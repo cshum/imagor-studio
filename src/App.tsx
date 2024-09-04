@@ -7,49 +7,51 @@ import DashboardPage from '@/pages/dashboard-page';
 import CategoriesPage from '@/pages/categories-page';
 import AccountPage from '@/pages/account-page';
 import RootLayout from '@/layouts/root-layout';
-import DemoLayout from '@/layouts/demo-layout';
 import HomePage from '@/pages/home-page.tsx'
+import AdminPanelLayout from '@/layouts/admin-panel-layout.tsx'
 
 const App = () => {
   return (
     <Router>
       <RootLayout>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={
+            <HomePage />
+          } />
           <Route path="/users" element={
-            <DemoLayout>
+            <AdminPanelLayout>
               <UsersPage />
-            </DemoLayout>
+            </AdminPanelLayout>
           }/>
           <Route path="/tags" element={
-            <DemoLayout>
+            <AdminPanelLayout>
               <TagsPage />
-            </DemoLayout>
+            </AdminPanelLayout>
           }/>
           <Route path="/posts" element={
-            <DemoLayout>
+            <AdminPanelLayout>
               <PostsPage />
-            </DemoLayout>
+            </AdminPanelLayout>
           }/>
           <Route path="/posts/new" element={
-            <DemoLayout>
+            <AdminPanelLayout>
               <NewPostPage />
-            </DemoLayout>
+            </AdminPanelLayout>
           }/>
           <Route path="/dashboard" element={
-            <DemoLayout>
+            <AdminPanelLayout>
               <DashboardPage />
-            </DemoLayout>
+            </AdminPanelLayout>
           }/>
           <Route path="/categories" element={
-            <DemoLayout>
+            <AdminPanelLayout>
               <CategoriesPage />
-            </DemoLayout>
+            </AdminPanelLayout>
           }/>
           <Route path="/account" element={
-            <DemoLayout>
+            <AdminPanelLayout>
               <AccountPage />
-            </DemoLayout>
+            </AdminPanelLayout>
           }/>
         </Routes>
       </RootLayout>

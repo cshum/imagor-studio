@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from '@/lib/utils';
 import { useStore } from '@/hooks/use-store';
 import { Footer } from '@/components/admin-panel/footer';
