@@ -1,7 +1,7 @@
 import { PropsWithChildren } from 'react';
 import { Helmet } from 'react-helmet';
 import { ThemeProvider } from '@/providers/theme-provider.tsx';  // Your custom ThemeProvider
-import '../app/globals.css';
+import '../globals.css';
 
 const RootLayout = ({ children }: PropsWithChildren) => {
   return (
