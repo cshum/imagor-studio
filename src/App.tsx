@@ -6,14 +6,14 @@ import NewPostPage from '@/pages/posts/new-post-page';
 import DashboardPage from '@/pages/dashboard-page';
 import CategoriesPage from '@/pages/categories-page';
 import AccountPage from '@/pages/account-page';
-import RootLayout from '@/layouts/root-layout';
 import HomePage from '@/pages/home-page.tsx'
 import AdminPanelLayout from '@/layouts/admin-panel-layout.tsx'
+import { ThemeProvider } from './providers/theme-provider';
 
 const App = () => {
   return (
-    <Router>
-      <RootLayout>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
+      <Router>
         <Routes>
           <Route path="/" element={
             <HomePage />
@@ -54,8 +54,8 @@ const App = () => {
             </AdminPanelLayout>
           }/>
         </Routes>
-      </RootLayout>
-    </Router>
+      </Router>
+    </ThemeProvider>
   );
 };
 
