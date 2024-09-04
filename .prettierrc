@@ -1,0 +1,29 @@
+{
+  "semi": false,
+  "tabWidth": 2,
+  "printWidth": 100,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "jsxSingleQuote": true,
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "importOrder": [
+    "^react$",
+    "<THIRD_PARTY_MODULES>",
+    "",
+    "^@/layouts/(.*)$",
+    "^@/components/(.*)$",
+    "^@/features/(.*)$",
+    "^@/utils/(.*)$",
+    "^@/assets/(.*)$",
+    "^@/vendors/(.*)$",
+    "^[./]"
+  ],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true,
+  "plugins": [
+    "@ianvs/prettier-plugin-sort-imports",
+    "prettier-plugin-tailwindcss"
+  ],
+  "pluginSearchDirs": false
+}
