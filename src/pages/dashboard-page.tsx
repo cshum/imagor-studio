@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';  // Use React Router's Link
 import PlaceholderContent from '@/components/demo/placeholder-content';
-import { ContentLayout } from '@/components/admin-panel/content-layout';
+import { ContentLayout } from '@/layouts/content-layout.tsx';
 import {
   Breadcrumb,
   BreadcrumbItem,

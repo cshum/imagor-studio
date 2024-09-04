@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react';
-import { Navbar } from '@/components/admin-panel/navbar';
+import { Navbar } from '@/components/admin-panel/navbar.tsx';
 
 interface ContentLayoutProps {
   title: string;
