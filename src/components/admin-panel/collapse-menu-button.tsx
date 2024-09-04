@@ -103,7 +103,7 @@ export function CollapseMenuButton({
             className="w-full justify-start h-10 mb-1"
             asChild
           >
-            <Link to={href}>  {/* Replace href with 'to' */}
+            <Link to={href}>
               <span className="mr-4 ml-2">
                 <Dot size={18} />
               </span>
@@ -162,7 +162,7 @@ export function CollapseMenuButton({
         <DropdownMenuSeparator />
         {submenus.map(({ href, label }, index) => (
           <DropdownMenuItem key={index} asChild>
-            <Link className="cursor-pointer" to={href}>  {/* Replace href with 'to' */}
+            <Link className="cursor-pointer" to={href}>
               <p className="max-w-[180px] truncate">{label}</p>
             </Link>
           </DropdownMenuItem>

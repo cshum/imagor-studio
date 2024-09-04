@@ -17,13 +17,13 @@ export default function AccountPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/public">Home</Link>  {/* Use React Router's `to` */}
+              <Link to="/public">Home</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/dashboard">Dashboard</Link>  {/* Use `to` */}
+              <Link to="/dashboard">Dashboard</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

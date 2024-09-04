@@ -9,7 +9,6 @@ import AccountPage from '@/pages/account-page';
 import RootLayout from '@/layouts/root-layout';
 import HomePage from '@/pages/home-page.tsx'
 import AdminPanelLayout from '@/layouts/admin-panel-layout.tsx'
-import { ContentLayout } from '@/layouts/content-layout.tsx'
 
 const App = () => {
   return (
@@ -17,11 +16,7 @@ const App = () => {
       <RootLayout>
         <Routes>
           <Route path="/" element={
-            <AdminPanelLayout>
-              <ContentLayout title={'Home'}>
-                <HomePage />
-              </ContentLayout>
-            </AdminPanelLayout>
+            <HomePage />
           } />
           <Route path="/users" element={
             <AdminPanelLayout>

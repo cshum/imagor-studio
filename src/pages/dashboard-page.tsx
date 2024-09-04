@@ -17,7 +17,7 @@ export default function DashboardPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/">Home</Link> {/* Use `to` instead of `href` */}
+              <Link to="/">Home</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
