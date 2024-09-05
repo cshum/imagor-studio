@@ -7,11 +7,11 @@ import HomePage from '@/pages/home-page.tsx';
 import CategoriesPage from '@/pages/categories-page';
 import AccountPage from '@/pages/account-page';
 import AdminPanelLayout from '@/layouts/admin-panel-layout.tsx'
-import { ThemeProvider } from './providers/theme-provider';
+import { RootLayout } from '@/layouts/root-layout.tsx'
 
 const App = () => {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
+    <RootLayout>
       <Router>
         <Routes>
           <Route path="/" element={
@@ -51,7 +51,7 @@ const App = () => {
           }/>
         </Routes>
       </Router>
-    </ThemeProvider>
+    </RootLayout>
   );
 };
 
