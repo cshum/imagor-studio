@@ -15,11 +15,11 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({
-                                children,
-                                defaultTheme = 'light',
-                                enableSystem = true,
-                                attribute = 'class',
-                              }: ThemeProviderProps) {
+  children,
+  defaultTheme = 'light',
+  enableSystem = true,
+  attribute = 'class',
+}: ThemeProviderProps) {
   const [theme, setTheme] = useState(defaultTheme);
 
   // Sync with system theme if enabled

@@ -70,7 +70,7 @@
   * {
     @apply border-border;
   }
-  body {
+  html, body {
     @apply bg-background text-foreground;
     font-family:
       Geist Variable,
@@ -85,5 +85,12 @@
       'Segoe UI',
       Arial,
       sans-serif;
+
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      height: 100%;
+      width: 100%;
+      overflow-x: hidden;
   }
 }
