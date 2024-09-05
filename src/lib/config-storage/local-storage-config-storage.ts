@@ -1,6 +1,6 @@
 import { ConfigStorage } from '@/lib/config-storage/config-storage.ts'
 
-export class LocalConfigStorage implements ConfigStorage {
+export class LocalStorageConfigStorage implements ConfigStorage {
   storageKey: string;
 
   constructor(storageKey: string) {

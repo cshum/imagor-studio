@@ -1,14 +1,11 @@
 import { cn } from '@/lib/utils';
-import { useStore } from '@/hooks/use-store';
 import { Footer } from '@/components/admin-panel/footer';
 import { Sidebar } from '@/components/admin-panel/sidebar';
-import { useSidebarToggle } from '@/hooks/use-sidebar-toggle';
 import { PropsWithChildren } from 'react';
+import { useSidebarToggle } from '@/providers/sidebar-toggle-provider.tsx'
 
 export default function AdminPanelLayout({ children }: PropsWithChildren) {
-  const sidebar = useStore(useSidebarToggle, (state) => state);
-
-  if (!sidebar) return null;
+  const { isOpen } = useSidebarToggle(); // Use the new context-based hook
 
   return (
     <>
@@ -16,7 +13,7 @@ export default function AdminPanelLayout({ children }: PropsWithChildren) {
       <main
         className={cn(
           'min-h-[calc(100vh_-_56px)] bg-zinc-50 dark:bg-zinc-900 transition-[margin-left] ease-in-out duration-300',
-          sidebar?.isOpen === false ? 'lg:ml-[90px]' : 'lg:ml-72',
+          isOpen === false ? 'lg:ml-[90px]' : 'lg:ml-72'
         )}
       >
         {children}
@@ -24,7 +21,7 @@ export default function AdminPanelLayout({ children }: PropsWithChildren) {
       <footer
         className={cn(
           'transition-[margin-left] ease-in-out duration-300',
-          sidebar?.isOpen === false ? 'lg:ml-[90px]' : 'lg:ml-72',
+          isOpen === false ? 'lg:ml-[90px]' : 'lg:ml-72'
         )}
       >
         <Footer />
