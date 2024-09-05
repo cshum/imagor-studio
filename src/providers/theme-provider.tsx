@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { ThemeStorage } from '@/lib/theme-storage/theme-storage.ts';
+import { ConfigStorage } from '@/lib/config-storage/config-storage.ts';
 
 export type Theme = 'system' | 'light' | 'dark';
 
@@ -7,7 +7,7 @@ interface ThemeProviderProps {
   children: ReactNode;
   defaultTheme?: Theme; // system by default
   attribute?: string; // For handling class attribute changes
-  storage: ThemeStorage; // Inject storage here
+  storage: ConfigStorage; // Inject storage here
 }
 
 interface ThemeContextType {
@@ -30,7 +30,7 @@ export function ThemeProvider({
   // Fetch theme from storage
   useEffect(() => {
     const loadTheme = async () => {
-      const storedTheme = await storage.loadTheme();
+      const storedTheme = await storage.get();
       if (storedTheme === 'light' || storedTheme === 'dark') {
         setTheme(storedTheme as Theme);
         setIsSystem(false); // User-selected, so not system
@@ -73,7 +73,7 @@ export function ThemeProvider({
     if (!loaded) return;
 
     const saveTheme = async () => {
-      await storage.saveTheme(isSystem ? 'system' : theme); // Save "system" if in system mode, otherwise save the theme
+      await storage.set(isSystem ? 'system' : theme); // Save "system" if in system mode, otherwise save the theme
     };
 
     saveTheme();
