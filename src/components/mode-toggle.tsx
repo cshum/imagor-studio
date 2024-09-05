@@ -7,10 +7,10 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from '@/components/ui/tooltip';
-import useDarkMode from '@/hooks/use-dark-mode.ts';
+import { useTheme } from '@/providers/theme-provider.tsx';
 
 export function ModeToggle() {
-  const darkMode = useDarkMode(false); // Default to light mode
+  const { setTheme, theme } = useTheme();
 
   return (
     <TooltipProvider disableHoverableContent>
@@ -20,7 +20,7 @@ export function ModeToggle() {
             className="rounded-full w-8 h-8 bg-background"
             variant="outline"
             size="icon"
-            onClick={darkMode.toggle}
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           >
             <SunIcon
               className="w-[1.2rem] h-[1.2rem] rotate-90 scale-0 transition-transform ease-in-out duration-500 dark:rotate-0 dark:scale-100"
