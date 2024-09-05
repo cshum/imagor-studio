@@ -1,14 +1,14 @@
-import { Link } from 'react-router-dom';  // Replace next/link with react-router-dom
-import PlaceholderContent from '@/components/demo/placeholder-content.tsx';
-import { ContentLayout } from '@/layouts/content-layout.tsx';
+import { Link } from 'react-router-dom'
+import PlaceholderContent from '@/components/demo/placeholder-content.tsx'
+import { ContentLayout } from '@/layouts/content-layout.tsx'
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator
-} from '@/components/ui/breadcrumb.tsx';
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb.tsx'
 
 export default function PostsPage() {
   return (
@@ -29,5 +29,5 @@ export default function PostsPage() {
       </Breadcrumb>
       <PlaceholderContent />
     </ContentLayout>
-  );
+  )
 }

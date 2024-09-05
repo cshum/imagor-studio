@@ -1,16 +1,11 @@
 // src/components/ModeToggle.tsx
-import { MoonIcon, SunIcon } from '@radix-ui/react-icons';
-import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
-} from '@/components/ui/tooltip';
-import { useTheme } from '@/providers/theme-provider.tsx';
+import { MoonIcon, SunIcon } from '@radix-ui/react-icons'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useTheme } from '@/providers/theme-provider.tsx'
 
 export function ModeToggle() {
-  const { setTheme, theme } = useTheme();
+  const { setTheme, theme } = useTheme()
 
   return (
     <TooltipProvider disableHoverableContent>
@@ -20,7 +15,7 @@ export function ModeToggle() {
             className="rounded-full w-8 h-8 bg-background"
             variant="outline"
             size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           >
             <SunIcon
               className="w-[1.2rem] h-[1.2rem] rotate-90 scale-0 transition-transform ease-in-out duration-500 dark:rotate-0 dark:scale-100"
@@ -34,5 +29,5 @@ export function ModeToggle() {
         <TooltipContent side="bottom">Switch Theme</TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  );
+  )
 }

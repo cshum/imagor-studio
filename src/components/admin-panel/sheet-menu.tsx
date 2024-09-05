@@ -1,15 +1,9 @@
-import { Link } from 'react-router-dom';  // Replace next/link with react-router-dom
-import { MenuIcon, PanelsTopLeft } from 'lucide-react';
+import { Link } from 'react-router-dom'
+import { MenuIcon, PanelsTopLeft } from 'lucide-react'
 
-import { Button } from '@/components/ui/button';
-import { Menu } from '@/components/admin-panel/menu';
-import {
-  Sheet,
-  SheetHeader,
-  SheetContent,
-  SheetTrigger,
-  SheetTitle
-} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button'
+import { Menu } from '@/components/admin-panel/menu'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
 export function SheetMenu() {
   return (
@@ -35,5 +29,5 @@ export function SheetMenu() {
         <Menu isOpen />
       </SheetContent>
     </Sheet>
-  );
+  )
 }

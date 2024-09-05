@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';  // React Router Link
-import { Card, CardContent } from '@/components/ui/card';  // ShadCN components
+import { Link } from 'react-router-dom' // React Router Link
+import { Card, CardContent } from '@/components/ui/card' // ShadCN components
 
 export default function PlaceholderContent() {
   return (
@@ -28,5 +28,5 @@ export default function PlaceholderContent() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

@@ -1,14 +1,14 @@
-import { Link } from 'react-router-dom';  // Use React Router Link
-import PlaceholderContent from '@/components/demo/placeholder-content';
-import { ContentLayout } from '@/layouts/content-layout.tsx';
+import { Link } from 'react-router-dom' // Use React Router Link
+import PlaceholderContent from '@/components/demo/placeholder-content'
+import { ContentLayout } from '@/layouts/content-layout.tsx'
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator
-} from '@/components/ui/breadcrumb';
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 
 export default function UsersPage() {
   return (
@@ -28,5 +28,5 @@ export default function UsersPage() {
       </Breadcrumb>
       <PlaceholderContent />
     </ContentLayout>
-  );
+  )
 }

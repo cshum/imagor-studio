@@ -1,17 +1,17 @@
 import { ConfigStorage } from '@/lib/config-storage/config-storage.ts'
 
 export class LocalStorageConfigStorage implements ConfigStorage {
-  storageKey: string;
+  storageKey: string
 
   constructor(storageKey: string) {
-    this.storageKey = storageKey;
+    this.storageKey = storageKey
   }
 
   async get(): Promise<string | null> {
-    return localStorage.getItem(this.storageKey);
+    return localStorage.getItem(this.storageKey)
   }
 
   async set(theme: string): Promise<void> {
-    localStorage.setItem(this.storageKey, theme);
+    localStorage.setItem(this.storageKey, theme)
   }
 }
