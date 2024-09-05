@@ -35,7 +35,7 @@ export function getMenuList(pathname: string): Group[] {
         {
           href: "/",
           label: "Home",
-          active: pathname === "/" || pathname.includes("/"),
+          active: pathname === "/",
           icon: LayoutGrid,
           submenus: []
         }
