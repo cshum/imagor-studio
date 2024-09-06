@@ -4,7 +4,11 @@ import { Sidebar } from '@/components/admin-panel/sidebar'
 import { PropsWithChildren } from 'react'
 import { useSidebarToggle } from '@/providers/sidebar-toggle-provider.tsx'
 
-export default function AdminPanelLayout({ children }: PropsWithChildren) {
+interface AdminPanelLayoutProps extends PropsWithChildren {
+  hideFooter?: boolean; // New prop to control footer visibility
+}
+
+export default function AdminPanelLayout({ children, hideFooter }: AdminPanelLayoutProps) {
   const { isOpen } = useSidebarToggle()
 
   return (
@@ -18,14 +22,16 @@ export default function AdminPanelLayout({ children }: PropsWithChildren) {
       >
         {children}
       </main>
-      <footer
-        className={cn(
-          'transition-[margin-left] ease-in-out duration-300',
-          !isOpen ? 'lg:ml-[90px]' : 'lg:ml-72',
-        )}
-      >
-        <Footer />
-      </footer>
+      {!hideFooter && (
+        <footer
+          className={cn(
+            'transition-[margin-left] ease-in-out duration-300',
+            !isOpen ? 'lg:ml-[90px]' : 'lg:ml-72',
+          )}
+        >
+          <Footer />
+        </footer>
+      )}
     </>
   )
 }

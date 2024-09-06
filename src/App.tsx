@@ -15,7 +15,7 @@ const App = () => {
       <Router>
         <Routes>
           <Route path="/" element={
-            <AdminPanelLayout>
+            <AdminPanelLayout hideFooter={true}>
               <HomePage />
             </AdminPanelLayout>
           } />
