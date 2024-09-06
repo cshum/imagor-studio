@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 interface Image {
   id: string;
@@ -9,11 +10,9 @@ interface ImageGalleryProps {
   imageCount: number;
   columnCount: number;
   rowHeight: number;
-  width: number;
-  height: number;
 }
 
-export const ImageGallery = ({ imageCount, columnCount, rowHeight, width, height }: ImageGalleryProps) => {
+export const ImageGallery = ({ imageCount, columnCount, rowHeight }: ImageGalleryProps) => {
   const [images, setImages] = useState<Image[]>([]);
 
   useEffect(() => {
@@ -41,19 +40,28 @@ export const ImageGallery = ({ imageCount, columnCount, rowHeight, width, height
     );
   };
 
-  const columnWidth = width / columnCount;
-  const rowCount = Math.ceil(images.length / columnCount);
-
   return (
-    <Grid
-      columnCount={columnCount}
-      columnWidth={columnWidth}
-      height={height}
-      rowCount={rowCount}
-      rowHeight={rowHeight}
-      width={width}
-    >
-      {Cell}
-    </Grid>
+    <div className="w-full h-full min-h-[500px] bg-transparent">
+      <AutoSizer>
+        {({ height, width }) => {
+          const columnWidth = width / columnCount;
+          const rowCount = Math.ceil(images.length / columnCount);
+
+          return (
+            <Grid
+              columnCount={columnCount}
+              columnWidth={columnWidth}
+              height={height}
+              rowCount={rowCount}
+              rowHeight={rowHeight}
+              width={width}
+              className="scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent"
+            >
+              {Cell}
+            </Grid>
+          );
+        }}
+      </AutoSizer>
+    </div>
   );
 };
