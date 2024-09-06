@@ -45,13 +45,11 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
       return (
         <div
           key={rowIndex}
-          className="flex"
+          className="flex absolute w-full"
           style={{
-            height: rowHeight,
-            width: '100%',
-            position: 'absolute',
-            top: rowIndex * rowHeight,
-            left: 0,
+            height: `${rowHeight}px`,
+            transform: `translate3d(0, ${rowIndex * rowHeight}px, 0)`,
+            willChange: 'transform',
           }}
         >
           {Array.from({ length: columnCount }, (_, columnIndex) => {
@@ -72,11 +70,13 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
         </div>
       )
     }).filter(Boolean)
-  }, [images, columnCount, rowHeight, startIndex, rowCount, visibleRowsCount, columnWidth])
+  }, [images, columnCount, rowHeight, startIndex, rowCount, visibleRowsCount, columnWidth, scrollTop])
 
   return (
     <div style={{ height: totalHeight, position: 'relative', width: '100%', overflow: 'hidden' }}>
-      {visibleRows}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: totalHeight }}>
+        {visibleRows}
+      </div>
     </div>
   )
 }
