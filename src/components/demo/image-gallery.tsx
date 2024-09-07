@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTheme } from '@/providers/theme-provider.tsx';
 
 interface Image {
   id: string;
+  isLoaded: boolean;
 }
 
 interface ImageGalleryProps {
@@ -21,10 +23,12 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                                                           }) => {
   const [images, setImages] = useState<Image[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const newImages: Image[] = Array.from({ length: imageCount }, (_, i) => ({
       id: `${i + 1}`,
+      isLoaded: false,
     }));
     setImages(newImages);
   }, [imageCount]);
@@ -34,8 +38,16 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
   const columnWidth = width / columnCount;
 
   const visibleRowsCount = Math.ceil(window.innerHeight / rowHeight);
-  const overscanCount = 3; // Number of rows to render above and below the visible area
+  const overscanCount = 3;
   const totalRenderedRows = visibleRowsCount + 2 * overscanCount;
+
+  const handleImageLoad = useCallback((index: number) => {
+    setImages(prevImages => {
+      const newImages = [...prevImages];
+      newImages[index] = { ...newImages[index], isLoaded: true };
+      return newImages;
+    });
+  }, []);
 
   const renderRow = useCallback((rowIndex: number) => {
     const startImageIndex = rowIndex * columnCount;
@@ -53,37 +65,40 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
           const imageIndex = startImageIndex + columnIndex;
           if (imageIndex >= images.length) return null;
           const image = images[imageIndex];
+          const placeholderColor = theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200';
           return (
-            <div key={columnIndex} className="p-2 box-border" style={{ width: `${columnWidth}px` }}>
-              <img
-                src={`https://picsum.photos/id/${image.id}/400/300`}
-                alt={`Random image ${image.id}`}
-                className="w-full h-full object-cover rounded-md shadow-md transition-transform duration-300 hover:scale-105"
-                loading="lazy"
-              />
+            <div key={columnIndex} className="p-2 box-border" style={{ width: `${columnWidth}px`, height: `${rowHeight}px` }}>
+              {image.isLoaded ? (
+                <img
+                  src={`https://picsum.photos/id/${image.id}/400/300`}
+                  alt={`Random image ${image.id}`}
+                  className="w-full h-full object-cover rounded-md shadow-md transition-transform duration-300 hover:scale-105"
+                />
+              ) : (
+                <>
+                  <div className={`w-full h-full ${placeholderColor} rounded-md`} />
+                  <img
+                    src={`https://picsum.photos/id/${image.id}/400/300`}
+                    alt={`Random image ${image.id}`}
+                    className="hidden"
+                    onLoad={() => handleImageLoad(imageIndex)}
+                  />
+                </>
+              )}
             </div>
           );
         })}
       </div>
     );
-  }, [images, columnCount, rowHeight, columnWidth]);
+  }, [images, columnCount, rowHeight, columnWidth, theme, handleImageLoad]);
 
   const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - overscanCount);
   const endIndex = Math.min(rowCount, startIndex + totalRenderedRows);
-
-  const lastStartIndexRef = useRef<number | null>(null)
-  const lastEndIndexRef = useRef<number | null>(null)
 
   const visibleRows = useCallback(() => {
     const rows = [];
     for (let i = startIndex; i < endIndex; i++) {
       rows.push(renderRow(i));
-    }
-    if (lastStartIndexRef.current !== startIndex || lastEndIndexRef.current !== endIndex) {
-      console.log(lastStartIndexRef.current, lastEndIndexRef.current, startIndex, endIndex)
-      // apply rows optimization logic here
-      lastStartIndexRef.current = startIndex
-      lastEndIndexRef.current = endIndex
     }
     return rows;
   }, [startIndex, endIndex, renderRow]);
@@ -91,7 +106,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
   return (
     <div
       ref={containerRef}
-      style={{ height: totalHeight, position: 'relative', width: '100%', overflow: 'hidden' }}
+      style={{ height: `${totalHeight}px`, position: 'relative', width: '100%', overflow: 'hidden' }}
     >
       {visibleRows()}
     </div>
