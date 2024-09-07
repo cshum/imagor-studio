@@ -66,7 +66,7 @@ export const ImageGrid = ({
           }}
         >
           <div
-            className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
+            className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden">
             <img
               src={image.src}
               alt={image.alt}
