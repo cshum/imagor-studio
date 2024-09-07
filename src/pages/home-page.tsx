@@ -48,15 +48,12 @@ export default function HomePage() {
       scrollTimeoutRef.current = window.setTimeout(() => {
         setIsScrolling(false)
         scrollPositionRef.current = containerRef.current?.scrollTop || 0 // Capture the scrollTop when scrolling stops
-      }, 150)
-    }
-  }, [])
 
-  // Save the scroll position from the ref to localStorage when the component unmounts
-  const saveScrollPosition = useCallback(() => {
-    // Only save if scroll position is not null (if it's been initialized)
-    if (scrollPositionRef.current !== null) {
-      localStorage.setItem(SCROLL_POSITION_KEY, scrollPositionRef.current.toString())
+        // Save the scroll position to localStorage
+        if (scrollPositionRef.current !== null) {
+          localStorage.setItem(SCROLL_POSITION_KEY, scrollPositionRef.current.toString())
+        }
+      }, 150)
     }
   }, [])
 
@@ -112,14 +109,7 @@ export default function HomePage() {
         clearTimeout(resizeTimeoutRef.current)
       }
     }
-  }, [handleScroll, handleResize])
-
-  // Save scroll position only when the component is about to unmount
-  useEffect(() => {
-    return () => {
-      saveScrollPosition() // Save the scroll position to local storage on unmount
-    }
-  }, [saveScrollPosition])
+  }, [handleScroll, handleResize, updateWidth])
 
   // Trigger width update when the sidebar state (isOpen) changes
   useEffect(() => {
