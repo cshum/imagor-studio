@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from '@/components/ui/breadcrumb'
 import { Card, CardContent } from '@/components/ui/card'
-import { ImageGrid, Image } from '@/components/image-grid/image-grid' // Adjusted the import path
+import { Image, ImageGrid } from '@/components/image-grid/image-grid' // Updated import path
 import { useSidebarToggle } from '@/providers/sidebar-toggle-provider.tsx' // Import sidebar toggle hook
 
 export default function HomePage() {
@@ -20,8 +20,8 @@ export default function HomePage() {
   const generateImages = useCallback((count: number) => {
     return Array.from({ length: count }, (_, i) => ({
       id: `${i + 1}`,
-      src: `https://picsum.photos/id/${i + 1}/300/225`,  // Image source passed through props
-      alt: `Random image ${i + 1}`,  // Alt text passed through props
+      src: `https://picsum.photos/id/${i + 1}/300/225`, // Image source passed through props
+      alt: `Random image ${i + 1}`, // Alt text passed through props
     }))
   }, [])
 
