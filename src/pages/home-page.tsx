@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from '@/components/ui/breadcrumb'
 import { Card, CardContent } from '@/components/ui/card'
-import { Image, ImageGallery } from '@/components/demo/image-gallery' // Adjust the import path
+import { ImageGrid, Image } from '@/components/image-grid/image-grid' // Adjusted the import path
 import { useSidebarToggle } from '@/providers/sidebar-toggle-provider.tsx' // Import sidebar toggle hook
 
 export default function HomePage() {
@@ -17,7 +17,6 @@ export default function HomePage() {
   const resizeTimeoutRef = useRef<number | null>(null) // Ref to track resize timeout
   const { isOpen } = useSidebarToggle() // Get the sidebar open state
 
-  // Generates image data for the gallery
   const generateImages = useCallback((count: number) => {
     return Array.from({ length: count }, (_, i) => ({
       id: `${i + 1}`,
@@ -30,7 +29,6 @@ export default function HomePage() {
     setImages(generateImages(1000))
   }, [generateImages])
 
-  // Handles scroll and sets debounce to stop scrolling state
   const handleScroll = useCallback(() => {
     if (containerRef.current) {
       setScrollTop(containerRef.current.scrollTop)
@@ -46,7 +44,6 @@ export default function HomePage() {
     }
   }, [])
 
-  // Updates the content width, accounting for padding
   const updateWidth = useCallback(() => {
     if (contentRef.current) {
       const padding = 48 // Set padding to 48px for appropriate positioning
@@ -55,7 +52,6 @@ export default function HomePage() {
     }
   }, [])
 
-  // Debounced resize handler to limit the number of times updateWidth is called
   const handleResize = useCallback(() => {
     if (resizeTimeoutRef.current) {
       clearTimeout(resizeTimeoutRef.current) // Clear any existing timeout to debounce
@@ -117,12 +113,13 @@ export default function HomePage() {
         <Card className="rounded-lg border-none mt-6">
           <CardContent className="p-6" ref={contentRef}>
             {contentWidth > 0 && (
-              <ImageGallery
+              <ImageGrid
                 images={images}
                 aspectRatio={4 / 3}
                 width={contentWidth} // Use the adjusted width
                 scrollTop={scrollTop}
                 isScrolling={isScrolling}
+                maxImageWidth={300} // Pass the maximum image width as a prop
               />
             )}
           </CardContent>

@@ -6,23 +6,25 @@ export interface Image {
   alt: string
 }
 
-interface ImageGalleryProps {
+interface ImageGridProps {
   images: Image[]
   aspectRatio: number
   width: number
   scrollTop: number
   isScrolling: boolean
+  maxImageWidth: number
 }
 
-export const ImageGallery = ({
-                               images,
-                               aspectRatio,
-                               width,
-                               scrollTop,
-                               isScrolling,
-                             }: ImageGalleryProps) => {
-  // Dynamically calculate the number of columns based on image width
-  const columnCount = Math.max(2, Math.floor(width / 300))
+export const ImageGrid = ({
+                            images,
+                            aspectRatio,
+                            width,
+                            scrollTop,
+                            isScrolling,
+                            maxImageWidth,
+                          }: ImageGridProps) => {
+  // Dynamically calculate the number of columns based on maxImageWidth prop
+  const columnCount = Math.max(2, Math.floor(width / maxImageWidth))
   const columnWidth = width / columnCount
   const rowHeight = columnWidth / aspectRatio
 
@@ -30,7 +32,7 @@ export const ImageGallery = ({
   const totalHeight = rowCount * rowHeight
 
   const visibleRowsCount = Math.ceil(window.innerHeight / rowHeight)
-  const overscanCount = 2 // Allow overscanning to improve scrolling performance
+  const overscanCount = 2
   const totalRenderedRows = visibleRowsCount + 2 * overscanCount
 
   // Render individual images with correct positioning
@@ -53,8 +55,7 @@ export const ImageGallery = ({
             willChange: 'transform',
           }}
         >
-          <div
-            className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
+          <div className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
             <img
               src={image.src}
               alt={image.alt}
@@ -64,7 +65,7 @@ export const ImageGallery = ({
         </div>
       )
     },
-    [images, columnCount, columnWidth, rowHeight],
+    [images, columnCount, columnWidth, rowHeight]
   )
 
   // Determine which images should be rendered based on scroll position
