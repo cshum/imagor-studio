@@ -71,7 +71,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
               <>
                 <div className={`w-full h-full ${placeholderColor} rounded-md ${image.isLoaded ? 'hidden': ''}`} />
                 <img
-                  src={`https://picsum.photos/id/${image.id}/400/300`}
+                  src={`https://picsum.photos/id/${image.id}/300/225`}
                   alt={`Random image ${image.id}`}
                   className={`w-full h-full object-cover rounded-md shadow-md transition-transform duration-300 hover:scale-105 ${image.isLoaded ? '' : 'hidden'}`}
                   onLoad={() => handleImageLoad(imageIndex)}
