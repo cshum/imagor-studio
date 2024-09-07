@@ -31,7 +31,7 @@ export const ImageGallery = ({
   const totalHeight = rowCount * rowHeight
 
   const visibleRowsCount = Math.ceil(window.innerHeight / rowHeight)
-  const overscanCount = 3 // Allow overscanning to improve scrolling performance
+  const overscanCount = 2 // Allow overscanning to improve scrolling performance
   const totalRenderedRows = visibleRowsCount + 2 * overscanCount
 
   // Render individual images with correct positioning
