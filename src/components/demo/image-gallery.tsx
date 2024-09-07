@@ -71,10 +71,19 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
   const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - overscanCount);
   const endIndex = Math.min(rowCount, startIndex + totalRenderedRows);
 
+  const lastStartIndexRef = useRef<number | null>(null)
+  const lastEndIndexRef = useRef<number | null>(null)
+
   const visibleRows = useCallback(() => {
     const rows = [];
     for (let i = startIndex; i < endIndex; i++) {
       rows.push(renderRow(i));
+    }
+    if (lastStartIndexRef.current !== startIndex || lastEndIndexRef.current !== endIndex) {
+      console.log(lastStartIndexRef.current, lastEndIndexRef.current, startIndex, endIndex)
+      // apply rows optimization logic here
+      lastStartIndexRef.current = startIndex
+      lastEndIndexRef.current = endIndex
     }
     return rows;
   }, [startIndex, endIndex, renderRow]);
