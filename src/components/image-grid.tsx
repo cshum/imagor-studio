@@ -11,7 +11,6 @@ interface ImageGridProps {
   aspectRatio: number;
   width: number;
   scrollTop: number;
-  isScrolling: boolean;
   maxImageWidth: number;
   onRendered?: () => void; // New callback prop for notifying when grid is rendered
 }
@@ -21,7 +20,6 @@ export const ImageGrid = ({
                             aspectRatio,
                             width,
                             scrollTop,
-                            isScrolling,
                             maxImageWidth,
                             onRendered,
                           }: ImageGridProps) => {
@@ -93,7 +91,7 @@ export const ImageGrid = ({
 
   return (
     <div
-      className={`relative w-full overflow-hidden ${isScrolling ? '' : 'not-scrolling'} group`}
+      className={`relative w-full overflow-hidden`}
       style={{ height: `${totalHeight}px` }}
     >
       {visibleImages()}

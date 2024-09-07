@@ -65,7 +65,6 @@ export default function HomePage() {
                 aspectRatio={4 / 3}
                 width={contentWidth}
                 scrollTop={scrollPosition} // Use the scroll position state
-                isScrolling={false}
                 maxImageWidth={300}
                 onRendered={() => setGridRendered(true)} // Set grid rendered to true
               />
