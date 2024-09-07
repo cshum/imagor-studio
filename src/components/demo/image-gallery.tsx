@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useTheme } from '@/providers/theme-provider.tsx';
+import React, { useCallback } from 'react';
 
 interface Image {
   id: string;
@@ -7,47 +6,31 @@ interface Image {
 }
 
 interface ImageGalleryProps {
-  imageCount: number;
+  images: Image[];
   columnCount: number;
-  rowHeight: number;
+  aspectRatio: number;
   width: number;
   scrollTop: number;
+  isScrolling: boolean;
 }
 
 export const ImageGallery: React.FC<ImageGalleryProps> = ({
-                                                            imageCount,
+                                                            images,
                                                             columnCount,
-                                                            rowHeight,
+                                                            aspectRatio,
                                                             width,
-                                                            scrollTop
+                                                            scrollTop,
+                                                            isScrolling
                                                           }) => {
-  const [images, setImages] = useState<Image[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { theme } = useTheme();
-
-  useEffect(() => {
-    const newImages: Image[] = Array.from({ length: imageCount }, (_, i) => ({
-      id: `${i + 1}`,
-      isLoaded: false,
-    }));
-    setImages(newImages);
-  }, [imageCount]);
+  const columnWidth = width / columnCount;
+  const rowHeight = columnWidth / aspectRatio;
 
   const rowCount = Math.ceil(images.length / columnCount);
   const totalHeight = rowCount * rowHeight;
-  const columnWidth = width / columnCount;
 
   const visibleRowsCount = Math.ceil(window.innerHeight / rowHeight);
   const overscanCount = 1;
   const totalRenderedRows = visibleRowsCount + 2 * overscanCount;
-
-  const handleImageLoad = useCallback((index: number) => {
-    setImages(prevImages => {
-      const newImages = [...prevImages];
-      newImages[index] = { ...newImages[index], isLoaded: true };
-      return newImages;
-    });
-  }, []);
 
   const renderRow = useCallback((rowIndex: number) => {
     const startImageIndex = rowIndex * columnCount;
@@ -65,27 +48,24 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
           const imageIndex = startImageIndex + columnIndex;
           if (imageIndex >= images.length) return null;
           const image = images[imageIndex];
-          const placeholderColor = theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200';
           return (
             <div key={columnIndex} className="p-2 box-border" style={{ width: `${columnWidth}px`, height: `${rowHeight}px` }}>
-              <>
-                <div className={`w-full h-full ${placeholderColor} rounded-md ${image.isLoaded ? 'hidden': ''}`} />
+              <div className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
                 <img
                   src={`https://picsum.photos/id/${image.id}/300/225`}
                   alt={`Random image ${image.id}`}
-                  className={`w-full h-full object-cover rounded-md transition-transform duration-300 hover:shadow-md hover:scale-105 ${image.isLoaded ? '' : 'hidden'}`}
-                  onLoad={() => handleImageLoad(imageIndex)}
+                  className="w-full h-full object-cover group-[.not-scrolling]:shadow-md"
                 />
-              </>
+              </div>
             </div>
           );
         })}
       </div>
     );
-  }, [images, columnCount, rowHeight, columnWidth, theme, handleImageLoad]);
+  }, [images, columnCount, rowHeight, columnWidth]);
 
-  const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - overscanCount)
-  const endIndex = Math.min(rowCount, startIndex + totalRenderedRows)
+  const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - overscanCount);
+  const endIndex = Math.min(rowCount, startIndex + totalRenderedRows);
 
   const visibleRows = useCallback(() => {
     const rows = [];
@@ -97,8 +77,8 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
 
   return (
     <div
-      ref={containerRef}
-      style={{ height: `${totalHeight}px`, position: 'relative', width: '100%', overflow: 'hidden' }}
+      className={`relative w-full overflow-hidden ${isScrolling ? '' : 'not-scrolling'} group`}
+      style={{ height: `${totalHeight}px` }}
     >
       {visibleRows()}
     </div>
