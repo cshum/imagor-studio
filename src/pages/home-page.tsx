@@ -3,20 +3,24 @@ import { Link } from 'react-router-dom'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from '@/components/ui/breadcrumb'
 import { Card, CardContent } from '@/components/ui/card'
-import { Image, ImageGrid } from '@/components/image-grid.tsx' // Updated import path
+import { Image, ImageGrid } from '@/components/image-grid' // Adjusted import path
 import { useSidebarToggle } from '@/providers/sidebar-toggle-provider.tsx' // Import sidebar toggle hook
+
+const SCROLL_POSITION_KEY = 'homePageScrollPosition' // Key for local storage
 
 export default function HomePage() {
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null) // Add a ref for CardContent
+  const scrollPositionRef = useRef<number | null>(null) // Use null initially to differentiate between 0 and no scroll
   const [contentWidth, setContentWidth] = useState(0)
-  const [scrollTop, setScrollTop] = useState(0)
   const [isScrolling, setIsScrolling] = useState(false)
   const [images, setImages] = useState<Image[]>([])
+  const [gridRendered, setGridRendered] = useState(false) // New state to track if grid is rendered
   const scrollTimeoutRef = useRef<number | null>(null)
   const resizeTimeoutRef = useRef<number | null>(null) // Ref to track resize timeout
   const { isOpen } = useSidebarToggle() // Get the sidebar open state
 
+  // Generate image data for the grid
   const generateImages = useCallback((count: number) => {
     return Array.from({ length: count }, (_, i) => ({
       id: `${i + 1}`,
@@ -29,18 +33,30 @@ export default function HomePage() {
     setImages(generateImages(1000))
   }, [generateImages])
 
+  // Handle scroll event and track the scroll position in a ref
   const handleScroll = useCallback(() => {
     if (containerRef.current) {
-      setScrollTop(containerRef.current.scrollTop)
+      scrollPositionRef.current = containerRef.current.scrollTop // Store scroll position in ref
+
       setIsScrolling(true)
 
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current)
       }
 
+      // Wait 150ms before considering the scroll as finished
       scrollTimeoutRef.current = window.setTimeout(() => {
         setIsScrolling(false)
+        scrollPositionRef.current = containerRef.current?.scrollTop || 0 // Capture the scrollTop when scrolling stops
       }, 150)
+    }
+  }, [])
+
+  // Save the scroll position from the ref to localStorage when the component unmounts
+  const saveScrollPosition = useCallback(() => {
+    // Only save if scroll position is not null (if it's been initialized)
+    if (scrollPositionRef.current !== null) {
+      localStorage.setItem(SCROLL_POSITION_KEY, scrollPositionRef.current.toString())
     }
   }, [])
 
@@ -61,6 +77,18 @@ export default function HomePage() {
       updateWidth() // Call the actual update function after the debounce timeout
     }, 100) // 100ms debounce delay for resizing
   }, [updateWidth])
+
+  // Restore scroll position from local storage after the grid is rendered
+  useEffect(() => {
+    if (gridRendered && containerRef.current) {
+      const savedScrollPosition = localStorage.getItem(SCROLL_POSITION_KEY)
+      if (savedScrollPosition !== null) {
+        const scrollTop = parseInt(savedScrollPosition, 10)
+        containerRef.current.scrollTop = scrollTop
+        scrollPositionRef.current = scrollTop // Set scroll position to the restored value
+      }
+    }
+  }, [gridRendered]) // Trigger when the grid is fully rendered
 
   useEffect(() => {
     updateWidth() // Update width on mount
@@ -85,6 +113,13 @@ export default function HomePage() {
       }
     }
   }, [handleScroll, handleResize])
+
+  // Save scroll position only when the component is about to unmount
+  useEffect(() => {
+    return () => {
+      saveScrollPosition() // Save the scroll position to local storage on unmount
+    }
+  }, [saveScrollPosition])
 
   // Trigger width update when the sidebar state (isOpen) changes
   useEffect(() => {
@@ -117,9 +152,10 @@ export default function HomePage() {
                 images={images}
                 aspectRatio={4 / 3}
                 width={contentWidth} // Use the adjusted width
-                scrollTop={scrollTop}
+                scrollTop={scrollPositionRef.current ?? 0} // Use scroll position or default to 0 if null
                 isScrolling={isScrolling}
                 maxImageWidth={300} // Pass the maximum image width as a prop
+                onRendered={() => setGridRendered(true)} // Callback to signal grid has rendered
               />
             )}
           </CardContent>

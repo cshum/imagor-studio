@@ -1,18 +1,19 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 
 export interface Image {
-  id: string
-  src: string
-  alt: string
+  id: string;
+  src: string;
+  alt: string;
 }
 
 interface ImageGridProps {
-  images: Image[]
-  aspectRatio: number
-  width: number
-  scrollTop: number
-  isScrolling: boolean
-  maxImageWidth: number
+  images: Image[];
+  aspectRatio: number;
+  width: number;
+  scrollTop: number;
+  isScrolling: boolean;
+  maxImageWidth: number;
+  onRendered?: () => void; // New callback prop for notifying when grid is rendered
 }
 
 export const ImageGrid = ({
@@ -22,6 +23,7 @@ export const ImageGrid = ({
                             scrollTop,
                             isScrolling,
                             maxImageWidth,
+                            onRendered,
                           }: ImageGridProps) => {
   // Dynamically calculate the number of columns based on maxImageWidth prop
   const columnCount = Math.max(2, Math.floor(width / maxImageWidth))
@@ -32,8 +34,15 @@ export const ImageGrid = ({
   const totalHeight = rowCount * rowHeight
 
   const visibleRowsCount = Math.ceil(window.innerHeight / rowHeight)
-  const overscanCount = 2
+  const overscanCount = 2 // Allow overscanning to improve scrolling performance
   const totalRenderedRows = visibleRowsCount + 2 * overscanCount
+
+  // Notify that the grid has been rendered
+  useEffect(() => {
+    if (onRendered) {
+      onRendered() // Callback to notify when the grid has rendered
+    }
+  }, [onRendered])
 
   // Render individual images with correct positioning
   const renderImage = useCallback(
@@ -55,7 +64,8 @@ export const ImageGrid = ({
             willChange: 'transform',
           }}
         >
-          <div className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
+          <div
+            className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
             <img
               src={image.src}
               alt={image.alt}
@@ -65,7 +75,7 @@ export const ImageGrid = ({
         </div>
       )
     },
-    [images, columnCount, columnWidth, rowHeight]
+    [images, columnCount, columnWidth, rowHeight],
   )
 
   // Determine which images should be rendered based on scroll position
