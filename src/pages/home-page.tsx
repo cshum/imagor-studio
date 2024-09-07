@@ -25,8 +25,6 @@ export default function HomePage() {
   const contentRef = useRef<HTMLDivElement>(null)
   const [images, setImages] = useState<Image[]>([])
   const { isOpen } = useSidebarToggle()
-
-  // Use breakpoint to determine current screen size
   const isDesktop = useBreakpoint("md")
 
   // Custom hooks
@@ -69,9 +67,9 @@ export default function HomePage() {
                 images={images}
                 aspectRatio={4 / 3}
                 width={contentWidth}
-                scrollTop={scrollPosition} // Use the scroll position state
+                scrollTop={scrollPosition}
                 maxImageWidth={300}
-                onRendered={() => setGridRendered(true)} // Set grid rendered to true
+                onRendered={() => setGridRendered(true)}
               />
             )}
           </CardContent>
