@@ -68,23 +68,15 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
           const placeholderColor = theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200';
           return (
             <div key={columnIndex} className="p-2 box-border" style={{ width: `${columnWidth}px`, height: `${rowHeight}px` }}>
-              {image.isLoaded ? (
+              <>
+                <div className={`w-full h-full ${placeholderColor} rounded-md ${image.isLoaded ? 'hidden': ''}`} />
                 <img
                   src={`https://picsum.photos/id/${image.id}/400/300`}
                   alt={`Random image ${image.id}`}
-                  className="w-full h-full object-cover rounded-md shadow-md transition-transform duration-300 hover:scale-105"
+                  className={`w-full h-full object-cover rounded-md shadow-md transition-transform duration-300 hover:scale-105 ${image.isLoaded ? '' : 'hidden'}`}
+                  onLoad={() => handleImageLoad(imageIndex)}
                 />
-              ) : (
-                <>
-                  <div className={`w-full h-full ${placeholderColor} rounded-md`} />
-                  <img
-                    src={`https://picsum.photos/id/${image.id}/400/300`}
-                    alt={`Random image ${image.id}`}
-                    className="hidden"
-                    onLoad={() => handleImageLoad(imageIndex)}
-                  />
-                </>
-              )}
+              </>
             </div>
           );
         })}
@@ -92,8 +84,8 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
     );
   }, [images, columnCount, rowHeight, columnWidth, theme, handleImageLoad]);
 
-  const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - overscanCount);
-  const endIndex = Math.min(rowCount, startIndex + totalRenderedRows);
+  const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - overscanCount)
+  const endIndex = Math.min(rowCount, startIndex + totalRenderedRows)
 
   const visibleRows = useCallback(() => {
     const rows = [];
