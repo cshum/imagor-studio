@@ -4,6 +4,7 @@ import { ContentLayout } from '@/layouts/content-layout'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from '@/components/ui/breadcrumb'
 import { Card, CardContent } from '@/components/ui/card'
 import { ImageGallery } from '@/components/demo/image-gallery' // Adjust the import path based on your structure
+import { useSidebarToggle } from '@/providers/sidebar-toggle-provider.tsx' // Import sidebar toggle hook
 
 interface Image {
   id: string;
@@ -20,6 +21,8 @@ export default function HomePage() {
   const [isScrolling, setIsScrolling] = useState(false)
   const [images, setImages] = useState<Image[]>([])
   const scrollTimeoutRef = useRef<number | null>(null)
+
+  const { isOpen } = useSidebarToggle() // Get the sidebar open state
 
   const generateImages = useCallback((count: number) => {
     return Array.from({ length: count }, (_, i) => ({
@@ -49,17 +52,18 @@ export default function HomePage() {
     }
   }, [])
 
-  useEffect(() => {
-    const updateWidth = () => {
-      if (contentRef.current) {
-        const padding = 48 // Account for padding (adjust based on actual padding)
-        const calculatedWidth = contentRef.current.offsetWidth - padding
-        setContentWidth(calculatedWidth) // Set the adjusted width
-      }
+  const updateWidth = useCallback(() => {
+    if (contentRef.current) {
+      const padding = 48 // Set padding to 48px for appropriate positioning
+      const calculatedWidth = contentRef.current.offsetWidth - padding
+      setContentWidth(calculatedWidth) // Set the adjusted width
     }
+  }, [])
 
-    updateWidth()
-    window.addEventListener('resize', updateWidth)
+  useEffect(() => {
+    updateWidth() // Update width on mount
+
+    window.addEventListener('resize', updateWidth) // Trigger on resize
 
     const currentContainer = containerRef.current
     if (currentContainer) {
@@ -67,7 +71,7 @@ export default function HomePage() {
     }
 
     return () => {
-      window.removeEventListener('resize', updateWidth)
+      window.removeEventListener('resize', updateWidth) // Clean up event listeners
       if (currentContainer) {
         currentContainer.removeEventListener('scroll', handleScroll)
       }
@@ -75,7 +79,19 @@ export default function HomePage() {
         clearTimeout(scrollTimeoutRef.current)
       }
     }
-  }, [handleScroll])
+  }, [handleScroll, updateWidth])
+
+  // Trigger width update when the sidebar state changes
+  useEffect(() => {
+    const transitionDuration = 300 // Tailwind transition duration in milliseconds
+    const timeoutId = setTimeout(() => {
+      updateWidth() // Recalculate width after the sidebar finishes its transition
+    }, transitionDuration)
+
+    return () => {
+      clearTimeout(timeoutId) // Clear the timeout on cleanup
+    }
+  }, [isOpen, updateWidth])
 
   return (
     <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto' }}>
