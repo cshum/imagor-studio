@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { ContentLayout } from '@/layouts/content-layout';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from '@/components/ui/breadcrumb';
 import { Card, CardContent } from '@/components/ui/card';
-import { ImageGallery } from '@/components/demo/image-gallery';
-
-const SCROLL_POSITION_KEY = 'homePageScrollPosition';
+import { ImageGallery } from '@/components/demo/image-gallery';  // Adjust the import path based on your structure
 
 interface Image {
   id: string;
+  src: string;
+  alt: string;
   isLoaded: boolean;
 }
 
@@ -23,6 +23,8 @@ export default function HomePage() {
   const generateImages = useCallback((count: number) => {
     return Array.from({ length: count }, (_, i) => ({
       id: `${i + 1}`,
+      src: `https://picsum.photos/id/${i + 1}/300/225`,  // Image source passed through props
+      alt: `Random image ${i + 1}`,  // Alt text passed through props
       isLoaded: false,
     }));
   }, []);
@@ -72,19 +74,6 @@ export default function HomePage() {
     };
   }, [handleScroll]);
 
-  useEffect(() => {
-    const savedScrollPosition = localStorage.getItem(SCROLL_POSITION_KEY);
-    if (savedScrollPosition && containerRef.current) {
-      containerRef.current.scrollTop = parseInt(savedScrollPosition, 10);
-    }
-
-    return () => {
-      if (containerRef.current) {
-        localStorage.setItem(SCROLL_POSITION_KEY, containerRef.current.scrollTop.toString());
-      }
-    };
-  }, []);
-
   return (
     <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto' }}>
       <ContentLayout title="Home">
@@ -102,8 +91,7 @@ export default function HomePage() {
             {containerWidth > 0 && (
               <ImageGallery
                 images={images}
-                columnCount={4}
-                aspectRatio={4/3}
+                aspectRatio={4 / 3}
                 width={containerWidth}
                 scrollTop={scrollTop}
                 isScrolling={isScrolling}
