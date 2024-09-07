@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 interface Image {
   id: string;
@@ -17,66 +17,74 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                                                             columnCount,
                                                             rowHeight,
                                                             width,
-                                                            scrollTop,
+                                                            scrollTop
                                                           }) => {
-  const [images, setImages] = useState<Image[]>([])
+  const [images, setImages] = useState<Image[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const newImages: Image[] = Array.from({ length: imageCount }, (_, i) => ({
       id: `${i + 1}`,
-    }))
-    setImages(newImages)
-  }, [imageCount])
+    }));
+    setImages(newImages);
+  }, [imageCount]);
 
-  const rowCount = Math.ceil(images.length / columnCount)
-  const totalHeight = rowCount * rowHeight
-  const columnWidth = width / columnCount
+  const rowCount = Math.ceil(images.length / columnCount);
+  const totalHeight = rowCount * rowHeight;
+  const columnWidth = width / columnCount;
 
-  const visibleRowsCount = Math.ceil(window.innerHeight / rowHeight) + 2
-  const startIndex = Math.floor(scrollTop / rowHeight)
+  const visibleRowsCount = Math.ceil(window.innerHeight / rowHeight);
+  const overscanCount = 3; // Number of rows to render above and below the visible area
+  const totalRenderedRows = visibleRowsCount + 2 * overscanCount;
 
-  const visibleRows = useMemo(() => {
-    return Array.from({ length: visibleRowsCount }, (_, index) => {
-      const rowIndex = startIndex + index
-      if (rowIndex >= rowCount) return null
+  const renderRow = useCallback((rowIndex: number) => {
+    const startImageIndex = rowIndex * columnCount;
+    return (
+      <div
+        key={rowIndex}
+        className="flex absolute w-full"
+        style={{
+          height: `${rowHeight}px`,
+          transform: `translateY(${rowIndex * rowHeight}px)`,
+          willChange: 'transform'
+        }}
+      >
+        {Array.from({ length: columnCount }, (_, columnIndex) => {
+          const imageIndex = startImageIndex + columnIndex;
+          if (imageIndex >= images.length) return null;
+          const image = images[imageIndex];
+          return (
+            <div key={columnIndex} className="p-2 box-border" style={{ width: `${columnWidth}px` }}>
+              <img
+                src={`https://picsum.photos/id/${image.id}/400/300`}
+                alt={`Random image ${image.id}`}
+                className="w-full h-full object-cover rounded-md shadow-md transition-transform duration-300 hover:scale-105"
+                loading="lazy"
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }, [images, columnCount, rowHeight, columnWidth]);
 
-      const startImageIndex = rowIndex * columnCount
+  const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - overscanCount);
+  const endIndex = Math.min(rowCount, startIndex + totalRenderedRows);
 
-      return (
-        <div
-          key={rowIndex}
-          className="flex absolute w-full"
-          style={{
-            height: `${rowHeight}px`,
-            transform: `translate3d(0, ${rowIndex * rowHeight}px, 0)`,
-            willChange: 'transform',
-          }}
-        >
-          {Array.from({ length: columnCount }, (_, columnIndex) => {
-            const imageIndex = startImageIndex + columnIndex
-            if (imageIndex >= images.length) return null
-            const image = images[imageIndex]
-            return (
-              <div key={columnIndex} className="p-2 box-border" style={{ width: `${columnWidth}px` }}>
-                <img
-                  src={`https://picsum.photos/id/${image.id}/400/300`}
-                  alt={`Random image ${image.id}`}
-                  className="w-full h-full object-cover rounded-md shadow-md transition-transform duration-300 hover:scale-105"
-                  loading="lazy"
-                />
-              </div>
-            )
-          })}
-        </div>
-      )
-    }).filter(Boolean)
-  }, [images, columnCount, rowHeight, startIndex, rowCount, visibleRowsCount, columnWidth, scrollTop])
+  const visibleRows = useCallback(() => {
+    const rows = [];
+    for (let i = startIndex; i < endIndex; i++) {
+      rows.push(renderRow(i));
+    }
+    return rows;
+  }, [startIndex, endIndex, renderRow]);
 
   return (
-    <div style={{ height: totalHeight, position: 'relative', width: '100%', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: totalHeight }}>
-        {visibleRows}
-      </div>
+    <div
+      ref={containerRef}
+      style={{ height: totalHeight, position: 'relative', width: '100%', overflow: 'hidden' }}
+    >
+      {visibleRows()}
     </div>
-  )
-}
+  );
+};
