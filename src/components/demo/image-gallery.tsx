@@ -54,7 +54,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                 <img
                   src={`https://picsum.photos/id/${image.id}/300/225`}
                   alt={`Random image ${image.id}`}
-                  className="w-full h-full object-cover group-[.not-scrolling]:shadow-md"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>
