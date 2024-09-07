@@ -34,7 +34,8 @@ export const ImageGrid = ({
   const totalHeight = rowCount * rowHeight
 
   const visibleRowsCount = Math.ceil(window.innerHeight / rowHeight)
-  const overscanCount = 2 // Allow overscanning to improve scrolling performance
+  // const overscanCount = 2
+  const overscanCount = visibleRowsCount
   const totalRenderedRows = visibleRowsCount + 2 * overscanCount
 
   // Notify that the grid has been rendered
