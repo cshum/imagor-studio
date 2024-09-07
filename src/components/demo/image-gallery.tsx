@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback } from 'react'
 
 interface Image {
   id: string;
@@ -23,73 +23,69 @@ export const ImageGallery = ({
                                isScrolling,
                              }: ImageGalleryProps) => {
   // Dynamically calculate the number of columns based on image width
-  const columnCount = Math.max(2, Math.floor(width / 300));
-  const columnWidth = width / columnCount;
-  const rowHeight = columnWidth / aspectRatio;
+  const columnCount = Math.max(2, Math.floor(width / 300))
+  const columnWidth = width / columnCount
+  const rowHeight = columnWidth / aspectRatio
 
-  const rowCount = Math.ceil(images.length / columnCount);
-  const totalHeight = rowCount * rowHeight;
+  const rowCount = Math.ceil(images.length / columnCount)
+  const totalHeight = rowCount * rowHeight
 
-  const visibleRowsCount = Math.ceil(window.innerHeight / rowHeight);
-  const overscanCount = 2;
-  const totalRenderedRows = visibleRowsCount + 2 * overscanCount;
+  const visibleRowsCount = Math.ceil(window.innerHeight / rowHeight)
+  const overscanCount = 3 // Allow overscanning to improve scrolling performance
+  const totalRenderedRows = visibleRowsCount + 2 * overscanCount
 
-  const renderRow = useCallback(
-    (rowIndex: number) => {
-      const startImageIndex = rowIndex * columnCount;
+  // Render individual images with correct positioning
+  const renderImage = useCallback(
+    (imageIndex: number) => {
+      const rowIndex = Math.floor(imageIndex / columnCount)
+      const columnIndex = imageIndex % columnCount
+
+      const image = images[imageIndex]
+      if (!image) return null
+
       return (
         <div
-          key={rowIndex}
-          className="flex absolute w-full"
+          key={image.id}
+          className="absolute p-2 box-border"
           style={{
+            width: `${columnWidth}px`,
             height: `${rowHeight}px`,
-            transform: `translateY(${rowIndex * rowHeight}px)`,
+            transform: `translate3d(${columnIndex * columnWidth}px, ${rowIndex * rowHeight}px, 0)`,
             willChange: 'transform',
           }}
         >
-          {Array.from({ length: columnCount }, (_, columnIndex) => {
-            const imageIndex = startImageIndex + columnIndex;
-            if (imageIndex >= images.length) return null;
-            const image = images[imageIndex];
-            return (
-              <div
-                key={columnIndex}
-                className="p-2 box-border"
-                style={{ width: `${columnWidth}px`, height: `${rowHeight}px` }}
-              >
-                <div className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            );
-          })}
+          <div
+            className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
+            <img
+              src={image.src}
+              alt={image.alt}
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
-      );
+      )
     },
-    [images, columnCount, rowHeight, columnWidth]
-  );
+    [images, columnCount, columnWidth, rowHeight],
+  )
 
-  const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - overscanCount);
-  const endIndex = Math.min(rowCount, startIndex + totalRenderedRows);
+  // Determine which images should be rendered based on scroll position
+  const startImageIndex = Math.max(0, Math.floor(scrollTop / rowHeight - overscanCount) * columnCount)
+  const endImageIndex = Math.min(images.length, startImageIndex + totalRenderedRows * columnCount)
 
-  const visibleRows = useCallback(() => {
-    const rows = [];
-    for (let i = startIndex; i < endIndex; i++) {
-      rows.push(renderRow(i));
+  const visibleImages = useCallback(() => {
+    const imagesToRender = []
+    for (let i = startImageIndex; i < endImageIndex; i++) {
+      imagesToRender.push(renderImage(i))
     }
-    return rows;
-  }, [startIndex, endIndex, renderRow]);
+    return imagesToRender
+  }, [startImageIndex, endImageIndex, renderImage])
 
   return (
     <div
       className={`relative w-full overflow-hidden ${isScrolling ? '' : 'not-scrolling'} group`}
       style={{ height: `${totalHeight}px` }}
     >
-      {visibleRows()}
+      {visibleImages()}
     </div>
-  );
-};
+  )
+}
