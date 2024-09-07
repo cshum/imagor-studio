@@ -38,7 +38,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
   const columnWidth = width / columnCount;
 
   const visibleRowsCount = Math.ceil(window.innerHeight / rowHeight);
-  const overscanCount = 3;
+  const overscanCount = 1;
   const totalRenderedRows = visibleRowsCount + 2 * overscanCount;
 
   const handleImageLoad = useCallback((index: number) => {
