@@ -3,15 +3,8 @@ import { Link } from 'react-router-dom'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from '@/components/ui/breadcrumb'
 import { Card, CardContent } from '@/components/ui/card'
-import { ImageGallery } from '@/components/demo/image-gallery' // Adjust the import path based on your structure
+import { Image, ImageGallery } from '@/components/demo/image-gallery' // Adjust the import path
 import { useSidebarToggle } from '@/providers/sidebar-toggle-provider.tsx' // Import sidebar toggle hook
-
-interface Image {
-  id: string;
-  src: string;
-  alt: string;
-  isLoaded: boolean;
-}
 
 export default function HomePage() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -21,15 +14,15 @@ export default function HomePage() {
   const [isScrolling, setIsScrolling] = useState(false)
   const [images, setImages] = useState<Image[]>([])
   const scrollTimeoutRef = useRef<number | null>(null)
-
+  const resizeTimeoutRef = useRef<number | null>(null) // Ref to track resize timeout
   const { isOpen } = useSidebarToggle() // Get the sidebar open state
 
+  // Generates image data for the gallery
   const generateImages = useCallback((count: number) => {
     return Array.from({ length: count }, (_, i) => ({
       id: `${i + 1}`,
       src: `https://picsum.photos/id/${i + 1}/300/225`,  // Image source passed through props
       alt: `Random image ${i + 1}`,  // Alt text passed through props
-      isLoaded: false,
     }))
   }, [])
 
@@ -37,6 +30,7 @@ export default function HomePage() {
     setImages(generateImages(1000))
   }, [generateImages])
 
+  // Handles scroll and sets debounce to stop scrolling state
   const handleScroll = useCallback(() => {
     if (containerRef.current) {
       setScrollTop(containerRef.current.scrollTop)
@@ -52,6 +46,7 @@ export default function HomePage() {
     }
   }, [])
 
+  // Updates the content width, accounting for padding
   const updateWidth = useCallback(() => {
     if (contentRef.current) {
       const padding = 48 // Set padding to 48px for appropriate positioning
@@ -60,10 +55,21 @@ export default function HomePage() {
     }
   }, [])
 
+  // Debounced resize handler to limit the number of times updateWidth is called
+  const handleResize = useCallback(() => {
+    if (resizeTimeoutRef.current) {
+      clearTimeout(resizeTimeoutRef.current) // Clear any existing timeout to debounce
+    }
+
+    resizeTimeoutRef.current = window.setTimeout(() => {
+      updateWidth() // Call the actual update function after the debounce timeout
+    }, 100) // 100ms debounce delay for resizing
+  }, [updateWidth])
+
   useEffect(() => {
     updateWidth() // Update width on mount
 
-    window.addEventListener('resize', updateWidth) // Trigger on resize
+    window.addEventListener('resize', handleResize) // Attach resize handler
 
     const currentContainer = containerRef.current
     if (currentContainer) {
@@ -71,17 +77,20 @@ export default function HomePage() {
     }
 
     return () => {
-      window.removeEventListener('resize', updateWidth) // Clean up event listeners
+      window.removeEventListener('resize', handleResize) // Clean up resize event listener
       if (currentContainer) {
         currentContainer.removeEventListener('scroll', handleScroll)
       }
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current)
       }
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
+      }
     }
-  }, [handleScroll, updateWidth])
+  }, [handleScroll, handleResize])
 
-  // Trigger width update when the sidebar state changes
+  // Trigger width update when the sidebar state (isOpen) changes
   useEffect(() => {
     const transitionDuration = 300 // Tailwind transition duration in milliseconds
     const timeoutId = setTimeout(() => {

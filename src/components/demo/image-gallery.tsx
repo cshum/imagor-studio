@@ -1,18 +1,17 @@
 import { useCallback } from 'react'
 
-interface Image {
-  id: string;
-  src: string;
-  alt: string;
-  isLoaded: boolean;
+export interface Image {
+  id: string
+  src: string
+  alt: string
 }
 
 interface ImageGalleryProps {
-  images: Image[];
-  aspectRatio: number;
-  width: number;
-  scrollTop: number;
-  isScrolling: boolean;
+  images: Image[]
+  aspectRatio: number
+  width: number
+  scrollTop: number
+  isScrolling: boolean
 }
 
 export const ImageGallery = ({
