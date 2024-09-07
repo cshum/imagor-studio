@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from '@/components/ui/breadcrumb'
 import { Card, CardContent } from '@/components/ui/card'
-import { Image, ImageGrid } from '@/components/image-grid/image-grid' // Updated import path
+import { Image, ImageGrid } from '@/components/image-grid.tsx' // Updated import path
 import { useSidebarToggle } from '@/providers/sidebar-toggle-provider.tsx' // Import sidebar toggle hook
 
 export default function HomePage() {
