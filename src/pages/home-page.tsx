@@ -10,15 +10,7 @@ import { useWidthHandler } from '@/hooks/use-width-handler'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
-
-// Generate image data for the grid
-const generateImages = (count: number) => {
-  return Array.from({ length: count }, (_, i) => ({
-    id: `${i + 1}`,
-    src: `https://picsum.photos/id/${i + 1}/300/225`,
-    alt: `Random image ${i + 1}`,
-  }))
-}
+import { generateDummyImages } from '@/lib/generate-dummy-images.ts'
 
 export default function HomePage() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -38,7 +30,7 @@ export default function HomePage() {
   const [gridRendered, setGridRendered] = useState(false)
 
   useEffect(() => {
-    setImages(generateImages(1000))
+    setImages(generateDummyImages(10000))
   }, [])
 
   // Scroll restoration
