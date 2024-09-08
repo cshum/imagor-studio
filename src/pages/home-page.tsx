@@ -31,7 +31,7 @@ export default function HomePage() {
   const { restoreScrollPosition, scrollPosition } = useScrollHandler(
     containerRef, useMemo(() => new LocalConfigStorage('homePageScrollPosition'), [])
   )
-  const { contentWidth, updateWidth } = useWidthHandler(contentRef, true, isOpen, isDesktop ? 30 : 8)
+  const { contentWidth, updateWidth } = useWidthHandler(contentRef, true, isOpen, isDesktop ? 30 : 16)
   useResizeHandler(updateWidth)
 
   // Grid rendered state
@@ -60,8 +60,8 @@ export default function HomePage() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <Card className="rounded-lg border-none mt-6">
-          <CardContent className="p-1 md:p-4" ref={contentRef}>
+        <Card className="rounded-lg border-none mt-4">
+          <CardContent className="p-2 md:p-4" ref={contentRef}>
             {contentWidth > 0 && (
               <ImageGrid
                 images={images}
