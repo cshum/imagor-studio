@@ -4,7 +4,6 @@ import {
   Clock,
   Forward,
   MoreVertical,
-  Reply,
   ReplyAll,
 } from "lucide-react";
 import {
@@ -36,11 +35,11 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled }) =>
   return (
     <TooltipProvider>
       <header
-        className={`sticky top-14 z-10 w-full  
-        ${isScrolled ? 'bg-card/95 backdrop-blur' : 'bg-card rounded-t-lg'}`}
+        className={`sticky top-14 z-10 w-full px-2 transition-all duration-300
+        ${isScrolled ? 'bg-card/95 backdrop-blur shadow dark:shadow-secondary' : 'bg-card rounded-t-lg'}`}
       >
-        <div className={`mx-auto transition-all duration-300 ${isScrolled ? 'w-full' : 'max-w-screen-2xl'}`}>
-          <div className="px-4 py-2 flex items-center justify-between">
+        <div className="mx-auto">
+          <div className={`px-4 py-1 flex items-center justify-between`}>
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
@@ -72,15 +71,6 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled }) =>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Snooze</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Reply className="h-4 w-4" />
-                    <span className="sr-only">Reply</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Reply</TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>

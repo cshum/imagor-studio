@@ -39,16 +39,12 @@ export default function HomePage() {
     }
   }, [gridRendered, restoreScrollPosition])
 
-  const containerTop = containerRef.current ? containerRef.current.getBoundingClientRect().top : 0
-
-  const isScrollDown = scrollPosition > containerTop
-
   return (
     <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto' }}>
       <ContentLayout title="Home" isBounded={false}>
-          <FixedHeaderBar isScrolled={isScrollDown} />
-          <Card className={`rounded-lg border-none rounded-t-none ${isScrollDown ? 'rounded-t-none':''}`}>
-            <CardContent className="p-2 pt-0 md:p-4 md:pt-0" ref={contentRef}>
+          <FixedHeaderBar isScrolled={scrollPosition > 24} />
+          <Card className={`rounded-lg border-none rounded-t-none`}>
+            <CardContent className="p-2 pt-0 -mt-1 md:p-4 md:pt-0" ref={contentRef}>
               {contentWidth > 0 && (
                 <ImageGrid
                   images={images}
