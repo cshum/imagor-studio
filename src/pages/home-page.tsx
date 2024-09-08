@@ -25,11 +25,11 @@ export default function HomePage() {
   const contentRef = useRef<HTMLDivElement>(null)
   const [images, setImages] = useState<Image[]>([])
   const { isOpen } = useSidebarToggle()
-  const isDesktop = useBreakpoint("md")
+  const isDesktop = useBreakpoint('md')
 
   // Custom hooks
   const { restoreScrollPosition, scrollPosition } = useScrollHandler(
-    containerRef, useMemo(() => new LocalConfigStorage('homePageScrollPosition'), [])
+    containerRef, useMemo(() => new LocalConfigStorage('homePageScrollPosition'), []),
   )
   const { contentWidth, updateWidth } = useWidthHandler(contentRef, true, isOpen, isDesktop ? 30 : 16)
   useResizeHandler(updateWidth)

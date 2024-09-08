@@ -12,7 +12,7 @@ interface ImageGridProps {
   width: number;
   scrollTop: number;
   maxImageWidth: number;
-  onRendered?: () => void; // New callback prop for notifying when grid is rendered
+  onRendered?: () => void;
 }
 
 export const ImageGrid = ({
