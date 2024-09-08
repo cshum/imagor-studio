@@ -8,8 +8,8 @@ import { useSidebarToggle } from '@/providers/sidebar-toggle-provider.tsx'
 import { useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
-import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage.ts'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
+import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 
 // Generate image data for the grid
 const generateImages = (count: number) => {
@@ -29,7 +29,7 @@ export default function HomePage() {
 
   // Custom hooks
   const { restoreScrollPosition, scrollPosition } = useScrollHandler(
-    containerRef, useMemo(() => new LocalConfigStorage('homePageScrollPosition'), []),
+    containerRef, useMemo(() => new SessionConfigStorage('homePageScrollPosition'), []),
   )
   const { contentWidth, updateWidth } = useWidthHandler(contentRef, true, isOpen, isDesktop ? 30 : 16)
   useResizeHandler(updateWidth)
