@@ -3,10 +3,11 @@ import { ConfigStorage } from '@/lib/config-storage/config-storage.ts'
 
 export const useScrollHandler = (
   containerRef: RefObject<HTMLDivElement>,
-  configStorage: ConfigStorage, // Pass ConfigStorage instance
+  configStorage: ConfigStorage,
   debounceDelay: number = 0, // Default debounce delay is 0, meaning no debounce
 ) => {
   const [scrollPosition, setScrollPosition] = useState<number>(0) // Use state for scroll position
+  const [isScrolling, setIsScrolling] = useState<boolean>(false) // Track scrolling state
   const scrollTimeoutRef = useRef<number | null>(null)
   const debounceTimeoutRef = useRef<number | null>(null)
 
@@ -29,11 +30,18 @@ export const useScrollHandler = (
       clearTimeout(debounceTimeoutRef.current)
     }
 
+    setIsScrolling(true) // Set scrolling to true when scrolling starts
+
     const executeScrollHandling = () => {
       if (containerRef.current) {
         const currentScrollPosition = containerRef.current.scrollTop
         saveScrollPosition(currentScrollPosition) // Save scroll position through the refactored function
       }
+
+      // Set scrolling to false after a delay (scrolling has stopped)
+      scrollTimeoutRef.current = window.setTimeout(() => {
+        setIsScrolling(false)
+      }, 150)
     }
 
     if (debounceDelay > 0) {
@@ -78,6 +86,7 @@ export const useScrollHandler = (
   return {
     handleScroll,
     restoreScrollPosition,
-    scrollPosition, // Expose the scroll position state
+    scrollPosition,
+    isScrolling,
   }
 }
