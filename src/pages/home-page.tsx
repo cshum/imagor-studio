@@ -40,7 +40,7 @@ export default function HomePage() {
   }, [gridRendered, restoreScrollPosition])
 
   return (
-    <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto' }}>
+    <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
       <ContentLayout title="Home" isBounded={false}>
           <FixedHeaderBar isScrolled={scrollPosition > 24} />
           <Card className={`rounded-lg border-none rounded-t-none`}>
