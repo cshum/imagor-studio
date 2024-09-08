@@ -55,7 +55,7 @@ export const ImageGrid = ({
       return (
         <div
           key={image.id}
-          className="absolute p-2 box-border"
+          className="absolute box-border p-1 md:p-2"
           style={{
             width: `${columnWidth}px`,
             height: `${rowHeight}px`,
