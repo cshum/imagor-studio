@@ -50,7 +50,7 @@ export default function HomePage() {
 
   return (
     <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto' }}>
-      <ContentLayout title="Home">
+      <ContentLayout title="Home" isBounded={false}>
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
