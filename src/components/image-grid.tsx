@@ -1,19 +1,20 @@
 import { useCallback, useEffect } from 'react'
 
-export interface Image {
+export interface ImageProps {
   id: string;
   src: string;
   alt: string;
 }
 
 interface ImageGridProps {
-  images: Image[];
+  images: ImageProps[];
   aspectRatio: number;
   width: number;
   scrollTop: number;
   maxImageWidth: number;
   isScrolling: boolean;
   onRendered?: () => void;
+  onImageClick?: (image: ImageProps, position: { top: number; left: number; width: number; height: number }) => void;
 }
 
 export const ImageGrid = ({
@@ -24,6 +25,7 @@ export const ImageGrid = ({
                             maxImageWidth,
                             isScrolling,
                             onRendered,
+                            onImageClick,
                           }: ImageGridProps) => {
   // Dynamically calculate the number of columns based on maxImageWidth prop
   const columnCount = Math.max(2, Math.floor(width / maxImageWidth))
@@ -54,29 +56,41 @@ export const ImageGrid = ({
       const image = images[imageIndex]
       if (!image) return null
 
+      const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (onImageClick) {
+          const rect = e.currentTarget.getBoundingClientRect();
+          onImageClick(image, {
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height
+          });
+        }
+      };
+
       return (
         <div
           key={image.id}
-          className="absolute box-border p-1 md:p-2"
+          className="absolute box-border p-1 md:p-2 cursor-pointer"
           style={{
             width: `${columnWidth}px`,
             height: `${rowHeight}px`,
             transform: `translate3d(${columnIndex * columnWidth}px, ${rowIndex * rowHeight}px, 0)`,
             willChange: 'transform',
           }}
+          onClick={handleClick}
         >
-          <div
-            className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
+          <div className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
             <img
               src={image.src}
               alt={image.alt}
-              className="w-full h-full object-cover "
+              className="w-full h-full object-cover"
             />
           </div>
         </div>
       )
     },
-    [images, columnCount, columnWidth, rowHeight],
+    [images, columnCount, columnWidth, rowHeight, onImageClick],
   )
 
   // Determine which images should be rendered based on scroll position

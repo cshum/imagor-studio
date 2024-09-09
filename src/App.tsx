@@ -19,6 +19,11 @@ const App = () => {
               <HomePage />
             </AdminPanelLayout>
           } />
+          <Route path="/image/:id" element={
+            <AdminPanelLayout hideFooter={true}>
+              <HomePage />
+            </AdminPanelLayout>
+          } />
           <Route path="/users" element={
             <AdminPanelLayout>
               <UsersPage />
