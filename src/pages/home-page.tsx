@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Card, CardContent } from '@/components/ui/card'
-import { ImageProps, ImageGrid } from '@/components/image-grid'
+import { ImageProps, ImageGrid } from '@/components/image-gallery/image-grid'
 import { useSidebarToggle } from '@/providers/sidebar-toggle-provider.tsx'
 import { useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
@@ -12,8 +11,7 @@ import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { generateDummyImages } from '@/lib/generate-dummy-images.ts'
 import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
-import { X, ZoomIn, ZoomOut } from 'lucide-react'
-import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch'
+import { FullScreenImage } from '@/components/image-gallery/full-screen-image'
 
 export default function HomePage() {
   const { id } = useParams<{ id: string }>()
@@ -90,19 +88,9 @@ export default function HomePage() {
 
   const isScrolledDown = scrollPosition > 22 + (isDesktop ? 40 : 30)
 
-  const [scale, setScale] = useState(1)
-  const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
-
-  const handleZoomChange = (newScale: number) => {
-    setScale(newScale)
-  }
-
   const handleCloseFullView = useCallback(() => {
-    if (transformComponentRef.current) {
-      transformComponentRef.current.resetTransform(0)
-    }
-    navigate('/', { state: { isClosingImage: true, initialPosition: location.state?.initialPosition } })
-  }, [navigate, location.state?.initialPosition])
+    setSelectedImage(null)
+  }, [])
 
   return (
     <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
@@ -129,111 +117,10 @@ export default function HomePage() {
         </Card>
       </ContentLayout>
 
-
-      <AnimatePresence>
-        {selectedImage && (
-          <motion.div
-            // initial={{ opacity: 0 }}
-            // animate={{ opacity: 1 }}
-            // exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center"
-          >
-            <TransformWrapper
-              initialScale={1}
-              minScale={0.5}
-              maxScale={3}
-              centerOnInit={true}
-              onTransformed={({ state }) => handleZoomChange(state.scale)}
-              onZoom={({ state }) => handleZoomChange(state.scale)}
-              smooth={true}
-              wheel={{ step: 0.05 }}
-              pinch={{ step: 0.05 }}
-              ref={transformComponentRef}
-            >
-              {({ zoomIn, zoomOut, resetTransform }) => (
-                <>
-                  <TransformComponent
-                    wrapperStyle={{
-                      width: '100%',
-                      height: '100%',
-                    }}
-                    contentStyle={{
-                      width: '100%',
-                      height: '100%',
-                    }}
-                  >
-                    <motion.div
-                      initial={location.state?.initialPosition}
-                      animate={{
-                        top: 0,
-                        left: 0,
-                        width: '100vw',
-                        height: '100vh',
-                        transition: { duration: 0.2 },
-                      }}
-                      exit={location.state?.initialPosition}
-                      className="absolute"
-                    >
-                      <motion.img
-                        src={selectedImage.src}
-                        alt={selectedImage.alt}
-                        initial={{
-                          width: location.state?.initialPosition?.width || '100%',
-                          height: location.state?.initialPosition?.height || '100%',
-                          objectFit: 'cover',
-                        }}
-                        animate={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'contain',
-                          transition: { duration: 0.2 },
-                        }}
-                        exit={{
-                          width: location.state?.initialPosition?.width || '100%',
-                          height: location.state?.initialPosition?.height || '100%',
-                          objectFit: 'contain',
-                          transition: { duration: 0.2 },
-                        }}
-                        className="w-full h-full"
-                      />
-                    </motion.div>
-                  </TransformComponent>
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-4">
-                    <button
-                      onClick={() => zoomOut()}
-                      className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
-                    >
-                      <ZoomOut size={24} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        resetTransform()
-                      }}
-                      className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-full hover:bg-opacity-75 transition-colors"
-                    >
-                      {Math.round(scale * 100)}%
-                    </button>
-                    <button
-                      onClick={() => zoomIn()}
-                      className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
-                    >
-                      <ZoomIn size={24} />
-                    </button>
-                  </div>
-                </>
-              )}
-            </TransformWrapper>
-            {/* Fixed close button */}
-            <button
-              onClick={handleCloseFullView}
-              className="fixed top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-colors z-60"
-            >
-              <X size={24} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+      <FullScreenImage
+        selectedImage={selectedImage}
+        onClose={handleCloseFullView}
+      />
 
       {isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
