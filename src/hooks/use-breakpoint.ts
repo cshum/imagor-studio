@@ -4,4 +4,4 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 
 const config = resolveConfig(tailwindConfig)
 
-export const { useBreakpoint, useBreakpointValue, useBreakpointEffect } = create(config.theme.screens);
+export const { useBreakpoint, useBreakpointValue, useBreakpointEffect } = create(config.theme.screens)

@@ -1,11 +1,6 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import {
-  Clock,
-  Forward,
-  MoreVertical,
-  ReplyAll,
-} from "lucide-react";
+import React from 'react'
+import { Link } from 'react-router-dom'
+import { Clock, Forward, MoreVertical, ReplyAll } from 'lucide-react'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,33 +8,28 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from '@/components/ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface FixedHeaderBarProps {
   isScrolled: boolean;
 }
 
-export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled }) => {
+export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled: isScrolledDown }) => {
   return (
     <TooltipProvider>
       <header
         className={`sticky top-14 z-10 w-full px-2
-        ${isScrolled ? 'backdrop-blur shadow bg-card/90 dark:shadow-secondary md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
+        ${isScrolledDown ? 'backdrop-blur shadow bg-card/90 dark:shadow-secondary md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
       >
         <div className="mx-auto">
-          <div className={`px-2 py-1 flex items-center justify-between ${isScrolled ? 'md:mx-6': ''}`}>
+          <div className={`px-2 py-1 flex items-center justify-between ${isScrolledDown ? 'md:mx-6' : ''}`}>
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
@@ -109,5 +99,5 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled }) =>
         </div>
       </header>
     </TooltipProvider>
-  );
-};
+  )
+}

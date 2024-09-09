@@ -19,7 +19,7 @@ export default function HomePage() {
   const isDesktop = useBreakpoint('md')
 
   // Custom hooks
-  const { restoreScrollPosition, scrollPosition } = useScrollHandler(
+  const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
     containerRef, useMemo(() => new SessionConfigStorage('homePageScrollPosition'), []),
   )
   const { contentWidth, updateWidth } = useWidthHandler(contentRef, true, isOpen, isDesktop ? 30 : 16)
@@ -43,7 +43,7 @@ export default function HomePage() {
     setGridRendered(true)
   }, [])
 
-  const isScrolled = scrollPosition > 22 + (isDesktop ? 40 : 30)
+  const isScrolledDown = scrollPosition > 22 + (isDesktop ? 40 : 30)
 
   return (
     <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
@@ -51,7 +51,7 @@ export default function HomePage() {
         <div className="grid mx-4 mt-0">
           <h1 className="text-3xl md:text-4xl">Title</h1>
         </div>
-        <FixedHeaderBar isScrolled={isScrolled} />
+        <FixedHeaderBar isScrolled={isScrolledDown} />
         <Card className={`rounded-lg border-none`}>
           <CardContent className="p-2 md:p-4" ref={contentRef}>
             {contentWidth > 0 && (
@@ -61,6 +61,7 @@ export default function HomePage() {
                 width={contentWidth}
                 scrollTop={scrollPosition}
                 maxImageWidth={300}
+                isScrolling={isScrolling}
                 onRendered={onRendered}
               />
             )}
