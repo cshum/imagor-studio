@@ -39,7 +39,7 @@ export default function HomePage() {
     }
   }, [gridRendered, restoreScrollPosition])
 
-  const isScrolled = scrollPosition > 24 + (isDesktop ? 40 : 36)
+  const isScrolled = scrollPosition > 22 + (isDesktop ? 40 : 30)
 
   return (
     <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
