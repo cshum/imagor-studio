@@ -39,17 +39,17 @@ export default function HomePage() {
     }
   }, [gridRendered, restoreScrollPosition])
 
-  const isScrolled = scrollPosition > 8 + 16 * 2 + (isDesktop ? 40 : 36)
+  const isScrolled = scrollPosition > 24 + (isDesktop ? 40 : 36)
 
   return (
     <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
       <ContentLayout title="Title" isBounded={false}>
-        <div className="grid m-4 mt-0">
+        <div className="grid mx-4 mt-0">
           <h1 className="text-3xl md:text-4xl">Title</h1>
         </div>
+        <FixedHeaderBar isScrolled={isScrolled} />
         <Card className={`rounded-lg border-none`}>
-          <FixedHeaderBar isScrolled={isScrolled} />
-          <CardContent className="p-2 pt-0 -mt-2 md:p-4 md:pt-0" ref={contentRef}>
+          <CardContent className="p-2 md:p-4" ref={contentRef}>
             {contentWidth > 0 && (
               <ImageGrid
                 images={images}
