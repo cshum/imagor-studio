@@ -49,7 +49,7 @@ export default function HomePage() {
         </div>
         <Card className={`rounded-lg border-none`}>
           <FixedHeaderBar isScrolled={isScrolled} />
-          <CardContent className="p-2 pt-0 -mt-1 md:p-4 md:pt-0" ref={contentRef}>
+          <CardContent className="p-2 pt-0 -mt-2 md:p-4 md:pt-0" ref={contentRef}>
             {contentWidth > 0 && (
               <ImageGrid
                 images={images}
