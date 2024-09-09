@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { Image, ImageGrid } from '@/components/image-grid'
@@ -39,6 +39,10 @@ export default function HomePage() {
     }
   }, [gridRendered, restoreScrollPosition])
 
+  const onRendered = useCallback(() => {
+    setGridRendered(true)
+  }, [])
+
   const isScrolled = scrollPosition > 22 + (isDesktop ? 40 : 30)
 
   return (
@@ -57,7 +61,7 @@ export default function HomePage() {
                 width={contentWidth}
                 scrollTop={scrollPosition}
                 maxImageWidth={300}
-                onRendered={() => setGridRendered(true)}
+                onRendered={onRendered}
               />
             )}
           </CardContent>
