@@ -75,7 +75,7 @@ export default function HomePage() {
       setIsLoading(false)
       setSelectedImage({ ...image, src: fullSizeSrc })
       navigate(`/image/${image.id}`, {
-        state: { isClickNavigation: true, initialPosition: position }
+        state: { initialPosition: position }
       })
     };
   }, [navigate])
