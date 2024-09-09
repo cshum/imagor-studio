@@ -39,24 +39,29 @@ export default function HomePage() {
     }
   }, [gridRendered, restoreScrollPosition])
 
+  const isScrolled = scrollPosition > 24 + 16 * 2 + (isDesktop ? 40 : 36)
+
   return (
     <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
-      <ContentLayout title="Home" isBounded={false}>
-          <FixedHeaderBar isScrolled={scrollPosition > 24} />
-          <Card className={`rounded-lg border-none rounded-t-none`}>
-            <CardContent className="p-2 pt-0 -mt-1 md:p-4 md:pt-0" ref={contentRef}>
-              {contentWidth > 0 && (
-                <ImageGrid
-                  images={images}
-                  aspectRatio={4 / 3}
-                  width={contentWidth}
-                  scrollTop={scrollPosition}
-                  maxImageWidth={300}
-                  onRendered={() => setGridRendered(true)}
-                />
-              )}
-            </CardContent>
-          </Card>
+      <ContentLayout title="Title" isBounded={false}>
+        <div className="grid m-4 mt-0">
+          <h1 className="text-3xl md:text-4xl">Title</h1>
+        </div>
+        <Card className={`rounded-lg border-none`}>
+          <FixedHeaderBar isScrolled={isScrolled} />
+          <CardContent className="p-2 pt-0 -mt-1 md:p-4 md:pt-0" ref={contentRef}>
+            {contentWidth > 0 && (
+              <ImageGrid
+                images={images}
+                aspectRatio={4 / 3}
+                width={contentWidth}
+                scrollTop={scrollPosition}
+                maxImageWidth={300}
+                onRendered={() => setGridRendered(true)}
+              />
+            )}
+          </CardContent>
+        </Card>
       </ContentLayout>
     </div>
   )
