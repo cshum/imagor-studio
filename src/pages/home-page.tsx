@@ -121,9 +121,9 @@ export default function HomePage() {
       <AnimatePresence>
         {selectedImage && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            // initial={{ opacity: 0 }}
+            // animate={{ opacity: 1 }}
+            // exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
           >
             <motion.div
@@ -133,7 +133,7 @@ export default function HomePage() {
                 left: 0,
                 width: '100vw',
                 height: '100vh',
-                transition: { duration: 0.3 },
+                transition: { duration: 0.2 },
               }}
               exit={location.state?.initialPosition}
               className="absolute"
@@ -142,21 +142,21 @@ export default function HomePage() {
                 src={selectedImage.src}
                 alt={selectedImage.alt}
                 initial={{
-                  width: '100%',
-                  height: '100%',
+                  width: location.state?.initialPosition?.width || '100%',
+                  height: location.state?.initialPosition?.height || '100%',
                   objectFit: 'cover',
                 }}
                 animate={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'contain',
-                  transition: { duration: 0.3 },
+                  transition: { duration: 0.2 },
                 }}
                 exit={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  transition: { duration: 0.3 },
+                  width: location.state?.initialPosition?.width || '100%',
+                  height: location.state?.initialPosition?.height || '100%',
+                  objectFit: 'contain',
+                  transition: { duration: 0.2 },
                 }}
                 className="w-full h-full"
               />
