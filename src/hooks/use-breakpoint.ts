@@ -1,7 +1,33 @@
-import { create } from '@kodingdotninja/use-tailwind-breakpoint'
-import tailwindConfig from 'tailwindcss/defaultConfig' // todo: load custom config
-import resolveConfig from 'tailwindcss/resolveConfig'
+import { useState, useEffect } from 'react'
 
-const config = resolveConfig(tailwindConfig)
+// Define the breakpoints based on your Tailwind config
+const breakpoints = {
+  sm: '640px',
+  md: '768px',
+  lg: '1024px',
+  xl: '1280px',
+  '2xl': '1536px',
+}
 
-export const { useBreakpoint, useBreakpointValue, useBreakpointEffect } = create(config.theme.screens)
+type Breakpoint = keyof typeof breakpoints
+
+export function useBreakpoint(breakpoint: Breakpoint): boolean {
+  const [matches, setMatches] = useState(false)
+
+  useEffect(() => {
+    const media = window.matchMedia(`(min-width: ${breakpoints[breakpoint]})`)
+
+    const updateMatch = () => setMatches(media.matches)
+
+    // Set initial value
+    updateMatch()
+
+    // Add listener for changes
+    media.addEventListener('change', updateMatch)
+
+    // Clean up listener on component unmount
+    return () => media.removeEventListener('change', updateMatch)
+  }, [breakpoint])
+
+  return matches
+}
