@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useParams, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Card, CardContent } from '@/components/ui/card'
-import { ImageProps, ImageGrid } from '@/components/image-gallery/image-grid'
+import { ImageGrid, ImageProps } from '@/components/image-gallery/image-grid'
 import { useSidebarToggle } from '@/providers/sidebar-toggle-provider.tsx'
 import { useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
@@ -14,7 +14,7 @@ import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
 import { FullScreenImage } from '@/components/image-gallery/full-screen-image'
 import { LoadingBar } from '@/components/loading-bar.tsx';
 
-export default function HomePage() {
+export function HomePage() {
   const { id } = useParams<{ id: string }>()
   const location = useLocation()
   const navigate = useNavigate()
@@ -98,7 +98,7 @@ export default function HomePage() {
 
   return (
     <>
-      <LoadingBar isLoading={isLoading} />
+      <LoadingBar isLoading={isLoading}/>
       <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
         <ContentLayout title="Title" isBounded={false}>
           <div className="grid mx-4 mt-0">

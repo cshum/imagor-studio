@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import PlaceholderContent from '@/components/demo/placeholder-content.tsx'
+import { PlaceholderContent } from '@/components/demo/placeholder-content.tsx'
 import { ContentLayout } from '@/layouts/content-layout.tsx'
 import {
   Breadcrumb,
@@ -10,7 +10,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb.tsx'
 
-export default function PostsPage() {
+export function PostsPage() {
   return (
     <ContentLayout title="All Posts">
       <Breadcrumb>
@@ -20,14 +20,14 @@ export default function PostsPage() {
               <Link to="/">Home</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
+          <BreadcrumbSeparator/>
 
           <BreadcrumbItem>
             <BreadcrumbPage>Posts</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <PlaceholderContent />
+      <PlaceholderContent/>
     </ContentLayout>
   )
 }

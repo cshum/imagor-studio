@@ -10,7 +10,7 @@ interface ContentLayoutProps {
 export function ContentLayout({ title, children, isBounded, className }: PropsWithChildren<ContentLayoutProps>) {
   return (
     <div>
-      <Navbar title={title} />
+      <Navbar title={title}/>
       <div
         className={`${className || ''} ${isBounded === false ? '' : 'container'} pt-4 pb-8 px-0 sm:pt-6 sm:px-6`}>{children}</div>
     </div>

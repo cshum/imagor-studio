@@ -10,7 +10,7 @@ export function SheetMenu() {
     <Sheet>
       <SheetTrigger className="lg:hidden" asChild>
         <Button className="h-8" variant="outline" size="icon">
-          <MenuIcon size={20} />
+          <MenuIcon size={20}/>
         </Button>
       </SheetTrigger>
       <SheetContent className="sm:w-72 px-3 h-full flex flex-col" side="left">
@@ -21,12 +21,12 @@ export function SheetMenu() {
             asChild
           >
             <Link to="/" className="flex items-center gap-2">
-              <PanelsTopLeft className="w-6 h-6 mr-1" />
+              <PanelsTopLeft className="w-6 h-6 mr-1"/>
               <SheetTitle className="font-bold text-lg">Brand</SheetTitle>
             </Link>
           </Button>
         </SheetHeader>
-        <Menu isOpen />
+        <Menu isOpen/>
       </SheetContent>
     </Sheet>
   )

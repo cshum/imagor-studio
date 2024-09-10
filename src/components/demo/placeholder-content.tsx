@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom' // React Router Link
 import { Card, CardContent } from '@/components/ui/card' // ShadCN components
 
-export default function PlaceholderContent() {
+export function PlaceholderContent() {
   return (
     <Card className="rounded-lg border-none mt-4">
       <CardContent className="p-6">

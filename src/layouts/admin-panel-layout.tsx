@@ -8,12 +8,12 @@ interface AdminPanelLayoutProps extends PropsWithChildren {
   hideFooter?: boolean; // New prop to control footer visibility
 }
 
-export default function AdminPanelLayout({ children, hideFooter }: AdminPanelLayoutProps) {
+export function AdminPanelLayout({ children, hideFooter }: AdminPanelLayoutProps) {
   const { isOpen } = useSidebarToggle()
 
   return (
     <>
-      <Sidebar />
+      <Sidebar/>
       <main
         className={cn(
           'min-h-[calc(100vh_-_56px)] bg-zinc-50 dark:bg-zinc-900 transition-[margin-left] ease-in-out duration-300',
@@ -29,7 +29,7 @@ export default function AdminPanelLayout({ children, hideFooter }: AdminPanelLay
             !isOpen ? 'lg:ml-[90px]' : 'lg:ml-72',
           )}
         >
-          <Footer />
+          <Footer/>
         </footer>
       )}
     </>

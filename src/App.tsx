@@ -1,13 +1,13 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
-import UsersPage from '@/pages/users-page'
-import TagsPage from '@/pages/tags-page'
-import PostsPage from '@/pages/posts/posts-page'
-import NewPostPage from '@/pages/posts/new-post-page'
-import HomePage from '@/pages/home-page.tsx'
-import CategoriesPage from '@/pages/categories-page'
-import AccountPage from '@/pages/account-page'
-import AdminPanelLayout from '@/layouts/admin-panel-layout.tsx'
+import { AdminPanelLayout } from '@/layouts/admin-panel-layout.tsx'
 import { RootLayout } from '@/layouts/root-layout.tsx'
+import { HomePage } from '@/pages/home-page.tsx';
+import { UsersPage } from '@/pages/users-page.tsx';
+import { TagsPage } from '@/pages/tags-page.tsx';
+import { PostsPage } from '@/pages/posts/posts-page.tsx';
+import { NewPostPage } from '@/pages/posts/new-post-page.tsx';
+import { CategoriesPage } from '@/pages/categories-page.tsx';
+import { AccountPage } from '@/pages/account-page.tsx';
 
 const App = () => {
   return (
@@ -16,44 +16,44 @@ const App = () => {
         <Routes>
           <Route path="/" element={
             <AdminPanelLayout hideFooter={true}>
-              <HomePage />
+              <HomePage/>
             </AdminPanelLayout>
-          } />
+          }/>
           <Route path="/image/:id" element={
             <AdminPanelLayout hideFooter={true}>
-              <HomePage />
+              <HomePage/>
             </AdminPanelLayout>
-          } />
+          }/>
           <Route path="/users" element={
             <AdminPanelLayout>
-              <UsersPage />
+              <UsersPage/>
             </AdminPanelLayout>
-          } />
+          }/>
           <Route path="/tags" element={
             <AdminPanelLayout>
-              <TagsPage />
+              <TagsPage/>
             </AdminPanelLayout>
-          } />
+          }/>
           <Route path="/posts" element={
             <AdminPanelLayout>
-              <PostsPage />
+              <PostsPage/>
             </AdminPanelLayout>
-          } />
+          }/>
           <Route path="/posts/new" element={
             <AdminPanelLayout>
-              <NewPostPage />
+              <NewPostPage/>
             </AdminPanelLayout>
-          } />
+          }/>
           <Route path="/categories" element={
             <AdminPanelLayout>
-              <CategoriesPage />
+              <CategoriesPage/>
             </AdminPanelLayout>
-          } />
+          }/>
           <Route path="/account" element={
             <AdminPanelLayout>
-              <AccountPage />
+              <AccountPage/>
             </AdminPanelLayout>
-          } />
+          }/>
         </Routes>
       </Router>
     </RootLayout>

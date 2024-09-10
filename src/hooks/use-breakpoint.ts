@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 // Define the breakpoints based on your Tailwind config
 const breakpoints = {

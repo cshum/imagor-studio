@@ -57,7 +57,7 @@ export function CollapseMenuButton({
           <div className="w-full items-center flex justify-between">
             <div className="flex items-center">
               <span className="mr-4">
-                <Icon size={18} />
+                <Icon size={18}/>
               </span>
               <p
                 className={cn(
@@ -97,7 +97,7 @@ export function CollapseMenuButton({
           >
             <Link to={href}>
               <span className="mr-4 ml-2">
-                <Dot size={18} />
+                <Dot size={18}/>
               </span>
               <p
                 className={cn(
@@ -127,7 +127,7 @@ export function CollapseMenuButton({
                 <div className="w-full items-center flex justify-between">
                   <div className="flex items-center">
                     <span className={cn(isOpen === false ? '' : 'mr-4')}>
-                      <Icon size={18} />
+                      <Icon size={18}/>
                     </span>
                     <p
                       className={cn(
@@ -151,7 +151,7 @@ export function CollapseMenuButton({
         <DropdownMenuLabel className="max-w-[190px] truncate">
           {label}
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator/>
         {submenus.map(({ href, label }, index) => (
           <DropdownMenuItem key={index} asChild>
             <Link className="cursor-pointer" to={href}>
@@ -159,7 +159,7 @@ export function CollapseMenuButton({
             </Link>
           </DropdownMenuItem>
         ))}
-        <DropdownMenuArrow className="fill-border" />
+        <DropdownMenuArrow className="fill-border"/>
       </DropdownMenuContent>
     </DropdownMenu>
   )

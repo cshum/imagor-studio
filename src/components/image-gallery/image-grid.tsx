@@ -80,7 +80,8 @@ export const ImageGrid = ({
           }}
           onClick={handleClick}
         >
-          <div className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
+          <div
+            className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
             <img
               src={image.src}
               alt={image.alt}

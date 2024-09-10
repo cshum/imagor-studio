@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
 import { X, ZoomIn, ZoomOut } from 'lucide-react'
 
 interface SelectedImage {
@@ -35,7 +35,12 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
       transformComponentRef.current.resetTransform(0)
     }
     onClose()
-    navigate('/', { state: { isClosingImage: true, initialPosition: shouldAnimate ? location.state?.initialPosition : undefined } })
+    navigate('/', {
+      state: {
+        isClosingImage: true,
+        initialPosition: shouldAnimate ? location.state?.initialPosition : undefined
+      }
+    })
   }, [navigate, location.state?.initialPosition, onClose, shouldAnimate])
 
   const handlePanStart = useCallback((_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
@@ -134,7 +139,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
                     onClick={() => zoomOut()}
                     className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
                   >
-                    <ZoomOut size={24} />
+                    <ZoomOut size={24}/>
                   </button>
                   <button
                     onClick={() => resetTransform()}
@@ -146,7 +151,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
                     onClick={() => zoomIn()}
                     className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
                   >
-                    <ZoomIn size={24} />
+                    <ZoomIn size={24}/>
                   </button>
                 </div>
               </>
@@ -157,7 +162,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
             onClick={handleCloseFullView}
             className="fixed top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-colors z-60"
           >
-            <X size={24} />
+            <X size={24}/>
           </button>
         </motion.div>
       )}

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom' // Use React Router Link
-import PlaceholderContent from '@/components/demo/placeholder-content'
+import { PlaceholderContent } from '@/components/demo/placeholder-content'
 import { ContentLayout } from '@/layouts/content-layout.tsx'
 import {
   Breadcrumb,
@@ -10,7 +10,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 
-export default function UsersPage() {
+export function UsersPage() {
   return (
     <ContentLayout title="Users">
       <Breadcrumb>
@@ -20,13 +20,13 @@ export default function UsersPage() {
               <Link to="/">Home</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
+          <BreadcrumbSeparator/>
           <BreadcrumbItem>
             <BreadcrumbPage>Users</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <PlaceholderContent />
+      <PlaceholderContent/>
     </ContentLayout>
   )
 }

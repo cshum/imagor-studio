@@ -37,13 +37,13 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled: isSc
                     <Link to="/">Home</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
+                <BreadcrumbSeparator/>
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
                     <Link to="/posts">Posts</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
+                <BreadcrumbSeparator/>
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
                     <Link to="/posts">Title</Link>
@@ -56,7 +56,7 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled: isSc
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon">
-                    <Clock className="h-4 w-4" />
+                    <Clock className="h-4 w-4"/>
                     <span className="sr-only">Snooze</span>
                   </Button>
                 </TooltipTrigger>
@@ -65,7 +65,7 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled: isSc
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon">
-                    <ReplyAll className="h-4 w-4" />
+                    <ReplyAll className="h-4 w-4"/>
                     <span className="sr-only">Reply all</span>
                   </Button>
                 </TooltipTrigger>
@@ -74,7 +74,7 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled: isSc
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon">
-                    <Forward className="h-4 w-4" />
+                    <Forward className="h-4 w-4"/>
                     <span className="sr-only">Forward</span>
                   </Button>
                 </TooltipTrigger>
@@ -83,7 +83,7 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled: isSc
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4" />
+                    <MoreVertical className="h-4 w-4"/>
                     <span className="sr-only">More</span>
                   </Button>
                 </DropdownMenuTrigger>

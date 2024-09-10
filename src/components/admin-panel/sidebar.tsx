@@ -18,7 +18,7 @@ export function Sidebar() {
       )}
     >
       {/* Passing toggleSidebar to SidebarToggle */}
-      <SidebarToggle isOpen={isOpen} setIsOpen={toggleSidebar} />
+      <SidebarToggle isOpen={isOpen} setIsOpen={toggleSidebar}/>
       <div className="relative h-full flex flex-col px-3 py-4 overflow-y-auto shadow-md dark:shadow-zinc-800">
         <Button
           className={cn(
@@ -29,7 +29,7 @@ export function Sidebar() {
           asChild
         >
           <Link to="/" className="flex items-center gap-2">
-            <PanelsTopLeft className="w-6 h-6 mr-1" />
+            <PanelsTopLeft className="w-6 h-6 mr-1"/>
             <h1
               className={cn(
                 'font-bold text-lg whitespace-nowrap transition-[transform,opacity,display] ease-in-out duration-300',
@@ -42,7 +42,7 @@ export function Sidebar() {
             </h1>
           </Link>
         </Button>
-        <Menu isOpen={isOpen} />
+        <Menu isOpen={isOpen}/>
       </div>
     </aside>
   )
