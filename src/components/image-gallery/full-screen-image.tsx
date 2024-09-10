@@ -21,6 +21,8 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
   const [scale, setScale] = useState(1)
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
 
+  const shouldAnimate = !!location.state?.isClickNavigation
+
   const handleZoomChange = (newScale: number) => {
     setScale(newScale)
   }
@@ -30,16 +32,13 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
       transformComponentRef.current.resetTransform(0)
     }
     onClose()
-    navigate('/', { state: { isClosingImage: true, initialPosition: location.state?.initialPosition } })
-  }, [navigate, location.state?.initialPosition, onClose])
+    navigate('/', { state: { isClosingImage: true, initialPosition: shouldAnimate ? location.state?.initialPosition : undefined } })
+  }, [navigate, location.state?.initialPosition, onClose, shouldAnimate])
 
   return (
     <AnimatePresence>
       {selectedImage && (
         <motion.div
-          // initial={{ opacity: 0 }}
-          // animate={{ opacity: 1 }}
-          // exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center"
         >
           <TransformWrapper
@@ -75,7 +74,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
                       height: '100vh',
                       transition: { duration: 0.2 },
                     }}
-                    exit={location.state?.initialPosition}
+                    exit={shouldAnimate ? location.state?.initialPosition : false}
                     className="absolute flex items-center justify-center"
                   >
                     <motion.img
@@ -91,13 +90,13 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
                         height: '100%',
                         maxWidth: '100%',
                         objectFit: 'contain',
-                        transition: { duration: 0.2 },
+                        transition: { duration: shouldAnimate ? 0.2 : 0 },
                       }}
                       exit={{
                         width: location.state?.initialPosition?.width || '100%',
                         height: location.state?.initialPosition?.height || '100%',
                         objectFit: 'cover',
-                        transition: { duration: 0.2 },
+                        transition: { duration: shouldAnimate ? 0.2 : 0 },
                       }}
                       className="max-h-full max-w-full"
                     />
