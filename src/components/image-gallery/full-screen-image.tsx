@@ -22,7 +22,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
   const [scale, setScale] = useState(1)
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
   const panStartPosition = useRef<{ x: number; y: number } | null>(null)
-  const DRAG_THRESHOLD = 100 // pixels
+  const DRAG_THRESHOLD = 100
 
   const shouldAnimate = !!location.state?.isClickNavigation
 
@@ -116,7 +116,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
                         width: 'auto',
                         height: '100%',
                         maxWidth: '100%',
-                        objectFit: 'cover',
+                        objectFit: 'contain',
                         transition: { duration: shouldAnimate ? duration : 0 },
                       }}
                       exit={{
