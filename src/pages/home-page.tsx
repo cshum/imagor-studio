@@ -12,7 +12,10 @@ import { SessionConfigStorage } from '@/lib/config-storage/session-config-storag
 import { generateDummyImages } from '@/lib/generate-dummy-images.ts'
 import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
 import { FullScreenImage } from '@/components/image-gallery/full-screen-image'
-import { LoadingBar } from '@/components/loading-bar.tsx'
+
+interface FullSizeImageProps extends ImageProps {
+  fullSizeSrc: string;
+}
 
 export default function HomePage() {
   const { id } = useParams<{ id: string }>()
@@ -24,7 +27,7 @@ export default function HomePage() {
   const { isOpen } = useSidebarToggle()
   const isDesktop = useBreakpoint('md')
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<ImageProps | null>(null)
+  const [selectedImage, setSelectedImage] = useState<FullSizeImageProps | null>(null)
 
   // Custom hooks
   const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
@@ -44,7 +47,11 @@ export default function HomePage() {
     if (id) {
       const imageFromUrl = generatedImages.find(img => img.id === id)
       if (imageFromUrl) {
-        setSelectedImage({ ...imageFromUrl, src: imageFromUrl.src.replace('/300/225', '/1200/900') })
+        setSelectedImage({
+          ...imageFromUrl,
+          src: imageFromUrl.src,
+          fullSizeSrc: imageFromUrl.src.replace('/300/225', '/900/1200')
+        })
       }
     } else {
       setSelectedImage(null)
@@ -66,7 +73,7 @@ export default function HomePage() {
     image: ImageProps,
     position: { top: number; left: number; width: number; height: number }
   ) => {
-    const fullSizeSrc = image.src.replace('/300/225', '/1200/900');
+    const fullSizeSrc = image.src.replace('/300/225', '/900/1200');
     setIsLoading(true)
 
     // Preload the full-size image
@@ -74,9 +81,9 @@ export default function HomePage() {
     preloadImage.src = fullSizeSrc;
     preloadImage.onload = () => {
       setIsLoading(false)
-      setSelectedImage({ ...image, src: fullSizeSrc })
+      setSelectedImage({ ...image, src: image.src, fullSizeSrc })
       navigate(`/image/${image.id}`, {
-        state: { initialPosition: position }
+        state: { isClickNavigation: true, initialPosition: position }
       })
     };
   }, [navigate])
@@ -94,38 +101,40 @@ export default function HomePage() {
   }, [])
 
   return (
-    <>
-      <LoadingBar isLoading={isLoading} />
-      <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
-        <ContentLayout title="Title" isBounded={false}>
-          <div className="grid mx-4 mt-0">
-            <h1 className="text-3xl md:text-4xl">Title</h1>
-          </div>
-          <FixedHeaderBar isScrolled={isScrolledDown} />
-          <Card className={`rounded-lg border-none`}>
-            <CardContent className="p-2 md:p-4" ref={contentRef}>
-              {contentWidth > 0 && (
-                <ImageGrid
-                  images={images}
-                  aspectRatio={4 / 3}
-                  width={contentWidth}
-                  scrollTop={scrollPosition}
-                  maxImageWidth={300}
-                  isScrolling={isScrolling}
-                  onRendered={onRendered}
-                  onImageClick={handleImageClick}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </ContentLayout>
+    <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
+      <ContentLayout title="Title" isBounded={false}>
+        <div className="grid mx-4 mt-0">
+          <h1 className="text-3xl md:text-4xl">Title</h1>
+        </div>
+        <FixedHeaderBar isScrolled={isScrolledDown} />
+        <Card className={`rounded-lg border-none`}>
+          <CardContent className="p-2 md:p-4" ref={contentRef}>
+            {contentWidth > 0 && (
+              <ImageGrid
+                images={images}
+                aspectRatio={4 / 3}
+                width={contentWidth}
+                scrollTop={scrollPosition}
+                maxImageWidth={300}
+                isScrolling={isScrolling}
+                onRendered={onRendered}
+                onImageClick={handleImageClick}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </ContentLayout>
 
-        <FullScreenImage
-          selectedImage={selectedImage}
-          onClose={handleCloseFullView}
-        />
-      </div>
-    </>
+      <FullScreenImage
+        selectedImage={selectedImage}
+        onClose={handleCloseFullView}
+      />
 
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <h1 className="text-3xl">Loading...</h1>
+        </div>
+      )}
+    </div>
   )
 }

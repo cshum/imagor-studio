@@ -1,22 +1,25 @@
-import React, { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch'
 import { X, ZoomIn, ZoomOut } from 'lucide-react'
 
+interface SelectedImage {
+  src: string;
+  fullSizeSrc: string;
+  alt: string;
+  id: string;
+}
+
 interface FullScreenImageProps {
-  selectedImage: {
-    src: string;
-    alt: string;
-    id: string;
-  } | null;
+  selectedImage: SelectedImage | null;
   onClose: () => void;
 }
 
-export const FullScreenImage = ({ selectedImage, onClose }: FullScreenImageProps) => {
+export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const [scale, setScale] = React.useState(1)
+  const [scale, setScale] = useState(1)
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
 
   const handleZoomChange = (newScale: number) => {
@@ -74,10 +77,10 @@ export const FullScreenImage = ({ selectedImage, onClose }: FullScreenImageProps
                       transition: { duration: 0.2 },
                     }}
                     exit={location.state?.initialPosition}
-                    className="absolute"
+                    className="absolute flex items-center justify-center"
                   >
                     <motion.img
-                      src={selectedImage.src}
+                      src={selectedImage.fullSizeSrc}
                       alt={selectedImage.alt}
                       initial={{
                         width: location.state?.initialPosition?.width || '100%',
@@ -85,18 +88,19 @@ export const FullScreenImage = ({ selectedImage, onClose }: FullScreenImageProps
                         objectFit: 'cover',
                       }}
                       animate={{
-                        width: '100%',
+                        width: 'auto',
                         height: '100%',
+                        maxWidth: '100%',
                         objectFit: 'contain',
                         transition: { duration: 0.2 },
                       }}
                       exit={{
                         width: location.state?.initialPosition?.width || '100%',
                         height: location.state?.initialPosition?.height || '100%',
-                        objectFit: 'contain',
+                        objectFit: 'cover',
                         transition: { duration: 0.2 },
                       }}
-                      className="w-full h-full"
+                      className="max-h-full max-w-full"
                     />
                   </motion.div>
                 </TransformComponent>
