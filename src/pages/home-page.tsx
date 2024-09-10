@@ -46,7 +46,7 @@ export default function HomePage() {
       if (imageFromUrl) {
         setSelectedImage({
           ...imageFromUrl,
-          src: imageFromUrl.src.replace('/300/225', '/900/1200'),
+          src: imageFromUrl.src.replace('/300/225', '/1200/900'),
         })
       }
     } else {
@@ -69,7 +69,7 @@ export default function HomePage() {
     image: ImageProps,
     position: { top: number; left: number; width: number; height: number }
   ) => {
-    const fullSizeSrc = image.src.replace('/300/225', '/900/1200');
+    const fullSizeSrc = image.src.replace('/300/225', '/1200/900');
     setIsLoading(true)
 
     // Preload the full-size image
