@@ -14,10 +14,6 @@ import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
 import { FullScreenImage } from '@/components/image-gallery/full-screen-image'
 import { LoadingBar } from '@/components/loading-bar.tsx';
 
-interface FullSizeImageProps extends ImageProps {
-  fullSizeSrc: string;
-}
-
 export default function HomePage() {
   const { id } = useParams<{ id: string }>()
   const location = useLocation()
@@ -28,7 +24,7 @@ export default function HomePage() {
   const { isOpen } = useSidebarToggle()
   const isDesktop = useBreakpoint('md')
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<FullSizeImageProps | null>(null)
+  const [selectedImage, setSelectedImage] = useState<ImageProps | null>(null)
 
   // Custom hooks
   const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
@@ -50,8 +46,7 @@ export default function HomePage() {
       if (imageFromUrl) {
         setSelectedImage({
           ...imageFromUrl,
-          src: imageFromUrl.src,
-          fullSizeSrc: imageFromUrl.src.replace('/300/225', '/900/1200')
+          src: imageFromUrl.src.replace('/300/225', '/900/1200'),
         })
       }
     } else {
@@ -82,7 +77,7 @@ export default function HomePage() {
     preloadImage.src = fullSizeSrc;
     preloadImage.onload = () => {
       setIsLoading(false)
-      setSelectedImage({ ...image, src: image.src, fullSizeSrc })
+      setSelectedImage({ ...image, src: fullSizeSrc })
       navigate(`/image/${image.id}`, {
         state: { isClickNavigation: true, initialPosition: position }
       })

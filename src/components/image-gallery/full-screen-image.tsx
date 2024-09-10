@@ -6,7 +6,6 @@ import { X, ZoomIn, ZoomOut } from 'lucide-react'
 
 interface SelectedImage {
   src: string;
-  fullSizeSrc: string;
   alt: string;
   id: string;
 }
@@ -80,7 +79,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
                     className="absolute flex items-center justify-center"
                   >
                     <motion.img
-                      src={selectedImage.fullSizeSrc}
+                      src={selectedImage.src}
                       alt={selectedImage.alt}
                       initial={{
                         width: location.state?.initialPosition?.width || '100%',
