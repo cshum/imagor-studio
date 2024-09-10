@@ -21,6 +21,8 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
   const duration = 0.2
   const [scale, setScale] = useState(1)
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
+  const panStartPosition = useRef<{ x: number; y: number } | null>(null)
+  const DRAG_THRESHOLD = 100 // pixels
 
   const shouldAnimate = !!location.state?.isClickNavigation
 
@@ -36,6 +38,28 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
     navigate('/', { state: { isClosingImage: true, initialPosition: shouldAnimate ? location.state?.initialPosition : undefined } })
   }, [navigate, location.state?.initialPosition, onClose, shouldAnimate])
 
+  const handlePanStart = useCallback((_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
+    if (scale === 1) {
+      const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
+      const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
+      panStartPosition.current = { x: clientX, y: clientY }
+    }
+  }, [scale])
+
+  const handlePan = useCallback((_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
+    if (scale === 1 && panStartPosition.current) {
+      const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
+      const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
+      const dx = clientX - panStartPosition.current.x
+      const dy = clientY - panStartPosition.current.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+
+      if (distance > DRAG_THRESHOLD) {
+        handleCloseFullView()
+      }
+    }
+  }, [scale, handleCloseFullView])
+
   return (
     <AnimatePresence>
       {selectedImage && (
@@ -49,6 +73,8 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
             centerOnInit={true}
             onTransformed={({ state }) => handleZoomChange(state.scale)}
             onZoom={({ state }) => handleZoomChange(state.scale)}
+            onPanningStart={handlePanStart}
+            onPanning={handlePan}
             smooth={true}
             wheel={{ step: 0.05 }}
             pinch={{ step: 0.05 }}
