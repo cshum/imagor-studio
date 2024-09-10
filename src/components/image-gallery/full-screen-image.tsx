@@ -18,6 +18,7 @@ interface FullScreenImageProps {
 export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps) {
   const navigate = useNavigate()
   const location = useLocation()
+  const duration = 0.2
   const [scale, setScale] = useState(1)
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
 
@@ -72,7 +73,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
                       left: 0,
                       width: '100vw',
                       height: '100vh',
-                      transition: { duration: 0.2 },
+                      transition: { duration: duration },
                     }}
                     exit={shouldAnimate ? location.state?.initialPosition : false}
                     className="absolute flex items-center justify-center"
@@ -89,14 +90,14 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
                         width: 'auto',
                         height: '100%',
                         maxWidth: '100%',
-                        objectFit: 'contain',
-                        transition: { duration: shouldAnimate ? 0.2 : 0 },
+                        objectFit: 'cover',
+                        transition: { duration: shouldAnimate ? duration : 0 },
                       }}
                       exit={{
                         width: location.state?.initialPosition?.width || '100%',
                         height: location.state?.initialPosition?.height || '100%',
                         objectFit: 'cover',
-                        transition: { duration: shouldAnimate ? 0.2 : 0 },
+                        transition: { duration: shouldAnimate ? duration : 0 },
                       }}
                       className="max-h-full max-w-full"
                     />
