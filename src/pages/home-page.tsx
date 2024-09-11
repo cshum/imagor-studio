@@ -30,7 +30,7 @@ export function HomePage() {
   const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
     containerRef, useMemo(() => new SessionConfigStorage('homePageScrollPosition'), []),
   )
-  const { contentWidth, updateWidth } = useWidthHandler(contentRef, true, isOpen, isDesktop ? 30 : 16)
+  const { contentWidth, updateWidth } = useWidthHandler(contentRef, true, isOpen, isDesktop ? 32 : 16)
   useResizeHandler(updateWidth)
 
   // Grid rendered state

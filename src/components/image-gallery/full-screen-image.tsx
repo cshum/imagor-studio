@@ -37,10 +37,10 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
   useEffect(() => {
     if (!selectedImage) return
 
+    const overlay = overlayRef.current
     const preventDefault = (e: TouchEvent) => {
       e.preventDefault()
     }
-    const overlay = overlayRef.current
     if (!overlay) return
     overlay.addEventListener('touchmove', preventDefault, { passive: false })
     return () => {
@@ -55,7 +55,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
   }
 
   const handleCloseFullView = useCallback(() => {
-    if (transformComponentRef.current && scale > 1) {
+    if (transformComponentRef.current) {
       transformComponentRef.current.resetTransform(0)
     }
     onClose()
@@ -130,7 +130,6 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
           <TransformWrapper
             initialScale={1}
             minScale={0.5}
-            maxScale={3}
             centerOnInit={true}
             onTransformed={({ state }) => handleZoomChange(state.scale)}
             onZoom={({ state }) => handleZoomChange(state.scale)}
