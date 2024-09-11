@@ -38,15 +38,14 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
     if (!selectedImage) return
 
     const overlay = overlayRef.current
+    if (!overlay) return
+
     const preventDefault = (e: TouchEvent) => {
       e.preventDefault()
     }
-    if (!overlay) return
     overlay.addEventListener('touchmove', preventDefault, { passive: false })
     return () => {
-      if (overlay) {
-        overlay.removeEventListener('touchmove', preventDefault)
-      }
+      overlay.removeEventListener('touchmove', preventDefault)
     }
   }, [selectedImage])
 
