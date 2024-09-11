@@ -64,7 +64,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
         initialPosition: shouldAnimate ? location.state?.initialPosition : undefined
       }
     })
-  }, [navigate, location.state?.initialPosition, onClose, shouldAnimate, scale])
+  }, [navigate, location.state?.initialPosition, onClose, shouldAnimate])
 
   const handlePanStart = useCallback((_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
     if (scale === 1) {
