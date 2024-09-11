@@ -39,8 +39,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   const [dimensions, setDimensions] = useState<ImageDimensions>({ width: 0, height: 0 })
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const isDesktop = useBreakpoint('md')
-
-  const shouldAnimate = !!location.state?.isImageGrid
+  const initialPosition = location.state?.initialPosition
 
   useEffect(() => {
     if (!selectedImage) return
@@ -70,10 +69,10 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     navigate('/', {
       state: {
         isClosingImage: true,
-        initialPosition: shouldAnimate ? location.state?.initialPosition : undefined
+        initialPosition: initialPosition
       }
     })
-  }, [navigate, location.state?.initialPosition, onClose, shouldAnimate])
+  }, [navigate, initialPosition, onClose])
 
   const handlePanStart = useCallback((_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
     if (scale === 1) {
@@ -186,7 +185,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                     }}
                   >
                     <motion.div
-                      initial={location.state?.initialPosition}
+                      initial={initialPosition}
                       animate={{
                         top: 0,
                         left: 0,
@@ -194,28 +193,28 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                         height: '100%',
                         transition: { duration: duration },
                       }}
-                      exit={shouldAnimate ? location.state?.initialPosition : false}
+                      exit={initialPosition || false}
                       className="absolute flex items-center justify-center"
                     >
                       <motion.img
                         src={selectedImage.src}
                         alt={selectedImage.alt}
                         initial={{
-                          width: location.state?.initialPosition?.width || dimensions.width,
-                          height: location.state?.initialPosition?.height || dimensions.height,
+                          width: initialPosition?.width || dimensions.width,
+                          height: initialPosition?.height || dimensions.height,
                           objectFit: 'cover',
                         }}
                         animate={{
                           width: dimensions.width,
                           height: dimensions.height,
                           objectFit: 'contain',
-                          transition: { duration: shouldAnimate ? duration : 0 },
+                          transition: { duration: initialPosition ? duration : 0 },
                         }}
                         exit={{
-                          width: location.state?.initialPosition?.width || dimensions.width,
-                          height: location.state?.initialPosition?.height || dimensions.height,
+                          width: initialPosition?.width || dimensions.width,
+                          height: initialPosition?.height || dimensions.height,
                           objectFit: 'cover',
-                          transition: { duration: shouldAnimate ? duration : 0 },
+                          transition: { duration: initialPosition ? duration : 0 },
                         }}
                         className="max-h-full max-w-full"
                       />

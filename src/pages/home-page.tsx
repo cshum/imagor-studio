@@ -135,7 +135,7 @@ export function HomePage() {
         }
       })
       navigate(`/image/${image.id}`, {
-        state: { isImageGrid: !!position, initialPosition: position }
+        state: { initialPosition: position }
       })
     };
   }, [navigate, images])
