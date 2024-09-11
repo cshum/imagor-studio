@@ -205,7 +205,7 @@ export function ImageFullScreen({ selectedImage, onClose }: FullScreenImageProps
                       />
                     </motion.div>
                   </TransformComponent>
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-4">
+                  <div className="absolute bottom-4 right-8 flex space-x-4">
                     <button
                       onClick={() => zoomOut()}
                       className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
