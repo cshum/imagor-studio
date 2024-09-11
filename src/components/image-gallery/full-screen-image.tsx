@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
@@ -15,6 +15,11 @@ interface FullScreenImageProps {
   onClose: () => void;
 }
 
+interface ImageDimensions {
+  width: number;
+  height: number;
+}
+
 export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -23,6 +28,8 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
   const panStartPosition = useRef<{ x: number; y: number } | null>(null)
   const DRAG_THRESHOLD = 100
+
+  const [dimensions, setDimensions] = useState<ImageDimensions>({ width: 0, height: 0 })
 
   const shouldAnimate = !!location.state?.isClickNavigation
 
@@ -64,6 +71,37 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
       }
     }
   }, [scale, handleCloseFullView])
+
+  const calculateDimensions = useCallback(() => {
+    if (selectedImage) {
+      const img = new Image()
+      img.src = selectedImage.src
+      img.onload = () => {
+        const windowWidth = window.innerWidth
+        const windowHeight = window.innerHeight
+        const imageAspectRatio = img.width / img.height
+        const windowAspectRatio = windowWidth / windowHeight
+
+        let newWidth, newHeight
+
+        if (imageAspectRatio > windowAspectRatio) {
+          newWidth = windowWidth
+          newHeight = windowWidth / imageAspectRatio
+        } else {
+          newHeight = windowHeight
+          newWidth = windowHeight * imageAspectRatio
+        }
+
+        setDimensions({ width: Math.round(newWidth), height: Math.round(newHeight) })
+      }
+    }
+  }, [selectedImage])
+
+  useEffect(() => {
+    calculateDimensions()
+    window.addEventListener('resize', calculateDimensions)
+    return () => window.removeEventListener('resize', calculateDimensions)
+  }, [calculateDimensions])
 
   return (
     <AnimatePresence>
@@ -113,20 +151,19 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
                       src={selectedImage.src}
                       alt={selectedImage.alt}
                       initial={{
-                        width: location.state?.initialPosition?.width || '100%',
-                        height: location.state?.initialPosition?.height || '100%',
+                        width: location.state?.initialPosition?.width || dimensions.width,
+                        height: location.state?.initialPosition?.height || dimensions.height,
                         objectFit: 'cover',
                       }}
                       animate={{
-                        width: 'auto',
-                        height: '100%',
-                        maxWidth: '100%',
+                        width: dimensions.width,
+                        height: dimensions.height,
                         objectFit: 'contain',
                         transition: { duration: shouldAnimate ? duration : 0 },
                       }}
                       exit={{
-                        width: location.state?.initialPosition?.width || '100%',
-                        height: location.state?.initialPosition?.height || '100%',
+                        width: location.state?.initialPosition?.width || dimensions.width,
+                        height: location.state?.initialPosition?.height || dimensions.height,
                         objectFit: 'cover',
                         transition: { duration: shouldAnimate ? duration : 0 },
                       }}
