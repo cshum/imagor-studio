@@ -28,10 +28,27 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
   const panStartPosition = useRef<{ x: number; y: number } | null>(null)
   const DRAG_THRESHOLD = 100
+  const overlayRef = useRef<HTMLDivElement>(null)
 
   const [dimensions, setDimensions] = useState<ImageDimensions>({ width: 0, height: 0 })
 
   const shouldAnimate = !!location.state?.isClickNavigation
+
+  useEffect(() => {
+    if (!selectedImage) return
+
+    const preventDefault = (e: TouchEvent) => {
+      e.preventDefault()
+    }
+    const overlay = overlayRef.current
+    if (!overlay) return
+    overlay.addEventListener('touchmove', preventDefault, { passive: false })
+    return () => {
+      if (overlay) {
+        overlay.removeEventListener('touchmove', preventDefault)
+      }
+    }
+  }, [selectedImage])
 
   const handleZoomChange = (newScale: number) => {
     setScale(newScale)
@@ -108,6 +125,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
       {selectedImage && (
         <motion.div
           className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center"
+          ref={overlayRef}
         >
           <TransformWrapper
             initialScale={1}
