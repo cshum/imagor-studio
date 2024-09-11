@@ -14,6 +14,8 @@ import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
 import { ImageFullScreen } from '@/components/image-gallery/image-full-screen.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { ImageInfo } from '@/components/image-gallery/image-info-view'
+import { FolderGrid, FolderProps } from '@/components/image-gallery/folder-grid'
+
 
 export function HomePage() {
   const { id } = useParams<{ id: string }>()
@@ -22,10 +24,13 @@ export function HomePage() {
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const [images, setImages] = useState<ImageProps[]>([])
+  const [folders, setFolders] = useState<FolderProps[]>([])
   const { isOpen } = useSidebarToggle()
   const isDesktop = useBreakpoint('md')
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImage, setSelectedImage] = useState<ImageProps & { info?: ImageInfo } | null>(null)
+
+  const maxItemWidth = 280
 
   // Custom hooks
   const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
@@ -40,6 +45,19 @@ export function HomePage() {
   useEffect(() => {
     const generatedImages = generateDummyImages(10000)
     setImages(generatedImages)
+
+    // Generate more dummy folders
+    const dummyFolders: FolderProps[] = [
+      { id: '1', name: 'Vacation Photos' },
+      { id: '2', name: 'Work Projects' },
+      { id: '3', name: 'Family Events' },
+      { id: '4', name: 'Hobbies' },
+      { id: '5', name: 'Miscellaneous' },
+      { id: '6', name: 'Documents' },
+      { id: '7', name: 'Music' },
+      { id: '8', name: 'Videos' },
+    ]
+    setFolders(dummyFolders)
 
     // If there's an ID in the URL, find and select that image
     if (id) {
@@ -118,6 +136,13 @@ export function HomePage() {
     };
   }, [navigate])
 
+  const handleFolderClick = useCallback((folder: FolderProps) => {
+    // Here you would typically navigate to a new route or update the state to show the folder's contents
+    console.log(`Folder clicked: ${folder.name}`)
+    // For example:
+    // navigate(`/folder/${folder.id}`)
+  }, [])
+
   useEffect(() => {
     if (location.state?.isClosingImage) {
       setSelectedImage(null)
@@ -139,19 +164,27 @@ export function HomePage() {
             <h1 className="text-3xl md:text-4xl">Title</h1>
           </div>
           <FixedHeaderBar isScrolled={isScrolledDown}/>
-          <Card className={`rounded-lg border-none`}>
+          <Card className="rounded-lg border-none">
             <CardContent className="p-2 md:p-4" ref={contentRef}>
               {contentWidth > 0 && (
-                <ImageGrid
-                  images={images}
-                  aspectRatio={4 / 3}
-                  width={contentWidth}
-                  scrollTop={scrollPosition}
-                  maxImageWidth={280}
-                  isScrolling={isScrolling}
-                  onRendered={onRendered}
-                  onImageClick={handleImageClick}
-                />
+                <>
+                  <FolderGrid
+                    folders={folders}
+                    onFolderClick={handleFolderClick}
+                    width={contentWidth}
+                    maxFolderWidth={maxItemWidth}
+                  />
+                  <ImageGrid
+                    images={images}
+                    aspectRatio={4 / 3}
+                    width={contentWidth}
+                    scrollTop={scrollPosition}
+                    maxImageWidth={280}
+                    isScrolling={isScrolling}
+                    onRendered={onRendered}
+                    onImageClick={handleImageClick}
+                  />
+                </>
               )}
             </CardContent>
           </Card>
