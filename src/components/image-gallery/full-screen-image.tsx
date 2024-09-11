@@ -38,7 +38,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
   }
 
   const handleCloseFullView = useCallback(() => {
-    if (transformComponentRef.current) {
+    if (transformComponentRef.current && scale > 1) {
       transformComponentRef.current.resetTransform(0)
     }
     onClose()
@@ -48,7 +48,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
         initialPosition: shouldAnimate ? location.state?.initialPosition : undefined
       }
     })
-  }, [navigate, location.state?.initialPosition, onClose, shouldAnimate])
+  }, [navigate, location.state?.initialPosition, onClose, shouldAnimate, scale])
 
   const handlePanStart = useCallback((_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
     if (scale === 1) {
