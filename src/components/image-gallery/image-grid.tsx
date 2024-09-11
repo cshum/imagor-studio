@@ -1,9 +1,11 @@
 import { useCallback, useEffect } from 'react'
+import { ImageInfo } from '@/components/image-gallery/image-info-view'
 
 export interface ImageProps {
   id: string;
   src: string;
   alt: string;
+  info?: ImageInfo;
 }
 
 interface ImageGridProps {
@@ -36,7 +38,6 @@ export const ImageGrid = ({
   const totalHeight = rowCount * rowHeight
 
   const visibleRowsCount = Math.ceil(window.innerHeight / rowHeight)
-  // const overscanCount = 2
   const overscanCount = visibleRowsCount
   const totalRenderedRows = visibleRowsCount + 2 * overscanCount
 

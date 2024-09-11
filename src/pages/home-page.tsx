@@ -12,7 +12,8 @@ import { SessionConfigStorage } from '@/lib/config-storage/session-config-storag
 import { generateDummyImages } from '@/lib/generate-dummy-images.ts'
 import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
 import { FullScreenImage } from '@/components/image-gallery/full-screen-image'
-import { LoadingBar } from '@/components/loading-bar.tsx';
+import { LoadingBar } from '@/components/loading-bar.tsx'
+import { ImageInfo } from '@/components/image-gallery/image-info-view'
 
 export function HomePage() {
   const { id } = useParams<{ id: string }>()
@@ -24,7 +25,7 @@ export function HomePage() {
   const { isOpen } = useSidebarToggle()
   const isDesktop = useBreakpoint('md')
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<ImageProps | null>(null)
+  const [selectedImage, setSelectedImage] = useState<ImageProps & { info?: ImageInfo } | null>(null)
 
   // Custom hooks
   const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
@@ -47,6 +48,21 @@ export function HomePage() {
         setSelectedImage({
           ...imageFromUrl,
           src: imageFromUrl.src.replace('/300/225', '/1200/900'),
+          info: {
+            exif: {
+              "Camera": "Canon EOS 5D Mark IV",
+              "Lens": "EF 24-70mm f/2.8L II USM",
+              "Focal Length": "50mm",
+              "Aperture": "f/4.0",
+              "Shutter Speed": "1/250s",
+              "ISO": "100",
+              "Date Taken": "2023-09-15 14:30:22",
+              "GPS Coordinates": "40°42'46.0\"N 74°00'21.0\"W",
+              "File Size": "24.5 MB",
+              "Color Space": "sRGB",
+              "Software": "Adobe Lightroom Classic 10.0"
+            }
+          }
         })
       }
     } else {
@@ -73,11 +89,29 @@ export function HomePage() {
     setIsLoading(true)
 
     // Preload the full-size image
-    const preloadImage = new globalThis.Image();
+    const preloadImage = new Image();
     preloadImage.src = fullSizeSrc;
     preloadImage.onload = () => {
       setIsLoading(false)
-      setSelectedImage({ ...image, src: fullSizeSrc })
+      setSelectedImage({
+        ...image,
+        src: fullSizeSrc,
+        info: {
+          exif: {
+            "Camera": "Canon EOS 5D Mark IV",
+            "Lens": "EF 24-70mm f/2.8L II USM",
+            "Focal Length": "50mm",
+            "Aperture": "f/4.0",
+            "Shutter Speed": "1/250s",
+            "ISO": "100",
+            "Date Taken": "2023-09-15 14:30:22",
+            "GPS Coordinates": "40°42'46.0\"N 74°00'21.0\"W",
+            "File Size": "24.5 MB",
+            "Color Space": "sRGB",
+            "Software": "Adobe Lightroom Classic 10.0"
+          }
+        }
+      })
       navigate(`/image/${image.id}`, {
         state: { isClickNavigation: true, initialPosition: position }
       })
@@ -128,7 +162,5 @@ export function HomePage() {
         />
       </div>
     </>
-
-
   )
 }
