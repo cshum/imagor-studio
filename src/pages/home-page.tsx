@@ -11,7 +11,7 @@ import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { generateDummyImages } from '@/lib/generate-dummy-images.ts'
 import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
-import { FullScreenImage } from '@/components/image-gallery/full-screen-image'
+import { ImageFullScreen } from '@/components/image-gallery/image-full-screen.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { ImageInfo } from '@/components/image-gallery/image-info-view'
 
@@ -156,7 +156,7 @@ export function HomePage() {
             </CardContent>
           </Card>
         </ContentLayout>
-        <FullScreenImage
+        <ImageFullScreen
           selectedImage={selectedImage}
           onClose={handleCloseFullView}
         />

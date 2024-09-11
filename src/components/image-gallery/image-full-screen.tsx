@@ -24,7 +24,7 @@ interface ImageDimensions {
   height: number;
 }
 
-export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps) {
+export function ImageFullScreen({ selectedImage, onClose }: FullScreenImageProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const duration = 0.2
@@ -229,7 +229,7 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
               )}
             </TransformWrapper>
 
-            <div className="absolute top-4 right-4 flex space-x-2 z-60">
+            <div className="absolute top-4 right-8 flex space-x-2 z-60">
               <button
                 onClick={toggleInfo}
                 className="text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-colors"
