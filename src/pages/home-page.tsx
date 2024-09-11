@@ -149,7 +149,7 @@ export function HomePage() {
     }
   }, [location])
 
-  const isScrolledDown = scrollPosition > 22 + (isDesktop ? 40 : 30)
+  const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 40 : 30)
 
   const handleCloseFullView = useCallback(() => {
     setSelectedImage(null)
@@ -160,7 +160,7 @@ export function HomePage() {
       <LoadingBar isLoading={isLoading}/>
       <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
         <ContentLayout title="Title" isBounded={false}>
-          <div className="grid mx-4 mt-0">
+          <div className="grid mx-4 my-2">
             <h1 className="text-3xl md:text-4xl">Title</h1>
           </div>
           <FixedHeaderBar isScrolled={isScrolledDown}/>
