@@ -147,7 +147,7 @@ export function HomePage() {
                   aspectRatio={4 / 3}
                   width={contentWidth}
                   scrollTop={scrollPosition}
-                  maxImageWidth={300}
+                  maxImageWidth={280}
                   isScrolling={isScrolling}
                   onRendered={onRendered}
                   onImageClick={handleImageClick}

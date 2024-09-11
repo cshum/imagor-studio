@@ -1,11 +1,9 @@
 import { useCallback, useEffect } from 'react'
-import { ImageInfo } from '@/components/image-gallery/image-info-view'
 
 export interface ImageProps {
   id: string;
   src: string;
   alt: string;
-  info?: ImageInfo;
 }
 
 interface ImageGridProps {

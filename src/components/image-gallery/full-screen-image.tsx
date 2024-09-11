@@ -229,7 +229,6 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
               )}
             </TransformWrapper>
 
-            {/* Info and Close buttons */}
             <div className="absolute top-4 right-4 flex space-x-2 z-60">
               <button
                 onClick={toggleInfo}
@@ -245,7 +244,6 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
               </button>
             </div>
 
-            {/* Info panel */}
             <Sheet open={isInfoOpen} onOpenChange={setIsInfoOpen}>
               <ImageInfoView info={selectedImage.info}/>
             </Sheet>
