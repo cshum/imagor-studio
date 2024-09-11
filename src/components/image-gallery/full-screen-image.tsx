@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
-import { X, ZoomIn, ZoomOut, Info } from 'lucide-react'
-import { ImageInfoView, ImageInfo } from '@/components/image-gallery/image-info-view'
+import { Info, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { ImageInfo, ImageInfoView } from '@/components/image-gallery/image-info-view'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { Sheet } from '@/components/ui/sheet'
 
@@ -137,121 +137,121 @@ export function FullScreenImage({ selectedImage, onClose }: FullScreenImageProps
           className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center"
           ref={overlayRef}
         >
-            <div
-              className={`
+          <div
+            className={`
               relative flex w-full h-full
               transition-[padding-left] duration-500 ease-in-out
               ${isInfoOpen && isDesktop ? 'pl-[300px]' : 'pl-0'}
             `}
+          >
+            <TransformWrapper
+              initialScale={1}
+              minScale={0.5}
+              centerOnInit={true}
+              onTransformed={({ state }) => handleZoomChange(state.scale)}
+              onZoom={({ state }) => handleZoomChange(state.scale)}
+              onPanningStart={handlePanStart}
+              onPanning={handlePan}
+              smooth={true}
+              wheel={{ step: 0.05 }}
+              pinch={{ step: 0.05 }}
+              ref={transformComponentRef}
             >
-              <TransformWrapper
-                initialScale={1}
-                minScale={0.5}
-                centerOnInit={true}
-                onTransformed={({ state }) => handleZoomChange(state.scale)}
-                onZoom={({ state }) => handleZoomChange(state.scale)}
-                onPanningStart={handlePanStart}
-                onPanning={handlePan}
-                smooth={true}
-                wheel={{ step: 0.05 }}
-                pinch={{ step: 0.05 }}
-                ref={transformComponentRef}
-              >
-                {({ zoomIn, zoomOut, resetTransform }) => (
-                  <>
-                    <TransformComponent
-                      wrapperStyle={{
+              {({ zoomIn, zoomOut, resetTransform }) => (
+                <>
+                  <TransformComponent
+                    wrapperStyle={{
+                      width: '100%',
+                      height: '100%',
+                    }}
+                    contentStyle={{
+                      width: '100%',
+                      height: '100%',
+                    }}
+                  >
+                    <motion.div
+                      initial={location.state?.initialPosition}
+                      animate={{
+                        top: 0,
+                        left: 0,
                         width: '100%',
                         height: '100%',
+                        transition: { duration: duration },
                       }}
-                      contentStyle={{
-                        width: '100%',
-                        height: '100%',
-                      }}
+                      exit={shouldAnimate ? location.state?.initialPosition : false}
+                      className="absolute flex items-center justify-center"
                     >
-                      <motion.div
-                        initial={location.state?.initialPosition}
-                        animate={{
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                          transition: { duration: duration },
+                      <motion.img
+                        src={selectedImage.src}
+                        alt={selectedImage.alt}
+                        initial={{
+                          width: location.state?.initialPosition?.width || dimensions.width,
+                          height: location.state?.initialPosition?.height || dimensions.height,
+                          objectFit: 'cover',
                         }}
-                        exit={shouldAnimate ? location.state?.initialPosition : false}
-                        className="absolute flex items-center justify-center"
-                      >
-                        <motion.img
-                          src={selectedImage.src}
-                          alt={selectedImage.alt}
-                          initial={{
-                            width: location.state?.initialPosition?.width || dimensions.width,
-                            height: location.state?.initialPosition?.height || dimensions.height,
-                            objectFit: 'cover',
-                          }}
-                          animate={{
-                            width: dimensions.width,
-                            height: dimensions.height,
-                            objectFit: 'contain',
-                            transition: { duration: shouldAnimate ? duration : 0 },
-                          }}
-                          exit={{
-                            width: location.state?.initialPosition?.width || dimensions.width,
-                            height: location.state?.initialPosition?.height || dimensions.height,
-                            objectFit: 'cover',
-                            transition: { duration: shouldAnimate ? duration : 0 },
-                          }}
-                          className="max-h-full max-w-full"
-                        />
-                      </motion.div>
-                    </TransformComponent>
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-4">
-                      <button
-                        onClick={() => zoomOut()}
-                        className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
-                      >
-                        <ZoomOut size={24}/>
-                      </button>
-                      <button
-                        onClick={() => resetTransform()}
-                        className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-full hover:bg-opacity-75 transition-colors"
-                      >
-                        {Math.round(scale * 100)}%
-                      </button>
-                      <button
-                        onClick={() => zoomIn()}
-                        className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
-                      >
-                        <ZoomIn size={24}/>
-                      </button>
-                    </div>
-                  </>
-                )}
-              </TransformWrapper>
+                        animate={{
+                          width: dimensions.width,
+                          height: dimensions.height,
+                          objectFit: 'contain',
+                          transition: { duration: shouldAnimate ? duration : 0 },
+                        }}
+                        exit={{
+                          width: location.state?.initialPosition?.width || dimensions.width,
+                          height: location.state?.initialPosition?.height || dimensions.height,
+                          objectFit: 'cover',
+                          transition: { duration: shouldAnimate ? duration : 0 },
+                        }}
+                        className="max-h-full max-w-full"
+                      />
+                    </motion.div>
+                  </TransformComponent>
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-4">
+                    <button
+                      onClick={() => zoomOut()}
+                      className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
+                    >
+                      <ZoomOut size={24}/>
+                    </button>
+                    <button
+                      onClick={() => resetTransform()}
+                      className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-full hover:bg-opacity-75 transition-colors"
+                    >
+                      {Math.round(scale * 100)}%
+                    </button>
+                    <button
+                      onClick={() => zoomIn()}
+                      className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
+                    >
+                      <ZoomIn size={24}/>
+                    </button>
+                  </div>
+                </>
+              )}
+            </TransformWrapper>
 
-              {/* Info and Close buttons */}
-              <div className="absolute top-4 right-4 flex space-x-2 z-60">
-                <button
-                  onClick={toggleInfo}
-                  className="text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-colors"
-                >
-                  <Info size={24}/>
-                </button>
-                <button
-                  onClick={handleCloseFullView}
-                  className="text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-colors"
-                >
-                  <X size={24}/>
-                </button>
-              </div>
-
-              {/* Info panel */}
-              <Sheet open={isInfoOpen} onOpenChange={setIsInfoOpen}>
-                <ImageInfoView info={selectedImage.info}/>
-              </Sheet>
+            {/* Info and Close buttons */}
+            <div className="absolute top-4 right-4 flex space-x-2 z-60">
+              <button
+                onClick={toggleInfo}
+                className="text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-colors"
+              >
+                <Info size={24}/>
+              </button>
+              <button
+                onClick={handleCloseFullView}
+                className="text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-colors"
+              >
+                <X size={24}/>
+              </button>
             </div>
+
+            {/* Info panel */}
+            <Sheet open={isInfoOpen} onOpenChange={setIsInfoOpen}>
+              <ImageInfoView info={selectedImage.info}/>
+            </Sheet>
+          </div>
         </motion.div>
-        )}
+      )}
     </AnimatePresence>
   )
 }
