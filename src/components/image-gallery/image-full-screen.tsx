@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
-import { Info, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Info, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { ImageInfo, ImageInfoView } from '@/components/image-gallery/image-info-view'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { Sheet } from '@/components/ui/sheet'
@@ -17,6 +17,8 @@ interface SelectedImage {
 interface FullScreenImageProps {
   selectedImage: SelectedImage | null;
   onClose: () => void;
+  onPrevImage: () => void;
+  onNextImage: () => void;
 }
 
 interface ImageDimensions {
@@ -24,7 +26,7 @@ interface ImageDimensions {
   height: number;
 }
 
-export function ImageFullScreen({ selectedImage, onClose }: FullScreenImageProps) {
+export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextImage }: FullScreenImageProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const duration = 0.2
@@ -38,7 +40,7 @@ export function ImageFullScreen({ selectedImage, onClose }: FullScreenImageProps
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const isDesktop = useBreakpoint('md')
 
-  const shouldAnimate = !!location.state?.isClickNavigation
+  const shouldAnimate = !!location.state?.isImageGrid
 
   useEffect(() => {
     if (!selectedImage) return
@@ -129,6 +131,20 @@ export function ImageFullScreen({ selectedImage, onClose }: FullScreenImageProps
   const toggleInfo = () => {
     setIsInfoOpen(!isInfoOpen)
   }
+
+  const handlePrevImage = useCallback(() => {
+    if (transformComponentRef.current) {
+      transformComponentRef.current.resetTransform(0)
+    }
+    onPrevImage()
+  }, [onPrevImage])
+
+  const handleNextImage = useCallback(() => {
+    if (transformComponentRef.current) {
+      transformComponentRef.current.resetTransform(0)
+    }
+    onNextImage()
+  }, [onNextImage])
 
   return (
     <AnimatePresence>
@@ -228,6 +244,24 @@ export function ImageFullScreen({ selectedImage, onClose }: FullScreenImageProps
                 </>
               )}
             </TransformWrapper>
+
+            {/* Navigation buttons */}
+            <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 left-4' : 'bottom-4 left-8'}`}>
+              <button
+                onClick={handlePrevImage}
+                className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
+              >
+                <ChevronLeft size={24} />
+              </button>
+            </div>
+            <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 right-4' : 'bottom-4 left-20'}`}>
+              <button
+                onClick={handleNextImage}
+                className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
+              >
+                <ChevronRight size={24} />
+              </button>
+            </div>
 
             <div className="absolute top-4 right-8 flex space-x-2 z-60">
               <button

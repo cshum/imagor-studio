@@ -16,7 +16,6 @@ import { LoadingBar } from '@/components/loading-bar.tsx'
 import { ImageInfo } from '@/components/image-gallery/image-info-view'
 import { FolderGrid, FolderProps } from '@/components/image-gallery/folder-grid'
 
-
 export function HomePage() {
   const { id } = useParams<{ id: string }>()
   const location = useLocation()
@@ -29,6 +28,7 @@ export function HomePage() {
   const isDesktop = useBreakpoint('md')
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImage, setSelectedImage] = useState<ImageProps & { info?: ImageInfo } | null>(null)
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
 
   const maxItemWidth = 280
 
@@ -82,9 +82,11 @@ export function HomePage() {
             }
           }
         })
+        setSelectedImageIndex(generatedImages.findIndex(img => img.id === id))
       }
     } else {
       setSelectedImage(null)
+      setSelectedImageIndex(null)
     }
   }, [id])
 
@@ -101,7 +103,7 @@ export function HomePage() {
 
   const handleImageClick = useCallback((
     image: ImageProps,
-    position: { top: number; left: number; width: number; height: number }
+    position?: { top: number; left: number; width: number; height: number }
   ) => {
     const fullSizeSrc = image.src.replace('/300/225', '/1200/900');
     setIsLoading(true)
@@ -111,6 +113,8 @@ export function HomePage() {
     preloadImage.src = fullSizeSrc;
     preloadImage.onload = () => {
       setIsLoading(false)
+      const index = images.findIndex(img => img.id === image.id)
+      setSelectedImageIndex(index)
       setSelectedImage({
         ...image,
         src: fullSizeSrc,
@@ -131,10 +135,10 @@ export function HomePage() {
         }
       })
       navigate(`/image/${image.id}`, {
-        state: { isClickNavigation: true, initialPosition: position }
+        state: { isImageGrid: !!position, initialPosition: position }
       })
     };
-  }, [navigate])
+  }, [navigate, images])
 
   const handleFolderClick = useCallback((folder: FolderProps) => {
     // Here you would typically navigate to a new route or update the state to show the folder's contents
@@ -143,17 +147,37 @@ export function HomePage() {
     // navigate(`/folder/${folder.id}`)
   }, [])
 
+  const handleCloseFullView = useCallback(() => {
+    setSelectedImage(null)
+    setSelectedImageIndex(null)
+    navigate('/', {
+      state: {
+        isClosingImage: true,
+        initialPosition: location.state?.initialPosition
+      }
+    })
+  }, [navigate, location.state?.initialPosition])
+
+  const handlePrevImage = useCallback(() => {
+    if (selectedImageIndex !== null && selectedImageIndex > 0) {
+      handleImageClick(images[selectedImageIndex - 1])
+    }
+  }, [selectedImageIndex, images, handleImageClick])
+
+  const handleNextImage = useCallback(() => {
+    if (selectedImageIndex !== null && selectedImageIndex < images.length - 1) {
+      handleImageClick(images[selectedImageIndex + 1])
+    }
+  }, [selectedImageIndex, images, handleImageClick])
+
   useEffect(() => {
     if (location.state?.isClosingImage) {
       setSelectedImage(null)
+      setSelectedImageIndex(null)
     }
   }, [location])
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 40 : 30)
-
-  const handleCloseFullView = useCallback(() => {
-    setSelectedImage(null)
-  }, [])
 
   return (
     <>
@@ -192,6 +216,8 @@ export function HomePage() {
         <ImageFullScreen
           selectedImage={selectedImage}
           onClose={handleCloseFullView}
+          onPrevImage={handlePrevImage}
+          onNextImage={handleNextImage}
         />
       </div>
     </>
