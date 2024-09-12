@@ -8,22 +8,24 @@ import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { Sheet } from '@/components/ui/sheet'
 
 interface SelectedImage {
-  src: string;
-  alt: string;
-  id: string;
-  info?: ImageInfo;
+  src: string
+  alt: string
+  id: string
+  info?: ImageInfo
 }
 
 interface FullScreenImageProps {
-  selectedImage: SelectedImage | null;
-  onClose: () => void;
-  onPrevImage?: () => void;
-  onNextImage?: () => void;
+  selectedImage: SelectedImage | null
+  onClose: () => void
+  onPrevImage?: () => void
+  onNextImage?: () => void
 }
 
 interface ImageDimensions {
-  width: number;
-  height: number;
+  width: number
+  height: number
+  naturalWidth: number
+  naturalHeight: number
 }
 
 export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextImage }: FullScreenImageProps) {
@@ -36,7 +38,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   const DRAG_THRESHOLD = 100
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  const [dimensions, setDimensions] = useState<ImageDimensions>({ width: 0, height: 0 })
+  const [dimensions, setDimensions] = useState<ImageDimensions>({ width: 0, height: 0, naturalWidth: 0, naturalHeight: 0 })
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const isDesktop = useBreakpoint('md')
   const initialPosition = location.state?.initialPosition
@@ -109,7 +111,11 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
 
         let newWidth, newHeight
 
-        if (imageAspectRatio > windowAspectRatio) {
+        if (img.width <= windowWidth && img.height <= windowHeight) {
+          // Image is smaller than the window, keep original dimensions
+          newWidth = img.width
+          newHeight = img.height
+        } else if (imageAspectRatio > windowAspectRatio) {
           newWidth = windowWidth
           newHeight = windowWidth / imageAspectRatio
         } else {
@@ -117,7 +123,12 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
           newWidth = windowHeight * imageAspectRatio
         }
 
-        setDimensions({ width: Math.round(newWidth), height: Math.round(newHeight) })
+        setDimensions({
+          width: Math.round(newWidth),
+          height: Math.round(newHeight),
+          naturalWidth: img.width,
+          naturalHeight: img.height
+        })
       }
     }
   }, [selectedImage, isInfoOpen, isDesktop])
@@ -163,6 +174,10 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     }),
   }
 
+  const calculateZoomPercentage = (scale: number) => {
+    return Math.round((scale * dimensions.width / dimensions.naturalWidth) * 100)
+  }
+
   return (
     <AnimatePresence>
       {selectedImage && (
@@ -180,6 +195,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
             <TransformWrapper
               initialScale={1}
               minScale={0.5}
+              maxScale={3}
               centerOnInit={true}
               onTransformed={({ state }) => handleZoomChange(state.scale)}
               onZoom={({ state }) => handleZoomChange(state.scale)}
@@ -277,7 +293,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                       onClick={() => resetTransform()}
                       className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-full hover:bg-opacity-75 transition-colors"
                     >
-                      {Math.round(scale * 100)}%
+                      {calculateZoomPercentage(scale)}%
                     </button>
                     <button
                       onClick={() => zoomIn()}
