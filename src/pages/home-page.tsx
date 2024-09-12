@@ -158,17 +158,14 @@ export function HomePage() {
     })
   }, [navigate, location.state?.initialPosition])
 
-  const handlePrevImage = useCallback(() => {
-    if (selectedImageIndex !== null && selectedImageIndex > 0) {
-      handleImageClick(images[selectedImageIndex - 1])
-    }
-  }, [selectedImageIndex, images, handleImageClick])
-
-  const handleNextImage = useCallback(() => {
-    if (selectedImageIndex !== null && selectedImageIndex < images.length - 1) {
-      handleImageClick(images[selectedImageIndex + 1])
-    }
-  }, [selectedImageIndex, images, handleImageClick])
+  const { handlePrevImage, handleNextImage } = useMemo(() => ({
+    handlePrevImage: selectedImageIndex !== null && selectedImageIndex > 0
+      ? () => handleImageClick(images[selectedImageIndex - 1])
+      : undefined,
+    handleNextImage: selectedImageIndex !== null && selectedImageIndex < images.length - 1
+      ? () => handleImageClick(images[selectedImageIndex + 1])
+      : undefined
+  }), [selectedImageIndex, images, handleImageClick])
 
   useEffect(() => {
     if (location.state?.isClosingImage) {

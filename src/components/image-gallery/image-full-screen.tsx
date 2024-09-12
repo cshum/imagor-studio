@@ -17,8 +17,8 @@ interface SelectedImage {
 interface FullScreenImageProps {
   selectedImage: SelectedImage | null;
   onClose: () => void;
-  onPrevImage: () => void;
-  onNextImage: () => void;
+  onPrevImage?: () => void;
+  onNextImage?: () => void;
 }
 
 interface ImageDimensions {
@@ -137,7 +137,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       transformComponentRef.current.resetTransform(0)
     }
     setDirection(-1)
-    onPrevImage()
+    onPrevImage?.()
   }, [onPrevImage])
 
   const handleNextImage = useCallback(() => {
@@ -145,7 +145,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       transformComponentRef.current.resetTransform(0)
     }
     setDirection(1)
-    onNextImage()
+    onNextImage?.()
   }, [onNextImage])
 
   const slideVariants = {
@@ -290,22 +290,26 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               )}
             </TransformWrapper>
 
-            <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 left-4' : 'bottom-4 left-8'}`}>
-              <button
-                onClick={handlePrevImage}
-                className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
-              >
-                <ChevronLeft size={24} />
-              </button>
-            </div>
-            <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 right-4' : 'bottom-4 left-20'}`}>
-              <button
-                onClick={handleNextImage}
-                className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
-              >
-                <ChevronRight size={24} />
-              </button>
-            </div>
+            {onPrevImage && (
+              <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 left-4' : 'bottom-4 left-8'}`}>
+                <button
+                  onClick={handlePrevImage}
+                  className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+              </div>
+            )}
+            {onNextImage && (
+              <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 right-4' : 'bottom-4 left-20'}`}>
+                <button
+                  onClick={handleNextImage}
+                  className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </div>
+            )}
 
             <div className="absolute top-4 right-8 flex space-x-2 z-60">
               <button
