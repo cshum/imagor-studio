@@ -40,6 +40,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const isDesktop = useBreakpoint('md')
   const initialPosition = location.state?.initialPosition
+  const [direction, setDirection] = useState(0)
 
   useEffect(() => {
     if (!selectedImage) return
@@ -135,6 +136,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     if (transformComponentRef.current) {
       transformComponentRef.current.resetTransform(0)
     }
+    setDirection(-1)
     onPrevImage()
   }, [onPrevImage])
 
@@ -142,8 +144,24 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     if (transformComponentRef.current) {
       transformComponentRef.current.resetTransform(0)
     }
+    setDirection(1)
     onNextImage()
   }, [onNextImage])
+
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 20 : -20,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      x: direction < 0 ? 20 : -20,
+      opacity: 0,
+    }),
+  }
 
   return (
     <AnimatePresence>
@@ -184,41 +202,69 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                       height: '100%',
                     }}
                   >
-                    <motion.div
-                      initial={initialPosition}
-                      animate={{
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        transition: { duration: duration },
-                      }}
-                      exit={initialPosition || false}
-                      className="absolute flex items-center justify-center"
-                    >
-                      <motion.img
-                        src={selectedImage.src}
-                        alt={selectedImage.alt}
-                        initial={{
-                          width: initialPosition?.width || dimensions.width,
-                          height: initialPosition?.height || dimensions.height,
-                          objectFit: 'cover',
-                        }}
+                    {initialPosition ? (
+                      <motion.div
+                        initial={initialPosition}
                         animate={{
-                          width: dimensions.width,
-                          height: dimensions.height,
-                          objectFit: 'contain',
-                          transition: { duration: initialPosition ? duration : 0 },
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          transition: { duration: duration },
                         }}
-                        exit={{
-                          width: initialPosition?.width || dimensions.width,
-                          height: initialPosition?.height || dimensions.height,
-                          objectFit: 'cover',
-                          transition: { duration: initialPosition ? duration : 0 },
+                        exit={initialPosition || false}
+                        className="absolute flex items-center justify-center"
+                      >
+                        <motion.img
+                          src={selectedImage.src}
+                          alt={selectedImage.alt}
+                          initial={{
+                            width: initialPosition.width,
+                            height: initialPosition.height,
+                            objectFit: 'cover',
+                          }}
+                          animate={{
+                            width: dimensions.width,
+                            height: dimensions.height,
+                            objectFit: 'contain',
+                            transition: { duration: duration },
+                          }}
+                          exit={{
+                            width: initialPosition.width,
+                            height: initialPosition.height,
+                            objectFit: 'cover',
+                            transition: { duration: duration },
+                          }}
+                          className="max-h-full max-w-full"
+                        />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key={selectedImage.id}
+                        variants={slideVariants}
+                        custom={direction}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{
+                          x: { type: "spring", stiffness: 300, damping: 30 },
+                          opacity: { duration: 0.2 }
                         }}
-                        className="max-h-full max-w-full"
-                      />
-                    </motion.div>
+                        className="absolute flex items-center justify-center w-full h-full"
+                      >
+                        <motion.img
+                          src={selectedImage.src}
+                          alt={selectedImage.alt}
+                          initial={false}
+                          animate={{
+                            width: dimensions.width,
+                            height: dimensions.height,
+                            transition: { duration: 0 },
+                          }}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </motion.div>
+                    )}
                   </TransformComponent>
                   <div className="absolute bottom-4 right-8 flex space-x-4">
                     <button
@@ -244,7 +290,6 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               )}
             </TransformWrapper>
 
-            {/* Navigation buttons */}
             <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 left-4' : 'bottom-4 left-8'}`}>
               <button
                 onClick={handlePrevImage}
