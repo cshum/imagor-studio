@@ -63,9 +63,18 @@ export function HomePage() {
     if (id) {
       const imageFromUrl = generatedImages.find(img => img.id === id)
       if (imageFromUrl) {
+        const fullSizeSrc = imageFromUrl.src.replace('/300/225', '/1200/900');
+        if (!location.state?.direction) {
+          setIsLoading(true)
+          const preloadImage = new Image();
+          preloadImage.src = fullSizeSrc;
+          preloadImage.onload = () => {
+            setIsLoading(false)
+          }
+        }
         setSelectedImage({
           ...imageFromUrl,
-          src: imageFromUrl.src.replace('/300/225', '/1200/900'),
+          src: fullSizeSrc,
           info: {
             exif: {
               "Camera": "Canon EOS 5D Mark IV",
@@ -103,7 +112,8 @@ export function HomePage() {
 
   const handleImageClick = useCallback((
     image: ImageProps,
-    position?: { top: number; left: number; width: number; height: number }
+    position: { top: number; left: number; width: number; height: number } | null,
+    direction?: -1 | 1
   ) => {
     const fullSizeSrc = image.src.replace('/300/225', '/1200/900');
     setIsLoading(true)
@@ -135,7 +145,7 @@ export function HomePage() {
         }
       })
       navigate(`/image/${image.id}`, {
-        state: { initialPosition: position }
+        state: { initialPosition: position, direction }
       })
     };
   }, [navigate, images])
@@ -160,10 +170,10 @@ export function HomePage() {
 
   const { handlePrevImage, handleNextImage } = useMemo(() => ({
     handlePrevImage: selectedImageIndex !== null && selectedImageIndex > 0
-      ? () => handleImageClick(images[selectedImageIndex - 1])
+      ? () => handleImageClick(images[selectedImageIndex - 1], null, -1)
       : undefined,
     handleNextImage: selectedImageIndex !== null && selectedImageIndex < images.length - 1
-      ? () => handleImageClick(images[selectedImageIndex + 1])
+      ? () => handleImageClick(images[selectedImageIndex + 1], null, 1)
       : undefined
   }), [selectedImageIndex, images, handleImageClick])
 
