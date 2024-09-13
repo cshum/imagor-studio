@@ -43,6 +43,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   const isDesktop = useBreakpoint('md')
   const initialPosition = location.state?.initialPosition
   const [direction, setDirection] = useState(0)
+  const [isClosing, setIsClosing] = useState(false)
 
   useEffect(() => {
     if (!selectedImage) return
@@ -68,14 +69,18 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       transformComponentRef.current.resetTransform(0)
     }
     setIsInfoOpen(false)
-    onClose()
-    navigate('/', {
-      state: {
-        isClosingImage: true,
-        initialPosition: initialPosition
-      }
-    })
-  }, [navigate, initialPosition, onClose])
+    setIsClosing(true)
+
+    setTimeout(() => {
+      onClose()
+      navigate('/', {
+        state: {
+          isClosingImage: true,
+          initialPosition: initialPosition
+        }
+      })
+    }, duration * 1000)
+  }, [navigate, initialPosition, onClose, duration])
 
   const handlePanStart = useCallback((_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
     if (scale === 1) {
@@ -112,7 +117,6 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
         let newWidth, newHeight
 
         if (img.width <= windowWidth && img.height <= windowHeight) {
-          // Image is smaller than the window, keep original dimensions
           newWidth = img.width
           newHeight = img.height
         } else if (imageAspectRatio > windowAspectRatio) {
@@ -184,6 +188,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
         <motion.div
           className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center"
           ref={overlayRef}
+          exit={{ transition: { duration: duration } }}
         >
           <div
             className={`
@@ -277,6 +282,10 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                             height: dimensions.height,
                             transition: { duration: 0 },
                           }}
+                          exit={isClosing ? {
+                            scale: 0.5,
+                            transition: { duration: duration }
+                          } : {}}
                           className="max-h-full max-w-full object-contain"
                         />
                       </motion.div>
