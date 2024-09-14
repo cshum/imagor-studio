@@ -66,7 +66,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
 
   const handleCloseFullView = useCallback(() => {
     if (transformComponentRef.current) {
-      transformComponentRef.current.resetTransform(0)
+      transformComponentRef.current.resetTransform()
     }
     setIsInfoOpen(false)
     setIsClosing(true)
