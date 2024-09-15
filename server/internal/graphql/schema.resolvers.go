@@ -7,33 +7,120 @@ package graphql
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/99designs/gqlgen/graphql"
+	"go.uber.org/zap"
 )
 
 // UploadFile is the resolver for the uploadFile field.
 func (r *mutationResolver) UploadFile(ctx context.Context, path string, content graphql.Upload) (bool, error) {
-	panic(fmt.Errorf("not implemented: UploadFile - uploadFile"))
+	r.Logger.Info("Uploading file", zap.String("path", path), zap.String("filename", content.Filename))
+
+	// The content.File is already an io.Reader, so we don't need to open it
+	err := r.Storage.Put(ctx, path, content.File)
+	if err != nil {
+		r.Logger.Error("Failed to upload file", zap.Error(err))
+		return false, fmt.Errorf("failed to upload file: %w", err)
+	}
+
+	return true, nil
 }
 
 // DeleteFile is the resolver for the deleteFile field.
 func (r *mutationResolver) DeleteFile(ctx context.Context, path string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteFile - deleteFile"))
+	r.Logger.Info("Deleting file", zap.String("path", path))
+
+	err := r.Storage.Delete(ctx, path)
+	if err != nil {
+		r.Logger.Error("Failed to delete file", zap.Error(err))
+		return false, fmt.Errorf("failed to delete file: %w", err)
+	}
+
+	return true, nil
 }
 
 // CreateFolder is the resolver for the createFolder field.
 func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool, error) {
-	panic(fmt.Errorf("not implemented: CreateFolder - createFolder"))
+	r.Logger.Info("Creating folder", zap.String("path", path))
+
+	err := r.Storage.CreateFolder(ctx, path)
+	if err != nil {
+		r.Logger.Error("Failed to create folder", zap.Error(err))
+		return false, fmt.Errorf("failed to create folder: %w", err)
+	}
+
+	return true, nil
 }
 
 // ListFiles is the resolver for the listFiles field.
 func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool) (*FileList, error) {
-	panic(fmt.Errorf("not implemented: ListFiles - listFiles"))
+	r.Logger.Info("Listing files", zap.String("path", path), zap.Int("offset", offset), zap.Int("limit", limit))
+
+	onlyFilesValue := false
+	onlyFoldersValue := false
+	if onlyFiles != nil {
+		onlyFilesValue = *onlyFiles
+	}
+	if onlyFolders != nil {
+		onlyFoldersValue = *onlyFolders
+	}
+
+	result, err := r.Storage.List(ctx, path, offset, limit, onlyFilesValue, onlyFoldersValue)
+	if err != nil {
+		r.Logger.Error("Failed to list files", zap.Error(err))
+		return nil, fmt.Errorf("failed to list files: %w", err)
+	}
+
+	files := make([]*File, len(result.Items))
+	for i, item := range result.Items {
+		files[i] = &File{
+			Name:        item.Name,
+			Path:        item.Path,
+			Size:        int(item.Size),
+			IsDirectory: item.IsDir,
+		}
+	}
+
+	return &FileList{
+		Items:      files,
+		TotalCount: result.TotalCount,
+	}, nil
 }
 
 // GetFile is the resolver for the getFile field.
 func (r *queryResolver) GetFile(ctx context.Context, path string) (*File, error) {
-	panic(fmt.Errorf("not implemented: GetFile - getFile"))
+	r.Logger.Info("Getting file", zap.String("path", path))
+
+	reader, err := r.Storage.Get(ctx, path)
+	if err != nil {
+		r.Logger.Error("Failed to get file", zap.Error(err))
+		return nil, fmt.Errorf("failed to get file: %w", err)
+	}
+	defer reader.Close()
+
+	content, err := ioutil.ReadAll(reader)
+	if err != nil {
+		r.Logger.Error("Failed to read file content", zap.Error(err))
+		return nil, fmt.Errorf("failed to read file content: %w", err)
+	}
+
+	// Determine if it's a directory based on the content
+	isDirectory := len(content) == 0 && path[len(path)-1] == '/'
+
+	file := &File{
+		Name:        path[len(path)-1:],
+		Path:        path,
+		Size:        len(content),
+		IsDirectory: isDirectory,
+	}
+
+	if !isDirectory {
+		contentStr := string(content)
+		file.Content = &contentStr
+	}
+
+	return file, nil
 }
 
 // Mutation returns MutationResolver implementation.
