@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { CollapseMenuButton } from '@/components/admin-panel/collapse-menu-button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useTranslation } from 'react-i18next'
 
 interface MenuProps {
   isOpen: boolean | undefined;
@@ -14,6 +15,7 @@ interface MenuProps {
 
 export function Menu({ isOpen }: MenuProps) {
   const location = useLocation() // Use React Router's useLocation to get the current pathname
+  const { t } = useTranslation()
   const menuList = getMenuList(location.pathname) // Pass current pathname to getMenuList
 
   return (
@@ -115,12 +117,12 @@ export function Menu({ isOpen }: MenuProps) {
                         isOpen === false ? 'opacity-0 hidden' : 'opacity-100',
                       )}
                     >
-                      Sign out
+                      {t('signOut')}
                     </p>
                   </Button>
                 </TooltipTrigger>
                 {isOpen === false && (
-                  <TooltipContent side="right">Sign out</TooltipContent>
+                  <TooltipContent side="right">{t('signOut')}</TooltipContent>
                 )}
               </Tooltip>
             </TooltipProvider>
