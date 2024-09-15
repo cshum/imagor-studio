@@ -1,0 +1,25 @@
+type Query {
+    listFiles(path: String!, offset: Int!, limit: Int!, onlyFiles: Boolean, onlyFolders: Boolean): FileList!
+    getFile(path: String!): File
+}
+
+type Mutation {
+    uploadFile(path: String!, content: Upload!): Boolean!
+    deleteFile(path: String!): Boolean!
+    createFolder(path: String!): Boolean!
+}
+
+type FileList {
+    items: [File!]!
+    totalCount: Int!
+}
+
+type File {
+    name: String!
+    path: String!
+    size: Int!
+    isDirectory: Boolean!
+    content: String
+}
+
+scalar Upload
