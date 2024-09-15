@@ -2,17 +2,17 @@ package server
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/graphql"
 	"github.com/cshum/imagor-studio/server/internal/storage"
-	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
-	router *gin.Engine
-	cfg    *config.Config
+	cfg *config.Config
 }
 
 func New(cfg *config.Config) (*Server, error) {
@@ -25,16 +25,16 @@ func New(cfg *config.Config) (*Server, error) {
 	schema := graphql.NewExecutableSchema(graphql.Config{Resolvers: resolver})
 	gqlHandler := handler.NewDefaultServer(schema)
 
-	router := gin.Default()
-	router.POST("/query", gin.WrapH(gqlHandler))
-	router.GET("/", gin.WrapH(playground.Handler("GraphQL playground", "/query")))
+	http.Handle("/query", gqlHandler)
+	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 
 	return &Server{
-		router: router,
-		cfg:    cfg,
+		cfg: cfg,
 	}, nil
 }
 
 func (s *Server) Run() error {
-	return s.router.Run(fmt.Sprintf(":%d", s.cfg.Port))
+	addr := fmt.Sprintf(":%d", s.cfg.Port)
+	fmt.Printf("Server is running on http://localhost%s\n", addr)
+	return http.ListenAndServe(addr, nil)
 }
