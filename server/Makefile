@@ -14,6 +14,9 @@ MAIN_PACKAGE=./cmd/server
 # Build flags
 LDFLAGS=-ldflags "-w -s"
 
+# gqlgen
+GQLGEN=go run github.com/99designs/gqlgen generate
+
 all: test build
 
 build:
@@ -44,4 +47,14 @@ build-linux:
 docker-build:
 	docker build -t imagor-studio-server .
 
-.PHONY: all build test clean run deps tidy build-linux docker-build
+# gqlgen commands
+gqlgen:
+	$(GQLGEN)
+
+gqlgen-init:
+	$(GQLGEN) init
+
+gqlgen-update:
+	$(GQLGEN) --verbose
+
+.PHONY: all build test clean run deps tidy build-linux docker-build gqlgen gqlgen-init gqlgen-update
