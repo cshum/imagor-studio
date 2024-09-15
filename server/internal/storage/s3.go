@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"io"
-	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -38,6 +37,11 @@ func (s *S3Storage) List(ctx context.Context, path string, offset, limit int, on
 		Delimiter: aws.String("/"),
 	}
 
+	if onlyFiles {
+		// For files only, we don't use a delimiter
+		params.Delimiter = nil
+	}
+
 	var items []FileInfo
 	var totalCount int
 
@@ -48,35 +52,33 @@ func (s *S3Storage) List(ctx context.Context, path string, offset, limit int, on
 			return ListResult{}, err
 		}
 
-		for _, commonPrefix := range page.CommonPrefixes {
-			if onlyFiles {
-				continue
+		if !onlyFiles {
+			for _, commonPrefix := range page.CommonPrefixes {
+				folderName := strings.TrimPrefix(*commonPrefix.Prefix, prefix)
+				folderName = strings.TrimSuffix(folderName, "/")
+				items = append(items, FileInfo{
+					Name:  folderName,
+					Path:  *commonPrefix.Prefix,
+					IsDir: true,
+				})
+				totalCount++
 			}
-			folderName := strings.TrimPrefix(*commonPrefix.Prefix, prefix)
-			folderName = strings.TrimSuffix(folderName, "/")
-			items = append(items, FileInfo{
-				Name:  folderName,
-				Path:  *commonPrefix.Prefix,
-				IsDir: true,
-			})
-			totalCount++
 		}
 
-		for _, object := range page.Contents {
-			if onlyFolders {
-				continue
+		if !onlyFolders {
+			for _, object := range page.Contents {
+				if strings.HasSuffix(*object.Key, "/") {
+					continue // Skip directory markers
+				}
+				name := strings.TrimPrefix(*object.Key, prefix)
+				items = append(items, FileInfo{
+					Name:  name,
+					Path:  *object.Key,
+					Size:  *object.Size,
+					IsDir: false,
+				})
+				totalCount++
 			}
-			if strings.HasSuffix(*object.Key, "/") {
-				continue // Skip directory markers
-			}
-			name := filepath.Base(*object.Key)
-			items = append(items, FileInfo{
-				Name:  name,
-				Path:  *object.Key,
-				Size:  *object.Size,
-				IsDir: false,
-			})
-			totalCount++
 		}
 	}
 
@@ -131,6 +133,7 @@ func (s *S3Storage) CreateFolder(ctx context.Context, path string) error {
 	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(path),
+		Body:   strings.NewReader(""),
 	})
 	return err
 }
