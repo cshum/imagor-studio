@@ -11,16 +11,18 @@ node_modules
 dist
 dist-ssr
 *.local
+.vite
 
 # Editor directories and files
+.idea
 .vscode/*
 !.vscode/extensions.json
-.idea
-.vite
-.claudesync
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+.claudesync
+imagor-studio-server
