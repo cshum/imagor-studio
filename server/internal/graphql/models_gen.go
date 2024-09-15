@@ -14,3 +14,9 @@ type FileList struct {
 	Items      []*File `json:"items"`
 	TotalCount int     `json:"totalCount"`
 }
+
+type Mutation struct {
+}
+
+type Query struct {
+}

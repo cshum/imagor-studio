@@ -49,12 +49,12 @@ docker-build:
 
 # gqlgen commands
 gqlgen:
-	$(GQLGEN)
+	$(GQLGEN) --config gqlgen.yml
 
 gqlgen-init:
 	$(GQLGEN) init
 
 gqlgen-update:
-	$(GQLGEN) --verbose
+	$(GQLGEN) --verbose --config gqlgen.yml
 
 .PHONY: all build test clean run deps tidy build-linux docker-build gqlgen gqlgen-init gqlgen-update
