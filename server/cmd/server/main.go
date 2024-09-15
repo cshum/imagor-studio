@@ -5,6 +5,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/server"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -13,12 +14,14 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
+	defer cfg.Logger.Sync()
+
 	srv, err := server.New(cfg)
 	if err != nil {
-		log.Fatalf("Failed to create server: %v", err)
+		cfg.Logger.Fatal("Failed to create server", zap.Error(err))
 	}
 
 	if err := srv.Run(); err != nil {
-		log.Fatalf("Failed to run server: %v", err)
+		cfg.Logger.Fatal("Failed to run server", zap.Error(err))
 	}
 }

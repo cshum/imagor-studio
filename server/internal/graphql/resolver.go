@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"github.com/cshum/imagor-studio/server/internal/storage"
+	"go.uber.org/zap"
 )
 
 // This file will not be regenerated automatically.
@@ -10,4 +11,5 @@ import (
 
 type Resolver struct {
 	Storage storage.Storage
+	Logger  *zap.Logger
 }

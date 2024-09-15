@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/peterbourgon/ff/v3"
+	"go.uber.org/zap"
 )
 
 type Config struct {
@@ -14,6 +15,7 @@ type Config struct {
 	S3Bucket    string
 	S3Region    string
 	FilesysRoot string
+	Logger      *zap.Logger
 }
 
 func Load() (*Config, error) {
@@ -40,6 +42,13 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error parsing configuration: %w", err)
 	}
+
+	// Initialize zap logger
+	logger, err := zap.NewProduction()
+	if err != nil {
+		return nil, fmt.Errorf("error initializing logger: %w", err)
+	}
+	cfg.Logger = logger
 
 	return cfg, nil
 }

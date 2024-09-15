@@ -73,7 +73,7 @@ func (s *S3Storage) List(ctx context.Context, path string, offset, limit int, on
 			items = append(items, FileInfo{
 				Name:  name,
 				Path:  *object.Key,
-				Size:  object.Size,
+				Size:  *object.Size,
 				IsDir: false,
 			})
 			totalCount++
