@@ -1,4 +1,4 @@
-import { Bookmark, LayoutGrid, LucideIcon, Settings, SquarePen, Tag, Users } from 'lucide-react'
+import { LayoutGrid, LucideIcon, Settings, SquarePen, Users } from 'lucide-react'
 
 type Submenu = {
   href: string;
@@ -53,20 +53,6 @@ export function getMenuList(pathname: string): Group[] {
               active: pathname === '/posts/new',
             },
           ],
-        },
-        {
-          href: '/categories',
-          label: 'Categories',
-          active: pathname.includes('/categories'),
-          icon: Bookmark,
-          submenus: [],
-        },
-        {
-          href: '/tags',
-          label: 'Tags',
-          active: pathname.includes('/tags'),
-          icon: Tag,
-          submenus: [],
         },
       ],
     },
