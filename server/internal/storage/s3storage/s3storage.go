@@ -5,6 +5,7 @@ import (
 	"io"
 	"path"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -124,44 +125,60 @@ func (s *S3Storage) List(ctx context.Context, path string, options storage.ListO
 	}
 
 	var items []storage.FileInfo
-	var totalCount int
+	var totalCount int64
 
-	paginator := s3.NewListObjectsV2Paginator(s.client, params)
+	// First, get the total count
+	countParams := *params
+	countParams.MaxKeys = nil // Remove any limit to get all objects
+	paginator := s3.NewListObjectsV2Paginator(s.client, &countParams)
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
 			return storage.ListResult{}, err
 		}
-
+		totalCount += int64(len(page.Contents))
 		if !options.OnlyFiles {
-			for _, commonPrefix := range page.CommonPrefixes {
-				folderName := s.relativePath(*commonPrefix.Prefix)
-				folderName = strings.TrimSuffix(folderName, "/")
-				items = append(items, storage.FileInfo{
-					Name:  folderName,
-					Path:  s.relativePath(*commonPrefix.Prefix),
-					IsDir: true,
-				})
-				totalCount++
-			}
+			totalCount += int64(len(page.CommonPrefixes))
 		}
+	}
 
-		if !options.OnlyFolders {
-			for _, object := range page.Contents {
-				if strings.HasSuffix(*object.Key, "/") {
-					continue
-				}
-				name := s.relativePath(*object.Key)
-				items = append(items, storage.FileInfo{
-					Name:         name,
-					Path:         s.relativePath(*object.Key),
-					Size:         *object.Size,
-					IsDir:        false,
-					ModifiedTime: *object.LastModified,
-					ETag:         strings.Trim(*object.ETag, "\""),
-				})
-				totalCount++
+	// Now, get the actual items with pagination
+	params.MaxKeys = aws.Int32(int32(options.Limit))
+	if options.Offset > 0 {
+		params.StartAfter = aws.String(s.fullPath(path) + strconv.Itoa(options.Offset))
+	}
+
+	result, err := s.client.ListObjectsV2(ctx, params)
+	if err != nil {
+		return storage.ListResult{}, err
+	}
+
+	if !options.OnlyFiles {
+		for _, commonPrefix := range result.CommonPrefixes {
+			folderName := s.relativePath(*commonPrefix.Prefix)
+			folderName = strings.TrimSuffix(folderName, "/")
+			items = append(items, storage.FileInfo{
+				Name:  folderName,
+				Path:  s.relativePath(*commonPrefix.Prefix),
+				IsDir: true,
+			})
+		}
+	}
+
+	if !options.OnlyFolders {
+		for _, object := range result.Contents {
+			if strings.HasSuffix(*object.Key, "/") {
+				continue
 			}
+			name := s.relativePath(*object.Key)
+			items = append(items, storage.FileInfo{
+				Name:         name,
+				Path:         s.relativePath(*object.Key),
+				Size:         *object.Size,
+				IsDir:        false,
+				ModifiedTime: *object.LastModified,
+				ETag:         strings.Trim(*object.ETag, "\""),
+			})
 		}
 	}
 
@@ -188,19 +205,9 @@ func (s *S3Storage) List(ctx context.Context, path string, options storage.ListO
 		}
 	})
 
-	// Apply pagination
-	start := options.Offset
-	end := options.Offset + options.Limit
-	if start >= len(items) {
-		return storage.ListResult{TotalCount: totalCount}, nil
-	}
-	if end > len(items) {
-		end = len(items)
-	}
-
 	return storage.ListResult{
-		Items:      items[start:end],
-		TotalCount: totalCount,
+		Items:      items,
+		TotalCount: int(totalCount),
 	}, nil
 }
 
