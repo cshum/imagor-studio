@@ -74,7 +74,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		ListFiles func(childComplexity int, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *string, sortOrder *string) int
+		ListFiles func(childComplexity int, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) int
 		StatFile  func(childComplexity int, path string) int
 	}
 }
@@ -85,7 +85,7 @@ type MutationResolver interface {
 	CreateFolder(ctx context.Context, path string) (bool, error)
 }
 type QueryResolver interface {
-	ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *string, sortOrder *string) (*FileList, error)
+	ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error)
 	StatFile(ctx context.Context, path string) (*FileStat, error)
 }
 
@@ -238,7 +238,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.ListFiles(childComplexity, args["path"].(string), args["offset"].(int), args["limit"].(int), args["onlyFiles"].(*bool), args["onlyFolders"].(*bool), args["sortBy"].(*string), args["sortOrder"].(*string)), true
+		return e.complexity.Query.ListFiles(childComplexity, args["path"].(string), args["offset"].(int), args["limit"].(int), args["onlyFiles"].(*bool), args["onlyFolders"].(*bool), args["sortBy"].(*SortOption), args["sortOrder"].(*SortOrder)), true
 
 	case "Query.statFile":
 		if e.complexity.Query.StatFile == nil {
@@ -683,44 +683,44 @@ func (ec *executionContext) field_Query_listFiles_argsOnlyFolders(
 func (ec *executionContext) field_Query_listFiles_argsSortBy(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (*string, error) {
+) (*SortOption, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["sortBy"]
 	if !ok {
-		var zeroVal *string
+		var zeroVal *SortOption
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sortBy"))
 	if tmp, ok := rawArgs["sortBy"]; ok {
-		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+		return ec.unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgraphqlᚐSortOption(ctx, tmp)
 	}
 
-	var zeroVal *string
+	var zeroVal *SortOption
 	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_listFiles_argsSortOrder(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (*string, error) {
+) (*SortOrder, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["sortOrder"]
 	if !ok {
-		var zeroVal *string
+		var zeroVal *SortOrder
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sortOrder"))
 	if tmp, ok := rawArgs["sortOrder"]; ok {
-		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+		return ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgraphqlᚐSortOrder(ctx, tmp)
 	}
 
-	var zeroVal *string
+	var zeroVal *SortOrder
 	return zeroVal, nil
 }
 
@@ -1542,7 +1542,7 @@ func (ec *executionContext) _Query_listFiles(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ListFiles(rctx, fc.Args["path"].(string), fc.Args["offset"].(int), fc.Args["limit"].(int), fc.Args["onlyFiles"].(*bool), fc.Args["onlyFolders"].(*bool), fc.Args["sortBy"].(*string), fc.Args["sortOrder"].(*string))
+		return ec.resolvers.Query().ListFiles(rctx, fc.Args["path"].(string), fc.Args["offset"].(int), fc.Args["limit"].(int), fc.Args["onlyFiles"].(*bool), fc.Args["onlyFolders"].(*bool), fc.Args["sortBy"].(*SortOption), fc.Args["sortOrder"].(*SortOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5540,6 +5540,38 @@ func (ec *executionContext) marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑ
 		return graphql.Null
 	}
 	return ec._FileStat(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgraphqlᚐSortOption(ctx context.Context, v interface{}) (*SortOption, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(SortOption)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgraphqlᚐSortOption(ctx context.Context, sel ast.SelectionSet, v *SortOption) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgraphqlᚐSortOrder(ctx context.Context, v interface{}) (*SortOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(SortOrder)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgraphqlᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *SortOrder) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

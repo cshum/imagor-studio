@@ -5,8 +5,8 @@ type Query {
         limit: Int!
         onlyFiles: Boolean
         onlyFolders: Boolean
-        sortBy: String
-        sortOrder: String
+        sortBy: SortOption
+        sortOrder: SortOrder
     ): FileList!
 
     statFile(path: String!): FileStat
@@ -37,6 +37,17 @@ type FileStat {
     isDirectory: Boolean!
     modifiedTime: String!
     etag: String
+}
+
+enum SortOption {
+    NAME
+    SIZE
+    MODIFIED_TIME
+}
+
+enum SortOrder {
+    ASC
+    DESC
 }
 
 scalar Upload

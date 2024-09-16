@@ -1,10 +1,14 @@
 package config
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storage/filestorage"
 	"github.com/cshum/imagor-studio/server/internal/storage/s3storage"
@@ -13,21 +17,19 @@ import (
 )
 
 type Config struct {
-	Port        int
-	StorageType string
-	Storage     storage.Storage
-	Logger      *zap.Logger
+	Port    int
+	Storage storage.Storage
+	Logger  *zap.Logger
 }
 
 func Load() (*Config, error) {
 	fs := flag.NewFlagSet("imagor-studio", flag.ExitOnError)
 
 	var (
-		port        = fs.Int("port", 8080, "port to listen on")
-		storageType = fs.String("storage-type", "file", "storage type (file or s3)")
+		port = fs.Int("port", 8080, "port to listen on")
 
 		// FileStorage options
-		fileStorageBaseDir         = fs.String("file-storage-base-dir", "./files", "base directory for file storage")
+		fileStorageBaseDir         = fs.String("file-storage-base-dir", "", "base directory for file storage")
 		fileStorageDirPermissions  = fs.Int("file-storage-dir-permissions", 0755, "directory permissions for file storage")
 		fileStorageFilePermissions = fs.Int("file-storage-file-permissions", 0644, "file permissions for file storage")
 
@@ -62,25 +64,42 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		Port:        *port,
-		StorageType: *storageType,
-		Logger:      logger,
+		Port:   *port,
+		Logger: logger,
 	}
 
-	// Create storage based on type
-	switch cfg.StorageType {
-	case "s3":
-		s3Storage, err := s3storage.New(*s3StorageBucket,
-			s3storage.WithRegion(*awsRegion),
-			s3storage.WithEndpoint(*s3Endpoint),
-			s3storage.WithCredentials(*awsAccessKeyID, *awsSecretAccessKey, *awsSessionToken),
-			s3storage.WithBaseDir(*s3StorageBaseDir),
+	// Determine storage type based on provided configuration
+	if *s3StorageBucket != "" {
+		// Check if S3 bucket exists
+		s3Config, err := config.LoadDefaultConfig(context.TODO(),
+			config.WithRegion(*awsRegion),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create S3 storage: %w", err)
+			return nil, fmt.Errorf("failed to load AWS config: %w", err)
 		}
-		cfg.Storage = s3Storage
-	case "file":
+
+		s3Client := s3.NewFromConfig(s3Config)
+		_, err = s3Client.HeadBucket(context.TODO(), &s3.HeadBucketInput{
+			Bucket: aws.String(*s3StorageBucket),
+		})
+		if err == nil {
+			// S3 bucket exists, use S3 storage
+			s3Storage, err := s3storage.New(*s3StorageBucket,
+				s3storage.WithRegion(*awsRegion),
+				s3storage.WithEndpoint(*s3Endpoint),
+				s3storage.WithCredentials(*awsAccessKeyID, *awsSecretAccessKey, *awsSessionToken),
+				s3storage.WithBaseDir(*s3StorageBaseDir),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create S3 storage: %w", err)
+			}
+			cfg.Storage = s3Storage
+			cfg.Logger.Info("Using S3 storage", zap.String("bucket", *s3StorageBucket))
+		} else {
+			return nil, fmt.Errorf("S3 bucket does not exist or is not accessible: %w", err)
+		}
+	} else if *fileStorageBaseDir != "" {
+		// File storage base directory is set, use file storage
 		fileStorage, err := filestorage.New(*fileStorageBaseDir,
 			filestorage.WithDirPermissions(os.FileMode(*fileStorageDirPermissions)),
 			filestorage.WithFilePermissions(os.FileMode(*fileStorageFilePermissions)),
@@ -89,22 +108,15 @@ func Load() (*Config, error) {
 			return nil, fmt.Errorf("failed to create file storage: %w", err)
 		}
 		cfg.Storage = fileStorage
-	default:
-		return nil, fmt.Errorf("unsupported storage type: %s", cfg.StorageType)
+		cfg.Logger.Info("Using file storage", zap.String("baseDir", *fileStorageBaseDir))
+	} else {
+		return nil, fmt.Errorf("no valid storage configuration found: either S3 bucket or file storage base directory must be set")
 	}
 
 	// Log configuration
 	cfg.Logger.Info("Configuration loaded",
 		zap.Int("port", cfg.Port),
-		zap.String("awsRegion", *awsRegion),
-		zap.Bool("awsCredentialsProvided", *awsAccessKeyID != "" && *awsSecretAccessKey != ""),
-		zap.String("storageType", cfg.StorageType),
-		zap.String("s3StorageBucket", *s3StorageBucket),
-		zap.String("s3StorageBaseDir", *s3StorageBaseDir),
-		zap.String("s3Endpoint", *s3Endpoint),
-		zap.String("fileStorageBaseDir", *fileStorageBaseDir),
-		zap.Int("fileStorageDirPermissions", *fileStorageDirPermissions),
-		zap.Int("fileStorageFilePermissions", *fileStorageFilePermissions),
+		zap.String("storageType", fmt.Sprintf("%T", cfg.Storage)),
 	)
 
 	return cfg, nil

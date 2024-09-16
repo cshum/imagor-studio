@@ -54,7 +54,7 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool,
 }
 
 // ListFiles is the resolver for the listFiles field.
-func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *string, sortOrder *string) (*FileList, error) {
+func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error) {
 	r.Logger.Info("Listing files",
 		zap.String("path", path),
 		zap.Int("offset", offset),
