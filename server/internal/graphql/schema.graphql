@@ -1,6 +1,15 @@
 type Query {
-    listFiles(path: String!, offset: Int!, limit: Int!, onlyFiles: Boolean, onlyFolders: Boolean): FileList!
-    getFile(path: String!): File
+    listFiles(
+        path: String!
+        offset: Int!
+        limit: Int!
+        onlyFiles: Boolean
+        onlyFolders: Boolean
+        sortBy: String
+        sortOrder: String
+    ): FileList!
+
+    statFile(path: String!): FileStat
 }
 
 type Mutation {
@@ -19,7 +28,15 @@ type File {
     path: String!
     size: Int!
     isDirectory: Boolean!
-    content: String
+}
+
+type FileStat {
+    name: String!
+    path: String!
+    size: Int!
+    isDirectory: Boolean!
+    modifiedTime: String!
+    etag: String
 }
 
 scalar Upload

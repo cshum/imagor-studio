@@ -47,7 +47,6 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	File struct {
-		Content     func(childComplexity int) int
 		IsDirectory func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Path        func(childComplexity int) int
@@ -59,6 +58,15 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	FileStat struct {
+		Etag         func(childComplexity int) int
+		IsDirectory  func(childComplexity int) int
+		ModifiedTime func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Path         func(childComplexity int) int
+		Size         func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CreateFolder func(childComplexity int, path string) int
 		DeleteFile   func(childComplexity int, path string) int
@@ -66,8 +74,8 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetFile   func(childComplexity int, path string) int
-		ListFiles func(childComplexity int, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool) int
+		ListFiles func(childComplexity int, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *string, sortOrder *string) int
+		StatFile  func(childComplexity int, path string) int
 	}
 }
 
@@ -77,8 +85,8 @@ type MutationResolver interface {
 	CreateFolder(ctx context.Context, path string) (bool, error)
 }
 type QueryResolver interface {
-	ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool) (*FileList, error)
-	GetFile(ctx context.Context, path string) (*File, error)
+	ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *string, sortOrder *string) (*FileList, error)
+	StatFile(ctx context.Context, path string) (*FileStat, error)
 }
 
 type executableSchema struct {
@@ -99,13 +107,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
-
-	case "File.content":
-		if e.complexity.File.Content == nil {
-			break
-		}
-
-		return e.complexity.File.Content(childComplexity), true
 
 	case "File.isDirectory":
 		if e.complexity.File.IsDirectory == nil {
@@ -149,6 +150,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.FileList.TotalCount(childComplexity), true
 
+	case "FileStat.etag":
+		if e.complexity.FileStat.Etag == nil {
+			break
+		}
+
+		return e.complexity.FileStat.Etag(childComplexity), true
+
+	case "FileStat.isDirectory":
+		if e.complexity.FileStat.IsDirectory == nil {
+			break
+		}
+
+		return e.complexity.FileStat.IsDirectory(childComplexity), true
+
+	case "FileStat.modifiedTime":
+		if e.complexity.FileStat.ModifiedTime == nil {
+			break
+		}
+
+		return e.complexity.FileStat.ModifiedTime(childComplexity), true
+
+	case "FileStat.name":
+		if e.complexity.FileStat.Name == nil {
+			break
+		}
+
+		return e.complexity.FileStat.Name(childComplexity), true
+
+	case "FileStat.path":
+		if e.complexity.FileStat.Path == nil {
+			break
+		}
+
+		return e.complexity.FileStat.Path(childComplexity), true
+
+	case "FileStat.size":
+		if e.complexity.FileStat.Size == nil {
+			break
+		}
+
+		return e.complexity.FileStat.Size(childComplexity), true
+
 	case "Mutation.createFolder":
 		if e.complexity.Mutation.CreateFolder == nil {
 			break
@@ -185,18 +228,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UploadFile(childComplexity, args["path"].(string), args["content"].(graphql.Upload)), true
 
-	case "Query.getFile":
-		if e.complexity.Query.GetFile == nil {
-			break
-		}
-
-		args, err := ec.field_Query_getFile_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.GetFile(childComplexity, args["path"].(string)), true
-
 	case "Query.listFiles":
 		if e.complexity.Query.ListFiles == nil {
 			break
@@ -207,7 +238,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.ListFiles(childComplexity, args["path"].(string), args["offset"].(int), args["limit"].(int), args["onlyFiles"].(*bool), args["onlyFolders"].(*bool)), true
+		return e.complexity.Query.ListFiles(childComplexity, args["path"].(string), args["offset"].(int), args["limit"].(int), args["onlyFiles"].(*bool), args["onlyFolders"].(*bool), args["sortBy"].(*string), args["sortOrder"].(*string)), true
+
+	case "Query.statFile":
+		if e.complexity.Query.StatFile == nil {
+			break
+		}
+
+		args, err := ec.field_Query_statFile_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.StatFile(childComplexity, args["path"].(string)), true
 
 	}
 	return 0, false
@@ -487,38 +530,6 @@ func (ec *executionContext) field_Query___type_argsName(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_getFile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getFile_argsPath(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["path"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Query_getFile_argsPath(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["path"]
-	if !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
-	if tmp, ok := rawArgs["path"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Query_listFiles_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -547,6 +558,16 @@ func (ec *executionContext) field_Query_listFiles_args(ctx context.Context, rawA
 		return nil, err
 	}
 	args["onlyFolders"] = arg4
+	arg5, err := ec.field_Query_listFiles_argsSortBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["sortBy"] = arg5
+	arg6, err := ec.field_Query_listFiles_argsSortOrder(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["sortOrder"] = arg6
 	return args, nil
 }
 func (ec *executionContext) field_Query_listFiles_argsPath(
@@ -656,6 +677,82 @@ func (ec *executionContext) field_Query_listFiles_argsOnlyFolders(
 	}
 
 	var zeroVal *bool
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_listFiles_argsSortBy(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["sortBy"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sortBy"))
+	if tmp, ok := rawArgs["sortBy"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_listFiles_argsSortOrder(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["sortOrder"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sortOrder"))
+	if tmp, ok := rawArgs["sortOrder"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_statFile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_statFile_argsPath(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["path"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_statFile_argsPath(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["path"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
+	if tmp, ok := rawArgs["path"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -907,47 +1004,6 @@ func (ec *executionContext) fieldContext_File_isDirectory(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _File_content(ctx context.Context, field graphql.CollectedField, obj *File) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_File_content(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Content, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_File_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "File",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _FileList_items(ctx context.Context, field graphql.CollectedField, obj *FileList) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_FileList_items(ctx, field)
 	if err != nil {
@@ -995,8 +1051,6 @@ func (ec *executionContext) fieldContext_FileList_items(_ context.Context, field
 				return ec.fieldContext_File_size(ctx, field)
 			case "isDirectory":
 				return ec.fieldContext_File_isDirectory(ctx, field)
-			case "content":
-				return ec.fieldContext_File_content(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
 		},
@@ -1043,6 +1097,267 @@ func (ec *executionContext) fieldContext_FileList_totalCount(_ context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FileStat_name(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileStat_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileStat_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileStat",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FileStat_path(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileStat_path(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Path, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileStat_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileStat",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FileStat_size(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileStat_size(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Size, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileStat_size(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileStat",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FileStat_isDirectory(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileStat_isDirectory(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsDirectory, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileStat_isDirectory(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileStat",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FileStat_modifiedTime(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileStat_modifiedTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ModifiedTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileStat_modifiedTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileStat",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FileStat_etag(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileStat_etag(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Etag, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileStat_etag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileStat",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1227,7 +1542,7 @@ func (ec *executionContext) _Query_listFiles(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ListFiles(rctx, fc.Args["path"].(string), fc.Args["offset"].(int), fc.Args["limit"].(int), fc.Args["onlyFiles"].(*bool), fc.Args["onlyFolders"].(*bool))
+		return ec.resolvers.Query().ListFiles(rctx, fc.Args["path"].(string), fc.Args["offset"].(int), fc.Args["limit"].(int), fc.Args["onlyFiles"].(*bool), fc.Args["onlyFolders"].(*bool), fc.Args["sortBy"].(*string), fc.Args["sortOrder"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1274,8 +1589,8 @@ func (ec *executionContext) fieldContext_Query_listFiles(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getFile(ctx, field)
+func (ec *executionContext) _Query_statFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_statFile(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1288,7 +1603,7 @@ func (ec *executionContext) _Query_getFile(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetFile(rctx, fc.Args["path"].(string))
+		return ec.resolvers.Query().StatFile(rctx, fc.Args["path"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1297,12 +1612,12 @@ func (ec *executionContext) _Query_getFile(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*File)
+	res := resTmp.(*FileStat)
 	fc.Result = res
-	return ec.marshalOFile2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgraphqlᚐFile(ctx, field.Selections, res)
+	return ec.marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgraphqlᚐFileStat(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_statFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -1311,17 +1626,19 @@ func (ec *executionContext) fieldContext_Query_getFile(ctx context.Context, fiel
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "name":
-				return ec.fieldContext_File_name(ctx, field)
+				return ec.fieldContext_FileStat_name(ctx, field)
 			case "path":
-				return ec.fieldContext_File_path(ctx, field)
+				return ec.fieldContext_FileStat_path(ctx, field)
 			case "size":
-				return ec.fieldContext_File_size(ctx, field)
+				return ec.fieldContext_FileStat_size(ctx, field)
 			case "isDirectory":
-				return ec.fieldContext_File_isDirectory(ctx, field)
-			case "content":
-				return ec.fieldContext_File_content(ctx, field)
+				return ec.fieldContext_FileStat_isDirectory(ctx, field)
+			case "modifiedTime":
+				return ec.fieldContext_FileStat_modifiedTime(ctx, field)
+			case "etag":
+				return ec.fieldContext_FileStat_etag(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type FileStat", field.Name)
 		},
 	}
 	defer func() {
@@ -1331,7 +1648,7 @@ func (ec *executionContext) fieldContext_Query_getFile(ctx context.Context, fiel
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_statFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3359,28 +3676,6 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "content":
-			field := field
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return ec._File_content(ctx, field, obj)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-			out.Values[i] = ec._File_content(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3465,6 +3760,187 @@ func (ec *executionContext) _FileList(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var fileStatImplementors = []string{"FileStat"}
+
+func (ec *executionContext) _FileStat(ctx context.Context, sel ast.SelectionSet, obj *FileStat) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, fileStatImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FileStat")
+		case "name":
+			field := field
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return ec._FileStat_name(ctx, field, obj)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+			out.Values[i] = ec._FileStat_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "path":
+			field := field
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return ec._FileStat_path(ctx, field, obj)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+			out.Values[i] = ec._FileStat_path(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "size":
+			field := field
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return ec._FileStat_size(ctx, field, obj)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+			out.Values[i] = ec._FileStat_size(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isDirectory":
+			field := field
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return ec._FileStat_isDirectory(ctx, field, obj)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+			out.Values[i] = ec._FileStat_isDirectory(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "modifiedTime":
+			field := field
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return ec._FileStat_modifiedTime(ctx, field, obj)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+			out.Values[i] = ec._FileStat_modifiedTime(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "etag":
+			field := field
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return ec._FileStat_etag(ctx, field, obj)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+			out.Values[i] = ec._FileStat_etag(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3585,11 +4061,11 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "getFile":
+		case "statFile":
 			field := field
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Query_getFile(ctx, field)
+				return ec._Query_statFile(ctx, field)
 			})
 		case "__type":
 			field := field
@@ -5059,11 +5535,11 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOFile2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgraphqlᚐFile(ctx context.Context, sel ast.SelectionSet, v *File) graphql.Marshaler {
+func (ec *executionContext) marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgraphqlᚐFileStat(ctx context.Context, sel ast.SelectionSet, v *FileStat) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._File(ctx, sel, v)
+	return ec._FileStat(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

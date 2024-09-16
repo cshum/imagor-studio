@@ -3,16 +3,24 @@
 package graphql
 
 type File struct {
-	Name        string  `json:"name"`
-	Path        string  `json:"path"`
-	Size        int     `json:"size"`
-	IsDirectory bool    `json:"isDirectory"`
-	Content     *string `json:"content,omitempty"`
+	Name        string `json:"name"`
+	Path        string `json:"path"`
+	Size        int    `json:"size"`
+	IsDirectory bool   `json:"isDirectory"`
 }
 
 type FileList struct {
 	Items      []*File `json:"items"`
 	TotalCount int     `json:"totalCount"`
+}
+
+type FileStat struct {
+	Name         string  `json:"name"`
+	Path         string  `json:"path"`
+	Size         int     `json:"size"`
+	IsDirectory  bool    `json:"isDirectory"`
+	ModifiedTime string  `json:"modifiedTime"`
+	Etag         *string `json:"etag,omitempty"`
 }
 
 type Mutation struct {

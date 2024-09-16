@@ -7,9 +7,10 @@ package graphql
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/cshum/imagor-studio/server/internal/storage"
 	"go.uber.org/zap"
 )
 
@@ -17,7 +18,6 @@ import (
 func (r *mutationResolver) UploadFile(ctx context.Context, path string, content graphql.Upload) (bool, error) {
 	r.Logger.Info("Uploading file", zap.String("path", path), zap.String("filename", content.Filename))
 
-	// The content.File is already an io.Reader, so we don't need to open it
 	err := r.Storage.Put(ctx, path, content.File)
 	if err != nil {
 		r.Logger.Error("Failed to upload file", zap.Error(err))
@@ -54,19 +54,47 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool,
 }
 
 // ListFiles is the resolver for the listFiles field.
-func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool) (*FileList, error) {
-	r.Logger.Info("Listing files", zap.String("path", path), zap.Int("offset", offset), zap.Int("limit", limit))
+func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *string, sortOrder *string) (*FileList, error) {
+	r.Logger.Info("Listing files",
+		zap.String("path", path),
+		zap.Int("offset", offset),
+		zap.Int("limit", limit),
+		zap.Any("sortBy", sortBy),
+		zap.Any("sortOrder", sortOrder),
+	)
 
-	onlyFilesValue := false
-	onlyFoldersValue := false
-	if onlyFiles != nil {
-		onlyFilesValue = *onlyFiles
-	}
-	if onlyFolders != nil {
-		onlyFoldersValue = *onlyFolders
+	options := storage.ListOptions{
+		Offset:      offset,
+		Limit:       limit,
+		OnlyFiles:   onlyFiles != nil && *onlyFiles,
+		OnlyFolders: onlyFolders != nil && *onlyFolders,
 	}
 
-	result, err := r.Storage.List(ctx, path, offset, limit, onlyFilesValue, onlyFoldersValue)
+	if sortBy != nil {
+		switch *sortBy {
+		case "NAME":
+			options.SortBy = storage.SortByName
+		case "SIZE":
+			options.SortBy = storage.SortBySize
+		case "MODIFIED_TIME":
+			options.SortBy = storage.SortByModifiedTime
+		default:
+			return nil, fmt.Errorf("invalid sortBy option: %s", *sortBy)
+		}
+	}
+
+	if sortOrder != nil {
+		switch *sortOrder {
+		case "ASC":
+			options.SortOrder = storage.SortOrderAsc
+		case "DESC":
+			options.SortOrder = storage.SortOrderDesc
+		default:
+			return nil, fmt.Errorf("invalid sortOrder option: %s", *sortOrder)
+		}
+	}
+
+	result, err := r.Storage.List(ctx, path, options)
 	if err != nil {
 		r.Logger.Error("Failed to list files", zap.Error(err))
 		return nil, fmt.Errorf("failed to list files: %w", err)
@@ -88,39 +116,24 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, 
 	}, nil
 }
 
-// GetFile is the resolver for the getFile field.
-func (r *queryResolver) GetFile(ctx context.Context, path string) (*File, error) {
-	r.Logger.Info("Getting file", zap.String("path", path))
+// StatFile is the resolver for the statFile field.
+func (r *queryResolver) StatFile(ctx context.Context, path string) (*FileStat, error) {
+	r.Logger.Info("Getting file stats", zap.String("path", path))
 
-	reader, err := r.Storage.Get(ctx, path)
+	fileInfo, err := r.Storage.Stat(ctx, path)
 	if err != nil {
-		r.Logger.Error("Failed to get file", zap.Error(err))
-		return nil, fmt.Errorf("failed to get file: %w", err)
-	}
-	defer reader.Close()
-
-	content, err := ioutil.ReadAll(reader)
-	if err != nil {
-		r.Logger.Error("Failed to read file content", zap.Error(err))
-		return nil, fmt.Errorf("failed to read file content: %w", err)
+		r.Logger.Error("Failed to get file stats", zap.Error(err))
+		return nil, fmt.Errorf("failed to get file stats: %w", err)
 	}
 
-	// Determine if it's a directory based on the content
-	isDirectory := len(content) == 0 && path[len(path)-1] == '/'
-
-	file := &File{
-		Name:        path[len(path)-1:],
-		Path:        path,
-		Size:        len(content),
-		IsDirectory: isDirectory,
-	}
-
-	if !isDirectory {
-		contentStr := string(content)
-		file.Content = &contentStr
-	}
-
-	return file, nil
+	return &FileStat{
+		Name:         fileInfo.Name,
+		Path:         fileInfo.Path,
+		Size:         int(fileInfo.Size),
+		IsDirectory:  fileInfo.IsDir,
+		ModifiedTime: fileInfo.ModifiedTime.Format(time.RFC3339),
+		Etag:         &fileInfo.ETag,
+	}, nil
 }
 
 // Mutation returns MutationResolver implementation.

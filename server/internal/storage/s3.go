@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -25,7 +26,7 @@ func NewS3Storage(bucket, region string) (*S3Storage, error) {
 	return &S3Storage{client: client, bucket: bucket}, nil
 }
 
-func (s *S3Storage) List(ctx context.Context, path string, offset, limit int, onlyFiles, onlyFolders bool) (ListResult, error) {
+func (s *S3Storage) List(ctx context.Context, path string, options ListOptions) (ListResult, error) {
 	prefix := strings.TrimPrefix(path, "/")
 	if prefix != "" && !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
@@ -37,9 +38,24 @@ func (s *S3Storage) List(ctx context.Context, path string, offset, limit int, on
 		Delimiter: aws.String("/"),
 	}
 
-	if onlyFiles {
-		// For files only, we don't use a delimiter
+	if options.OnlyFiles {
 		params.Delimiter = nil
+	}
+
+	// Set up sorting parameters
+	switch options.SortBy {
+	case SortByName:
+		// S3 always sorts by key (name) in ascending order
+		if options.SortOrder == SortOrderDesc {
+			// For descending order, we'll need to reverse the results in memory
+			params.MaxKeys = aws.Int32(1000) // Fetch more items to sort
+		}
+	case SortBySize:
+		// S3 doesn't support sorting by size, we'll sort in memory
+		params.MaxKeys = aws.Int32(1000)
+	case SortByModifiedTime:
+		// Use ListObjectsV2 for sorting by modified time
+		return s.listObjectsV2(ctx, prefix, options)
 	}
 
 	var items []FileInfo
@@ -52,7 +68,7 @@ func (s *S3Storage) List(ctx context.Context, path string, offset, limit int, on
 			return ListResult{}, err
 		}
 
-		if !onlyFiles {
+		if !options.OnlyFiles {
 			for _, commonPrefix := range page.CommonPrefixes {
 				folderName := strings.TrimPrefix(*commonPrefix.Prefix, prefix)
 				folderName = strings.TrimSuffix(folderName, "/")
@@ -65,48 +81,152 @@ func (s *S3Storage) List(ctx context.Context, path string, offset, limit int, on
 			}
 		}
 
-		if !onlyFolders {
+		if !options.OnlyFolders {
 			for _, object := range page.Contents {
 				if strings.HasSuffix(*object.Key, "/") {
-					continue // Skip directory markers
+					continue
 				}
 				name := strings.TrimPrefix(*object.Key, prefix)
 				items = append(items, FileInfo{
-					Name:  name,
-					Path:  *object.Key,
-					Size:  *object.Size,
-					IsDir: false,
+					Name:         name,
+					Path:         *object.Key,
+					Size:         *object.Size, // Dereference the pointer
+					IsDir:        false,
+					ModifiedTime: *object.LastModified,
+					ETag:         strings.Trim(*object.ETag, "\""),
 				})
 				totalCount++
 			}
 		}
 	}
 
-	// Apply pagination
-	if offset >= len(items) {
-		return ListResult{TotalCount: totalCount}, nil
+	// Sort items if necessary
+	if options.SortBy == SortBySize || (options.SortBy == SortByName && options.SortOrder == SortOrderDesc) {
+		sortItems(items, options.SortBy, options.SortOrder)
 	}
 
-	end := offset + limit
+	// Apply pagination
+	start := options.Offset
+	end := options.Offset + options.Limit
+	if start >= len(items) {
+		return ListResult{TotalCount: totalCount}, nil
+	}
 	if end > len(items) {
 		end = len(items)
 	}
 
 	return ListResult{
-		Items:      items[offset:end],
+		Items:      items[start:end],
 		TotalCount: totalCount,
 	}, nil
 }
 
+func (s *S3Storage) listObjectsV2(ctx context.Context, prefix string, options ListOptions) (ListResult, error) {
+	params := &s3.ListObjectsV2Input{
+		Bucket: aws.String(s.bucket),
+		Prefix: aws.String(prefix),
+	}
+
+	if !options.OnlyFiles {
+		params.Delimiter = aws.String("/")
+	}
+
+	var items []FileInfo
+	var totalCount int
+
+	paginator := s3.NewListObjectsV2Paginator(s.client, params)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return ListResult{}, err
+		}
+
+		if !options.OnlyFiles {
+			for _, commonPrefix := range page.CommonPrefixes {
+				folderName := strings.TrimPrefix(*commonPrefix.Prefix, prefix)
+				folderName = strings.TrimSuffix(folderName, "/")
+				items = append(items, FileInfo{
+					Name:  folderName,
+					Path:  *commonPrefix.Prefix,
+					IsDir: true,
+				})
+				totalCount++
+			}
+		}
+
+		if !options.OnlyFolders {
+			for _, object := range page.Contents {
+				if strings.HasSuffix(*object.Key, "/") {
+					continue
+				}
+				name := strings.TrimPrefix(*object.Key, prefix)
+				items = append(items, FileInfo{
+					Name:         name,
+					Path:         *object.Key,
+					Size:         *object.Size, // Dereference the pointer
+					IsDir:        false,
+					ModifiedTime: *object.LastModified,
+					ETag:         strings.Trim(*object.ETag, "\""),
+				})
+				totalCount++
+			}
+		}
+	}
+
+	// Sort items
+	sortItems(items, options.SortBy, options.SortOrder)
+
+	// Apply pagination
+	start := options.Offset
+	end := options.Offset + options.Limit
+	if start >= len(items) {
+		return ListResult{TotalCount: totalCount}, nil
+	}
+	if end > len(items) {
+		end = len(items)
+	}
+
+	return ListResult{
+		Items:      items[start:end],
+		TotalCount: totalCount,
+	}, nil
+}
+
+// ... (rest of the S3Storage methods remain the same)
+
+func sortItems(items []FileInfo, sortBy SortOption, sortOrder SortOrder) {
+	sort.Slice(items, func(i, j int) bool {
+		switch sortBy {
+		case SortByName:
+			if sortOrder == SortOrderDesc {
+				return items[i].Name > items[j].Name
+			}
+			return items[i].Name < items[j].Name
+		case SortBySize:
+			if sortOrder == SortOrderDesc {
+				return items[i].Size > items[j].Size
+			}
+			return items[i].Size < items[j].Size
+		case SortByModifiedTime:
+			if sortOrder == SortOrderDesc {
+				return items[i].ModifiedTime.After(items[j].ModifiedTime)
+			}
+			return items[i].ModifiedTime.Before(items[j].ModifiedTime)
+		default:
+			return items[i].Name < items[j].Name
+		}
+	})
+}
+
 func (s *S3Storage) Get(ctx context.Context, path string) (io.ReadCloser, error) {
-	resp, err := s.client.GetObject(ctx, &s3.GetObjectInput{
+	result, err := s.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(path),
 	})
 	if err != nil {
 		return nil, err
 	}
-	return resp.Body, nil
+	return result.Body, nil
 }
 
 func (s *S3Storage) Put(ctx context.Context, path string, content io.Reader) error {
@@ -114,14 +234,6 @@ func (s *S3Storage) Put(ctx context.Context, path string, content io.Reader) err
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(path),
 		Body:   content,
-	})
-	return err
-}
-
-func (s *S3Storage) Delete(ctx context.Context, path string) error {
-	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(s.bucket),
-		Key:    aws.String(path),
 	})
 	return err
 }
@@ -134,6 +246,33 @@ func (s *S3Storage) CreateFolder(ctx context.Context, path string) error {
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(path),
 		Body:   strings.NewReader(""),
+	})
+	return err
+}
+
+func (s *S3Storage) Stat(ctx context.Context, path string) (FileInfo, error) {
+	result, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(path),
+	})
+	if err != nil {
+		return FileInfo{}, err
+	}
+
+	return FileInfo{
+		Name:         path[strings.LastIndex(path, "/")+1:],
+		Path:         path,
+		Size:         *result.ContentLength,
+		IsDir:        strings.HasSuffix(path, "/"),
+		ModifiedTime: *result.LastModified,
+		ETag:         strings.Trim(*result.ETag, "\""),
+	}, nil
+}
+
+func (s *S3Storage) Delete(ctx context.Context, path string) error {
+	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(path),
 	})
 	return err
 }

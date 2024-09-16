@@ -20,7 +20,7 @@ func NewFilesystemStorage(root string) (*FilesystemStorage, error) {
 	return &FilesystemStorage{root: absRoot}, nil
 }
 
-func (fs *FilesystemStorage) List(ctx context.Context, path string, offset, limit int, onlyFiles, onlyFolders bool) (ListResult, error) {
+func (fs *FilesystemStorage) List(ctx context.Context, path string, options ListOptions) (ListResult, error) {
 	fullPath := filepath.Join(fs.root, path)
 	entries, err := os.ReadDir(fullPath)
 	if err != nil {
@@ -29,7 +29,7 @@ func (fs *FilesystemStorage) List(ctx context.Context, path string, offset, limi
 
 	var filteredEntries []os.DirEntry
 	for _, entry := range entries {
-		if (onlyFiles && entry.IsDir()) || (onlyFolders && !entry.IsDir()) {
+		if (options.OnlyFiles && entry.IsDir()) || (options.OnlyFolders && !entry.IsDir()) {
 			continue
 		}
 		filteredEntries = append(filteredEntries, entry)
@@ -37,27 +37,49 @@ func (fs *FilesystemStorage) List(ctx context.Context, path string, offset, limi
 
 	totalCount := len(filteredEntries)
 
+	// Sort the entries
 	sort.Slice(filteredEntries, func(i, j int) bool {
-		return filteredEntries[i].Name() < filteredEntries[j].Name()
+		infoI, _ := filteredEntries[i].Info()
+		infoJ, _ := filteredEntries[j].Info()
+		switch options.SortBy {
+		case SortByName:
+			if options.SortOrder == SortOrderDesc {
+				return filteredEntries[i].Name() > filteredEntries[j].Name()
+			}
+			return filteredEntries[i].Name() < filteredEntries[j].Name()
+		case SortBySize:
+			if options.SortOrder == SortOrderDesc {
+				return infoI.Size() > infoJ.Size()
+			}
+			return infoI.Size() < infoJ.Size()
+		case SortByModifiedTime:
+			if options.SortOrder == SortOrderDesc {
+				return infoI.ModTime().After(infoJ.ModTime())
+			}
+			return infoI.ModTime().Before(infoJ.ModTime())
+		default:
+			return filteredEntries[i].Name() < filteredEntries[j].Name()
+		}
 	})
 
-	end := offset + limit
+	end := options.Offset + options.Limit
 	if end > len(filteredEntries) {
 		end = len(filteredEntries)
 	}
 
 	var items []FileInfo
-	for _, entry := range filteredEntries[offset:end] {
+	for _, entry := range filteredEntries[options.Offset:end] {
 		info, err := entry.Info()
 		if err != nil {
 			return ListResult{}, err
 		}
 
 		items = append(items, FileInfo{
-			Name:  entry.Name(),
-			Path:  filepath.Join(path, entry.Name()),
-			Size:  info.Size(),
-			IsDir: entry.IsDir(),
+			Name:         entry.Name(),
+			Path:         filepath.Join(path, entry.Name()),
+			Size:         info.Size(),
+			IsDir:        entry.IsDir(),
+			ModifiedTime: info.ModTime(),
 		})
 	}
 
@@ -94,4 +116,20 @@ func (fs *FilesystemStorage) Delete(ctx context.Context, path string) error {
 
 func (fs *FilesystemStorage) CreateFolder(ctx context.Context, path string) error {
 	return os.MkdirAll(filepath.Join(fs.root, path), 0755)
+}
+
+func (fs *FilesystemStorage) Stat(ctx context.Context, path string) (FileInfo, error) {
+	fullPath := filepath.Join(fs.root, path)
+	info, err := os.Stat(fullPath)
+	if err != nil {
+		return FileInfo{}, err
+	}
+
+	return FileInfo{
+		Name:         info.Name(),
+		Path:         path,
+		Size:         info.Size(),
+		IsDir:        info.IsDir(),
+		ModifiedTime: info.ModTime(),
+	}, nil
 }
