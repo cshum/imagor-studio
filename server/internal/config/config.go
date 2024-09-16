@@ -44,11 +44,22 @@ func Load() (*Config, error) {
 	}
 
 	// Initialize zap logger
-	logger, err := zap.NewProduction()
+	loggerConfig := zap.NewDevelopmentConfig()
+	loggerConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	logger, err := loggerConfig.Build()
 	if err != nil {
 		return nil, fmt.Errorf("error initializing logger: %w", err)
 	}
 	cfg.Logger = logger
+
+	// Log configuration
+	cfg.Logger.Debug("Configuration loaded",
+		zap.Int("port", cfg.Port),
+		zap.String("storageType", cfg.StorageType),
+		zap.String("s3Bucket", cfg.S3Bucket),
+		zap.String("s3Region", cfg.S3Region),
+		zap.String("filesysRoot", cfg.FilesysRoot),
+	)
 
 	return cfg, nil
 }

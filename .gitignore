@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 .vite
+.env
 
 # Editor directories and files
 .idea
