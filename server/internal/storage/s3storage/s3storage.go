@@ -3,6 +3,7 @@ package s3storage
 import (
 	"context"
 	"io"
+	"path"
 	"sort"
 	"strings"
 
@@ -21,6 +22,7 @@ type S3Storage struct {
 	accessKeyID     string
 	secretAccessKey string
 	sessionToken    string
+	baseDir         string
 }
 
 type Option func(*S3Storage)
@@ -42,6 +44,12 @@ func WithCredentials(accessKeyID, secretAccessKey, sessionToken string) Option {
 		s.accessKeyID = accessKeyID
 		s.secretAccessKey = secretAccessKey
 		s.sessionToken = sessionToken
+	}
+}
+
+func WithBaseDir(baseDir string) Option {
+	return func(s *S3Storage) {
+		s.baseDir = strings.Trim(baseDir, "/")
 	}
 }
 
@@ -91,8 +99,16 @@ func New(bucket string, options ...Option) (*S3Storage, error) {
 	return s, nil
 }
 
+func (s *S3Storage) fullPath(p string) string {
+	return path.Join(s.baseDir, strings.TrimPrefix(p, "/"))
+}
+
+func (s *S3Storage) relativePath(p string) string {
+	return strings.TrimPrefix(strings.TrimPrefix(p, s.baseDir), "/")
+}
+
 func (s *S3Storage) List(ctx context.Context, path string, options storage.ListOptions) (storage.ListResult, error) {
-	prefix := strings.TrimPrefix(path, "/")
+	prefix := s.fullPath(path)
 	if prefix != "" && !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
@@ -119,11 +135,11 @@ func (s *S3Storage) List(ctx context.Context, path string, options storage.ListO
 
 		if !options.OnlyFiles {
 			for _, commonPrefix := range page.CommonPrefixes {
-				folderName := strings.TrimPrefix(*commonPrefix.Prefix, prefix)
+				folderName := s.relativePath(*commonPrefix.Prefix)
 				folderName = strings.TrimSuffix(folderName, "/")
 				items = append(items, storage.FileInfo{
 					Name:  folderName,
-					Path:  *commonPrefix.Prefix,
+					Path:  s.relativePath(*commonPrefix.Prefix),
 					IsDir: true,
 				})
 				totalCount++
@@ -135,10 +151,10 @@ func (s *S3Storage) List(ctx context.Context, path string, options storage.ListO
 				if strings.HasSuffix(*object.Key, "/") {
 					continue
 				}
-				name := strings.TrimPrefix(*object.Key, prefix)
+				name := s.relativePath(*object.Key)
 				items = append(items, storage.FileInfo{
 					Name:         name,
-					Path:         *object.Key,
+					Path:         s.relativePath(*object.Key),
 					Size:         *object.Size,
 					IsDir:        false,
 					ModifiedTime: *object.LastModified,
@@ -191,7 +207,7 @@ func (s *S3Storage) List(ctx context.Context, path string, options storage.ListO
 func (s *S3Storage) Get(ctx context.Context, path string) (io.ReadCloser, error) {
 	result, err := s.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s.bucket),
-		Key:    aws.String(path),
+		Key:    aws.String(s.fullPath(path)),
 	})
 	if err != nil {
 		return nil, err
@@ -202,19 +218,20 @@ func (s *S3Storage) Get(ctx context.Context, path string) (io.ReadCloser, error)
 func (s *S3Storage) Put(ctx context.Context, path string, content io.Reader) error {
 	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(s.bucket),
-		Key:    aws.String(path),
+		Key:    aws.String(s.fullPath(path)),
 		Body:   content,
 	})
 	return err
 }
 
 func (s *S3Storage) CreateFolder(ctx context.Context, path string) error {
-	if !strings.HasSuffix(path, "/") {
-		path += "/"
+	fullPath := s.fullPath(path)
+	if !strings.HasSuffix(fullPath, "/") {
+		fullPath += "/"
 	}
 	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(s.bucket),
-		Key:    aws.String(path),
+		Key:    aws.String(fullPath),
 		Body:   strings.NewReader(""),
 	})
 	return err
@@ -223,15 +240,15 @@ func (s *S3Storage) CreateFolder(ctx context.Context, path string) error {
 func (s *S3Storage) Stat(ctx context.Context, path string) (storage.FileInfo, error) {
 	result, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
 		Bucket: aws.String(s.bucket),
-		Key:    aws.String(path),
+		Key:    aws.String(s.fullPath(path)),
 	})
 	if err != nil {
 		return storage.FileInfo{}, err
 	}
 
 	return storage.FileInfo{
-		Name:         path[strings.LastIndex(path, "/")+1:],
-		Path:         path,
+		Name:         s.relativePath(path),
+		Path:         s.relativePath(path),
 		Size:         *result.ContentLength,
 		IsDir:        strings.HasSuffix(path, "/"),
 		ModifiedTime: *result.LastModified,
@@ -242,7 +259,7 @@ func (s *S3Storage) Stat(ctx context.Context, path string) (storage.FileInfo, er
 func (s *S3Storage) Delete(ctx context.Context, path string) error {
 	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(s.bucket),
-		Key:    aws.String(path),
+		Key:    aws.String(s.fullPath(path)),
 	})
 	return err
 }
