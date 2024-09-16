@@ -72,11 +72,11 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, 
 
 	if sortBy != nil {
 		switch *sortBy {
-		case "NAME":
+		case SortOptionName:
 			options.SortBy = storage.SortByName
-		case "SIZE":
+		case SortOptionSize:
 			options.SortBy = storage.SortBySize
-		case "MODIFIED_TIME":
+		case SortOptionModifiedTime:
 			options.SortBy = storage.SortByModifiedTime
 		default:
 			return nil, fmt.Errorf("invalid sortBy option: %s", *sortBy)
@@ -85,9 +85,9 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, 
 
 	if sortOrder != nil {
 		switch *sortOrder {
-		case "ASC":
+		case SortOrderAsc:
 			options.SortOrder = storage.SortOrderAsc
-		case "DESC":
+		case SortOrderDesc:
 			options.SortOrder = storage.SortOrderDesc
 		default:
 			return nil, fmt.Errorf("invalid sortOrder option: %s", *sortOrder)
