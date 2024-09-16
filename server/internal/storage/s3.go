@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
@@ -16,14 +17,45 @@ type S3Storage struct {
 	bucket string
 }
 
-func NewS3Storage(bucket, region string) (*S3Storage, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
+func NewS3Storage(bucket, region, endpoint, accessKeyID, secretAccessKey, sessionToken string) (*S3Storage, error) {
+	ctx := context.TODO()
+	var cfg aws.Config
+	var err error
+
+	if accessKeyID != "" && secretAccessKey != "" {
+		// Use provided credentials
+		cfg, err = config.LoadDefaultConfig(ctx,
+			config.WithRegion(region),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+				accessKeyID,
+				secretAccessKey,
+				sessionToken,
+			)),
+		)
+	} else {
+		// Use default credential chain
+		cfg, err = config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
-	client := s3.NewFromConfig(cfg)
-	return &S3Storage{client: client, bucket: bucket}, nil
+	options := []func(*s3.Options){
+		func(o *s3.Options) {
+			if endpoint != "" {
+				o.BaseEndpoint = aws.String(endpoint)
+				o.UsePathStyle = true
+			}
+		},
+	}
+
+	client := s3.NewFromConfig(cfg, options...)
+
+	return &S3Storage{
+		client: client,
+		bucket: bucket,
+	}, nil
 }
 
 func (s *S3Storage) List(ctx context.Context, path string, options ListOptions) (ListResult, error) {
