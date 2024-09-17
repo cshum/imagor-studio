@@ -68,25 +68,25 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateFolder func(childComplexity int, storageKey string, path string) int
-		DeleteFile   func(childComplexity int, storageKey string, path string) int
-		UploadFile   func(childComplexity int, storageKey string, path string, content graphql.Upload) int
+		CreateFolder func(childComplexity int, storageKey *string, path string) int
+		DeleteFile   func(childComplexity int, storageKey *string, path string) int
+		UploadFile   func(childComplexity int, storageKey *string, path string, content graphql.Upload) int
 	}
 
 	Query struct {
-		ListFiles func(childComplexity int, storageKey string, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) int
-		StatFile  func(childComplexity int, storageKey string, path string) int
+		ListFiles func(childComplexity int, storageKey *string, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) int
+		StatFile  func(childComplexity int, storageKey *string, path string) int
 	}
 }
 
 type MutationResolver interface {
-	UploadFile(ctx context.Context, storageKey string, path string, content graphql.Upload) (bool, error)
-	DeleteFile(ctx context.Context, storageKey string, path string) (bool, error)
-	CreateFolder(ctx context.Context, storageKey string, path string) (bool, error)
+	UploadFile(ctx context.Context, storageKey *string, path string, content graphql.Upload) (bool, error)
+	DeleteFile(ctx context.Context, storageKey *string, path string) (bool, error)
+	CreateFolder(ctx context.Context, storageKey *string, path string) (bool, error)
 }
 type QueryResolver interface {
-	ListFiles(ctx context.Context, storageKey string, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error)
-	StatFile(ctx context.Context, storageKey string, path string) (*FileStat, error)
+	ListFiles(ctx context.Context, storageKey *string, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error)
+	StatFile(ctx context.Context, storageKey *string, path string) (*FileStat, error)
 }
 
 type executableSchema struct {
@@ -202,7 +202,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateFolder(childComplexity, args["storageKey"].(string), args["path"].(string)), true
+		return e.complexity.Mutation.CreateFolder(childComplexity, args["storageKey"].(*string), args["path"].(string)), true
 
 	case "Mutation.deleteFile":
 		if e.complexity.Mutation.DeleteFile == nil {
@@ -214,7 +214,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteFile(childComplexity, args["storageKey"].(string), args["path"].(string)), true
+		return e.complexity.Mutation.DeleteFile(childComplexity, args["storageKey"].(*string), args["path"].(string)), true
 
 	case "Mutation.uploadFile":
 		if e.complexity.Mutation.UploadFile == nil {
@@ -226,7 +226,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UploadFile(childComplexity, args["storageKey"].(string), args["path"].(string), args["content"].(graphql.Upload)), true
+		return e.complexity.Mutation.UploadFile(childComplexity, args["storageKey"].(*string), args["path"].(string), args["content"].(graphql.Upload)), true
 
 	case "Query.listFiles":
 		if e.complexity.Query.ListFiles == nil {
@@ -238,7 +238,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.ListFiles(childComplexity, args["storageKey"].(string), args["path"].(string), args["offset"].(int), args["limit"].(int), args["onlyFiles"].(*bool), args["onlyFolders"].(*bool), args["sortBy"].(*SortOption), args["sortOrder"].(*SortOrder)), true
+		return e.complexity.Query.ListFiles(childComplexity, args["storageKey"].(*string), args["path"].(string), args["offset"].(int), args["limit"].(int), args["onlyFiles"].(*bool), args["onlyFolders"].(*bool), args["sortBy"].(*SortOption), args["sortOrder"].(*SortOrder)), true
 
 	case "Query.statFile":
 		if e.complexity.Query.StatFile == nil {
@@ -250,7 +250,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.StatFile(childComplexity, args["storageKey"].(string), args["path"].(string)), true
+		return e.complexity.Query.StatFile(childComplexity, args["storageKey"].(*string), args["path"].(string)), true
 
 	}
 	return 0, false
@@ -393,22 +393,22 @@ func (ec *executionContext) field_Mutation_createFolder_args(ctx context.Context
 func (ec *executionContext) field_Mutation_createFolder_argsStorageKey(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (string, error) {
+) (*string, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["storageKey"]
 	if !ok {
-		var zeroVal string
+		var zeroVal *string
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("storageKey"))
 	if tmp, ok := rawArgs["storageKey"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
 	}
 
-	var zeroVal string
+	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -452,22 +452,22 @@ func (ec *executionContext) field_Mutation_deleteFile_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_deleteFile_argsStorageKey(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (string, error) {
+) (*string, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["storageKey"]
 	if !ok {
-		var zeroVal string
+		var zeroVal *string
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("storageKey"))
 	if tmp, ok := rawArgs["storageKey"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
 	}
 
-	var zeroVal string
+	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -516,22 +516,22 @@ func (ec *executionContext) field_Mutation_uploadFile_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_uploadFile_argsStorageKey(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (string, error) {
+) (*string, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["storageKey"]
 	if !ok {
-		var zeroVal string
+		var zeroVal *string
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("storageKey"))
 	if tmp, ok := rawArgs["storageKey"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
 	}
 
-	var zeroVal string
+	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -659,22 +659,22 @@ func (ec *executionContext) field_Query_listFiles_args(ctx context.Context, rawA
 func (ec *executionContext) field_Query_listFiles_argsStorageKey(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (string, error) {
+) (*string, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["storageKey"]
 	if !ok {
-		var zeroVal string
+		var zeroVal *string
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("storageKey"))
 	if tmp, ok := rawArgs["storageKey"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
 	}
 
-	var zeroVal string
+	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -850,22 +850,22 @@ func (ec *executionContext) field_Query_statFile_args(ctx context.Context, rawAr
 func (ec *executionContext) field_Query_statFile_argsStorageKey(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (string, error) {
+) (*string, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["storageKey"]
 	if !ok {
-		var zeroVal string
+		var zeroVal *string
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("storageKey"))
 	if tmp, ok := rawArgs["storageKey"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
 	}
 
-	var zeroVal string
+	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -1512,7 +1512,7 @@ func (ec *executionContext) _Mutation_uploadFile(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UploadFile(rctx, fc.Args["storageKey"].(string), fc.Args["path"].(string), fc.Args["content"].(graphql.Upload))
+		return ec.resolvers.Mutation().UploadFile(rctx, fc.Args["storageKey"].(*string), fc.Args["path"].(string), fc.Args["content"].(graphql.Upload))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1567,7 +1567,7 @@ func (ec *executionContext) _Mutation_deleteFile(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteFile(rctx, fc.Args["storageKey"].(string), fc.Args["path"].(string))
+		return ec.resolvers.Mutation().DeleteFile(rctx, fc.Args["storageKey"].(*string), fc.Args["path"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1622,7 +1622,7 @@ func (ec *executionContext) _Mutation_createFolder(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateFolder(rctx, fc.Args["storageKey"].(string), fc.Args["path"].(string))
+		return ec.resolvers.Mutation().CreateFolder(rctx, fc.Args["storageKey"].(*string), fc.Args["path"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1677,7 +1677,7 @@ func (ec *executionContext) _Query_listFiles(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ListFiles(rctx, fc.Args["storageKey"].(string), fc.Args["path"].(string), fc.Args["offset"].(int), fc.Args["limit"].(int), fc.Args["onlyFiles"].(*bool), fc.Args["onlyFolders"].(*bool), fc.Args["sortBy"].(*SortOption), fc.Args["sortOrder"].(*SortOrder))
+		return ec.resolvers.Query().ListFiles(rctx, fc.Args["storageKey"].(*string), fc.Args["path"].(string), fc.Args["offset"].(int), fc.Args["limit"].(int), fc.Args["onlyFiles"].(*bool), fc.Args["onlyFolders"].(*bool), fc.Args["sortBy"].(*SortOption), fc.Args["sortOrder"].(*SortOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1738,7 +1738,7 @@ func (ec *executionContext) _Query_statFile(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().StatFile(rctx, fc.Args["storageKey"].(string), fc.Args["path"].(string))
+		return ec.resolvers.Query().StatFile(rctx, fc.Args["storageKey"].(*string), fc.Args["path"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
