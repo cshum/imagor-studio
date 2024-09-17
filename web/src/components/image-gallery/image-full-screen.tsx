@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
-import { ChevronLeft, ChevronRight, Info, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Info, X, ZoomIn } from 'lucide-react'
 import { ImageInfo, ImageInfoView } from '@/components/image-gallery/image-info-view'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { Sheet } from '@/components/ui/sheet'
@@ -62,6 +62,9 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
 
   const handleZoomChange = (newScale: number) => {
     setScale(newScale)
+    if (newScale < 1) {
+      handleCloseFullView()
+    }
   }
 
   const handleCloseFullView = useCallback(() => {
@@ -199,7 +202,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
           >
             <TransformWrapper
               initialScale={1}
-              minScale={0.5}
+              minScale={1}
               maxScale={3}
               centerOnInit={true}
               onTransformed={({ state }) => handleZoomChange(state.scale)}
@@ -211,7 +214,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               pinch={{ step: 0.05 }}
               ref={transformComponentRef}
             >
-              {({ zoomIn, zoomOut, resetTransform }) => (
+              {({ zoomIn, resetTransform }) => (
                 <>
                   <TransformComponent
                     wrapperStyle={{
@@ -292,12 +295,6 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                     )}
                   </TransformComponent>
                   <div className="absolute bottom-4 right-8 flex space-x-4">
-                    <button
-                      onClick={() => zoomOut()}
-                      className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
-                    >
-                      <ZoomOut size={24}/>
-                    </button>
                     <button
                       onClick={() => resetTransform()}
                       className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-full hover:bg-opacity-75 transition-colors"
