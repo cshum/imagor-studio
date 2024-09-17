@@ -17,9 +17,9 @@ import (
 )
 
 type Config struct {
-	Port    int
-	Storage storage.Storage
-	Logger  *zap.Logger
+	Port     int
+	Storages map[string]storage.Storage
+	Logger   *zap.Logger
 }
 
 func Load() (*Config, error) {
@@ -57,15 +57,15 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("error parsing configuration: %w", err)
 	}
 
-	// Initialize zap logger
 	logger, err := zap.NewProduction()
 	if err != nil {
 		return nil, fmt.Errorf("error initializing logger: %w", err)
 	}
 
 	cfg := &Config{
-		Port:   *port,
-		Logger: logger,
+		Port:     *port,
+		Logger:   logger,
+		Storages: make(map[string]storage.Storage),
 	}
 
 	// Determine storage type based on provided configuration
@@ -93,10 +93,10 @@ func Load() (*Config, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to create S3 storage: %w", err)
 			}
-			cfg.Storage = s3Storage
+			cfg.Storages["default"] = s3Storage
 			cfg.Logger.Info("Using S3 storage", zap.String("bucket", *s3StorageBucket))
 		} else {
-			return nil, fmt.Errorf("S3 bucket does not exist or is not accessible: %w", err)
+			return nil, fmt.Errorf("s3 bucket does not exist or is not accessible: %w", err)
 		}
 	} else if *fileStorageBaseDir != "" {
 		// File storage base directory is set, use file storage
@@ -107,16 +107,15 @@ func Load() (*Config, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to create file storage: %w", err)
 		}
-		cfg.Storage = fileStorage
+		cfg.Storages["default"] = fileStorage
 		cfg.Logger.Info("Using file storage", zap.String("baseDir", *fileStorageBaseDir))
 	} else {
 		return nil, fmt.Errorf("no valid storage configuration found: either S3 bucket or file storage base directory must be set")
 	}
 
-	// Log configuration
 	cfg.Logger.Info("Configuration loaded",
 		zap.Int("port", cfg.Port),
-		zap.String("storageType", fmt.Sprintf("%T", cfg.Storage)),
+		zap.String("storageType", fmt.Sprintf("%T", cfg.Storages["default"])),
 	)
 
 	return cfg, nil

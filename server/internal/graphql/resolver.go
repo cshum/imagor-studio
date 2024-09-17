@@ -10,6 +10,6 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	Storage storage.Storage
-	Logger  *zap.Logger
+	Storages map[string]storage.Storage
+	Logger   *zap.Logger
 }

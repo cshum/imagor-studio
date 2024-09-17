@@ -15,10 +15,15 @@ import (
 )
 
 // UploadFile is the resolver for the uploadFile field.
-func (r *mutationResolver) UploadFile(ctx context.Context, path string, content graphql.Upload) (bool, error) {
-	r.Logger.Info("Uploading file", zap.String("path", path), zap.String("filename", content.Filename))
+func (r *mutationResolver) UploadFile(ctx context.Context, storageKey string, path string, content graphql.Upload) (bool, error) {
+	r.Logger.Info("Uploading file", zap.String("storageKey", storageKey), zap.String("path", path), zap.String("filename", content.Filename))
 
-	err := r.Storage.Put(ctx, path, content.File)
+	s, ok := r.Storages[storageKey]
+	if !ok {
+		return false, fmt.Errorf("invalid storage key: %s", storageKey)
+	}
+
+	err := s.Put(ctx, path, content.File)
 	if err != nil {
 		r.Logger.Error("Failed to upload file", zap.Error(err))
 		return false, fmt.Errorf("failed to upload file: %w", err)
@@ -28,10 +33,15 @@ func (r *mutationResolver) UploadFile(ctx context.Context, path string, content 
 }
 
 // DeleteFile is the resolver for the deleteFile field.
-func (r *mutationResolver) DeleteFile(ctx context.Context, path string) (bool, error) {
-	r.Logger.Info("Deleting file", zap.String("path", path))
+func (r *mutationResolver) DeleteFile(ctx context.Context, storageKey string, path string) (bool, error) {
+	r.Logger.Info("Deleting file", zap.String("storageKey", storageKey), zap.String("path", path))
 
-	err := r.Storage.Delete(ctx, path)
+	s, ok := r.Storages[storageKey]
+	if !ok {
+		return false, fmt.Errorf("invalid storage key: %s", storageKey)
+	}
+
+	err := s.Delete(ctx, path)
 	if err != nil {
 		r.Logger.Error("Failed to delete file", zap.Error(err))
 		return false, fmt.Errorf("failed to delete file: %w", err)
@@ -41,10 +51,15 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, path string) (bool, e
 }
 
 // CreateFolder is the resolver for the createFolder field.
-func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool, error) {
-	r.Logger.Info("Creating folder", zap.String("path", path))
+func (r *mutationResolver) CreateFolder(ctx context.Context, storageKey string, path string) (bool, error) {
+	r.Logger.Info("Creating folder", zap.String("storageKey", storageKey), zap.String("path", path))
 
-	err := r.Storage.CreateFolder(ctx, path)
+	s, ok := r.Storages[storageKey]
+	if !ok {
+		return false, fmt.Errorf("invalid storage key: %s", storageKey)
+	}
+
+	err := s.CreateFolder(ctx, path)
 	if err != nil {
 		r.Logger.Error("Failed to create folder", zap.Error(err))
 		return false, fmt.Errorf("failed to create folder: %w", err)
@@ -54,14 +69,20 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool,
 }
 
 // ListFiles is the resolver for the listFiles field.
-func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error) {
+func (r *queryResolver) ListFiles(ctx context.Context, storageKey string, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error) {
 	r.Logger.Info("Listing files",
+		zap.String("storageKey", storageKey),
 		zap.String("path", path),
 		zap.Int("offset", offset),
 		zap.Int("limit", limit),
 		zap.Any("sortBy", sortBy),
 		zap.Any("sortOrder", sortOrder),
 	)
+
+	s, ok := r.Storages[storageKey]
+	if !ok {
+		return nil, fmt.Errorf("invalid storage key: %s", storageKey)
+	}
 
 	options := storage.ListOptions{
 		Offset:      offset,
@@ -94,7 +115,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, 
 		}
 	}
 
-	result, err := r.Storage.List(ctx, path, options)
+	result, err := s.List(ctx, path, options)
 	if err != nil {
 		r.Logger.Error("Failed to list files", zap.Error(err))
 		return nil, fmt.Errorf("failed to list files: %w", err)
@@ -117,10 +138,15 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, 
 }
 
 // StatFile is the resolver for the statFile field.
-func (r *queryResolver) StatFile(ctx context.Context, path string) (*FileStat, error) {
-	r.Logger.Info("Getting file stats", zap.String("path", path))
+func (r *queryResolver) StatFile(ctx context.Context, storageKey string, path string) (*FileStat, error) {
+	r.Logger.Info("Getting file stats", zap.String("storageKey", storageKey), zap.String("path", path))
 
-	fileInfo, err := r.Storage.Stat(ctx, path)
+	s, ok := r.Storages[storageKey]
+	if !ok {
+		return nil, fmt.Errorf("invalid storage key: %s", storageKey)
+	}
+
+	fileInfo, err := s.Stat(ctx, path)
 	if err != nil {
 		r.Logger.Error("Failed to get file stats", zap.Error(err))
 		return nil, fmt.Errorf("failed to get file stats: %w", err)

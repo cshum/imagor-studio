@@ -1,5 +1,6 @@
 type Query {
     listFiles(
+        storageKey: String!
         path: String!
         offset: Int!
         limit: Int!
@@ -9,13 +10,13 @@ type Query {
         sortOrder: SortOrder
     ): FileList!
 
-    statFile(path: String!): FileStat
+    statFile(storageKey: String!, path: String!): FileStat
 }
 
 type Mutation {
-    uploadFile(path: String!, content: Upload!): Boolean!
-    deleteFile(path: String!): Boolean!
-    createFolder(path: String!): Boolean!
+    uploadFile(storageKey: String!, path: String!, content: Upload!): Boolean!
+    deleteFile(storageKey: String!, path: String!): Boolean!
+    createFolder(storageKey: String!, path: String!): Boolean!
 }
 
 type FileList {
