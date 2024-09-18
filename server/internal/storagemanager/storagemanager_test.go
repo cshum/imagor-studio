@@ -12,16 +12,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func TestStorageManager_Encryption(t *testing.T) {
-	// Setup
-	logger, _ := zap.NewDevelopment()
-	defer logger.Sync()
-
+func setupTestDB(t *testing.T) *sql.DB {
 	db, err := sql.Open("sqlite3", ":memory:")
 	require.NoError(t, err)
-	defer db.Close()
 
-	// Create table with the correct schema
 	_, err = db.Exec(`
 		CREATE TABLE storage_configs (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,6 +28,435 @@ func TestStorageManager_Encryption(t *testing.T) {
 		)
 	`)
 	require.NoError(t, err)
+
+	return db
+}
+
+func TestStorageManager_AddConfig(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+
+	db := setupTestDB(t)
+	defer db.Close()
+
+	secretKey := "test-secret-key"
+	sm, err := New(db, logger, secretKey)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	testCases := []struct {
+		name        string
+		config      StorageConfig
+		expectError bool
+	}{
+		{
+			name: "Valid S3 Config",
+			config: StorageConfig{
+				Name: "Test S3",
+				Key:  "test-s3",
+				Type: "s3",
+				Config: json.RawMessage(`{
+					"bucket": "test-bucket",
+					"region": "us-west-2",
+					"accessKeyId": "AKIAIOSFODNN7EXAMPLE",
+					"secretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+				}`),
+			},
+			expectError: false,
+		},
+		{
+			name: "Valid File Config",
+			config: StorageConfig{
+				Name: "Test File",
+				Key:  "test-file",
+				Type: "file",
+				Config: json.RawMessage(`{
+					"baseDir": "/tmp/test-storage"
+				}`),
+			},
+			expectError: false,
+		},
+		{
+			name: "Invalid Config Type",
+			config: StorageConfig{
+				Name:   "Invalid Type",
+				Key:    "invalid-type",
+				Type:   "invalid",
+				Config: json.RawMessage(`{}`),
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := sm.AddConfig(ctx, tc.config)
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+
+				// Verify the config was added
+				retrievedConfig, err := sm.GetConfig(ctx, tc.config.Key)
+				assert.NoError(t, err)
+				assert.NotNil(t, retrievedConfig)
+				assert.Equal(t, tc.config.Name, retrievedConfig.Name)
+				assert.Equal(t, tc.config.Key, retrievedConfig.Key)
+				assert.Equal(t, tc.config.Type, retrievedConfig.Type)
+				assert.JSONEq(t, string(tc.config.Config), string(retrievedConfig.Config))
+			}
+		})
+	}
+}
+
+func TestStorageManager_UpdateConfig(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+
+	db := setupTestDB(t)
+	defer db.Close()
+
+	secretKey := "test-secret-key"
+	sm, err := New(db, logger, secretKey)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	// Add an initial config
+	initialConfig := StorageConfig{
+		Name: "Initial S3",
+		Key:  "initial-s3",
+		Type: "s3",
+		Config: json.RawMessage(`{
+			"bucket": "initial-bucket",
+			"region": "us-west-2"
+		}`),
+	}
+	err = sm.AddConfig(ctx, initialConfig)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name         string
+		key          string
+		updateConfig StorageConfig
+		expectError  bool
+	}{
+		{
+			name: "Valid Update",
+			key:  "initial-s3",
+			updateConfig: StorageConfig{
+				Name: "Updated S3",
+				Key:  "initial-s3",
+				Type: "s3",
+				Config: json.RawMessage(`{
+					"bucket": "updated-bucket",
+					"region": "us-east-1"
+				}`),
+			},
+			expectError: false,
+		},
+		{
+			name: "Non-existent Key",
+			key:  "non-existent",
+			updateConfig: StorageConfig{
+				Name:   "Non-existent",
+				Key:    "non-existent",
+				Type:   "s3",
+				Config: json.RawMessage(`{}`),
+			},
+			expectError: true,
+		},
+		{
+			name: "Invalid Config Type",
+			key:  "initial-s3",
+			updateConfig: StorageConfig{
+				Name:   "Invalid Type",
+				Key:    "initial-s3",
+				Type:   "invalid",
+				Config: json.RawMessage(`{}`),
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := sm.UpdateConfig(ctx, tc.key, tc.updateConfig)
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+
+				// Verify the config was updated
+				retrievedConfig, err := sm.GetConfig(ctx, tc.key)
+				assert.NoError(t, err)
+				assert.NotNil(t, retrievedConfig)
+				assert.Equal(t, tc.updateConfig.Name, retrievedConfig.Name)
+				assert.Equal(t, tc.updateConfig.Key, retrievedConfig.Key)
+				assert.Equal(t, tc.updateConfig.Type, retrievedConfig.Type)
+				assert.JSONEq(t, string(tc.updateConfig.Config), string(retrievedConfig.Config))
+			}
+		})
+	}
+}
+
+func TestStorageManager_DeleteConfig(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+
+	db := setupTestDB(t)
+	defer db.Close()
+
+	secretKey := "test-secret-key"
+	sm, err := New(db, logger, secretKey)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	// Add a config to delete
+	configToDelete := StorageConfig{
+		Name: "Config to Delete",
+		Key:  "delete-me",
+		Type: "file",
+		Config: json.RawMessage(`{
+			"baseDir": "/tmp/delete-me"
+		}`),
+	}
+	err = sm.AddConfig(ctx, configToDelete)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name        string
+		key         string
+		expectError bool
+	}{
+		{
+			name:        "Existing Config",
+			key:         "delete-me",
+			expectError: false,
+		},
+		{
+			name:        "Non-existent Config",
+			key:         "non-existent",
+			expectError: false, // DeleteConfig doesn't return an error for non-existent keys
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := sm.DeleteConfig(ctx, tc.key)
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+
+				// Verify the config was deleted
+				_, err := sm.GetConfig(ctx, tc.key)
+				assert.Error(t, err) // Expecting an error as the config should not exist
+			}
+		})
+	}
+}
+
+func TestStorageManager_GetConfigs(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+
+	db := setupTestDB(t)
+	defer db.Close()
+
+	secretKey := "test-secret-key"
+	sm, err := New(db, logger, secretKey)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	// Add multiple configs
+	configs := []StorageConfig{
+		{
+			Name: "S3 Config",
+			Key:  "s3-config",
+			Type: "s3",
+			Config: json.RawMessage(`{
+				"bucket": "test-bucket",
+				"region": "us-west-2"
+			}`),
+		},
+		{
+			Name: "File Config",
+			Key:  "file-config",
+			Type: "file",
+			Config: json.RawMessage(`{
+				"baseDir": "/tmp/test-storage"
+			}`),
+		},
+	}
+
+	for _, cfg := range configs {
+		err := sm.AddConfig(ctx, cfg)
+		require.NoError(t, err)
+	}
+
+	// Test GetConfigs
+	retrievedConfigs, err := sm.GetConfigs(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, retrievedConfigs, len(configs))
+
+	// Verify each config
+	for _, expectedConfig := range configs {
+		found := false
+		for _, retrievedConfig := range retrievedConfigs {
+			if retrievedConfig.Key == expectedConfig.Key {
+				assert.Equal(t, expectedConfig.Name, retrievedConfig.Name)
+				assert.Equal(t, expectedConfig.Type, retrievedConfig.Type)
+				assert.JSONEq(t, string(expectedConfig.Config), string(retrievedConfig.Config))
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "Config with key %s not found in retrieved configs", expectedConfig.Key)
+	}
+}
+
+func TestStorageManager_GetStorage(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+
+	db := setupTestDB(t)
+	defer db.Close()
+
+	secretKey := "test-secret-key"
+	sm, err := New(db, logger, secretKey)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	// Add configs
+	configs := []StorageConfig{
+		{
+			Name: "S3 Storage",
+			Key:  "s3-storage",
+			Type: "s3",
+			Config: json.RawMessage(`{
+				"bucket": "test-bucket",
+				"region": "us-west-2"
+			}`),
+		},
+		{
+			Name: "File Storage",
+			Key:  "file-storage",
+			Type: "file",
+			Config: json.RawMessage(`{
+				"baseDir": "/tmp/test-storage"
+			}`),
+		},
+	}
+
+	for _, cfg := range configs {
+		err := sm.AddConfig(ctx, cfg)
+		require.NoError(t, err)
+	}
+
+	testCases := []struct {
+		name        string
+		key         string
+		expectError bool
+	}{
+		{
+			name:        "Existing S3 Storage",
+			key:         "s3-storage",
+			expectError: false,
+		},
+		{
+			name:        "Existing File Storage",
+			key:         "file-storage",
+			expectError: false,
+		},
+		{
+			name:        "Non-existent Storage",
+			key:         "non-existent",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			storage, err := sm.GetStorage(tc.key)
+			if tc.expectError {
+				assert.Error(t, err)
+				assert.Nil(t, storage)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, storage)
+				// You can add more specific checks here depending on the storage interface
+			}
+		})
+	}
+}
+
+func TestStorageManager_GetDefaultStorage(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+
+	db := setupTestDB(t)
+	defer db.Close()
+
+	secretKey := "test-secret-key"
+	sm, err := New(db, logger, secretKey)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	t.Run("No Configs", func(t *testing.T) {
+		storage, err := sm.GetDefaultStorage()
+		assert.Error(t, err)
+		assert.Nil(t, storage)
+	})
+
+	t.Run("Single Config", func(t *testing.T) {
+		config := StorageConfig{
+			Name: "Default Storage",
+			Key:  "default",
+			Type: "file",
+			Config: json.RawMessage(`{
+				"baseDir": "/tmp/default-storage"
+			}`),
+		}
+		err := sm.AddConfig(ctx, config)
+		require.NoError(t, err)
+
+		storage, err := sm.GetDefaultStorage()
+		assert.NoError(t, err)
+		assert.NotNil(t, storage)
+	})
+
+	t.Run("Multiple Configs", func(t *testing.T) {
+		config := StorageConfig{
+			Name: "Second Storage",
+			Key:  "second",
+			Type: "s3",
+			Config: json.RawMessage(`{
+				"bucket": "second-bucket",
+				"region": "us-east-1"
+			}`),
+		}
+		err := sm.AddConfig(ctx, config)
+		require.NoError(t, err)
+
+		storage, err := sm.GetDefaultStorage()
+		assert.Error(t, err)
+		assert.Nil(t, storage)
+	})
+}
+
+func TestStorageManager_Encryption(t *testing.T) {
+	// Setup
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+
+	db := setupTestDB(t)
+	defer db.Close()
 
 	secretKey := "imagor-secret"
 	sm, err := New(db, logger, secretKey)
