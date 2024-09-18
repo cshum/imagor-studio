@@ -17,16 +17,16 @@ func setupTestDB(t *testing.T) *sql.DB {
 	require.NoError(t, err)
 
 	_, err = db.Exec(`
-		CREATE TABLE storage_configs (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT NOT NULL,
-			key TEXT NOT NULL UNIQUE,
-			type TEXT NOT NULL,
-			config TEXT NOT NULL,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-		)
-	`)
+        CREATE TABLE storage_configs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            key TEXT NOT NULL UNIQUE,
+            type TEXT NOT NULL,
+            config TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `)
 	require.NoError(t, err)
 
 	return db
@@ -252,8 +252,13 @@ func TestStorageManager_DeleteConfig(t *testing.T) {
 				assert.NoError(t, err)
 
 				// Verify the config was deleted
-				_, err := sm.GetConfig(ctx, tc.key)
-				assert.Error(t, err) // Expecting an error as the config should not exist
+				retrievedConfig, err := sm.GetConfig(ctx, tc.key)
+				if tc.expectError {
+					assert.Error(t, err)
+				} else {
+					assert.Nil(t, err)
+					assert.Nil(t, retrievedConfig) // Check that retrievedConfig is nil for deleted/non-existent configs
+				}
 			}
 		})
 	}
