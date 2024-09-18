@@ -35,7 +35,7 @@ func TestStorageManager_Encryption(t *testing.T) {
 	`)
 	require.NoError(t, err)
 
-	secretKey := []byte("test-secret-key-32-bytes-long!!!")
+	secretKey := "imagor-secret"
 	sm, err := New(db, logger, secretKey)
 	require.NoError(t, err)
 

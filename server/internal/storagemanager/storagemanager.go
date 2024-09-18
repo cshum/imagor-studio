@@ -5,10 +5,12 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/crypto/hkdf"
 	"io"
 	"sync"
 
@@ -36,8 +38,15 @@ type StorageManager struct {
 	gcm      cipher.AEAD
 }
 
-func New(db *sql.DB, logger *zap.Logger, encryptionKey []byte) (*StorageManager, error) {
-	block, err := aes.NewCipher(encryptionKey)
+func New(db *sql.DB, logger *zap.Logger, secretKey string) (*StorageManager, error) {
+	// Derive a 32-byte key using HKDF
+	derivedKey := make([]byte, 32)
+	r := hkdf.New(sha256.New, []byte(secretKey), nil, []byte("imagor-studio-storage-manager"))
+	if _, err := io.ReadFull(r, derivedKey); err != nil {
+		return nil, fmt.Errorf("failed to derive key: %w", err)
+	}
+
+	block, err := aes.NewCipher(derivedKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
 	}
