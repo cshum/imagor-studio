@@ -78,11 +78,11 @@ func (sm *StorageManager) saveConfigs() error {
 
 func (sm *StorageManager) initializeStorages() error {
 	for _, cfg := range sm.configs {
-		storage, err := sm.createStorageFromConfig(cfg)
+		s, err := sm.createStorageFromConfig(cfg)
 		if err != nil {
-			return fmt.Errorf("error creating storage from config: %w", err)
+			return fmt.Errorf("error creating s from config: %w", err)
 		}
-		sm.storages[cfg.Key] = storage
+		sm.storages[cfg.Key] = s
 	}
 	return nil
 }
@@ -150,11 +150,11 @@ func (sm *StorageManager) AddConfig(config StorageConfig) error {
 		return err
 	}
 
-	storage, err := sm.createStorageFromConfig(config)
+	s, err := sm.createStorageFromConfig(config)
 	if err != nil {
 		return err
 	}
-	sm.storages[config.Key] = storage
+	sm.storages[config.Key] = s
 
 	return nil
 }
@@ -171,11 +171,11 @@ func (sm *StorageManager) UpdateConfig(key string, config StorageConfig) error {
 				return err
 			}
 
-			storage, err := sm.createStorageFromConfig(config)
+			s, err := sm.createStorageFromConfig(config)
 			if err != nil {
 				return err
 			}
-			sm.storages[config.Key] = storage
+			sm.storages[config.Key] = s
 
 			return nil
 		}
