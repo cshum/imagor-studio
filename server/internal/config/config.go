@@ -9,6 +9,8 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/storagemanager"
 	"github.com/peterbourgon/ff/v3"
 	"go.uber.org/zap"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Config struct {
