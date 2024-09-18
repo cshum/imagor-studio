@@ -1,13 +1,12 @@
-// internal/config/config.go
-
 package config
 
 import (
+	"database/sql"
 	"flag"
 	"fmt"
-	"github.com/cshum/imagor-studio/server/internal/storagemanager"
 	"os"
 
+	"github.com/cshum/imagor-studio/server/internal/storagemanager"
 	"github.com/peterbourgon/ff/v3"
 	"go.uber.org/zap"
 )
@@ -22,9 +21,9 @@ func Load() (*Config, error) {
 	fs := flag.NewFlagSet("imagor-studio", flag.ExitOnError)
 
 	var (
-		port              = fs.Int("port", 8080, "port to listen on")
-		storageConfigFile = fs.String("storage-config", "storage_config.json", "path to storage configuration file")
-		err               error
+		port   = fs.Int("port", 8080, "port to listen on")
+		dbPath = fs.String("db-path", "storage.db", "path to SQLite database file")
+		err    error
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -44,7 +43,12 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("error initializing logger: %w", err)
 	}
 
-	storageManager, err := storagemanager.New(*storageConfigFile)
+	db, err := sql.Open("sqlite3", *dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("error opening database: %w", err)
+	}
+
+	storageManager, err := storagemanager.New(db, logger)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing storage manager: %w", err)
 	}
@@ -57,7 +61,7 @@ func Load() (*Config, error) {
 
 	cfg.Logger.Info("Configuration loaded",
 		zap.Int("port", cfg.Port),
-		zap.Int("storageCount", len(storageManager.GetConfigs())),
+		zap.String("dbPath", *dbPath),
 	)
 
 	return cfg, nil
