@@ -58,3 +58,18 @@ gqlgen-update:
 	$(GQLGEN) --verbose --config gqlgen.yml
 
 .PHONY: all build test clean run deps tidy build-linux docker-build gqlgen gqlgen-init gqlgen-update
+
+.PHONY: generate-models
+
+generate-models:
+	sqlboiler sqlite3
+
+setup-db:
+	sqlite3 storage.db < setup_database.sql
+
+clean-db:
+	rm -f storage.db
+
+reset-db: clean-db setup-db
+
+.PHONY: setup-db clean-db reset-db
