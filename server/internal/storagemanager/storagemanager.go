@@ -204,11 +204,31 @@ func (sm *StorageManager) DeleteConfig(key string) error {
 	return fmt.Errorf("storage config with key %s not found", key)
 }
 
-func (sm *StorageManager) GetStorage(key string) (storage.Storage, bool) {
+// GetDefaultStorage returns the default storage if only one storage is configured.
+// If multiple storages are configured, it returns an error.
+func (sm *StorageManager) GetDefaultStorage() (storage.Storage, error) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
+
+	if len(sm.instances) == 1 {
+		for _, s := range sm.instances {
+			return s, nil
+		}
+	}
+	return nil, fmt.Errorf("no default storage available: multiple storages are configured")
+}
+
+// GetStorage returns a storage instance for the given key.
+// If the key doesn't exist, it returns an error.
+func (sm *StorageManager) GetStorage(key string) (storage.Storage, error) {
+	sm.mu.RLock()
+	defer sm.mu.RUnlock()
+
 	s, ok := sm.instances[key]
-	return s, ok
+	if !ok {
+		return nil, fmt.Errorf("invalid storage key: %s", key)
+	}
+	return s, nil
 }
 
 func (sm *StorageManager) GetAllStorages() map[string]storage.Storage {

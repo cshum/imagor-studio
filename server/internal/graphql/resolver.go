@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"fmt"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storagemanager"
 	"go.uber.org/zap"
@@ -24,22 +23,8 @@ func NewResolver(storageManager *storagemanager.StorageManager, logger *zap.Logg
 }
 
 func (r *Resolver) getStorage(storageKey *string) (storage.Storage, error) {
-	storages := r.storageManager.GetAllStorages()
-
-	if len(storages) == 1 && storageKey == nil {
-		for _, s := range storages {
-			return s, nil
-		}
-	}
-
 	if storageKey == nil {
-		return nil, fmt.Errorf("storageKey is required when multiple storages are configured")
+		return r.storageManager.GetDefaultStorage()
 	}
-
-	s, ok := r.storageManager.GetStorage(*storageKey)
-	if !ok {
-		return nil, fmt.Errorf("invalid storage key: %s", *storageKey)
-	}
-
-	return s, nil
+	return r.storageManager.GetStorage(*storageKey)
 }

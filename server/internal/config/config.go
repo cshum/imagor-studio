@@ -24,19 +24,18 @@ func Load() (*Config, error) {
 	var (
 		port              = fs.Int("port", 8080, "port to listen on")
 		storageConfigFile = fs.String("storage-config", "storage_config.json", "path to storage configuration file")
+		err               error
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
 
-	err := ff.Parse(fs, os.Args[1:],
+	if err = ff.Parse(fs, os.Args[1:],
 		ff.WithEnvVars(),
 		ff.WithConfigFileFlag("config"),
 		ff.WithIgnoreUndefined(true),
 		ff.WithAllowMissingConfigFile(true),
 		ff.WithConfigFileParser(ff.EnvParser),
-	)
-
-	if err != nil {
+	); err != nil {
 		return nil, fmt.Errorf("error parsing configuration: %w", err)
 	}
 
