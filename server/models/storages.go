@@ -22,8 +22,8 @@ import (
 	"github.com/volatiletech/strmangle"
 )
 
-// StorageConfig is an object representing the database table.
-type StorageConfig struct {
+// Storage is an object representing the database table.
+type Storage struct {
 	ID        null.Int64  `boil:"id" json:"id,omitempty" toml:"id" yaml:"id,omitempty"`
 	Name      string      `boil:"name" json:"name" toml:"name" yaml:"name"`
 	Key       string      `boil:"key" json:"key" toml:"key" yaml:"key"`
@@ -32,11 +32,11 @@ type StorageConfig struct {
 	CreatedAt null.String `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
 	UpdatedAt null.String `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
 
-	R *storage_configR `boil:"-" json:"-" toml:"-" yaml:"-"`
-	L storage_configL  `boil:"-" json:"-" toml:"-" yaml:"-"`
+	R *storageR `boil:"-" json:"-" toml:"-" yaml:"-"`
+	L storageL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
-var StorageConfigColumns = struct {
+var StorageColumns = struct {
 	ID        string
 	Name      string
 	Key       string
@@ -54,7 +54,7 @@ var StorageConfigColumns = struct {
 	UpdatedAt: "updated_at",
 }
 
-var StorageConfigTableColumns = struct {
+var StorageTableColumns = struct {
 	ID        string
 	Name      string
 	Key       string
@@ -63,13 +63,13 @@ var StorageConfigTableColumns = struct {
 	CreatedAt string
 	UpdatedAt string
 }{
-	ID:        "storage_configs.id",
-	Name:      "storage_configs.name",
-	Key:       "storage_configs.key",
-	Type:      "storage_configs.type",
-	Config:    "storage_configs.config",
-	CreatedAt: "storage_configs.created_at",
-	UpdatedAt: "storage_configs.updated_at",
+	ID:        "storages.id",
+	Name:      "storages.name",
+	Key:       "storages.key",
+	Type:      "storages.type",
+	Config:    "storages.config",
+	CreatedAt: "storages.created_at",
+	UpdatedAt: "storages.updated_at",
 }
 
 // Generated where
@@ -181,7 +181,7 @@ func (w whereHelpernull_String) NIN(slice []string) qm.QueryMod {
 func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
-var StorageConfigWhere = struct {
+var StorageWhere = struct {
 	ID        whereHelpernull_Int64
 	Name      whereHelperstring
 	Key       whereHelperstring
@@ -190,62 +190,62 @@ var StorageConfigWhere = struct {
 	CreatedAt whereHelpernull_String
 	UpdatedAt whereHelpernull_String
 }{
-	ID:        whereHelpernull_Int64{field: "\"storage_configs\".\"id\""},
-	Name:      whereHelperstring{field: "\"storage_configs\".\"name\""},
-	Key:       whereHelperstring{field: "\"storage_configs\".\"key\""},
-	Type:      whereHelperstring{field: "\"storage_configs\".\"type\""},
-	Config:    whereHelperstring{field: "\"storage_configs\".\"config\""},
-	CreatedAt: whereHelpernull_String{field: "\"storage_configs\".\"created_at\""},
-	UpdatedAt: whereHelpernull_String{field: "\"storage_configs\".\"updated_at\""},
+	ID:        whereHelpernull_Int64{field: "\"storages\".\"id\""},
+	Name:      whereHelperstring{field: "\"storages\".\"name\""},
+	Key:       whereHelperstring{field: "\"storages\".\"key\""},
+	Type:      whereHelperstring{field: "\"storages\".\"type\""},
+	Config:    whereHelperstring{field: "\"storages\".\"config\""},
+	CreatedAt: whereHelpernull_String{field: "\"storages\".\"created_at\""},
+	UpdatedAt: whereHelpernull_String{field: "\"storages\".\"updated_at\""},
 }
 
-// StorageConfigRels is where relationship names are stored.
-var StorageConfigRels = struct {
+// StorageRels is where relationship names are stored.
+var StorageRels = struct {
 }{}
 
-// storage_configR is where relationships are stored.
-type storage_configR struct {
+// storageR is where relationships are stored.
+type storageR struct {
 }
 
 // NewStruct creates a new relationship struct
-func (*storage_configR) NewStruct() *storage_configR {
-	return &storage_configR{}
+func (*storageR) NewStruct() *storageR {
+	return &storageR{}
 }
 
-// storage_configL is where Load methods for each relationship are stored.
-type storage_configL struct{}
+// storageL is where Load methods for each relationship are stored.
+type storageL struct{}
 
 var (
-	storage_configAllColumns            = []string{"id", "name", "key", "type", "config", "created_at", "updated_at"}
-	storage_configColumnsWithoutDefault = []string{"name", "key", "type", "config"}
-	storage_configColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
-	storage_configPrimaryKeyColumns     = []string{"id"}
-	storage_configGeneratedColumns      = []string{"id"}
+	storageAllColumns            = []string{"id", "name", "key", "type", "config", "created_at", "updated_at"}
+	storageColumnsWithoutDefault = []string{"name", "key", "type", "config"}
+	storageColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
+	storagePrimaryKeyColumns     = []string{"id"}
+	storageGeneratedColumns      = []string{"id"}
 )
 
 type (
-	// StorageConfigSlice is an alias for a slice of pointers to StorageConfig.
-	// This should almost always be used instead of []StorageConfig.
-	StorageConfigSlice []*StorageConfig
-	// StorageConfigHook is the signature for custom StorageConfig hook methods
-	StorageConfigHook func(context.Context, boil.ContextExecutor, *StorageConfig) error
+	// StorageSlice is an alias for a slice of pointers to Storage.
+	// This should almost always be used instead of []Storage.
+	StorageSlice []*Storage
+	// StorageHook is the signature for custom Storage hook methods
+	StorageHook func(context.Context, boil.ContextExecutor, *Storage) error
 
-	storage_configQuery struct {
+	storageQuery struct {
 		*queries.Query
 	}
 )
 
 // Cache for insert, update and upsert
 var (
-	storage_configType                 = reflect.TypeOf(&StorageConfig{})
-	storage_configMapping              = queries.MakeStructMapping(storage_configType)
-	storage_configPrimaryKeyMapping, _ = queries.BindMapping(storage_configType, storage_configMapping, storage_configPrimaryKeyColumns)
-	storage_configInsertCacheMut       sync.RWMutex
-	storage_configInsertCache          = make(map[string]insertCache)
-	storage_configUpdateCacheMut       sync.RWMutex
-	storage_configUpdateCache          = make(map[string]updateCache)
-	storage_configUpsertCacheMut       sync.RWMutex
-	storage_configUpsertCache          = make(map[string]insertCache)
+	storageType                 = reflect.TypeOf(&Storage{})
+	storageMapping              = queries.MakeStructMapping(storageType)
+	storagePrimaryKeyMapping, _ = queries.BindMapping(storageType, storageMapping, storagePrimaryKeyColumns)
+	storageInsertCacheMut       sync.RWMutex
+	storageInsertCache          = make(map[string]insertCache)
+	storageUpdateCacheMut       sync.RWMutex
+	storageUpdateCache          = make(map[string]updateCache)
+	storageUpsertCacheMut       sync.RWMutex
+	storageUpsertCache          = make(map[string]insertCache)
 )
 
 var (
@@ -256,36 +256,36 @@ var (
 	_ = qmhelper.Where
 )
 
-var storage_configAfterSelectMu sync.Mutex
-var storage_configAfterSelectHooks []StorageConfigHook
+var storageAfterSelectMu sync.Mutex
+var storageAfterSelectHooks []StorageHook
 
-var storage_configBeforeInsertMu sync.Mutex
-var storage_configBeforeInsertHooks []StorageConfigHook
-var storage_configAfterInsertMu sync.Mutex
-var storage_configAfterInsertHooks []StorageConfigHook
+var storageBeforeInsertMu sync.Mutex
+var storageBeforeInsertHooks []StorageHook
+var storageAfterInsertMu sync.Mutex
+var storageAfterInsertHooks []StorageHook
 
-var storage_configBeforeUpdateMu sync.Mutex
-var storage_configBeforeUpdateHooks []StorageConfigHook
-var storage_configAfterUpdateMu sync.Mutex
-var storage_configAfterUpdateHooks []StorageConfigHook
+var storageBeforeUpdateMu sync.Mutex
+var storageBeforeUpdateHooks []StorageHook
+var storageAfterUpdateMu sync.Mutex
+var storageAfterUpdateHooks []StorageHook
 
-var storage_configBeforeDeleteMu sync.Mutex
-var storage_configBeforeDeleteHooks []StorageConfigHook
-var storage_configAfterDeleteMu sync.Mutex
-var storage_configAfterDeleteHooks []StorageConfigHook
+var storageBeforeDeleteMu sync.Mutex
+var storageBeforeDeleteHooks []StorageHook
+var storageAfterDeleteMu sync.Mutex
+var storageAfterDeleteHooks []StorageHook
 
-var storage_configBeforeUpsertMu sync.Mutex
-var storage_configBeforeUpsertHooks []StorageConfigHook
-var storage_configAfterUpsertMu sync.Mutex
-var storage_configAfterUpsertHooks []StorageConfigHook
+var storageBeforeUpsertMu sync.Mutex
+var storageBeforeUpsertHooks []StorageHook
+var storageAfterUpsertMu sync.Mutex
+var storageAfterUpsertHooks []StorageHook
 
 // doAfterSelectHooks executes all "after Select" hooks.
-func (o *StorageConfig) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Storage) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range storage_configAfterSelectHooks {
+	for _, hook := range storageAfterSelectHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -295,12 +295,12 @@ func (o *StorageConfig) doAfterSelectHooks(ctx context.Context, exec boil.Contex
 }
 
 // doBeforeInsertHooks executes all "before insert" hooks.
-func (o *StorageConfig) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Storage) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range storage_configBeforeInsertHooks {
+	for _, hook := range storageBeforeInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -310,12 +310,12 @@ func (o *StorageConfig) doBeforeInsertHooks(ctx context.Context, exec boil.Conte
 }
 
 // doAfterInsertHooks executes all "after Insert" hooks.
-func (o *StorageConfig) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Storage) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range storage_configAfterInsertHooks {
+	for _, hook := range storageAfterInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -325,12 +325,12 @@ func (o *StorageConfig) doAfterInsertHooks(ctx context.Context, exec boil.Contex
 }
 
 // doBeforeUpdateHooks executes all "before Update" hooks.
-func (o *StorageConfig) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Storage) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range storage_configBeforeUpdateHooks {
+	for _, hook := range storageBeforeUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -340,12 +340,12 @@ func (o *StorageConfig) doBeforeUpdateHooks(ctx context.Context, exec boil.Conte
 }
 
 // doAfterUpdateHooks executes all "after Update" hooks.
-func (o *StorageConfig) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Storage) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range storage_configAfterUpdateHooks {
+	for _, hook := range storageAfterUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -355,12 +355,12 @@ func (o *StorageConfig) doAfterUpdateHooks(ctx context.Context, exec boil.Contex
 }
 
 // doBeforeDeleteHooks executes all "before Delete" hooks.
-func (o *StorageConfig) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Storage) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range storage_configBeforeDeleteHooks {
+	for _, hook := range storageBeforeDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -370,12 +370,12 @@ func (o *StorageConfig) doBeforeDeleteHooks(ctx context.Context, exec boil.Conte
 }
 
 // doAfterDeleteHooks executes all "after Delete" hooks.
-func (o *StorageConfig) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Storage) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range storage_configAfterDeleteHooks {
+	for _, hook := range storageAfterDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -385,12 +385,12 @@ func (o *StorageConfig) doAfterDeleteHooks(ctx context.Context, exec boil.Contex
 }
 
 // doBeforeUpsertHooks executes all "before Upsert" hooks.
-func (o *StorageConfig) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Storage) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range storage_configBeforeUpsertHooks {
+	for _, hook := range storageBeforeUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -400,12 +400,12 @@ func (o *StorageConfig) doBeforeUpsertHooks(ctx context.Context, exec boil.Conte
 }
 
 // doAfterUpsertHooks executes all "after Upsert" hooks.
-func (o *StorageConfig) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Storage) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range storage_configAfterUpsertHooks {
+	for _, hook := range storageAfterUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -414,51 +414,51 @@ func (o *StorageConfig) doAfterUpsertHooks(ctx context.Context, exec boil.Contex
 	return nil
 }
 
-// AddStorageConfigHook registers your hook function for all future operations.
-func AddStorageConfigHook(hookPoint boil.HookPoint, storage_configHook StorageConfigHook) {
+// AddStorageHook registers your hook function for all future operations.
+func AddStorageHook(hookPoint boil.HookPoint, storageHook StorageHook) {
 	switch hookPoint {
 	case boil.AfterSelectHook:
-		storage_configAfterSelectMu.Lock()
-		storage_configAfterSelectHooks = append(storage_configAfterSelectHooks, storage_configHook)
-		storage_configAfterSelectMu.Unlock()
+		storageAfterSelectMu.Lock()
+		storageAfterSelectHooks = append(storageAfterSelectHooks, storageHook)
+		storageAfterSelectMu.Unlock()
 	case boil.BeforeInsertHook:
-		storage_configBeforeInsertMu.Lock()
-		storage_configBeforeInsertHooks = append(storage_configBeforeInsertHooks, storage_configHook)
-		storage_configBeforeInsertMu.Unlock()
+		storageBeforeInsertMu.Lock()
+		storageBeforeInsertHooks = append(storageBeforeInsertHooks, storageHook)
+		storageBeforeInsertMu.Unlock()
 	case boil.AfterInsertHook:
-		storage_configAfterInsertMu.Lock()
-		storage_configAfterInsertHooks = append(storage_configAfterInsertHooks, storage_configHook)
-		storage_configAfterInsertMu.Unlock()
+		storageAfterInsertMu.Lock()
+		storageAfterInsertHooks = append(storageAfterInsertHooks, storageHook)
+		storageAfterInsertMu.Unlock()
 	case boil.BeforeUpdateHook:
-		storage_configBeforeUpdateMu.Lock()
-		storage_configBeforeUpdateHooks = append(storage_configBeforeUpdateHooks, storage_configHook)
-		storage_configBeforeUpdateMu.Unlock()
+		storageBeforeUpdateMu.Lock()
+		storageBeforeUpdateHooks = append(storageBeforeUpdateHooks, storageHook)
+		storageBeforeUpdateMu.Unlock()
 	case boil.AfterUpdateHook:
-		storage_configAfterUpdateMu.Lock()
-		storage_configAfterUpdateHooks = append(storage_configAfterUpdateHooks, storage_configHook)
-		storage_configAfterUpdateMu.Unlock()
+		storageAfterUpdateMu.Lock()
+		storageAfterUpdateHooks = append(storageAfterUpdateHooks, storageHook)
+		storageAfterUpdateMu.Unlock()
 	case boil.BeforeDeleteHook:
-		storage_configBeforeDeleteMu.Lock()
-		storage_configBeforeDeleteHooks = append(storage_configBeforeDeleteHooks, storage_configHook)
-		storage_configBeforeDeleteMu.Unlock()
+		storageBeforeDeleteMu.Lock()
+		storageBeforeDeleteHooks = append(storageBeforeDeleteHooks, storageHook)
+		storageBeforeDeleteMu.Unlock()
 	case boil.AfterDeleteHook:
-		storage_configAfterDeleteMu.Lock()
-		storage_configAfterDeleteHooks = append(storage_configAfterDeleteHooks, storage_configHook)
-		storage_configAfterDeleteMu.Unlock()
+		storageAfterDeleteMu.Lock()
+		storageAfterDeleteHooks = append(storageAfterDeleteHooks, storageHook)
+		storageAfterDeleteMu.Unlock()
 	case boil.BeforeUpsertHook:
-		storage_configBeforeUpsertMu.Lock()
-		storage_configBeforeUpsertHooks = append(storage_configBeforeUpsertHooks, storage_configHook)
-		storage_configBeforeUpsertMu.Unlock()
+		storageBeforeUpsertMu.Lock()
+		storageBeforeUpsertHooks = append(storageBeforeUpsertHooks, storageHook)
+		storageBeforeUpsertMu.Unlock()
 	case boil.AfterUpsertHook:
-		storage_configAfterUpsertMu.Lock()
-		storage_configAfterUpsertHooks = append(storage_configAfterUpsertHooks, storage_configHook)
-		storage_configAfterUpsertMu.Unlock()
+		storageAfterUpsertMu.Lock()
+		storageAfterUpsertHooks = append(storageAfterUpsertHooks, storageHook)
+		storageAfterUpsertMu.Unlock()
 	}
 }
 
-// One returns a single storage_config record from the query.
-func (q storage_configQuery) One(ctx context.Context, exec boil.ContextExecutor) (*StorageConfig, error) {
-	o := &StorageConfig{}
+// One returns a single storage record from the query.
+func (q storageQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Storage, error) {
+	o := &Storage{}
 
 	queries.SetLimit(q.Query, 1)
 
@@ -467,7 +467,7 @@ func (q storage_configQuery) One(ctx context.Context, exec boil.ContextExecutor)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: failed to execute a one query for storage_configs")
+		return nil, errors.Wrap(err, "models: failed to execute a one query for storages")
 	}
 
 	if err := o.doAfterSelectHooks(ctx, exec); err != nil {
@@ -477,16 +477,16 @@ func (q storage_configQuery) One(ctx context.Context, exec boil.ContextExecutor)
 	return o, nil
 }
 
-// All returns all StorageConfig records from the query.
-func (q storage_configQuery) All(ctx context.Context, exec boil.ContextExecutor) (StorageConfigSlice, error) {
-	var o []*StorageConfig
+// All returns all Storage records from the query.
+func (q storageQuery) All(ctx context.Context, exec boil.ContextExecutor) (StorageSlice, error) {
+	var o []*Storage
 
 	err := q.Bind(ctx, exec, &o)
 	if err != nil {
-		return nil, errors.Wrap(err, "models: failed to assign all query results to StorageConfig slice")
+		return nil, errors.Wrap(err, "models: failed to assign all query results to Storage slice")
 	}
 
-	if len(storage_configAfterSelectHooks) != 0 {
+	if len(storageAfterSelectHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterSelectHooks(ctx, exec); err != nil {
 				return o, err
@@ -497,8 +497,8 @@ func (q storage_configQuery) All(ctx context.Context, exec boil.ContextExecutor)
 	return o, nil
 }
 
-// Count returns the count of all StorageConfig records in the query.
-func (q storage_configQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+// Count returns the count of all Storage records in the query.
+func (q storageQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -506,14 +506,14 @@ func (q storage_configQuery) Count(ctx context.Context, exec boil.ContextExecuto
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to count storage_configs rows")
+		return 0, errors.Wrap(err, "models: failed to count storages rows")
 	}
 
 	return count, nil
 }
 
 // Exists checks if the row exists in the table.
-func (q storage_configQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
+func (q storageQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -522,58 +522,58 @@ func (q storage_configQuery) Exists(ctx context.Context, exec boil.ContextExecut
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "models: failed to check if storage_configs exists")
+		return false, errors.Wrap(err, "models: failed to check if storages exists")
 	}
 
 	return count > 0, nil
 }
 
-// StorageConfigs retrieves all the records using an executor.
-func StorageConfigs(mods ...qm.QueryMod) storage_configQuery {
-	mods = append(mods, qm.From("\"storage_configs\""))
+// Storages retrieves all the records using an executor.
+func Storages(mods ...qm.QueryMod) storageQuery {
+	mods = append(mods, qm.From("\"storages\""))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
-		queries.SetSelect(q, []string{"\"storage_configs\".*"})
+		queries.SetSelect(q, []string{"\"storages\".*"})
 	}
 
-	return storage_configQuery{q}
+	return storageQuery{q}
 }
 
-// FindStorageConfig retrieves a single record by ID with an executor.
+// FindStorage retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindStorageConfig(ctx context.Context, exec boil.ContextExecutor, iD null.Int64, selectCols ...string) (*StorageConfig, error) {
-	storage_configObj := &StorageConfig{}
+func FindStorage(ctx context.Context, exec boil.ContextExecutor, iD null.Int64, selectCols ...string) (*Storage, error) {
+	storageObj := &Storage{}
 
 	sel := "*"
 	if len(selectCols) > 0 {
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"storage_configs\" where \"id\"=?", sel,
+		"select %s from \"storages\" where \"id\"=?", sel,
 	)
 
 	q := queries.Raw(query, iD)
 
-	err := q.Bind(ctx, exec, storage_configObj)
+	err := q.Bind(ctx, exec, storageObj)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: unable to select from storage_configs")
+		return nil, errors.Wrap(err, "models: unable to select from storages")
 	}
 
-	if err = storage_configObj.doAfterSelectHooks(ctx, exec); err != nil {
-		return storage_configObj, err
+	if err = storageObj.doAfterSelectHooks(ctx, exec); err != nil {
+		return storageObj, err
 	}
 
-	return storage_configObj, nil
+	return storageObj, nil
 }
 
 // Insert a single record using an executor.
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
-func (o *StorageConfig) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
+func (o *Storage) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no storage_configs provided for insertion")
+		return errors.New("models: no storages provided for insertion")
 	}
 
 	var err error
@@ -592,34 +592,34 @@ func (o *StorageConfig) Insert(ctx context.Context, exec boil.ContextExecutor, c
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(storage_configColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(storageColumnsWithDefault, o)
 
 	key := makeCacheKey(columns, nzDefaults)
-	storage_configInsertCacheMut.RLock()
-	cache, cached := storage_configInsertCache[key]
-	storage_configInsertCacheMut.RUnlock()
+	storageInsertCacheMut.RLock()
+	cache, cached := storageInsertCache[key]
+	storageInsertCacheMut.RUnlock()
 
 	if !cached {
 		wl, returnColumns := columns.InsertColumnSet(
-			storage_configAllColumns,
-			storage_configColumnsWithDefault,
-			storage_configColumnsWithoutDefault,
+			storageAllColumns,
+			storageColumnsWithDefault,
+			storageColumnsWithoutDefault,
 			nzDefaults,
 		)
-		wl = strmangle.SetComplement(wl, storage_configGeneratedColumns)
+		wl = strmangle.SetComplement(wl, storageGeneratedColumns)
 
-		cache.valueMapping, err = queries.BindMapping(storage_configType, storage_configMapping, wl)
+		cache.valueMapping, err = queries.BindMapping(storageType, storageMapping, wl)
 		if err != nil {
 			return err
 		}
-		cache.retMapping, err = queries.BindMapping(storage_configType, storage_configMapping, returnColumns)
+		cache.retMapping, err = queries.BindMapping(storageType, storageMapping, returnColumns)
 		if err != nil {
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO \"storage_configs\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO \"storages\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO \"storage_configs\" %sDEFAULT VALUES%s"
+			cache.query = "INSERT INTO \"storages\" %sDEFAULT VALUES%s"
 		}
 
 		var queryOutput, queryReturning string
@@ -647,22 +647,22 @@ func (o *StorageConfig) Insert(ctx context.Context, exec boil.ContextExecutor, c
 	}
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to insert into storage_configs")
+		return errors.Wrap(err, "models: unable to insert into storages")
 	}
 
 	if !cached {
-		storage_configInsertCacheMut.Lock()
-		storage_configInsertCache[key] = cache
-		storage_configInsertCacheMut.Unlock()
+		storageInsertCacheMut.Lock()
+		storageInsertCache[key] = cache
+		storageInsertCacheMut.Unlock()
 	}
 
 	return o.doAfterInsertHooks(ctx, exec)
 }
 
-// Update uses an executor to update the StorageConfig.
+// Update uses an executor to update the Storage.
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
-func (o *StorageConfig) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+func (o *Storage) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
 	if !boil.TimestampsAreSkipped(ctx) {
 		currTime := time.Now().In(boil.GetLocation())
 
@@ -674,29 +674,29 @@ func (o *StorageConfig) Update(ctx context.Context, exec boil.ContextExecutor, c
 		return 0, err
 	}
 	key := makeCacheKey(columns, nil)
-	storage_configUpdateCacheMut.RLock()
-	cache, cached := storage_configUpdateCache[key]
-	storage_configUpdateCacheMut.RUnlock()
+	storageUpdateCacheMut.RLock()
+	cache, cached := storageUpdateCache[key]
+	storageUpdateCacheMut.RUnlock()
 
 	if !cached {
 		wl := columns.UpdateColumnSet(
-			storage_configAllColumns,
-			storage_configPrimaryKeyColumns,
+			storageAllColumns,
+			storagePrimaryKeyColumns,
 		)
-		wl = strmangle.SetComplement(wl, storage_configGeneratedColumns)
+		wl = strmangle.SetComplement(wl, storageGeneratedColumns)
 
 		if !columns.IsWhitelist() {
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
 		if len(wl) == 0 {
-			return 0, errors.New("models: unable to update storage_configs, could not build whitelist")
+			return 0, errors.New("models: unable to update storages, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE \"storage_configs\" SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE \"storages\" SET %s WHERE %s",
 			strmangle.SetParamNames("\"", "\"", 0, wl),
-			strmangle.WhereClause("\"", "\"", 0, storage_configPrimaryKeyColumns),
+			strmangle.WhereClause("\"", "\"", 0, storagePrimaryKeyColumns),
 		)
-		cache.valueMapping, err = queries.BindMapping(storage_configType, storage_configMapping, append(wl, storage_configPrimaryKeyColumns...))
+		cache.valueMapping, err = queries.BindMapping(storageType, storageMapping, append(wl, storagePrimaryKeyColumns...))
 		if err != nil {
 			return 0, err
 		}
@@ -712,42 +712,42 @@ func (o *StorageConfig) Update(ctx context.Context, exec boil.ContextExecutor, c
 	var result sql.Result
 	result, err = exec.ExecContext(ctx, cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update storage_configs row")
+		return 0, errors.Wrap(err, "models: unable to update storages row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by update for storage_configs")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by update for storages")
 	}
 
 	if !cached {
-		storage_configUpdateCacheMut.Lock()
-		storage_configUpdateCache[key] = cache
-		storage_configUpdateCacheMut.Unlock()
+		storageUpdateCacheMut.Lock()
+		storageUpdateCache[key] = cache
+		storageUpdateCacheMut.Unlock()
 	}
 
 	return rowsAff, o.doAfterUpdateHooks(ctx, exec)
 }
 
 // UpdateAll updates all rows with the specified column values.
-func (q storage_configQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (q storageQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	queries.SetUpdate(q.Query, cols)
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all for storage_configs")
+		return 0, errors.Wrap(err, "models: unable to update all for storages")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for storage_configs")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for storages")
 	}
 
 	return rowsAff, nil
 }
 
 // UpdateAll updates all rows with the specified column values, using an executor.
-func (o StorageConfigSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (o StorageSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	ln := int64(len(o))
 	if ln == 0 {
 		return 0, nil
@@ -769,13 +769,13 @@ func (o StorageConfigSlice) UpdateAll(ctx context.Context, exec boil.ContextExec
 
 	// Append all of the primary key values for each column
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), storage_configPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), storagePrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE \"storage_configs\" SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE \"storages\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 0, colNames),
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, storage_configPrimaryKeyColumns, len(o)))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, storagePrimaryKeyColumns, len(o)))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -784,21 +784,21 @@ func (o StorageConfigSlice) UpdateAll(ctx context.Context, exec boil.ContextExec
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all in storage_config slice")
+		return 0, errors.Wrap(err, "models: unable to update all in storage slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected all in update all storage_config")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected all in update all storage")
 	}
 	return rowsAff, nil
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *StorageConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
+func (o *Storage) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no storage_configs provided for upsert")
+		return errors.New("models: no storages provided for upsert")
 	}
 	if !boil.TimestampsAreSkipped(ctx) {
 		currTime := time.Now().In(boil.GetLocation())
@@ -813,7 +813,7 @@ func (o *StorageConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, u
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(storage_configColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(storageColumnsWithDefault, o)
 
 	// Build cache key in-line uglily - mysql vs psql problems
 	buf := strmangle.GetBuffer()
@@ -843,43 +843,43 @@ func (o *StorageConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, u
 	key := buf.String()
 	strmangle.PutBuffer(buf)
 
-	storage_configUpsertCacheMut.RLock()
-	cache, cached := storage_configUpsertCache[key]
-	storage_configUpsertCacheMut.RUnlock()
+	storageUpsertCacheMut.RLock()
+	cache, cached := storageUpsertCache[key]
+	storageUpsertCacheMut.RUnlock()
 
 	var err error
 
 	if !cached {
 		insert, _ := insertColumns.InsertColumnSet(
-			storage_configAllColumns,
-			storage_configColumnsWithDefault,
-			storage_configColumnsWithoutDefault,
+			storageAllColumns,
+			storageColumnsWithDefault,
+			storageColumnsWithoutDefault,
 			nzDefaults,
 		)
 		update := updateColumns.UpdateColumnSet(
-			storage_configAllColumns,
-			storage_configPrimaryKeyColumns,
+			storageAllColumns,
+			storagePrimaryKeyColumns,
 		)
 
 		if updateOnConflict && len(update) == 0 {
-			return errors.New("models: unable to upsert storage_configs, could not build update column list")
+			return errors.New("models: unable to upsert storages, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(storage_configAllColumns, strmangle.SetIntersect(insert, update))
+		ret := strmangle.SetComplement(storageAllColumns, strmangle.SetIntersect(insert, update))
 
 		conflict := conflictColumns
 		if len(conflict) == 0 {
-			conflict = make([]string, len(storage_configPrimaryKeyColumns))
-			copy(conflict, storage_configPrimaryKeyColumns)
+			conflict = make([]string, len(storagePrimaryKeyColumns))
+			copy(conflict, storagePrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQuerySQLite(dialect, "\"storage_configs\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQuerySQLite(dialect, "\"storages\"", updateOnConflict, ret, update, conflict, insert)
 
-		cache.valueMapping, err = queries.BindMapping(storage_configType, storage_configMapping, insert)
+		cache.valueMapping, err = queries.BindMapping(storageType, storageMapping, insert)
 		if err != nil {
 			return err
 		}
 		if len(ret) != 0 {
-			cache.retMapping, err = queries.BindMapping(storage_configType, storage_configMapping, ret)
+			cache.retMapping, err = queries.BindMapping(storageType, storageMapping, ret)
 			if err != nil {
 				return err
 			}
@@ -907,31 +907,31 @@ func (o *StorageConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, u
 		_, err = exec.ExecContext(ctx, cache.query, vals...)
 	}
 	if err != nil {
-		return errors.Wrap(err, "models: unable to upsert storage_configs")
+		return errors.Wrap(err, "models: unable to upsert storages")
 	}
 
 	if !cached {
-		storage_configUpsertCacheMut.Lock()
-		storage_configUpsertCache[key] = cache
-		storage_configUpsertCacheMut.Unlock()
+		storageUpsertCacheMut.Lock()
+		storageUpsertCache[key] = cache
+		storageUpsertCacheMut.Unlock()
 	}
 
 	return o.doAfterUpsertHooks(ctx, exec)
 }
 
-// Delete deletes a single StorageConfig record with an executor.
+// Delete deletes a single Storage record with an executor.
 // Delete will match against the primary key column to find the record to delete.
-func (o *StorageConfig) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o *Storage) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if o == nil {
-		return 0, errors.New("models: no StorageConfig provided for delete")
+		return 0, errors.New("models: no Storage provided for delete")
 	}
 
 	if err := o.doBeforeDeleteHooks(ctx, exec); err != nil {
 		return 0, err
 	}
 
-	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), storage_configPrimaryKeyMapping)
-	sql := "DELETE FROM \"storage_configs\" WHERE \"id\"=?"
+	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), storagePrimaryKeyMapping)
+	sql := "DELETE FROM \"storages\" WHERE \"id\"=?"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -940,12 +940,12 @@ func (o *StorageConfig) Delete(ctx context.Context, exec boil.ContextExecutor) (
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete from storage_configs")
+		return 0, errors.Wrap(err, "models: unable to delete from storages")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for storage_configs")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for storages")
 	}
 
 	if err := o.doAfterDeleteHooks(ctx, exec); err != nil {
@@ -956,33 +956,33 @@ func (o *StorageConfig) Delete(ctx context.Context, exec boil.ContextExecutor) (
 }
 
 // DeleteAll deletes all matching rows.
-func (q storage_configQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (q storageQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if q.Query == nil {
-		return 0, errors.New("models: no storage_configQuery provided for delete all")
+		return 0, errors.New("models: no storageQuery provided for delete all")
 	}
 
 	queries.SetDelete(q.Query)
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from storage_configs")
+		return 0, errors.Wrap(err, "models: unable to delete all from storages")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for storage_configs")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for storages")
 	}
 
 	return rowsAff, nil
 }
 
 // DeleteAll deletes all rows in the slice, using an executor.
-func (o StorageConfigSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o StorageSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if len(o) == 0 {
 		return 0, nil
 	}
 
-	if len(storage_configBeforeDeleteHooks) != 0 {
+	if len(storageBeforeDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doBeforeDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -992,12 +992,12 @@ func (o StorageConfigSlice) DeleteAll(ctx context.Context, exec boil.ContextExec
 
 	var args []interface{}
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), storage_configPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), storagePrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM \"storage_configs\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, storage_configPrimaryKeyColumns, len(o))
+	sql := "DELETE FROM \"storages\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, storagePrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1006,15 +1006,15 @@ func (o StorageConfigSlice) DeleteAll(ctx context.Context, exec boil.ContextExec
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from storage_config slice")
+		return 0, errors.Wrap(err, "models: unable to delete all from storage slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for storage_configs")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for storages")
 	}
 
-	if len(storage_configAfterDeleteHooks) != 0 {
+	if len(storageAfterDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -1027,8 +1027,8 @@ func (o StorageConfigSlice) DeleteAll(ctx context.Context, exec boil.ContextExec
 
 // Reload refetches the object from the database
 // using the primary keys with an executor.
-func (o *StorageConfig) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindStorageConfig(ctx, exec, o.ID)
+func (o *Storage) Reload(ctx context.Context, exec boil.ContextExecutor) error {
+	ret, err := FindStorage(ctx, exec, o.ID)
 	if err != nil {
 		return err
 	}
@@ -1039,26 +1039,26 @@ func (o *StorageConfig) Reload(ctx context.Context, exec boil.ContextExecutor) e
 
 // ReloadAll refetches every row with matching primary key column values
 // and overwrites the original object slice with the newly updated slice.
-func (o *StorageConfigSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
+func (o *StorageSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
 	if o == nil || len(*o) == 0 {
 		return nil
 	}
 
-	slice := StorageConfigSlice{}
+	slice := StorageSlice{}
 	var args []interface{}
 	for _, obj := range *o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), storage_configPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), storagePrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT \"storage_configs\".* FROM \"storage_configs\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, storage_configPrimaryKeyColumns, len(*o))
+	sql := "SELECT \"storages\".* FROM \"storages\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, storagePrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
 
 	err := q.Bind(ctx, exec, &slice)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to reload all in StorageConfigSlice")
+		return errors.Wrap(err, "models: unable to reload all in StorageSlice")
 	}
 
 	*o = slice
@@ -1066,10 +1066,10 @@ func (o *StorageConfigSlice) ReloadAll(ctx context.Context, exec boil.ContextExe
 	return nil
 }
 
-// StorageConfigExists checks if the StorageConfig row exists.
-func StorageConfigExists(ctx context.Context, exec boil.ContextExecutor, iD null.Int64) (bool, error) {
+// StorageExists checks if the Storage row exists.
+func StorageExists(ctx context.Context, exec boil.ContextExecutor, iD null.Int64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"storage_configs\" where \"id\"=? limit 1)"
+	sql := "select exists(select 1 from \"storages\" where \"id\"=? limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1080,13 +1080,13 @@ func StorageConfigExists(ctx context.Context, exec boil.ContextExecutor, iD null
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "models: unable to check if storage_configs exists")
+		return false, errors.Wrap(err, "models: unable to check if storages exists")
 	}
 
 	return exists, nil
 }
 
-// Exists checks if the StorageConfig row exists.
-func (o *StorageConfig) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return StorageConfigExists(ctx, exec, o.ID)
+// Exists checks if the Storage row exists.
+func (o *Storage) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
+	return StorageExists(ctx, exec, o.ID)
 }

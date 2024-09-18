@@ -1,4 +1,4 @@
-CREATE TABLE storage_configs (
+CREATE TABLE storages (
                                  id INTEGER PRIMARY KEY AUTOINCREMENT,
                                  name TEXT NOT NULL,
                                  key TEXT NOT NULL UNIQUE,
@@ -8,9 +8,9 @@ CREATE TABLE storage_configs (
                                  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER update_storage_configs_updated_at
-    AFTER UPDATE ON storage_configs
+CREATE TRIGGER update_storages_updated_at
+    AFTER UPDATE ON storages
     FOR EACH ROW
 BEGIN
-    UPDATE storage_configs SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+    UPDATE storages SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
 END;

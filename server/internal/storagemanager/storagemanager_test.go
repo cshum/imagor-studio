@@ -17,7 +17,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 	require.NoError(t, err)
 
 	_, err = db.Exec(`
-        CREATE TABLE storage_configs (
+        CREATE TABLE storages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             key TEXT NOT NULL UNIQUE,

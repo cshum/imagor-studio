@@ -80,7 +80,7 @@ func New(db *sql.DB, logger *zap.Logger, secretKey string) (StorageManager, erro
 
 func (sm *storageManager) initializeStorages() error {
 	ctx := context.Background()
-	configs, err := models.StorageConfigs().All(ctx, sm.db)
+	configs, err := models.Storages().All(ctx, sm.db)
 	if err != nil {
 		return fmt.Errorf("error fetching storage configs: %w", err)
 	}
@@ -97,7 +97,7 @@ func (sm *storageManager) initializeStorages() error {
 	return nil
 }
 
-func (sm *storageManager) createStorageFromConfig(config *models.StorageConfig) (storage.Storage, error) {
+func (sm *storageManager) createStorageFromConfig(config *models.Storage) (storage.Storage, error) {
 	decryptedConfig, err := sm.decryptConfig(config.Config)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting config: %w", err)
@@ -165,7 +165,7 @@ func (sm *storageManager) decryptConfig(encryptedConfig string) (json.RawMessage
 }
 
 func (sm *storageManager) GetConfigs(ctx context.Context) ([]StorageConfig, error) {
-	configs, err := models.StorageConfigs().All(ctx, sm.db)
+	configs, err := models.Storages().All(ctx, sm.db)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching storage configs: %w", err)
 	}
@@ -189,7 +189,7 @@ func (sm *storageManager) GetConfigs(ctx context.Context) ([]StorageConfig, erro
 }
 
 func (sm *storageManager) GetConfig(ctx context.Context, key string) (*StorageConfig, error) {
-	config, err := models.StorageConfigs(qm.Where("key=?", key)).One(ctx, sm.db)
+	config, err := models.Storages(qm.Where("key=?", key)).One(ctx, sm.db)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // Return nil, nil when no config is found
@@ -216,7 +216,7 @@ func (sm *storageManager) AddConfig(ctx context.Context, config StorageConfig) e
 		return fmt.Errorf("error encrypting config: %w", err)
 	}
 
-	dbConfig := &models.StorageConfig{
+	dbConfig := &models.Storage{
 		Name:   config.Name,
 		Key:    config.Key,
 		Type:   config.Type,
@@ -247,12 +247,12 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, key string, config S
 	}
 
 	updateColumns := models.M{
-		models.StorageConfigColumns.Name:   config.Name,
-		models.StorageConfigColumns.Type:   config.Type,
-		models.StorageConfigColumns.Config: encryptedConfig,
+		models.StorageColumns.Name:   config.Name,
+		models.StorageColumns.Type:   config.Type,
+		models.StorageColumns.Config: encryptedConfig,
 	}
 
-	rowsAff, err := models.StorageConfigs(
+	rowsAff, err := models.Storages(
 		qm.Where("key=?", key),
 	).UpdateAll(ctx, sm.db, updateColumns)
 	if err != nil {
@@ -263,7 +263,7 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, key string, config S
 		return fmt.Errorf("storage config with key %s not found", key)
 	}
 
-	updatedConfig := &models.StorageConfig{
+	updatedConfig := &models.Storage{
 		Key:    key,
 		Name:   config.Name,
 		Type:   config.Type,
@@ -281,7 +281,7 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, key string, config S
 }
 
 func (sm *storageManager) DeleteConfig(ctx context.Context, key string) error {
-	_, err := models.StorageConfigs(qm.Where("key=?", key)).DeleteAll(ctx, sm.db)
+	_, err := models.Storages(qm.Where("key=?", key)).DeleteAll(ctx, sm.db)
 	if err != nil {
 		return fmt.Errorf("error deleting storage config: %w", err)
 	}

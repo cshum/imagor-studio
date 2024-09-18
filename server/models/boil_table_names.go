@@ -4,7 +4,7 @@
 package models
 
 var TableNames = struct {
-	StorageConfigs string
+	Storages string
 }{
-	StorageConfigs: "storage_configs",
+	Storages: "storages",
 }

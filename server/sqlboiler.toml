@@ -4,9 +4,3 @@ no-tests = true
 [sqlite3]
 dbname = "storage.db"
 blacklist = ["sqlite_sequence"]
-
-[aliases.tables.storage_configs]
-up_plural = "StorageConfigs"
-up_singular = "StorageConfig"
-down_plural = "storage_configs"
-down_singular = "storage_config"
