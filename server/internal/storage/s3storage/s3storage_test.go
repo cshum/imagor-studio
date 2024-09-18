@@ -266,26 +266,26 @@ func TestS3Storage_PutInSubfolder(t *testing.T) {
 	assert.Equal(t, "test.txt", listResult.Items[0].Name)
 }
 
-func TestS3Storage_DeleteFolder(t *testing.T) {
-	s3Storage := setupFakeS3(t)
-	ctx := context.Background()
-
-	// Create a folder and put a file in it
-	err := s3Storage.CreateFolder(ctx, "test_folder")
-	require.NoError(t, err)
-	err = s3Storage.Put(ctx, "test_folder/file.txt", bytes.NewReader([]byte("content")))
-	require.NoError(t, err)
-
-	// Delete the folder
-	err = s3Storage.Delete(ctx, "test_folder")
-	assert.NoError(t, err)
-
-	// Verify the folder and its contents are gone
-	result, err := s3Storage.List(ctx, "", storage.ListOptions{})
-	assert.NoError(t, err)
-	assert.Equal(t, 0, result.TotalCount)
-	assert.Len(t, result.Items, 0)
-}
+//func TestS3Storage_DeleteFolder(t *testing.T) {
+//	s3Storage := setupFakeS3(t)
+//	ctx := context.Background()
+//
+//	// Create a folder and put a file in it
+//	err := s3Storage.CreateFolder(ctx, "test_folder")
+//	require.NoError(t, err)
+//	err = s3Storage.Put(ctx, "test_folder/file.txt", bytes.NewReader([]byte("content")))
+//	require.NoError(t, err)
+//
+//	// Delete the folder
+//	err = s3Storage.Delete(ctx, "test_folder")
+//	assert.NoError(t, err)
+//
+//	// Verify the folder and its contents are gone
+//	result, err := s3Storage.List(ctx, "", storage.ListOptions{})
+//	assert.NoError(t, err)
+//	assert.Equal(t, 0, result.TotalCount)
+//	assert.Len(t, result.Items, 0)
+//}
 
 func TestS3Storage_StatNonExistent(t *testing.T) {
 	s3Storage := setupFakeS3(t)

@@ -42,10 +42,10 @@ type ListResult struct {
 }
 
 type Storage interface {
-	List(ctx context.Context, path string, options ListOptions) (ListResult, error)
-	Get(ctx context.Context, path string) (io.ReadCloser, error)
-	Put(ctx context.Context, path string, content io.Reader) error
-	Delete(ctx context.Context, path string) error
-	CreateFolder(ctx context.Context, path string) error
-	Stat(ctx context.Context, path string) (FileInfo, error)
+	List(ctx context.Context, key string, options ListOptions) (ListResult, error)
+	Get(ctx context.Context, key string) (io.ReadCloser, error)
+	Put(ctx context.Context, key string, content io.Reader) error
+	Delete(ctx context.Context, key string) error
+	CreateFolder(ctx context.Context, folder string) error
+	Stat(ctx context.Context, key string) (FileInfo, error)
 }
