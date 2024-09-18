@@ -2,6 +2,7 @@ package s3storage
 
 import (
 	"context"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"io"
 	"path"
 	"sort"
@@ -263,9 +264,79 @@ func (s *S3Storage) Stat(ctx context.Context, key string) (storage.FileInfo, err
 }
 
 func (s *S3Storage) Delete(ctx context.Context, key string) error {
-	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(s.bucket),
-		Key:    aws.String(s.fullPath(key)),
-	})
-	return err
+	fullPath := s.fullPath(key)
+
+	// Check if the key is a folder
+	if !strings.HasSuffix(fullPath, "/") {
+		// If it's not explicitly a folder, check if it exists as one
+		listResult, err := s.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+			Bucket:  aws.String(s.bucket),
+			Prefix:  aws.String(fullPath + "/"),
+			MaxKeys: aws.Int32(1),
+		})
+		if err != nil {
+			return err
+		}
+		if len(listResult.Contents) > 0 {
+			// It's a folder, append slash
+			fullPath += "/"
+		}
+	}
+
+	if strings.HasSuffix(fullPath, "/") {
+		// It's a folder, delete all objects inside
+		err := s.deleteFolder(ctx, fullPath)
+		if err != nil {
+			return err
+		}
+	} else {
+		// It's a file, delete single object
+		_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+			Bucket: aws.String(s.bucket),
+			Key:    aws.String(fullPath),
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *S3Storage) deleteFolder(ctx context.Context, prefix string) error {
+	var continuationToken *string
+
+	for {
+		listObjectsInput := &s3.ListObjectsV2Input{
+			Bucket: aws.String(s.bucket),
+			Prefix: aws.String(prefix),
+		}
+		if continuationToken != nil {
+			listObjectsInput.ContinuationToken = continuationToken
+		}
+		listResult, err := s.client.ListObjectsV2(ctx, listObjectsInput)
+		if err != nil {
+			return err
+		}
+		if len(listResult.Contents) == 0 {
+			break
+		}
+		objectsToDelete := make([]types.ObjectIdentifier, len(listResult.Contents))
+		for i, object := range listResult.Contents {
+			objectsToDelete[i] = types.ObjectIdentifier{Key: object.Key}
+		}
+		_, err = s.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+			Bucket: aws.String(s.bucket),
+			Delete: &types.Delete{Objects: objectsToDelete},
+		})
+		if err != nil {
+			return err
+		}
+		if !*listResult.IsTruncated {
+			break
+		}
+		continuationToken = listResult.NextContinuationToken
+	}
+
+	return nil
 }
