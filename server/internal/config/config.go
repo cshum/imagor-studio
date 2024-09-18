@@ -15,7 +15,7 @@ import (
 
 type Config struct {
 	Port           int
-	StorageManager *storagemanager.StorageManager
+	StorageManager storagemanager.StorageManager
 	Logger         *zap.Logger
 }
 
@@ -55,7 +55,7 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("imagor-secret is required")
 	}
 
-	storageManager, err := storagemanager.New(db, logger, []byte(*imagorSecret))
+	storageManager, err := storagemanager.New(db, logger, *imagorSecret)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing storage manager: %w", err)
 	}

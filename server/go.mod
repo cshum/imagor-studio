@@ -49,6 +49,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/urfave/cli/v2 v2.27.4 // indirect
 	github.com/volatiletech/inflect v0.0.1 // indirect
 	github.com/volatiletech/randomize v0.0.1 // indirect

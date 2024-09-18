@@ -11,11 +11,11 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	storageManager *storagemanager.StorageManager
+	storageManager storagemanager.StorageManager
 	logger         *zap.Logger
 }
 
-func NewResolver(storageManager *storagemanager.StorageManager, logger *zap.Logger) *Resolver {
+func NewResolver(storageManager storagemanager.StorageManager, logger *zap.Logger) *Resolver {
 	return &Resolver{
 		storageManager: storageManager,
 		logger:         logger,
