@@ -230,14 +230,3 @@ func (sm *StorageManager) GetStorage(key string) (storage.Storage, error) {
 	}
 	return s, nil
 }
-
-// ListStorages returns a slice of all storage storages
-func (sm *StorageManager) ListStorages() (storages []storage.Storage) {
-	sm.mu.RLock()
-	defer sm.mu.RUnlock()
-
-	for _, s := range sm.storages {
-		storages = append(storages, s)
-	}
-	return
-}

@@ -57,7 +57,7 @@ func Load() (*Config, error) {
 
 	cfg.Logger.Info("Configuration loaded",
 		zap.Int("port", cfg.Port),
-		zap.Int("storageCount", len(storageManager.ListStorages())),
+		zap.Int("storageCount", len(storageManager.GetConfigs())),
 	)
 
 	return cfg, nil
