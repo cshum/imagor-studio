@@ -88,13 +88,21 @@ func (fs *FileStorage) List(ctx context.Context, path string, options storage.Li
 		}
 	})
 
-	end := options.Offset + options.Limit
-	if end > len(filteredEntries) {
-		end = len(filteredEntries)
+	// Handle pagination
+	start := options.Offset
+	if start > len(filteredEntries) {
+		start = len(filteredEntries)
+	}
+	end := len(filteredEntries)
+	if options.Limit > 0 {
+		end = start + options.Limit
+		if end > len(filteredEntries) {
+			end = len(filteredEntries)
+		}
 	}
 
 	var items []storage.FileInfo
-	for _, entry := range filteredEntries[options.Offset:end] {
+	for _, entry := range filteredEntries[start:end] {
 		info, err := entry.Info()
 		if err != nil {
 			return storage.ListResult{}, err
