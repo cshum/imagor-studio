@@ -154,7 +154,7 @@ func (s *S3Storage) List(ctx context.Context, path string, options storage.ListO
 		// Process Contents (files)
 		if !options.OnlyFolders {
 			for _, object := range page.Contents {
-				if strings.HasSuffix(*object.Key, "/") {
+				if strings.HasSuffix(*object.Key, "/") || strings.HasSuffix(*object.Key, "/.") {
 					continue // Skip directory placeholders
 				}
 				if currentOffset >= options.Offset && (options.Limit <= 0 || len(items) < options.Limit) {
@@ -231,7 +231,7 @@ func (s *S3Storage) Put(ctx context.Context, path string, content io.Reader) err
 func (s *S3Storage) CreateFolder(ctx context.Context, path string) error {
 	fullPath := s.fullPath(path)
 	if !strings.HasSuffix(fullPath, "/") {
-		fullPath += "/"
+		fullPath += "/."
 	}
 	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(s.bucket),

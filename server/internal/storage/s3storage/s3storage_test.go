@@ -190,7 +190,7 @@ func TestS3Storage_ListWithOptions(t *testing.T) {
 
 	// Upload files and create folders
 	files := []string{"file1.txt", "file2.txt", "file3.txt"}
-	folders := []string{"folder1/", "folder2/"}
+	folders := []string{"folder1", "folder2"}
 
 	for _, file := range files {
 		err := s3Storage.Put(ctx, file, bytes.NewReader([]byte("content")))
