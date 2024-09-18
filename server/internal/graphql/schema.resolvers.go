@@ -6,12 +6,13 @@ package graphql
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/cshum/imagor-studio/server/models"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/cshum/imagor-studio/server/internal/storage"
+	"github.com/cshum/imagor-studio/server/internal/storagemanager"
 	"go.uber.org/zap"
 )
 
@@ -70,15 +71,13 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, storageKey *string,
 }
 
 // AddStorageConfig is the resolver for the addStorageConfig field.
-func (r *mutationResolver) AddStorageConfig(ctx context.Context, input StorageConfigInput) (*StorageConfig, error) {
-	config := &models.StorageConfig{
-		Name:   input.Name,
-		Key:    input.Key,
-		Type:   input.Type,
-		Config: input.Config,
-	}
-
-	err := r.storageManager.AddConfig(ctx, config)
+func (r *mutationResolver) AddStorageConfig(ctx context.Context, config StorageConfigInput) (*StorageConfig, error) {
+	err := r.storageManager.AddConfig(ctx, storagemanager.StorageConfig{
+		Name:   config.Name,
+		Key:    config.Key,
+		Type:   config.Type,
+		Config: json.RawMessage(config.Config),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -87,20 +86,18 @@ func (r *mutationResolver) AddStorageConfig(ctx context.Context, input StorageCo
 		Name:   config.Name,
 		Key:    config.Key,
 		Type:   config.Type,
-		Config: input.Config,
+		Config: config.Config,
 	}, nil
 }
 
 // UpdateStorageConfig is the resolver for the updateStorageConfig field.
-func (r *mutationResolver) UpdateStorageConfig(ctx context.Context, key string, input StorageConfigInput) (*StorageConfig, error) {
-	config := &models.StorageConfig{
-		Name:   input.Name,
-		Key:    input.Key,
-		Type:   input.Type,
-		Config: input.Config,
-	}
-
-	err := r.storageManager.UpdateConfig(ctx, key, config)
+func (r *mutationResolver) UpdateStorageConfig(ctx context.Context, key string, config StorageConfigInput) (*StorageConfig, error) {
+	err := r.storageManager.UpdateConfig(ctx, key, storagemanager.StorageConfig{
+		Name:   config.Name,
+		Key:    config.Key,
+		Type:   config.Type,
+		Config: json.RawMessage(config.Config),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +106,7 @@ func (r *mutationResolver) UpdateStorageConfig(ctx context.Context, key string, 
 		Name:   config.Name,
 		Key:    config.Key,
 		Type:   config.Type,
-		Config: input.Config, // Use the original input config
+		Config: config.Config,
 	}, nil
 }
 
@@ -228,7 +225,7 @@ func (r *queryResolver) ListStorageConfigs(ctx context.Context) ([]*StorageConfi
 			Name:   cfg.Name,
 			Key:    cfg.Key,
 			Type:   cfg.Type,
-			Config: cfg.Config, // Note: This is the encrypted config
+			Config: string(cfg.Config),
 		}
 	}
 	return result, nil
@@ -247,7 +244,7 @@ func (r *queryResolver) GetStorageConfig(ctx context.Context, key string) (*Stor
 		Name:   cfg.Name,
 		Key:    cfg.Key,
 		Type:   cfg.Type,
-		Config: cfg.Config, // Note: This is the encrypted config
+		Config: string(cfg.Config),
 	}, nil
 }
 

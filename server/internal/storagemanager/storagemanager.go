@@ -2,32 +2,56 @@ package storagemanager
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/cshum/imagor-studio/server/models"
+	"io"
 	"sync"
 
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storage/filestorage"
 	"github.com/cshum/imagor-studio/server/internal/storage/s3storage"
+	"github.com/cshum/imagor-studio/server/models"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"go.uber.org/zap"
 )
+
+type StorageConfig struct {
+	Name   string          `json:"name"`
+	Key    string          `json:"key"`
+	Type   string          `json:"type"`
+	Config json.RawMessage `json:"config"`
+}
 
 type StorageManager struct {
 	db       *sql.DB
 	storages map[string]storage.Storage
 	mu       sync.RWMutex
 	logger   *zap.Logger
+	gcm      cipher.AEAD
 }
 
-func New(db *sql.DB, logger *zap.Logger) (*StorageManager, error) {
+func New(db *sql.DB, logger *zap.Logger, encryptionKey []byte) (*StorageManager, error) {
+	block, err := aes.NewCipher(encryptionKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GCM: %w", err)
+	}
+
 	sm := &StorageManager{
 		db:       db,
 		storages: make(map[string]storage.Storage),
 		logger:   logger,
+		gcm:      gcm,
 	}
 	if err := sm.initializeStorages(); err != nil {
 		return nil, err
@@ -42,8 +66,8 @@ func (sm *StorageManager) initializeStorages() error {
 		return fmt.Errorf("error fetching storage configs: %w", err)
 	}
 
-	sm.mu.RLock()
-	defer sm.mu.RUnlock()
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
 	for _, cfg := range configs {
 		s, err := sm.createStorageFromConfig(cfg)
 		if err != nil {
@@ -60,74 +84,129 @@ func (sm *StorageManager) createStorageFromConfig(config *models.StorageConfig) 
 		return nil, fmt.Errorf("error decrypting config: %w", err)
 	}
 
+	var configMap map[string]interface{}
+	if err := json.Unmarshal(decryptedConfig, &configMap); err != nil {
+		return nil, fmt.Errorf("error unmarshaling config: %w", err)
+	}
+
 	switch config.Type {
 	case "file":
-		var fileConfig struct {
-			BaseDir string `json:"baseDir"`
+		baseDir, ok := configMap["baseDir"].(string)
+		if !ok {
+			return nil, fmt.Errorf("invalid baseDir in file storage config")
 		}
-		err := json.Unmarshal([]byte(decryptedConfig), &fileConfig)
-		if err != nil {
-			return nil, fmt.Errorf("error unmarshaling file storage config: %w", err)
-		}
-		return filestorage.New(fileConfig.BaseDir)
+		return filestorage.New(baseDir)
 	case "s3":
-		var s3Config struct {
-			Bucket          string `json:"bucket"`
-			Region          string `json:"region"`
-			Endpoint        string `json:"endpoint"`
-			AccessKeyID     string `json:"accessKeyId"`
-			SecretAccessKey string `json:"secretAccessKey"`
-			SessionToken    string `json:"sessionToken"`
-			BaseDir         string `json:"baseDir"`
-		}
-		err := json.Unmarshal([]byte(decryptedConfig), &s3Config)
-		if err != nil {
-			return nil, fmt.Errorf("error unmarshaling S3 storage config: %w", err)
-		}
-		return s3storage.New(s3Config.Bucket,
-			s3storage.WithRegion(s3Config.Region),
-			s3storage.WithEndpoint(s3Config.Endpoint),
-			s3storage.WithCredentials(s3Config.AccessKeyID, s3Config.SecretAccessKey, s3Config.SessionToken),
-			s3storage.WithBaseDir(s3Config.BaseDir),
+		bucket, _ := configMap["bucket"].(string)
+		region, _ := configMap["region"].(string)
+		endpoint, _ := configMap["endpoint"].(string)
+		accessKeyID, _ := configMap["accessKeyId"].(string)
+		secretAccessKey, _ := configMap["secretAccessKey"].(string)
+		sessionToken, _ := configMap["sessionToken"].(string)
+		baseDir, _ := configMap["baseDir"].(string)
+
+		return s3storage.New(bucket,
+			s3storage.WithRegion(region),
+			s3storage.WithEndpoint(endpoint),
+			s3storage.WithCredentials(accessKeyID, secretAccessKey, sessionToken),
+			s3storage.WithBaseDir(baseDir),
 		)
 	default:
 		return nil, fmt.Errorf("unsupported storage type: %s", config.Type)
 	}
 }
 
-func (sm *StorageManager) encryptConfig(config string) (string, error) {
-	// In a real-world scenario, you would use a proper encryption/decryption method here.
-	// You should replace this with a proper encryption method (e.g., AES) in production.
-	return config, nil
+func (sm *StorageManager) encryptConfig(config json.RawMessage) (string, error) {
+	nonce := make([]byte, sm.gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", fmt.Errorf("failed to generate nonce: %w", err)
+	}
+
+	ciphertext := sm.gcm.Seal(nonce, nonce, config, nil)
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-func (sm *StorageManager) decryptConfig(encryptedConfig string) (string, error) {
-	// In a real-world scenario, you would use a proper encryption/decryption method here.
-	// You should replace this with a proper encryption method (e.g., AES) in production.
-	return encryptedConfig, nil
+func (sm *StorageManager) decryptConfig(encryptedConfig string) (json.RawMessage, error) {
+	ciphertext, err := base64.StdEncoding.DecodeString(encryptedConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode base64: %w", err)
+	}
+
+	if len(ciphertext) < sm.gcm.NonceSize() {
+		return nil, fmt.Errorf("ciphertext too short")
+	}
+
+	nonce, ciphertext := ciphertext[:sm.gcm.NonceSize()], ciphertext[sm.gcm.NonceSize():]
+	plaintext, err := sm.gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt: %w", err)
+	}
+
+	return plaintext, nil
 }
 
-func (sm *StorageManager) GetConfigs(ctx context.Context) ([]*models.StorageConfig, error) {
-	return models.StorageConfigs().All(ctx, sm.db)
+func (sm *StorageManager) GetConfigs(ctx context.Context) ([]StorageConfig, error) {
+	configs, err := models.StorageConfigs().All(ctx, sm.db)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching storage configs: %w", err)
+	}
+
+	var outputs []StorageConfig
+	for _, cfg := range configs {
+		decryptedConfig, err := sm.decryptConfig(cfg.Config)
+		if err != nil {
+			return nil, fmt.Errorf("error decrypting config: %w", err)
+		}
+
+		outputs = append(outputs, StorageConfig{
+			Name:   cfg.Name,
+			Key:    cfg.Key,
+			Type:   cfg.Type,
+			Config: decryptedConfig,
+		})
+	}
+
+	return outputs, nil
 }
 
-func (sm *StorageManager) GetConfig(ctx context.Context, key string) (*models.StorageConfig, error) {
-	return models.StorageConfigs(qm.Where("key=?", key)).One(ctx, sm.db)
+func (sm *StorageManager) GetConfig(ctx context.Context, key string) (*StorageConfig, error) {
+	config, err := models.StorageConfigs(qm.Where("key=?", key)).One(ctx, sm.db)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching storage config: %w", err)
+	}
+
+	decryptedConfig, err := sm.decryptConfig(config.Config)
+	if err != nil {
+		return nil, fmt.Errorf("error decrypting config: %w", err)
+	}
+
+	return &StorageConfig{
+		Name:   config.Name,
+		Key:    config.Key,
+		Type:   config.Type,
+		Config: decryptedConfig,
+	}, nil
 }
 
-func (sm *StorageManager) AddConfig(ctx context.Context, config *models.StorageConfig) error {
+func (sm *StorageManager) AddConfig(ctx context.Context, config StorageConfig) error {
 	encryptedConfig, err := sm.encryptConfig(config.Config)
 	if err != nil {
 		return fmt.Errorf("error encrypting config: %w", err)
 	}
-	config.Config = encryptedConfig
 
-	err = config.Insert(ctx, sm.db, boil.Infer())
+	dbConfig := &models.StorageConfig{
+		Name:   config.Name,
+		Key:    config.Key,
+		Type:   config.Type,
+		Config: encryptedConfig,
+	}
+
+	err = dbConfig.Insert(ctx, sm.db, boil.Infer())
 	if err != nil {
 		return fmt.Errorf("error inserting storage config: %w", err)
 	}
 
-	s, err := sm.createStorageFromConfig(config)
+	s, err := sm.createStorageFromConfig(dbConfig)
 	if err != nil {
 		return err
 	}
@@ -139,21 +218,18 @@ func (sm *StorageManager) AddConfig(ctx context.Context, config *models.StorageC
 	return nil
 }
 
-func (sm *StorageManager) UpdateConfig(ctx context.Context, key string, config *models.StorageConfig) error {
-	// Encrypt the new config
+func (sm *StorageManager) UpdateConfig(ctx context.Context, key string, config StorageConfig) error {
 	encryptedConfig, err := sm.encryptConfig(config.Config)
 	if err != nil {
 		return fmt.Errorf("error encrypting config: %w", err)
 	}
 
-	// Prepare the update data
 	updateColumns := models.M{
 		models.StorageConfigColumns.Name:   config.Name,
 		models.StorageConfigColumns.Type:   config.Type,
 		models.StorageConfigColumns.Config: encryptedConfig,
 	}
 
-	// Perform the update
 	rowsAff, err := models.StorageConfigs(
 		qm.Where("key=?", key),
 	).UpdateAll(ctx, sm.db, updateColumns)
@@ -165,7 +241,6 @@ func (sm *StorageManager) UpdateConfig(ctx context.Context, key string, config *
 		return fmt.Errorf("storage config with key %s not found", key)
 	}
 
-	// Create and store the new storage instance
 	updatedConfig := &models.StorageConfig{
 		Key:    key,
 		Name:   config.Name,

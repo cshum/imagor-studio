@@ -21,9 +21,10 @@ func Load() (*Config, error) {
 	fs := flag.NewFlagSet("imagor-studio", flag.ExitOnError)
 
 	var (
-		port   = fs.Int("port", 8080, "port to listen on")
-		dbPath = fs.String("db-path", "storage.db", "path to SQLite database file")
-		err    error
+		port         = fs.Int("port", 8080, "port to listen on")
+		dbPath       = fs.String("db-path", "storage.db", "path to SQLite database file")
+		imagorSecret = fs.String("imagor-secret", "", "secret key for encrypting storage configs")
+		err          error
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -48,7 +49,11 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("error opening database: %w", err)
 	}
 
-	storageManager, err := storagemanager.New(db, logger)
+	if *imagorSecret == "" {
+		return nil, fmt.Errorf("imagor-secret is required")
+	}
+
+	storageManager, err := storagemanager.New(db, logger, []byte(*imagorSecret))
 	if err != nil {
 		return nil, fmt.Errorf("error initializing storage manager: %w", err)
 	}
