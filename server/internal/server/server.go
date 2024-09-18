@@ -16,7 +16,7 @@ type Server struct {
 }
 
 func New(cfg *config.Config) (*Server, error) {
-	resolver := graphql.NewResolver(cfg.Storages, cfg.Logger)
+	resolver := graphql.NewResolver(cfg.StorageManager, cfg.Logger)
 	schema := graphql.NewExecutableSchema(graphql.Config{Resolvers: resolver})
 	gqlHandler := handler.NewDefaultServer(schema)
 

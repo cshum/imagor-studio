@@ -11,12 +11,19 @@ type Query {
     ): FileList!
 
     statFile(storageKey: String, path: String!): FileStat
+
+    listStorageConfigs: [StorageConfig!]!
+    getStorageConfig(key: String!): StorageConfig
 }
 
 type Mutation {
     uploadFile(storageKey: String, path: String!, content: Upload!): Boolean!
     deleteFile(storageKey: String, path: String!): Boolean!
     createFolder(storageKey: String, path: String!): Boolean!
+
+    addStorageConfig(config: StorageConfigInput!): StorageConfig!
+    updateStorageConfig(key: String!, config: StorageConfigInput!): StorageConfig!
+    deleteStorageConfig(key: String!): Boolean!
 }
 
 type FileList {
@@ -52,3 +59,19 @@ enum SortOrder {
 }
 
 scalar Upload
+
+type StorageConfig {
+    name: String!
+    key: String!
+    type: String!
+    config: JSON!
+}
+
+input StorageConfigInput {
+    name: String!
+    key: String!
+    type: String!
+    config: JSON!
+}
+
+scalar JSON

@@ -6,7 +6,9 @@ package graphql
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/cshum/imagor-studio/server/internal/storagemanager"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -65,6 +67,71 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, storageKey *string,
 		return false, fmt.Errorf("failed to create folder: %w", err)
 	}
 
+	return true, nil
+}
+
+// AddStorageConfig is the resolver for the addStorageConfig field.
+func (r *mutationResolver) AddStorageConfig(ctx context.Context, input StorageConfigInput) (*StorageConfig, error) {
+	var rawConfig json.RawMessage
+	err := json.Unmarshal([]byte(input.Config), &rawConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := storagemanager.StorageConfig{
+		Name:   input.Name,
+		Key:    input.Key,
+		Type:   input.Type,
+		Config: rawConfig,
+	}
+
+	err = r.storageManager.AddConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &StorageConfig{
+		Name:   cfg.Name,
+		Key:    cfg.Key,
+		Type:   cfg.Type,
+		Config: input.Config, // Use the original string input
+	}, nil
+}
+
+// UpdateStorageConfig is the resolver for the updateStorageConfig field.
+func (r *mutationResolver) UpdateStorageConfig(ctx context.Context, key string, input StorageConfigInput) (*StorageConfig, error) {
+	var rawConfig json.RawMessage
+	err := json.Unmarshal([]byte(input.Config), &rawConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := storagemanager.StorageConfig{
+		Name:   input.Name,
+		Key:    input.Key,
+		Type:   input.Type,
+		Config: rawConfig,
+	}
+
+	err = r.storageManager.UpdateConfig(key, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &StorageConfig{
+		Name:   cfg.Name,
+		Key:    cfg.Key,
+		Type:   cfg.Type,
+		Config: input.Config, // Use the original string input
+	}, nil
+}
+
+// DeleteStorageConfig is the resolver for the deleteStorageConfig field.
+func (r *mutationResolver) DeleteStorageConfig(ctx context.Context, key string) (bool, error) {
+	err := r.storageManager.DeleteConfig(key)
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
@@ -158,6 +225,43 @@ func (r *queryResolver) StatFile(ctx context.Context, storageKey *string, path s
 		IsDirectory:  fileInfo.IsDir,
 		ModifiedTime: fileInfo.ModifiedTime.Format(time.RFC3339),
 		Etag:         &fileInfo.ETag,
+	}, nil
+}
+
+// ListStorageConfigs is the resolver for the listStorageConfigs field.
+func (r *queryResolver) ListStorageConfigs(ctx context.Context) ([]*StorageConfig, error) {
+	configs := r.storageManager.GetConfigs()
+	result := make([]*StorageConfig, len(configs))
+	for i, cfg := range configs {
+		configStr, err := json.Marshal(cfg.Config)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = &StorageConfig{
+			Name:   cfg.Name,
+			Key:    cfg.Key,
+			Type:   cfg.Type,
+			Config: string(configStr),
+		}
+	}
+	return result, nil
+}
+
+// GetStorageConfig is the resolver for the getStorageConfig field.
+func (r *queryResolver) GetStorageConfig(ctx context.Context, key string) (*StorageConfig, error) {
+	cfg, ok := r.storageManager.GetConfig(key)
+	if !ok {
+		return nil, nil
+	}
+	configStr, err := json.Marshal(cfg.Config)
+	if err != nil {
+		return nil, err
+	}
+	return &StorageConfig{
+		Name:   cfg.Name,
+		Key:    cfg.Key,
+		Type:   cfg.Type,
+		Config: string(configStr),
 	}, nil
 }
 
