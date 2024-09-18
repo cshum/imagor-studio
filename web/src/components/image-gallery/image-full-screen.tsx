@@ -44,6 +44,8 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   const initialPosition = location.state?.initialPosition
   const [direction, setDirection] = useState(0)
   const [isClosing, setIsClosing] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const dragDistance = useRef(0)
 
   useEffect(() => {
     if (!selectedImage) return
@@ -90,22 +92,29 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
       const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
       panStartPosition.current = { x: clientX, y: clientY }
+      setIsDragging(true)
+      dragDistance.current = 0
     }
   }, [scale])
 
   const handlePan = useCallback((_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
-    if (scale === 1 && panStartPosition.current) {
+    if (scale === 1 && panStartPosition.current && isDragging) {
       const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
       const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
       const dx = clientX - panStartPosition.current.x
       const dy = clientY - panStartPosition.current.y
-      const distance = Math.sqrt(dx * dx + dy * dy)
-
-      if (distance > DRAG_THRESHOLD) {
-        handleCloseFullView()
-      }
+      dragDistance.current = Math.sqrt(dx * dx + dy * dy)
     }
-  }, [scale, handleCloseFullView])
+  }, [scale, isDragging])
+
+  const handlePanEnd = useCallback(() => {
+    if (isDragging && dragDistance.current > DRAG_THRESHOLD) {
+      handleCloseFullView()
+    }
+    setIsDragging(false)
+    panStartPosition.current = null
+    dragDistance.current = 0
+  }, [isDragging, handleCloseFullView])
 
   const calculateDimensions = useCallback(() => {
     if (selectedImage) {
@@ -203,12 +212,12 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
             <TransformWrapper
               initialScale={1}
               minScale={1}
-              maxScale={3}
               centerOnInit={true}
               onTransformed={({ state }) => handleZoomChange(state.scale)}
               onZoom={({ state }) => handleZoomChange(state.scale)}
               onPanningStart={handlePanStart}
               onPanning={handlePan}
+              onPanningStop={handlePanEnd}
               smooth={true}
               wheel={{ step: 0.05 }}
               pinch={{ step: 0.05 }}
