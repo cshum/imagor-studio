@@ -25,6 +25,8 @@ type S3Storage struct {
 	baseDir         string
 }
 
+var folderSuffix = "/"
+
 type Option func(*S3Storage)
 
 func WithRegion(region string) Option {
@@ -154,7 +156,7 @@ func (s *S3Storage) List(ctx context.Context, key string, options storage.ListOp
 		// Process Contents (files)
 		if !options.OnlyFolders {
 			for _, object := range page.Contents {
-				if strings.HasSuffix(*object.Key, "/") || strings.HasSuffix(*object.Key, "/.") {
+				if strings.HasSuffix(*object.Key, folderSuffix) {
 					continue // Skip directory placeholders
 				}
 				if currentOffset >= options.Offset && (options.Limit <= 0 || len(items) < options.Limit) {
@@ -231,7 +233,7 @@ func (s *S3Storage) Put(ctx context.Context, key string, content io.Reader) erro
 func (s *S3Storage) CreateFolder(ctx context.Context, folder string) error {
 	fullPath := s.fullPath(folder)
 	if !strings.HasSuffix(fullPath, "/") {
-		fullPath += "/."
+		fullPath += folderSuffix
 	}
 	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(s.bucket),

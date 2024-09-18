@@ -20,6 +20,7 @@ import (
 )
 
 func setupFakeS3(t *testing.T) *S3Storage {
+	folderSuffix = "/."
 	backend := s3mem.New()
 	faker := gofakes3.New(backend)
 	ts := httptest.NewServer(faker.Server())
