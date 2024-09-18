@@ -20,7 +20,7 @@ type StorageConfig struct {
 
 type StorageManager struct {
 	configs    []StorageConfig
-	instances  map[string]storage.Storage
+	storages   map[string]storage.Storage
 	configFile string
 	mu         sync.RWMutex
 }
@@ -28,7 +28,7 @@ type StorageManager struct {
 func New(configFile string) (*StorageManager, error) {
 	sm := &StorageManager{
 		configFile: configFile,
-		instances:  make(map[string]storage.Storage),
+		storages:   make(map[string]storage.Storage),
 	}
 
 	err := sm.loadConfigs()
@@ -82,7 +82,7 @@ func (sm *StorageManager) initializeStorages() error {
 		if err != nil {
 			return fmt.Errorf("error creating storage from config: %w", err)
 		}
-		sm.instances[cfg.Key] = storage
+		sm.storages[cfg.Key] = storage
 	}
 	return nil
 }
@@ -154,7 +154,7 @@ func (sm *StorageManager) AddConfig(config StorageConfig) error {
 	if err != nil {
 		return err
 	}
-	sm.instances[config.Key] = storage
+	sm.storages[config.Key] = storage
 
 	return nil
 }
@@ -175,7 +175,7 @@ func (sm *StorageManager) UpdateConfig(key string, config StorageConfig) error {
 			if err != nil {
 				return err
 			}
-			sm.instances[config.Key] = storage
+			sm.storages[config.Key] = storage
 
 			return nil
 		}
@@ -196,7 +196,7 @@ func (sm *StorageManager) DeleteConfig(key string) error {
 				return err
 			}
 
-			delete(sm.instances, key)
+			delete(sm.storages, key)
 			return nil
 		}
 	}
@@ -210,8 +210,8 @@ func (sm *StorageManager) GetDefaultStorage() (storage.Storage, error) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 
-	if len(sm.instances) == 1 {
-		for _, s := range sm.instances {
+	if len(sm.storages) == 1 {
+		for _, s := range sm.storages {
 			return s, nil
 		}
 	}
@@ -224,15 +224,20 @@ func (sm *StorageManager) GetStorage(key string) (storage.Storage, error) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 
-	s, ok := sm.instances[key]
+	s, ok := sm.storages[key]
 	if !ok {
 		return nil, fmt.Errorf("invalid storage key: %s", key)
 	}
 	return s, nil
 }
 
-func (sm *StorageManager) GetAllStorages() map[string]storage.Storage {
+// ListStorages returns a slice of all storage storages
+func (sm *StorageManager) ListStorages() (storages []storage.Storage) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
-	return sm.instances
+
+	for _, s := range sm.storages {
+		storages = append(storages, s)
+	}
+	return
 }
