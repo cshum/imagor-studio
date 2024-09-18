@@ -119,7 +119,7 @@ func TestS3Storage_List(t *testing.T) {
 	}
 
 	// Create some folders
-	folders := []string{"folder1/", "folder2/"}
+	folders := []string{"folder1", "folder2"}
 	for _, folder := range folders {
 		err := s3Storage.CreateFolder(ctx, folder)
 		require.NoError(t, err)

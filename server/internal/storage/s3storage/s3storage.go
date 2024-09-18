@@ -137,7 +137,7 @@ func (s *S3Storage) List(ctx context.Context, path string, options storage.ListO
 		// Process CommonPrefixes (folders)
 		if !options.OnlyFiles {
 			for _, commonPrefix := range page.CommonPrefixes {
-				if currentOffset >= options.Offset && len(items) < options.Limit {
+				if currentOffset >= options.Offset && (options.Limit <= 0 || len(items) < options.Limit) {
 					folderName := s.relativePath(*commonPrefix.Prefix)
 					folderName = strings.TrimSuffix(folderName, "/")
 					items = append(items, storage.FileInfo{
@@ -157,7 +157,7 @@ func (s *S3Storage) List(ctx context.Context, path string, options storage.ListO
 				if strings.HasSuffix(*object.Key, "/") {
 					continue // Skip directory placeholders
 				}
-				if currentOffset >= options.Offset && len(items) < options.Limit {
+				if currentOffset >= options.Offset && (options.Limit <= 0 || len(items) < options.Limit) {
 					name := s.relativePath(*object.Key)
 					items = append(items, storage.FileInfo{
 						Name:         name,
@@ -174,7 +174,7 @@ func (s *S3Storage) List(ctx context.Context, path string, options storage.ListO
 		}
 
 		// Break if we've collected enough items
-		if len(items) >= options.Limit {
+		if options.Limit > 0 && len(items) >= options.Limit {
 			break
 		}
 	}
