@@ -146,7 +146,19 @@ func (fs *FileStorage) Put(ctx context.Context, path string, content io.Reader) 
 }
 
 func (fs *FileStorage) Delete(ctx context.Context, path string) error {
-	return os.Remove(filepath.Join(fs.baseDir, path))
+	fullPath := filepath.Join(fs.baseDir, path)
+	fileInfo, err := os.Stat(fullPath)
+	if err != nil {
+		return err
+	}
+
+	if fileInfo.IsDir() {
+		// If it's a directory, remove all contents recursively
+		return os.RemoveAll(fullPath)
+	}
+
+	// If it's a file, remove it directly
+	return os.Remove(fullPath)
 }
 
 func (fs *FileStorage) CreateFolder(ctx context.Context, path string) error {
