@@ -1,3 +1,4 @@
 *_test.go
 generated.go
 models
+go.sum
