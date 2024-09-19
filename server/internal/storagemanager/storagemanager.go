@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"golang.org/x/crypto/hkdf"
 	"io"
@@ -191,7 +192,7 @@ func (sm *storageManager) GetConfigs(ctx context.Context) ([]StorageConfig, erro
 func (sm *storageManager) GetConfig(ctx context.Context, key string) (*StorageConfig, error) {
 	config, err := models.Storages(qm.Where("key=?", key)).One(ctx, sm.db)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil // Return nil, nil when no config is found
 		}
 		return nil, fmt.Errorf("error fetching storage config: %w", err)
