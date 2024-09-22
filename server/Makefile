@@ -59,8 +59,6 @@ gqlgen-update:
 
 .PHONY: all build test clean run deps tidy build-linux docker-build gqlgen gqlgen-init gqlgen-update
 
-.PHONY: generate-models
-
 clean-db:
 	rm -f storage.db
 

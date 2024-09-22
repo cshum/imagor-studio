@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"github.com/cshum/imagor-studio/server/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -21,7 +22,7 @@ func setupTestDB(t *testing.T) *bun.DB {
 	db := bun.NewDB(sqldb, sqlitedialect.New())
 
 	err = db.RunInTx(context.Background(), nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewCreateTable().Model((*Storage)(nil)).Exec(ctx)
+		_, err := tx.NewCreateTable().Model((*models.Storage)(nil)).Exec(ctx)
 		return err
 	})
 	require.NoError(t, err)

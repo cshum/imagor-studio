@@ -11,9 +11,11 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/graphql"
 	"github.com/cshum/imagor-studio/server/internal/storagemanager"
+	"github.com/cshum/imagor-studio/server/migrations"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/sqliteshim"
+	"github.com/uptrace/bun/migrate"
 	"go.uber.org/zap"
 )
 
@@ -30,13 +32,22 @@ func New(cfg *config.Config) (*Server, error) {
 
 	db := bun.NewDB(sqldb, sqlitedialect.New())
 
-	// Run migrations or create tables if needed
-	err = db.RunInTx(context.Background(), nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewCreateTable().Model((*storagemanager.Storage)(nil)).IfNotExists().Exec(ctx)
-		return err
-	})
+	// Run migrations
+	migrator := migrate.NewMigrator(db, migrations.Migrations)
+	err = migrator.Init(context.Background())
 	if err != nil {
-		return nil, fmt.Errorf("failed to create schema resources: %w", err)
+		return nil, fmt.Errorf("failed to init migrator: %w", err)
+	}
+
+	group, err := migrator.Migrate(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("failed to run migrations: %w", err)
+	}
+
+	if group.IsZero() {
+		cfg.Logger.Info("No migrations to run")
+	} else {
+		cfg.Logger.Info("Migrations applied", zap.String("group", group.String()))
 	}
 
 	storageManager, err := storagemanager.New(db, cfg.Logger, cfg.ImagorSecret)
