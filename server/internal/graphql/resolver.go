@@ -1,8 +1,8 @@
 package graphql
 
 import (
-	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storagemanager"
+	"github.com/cshum/imagor-studio/server/internal/storagestore"
 	"go.uber.org/zap"
 )
 
@@ -22,7 +22,7 @@ func NewResolver(storageManager storagemanager.StorageManager, logger *zap.Logge
 	}
 }
 
-func (r *Resolver) getStorage(storageKey *string) (storage.Storage, error) {
+func (r *Resolver) getStorage(storageKey *string) (storagestore.Storage, error) {
 	if storageKey == nil {
 		return r.storageManager.GetDefaultStorage()
 	}

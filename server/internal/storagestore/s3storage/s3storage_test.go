@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/cshum/imagor-studio/server/internal/storage"
+	"github.com/cshum/imagor-studio/server/internal/storagestore"
 	"github.com/johannesboyne/gofakes3"
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
 	"github.com/stretchr/testify/assert"
@@ -127,7 +127,7 @@ func TestS3Storage_List(t *testing.T) {
 	}
 
 	// List all items
-	result, err := s3Storage.List(ctx, "", storage.ListOptions{})
+	result, err := s3Storage.List(ctx, "", storagestore.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, len(files)+len(folders), result.TotalCount)
 	assert.Len(t, result.Items, len(files)+len(folders))
@@ -141,13 +141,13 @@ func TestS3Storage_List(t *testing.T) {
 	assert.ElementsMatch(t, expectedNames, names)
 
 	// Test listing only files
-	filesResult, err := s3Storage.List(ctx, "", storage.ListOptions{OnlyFiles: true})
+	filesResult, err := s3Storage.List(ctx, "", storagestore.ListOptions{OnlyFiles: true})
 	assert.NoError(t, err)
 	assert.Equal(t, len(files), filesResult.TotalCount)
 	assert.Len(t, filesResult.Items, len(files))
 
 	// Test listing only folders
-	foldersResult, err := s3Storage.List(ctx, "", storage.ListOptions{OnlyFolders: true})
+	foldersResult, err := s3Storage.List(ctx, "", storagestore.ListOptions{OnlyFolders: true})
 	assert.NoError(t, err)
 	assert.Equal(t, len(folders), foldersResult.TotalCount)
 	assert.Len(t, foldersResult.Items, len(folders))
@@ -161,7 +161,7 @@ func TestS3Storage_CreateFolder(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify the folder was created
-	result, err := s3Storage.List(ctx, "", storage.ListOptions{OnlyFolders: true})
+	result, err := s3Storage.List(ctx, "", storagestore.ListOptions{OnlyFolders: true})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, result.TotalCount)
 	assert.Len(t, result.Items, 1)
@@ -204,16 +204,16 @@ func TestS3Storage_ListWithOptions(t *testing.T) {
 	}
 
 	// Test sorting by name descending
-	result, err := s3Storage.List(ctx, "", storage.ListOptions{
-		SortBy:    storage.SortByName,
-		SortOrder: storage.SortOrderDesc,
+	result, err := s3Storage.List(ctx, "", storagestore.ListOptions{
+		SortBy:    storagestore.SortByName,
+		SortOrder: storagestore.SortOrderDesc,
 	})
 	assert.NoError(t, err)
 	assert.Len(t, result.Items, len(files)+len(folders))
 	assert.True(t, result.Items[0].Name > result.Items[1].Name)
 
 	// Test pagination
-	paginatedResult, err := s3Storage.List(ctx, "", storage.ListOptions{
+	paginatedResult, err := s3Storage.List(ctx, "", storagestore.ListOptions{
 		Offset: 1,
 		Limit:  2,
 	})
@@ -225,7 +225,7 @@ func TestS3Storage_ListWithOptions(t *testing.T) {
 	err = s3Storage.Put(ctx, "subfolder/file4.txt", bytes.NewReader([]byte("content")))
 	require.NoError(t, err)
 
-	subfolderResult, err := s3Storage.List(ctx, "subfolder", storage.ListOptions{})
+	subfolderResult, err := s3Storage.List(ctx, "subfolder", storagestore.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, subfolderResult.TotalCount)
 	assert.Len(t, subfolderResult.Items, 1)
@@ -236,7 +236,7 @@ func TestS3Storage_ListEmpty(t *testing.T) {
 	s3Storage := setupFakeS3(t)
 	ctx := context.Background()
 
-	result, err := s3Storage.List(ctx, "", storage.ListOptions{})
+	result, err := s3Storage.List(ctx, "", storagestore.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 0, result.TotalCount)
 	assert.Len(t, result.Items, 0)
@@ -260,7 +260,7 @@ func TestS3Storage_PutInSubfolder(t *testing.T) {
 	assert.Equal(t, content, string(data))
 
 	// List the subfolder
-	listResult, err := s3Storage.List(ctx, "subfolder", storage.ListOptions{})
+	listResult, err := s3Storage.List(ctx, "subfolder", storagestore.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, listResult.TotalCount)
 	assert.Len(t, listResult.Items, 1)
@@ -282,7 +282,7 @@ func TestS3Storage_DeleteFolder(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify the folder and its contents are gone
-	result, err := s3Storage.List(ctx, "", storage.ListOptions{})
+	result, err := s3Storage.List(ctx, "", storagestore.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 0, result.TotalCount)
 	assert.Len(t, result.Items, 0)
@@ -336,7 +336,7 @@ func TestS3Storage_ListWithBaseDir(t *testing.T) {
 	require.NoError(t, err)
 
 	// List files
-	result, err := s3Storage.List(ctx, "", storage.ListOptions{})
+	result, err := s3Storage.List(ctx, "", storagestore.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, result.TotalCount)
 	assert.Len(t, result.Items, 1)

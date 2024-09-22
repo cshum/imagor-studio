@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/cshum/imagor-studio/server/internal/storage"
+	"github.com/cshum/imagor-studio/server/internal/storagestore"
 )
 
 type FileStorage struct {
@@ -46,11 +46,11 @@ func New(baseDir string, options ...Option) (*FileStorage, error) {
 	return fs, nil
 }
 
-func (fs *FileStorage) List(ctx context.Context, path string, options storage.ListOptions) (storage.ListResult, error) {
+func (fs *FileStorage) List(ctx context.Context, path string, options storagestore.ListOptions) (storagestore.ListResult, error) {
 	fullPath := filepath.Join(fs.baseDir, path)
 	entries, err := os.ReadDir(fullPath)
 	if err != nil {
-		return storage.ListResult{}, err
+		return storagestore.ListResult{}, err
 	}
 
 	var filteredEntries []os.DirEntry
@@ -68,18 +68,18 @@ func (fs *FileStorage) List(ctx context.Context, path string, options storage.Li
 		infoI, _ := filteredEntries[i].Info()
 		infoJ, _ := filteredEntries[j].Info()
 		switch options.SortBy {
-		case storage.SortByName:
-			if options.SortOrder == storage.SortOrderDesc {
+		case storagestore.SortByName:
+			if options.SortOrder == storagestore.SortOrderDesc {
 				return filteredEntries[i].Name() > filteredEntries[j].Name()
 			}
 			return filteredEntries[i].Name() < filteredEntries[j].Name()
-		case storage.SortBySize:
-			if options.SortOrder == storage.SortOrderDesc {
+		case storagestore.SortBySize:
+			if options.SortOrder == storagestore.SortOrderDesc {
 				return infoI.Size() > infoJ.Size()
 			}
 			return infoI.Size() < infoJ.Size()
-		case storage.SortByModifiedTime:
-			if options.SortOrder == storage.SortOrderDesc {
+		case storagestore.SortByModifiedTime:
+			if options.SortOrder == storagestore.SortOrderDesc {
 				return infoI.ModTime().After(infoJ.ModTime())
 			}
 			return infoI.ModTime().Before(infoJ.ModTime())
@@ -101,14 +101,14 @@ func (fs *FileStorage) List(ctx context.Context, path string, options storage.Li
 		}
 	}
 
-	var items []storage.FileInfo
+	var items []storagestore.FileInfo
 	for _, entry := range filteredEntries[start:end] {
 		info, err := entry.Info()
 		if err != nil {
-			return storage.ListResult{}, err
+			return storagestore.ListResult{}, err
 		}
 
-		items = append(items, storage.FileInfo{
+		items = append(items, storagestore.FileInfo{
 			Name:         entry.Name(),
 			Path:         filepath.Join(path, entry.Name()),
 			Size:         info.Size(),
@@ -117,7 +117,7 @@ func (fs *FileStorage) List(ctx context.Context, path string, options storage.Li
 		})
 	}
 
-	return storage.ListResult{
+	return storagestore.ListResult{
 		Items:      items,
 		TotalCount: totalCount,
 	}, nil
@@ -165,14 +165,14 @@ func (fs *FileStorage) CreateFolder(ctx context.Context, path string) error {
 	return os.MkdirAll(filepath.Join(fs.baseDir, path), fs.dirPermissions)
 }
 
-func (fs *FileStorage) Stat(ctx context.Context, path string) (storage.FileInfo, error) {
+func (fs *FileStorage) Stat(ctx context.Context, path string) (storagestore.FileInfo, error) {
 	fullPath := filepath.Join(fs.baseDir, path)
 	info, err := os.Stat(fullPath)
 	if err != nil {
-		return storage.FileInfo{}, err
+		return storagestore.FileInfo{}, err
 	}
 
-	return storage.FileInfo{
+	return storagestore.FileInfo{
 		Name:         info.Name(),
 		Path:         path,
 		Size:         info.Size(),

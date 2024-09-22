@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/storage"
+	"github.com/cshum/imagor-studio/server/internal/storagestore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -101,7 +101,7 @@ func TestFileStorage_List(t *testing.T) {
 	}
 
 	// List all items
-	result, err := fs.List(ctx, "", storage.ListOptions{})
+	result, err := fs.List(ctx, "", storagestore.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, len(files)+len(folders), result.TotalCount)
 	assert.Len(t, result.Items, len(files)+len(folders))
@@ -115,13 +115,13 @@ func TestFileStorage_List(t *testing.T) {
 	assert.ElementsMatch(t, expectedNames, names)
 
 	// Test listing only files
-	filesResult, err := fs.List(ctx, "", storage.ListOptions{OnlyFiles: true})
+	filesResult, err := fs.List(ctx, "", storagestore.ListOptions{OnlyFiles: true})
 	assert.NoError(t, err)
 	assert.Equal(t, len(files), filesResult.TotalCount)
 	assert.Len(t, filesResult.Items, len(files))
 
 	// Test listing only folders
-	foldersResult, err := fs.List(ctx, "", storage.ListOptions{OnlyFolders: true})
+	foldersResult, err := fs.List(ctx, "", storagestore.ListOptions{OnlyFolders: true})
 	assert.NoError(t, err)
 	assert.Equal(t, len(folders), foldersResult.TotalCount)
 	assert.Len(t, foldersResult.Items, len(folders))
@@ -136,7 +136,7 @@ func TestFileStorage_CreateFolder(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify the folder was created
-	result, err := fs.List(ctx, "", storage.ListOptions{OnlyFolders: true})
+	result, err := fs.List(ctx, "", storagestore.ListOptions{OnlyFolders: true})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, result.TotalCount)
 	assert.Len(t, result.Items, 1)
@@ -181,16 +181,16 @@ func TestFileStorage_ListWithOptions(t *testing.T) {
 	}
 
 	// Test sorting by name descending
-	result, err := fs.List(ctx, "", storage.ListOptions{
-		SortBy:    storage.SortByName,
-		SortOrder: storage.SortOrderDesc,
+	result, err := fs.List(ctx, "", storagestore.ListOptions{
+		SortBy:    storagestore.SortByName,
+		SortOrder: storagestore.SortOrderDesc,
 	})
 	assert.NoError(t, err)
 	assert.Len(t, result.Items, len(files)+len(folders))
 	assert.True(t, result.Items[0].Name > result.Items[1].Name)
 
 	// Test pagination
-	paginatedResult, err := fs.List(ctx, "", storage.ListOptions{
+	paginatedResult, err := fs.List(ctx, "", storagestore.ListOptions{
 		Offset: 1,
 		Limit:  2,
 	})
@@ -202,7 +202,7 @@ func TestFileStorage_ListWithOptions(t *testing.T) {
 	err = fs.Put(ctx, "subfolder/file4.txt", bytes.NewReader([]byte("content")))
 	require.NoError(t, err)
 
-	subfolderResult, err := fs.List(ctx, "subfolder", storage.ListOptions{})
+	subfolderResult, err := fs.List(ctx, "subfolder", storagestore.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, subfolderResult.TotalCount)
 	assert.Len(t, subfolderResult.Items, 1)
@@ -214,7 +214,7 @@ func TestFileStorage_ListEmpty(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 	ctx := context.Background()
 
-	result, err := fs.List(ctx, "", storage.ListOptions{})
+	result, err := fs.List(ctx, "", storagestore.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 0, result.TotalCount)
 	assert.Len(t, result.Items, 0)
@@ -239,7 +239,7 @@ func TestFileStorage_PutInSubfolder(t *testing.T) {
 	assert.Equal(t, content, string(data))
 
 	// List the subfolder
-	listResult, err := fs.List(ctx, "subfolder", storage.ListOptions{})
+	listResult, err := fs.List(ctx, "subfolder", storagestore.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, listResult.TotalCount)
 	assert.Len(t, listResult.Items, 1)
@@ -262,7 +262,7 @@ func TestFileStorage_DeleteFolder(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify the folder and its contents are gone
-	result, err := fs.List(ctx, "", storage.ListOptions{})
+	result, err := fs.List(ctx, "", storagestore.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 0, result.TotalCount)
 	assert.Len(t, result.Items, 0)
@@ -296,7 +296,7 @@ func TestFileStorage_ListWithBaseDir(t *testing.T) {
 	require.NoError(t, err)
 
 	// List files
-	result, err := fs.List(ctx, "base/dir", storage.ListOptions{})
+	result, err := fs.List(ctx, "base/dir", storagestore.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, result.TotalCount)
 	assert.Len(t, result.Items, 1)

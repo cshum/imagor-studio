@@ -1,22 +1,19 @@
 package config
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 	"os"
 
-	"github.com/cshum/imagor-studio/server/internal/storagemanager"
 	"github.com/peterbourgon/ff/v3"
 	"go.uber.org/zap"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type Config struct {
-	Port           int
-	StorageManager storagemanager.StorageManager
-	Logger         *zap.Logger
+	Port         int
+	DBPath       string
+	ImagorSecret string
+	Logger       *zap.Logger
 }
 
 func Load() (*Config, error) {
@@ -46,29 +43,20 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("error initializing logger: %w", err)
 	}
 
-	db, err := sql.Open("sqlite3", *dbPath)
-	if err != nil {
-		return nil, fmt.Errorf("error opening database: %w", err)
-	}
-
 	if *imagorSecret == "" {
 		return nil, fmt.Errorf("imagor-secret is required")
 	}
 
-	storageManager, err := storagemanager.New(db, logger, *imagorSecret)
-	if err != nil {
-		return nil, fmt.Errorf("error initializing storage manager: %w", err)
-	}
-
 	cfg := &Config{
-		Port:           *port,
-		Logger:         logger,
-		StorageManager: storageManager,
+		Port:         *port,
+		DBPath:       *dbPath,
+		ImagorSecret: *imagorSecret,
+		Logger:       logger,
 	}
 
 	cfg.Logger.Info("Configuration loaded",
 		zap.Int("port", cfg.Port),
-		zap.String("dbPath", *dbPath),
+		zap.String("dbPath", cfg.DBPath),
 	)
 
 	return cfg, nil

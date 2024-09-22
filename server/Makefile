@@ -61,12 +61,6 @@ gqlgen-update:
 
 .PHONY: generate-models
 
-generate-models:
-	sqlboiler sqlite3
-
-setup-db:
-	sqlite3 storage.db < setup_database.sql
-
 clean-db:
 	rm -f storage.db
 

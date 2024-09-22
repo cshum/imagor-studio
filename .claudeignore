@@ -2,3 +2,4 @@
 generated.go
 models
 go.sum
+ent

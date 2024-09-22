@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storagemanager"
+	"github.com/cshum/imagor-studio/server/internal/storagestore"
 	"go.uber.org/zap"
 )
 
@@ -134,7 +134,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path 
 		return nil, err
 	}
 
-	options := storage.ListOptions{
+	options := storagestore.ListOptions{
 		Offset:      offset,
 		Limit:       limit,
 		OnlyFiles:   onlyFiles != nil && *onlyFiles,
@@ -144,11 +144,11 @@ func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path 
 	if sortBy != nil {
 		switch *sortBy {
 		case SortOptionName:
-			options.SortBy = storage.SortByName
+			options.SortBy = storagestore.SortByName
 		case SortOptionSize:
-			options.SortBy = storage.SortBySize
+			options.SortBy = storagestore.SortBySize
 		case SortOptionModifiedTime:
-			options.SortBy = storage.SortByModifiedTime
+			options.SortBy = storagestore.SortByModifiedTime
 		default:
 			return nil, fmt.Errorf("invalid sortBy option: %s", *sortBy)
 		}
@@ -157,9 +157,9 @@ func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path 
 	if sortOrder != nil {
 		switch *sortOrder {
 		case SortOrderAsc:
-			options.SortOrder = storage.SortOrderAsc
+			options.SortOrder = storagestore.SortOrderAsc
 		case SortOrderDesc:
-			options.SortOrder = storage.SortOrderDesc
+			options.SortOrder = storagestore.SortOrderDesc
 		default:
 			return nil, fmt.Errorf("invalid sortOrder option: %s", *sortOrder)
 		}

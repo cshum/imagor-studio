@@ -2,8 +2,10 @@ package storagemanager
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
+	"entgo.io/ent/dialect"
+	"github.com/cshum/imagor-studio/server/ent"
+	"github.com/cshum/imagor-studio/server/ent/enttest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -12,24 +14,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func setupTestDB(t *testing.T) *sql.DB {
-	db, err := sql.Open("sqlite3", ":memory:")
-	require.NoError(t, err)
-
-	_, err = db.Exec(`
-        CREATE TABLE storages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            key TEXT NOT NULL UNIQUE,
-            type TEXT NOT NULL,
-            config TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    `)
-	require.NoError(t, err)
-
-	return db
+func setupTestDB(t *testing.T) *ent.Client {
+	client := enttest.Open(t, dialect.SQLite, "file:ent?mode=memory&cache=shared&_fk=1")
+	return client
 }
 
 func TestStorageManager_AddConfig(t *testing.T) {

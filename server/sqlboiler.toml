@@ -1,6 +1,0 @@
-wipe     = true
-no-tests = true
-
-[sqlite3]
-dbname = "storage.db"
-blacklist = ["sqlite_sequence"]
