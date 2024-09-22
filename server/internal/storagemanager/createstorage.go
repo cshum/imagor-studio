@@ -23,19 +23,19 @@ type S3StorageConfig struct {
 	BaseDir         string `json:"baseDir"`
 }
 
-func (sm *storageManager) createStorageFromConfig(config *models.Storage) (storage.Storage, error) {
-	decryptedConfig, err := sm.decryptConfig(config.Config)
+func (sm *storageManager) createStorage(storageModel *models.Storage) (storage.Storage, error) {
+	decryptedConfig, err := sm.decryptConfig(storageModel.Config)
 	if err != nil {
-		return nil, fmt.Errorf("error decrypting config: %w", err)
+		return nil, fmt.Errorf("error decrypting storageModel: %w", err)
 	}
 
-	switch config.Type {
+	switch storageModel.Type {
 	case "file":
 		return sm.createFileStorage(decryptedConfig)
 	case "s3":
 		return sm.createS3Storage(decryptedConfig)
 	default:
-		return nil, fmt.Errorf("unsupported storage type: %s", config.Type)
+		return nil, fmt.Errorf("unsupported storage type: %s", storageModel.Type)
 	}
 }
 

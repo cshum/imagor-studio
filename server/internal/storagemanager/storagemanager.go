@@ -77,16 +77,16 @@ func New(db *bun.DB, logger *zap.Logger, secretKey string) (StorageManager, erro
 
 func (sm *storageManager) initializeStorages() error {
 	ctx := context.Background()
-	var configs []models.Storage
-	err := sm.db.NewSelect().Model(&configs).Scan(ctx)
+	var storageConfigs []models.Storage
+	err := sm.db.NewSelect().Model(&storageConfigs).Scan(ctx)
 	if err != nil {
-		return fmt.Errorf("error fetching storage configs: %w", err)
+		return fmt.Errorf("error fetching storage storageConfigs: %w", err)
 	}
 
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	for _, cfg := range configs {
-		s, err := sm.createStorageFromConfig(&cfg)
+	for _, cfg := range storageConfigs {
+		s, err := sm.createStorage(&cfg)
 		if err != nil {
 			return fmt.Errorf("error creating storage from config: %w", err)
 		}
@@ -178,19 +178,19 @@ func (sm *storageManager) AddConfig(ctx context.Context, config StorageConfig) e
 		return fmt.Errorf("error encrypting config: %w", err)
 	}
 
-	storage := &models.Storage{
+	storageModel := &models.Storage{
 		Name:   config.Name,
 		Key:    config.Key,
 		Type:   config.Type,
 		Config: encryptedConfig,
 	}
 
-	_, err = sm.db.NewInsert().Model(storage).Exec(ctx)
+	_, err = sm.db.NewInsert().Model(storageModel).Exec(ctx)
 	if err != nil {
-		return fmt.Errorf("error inserting storage config: %w", err)
+		return fmt.Errorf("error inserting storageModel config: %w", err)
 	}
 
-	s, err := sm.createStorageFromConfig(storage)
+	s, err := sm.createStorage(storageModel)
 	if err != nil {
 		return err
 	}
@@ -229,7 +229,7 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, key string, config S
 		return fmt.Errorf("storage config with key %s not found", key)
 	}
 
-	s, err := sm.createStorageFromConfig(&models.Storage{
+	s, err := sm.createStorage(&models.Storage{
 		Key:    key,
 		Name:   config.Name,
 		Type:   config.Type,
