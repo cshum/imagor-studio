@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/storagestore"
+	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
@@ -18,9 +18,9 @@ type MockStorage struct {
 	mock.Mock
 }
 
-func (m *MockStorage) List(ctx context.Context, path string, options storagestore.ListOptions) (storagestore.ListResult, error) {
+func (m *MockStorage) List(ctx context.Context, path string, options storage.ListOptions) (storage.ListResult, error) {
 	args := m.Called(ctx, path, options)
-	return args.Get(0).(storagestore.ListResult), args.Error(1)
+	return args.Get(0).(storage.ListResult), args.Error(1)
 }
 
 func (m *MockStorage) Get(ctx context.Context, path string) (io.ReadCloser, error) {
@@ -43,9 +43,9 @@ func (m *MockStorage) CreateFolder(ctx context.Context, path string) error {
 	return args.Error(0)
 }
 
-func (m *MockStorage) Stat(ctx context.Context, path string) (storagestore.FileInfo, error) {
+func (m *MockStorage) Stat(ctx context.Context, path string) (storage.FileInfo, error) {
 	args := m.Called(ctx, path)
-	return args.Get(0).(storagestore.FileInfo), args.Error(1)
+	return args.Get(0).(storage.FileInfo), args.Error(1)
 }
 
 type MockStorageManager struct {
@@ -77,14 +77,14 @@ func (m *MockStorageManager) DeleteConfig(ctx context.Context, key string) error
 	return args.Error(0)
 }
 
-func (m *MockStorageManager) GetDefaultStorage() (storagestore.Storage, error) {
+func (m *MockStorageManager) GetDefaultStorage() (storage.Storage, error) {
 	args := m.Called()
-	return args.Get(0).(storagestore.Storage), args.Error(1)
+	return args.Get(0).(storage.Storage), args.Error(1)
 }
 
-func (m *MockStorageManager) GetStorage(key string) (storagestore.Storage, error) {
+func (m *MockStorageManager) GetStorage(key string) (storage.Storage, error) {
 	args := m.Called(key)
-	return args.Get(0).(storagestore.Storage), args.Error(1)
+	return args.Get(0).(storage.Storage), args.Error(1)
 }
 
 func TestListFiles(t *testing.T) {
@@ -104,8 +104,8 @@ func TestListFiles(t *testing.T) {
 
 	mockStorageManager.On("GetDefaultStorage").Return(mockStorage, nil)
 
-	mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storagestore.ListResult{
-		Items: []storagestore.FileInfo{
+	mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
+		Items: []storage.FileInfo{
 			{Name: "file1.txt", Path: "/test/file1.txt", Size: 100, IsDir: false},
 			{Name: "file2.txt", Path: "/test/file2.txt", Size: 200, IsDir: false},
 		},
@@ -139,7 +139,7 @@ func TestStatFile(t *testing.T) {
 
 	mockStorageManager.On("GetDefaultStorage").Return(mockStorage, nil)
 
-	mockStorage.On("Stat", ctx, path).Return(storagestore.FileInfo{
+	mockStorage.On("Stat", ctx, path).Return(storage.FileInfo{
 		Name:         "file1.txt",
 		Path:         "/test/file1.txt",
 		Size:         100,

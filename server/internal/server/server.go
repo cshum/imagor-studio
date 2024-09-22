@@ -2,46 +2,44 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/cshum/imagor-studio/server/ent"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/graphql"
 	"github.com/cshum/imagor-studio/server/internal/storagemanager"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"github.com/uptrace/bun/driver/sqliteshim"
 	"go.uber.org/zap"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type Server struct {
 	cfg *config.Config
+	db  *bun.DB
 }
 
 func New(cfg *config.Config) (*Server, error) {
-	// Modify the dbPath to include the foreign key option
-	dbPath := cfg.DBPath
-	if !strings.Contains(dbPath, "?") {
-		dbPath += "?"
-	} else if !strings.HasSuffix(dbPath, "&") {
-		dbPath += "&"
-	}
-	dbPath += "_fk=1"
-	client, err := ent.Open("sqlite3", dbPath)
+	sqldb, err := sql.Open(sqliteshim.ShimName, cfg.DBPath)
 	if err != nil {
-		cfg.Logger.Fatal("Failed to connect to database", zap.Error(err))
-	}
-	defer client.Close()
-
-	// Run the auto migration tool.
-	if err := client.Schema.Create(context.Background()); err != nil {
-		cfg.Logger.Fatal("Failed to create schema resources", zap.Error(err))
+		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	storageManager, err := storagemanager.New(client, cfg.Logger, cfg.ImagorSecret)
+	db := bun.NewDB(sqldb, sqlitedialect.New())
+
+	// Run migrations or create tables if needed
+	err = db.RunInTx(context.Background(), nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewCreateTable().Model((*storagemanager.Storage)(nil)).IfNotExists().Exec(ctx)
+		return err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create schema resources: %w", err)
+	}
+
+	storageManager, err := storagemanager.New(db, cfg.Logger, cfg.ImagorSecret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage manager: %w", err)
 	}
@@ -55,6 +53,7 @@ func New(cfg *config.Config) (*Server, error) {
 
 	return &Server{
 		cfg: cfg,
+		db:  db,
 	}, nil
 }
 
@@ -62,4 +61,8 @@ func (s *Server) Run() error {
 	addr := fmt.Sprintf(":%d", s.cfg.Port)
 	s.cfg.Logger.Info("Server is running", zap.String("address", fmt.Sprintf("http://localhost%s", addr)))
 	return http.ListenAndServe(addr, nil)
+}
+
+func (s *Server) Close() error {
+	return s.db.Close()
 }

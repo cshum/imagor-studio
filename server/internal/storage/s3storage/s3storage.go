@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/cshum/imagor-studio/server/internal/storagestore"
+	"github.com/cshum/imagor-studio/server/internal/storage"
 )
 
 type S3Storage struct {
@@ -110,7 +110,7 @@ func (s *S3Storage) relativePath(p string) string {
 	return strings.TrimPrefix(strings.TrimPrefix(p, s.baseDir), "/")
 }
 
-func (s *S3Storage) List(ctx context.Context, key string, options storagestore.ListOptions) (storagestore.ListResult, error) {
+func (s *S3Storage) List(ctx context.Context, key string, options storage.ListOptions) (storage.ListResult, error) {
 	prefix := s.fullPath(key)
 	if prefix != "" && !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
@@ -125,7 +125,7 @@ func (s *S3Storage) List(ctx context.Context, key string, options storagestore.L
 		params.Delimiter = aws.String("/")
 	}
 
-	var items []storagestore.FileInfo
+	var items []storage.FileInfo
 	var totalCount int
 	var currentOffset int
 
@@ -134,7 +134,7 @@ func (s *S3Storage) List(ctx context.Context, key string, options storagestore.L
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return storagestore.ListResult{}, err
+			return storage.ListResult{}, err
 		}
 
 		// Process CommonPrefixes (folders)
@@ -143,7 +143,7 @@ func (s *S3Storage) List(ctx context.Context, key string, options storagestore.L
 				if currentOffset >= options.Offset && (options.Limit <= 0 || len(items) < options.Limit) {
 					relativePath := s.relativePath(*commonPrefix.Prefix)
 					folderName := strings.TrimSuffix(relativePath, "/")
-					items = append(items, storagestore.FileInfo{
+					items = append(items, storage.FileInfo{
 						Name:  path.Base(folderName),
 						Path:  relativePath,
 						IsDir: true,
@@ -162,7 +162,7 @@ func (s *S3Storage) List(ctx context.Context, key string, options storagestore.L
 				}
 				if currentOffset >= options.Offset && (options.Limit <= 0 || len(items) < options.Limit) {
 					relativePath := s.relativePath(*object.Key)
-					items = append(items, storagestore.FileInfo{
+					items = append(items, storage.FileInfo{
 						Name:         path.Base(relativePath),
 						Path:         relativePath,
 						Size:         *object.Size,
@@ -185,18 +185,18 @@ func (s *S3Storage) List(ctx context.Context, key string, options storagestore.L
 	// Sort items
 	sort.Slice(items, func(i, j int) bool {
 		switch options.SortBy {
-		case storagestore.SortByName:
-			if options.SortOrder == storagestore.SortOrderDesc {
+		case storage.SortByName:
+			if options.SortOrder == storage.SortOrderDesc {
 				return items[i].Name > items[j].Name
 			}
 			return items[i].Name < items[j].Name
-		case storagestore.SortBySize:
-			if options.SortOrder == storagestore.SortOrderDesc {
+		case storage.SortBySize:
+			if options.SortOrder == storage.SortOrderDesc {
 				return items[i].Size > items[j].Size
 			}
 			return items[i].Size < items[j].Size
-		case storagestore.SortByModifiedTime:
-			if options.SortOrder == storagestore.SortOrderDesc {
+		case storage.SortByModifiedTime:
+			if options.SortOrder == storage.SortOrderDesc {
 				return items[i].ModifiedTime.After(items[j].ModifiedTime)
 			}
 			return items[i].ModifiedTime.Before(items[j].ModifiedTime)
@@ -205,7 +205,7 @@ func (s *S3Storage) List(ctx context.Context, key string, options storagestore.L
 		}
 	})
 
-	return storagestore.ListResult{
+	return storage.ListResult{
 		Items:      items,
 		TotalCount: totalCount,
 	}, nil
@@ -244,16 +244,16 @@ func (s *S3Storage) CreateFolder(ctx context.Context, folder string) error {
 	return err
 }
 
-func (s *S3Storage) Stat(ctx context.Context, key string) (storagestore.FileInfo, error) {
+func (s *S3Storage) Stat(ctx context.Context, key string) (storage.FileInfo, error) {
 	result, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(s.fullPath(key)),
 	})
 	if err != nil {
-		return storagestore.FileInfo{}, err
+		return storage.FileInfo{}, err
 	}
 	relativePath := s.relativePath(key)
-	return storagestore.FileInfo{
+	return storage.FileInfo{
 		Name:         path.Base(relativePath),
 		Path:         relativePath,
 		Size:         *result.ContentLength,

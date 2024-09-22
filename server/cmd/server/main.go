@@ -1,3 +1,4 @@
+// cmd/server/main.go
 package main
 
 import (
@@ -20,6 +21,12 @@ func main() {
 	if err != nil {
 		cfg.Logger.Fatal("Failed to create server", zap.Error(err))
 	}
+
+	defer func() {
+		if err := srv.Close(); err != nil {
+			cfg.Logger.Error("Failed to close server", zap.Error(err))
+		}
+	}()
 
 	if err := srv.Run(); err != nil {
 		cfg.Logger.Fatal("Failed to run server", zap.Error(err))

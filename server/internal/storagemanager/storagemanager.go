@@ -6,18 +6,28 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
 
-	"github.com/cshum/imagor-studio/server/ent"
-	"github.com/cshum/imagor-studio/server/ent/storage"
-	"github.com/cshum/imagor-studio/server/internal/storagestore"
+	"github.com/cshum/imagor-studio/server/internal/storage"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/hkdf"
 )
+
+type Storage struct {
+	bun.BaseModel `bun:"table:storages,alias:s"`
+
+	ID     int64  `bun:"id,pk,autoincrement"`
+	Key    string `bun:"key,unique"`
+	Name   string `bun:"name"`
+	Type   string `bun:"type"`
+	Config string `bun:"config"`
+}
 
 type StorageConfig struct {
 	Name   string          `json:"name"`
@@ -32,19 +42,19 @@ type StorageManager interface {
 	AddConfig(ctx context.Context, config StorageConfig) error
 	UpdateConfig(ctx context.Context, key string, config StorageConfig) error
 	DeleteConfig(ctx context.Context, key string) error
-	GetDefaultStorage() (storagestore.Storage, error)
-	GetStorage(key string) (storagestore.Storage, error)
+	GetDefaultStorage() (storage.Storage, error)
+	GetStorage(key string) (storage.Storage, error)
 }
 
 type storageManager struct {
-	db       *ent.Client
-	storages map[string]storagestore.Storage
+	db       *bun.DB
+	storages map[string]storage.Storage
 	mu       sync.RWMutex
 	logger   *zap.Logger
 	gcm      cipher.AEAD
 }
 
-func New(db *ent.Client, logger *zap.Logger, secretKey string) (StorageManager, error) {
+func New(db *bun.DB, logger *zap.Logger, secretKey string) (StorageManager, error) {
 	derivedKey := make([]byte, 32)
 	r := hkdf.New(sha256.New, []byte(secretKey), nil, []byte("imagor-studio-storage-manager"))
 	if _, err := io.ReadFull(r, derivedKey); err != nil {
@@ -63,7 +73,7 @@ func New(db *ent.Client, logger *zap.Logger, secretKey string) (StorageManager, 
 
 	sm := &storageManager{
 		db:       db,
-		storages: make(map[string]storagestore.Storage),
+		storages: make(map[string]storage.Storage),
 		logger:   logger,
 		gcm:      gcm,
 	}
@@ -75,7 +85,8 @@ func New(db *ent.Client, logger *zap.Logger, secretKey string) (StorageManager, 
 
 func (sm *storageManager) initializeStorages() error {
 	ctx := context.Background()
-	configs, err := sm.db.Storage.Query().All(ctx)
+	var configs []Storage
+	err := sm.db.NewSelect().Model(&configs).Scan(ctx)
 	if err != nil {
 		return fmt.Errorf("error fetching storage configs: %w", err)
 	}
@@ -83,7 +94,7 @@ func (sm *storageManager) initializeStorages() error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 	for _, cfg := range configs {
-		s, err := sm.createStorageFromConfig(cfg)
+		s, err := sm.createStorageFromConfig(&cfg)
 		if err != nil {
 			return fmt.Errorf("error creating storage from config: %w", err)
 		}
@@ -122,7 +133,8 @@ func (sm *storageManager) decryptConfig(encryptedConfig string) (json.RawMessage
 }
 
 func (sm *storageManager) GetConfigs(ctx context.Context) ([]StorageConfig, error) {
-	configs, err := sm.db.Storage.Query().All(ctx)
+	var configs []Storage
+	err := sm.db.NewSelect().Model(&configs).Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching storage configs: %w", err)
 	}
@@ -146,10 +158,11 @@ func (sm *storageManager) GetConfigs(ctx context.Context) ([]StorageConfig, erro
 }
 
 func (sm *storageManager) GetConfig(ctx context.Context, key string) (*StorageConfig, error) {
-	config, err := sm.db.Storage.Query().Where(storage.Key(key)).Only(ctx)
+	var config Storage
+	err := sm.db.NewSelect().Model(&config).Where("key = ?", key).Scan(ctx)
 	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, nil // Return nil, nil when no config is found
+		if err == sql.ErrNoRows {
+			return nil, nil
 		}
 		return nil, fmt.Errorf("error fetching storage config: %w", err)
 	}
@@ -173,23 +186,19 @@ func (sm *storageManager) AddConfig(ctx context.Context, config StorageConfig) e
 		return fmt.Errorf("error encrypting config: %w", err)
 	}
 
-	_, err = sm.db.Storage.Create().
-		SetName(config.Name).
-		SetKey(config.Key).
-		SetType(config.Type).
-		SetConfig(encryptedConfig).
-		Save(ctx)
-
-	if err != nil {
-		return fmt.Errorf("error inserting storage config: %w", err)
-	}
-
-	s, err := sm.createStorageFromConfig(&ent.Storage{
+	storage := &Storage{
 		Name:   config.Name,
 		Key:    config.Key,
 		Type:   config.Type,
 		Config: encryptedConfig,
-	})
+	}
+
+	_, err = sm.db.NewInsert().Model(storage).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("error inserting storage config: %w", err)
+	}
+
+	s, err := sm.createStorageFromConfig(storage)
 	if err != nil {
 		return err
 	}
@@ -207,22 +216,28 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, key string, config S
 		return fmt.Errorf("error encrypting config: %w", err)
 	}
 
-	updatedRows, err := sm.db.Storage.Update().
-		Where(storage.Key(key)).
-		SetName(config.Name).
-		SetType(config.Type).
-		SetConfig(encryptedConfig).
-		Save(ctx)
+	result, err := sm.db.NewUpdate().
+		Model((*Storage)(nil)).
+		Set("name = ?", config.Name).
+		Set("type = ?", config.Type).
+		Set("config = ?", encryptedConfig).
+		Where("key = ?", key).
+		Exec(ctx)
 
 	if err != nil {
 		return fmt.Errorf("error updating storage config: %w", err)
 	}
 
-	if updatedRows == 0 {
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("error getting rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
 		return fmt.Errorf("storage config with key %s not found", key)
 	}
 
-	s, err := sm.createStorageFromConfig(&ent.Storage{
+	s, err := sm.createStorageFromConfig(&Storage{
 		Key:    key,
 		Name:   config.Name,
 		Type:   config.Type,
@@ -240,7 +255,7 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, key string, config S
 }
 
 func (sm *storageManager) DeleteConfig(ctx context.Context, key string) error {
-	_, err := sm.db.Storage.Delete().Where(storage.Key(key)).Exec(ctx)
+	_, err := sm.db.NewDelete().Model((*Storage)(nil)).Where("key = ?", key).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("error deleting storage config: %w", err)
 	}
@@ -251,7 +266,7 @@ func (sm *storageManager) DeleteConfig(ctx context.Context, key string) error {
 	return nil
 }
 
-func (sm *storageManager) GetDefaultStorage() (storagestore.Storage, error) {
+func (sm *storageManager) GetDefaultStorage() (storage.Storage, error) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 
@@ -263,7 +278,7 @@ func (sm *storageManager) GetDefaultStorage() (storagestore.Storage, error) {
 	return nil, fmt.Errorf("no default storage available: multiple storages are configured")
 }
 
-func (sm *storageManager) GetStorage(key string) (storagestore.Storage, error) {
+func (sm *storageManager) GetStorage(key string) (storage.Storage, error) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 

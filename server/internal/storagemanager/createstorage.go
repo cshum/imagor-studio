@@ -3,10 +3,9 @@ package storagemanager
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cshum/imagor-studio/server/ent"
-	"github.com/cshum/imagor-studio/server/internal/storagestore"
-	"github.com/cshum/imagor-studio/server/internal/storagestore/filestorage"
-	"github.com/cshum/imagor-studio/server/internal/storagestore/s3storage"
+	"github.com/cshum/imagor-studio/server/internal/storage"
+	"github.com/cshum/imagor-studio/server/internal/storage/filestorage"
+	"github.com/cshum/imagor-studio/server/internal/storage/s3storage"
 )
 
 type FileStorageConfig struct {
@@ -23,7 +22,7 @@ type S3StorageConfig struct {
 	BaseDir         string `json:"baseDir"`
 }
 
-func (sm *storageManager) createStorageFromConfig(config *ent.Storage) (storagestore.Storage, error) {
+func (sm *storageManager) createStorageFromConfig(config *Storage) (storage.Storage, error) {
 	decryptedConfig, err := sm.decryptConfig(config.Config)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting config: %w", err)
@@ -39,7 +38,7 @@ func (sm *storageManager) createStorageFromConfig(config *ent.Storage) (storages
 	}
 }
 
-func (sm *storageManager) createFileStorage(decryptedConfig []byte) (storagestore.Storage, error) {
+func (sm *storageManager) createFileStorage(decryptedConfig []byte) (storage.Storage, error) {
 	var cfg FileStorageConfig
 	if err := json.Unmarshal(decryptedConfig, &cfg); err != nil {
 		return nil, fmt.Errorf("error unmarshaling file storage config: %w", err)
@@ -47,7 +46,7 @@ func (sm *storageManager) createFileStorage(decryptedConfig []byte) (storagestor
 	return filestorage.New(cfg.BaseDir)
 }
 
-func (sm *storageManager) createS3Storage(decryptedConfig []byte) (storagestore.Storage, error) {
+func (sm *storageManager) createS3Storage(decryptedConfig []byte) (storage.Storage, error) {
 	var cfg S3StorageConfig
 	if err := json.Unmarshal(decryptedConfig, &cfg); err != nil {
 		return nil, fmt.Errorf("error unmarshaling S3 storage config: %w", err)

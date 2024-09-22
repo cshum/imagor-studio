@@ -1,4 +1,4 @@
-package storagestore
+package storage
 
 import (
 	"context"
