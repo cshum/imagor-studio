@@ -15,8 +15,6 @@ import (
 	"github.com/cshum/imagor-studio/server/ent"
 	"github.com/cshum/imagor-studio/server/ent/storage"
 	"github.com/cshum/imagor-studio/server/internal/storagestore"
-	"github.com/cshum/imagor-studio/server/internal/storagestore/filestorage"
-	"github.com/cshum/imagor-studio/server/internal/storagestore/s3storage"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/hkdf"
 )
@@ -92,44 +90,6 @@ func (sm *storageManager) initializeStorages() error {
 		sm.storages[cfg.Key] = s
 	}
 	return nil
-}
-
-func (sm *storageManager) createStorageFromConfig(config *ent.Storage) (storagestore.Storage, error) {
-	decryptedConfig, err := sm.decryptConfig(config.Config)
-	if err != nil {
-		return nil, fmt.Errorf("error decrypting config: %w", err)
-	}
-
-	var configMap map[string]interface{}
-	if err := json.Unmarshal(decryptedConfig, &configMap); err != nil {
-		return nil, fmt.Errorf("error unmarshaling config: %w", err)
-	}
-
-	switch config.Type {
-	case "file":
-		baseDir, ok := configMap["baseDir"].(string)
-		if !ok {
-			return nil, fmt.Errorf("invalid baseDir in file storage config")
-		}
-		return filestorage.New(baseDir)
-	case "s3":
-		bucket, _ := configMap["bucket"].(string)
-		region, _ := configMap["region"].(string)
-		endpoint, _ := configMap["endpoint"].(string)
-		accessKeyID, _ := configMap["accessKeyId"].(string)
-		secretAccessKey, _ := configMap["secretAccessKey"].(string)
-		sessionToken, _ := configMap["sessionToken"].(string)
-		baseDir, _ := configMap["baseDir"].(string)
-
-		return s3storage.New(bucket,
-			s3storage.WithRegion(region),
-			s3storage.WithEndpoint(endpoint),
-			s3storage.WithCredentials(accessKeyID, secretAccessKey, sessionToken),
-			s3storage.WithBaseDir(baseDir),
-		)
-	default:
-		return nil, fmt.Errorf("unsupported storage type: %s", config.Type)
-	}
 }
 
 func (sm *storageManager) encryptConfig(config json.RawMessage) (string, error) {
