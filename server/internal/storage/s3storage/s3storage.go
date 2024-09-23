@@ -182,21 +182,30 @@ func (s *S3Storage) List(ctx context.Context, key string, options storage.ListOp
 		}
 	}
 
+	s.sortItems(items, options.SortBy, options.SortOrder)
+
+	return storage.ListResult{
+		Items:      items,
+		TotalCount: totalCount,
+	}, nil
+}
+
+func (s *S3Storage) sortItems(items []storage.FileInfo, sortBy storage.SortOption, sortOrder storage.SortOrder) {
 	// Sort items
 	sort.Slice(items, func(i, j int) bool {
-		switch options.SortBy {
+		switch sortBy {
 		case storage.SortByName:
-			if options.SortOrder == storage.SortOrderDesc {
+			if sortOrder == storage.SortOrderDesc {
 				return items[i].Name > items[j].Name
 			}
 			return items[i].Name < items[j].Name
 		case storage.SortBySize:
-			if options.SortOrder == storage.SortOrderDesc {
+			if sortOrder == storage.SortOrderDesc {
 				return items[i].Size > items[j].Size
 			}
 			return items[i].Size < items[j].Size
 		case storage.SortByModifiedTime:
-			if options.SortOrder == storage.SortOrderDesc {
+			if sortOrder == storage.SortOrderDesc {
 				return items[i].ModifiedTime.After(items[j].ModifiedTime)
 			}
 			return items[i].ModifiedTime.Before(items[j].ModifiedTime)
@@ -204,11 +213,6 @@ func (s *S3Storage) List(ctx context.Context, key string, options storage.ListOp
 			return items[i].Name < items[j].Name
 		}
 	})
-
-	return storage.ListResult{
-		Items:      items,
-		TotalCount: totalCount,
-	}, nil
 }
 
 func (s *S3Storage) Get(ctx context.Context, key string) (io.ReadCloser, error) {
