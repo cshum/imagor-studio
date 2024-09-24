@@ -12,21 +12,21 @@ import (
 
 type FileStorage struct {
 	baseDir         string
-	dirPermissions  os.FileMode
-	filePermissions os.FileMode
+	mkdirPermission os.FileMode
+	writePermission os.FileMode
 }
 
 type Option func(*FileStorage)
 
-func WithDirPermissions(perm os.FileMode) Option {
+func WithMkdirPermission(perm os.FileMode) Option {
 	return func(fs *FileStorage) {
-		fs.dirPermissions = perm
+		fs.mkdirPermission = perm
 	}
 }
 
-func WithFilePermissions(perm os.FileMode) Option {
+func WithWritePermission(perm os.FileMode) Option {
 	return func(fs *FileStorage) {
-		fs.filePermissions = perm
+		fs.writePermission = perm
 	}
 }
 
@@ -37,8 +37,8 @@ func New(baseDir string, options ...Option) (*FileStorage, error) {
 	}
 	fs := &FileStorage{
 		baseDir:         absBaseDir,
-		dirPermissions:  0755, // Default directory permissions
-		filePermissions: 0644, // Default file permissions
+		mkdirPermission: 0755, // Default directory permissions
+		writePermission: 0644, // Default file permissions
 	}
 	for _, option := range options {
 		option(fs)
@@ -131,11 +131,11 @@ func (fs *FileStorage) Get(ctx context.Context, path string) (io.ReadCloser, err
 func (fs *FileStorage) Put(ctx context.Context, path string, content io.Reader) error {
 	fullPath := filepath.Join(fs.baseDir, path)
 	dir := filepath.Dir(fullPath)
-	if err := os.MkdirAll(dir, fs.dirPermissions); err != nil {
+	if err := os.MkdirAll(dir, fs.mkdirPermission); err != nil {
 		return err
 	}
 
-	file, err := os.OpenFile(fullPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fs.filePermissions)
+	file, err := os.OpenFile(fullPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fs.writePermission)
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func (fs *FileStorage) Delete(ctx context.Context, path string) error {
 }
 
 func (fs *FileStorage) CreateFolder(ctx context.Context, path string) error {
-	return os.MkdirAll(filepath.Join(fs.baseDir, path), fs.dirPermissions)
+	return os.MkdirAll(filepath.Join(fs.baseDir, path), fs.mkdirPermission)
 }
 
 func (fs *FileStorage) Stat(ctx context.Context, path string) (storage.FileInfo, error) {

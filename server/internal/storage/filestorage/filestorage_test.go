@@ -286,7 +286,7 @@ func TestFileStorage_ListWithBaseDir(t *testing.T) {
 	err = os.MkdirAll(baseDir, 0755)
 	require.NoError(t, err)
 
-	fs, err := New(tempDir, WithDirPermissions(0755))
+	fs, err := New(tempDir, WithMkdirPermission(0755))
 	require.NoError(t, err)
 
 	ctx := context.Background()

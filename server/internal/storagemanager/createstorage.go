@@ -3,6 +3,8 @@ package storagemanager
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storage/filestorage"
 	"github.com/cshum/imagor-studio/server/internal/storage/s3storage"
@@ -10,7 +12,9 @@ import (
 )
 
 type FileStorageConfig struct {
-	BaseDir string `json:"baseDir"`
+	BaseDir          string      `json:"baseDir"`
+	MkdirPermissions os.FileMode `json:"mkdirPermissions"`
+	WritePermissions os.FileMode `json:"writePermissions"`
 }
 
 type S3StorageConfig struct {
@@ -44,7 +48,10 @@ func (sm *storageManager) createFileStorage(decryptedConfig []byte) (storage.Sto
 	if err := json.Unmarshal(decryptedConfig, &cfg); err != nil {
 		return nil, fmt.Errorf("error unmarshaling file storage config: %w", err)
 	}
-	return filestorage.New(cfg.BaseDir)
+	return filestorage.New(cfg.BaseDir,
+		filestorage.WithMkdirPermission(cfg.MkdirPermissions),
+		filestorage.WithWritePermission(cfg.WritePermissions),
+	)
 }
 
 func (sm *storageManager) createS3Storage(decryptedConfig []byte) (storage.Storage, error) {
