@@ -191,7 +191,9 @@ func (s *S3Storage) List(ctx context.Context, key string, options storage.ListOp
 }
 
 func (s *S3Storage) sortItems(items []storage.FileInfo, sortBy storage.SortOption, sortOrder storage.SortOrder) {
-	// Sort items
+	if sortBy == "" && sortOrder == "" {
+		return
+	}
 	sort.Slice(items, func(i, j int) bool {
 		switch sortBy {
 		case storage.SortByName:
