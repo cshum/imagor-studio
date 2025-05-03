@@ -6,11 +6,6 @@ exec:
 model:
   filename: internal/gql/models_gen.go
   package: gql
-resolver:
-  layout: follow-schema
-  dir: internal/gql
-  package: gql
-  filename_template: "{name}.resolvers.go"
 autobind: []
 models:
   ID:
