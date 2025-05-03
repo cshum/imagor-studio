@@ -5,9 +5,10 @@ import "github.com/uptrace/bun"
 type Storage struct {
 	bun.BaseModel `bun:"table:storages,alias:s"`
 
-	ID     int64  `bun:"id,pk,autoincrement"`
-	Key    string `bun:"key,unique"`
-	Name   string `bun:"name"`
-	Type   string `bun:"type"`
-	Config string `bun:"config"`
+	ID      string `bun:"id,pk,type:text"`
+	OwnerID string `bun:"owner_id,notnull,type:text"`
+	Key     string `bun:"key,notnull"`
+	Name    string `bun:"name,notnull"`
+	Type    string `bun:"type,notnull"`
+	Config  string `bun:"config,notnull"`
 }

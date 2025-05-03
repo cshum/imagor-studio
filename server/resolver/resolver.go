@@ -13,6 +13,23 @@ import (
 	"go.uber.org/zap"
 )
 
+type contextKey string
+
+const (
+	OwnerIDContextKey contextKey = "ownerID"
+)
+
+// GetOwnerIDFromContext extracts the owner ID from the context
+func GetOwnerIDFromContext(ctx context.Context) (string, error) {
+	ownerID, ok := ctx.Value(OwnerIDContextKey).(string)
+	if !ok {
+		// For development/testing, return a default owner ID (UUID)
+		// In production, this should return an error
+		return "00000000-0000-0000-0000-000000000001", nil
+	}
+	return ownerID, nil
+}
+
 type Resolver struct {
 	storageManager storagemanager.StorageManager
 	logger         *zap.Logger
@@ -25,11 +42,16 @@ func NewResolver(storageManager storagemanager.StorageManager, logger *zap.Logge
 	}
 }
 
-func (r *Resolver) getStorage(storageKey *string) (storage.Storage, error) {
-	if storageKey == nil {
-		return r.storageManager.GetDefaultStorage()
+func (r *Resolver) getStorage(ctx context.Context, storageKey *string) (storage.Storage, error) {
+	ownerID, err := GetOwnerIDFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get owner ID: %w", err)
 	}
-	return r.storageManager.GetStorage(*storageKey)
+
+	if storageKey == nil {
+		return r.storageManager.GetDefaultStorage(ownerID)
+	}
+	return r.storageManager.GetStorage(ownerID, *storageKey)
 }
 
 // Mutation returns MutationResolver implementation.
@@ -45,7 +67,7 @@ type queryResolver struct{ *Resolver }
 func (r *mutationResolver) UploadFile(ctx context.Context, storageKey *string, path string, content graphql.Upload) (bool, error) {
 	r.logger.Info("Uploading file", zap.String("path", path), zap.String("filename", content.Filename))
 
-	s, err := r.getStorage(storageKey)
+	s, err := r.getStorage(ctx, storageKey)
 	if err != nil {
 		return false, err
 	}
@@ -63,7 +85,7 @@ func (r *mutationResolver) UploadFile(ctx context.Context, storageKey *string, p
 func (r *mutationResolver) DeleteFile(ctx context.Context, storageKey *string, path string) (bool, error) {
 	r.logger.Info("Deleting file", zap.String("path", path))
 
-	s, err := r.getStorage(storageKey)
+	s, err := r.getStorage(ctx, storageKey)
 	if err != nil {
 		return false, err
 	}
@@ -81,7 +103,7 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, storageKey *string, p
 func (r *mutationResolver) CreateFolder(ctx context.Context, storageKey *string, path string) (bool, error) {
 	r.logger.Info("Creating folder", zap.String("path", path))
 
-	s, err := r.getStorage(storageKey)
+	s, err := r.getStorage(ctx, storageKey)
 	if err != nil {
 		return false, err
 	}
@@ -97,7 +119,12 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, storageKey *string,
 
 // AddStorageConfig is the resolver for the addStorageConfig field.
 func (r *mutationResolver) AddStorageConfig(ctx context.Context, config gql.StorageConfigInput) (*gql.StorageConfig, error) {
-	err := r.storageManager.AddConfig(ctx, &storagemanager.StorageConfig{
+	ownerID, err := GetOwnerIDFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get owner ID: %w", err)
+	}
+
+	err = r.storageManager.AddConfig(ctx, ownerID, &storagemanager.StorageConfig{
 		Name:   config.Name,
 		Key:    config.Key,
 		Type:   config.Type,
@@ -117,7 +144,12 @@ func (r *mutationResolver) AddStorageConfig(ctx context.Context, config gql.Stor
 
 // UpdateStorageConfig is the resolver for the updateStorageConfig field.
 func (r *mutationResolver) UpdateStorageConfig(ctx context.Context, key string, config gql.StorageConfigInput) (*gql.StorageConfig, error) {
-	err := r.storageManager.UpdateConfig(ctx, key, &storagemanager.StorageConfig{
+	ownerID, err := GetOwnerIDFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get owner ID: %w", err)
+	}
+
+	err = r.storageManager.UpdateConfig(ctx, ownerID, key, &storagemanager.StorageConfig{
 		Name:   config.Name,
 		Key:    config.Key,
 		Type:   config.Type,
@@ -137,7 +169,12 @@ func (r *mutationResolver) UpdateStorageConfig(ctx context.Context, key string, 
 
 // DeleteStorageConfig is the resolver for the deleteStorageConfig field.
 func (r *mutationResolver) DeleteStorageConfig(ctx context.Context, key string) (bool, error) {
-	err := r.storageManager.DeleteConfig(ctx, key)
+	ownerID, err := GetOwnerIDFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get owner ID: %w", err)
+	}
+
+	err = r.storageManager.DeleteConfig(ctx, ownerID, key)
 	if err != nil {
 		return false, err
 	}
@@ -154,7 +191,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path 
 		zap.Any("sortOrder", sortOrder),
 	)
 
-	s, err := r.getStorage(storageKey)
+	s, err := r.getStorage(ctx, storageKey)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +253,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path 
 func (r *queryResolver) StatFile(ctx context.Context, storageKey *string, path string) (*gql.FileStat, error) {
 	r.logger.Info("Getting file stats", zap.String("path", path))
 
-	s, err := r.getStorage(storageKey)
+	s, err := r.getStorage(ctx, storageKey)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +276,12 @@ func (r *queryResolver) StatFile(ctx context.Context, storageKey *string, path s
 
 // ListStorageConfigs is the resolver for the listStorageConfigs field.
 func (r *queryResolver) ListStorageConfigs(ctx context.Context) ([]*gql.StorageConfig, error) {
-	configs, err := r.storageManager.GetConfigs(ctx)
+	ownerID, err := GetOwnerIDFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get owner ID: %w", err)
+	}
+
+	configs, err := r.storageManager.GetConfigs(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +300,12 @@ func (r *queryResolver) ListStorageConfigs(ctx context.Context) ([]*gql.StorageC
 
 // GetStorageConfig is the resolver for the getStorageConfig field.
 func (r *queryResolver) GetStorageConfig(ctx context.Context, key string) (*gql.StorageConfig, error) {
-	cfg, err := r.storageManager.GetConfig(ctx, key)
+	ownerID, err := GetOwnerIDFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get owner ID: %w", err)
+	}
+
+	cfg, err := r.storageManager.GetConfig(ctx, ownerID, key)
 	if err != nil {
 		return nil, err
 	}
