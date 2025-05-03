@@ -8,7 +8,7 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/storage/s3storage"
 	"os"
 
-	"github.com/cshum/imagor-studio/server/models"
+	"github.com/cshum/imagor-studio/server/model"
 )
 
 type FileStorageConfig struct {
@@ -27,7 +27,7 @@ type S3StorageConfig struct {
 	BaseDir         string `json:"baseDir"`
 }
 
-func (sm *storageManager) createStorage(storageModel *models.Storage) (storage.Storage, error) {
+func (sm *storageManager) createStorage(storageModel *model.Storage) (storage.Storage, error) {
 	decryptedConfig, err := sm.decryptConfig(storageModel.Config)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting storageModel: %w", err)

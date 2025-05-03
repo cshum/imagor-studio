@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cshum/imagor-studio/server/models"
+	"github.com/cshum/imagor-studio/server/model"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"io"
@@ -83,7 +83,7 @@ func (sm *storageManager) storageKey(ownerID string, storageKey string) string {
 
 func (sm *storageManager) initializeStorages() error {
 	ctx := context.Background()
-	var storageConfigs []models.Storage
+	var storageConfigs []model.Storage
 	err := sm.db.NewSelect().Model(&storageConfigs).Scan(ctx)
 	if err != nil {
 		return fmt.Errorf("error fetching storage configs: %w", err)
@@ -131,7 +131,7 @@ func (sm *storageManager) decryptConfig(encryptedConfig string) (json.RawMessage
 }
 
 func (sm *storageManager) GetConfigs(ctx context.Context, ownerID string) ([]*StorageConfig, error) {
-	var configs []models.Storage
+	var configs []model.Storage
 	err := sm.db.NewSelect().
 		Model(&configs).
 		Where("owner_id = ?", ownerID).
@@ -159,7 +159,7 @@ func (sm *storageManager) GetConfigs(ctx context.Context, ownerID string) ([]*St
 }
 
 func (sm *storageManager) GetConfig(ctx context.Context, ownerID string, key string) (*StorageConfig, error) {
-	var config models.Storage
+	var config model.Storage
 	err := sm.db.NewSelect().
 		Model(&config).
 		Where("owner_id = ? AND key = ?", ownerID, key).
@@ -193,7 +193,7 @@ func (sm *storageManager) AddConfig(ctx context.Context, ownerID string, config 
 		return fmt.Errorf("error encrypting config: %w", err)
 	}
 
-	storageModel := &models.Storage{
+	storageModel := &model.Storage{
 		ID:      uuid.GenerateUUID(), // Generate UUID for new record
 		OwnerID: ownerID,
 		Name:    config.Name,
@@ -229,7 +229,7 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, ownerID string, key 
 	}
 
 	result, err := sm.db.NewUpdate().
-		Model((*models.Storage)(nil)).
+		Model((*model.Storage)(nil)).
 		Set("name = ?", config.Name).
 		Set("type = ?", config.Type).
 		Set("config = ?", encryptedConfig).
@@ -249,7 +249,7 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, ownerID string, key 
 		return fmt.Errorf("storage config with key %s not found for owner %s", key, ownerID)
 	}
 
-	s, err := sm.createStorage(&models.Storage{
+	s, err := sm.createStorage(&model.Storage{
 		OwnerID: ownerID,
 		Key:     key,
 		Name:    config.Name,
@@ -269,7 +269,7 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, ownerID string, key 
 
 func (sm *storageManager) DeleteConfig(ctx context.Context, ownerID string, key string) error {
 	_, err := sm.db.NewDelete().
-		Model((*models.Storage)(nil)).
+		Model((*model.Storage)(nil)).
 		Where("owner_id = ? AND key = ?", ownerID, key).
 		Exec(ctx)
 	if err != nil {
