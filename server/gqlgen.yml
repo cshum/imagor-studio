@@ -1,15 +1,15 @@
 schema:
   - internal/graphql/*.graphql
 exec:
-  filename: internal/graphql/generated.go
-  package: graphql
+  filename: internal/gql/generated.go
+  package: gql
 model:
-  filename: internal/graphql/models_gen.go
-  package: graphql
+  filename: internal/gql/models_gen.go
+  package: gql
 resolver:
   layout: follow-schema
-  dir: internal/graphql
-  package: graphql
+  dir: internal/gql
+  package: gql
   filename_template: "{name}.resolvers.go"
 autobind: []
 models:

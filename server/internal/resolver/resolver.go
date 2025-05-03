@@ -1,4 +1,4 @@
-package graphql
+package resolver
 
 import (
 	"github.com/cshum/imagor-studio/server/internal/storage"

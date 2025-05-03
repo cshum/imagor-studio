@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/cshum/imagor-studio/server/internal/resolver"
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/cshum/imagor-studio/server/internal/config"
-	"github.com/cshum/imagor-studio/server/internal/graphql"
+	"github.com/cshum/imagor-studio/server/internal/gql"
 	"github.com/cshum/imagor-studio/server/internal/storagemanager"
 	"github.com/cshum/imagor-studio/server/migrations"
 	"github.com/uptrace/bun"
@@ -55,8 +56,8 @@ func New(cfg *config.Config) (*Server, error) {
 		return nil, fmt.Errorf("failed to create storage manager: %w", err)
 	}
 
-	resolver := graphql.NewResolver(storageManager, cfg.Logger)
-	schema := graphql.NewExecutableSchema(graphql.Config{Resolvers: resolver})
+	storageResolver := resolver.NewResolver(storageManager, cfg.Logger)
+	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.NewDefaultServer(schema)
 
 	http.Handle("/query", gqlHandler)

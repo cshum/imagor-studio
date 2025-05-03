@@ -1,8 +1,9 @@
-package graphql
+package resolver
 
 import (
 	"context"
 	"encoding/json"
+	"github.com/cshum/imagor-studio/server/internal/gql"
 	"github.com/cshum/imagor-studio/server/internal/storagemanager"
 	"io"
 	"testing"
@@ -99,8 +100,8 @@ func TestListFiles(t *testing.T) {
 	limit := 10
 	onlyFiles := new(bool)
 	*onlyFiles = true
-	sortBy := SortOptionName
-	sortOrder := SortOrderAsc
+	sortBy := gql.SortOptionName
+	sortOrder := gql.SortOrderAsc
 
 	mockStorageManager.On("GetDefaultStorage").Return(mockStorage, nil)
 
@@ -239,7 +240,7 @@ func TestAddStorageConfig(t *testing.T) {
 	resolver := NewResolver(mockStorageManager, logger)
 
 	ctx := context.Background()
-	input := StorageConfigInput{
+	input := gql.StorageConfigInput{
 		Name:   "New S3",
 		Key:    "new-s3",
 		Type:   "s3",
