@@ -58,7 +58,7 @@ func New(cfg *config.Config) (*Server, error) {
 
 	storageResolver := resolver.NewResolver(storageManager, cfg.Logger)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
-	gqlHandler := handler.NewDefaultServer(schema)
+	gqlHandler := handler.New(schema)
 
 	http.Handle("/query", gqlHandler)
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
