@@ -13,7 +13,9 @@ import (
 	"fmt"
 	"github.com/cshum/imagor-studio/server/models"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
+	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"io"
+	"strings"
 	"sync"
 
 	"github.com/uptrace/bun"
@@ -29,18 +31,18 @@ type StorageConfig struct {
 }
 
 type StorageManager interface {
-	GetConfigs(ctx context.Context) ([]*StorageConfig, error)
-	GetConfig(ctx context.Context, key string) (*StorageConfig, error)
-	AddConfig(ctx context.Context, config *StorageConfig) error
-	UpdateConfig(ctx context.Context, key string, config *StorageConfig) error
-	DeleteConfig(ctx context.Context, key string) error
-	GetDefaultStorage() (storage.Storage, error)
-	GetStorage(key string) (storage.Storage, error)
+	GetConfigs(ctx context.Context, ownerID string) ([]*StorageConfig, error)
+	GetConfig(ctx context.Context, ownerID string, key string) (*StorageConfig, error)
+	AddConfig(ctx context.Context, ownerID string, config *StorageConfig) error
+	UpdateConfig(ctx context.Context, ownerID string, key string, config *StorageConfig) error
+	DeleteConfig(ctx context.Context, ownerID string, key string) error
+	GetDefaultStorage(ownerID string) (storage.Storage, error)
+	GetStorage(ownerID string, key string) (storage.Storage, error)
 }
 
 type storageManager struct {
 	db       *bun.DB
-	storages map[string]storage.Storage
+	storages map[string]storage.Storage // Key format: "ownerID:storageKey"
 	mu       sync.RWMutex
 	logger   *zap.Logger
 	gcm      cipher.AEAD
@@ -75,12 +77,16 @@ func New(db *bun.DB, logger *zap.Logger, secretKey string) (StorageManager, erro
 	return sm, nil
 }
 
+func (sm *storageManager) storageKey(ownerID string, storageKey string) string {
+	return fmt.Sprintf("%s:%s", ownerID, storageKey)
+}
+
 func (sm *storageManager) initializeStorages() error {
 	ctx := context.Background()
 	var storageConfigs []models.Storage
 	err := sm.db.NewSelect().Model(&storageConfigs).Scan(ctx)
 	if err != nil {
-		return fmt.Errorf("error fetching storage storageConfigs: %w", err)
+		return fmt.Errorf("error fetching storage configs: %w", err)
 	}
 
 	sm.mu.Lock()
@@ -90,7 +96,7 @@ func (sm *storageManager) initializeStorages() error {
 		if err != nil {
 			return fmt.Errorf("error creating storage from config: %w", err)
 		}
-		sm.storages[cfg.Key] = s
+		sm.storages[sm.storageKey(cfg.OwnerID, cfg.Key)] = s
 	}
 	return nil
 }
@@ -124,9 +130,12 @@ func (sm *storageManager) decryptConfig(encryptedConfig string) (json.RawMessage
 	return plaintext, nil
 }
 
-func (sm *storageManager) GetConfigs(ctx context.Context) ([]*StorageConfig, error) {
+func (sm *storageManager) GetConfigs(ctx context.Context, ownerID string) ([]*StorageConfig, error) {
 	var configs []models.Storage
-	err := sm.db.NewSelect().Model(&configs).Scan(ctx)
+	err := sm.db.NewSelect().
+		Model(&configs).
+		Where("owner_id = ?", ownerID).
+		Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching storage configs: %w", err)
 	}
@@ -149,9 +158,12 @@ func (sm *storageManager) GetConfigs(ctx context.Context) ([]*StorageConfig, err
 	return outputs, nil
 }
 
-func (sm *storageManager) GetConfig(ctx context.Context, key string) (*StorageConfig, error) {
+func (sm *storageManager) GetConfig(ctx context.Context, ownerID string, key string) (*StorageConfig, error) {
 	var config models.Storage
-	err := sm.db.NewSelect().Model(&config).Where("key = ?", key).Scan(ctx)
+	err := sm.db.NewSelect().
+		Model(&config).
+		Where("owner_id = ? AND key = ?", ownerID, key).
+		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -172,7 +184,7 @@ func (sm *storageManager) GetConfig(ctx context.Context, key string) (*StorageCo
 	}, nil
 }
 
-func (sm *storageManager) AddConfig(ctx context.Context, config *StorageConfig) error {
+func (sm *storageManager) AddConfig(ctx context.Context, ownerID string, config *StorageConfig) error {
 	if config == nil {
 		return fmt.Errorf("missing config")
 	}
@@ -182,15 +194,17 @@ func (sm *storageManager) AddConfig(ctx context.Context, config *StorageConfig) 
 	}
 
 	storageModel := &models.Storage{
-		Name:   config.Name,
-		Key:    config.Key,
-		Type:   config.Type,
-		Config: encryptedConfig,
+		ID:      uuid.GenerateUUID(), // Generate UUID for new record
+		OwnerID: ownerID,
+		Name:    config.Name,
+		Key:     config.Key,
+		Type:    config.Type,
+		Config:  encryptedConfig,
 	}
 
 	_, err = sm.db.NewInsert().Model(storageModel).Exec(ctx)
 	if err != nil {
-		return fmt.Errorf("error inserting storageModel config: %w", err)
+		return fmt.Errorf("error inserting storage config: %w", err)
 	}
 
 	s, err := sm.createStorage(storageModel)
@@ -200,12 +214,12 @@ func (sm *storageManager) AddConfig(ctx context.Context, config *StorageConfig) 
 
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	sm.storages[config.Key] = s
+	sm.storages[sm.storageKey(ownerID, config.Key)] = s
 
 	return nil
 }
 
-func (sm *storageManager) UpdateConfig(ctx context.Context, key string, config *StorageConfig) error {
+func (sm *storageManager) UpdateConfig(ctx context.Context, ownerID string, key string, config *StorageConfig) error {
 	if config == nil {
 		return fmt.Errorf("missing config")
 	}
@@ -219,7 +233,7 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, key string, config *
 		Set("name = ?", config.Name).
 		Set("type = ?", config.Type).
 		Set("config = ?", encryptedConfig).
-		Where("key = ?", key).
+		Where("owner_id = ? AND key = ?", ownerID, key).
 		Exec(ctx)
 
 	if err != nil {
@@ -232,14 +246,15 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, key string, config *
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("storage config with key %s not found", key)
+		return fmt.Errorf("storage config with key %s not found for owner %s", key, ownerID)
 	}
 
 	s, err := sm.createStorage(&models.Storage{
-		Key:    key,
-		Name:   config.Name,
-		Type:   config.Type,
-		Config: encryptedConfig,
+		OwnerID: ownerID,
+		Key:     key,
+		Name:    config.Name,
+		Type:    config.Type,
+		Config:  encryptedConfig,
 	})
 	if err != nil {
 		return fmt.Errorf("error creating storage from updated config: %w", err)
@@ -247,42 +262,50 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, key string, config *
 
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	sm.storages[key] = s
+	sm.storages[sm.storageKey(ownerID, key)] = s
 
 	return nil
 }
 
-func (sm *storageManager) DeleteConfig(ctx context.Context, key string) error {
-	_, err := sm.db.NewDelete().Model((*models.Storage)(nil)).Where("key = ?", key).Exec(ctx)
+func (sm *storageManager) DeleteConfig(ctx context.Context, ownerID string, key string) error {
+	_, err := sm.db.NewDelete().
+		Model((*models.Storage)(nil)).
+		Where("owner_id = ? AND key = ?", ownerID, key).
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("error deleting storage config: %w", err)
 	}
 
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	delete(sm.storages, key)
+	delete(sm.storages, sm.storageKey(ownerID, key))
 	return nil
 }
 
-func (sm *storageManager) GetDefaultStorage() (storage.Storage, error) {
+func (sm *storageManager) GetDefaultStorage(ownerID string) (storage.Storage, error) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 
-	if len(sm.storages) == 1 {
-		for _, s := range sm.storages {
-			return s, nil
+	var ownerStorages []storage.Storage
+	for key, s := range sm.storages {
+		if sKey := fmt.Sprintf("%s:", ownerID); strings.HasPrefix(key, sKey) {
+			ownerStorages = append(ownerStorages, s)
 		}
 	}
-	return nil, fmt.Errorf("no default storage available: multiple storages are configured")
+
+	if len(ownerStorages) == 1 {
+		return ownerStorages[0], nil
+	}
+	return nil, fmt.Errorf("no default storage available for owner %s: multiple or no storages are configured", ownerID)
 }
 
-func (sm *storageManager) GetStorage(key string) (storage.Storage, error) {
+func (sm *storageManager) GetStorage(ownerID string, key string) (storage.Storage, error) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 
-	s, ok := sm.storages[key]
+	s, ok := sm.storages[sm.storageKey(ownerID, key)]
 	if !ok {
-		return nil, fmt.Errorf("invalid storage key: %s", key)
+		return nil, fmt.Errorf("invalid storage key %s for owner %s", key, ownerID)
 	}
 	return s, nil
 }
