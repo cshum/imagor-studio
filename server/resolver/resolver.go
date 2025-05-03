@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	gql2 "github.com/cshum/imagor-studio/server/gql"
+	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/cshum/imagor-studio/server/pkg/storagemanager"
 	"time"
@@ -33,10 +33,10 @@ func (r *Resolver) getStorage(storageKey *string) (storage.Storage, error) {
 }
 
 // Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() gql2.MutationResolver { return &mutationResolver{r} }
+func (r *Resolver) Mutation() gql.MutationResolver { return &mutationResolver{r} }
 
 // Query returns QueryResolver implementation.
-func (r *Resolver) Query() gql2.QueryResolver { return &queryResolver{r} }
+func (r *Resolver) Query() gql.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
@@ -96,7 +96,7 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, storageKey *string,
 }
 
 // AddStorageConfig is the resolver for the addStorageConfig field.
-func (r *mutationResolver) AddStorageConfig(ctx context.Context, config gql2.StorageConfigInput) (*gql2.StorageConfig, error) {
+func (r *mutationResolver) AddStorageConfig(ctx context.Context, config gql.StorageConfigInput) (*gql.StorageConfig, error) {
 	err := r.storageManager.AddConfig(ctx, storagemanager.StorageConfig{
 		Name:   config.Name,
 		Key:    config.Key,
@@ -107,7 +107,7 @@ func (r *mutationResolver) AddStorageConfig(ctx context.Context, config gql2.Sto
 		return nil, err
 	}
 
-	return &gql2.StorageConfig{
+	return &gql.StorageConfig{
 		Name:   config.Name,
 		Key:    config.Key,
 		Type:   config.Type,
@@ -116,7 +116,7 @@ func (r *mutationResolver) AddStorageConfig(ctx context.Context, config gql2.Sto
 }
 
 // UpdateStorageConfig is the resolver for the updateStorageConfig field.
-func (r *mutationResolver) UpdateStorageConfig(ctx context.Context, key string, config gql2.StorageConfigInput) (*gql2.StorageConfig, error) {
+func (r *mutationResolver) UpdateStorageConfig(ctx context.Context, key string, config gql.StorageConfigInput) (*gql.StorageConfig, error) {
 	err := r.storageManager.UpdateConfig(ctx, key, storagemanager.StorageConfig{
 		Name:   config.Name,
 		Key:    config.Key,
@@ -127,7 +127,7 @@ func (r *mutationResolver) UpdateStorageConfig(ctx context.Context, key string, 
 		return nil, err
 	}
 
-	return &gql2.StorageConfig{
+	return &gql.StorageConfig{
 		Name:   config.Name,
 		Key:    config.Key,
 		Type:   config.Type,
@@ -145,7 +145,7 @@ func (r *mutationResolver) DeleteStorageConfig(ctx context.Context, key string) 
 }
 
 // ListFiles is the resolver for the listFiles field.
-func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *gql2.SortOption, sortOrder *gql2.SortOrder) (*gql2.FileList, error) {
+func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
 	r.logger.Info("Listing files",
 		zap.String("path", path),
 		zap.Int("offset", offset),
@@ -168,11 +168,11 @@ func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path 
 
 	if sortBy != nil {
 		switch *sortBy {
-		case gql2.SortOptionName:
+		case gql.SortOptionName:
 			options.SortBy = storage.SortByName
-		case gql2.SortOptionSize:
+		case gql.SortOptionSize:
 			options.SortBy = storage.SortBySize
-		case gql2.SortOptionModifiedTime:
+		case gql.SortOptionModifiedTime:
 			options.SortBy = storage.SortByModifiedTime
 		default:
 			return nil, fmt.Errorf("invalid sortBy option: %s", *sortBy)
@@ -181,9 +181,9 @@ func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path 
 
 	if sortOrder != nil {
 		switch *sortOrder {
-		case gql2.SortOrderAsc:
+		case gql.SortOrderAsc:
 			options.SortOrder = storage.SortOrderAsc
-		case gql2.SortOrderDesc:
+		case gql.SortOrderDesc:
 			options.SortOrder = storage.SortOrderDesc
 		default:
 			return nil, fmt.Errorf("invalid sortOrder option: %s", *sortOrder)
@@ -196,9 +196,9 @@ func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path 
 		return nil, fmt.Errorf("failed to list files: %w", err)
 	}
 
-	files := make([]*gql2.File, len(result.Items))
+	files := make([]*gql.File, len(result.Items))
 	for i, item := range result.Items {
-		files[i] = &gql2.File{
+		files[i] = &gql.File{
 			Name:        item.Name,
 			Path:        item.Path,
 			Size:        int(item.Size),
@@ -206,14 +206,14 @@ func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path 
 		}
 	}
 
-	return &gql2.FileList{
+	return &gql.FileList{
 		Items:      files,
 		TotalCount: result.TotalCount,
 	}, nil
 }
 
 // StatFile is the resolver for the statFile field.
-func (r *queryResolver) StatFile(ctx context.Context, storageKey *string, path string) (*gql2.FileStat, error) {
+func (r *queryResolver) StatFile(ctx context.Context, storageKey *string, path string) (*gql.FileStat, error) {
 	r.logger.Info("Getting file stats", zap.String("path", path))
 
 	s, err := r.getStorage(storageKey)
@@ -227,7 +227,7 @@ func (r *queryResolver) StatFile(ctx context.Context, storageKey *string, path s
 		return nil, fmt.Errorf("failed to get file stats: %w", err)
 	}
 
-	return &gql2.FileStat{
+	return &gql.FileStat{
 		Name:         fileInfo.Name,
 		Path:         fileInfo.Path,
 		Size:         int(fileInfo.Size),
@@ -238,15 +238,15 @@ func (r *queryResolver) StatFile(ctx context.Context, storageKey *string, path s
 }
 
 // ListStorageConfigs is the resolver for the listStorageConfigs field.
-func (r *queryResolver) ListStorageConfigs(ctx context.Context) ([]*gql2.StorageConfig, error) {
+func (r *queryResolver) ListStorageConfigs(ctx context.Context) ([]*gql.StorageConfig, error) {
 	configs, err := r.storageManager.GetConfigs(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]*gql2.StorageConfig, len(configs))
+	result := make([]*gql.StorageConfig, len(configs))
 	for i, cfg := range configs {
-		result[i] = &gql2.StorageConfig{
+		result[i] = &gql.StorageConfig{
 			Name:   cfg.Name,
 			Key:    cfg.Key,
 			Type:   cfg.Type,
@@ -257,7 +257,7 @@ func (r *queryResolver) ListStorageConfigs(ctx context.Context) ([]*gql2.Storage
 }
 
 // GetStorageConfig is the resolver for the getStorageConfig field.
-func (r *queryResolver) GetStorageConfig(ctx context.Context, key string) (*gql2.StorageConfig, error) {
+func (r *queryResolver) GetStorageConfig(ctx context.Context, key string) (*gql.StorageConfig, error) {
 	cfg, err := r.storageManager.GetConfig(ctx, key)
 	if err != nil {
 		return nil, err
@@ -265,7 +265,7 @@ func (r *queryResolver) GetStorageConfig(ctx context.Context, key string) (*gql2
 	if cfg == nil {
 		return nil, nil
 	}
-	return &gql2.StorageConfig{
+	return &gql.StorageConfig{
 		Name:   cfg.Name,
 		Key:    cfg.Key,
 		Type:   cfg.Type,
