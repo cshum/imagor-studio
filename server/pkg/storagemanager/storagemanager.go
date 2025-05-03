@@ -12,10 +12,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cshum/imagor-studio/server/models"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"io"
 	"sync"
 
-	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/hkdf"

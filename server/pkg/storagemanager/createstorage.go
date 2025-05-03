@@ -3,11 +3,11 @@ package storagemanager
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
+	"github.com/cshum/imagor-studio/server/pkg/storage/filestorage"
+	"github.com/cshum/imagor-studio/server/pkg/storage/s3storage"
 	"os"
 
-	"github.com/cshum/imagor-studio/server/internal/storage"
-	"github.com/cshum/imagor-studio/server/internal/storage/filestorage"
-	"github.com/cshum/imagor-studio/server/internal/storage/s3storage"
 	"github.com/cshum/imagor-studio/server/models"
 )
 

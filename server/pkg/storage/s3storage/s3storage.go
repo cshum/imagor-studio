@@ -3,6 +3,7 @@ package s3storage
 import (
 	"context"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"io"
 	"path"
 	"sort"
@@ -12,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/cshum/imagor-studio/server/internal/storage"
 )
 
 type S3Storage struct {

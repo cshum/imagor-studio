@@ -2,12 +2,11 @@ package filestorage
 
 import (
 	"context"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"io"
 	"os"
 	"path/filepath"
 	"sort"
-
-	"github.com/cshum/imagor-studio/server/internal/storage"
 )
 
 type FileStorage struct {

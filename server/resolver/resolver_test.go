@@ -3,13 +3,13 @@ package resolver
 import (
 	"context"
 	"encoding/json"
-	"github.com/cshum/imagor-studio/server/internal/gql"
-	"github.com/cshum/imagor-studio/server/internal/storagemanager"
+	"github.com/cshum/imagor-studio/server/gql"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
+	"github.com/cshum/imagor-studio/server/pkg/storagemanager"
 	"io"
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"

@@ -3,6 +3,7 @@ package s3storage
 import (
 	"bytes"
 	"context"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"io"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/johannesboyne/gofakes3"
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
 	"github.com/stretchr/testify/assert"

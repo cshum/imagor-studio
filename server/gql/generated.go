@@ -563,7 +563,7 @@ func (ec *executionContext) field_Mutation_addStorageConfig_argsConfig(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
 	if tmp, ok := rawArgs["config"]; ok {
-		return ec.unmarshalNStorageConfigInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐStorageConfigInput(ctx, tmp)
+		return ec.unmarshalNStorageConfigInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐStorageConfigInput(ctx, tmp)
 	}
 
 	var zeroVal StorageConfigInput
@@ -744,7 +744,7 @@ func (ec *executionContext) field_Mutation_updateStorageConfig_argsConfig(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
 	if tmp, ok := rawArgs["config"]; ok {
-		return ec.unmarshalNStorageConfigInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐStorageConfigInput(ctx, tmp)
+		return ec.unmarshalNStorageConfigInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐStorageConfigInput(ctx, tmp)
 	}
 
 	var zeroVal StorageConfigInput
@@ -1045,7 +1045,7 @@ func (ec *executionContext) field_Query_listFiles_argsSortBy(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sortBy"))
 	if tmp, ok := rawArgs["sortBy"]; ok {
-		return ec.unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐSortOption(ctx, tmp)
+		return ec.unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐSortOption(ctx, tmp)
 	}
 
 	var zeroVal *SortOption
@@ -1063,7 +1063,7 @@ func (ec *executionContext) field_Query_listFiles_argsSortOrder(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sortOrder"))
 	if tmp, ok := rawArgs["sortOrder"]; ok {
-		return ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐSortOrder(ctx, tmp)
+		return ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐSortOrder(ctx, tmp)
 	}
 
 	var zeroVal *SortOrder
@@ -1445,7 +1445,7 @@ func (ec *executionContext) _FileList_items(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*File)
 	fc.Result = res
-	return ec.marshalNFile2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐFileᚄ(ctx, field.Selections, res)
+	return ec.marshalNFile2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_FileList_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1969,7 +1969,7 @@ func (ec *executionContext) _Mutation_addStorageConfig(ctx context.Context, fiel
 	}
 	res := resTmp.(*StorageConfig)
 	fc.Result = res
-	return ec.marshalNStorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐStorageConfig(ctx, field.Selections, res)
+	return ec.marshalNStorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐStorageConfig(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addStorageConfig(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2034,7 +2034,7 @@ func (ec *executionContext) _Mutation_updateStorageConfig(ctx context.Context, f
 	}
 	res := resTmp.(*StorageConfig)
 	fc.Result = res
-	return ec.marshalNStorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐStorageConfig(ctx, field.Selections, res)
+	return ec.marshalNStorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐStorageConfig(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateStorageConfig(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2154,7 +2154,7 @@ func (ec *executionContext) _Query_listFiles(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*FileList)
 	fc.Result = res
-	return ec.marshalNFileList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐFileList(ctx, field.Selections, res)
+	return ec.marshalNFileList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileList(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_listFiles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2212,7 +2212,7 @@ func (ec *executionContext) _Query_statFile(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*FileStat)
 	fc.Result = res
-	return ec.marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐFileStat(ctx, field.Selections, res)
+	return ec.marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileStat(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_statFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2281,7 +2281,7 @@ func (ec *executionContext) _Query_listStorageConfigs(ctx context.Context, field
 	}
 	res := resTmp.([]*StorageConfig)
 	fc.Result = res
-	return ec.marshalNStorageConfig2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐStorageConfigᚄ(ctx, field.Selections, res)
+	return ec.marshalNStorageConfig2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐStorageConfigᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_listStorageConfigs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2332,7 +2332,7 @@ func (ec *executionContext) _Query_getStorageConfig(ctx context.Context, field g
 	}
 	res := resTmp.(*StorageConfig)
 	fc.Result = res
-	return ec.marshalOStorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐStorageConfig(ctx, field.Selections, res)
+	return ec.marshalOStorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐStorageConfig(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getStorageConfig(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5463,7 +5463,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNFile2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐFileᚄ(ctx context.Context, sel ast.SelectionSet, v []*File) graphql.Marshaler {
+func (ec *executionContext) marshalNFile2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileᚄ(ctx context.Context, sel ast.SelectionSet, v []*File) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5487,7 +5487,7 @@ func (ec *executionContext) marshalNFile2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑs
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNFile2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐFile(ctx, sel, v[i])
+			ret[i] = ec.marshalNFile2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFile(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -5507,7 +5507,7 @@ func (ec *executionContext) marshalNFile2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑs
 	return ret
 }
 
-func (ec *executionContext) marshalNFile2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐFile(ctx context.Context, sel ast.SelectionSet, v *File) graphql.Marshaler {
+func (ec *executionContext) marshalNFile2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFile(ctx context.Context, sel ast.SelectionSet, v *File) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -5517,11 +5517,11 @@ func (ec *executionContext) marshalNFile2ᚖgithubᚗcomᚋcshumᚋimagorᚑstud
 	return ec._File(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNFileList2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐFileList(ctx context.Context, sel ast.SelectionSet, v FileList) graphql.Marshaler {
+func (ec *executionContext) marshalNFileList2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileList(ctx context.Context, sel ast.SelectionSet, v FileList) graphql.Marshaler {
 	return ec._FileList(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNFileList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐFileList(ctx context.Context, sel ast.SelectionSet, v *FileList) graphql.Marshaler {
+func (ec *executionContext) marshalNFileList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileList(ctx context.Context, sel ast.SelectionSet, v *FileList) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -5563,11 +5563,11 @@ func (ec *executionContext) marshalNJSON2string(ctx context.Context, sel ast.Sel
 	return res
 }
 
-func (ec *executionContext) marshalNStorageConfig2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐStorageConfig(ctx context.Context, sel ast.SelectionSet, v StorageConfig) graphql.Marshaler {
+func (ec *executionContext) marshalNStorageConfig2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐStorageConfig(ctx context.Context, sel ast.SelectionSet, v StorageConfig) graphql.Marshaler {
 	return ec._StorageConfig(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStorageConfig2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐStorageConfigᚄ(ctx context.Context, sel ast.SelectionSet, v []*StorageConfig) graphql.Marshaler {
+func (ec *executionContext) marshalNStorageConfig2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐStorageConfigᚄ(ctx context.Context, sel ast.SelectionSet, v []*StorageConfig) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5591,7 +5591,7 @@ func (ec *executionContext) marshalNStorageConfig2ᚕᚖgithubᚗcomᚋcshumᚋi
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNStorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐStorageConfig(ctx, sel, v[i])
+			ret[i] = ec.marshalNStorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐStorageConfig(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -5611,7 +5611,7 @@ func (ec *executionContext) marshalNStorageConfig2ᚕᚖgithubᚗcomᚋcshumᚋi
 	return ret
 }
 
-func (ec *executionContext) marshalNStorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐStorageConfig(ctx context.Context, sel ast.SelectionSet, v *StorageConfig) graphql.Marshaler {
+func (ec *executionContext) marshalNStorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐStorageConfig(ctx context.Context, sel ast.SelectionSet, v *StorageConfig) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -5621,7 +5621,7 @@ func (ec *executionContext) marshalNStorageConfig2ᚖgithubᚗcomᚋcshumᚋimag
 	return ec._StorageConfig(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNStorageConfigInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐStorageConfigInput(ctx context.Context, v any) (StorageConfigInput, error) {
+func (ec *executionContext) unmarshalNStorageConfigInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐStorageConfigInput(ctx context.Context, v any) (StorageConfigInput, error) {
 	res, err := ec.unmarshalInputStorageConfigInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -5941,14 +5941,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐFileStat(ctx context.Context, sel ast.SelectionSet, v *FileStat) graphql.Marshaler {
+func (ec *executionContext) marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileStat(ctx context.Context, sel ast.SelectionSet, v *FileStat) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._FileStat(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐSortOption(ctx context.Context, v any) (*SortOption, error) {
+func (ec *executionContext) unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐSortOption(ctx context.Context, v any) (*SortOption, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -5957,14 +5957,14 @@ func (ec *executionContext) unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimago
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐSortOption(ctx context.Context, sel ast.SelectionSet, v *SortOption) graphql.Marshaler {
+func (ec *executionContext) marshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐSortOption(ctx context.Context, sel ast.SelectionSet, v *SortOption) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐSortOrder(ctx context.Context, v any) (*SortOrder, error) {
+func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐSortOrder(ctx context.Context, v any) (*SortOrder, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -5973,14 +5973,14 @@ func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagor
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *SortOrder) graphql.Marshaler {
+func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *SortOrder) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOStorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgqlᚐStorageConfig(ctx context.Context, sel ast.SelectionSet, v *StorageConfig) graphql.Marshaler {
+func (ec *executionContext) marshalOStorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐStorageConfig(ctx context.Context, sel ast.SelectionSet, v *StorageConfig) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

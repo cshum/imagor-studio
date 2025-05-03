@@ -3,13 +3,13 @@ package filestorage
 import (
 	"bytes"
 	"context"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
