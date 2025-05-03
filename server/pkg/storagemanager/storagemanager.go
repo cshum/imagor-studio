@@ -29,10 +29,10 @@ type StorageConfig struct {
 }
 
 type StorageManager interface {
-	GetConfigs(ctx context.Context) ([]StorageConfig, error)
+	GetConfigs(ctx context.Context) ([]*StorageConfig, error)
 	GetConfig(ctx context.Context, key string) (*StorageConfig, error)
-	AddConfig(ctx context.Context, config StorageConfig) error
-	UpdateConfig(ctx context.Context, key string, config StorageConfig) error
+	AddConfig(ctx context.Context, config *StorageConfig) error
+	UpdateConfig(ctx context.Context, key string, config *StorageConfig) error
 	DeleteConfig(ctx context.Context, key string) error
 	GetDefaultStorage() (storage.Storage, error)
 	GetStorage(key string) (storage.Storage, error)
@@ -124,21 +124,21 @@ func (sm *storageManager) decryptConfig(encryptedConfig string) (json.RawMessage
 	return plaintext, nil
 }
 
-func (sm *storageManager) GetConfigs(ctx context.Context) ([]StorageConfig, error) {
+func (sm *storageManager) GetConfigs(ctx context.Context) ([]*StorageConfig, error) {
 	var configs []models.Storage
 	err := sm.db.NewSelect().Model(&configs).Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching storage configs: %w", err)
 	}
 
-	var outputs []StorageConfig
+	var outputs []*StorageConfig
 	for _, cfg := range configs {
 		decryptedConfig, err := sm.decryptConfig(cfg.Config)
 		if err != nil {
 			return nil, fmt.Errorf("error decrypting config: %w", err)
 		}
 
-		outputs = append(outputs, StorageConfig{
+		outputs = append(outputs, &StorageConfig{
 			Name:   cfg.Name,
 			Key:    cfg.Key,
 			Type:   cfg.Type,
@@ -172,7 +172,10 @@ func (sm *storageManager) GetConfig(ctx context.Context, key string) (*StorageCo
 	}, nil
 }
 
-func (sm *storageManager) AddConfig(ctx context.Context, config StorageConfig) error {
+func (sm *storageManager) AddConfig(ctx context.Context, config *StorageConfig) error {
+	if config == nil {
+		return fmt.Errorf("missing config")
+	}
 	encryptedConfig, err := sm.encryptConfig(config.Config)
 	if err != nil {
 		return fmt.Errorf("error encrypting config: %w", err)
@@ -202,7 +205,10 @@ func (sm *storageManager) AddConfig(ctx context.Context, config StorageConfig) e
 	return nil
 }
 
-func (sm *storageManager) UpdateConfig(ctx context.Context, key string, config StorageConfig) error {
+func (sm *storageManager) UpdateConfig(ctx context.Context, key string, config *StorageConfig) error {
+	if config == nil {
+		return fmt.Errorf("missing config")
+	}
 	encryptedConfig, err := sm.encryptConfig(config.Config)
 	if err != nil {
 		return fmt.Errorf("error encrypting config: %w", err)

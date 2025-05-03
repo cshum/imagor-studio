@@ -53,9 +53,9 @@ type MockStorageManager struct {
 	mock.Mock
 }
 
-func (m *MockStorageManager) GetConfigs(ctx context.Context) ([]storagemanager.StorageConfig, error) {
+func (m *MockStorageManager) GetConfigs(ctx context.Context) ([]*storagemanager.StorageConfig, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]storagemanager.StorageConfig), args.Error(1)
+	return args.Get(0).([]*storagemanager.StorageConfig), args.Error(1)
 }
 
 func (m *MockStorageManager) GetConfig(ctx context.Context, key string) (*storagemanager.StorageConfig, error) {
@@ -63,13 +63,13 @@ func (m *MockStorageManager) GetConfig(ctx context.Context, key string) (*storag
 	return args.Get(0).(*storagemanager.StorageConfig), args.Error(1)
 }
 
-func (m *MockStorageManager) AddConfig(ctx context.Context, config storagemanager.StorageConfig) error {
-	args := m.Called(ctx, config)
+func (m *MockStorageManager) AddConfig(ctx context.Context, config *storagemanager.StorageConfig) error {
+	args := m.Called(ctx, *config)
 	return args.Error(0)
 }
 
-func (m *MockStorageManager) UpdateConfig(ctx context.Context, key string, config storagemanager.StorageConfig) error {
-	args := m.Called(ctx, key, config)
+func (m *MockStorageManager) UpdateConfig(ctx context.Context, key string, config *storagemanager.StorageConfig) error {
+	args := m.Called(ctx, key, *config)
 	return args.Error(0)
 }
 
@@ -214,7 +214,7 @@ func TestListStorageConfigs(t *testing.T) {
 
 	ctx := context.Background()
 
-	mockConfigs := []storagemanager.StorageConfig{
+	mockConfigs := []*storagemanager.StorageConfig{
 		{Name: "Local", Key: "local", Type: "file", Config: json.RawMessage(`{"baseDir":"/tmp/storage"}`)},
 		{Name: "S3", Key: "s3", Type: "s3", Config: json.RawMessage(`{"bucket":"my-bucket"}`)},
 	}

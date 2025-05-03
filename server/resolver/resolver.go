@@ -97,7 +97,7 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, storageKey *string,
 
 // AddStorageConfig is the resolver for the addStorageConfig field.
 func (r *mutationResolver) AddStorageConfig(ctx context.Context, config gql.StorageConfigInput) (*gql.StorageConfig, error) {
-	err := r.storageManager.AddConfig(ctx, storagemanager.StorageConfig{
+	err := r.storageManager.AddConfig(ctx, &storagemanager.StorageConfig{
 		Name:   config.Name,
 		Key:    config.Key,
 		Type:   config.Type,
@@ -117,7 +117,7 @@ func (r *mutationResolver) AddStorageConfig(ctx context.Context, config gql.Stor
 
 // UpdateStorageConfig is the resolver for the updateStorageConfig field.
 func (r *mutationResolver) UpdateStorageConfig(ctx context.Context, key string, config gql.StorageConfigInput) (*gql.StorageConfig, error) {
-	err := r.storageManager.UpdateConfig(ctx, key, storagemanager.StorageConfig{
+	err := r.storageManager.UpdateConfig(ctx, key, &storagemanager.StorageConfig{
 		Name:   config.Name,
 		Key:    config.Key,
 		Type:   config.Type,

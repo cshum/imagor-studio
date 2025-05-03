@@ -45,12 +45,12 @@ func TestStorageManager_AddConfig(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		config      StorageConfig
+		config      *StorageConfig
 		expectError bool
 	}{
 		{
 			name: "Valid S3 Config",
-			config: StorageConfig{
+			config: &StorageConfig{
 				Name: "Test S3",
 				Key:  "test-s3",
 				Type: "s3",
@@ -65,7 +65,7 @@ func TestStorageManager_AddConfig(t *testing.T) {
 		},
 		{
 			name: "Valid File Config",
-			config: StorageConfig{
+			config: &StorageConfig{
 				Name: "Test File",
 				Key:  "test-file",
 				Type: "file",
@@ -77,7 +77,7 @@ func TestStorageManager_AddConfig(t *testing.T) {
 		},
 		{
 			name: "Invalid Config Type",
-			config: StorageConfig{
+			config: &StorageConfig{
 				Name:   "Invalid Type",
 				Key:    "invalid-type",
 				Type:   "invalid",
@@ -122,7 +122,7 @@ func TestStorageManager_UpdateConfig(t *testing.T) {
 	ctx := context.Background()
 
 	// Add an initial config
-	initialConfig := StorageConfig{
+	initialConfig := &StorageConfig{
 		Name: "Initial S3",
 		Key:  "initial-s3",
 		Type: "s3",
@@ -137,13 +137,13 @@ func TestStorageManager_UpdateConfig(t *testing.T) {
 	testCases := []struct {
 		name         string
 		key          string
-		updateConfig StorageConfig
+		updateConfig *StorageConfig
 		expectError  bool
 	}{
 		{
 			name: "Valid Update",
 			key:  "initial-s3",
-			updateConfig: StorageConfig{
+			updateConfig: &StorageConfig{
 				Name: "Updated S3",
 				Key:  "initial-s3",
 				Type: "s3",
@@ -157,7 +157,7 @@ func TestStorageManager_UpdateConfig(t *testing.T) {
 		{
 			name: "Non-existent Key",
 			key:  "non-existent",
-			updateConfig: StorageConfig{
+			updateConfig: &StorageConfig{
 				Name:   "Non-existent",
 				Key:    "non-existent",
 				Type:   "s3",
@@ -168,7 +168,7 @@ func TestStorageManager_UpdateConfig(t *testing.T) {
 		{
 			name: "Invalid Config Type",
 			key:  "initial-s3",
-			updateConfig: StorageConfig{
+			updateConfig: &StorageConfig{
 				Name:   "Invalid Type",
 				Key:    "initial-s3",
 				Type:   "invalid",
@@ -213,7 +213,7 @@ func TestStorageManager_DeleteConfig(t *testing.T) {
 	ctx := context.Background()
 
 	// Add a config to delete
-	configToDelete := StorageConfig{
+	configToDelete := &StorageConfig{
 		Name: "Config to Delete",
 		Key:  "delete-me",
 		Type: "file",
@@ -276,7 +276,7 @@ func TestStorageManager_GetConfigs(t *testing.T) {
 	ctx := context.Background()
 
 	// Add multiple configs
-	configs := []StorageConfig{
+	configs := []*StorageConfig{
 		{
 			Name: "S3 Config",
 			Key:  "s3-config",
@@ -336,7 +336,7 @@ func TestStorageManager_GetStorage(t *testing.T) {
 	ctx := context.Background()
 
 	// Add configs
-	configs := []StorageConfig{
+	configs := []*StorageConfig{
 		{
 			Name: "S3 Storage",
 			Key:  "s3-storage",
@@ -418,7 +418,7 @@ func TestStorageManager_GetDefaultStorage(t *testing.T) {
 	})
 
 	t.Run("Single Config", func(t *testing.T) {
-		config := StorageConfig{
+		config := &StorageConfig{
 			Name: "Default Storage",
 			Key:  "default",
 			Type: "file",
@@ -435,7 +435,7 @@ func TestStorageManager_GetDefaultStorage(t *testing.T) {
 	})
 
 	t.Run("Multiple Configs", func(t *testing.T) {
-		config := StorageConfig{
+		config := &StorageConfig{
 			Name: "Second Storage",
 			Key:  "second",
 			Type: "s3",
@@ -466,7 +466,7 @@ func TestStorageManager_Encryption(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("EncryptAndDecryptConfig", func(t *testing.T) {
-		originalConfig := StorageConfig{
+		originalConfig := &StorageConfig{
 			Name: "Test Storage",
 			Key:  "test-storage",
 			Type: "s3",
@@ -503,7 +503,7 @@ func TestStorageManager_Encryption(t *testing.T) {
 	})
 
 	t.Run("UpdateEncryptedConfig", func(t *testing.T) {
-		updatedConfig := StorageConfig{
+		updatedConfig := &StorageConfig{
 			Name: "Updated Test Storage",
 			Key:  "test-storage",
 			Type: "s3",
@@ -541,7 +541,7 @@ func TestStorageManager_Encryption(t *testing.T) {
 
 	t.Run("ListEncryptedConfigs", func(t *testing.T) {
 		// Add another config
-		anotherConfig := StorageConfig{
+		anotherConfig := &StorageConfig{
 			Name: "Another Test Storage",
 			Key:  "another-test-storage",
 			Type: "file",
@@ -558,7 +558,7 @@ func TestStorageManager_Encryption(t *testing.T) {
 		assert.Len(t, configs, 2)
 
 		// Check if both configs are in the list
-		configMap := make(map[string]StorageConfig)
+		configMap := make(map[string]*StorageConfig)
 		for _, cfg := range configs {
 			configMap[cfg.Key] = cfg
 		}
