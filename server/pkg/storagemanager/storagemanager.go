@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"github.com/cshum/imagor-studio/server/model"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
+	"github.com/cshum/imagor-studio/server/pkg/storagefactory"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"io"
 	"strings"
@@ -42,13 +43,20 @@ type StorageManager interface {
 
 type storageManager struct {
 	db       *bun.DB
+	factory  storagefactory.StorageFactory
 	storages map[string]storage.Storage // Key format: "ownerID:storageKey"
 	mu       sync.RWMutex
 	logger   *zap.Logger
 	gcm      cipher.AEAD
 }
 
+// New creates a new storage manager with the default factory
 func New(db *bun.DB, logger *zap.Logger, secretKey string) (StorageManager, error) {
+	return NewWithFactory(db, logger, secretKey, storagefactory.NewStorageFactory())
+}
+
+// NewWithFactory creates a new storage manager with a custom factory
+func NewWithFactory(db *bun.DB, logger *zap.Logger, secretKey string, factory storagefactory.StorageFactory) (StorageManager, error) {
 	derivedKey := make([]byte, 32)
 	r := hkdf.New(sha256.New, []byte(secretKey), nil, []byte("imagor-studio-storage-manager"))
 	if _, err := io.ReadFull(r, derivedKey); err != nil {
@@ -67,6 +75,7 @@ func New(db *bun.DB, logger *zap.Logger, secretKey string) (StorageManager, erro
 
 	sm := &storageManager{
 		db:       db,
+		factory:  factory,
 		storages: make(map[string]storage.Storage),
 		logger:   logger,
 		gcm:      gcm,
@@ -92,13 +101,22 @@ func (sm *storageManager) initializeStorages() error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 	for _, cfg := range storageConfigs {
-		s, err := sm.createStorage(&cfg)
+		s, err := sm.createStorageFromModel(&cfg)
 		if err != nil {
 			return fmt.Errorf("error creating storage from config: %w", err)
 		}
 		sm.storages[sm.storageKey(cfg.OwnerID, cfg.Key)] = s
 	}
 	return nil
+}
+
+func (sm *storageManager) createStorageFromModel(storageModel *model.Storage) (storage.Storage, error) {
+	decryptedConfig, err := sm.decryptConfig(storageModel.Config)
+	if err != nil {
+		return nil, fmt.Errorf("error decrypting storageModel: %w", err)
+	}
+
+	return sm.factory.CreateStorage(storageModel.Type, decryptedConfig)
 }
 
 func (sm *storageManager) encryptConfig(config json.RawMessage) (string, error) {
@@ -207,7 +225,7 @@ func (sm *storageManager) AddConfig(ctx context.Context, ownerID string, config 
 		return fmt.Errorf("error inserting storage config: %w", err)
 	}
 
-	s, err := sm.createStorage(storageModel)
+	s, err := sm.createStorageFromModel(storageModel)
 	if err != nil {
 		return err
 	}
@@ -249,7 +267,7 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, ownerID string, key 
 		return fmt.Errorf("storage config with key %s not found for owner %s", key, ownerID)
 	}
 
-	s, err := sm.createStorage(&model.Storage{
+	s, err := sm.createStorageFromModel(&model.Storage{
 		OwnerID: ownerID,
 		Key:     key,
 		Name:    config.Name,
