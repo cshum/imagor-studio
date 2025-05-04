@@ -1,4 +1,4 @@
-package storagemanager
+package storagerepository
 
 import (
 	"context"
@@ -31,7 +31,7 @@ type StorageConfig struct {
 	Config json.RawMessage `json:"config"`
 }
 
-type StorageManager interface {
+type SorageRepository interface {
 	GetConfigs(ctx context.Context, ownerID string) ([]*StorageConfig, error)
 	GetConfig(ctx context.Context, ownerID string, key string) (*StorageConfig, error)
 	AddConfig(ctx context.Context, ownerID string, config *StorageConfig) error
@@ -41,7 +41,7 @@ type StorageManager interface {
 	GetStorage(ownerID string, key string) (storage.Storage, error)
 }
 
-type storageManager struct {
+type sorageRepository struct {
 	db       *bun.DB
 	registry storageregistry.StorageRegistry
 	storages map[string]storage.Storage // Key format: "ownerID:storageKey"
@@ -50,15 +50,15 @@ type storageManager struct {
 	gcm      cipher.AEAD
 }
 
-// New creates a new storage manager with the default registry
-func New(db *bun.DB, logger *zap.Logger, secretKey string) (StorageManager, error) {
+// New creates a new storage repository with the default registry
+func New(db *bun.DB, logger *zap.Logger, secretKey string) (SorageRepository, error) {
 	return NewWithRegistry(db, logger, secretKey, storageregistry.NewStorageRegistry())
 }
 
-// NewWithRegistry creates a new storage manager with a custom registry
-func NewWithRegistry(db *bun.DB, logger *zap.Logger, secretKey string, registry storageregistry.StorageRegistry) (StorageManager, error) {
+// NewWithRegistry creates a new storage repository with a custom registry
+func NewWithRegistry(db *bun.DB, logger *zap.Logger, secretKey string, registry storageregistry.StorageRegistry) (SorageRepository, error) {
 	derivedKey := make([]byte, 32)
-	r := hkdf.New(sha256.New, []byte(secretKey), nil, []byte("imagor-studio-storage-manager"))
+	r := hkdf.New(sha256.New, []byte(secretKey), nil, []byte("imagor-studio-storage-repository"))
 	if _, err := io.ReadFull(r, derivedKey); err != nil {
 		return nil, fmt.Errorf("failed to derive key: %w", err)
 	}
@@ -73,7 +73,7 @@ func NewWithRegistry(db *bun.DB, logger *zap.Logger, secretKey string, registry 
 		return nil, fmt.Errorf("failed to create GCM: %w", err)
 	}
 
-	sm := &storageManager{
+	sm := &sorageRepository{
 		db:       db,
 		registry: registry,
 		storages: make(map[string]storage.Storage),
@@ -86,11 +86,11 @@ func NewWithRegistry(db *bun.DB, logger *zap.Logger, secretKey string, registry 
 	return sm, nil
 }
 
-func (sm *storageManager) storageKey(ownerID string, storageKey string) string {
+func (sm *sorageRepository) storageKey(ownerID string, storageKey string) string {
 	return fmt.Sprintf("%s:%s", ownerID, storageKey)
 }
 
-func (sm *storageManager) initializeStorages() error {
+func (sm *sorageRepository) initializeStorages() error {
 	ctx := context.Background()
 	var storageConfigs []model.Storage
 	err := sm.db.NewSelect().Model(&storageConfigs).Scan(ctx)
@@ -110,7 +110,7 @@ func (sm *storageManager) initializeStorages() error {
 	return nil
 }
 
-func (sm *storageManager) createStorageFromModel(storageModel *model.Storage) (storage.Storage, error) {
+func (sm *sorageRepository) createStorageFromModel(storageModel *model.Storage) (storage.Storage, error) {
 	decryptedConfig, err := sm.decryptConfig(storageModel.Config)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting storageModel: %w", err)
@@ -119,7 +119,7 @@ func (sm *storageManager) createStorageFromModel(storageModel *model.Storage) (s
 	return sm.registry.CreateStorage(storageModel.Type, decryptedConfig)
 }
 
-func (sm *storageManager) encryptConfig(config json.RawMessage) (string, error) {
+func (sm *sorageRepository) encryptConfig(config json.RawMessage) (string, error) {
 	nonce := make([]byte, sm.gcm.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return "", fmt.Errorf("failed to generate nonce: %w", err)
@@ -129,7 +129,7 @@ func (sm *storageManager) encryptConfig(config json.RawMessage) (string, error) 
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-func (sm *storageManager) decryptConfig(encryptedConfig string) (json.RawMessage, error) {
+func (sm *sorageRepository) decryptConfig(encryptedConfig string) (json.RawMessage, error) {
 	ciphertext, err := base64.StdEncoding.DecodeString(encryptedConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode base64: %w", err)
@@ -148,7 +148,7 @@ func (sm *storageManager) decryptConfig(encryptedConfig string) (json.RawMessage
 	return plaintext, nil
 }
 
-func (sm *storageManager) GetConfigs(ctx context.Context, ownerID string) ([]*StorageConfig, error) {
+func (sm *sorageRepository) GetConfigs(ctx context.Context, ownerID string) ([]*StorageConfig, error) {
 	var configs []model.Storage
 	err := sm.db.NewSelect().
 		Model(&configs).
@@ -176,7 +176,7 @@ func (sm *storageManager) GetConfigs(ctx context.Context, ownerID string) ([]*St
 	return outputs, nil
 }
 
-func (sm *storageManager) GetConfig(ctx context.Context, ownerID string, key string) (*StorageConfig, error) {
+func (sm *sorageRepository) GetConfig(ctx context.Context, ownerID string, key string) (*StorageConfig, error) {
 	var config model.Storage
 	err := sm.db.NewSelect().
 		Model(&config).
@@ -202,7 +202,7 @@ func (sm *storageManager) GetConfig(ctx context.Context, ownerID string, key str
 	}, nil
 }
 
-func (sm *storageManager) AddConfig(ctx context.Context, ownerID string, config *StorageConfig) error {
+func (sm *sorageRepository) AddConfig(ctx context.Context, ownerID string, config *StorageConfig) error {
 	if config == nil {
 		return fmt.Errorf("missing config")
 	}
@@ -237,7 +237,7 @@ func (sm *storageManager) AddConfig(ctx context.Context, ownerID string, config 
 	return nil
 }
 
-func (sm *storageManager) UpdateConfig(ctx context.Context, ownerID string, key string, config *StorageConfig) error {
+func (sm *sorageRepository) UpdateConfig(ctx context.Context, ownerID string, key string, config *StorageConfig) error {
 	if config == nil {
 		return fmt.Errorf("missing config")
 	}
@@ -285,7 +285,7 @@ func (sm *storageManager) UpdateConfig(ctx context.Context, ownerID string, key 
 	return nil
 }
 
-func (sm *storageManager) DeleteConfig(ctx context.Context, ownerID string, key string) error {
+func (sm *sorageRepository) DeleteConfig(ctx context.Context, ownerID string, key string) error {
 	_, err := sm.db.NewDelete().
 		Model((*model.Storage)(nil)).
 		Where("owner_id = ? AND key = ?", ownerID, key).
@@ -300,7 +300,7 @@ func (sm *storageManager) DeleteConfig(ctx context.Context, ownerID string, key 
 	return nil
 }
 
-func (sm *storageManager) GetDefaultStorage(ownerID string) (storage.Storage, error) {
+func (sm *sorageRepository) GetDefaultStorage(ownerID string) (storage.Storage, error) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 
@@ -317,7 +317,7 @@ func (sm *storageManager) GetDefaultStorage(ownerID string) (storage.Storage, er
 	return nil, fmt.Errorf("no default storage available for owner %s: multiple or no storages are configured", ownerID)
 }
 
-func (sm *storageManager) GetStorage(ownerID string, key string) (storage.Storage, error) {
+func (sm *sorageRepository) GetStorage(ownerID string, key string) (storage.Storage, error) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 

@@ -1,4 +1,4 @@
-package storagemanager
+package storagerepository
 
 import (
 	"context"
@@ -41,7 +41,7 @@ func setupTestDB(t *testing.T) *bun.DB {
 	return db
 }
 
-func TestStorageManager_AddConfig(t *testing.T) {
+func TestSorageRepository_AddConfig(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -120,7 +120,7 @@ func TestStorageManager_AddConfig(t *testing.T) {
 	}
 }
 
-func TestStorageManager_ConfigIsolationBetweenOwners(t *testing.T) {
+func TestSorageRepository_ConfigIsolationBetweenOwners(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -181,7 +181,7 @@ func TestStorageManager_ConfigIsolationBetweenOwners(t *testing.T) {
 	assert.NotEqual(t, retrievedConfig3.Name, "Owner2 S3")
 }
 
-func TestStorageManager_UpdateConfig(t *testing.T) {
+func TestSorageRepository_UpdateConfig(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -273,7 +273,7 @@ func TestStorageManager_UpdateConfig(t *testing.T) {
 	}
 }
 
-func TestStorageManager_DeleteConfig(t *testing.T) {
+func TestSorageRepository_DeleteConfig(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -337,7 +337,7 @@ func TestStorageManager_DeleteConfig(t *testing.T) {
 	}
 }
 
-func TestStorageManager_GetConfigs(t *testing.T) {
+func TestSorageRepository_GetConfigs(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -418,7 +418,7 @@ func TestStorageManager_GetConfigs(t *testing.T) {
 	assert.Equal(t, otherConfig.Name, otherRetrievedConfigs[0].Name)
 }
 
-func TestStorageManager_GetStorage(t *testing.T) {
+func TestSorageRepository_GetStorage(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -504,7 +504,7 @@ func TestStorageManager_GetStorage(t *testing.T) {
 	}
 }
 
-func TestStorageManager_GetDefaultStorage(t *testing.T) {
+func TestSorageRepository_GetDefaultStorage(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -567,7 +567,7 @@ func TestStorageManager_GetDefaultStorage(t *testing.T) {
 	})
 }
 
-func TestStorageManager_Encryption(t *testing.T) {
+func TestSorageRepository_Encryption(t *testing.T) {
 	// Setup
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
@@ -693,7 +693,7 @@ func TestStorageManager_Encryption(t *testing.T) {
 	})
 }
 
-func TestStorageManager_MultiTenant(t *testing.T) {
+func TestSorageRepository_MultiTenant(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
