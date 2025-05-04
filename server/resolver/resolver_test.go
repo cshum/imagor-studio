@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/cshum/imagor-studio/server/gql"
+	"github.com/cshum/imagor-studio/server/pkg/metadatastore"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/cshum/imagor-studio/server/pkg/storageconfigstore"
 	"io"
@@ -60,16 +61,19 @@ func (m *MockStore) List(ctx context.Context, ownerID string) ([]*storageconfigs
 
 func (m *MockStore) Get(ctx context.Context, ownerID string, key string) (*storageconfigstore.Config, error) {
 	args := m.Called(ctx, ownerID, key)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).(*storageconfigstore.Config), args.Error(1)
 }
 
 func (m *MockStore) Create(ctx context.Context, ownerID string, config *storageconfigstore.Config) error {
-	args := m.Called(ctx, ownerID, *config)
+	args := m.Called(ctx, ownerID, config)
 	return args.Error(0)
 }
 
 func (m *MockStore) Update(ctx context.Context, ownerID string, key string, config *storageconfigstore.Config) error {
-	args := m.Called(ctx, ownerID, key, *config)
+	args := m.Called(ctx, ownerID, key, config)
 	return args.Error(0)
 }
 
@@ -88,11 +92,39 @@ func (m *MockStore) Storage(ownerID string, key string) (storage.Storage, error)
 	return args.Get(0).(storage.Storage), args.Error(1)
 }
 
+type MockMetadataStore struct {
+	mock.Mock
+}
+
+func (m *MockMetadataStore) List(ctx context.Context, ownerID string, prefix *string) ([]*metadatastore.Metadata, error) {
+	args := m.Called(ctx, ownerID, prefix)
+	return args.Get(0).([]*metadatastore.Metadata), args.Error(1)
+}
+
+func (m *MockMetadataStore) Get(ctx context.Context, ownerID, key string) (*metadatastore.Metadata, error) {
+	args := m.Called(ctx, ownerID, key)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*metadatastore.Metadata), args.Error(1)
+}
+
+func (m *MockMetadataStore) Set(ctx context.Context, ownerID, key, value string) (*metadatastore.Metadata, error) {
+	args := m.Called(ctx, ownerID, key, value)
+	return args.Get(0).(*metadatastore.Metadata), args.Error(1)
+}
+
+func (m *MockMetadataStore) Delete(ctx context.Context, ownerID, key string) error {
+	args := m.Called(ctx, ownerID, key)
+	return args.Error(0)
+}
+
 func TestListFiles(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, logger)
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
 
 	// Create context with owner ID
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
@@ -132,8 +164,9 @@ func TestListFiles(t *testing.T) {
 func TestListFilesWithoutOwnerID(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, logger)
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
 
 	// Create context without owner ID (should use default)
 	ctx := context.Background()
@@ -165,8 +198,9 @@ func TestListFilesWithoutOwnerID(t *testing.T) {
 func TestStatFile(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, logger)
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	path := "/test/file1.txt"
@@ -200,8 +234,9 @@ func TestStatFile(t *testing.T) {
 func TestCreateFolder(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, logger)
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	path := "/test/new-folder"
@@ -221,8 +256,9 @@ func TestCreateFolder(t *testing.T) {
 func TestDeleteFile(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, logger)
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	path := "/test/file-to-delete.txt"
@@ -241,8 +277,9 @@ func TestDeleteFile(t *testing.T) {
 
 func TestListStorageConfigs(t *testing.T) {
 	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, logger)
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 
@@ -268,8 +305,9 @@ func TestListStorageConfigs(t *testing.T) {
 
 func TestAddStorageConfig(t *testing.T) {
 	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, logger)
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	input := gql.StorageConfigInput{
@@ -279,7 +317,14 @@ func TestAddStorageConfig(t *testing.T) {
 		Config: `{"bucket":"new-bucket"}`,
 	}
 
-	mockStore.On("Create", ctx, "test-owner-id", mock.AnythingOfType("storageconfigstore.Config")).Return(nil)
+	expectedConfig := &storageconfigstore.Config{
+		Name:   input.Name,
+		Key:    input.Key,
+		Type:   input.Type,
+		Config: json.RawMessage(input.Config),
+	}
+
+	mockStore.On("Create", ctx, "test-owner-id", expectedConfig).Return(nil)
 
 	result, err := resolver.Mutation().AddStorageConfig(ctx, input)
 
@@ -295,8 +340,9 @@ func TestAddStorageConfig(t *testing.T) {
 
 func TestUpdateStorageConfig(t *testing.T) {
 	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, logger)
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	key := "existing-s3"
@@ -307,7 +353,14 @@ func TestUpdateStorageConfig(t *testing.T) {
 		Config: `{"bucket":"updated-bucket"}`,
 	}
 
-	mockStore.On("Update", ctx, "test-owner-id", key, mock.AnythingOfType("storageconfigstore.Config")).Return(nil)
+	expectedConfig := &storageconfigstore.Config{
+		Name:   input.Name,
+		Key:    input.Key,
+		Type:   input.Type,
+		Config: json.RawMessage(input.Config),
+	}
+
+	mockStore.On("Update", ctx, "test-owner-id", key, expectedConfig).Return(nil)
 
 	result, err := resolver.Mutation().UpdateStorageConfig(ctx, key, input)
 
@@ -323,8 +376,9 @@ func TestUpdateStorageConfig(t *testing.T) {
 
 func TestDeleteStorageConfig(t *testing.T) {
 	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, logger)
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	key := "config-to-delete"
@@ -342,8 +396,9 @@ func TestDeleteStorageConfig(t *testing.T) {
 func TestGetStorageWithSpecificKey(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, logger)
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	storageKey := "specific-storage"
@@ -366,4 +421,130 @@ func TestGetStorageWithSpecificKey(t *testing.T) {
 
 	mockStorage.AssertExpectations(t)
 	mockStore.AssertExpectations(t)
+}
+
+// Metadata tests
+func TestListMetadata(t *testing.T) {
+	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
+
+	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
+	prefix := "app:"
+
+	now := time.Now()
+	mockMetadata := []*metadatastore.Metadata{
+		{Key: "app:setting1", Value: "value1", CreatedAt: now, UpdatedAt: now},
+		{Key: "app:setting2", Value: "value2", CreatedAt: now, UpdatedAt: now},
+	}
+
+	mockMetadataStore.On("List", ctx, "test-owner-id", &prefix).Return(mockMetadata, nil)
+
+	result, err := resolver.Query().ListMetadata(ctx, &prefix)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 2)
+	assert.Equal(t, "app:setting1", result[0].Key)
+	assert.Equal(t, "value1", result[0].Value)
+
+	mockMetadataStore.AssertExpectations(t)
+}
+
+func TestGetMetadata(t *testing.T) {
+	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
+
+	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
+	key := "app:setting1"
+
+	now := time.Now()
+	mockMetadata := &metadatastore.Metadata{
+		Key:       key,
+		Value:     "value1",
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	mockMetadataStore.On("Get", ctx, "test-owner-id", key).Return(mockMetadata, nil)
+
+	result, err := resolver.Query().GetMetadata(ctx, key)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, key, result.Key)
+	assert.Equal(t, "value1", result.Value)
+
+	mockMetadataStore.AssertExpectations(t)
+}
+
+func TestGetMetadataNotFound(t *testing.T) {
+	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
+
+	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
+	key := "non-existent"
+
+	mockMetadataStore.On("Get", ctx, "test-owner-id", key).Return(nil, nil)
+
+	result, err := resolver.Query().GetMetadata(ctx, key)
+
+	assert.NoError(t, err)
+	assert.Nil(t, result)
+
+	mockMetadataStore.AssertExpectations(t)
+}
+
+func TestSetMetadata(t *testing.T) {
+	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
+
+	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
+	key := "app:new-setting"
+	value := "new-value"
+
+	now := time.Now()
+	resultMetadata := &metadatastore.Metadata{
+		Key:       key,
+		Value:     value,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	mockMetadataStore.On("Set", ctx, "test-owner-id", key, value).Return(resultMetadata, nil)
+
+	result, err := resolver.Mutation().SetMetadata(ctx, key, value)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, key, result.Key)
+	assert.Equal(t, value, result.Value)
+
+	mockMetadataStore.AssertExpectations(t)
+}
+
+func TestDeleteMetadata(t *testing.T) {
+	mockStore := new(MockStore)
+	mockMetadataStore := new(MockMetadataStore)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(mockStore, mockMetadataStore, logger)
+
+	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
+	key := "app:setting-to-delete"
+
+	mockMetadataStore.On("Delete", ctx, "test-owner-id", key).Return(nil)
+
+	result, err := resolver.Mutation().DeleteMetadata(ctx, key)
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+
+	mockMetadataStore.AssertExpectations(t)
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/internal/migrations"
+	"github.com/cshum/imagor-studio/server/pkg/metadatastore"
 	"github.com/cshum/imagor-studio/server/pkg/storageconfigstore"
 	"github.com/cshum/imagor-studio/server/resolver"
 	"net/http"
@@ -51,12 +52,14 @@ func New(cfg *config.Config) (*Server, error) {
 		cfg.Logger.Info("Migrations applied", zap.String("group", group.String()))
 	}
 
-	sorageRepository, err := storageconfigstore.New(db, cfg.Logger, cfg.ImagorSecret)
+	storageConfigStore, err := storageconfigstore.New(db, cfg.Logger, cfg.ImagorSecret)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create storage manager: %w", err)
+		return nil, fmt.Errorf("failed to create storage repository: %w", err)
 	}
 
-	storageResolver := resolver.NewResolver(sorageRepository, cfg.Logger)
+	metadataStore := metadatastore.New(db, cfg.Logger)
+
+	storageResolver := resolver.NewResolver(storageConfigStore, metadataStore, cfg.Logger)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
 
