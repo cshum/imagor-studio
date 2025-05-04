@@ -83,12 +83,23 @@ func (tm *TokenManager) ValidateToken(tokenString string) (*Claims, error) {
 // RefreshToken creates a new token with extended expiration
 func (tm *TokenManager) RefreshToken(claims *Claims) (string, error) {
 	now := time.Now()
-	claims.ExpiresAt = jwt.NewNumericDate(now.Add(tm.tokenDuration))
-	claims.NotBefore = jwt.NewNumericDate(now)
-	claims.IssuedAt = jwt.NewNumericDate(now)
-	claims.ID = fmt.Sprintf("%d", time.Now().UnixNano())
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	// Create new claims with updated fields
+	newClaims := &Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   claims.Subject,
+			ExpiresAt: jwt.NewNumericDate(now.Add(tm.tokenDuration)),
+			NotBefore: jwt.NewNumericDate(now),
+			IssuedAt:  jwt.NewNumericDate(now),
+			ID:        fmt.Sprintf("%d", now.UnixNano()),
+		},
+		UserID: claims.UserID,
+		Email:  claims.Email,
+		Role:   claims.Role,
+		Scopes: claims.Scopes,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)
 	return token.SignedString(tm.secret)
 }
 
@@ -104,7 +115,13 @@ func ExtractTokenFromHeader(authHeader string) (string, error) {
 		return "", fmt.Errorf("invalid authorization header format")
 	}
 
-	return parts[1], nil
+	// Check if token part is empty
+	token := strings.TrimSpace(parts[1])
+	if token == "" {
+		return "", fmt.Errorf("token is empty")
+	}
+
+	return token, nil
 }
 
 // ContextKey type for context values

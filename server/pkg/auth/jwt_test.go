@@ -118,30 +118,23 @@ func TestValidateToken_ExpiredToken(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to parse token")
 }
 
-func TestValidateToken_WrongAlgorithm(t *testing.T) {
-	// Skip this test as it requires proper RSA key generation
-	t.Skip("Skipping RSA algorithm test - requires proper RSA key generation")
-}
-
 func TestRefreshToken(t *testing.T) {
 	tm := NewTokenManager("test-secret", time.Hour)
 
-	// Create original token
+	// Create original token with timestamps in the past
+	pastTime := time.Now().Add(-time.Minute)
 	originalClaims := &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "user1",
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			ID:        "original-id",
+			ExpiresAt: jwt.NewNumericDate(pastTime.Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(pastTime),
+			ID:        "original-test-id",
 		},
 		UserID: "user1",
 		Email:  "test@example.com",
 		Role:   "user",
 		Scopes: []string{"read"},
 	}
-
-	// Wait a bit to ensure different timestamps
-	time.Sleep(time.Millisecond * 100)
 
 	// Refresh the token
 	refreshedToken, err := tm.RefreshToken(originalClaims)
@@ -156,18 +149,25 @@ func TestRefreshToken(t *testing.T) {
 	assert.Equal(t, originalClaims.Role, refreshedClaims.Role)
 	assert.Equal(t, originalClaims.Scopes, refreshedClaims.Scopes)
 
-	// Check that ID is different - compare the actual ID values
+	// Check that ID is different
 	assert.NotEqual(t, originalClaims.ID, refreshedClaims.ID)
+	assert.NotEqual(t, "original-test-id", refreshedClaims.ID)
 
-	// Check that expiration is extended (comparing Unix timestamps)
-	originalExp := originalClaims.ExpiresAt.Time.Unix()
-	refreshedExp := refreshedClaims.ExpiresAt.Time.Unix()
-	assert.GreaterOrEqual(t, refreshedExp, originalExp)
+	// Verify that the new ID is in the correct format (timestamp-based)
+	assert.Regexp(t, `^\d+$`, refreshedClaims.ID, "ID should be a timestamp")
 
-	// Also check that IssuedAt is updated
-	originalIat := originalClaims.IssuedAt.Time.Unix()
-	refreshedIat := refreshedClaims.IssuedAt.Time.Unix()
-	assert.Greater(t, refreshedIat, originalIat)
+	// Check that expiration is extended
+	originalExp := originalClaims.ExpiresAt.Time
+	refreshedExp := refreshedClaims.ExpiresAt.Time
+	assert.True(t, refreshedExp.After(originalExp), "Expiration time should be extended")
+
+	// Check that IssuedAt is updated
+	originalIat := originalClaims.IssuedAt.Time
+	refreshedIat := refreshedClaims.IssuedAt.Time
+	assert.True(t, refreshedIat.After(originalIat), "IssuedAt should be updated")
+
+	// Verify the new token was issued recently (within last second)
+	assert.WithinDuration(t, time.Now(), refreshedIat, time.Second, "Token should be issued recently")
 }
 
 func TestExtractTokenFromHeader(t *testing.T) {
