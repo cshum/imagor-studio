@@ -139,31 +139,22 @@ func TestListFilesWithoutOwnerID(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	resolver := NewResolver(mockStore, mockMetadataStore, logger)
 
-	// Create context without owner ID (should use default)
+	// Create context without owner ID - this should now fail
 	ctx := context.Background()
 	path := "/test"
 	offset := 0
 	limit := 10
 
-	// Default owner ID should be used
-	defaultOwnerID := "00000000-0000-0000-0000-000000000001"
-	mockStore.On("DefaultStorage", defaultOwnerID).Return(mockStorage, nil)
-
-	mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
-		Items: []storage.FileInfo{
-			{Name: "file1.txt", Path: "/test/file1.txt", Size: 100, IsDir: false},
-		},
-		TotalCount: 1,
-	}, nil)
-
 	result, err := resolver.Query().ListFiles(ctx, nil, path, offset, limit, nil, nil, nil, nil)
 
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.Equal(t, 1, result.TotalCount)
+	// We expect an error because no owner ID is in context
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "owner ID not found in context")
 
-	mockStorage.AssertExpectations(t)
-	mockStore.AssertExpectations(t)
+	// No mocks should be called since it fails early
+	mockStorage.AssertNotCalled(t, "List", mock.Anything, mock.Anything, mock.Anything)
+	mockStore.AssertNotCalled(t, "DefaultStorage", mock.Anything)
 }
 
 func TestStatFile(t *testing.T) {

@@ -4,16 +4,19 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/cshum/imagor-studio/server/gql"
-	"github.com/cshum/imagor-studio/server/internal/migrations"
-	"github.com/cshum/imagor-studio/server/pkg/metadatastore"
-	"github.com/cshum/imagor-studio/server/pkg/storageconfigstore"
-	"github.com/cshum/imagor-studio/server/resolver"
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/internal/config"
+	"github.com/cshum/imagor-studio/server/internal/handlers"
+	"github.com/cshum/imagor-studio/server/internal/middleware"
+	"github.com/cshum/imagor-studio/server/internal/migrations"
+	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/metadatastore"
+	"github.com/cshum/imagor-studio/server/pkg/storageconfigstore"
+	"github.com/cshum/imagor-studio/server/resolver"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/sqliteshim"
@@ -22,8 +25,9 @@ import (
 )
 
 type Server struct {
-	cfg *config.Config
-	db  *bun.DB
+	cfg          *config.Config
+	db           *bun.DB
+	tokenManager *auth.TokenManager
 }
 
 func New(cfg *config.Config) (*Server, error) {
@@ -52,6 +56,13 @@ func New(cfg *config.Config) (*Server, error) {
 		cfg.Logger.Info("Migrations applied", zap.String("group", group.String()))
 	}
 
+	// Initialize token manager
+	tokenManager := auth.NewTokenManager(
+		cfg.JWTSecret,
+		cfg.JWTExpiration,
+	)
+
+	// Initialize stores
 	storageConfigStore, err := storageconfigstore.New(db, cfg.Logger, cfg.ImagorSecret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage repository: %w", err)
@@ -59,16 +70,53 @@ func New(cfg *config.Config) (*Server, error) {
 
 	metadataStore := metadatastore.New(db, cfg.Logger)
 
+	// Initialize GraphQL
 	storageResolver := resolver.NewResolver(storageConfigStore, metadataStore, cfg.Logger)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
 
-	http.Handle("/query", gqlHandler)
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	// Create auth handler
+	authHandler := handlers.NewAuthHandler(tokenManager, cfg.Logger)
+
+	// Create middleware chain
+	mux := http.NewServeMux()
+
+	// Public endpoints
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
+	// Dev login endpoints (no auth required)
+	mux.HandleFunc("/auth/dev-login", authHandler.DevLogin)
+	mux.HandleFunc("/auth/refresh", authHandler.RefreshToken)
+
+	// GraphQL playground (available in development, might want to disable in production)
+	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
+
+	// Protected endpoints
+	protectedHandler := middleware.JWTMiddleware(tokenManager)(gqlHandler)
+	mux.Handle("/query", protectedHandler)
+
+	// Configure CORS
+	corsConfig := middleware.DefaultCORSConfig()
+
+	// Apply global middleware to the entire mux
+	h := middleware.CORSMiddleware(corsConfig)(
+		middleware.LoggingMiddleware(cfg.Logger)(
+			middleware.ErrorMiddleware(cfg.Logger)(
+				mux,
+			),
+		),
+	)
+
+	// Set the final handler
+	http.Handle("/", h)
 
 	return &Server{
-		cfg: cfg,
-		db:  db,
+		cfg:          cfg,
+		db:           db,
+		tokenManager: tokenManager,
 	}, nil
 }
 
