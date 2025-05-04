@@ -14,6 +14,9 @@ type Query {
 
     listStorageConfigs: [StorageConfig!]!
     getStorageConfig(key: String!): StorageConfig
+
+    listMetadata(prefix: String): [Metadata!]!
+    getMetadata(key: String!): Metadata
 }
 
 type Mutation {
@@ -24,6 +27,9 @@ type Mutation {
     addStorageConfig(config: StorageConfigInput!): StorageConfig!
     updateStorageConfig(key: String!, config: StorageConfigInput!): StorageConfig!
     deleteStorageConfig(key: String!): Boolean!
+
+    setMetadata(key: String!, value: String!): Metadata!
+    deleteMetadata(key: String!): Boolean!
 }
 
 type FileList {
@@ -72,6 +78,13 @@ input StorageConfigInput {
     key: String!
     type: String!
     config: JSON!
+}
+
+type Metadata {
+    key: String!
+    value: String!
+    createdAt: String!
+    updatedAt: String!
 }
 
 scalar JSON

@@ -30,6 +30,13 @@ type FileStat struct {
 	Etag         *string `json:"etag,omitempty"`
 }
 
+type Metadata struct {
+	Key       string `json:"key"`
+	Value     string `json:"value"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
+}
+
 type Mutation struct {
 }
 
