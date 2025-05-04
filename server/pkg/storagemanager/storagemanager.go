@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"github.com/cshum/imagor-studio/server/model"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
-	"github.com/cshum/imagor-studio/server/pkg/storagefactory"
+	"github.com/cshum/imagor-studio/server/pkg/storageregistry"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"io"
 	"strings"
@@ -43,20 +43,20 @@ type StorageManager interface {
 
 type storageManager struct {
 	db       *bun.DB
-	factory  storagefactory.StorageFactory
+	registry storageregistry.StorageRegistry
 	storages map[string]storage.Storage // Key format: "ownerID:storageKey"
 	mu       sync.RWMutex
 	logger   *zap.Logger
 	gcm      cipher.AEAD
 }
 
-// New creates a new storage manager with the default factory
+// New creates a new storage manager with the default registry
 func New(db *bun.DB, logger *zap.Logger, secretKey string) (StorageManager, error) {
-	return NewWithFactory(db, logger, secretKey, storagefactory.NewStorageFactory())
+	return NewWithRegistry(db, logger, secretKey, storageregistry.NewStorageRegistry())
 }
 
-// NewWithFactory creates a new storage manager with a custom factory
-func NewWithFactory(db *bun.DB, logger *zap.Logger, secretKey string, factory storagefactory.StorageFactory) (StorageManager, error) {
+// NewWithRegistry creates a new storage manager with a custom registry
+func NewWithRegistry(db *bun.DB, logger *zap.Logger, secretKey string, factory storageregistry.StorageRegistry) (StorageManager, error) {
 	derivedKey := make([]byte, 32)
 	r := hkdf.New(sha256.New, []byte(secretKey), nil, []byte("imagor-studio-storage-manager"))
 	if _, err := io.ReadFull(r, derivedKey); err != nil {
@@ -75,7 +75,7 @@ func NewWithFactory(db *bun.DB, logger *zap.Logger, secretKey string, factory st
 
 	sm := &storageManager{
 		db:       db,
-		factory:  factory,
+		registry: factory,
 		storages: make(map[string]storage.Storage),
 		logger:   logger,
 		gcm:      gcm,
@@ -116,7 +116,7 @@ func (sm *storageManager) createStorageFromModel(storageModel *model.Storage) (s
 		return nil, fmt.Errorf("error decrypting storageModel: %w", err)
 	}
 
-	return sm.factory.CreateStorage(storageModel.Type, decryptedConfig)
+	return sm.registry.CreateStorage(storageModel.Type, decryptedConfig)
 }
 
 func (sm *storageManager) encryptConfig(config json.RawMessage) (string, error) {

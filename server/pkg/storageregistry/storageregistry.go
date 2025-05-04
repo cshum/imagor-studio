@@ -1,4 +1,4 @@
-package storagefactory
+package storageregistry
 
 import (
 	"encoding/json"
@@ -6,8 +6,8 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 )
 
-// StorageFactory interface for creating storage instances
-type StorageFactory interface {
+// StorageRegistry interface for creating storage instances
+type StorageRegistry interface {
 	CreateStorage(storageType string, config json.RawMessage) (storage.Storage, error)
 	RegisterStorageType(storageType string, creator StorageCreator)
 }
@@ -15,14 +15,14 @@ type StorageFactory interface {
 // StorageCreator is a function type for creating storage instances
 type StorageCreator func(config json.RawMessage) (storage.Storage, error)
 
-// storageFactory implements StorageFactory
-type storageFactory struct {
+// storageRegistry implements StorageRegistry
+type storageRegistry struct {
 	creators map[string]StorageCreator
 }
 
-// NewStorageFactory creates a new storage factory with default storage types
-func NewStorageFactory() StorageFactory {
-	factory := &storageFactory{
+// NewStorageRegistry creates a new storage factory with default storage types
+func NewStorageRegistry() StorageRegistry {
+	factory := &storageRegistry{
 		creators: make(map[string]StorageCreator),
 	}
 
@@ -34,12 +34,12 @@ func NewStorageFactory() StorageFactory {
 }
 
 // RegisterStorageType allows registration of new storage types
-func (f *storageFactory) RegisterStorageType(storageType string, creator StorageCreator) {
+func (f *storageRegistry) RegisterStorageType(storageType string, creator StorageCreator) {
 	f.creators[storageType] = creator
 }
 
 // CreateStorage creates a storage instance based on type and config
-func (f *storageFactory) CreateStorage(storageType string, config json.RawMessage) (storage.Storage, error) {
+func (f *storageRegistry) CreateStorage(storageType string, config json.RawMessage) (storage.Storage, error) {
 	creator, exists := f.creators[storageType]
 	if !exists {
 		return nil, fmt.Errorf("unsupported storage type: %s", storageType)

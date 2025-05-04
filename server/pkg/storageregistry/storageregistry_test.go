@@ -1,4 +1,4 @@
-package storagefactory
+package storageregistry
 
 import (
 	"context"
@@ -40,7 +40,7 @@ func (m *mockStorage) Stat(ctx context.Context, key string) (storage.FileInfo, e
 }
 
 func TestNewStorageFactory(t *testing.T) {
-	factory := NewStorageFactory()
+	factory := NewStorageRegistry()
 	assert.NotNil(t, factory)
 
 	// Verify that default storage types are registered
@@ -68,7 +68,7 @@ func TestNewStorageFactory(t *testing.T) {
 }
 
 func TestRegisterStorageType(t *testing.T) {
-	factory := NewStorageFactory()
+	factory := NewStorageRegistry()
 
 	// Register a custom storage type
 	mockCreator := func(config json.RawMessage) (storage.Storage, error) {
@@ -85,7 +85,7 @@ func TestRegisterStorageType(t *testing.T) {
 }
 
 func TestCreateStorage_FileStorage(t *testing.T) {
-	factory := NewStorageFactory()
+	factory := NewStorageRegistry()
 
 	tests := []struct {
 		name      string
@@ -130,7 +130,7 @@ func TestCreateStorage_FileStorage(t *testing.T) {
 }
 
 func TestCreateStorage_S3Storage(t *testing.T) {
-	factory := NewStorageFactory()
+	factory := NewStorageRegistry()
 
 	tests := []struct {
 		name      string
@@ -178,7 +178,7 @@ func TestCreateStorage_S3Storage(t *testing.T) {
 }
 
 func TestCreateStorage_InvalidType(t *testing.T) {
-	factory := NewStorageFactory()
+	factory := NewStorageRegistry()
 
 	// Try to create a storage with an unregistered type
 	_, err := factory.CreateStorage("unknown", json.RawMessage("{}"))
@@ -187,7 +187,7 @@ func TestCreateStorage_InvalidType(t *testing.T) {
 }
 
 func TestCreateStorage_InvalidJSON(t *testing.T) {
-	factory := NewStorageFactory()
+	factory := NewStorageRegistry()
 
 	tests := []struct {
 		name          string
@@ -219,7 +219,7 @@ func TestCreateStorage_InvalidJSON(t *testing.T) {
 }
 
 func TestCreateStorage_EmptyConfig(t *testing.T) {
-	factory := NewStorageFactory()
+	factory := NewStorageRegistry()
 
 	// Test with empty config - this results in zero values for all fields
 	_, err := factory.CreateStorage("file", json.RawMessage("{}"))
@@ -237,7 +237,7 @@ func TestCreateStorage_EmptyConfig(t *testing.T) {
 }
 
 func TestStorageFactory_ThreadSafety(t *testing.T) {
-	factory := NewStorageFactory()
+	factory := NewStorageRegistry()
 
 	// Run multiple goroutines to test thread safety
 	done := make(chan bool, 10)

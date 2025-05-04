@@ -1,4 +1,4 @@
-package storagefactory
+package storageregistry
 
 import (
 	"encoding/json"
