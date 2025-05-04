@@ -56,7 +56,7 @@ func New(db *bun.DB, logger *zap.Logger, secretKey string) (StorageManager, erro
 }
 
 // NewWithRegistry creates a new storage manager with a custom registry
-func NewWithRegistry(db *bun.DB, logger *zap.Logger, secretKey string, factory storageregistry.StorageRegistry) (StorageManager, error) {
+func NewWithRegistry(db *bun.DB, logger *zap.Logger, secretKey string, registry storageregistry.StorageRegistry) (StorageManager, error) {
 	derivedKey := make([]byte, 32)
 	r := hkdf.New(sha256.New, []byte(secretKey), nil, []byte("imagor-studio-storage-manager"))
 	if _, err := io.ReadFull(r, derivedKey); err != nil {
@@ -75,7 +75,7 @@ func NewWithRegistry(db *bun.DB, logger *zap.Logger, secretKey string, factory s
 
 	sm := &storageManager{
 		db:       db,
-		registry: factory,
+		registry: registry,
 		storages: make(map[string]storage.Storage),
 		logger:   logger,
 		gcm:      gcm,
