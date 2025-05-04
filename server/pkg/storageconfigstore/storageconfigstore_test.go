@@ -24,16 +24,18 @@ func setupTestDB(t *testing.T) *bun.DB {
 	// Create table with UUID columns
 	err = db.RunInTx(context.Background(), nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.ExecContext(ctx, `
-			CREATE TABLE storages (
-				id TEXT PRIMARY KEY,
-				owner_id TEXT NOT NULL,
-				key TEXT NOT NULL,
-				name TEXT NOT NULL,
-				type TEXT NOT NULL,
-				config TEXT NOT NULL,
-				UNIQUE(owner_id, key)
-			)
-		`)
+          CREATE TABLE storages (
+             id TEXT PRIMARY KEY,
+             owner_id TEXT NOT NULL,
+             key TEXT NOT NULL,
+             name TEXT NOT NULL,
+             type TEXT NOT NULL,
+             config TEXT NOT NULL,
+             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+             UNIQUE(owner_id, key)
+          )
+       `)
 		return err
 	})
 	require.NoError(t, err)
