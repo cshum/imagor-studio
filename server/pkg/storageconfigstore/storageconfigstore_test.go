@@ -1,4 +1,4 @@
-package storagerepository
+package storageconfigstore
 
 import (
 	"context"
@@ -41,7 +41,7 @@ func setupTestDB(t *testing.T) *bun.DB {
 	return db
 }
 
-func TestSorageRepository_AddConfig(t *testing.T) {
+func TestStore_AddConfig(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -57,12 +57,12 @@ func TestSorageRepository_AddConfig(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		config      *StorageConfig
+		config      *Config
 		expectError bool
 	}{
 		{
 			name: "Valid S3 Config",
-			config: &StorageConfig{
+			config: &Config{
 				Name: "Test S3",
 				Key:  "test-s3",
 				Type: "s3",
@@ -77,7 +77,7 @@ func TestSorageRepository_AddConfig(t *testing.T) {
 		},
 		{
 			name: "Valid File Config",
-			config: &StorageConfig{
+			config: &Config{
 				Name: "Test File",
 				Key:  "test-file",
 				Type: "file",
@@ -89,7 +89,7 @@ func TestSorageRepository_AddConfig(t *testing.T) {
 		},
 		{
 			name: "Invalid Config Type",
-			config: &StorageConfig{
+			config: &Config{
 				Name:   "Invalid Type",
 				Key:    "invalid-type",
 				Type:   "invalid",
@@ -101,14 +101,14 @@ func TestSorageRepository_AddConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := sm.AddConfig(ctx, ownerID, tc.config)
+			err := sm.Create(ctx, ownerID, tc.config)
 			if tc.expectError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 
 				// Verify the config was added
-				retrievedConfig, err := sm.GetConfig(ctx, ownerID, tc.config.Key)
+				retrievedConfig, err := sm.Get(ctx, ownerID, tc.config.Key)
 				assert.NoError(t, err)
 				assert.NotNil(t, retrievedConfig)
 				assert.Equal(t, tc.config.Name, retrievedConfig.Name)
@@ -120,7 +120,7 @@ func TestSorageRepository_AddConfig(t *testing.T) {
 	}
 }
 
-func TestSorageRepository_ConfigIsolationBetweenOwners(t *testing.T) {
+func TestStore_ConfigIsolationBetweenOwners(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -136,7 +136,7 @@ func TestSorageRepository_ConfigIsolationBetweenOwners(t *testing.T) {
 	ownerID2 := uuid.GenerateUUID()
 
 	// Add config for owner 1
-	config1 := &StorageConfig{
+	config1 := &Config{
 		Name: "Owner1 S3",
 		Key:  "shared-key",
 		Type: "s3",
@@ -145,11 +145,11 @@ func TestSorageRepository_ConfigIsolationBetweenOwners(t *testing.T) {
 			"region": "us-west-2"
 		}`),
 	}
-	err = sm.AddConfig(ctx, ownerID1, config1)
+	err = sm.Create(ctx, ownerID1, config1)
 	require.NoError(t, err)
 
 	// Add config for owner 2 with the same key
-	config2 := &StorageConfig{
+	config2 := &Config{
 		Name: "Owner2 S3",
 		Key:  "shared-key",
 		Type: "s3",
@@ -158,30 +158,30 @@ func TestSorageRepository_ConfigIsolationBetweenOwners(t *testing.T) {
 			"region": "us-east-1"
 		}`),
 	}
-	err = sm.AddConfig(ctx, ownerID2, config2)
+	err = sm.Create(ctx, ownerID2, config2)
 	require.NoError(t, err)
 
 	// Verify owner 1's config
-	retrievedConfig1, err := sm.GetConfig(ctx, ownerID1, "shared-key")
+	retrievedConfig1, err := sm.Get(ctx, ownerID1, "shared-key")
 	assert.NoError(t, err)
 	assert.NotNil(t, retrievedConfig1)
 	assert.Equal(t, "Owner1 S3", retrievedConfig1.Name)
 	assert.JSONEq(t, `{"bucket": "owner1-bucket", "region": "us-west-2"}`, string(retrievedConfig1.Config))
 
 	// Verify owner 2's config
-	retrievedConfig2, err := sm.GetConfig(ctx, ownerID2, "shared-key")
+	retrievedConfig2, err := sm.Get(ctx, ownerID2, "shared-key")
 	assert.NoError(t, err)
 	assert.NotNil(t, retrievedConfig2)
 	assert.Equal(t, "Owner2 S3", retrievedConfig2.Name)
 	assert.JSONEq(t, `{"bucket": "owner2-bucket", "region": "us-east-1"}`, string(retrievedConfig2.Config))
 
 	// Verify that owner 1 cannot access owner 2's config
-	retrievedConfig3, err := sm.GetConfig(ctx, ownerID1, "shared-key")
+	retrievedConfig3, err := sm.Get(ctx, ownerID1, "shared-key")
 	assert.NoError(t, err)
 	assert.NotEqual(t, retrievedConfig3.Name, "Owner2 S3")
 }
 
-func TestSorageRepository_UpdateConfig(t *testing.T) {
+func TestStore_UpdateConfig(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -196,7 +196,7 @@ func TestSorageRepository_UpdateConfig(t *testing.T) {
 	ownerID := uuid.GenerateUUID()
 
 	// Add an initial config
-	initialConfig := &StorageConfig{
+	initialConfig := &Config{
 		Name: "Initial S3",
 		Key:  "initial-s3",
 		Type: "s3",
@@ -205,19 +205,19 @@ func TestSorageRepository_UpdateConfig(t *testing.T) {
 			"region": "us-west-2"
 		}`),
 	}
-	err = sm.AddConfig(ctx, ownerID, initialConfig)
+	err = sm.Create(ctx, ownerID, initialConfig)
 	require.NoError(t, err)
 
 	testCases := []struct {
 		name         string
 		key          string
-		updateConfig *StorageConfig
+		updateConfig *Config
 		expectError  bool
 	}{
 		{
 			name: "Valid Update",
 			key:  "initial-s3",
-			updateConfig: &StorageConfig{
+			updateConfig: &Config{
 				Name: "Updated S3",
 				Key:  "initial-s3",
 				Type: "s3",
@@ -231,7 +231,7 @@ func TestSorageRepository_UpdateConfig(t *testing.T) {
 		{
 			name: "Non-existent Key",
 			key:  "non-existent",
-			updateConfig: &StorageConfig{
+			updateConfig: &Config{
 				Name:   "Non-existent",
 				Key:    "non-existent",
 				Type:   "s3",
@@ -242,7 +242,7 @@ func TestSorageRepository_UpdateConfig(t *testing.T) {
 		{
 			name: "Invalid Config Type",
 			key:  "initial-s3",
-			updateConfig: &StorageConfig{
+			updateConfig: &Config{
 				Name:   "Invalid Type",
 				Key:    "initial-s3",
 				Type:   "invalid",
@@ -254,14 +254,14 @@ func TestSorageRepository_UpdateConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := sm.UpdateConfig(ctx, ownerID, tc.key, tc.updateConfig)
+			err := sm.Update(ctx, ownerID, tc.key, tc.updateConfig)
 			if tc.expectError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 
 				// Verify the config was updated
-				retrievedConfig, err := sm.GetConfig(ctx, ownerID, tc.key)
+				retrievedConfig, err := sm.Get(ctx, ownerID, tc.key)
 				assert.NoError(t, err)
 				assert.NotNil(t, retrievedConfig)
 				assert.Equal(t, tc.updateConfig.Name, retrievedConfig.Name)
@@ -273,7 +273,7 @@ func TestSorageRepository_UpdateConfig(t *testing.T) {
 	}
 }
 
-func TestSorageRepository_DeleteConfig(t *testing.T) {
+func TestStore_DeleteConfig(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -288,7 +288,7 @@ func TestSorageRepository_DeleteConfig(t *testing.T) {
 	ownerID := uuid.GenerateUUID()
 
 	// Add a config to delete
-	configToDelete := &StorageConfig{
+	configToDelete := &Config{
 		Name: "Config to Delete",
 		Key:  "delete-me",
 		Type: "file",
@@ -296,7 +296,7 @@ func TestSorageRepository_DeleteConfig(t *testing.T) {
 			"baseDir": "/tmp/delete-me"
 		}`),
 	}
-	err = sm.AddConfig(ctx, ownerID, configToDelete)
+	err = sm.Create(ctx, ownerID, configToDelete)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -312,20 +312,20 @@ func TestSorageRepository_DeleteConfig(t *testing.T) {
 		{
 			name:        "Non-existent Config",
 			key:         "non-existent",
-			expectError: false, // DeleteConfig doesn't return an error for non-existent keys
+			expectError: false, // Delete doesn't return an error for non-existent keys
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := sm.DeleteConfig(ctx, ownerID, tc.key)
+			err := sm.Delete(ctx, ownerID, tc.key)
 			if tc.expectError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 
 				// Verify the config was deleted
-				retrievedConfig, err := sm.GetConfig(ctx, ownerID, tc.key)
+				retrievedConfig, err := sm.Get(ctx, ownerID, tc.key)
 				if tc.expectError {
 					assert.Error(t, err)
 				} else {
@@ -337,7 +337,7 @@ func TestSorageRepository_DeleteConfig(t *testing.T) {
 	}
 }
 
-func TestSorageRepository_GetConfigs(t *testing.T) {
+func TestStore_GetConfigs(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -352,7 +352,7 @@ func TestSorageRepository_GetConfigs(t *testing.T) {
 	ownerID := uuid.GenerateUUID()
 
 	// Add multiple configs for this owner
-	configs := []*StorageConfig{
+	configs := []*Config{
 		{
 			Name: "S3 Config",
 			Key:  "s3-config",
@@ -373,13 +373,13 @@ func TestSorageRepository_GetConfigs(t *testing.T) {
 	}
 
 	for _, cfg := range configs {
-		err := sm.AddConfig(ctx, ownerID, cfg)
+		err := sm.Create(ctx, ownerID, cfg)
 		require.NoError(t, err)
 	}
 
 	// Add a config for a different owner
 	otherOwnerID := uuid.GenerateUUID()
-	otherConfig := &StorageConfig{
+	otherConfig := &Config{
 		Name: "Other Owner Config",
 		Key:  "other-config",
 		Type: "s3",
@@ -388,11 +388,11 @@ func TestSorageRepository_GetConfigs(t *testing.T) {
 			"region": "eu-west-1"
 		}`),
 	}
-	err = sm.AddConfig(ctx, otherOwnerID, otherConfig)
+	err = sm.Create(ctx, otherOwnerID, otherConfig)
 	require.NoError(t, err)
 
-	// Test GetConfigs for the first owner
-	retrievedConfigs, err := sm.GetConfigs(ctx, ownerID)
+	// Test List for the first owner
+	retrievedConfigs, err := sm.List(ctx, ownerID)
 	assert.NoError(t, err)
 	assert.Len(t, retrievedConfigs, len(configs))
 
@@ -411,14 +411,14 @@ func TestSorageRepository_GetConfigs(t *testing.T) {
 		assert.True(t, found, "Config with key %s not found in retrieved configs", expectedConfig.Key)
 	}
 
-	// Test GetConfigs for the other owner
-	otherRetrievedConfigs, err := sm.GetConfigs(ctx, otherOwnerID)
+	// Test List for the other owner
+	otherRetrievedConfigs, err := sm.List(ctx, otherOwnerID)
 	assert.NoError(t, err)
 	assert.Len(t, otherRetrievedConfigs, 1)
 	assert.Equal(t, otherConfig.Name, otherRetrievedConfigs[0].Name)
 }
 
-func TestSorageRepository_GetStorage(t *testing.T) {
+func TestStore_GetStorage(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -433,7 +433,7 @@ func TestSorageRepository_GetStorage(t *testing.T) {
 	ownerID := uuid.GenerateUUID()
 
 	// Add configs
-	configs := []*StorageConfig{
+	configs := []*Config{
 		{
 			Name: "S3 Storage",
 			Key:  "s3-storage",
@@ -454,7 +454,7 @@ func TestSorageRepository_GetStorage(t *testing.T) {
 	}
 
 	for _, cfg := range configs {
-		err := sm.AddConfig(ctx, ownerID, cfg)
+		err := sm.Create(ctx, ownerID, cfg)
 		require.NoError(t, err)
 	}
 
@@ -492,7 +492,7 @@ func TestSorageRepository_GetStorage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			storage, err := sm.GetStorage(tc.ownerID, tc.key)
+			storage, err := sm.Storage(tc.ownerID, tc.key)
 			if tc.expectError {
 				assert.Error(t, err)
 				assert.Nil(t, storage)
@@ -504,7 +504,7 @@ func TestSorageRepository_GetStorage(t *testing.T) {
 	}
 }
 
-func TestSorageRepository_GetDefaultStorage(t *testing.T) {
+func TestStore_GetDefaultStorage(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -519,13 +519,13 @@ func TestSorageRepository_GetDefaultStorage(t *testing.T) {
 	ownerID := uuid.GenerateUUID()
 
 	t.Run("No Configs", func(t *testing.T) {
-		storage, err := sm.GetDefaultStorage(ownerID)
+		storage, err := sm.DefaultStorage(ownerID)
 		assert.Error(t, err)
 		assert.Nil(t, storage)
 	})
 
 	t.Run("Single Config", func(t *testing.T) {
-		config := &StorageConfig{
+		config := &Config{
 			Name: "Default Storage",
 			Key:  "default",
 			Type: "file",
@@ -533,16 +533,16 @@ func TestSorageRepository_GetDefaultStorage(t *testing.T) {
 				"baseDir": "/tmp/default-storage"
 			}`),
 		}
-		err := sm.AddConfig(ctx, ownerID, config)
+		err := sm.Create(ctx, ownerID, config)
 		require.NoError(t, err)
 
-		storage, err := sm.GetDefaultStorage(ownerID)
+		storage, err := sm.DefaultStorage(ownerID)
 		assert.NoError(t, err)
 		assert.NotNil(t, storage)
 	})
 
 	t.Run("Multiple Configs", func(t *testing.T) {
-		config := &StorageConfig{
+		config := &Config{
 			Name: "Second Storage",
 			Key:  "second",
 			Type: "s3",
@@ -551,23 +551,23 @@ func TestSorageRepository_GetDefaultStorage(t *testing.T) {
 				"region": "us-east-1"
 			}`),
 		}
-		err := sm.AddConfig(ctx, ownerID, config)
+		err := sm.Create(ctx, ownerID, config)
 		require.NoError(t, err)
 
-		storage, err := sm.GetDefaultStorage(ownerID)
+		storage, err := sm.DefaultStorage(ownerID)
 		assert.Error(t, err)
 		assert.Nil(t, storage)
 	})
 
 	t.Run("Different Owner", func(t *testing.T) {
 		otherOwnerID := uuid.GenerateUUID()
-		storage, err := sm.GetDefaultStorage(otherOwnerID)
+		storage, err := sm.DefaultStorage(otherOwnerID)
 		assert.Error(t, err)
 		assert.Nil(t, storage)
 	})
 }
 
-func TestSorageRepository_Encryption(t *testing.T) {
+func TestStore_Encryption(t *testing.T) {
 	// Setup
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
@@ -582,7 +582,7 @@ func TestSorageRepository_Encryption(t *testing.T) {
 	ownerID := uuid.GenerateUUID()
 
 	t.Run("EncryptAndDecryptConfig", func(t *testing.T) {
-		originalConfig := &StorageConfig{
+		originalConfig := &Config{
 			Name: "Test Storage",
 			Key:  "test-storage",
 			Type: "s3",
@@ -594,12 +594,12 @@ func TestSorageRepository_Encryption(t *testing.T) {
 			}`),
 		}
 
-		// Test AddConfig (which includes encryption)
-		err := sm.AddConfig(context.Background(), ownerID, originalConfig)
+		// Test Create (which includes encryption)
+		err := sm.Create(context.Background(), ownerID, originalConfig)
 		require.NoError(t, err)
 
 		// Retrieve the config (which includes decryption)
-		retrievedConfig, err := sm.GetConfig(context.Background(), ownerID, originalConfig.Key)
+		retrievedConfig, err := sm.Get(context.Background(), ownerID, originalConfig.Key)
 		require.NoError(t, err)
 		require.NotNil(t, retrievedConfig)
 
@@ -619,7 +619,7 @@ func TestSorageRepository_Encryption(t *testing.T) {
 	})
 
 	t.Run("UpdateEncryptedConfig", func(t *testing.T) {
-		updatedConfig := &StorageConfig{
+		updatedConfig := &Config{
 			Name: "Updated Test Storage",
 			Key:  "test-storage",
 			Type: "s3",
@@ -632,11 +632,11 @@ func TestSorageRepository_Encryption(t *testing.T) {
 		}
 
 		// Update the config
-		err := sm.UpdateConfig(context.Background(), ownerID, updatedConfig.Key, updatedConfig)
+		err := sm.Update(context.Background(), ownerID, updatedConfig.Key, updatedConfig)
 		require.NoError(t, err)
 
 		// Retrieve the updated config
-		retrievedConfig, err := sm.GetConfig(context.Background(), ownerID, updatedConfig.Key)
+		retrievedConfig, err := sm.Get(context.Background(), ownerID, updatedConfig.Key)
 		require.NoError(t, err)
 		require.NotNil(t, retrievedConfig)
 
@@ -657,7 +657,7 @@ func TestSorageRepository_Encryption(t *testing.T) {
 
 	t.Run("ListEncryptedConfigs", func(t *testing.T) {
 		// Add another config
-		anotherConfig := &StorageConfig{
+		anotherConfig := &Config{
 			Name: "Another Test Storage",
 			Key:  "another-test-storage",
 			Type: "file",
@@ -665,16 +665,16 @@ func TestSorageRepository_Encryption(t *testing.T) {
 				"baseDir": "/tmp/test-storage"
 			}`),
 		}
-		err := sm.AddConfig(context.Background(), ownerID, anotherConfig)
+		err := sm.Create(context.Background(), ownerID, anotherConfig)
 		require.NoError(t, err)
 
 		// List all configs for this owner
-		configs, err := sm.GetConfigs(context.Background(), ownerID)
+		configs, err := sm.List(context.Background(), ownerID)
 		require.NoError(t, err)
 		assert.Len(t, configs, 2)
 
 		// Check if both configs are in the list
-		configMap := make(map[string]*StorageConfig)
+		configMap := make(map[string]*Config)
 		for _, cfg := range configs {
 			configMap[cfg.Key] = cfg
 		}
@@ -693,7 +693,7 @@ func TestSorageRepository_Encryption(t *testing.T) {
 	})
 }
 
-func TestSorageRepository_MultiTenant(t *testing.T) {
+func TestStore_MultiTenant(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 
@@ -709,7 +709,7 @@ func TestSorageRepository_MultiTenant(t *testing.T) {
 	owner2ID := uuid.GenerateUUID()
 
 	// Add configs for owner 1
-	config1 := &StorageConfig{
+	config1 := &Config{
 		Name: "Owner1 Storage 1",
 		Key:  "storage1",
 		Type: "file",
@@ -717,11 +717,11 @@ func TestSorageRepository_MultiTenant(t *testing.T) {
 			"baseDir": "/owner1/storage1"
 		}`),
 	}
-	err = sm.AddConfig(ctx, owner1ID, config1)
+	err = sm.Create(ctx, owner1ID, config1)
 	require.NoError(t, err)
 
 	// Add configs for owner 2
-	config2 := &StorageConfig{
+	config2 := &Config{
 		Name: "Owner2 Storage 1",
 		Key:  "storage1", // Same key as owner1's config
 		Type: "file",
@@ -729,26 +729,26 @@ func TestSorageRepository_MultiTenant(t *testing.T) {
 			"baseDir": "/owner2/storage1"
 		}`),
 	}
-	err = sm.AddConfig(ctx, owner2ID, config2)
+	err = sm.Create(ctx, owner2ID, config2)
 	require.NoError(t, err)
 
-	// Test GetConfig for owner 1
-	retrieved1, err := sm.GetConfig(ctx, owner1ID, "storage1")
+	// Test Get for owner 1
+	retrieved1, err := sm.Get(ctx, owner1ID, "storage1")
 	assert.NoError(t, err)
 	assert.Equal(t, "Owner1 Storage 1", retrieved1.Name)
 
-	// Test GetConfig for owner 2
-	retrieved2, err := sm.GetConfig(ctx, owner2ID, "storage1")
+	// Test Get for owner 2
+	retrieved2, err := sm.Get(ctx, owner2ID, "storage1")
 	assert.NoError(t, err)
 	assert.Equal(t, "Owner2 Storage 1", retrieved2.Name)
 
-	// Test GetStorage for owner 1
-	storage1, err := sm.GetStorage(owner1ID, "storage1")
+	// Test Storage for owner 1
+	storage1, err := sm.Storage(owner1ID, "storage1")
 	assert.NoError(t, err)
 	assert.NotNil(t, storage1)
 
-	// Test GetStorage for owner 2
-	storage2, err := sm.GetStorage(owner2ID, "storage1")
+	// Test Storage for owner 2
+	storage2, err := sm.Storage(owner2ID, "storage1")
 	assert.NoError(t, err)
 	assert.NotNil(t, storage2)
 
@@ -756,20 +756,20 @@ func TestSorageRepository_MultiTenant(t *testing.T) {
 	assert.NotEqual(t, storage1, storage2)
 
 	// Test that owner 1 cannot access owner 2's storage
-	_, err = sm.GetStorage(owner1ID, "storage1")
+	_, err = sm.Storage(owner1ID, "storage1")
 	assert.NoError(t, err) // Should not error because owner1 has their own storage1
 
 	// Test deletion isolation
-	err = sm.DeleteConfig(ctx, owner1ID, "storage1")
+	err = sm.Delete(ctx, owner1ID, "storage1")
 	assert.NoError(t, err)
 
 	// Owner2's config should still exist
-	retrieved2After, err := sm.GetConfig(ctx, owner2ID, "storage1")
+	retrieved2After, err := sm.Get(ctx, owner2ID, "storage1")
 	assert.NoError(t, err)
 	assert.NotNil(t, retrieved2After)
 
 	// Owner1's config should be gone
-	retrieved1After, err := sm.GetConfig(ctx, owner1ID, "storage1")
+	retrieved1After, err := sm.Get(ctx, owner1ID, "storage1")
 	assert.NoError(t, err)
 	assert.Nil(t, retrieved1After)
 }

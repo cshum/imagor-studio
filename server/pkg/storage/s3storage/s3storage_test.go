@@ -81,7 +81,7 @@ func TestS3Storage_Get(t *testing.T) {
 	err := s3Storage.Put(ctx, "get_test.txt", bytes.NewReader([]byte(content)))
 	require.NoError(t, err)
 
-	// Get the file
+	// List the file
 	result, err := s3Storage.Get(ctx, "get_test.txt")
 	assert.NoError(t, err)
 	defer result.Close()

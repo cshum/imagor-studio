@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/internal/migrations"
-	"github.com/cshum/imagor-studio/server/pkg/storagerepository"
+	"github.com/cshum/imagor-studio/server/pkg/storageconfigstore"
 	"github.com/cshum/imagor-studio/server/resolver"
 	"net/http"
 
@@ -51,7 +51,7 @@ func New(cfg *config.Config) (*Server, error) {
 		cfg.Logger.Info("Migrations applied", zap.String("group", group.String()))
 	}
 
-	sorageRepository, err := storagerepository.New(db, cfg.Logger, cfg.ImagorSecret)
+	sorageRepository, err := storageconfigstore.New(db, cfg.Logger, cfg.ImagorSecret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage manager: %w", err)
 	}

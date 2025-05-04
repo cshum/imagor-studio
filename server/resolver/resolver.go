@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
-	"github.com/cshum/imagor-studio/server/pkg/storagerepository"
+	"github.com/cshum/imagor-studio/server/pkg/storageconfigstore"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -31,11 +31,11 @@ func GetOwnerIDFromContext(ctx context.Context) (string, error) {
 }
 
 type Resolver struct {
-	sorageRepository storagerepository.SorageRepository
+	sorageRepository storageconfigstore.Store
 	logger           *zap.Logger
 }
 
-func NewResolver(sorageRepository storagerepository.SorageRepository, logger *zap.Logger) *Resolver {
+func NewResolver(sorageRepository storageconfigstore.Store, logger *zap.Logger) *Resolver {
 	return &Resolver{
 		sorageRepository: sorageRepository,
 		logger:           logger,
@@ -49,9 +49,9 @@ func (r *Resolver) getStorage(ctx context.Context, storageKey *string) (storage.
 	}
 
 	if storageKey == nil {
-		return r.sorageRepository.GetDefaultStorage(ownerID)
+		return r.sorageRepository.DefaultStorage(ownerID)
 	}
-	return r.sorageRepository.GetStorage(ownerID, *storageKey)
+	return r.sorageRepository.Storage(ownerID, *storageKey)
 }
 
 // Mutation returns MutationResolver implementation.
@@ -124,7 +124,7 @@ func (r *mutationResolver) AddStorageConfig(ctx context.Context, config gql.Stor
 		return nil, fmt.Errorf("failed to get owner ID: %w", err)
 	}
 
-	err = r.sorageRepository.AddConfig(ctx, ownerID, &storagerepository.StorageConfig{
+	err = r.sorageRepository.Create(ctx, ownerID, &storageconfigstore.Config{
 		Name:   config.Name,
 		Key:    config.Key,
 		Type:   config.Type,
@@ -149,7 +149,7 @@ func (r *mutationResolver) UpdateStorageConfig(ctx context.Context, key string, 
 		return nil, fmt.Errorf("failed to get owner ID: %w", err)
 	}
 
-	err = r.sorageRepository.UpdateConfig(ctx, ownerID, key, &storagerepository.StorageConfig{
+	err = r.sorageRepository.Update(ctx, ownerID, key, &storageconfigstore.Config{
 		Name:   config.Name,
 		Key:    config.Key,
 		Type:   config.Type,
@@ -174,7 +174,7 @@ func (r *mutationResolver) DeleteStorageConfig(ctx context.Context, key string) 
 		return false, fmt.Errorf("failed to get owner ID: %w", err)
 	}
 
-	err = r.sorageRepository.DeleteConfig(ctx, ownerID, key)
+	err = r.sorageRepository.Delete(ctx, ownerID, key)
 	if err != nil {
 		return false, err
 	}
@@ -281,7 +281,7 @@ func (r *queryResolver) ListStorageConfigs(ctx context.Context) ([]*gql.StorageC
 		return nil, fmt.Errorf("failed to get owner ID: %w", err)
 	}
 
-	configs, err := r.sorageRepository.GetConfigs(ctx, ownerID)
+	configs, err := r.sorageRepository.List(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +305,7 @@ func (r *queryResolver) GetStorageConfig(ctx context.Context, key string) (*gql.
 		return nil, fmt.Errorf("failed to get owner ID: %w", err)
 	}
 
-	cfg, err := r.sorageRepository.GetConfig(ctx, ownerID, key)
+	cfg, err := r.sorageRepository.Get(ctx, ownerID, key)
 	if err != nil {
 		return nil, err
 	}

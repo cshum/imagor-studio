@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
-	"github.com/cshum/imagor-studio/server/pkg/storagerepository"
+	"github.com/cshum/imagor-studio/server/pkg/storageconfigstore"
 	"io"
 	"testing"
 	"time"
@@ -49,50 +49,50 @@ func (m *MockStorage) Stat(ctx context.Context, path string) (storage.FileInfo, 
 	return args.Get(0).(storage.FileInfo), args.Error(1)
 }
 
-type MockSorageRepository struct {
+type MockStore struct {
 	mock.Mock
 }
 
-func (m *MockSorageRepository) GetConfigs(ctx context.Context, ownerID string) ([]*storagerepository.StorageConfig, error) {
+func (m *MockStore) List(ctx context.Context, ownerID string) ([]*storageconfigstore.Config, error) {
 	args := m.Called(ctx, ownerID)
-	return args.Get(0).([]*storagerepository.StorageConfig), args.Error(1)
+	return args.Get(0).([]*storageconfigstore.Config), args.Error(1)
 }
 
-func (m *MockSorageRepository) GetConfig(ctx context.Context, ownerID string, key string) (*storagerepository.StorageConfig, error) {
+func (m *MockStore) Get(ctx context.Context, ownerID string, key string) (*storageconfigstore.Config, error) {
 	args := m.Called(ctx, ownerID, key)
-	return args.Get(0).(*storagerepository.StorageConfig), args.Error(1)
+	return args.Get(0).(*storageconfigstore.Config), args.Error(1)
 }
 
-func (m *MockSorageRepository) AddConfig(ctx context.Context, ownerID string, config *storagerepository.StorageConfig) error {
+func (m *MockStore) Create(ctx context.Context, ownerID string, config *storageconfigstore.Config) error {
 	args := m.Called(ctx, ownerID, *config)
 	return args.Error(0)
 }
 
-func (m *MockSorageRepository) UpdateConfig(ctx context.Context, ownerID string, key string, config *storagerepository.StorageConfig) error {
+func (m *MockStore) Update(ctx context.Context, ownerID string, key string, config *storageconfigstore.Config) error {
 	args := m.Called(ctx, ownerID, key, *config)
 	return args.Error(0)
 }
 
-func (m *MockSorageRepository) DeleteConfig(ctx context.Context, ownerID string, key string) error {
+func (m *MockStore) Delete(ctx context.Context, ownerID string, key string) error {
 	args := m.Called(ctx, ownerID, key)
 	return args.Error(0)
 }
 
-func (m *MockSorageRepository) GetDefaultStorage(ownerID string) (storage.Storage, error) {
+func (m *MockStore) DefaultStorage(ownerID string) (storage.Storage, error) {
 	args := m.Called(ownerID)
 	return args.Get(0).(storage.Storage), args.Error(1)
 }
 
-func (m *MockSorageRepository) GetStorage(ownerID string, key string) (storage.Storage, error) {
+func (m *MockStore) Storage(ownerID string, key string) (storage.Storage, error) {
 	args := m.Called(ownerID, key)
 	return args.Get(0).(storage.Storage), args.Error(1)
 }
 
 func TestListFiles(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockSorageRepository := new(MockSorageRepository)
+	mockStore := new(MockStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockSorageRepository, logger)
+	resolver := NewResolver(mockStore, logger)
 
 	// Create context with owner ID
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
@@ -104,7 +104,7 @@ func TestListFiles(t *testing.T) {
 	sortBy := gql.SortOptionName
 	sortOrder := gql.SortOrderAsc
 
-	mockSorageRepository.On("GetDefaultStorage", "test-owner-id").Return(mockStorage, nil)
+	mockStore.On("DefaultStorage", "test-owner-id").Return(mockStorage, nil)
 
 	mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
 		Items: []storage.FileInfo{
@@ -126,14 +126,14 @@ func TestListFiles(t *testing.T) {
 	assert.False(t, result.Items[0].IsDirectory)
 
 	mockStorage.AssertExpectations(t)
-	mockSorageRepository.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
 }
 
 func TestListFilesWithoutOwnerID(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockSorageRepository := new(MockSorageRepository)
+	mockStore := new(MockStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockSorageRepository, logger)
+	resolver := NewResolver(mockStore, logger)
 
 	// Create context without owner ID (should use default)
 	ctx := context.Background()
@@ -143,7 +143,7 @@ func TestListFilesWithoutOwnerID(t *testing.T) {
 
 	// Default owner ID should be used
 	defaultOwnerID := "00000000-0000-0000-0000-000000000001"
-	mockSorageRepository.On("GetDefaultStorage", defaultOwnerID).Return(mockStorage, nil)
+	mockStore.On("DefaultStorage", defaultOwnerID).Return(mockStorage, nil)
 
 	mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
 		Items: []storage.FileInfo{
@@ -159,19 +159,19 @@ func TestListFilesWithoutOwnerID(t *testing.T) {
 	assert.Equal(t, 1, result.TotalCount)
 
 	mockStorage.AssertExpectations(t)
-	mockSorageRepository.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
 }
 
 func TestStatFile(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockSorageRepository := new(MockSorageRepository)
+	mockStore := new(MockStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockSorageRepository, logger)
+	resolver := NewResolver(mockStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	path := "/test/file1.txt"
 
-	mockSorageRepository.On("GetDefaultStorage", "test-owner-id").Return(mockStorage, nil)
+	mockStore.On("DefaultStorage", "test-owner-id").Return(mockStorage, nil)
 
 	mockStorage.On("Stat", ctx, path).Return(storage.FileInfo{
 		Name:         "file1.txt",
@@ -194,19 +194,19 @@ func TestStatFile(t *testing.T) {
 	assert.Equal(t, "abc123", *result.Etag)
 
 	mockStorage.AssertExpectations(t)
-	mockSorageRepository.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
 }
 
 func TestCreateFolder(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockSorageRepository := new(MockSorageRepository)
+	mockStore := new(MockStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockSorageRepository, logger)
+	resolver := NewResolver(mockStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	path := "/test/new-folder"
 
-	mockSorageRepository.On("GetDefaultStorage", "test-owner-id").Return(mockStorage, nil)
+	mockStore.On("DefaultStorage", "test-owner-id").Return(mockStorage, nil)
 	mockStorage.On("CreateFolder", ctx, path).Return(nil)
 
 	result, err := resolver.Mutation().CreateFolder(ctx, nil, path)
@@ -215,19 +215,19 @@ func TestCreateFolder(t *testing.T) {
 	assert.True(t, result)
 
 	mockStorage.AssertExpectations(t)
-	mockSorageRepository.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
 }
 
 func TestDeleteFile(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockSorageRepository := new(MockSorageRepository)
+	mockStore := new(MockStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockSorageRepository, logger)
+	resolver := NewResolver(mockStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	path := "/test/file-to-delete.txt"
 
-	mockSorageRepository.On("GetDefaultStorage", "test-owner-id").Return(mockStorage, nil)
+	mockStore.On("DefaultStorage", "test-owner-id").Return(mockStorage, nil)
 	mockStorage.On("Delete", ctx, path).Return(nil)
 
 	result, err := resolver.Mutation().DeleteFile(ctx, nil, path)
@@ -236,22 +236,22 @@ func TestDeleteFile(t *testing.T) {
 	assert.True(t, result)
 
 	mockStorage.AssertExpectations(t)
-	mockSorageRepository.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
 }
 
 func TestListStorageConfigs(t *testing.T) {
-	mockSorageRepository := new(MockSorageRepository)
+	mockStore := new(MockStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockSorageRepository, logger)
+	resolver := NewResolver(mockStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 
-	mockConfigs := []*storagerepository.StorageConfig{
+	mockConfigs := []*storageconfigstore.Config{
 		{Name: "Local", Key: "local", Type: "file", Config: json.RawMessage(`{"baseDir":"/tmp/storage"}`)},
 		{Name: "S3", Key: "s3", Type: "s3", Config: json.RawMessage(`{"bucket":"my-bucket"}`)},
 	}
 
-	mockSorageRepository.On("GetConfigs", ctx, "test-owner-id").Return(mockConfigs, nil)
+	mockStore.On("List", ctx, "test-owner-id").Return(mockConfigs, nil)
 
 	result, err := resolver.Query().ListStorageConfigs(ctx)
 
@@ -263,13 +263,13 @@ func TestListStorageConfigs(t *testing.T) {
 	assert.Equal(t, "file", result[0].Type)
 	assert.JSONEq(t, `{"baseDir":"/tmp/storage"}`, result[0].Config)
 
-	mockSorageRepository.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
 }
 
 func TestAddStorageConfig(t *testing.T) {
-	mockSorageRepository := new(MockSorageRepository)
+	mockStore := new(MockStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockSorageRepository, logger)
+	resolver := NewResolver(mockStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	input := gql.StorageConfigInput{
@@ -279,7 +279,7 @@ func TestAddStorageConfig(t *testing.T) {
 		Config: `{"bucket":"new-bucket"}`,
 	}
 
-	mockSorageRepository.On("AddConfig", ctx, "test-owner-id", mock.AnythingOfType("storagerepository.StorageConfig")).Return(nil)
+	mockStore.On("Create", ctx, "test-owner-id", mock.AnythingOfType("storageconfigstore.Config")).Return(nil)
 
 	result, err := resolver.Mutation().AddStorageConfig(ctx, input)
 
@@ -290,13 +290,13 @@ func TestAddStorageConfig(t *testing.T) {
 	assert.Equal(t, input.Type, result.Type)
 	assert.Equal(t, input.Config, result.Config)
 
-	mockSorageRepository.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
 }
 
 func TestUpdateStorageConfig(t *testing.T) {
-	mockSorageRepository := new(MockSorageRepository)
+	mockStore := new(MockStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockSorageRepository, logger)
+	resolver := NewResolver(mockStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	key := "existing-s3"
@@ -307,7 +307,7 @@ func TestUpdateStorageConfig(t *testing.T) {
 		Config: `{"bucket":"updated-bucket"}`,
 	}
 
-	mockSorageRepository.On("UpdateConfig", ctx, "test-owner-id", key, mock.AnythingOfType("storagerepository.StorageConfig")).Return(nil)
+	mockStore.On("Update", ctx, "test-owner-id", key, mock.AnythingOfType("storageconfigstore.Config")).Return(nil)
 
 	result, err := resolver.Mutation().UpdateStorageConfig(ctx, key, input)
 
@@ -318,38 +318,38 @@ func TestUpdateStorageConfig(t *testing.T) {
 	assert.Equal(t, input.Type, result.Type)
 	assert.Equal(t, input.Config, result.Config)
 
-	mockSorageRepository.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
 }
 
 func TestDeleteStorageConfig(t *testing.T) {
-	mockSorageRepository := new(MockSorageRepository)
+	mockStore := new(MockStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockSorageRepository, logger)
+	resolver := NewResolver(mockStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	key := "config-to-delete"
 
-	mockSorageRepository.On("DeleteConfig", ctx, "test-owner-id", key).Return(nil)
+	mockStore.On("Delete", ctx, "test-owner-id", key).Return(nil)
 
 	result, err := resolver.Mutation().DeleteStorageConfig(ctx, key)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
 
-	mockSorageRepository.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
 }
 
 func TestGetStorageWithSpecificKey(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockSorageRepository := new(MockSorageRepository)
+	mockStore := new(MockStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockSorageRepository, logger)
+	resolver := NewResolver(mockStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	storageKey := "specific-storage"
 	path := "/test"
 
-	mockSorageRepository.On("GetStorage", "test-owner-id", storageKey).Return(mockStorage, nil)
+	mockStore.On("Storage", "test-owner-id", storageKey).Return(mockStorage, nil)
 
 	mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
 		Items: []storage.FileInfo{
@@ -365,5 +365,5 @@ func TestGetStorageWithSpecificKey(t *testing.T) {
 	assert.Equal(t, 1, result.TotalCount)
 
 	mockStorage.AssertExpectations(t)
-	mockSorageRepository.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
 }

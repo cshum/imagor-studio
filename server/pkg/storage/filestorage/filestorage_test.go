@@ -53,7 +53,7 @@ func TestFileStorage_Get(t *testing.T) {
 	err := fs.Put(ctx, "get_test.txt", bytes.NewReader([]byte(content)))
 	require.NoError(t, err)
 
-	// Get the file
+	// List the file
 	result, err := fs.Get(ctx, "get_test.txt")
 	assert.NoError(t, err)
 	defer result.Close()
