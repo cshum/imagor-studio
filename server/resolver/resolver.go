@@ -10,23 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-type contextKey string
-
-const (
-	OwnerIDContextKey contextKey = "ownerID"
-)
-
-// GetOwnerIDFromContext extracts the owner ID from the context
-func GetOwnerIDFromContext(ctx context.Context) (string, error) {
-	ownerID, ok := ctx.Value(OwnerIDContextKey).(string)
-	if !ok {
-		// For development/testing, return a default owner ID (UUID)
-		// In production, this should return an error
-		return "00000000-0000-0000-0000-000000000001", nil
-	}
-	return ownerID, nil
-}
-
 type Resolver struct {
 	storageConfigStore storageconfigstore.Store
 	metadataStore      metadatastore.Store
