@@ -1,6 +1,5 @@
 type Query {
     listFiles(
-        storageKey: String
         path: String!
         offset: Int!
         limit: Int!
@@ -10,23 +9,16 @@ type Query {
         sortOrder: SortOrder
     ): FileList!
 
-    statFile(storageKey: String, path: String!): FileStat
-
-    listStorageConfigs: [StorageConfig!]!
-    getStorageConfig(key: String!): StorageConfig
+    statFile(path: String!): FileStat
 
     listMetadata(prefix: String): [Metadata!]!
     getMetadata(key: String!): Metadata
 }
 
 type Mutation {
-    uploadFile(storageKey: String, path: String!, content: Upload!): Boolean!
-    deleteFile(storageKey: String, path: String!): Boolean!
-    createFolder(storageKey: String, path: String!): Boolean!
-
-    addStorageConfig(config: StorageConfigInput!): StorageConfig!
-    updateStorageConfig(key: String!, config: StorageConfigInput!): StorageConfig!
-    deleteStorageConfig(key: String!): Boolean!
+    uploadFile(path: String!, content: Upload!): Boolean!
+    deleteFile(path: String!): Boolean!
+    createFolder(path: String!): Boolean!
 
     setMetadata(key: String!, value: String!): Metadata!
     deleteMetadata(key: String!): Boolean!
@@ -65,20 +57,6 @@ enum SortOrder {
 }
 
 scalar Upload
-
-type StorageConfig {
-    name: String!
-    key: String!
-    type: String!
-    config: JSON!
-}
-
-input StorageConfigInput {
-    name: String!
-    key: String!
-    type: String!
-    config: JSON!
-}
 
 type Metadata {
     key: String!
