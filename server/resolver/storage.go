@@ -2,12 +2,10 @@ package resolver
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
-	"github.com/cshum/imagor-studio/server/pkg/storageconfigstore"
 	"go.uber.org/zap"
 	"time"
 )
@@ -16,13 +14,7 @@ import (
 func (r *mutationResolver) UploadFile(ctx context.Context, storageKey *string, path string, content graphql.Upload) (bool, error) {
 	r.logger.Info("Uploading file", zap.String("path", path), zap.String("filename", content.Filename))
 
-	s, err := r.getStorage(ctx, storageKey)
-	if err != nil {
-		return false, err
-	}
-
-	err = s.Put(ctx, path, content.File)
-	if err != nil {
+	if err := r.storage.Put(ctx, path, content.File); err != nil {
 		r.logger.Error("Failed to upload file", zap.Error(err))
 		return false, fmt.Errorf("failed to upload file: %w", err)
 	}
@@ -34,13 +26,7 @@ func (r *mutationResolver) UploadFile(ctx context.Context, storageKey *string, p
 func (r *mutationResolver) DeleteFile(ctx context.Context, storageKey *string, path string) (bool, error) {
 	r.logger.Info("Deleting file", zap.String("path", path))
 
-	s, err := r.getStorage(ctx, storageKey)
-	if err != nil {
-		return false, err
-	}
-
-	err = s.Delete(ctx, path)
-	if err != nil {
+	if err := r.storage.Delete(ctx, path); err != nil {
 		r.logger.Error("Failed to delete file", zap.Error(err))
 		return false, fmt.Errorf("failed to delete file: %w", err)
 	}
@@ -52,81 +38,11 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, storageKey *string, p
 func (r *mutationResolver) CreateFolder(ctx context.Context, storageKey *string, path string) (bool, error) {
 	r.logger.Info("Creating folder", zap.String("path", path))
 
-	s, err := r.getStorage(ctx, storageKey)
-	if err != nil {
-		return false, err
-	}
-
-	err = s.CreateFolder(ctx, path)
-	if err != nil {
+	if err := r.storage.CreateFolder(ctx, path); err != nil {
 		r.logger.Error("Failed to create folder", zap.Error(err))
 		return false, fmt.Errorf("failed to create folder: %w", err)
 	}
 
-	return true, nil
-}
-
-// AddStorageConfig is the resolver for the addStorageConfig field.
-func (r *mutationResolver) AddStorageConfig(ctx context.Context, config gql.StorageConfigInput) (*gql.StorageConfig, error) {
-	ownerID, err := GetOwnerIDFromContext(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get owner ID: %w", err)
-	}
-
-	err = r.storageConfigStore.Create(ctx, ownerID, &storageconfigstore.Config{
-		Name:   config.Name,
-		Key:    config.Key,
-		Type:   config.Type,
-		Config: json.RawMessage(config.Config),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &gql.StorageConfig{
-		Name:   config.Name,
-		Key:    config.Key,
-		Type:   config.Type,
-		Config: config.Config,
-	}, nil
-}
-
-// UpdateStorageConfig is the resolver for the updateStorageConfig field.
-func (r *mutationResolver) UpdateStorageConfig(ctx context.Context, key string, config gql.StorageConfigInput) (*gql.StorageConfig, error) {
-	ownerID, err := GetOwnerIDFromContext(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get owner ID: %w", err)
-	}
-
-	err = r.storageConfigStore.Update(ctx, ownerID, key, &storageconfigstore.Config{
-		Name:   config.Name,
-		Key:    config.Key,
-		Type:   config.Type,
-		Config: json.RawMessage(config.Config),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &gql.StorageConfig{
-		Name:   config.Name,
-		Key:    config.Key,
-		Type:   config.Type,
-		Config: config.Config,
-	}, nil
-}
-
-// DeleteStorageConfig is the resolver for the deleteStorageConfig field.
-func (r *mutationResolver) DeleteStorageConfig(ctx context.Context, key string) (bool, error) {
-	ownerID, err := GetOwnerIDFromContext(ctx)
-	if err != nil {
-		return false, fmt.Errorf("failed to get owner ID: %w", err)
-	}
-
-	err = r.storageConfigStore.Delete(ctx, ownerID, key)
-	if err != nil {
-		return false, err
-	}
 	return true, nil
 }
 
@@ -139,11 +55,6 @@ func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path 
 		zap.Any("sortBy", sortBy),
 		zap.Any("sortOrder", sortOrder),
 	)
-
-	s, err := r.getStorage(ctx, storageKey)
-	if err != nil {
-		return nil, err
-	}
 
 	options := storage.ListOptions{
 		Offset:      offset,
@@ -176,7 +87,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path 
 		}
 	}
 
-	result, err := s.List(ctx, path, options)
+	result, err := r.storage.List(ctx, path, options)
 	if err != nil {
 		r.logger.Error("Failed to list files", zap.Error(err))
 		return nil, fmt.Errorf("failed to list files: %w", err)
@@ -202,12 +113,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path 
 func (r *queryResolver) StatFile(ctx context.Context, storageKey *string, path string) (*gql.FileStat, error) {
 	r.logger.Info("Getting file stats", zap.String("path", path))
 
-	s, err := r.getStorage(ctx, storageKey)
-	if err != nil {
-		return nil, err
-	}
-
-	fileInfo, err := s.Stat(ctx, path)
+	fileInfo, err := r.storage.Stat(ctx, path)
 	if err != nil {
 		r.logger.Error("Failed to get file stats", zap.Error(err))
 		return nil, fmt.Errorf("failed to get file stats: %w", err)
@@ -220,51 +126,5 @@ func (r *queryResolver) StatFile(ctx context.Context, storageKey *string, path s
 		IsDirectory:  fileInfo.IsDir,
 		ModifiedTime: fileInfo.ModifiedTime.Format(time.RFC3339),
 		Etag:         &fileInfo.ETag,
-	}, nil
-}
-
-// ListStorageConfigs is the resolver for the listStorageConfigs field.
-func (r *queryResolver) ListStorageConfigs(ctx context.Context) ([]*gql.StorageConfig, error) {
-	ownerID, err := GetOwnerIDFromContext(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get owner ID: %w", err)
-	}
-
-	configs, err := r.storageConfigStore.List(ctx, ownerID)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]*gql.StorageConfig, len(configs))
-	for i, cfg := range configs {
-		result[i] = &gql.StorageConfig{
-			Name:   cfg.Name,
-			Key:    cfg.Key,
-			Type:   cfg.Type,
-			Config: string(cfg.Config),
-		}
-	}
-	return result, nil
-}
-
-// GetStorageConfig is the resolver for the getStorageConfig field.
-func (r *queryResolver) GetStorageConfig(ctx context.Context, key string) (*gql.StorageConfig, error) {
-	ownerID, err := GetOwnerIDFromContext(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get owner ID: %w", err)
-	}
-
-	cfg, err := r.storageConfigStore.Get(ctx, ownerID, key)
-	if err != nil {
-		return nil, err
-	}
-	if cfg == nil {
-		return nil, nil
-	}
-	return &gql.StorageConfig{
-		Name:   cfg.Name,
-		Key:    cfg.Key,
-		Type:   cfg.Type,
-		Config: string(cfg.Config),
 	}, nil
 }
