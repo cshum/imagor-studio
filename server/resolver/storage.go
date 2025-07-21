@@ -11,7 +11,7 @@ import (
 )
 
 // UploadFile is the resolver for the uploadFile field.
-func (r *mutationResolver) UploadFile(ctx context.Context, storageKey *string, path string, content graphql.Upload) (bool, error) {
+func (r *mutationResolver) UploadFile(ctx context.Context, path string, content graphql.Upload) (bool, error) {
 	r.logger.Info("Uploading file", zap.String("path", path), zap.String("filename", content.Filename))
 
 	if err := r.storage.Put(ctx, path, content.File); err != nil {
@@ -23,7 +23,7 @@ func (r *mutationResolver) UploadFile(ctx context.Context, storageKey *string, p
 }
 
 // DeleteFile is the resolver for the deleteFile field.
-func (r *mutationResolver) DeleteFile(ctx context.Context, storageKey *string, path string) (bool, error) {
+func (r *mutationResolver) DeleteFile(ctx context.Context, path string) (bool, error) {
 	r.logger.Info("Deleting file", zap.String("path", path))
 
 	if err := r.storage.Delete(ctx, path); err != nil {
@@ -35,7 +35,7 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, storageKey *string, p
 }
 
 // CreateFolder is the resolver for the createFolder field.
-func (r *mutationResolver) CreateFolder(ctx context.Context, storageKey *string, path string) (bool, error) {
+func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool, error) {
 	r.logger.Info("Creating folder", zap.String("path", path))
 
 	if err := r.storage.CreateFolder(ctx, path); err != nil {
@@ -47,7 +47,7 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, storageKey *string,
 }
 
 // ListFiles is the resolver for the listFiles field.
-func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
+func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
 	r.logger.Info("Listing files",
 		zap.String("path", path),
 		zap.Int("offset", offset),
@@ -110,7 +110,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, storageKey *string, path 
 }
 
 // StatFile is the resolver for the statFile field.
-func (r *queryResolver) StatFile(ctx context.Context, storageKey *string, path string) (*gql.FileStat, error) {
+func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileStat, error) {
 	r.logger.Info("Getting file stats", zap.String("path", path))
 
 	fileInfo, err := r.storage.Stat(ctx, path)
