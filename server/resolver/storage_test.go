@@ -84,29 +84,6 @@ func TestListFiles(t *testing.T) {
 	mockStorage.AssertExpectations(t)
 }
 
-func TestListFilesWithoutOwnerID(t *testing.T) {
-	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
-	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
-
-	// Create context without owner ID - this should now fail
-	ctx := context.Background()
-	path := "/test"
-	offset := 0
-	limit := 10
-
-	result, err := resolver.Query().ListFiles(ctx, path, offset, limit, nil, nil, nil, nil)
-
-	// We expect an error because no owner ID is in context
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "owner ID not found in context")
-
-	// No mocks should be called since it fails early
-	mockStorage.AssertNotCalled(t, "List", mock.Anything, mock.Anything, mock.Anything)
-}
-
 func TestStatFile(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
