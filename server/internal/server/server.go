@@ -1,3 +1,4 @@
+// internal/server/server.go
 package server
 
 import (
@@ -15,7 +16,9 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/migrations"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/metadatastore"
-	"github.com/cshum/imagor-studio/server/pkg/storageconfigstore"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
+	"github.com/cshum/imagor-studio/server/pkg/storage/filestorage"
+	"github.com/cshum/imagor-studio/server/pkg/storage/s3storage"
 	"github.com/cshum/imagor-studio/server/resolver"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
@@ -28,6 +31,7 @@ type Server struct {
 	cfg          *config.Config
 	db           *bun.DB
 	tokenManager *auth.TokenManager
+	storage      storage.Storage
 }
 
 func New(cfg *config.Config) (*Server, error) {
@@ -38,7 +42,7 @@ func New(cfg *config.Config) (*Server, error) {
 
 	db := bun.NewDB(sqldb, sqlitedialect.New())
 
-	// Run migrations
+	// Run migrations (only metadata table now)
 	migrator := migrate.NewMigrator(db, migrations.Migrations)
 	err = migrator.Init(context.Background())
 	if err != nil {
@@ -62,16 +66,17 @@ func New(cfg *config.Config) (*Server, error) {
 		cfg.JWTExpiration,
 	)
 
-	// Initialize stores
-	storageConfigStore, err := storageconfigstore.New(db, cfg.Logger, cfg.ImagorSecret)
+	// Create storage based on configuration
+	stor, err := createStorage(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create storage repository: %w", err)
+		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
 
+	// Initialize metadata store
 	metadataStore := metadatastore.New(db, cfg.Logger)
 
 	// Initialize GraphQL
-	storageResolver := resolver.NewResolver(storageConfigStore, metadataStore, cfg.Logger)
+	storageResolver := resolver.NewResolver(stor, metadataStore, cfg.Logger)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
 
@@ -117,7 +122,59 @@ func New(cfg *config.Config) (*Server, error) {
 		cfg:          cfg,
 		db:           db,
 		tokenManager: tokenManager,
+		storage:      stor,
 	}, nil
+}
+
+func createStorage(cfg *config.Config) (storage.Storage, error) {
+	switch cfg.StorageType {
+	case "file", "filesystem":
+		cfg.Logger.Info("Creating file storage",
+			zap.String("baseDir", cfg.FileBaseDir),
+			zap.String("mkdirPermissions", cfg.FileMkdirPermissions.String()),
+			zap.String("writePermissions", cfg.FileWritePermissions.String()),
+		)
+
+		return filestorage.New(cfg.FileBaseDir,
+			filestorage.WithMkdirPermission(cfg.FileMkdirPermissions),
+			filestorage.WithWritePermission(cfg.FileWritePermissions),
+		)
+
+	case "s3":
+		cfg.Logger.Info("Creating S3 storage",
+			zap.String("bucket", cfg.S3Bucket),
+			zap.String("region", cfg.S3Region),
+			zap.String("endpoint", cfg.S3Endpoint),
+			zap.String("baseDir", cfg.S3BaseDir),
+		)
+
+		var options []s3storage.Option
+
+		if cfg.S3Region != "" {
+			options = append(options, s3storage.WithRegion(cfg.S3Region))
+		}
+
+		if cfg.S3Endpoint != "" {
+			options = append(options, s3storage.WithEndpoint(cfg.S3Endpoint))
+		}
+
+		if cfg.S3AccessKeyID != "" && cfg.S3SecretAccessKey != "" {
+			options = append(options, s3storage.WithCredentials(
+				cfg.S3AccessKeyID,
+				cfg.S3SecretAccessKey,
+				cfg.S3SessionToken,
+			))
+		}
+
+		if cfg.S3BaseDir != "" {
+			options = append(options, s3storage.WithBaseDir(cfg.S3BaseDir))
+		}
+
+		return s3storage.New(cfg.S3Bucket, options...)
+
+	default:
+		return nil, fmt.Errorf("unsupported storage type: %s", cfg.StorageType)
+	}
 }
 
 func (s *Server) Run() error {

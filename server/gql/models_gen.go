@@ -43,20 +43,6 @@ type Mutation struct {
 type Query struct {
 }
 
-type StorageConfig struct {
-	Name   string `json:"name"`
-	Key    string `json:"key"`
-	Type   string `json:"type"`
-	Config string `json:"config"`
-}
-
-type StorageConfigInput struct {
-	Name   string `json:"name"`
-	Key    string `json:"key"`
-	Type   string `json:"type"`
-	Config string `json:"config"`
-}
-
 type SortOption string
 
 const (

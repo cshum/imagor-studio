@@ -40,10 +40,10 @@ func (m *MockMetadataStore) Delete(ctx context.Context, ownerID, key string) err
 
 // Metadata tests
 func TestListMetadata(t *testing.T) {
-	mockStore := new(MockStore)
+	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	prefix := "app:"
@@ -68,10 +68,10 @@ func TestListMetadata(t *testing.T) {
 }
 
 func TestGetMetadata(t *testing.T) {
-	mockStore := new(MockStore)
+	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	key := "app:setting1"
@@ -97,10 +97,10 @@ func TestGetMetadata(t *testing.T) {
 }
 
 func TestGetMetadataNotFound(t *testing.T) {
-	mockStore := new(MockStore)
+	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	key := "non-existent"
@@ -116,10 +116,10 @@ func TestGetMetadataNotFound(t *testing.T) {
 }
 
 func TestSetMetadata(t *testing.T) {
-	mockStore := new(MockStore)
+	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	key := "app:new-setting"
@@ -146,10 +146,10 @@ func TestSetMetadata(t *testing.T) {
 }
 
 func TestDeleteMetadata(t *testing.T) {
-	mockStore := new(MockStore)
+	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStore, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	key := "app:setting-to-delete"
