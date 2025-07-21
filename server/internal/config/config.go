@@ -46,6 +46,7 @@ func Load() (*Config, error) {
 		port          = fs.String("port", "8080", "port to listen on")
 		dbPath        = fs.String("db-path", "storage.db", "path to SQLite database file")
 		jwtSecret     = fs.String("jwt-secret", "", "secret key for JWT signing")
+		imagorSecret  = fs.String("imagor-secret", "", "secret key for imagor")
 		jwtExpiration = fs.String("jwt-expiration", "24h", "JWT token expiration duration")
 		storageType   = fs.String("storage-type", "file", "storage type: file or s3")
 
@@ -80,7 +81,10 @@ func Load() (*Config, error) {
 	}
 
 	if *jwtSecret == "" {
-		return nil, fmt.Errorf("jwt-secret is required")
+		if *imagorSecret == "" {
+			return nil, fmt.Errorf("jwt-secret is required")
+		}
+		*jwtSecret = *imagorSecret
 	}
 
 	// Parse port
