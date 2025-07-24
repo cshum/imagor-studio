@@ -8,12 +8,12 @@ import { useWidthHandler } from '@/hooks/use-width-handler'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
-import { generateDummyImages } from '@/lib/generate-dummy-images.ts'
 import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
 import { ImageFullScreen } from '@/components/image-gallery/image-full-screen.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { ImageInfo } from '@/components/image-gallery/image-info-view'
 import { FolderGrid, FolderProps } from '@/components/image-gallery/folder-grid'
+import { generateDummyImages } from '@/api/dummy.ts'
 
 export function HomePage() {
   // Fix: Use useParams without generic typing and handle undefined params
