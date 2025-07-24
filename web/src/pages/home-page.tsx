@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useNavigate, useLoaderData, useRouterState } from '@tanstack/react-router'
+import { useNavigate, useLoaderData, useRouterState } from '@tanstack/react-router'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
@@ -21,9 +21,14 @@ export function HomePage() {
 
   const navigate = useNavigate()
   const { isLoading } = useRouterState()
-  const location = useLocation()
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+  const initialPositionRef = useRef<{
+    top: number
+    left: number
+    width: number
+    height: number
+  } | null>(null)
 
   // Get data from loader instead of generating locally
   const images: ImageProps[] = loaderData?.images || []
@@ -74,13 +79,11 @@ export function HomePage() {
     position: { top: number; left: number; width: number; height: number } | null,
     direction?: -1 | 1
   ) => {
+    initialPositionRef.current = position
     return navigate({
       to: '/image/$id',
       params: { id: image.id },
-      state: {
-        ...(position && {initialPosition: position}),
-        direction
-      }
+      state: { direction }
     })
   }
 
@@ -96,7 +99,6 @@ export function HomePage() {
       to: '/home',
       state: {
         isClosingImage: true,
-        initialPosition: location.state?.initialPosition
       }
     })
   }
@@ -142,6 +144,7 @@ export function HomePage() {
           onClose={handleCloseFullView}
           onPrevImage={handlePrevImage}
           onNextImage={handleNextImage}
+          initialPosition={initialPositionRef.current || undefined}
         />
       </div>
     </>

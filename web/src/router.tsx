@@ -111,12 +111,6 @@ declare module '@tanstack/react-router' {
 
   // Extend HistoryState to include custom properties
   interface HistoryState {
-    initialPosition?: {
-      top: number
-      left: number
-      width: number
-      height: number
-    }
     direction?: -1 | 1
     isClosingImage?: boolean
   }

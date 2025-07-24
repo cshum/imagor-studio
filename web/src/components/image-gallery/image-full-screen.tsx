@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useLocation } from '@tanstack/react-router'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
 import { ChevronLeft, ChevronRight, Info, X, ZoomIn } from 'lucide-react'
 import { ImageInfo, ImageInfoView } from '@/components/image-gallery/image-info-view'
@@ -19,6 +18,12 @@ interface FullScreenImageProps {
   onClose: () => void
   onPrevImage?: () => void
   onNextImage?: () => void
+  initialPosition?: {
+    top: number
+    left: number
+    width: number
+    height: number
+  }
 }
 
 interface ImageDimensions {
@@ -28,8 +33,7 @@ interface ImageDimensions {
   naturalHeight: number
 }
 
-export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextImage }: FullScreenImageProps) {
-  const location = useLocation()
+export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextImage, initialPosition }: FullScreenImageProps) {
   const duration = 0.2
   const [scale, setScale] = useState(1)
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
@@ -40,7 +44,6 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   const [dimensions, setDimensions] = useState<ImageDimensions>({ width: 0, height: 0, naturalWidth: 0, naturalHeight: 0 })
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const isDesktop = useBreakpoint('md')
-  const initialPosition = location.state?.initialPosition
   const [direction, setDirection] = useState(0)
   const [isClosing, setIsClosing] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
