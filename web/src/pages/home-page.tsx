@@ -18,7 +18,7 @@ import { FolderGrid, FolderProps } from '@/components/image-gallery/folder-grid'
 export function HomePage() {
   // Fix: Use useParams without generic typing and handle undefined params
   const params = useParams({ strict: false })
-  const id = (params as any)?.id // Type assertion for now, or use params.id if route is properly typed
+  const id = params?.id
 
   const location = useLocation()
   const navigate = useNavigate()
@@ -146,11 +146,13 @@ export function HomePage() {
           }
         }
       })
-      // Fix: Use TanStack Router navigation syntax
       navigate({
         to: '/image/$id',
         params: { id: image.id },
-        state: { initialPosition: position, direction }
+        state: {
+          ...(position && {initialPosition: position}),
+          direction
+        }
       })
     };
   }, [navigate, images])
