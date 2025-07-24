@@ -24,7 +24,7 @@ export function HomePage() {
   const id = params?.id
 
   const navigate = useNavigate()
-  const { isLoading} = useRouterState()
+  const { isLoading } = useRouterState()
   const location = useLocation()
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
