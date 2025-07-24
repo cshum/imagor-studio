@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from '@tanstack/react-router'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
 import { ChevronLeft, ChevronRight, Info, X, ZoomIn } from 'lucide-react'
 import { ImageInfo, ImageInfoView } from '@/components/image-gallery/image-info-view'

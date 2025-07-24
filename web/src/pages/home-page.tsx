@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from '@tanstack/react-router'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { ImageGrid, ImageProps } from '@/components/image-gallery/image-grid'
@@ -16,7 +16,10 @@ import { ImageInfo } from '@/components/image-gallery/image-info-view'
 import { FolderGrid, FolderProps } from '@/components/image-gallery/folder-grid'
 
 export function HomePage() {
-  const { id } = useParams<{ id: string }>()
+  // Fix: Use useParams without generic typing and handle undefined params
+  const params = useParams({ strict: false })
+  const id = (params as any)?.id // Type assertion for now, or use params.id if route is properly typed
+
   const location = useLocation()
   const navigate = useNavigate()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -143,7 +146,10 @@ export function HomePage() {
           }
         }
       })
-      navigate(`/image/${image.id}`, {
+      // Fix: Use TanStack Router navigation syntax
+      navigate({
+        to: '/image/$id',
+        params: { id: image.id },
         state: { initialPosition: position, direction }
       })
     };
@@ -153,13 +159,15 @@ export function HomePage() {
     // Here you would typically navigate to a new route or update the state to show the folder's contents
     console.log(`Folder clicked: ${folder.name}`)
     // For example:
-    // navigate(`/folder/${folder.id}`)
+    // navigate({ to: '/folder/$id', params: { id: folder.id } })
   }, [])
 
   const handleCloseFullView = useCallback(() => {
     setSelectedImage(null)
     setSelectedImageIndex(null)
-    navigate('/', {
+    // Fix: Use TanStack Router navigation syntax
+    navigate({
+      to: '/home',
       state: {
         isClosingImage: true,
         initialPosition: location.state?.initialPosition
