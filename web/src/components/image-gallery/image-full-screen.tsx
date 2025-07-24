@@ -71,7 +71,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     }
   }
 
-  const handleCloseFullView = useCallback(() => {
+  const handleCloseFullView = () => {
     if (transformComponentRef.current) {
       transformComponentRef.current.resetTransform()
     }
@@ -79,11 +79,13 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     setIsClosing(true)
 
     setTimeout(() => {
-      onClose()
+      if (onClose) {
+        onClose()
+      }
     }, duration * 1000)
-  }, [onClose, duration])
+  }
 
-  const handlePanStart = useCallback((_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
+  const handlePanStart = (_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
     if (scale === 1) {
       const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
       const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
@@ -91,9 +93,9 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       setIsDragging(true)
       dragDistance.current = 0
     }
-  }, [scale])
+  }
 
-  const handlePan = useCallback((_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
+  const handlePan = (_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
     if (scale === 1 && panStartPosition.current && isDragging) {
       const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
       const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
@@ -101,16 +103,16 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       const dy = clientY - panStartPosition.current.y
       dragDistance.current = Math.sqrt(dx * dx + dy * dy)
     }
-  }, [scale, isDragging])
+  }
 
-  const handlePanEnd = useCallback(() => {
+  const handlePanEnd = () => {
     if (isDragging && dragDistance.current > DRAG_THRESHOLD) {
       handleCloseFullView()
     }
     setIsDragging(false)
     panStartPosition.current = null
     dragDistance.current = 0
-  }, [isDragging, handleCloseFullView])
+  }
 
   const calculateDimensions = useCallback(() => {
     if (selectedImage) {
@@ -155,21 +157,25 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     setIsInfoOpen(!isInfoOpen)
   }
 
-  const handlePrevImage = useCallback(() => {
+  const handlePrevImage = () => {
     if (transformComponentRef.current) {
       transformComponentRef.current.resetTransform(0)
     }
     setDirection(-1)
-    onPrevImage?.()
-  }, [onPrevImage])
+    if (onPrevImage) {
+      onPrevImage()
+    }
+  }
 
-  const handleNextImage = useCallback(() => {
+  const handleNextImage = () => {
     if (transformComponentRef.current) {
       transformComponentRef.current.resetTransform(0)
     }
     setDirection(1)
-    onNextImage?.()
-  }, [onNextImage])
+    if (onNextImage) {
+      onNextImage()
+    }
+  }
 
   const slideVariants = {
     enter: (direction: number) => ({
