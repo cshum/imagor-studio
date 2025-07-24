@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams, useRouterState} from '@tanstack/react-router'
+import { useLocation, useNavigate, useParams } from '@tanstack/react-router'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { ImageGrid, ImageProps } from '@/components/image-gallery/image-grid'
@@ -21,7 +21,7 @@ export function HomePage() {
   const id = params?.id
 
   const navigate = useNavigate()
-  const locationState = useRouterState({ select: s => s.location.state })
+  const location = useLocation()
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const [images, setImages] = useState<ImageProps[]>([])
@@ -66,7 +66,7 @@ export function HomePage() {
       const imageFromUrl = generatedImages.find(img => img.id === id)
       if (imageFromUrl) {
         const fullSizeSrc = imageFromUrl.src.replace('/300/225', '/1200/900');
-        if (!locationState?.direction) {
+        if (!location.state?.direction) {
           setIsLoading(true)
           const preloadImage = new Image();
           preloadImage.src = fullSizeSrc;
@@ -172,10 +172,10 @@ export function HomePage() {
       to: '/home',
       state: {
         isClosingImage: true,
-        initialPosition: locationState?.initialPosition
+        initialPosition: location.state?.initialPosition
       }
     })
-  }, [navigate, locationState?.initialPosition])
+  }, [navigate, location.state?.initialPosition])
 
   const { handlePrevImage, handleNextImage } = useMemo(() => ({
     handlePrevImage: selectedImageIndex !== null && selectedImageIndex > 0
@@ -187,11 +187,11 @@ export function HomePage() {
   }), [selectedImageIndex, images, handleImageClick])
 
   useEffect(() => {
-    if (locationState?.isClosingImage) {
+    if (location.state?.isClosingImage) {
       setSelectedImage(null)
       setSelectedImageIndex(null)
     }
-  }, [locationState?.isClosingImage])
+  }, [location.state?.isClosingImage])
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 40 : 30)
 
