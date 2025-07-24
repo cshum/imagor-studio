@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useLoaderData, useRouterState } from '@tanstack/react-router'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Card, CardContent } from '@/components/ui/card'
@@ -70,10 +70,6 @@ export function HomePage() {
     }
   }, [gridRendered, restoreScrollPosition, selectedImage])
 
-  const onRendered = useCallback(() => {
-    setGridRendered(true)
-  }, [])
-
   const handleImageClick = (
     image: ImageProps,
     position: { top: number; left: number; width: number; height: number } | null,
@@ -131,7 +127,7 @@ export function HomePage() {
                     scrollTop={scrollPosition}
                     maxImageWidth={280}
                     isScrolling={isScrolling}
-                    onRendered={onRendered}
+                    onRendered={() => setGridRendered(true)}
                     onImageClick={handleImageClick}
                   />
                 </>
