@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useNavigate, useParams, useLoaderData, useRouterState } from '@tanstack/react-router'
+import { useLocation, useNavigate, useLoaderData, useRouterState } from '@tanstack/react-router'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
@@ -19,10 +19,6 @@ export function HomePage() {
   // Get loader data from router
   const loaderData = useLoaderData({ strict: false }) as ImageLoaderData
 
-  // Fix: Use useParams without generic typing and handle undefined params
-  const params = useParams({ strict: false })
-  const id = params?.id
-
   const navigate = useNavigate()
   const { isLoading } = useRouterState()
   const location = useLocation()
@@ -30,13 +26,24 @@ export function HomePage() {
   const contentRef = useRef<HTMLDivElement>(null)
 
   // Get data from loader instead of generating locally
-  const [images] = useState<ImageProps[]>(loaderData?.images || [])
-  const [folders] = useState<FolderProps[]>(loaderData?.folders || [])
+  const images: ImageProps[] = loaderData?.images || []
+  const folders: FolderProps[] = loaderData?.folders || []
+  const selectedImage : ImageProps & { info?: ImageInfo } | null = loaderData?.selectedImage || null
+  const selectedImageIndex : number | null = loaderData?.selectedImageIndex || null
+
+  const handlePrevImage =  images && selectedImageIndex !== null && selectedImageIndex > 0
+    ? () => handleImageClick(images[selectedImageIndex - 1], null, -1)
+    : undefined
+  const handleNextImage = images && selectedImageIndex !== null && selectedImageIndex < images.length - 1
+    ? () => handleImageClick(images[selectedImageIndex + 1], null, 1)
+    : undefined
 
   const isOpen = false
   const isDesktop = useBreakpoint('md')
-  const [selectedImage, setSelectedImage] = useState<ImageProps & { info?: ImageInfo } | null>(loaderData?.selectedImage || null)
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(loaderData?.selectedImageIndex || null)
+
+  useEffect(() => {
+    console.log(loaderData)
+  }, [loaderData])
 
 
   const maxItemWidth = 280
@@ -51,22 +58,6 @@ export function HomePage() {
   // Grid rendered state
   const [gridRendered, setGridRendered] = useState(false)
 
-  // Initialize selected image from loader data
-  useEffect(() => {
-    // Check if this is image loader data (has selectedImage property)
-    const imageLoaderData = loaderData as ImageLoaderData
-
-    if (id && imageLoaderData?.selectedImage && imageLoaderData?.selectedImageIndex !== null) {
-      // Use data from loader
-      setSelectedImage(imageLoaderData.selectedImage)
-      setSelectedImageIndex(imageLoaderData.selectedImageIndex)
-    } else if (!id) {
-      // Clear selection when no ID in URL
-      setSelectedImage(null)
-      setSelectedImageIndex(null)
-    }
-  }, [id, loaderData])
-
   // Scroll restoration
   useEffect(() => {
     if (containerRef.current && gridRendered && !selectedImage) {
@@ -78,54 +69,37 @@ export function HomePage() {
     setGridRendered(true)
   }, [])
 
-  const handleImageClick = useCallback((
+  const handleImageClick = (
     image: ImageProps,
     position: { top: number; left: number; width: number; height: number } | null,
     direction?: -1 | 1
-  ) => navigate({
-    to: '/image/$id',
-    params: { id: image.id },
-    state: {
-      ...(position && {initialPosition: position}),
-      direction
-    }
-  }), [navigate])
+  ) => {
+    return navigate({
+      to: '/image/$id',
+      params: { id: image.id },
+      state: {
+        ...(position && {initialPosition: position}),
+        direction
+      }
+    })
+  }
 
-  const handleFolderClick = useCallback((folder: FolderProps) => {
+  const handleFolderClick = (folder: FolderProps) => {
     // Here you would typically navigate to a new route or update the state to show the folder's contents
     console.log(`Folder clicked: ${folder.name}`)
     // For example:
     // navigate({ to: '/folder/$id', params: { id: folder.id } })
-  }, [])
+  }
 
-  const handleCloseFullView = useCallback(() => {
-    setSelectedImage(null)
-    setSelectedImageIndex(null)
-    // Fix: Use TanStack Router navigation syntax
-    navigate({
+  const handleCloseFullView = () => {
+    return navigate({
       to: '/home',
       state: {
         isClosingImage: true,
         initialPosition: location.state?.initialPosition
       }
     })
-  }, [navigate, location.state?.initialPosition])
-
-  const { handlePrevImage, handleNextImage } = useMemo(() => ({
-    handlePrevImage: selectedImageIndex !== null && selectedImageIndex > 0
-      ? () => handleImageClick(images[selectedImageIndex - 1], null, -1)
-      : undefined,
-    handleNextImage: selectedImageIndex !== null && selectedImageIndex < images.length - 1
-      ? () => handleImageClick(images[selectedImageIndex + 1], null, 1)
-      : undefined
-  }), [selectedImageIndex, images, handleImageClick])
-
-  useEffect(() => {
-    if (location.state?.isClosingImage) {
-      setSelectedImage(null)
-      setSelectedImageIndex(null)
-    }
-  }, [location.state?.isClosingImage])
+  }
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 40 : 30)
 
