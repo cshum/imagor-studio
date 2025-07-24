@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useNavigate, useParams, useLoaderData } from '@tanstack/react-router'
+import { useLocation, useNavigate, useParams, useLoaderData, useRouterState } from '@tanstack/react-router'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
@@ -24,6 +24,7 @@ export function HomePage() {
   const id = params?.id
 
   const navigate = useNavigate()
+  const { isLoading} = useRouterState()
   const location = useLocation()
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -34,9 +35,9 @@ export function HomePage() {
 
   const isOpen = false
   const isDesktop = useBreakpoint('md')
-  const [isLoading, setIsLoading] = useState(false)
   const [selectedImage, setSelectedImage] = useState<ImageProps & { info?: ImageInfo } | null>(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
+
 
   const maxItemWidth = 280
 
@@ -59,13 +60,6 @@ export function HomePage() {
       // Use data from loader
       setSelectedImage(imageLoaderData.selectedImage)
       setSelectedImageIndex(imageLoaderData.selectedImageIndex)
-
-      // Set loading state only if image wasn't preloaded
-      if (!imageLoaderData.preloadedFullSizeImage) {
-        setIsLoading(true)
-        // Simulate loading complete since image should be preloaded by loader
-        setTimeout(() => setIsLoading(false), 100)
-      }
     } else if (!id) {
       // Clear selection when no ID in URL
       setSelectedImage(null)
@@ -84,21 +78,18 @@ export function HomePage() {
     setGridRendered(true)
   }, [])
 
-  const handleImageClick = useCallback(async (
+  const handleImageClick = useCallback((
     image: ImageProps,
     position: { top: number; left: number; width: number; height: number } | null,
     direction?: -1 | 1
-  ) => {
-    setIsLoading(true)
-    await navigate({
-      to: '/image/$id',
-      params: { id: image.id },
-      state: {
-        ...(position && {initialPosition: position}),
-        direction
-      }
-    })
-  }, [navigate])
+  ) => navigate({
+    to: '/image/$id',
+    params: { id: image.id },
+    state: {
+      ...(position && {initialPosition: position}),
+      direction
+    }
+  }), [navigate])
 
   const handleFolderClick = useCallback((folder: FolderProps) => {
     // Here you would typically navigate to a new route or update the state to show the folder's contents
