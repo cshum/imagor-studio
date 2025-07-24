@@ -46,11 +46,6 @@ export function HomePage() {
   const isOpen = false
   const isDesktop = useBreakpoint('md')
 
-  useEffect(() => {
-    console.log(loaderData)
-  }, [loaderData])
-
-
   const maxItemWidth = 280
 
   // Custom hooks
@@ -71,13 +66,13 @@ export function HomePage() {
   }, [gridRendered, restoreScrollPosition, selectedImage])
 
   const handleImageClick = (
-    image: ImageProps,
+    { id }: ImageProps,
     position: { top: number; left: number; width: number; height: number } | null,
   ) => {
     initialPositionRef.current = position
     return navigate({
       to: '/image/$id',
-      params: { id: image.id },
+      params: { id },
     })
   }
 

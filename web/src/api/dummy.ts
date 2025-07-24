@@ -110,9 +110,9 @@ export const imageLoader = async ({ params }: {
 
   const selectedImageIndex = images.findIndex(img => img.id === params.id)
 
-  let fullSizeSrc = selectedImageData.src.replace('/300/225', '/800/600')
+  const fullSizeSrc = selectedImageData.src.replace('/300/225', '/800/600')
 
-  fullSizeSrc = await preloadImage(fullSizeSrc)
+  await Promise.all([preloadImage(fullSizeSrc), new Promise(resolve => setTimeout(resolve, 200))])
 
   const selectedImage: ImageProps & { info?: ImageInfo } = {
     ...selectedImageData,
