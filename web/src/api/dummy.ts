@@ -20,7 +20,6 @@ export interface HomeLoaderData {
 export interface ImageLoaderData extends HomeLoaderData {
   selectedImage: (ImageProps & { info?: ImageInfo }) | null;
   selectedImageIndex: number | null;
-  preloadedFullSizeImage?: string;
 }
 
 export const generateDummyImages = (count: number) => {
@@ -76,22 +75,13 @@ const preloadImage = (src: string): Promise<string> => {
  * Generates dummy images and folders data
  */
 export const homeLoader = async (): Promise<HomeLoaderData> => {
-  try {
-    // Generate dummy data
-    const images = generateDummyImages(10000)
-    const folders = generateDummyFolders()
+  // Generate dummy data
+  const images = generateDummyImages(10000)
+  const folders = generateDummyFolders()
 
-    return {
-      images,
-      folders
-    }
-  } catch (error) {
-    console.error('Error loading home data:', error)
-    // Return empty arrays as fallback
-    return {
-      images: [],
-      folders: []
-    }
+  return {
+    images,
+    folders
   }
 }
 
@@ -99,10 +89,7 @@ export const homeLoader = async (): Promise<HomeLoaderData> => {
  * Loader for the image detail page
  * Generates data and preloads the selected image
  */
-export const imageLoader = async ({
-                                    params,
-                                    location
-                                  }: {
+export const imageLoader = async ({ params }: {
   params: { id: string };
   location: { state?: { direction?: -1 | 1 } }
 }): Promise<ImageLoaderData> => {
@@ -124,16 +111,9 @@ export const imageLoader = async ({
 
   const selectedImageIndex = images.findIndex(img => img.id === params.id)
 
-  // Create full-size image URL
   const fullSizeSrc = selectedImageData.src.replace('/300/225', '/800/600')
 
-  // Preload the full-size image only if not coming from navigation with direction
-  // (i.e., when directly accessing the URL or refreshing)
-  let preloadedFullSizeImage: string | undefined
-
-  if (!location.state?.direction) {
-    await preloadImage(fullSizeSrc)
-  }
+  await preloadImage(fullSizeSrc)
 
   const selectedImage: ImageProps & { info?: ImageInfo } = {
     ...selectedImageData,
@@ -146,6 +126,5 @@ export const imageLoader = async ({
     folders,
     selectedImage,
     selectedImageIndex,
-    preloadedFullSizeImage,
   }
 }
