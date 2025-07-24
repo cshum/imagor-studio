@@ -91,7 +91,6 @@ export const homeLoader = async (): Promise<HomeLoaderData> => {
  */
 export const imageLoader = async ({ params }: {
   params: { id: string };
-  location: { state?: { direction?: -1 | 1 } }
 }): Promise<ImageLoaderData> => {
   // Generate all images and folders (same as home route)
   const images = generateDummyImages(10000)

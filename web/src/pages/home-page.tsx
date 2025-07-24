@@ -37,10 +37,10 @@ export function HomePage() {
   const selectedImageIndex : number | null = loaderData?.selectedImageIndex || null
 
   const handlePrevImage =  images && selectedImageIndex !== null && selectedImageIndex > 0
-    ? () => handleImageClick(images[selectedImageIndex - 1], null, -1)
+    ? () => handleImageClick(images[selectedImageIndex - 1], null)
     : undefined
   const handleNextImage = images && selectedImageIndex !== null && selectedImageIndex < images.length - 1
-    ? () => handleImageClick(images[selectedImageIndex + 1], null, 1)
+    ? () => handleImageClick(images[selectedImageIndex + 1], null)
     : undefined
 
   const isOpen = false
@@ -73,13 +73,11 @@ export function HomePage() {
   const handleImageClick = (
     image: ImageProps,
     position: { top: number; left: number; width: number; height: number } | null,
-    direction?: -1 | 1
   ) => {
     initialPositionRef.current = position
     return navigate({
       to: '/image/$id',
       params: { id: image.id },
-      state: { direction }
     })
   }
 
