@@ -89,12 +89,7 @@ export function HomePage() {
   }
 
   const handleCloseFullView = () => {
-    return navigate({
-      to: '/home',
-      state: {
-        isClosingImage: true,
-      }
-    })
+    return navigate({ to: '/home' })
   }
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 40 : 30)
