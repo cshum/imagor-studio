@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
 import { ChevronLeft, ChevronRight, Info, X, ZoomIn } from 'lucide-react'
@@ -114,44 +114,44 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     dragDistance.current = 0
   }
 
-  const calculateDimensions = useCallback(() => {
-    if (selectedImage) {
-      const img = new Image()
-      img.src = selectedImage.src
-      img.onload = () => {
-        const windowWidth = window.innerWidth - (isInfoOpen && isDesktop ? 300 : 0)
-        const windowHeight = window.innerHeight
-        const imageAspectRatio = img.width / img.height
-        const windowAspectRatio = windowWidth / windowHeight
-
-        let newWidth, newHeight
-
-        if (img.width <= windowWidth && img.height <= windowHeight) {
-          newWidth = img.width
-          newHeight = img.height
-        } else if (imageAspectRatio > windowAspectRatio) {
-          newWidth = windowWidth
-          newHeight = windowWidth / imageAspectRatio
-        } else {
-          newHeight = windowHeight
-          newWidth = windowHeight * imageAspectRatio
-        }
-
-        setDimensions({
-          width: Math.round(newWidth),
-          height: Math.round(newHeight),
-          naturalWidth: img.width,
-          naturalHeight: img.height
-        })
-      }
-    }
-  }, [selectedImage, isInfoOpen, isDesktop])
 
   useEffect(() => {
+    const calculateDimensions = () => {
+      if (selectedImage) {
+        const img = new Image()
+        img.src = selectedImage.src
+        img.onload = () => {
+          const windowWidth = window.innerWidth - (isInfoOpen && isDesktop ? 300 : 0)
+          const windowHeight = window.innerHeight
+          const imageAspectRatio = img.width / img.height
+          const windowAspectRatio = windowWidth / windowHeight
+
+          let newWidth, newHeight
+
+          if (img.width <= windowWidth && img.height <= windowHeight) {
+            newWidth = img.width
+            newHeight = img.height
+          } else if (imageAspectRatio > windowAspectRatio) {
+            newWidth = windowWidth
+            newHeight = windowWidth / imageAspectRatio
+          } else {
+            newHeight = windowHeight
+            newWidth = windowHeight * imageAspectRatio
+          }
+
+          setDimensions({
+            width: Math.round(newWidth),
+            height: Math.round(newHeight),
+            naturalWidth: img.width,
+            naturalHeight: img.height
+          })
+        }
+      }
+    }
     calculateDimensions()
     window.addEventListener('resize', calculateDimensions)
     return () => window.removeEventListener('resize', calculateDimensions)
-  }, [calculateDimensions])
+  }, [isDesktop, isInfoOpen, selectedImage])
 
   const toggleInfo = () => {
     setIsInfoOpen(!isInfoOpen)
