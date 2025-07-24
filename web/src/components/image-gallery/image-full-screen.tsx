@@ -78,7 +78,8 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
 
     setTimeout(() => {
       onClose()
-      navigate('/', {
+      navigate({
+        to: '/home',
         state: {
           isClosingImage: true,
           initialPosition: initialPosition
