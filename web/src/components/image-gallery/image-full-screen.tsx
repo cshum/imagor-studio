@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation } from '@tanstack/react-router'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
 import { ChevronLeft, ChevronRight, Info, X, ZoomIn } from 'lucide-react'
 import { ImageInfo, ImageInfoView } from '@/components/image-gallery/image-info-view'
@@ -29,7 +29,6 @@ interface ImageDimensions {
 }
 
 export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextImage }: FullScreenImageProps) {
-  const navigate = useNavigate()
   const location = useLocation()
   const duration = 0.2
   const [scale, setScale] = useState(1)
@@ -78,14 +77,8 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
 
     setTimeout(() => {
       onClose()
-      navigate('/', {
-        state: {
-          isClosingImage: true,
-          initialPosition: initialPosition
-        }
-      })
     }, duration * 1000)
-  }, [navigate, initialPosition, onClose, duration])
+  }, [onClose, duration])
 
   const handlePanStart = useCallback((_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
     if (scale === 1) {

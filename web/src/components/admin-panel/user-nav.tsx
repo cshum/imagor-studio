@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { LayoutGrid, LogOut, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'

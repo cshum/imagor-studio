@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { ChevronDown, Dot, LucideIcon } from 'lucide-react'
 

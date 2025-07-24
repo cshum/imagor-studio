@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom' // React Router Link
+import { Link } from '@tanstack/react-router' // React Router Link
 import { Card, CardContent } from '@/components/ui/card' // ShadCN components
 
 export function PlaceholderContent() {

@@ -1,6 +1,5 @@
-import { Link, useLocation } from 'react-router-dom' // Use React Router for navigation
+import { Link, useLocation } from '@tanstack/react-router'
 import { Ellipsis, LogOut } from 'lucide-react'
-
 import { cn } from '@/lib/utils'
 import { getMenuList } from '@/lib/menu-list'
 import { Button } from '@/components/ui/button'
