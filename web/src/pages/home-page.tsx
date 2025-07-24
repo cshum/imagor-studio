@@ -3,7 +3,6 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { ImageGrid, ImageProps } from '@/components/image-gallery/image-grid'
-import { useSidebarToggle } from '@/providers/sidebar-toggle-provider.tsx'
 import { useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
@@ -24,7 +23,7 @@ export function HomePage() {
   const contentRef = useRef<HTMLDivElement>(null)
   const [images, setImages] = useState<ImageProps[]>([])
   const [folders, setFolders] = useState<FolderProps[]>([])
-  const { isOpen } = useSidebarToggle()
+  const isOpen = false
   const isDesktop = useBreakpoint('md')
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImage, setSelectedImage] = useState<ImageProps & { info?: ImageInfo } | null>(null)
