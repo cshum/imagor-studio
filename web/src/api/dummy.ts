@@ -125,7 +125,7 @@ export const imageLoader = async ({
   const selectedImageIndex = images.findIndex(img => img.id === params.id)
 
   // Create full-size image URL
-  const fullSizeSrc = selectedImageData.src.replace('/300/225', '/1200/900')
+  const fullSizeSrc = selectedImageData.src.replace('/300/225', '/800/600')
 
   // Preload the full-size image only if not coming from navigation with direction
   // (i.e., when directly accessing the URL or refreshing)
