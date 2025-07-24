@@ -9,12 +9,11 @@ import {
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 
-// Import your existing components and loaders
 import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
 import { RootLayout } from '@/layouts/root-layout'
 import { HomePage } from '@/pages/home-page'
 import { AccountPage } from '@/pages/account-page'
-import { generateDummyImages } from '@/lib/generate-dummy-images'
+import { homeLoader, imageLoader } from '@/api/dummy.ts'
 
 // Root route
 const rootRoute = createRootRoute({
@@ -26,7 +25,6 @@ const rootRoute = createRootRoute({
   ),
 })
 
-// Index route with redirect logic
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
@@ -36,7 +34,6 @@ const indexRoute = createRoute({
   },
 })
 
-// Layout route for admin panel
 const adminPanelLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'admin-panel',
@@ -47,32 +44,20 @@ const adminPanelLayoutRoute = createRoute({
   ),
 })
 
-// Home route
 const homeRoute = createRoute({
   getParentRoute: () => adminPanelLayoutRoute,
   path: '/home',
   component: HomePage,
-  loader: async () => {
-    // Your loader logic here
-    const images = generateDummyImages(10000)
-    return { images }
-  },
+  loader: homeLoader,
 })
 
-// Image detail route with params
 const imageRoute = createRoute({
   getParentRoute: () => adminPanelLayoutRoute,
   path: '/image/$id',
   component: HomePage,
-  loader: async ({ params }) => {
-    // Preload image data based on ID
-    const images = generateDummyImages(10000)
-    const selectedImage = images.find(img => img.id === params.id)
-    return { images, selectedImage }
-  },
+  loader: imageLoader,
 })
 
-// Account layout route
 const accountLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'account-layout',
@@ -83,7 +68,6 @@ const accountLayoutRoute = createRoute({
   ),
 })
 
-// Account route
 const accountRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account',
@@ -123,17 +107,5 @@ export function AppRouter() {
 declare module '@tanstack/react-router' {
   interface Register {
     router: ReturnType<typeof createAppRouter>
-  }
-
-  // Extend HistoryState to include custom properties
-  interface HistoryState {
-    initialPosition?: {
-      top: number
-      left: number
-      width: number
-      height: number
-    }
-    direction?: -1 | 1
-    isClosingImage?: boolean
   }
 }

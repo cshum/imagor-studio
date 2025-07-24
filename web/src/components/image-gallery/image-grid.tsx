@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 export interface ImageProps {
   id: string;
@@ -39,12 +39,14 @@ export const ImageGrid = ({
   const overscanCount = visibleRowsCount
   const totalRenderedRows = visibleRowsCount + 2 * overscanCount
 
+  const onRenderedRef = useRef<() => void | null>(onRendered || null)
+
   // Notify that the grid has been rendered
   useEffect(() => {
-    if (onRendered) {
-      onRendered() // Callback to notify when the grid has rendered
+    if (onRenderedRef.current) {
+      onRenderedRef.current() // Callback to notify when the grid has rendered
     }
-  }, [onRendered])
+  }, [])
 
   // Render individual images with correct positioning
   const renderImage = useCallback(
