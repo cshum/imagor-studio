@@ -64,7 +64,7 @@ const generateImageInfo = (): ImageInfo => ({
 const preloadImage = (src: string): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image()
-    img.onload = () => resolve(src)
+    img.onload = () => resolve(img.src)
     img.onerror = reject
     img.src = src
   })
@@ -111,15 +111,17 @@ export const imageLoader = async ({ params }: {
 
   const selectedImageIndex = images.findIndex(img => img.id === params.id)
 
-  const fullSizeSrc = selectedImageData.src.replace('/300/225', '/800/600')
+  let fullSizeSrc = selectedImageData.src.replace('/300/225', '/800/600')
 
-  await preloadImage(fullSizeSrc)
+  fullSizeSrc = await preloadImage(fullSizeSrc)
 
   const selectedImage: ImageProps & { info?: ImageInfo } = {
     ...selectedImageData,
     src: fullSizeSrc,
     info: generateImageInfo()
   }
+
+  console.log(selectedImage)
 
   return {
     images,

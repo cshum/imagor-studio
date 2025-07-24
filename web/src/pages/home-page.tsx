@@ -12,12 +12,12 @@ import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
 import { ImageFullScreen } from '@/components/image-gallery/image-full-screen.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { FolderGrid } from '@/components/image-gallery/folder-grid'
-import { HomeLoaderData, ImageLoaderData, ImageProps, FolderProps } from '@/api/dummy'
+import { ImageLoaderData, ImageProps, FolderProps } from '@/api/dummy'
 import { ImageInfo } from '@/components/image-gallery/image-info-view'
 
 export function HomePage() {
   // Get loader data from router
-  const loaderData = useLoaderData({ strict: false }) as HomeLoaderData | ImageLoaderData
+  const loaderData = useLoaderData({ strict: false }) as ImageLoaderData
 
   // Fix: Use useParams without generic typing and handle undefined params
   const params = useParams({ strict: false })
@@ -35,8 +35,8 @@ export function HomePage() {
 
   const isOpen = false
   const isDesktop = useBreakpoint('md')
-  const [selectedImage, setSelectedImage] = useState<ImageProps & { info?: ImageInfo } | null>(null)
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
+  const [selectedImage, setSelectedImage] = useState<ImageProps & { info?: ImageInfo } | null>(loaderData?.selectedImage || null)
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(loaderData?.selectedImageIndex || null)
 
 
   const maxItemWidth = 280
