@@ -25,7 +25,7 @@ export interface ImageLoaderData extends HomeLoaderData {
 export const generateDummyImages = (count: number) => {
   return Array.from({ length: count }, (_, i) => ({
     id: `${i + 1}`,
-    src: `https://picsum.photos/id/${(i + 1) % 1000}/300/225`,
+    src: `https://placedog.net/300/225?id=${(i + 1) % 1000}`,
     alt: `Random image ${i + 1}`,
   }))
 }
@@ -76,7 +76,7 @@ const preloadImage = (src: string): Promise<string> => {
  */
 export const homeLoader = async (): Promise<HomeLoaderData> => {
   // Generate dummy data
-  const images = generateDummyImages(10000)
+  const images = generateDummyImages(246)
   const folders = generateDummyFolders()
 
   return {
@@ -93,7 +93,7 @@ export const imageLoader = async ({ params }: {
   params: { id: string };
 }): Promise<ImageLoaderData> => {
   // Generate all images and folders (same as home route)
-  const images = generateDummyImages(10000)
+  const images = generateDummyImages(246)
   const folders = generateDummyFolders()
 
   // Find the selected image
@@ -110,7 +110,7 @@ export const imageLoader = async ({ params }: {
 
   const selectedImageIndex = images.findIndex(img => img.id === params.id)
 
-  const fullSizeSrc = selectedImageData.src.replace('/300/225', '/800/600')
+  const fullSizeSrc = selectedImageData.src.replace('/300/225', '/1200/900')
 
   await Promise.all([preloadImage(fullSizeSrc), new Promise(resolve => setTimeout(resolve, 200))])
 
