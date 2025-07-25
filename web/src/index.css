@@ -94,4 +94,17 @@
         width: 100%;
         overflow-x: hidden;
     }
+
+    button,
+    [role="button"],
+    [role="menuitem"],
+    [role="tab"],
+    .cursor-pointer {
+        cursor: pointer;
+    }
+
+    button:disabled,
+    [role="button"][aria-disabled="true"] {
+        cursor: not-allowed;
+    }
 }
