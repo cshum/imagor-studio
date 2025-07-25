@@ -2,7 +2,7 @@ import { RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { ConfigStorage } from '@/lib/config-storage/config-storage.ts'
 
 export const useScrollHandler = (
-  containerRef: RefObject<HTMLDivElement>,
+  containerRef: RefObject<HTMLDivElement | null>,
   configStorage: ConfigStorage,
   debounceDelay: number = 0, // Default debounce delay is 0, meaning no debounce
 ) => {

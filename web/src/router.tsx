@@ -25,15 +25,6 @@ const rootRoute = createRootRoute({
   ),
 })
 
-const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/',
-  component: () => {
-    // Your existing redirect logic here
-    return <Navigate to="/home" replace />
-  },
-})
-
 const adminPanelLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'admin-panel',
@@ -42,20 +33,6 @@ const adminPanelLayoutRoute = createRoute({
       <Outlet />
     </AdminPanelLayout>
   ),
-})
-
-const homeRoute = createRoute({
-  getParentRoute: () => adminPanelLayoutRoute,
-  path: '/home',
-  component: HomePage,
-  loader: homeLoader,
-})
-
-const imageRoute = createRoute({
-  getParentRoute: () => adminPanelLayoutRoute,
-  path: '/image/$id',
-  component: HomePage,
-  loader: imageLoader,
 })
 
 const accountLayoutRoute = createRoute({
@@ -68,21 +45,36 @@ const accountLayoutRoute = createRoute({
   ),
 })
 
-const accountRoute = createRoute({
-  getParentRoute: () => accountLayoutRoute,
-  path: '/account',
-  component: AccountPage,
-})
-
 // Build the route tree
 const routeTree = rootRoute.addChildren([
-  indexRoute,
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/',
+    component: () => {
+      // Your existing redirect logic here
+      return <Navigate to="/home" replace />
+    },
+  }),
   adminPanelLayoutRoute.addChildren([
-    homeRoute,
-    imageRoute,
+    createRoute({
+      getParentRoute: () => adminPanelLayoutRoute,
+      path: '/home',
+      component: HomePage,
+      loader: homeLoader,
+    }),
+    createRoute({
+      getParentRoute: () => adminPanelLayoutRoute,
+      path: '/image/$id',
+      component: HomePage,
+      loader: imageLoader,
+    }),
   ]),
   accountLayoutRoute.addChildren([
-    accountRoute,
+    createRoute({
+      getParentRoute: () => accountLayoutRoute,
+      path: '/account',
+      component: AccountPage,
+    }),
   ]),
 ])
 

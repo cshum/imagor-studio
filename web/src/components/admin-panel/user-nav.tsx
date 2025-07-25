@@ -20,7 +20,7 @@ export function UserNav() {
   return (
     <DropdownMenu>
       <TooltipProvider disableHoverableContent>
-        <Tooltip delayDuration={100}>
+        <Tooltip delayDuration={100} >
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="relative h-8 w-8 rounded-full">

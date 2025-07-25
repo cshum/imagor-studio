@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
 import { ChevronLeft, ChevronRight, Info, X, ZoomIn } from 'lucide-react'
@@ -71,7 +71,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     }
   }
 
-  const handleCloseFullView = useCallback(() => {
+  const handleCloseFullView = () => {
     if (transformComponentRef.current) {
       transformComponentRef.current.resetTransform()
     }
@@ -79,11 +79,13 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     setIsClosing(true)
 
     setTimeout(() => {
-      onClose()
+      if (onClose) {
+        onClose()
+      }
     }, duration * 1000)
-  }, [onClose, duration])
+  }
 
-  const handlePanStart = useCallback((_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
+  const handlePanStart = (_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
     if (scale === 1) {
       const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
       const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
@@ -91,9 +93,9 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       setIsDragging(true)
       dragDistance.current = 0
     }
-  }, [scale])
+  }
 
-  const handlePan = useCallback((_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
+  const handlePan = (_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
     if (scale === 1 && panStartPosition.current && isDragging) {
       const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
       const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
@@ -101,75 +103,79 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       const dy = clientY - panStartPosition.current.y
       dragDistance.current = Math.sqrt(dx * dx + dy * dy)
     }
-  }, [scale, isDragging])
+  }
 
-  const handlePanEnd = useCallback(() => {
+  const handlePanEnd = () => {
     if (isDragging && dragDistance.current > DRAG_THRESHOLD) {
       handleCloseFullView()
     }
     setIsDragging(false)
     panStartPosition.current = null
     dragDistance.current = 0
-  }, [isDragging, handleCloseFullView])
+  }
 
-  const calculateDimensions = useCallback(() => {
-    if (selectedImage) {
-      const img = new Image()
-      img.src = selectedImage.src
-      img.onload = () => {
-        const windowWidth = window.innerWidth - (isInfoOpen && isDesktop ? 300 : 0)
-        const windowHeight = window.innerHeight
-        const imageAspectRatio = img.width / img.height
-        const windowAspectRatio = windowWidth / windowHeight
-
-        let newWidth, newHeight
-
-        if (img.width <= windowWidth && img.height <= windowHeight) {
-          newWidth = img.width
-          newHeight = img.height
-        } else if (imageAspectRatio > windowAspectRatio) {
-          newWidth = windowWidth
-          newHeight = windowWidth / imageAspectRatio
-        } else {
-          newHeight = windowHeight
-          newWidth = windowHeight * imageAspectRatio
-        }
-
-        setDimensions({
-          width: Math.round(newWidth),
-          height: Math.round(newHeight),
-          naturalWidth: img.width,
-          naturalHeight: img.height
-        })
-      }
-    }
-  }, [selectedImage, isInfoOpen, isDesktop])
 
   useEffect(() => {
+    const calculateDimensions = () => {
+      if (selectedImage) {
+        const img = new Image()
+        img.src = selectedImage.src
+        img.onload = () => {
+          const windowWidth = window.innerWidth - (isInfoOpen && isDesktop ? 300 : 0)
+          const windowHeight = window.innerHeight
+          const imageAspectRatio = img.width / img.height
+          const windowAspectRatio = windowWidth / windowHeight
+
+          let newWidth, newHeight
+
+          if (img.width <= windowWidth && img.height <= windowHeight) {
+            newWidth = img.width
+            newHeight = img.height
+          } else if (imageAspectRatio > windowAspectRatio) {
+            newWidth = windowWidth
+            newHeight = windowWidth / imageAspectRatio
+          } else {
+            newHeight = windowHeight
+            newWidth = windowHeight * imageAspectRatio
+          }
+
+          setDimensions({
+            width: Math.round(newWidth),
+            height: Math.round(newHeight),
+            naturalWidth: img.width,
+            naturalHeight: img.height
+          })
+        }
+      }
+    }
     calculateDimensions()
     window.addEventListener('resize', calculateDimensions)
     return () => window.removeEventListener('resize', calculateDimensions)
-  }, [calculateDimensions])
+  }, [isDesktop, isInfoOpen, selectedImage])
 
   const toggleInfo = () => {
     setIsInfoOpen(!isInfoOpen)
   }
 
-  const handlePrevImage = useCallback(() => {
+  const handlePrevImage = () => {
     if (transformComponentRef.current) {
       transformComponentRef.current.resetTransform(0)
     }
     setDirection(-1)
-    onPrevImage?.()
-  }, [onPrevImage])
+    if (onPrevImage) {
+      onPrevImage()
+    }
+  }
 
-  const handleNextImage = useCallback(() => {
+  const handleNextImage = () => {
     if (transformComponentRef.current) {
       transformComponentRef.current.resetTransform(0)
     }
     setDirection(1)
-    onNextImage?.()
-  }, [onNextImage])
+    if (onNextImage) {
+      onNextImage()
+    }
+  }
 
   const slideVariants = {
     enter: (direction: number) => ({
@@ -194,7 +200,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     <AnimatePresence>
       {selectedImage && (
         <motion.div
-          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center"
+          className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center"
           ref={overlayRef}
           exit={{ transition: { duration: duration } }}
         >
@@ -302,13 +308,13 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                   <div className="absolute bottom-4 right-8 flex space-x-4">
                     <button
                       onClick={() => resetTransform()}
-                      className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-full hover:bg-opacity-75 transition-colors"
+                      className="bg-black/50 text-white px-4 py-2 rounded-full hover:bg-black/75 transition-colors"
                     >
                       {calculateZoomPercentage(scale)}%
                     </button>
                     <button
                       onClick={() => zoomIn()}
-                      className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
+                      className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
                     >
                       <ZoomIn size={24}/>
                     </button>
@@ -321,7 +327,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 left-4' : 'bottom-4 left-8'}`}>
                 <button
                   onClick={handlePrevImage}
-                  className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
+                  className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
                 >
                   <ChevronLeft size={24} />
                 </button>
@@ -331,7 +337,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 right-4' : 'bottom-4 left-20'}`}>
                 <button
                   onClick={handleNextImage}
-                  className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
+                  className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
                 >
                   <ChevronRight size={24} />
                 </button>
@@ -341,13 +347,13 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
             <div className="absolute top-4 right-8 flex space-x-2 z-60">
               <button
                 onClick={toggleInfo}
-                className="text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-colors"
+                className="text-white bg-black/50 rounded-full p-2 hover:bg-black/75 transition-colors"
               >
                 <Info size={24}/>
               </button>
               <button
                 onClick={handleCloseFullView}
-                className="text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-colors"
+                className="text-white bg-black/50 rounded-full p-2 hover:bg-black/75 transition-colors"
               >
                 <X size={24}/>
               </button>

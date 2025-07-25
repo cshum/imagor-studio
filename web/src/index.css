@@ -1,8 +1,7 @@
 @import 'scrollbar.css';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.js";
 
 @layer base {
     :root {
@@ -94,5 +93,18 @@
         height: 100%;
         width: 100%;
         overflow-x: hidden;
+    }
+
+    button,
+    [role="button"],
+    [role="menuitem"],
+    [role="tab"],
+    .cursor-pointer {
+        cursor: pointer;
+    }
+
+    button:disabled,
+    [role="button"][aria-disabled="true"] {
+        cursor: not-allowed;
     }
 }

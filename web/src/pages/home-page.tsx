@@ -21,8 +21,8 @@ export function HomePage() {
 
   const navigate = useNavigate()
   const { isLoading } = useRouterState()
-  const containerRef = useRef<HTMLDivElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const contentRef = useRef<HTMLDivElement | null>(null)
   const initialPositionRef = useRef<{
     top: number
     left: number
