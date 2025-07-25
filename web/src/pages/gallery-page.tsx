@@ -15,7 +15,7 @@ import { FolderGrid } from '@/components/image-gallery/folder-grid'
 import { ImageLoaderData, ImageProps, FolderProps } from '@/api/dummy'
 import { ImageInfo } from '@/components/image-gallery/image-info-view'
 
-export function HomePage() {
+export function GalleryPage() {
   // Get loader data from router
   const loaderData = useLoaderData({ strict: false }) as ImageLoaderData
 

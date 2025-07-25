@@ -11,7 +11,7 @@ import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 
 import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
 import { RootLayout } from '@/layouts/root-layout'
-import { HomePage } from '@/pages/home-page'
+import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { AccountPage } from '@/pages/account-page'
 import { homeLoader, imageLoader } from '@/api/dummy.ts'
 
@@ -51,7 +51,6 @@ const routeTree = rootRoute.addChildren([
     getParentRoute: () => rootRoute,
     path: '/',
     component: () => {
-      // Your existing redirect logic here
       return <Navigate to="/home" replace />
     },
   }),
@@ -59,14 +58,16 @@ const routeTree = rootRoute.addChildren([
     createRoute({
       getParentRoute: () => adminPanelLayoutRoute,
       path: '/home',
-      component: HomePage,
+      component: GalleryPage,
       loader: homeLoader,
     }),
     createRoute({
       getParentRoute: () => adminPanelLayoutRoute,
       path: '/image/$id',
-      component: HomePage,
+      component: GalleryPage,
       loader: imageLoader,
+      staleTime: Infinity,
+      preload: false,
     }),
   ]),
   accountLayoutRoute.addChildren([
@@ -82,7 +83,6 @@ const routeTree = rootRoute.addChildren([
 const createAppRouter = () =>
   createRouter({
     routeTree,
-    defaultPreload: 'intent',
   })
 
 export function AppRouter() {
