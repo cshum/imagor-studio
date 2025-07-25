@@ -200,7 +200,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     <AnimatePresence>
       {selectedImage && (
         <motion.div
-          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center"
+          className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center"
           ref={overlayRef}
           exit={{ transition: { duration: duration } }}
         >
@@ -308,13 +308,13 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                   <div className="absolute bottom-4 right-8 flex space-x-4">
                     <button
                       onClick={() => resetTransform()}
-                      className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-full hover:bg-opacity-75 transition-colors"
+                      className="bg-black/50 text-white px-4 py-2 rounded-full hover:bg-black/75 transition-colors"
                     >
                       {calculateZoomPercentage(scale)}%
                     </button>
                     <button
                       onClick={() => zoomIn()}
-                      className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
+                      className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
                     >
                       <ZoomIn size={24}/>
                     </button>
@@ -327,7 +327,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 left-4' : 'bottom-4 left-8'}`}>
                 <button
                   onClick={handlePrevImage}
-                  className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
+                  className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
                 >
                   <ChevronLeft size={24} />
                 </button>
@@ -337,7 +337,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 right-4' : 'bottom-4 left-20'}`}>
                 <button
                   onClick={handleNextImage}
-                  className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors"
+                  className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
                 >
                   <ChevronRight size={24} />
                 </button>
@@ -347,13 +347,13 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
             <div className="absolute top-4 right-8 flex space-x-2 z-60">
               <button
                 onClick={toggleInfo}
-                className="text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-colors"
+                className="text-white bg-black/50 rounded-full p-2 hover:bg-black/75 transition-colors"
               >
                 <Info size={24}/>
               </button>
               <button
                 onClick={handleCloseFullView}
-                className="text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-colors"
+                className="text-white bg-black/50 rounded-full p-2 hover:bg-black/75 transition-colors"
               >
                 <X size={24}/>
               </button>
