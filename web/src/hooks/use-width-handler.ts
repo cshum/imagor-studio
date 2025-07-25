@@ -1,7 +1,7 @@
 import { RefObject, useCallback, useEffect, useState } from 'react'
 
 export const useWidthHandler = (
-  contentRef: RefObject<HTMLDivElement>,
+  contentRef: RefObject<HTMLDivElement | null>,
   handleSidebar = false,
   sidebarOpen = false,
   padding: number = 48, // Add padding argument with default value
