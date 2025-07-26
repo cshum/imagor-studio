@@ -7,7 +7,7 @@ import {
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/router-devtools'
+import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
 import { RootLayout } from '@/layouts/root-layout'
