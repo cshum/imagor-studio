@@ -114,8 +114,6 @@ export const imageLoader = async ({ params }: {
     info: generateImageInfo()
   }
 
-  console.log(selectedImage)
-
   return {
     selectedImage,
     selectedImageIndex,
