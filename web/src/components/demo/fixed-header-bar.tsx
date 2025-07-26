@@ -41,15 +41,10 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled: isSc
                 <BreadcrumbSeparator/>
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link to="/posts">Posts</Link>
+                    <Link to="/gallery">Gallery</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator/>
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link to="/posts">Title</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
 
