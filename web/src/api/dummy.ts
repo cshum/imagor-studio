@@ -100,12 +100,7 @@ export const imageLoader = async ({ params }: {
   const selectedImageData = images.find(img => img.id === params.id)
 
   if (!selectedImageData) {
-    return {
-      images,
-      folders,
-      selectedImage: null,
-      selectedImageIndex: null,
-    }
+    throw new Error('not found')
   }
 
   const selectedImageIndex = images.findIndex(img => img.id === params.id)

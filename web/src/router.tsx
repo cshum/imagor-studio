@@ -66,8 +66,7 @@ const routeTree = rootRoute.addChildren([
       path: '/image/$id',
       component: GalleryPage,
       loader: imageLoader,
-      staleTime: Infinity,
-      preload: false,
+      loaderDeps: () => ({ ts: Date.now() }),
     }),
   ]),
   accountLayoutRoute.addChildren([
