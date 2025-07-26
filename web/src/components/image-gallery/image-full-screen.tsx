@@ -188,8 +188,8 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   return (
     <AnimatePresence onExitComplete={onClose}>
       {isVisible && selectedImage && (
-        <motion.div
-          className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center"
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
           ref={overlayRef}
         >
           <div
@@ -215,6 +215,11 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
             >
               {({ zoomIn, resetTransform }) => (
                 <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 75 }}
+                    exit={{ opacity: 0 }}
+                    className='absolute bg-black/75 top-0 left-0 right-0 bottom-0'></motion.div>
                   <TransformComponent
                     wrapperStyle={{
                       width: '100%',
@@ -228,7 +233,6 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                     {initialPosition ? (
                       <motion.div
                         initial={{
-                          position: 'absolute',
                           top: initialPosition.top,
                           left: initialPosition.left,
                           width: initialPosition.width,
@@ -248,7 +252,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                           height: initialPosition.height,
                           transition: { duration: duration }
                         }}
-                        className="flex items-center justify-center"
+                        className="flex items-center justify-center absolute"
                       >
                         <motion.img
                           src={selectedImage.src}
@@ -285,7 +289,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                           x: { type: "spring", stiffness: 300, damping: 30 },
                           opacity: { duration: 0.2 }
                         }}
-                        className="absolute flex items-center justify-center w-full h-full"
+                        className="absolute z-10 flex items-center justify-center w-full h-full"
                       >
                         <motion.img
                           src={selectedImage.src}
@@ -363,7 +367,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               <ImageInfoView info={selectedImage.info}/>
             </Sheet>
           </div>
-        </motion.div>
+        </div>
       )}
     </AnimatePresence>
   )
