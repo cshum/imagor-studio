@@ -162,9 +162,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       transformComponentRef.current.resetTransform(0)
     }
     setDirection(-1)
-    if (onPrevImage) {
-      onPrevImage()
-    }
+    onPrevImage?.()
   }
 
   const handleNextImage = () => {
@@ -172,9 +170,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       transformComponentRef.current.resetTransform(0)
     }
     setDirection(1)
-    if (onNextImage) {
-      onNextImage()
-    }
+    onNextImage?.()
   }
 
   const slideVariants = {
