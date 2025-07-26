@@ -191,9 +191,6 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
         <motion.div
           className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center"
           ref={overlayRef}
-          exit={{
-            transition: { duration: duration }
-          }}
         >
           <div
             className={`
