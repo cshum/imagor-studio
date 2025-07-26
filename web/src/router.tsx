@@ -14,7 +14,7 @@ import { RootLayout } from '@/layouts/root-layout'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { AccountPage } from '@/pages/account-page'
 import { galleryLoader, imageLoader } from '@/api/dummy.ts'
-import { ImagePage } from '@/pages/image-page.tsx'
+import { ImagePage, ImageSearchParams } from '@/pages/image-page.tsx'
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -68,6 +68,7 @@ const imagePage = createRoute({
     const imageLoaderData = imagePage.useLoaderData()
     return <ImagePage imageLoaderData={imageLoaderData} galleryLoaderData={galleryLoaderData}/>
   },
+  validateSearch: (search ): ImageSearchParams => search,
 })
 
 const accountLayoutRoute = createRoute({

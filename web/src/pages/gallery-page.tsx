@@ -22,12 +22,6 @@ export function GalleryPage({galleryLoaderData, children} : GalleryPageProps) {
   const { isLoading } = useRouterState()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const contentRef = useRef<HTMLDivElement | null>(null)
-  const initialPositionRef = useRef<{
-    top: number
-    left: number
-    width: number
-    height: number
-  } | null>(null)
 
   const { images, folders } = galleryLoaderData
 
@@ -54,10 +48,11 @@ export function GalleryPage({galleryLoaderData, children} : GalleryPageProps) {
     { id }: ImageProps,
     position: { top: number; left: number; width: number; height: number } | null,
   ) => {
-    initialPositionRef.current = position
+    const search = position || undefined
     return navigate({
       to: '/gallery/$id',
       params: { id },
+      search,
     })
   }
 

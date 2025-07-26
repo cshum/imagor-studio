@@ -1,5 +1,4 @@
-import { useRef } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { ImageFullScreen } from '@/components/image-gallery/image-full-screen.tsx'
 import { GalleryLoaderData, ImageLoaderData, ImageProps } from '@/api/dummy'
 
@@ -8,29 +7,29 @@ export interface ImagePageProps {
   galleryLoaderData: GalleryLoaderData
 }
 
+export interface ImageSearchParams {
+  top?: number
+  left?: number
+  width?: number
+  height?: number
+}
+
 export function ImagePage({ imageLoaderData, galleryLoaderData }: ImagePageProps) {
   const navigate = useNavigate()
-  const initialPositionRef = useRef<{
-    top: number
-    left: number
-    width: number
-    height: number
-  } | null>(null)
+  const { top, left, width, height } = useSearch({ strict: false })
 
   const { images } = galleryLoaderData
   const { selectedImage, selectedImageIndex } = imageLoaderData
 
   const handlePrevImage =  images && selectedImageIndex > 0
-    ? () => handleImageClick(images[selectedImageIndex - 1], null)
+    ? () => handleImageClick(images[selectedImageIndex - 1])
     : undefined
   const handleNextImage = images && selectedImageIndex < images.length - 1
-    ? () => handleImageClick(images[selectedImageIndex + 1], null)
+    ? () => handleImageClick(images[selectedImageIndex + 1])
     : undefined
   const handleImageClick = (
     { id }: ImageProps,
-    position: { top: number; left: number; width: number; height: number } | null,
   ) => {
-    initialPositionRef.current = position
     return navigate({
       to: '/gallery/$id',
       params: { id },
@@ -47,7 +46,9 @@ export function ImagePage({ imageLoaderData, galleryLoaderData }: ImagePageProps
       onClose={handleCloseFullView}
       onPrevImage={handlePrevImage}
       onNextImage={handleNextImage}
-      initialPosition={initialPositionRef.current || undefined}
+      initialPosition={top && left && width && height ? {
+        top: Number(top), left: Number(left), width: Number(width), height: Number(height),
+      }: undefined}
     />
   )
 }
