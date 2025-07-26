@@ -16,7 +16,6 @@ import { AccountPage } from '@/pages/account-page'
 import { galleryLoader, imageLoader } from '@/api/dummy.ts'
 import { ImagePage } from '@/pages/image-page.tsx'
 
-// Root route
 const rootRoute = createRootRoute({
   component: () => (
     <>
@@ -26,21 +25,19 @@ const rootRoute = createRootRoute({
   ),
 })
 
+const rootPath = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  component: () => {
+    return <Navigate to="/gallery" replace />
+  },
+})
+
 const adminPanelLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'admin-panel',
   component: () => (
     <AdminPanelLayout hideFooter={true}>
-      <Outlet />
-    </AdminPanelLayout>
-  ),
-})
-
-const accountLayoutRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  id: 'account-layout',
-  component: () => (
-    <AdminPanelLayout>
       <Outlet />
     </AdminPanelLayout>
   ),
@@ -54,14 +51,6 @@ const galleryRoute = createRoute({
     return <GalleryPage galleryLoaderData={galleryLoaderData }><Outlet /></GalleryPage>
   },
   loader: galleryLoader,
-})
-
-const rootPath = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/',
-  component: () => {
-    return <Navigate to="/gallery" replace />
-  },
 })
 
 const galleryPage = createRoute({
@@ -81,7 +70,22 @@ const imagePage = createRoute({
   },
 })
 
-// Build the route tree
+const accountLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: 'account-layout',
+  component: () => (
+    <AdminPanelLayout>
+      <Outlet />
+    </AdminPanelLayout>
+  ),
+})
+
+const accountPage = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  path: '/account',
+  component: AccountPage,
+})
+
 const routeTree = rootRoute.addChildren([
   rootPath,
   adminPanelLayoutRoute.addChildren([
@@ -90,13 +94,7 @@ const routeTree = rootRoute.addChildren([
       imagePage,
     ]),
   ]),
-  accountLayoutRoute.addChildren([
-    createRoute({
-      getParentRoute: () => accountLayoutRoute,
-      path: '/account',
-      component: AccountPage,
-    }),
-  ]),
+  accountPage,
 ])
 
 // Create router
