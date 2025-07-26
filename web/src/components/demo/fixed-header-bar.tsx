@@ -25,7 +25,7 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled: isSc
   return (
     <TooltipProvider>
       <header
-        className={`sticky top-14 z-10 w-full px-2
+        className={`sticky top-0 z-10 w-full px-2
         ${isScrolledDown ? 'backdrop-blur shadow bg-card/90 dark:shadow-secondary md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
       >
         <div className="mx-auto">
