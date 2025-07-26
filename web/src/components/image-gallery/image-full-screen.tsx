@@ -218,7 +218,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 75 }}
-                    exit={{ opacity: 0 }}
+                    exit={{ opacity: 75 }}
                     className='absolute bg-black/75 top-0 left-0 right-0 bottom-0'></motion.div>
                   <TransformComponent
                     wrapperStyle={{
@@ -265,7 +265,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                           animate={{
                             width: dimensions.width,
                             height: dimensions.height,
-                            objectFit: 'contain',
+                            objectFit: 'cover',
                             transition: { duration: duration },
                           }}
                           exit={{
