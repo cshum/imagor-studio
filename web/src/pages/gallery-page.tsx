@@ -36,17 +36,14 @@ export function GalleryPage({galleryLoaderData, children} : GalleryPageProps) {
 
   const maxItemWidth = 280
 
-  // Custom hooks
   const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
     containerRef, useMemo(() => new SessionConfigStorage('homePageScrollPosition'), []),
   )
   const { contentWidth, updateWidth } = useWidthHandler(contentRef, true, isOpen, isDesktop ? 32 : 16)
   useResizeHandler(updateWidth)
 
-  // Grid rendered state
   const [gridRendered, setGridRendered] = useState(false)
 
-  // Scroll restoration
   useEffect(() => {
     if (containerRef.current && gridRendered) {
       restoreScrollPosition()
