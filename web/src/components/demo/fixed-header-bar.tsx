@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from '@tanstack/react-router'
-import { Clock, Forward, MoreVertical, ReplyAll } from 'lucide-react'
+import { Forward, MoreVertical } from 'lucide-react'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { ModeToggle } from '@/components/mode-toggle.tsx'
 
 interface FixedHeaderBarProps {
   isScrolled: boolean;
@@ -26,7 +27,7 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled: isSc
     <TooltipProvider>
       <header
         className={`sticky top-0 z-10 w-full px-2
-        ${isScrolledDown ? 'backdrop-blur shadow bg-card/90 dark:shadow-secondary md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
+        ${isScrolledDown ? 'backdrop-blur shadow bg-card/75 dark:shadow-secondary md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
       >
         <div className="mx-auto">
           <div className={`px-2 py-1 flex items-center justify-between ${isScrolledDown ? 'md:mx-6' : ''}`}>
@@ -53,24 +54,7 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled: isSc
             </Breadcrumb>
 
             <div className="flex items-center space-x-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Clock className="h-4 w-4"/>
-                    <span className="sr-only">Snooze</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Snooze</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <ReplyAll className="h-4 w-4"/>
-                    <span className="sr-only">Reply all</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Reply all</TooltipContent>
-              </Tooltip>
+              <ModeToggle />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon">
