@@ -45,7 +45,7 @@ const adminPanelLayoutRoute = createRoute({
 
 const galleryRoute = createRoute({
   getParentRoute: () => adminPanelLayoutRoute,
-  id: 'gallery',
+  path: '/gallery',
   component: () => {
     const galleryLoaderData = galleryRoute.useLoaderData()
     return <GalleryPage galleryLoaderData={galleryLoaderData }><Outlet /></GalleryPage>
@@ -55,12 +55,12 @@ const galleryRoute = createRoute({
 
 const galleryPage = createRoute({
   getParentRoute: () => galleryRoute,
-  path: '/gallery',
+  id: 'gallery-page',
 })
 
 const imagePage = createRoute({
   getParentRoute: () => galleryRoute,
-  path: '/gallery/$id',
+  path: '/$id',
   loader: imageLoader,
   loaderDeps: () => ({ ts: Date.now() }),
   component: () => {
