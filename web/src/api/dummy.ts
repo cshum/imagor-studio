@@ -12,14 +12,14 @@ export interface FolderProps {
   name: string;
 }
 
-export interface HomeLoaderData {
+export interface GalleryLoaderData {
   images: ImageProps[];
   folders: FolderProps[];
 }
 
-export interface ImageLoaderData extends HomeLoaderData {
-  selectedImage: (ImageProps & { info?: ImageInfo }) | null;
-  selectedImageIndex: number | null;
+export interface ImageLoaderData {
+  selectedImage: (ImageProps & { info?: ImageInfo });
+  selectedImageIndex: number;
 }
 
 export const generateDummyImages = (count: number) => {
@@ -74,7 +74,7 @@ const preloadImage = (src: string): Promise<string> => {
  * Loader for the home page
  * Generates dummy images and folders data
  */
-export const homeLoader = async (): Promise<HomeLoaderData> => {
+export const galleryLoader = async (): Promise<GalleryLoaderData> => {
   // Generate dummy data
   const images = generateDummyImages(246)
   const folders = generateDummyFolders()
@@ -94,7 +94,6 @@ export const imageLoader = async ({ params }: {
 }): Promise<ImageLoaderData> => {
   // Generate all images and folders (same as home route)
   const images = generateDummyImages(246)
-  const folders = generateDummyFolders()
 
   // Find the selected image
   const selectedImageData = images.find(img => img.id === params.id)
@@ -115,11 +114,7 @@ export const imageLoader = async ({ params }: {
     info: generateImageInfo()
   }
 
-  console.log(selectedImage)
-
   return {
-    images,
-    folders,
     selectedImage,
     selectedImageIndex,
   }

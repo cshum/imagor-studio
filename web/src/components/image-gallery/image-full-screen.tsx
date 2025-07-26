@@ -45,7 +45,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const isDesktop = useBreakpoint('md')
   const [direction, setDirection] = useState(0)
-  const [isClosing, setIsClosing] = useState(false)
+  const [isVisible, setIsVisible] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const dragDistance = useRef(0)
 
@@ -76,13 +76,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       transformComponentRef.current.resetTransform()
     }
     setIsInfoOpen(false)
-    setIsClosing(true)
-
-    setTimeout(() => {
-      if (onClose) {
-        onClose()
-      }
-    }, duration * 1000)
+    setIsVisible(false)
   }
 
   const handlePanStart = (_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
@@ -113,7 +107,6 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     panStartPosition.current = null
     dragDistance.current = 0
   }
-
 
   useEffect(() => {
     const calculateDimensions = () => {
@@ -162,9 +155,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       transformComponentRef.current.resetTransform(0)
     }
     setDirection(-1)
-    if (onPrevImage) {
-      onPrevImage()
-    }
+    onPrevImage?.()
   }
 
   const handleNextImage = () => {
@@ -172,9 +163,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       transformComponentRef.current.resetTransform(0)
     }
     setDirection(1)
-    if (onNextImage) {
-      onNextImage()
-    }
+    onNextImage?.()
   }
 
   const slideVariants = {
@@ -197,12 +186,11 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   }
 
   return (
-    <AnimatePresence>
-      {selectedImage && (
+    <AnimatePresence onExitComplete={onClose}>
+      {isVisible && selectedImage && (
         <motion.div
           className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center"
           ref={overlayRef}
-          exit={{ transition: { duration: duration } }}
         >
           <div
             className={`
@@ -239,7 +227,13 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                   >
                     {initialPosition ? (
                       <motion.div
-                        initial={initialPosition}
+                        initial={{
+                          position: 'absolute',
+                          top: initialPosition.top,
+                          left: initialPosition.left,
+                          width: initialPosition.width,
+                          height: initialPosition.height,
+                        }}
                         animate={{
                           top: 0,
                           left: 0,
@@ -247,8 +241,14 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                           height: '100%',
                           transition: { duration: duration },
                         }}
-                        exit={initialPosition || false}
-                        className="absolute flex items-center justify-center"
+                        exit={{
+                          top: initialPosition.top,
+                          left: initialPosition.left,
+                          width: initialPosition.width,
+                          height: initialPosition.height,
+                          transition: { duration: duration }
+                        }}
+                        className="flex items-center justify-center"
                       >
                         <motion.img
                           src={selectedImage.src}
@@ -296,10 +296,10 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                             height: dimensions.height,
                             transition: { duration: 0 },
                           }}
-                          exit={isClosing ? {
+                          exit={{
                             scale: 0.5,
                             transition: { duration: duration }
-                          } : {}}
+                          }}
                           className="max-h-full max-w-full object-contain"
                         />
                       </motion.div>

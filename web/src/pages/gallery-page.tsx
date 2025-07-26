@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useLoaderData, useRouterState } from '@tanstack/react-router'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
@@ -9,70 +9,50 @@ import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
-import { ImageFullScreen } from '@/components/image-gallery/image-full-screen.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { FolderGrid } from '@/components/image-gallery/folder-grid'
-import { ImageLoaderData, ImageProps, FolderProps } from '@/api/dummy'
-import { ImageInfo } from '@/components/image-gallery/image-info-view'
+import { ImageProps, FolderProps, GalleryLoaderData } from '@/api/dummy'
 
-export function GalleryPage() {
-  // Get loader data from router
-  const loaderData = useLoaderData({ strict: false }) as ImageLoaderData
+export interface GalleryPageProps extends React.PropsWithChildren{
+  galleryLoaderData: GalleryLoaderData
+}
 
+export function GalleryPage({galleryLoaderData, children} : GalleryPageProps) {
   const navigate = useNavigate()
   const { isLoading } = useRouterState()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const contentRef = useRef<HTMLDivElement | null>(null)
-  const initialPositionRef = useRef<{
-    top: number
-    left: number
-    width: number
-    height: number
-  } | null>(null)
 
-  // Get data from loader instead of generating locally
-  const images: ImageProps[] = loaderData?.images || []
-  const folders: FolderProps[] = loaderData?.folders || []
-  const selectedImage : ImageProps & { info?: ImageInfo } | null = loaderData?.selectedImage || null
-  const selectedImageIndex : number | null = loaderData?.selectedImageIndex || null
-
-  const handlePrevImage =  images && selectedImageIndex !== null && selectedImageIndex > 0
-    ? () => handleImageClick(images[selectedImageIndex - 1], null)
-    : undefined
-  const handleNextImage = images && selectedImageIndex !== null && selectedImageIndex < images.length - 1
-    ? () => handleImageClick(images[selectedImageIndex + 1], null)
-    : undefined
+  const { images, folders } = galleryLoaderData
 
   const isOpen = false
   const isDesktop = useBreakpoint('md')
 
   const maxItemWidth = 280
 
-  // Custom hooks
   const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
     containerRef, useMemo(() => new SessionConfigStorage('homePageScrollPosition'), []),
   )
   const { contentWidth, updateWidth } = useWidthHandler(contentRef, true, isOpen, isDesktop ? 32 : 16)
   useResizeHandler(updateWidth)
 
-  // Grid rendered state
   const [gridRendered, setGridRendered] = useState(false)
 
-  // Scroll restoration
   useEffect(() => {
-    if (containerRef.current && gridRendered && !selectedImage) {
+    if (containerRef.current && gridRendered) {
       restoreScrollPosition()
     }
-  }, [gridRendered, restoreScrollPosition, selectedImage])
+  }, [gridRendered, restoreScrollPosition])
 
   const handleImageClick = (
     { id }: ImageProps,
     position: { top: number; left: number; width: number; height: number } | null,
   ) => {
-    initialPositionRef.current = position
+    const search = position || undefined
     return navigate({
-      to: '/image/$id',
+      to: '/gallery/$id',
       params: { id },
+      search,
     })
   }
 
@@ -81,10 +61,6 @@ export function GalleryPage() {
     console.log(`Folder clicked: ${folder.name}`)
     // For example:
     // navigate({ to: '/folder/$id', params: { id: folder.id } })
-  }
-
-  const handleCloseFullView = () => {
-    return navigate({ to: '/home' })
   }
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 40 : 30)
@@ -123,13 +99,7 @@ export function GalleryPage() {
             </CardContent>
           </Card>
         </ContentLayout>
-        <ImageFullScreen
-          selectedImage={selectedImage}
-          onClose={handleCloseFullView}
-          onPrevImage={handlePrevImage}
-          onNextImage={handleNextImage}
-          initialPosition={initialPositionRef.current || undefined}
-        />
+        {children}
       </div>
     </>
   )

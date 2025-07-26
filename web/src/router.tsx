@@ -7,15 +7,15 @@ import {
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/router-devtools'
+import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
 import { RootLayout } from '@/layouts/root-layout'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { AccountPage } from '@/pages/account-page'
-import { homeLoader, imageLoader } from '@/api/dummy.ts'
+import { galleryLoader, imageLoader } from '@/api/dummy.ts'
+import { ImagePage, ImageSearchParams } from '@/pages/image-page.tsx'
 
-// Root route
 const rootRoute = createRootRoute({
   component: () => (
     <>
@@ -23,6 +23,14 @@ const rootRoute = createRootRoute({
       <TanStackRouterDevtools />
     </>
   ),
+})
+
+const rootPath = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  component: () => {
+    return <Navigate to="/gallery" replace />
+  },
 })
 
 const adminPanelLayoutRoute = createRoute({
@@ -35,6 +43,34 @@ const adminPanelLayoutRoute = createRoute({
   ),
 })
 
+const galleryRoute = createRoute({
+  getParentRoute: () => adminPanelLayoutRoute,
+  id: 'gallery',
+  component: () => {
+    const galleryLoaderData = galleryRoute.useLoaderData()
+    return <GalleryPage galleryLoaderData={galleryLoaderData }><Outlet /></GalleryPage>
+  },
+  loader: galleryLoader,
+})
+
+const galleryPage = createRoute({
+  getParentRoute: () => galleryRoute,
+  path: '/gallery',
+})
+
+const imagePage = createRoute({
+  getParentRoute: () => galleryRoute,
+  path: '/gallery/$id',
+  loader: imageLoader,
+  loaderDeps: () => ({ ts: Date.now() }),
+  component: () => {
+    const galleryLoaderData = galleryRoute.useLoaderData()
+    const imageLoaderData = imagePage.useLoaderData()
+    return <ImagePage imageLoaderData={imageLoaderData} galleryLoaderData={galleryLoaderData}/>
+  },
+  validateSearch: (search ): ImageSearchParams => search,
+})
+
 const accountLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'account-layout',
@@ -45,37 +81,21 @@ const accountLayoutRoute = createRoute({
   ),
 })
 
-// Build the route tree
+const accountPage = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  path: '/account',
+  component: AccountPage,
+})
+
 const routeTree = rootRoute.addChildren([
-  createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/',
-    component: () => {
-      return <Navigate to="/home" replace />
-    },
-  }),
+  rootPath,
   adminPanelLayoutRoute.addChildren([
-    createRoute({
-      getParentRoute: () => adminPanelLayoutRoute,
-      path: '/home',
-      component: GalleryPage,
-      loader: homeLoader,
-    }),
-    createRoute({
-      getParentRoute: () => adminPanelLayoutRoute,
-      path: '/image/$id',
-      component: GalleryPage,
-      loader: imageLoader,
-      loaderDeps: () => ({ ts: Date.now() }),
-    }),
+    galleryRoute.addChildren([
+      galleryPage,
+      imagePage,
+    ]),
   ]),
-  accountLayoutRoute.addChildren([
-    createRoute({
-      getParentRoute: () => accountLayoutRoute,
-      path: '/account',
-      component: AccountPage,
-    }),
-  ]),
+  accountPage,
 ])
 
 // Create router
