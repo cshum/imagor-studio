@@ -1,7 +1,8 @@
-import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router'
+import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { ImageFullScreen } from '@/components/image-gallery/image-full-screen.tsx'
 import { GalleryLoaderData, ImageLoaderData, ImageProps } from '@/api/dummy'
 import { LoadingBar } from '@/components/loading-bar.tsx'
+import { useImagePosition } from '@/stores/image-position-store.ts'
 
 export interface ImagePageProps {
   imageLoaderData: ImageLoaderData
@@ -10,20 +11,14 @@ export interface ImagePageProps {
   imageKey: string
 }
 
-export interface ImageSearchParams {
-  top?: number
-  left?: number
-  width?: number
-  height?: number
-}
-
 export function ImagePage({
                             imageLoaderData,
                             galleryLoaderData,
                             galleryKey,
+                            imageKey,
                           }: ImagePageProps) {
   const navigate = useNavigate()
-  const { top, left, width, height } = useSearch({ strict: false })
+  const { getPosition, clearPosition }  = useImagePosition()
   const { isLoading } = useRouterState()
 
   const { images } = galleryLoaderData
@@ -37,21 +32,23 @@ export function ImagePage({
     ? () => handleImageClick(images[selectedImageIndex + 1])
     : undefined
 
-  const handleImageClick = ({ id }: ImageProps) => {
-    return navigate({
+  const handleImageClick = async ({ id }: ImageProps) => {
+    await navigate({
       to: '/gallery/$galleryKey/$imageKey',
       params: {
         galleryKey,
         imageKey: id // Use imageKey parameter
       },
     })
+    clearPosition(galleryKey, imageKey)
   }
 
-  const handleCloseFullView = () => {
-    return navigate({
+  const handleCloseFullView = async () => {
+    await navigate({
       to: '/gallery/$galleryKey',
       params: { galleryKey }
     })
+    clearPosition(galleryKey, imageKey)
   }
 
   return (
@@ -62,12 +59,7 @@ export function ImagePage({
         onClose={handleCloseFullView}
         onPrevImage={handlePrevImage}
         onNextImage={handleNextImage}
-        initialPosition={top && left && width && height ? {
-          top: Number(top),
-          left: Number(left),
-          width: Number(width),
-          height: Number(height),
-        } : undefined}
+        initialPosition={getPosition(galleryKey, imageKey) || undefined}
       />
     </>
   )

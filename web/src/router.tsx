@@ -14,7 +14,7 @@ import { RootLayout } from '@/layouts/root-layout'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { AccountPage } from '@/pages/account-page'
 import { galleryLoader, imageLoader } from '@/api/dummy.ts'
-import { ImagePage, ImageSearchParams } from '@/pages/image-page.tsx'
+import { ImagePage } from '@/pages/image-page.tsx'
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -93,7 +93,6 @@ const imagePage = createRoute({
       />
     )
   },
-  validateSearch: (search): ImageSearchParams => search,
 })
 
 const accountLayoutRoute = createRoute({

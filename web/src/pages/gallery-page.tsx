@@ -12,6 +12,7 @@ import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { FolderGrid } from '@/components/image-gallery/folder-grid'
 import { ImageProps, FolderProps, GalleryLoaderData } from '@/api/dummy'
+import { ImagePosition, useImagePosition } from '@/stores/image-position-store.ts'
 
 export interface GalleryPageProps extends React.PropsWithChildren {
   galleryLoaderData: GalleryLoaderData
@@ -20,6 +21,7 @@ export interface GalleryPageProps extends React.PropsWithChildren {
 
 export function GalleryPage({ galleryLoaderData, galleryKey, children }: GalleryPageProps) {
   const navigate = useNavigate()
+  const { setPosition } = useImagePosition()
   const { isLoading } = useRouterState()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const contentRef = useRef<HTMLDivElement | null>(null)
@@ -50,16 +52,17 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const handleImageClick = (
     { id }: ImageProps,
-    position: { top: number; left: number; width: number; height: number } | null,
+    position: ImagePosition | null,
   ) => {
-    const search = position || undefined
+    if (position) {
+      setPosition(galleryKey, id, position)
+    }
     return navigate({
       to: '/gallery/$galleryKey/$imageKey',
       params: {
         galleryKey,
         imageKey: id // Use imageKey instead of id
       },
-      search,
     })
   }
 
