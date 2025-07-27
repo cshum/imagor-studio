@@ -61,10 +61,10 @@ export const ImageGrid = ({
         if (onImageClick) {
           const rect = e.currentTarget.getBoundingClientRect();
           onImageClick(image, {
-            top: rect.top,
-            left: rect.left,
-            width: rect.width,
-            height: rect.height
+            top: Math.round(rect.top),
+            left: Math.round(rect.left),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
           });
         }
       };
