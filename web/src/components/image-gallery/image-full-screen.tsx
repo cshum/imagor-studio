@@ -247,14 +247,12 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                           left: 0,
                           width: '100%',
                           height: '100%',
-                          transition: { duration: duration },
                         }}
                         exit={{
                           top: initialPosition.top,
                           left: initialPosition.left,
                           width: initialPosition.width,
                           height: initialPosition.height,
-                          transition: { duration: duration }
                         }}
                         className="flex items-center justify-center absolute"
                       >
@@ -270,13 +268,11 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                             width: dimensions.width,
                             height: dimensions.height,
                             objectFit: 'cover',
-                            transition: { duration: duration },
                           }}
                           exit={{
                             width: initialPosition.width,
                             height: initialPosition.height,
                             objectFit: 'cover',
-                            transition: { duration: duration },
                           }}
                           className="max-h-full max-w-full"
                         />
