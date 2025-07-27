@@ -6,6 +6,7 @@ import './index.css'
 import { AppRouter } from '@/router.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage.ts'
 import { themeActions } from '@/stores/theme-store.ts'
+
 const { initializeTheme } = themeActions
 
 initializeTheme(new LocalConfigStorage('theme'), 'class')
