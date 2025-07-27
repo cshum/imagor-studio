@@ -1,6 +1,7 @@
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router'
 import { ImageFullScreen } from '@/components/image-gallery/image-full-screen.tsx'
 import { GalleryLoaderData, ImageLoaderData, ImageProps } from '@/api/dummy'
+import { LoadingBar } from '@/components/loading-bar.tsx'
 
 export interface ImagePageProps {
   imageLoaderData: ImageLoaderData
@@ -17,6 +18,7 @@ export interface ImageSearchParams {
 export function ImagePage({ imageLoaderData, galleryLoaderData }: ImagePageProps) {
   const navigate = useNavigate()
   const { top, left, width, height } = useSearch({ strict: false })
+  const { isLoading } = useRouterState()
 
   const { images } = galleryLoaderData
   const { selectedImage, selectedImageIndex } = imageLoaderData
@@ -41,14 +43,17 @@ export function ImagePage({ imageLoaderData, galleryLoaderData }: ImagePageProps
   }
 
   return (
-    <ImageFullScreen
-      selectedImage={selectedImage}
-      onClose={handleCloseFullView}
-      onPrevImage={handlePrevImage}
-      onNextImage={handleNextImage}
-      initialPosition={top && left && width && height ? {
-        top: Number(top), left: Number(left), width: Number(width), height: Number(height),
-      }: undefined}
-    />
+    <>
+      <LoadingBar isLoading={isLoading} theme='dark' />
+      <ImageFullScreen
+        selectedImage={selectedImage}
+        onClose={handleCloseFullView}
+        onPrevImage={handlePrevImage}
+        onNextImage={handleNextImage}
+        initialPosition={top && left && width && height ? {
+          top: Number(top), left: Number(left), width: Number(width), height: Number(height),
+        }: undefined}
+      />
+    </>
   )
 }

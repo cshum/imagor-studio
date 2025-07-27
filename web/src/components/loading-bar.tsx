@@ -2,9 +2,25 @@ import { useEffect, useState } from 'react'
 
 interface LoadingBarProps {
   isLoading: boolean
+  theme?: 'light' | 'dark' | 'auto'
 }
 
-export function LoadingBar({ isLoading }: LoadingBarProps) {
+const themeClassesMap = {
+  light: {
+    background: 'bg-slate-100',
+    bar: 'bg-slate-900'
+  },
+  dark: {
+    background: 'bg-slate-800',
+    bar: 'bg-slate-50'
+  },
+  auto: {
+    background: 'bg-secondary',
+    bar: 'bg-primary'
+  }
+}
+
+export function LoadingBar({ isLoading, theme = 'auto' }: LoadingBarProps) {
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
@@ -33,10 +49,12 @@ export function LoadingBar({ isLoading }: LoadingBarProps) {
 
   if (progress === 0) return null
 
+  const themeClasses = themeClassesMap[theme] || themeClassesMap.auto
+
   return (
-    <div className="fixed top-0 left-0 w-full h-1 bg-secondary z-[100]">
+    <div className={`fixed top-0 left-0 w-full h-1 ${themeClasses.background} z-[100]`}>
       <div
-        className="h-full bg-primary transition-all duration-200 ease-out"
+        className={`h-full ${themeClasses.bar} transition-all duration-200 ease-out`}
         style={{ width: `${progress}%` }}
       />
     </div>
