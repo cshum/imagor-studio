@@ -67,11 +67,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     })
   }
 
-  const handleFolderClick = (folder: FolderProps) => {
-    // Navigate to the folder as a new gallery
-    console.log(`Folder clicked: ${folder.name}`)
-    // You could navigate to a new gallery based on the folder
-    // navigate({ to: '/gallery/$galleryKey', params: { galleryKey: folder.id } })
+  const handleFolderClick = ({ galleryKey }: FolderProps) => {
+    return navigate({
+      to: '/gallery/$galleryKey',
+      params: {
+        galleryKey,
+      },
+    })
   }
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 40 : 30)
