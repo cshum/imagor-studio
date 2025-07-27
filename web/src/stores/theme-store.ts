@@ -50,7 +50,7 @@ export const themeStore = createStore(initialState, reducer)
 
 // Theme management class
 class ThemeManager {
-  private storage: ConfigStorage
+  public storage: ConfigStorage // Make storage public for access
   private mediaQuery: MediaQueryList
   private attribute: string
 
@@ -203,7 +203,19 @@ export const themeActions = {
       themeManager.destroy()
       themeManager = null
     }
-  }
+  },
+
+  /**
+   * Reset theme to system default and clear storage
+   */
+  resetTheme: async () => {
+    if (!themeManager) {
+      console.warn('Theme manager not initialized')
+      return
+    }
+    await themeManager.storage.remove()
+    await themeManager.setTheme('system')
+  },
 }
 
 // Hook for components to use the theme store

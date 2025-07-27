@@ -14,4 +14,8 @@ export class SessionConfigStorage implements ConfigStorage {
   async set(value: string): Promise<void> {
     sessionStorage.setItem(this.storageKey, value)
   }
+
+  async remove(): Promise<void> {
+    sessionStorage.removeItem(this.storageKey)
+  }
 }

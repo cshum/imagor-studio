@@ -11,7 +11,11 @@ export class LocalConfigStorage implements ConfigStorage {
     return localStorage.getItem(this.storageKey)
   }
 
-  async set(theme: string): Promise<void> {
-    localStorage.setItem(this.storageKey, theme)
+  async set(value: string): Promise<void> {
+    localStorage.setItem(this.storageKey, value)
+  }
+
+  async remove(): Promise<void> {
+    localStorage.removeItem(this.storageKey)
   }
 }
