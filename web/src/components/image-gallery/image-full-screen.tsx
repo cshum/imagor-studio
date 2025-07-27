@@ -199,6 +199,12 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               ${isInfoOpen && isDesktop ? 'pl-[300px]' : 'pl-0'}
             `}
           >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 75 }}
+              exit={{ opacity: 75 }}
+              className='absolute bg-black/75 top-0 left-0 right-0 bottom-0'
+            ></motion.div>
             <TransformWrapper
               initialScale={1}
               minScale={1}
@@ -215,11 +221,6 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
             >
               {({ zoomIn, resetTransform }) => (
                 <>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 75 }}
-                    exit={{ opacity: 75 }}
-                    className='absolute bg-black/75 top-0 left-0 right-0 bottom-0'></motion.div>
                   <TransformComponent
                     wrapperStyle={{
                       width: '100%',
@@ -310,12 +311,12 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                     )}
                   </TransformComponent>
                   <div className="absolute bottom-4 right-8 flex space-x-4">
-                    <button
+                    {scale > 1 && <button
                       onClick={() => resetTransform()}
                       className="bg-black/50 text-white px-4 py-2 rounded-full hover:bg-black/75 transition-colors"
                     >
                       {calculateZoomPercentage(scale)}%
-                    </button>
+                    </button>}
                     <button
                       onClick={() => zoomIn()}
                       className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
