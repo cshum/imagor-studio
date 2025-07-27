@@ -2,7 +2,9 @@ import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { ImageFullScreen } from '@/components/image-gallery/image-full-screen.tsx'
 import { GalleryLoaderData, ImageLoaderData, ImageProps } from '@/api/dummy'
 import { LoadingBar } from '@/components/loading-bar.tsx'
-import { useImagePosition } from '@/stores/image-position-store.ts'
+import { imagePositionActions } from '@/stores/image-position-store.ts'
+
+const { getPosition, clearPosition } = imagePositionActions
 
 export interface ImagePageProps {
   imageLoaderData: ImageLoaderData
@@ -18,7 +20,6 @@ export function ImagePage({
                             imageKey,
                           }: ImagePageProps) {
   const navigate = useNavigate()
-  const { getPosition, clearPosition }  = useImagePosition()
   const { isLoading } = useRouterState()
 
   const { images } = galleryLoaderData
