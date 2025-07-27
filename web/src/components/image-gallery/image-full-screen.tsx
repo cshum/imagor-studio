@@ -37,8 +37,6 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   const duration = 0.2
   const [scale, setScale] = useState(1)
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
-  const panStartPosition = useRef<{ x: number; y: number } | null>(null)
-  const DRAG_THRESHOLD = 100
   const overlayRef = useRef<HTMLDivElement>(null)
 
   const [dimensions, setDimensions] = useState<ImageDimensions>({ width: 0, height: 0, naturalWidth: 0, naturalHeight: 0 })
@@ -46,8 +44,6 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   const isDesktop = useBreakpoint('md')
   const [direction, setDirection] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
-  const [isDragging, setIsDragging] = useState(false)
-  const dragDistance = useRef(0)
 
   useEffect(() => {
     if (!selectedImage) return
@@ -80,35 +76,6 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
       await new Promise(resolve => setTimeout(resolve, duration*1000))
     }
     setIsVisible(false)
-  }
-
-  const handlePanStart = (_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
-    if (scale === 1) {
-      const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
-      const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
-      panStartPosition.current = { x: clientX, y: clientY }
-      setIsDragging(true)
-      dragDistance.current = 0
-    }
-  }
-
-  const handlePan = (_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
-    if (scale === 1 && panStartPosition.current && isDragging) {
-      const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
-      const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
-      const dx = clientX - panStartPosition.current.x
-      const dy = clientY - panStartPosition.current.y
-      dragDistance.current = Math.sqrt(dx * dx + dy * dy)
-    }
-  }
-
-  const handlePanEnd = () => {
-    if (isDragging && dragDistance.current > DRAG_THRESHOLD) {
-      handleCloseFullView()
-    }
-    setIsDragging(false)
-    panStartPosition.current = null
-    dragDistance.current = 0
   }
 
   useEffect(() => {
@@ -214,9 +181,6 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               centerOnInit={true}
               onTransformed={({ state }) => handleZoomChange(state.scale)}
               onZoom={({ state }) => handleZoomChange(state.scale)}
-              onPanningStart={handlePanStart}
-              onPanning={handlePan}
-              onPanningStop={handlePanEnd}
               smooth={true}
               wheel={{ step: 0.05 }}
               pinch={{ step: 0.05 }}
