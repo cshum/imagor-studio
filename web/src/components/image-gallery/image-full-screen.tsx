@@ -60,17 +60,8 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     }
   }, [selectedImage])
 
-  const handleZoomChange = (newScale: number) => {
-    setScale(newScale)
-    if (newScale < 1) {
-      handleCloseFullView()
-    }
-  }
-
   const handleCloseFullView = async () => {
-    if (transformComponentRef.current) {
-      transformComponentRef.current.resetTransform()
-    }
+    transformComponentRef.current?.resetTransform()
     setIsInfoOpen(false)
     if (scale > 1) {
       await new Promise(resolve => setTimeout(resolve, duration*1000))
@@ -121,17 +112,13 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   }
 
   const handlePrevImage = () => {
-    if (transformComponentRef.current) {
-      transformComponentRef.current.resetTransform(0)
-    }
+    transformComponentRef.current?.resetTransform(0)
     setDirection(-1)
     onPrevImage?.()
   }
 
   const handleNextImage = () => {
-    if (transformComponentRef.current) {
-      transformComponentRef.current.resetTransform(0)
-    }
+    transformComponentRef.current?.resetTransform(0)
     setDirection(1)
     onNextImage?.()
   }
@@ -179,8 +166,8 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               initialScale={1}
               minScale={1}
               centerOnInit={true}
-              onTransformed={({ state }) => handleZoomChange(state.scale)}
-              onZoom={({ state }) => handleZoomChange(state.scale)}
+              onTransformed={({ state }) => setScale(state.scale)}
+              onZoom={({ state }) => setScale(state.scale)}
               smooth={true}
               wheel={{ step: 0.05 }}
               pinch={{ step: 0.05 }}
