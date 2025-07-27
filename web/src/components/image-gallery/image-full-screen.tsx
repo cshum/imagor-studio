@@ -331,7 +331,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               )}
             </TransformWrapper>
 
-            {onPrevImage && (
+            {onPrevImage && scale <= 1 && (
               <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 left-4' : 'bottom-4 left-8'}`}>
                 <button
                   onClick={handlePrevImage}
@@ -341,7 +341,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                 </button>
               </div>
             )}
-            {onNextImage && (
+            {onNextImage && scale <= 1 && (
               <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 right-4' : 'bottom-4 left-20'}`}>
                 <button
                   onClick={handleNextImage}
