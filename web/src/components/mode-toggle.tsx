@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useTheme } from '@/stores/theme-store.ts'
 
 export function ModeToggle() {
-  const { setTheme, theme } = useTheme()
+  const { setTheme, resolvedTheme } = useTheme()
 
   return (
     <TooltipProvider disableHoverableContent>
@@ -14,7 +14,7 @@ export function ModeToggle() {
             className="rounded-full w-8 h-8 bg-background"
             variant="outline"
             size="icon"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           >
             <SunIcon
               className="w-[1.2rem] h-[1.2rem] rotate-90 scale-0 transition-transform ease-in-out duration-500 dark:rotate-0 dark:scale-100"
