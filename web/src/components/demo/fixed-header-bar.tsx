@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from '@tanstack/react-router'
-import { Forward, MoreVertical } from 'lucide-react'
+import { Forward, MoreVertical, PanelLeft, PanelLeftClose } from 'lucide-react'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,33 +20,60 @@ import { ModeToggle } from '@/components/mode-toggle.tsx'
 
 interface FixedHeaderBarProps {
   isScrolled: boolean;
+  onTreeToggle?: () => void; // New prop for tree sidebar toggle
+  isTreeOpen?: boolean;      // New prop for tree sidebar state
 }
 
-export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({ isScrolled: isScrolledDown }) => {
+export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
+                                                                isScrolled: isScrolledDown,
+                                                                onTreeToggle,
+                                                                isTreeOpen = false
+                                                              }) => {
   return (
     <TooltipProvider>
       <header
         className={`sticky top-0 z-10 w-full px-2
-        ${isScrolledDown ? 'backdrop-blur shadow bg-card/80 dark:shadow-secondary md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
+        ${isScrolledDown ? 'backdrop-blur shadow bg-card/75 dark:shadow-secondary md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
       >
         <div className="mx-auto">
           <div className={`px-2 py-1 flex items-center justify-between ${isScrolledDown ? 'md:mx-6' : ''}`}>
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link to="/">Home</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator/>
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link to="/gallery">Gallery</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator/>
-              </BreadcrumbList>
-            </Breadcrumb>
+            <div className="flex items-center space-x-2">
+              {/* Tree Sidebar Toggle Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onTreeToggle}
+                    className={`h-8 w-8 ${isTreeOpen ? 'bg-accent' : ''}`}
+                  >
+                    {isTreeOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+                    <span className="sr-only">Toggle Tree Sidebar</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isTreeOpen ? 'Hide Tree' : 'Show Tree'}
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Breadcrumb */}
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <Link to="/">Home</Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator/>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <Link to="/gallery">Gallery</Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator/>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
 
             <div className="flex items-center space-x-1">
               <ModeToggle />
