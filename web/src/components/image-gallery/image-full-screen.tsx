@@ -300,6 +300,11 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
 
             <div className="absolute top-4 right-8 flex space-x-2 z-60">
               <button
+                className="text-white bg-black/50 rounded-full py-2 px-4 hover:bg-black/75 transition-colors"
+              >
+                imagor
+              </button>
+              <button
                 onClick={toggleInfo}
                 className="text-white bg-black/50 rounded-full p-2 hover:bg-black/75 transition-colors"
               >
