@@ -29,7 +29,8 @@ const rootPath = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: () => {
-    return <Navigate to="/gallery" replace />
+    // Default to a specific gallery - you can change 'default' to your preferred default gallery
+    return <Navigate to='/gallery/$galleryKey' params={{galleryKey: 'default'}} replace />
   },
 })
 
@@ -43,14 +44,24 @@ const adminPanelLayoutRoute = createRoute({
   ),
 })
 
+// Updated gallery route with galleryKey parameter
 const galleryRoute = createRoute({
   getParentRoute: () => adminPanelLayoutRoute,
-  path: '/gallery',
+  path: '/gallery/$galleryKey',
   component: () => {
     const galleryLoaderData = galleryRoute.useLoaderData()
-    return <GalleryPage galleryLoaderData={galleryLoaderData }><Outlet /></GalleryPage>
+    const { galleryKey } = galleryRoute.useParams()
+    return (
+      <GalleryPage
+        galleryLoaderData={galleryLoaderData}
+        galleryKey={galleryKey}
+      >
+        <Outlet />
+      </GalleryPage>
+    )
   },
-  loader: galleryLoader,
+  // Updated loader to accept galleryKey parameter
+  loader: ({ params }) => galleryLoader(params.galleryKey),
 })
 
 const galleryPage = createRoute({
@@ -58,17 +69,31 @@ const galleryPage = createRoute({
   id: 'gallery-page',
 })
 
+// Updated image route with imageKey parameter instead of id
 const imagePage = createRoute({
   getParentRoute: () => galleryRoute,
-  path: '/$id',
-  loader: imageLoader,
+  path: '/$imageKey',
+  loader: ({ params }) => imageLoader({
+    params: {
+      id: params.imageKey, // Map imageKey to id for existing loader
+      galleryKey: params.galleryKey
+    }
+  }),
   loaderDeps: () => ({ ts: Date.now() }),
   component: () => {
     const galleryLoaderData = galleryRoute.useLoaderData()
     const imageLoaderData = imagePage.useLoaderData()
-    return <ImagePage imageLoaderData={imageLoaderData} galleryLoaderData={galleryLoaderData}/>
+    const { galleryKey, imageKey } = imagePage.useParams()
+    return (
+      <ImagePage
+        imageLoaderData={imageLoaderData}
+        galleryLoaderData={galleryLoaderData}
+        galleryKey={galleryKey}
+        imageKey={imageKey}
+      />
+    )
   },
-  validateSearch: (search ): ImageSearchParams => search,
+  validateSearch: (search): ImageSearchParams => search,
 })
 
 const accountLayoutRoute = createRoute({

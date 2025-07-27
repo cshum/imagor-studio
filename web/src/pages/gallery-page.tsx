@@ -13,11 +13,12 @@ import { LoadingBar } from '@/components/loading-bar.tsx'
 import { FolderGrid } from '@/components/image-gallery/folder-grid'
 import { ImageProps, FolderProps, GalleryLoaderData } from '@/api/dummy'
 
-export interface GalleryPageProps extends React.PropsWithChildren{
+export interface GalleryPageProps extends React.PropsWithChildren {
   galleryLoaderData: GalleryLoaderData
+  galleryKey: string
 }
 
-export function GalleryPage({galleryLoaderData, children} : GalleryPageProps) {
+export function GalleryPage({ galleryLoaderData, galleryKey, children }: GalleryPageProps) {
   const navigate = useNavigate()
   const { isLoading } = useRouterState()
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -30,8 +31,11 @@ export function GalleryPage({galleryLoaderData, children} : GalleryPageProps) {
 
   const maxItemWidth = 280
 
+  // Use galleryKey-specific storage key for scroll position
+  const scrollStorageKey = `galleryPageScrollPosition_${galleryKey}`
   const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
-    containerRef, useMemo(() => new SessionConfigStorage('homePageScrollPosition'), []),
+    containerRef,
+    useMemo(() => new SessionConfigStorage(scrollStorageKey), [scrollStorageKey]),
   )
   const { contentWidth, updateWidth } = useWidthHandler(contentRef, true, isOpen, isDesktop ? 32 : 16)
   useResizeHandler(updateWidth)
@@ -50,28 +54,47 @@ export function GalleryPage({galleryLoaderData, children} : GalleryPageProps) {
   ) => {
     const search = position || undefined
     return navigate({
-      to: '/gallery/$id',
-      params: { id },
+      to: '/gallery/$galleryKey/$imageKey',
+      params: {
+        galleryKey,
+        imageKey: id // Use imageKey instead of id
+      },
       search,
     })
   }
 
   const handleFolderClick = (folder: FolderProps) => {
-    // Here you would typically navigate to a new route or update the state to show the folder's contents
+    // Navigate to the folder as a new gallery
     console.log(`Folder clicked: ${folder.name}`)
-    // For example:
-    // navigate({ to: '/folder/$id', params: { id: folder.id } })
+    // You could navigate to a new gallery based on the folder
+    // navigate({ to: '/gallery/$galleryKey', params: { galleryKey: folder.id } })
   }
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 40 : 30)
+
+  // Generate gallery title based on galleryKey
+  const getGalleryTitle = (key: string) => {
+    switch (key) {
+      case 'favorites':
+        return 'Favorite Images'
+      case 'recent':
+        return 'Recent Images'
+      case 'default':
+        return 'Gallery'
+      default:
+        return `Gallery: ${key}`
+    }
+  }
+
+  const galleryTitle = getGalleryTitle(galleryKey)
 
   return (
     <>
       <LoadingBar isLoading={isLoading}/>
       <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
-        <ContentLayout title="Title" isBounded={false}>
+        <ContentLayout title={galleryTitle} isBounded={false}>
           <div className="grid mx-4 my-2">
-            <h1 className="text-3xl md:text-4xl">Title</h1>
+            <h1 className="text-3xl md:text-4xl">{galleryTitle}</h1>
           </div>
           <FixedHeaderBar isScrolled={isScrolledDown}/>
           <Card className="rounded-lg border-none">

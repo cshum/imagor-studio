@@ -15,11 +15,13 @@ export interface FolderProps {
 export interface GalleryLoaderData {
   images: ImageProps[];
   folders: FolderProps[];
+  galleryKey: string;
 }
 
 export interface ImageLoaderData {
   selectedImage: (ImageProps & { info?: ImageInfo });
   selectedImageIndex: number;
+  galleryKey: string;
 }
 
 export const generateDummyImages = (count: number) => {
@@ -30,21 +32,32 @@ export const generateDummyImages = (count: number) => {
   }))
 }
 
+// Helper function to generate folders based on gallery key
+const generateDummyFolders = (galleryKey?: string): FolderProps[] => {
+  const baseFolders = [
+    { id: '1', name: 'Vacation Photos' },
+    { id: '2', name: 'Work Projects' },
+    { id: '3', name: 'Family Events' },
+    { id: '4', name: 'Hobbies' },
+    { id: '5', name: 'Miscellaneous' },
+    { id: '6', name: 'Documents' },
+    { id: '7', name: 'Music' },
+    { id: '8', name: 'Videos' },
+  ]
 
-// Helper function to generate folders
-const generateDummyFolders = (): FolderProps[] => [
-  { id: '1', name: 'Vacation Photos' },
-  { id: '2', name: 'Work Projects' },
-  { id: '3', name: 'Family Events' },
-  { id: '4', name: 'Hobbies' },
-  { id: '5', name: 'Miscellaneous' },
-  { id: '6', name: 'Documents' },
-  { id: '7', name: 'Music' },
-  { id: '8', name: 'Videos' },
-]
+  // Customize folder names based on gallery key
+  if (galleryKey) {
+    return baseFolders.map(folder => ({
+      ...folder,
+      name: `${galleryKey} - ${folder.name}`
+    }))
+  }
+
+  return baseFolders
+}
 
 // Helper function to generate image info
-const generateImageInfo = (): ImageInfo => ({
+const generateImageInfo = (galleryKey?: string): ImageInfo => ({
   exif: {
     "Camera": "Canon EOS 5D Mark IV",
     "Lens": "EF 24-70mm f/2.8L II USM",
@@ -56,7 +69,8 @@ const generateImageInfo = (): ImageInfo => ({
     "GPS Coordinates": "40°42'46.0\"N 74°00'21.0\"W",
     "File Size": "24.5 MB",
     "Color Space": "sRGB",
-    "Software": "Adobe Lightroom Classic 10.0"
+    "Software": "Adobe Lightroom Classic 10.0",
+    "Gallery": galleryKey || "Unknown"
   }
 })
 
@@ -71,38 +85,49 @@ const preloadImage = (src: string): Promise<string> => {
 }
 
 /**
- * Loader for the home page
- * Generates dummy images and folders data
+ * Updated loader for the gallery page with galleryKey support
+ * Generates dummy images and folders data based on gallery key
  */
-export const galleryLoader = async (): Promise<GalleryLoaderData> => {
-  // Generate dummy data
-  const images = generateDummyImages(246)
-  const folders = generateDummyFolders()
+export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderData> => {
+  // Generate different content based on gallery key
+  const imageCount = galleryKey === 'favorites' ? 123 :
+    galleryKey === 'recent' ? 89 :
+      246 // default count
+
+  const images = generateDummyImages(imageCount)
+  const folders = generateDummyFolders(galleryKey)
 
   return {
     images,
-    folders
+    folders,
+    galleryKey
   }
 }
 
 /**
- * Loader for the image detail page
+ * Updated loader for the image detail page with galleryKey support
  * Generates data and preloads the selected image
  */
 export const imageLoader = async ({ params }: {
-  params: { id: string };
+  params: { id: string; galleryKey: string };
 }): Promise<ImageLoaderData> => {
-  // Generate all images and folders (same as home route)
-  const images = generateDummyImages(246)
+  const { id, galleryKey } = params
+
+  // Generate all images for this gallery (same as gallery route)
+  const imageCount = galleryKey === 'favorites' ? 123 :
+    galleryKey === 'recent' ? 89 :
+      246 // default count
+
+  const images = generateDummyImages(imageCount)
 
   // Find the selected image
-  const selectedImageData = images.find(img => img.id === params.id)
+  const selectedImageData = images.find(img => img.id === id)
 
   if (!selectedImageData) {
     throw new Error('not found')
   }
 
-  const selectedImageIndex = images.findIndex(img => img.id === params.id)
+  const selectedImageIndex = images.findIndex(img => img.id === id)
 
   const fullSizeSrc = selectedImageData.src.replace('/300/225', '/1200/900')
 
@@ -111,11 +136,12 @@ export const imageLoader = async ({ params }: {
   const selectedImage: ImageProps & { info?: ImageInfo } = {
     ...selectedImageData,
     src: fullSizeSrc,
-    info: generateImageInfo()
+    info: generateImageInfo(galleryKey)
   }
 
   return {
     selectedImage,
     selectedImageIndex,
+    galleryKey
   }
 }

@@ -6,6 +6,8 @@ import { LoadingBar } from '@/components/loading-bar.tsx'
 export interface ImagePageProps {
   imageLoaderData: ImageLoaderData
   galleryLoaderData: GalleryLoaderData
+  galleryKey: string
+  imageKey: string
 }
 
 export interface ImageSearchParams {
@@ -15,7 +17,11 @@ export interface ImageSearchParams {
   height?: number
 }
 
-export function ImagePage({ imageLoaderData, galleryLoaderData }: ImagePageProps) {
+export function ImagePage({
+                            imageLoaderData,
+                            galleryLoaderData,
+                            galleryKey,
+                          }: ImagePageProps) {
   const navigate = useNavigate()
   const { top, left, width, height } = useSearch({ strict: false })
   const { isLoading } = useRouterState()
@@ -23,23 +29,29 @@ export function ImagePage({ imageLoaderData, galleryLoaderData }: ImagePageProps
   const { images } = galleryLoaderData
   const { selectedImage, selectedImageIndex } = imageLoaderData
 
-  const handlePrevImage =  images && selectedImageIndex > 0
+  const handlePrevImage = images && selectedImageIndex > 0
     ? () => handleImageClick(images[selectedImageIndex - 1])
     : undefined
+
   const handleNextImage = images && selectedImageIndex < images.length - 1
     ? () => handleImageClick(images[selectedImageIndex + 1])
     : undefined
-  const handleImageClick = (
-    { id }: ImageProps,
-  ) => {
+
+  const handleImageClick = ({ id }: ImageProps) => {
     return navigate({
-      to: '/gallery/$id',
-      params: { id },
+      to: '/gallery/$galleryKey/$imageKey',
+      params: {
+        galleryKey,
+        imageKey: id // Use imageKey parameter
+      },
     })
   }
 
   const handleCloseFullView = () => {
-    return navigate({ to: '/gallery' })
+    return navigate({
+      to: '/gallery/$galleryKey',
+      params: { galleryKey }
+    })
   }
 
   return (
@@ -51,8 +63,11 @@ export function ImagePage({ imageLoaderData, galleryLoaderData }: ImagePageProps
         onPrevImage={handlePrevImage}
         onNextImage={handleNextImage}
         initialPosition={top && left && width && height ? {
-          top: Number(top), left: Number(left), width: Number(width), height: Number(height),
-        }: undefined}
+          top: Number(top),
+          left: Number(left),
+          width: Number(width),
+          height: Number(height),
+        } : undefined}
       />
     </>
   )

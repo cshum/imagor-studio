@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from '@tanstack/react-router'
+import { Link, useParams } from '@tanstack/react-router'
 import { Forward, MoreVertical, PanelLeft, PanelLeftClose } from 'lucide-react'
 import {
   Breadcrumb,
@@ -29,6 +29,23 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
                                                                 onTreeToggle,
                                                                 isTreeOpen = false
                                                               }) => {
+  // Get current route parameters
+  const params = useParams({ strict: false })
+  const galleryKey = params.galleryKey || 'default'
+
+  const getGalleryDisplayName = (key: string) => {
+    switch (key) {
+      case 'favorites':
+        return 'Favorites'
+      case 'recent':
+        return 'Recent'
+      case 'default':
+        return 'Gallery'
+      default:
+        return key.charAt(0).toUpperCase() + key.slice(1)
+    }
+  }
+
   return (
     <TooltipProvider>
       <header
@@ -56,7 +73,7 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
                 </TooltipContent>
               </Tooltip>
 
-              {/* Breadcrumb */}
+              {/* Updated Breadcrumb with gallery key */}
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
@@ -67,7 +84,12 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
                   <BreadcrumbSeparator/>
                   <BreadcrumbItem>
                     <BreadcrumbLink asChild>
-                      <Link to="/gallery">Gallery</Link>
+                      <Link
+                        to="/gallery/$galleryKey"
+                        params={{ galleryKey }}
+                      >
+                        {getGalleryDisplayName(galleryKey)}
+                      </Link>
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator/>
@@ -94,6 +116,15 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    <Link to='/gallery/$galleryKey' params={{galleryKey: 'favourites'}}>View Favorites</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to='/gallery/$galleryKey' params={{galleryKey: 'recent'}} >View Recent</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="/gallery/$galleryKey" params={{galleryKey: 'default'}}>View All</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem>Mark as unread</DropdownMenuItem>
                   <DropdownMenuItem>Star thread</DropdownMenuItem>
                   <DropdownMenuItem>Add label</DropdownMenuItem>
