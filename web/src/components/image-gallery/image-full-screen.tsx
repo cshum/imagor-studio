@@ -309,7 +309,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                       </motion.div>
                     )}
                   </TransformComponent>
-                  <div className="absolute bottom-4 right-8 flex space-x-4">
+                  <div className="absolute z-10 bottom-4 right-8 flex space-x-4">
                     {scale > 1 && <button
                       onClick={() => resetTransform()}
                       className="bg-black/50 text-white px-4 py-2 rounded-full hover:bg-black/75 transition-colors"
@@ -326,9 +326,8 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                 </>
               )}
             </TransformWrapper>
-
             {onPrevImage && scale <= 1 && (
-              <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 left-4' : 'bottom-4 left-8'}`}>
+              <div className={`absolute z-10 ${isDesktop ? 'top-1/2 -translate-y-1/2 left-4' : 'bottom-4 left-8'}`}>
                 <button
                   onClick={handlePrevImage}
                   className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
@@ -338,7 +337,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               </div>
             )}
             {onNextImage && scale <= 1 && (
-              <div className={`absolute ${isDesktop ? 'top-1/2 -translate-y-1/2 right-4' : 'bottom-4 left-20'}`}>
+              <div className={`absolute z-10 ${isDesktop ? 'top-1/2 -translate-y-1/2 right-4' : 'bottom-4 left-20'}`}>
                 <button
                   onClick={handleNextImage}
                   className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
@@ -362,6 +361,11 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                 <X size={24}/>
               </button>
             </div>
+
+            {scale <= 1 && <div
+              className='absolute z-0 top-0 left-0 right-0 bottom-0'
+              onClick={handleCloseFullView}
+            ></div>}
 
             <Sheet open={isInfoOpen} onOpenChange={setIsInfoOpen}>
               <ImageInfoView info={selectedImage.info}/>
