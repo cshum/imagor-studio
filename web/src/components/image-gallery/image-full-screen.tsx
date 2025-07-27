@@ -71,11 +71,14 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     }
   }
 
-  const handleCloseFullView = () => {
+  const handleCloseFullView = async () => {
     if (transformComponentRef.current) {
       transformComponentRef.current.resetTransform()
     }
     setIsInfoOpen(false)
+    if (scale > 1) {
+      await new Promise(resolve => setTimeout(resolve, duration*1000))
+    }
     setIsVisible(false)
   }
 
