@@ -10,13 +10,18 @@ import {
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
-import { RootLayout } from '@/layouts/root-layout'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { AccountPage } from '@/pages/account-page'
 import { galleryLoader, imageLoader } from '@/api/dummy.ts'
 import { ImagePage } from '@/pages/image-page.tsx'
+import { themeStore } from '@/stores/theme-store.ts'
 
 const rootRoute = createRootRoute({
+  loader: async () => {
+    // Wait for theme to be loaded before rendering
+    await themeStore.waitFor(state => state.isLoaded)
+    return null
+  },
   component: () => (
     <>
       <Outlet />
@@ -131,11 +136,7 @@ const createAppRouter = () =>
 export function AppRouter() {
   const router = useMemo(() => createAppRouter(), [])
 
-  return (
-    <RootLayout>
-      <RouterProvider router={router} />
-    </RootLayout>
-  )
+  return <RouterProvider router={router} />
 }
 
 // Type registration
