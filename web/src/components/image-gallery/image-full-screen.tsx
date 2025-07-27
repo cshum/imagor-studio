@@ -9,7 +9,7 @@ import { Sheet } from '@/components/ui/sheet'
 interface SelectedImage {
   src: string
   alt: string
-  id: string
+  imageKey: string
   info?: ImageInfo
 }
 
@@ -230,7 +230,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                       </motion.div>
                     ) : (
                       <motion.div
-                        key={selectedImage.id}
+                        key={selectedImage.imageKey}
                         variants={slideVariants}
                         custom={direction}
                         initial="enter"

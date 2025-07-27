@@ -52,17 +52,17 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   }, [gridRendered, restoreScrollPosition])
 
   const handleImageClick = (
-    { id }: ImageProps,
+    { imageKey }: ImageProps,
     position: ImagePosition | null,
   ) => {
     if (position) {
-      setPosition(galleryKey, id, position)
+      setPosition(galleryKey, imageKey, position)
     }
     return navigate({
       to: '/gallery/$galleryKey/$imageKey',
       params: {
         galleryKey,
-        imageKey: id // Use imageKey instead of id
+        imageKey: imageKey // Use imageKey instead of id
       },
     })
   }

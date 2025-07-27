@@ -2,13 +2,13 @@ import { ImageInfo } from '@/components/image-gallery/image-info-view'
 
 // Types for loader data
 export interface ImageProps {
-  id: string;
+  imageKey: string;
   src: string;
   alt: string;
 }
 
 export interface FolderProps {
-  id: string;
+  galleryKey: string;
   name: string;
 }
 
@@ -26,7 +26,7 @@ export interface ImageLoaderData {
 
 export const generateDummyImages = (count: number) => {
   return Array.from({ length: count }, (_, i) => ({
-    id: `${i + 1}`,
+    imageKey: `${i + 1}.jpg`,
     src: `https://placedog.net/300/225?id=${(i + 1) % 1000}`,
     alt: `Random image ${i + 1}`,
   }))
@@ -35,14 +35,12 @@ export const generateDummyImages = (count: number) => {
 // Helper function to generate folders based on gallery key
 const generateDummyFolders = (galleryKey?: string): FolderProps[] => {
   const baseFolders = [
-    { id: '1', name: 'Vacation Photos' },
-    { id: '2', name: 'Work Projects' },
-    { id: '3', name: 'Family Events' },
-    { id: '4', name: 'Hobbies' },
-    { id: '5', name: 'Miscellaneous' },
-    { id: '6', name: 'Documents' },
-    { id: '7', name: 'Music' },
-    { id: '8', name: 'Videos' },
+    { galleryKey: 'vacation', name: 'Vacation Photos' },
+    { galleryKey: 'work', name: 'Work Projects' },
+    { galleryKey: 'family', name: 'Family Events' },
+    { galleryKey: 'hobbies', name: 'Hobbies' },
+    { galleryKey: 'miscellaneous', name: 'Miscellaneous' },
+    { galleryKey: 'documents', name: 'Documents' },
   ]
 
   // Customize folder names based on gallery key
@@ -109,9 +107,9 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
  * Generates data and preloads the selected image
  */
 export const imageLoader = async ({ params }: {
-  params: { id: string; galleryKey: string };
+  params: { imageKey: string; galleryKey: string };
 }): Promise<ImageLoaderData> => {
-  const { id, galleryKey } = params
+  const { imageKey, galleryKey } = params
 
   // Generate all images for this gallery (same as gallery route)
   const imageCount = galleryKey === 'favorites' ? 123 :
@@ -121,13 +119,13 @@ export const imageLoader = async ({ params }: {
   const images = generateDummyImages(imageCount)
 
   // Find the selected image
-  const selectedImageData = images.find(img => img.id === id)
+  const selectedImageData = images.find(img => img.imageKey === imageKey)
 
   if (!selectedImageData) {
     throw new Error('not found')
   }
 
-  const selectedImageIndex = images.findIndex(img => img.id === id)
+  const selectedImageIndex = images.findIndex(img => img.imageKey === imageKey)
 
   const fullSizeSrc = selectedImageData.src.replace('/300/225', '/1200/900')
 

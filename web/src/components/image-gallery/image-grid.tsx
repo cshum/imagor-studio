@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 
 export interface ImageProps {
-  id: string;
+  imageKey: string;
   src: string;
   alt: string;
 }
@@ -71,7 +71,7 @@ export const ImageGrid = ({
 
       return (
         <div
-          key={image.id}
+          key={image.imageKey}
           className="absolute box-border p-1 md:p-2 cursor-pointer"
           style={{
             width: `${columnWidth}px`,

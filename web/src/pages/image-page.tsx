@@ -33,23 +33,23 @@ export function ImagePage({
     ? () => handleImageClick(images[selectedImageIndex + 1])
     : undefined
 
-  const handleImageClick = async ({ id }: ImageProps) => {
-    await navigate({
+  const handleImageClick = ({ imageKey }: ImageProps) => {
+    clearPosition(galleryKey, imageKey)
+    navigate({
       to: '/gallery/$galleryKey/$imageKey',
       params: {
         galleryKey,
-        imageKey: id // Use imageKey parameter
+        imageKey: imageKey // Use imageKey parameter
       },
     })
-    clearPosition(galleryKey, imageKey)
   }
 
-  const handleCloseFullView = async () => {
-    await navigate({
+  const handleCloseFullView = () => {
+    clearPosition(galleryKey, imageKey)
+    navigate({
       to: '/gallery/$galleryKey',
       params: { galleryKey }
     })
-    clearPosition(galleryKey, imageKey)
   }
 
   return (

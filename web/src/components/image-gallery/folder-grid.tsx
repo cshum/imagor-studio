@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Folder } from 'lucide-react'
 
 export interface FolderProps {
-  id: string
+  galleryKey: string
   name: string
 }
 
@@ -27,7 +27,7 @@ export const FolderGrid = ({ folders, onFolderClick, width, maxFolderWidth }: Fo
     >
       {folders.map((folder) => (
         <Card
-          key={folder.id}
+          key={folder.galleryKey}
           className="cursor-pointer hover:bg-accent transition-colors"
           onClick={() => onFolderClick?.(folder)}
           style={{ width: `${folderWidth - 8}px` }} // Subtracting 8px to account for the gap
