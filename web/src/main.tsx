@@ -8,8 +8,7 @@ import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage.ts
 import { themeActions } from '@/stores/theme-store.ts'
 const { initializeTheme } = themeActions
 
-const themeStorage = new LocalConfigStorage('theme')
-initializeTheme(themeStorage, 'class')
+initializeTheme(new LocalConfigStorage('theme'), 'class')
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
