@@ -1,4 +1,3 @@
-import React from 'react'
 import { SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
@@ -8,18 +7,18 @@ export interface ImageInfo {
 }
 
 interface ImageInfoViewProps {
-  info?: ImageInfo;
+  imageInfo?: ImageInfo;
 }
 
-export const ImageInfoView: React.FC<ImageInfoViewProps> = ({ info }) => {
+export const ImageInfoView = ({ imageInfo }: ImageInfoViewProps) => {
   return (
     <SheetContent className="w-[300px] sm:w-[300px]" side="left" hideOverlay>
       <SheetHeader className="text-left">
         <SheetTitle>Image Information</SheetTitle>
       </SheetHeader>
       <ScrollArea className="h-[calc(100vh-80px)] mt-4">
-        {info?.exif ? (
-          Object.entries(info.exif).map(([key, value]) => (
+        {imageInfo?.exif ? (
+          Object.entries(imageInfo.exif).map(([key, value]) => (
             <div key={key} className="mb-2">
               <span className="font-semibold">{key}:</span> {value}
             </div>

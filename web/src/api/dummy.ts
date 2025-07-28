@@ -1,4 +1,3 @@
-import { ImageInfo } from '@/components/image-gallery/image-info-view'
 import { preloadImage } from '@/lib/preload-image.ts'
 
 export interface Image {
@@ -6,6 +5,10 @@ export interface Image {
   imageSrc: string;
   imageName: string;
   imageInfo?: ImageInfo
+}
+
+export interface ImageInfo {
+  exif?: Record<string, string>;
 }
 
 export interface Gallery {
