@@ -121,13 +121,11 @@ export function ImageFullScreen({
   }
 
   const handlePrevImage = () => {
-    transformComponentRef.current?.resetTransform(0)
     setDirection(-1)
     onPrevImage?.()
   }
 
   const handleNextImage = () => {
-    transformComponentRef.current?.resetTransform(0)
     setDirection(1)
     onNextImage?.()
   }
@@ -168,12 +166,6 @@ export function ImageFullScreen({
       opacity: 0,
     }),
   }
-
-  /*
-  const calculateZoomPercentage = (scale: number) => {
-    return Math.round((scale * dimensions.width / dimensions.naturalWidth) * 100)
-  }
-   */
 
   return (
     <AnimatePresence onExitComplete={onClose}>
