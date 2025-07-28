@@ -21,8 +21,8 @@ export interface GalleryLoaderData {
 }
 
 export interface ImageLoaderData {
-  selectedImage: Image;
-  selectedImageIndex: number;
+  image: Image;
+  imageIndex: number;
   galleryKey: string;
 }
 
@@ -148,8 +148,8 @@ export const imageLoader = async ({ params }: {
   }
 
   return {
-    selectedImage,
-    selectedImageIndex,
+    image: selectedImage,
+    imageIndex: selectedImageIndex,
     galleryKey
   }
 }

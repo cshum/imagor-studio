@@ -7,7 +7,7 @@ import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { Sheet } from '@/components/ui/sheet'
 import { preloadImage } from '@/lib/preload-image.ts'
 
-interface SelectedImage {
+interface Image {
   imageSrc: string
   imageName: string
   imageKey: string
@@ -15,7 +15,7 @@ interface SelectedImage {
 }
 
 interface FullScreenImageProps {
-  selectedImage: SelectedImage | null
+  image: Image | null
   onClose: () => void
   onPrevImage?: () => void
   onNextImage?: () => void
@@ -36,7 +36,7 @@ interface ImageDimensions {
 
 const SWIPE_CONFIDENCE_THRESHOLD = 10000
 
-export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextImage, initialPosition }: FullScreenImageProps) {
+export function ImageFullScreen({ image, onClose, onPrevImage, onNextImage, initialPosition }: FullScreenImageProps) {
   const duration = 0.2
   const [scale, setScale] = useState(1)
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
@@ -51,9 +51,9 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   const [isDragging, setIsDragging] = useState(false)
 
   useEffect(() => {
-    if (!selectedImage) return
+    if (!image) return
 
-    preloadImage(selectedImage.imageSrc).then(setImageElement)
+    preloadImage(image.imageSrc).then(setImageElement)
 
     const overlay = overlayRef.current
     if (!overlay) return
@@ -65,7 +65,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     return () => {
       overlay.removeEventListener('touchmove', preventDefault)
     }
-  }, [selectedImage])
+  }, [image])
 
   const handleCloseFullView = async () => {
     transformComponentRef.current?.resetTransform()
@@ -170,7 +170,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
 
   return (
     <AnimatePresence onExitComplete={onClose}>
-      {isVisible && selectedImage && (
+      {isVisible && image && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
           ref={overlayRef}
@@ -234,8 +234,8 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                         className="flex items-center justify-center absolute"
                       >
                         <motion.img
-                          src={selectedImage.imageSrc}
-                          alt={selectedImage.imageName}
+                          src={image.imageSrc}
+                          alt={image.imageName}
                           initial={{
                             width: initialPosition.width,
                             height: initialPosition.height,
@@ -256,7 +256,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                       </motion.div>
                     ) : (
                       <motion.div
-                        key={selectedImage.imageKey}
+                        key={image.imageKey}
                         variants={slideVariants}
                         custom={direction}
                         initial="enter"
@@ -269,8 +269,8 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                         className="absolute z-10 flex items-center justify-center w-full h-full"
                       >
                         <motion.img
-                          src={selectedImage.imageSrc}
-                          alt={selectedImage.imageName}
+                          src={image.imageSrc}
+                          alt={image.imageName}
                           initial={false}
                           animate={{
                             width: dimensions.width,
@@ -363,7 +363,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
             )}
 
             <Sheet open={isInfoOpen} onOpenChange={setIsInfoOpen}>
-              <ImageInfoView info={selectedImage.imageInfo}/>
+              <ImageInfoView info={image.imageInfo}/>
             </Sheet>
           </div>
         </div>

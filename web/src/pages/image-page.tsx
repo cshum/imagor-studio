@@ -23,14 +23,14 @@ export function ImagePage({
   const { isLoading } = useRouterState()
 
   const { images } = galleryLoaderData
-  const { selectedImage, selectedImageIndex } = imageLoaderData
+  const { image, imageIndex } = imageLoaderData
 
-  const handlePrevImage = images && selectedImageIndex > 0
-    ? () => handleImageClick(images[selectedImageIndex - 1])
+  const handlePrevImage = images && imageIndex > 0
+    ? () => handleImageClick(images[imageIndex - 1])
     : undefined
 
-  const handleNextImage = images && selectedImageIndex < images.length - 1
-    ? () => handleImageClick(images[selectedImageIndex + 1])
+  const handleNextImage = images && imageIndex < images.length - 1
+    ? () => handleImageClick(images[imageIndex + 1])
     : undefined
 
   const handleImageClick = ({ imageKey }: Image) => {
@@ -56,7 +56,7 @@ export function ImagePage({
     <>
       <LoadingBar isLoading={isLoading} theme='dark' />
       <ImageFullScreen
-        selectedImage={selectedImage}
+        image={image}
         onClose={handleCloseFullView}
         onPrevImage={handlePrevImage}
         onNextImage={handleNextImage}
