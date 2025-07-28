@@ -4,6 +4,7 @@ export const preloadImage = (src: string): Promise<HTMLImageElement> => {
     const img = new Image()
     img.onload = () => resolve(img)
     img.onerror = reject
+    img.onabort = reject
     img.src = src
   })
 }
