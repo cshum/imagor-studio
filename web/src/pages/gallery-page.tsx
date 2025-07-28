@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { ContentLayout } from '@/layouts/content-layout'
 import { Card, CardContent } from '@/components/ui/card'
@@ -7,7 +7,6 @@ import { useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
-import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { FolderGrid } from '@/components/image-gallery/folder-grid'
@@ -34,11 +33,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const maxItemWidth = 280
 
-  const scrollStorageKey = `galleryPageScrollPosition_${galleryKey}`
-  const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
-    containerRef,
-    useMemo(() => new SessionConfigStorage(scrollStorageKey), [scrollStorageKey]),
-  )
+  const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(containerRef, galleryKey)
   const { contentWidth, updateWidth } = useWidthHandler(contentRef, true, isOpen, isDesktop ? 32 : 16)
   useResizeHandler(updateWidth)
 

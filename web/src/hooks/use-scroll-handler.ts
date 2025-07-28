@@ -1,10 +1,10 @@
 import { RefObject, useCallback, useEffect, useRef, useState } from 'react'
-import { ConfigStorage } from '@/lib/config-storage/config-storage.ts'
+import { scrollPositionActions } from '@/stores/scroll-position-store'
 
 export const useScrollHandler = (
   containerRef: RefObject<HTMLDivElement | null>,
-  configStorage: ConfigStorage,
-  debounceDelay: number = 0, // Default debounce delay is 0, meaning no debounce
+  scrollKey: string, // Unique identifier for this scroll context
+  debounceDelay: number = 500, // Default debounce delay is 0, meaning no debounce
 ) => {
   const [scrollPosition, setScrollPosition] = useState<number>(0) // Use state for scroll position
   const [isScrolling, setIsScrolling] = useState<boolean>(false) // Track scrolling state
@@ -19,10 +19,10 @@ export const useScrollHandler = (
     }
 
     // Save scroll position after a short delay
-    scrollTimeoutRef.current = window.setTimeout(async () => {
-      await configStorage.set(currentScrollPosition.toString()) // Save scroll position using ConfigStorage
+    scrollTimeoutRef.current = window.setTimeout(() => {
+      scrollPositionActions.setPosition(scrollKey, currentScrollPosition) // Save scroll position using store
     }, 150)
-  }, [configStorage])
+  }, [scrollKey])
 
   // Debounced scroll handler
   const handleScroll = useCallback(() => {
@@ -55,14 +55,13 @@ export const useScrollHandler = (
     }
   }, [containerRef, debounceDelay, saveScrollPosition])
 
-  const restoreScrollPosition = useCallback(async () => {
-    const savedPosition = await configStorage.get() // Get scroll position using ConfigStorage
-    if (savedPosition !== null && containerRef.current) {
-      const scrollTop = parseInt(savedPosition, 10)
-      containerRef.current.scrollTop = scrollTop
-      setScrollPosition(scrollTop) // Restore scroll position in state
+  const restoreScrollPosition = useCallback(() => {
+    const savedPosition = scrollPositionActions.getPosition(scrollKey) // Get scroll position using store
+    if (savedPosition > 0 && containerRef.current) {
+      containerRef.current.scrollTop = savedPosition
+      setScrollPosition(savedPosition) // Restore scroll position in state
     }
-  }, [containerRef, configStorage])
+  }, [containerRef, scrollKey])
 
   // Add and clean up scroll event listener
   useEffect(() => {

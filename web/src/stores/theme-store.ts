@@ -158,7 +158,6 @@ export const themeActions = {
     if (themeManager) {
       themeManager.destroy()
     }
-
     themeManager = new ThemeManager(storage, attribute)
     await themeManager.initialize()
   },
