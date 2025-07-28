@@ -65,7 +65,7 @@ export const imagePositionActions = {
     const key = createKey(galleryKey, imageKey)
     imagePositionStore.dispatch({
       type: 'SET_POSITION',
-      payload: { key, position }
+      payload: { key, position },
     })
   },
 
@@ -85,7 +85,7 @@ export const imagePositionActions = {
     const key = createKey(galleryKey, imageKey)
     imagePositionStore.dispatch({
       type: 'CLEAR_POSITION',
-      payload: { key }
+      payload: { key },
     })
   },
 
@@ -94,7 +94,7 @@ export const imagePositionActions = {
    */
   clearAllPositions: () => {
     imagePositionStore.dispatch({
-      type: 'CLEAR_ALL_POSITIONS'
+      type: 'CLEAR_ALL_POSITIONS',
     })
   },
 
@@ -103,7 +103,7 @@ export const imagePositionActions = {
    */
   hasPosition: (galleryKey: string, imageKey: string): boolean => {
     return imagePositionActions.getPosition(galleryKey, imageKey) !== null
-  }
+  },
 }
 
 // Hook for components to use the store

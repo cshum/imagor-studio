@@ -1,6 +1,8 @@
 import React from 'react'
 import { Link, useParams } from '@tanstack/react-router'
 import { Forward, MoreVertical, PanelLeft, PanelLeftClose } from 'lucide-react'
+
+import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,19 +18,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { ModeToggle } from '@/components/mode-toggle.tsx'
 
 interface FixedHeaderBarProps {
-  isScrolled: boolean;
-  onTreeToggle?: () => void; // New prop for tree sidebar toggle
-  isTreeOpen?: boolean;      // New prop for tree sidebar state
+  isScrolled: boolean
+  onTreeToggle?: () => void // New prop for tree sidebar toggle
+  isTreeOpen?: boolean // New prop for tree sidebar state
 }
 
 export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
-                                                                isScrolled: isScrolledDown,
-                                                                onTreeToggle,
-                                                                isTreeOpen = false
-                                                              }) => {
+  isScrolled: isScrolledDown,
+  onTreeToggle,
+  isTreeOpen = false,
+}) => {
   // Get current route parameters
   const params = useParams({ strict: false })
   const galleryKey = params.galleryKey || 'default'
@@ -49,28 +50,31 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
   return (
     <TooltipProvider>
       <header
-        className={`sticky top-0 z-10 w-full px-2
-        ${isScrolledDown ? 'backdrop-blur shadow bg-card/75 dark:shadow-secondary md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
+        className={`sticky top-0 z-10 w-full px-2 ${isScrolledDown ? 'bg-card/75 dark:shadow-secondary shadow backdrop-blur md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
       >
-        <div className="mx-auto">
-          <div className={`px-2 py-1 flex items-center justify-between ${isScrolledDown ? 'md:mx-6' : ''}`}>
-            <div className="flex items-center space-x-2">
+        <div className='mx-auto'>
+          <div
+            className={`flex items-center justify-between px-2 py-1 ${isScrolledDown ? 'md:mx-6' : ''}`}
+          >
+            <div className='flex items-center space-x-2'>
               {/* Tree Sidebar Toggle Button */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    variant='ghost'
+                    size='icon'
                     onClick={onTreeToggle}
                     className={`h-8 w-8 ${isTreeOpen ? 'bg-accent' : ''}`}
                   >
-                    {isTreeOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
-                    <span className="sr-only">Toggle Tree Sidebar</span>
+                    {isTreeOpen ? (
+                      <PanelLeftClose className='h-4 w-4' />
+                    ) : (
+                      <PanelLeft className='h-4 w-4' />
+                    )}
+                    <span className='sr-only'>Toggle Tree Sidebar</span>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
-                  {isTreeOpen ? 'Hide Tree' : 'Show Tree'}
-                </TooltipContent>
+                <TooltipContent>{isTreeOpen ? 'Hide Tree' : 'Show Tree'}</TooltipContent>
               </Tooltip>
 
               {/* Updated Breadcrumb with gallery key */}
@@ -78,52 +82,55 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
                 <BreadcrumbList>
                   <BreadcrumbItem>
                     <BreadcrumbLink asChild>
-                      <Link to="/">Home</Link>
+                      <Link to='/'>Home</Link>
                     </BreadcrumbLink>
                   </BreadcrumbItem>
-                  <BreadcrumbSeparator/>
+                  <BreadcrumbSeparator />
                   <BreadcrumbItem>
                     <BreadcrumbLink asChild>
-                      <Link
-                        to="/gallery/$galleryKey"
-                        params={{ galleryKey }}
-                      >
+                      <Link to='/gallery/$galleryKey' params={{ galleryKey }}>
                         {getGalleryDisplayName(galleryKey)}
                       </Link>
                     </BreadcrumbLink>
                   </BreadcrumbItem>
-                  <BreadcrumbSeparator/>
+                  <BreadcrumbSeparator />
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
 
-            <div className="flex items-center space-x-1">
+            <div className='flex items-center space-x-1'>
               <ModeToggle />
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Forward className="h-4 w-4"/>
-                    <span className="sr-only">Forward</span>
+                  <Button variant='ghost' size='icon'>
+                    <Forward className='h-4 w-4' />
+                    <span className='sr-only'>Forward</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Forward</TooltipContent>
               </Tooltip>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4"/>
-                    <span className="sr-only">More</span>
+                  <Button variant='ghost' size='icon'>
+                    <MoreVertical className='h-4 w-4' />
+                    <span className='sr-only'>More</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align='end'>
                   <DropdownMenuItem>
-                    <Link to='/gallery/$galleryKey' params={{galleryKey: 'favourites'}}>View Favorites</Link>
+                    <Link to='/gallery/$galleryKey' params={{ galleryKey: 'favourites' }}>
+                      View Favorites
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Link to='/gallery/$galleryKey' params={{galleryKey: 'recent'}} >View Recent</Link>
+                    <Link to='/gallery/$galleryKey' params={{ galleryKey: 'recent' }}>
+                      View Recent
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Link to="/gallery/$galleryKey" params={{galleryKey: 'default'}}>View All</Link>
+                    <Link to='/gallery/$galleryKey' params={{ galleryKey: 'default' }}>
+                      View All
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>Mark as unread</DropdownMenuItem>
                   <DropdownMenuItem>Star thread</DropdownMenuItem>

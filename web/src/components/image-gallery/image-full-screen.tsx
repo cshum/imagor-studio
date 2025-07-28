@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion, PanInfo } from 'framer-motion'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
+import { AnimatePresence, motion, PanInfo } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Info, X, ZoomIn, ZoomOut } from 'lucide-react'
+
 import { ImageInfo, ImageInfoView } from '@/components/image-gallery/image-info-view'
-import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { Sheet } from '@/components/ui/sheet'
+import { useBreakpoint } from '@/hooks/use-breakpoint'
 
 interface Image {
   imageSrc: string
@@ -36,13 +37,25 @@ interface ImageDimensions {
 
 const SWIPE_CONFIDENCE_THRESHOLD = 10000
 
-export function ImageFullScreen({ image, imageElement, onClose, onPrevImage, onNextImage, initialPosition }: FullScreenImageProps) {
+export function ImageFullScreen({
+  image,
+  imageElement,
+  onClose,
+  onPrevImage,
+  onNextImage,
+  initialPosition,
+}: FullScreenImageProps) {
   const duration = 0.2
   const [scale, setScale] = useState(1)
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  const [dimensions, setDimensions] = useState<ImageDimensions>({ width: 0, height: 0, naturalWidth: 0, naturalHeight: 0 })
+  const [dimensions, setDimensions] = useState<ImageDimensions>({
+    width: 0,
+    height: 0,
+    naturalWidth: 0,
+    naturalHeight: 0,
+  })
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const isDesktop = useBreakpoint('md')
   const [direction, setDirection] = useState(0)
@@ -65,7 +78,7 @@ export function ImageFullScreen({ image, imageElement, onClose, onPrevImage, onN
     transformComponentRef.current?.resetTransform()
     setIsInfoOpen(false)
     if (scale > 1) {
-      await new Promise(resolve => setTimeout(resolve, duration*1000))
+      await new Promise((resolve) => setTimeout(resolve, duration * 1000))
     }
     setIsVisible(false)
   }
@@ -95,7 +108,7 @@ export function ImageFullScreen({ image, imageElement, onClose, onPrevImage, onN
         width: Math.round(newWidth),
         height: Math.round(newHeight),
         naturalWidth: img.width,
-        naturalHeight: img.height
+        naturalHeight: img.height,
       })
     }
     calculateDimensions()
@@ -165,22 +178,15 @@ export function ImageFullScreen({ image, imageElement, onClose, onPrevImage, onN
   return (
     <AnimatePresence onExitComplete={onClose}>
       {isVisible && image && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          ref={overlayRef}
-        >
+        <div className='fixed inset-0 z-50 flex items-center justify-center' ref={overlayRef}>
           <div
-            className={`
-              relative flex w-full h-full
-              transition-[padding-left] duration-500 ease-in-out
-              ${isInfoOpen && isDesktop ? 'pl-[300px]' : 'pl-0'}
-            `}
+            className={`relative flex h-full w-full transition-[padding-left] duration-500 ease-in-out ${isInfoOpen && isDesktop ? 'pl-[300px]' : 'pl-0'} `}
           >
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 75 }}
               exit={{ opacity: 75 }}
-              className='absolute bg-black/75 top-0 left-0 right-0 bottom-0'
+              className='absolute top-0 right-0 bottom-0 left-0 bg-black/75'
             ></motion.div>
             <TransformWrapper
               initialScale={1}
@@ -225,7 +231,7 @@ export function ImageFullScreen({ image, imageElement, onClose, onPrevImage, onN
                           width: initialPosition.width,
                           height: initialPosition.height,
                         }}
-                        className="flex items-center justify-center absolute"
+                        className='absolute flex items-center justify-center'
                       >
                         <motion.img
                           src={image.imageSrc}
@@ -245,7 +251,7 @@ export function ImageFullScreen({ image, imageElement, onClose, onPrevImage, onN
                             height: initialPosition.height,
                             objectFit: 'cover',
                           }}
-                          className="max-h-full max-w-full"
+                          className='max-h-full max-w-full'
                         />
                       </motion.div>
                     ) : (
@@ -253,14 +259,14 @@ export function ImageFullScreen({ image, imageElement, onClose, onPrevImage, onN
                         key={image.imageKey}
                         variants={slideVariants}
                         custom={direction}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
+                        initial='enter'
+                        animate='center'
+                        exit='exit'
                         transition={{
-                          x: { type: "spring", stiffness: 300, damping: 30 },
-                          opacity: { duration: 0.2 }
+                          x: { type: 'spring', stiffness: 300, damping: 30 },
+                          opacity: { duration: 0.2 },
                         }}
-                        className="absolute z-10 flex items-center justify-center w-full h-full"
+                        className='absolute z-10 flex h-full w-full items-center justify-center'
                       >
                         <motion.img
                           src={image.imageSrc}
@@ -273,91 +279,95 @@ export function ImageFullScreen({ image, imageElement, onClose, onPrevImage, onN
                           }}
                           exit={{
                             scale: 0.5,
-                            transition: { duration: duration }
+                            transition: { duration: duration },
                           }}
-                          className="max-h-full max-w-full object-contain"
+                          className='max-h-full max-w-full object-contain'
                         />
                       </motion.div>
                     )}
                   </TransformComponent>
-                  <div className="absolute z-10 bottom-4 right-8 flex space-x-4">
-                    {scale > 1 && <button
-                      onClick={() => resetTransform()}
-                      className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
-                    >
-                      <ZoomOut size={24}/>
-                    </button>}
+                  <div className='absolute right-8 bottom-4 z-10 flex space-x-4'>
+                    {scale > 1 && (
+                      <button
+                        onClick={() => resetTransform()}
+                        className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
+                      >
+                        <ZoomOut size={24} />
+                      </button>
+                    )}
                     <button
                       onClick={() => zoomIn()}
-                      className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
+                      className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
                     >
-                      <ZoomIn size={24}/>
+                      <ZoomIn size={24} />
                     </button>
                   </div>
                 </>
               )}
             </TransformWrapper>
             {onPrevImage && scale <= 1 && (
-              <div className={`absolute z-10 ${isDesktop ? 'top-1/2 -translate-y-1/2 left-4' : 'bottom-4 left-8'}`}>
+              <div
+                className={`absolute z-10 ${isDesktop ? 'top-1/2 left-4 -translate-y-1/2' : 'bottom-4 left-8'}`}
+              >
                 <button
                   onClick={handlePrevImage}
-                  className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
+                  className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
                 >
                   <ChevronLeft size={24} />
                 </button>
               </div>
             )}
             {onNextImage && scale <= 1 && (
-              <div className={`absolute z-10 ${isDesktop ? 'top-1/2 -translate-y-1/2 right-4' : 'bottom-4 left-20'}`}>
+              <div
+                className={`absolute z-10 ${isDesktop ? 'top-1/2 right-4 -translate-y-1/2' : 'bottom-4 left-20'}`}
+              >
                 <button
                   onClick={handleNextImage}
-                  className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
+                  className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
                 >
                   <ChevronRight size={24} />
                 </button>
               </div>
             )}
 
-            <div className="absolute top-4 right-8 flex space-x-2 z-60">
-              <button
-                className="text-white bg-black/50 rounded-full py-2 px-4 hover:bg-black/75 transition-colors"
-              >
+            <div className='absolute top-4 right-8 z-60 flex space-x-2'>
+              <button className='rounded-full bg-black/50 px-4 py-2 text-white transition-colors hover:bg-black/75'>
                 imagor
               </button>
               <button
                 onClick={toggleInfo}
-                className="text-white bg-black/50 rounded-full p-2 hover:bg-black/75 transition-colors"
+                className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
               >
-                <Info size={24}/>
+                <Info size={24} />
               </button>
               <button
                 onClick={handleCloseFullView}
-                className="text-white bg-black/50 rounded-full p-2 hover:bg-black/75 transition-colors"
+                className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
               >
-                <X size={24}/>
+                <X size={24} />
               </button>
             </div>
 
             {scale <= 1 && (
               <motion.div
-                className='absolute z-1 top-0 left-0 right-0 bottom-0'
+                className='absolute top-0 right-0 bottom-0 left-0 z-1'
                 onClick={handleOverlayClick}
-                drag={(onPrevImage || onNextImage) ? 'x' : false}
+                drag={onPrevImage || onNextImage ? 'x' : false}
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.2}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 style={{
-                  cursor: (onPrevImage || onNextImage) ? 'grab' : 'default'
+                  cursor: onPrevImage || onNextImage ? 'grab' : 'default',
                 }}
                 whileDrag={{
-                  cursor: 'grabbing'
+                  cursor: 'grabbing',
                 }}
               />
             )}
 
             <Sheet open={isInfoOpen} onOpenChange={setIsInfoOpen}>
-              <ImageInfoView imageInfo={image.imageInfo}/>
+              <ImageInfoView imageInfo={image.imageInfo} />
             </Sheet>
           </div>
         </div>

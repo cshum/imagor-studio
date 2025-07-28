@@ -1,32 +1,35 @@
 import { useCallback, useEffect, useRef } from 'react'
 
 export interface ImageProps {
-  imageKey: string;
-  imageSrc: string;
-  imageName: string;
+  imageKey: string
+  imageSrc: string
+  imageName: string
 }
 
 interface ImageGridProps {
-  images: ImageProps[];
-  aspectRatio: number;
-  width: number;
-  scrollTop: number;
-  maxImageWidth: number;
-  isScrolling: boolean;
-  onRendered?: () => void;
-  onImageClick?: (image: ImageProps, position: { top: number; left: number; width: number; height: number }) => void;
+  images: ImageProps[]
+  aspectRatio: number
+  width: number
+  scrollTop: number
+  maxImageWidth: number
+  isScrolling: boolean
+  onRendered?: () => void
+  onImageClick?: (
+    image: ImageProps,
+    position: { top: number; left: number; width: number; height: number },
+  ) => void
 }
 
 export const ImageGrid = ({
-                            images,
-                            aspectRatio,
-                            width,
-                            scrollTop,
-                            maxImageWidth,
-                            isScrolling,
-                            onRendered,
-                            onImageClick,
-                          }: ImageGridProps) => {
+  images,
+  aspectRatio,
+  width,
+  scrollTop,
+  maxImageWidth,
+  isScrolling,
+  onRendered,
+  onImageClick,
+}: ImageGridProps) => {
   // Dynamically calculate the number of columns based on maxImageWidth prop
   const columnCount = Math.max(2, Math.floor(width / maxImageWidth))
   const columnWidth = width / columnCount
@@ -59,20 +62,20 @@ export const ImageGrid = ({
 
       const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (onImageClick) {
-          const rect = e.currentTarget.getBoundingClientRect();
+          const rect = e.currentTarget.getBoundingClientRect()
           onImageClick(image, {
             top: Math.round(rect.top),
             left: Math.round(rect.left),
             width: Math.round(rect.width),
             height: Math.round(rect.height),
-          });
+          })
         }
-      };
+      }
 
       return (
         <div
           key={image.imageKey}
-          className="absolute box-border p-1 md:p-2 cursor-pointer"
+          className='absolute box-border cursor-pointer p-1 md:p-2'
           style={{
             width: `${columnWidth}px`,
             height: `${rowHeight}px`,
@@ -81,12 +84,11 @@ export const ImageGrid = ({
           }}
           onClick={handleClick}
         >
-          <div
-            className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
+          <div className='h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700'>
             <img
               src={image.imageSrc}
               alt={image.imageName}
-              className="w-full h-full object-cover"
+              className='h-full w-full object-cover'
             />
           </div>
         </div>
@@ -96,7 +98,10 @@ export const ImageGrid = ({
   )
 
   // Determine which images should be rendered based on scroll position
-  const startImageIndex = Math.max(0, Math.floor(scrollTop / rowHeight - overscanCount) * columnCount)
+  const startImageIndex = Math.max(
+    0,
+    Math.floor(scrollTop / rowHeight - overscanCount) * columnCount,
+  )
   const endImageIndex = Math.min(images.length, startImageIndex + totalRenderedRows * columnCount)
 
   const visibleImages = useCallback(() => {

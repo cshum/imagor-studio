@@ -1,32 +1,32 @@
 import { preloadImage } from '@/lib/preload-image.ts'
 
 export interface Image {
-  imageKey: string;
-  imageSrc: string;
-  imageName: string;
+  imageKey: string
+  imageSrc: string
+  imageName: string
   imageInfo?: ImageInfo
 }
 
 export interface ImageInfo {
-  exif?: Record<string, string>;
+  exif?: Record<string, string>
 }
 
 export interface Gallery {
-  galleryKey: string;
-  galleryName: string;
+  galleryKey: string
+  galleryName: string
 }
 
 export interface GalleryLoaderData {
   galleryName: string
-  galleryKey: string;
-  images: Image[];
-  folders: Gallery[];
+  galleryKey: string
+  images: Image[]
+  folders: Gallery[]
 }
 
 export interface ImageLoaderData {
-  image: Image;
+  image: Image
   imageElement: HTMLImageElement
-  galleryKey: string;
+  galleryKey: string
 }
 
 export const generateDummyImages = (count: number) => {
@@ -50,7 +50,7 @@ const generateDummyFolders = (galleryKey?: string): Gallery[] => {
 
   // Customize folder names based on gallery key
   if (galleryKey) {
-    return baseFolders.map(folder => ({
+    return baseFolders.map((folder) => ({
       ...folder,
       galleryName: folder.galleryName,
     }))
@@ -62,21 +62,20 @@ const generateDummyFolders = (galleryKey?: string): Gallery[] => {
 // Helper function to generate image info
 const generateImageInfo = (galleryKey?: string): ImageInfo => ({
   exif: {
-    "Camera": "Canon EOS 5D Mark IV",
-    "Lens": "EF 24-70mm f/2.8L II USM",
-    "Focal Length": "50mm",
-    "Aperture": "f/4.0",
-    "Shutter Speed": "1/250s",
-    "ISO": "100",
-    "Date Taken": "2023-09-15 14:30:22",
-    "GPS Coordinates": "40°42'46.0\"N 74°00'21.0\"W",
-    "File Size": "24.5 MB",
-    "Color Space": "sRGB",
-    "Software": "Adobe Lightroom Classic 10.0",
-    "Gallery": galleryKey || "Unknown"
-  }
+    Camera: 'Canon EOS 5D Mark IV',
+    Lens: 'EF 24-70mm f/2.8L II USM',
+    'Focal Length': '50mm',
+    Aperture: 'f/4.0',
+    'Shutter Speed': '1/250s',
+    ISO: '100',
+    'Date Taken': '2023-09-15 14:30:22',
+    'GPS Coordinates': '40°42\'46.0"N 74°00\'21.0"W',
+    'File Size': '24.5 MB',
+    'Color Space': 'sRGB',
+    Software: 'Adobe Lightroom Classic 10.0',
+    Gallery: galleryKey || 'Unknown',
+  },
 })
-
 
 // Generate gallery title based on galleryKey
 const getGalleryTitle = (key: string) => {
@@ -92,16 +91,13 @@ const getGalleryTitle = (key: string) => {
   }
 }
 
-
 /**
  * Updated loader for the gallery page with galleryKey support
  * Generates dummy images and folders data based on gallery key
  */
 export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderData> => {
   // Generate different content based on gallery key
-  const imageCount = galleryKey === 'favorites' ? 123 :
-    galleryKey === 'recent' ? 89 :
-      246 // default count
+  const imageCount = galleryKey === 'favorites' ? 123 : galleryKey === 'recent' ? 89 : 246 // default count
 
   const images = generateDummyImages(imageCount)
   const folders = generateDummyFolders(galleryKey)
@@ -111,7 +107,7 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
     galleryName,
     images,
     folders,
-    galleryKey
+    galleryKey,
   }
 }
 
@@ -119,20 +115,20 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
  * Updated loader for the image detail page with galleryKey support
  * Generates data and preloads the selected image
  */
-export const imageLoader = async ({ params }: {
-  params: { imageKey: string; galleryKey: string };
+export const imageLoader = async ({
+  params,
+}: {
+  params: { imageKey: string; galleryKey: string }
 }): Promise<ImageLoaderData> => {
   const { imageKey, galleryKey } = params
 
   // Generate all images for this gallery (same as gallery route)
-  const imageCount = galleryKey === 'favorites' ? 123 :
-    galleryKey === 'recent' ? 89 :
-      246 // default count
+  const imageCount = galleryKey === 'favorites' ? 123 : galleryKey === 'recent' ? 89 : 246 // default count
 
   const images = generateDummyImages(imageCount)
 
   // Find the selected image
-  const imageData = images.find(img => img.imageKey === imageKey)
+  const imageData = images.find((img) => img.imageKey === imageKey)
 
   if (!imageData) {
     throw new Error('not found')
@@ -145,7 +141,7 @@ export const imageLoader = async ({ params }: {
   const image: Image = {
     ...imageData,
     imageSrc: fullSizeSrc,
-    imageInfo: generateImageInfo(galleryKey)
+    imageInfo: generateImageInfo(galleryKey),
   }
   return {
     image,

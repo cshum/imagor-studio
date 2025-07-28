@@ -1,5 +1,5 @@
-import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
+import i18n from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 
 const resources = {
@@ -23,8 +23,7 @@ const resources = {
       dashboard: 'Dashboard',
 
       // Footer
-      footerText:
-        'Built on top of {{uiLink}}. The source code is available on {{githubLink}}.',
+      footerText: 'Built on top of {{uiLink}}. The source code is available on {{githubLink}}.',
 
       // Placeholder
       placeholderImageAttribution: 'Designed by Freepik',
@@ -57,7 +56,16 @@ i18n
     resources,
     fallbackLng: 'en', // use English if detected language is not available
     detection: {
-      order: ['querystring', 'cookie', 'localStorage', 'sessionStorage', 'navigator', 'htmlTag', 'path', 'subdomain'],
+      order: [
+        'querystring',
+        'cookie',
+        'localStorage',
+        'sessionStorage',
+        'navigator',
+        'htmlTag',
+        'path',
+        'subdomain',
+      ],
       caches: ['localStorage', 'cookie'], // cache user language on
     },
     interpolation: {

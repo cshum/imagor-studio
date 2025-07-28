@@ -1,23 +1,23 @@
 import { LayoutGrid, LucideIcon, Settings, SquarePen, Users } from 'lucide-react'
 
 type Submenu = {
-  href: string;
-  label: string;
-  active: boolean;
-};
+  href: string
+  label: string
+  active: boolean
+}
 
 type Menu = {
-  href: string;
-  label: string;
-  active: boolean;
+  href: string
+  label: string
+  active: boolean
   icon: LucideIcon
-  submenus: Submenu[];
-};
+  submenus: Submenu[]
+}
 
 type Group = {
-  groupLabel: string;
-  menus: Menu[];
-};
+  groupLabel: string
+  menus: Menu[]
+}
 
 export function getMenuList(pathname: string): Group[] {
   return [

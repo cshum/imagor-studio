@@ -8,15 +8,11 @@
   "bracketSpacing": true,
   "bracketSameLine": false,
   "importOrder": [
-    "^react$",
+    "^(react)",
     "<THIRD_PARTY_MODULES>",
     "",
-    "^@/components/(.*)$",
-    "^@/hooks/(.*)$",
-    "^@/layouts/(.*)$",
-    "^@/lib/(.*)$",
-    "^@/pages/(.*)$",
-    "^@/providers/(.*)$",
+    "^@/(.*)$",
+    "",
     "^[./]"
   ],
   "importOrderSeparation": true,

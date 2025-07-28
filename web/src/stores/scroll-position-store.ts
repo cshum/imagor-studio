@@ -1,5 +1,5 @@
-import { createStore } from '@/lib/create-store'
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
+import { createStore } from '@/lib/create-store'
 
 export interface ScrollPositionState {
   positions: Record<string, number> // key: route/component identifier, value: scroll position
@@ -98,19 +98,19 @@ class ScrollPositionManager {
         const positions = JSON.parse(savedPositions)
         scrollPositionStore.dispatch({
           type: 'LOAD_POSITIONS',
-          payload: { positions }
+          payload: { positions },
         })
       } else {
         scrollPositionStore.dispatch({
           type: 'SET_LOADED',
-          payload: { isLoaded: true }
+          payload: { isLoaded: true },
         })
       }
     } catch (error) {
       console.warn('Failed to load scroll positions from storage:', error)
       scrollPositionStore.dispatch({
         type: 'SET_LOADED',
-        payload: { isLoaded: true }
+        payload: { isLoaded: true },
       })
     }
   }
@@ -143,7 +143,7 @@ class ScrollPositionManager {
     // Always update the store immediately
     scrollPositionStore.dispatch({
       type: 'SET_POSITION',
-      payload: { key, position }
+      payload: { key, position },
     })
 
     // Debounce the storage save operation
@@ -154,7 +154,7 @@ class ScrollPositionManager {
     // Scrolling state doesn't need to be persisted to storage
     scrollPositionStore.dispatch({
       type: 'SET_SCROLLING',
-      payload: { key, isScrolling }
+      payload: { key, isScrolling },
     })
   }
 
@@ -171,7 +171,7 @@ class ScrollPositionManager {
   clearPosition(key: string) {
     scrollPositionStore.dispatch({
       type: 'CLEAR_POSITION',
-      payload: { key }
+      payload: { key },
     })
 
     // Debounce the storage save operation
@@ -180,7 +180,7 @@ class ScrollPositionManager {
 
   clearAllPositions() {
     scrollPositionStore.dispatch({
-      type: 'CLEAR_ALL_POSITIONS'
+      type: 'CLEAR_ALL_POSITIONS',
     })
 
     // Debounce the storage save operation

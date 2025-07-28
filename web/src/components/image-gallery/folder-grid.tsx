@@ -1,5 +1,6 @@
-import { Card, CardContent } from '@/components/ui/card'
 import { Folder } from 'lucide-react'
+
+import { Card, CardContent } from '@/components/ui/card'
 
 export interface FolderProps {
   galleryKey: string
@@ -19,22 +20,22 @@ export const FolderGrid = ({ folders, onFolderClick, width, maxFolderWidth }: Fo
 
   return (
     <div
-      className="grid gap-2 mb-4"
+      className='mb-4 grid gap-2'
       style={{
         gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-        width: `${width}px`
+        width: `${width}px`,
       }}
     >
       {folders.map((folder) => (
         <Card
           key={folder.galleryKey}
-          className="cursor-pointer hover:bg-accent transition-colors"
+          className='hover:bg-accent cursor-pointer transition-colors'
           onClick={() => onFolderClick?.(folder)}
           style={{ width: `${folderWidth - 8}px` }} // Subtracting 8px to account for the gap
         >
-          <CardContent className="flex items-center py-3 px-4">
-            <Folder className="w-5 h-5 mr-2 text-primary flex-shrink-0" />
-            <span className="text-sm font-medium truncate">{folder.galleryName}</span>
+          <CardContent className='flex items-center px-4 py-3'>
+            <Folder className='text-primary mr-2 h-5 w-5 flex-shrink-0' />
+            <span className='truncate text-sm font-medium'>{folder.galleryName}</span>
           </CardContent>
         </Card>
       ))}
