@@ -1,25 +1,25 @@
 import { useMemo } from 'react'
 import {
-  createRouter,
   createRootRoute,
   createRoute,
+  createRouter,
   Navigate,
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
-import { GalleryPage } from '@/pages/gallery-page.tsx'
-import { AccountPage } from '@/pages/account-page'
 import { galleryLoader, imageLoader } from '@/api/dummy.ts'
+import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
+import { AccountPage } from '@/pages/account-page'
+import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { themeStore } from '@/stores/theme-store.ts'
 
 const rootRoute = createRootRoute({
   loader: async () => {
     // Wait for theme to be loaded before rendering
-    await themeStore.waitFor(state => state.isLoaded)
+    await themeStore.waitFor((state) => state.isLoaded)
     return null
   },
   component: () => (
@@ -35,7 +35,7 @@ const rootPath = createRoute({
   path: '/',
   component: () => {
     // Default to a specific gallery - you can change 'default' to your preferred default gallery
-    return <Navigate to='/gallery/$galleryKey' params={{galleryKey: 'default'}} replace />
+    return <Navigate to='/gallery/$galleryKey' params={{ galleryKey: 'default' }} replace />
   },
 })
 
@@ -56,10 +56,7 @@ const galleryRoute = createRoute({
     const galleryLoaderData = galleryRoute.useLoaderData()
     const { galleryKey } = galleryRoute.useParams()
     return (
-      <GalleryPage
-        galleryLoaderData={galleryLoaderData}
-        galleryKey={galleryKey}
-      >
+      <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey={galleryKey}>
         <Outlet />
       </GalleryPage>
     )
@@ -109,20 +106,12 @@ const accountPage = createRoute({
 
 const routeTree = rootRoute.addChildren([
   rootPath,
-  adminPanelLayoutRoute.addChildren([
-    galleryRoute.addChildren([
-      galleryPage,
-      imagePage,
-    ]),
-  ]),
+  adminPanelLayoutRoute.addChildren([galleryRoute.addChildren([galleryPage, imagePage])]),
   accountPage,
 ])
 
 // Create router
-const createAppRouter = () =>
-  createRouter({
-    routeTree,
-  })
+const createAppRouter = () => createRouter({ routeTree })
 
 export function AppRouter() {
   const router = useMemo(() => createAppRouter(), [])

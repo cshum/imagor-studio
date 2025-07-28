@@ -8,16 +8,16 @@ interface LoadingBarProps {
 const themeClassesMap = {
   light: {
     background: 'bg-gray-100',
-    bar: 'bg-gray-900'
+    bar: 'bg-gray-900',
   },
   dark: {
     background: 'bg-gray-800',
-    bar: 'bg-gray-50'
+    bar: 'bg-gray-50',
   },
   auto: {
     background: 'bg-secondary',
-    bar: 'bg-primary'
-  }
+    bar: 'bg-primary',
+  },
 }
 
 export function LoadingBar({ isLoading, theme = 'auto' }: LoadingBarProps) {
@@ -52,7 +52,7 @@ export function LoadingBar({ isLoading, theme = 'auto' }: LoadingBarProps) {
   const themeClasses = themeClassesMap[theme] || themeClassesMap.auto
 
   return (
-    <div className={`fixed top-0 left-0 w-full h-1 ${themeClasses.background} z-[100]`}>
+    <div className={`fixed top-0 left-0 h-1 w-full ${themeClasses.background} z-[100]`}>
       <div
         className={`h-full ${themeClasses.bar} transition-all duration-200 ease-out`}
         style={{ width: `${progress}%` }}

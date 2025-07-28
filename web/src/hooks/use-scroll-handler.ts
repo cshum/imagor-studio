@@ -1,4 +1,5 @@
 import { RefObject, useCallback, useEffect, useRef, useState } from 'react'
+
 import { scrollPositionActions } from '@/stores/scroll-position-store'
 
 export const useScrollHandler = (
@@ -11,18 +12,21 @@ export const useScrollHandler = (
   const scrollTimeoutRef = useRef<number | null>(null)
   const debounceTimeoutRef = useRef<number | null>(null)
 
-  const saveScrollPosition = useCallback((currentScrollPosition: number) => {
-    setScrollPosition(currentScrollPosition) // Update the state
+  const saveScrollPosition = useCallback(
+    (currentScrollPosition: number) => {
+      setScrollPosition(currentScrollPosition) // Update the state
 
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current)
-    }
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
 
-    // Save scroll position after a short delay
-    scrollTimeoutRef.current = window.setTimeout(() => {
-      scrollPositionActions.setPosition(scrollKey, currentScrollPosition) // Save scroll position using store
-    }, 150)
-  }, [scrollKey])
+      // Save scroll position after a short delay
+      scrollTimeoutRef.current = window.setTimeout(() => {
+        scrollPositionActions.setPosition(scrollKey, currentScrollPosition) // Save scroll position using store
+      }, 150)
+    },
+    [scrollKey],
+  )
 
   // Debounced scroll handler
   const handleScroll = useCallback(() => {

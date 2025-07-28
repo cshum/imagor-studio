@@ -1,16 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
-import { ContentLayout } from '@/layouts/content-layout'
-import { Card, CardContent } from '@/components/ui/card'
+
+import { Gallery, GalleryLoaderData, Image } from '@/api/dummy'
+import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
+import { FolderGrid } from '@/components/image-gallery/folder-grid'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
+import { LoadingBar } from '@/components/loading-bar.tsx'
+import { Card, CardContent } from '@/components/ui/card'
+import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
+import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
-import { useResizeHandler } from '@/hooks/use-resize-handler'
-import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
-import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
-import { LoadingBar } from '@/components/loading-bar.tsx'
-import { FolderGrid } from '@/components/image-gallery/folder-grid'
-import { Image, Gallery, GalleryLoaderData } from '@/api/dummy'
+import { ContentLayout } from '@/layouts/content-layout'
 import { ImagePosition, imagePositionActions } from '@/stores/image-position-store.ts'
 
 const { setPosition } = imagePositionActions
@@ -33,8 +34,16 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const maxItemWidth = 280
 
-  const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(containerRef, galleryKey)
-  const { contentWidth, updateWidth } = useWidthHandler(contentRef, true, isOpen, isDesktop ? 32 : 16)
+  const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
+    containerRef,
+    galleryKey,
+  )
+  const { contentWidth, updateWidth } = useWidthHandler(
+    contentRef,
+    true,
+    isOpen,
+    isDesktop ? 32 : 16,
+  )
   useResizeHandler(updateWidth)
 
   const [gridRendered, setGridRendered] = useState(false)
@@ -45,10 +54,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }, [gridRendered, restoreScrollPosition])
 
-  const handleImageClick = (
-    { imageKey }: Image,
-    position: ImagePosition | null,
-  ) => {
+  const handleImageClick = ({ imageKey }: Image, position: ImagePosition | null) => {
     if (position) {
       setPosition(galleryKey, imageKey, position)
     }
@@ -71,15 +77,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   return (
     <>
-      <LoadingBar isLoading={isLoading}/>
+      <LoadingBar isLoading={isLoading} />
       <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
         <ContentLayout title={galleryName} isBounded={false}>
-          <div className="grid mx-4 my-2">
-            <h1 className="text-3xl md:text-4xl">{galleryName}</h1>
+          <div className='mx-4 my-2 grid'>
+            <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
           </div>
-          <FixedHeaderBar isScrolled={isScrolledDown}/>
-          <Card className="rounded-lg border-none">
-            <CardContent className="p-2 md:p-4" ref={contentRef}>
+          <FixedHeaderBar isScrolled={isScrolledDown} />
+          <Card className='rounded-lg border-none'>
+            <CardContent className='p-2 md:p-4' ref={contentRef}>
               {contentWidth > 0 && (
                 <>
                   <FolderGrid

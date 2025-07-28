@@ -8,4 +8,3 @@ export const preloadImage = (src: string): Promise<HTMLImageElement> => {
     img.src = src
   })
 }
-

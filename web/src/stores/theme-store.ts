@@ -1,5 +1,5 @@
-import { createStore } from '@/lib/create-store'
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
+import { createStore } from '@/lib/create-store'
 
 export type Theme = 'system' | 'light' | 'dark'
 
@@ -80,7 +80,7 @@ class ThemeManager {
 
     themeStore.dispatch({
       type: 'SET_RESOLVED_THEME',
-      payload: { resolvedTheme }
+      payload: { resolvedTheme },
     })
 
     this.applyTheme(resolvedTheme)
@@ -99,20 +99,21 @@ class ThemeManager {
     try {
       // Load theme from storage
       const storedTheme = await this.storage.get()
-      const theme = (storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'system')
-        ? storedTheme as Theme
-        : 'system'
+      const theme =
+        storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'system'
+          ? (storedTheme as Theme)
+          : 'system'
 
       themeStore.dispatch({
         type: 'SET_THEME',
-        payload: { theme }
+        payload: { theme },
       })
 
       this.updateResolvedTheme()
 
       themeStore.dispatch({
         type: 'SET_LOADED',
-        payload: { isLoaded: true }
+        payload: { isLoaded: true },
       })
     } catch (error) {
       console.warn('Failed to load theme from storage:', error)
@@ -120,7 +121,7 @@ class ThemeManager {
       this.updateResolvedTheme()
       themeStore.dispatch({
         type: 'SET_LOADED',
-        payload: { isLoaded: true }
+        payload: { isLoaded: true },
       })
     }
   }
@@ -128,7 +129,7 @@ class ThemeManager {
   async setTheme(theme: Theme) {
     themeStore.dispatch({
       type: 'SET_THEME',
-      payload: { theme }
+      payload: { theme },
     })
 
     this.updateResolvedTheme()
