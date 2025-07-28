@@ -83,10 +83,10 @@ export const scrollPositionStore = createStore(initialState, reducer)
 class ScrollPositionManager {
   private storage: ConfigStorage
   private saveTimeout: number | null = null
-  private saveDelay: number = 300 // Increased debounce delay for better batching
+  private saveDelay: number = 100
   private pendingChanges: boolean = false
 
-  constructor(storage: ConfigStorage, saveDelay: number = 300) {
+  constructor(storage: ConfigStorage, saveDelay: number = 100) {
     this.storage = storage
     this.saveDelay = saveDelay
   }

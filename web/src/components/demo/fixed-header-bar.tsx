@@ -77,8 +77,17 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
                 <TooltipContent>{isTreeOpen ? 'Hide Tree' : 'Show Tree'}</TooltipContent>
               </Tooltip>
 
-              {/* Updated Breadcrumb with gallery key */}
-              <Breadcrumb>
+              {/* Mobile: Show current page title only */}
+              {isScrolledDown && (
+                <div className='block sm:hidden'>
+                  <span className='max-w-[140px] truncate font-medium'>
+                    {getGalleryDisplayName(galleryKey)}
+                  </span>
+                </div>
+              )}
+
+              {/* Desktop: Full breadcrumb */}
+              <Breadcrumb className='hidden sm:block'>
                 <BreadcrumbList>
                   <BreadcrumbItem>
                     <BreadcrumbLink asChild>
