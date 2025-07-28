@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef } from 'react'
 
 export interface ImageProps {
   imageKey: string;
-  src: string;
-  alt: string;
+  imageSrc: string;
+  imageName: string;
 }
 
 interface ImageGridProps {
@@ -84,8 +84,8 @@ export const ImageGrid = ({
           <div
             className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden transition-transform duration-300 group-[.not-scrolling]:hover:scale-105">
             <img
-              src={image.src}
-              alt={image.alt}
+              src={image.imageSrc}
+              alt={image.imageName}
               className="w-full h-full object-cover"
             />
           </div>

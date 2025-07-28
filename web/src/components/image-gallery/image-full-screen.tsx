@@ -7,10 +7,10 @@ import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { Sheet } from '@/components/ui/sheet'
 
 interface SelectedImage {
-  src: string
-  alt: string
+  imageSrc: string
+  imageName: string
   imageKey: string
-  info?: ImageInfo
+  imageInfo?: ImageInfo
 }
 
 interface FullScreenImageProps {
@@ -76,7 +76,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     const calculateDimensions = () => {
       if (selectedImage) {
         const img = new Image()
-        img.src = selectedImage.src
+        img.src = selectedImage.imageSrc
         img.onload = () => {
           const windowWidth = window.innerWidth - (isInfoOpen && isDesktop ? 300 : 0)
           const windowHeight = window.innerHeight
@@ -233,8 +233,8 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                         className="flex items-center justify-center absolute"
                       >
                         <motion.img
-                          src={selectedImage.src}
-                          alt={selectedImage.alt}
+                          src={selectedImage.imageSrc}
+                          alt={selectedImage.imageName}
                           initial={{
                             width: initialPosition.width,
                             height: initialPosition.height,
@@ -268,8 +268,8 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
                         className="absolute z-10 flex items-center justify-center w-full h-full"
                       >
                         <motion.img
-                          src={selectedImage.src}
-                          alt={selectedImage.alt}
+                          src={selectedImage.imageSrc}
+                          alt={selectedImage.imageName}
                           initial={false}
                           animate={{
                             width: dimensions.width,
@@ -345,7 +345,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
 
             {scale <= 1 && (
               <motion.div
-                className='absolute z-0 top-0 left-0 right-0 bottom-0'
+                className='absolute z-1 top-0 left-0 right-0 bottom-0'
                 onClick={handleOverlayClick}
                 drag={(onPrevImage || onNextImage) ? 'x' : false}
                 dragConstraints={{ left: 0, right: 0 }}
@@ -362,7 +362,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
             )}
 
             <Sheet open={isInfoOpen} onOpenChange={setIsInfoOpen}>
-              <ImageInfoView info={selectedImage.info}/>
+              <ImageInfoView info={selectedImage.imageInfo}/>
             </Sheet>
           </div>
         </div>

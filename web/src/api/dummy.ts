@@ -1,10 +1,11 @@
 import { ImageInfo } from '@/components/image-gallery/image-info-view'
+import { preloadImage } from '@/lib/preload-image.ts'
 
 export interface Image {
   imageKey: string;
-  src: string;
-  alt: string;
-  info?: ImageInfo
+  imageSrc: string;
+  imageName: string;
+  imageInfo?: ImageInfo
 }
 
 export interface Gallery {
@@ -14,9 +15,9 @@ export interface Gallery {
 
 export interface GalleryLoaderData {
   galleryName: string
+  galleryKey: string;
   images: Image[];
   folders: Gallery[];
-  galleryKey: string;
 }
 
 export interface ImageLoaderData {
@@ -28,8 +29,8 @@ export interface ImageLoaderData {
 export const generateDummyImages = (count: number) => {
   return Array.from({ length: count }, (_, i) => ({
     imageKey: `${i + 1}.jpg`,
-    src: `https://placedog.net/300/225?id=${(i + 1) % 1000}`,
-    alt: `Random image ${i + 1}`,
+    imageSrc: `https://placedog.net/300/225?id=${(i + 1) % 1000}`,
+    imageName: `Random image ${i + 1}`,
   }))
 }
 
@@ -89,16 +90,6 @@ const getGalleryTitle = (key: string) => {
 }
 
 
-// Helper function to preload an image
-const preloadImage = (src: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => resolve(img.src)
-    img.onerror = reject
-    img.src = src
-  })
-}
-
 /**
  * Updated loader for the gallery page with galleryKey support
  * Generates dummy images and folders data based on gallery key
@@ -146,14 +137,14 @@ export const imageLoader = async ({ params }: {
 
   const selectedImageIndex = images.findIndex(img => img.imageKey === imageKey)
 
-  const fullSizeSrc = selectedImageData.src.replace('/300/225', '/1200/900')
+  const fullSizeSrc = selectedImageData.imageSrc.replace('/300/225', '/1200/900')
 
   await preloadImage(fullSizeSrc)
 
   const selectedImage: Image = {
     ...selectedImageData,
-    src: fullSizeSrc,
-    info: generateImageInfo(galleryKey)
+    imageSrc: fullSizeSrc,
+    imageInfo: generateImageInfo(galleryKey)
   }
 
   return {
