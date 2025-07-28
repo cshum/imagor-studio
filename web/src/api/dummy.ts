@@ -1,17 +1,17 @@
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { ImageInfo } from '@/components/image-gallery/image-view-info.tsx'
-import { Image } from '@/components/image-gallery/image-view.tsx'
+import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { preloadImage } from '@/lib/preload-image.ts'
 
 export interface GalleryLoaderData {
   galleryName: string
   galleryKey: string
-  images: Image[]
+  images: GalleryImage[]
   folders: Gallery[]
 }
 
 export interface ImageLoaderData {
-  image: Image
+  image: GalleryImage
   imageElement: HTMLImageElement
   galleryKey: string
 }
@@ -125,7 +125,7 @@ export const imageLoader = async ({
 
   const imageElement = await preloadImage(fullSizeSrc)
 
-  const image: Image = {
+  const image: GalleryImage = {
     ...imageData,
     imageSrc: fullSizeSrc,
     imageInfo: generateImageInfo(galleryKey),

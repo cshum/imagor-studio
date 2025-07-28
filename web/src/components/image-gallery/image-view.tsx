@@ -7,7 +7,7 @@ import { ImageInfo, ImageViewInfo } from '@/components/image-gallery/image-view-
 import { Sheet } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 
-export interface Image {
+export interface GalleryImage {
   imageSrc: string
   imageName: string
   imageKey: string
@@ -22,7 +22,7 @@ export interface Position {
 }
 
 export interface FullScreenImageProps {
-  image: Image
+  image: GalleryImage
   imageElement: HTMLImageElement
   onClose: () => void
   onPrevImage?: () => void

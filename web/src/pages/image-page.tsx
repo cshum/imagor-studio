@@ -1,7 +1,7 @@
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 
 import { GalleryLoaderData, ImageLoaderData } from '@/api/dummy'
-import { Image, ImageView } from '@/components/image-gallery/image-view.tsx'
+import { GalleryImage, ImageView } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { imagePositionActions } from '@/stores/image-position-store.ts'
 
@@ -35,7 +35,7 @@ export function ImagePage({
       ? () => handleImageClick(images[imageIndex + 1])
       : undefined
 
-  const handleImageClick = ({ imageKey }: Image) => {
+  const handleImageClick = ({ imageKey }: GalleryImage) => {
     clearPosition(galleryKey, imageKey)
     navigate({
       to: '/gallery/$galleryKey/$imageKey',
