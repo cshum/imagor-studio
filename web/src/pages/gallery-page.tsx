@@ -27,7 +27,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const containerRef = useRef<HTMLDivElement | null>(null)
   const contentRef = useRef<HTMLDivElement | null>(null)
 
-  const { images, folders } = galleryLoaderData
+  const { galleryName, images, folders } = galleryLoaderData
 
   const isOpen = false
   const isDesktop = useBreakpoint('md')
@@ -74,29 +74,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 40 : 30)
 
-  // Generate gallery title based on galleryKey
-  const getGalleryTitle = (key: string) => {
-    switch (key) {
-      case 'favorites':
-        return 'Favorite Images'
-      case 'recent':
-        return 'Recent Images'
-      case 'default':
-        return 'Gallery'
-      default:
-        return `Gallery: ${key}`
-    }
-  }
-
-  const galleryTitle = getGalleryTitle(galleryKey)
-
   return (
     <>
       <LoadingBar isLoading={isLoading}/>
       <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
-        <ContentLayout title={galleryTitle} isBounded={false}>
+        <ContentLayout title={galleryName} isBounded={false}>
           <div className="grid mx-4 my-2">
-            <h1 className="text-3xl md:text-4xl">{galleryTitle}</h1>
+            <h1 className="text-3xl md:text-4xl">{galleryName}</h1>
           </div>
           <FixedHeaderBar isScrolled={isScrolledDown}/>
           <Card className="rounded-lg border-none">

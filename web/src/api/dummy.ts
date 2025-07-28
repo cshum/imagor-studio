@@ -13,6 +13,7 @@ export interface FolderProps {
 }
 
 export interface GalleryLoaderData {
+  galleryName: string
   images: ImageProps[];
   folders: FolderProps[];
   galleryKey: string;
@@ -72,6 +73,22 @@ const generateImageInfo = (galleryKey?: string): ImageInfo => ({
   }
 })
 
+
+// Generate gallery title based on galleryKey
+const getGalleryTitle = (key: string) => {
+  switch (key) {
+    case 'favorites':
+      return 'Favorite Images'
+    case 'recent':
+      return 'Recent Images'
+    case 'default':
+      return 'Gallery'
+    default:
+      return `Gallery: ${key}`
+  }
+}
+
+
 // Helper function to preload an image
 const preloadImage = (src: string): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -94,8 +111,10 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
 
   const images = generateDummyImages(imageCount)
   const folders = generateDummyFolders(galleryKey)
+  const galleryName = getGalleryTitle(galleryKey)
 
   return {
+    galleryName,
     images,
     folders,
     galleryKey
