@@ -7,12 +7,12 @@ interface LoadingBarProps {
 
 const themeClassesMap = {
   light: {
-    background: 'bg-slate-100',
-    bar: 'bg-slate-900'
+    background: 'bg-gray-100',
+    bar: 'bg-gray-900'
   },
   dark: {
-    background: 'bg-slate-800',
-    bar: 'bg-slate-50'
+    background: 'bg-gray-800',
+    bar: 'bg-gray-50'
   },
   auto: {
     background: 'bg-secondary',

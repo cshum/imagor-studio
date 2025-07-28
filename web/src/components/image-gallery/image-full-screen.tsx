@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, PanInfo } from 'framer-motion'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
 import { ChevronLeft, ChevronRight, Info, X, ZoomIn } from 'lucide-react'
 import { ImageInfo, ImageInfoView } from '@/components/image-gallery/image-info-view'
@@ -33,6 +33,8 @@ interface ImageDimensions {
   naturalHeight: number
 }
 
+const SWIPE_CONFIDENCE_THRESHOLD = 10000
+
 export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextImage, initialPosition }: FullScreenImageProps) {
   const duration = 0.2
   const [scale, setScale] = useState(1)
@@ -44,6 +46,7 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
   const isDesktop = useBreakpoint('md')
   const [direction, setDirection] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
+  const [isDragging, setIsDragging] = useState(false)
 
   useEffect(() => {
     if (!selectedImage) return
@@ -121,6 +124,28 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
     transformComponentRef.current?.resetTransform(0)
     setDirection(1)
     onNextImage?.()
+  }
+
+  const handleDragStart = () => {
+    setIsDragging(true)
+  }
+
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const swipePower = Math.abs(info.offset.x) * info.velocity.x
+    if (swipePower < -SWIPE_CONFIDENCE_THRESHOLD && onNextImage) {
+      handleNextImage()
+    } else if (swipePower > SWIPE_CONFIDENCE_THRESHOLD && onPrevImage) {
+      handlePrevImage()
+    }
+    // Reset dragging state after a short delay to prevent onClick from firing
+    setTimeout(() => setIsDragging(false), 100)
+  }
+
+  const handleOverlayClick = () => {
+    // Only handle click if we weren't dragging
+    if (!isDragging) {
+      handleCloseFullView()
+    }
   }
 
   const slideVariants = {
@@ -318,10 +343,23 @@ export function ImageFullScreen({ selectedImage, onClose, onPrevImage, onNextIma
               </button>
             </div>
 
-            {scale <= 1 && <div
-              className='absolute z-0 top-0 left-0 right-0 bottom-0'
-              onClick={handleCloseFullView}
-            ></div>}
+            {scale <= 1 && (
+              <motion.div
+                className='absolute z-0 top-0 left-0 right-0 bottom-0'
+                onClick={handleOverlayClick}
+                drag={(onPrevImage || onNextImage) ? 'x' : false}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                style={{
+                  cursor: (onPrevImage || onNextImage) ? 'grab' : 'default'
+                }}
+                whileDrag={{
+                  cursor: 'grabbing'
+                }}
+              />
+            )}
 
             <Sheet open={isInfoOpen} onOpenChange={setIsInfoOpen}>
               <ImageInfoView info={selectedImage.info}/>
