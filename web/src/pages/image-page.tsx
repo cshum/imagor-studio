@@ -23,7 +23,7 @@ export function ImagePage({
   const { isLoading } = useRouterState()
 
   const { images } = galleryLoaderData
-  const { image } = imageLoaderData
+  const { image, imageElement } = imageLoaderData
   const imageIndex = images.findIndex(img => img.imageKey === imageKey)
 
   const handlePrevImage = images && imageIndex > 0
@@ -58,6 +58,7 @@ export function ImagePage({
       <LoadingBar isLoading={isLoading} theme='dark' />
       <ImageFullScreen
         image={image}
+        imageElement={imageElement}
         onClose={handleCloseFullView}
         onPrevImage={handlePrevImage}
         onNextImage={handleNextImage}

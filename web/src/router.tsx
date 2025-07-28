@@ -76,7 +76,6 @@ const imagePage = createRoute({
   getParentRoute: () => galleryRoute,
   path: '/$imageKey',
   loader: ({ params }) => imageLoader({ params }),
-  loaderDeps: () => ({ ts: Date.now() }),
   component: () => {
     const galleryLoaderData = galleryRoute.useLoaderData()
     const imageLoaderData = imagePage.useLoaderData()

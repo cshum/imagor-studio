@@ -5,7 +5,6 @@ import { ChevronLeft, ChevronRight, Info, X, ZoomIn } from 'lucide-react'
 import { ImageInfo, ImageInfoView } from '@/components/image-gallery/image-info-view'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { Sheet } from '@/components/ui/sheet'
-import { preloadImage } from '@/lib/preload-image.ts'
 
 interface Image {
   imageSrc: string
@@ -15,7 +14,8 @@ interface Image {
 }
 
 interface FullScreenImageProps {
-  image: Image | null
+  image: Image
+  imageElement: HTMLImageElement
   onClose: () => void
   onPrevImage?: () => void
   onNextImage?: () => void
@@ -36,12 +36,11 @@ interface ImageDimensions {
 
 const SWIPE_CONFIDENCE_THRESHOLD = 10000
 
-export function ImageFullScreen({ image, onClose, onPrevImage, onNextImage, initialPosition }: FullScreenImageProps) {
+export function ImageFullScreen({ image, imageElement, onClose, onPrevImage, onNextImage, initialPosition }: FullScreenImageProps) {
   const duration = 0.2
   const [scale, setScale] = useState(1)
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
-  const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null)
 
   const [dimensions, setDimensions] = useState<ImageDimensions>({ width: 0, height: 0, naturalWidth: 0, naturalHeight: 0 })
   const [isInfoOpen, setIsInfoOpen] = useState(false)
@@ -51,13 +50,8 @@ export function ImageFullScreen({ image, onClose, onPrevImage, onNextImage, init
   const [isDragging, setIsDragging] = useState(false)
 
   useEffect(() => {
-    if (!image) return
-
-    preloadImage(image.imageSrc).then(setImageElement)
-
     const overlay = overlayRef.current
     if (!overlay) return
-
     const preventDefault = (e: TouchEvent) => {
       e.preventDefault()
     }
@@ -65,7 +59,7 @@ export function ImageFullScreen({ image, onClose, onPrevImage, onNextImage, init
     return () => {
       overlay.removeEventListener('touchmove', preventDefault)
     }
-  }, [image])
+  }, [])
 
   const handleCloseFullView = async () => {
     transformComponentRef.current?.resetTransform()
@@ -78,38 +72,36 @@ export function ImageFullScreen({ image, onClose, onPrevImage, onNextImage, init
 
   useEffect(() => {
     const calculateDimensions = () => {
-      if (imageElement) {
-        const img = imageElement
-        const windowWidth = window.innerWidth - (isInfoOpen && isDesktop ? 300 : 0)
-        const windowHeight = window.innerHeight
-        const imageAspectRatio = img.width / img.height
-        const windowAspectRatio = windowWidth / windowHeight
+      const img = imageElement
+      const windowWidth = window.innerWidth - (isInfoOpen && isDesktop ? 300 : 0)
+      const windowHeight = window.innerHeight
+      const imageAspectRatio = img.width / img.height
+      const windowAspectRatio = windowWidth / windowHeight
 
-        let newWidth, newHeight
+      let newWidth, newHeight
 
-        if (img.width <= windowWidth && img.height <= windowHeight) {
-          newWidth = img.width
-          newHeight = img.height
-        } else if (imageAspectRatio > windowAspectRatio) {
-          newWidth = windowWidth
-          newHeight = windowWidth / imageAspectRatio
-        } else {
-          newHeight = windowHeight
-          newWidth = windowHeight * imageAspectRatio
-        }
-
-        setDimensions({
-          width: Math.round(newWidth),
-          height: Math.round(newHeight),
-          naturalWidth: img.width,
-          naturalHeight: img.height
-        })
+      if (img.width <= windowWidth && img.height <= windowHeight) {
+        newWidth = img.width
+        newHeight = img.height
+      } else if (imageAspectRatio > windowAspectRatio) {
+        newWidth = windowWidth
+        newHeight = windowWidth / imageAspectRatio
+      } else {
+        newHeight = windowHeight
+        newWidth = windowHeight * imageAspectRatio
       }
+
+      setDimensions({
+        width: Math.round(newWidth),
+        height: Math.round(newHeight),
+        naturalWidth: img.width,
+        naturalHeight: img.height
+      })
     }
     calculateDimensions()
     window.addEventListener('resize', calculateDimensions)
     return () => window.removeEventListener('resize', calculateDimensions)
-  }, [isDesktop, isInfoOpen, imageElement])
+  }, [imageElement, isDesktop, isInfoOpen])
 
   const toggleInfo = () => {
     setIsInfoOpen(!isInfoOpen)
