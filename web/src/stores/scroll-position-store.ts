@@ -195,66 +195,42 @@ export const scrollPositionActions = {
    * Set scroll position for a key
    */
   setPosition: (key: string, position: number) => {
-    if (!scrollPositionManager) {
-      console.warn('Scroll position manager not initialized')
-      return
-    }
-    scrollPositionManager.setPosition(key, position)
+    scrollPositionManager?.setPosition(key, position)
   },
 
   /**
    * Set scrolling state for a key
    */
   setScrolling: (key: string, isScrolling: boolean) => {
-    if (!scrollPositionManager) {
-      console.warn('Scroll position manager not initialized')
-      return
-    }
-    scrollPositionManager.setScrolling(key, isScrolling)
+    scrollPositionManager?.setScrolling(key, isScrolling)
   },
 
   /**
    * Get scroll position for a key
    */
   getPosition: (key: string): number => {
-    if (!scrollPositionManager) {
-      console.warn('Scroll position manager not initialized')
-      return 0
-    }
-    return scrollPositionManager.getPosition(key)
+    return scrollPositionManager?.getPosition(key) || 0
   },
 
   /**
    * Check if scrolling for a key
    */
   isScrolling: (key: string): boolean => {
-    if (!scrollPositionManager) {
-      console.warn('Scroll position manager not initialized')
-      return false
-    }
-    return scrollPositionManager.isScrolling(key)
+    return scrollPositionManager?.isScrolling(key) || false
   },
 
   /**
    * Clear position for a key
    */
   clearPosition: (key: string) => {
-    if (!scrollPositionManager) {
-      console.warn('Scroll position manager not initialized')
-      return
-    }
-    scrollPositionManager.clearPosition(key)
+    scrollPositionManager?.clearPosition(key)
   },
 
   /**
    * Clear all positions
    */
   clearAllPositions: () => {
-    if (!scrollPositionManager) {
-      console.warn('Scroll position manager not initialized')
-      return
-    }
-    scrollPositionManager.clearAllPositions()
+    scrollPositionManager?.clearAllPositions()
   },
 
   /**

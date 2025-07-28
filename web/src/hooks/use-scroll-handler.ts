@@ -4,7 +4,7 @@ import { scrollPositionActions } from '@/stores/scroll-position-store'
 export const useScrollHandler = (
   containerRef: RefObject<HTMLDivElement | null>,
   scrollKey: string, // Unique identifier for this scroll context
-  debounceDelay: number = 500, // Default debounce delay is 0, meaning no debounce
+  debounceDelay: number = 0, // Default debounce delay is 0, meaning no debounce
 ) => {
   const [scrollPosition, setScrollPosition] = useState<number>(0) // Use state for scroll position
   const [isScrolling, setIsScrolling] = useState<boolean>(false) // Track scrolling state

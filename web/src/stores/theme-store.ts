@@ -166,11 +166,7 @@ export const themeActions = {
    * Set theme
    */
   setTheme: async (theme: Theme) => {
-    if (!themeManager) {
-      console.warn('Theme manager not initialized')
-      return
-    }
-    await themeManager.setTheme(theme)
+    await themeManager?.setTheme(theme)
   },
 
   /**
@@ -208,12 +204,8 @@ export const themeActions = {
    * Reset theme to system default and clear storage
    */
   resetTheme: async () => {
-    if (!themeManager) {
-      console.warn('Theme manager not initialized')
-      return
-    }
-    await themeManager.storage.remove()
-    await themeManager.setTheme('system')
+    await themeManager?.storage.remove()
+    await themeManager?.setTheme('system')
   },
 }
 
