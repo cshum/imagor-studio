@@ -7,14 +7,14 @@ import { ImageInfo, ImageInfoView } from '@/components/image-gallery/image-info-
 import { Sheet } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 
-interface Image {
+export interface Image {
   imageSrc: string
   imageName: string
   imageKey: string
   imageInfo?: ImageInfo
 }
 
-interface FullScreenImageProps {
+export interface FullScreenImageProps {
   image: Image
   imageElement: HTMLImageElement
   onClose: () => void
@@ -28,7 +28,7 @@ interface FullScreenImageProps {
   }
 }
 
-interface ImageDimensions {
+export interface ImageDimensions {
   width: number
   height: number
   naturalWidth: number

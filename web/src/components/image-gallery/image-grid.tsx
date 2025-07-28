@@ -6,7 +6,7 @@ export interface ImageProps {
   imageName: string
 }
 
-interface ImageGridProps {
+export interface ImageGridProps {
   images: ImageProps[]
   aspectRatio: number
   width: number

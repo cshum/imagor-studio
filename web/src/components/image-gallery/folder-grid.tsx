@@ -2,14 +2,14 @@ import { Folder } from 'lucide-react'
 
 import { Card, CardContent } from '@/components/ui/card'
 
-export interface FolderProps {
+export interface Gallery {
   galleryKey: string
   galleryName: string
 }
 
-interface FolderGridProps {
-  folders: FolderProps[]
-  onFolderClick?: (folder: FolderProps) => void
+export interface FolderGridProps {
+  folders: Gallery[]
+  onFolderClick?: (folder: Gallery) => void
   width: number
   maxFolderWidth: number
 }

@@ -6,7 +6,7 @@ export interface ImageInfo {
   // Add other image information fields here
 }
 
-interface ImageInfoViewProps {
+export interface ImageInfoViewProps {
   imageInfo?: ImageInfo
 }
 

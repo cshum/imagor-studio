@@ -1,20 +1,7 @@
+import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
+import { Image } from '@/components/image-gallery/image-full-screen.tsx'
+import { ImageInfo } from '@/components/image-gallery/image-info-view.tsx'
 import { preloadImage } from '@/lib/preload-image.ts'
-
-export interface Image {
-  imageKey: string
-  imageSrc: string
-  imageName: string
-  imageInfo?: ImageInfo
-}
-
-export interface ImageInfo {
-  exif?: Record<string, string>
-}
-
-export interface Gallery {
-  galleryKey: string
-  galleryName: string
-}
 
 export interface GalleryLoaderData {
   galleryName: string
