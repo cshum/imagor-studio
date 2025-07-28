@@ -49,7 +49,6 @@ const adminPanelLayoutRoute = createRoute({
   ),
 })
 
-// Updated gallery route with galleryKey parameter
 const galleryRoute = createRoute({
   getParentRoute: () => adminPanelLayoutRoute,
   path: '/gallery/$galleryKey',
@@ -65,7 +64,6 @@ const galleryRoute = createRoute({
       </GalleryPage>
     )
   },
-  // Updated loader to accept galleryKey parameter
   loader: ({ params }) => galleryLoader(params.galleryKey),
 })
 
@@ -74,7 +72,6 @@ const galleryPage = createRoute({
   id: 'gallery-page',
 })
 
-// Updated image route with imageKey parameter instead of id
 const imagePage = createRoute({
   getParentRoute: () => galleryRoute,
   path: '/$imageKey',

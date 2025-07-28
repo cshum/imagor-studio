@@ -34,7 +34,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const maxItemWidth = 280
 
-  // Use galleryKey-specific storage key for scroll position
   const scrollStorageKey = `galleryPageScrollPosition_${galleryKey}`
   const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
     containerRef,
@@ -60,10 +59,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
     return navigate({
       to: '/gallery/$galleryKey/$imageKey',
-      params: {
-        galleryKey,
-        imageKey: imageKey // Use imageKey instead of id
-      },
+      params: { galleryKey, imageKey },
     })
   }
 
