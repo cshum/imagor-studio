@@ -355,7 +355,7 @@ export function ImageFullScreen({ image, imageElement, onClose, onPrevImage, onN
             )}
 
             <Sheet open={isInfoOpen} onOpenChange={setIsInfoOpen}>
-              <ImageInfoView info={image.imageInfo}/>
+              <ImageInfoView imageInfo={image.imageInfo}/>
             </Sheet>
           </div>
         </div>
