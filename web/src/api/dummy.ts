@@ -1,6 +1,6 @@
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
-import { Image } from '@/components/image-gallery/image-full-screen.tsx'
-import { ImageInfo } from '@/components/image-gallery/image-info-view.tsx'
+import { ImageInfo } from '@/components/image-gallery/image-view-info.tsx'
+import { Image } from '@/components/image-gallery/image-view.tsx'
 import { preloadImage } from '@/lib/preload-image.ts'
 
 export interface GalleryLoaderData {

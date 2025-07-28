@@ -1,7 +1,7 @@
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 
-import { GalleryLoaderData, Image, ImageLoaderData } from '@/api/dummy'
-import { ImageFullScreen } from '@/components/image-gallery/image-full-screen.tsx'
+import { GalleryLoaderData, ImageLoaderData } from '@/api/dummy'
+import { Image, ImageView } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { imagePositionActions } from '@/stores/image-position-store.ts'
 
@@ -57,7 +57,7 @@ export function ImagePage({
   return (
     <>
       <LoadingBar isLoading={isLoading} theme='dark' />
-      <ImageFullScreen
+      <ImageView
         image={image}
         imageElement={imageElement}
         onClose={handleCloseFullView}

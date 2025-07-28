@@ -6,11 +6,11 @@ export interface ImageInfo {
   // Add other image information fields here
 }
 
-export interface ImageInfoViewProps {
+export interface ImageViewInfoProps {
   imageInfo?: ImageInfo
 }
 
-export const ImageInfoView = ({ imageInfo }: ImageInfoViewProps) => {
+export const ImageViewInfo = ({ imageInfo }: ImageViewInfoProps) => {
   return (
     <SheetContent className='w-[300px] sm:w-[300px]' side='left' hideOverlay>
       <SheetHeader className='text-left'>

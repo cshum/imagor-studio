@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 
-import { Gallery, GalleryLoaderData, Image } from '@/api/dummy'
+import { GalleryLoaderData } from '@/api/dummy'
 import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
-import { FolderGrid } from '@/components/image-gallery/folder-grid'
+import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
+import { Image } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Card, CardContent } from '@/components/ui/card'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'

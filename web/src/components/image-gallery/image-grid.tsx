@@ -1,23 +1,16 @@
 import { useCallback, useEffect, useRef } from 'react'
 
-export interface ImageProps {
-  imageKey: string
-  imageSrc: string
-  imageName: string
-}
+import { Image, Position } from '@/components/image-gallery/image-view.tsx'
 
 export interface ImageGridProps {
-  images: ImageProps[]
+  images: Image[]
   aspectRatio: number
   width: number
   scrollTop: number
   maxImageWidth: number
   isScrolling: boolean
   onRendered?: () => void
-  onImageClick?: (
-    image: ImageProps,
-    position: { top: number; left: number; width: number; height: number },
-  ) => void
+  onImageClick?: (image: Image, position: Position) => void
 }
 
 export const ImageGrid = ({

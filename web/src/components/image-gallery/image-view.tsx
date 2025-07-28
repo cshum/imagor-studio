@@ -3,7 +3,7 @@ import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'reac
 import { AnimatePresence, motion, PanInfo } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Info, X, ZoomIn, ZoomOut } from 'lucide-react'
 
-import { ImageInfo, ImageInfoView } from '@/components/image-gallery/image-info-view'
+import { ImageInfo, ImageViewInfo } from '@/components/image-gallery/image-view-info.tsx'
 import { Sheet } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 
@@ -14,18 +14,20 @@ export interface Image {
   imageInfo?: ImageInfo
 }
 
+export interface Position {
+  top: number
+  left: number
+  width: number
+  height: number
+}
+
 export interface FullScreenImageProps {
   image: Image
   imageElement: HTMLImageElement
   onClose: () => void
   onPrevImage?: () => void
   onNextImage?: () => void
-  initialPosition?: {
-    top: number
-    left: number
-    width: number
-    height: number
-  }
+  initialPosition?: Position
 }
 
 export interface ImageDimensions {
@@ -37,7 +39,7 @@ export interface ImageDimensions {
 
 const SWIPE_CONFIDENCE_THRESHOLD = 10000
 
-export function ImageFullScreen({
+export function ImageView({
   image,
   imageElement,
   onClose,
@@ -359,7 +361,7 @@ export function ImageFullScreen({
             )}
 
             <Sheet open={isInfoOpen} onOpenChange={setIsInfoOpen}>
-              <ImageInfoView imageInfo={image.imageInfo} />
+              <ImageViewInfo imageInfo={image.imageInfo} />
             </Sheet>
           </div>
         </div>
