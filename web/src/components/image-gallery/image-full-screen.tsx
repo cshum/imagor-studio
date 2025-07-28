@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, PanInfo } from 'framer-motion'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
-import { ChevronLeft, ChevronRight, Info, X, ZoomIn } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Info, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { ImageInfo, ImageInfoView } from '@/components/image-gallery/image-info-view'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { Sheet } from '@/components/ui/sheet'
@@ -156,9 +156,11 @@ export function ImageFullScreen({ image, imageElement, onClose, onPrevImage, onN
     }),
   }
 
+  /*
   const calculateZoomPercentage = (scale: number) => {
     return Math.round((scale * dimensions.width / dimensions.naturalWidth) * 100)
   }
+   */
 
   return (
     <AnimatePresence onExitComplete={onClose}>
@@ -281,9 +283,9 @@ export function ImageFullScreen({ image, imageElement, onClose, onPrevImage, onN
                   <div className="absolute z-10 bottom-4 right-8 flex space-x-4">
                     {scale > 1 && <button
                       onClick={() => resetTransform()}
-                      className="bg-black/50 text-white px-4 py-2 rounded-full hover:bg-black/75 transition-colors"
+                      className="bg-black/50 text-white p-2 rounded-full hover:bg-black/75 transition-colors"
                     >
-                      {calculateZoomPercentage(scale)}%
+                      <ZoomOut size={24}/>
                     </button>}
                     <button
                       onClick={() => zoomIn()}
