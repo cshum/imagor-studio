@@ -1,6 +1,6 @@
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { ImageFullScreen } from '@/components/image-gallery/image-full-screen.tsx'
-import { GalleryLoaderData, ImageLoaderData, ImageProps } from '@/api/dummy'
+import { GalleryLoaderData, ImageLoaderData, Image } from '@/api/dummy'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { imagePositionActions } from '@/stores/image-position-store.ts'
 
@@ -33,7 +33,7 @@ export function ImagePage({
     ? () => handleImageClick(images[selectedImageIndex + 1])
     : undefined
 
-  const handleImageClick = ({ imageKey }: ImageProps) => {
+  const handleImageClick = ({ imageKey }: Image) => {
     clearPosition(galleryKey, imageKey)
     navigate({
       to: '/gallery/$galleryKey/$imageKey',

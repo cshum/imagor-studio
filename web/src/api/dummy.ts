@@ -1,26 +1,26 @@
 import { ImageInfo } from '@/components/image-gallery/image-info-view'
 
-// Types for loader data
-export interface ImageProps {
+export interface Image {
   imageKey: string;
   src: string;
   alt: string;
+  info?: ImageInfo
 }
 
-export interface FolderProps {
+export interface Gallery {
   galleryKey: string;
   galleryName: string;
 }
 
 export interface GalleryLoaderData {
   galleryName: string
-  images: ImageProps[];
-  folders: FolderProps[];
+  images: Image[];
+  folders: Gallery[];
   galleryKey: string;
 }
 
 export interface ImageLoaderData {
-  selectedImage: (ImageProps & { info?: ImageInfo });
+  selectedImage: Image;
   selectedImageIndex: number;
   galleryKey: string;
 }
@@ -34,7 +34,7 @@ export const generateDummyImages = (count: number) => {
 }
 
 // Helper function to generate folders based on gallery key
-const generateDummyFolders = (galleryKey?: string): FolderProps[] => {
+const generateDummyFolders = (galleryKey?: string): Gallery[] => {
   const baseFolders = [
     { galleryKey: 'vacation', galleryName: 'Vacation Photos' },
     { galleryKey: 'work', galleryName: 'Work Projects' },
@@ -150,7 +150,7 @@ export const imageLoader = async ({ params }: {
 
   await preloadImage(fullSizeSrc)
 
-  const selectedImage: ImageProps & { info?: ImageInfo } = {
+  const selectedImage: Image = {
     ...selectedImageData,
     src: fullSizeSrc,
     info: generateImageInfo(galleryKey)

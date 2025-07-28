@@ -11,7 +11,7 @@ import { SessionConfigStorage } from '@/lib/config-storage/session-config-storag
 import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { FolderGrid } from '@/components/image-gallery/folder-grid'
-import { ImageProps, FolderProps, GalleryLoaderData } from '@/api/dummy'
+import { Image, Gallery, GalleryLoaderData } from '@/api/dummy'
 import { ImagePosition, imagePositionActions } from '@/stores/image-position-store.ts'
 
 const { setPosition } = imagePositionActions
@@ -51,7 +51,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   }, [gridRendered, restoreScrollPosition])
 
   const handleImageClick = (
-    { imageKey }: ImageProps,
+    { imageKey }: Image,
     position: ImagePosition | null,
   ) => {
     if (position) {
@@ -63,7 +63,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     })
   }
 
-  const handleFolderClick = ({ galleryKey }: FolderProps) => {
+  const handleFolderClick = ({ galleryKey }: Gallery) => {
     return navigate({
       to: '/gallery/$galleryKey',
       params: {
