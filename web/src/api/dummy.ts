@@ -22,7 +22,7 @@ export interface GalleryLoaderData {
 
 export interface ImageLoaderData {
   image: Image;
-  imageIndex: number;
+  imageElement: HTMLImageElement
   galleryKey: string;
 }
 
@@ -129,27 +129,24 @@ export const imageLoader = async ({ params }: {
   const images = generateDummyImages(imageCount)
 
   // Find the selected image
-  const selectedImageData = images.find(img => img.imageKey === imageKey)
+  const imageData = images.find(img => img.imageKey === imageKey)
 
-  if (!selectedImageData) {
+  if (!imageData) {
     throw new Error('not found')
   }
 
-  const selectedImageIndex = images.findIndex(img => img.imageKey === imageKey)
+  const fullSizeSrc = imageData.imageSrc.replace('/300/225', '/1200/900')
 
-  const fullSizeSrc = selectedImageData.imageSrc.replace('/300/225', '/1200/900')
+  const imageElement = await preloadImage(fullSizeSrc)
 
-  await preloadImage(fullSizeSrc)
-
-  const selectedImage: Image = {
-    ...selectedImageData,
+  const image: Image = {
+    ...imageData,
     imageSrc: fullSizeSrc,
     imageInfo: generateImageInfo(galleryKey)
   }
-
   return {
-    image: selectedImage,
-    imageIndex: selectedImageIndex,
-    galleryKey
+    image,
+    imageElement,
+    galleryKey,
   }
 }

@@ -23,7 +23,8 @@ export function ImagePage({
   const { isLoading } = useRouterState()
 
   const { images } = galleryLoaderData
-  const { image, imageIndex } = imageLoaderData
+  const { image } = imageLoaderData
+  const imageIndex = images.findIndex(img => img.imageKey === imageKey)
 
   const handlePrevImage = images && imageIndex > 0
     ? () => handleImageClick(images[imageIndex - 1])
