@@ -3,7 +3,7 @@ import { Folder } from 'lucide-react'
 
 export interface FolderProps {
   galleryKey: string
-  name: string
+  galleryName: string
 }
 
 interface FolderGridProps {
@@ -34,7 +34,7 @@ export const FolderGrid = ({ folders, onFolderClick, width, maxFolderWidth }: Fo
         >
           <CardContent className="flex items-center py-3 px-4">
             <Folder className="w-5 h-5 mr-2 text-primary flex-shrink-0" />
-            <span className="text-sm font-medium truncate">{folder.name}</span>
+            <span className="text-sm font-medium truncate">{folder.galleryName}</span>
           </CardContent>
         </Card>
       ))}

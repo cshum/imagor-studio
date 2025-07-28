@@ -9,7 +9,7 @@ export interface ImageProps {
 
 export interface FolderProps {
   galleryKey: string;
-  name: string;
+  galleryName: string;
 }
 
 export interface GalleryLoaderData {
@@ -36,19 +36,19 @@ export const generateDummyImages = (count: number) => {
 // Helper function to generate folders based on gallery key
 const generateDummyFolders = (galleryKey?: string): FolderProps[] => {
   const baseFolders = [
-    { galleryKey: 'vacation', name: 'Vacation Photos' },
-    { galleryKey: 'work', name: 'Work Projects' },
-    { galleryKey: 'family', name: 'Family Events' },
-    { galleryKey: 'hobbies', name: 'Hobbies' },
-    { galleryKey: 'miscellaneous', name: 'Miscellaneous' },
-    { galleryKey: 'documents', name: 'Documents' },
+    { galleryKey: 'vacation', galleryName: 'Vacation Photos' },
+    { galleryKey: 'work', galleryName: 'Work Projects' },
+    { galleryKey: 'family', galleryName: 'Family Events' },
+    { galleryKey: 'hobbies', galleryName: 'Hobbies' },
+    { galleryKey: 'miscellaneous', galleryName: 'Miscellaneous' },
+    { galleryKey: 'documents', galleryName: 'Documents' },
   ]
 
   // Customize folder names based on gallery key
   if (galleryKey) {
     return baseFolders.map(folder => ({
       ...folder,
-      name: `${galleryKey} - ${folder.name}`
+      galleryName: folder.galleryName,
     }))
   }
 
