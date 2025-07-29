@@ -1,6 +1,6 @@
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 
-import { GalleryLoaderData, ImageLoaderData } from '@/api/dummy'
+import { GalleryLoaderData, ImageLoaderData } from '@/api/gallery.ts'
 import { GalleryImage, ImageView } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { imagePositionActions } from '@/stores/image-position-store.ts'
@@ -22,7 +22,6 @@ export function ImagePage({
 }: ImagePageProps) {
   const navigate = useNavigate()
   const { isLoading } = useRouterState()
-
   const { images } = galleryLoaderData
   const { image, imageElement } = imageLoaderData
   const imageIndex = images.findIndex((img) => img.imageKey === imageKey)
@@ -39,10 +38,7 @@ export function ImagePage({
     clearPosition(galleryKey, imageKey)
     navigate({
       to: '/gallery/$galleryKey/$imageKey',
-      params: {
-        galleryKey,
-        imageKey: imageKey, // Use imageKey parameter
-      },
+      params: { galleryKey, imageKey },
     })
   }
 

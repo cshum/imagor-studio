@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-import { galleryLoader, imageLoader } from '@/api/dummy.ts'
+import { galleryLoader, imageLoader } from '@/api/gallery.ts'
 import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
 import { AccountPage } from '@/pages/account-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
@@ -34,7 +34,6 @@ const rootPath = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: () => {
-    // Default to a specific gallery - you can change 'default' to your preferred default gallery
     return <Navigate to='/gallery/$galleryKey' params={{ galleryKey: 'default' }} replace />
   },
 })
@@ -115,7 +114,6 @@ const createAppRouter = () => createRouter({ routeTree })
 
 export function AppRouter() {
   const router = useMemo(() => createAppRouter(), [])
-
   return <RouterProvider router={router} />
 }
 

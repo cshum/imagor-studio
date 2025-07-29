@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 
-import { GalleryLoaderData } from '@/api/dummy'
+import { GalleryLoaderData } from '@/api/gallery.ts'
 import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
@@ -68,9 +68,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const handleFolderClick = ({ galleryKey }: Gallery) => {
     return navigate({
       to: '/gallery/$galleryKey',
-      params: {
-        galleryKey,
-      },
+      params: { galleryKey },
     })
   }
 
