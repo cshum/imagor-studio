@@ -132,18 +132,6 @@ export async function listFilesPaginated(params: {
 }
 
 /**
- * Check if a path exists
- */
-export async function pathExists(path: string): Promise<boolean> {
-  try {
-    const stat = await statFile(path)
-    return stat !== null
-  } catch (error) {
-    return false
-  }
-}
-
-/**
  * Get directory contents (files and folders separately)
  */
 export async function getDirectoryContents(path: string) {

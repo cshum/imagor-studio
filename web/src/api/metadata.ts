@@ -101,51 +101,6 @@ export async function deleteMultipleMetadata(keys: string[]): Promise<boolean[]>
 }
 
 /**
- * Check if a metadata key exists
- */
-export async function hasMetadata(key: string): Promise<boolean> {
-  try {
-    const metadata = await getMetadata(key)
-    return metadata !== null
-  } catch (error) {
-    return false
-  }
-}
-
-/**
- * Update metadata only if it exists
- */
-export async function updateMetadata(key: string, value: string): Promise<boolean> {
-  const exists = await hasMetadata(key)
-  if (exists) {
-    await setMetadata(key, value)
-    return true
-  }
-  return false
-}
-
-/**
- * Get metadata with fallback value
- */
-export async function getMetadataWithDefault(key: string, defaultValue: string): Promise<string> {
-  try {
-    const metadata = await getMetadata(key)
-    return metadata?.value ?? defaultValue
-  } catch (error) {
-    return defaultValue
-  }
-}
-
-/**
- * Search metadata by key pattern
- */
-export async function searchMetadata(pattern: string): Promise<ListMetadataQuery['listMetadata']> {
-  // For now, we'll use prefix search as the backend supports it
-  // In the future, this could be enhanced with more sophisticated pattern matching
-  return listMetadata(pattern)
-}
-
-/**
  * Get metadata statistics
  */
 export async function getMetadataStats(prefix?: string) {
