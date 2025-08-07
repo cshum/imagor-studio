@@ -2,14 +2,15 @@ package resolver
 
 import (
 	"context"
+	"io"
+	"testing"
+	"time"
+
 	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
-	"io"
-	"testing"
-	"time"
 )
 
 type MockStorage struct {

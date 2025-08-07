@@ -3,11 +3,12 @@ package resolver
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"go.uber.org/zap"
-	"time"
 )
 
 // UploadFile is the resolver for the uploadFile field.
@@ -93,9 +94,9 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, 
 		return nil, fmt.Errorf("failed to list files: %w", err)
 	}
 
-	files := make([]*gql.File, len(result.Items))
+	files := make([]*gql.FileItem, len(result.Items))
 	for i, item := range result.Items {
-		files[i] = &gql.File{
+		files[i] = &gql.FileItem{
 			Name:        item.Name,
 			Path:        item.Path,
 			Size:        int(item.Size),

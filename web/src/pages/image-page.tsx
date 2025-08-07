@@ -1,8 +1,8 @@
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 
-import { GalleryLoaderData, ImageLoaderData } from '@/api/gallery.ts'
 import { GalleryImage, ImageView } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
+import { GalleryLoaderData, ImageLoaderData } from '@/loaders/gallery.ts'
 import { imagePositionActions } from '@/stores/image-position-store.ts'
 
 const { getPosition, clearPosition } = imagePositionActions
