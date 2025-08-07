@@ -4,7 +4,7 @@ const config: CodegenConfig = {
   // Point to your GraphQL schema
   schema: '../server/graphql/storage.graphql',
   // Patterns to find GraphQL documents (queries, mutations, subscriptions)
-  documents: 'src/**/*.ts',
+  documents: 'src/**/*.gql.ts',
 
   // Output configuration
   generates: {
