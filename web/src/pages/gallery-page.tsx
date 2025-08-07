@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 
-import { GalleryLoaderData } from '@/api/gallery.ts'
 import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
@@ -13,6 +12,7 @@ import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
+import { GalleryLoaderData } from '@/loaders/gallery.ts'
 import { ImagePosition, imagePositionActions } from '@/stores/image-position-store.ts'
 
 const { setPosition } = imagePositionActions

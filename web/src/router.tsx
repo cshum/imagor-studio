@@ -9,8 +9,8 @@ import {
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-import { galleryLoader, imageLoader } from '@/api/gallery.ts'
 import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
+import { galleryLoader, imageLoader } from '@/loaders/gallery.ts'
 import { AccountPage } from '@/pages/account-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
