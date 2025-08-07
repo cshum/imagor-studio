@@ -8,6 +8,8 @@ import (
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/internal/config"
@@ -80,6 +82,20 @@ func New(cfg *config.Config) (*Server, error) {
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
 
+	// Add transports in the correct order (most specific first)
+	gqlHandler.AddTransport(transport.Options{})
+	gqlHandler.AddTransport(transport.GET{})
+	gqlHandler.AddTransport(transport.POST{})
+	gqlHandler.AddTransport(transport.MultipartForm{})
+
+	// Add WebSocket transport for subscriptions if needed
+	// gqlHandler.AddTransport(transport.Websocket{
+	//     KeepAlivePingInterval: 10 * time.Second,
+	// })
+
+	// Add useful extensions
+	gqlHandler.Use(extension.Introspection{})
+
 	// Create auth handler
 	authHandler := handlers.NewAuthHandler(tokenManager, cfg.Logger)
 
@@ -88,8 +104,9 @@ func New(cfg *config.Config) (*Server, error) {
 
 	// Public endpoints
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		w.Write([]byte(`{"status":"ok"}`))
 	})
 
 	// Dev login endpoints (no auth required)
@@ -100,7 +117,17 @@ func New(cfg *config.Config) (*Server, error) {
 	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
 
 	// Protected endpoints
-	protectedHandler := middleware.JWTMiddleware(tokenManager)(gqlHandler)
+	protectedHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cfg.Logger.Info("Handling GraphQL request",
+			zap.String("method", r.Method),
+			zap.String("path", r.URL.Path),
+			zap.String("content-type", r.Header.Get("Content-Type")),
+		)
+		// Apply JWT middleware
+		jwtMiddleware := middleware.JWTMiddleware(tokenManager)
+		jwtMiddleware(gqlHandler).ServeHTTP(w, r)
+	})
+
 	mux.Handle("/query", protectedHandler)
 
 	// Configure CORS
