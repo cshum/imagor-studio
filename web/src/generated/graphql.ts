@@ -23,8 +23,8 @@ export type Scalars = {
   Upload: { input: File; output: File }
 }
 
-export type File = {
-  __typename?: 'File'
+export type FileItem = {
+  __typename?: 'FileItem'
   isDirectory: Scalars['Boolean']['output']
   name: Scalars['String']['output']
   path: Scalars['String']['output']
@@ -33,7 +33,7 @@ export type File = {
 
 export type FileList = {
   __typename?: 'FileList'
-  items: Array<File>
+  items: Array<FileItem>
   totalCount: Scalars['Int']['output']
 }
 
@@ -121,7 +121,7 @@ export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
 export type SortOrder = 'ASC' | 'DESC'
 
 export type FileInfoFragment = {
-  __typename?: 'File'
+  __typename?: 'FileItem'
   name: string
   path: string
   size: number
@@ -162,7 +162,7 @@ export type ListFilesQuery = {
     __typename?: 'FileList'
     totalCount: number
     items: Array<{
-      __typename?: 'File'
+      __typename?: 'FileItem'
       name: string
       path: string
       size: number
@@ -265,7 +265,7 @@ export const FileInfoFragmentDoc = {
     {
       kind: 'FragmentDefinition',
       name: { kind: 'Name', value: 'FileInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'File' } },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'FileItem' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -437,7 +437,7 @@ export const ListFilesDocument = {
     {
       kind: 'FragmentDefinition',
       name: { kind: 'Name', value: 'FileInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'File' } },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'FileItem' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [

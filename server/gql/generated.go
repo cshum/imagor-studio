@@ -45,7 +45,7 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	File struct {
+	FileItem struct {
 		IsDirectory func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Path        func(childComplexity int) int
@@ -122,33 +122,33 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
-	case "File.isDirectory":
-		if e.complexity.File.IsDirectory == nil {
+	case "FileItem.isDirectory":
+		if e.complexity.FileItem.IsDirectory == nil {
 			break
 		}
 
-		return e.complexity.File.IsDirectory(childComplexity), true
+		return e.complexity.FileItem.IsDirectory(childComplexity), true
 
-	case "File.name":
-		if e.complexity.File.Name == nil {
+	case "FileItem.name":
+		if e.complexity.FileItem.Name == nil {
 			break
 		}
 
-		return e.complexity.File.Name(childComplexity), true
+		return e.complexity.FileItem.Name(childComplexity), true
 
-	case "File.path":
-		if e.complexity.File.Path == nil {
+	case "FileItem.path":
+		if e.complexity.FileItem.Path == nil {
 			break
 		}
 
-		return e.complexity.File.Path(childComplexity), true
+		return e.complexity.FileItem.Path(childComplexity), true
 
-	case "File.size":
-		if e.complexity.File.Size == nil {
+	case "FileItem.size":
+		if e.complexity.FileItem.Size == nil {
 			break
 		}
 
-		return e.complexity.File.Size(childComplexity), true
+		return e.complexity.FileItem.Size(childComplexity), true
 
 	case "FileList.items":
 		if e.complexity.FileList.Items == nil {
@@ -473,11 +473,11 @@ type Mutation {
 }
 
 type FileList {
-    items: [File!]!
+    items: [FileItem!]!
     totalCount: Int!
 }
 
-type File {
+type FileItem {
     name: String!
     path: String!
     size: Int!
@@ -1106,8 +1106,8 @@ func (ec *executionContext) field___Type_fields_argsIncludeDeprecated(
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _File_name(ctx context.Context, field graphql.CollectedField, obj *File) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_File_name(ctx, field)
+func (ec *executionContext) _FileItem_name(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileItem_name(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1137,9 +1137,9 @@ func (ec *executionContext) _File_name(ctx context.Context, field graphql.Collec
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_File_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_FileItem_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "File",
+		Object:     "FileItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1150,8 +1150,8 @@ func (ec *executionContext) fieldContext_File_name(_ context.Context, field grap
 	return fc, nil
 }
 
-func (ec *executionContext) _File_path(ctx context.Context, field graphql.CollectedField, obj *File) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_File_path(ctx, field)
+func (ec *executionContext) _FileItem_path(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileItem_path(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1181,9 +1181,9 @@ func (ec *executionContext) _File_path(ctx context.Context, field graphql.Collec
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_File_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_FileItem_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "File",
+		Object:     "FileItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1194,8 +1194,8 @@ func (ec *executionContext) fieldContext_File_path(_ context.Context, field grap
 	return fc, nil
 }
 
-func (ec *executionContext) _File_size(ctx context.Context, field graphql.CollectedField, obj *File) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_File_size(ctx, field)
+func (ec *executionContext) _FileItem_size(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileItem_size(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1225,9 +1225,9 @@ func (ec *executionContext) _File_size(ctx context.Context, field graphql.Collec
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_File_size(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_FileItem_size(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "File",
+		Object:     "FileItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1238,8 +1238,8 @@ func (ec *executionContext) fieldContext_File_size(_ context.Context, field grap
 	return fc, nil
 }
 
-func (ec *executionContext) _File_isDirectory(ctx context.Context, field graphql.CollectedField, obj *File) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_File_isDirectory(ctx, field)
+func (ec *executionContext) _FileItem_isDirectory(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileItem_isDirectory(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1269,9 +1269,9 @@ func (ec *executionContext) _File_isDirectory(ctx context.Context, field graphql
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_File_isDirectory(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_FileItem_isDirectory(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "File",
+		Object:     "FileItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1308,9 +1308,9 @@ func (ec *executionContext) _FileList_items(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*File)
+	res := resTmp.([]*FileItem)
 	fc.Result = res
-	return ec.marshalNFile2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileᚄ(ctx, field.Selections, res)
+	return ec.marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileItemᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_FileList_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1322,15 +1322,15 @@ func (ec *executionContext) fieldContext_FileList_items(_ context.Context, field
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "name":
-				return ec.fieldContext_File_name(ctx, field)
+				return ec.fieldContext_FileItem_name(ctx, field)
 			case "path":
-				return ec.fieldContext_File_path(ctx, field)
+				return ec.fieldContext_FileItem_path(ctx, field)
 			case "size":
-				return ec.fieldContext_File_size(ctx, field)
+				return ec.fieldContext_FileItem_size(ctx, field)
 			case "isDirectory":
-				return ec.fieldContext_File_isDirectory(ctx, field)
+				return ec.fieldContext_FileItem_isDirectory(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type FileItem", field.Name)
 		},
 	}
 	return fc, nil
@@ -4446,34 +4446,34 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** object.gotpl ****************************
 
-var fileImplementors = []string{"File"}
+var fileItemImplementors = []string{"FileItem"}
 
-func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj *File) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, fileImplementors)
+func (ec *executionContext) _FileItem(ctx context.Context, sel ast.SelectionSet, obj *FileItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, fileItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("File")
+			out.Values[i] = graphql.MarshalString("FileItem")
 		case "name":
-			out.Values[i] = ec._File_name(ctx, field, obj)
+			out.Values[i] = ec._FileItem_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "path":
-			out.Values[i] = ec._File_path(ctx, field, obj)
+			out.Values[i] = ec._FileItem_path(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "size":
-			out.Values[i] = ec._File_size(ctx, field, obj)
+			out.Values[i] = ec._FileItem_size(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "isDirectory":
-			out.Values[i] = ec._File_isDirectory(ctx, field, obj)
+			out.Values[i] = ec._FileItem_isDirectory(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -5219,7 +5219,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNFile2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileᚄ(ctx context.Context, sel ast.SelectionSet, v []*File) graphql.Marshaler {
+func (ec *executionContext) marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*FileItem) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5243,7 +5243,7 @@ func (ec *executionContext) marshalNFile2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑs
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNFile2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFile(ctx, sel, v[i])
+			ret[i] = ec.marshalNFileItem2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileItem(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -5263,14 +5263,14 @@ func (ec *executionContext) marshalNFile2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑs
 	return ret
 }
 
-func (ec *executionContext) marshalNFile2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFile(ctx context.Context, sel ast.SelectionSet, v *File) graphql.Marshaler {
+func (ec *executionContext) marshalNFileItem2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileItem(ctx context.Context, sel ast.SelectionSet, v *FileItem) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._File(ctx, sel, v)
+	return ec._FileItem(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNFileList2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileList(ctx context.Context, sel ast.SelectionSet, v FileList) graphql.Marshaler {

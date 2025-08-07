@@ -15,7 +15,7 @@ import * as types from './graphql'
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-  '\n  fragment FileInfo on File {\n    name\n    path\n    size\n    isDirectory\n  }\n': typeof types.FileInfoFragmentDoc
+  '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n  }\n': typeof types.FileInfoFragmentDoc
   '\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n  }\n': typeof types.FileStatInfoFragmentDoc
   '\n  fragment MetadataInfo on Metadata {\n    key\n    value\n    createdAt\n    updatedAt\n  }\n': typeof types.MetadataInfoFragmentDoc
   '\n  query ListFiles(\n    $path: String!\n    $offset: Int!\n    $limit: Int!\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        ...FileInfo\n      }\n      totalCount\n    }\n  }\n': typeof types.ListFilesDocument
@@ -29,7 +29,7 @@ type Documents = {
   '\n  mutation DeleteMetadata($key: String!) {\n    deleteMetadata(key: $key)\n  }\n': typeof types.DeleteMetadataDocument
 }
 const documents: Documents = {
-  '\n  fragment FileInfo on File {\n    name\n    path\n    size\n    isDirectory\n  }\n':
+  '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n  }\n':
     types.FileInfoFragmentDoc,
   '\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n  }\n':
     types.FileStatInfoFragmentDoc,
@@ -73,8 +73,8 @@ export function gql(source: string): unknown
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  fragment FileInfo on File {\n    name\n    path\n    size\n    isDirectory\n  }\n',
-): (typeof documents)['\n  fragment FileInfo on File {\n    name\n    path\n    size\n    isDirectory\n  }\n']
+  source: '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n  }\n',
+): (typeof documents)['\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

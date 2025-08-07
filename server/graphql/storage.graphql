@@ -25,11 +25,11 @@ type Mutation {
 }
 
 type FileList {
-    items: [File!]!
+    items: [FileItem!]!
     totalCount: Int!
 }
 
-type File {
+type FileItem {
     name: String!
     path: String!
     size: Int!

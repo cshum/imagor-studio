@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-type File struct {
+type FileItem struct {
 	Name        string `json:"name"`
 	Path        string `json:"path"`
 	Size        int    `json:"size"`
@@ -17,8 +17,8 @@ type File struct {
 }
 
 type FileList struct {
-	Items      []*File `json:"items"`
-	TotalCount int     `json:"totalCount"`
+	Items      []*FileItem `json:"items"`
+	TotalCount int         `json:"totalCount"`
 }
 
 type FileStat struct {

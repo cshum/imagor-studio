@@ -2,7 +2,7 @@ import { gql } from '@/generated/gql'
 
 // Fragments
 export const FileFragment = gql(`
-  fragment FileInfo on File {
+  fragment FileInfo on FileItem {
     name
     path
     size

@@ -17,7 +17,7 @@
       },
       {
         "kind": "OBJECT",
-        "name": "File",
+        "name": "FileItem",
         "description": null,
         "isOneOf": null,
         "fields": [
@@ -94,7 +94,7 @@
                 "ofType": {
                   "kind": "NON_NULL",
                   "name": null,
-                  "ofType": { "kind": "OBJECT", "name": "File", "ofType": null }
+                  "ofType": { "kind": "OBJECT", "name": "FileItem", "ofType": null }
                 }
               }
             },
