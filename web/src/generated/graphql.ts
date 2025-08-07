@@ -120,6 +120,66 @@ export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
 
 export type SortOrder = 'ASC' | 'DESC'
 
+export type MetadataInfoFragment = {
+  __typename?: 'Metadata'
+  key: string
+  value: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type ListMetadataQueryVariables = Exact<{
+  prefix?: InputMaybe<Scalars['String']['input']>
+}>
+
+export type ListMetadataQuery = {
+  __typename?: 'Query'
+  listMetadata: Array<{
+    __typename?: 'Metadata'
+    key: string
+    value: string
+    createdAt: string
+    updatedAt: string
+  }>
+}
+
+export type GetMetadataQueryVariables = Exact<{
+  key: Scalars['String']['input']
+}>
+
+export type GetMetadataQuery = {
+  __typename?: 'Query'
+  getMetadata: {
+    __typename?: 'Metadata'
+    key: string
+    value: string
+    createdAt: string
+    updatedAt: string
+  } | null
+}
+
+export type SetMetadataMutationVariables = Exact<{
+  key: Scalars['String']['input']
+  value: Scalars['String']['input']
+}>
+
+export type SetMetadataMutation = {
+  __typename?: 'Mutation'
+  setMetadata: {
+    __typename?: 'Metadata'
+    key: string
+    value: string
+    createdAt: string
+    updatedAt: string
+  }
+}
+
+export type DeleteMetadataMutationVariables = Exact<{
+  key: Scalars['String']['input']
+}>
+
+export type DeleteMetadataMutation = { __typename?: 'Mutation'; deleteMetadata: boolean }
+
 export type FileInfoFragment = {
   __typename?: 'FileItem'
   name: string
@@ -136,14 +196,6 @@ export type FileStatInfoFragment = {
   isDirectory: boolean
   modifiedTime: string
   etag: string | null
-}
-
-export type MetadataInfoFragment = {
-  __typename?: 'Metadata'
-  key: string
-  value: string
-  createdAt: string
-  updatedAt: string
 }
 
 export type ListFilesQueryVariables = Exact<{
@@ -188,36 +240,6 @@ export type StatFileQuery = {
   } | null
 }
 
-export type ListMetadataQueryVariables = Exact<{
-  prefix?: InputMaybe<Scalars['String']['input']>
-}>
-
-export type ListMetadataQuery = {
-  __typename?: 'Query'
-  listMetadata: Array<{
-    __typename?: 'Metadata'
-    key: string
-    value: string
-    createdAt: string
-    updatedAt: string
-  }>
-}
-
-export type GetMetadataQueryVariables = Exact<{
-  key: Scalars['String']['input']
-}>
-
-export type GetMetadataQuery = {
-  __typename?: 'Query'
-  getMetadata: {
-    __typename?: 'Metadata'
-    key: string
-    value: string
-    createdAt: string
-    updatedAt: string
-  } | null
-}
-
 export type UploadFileMutationVariables = Exact<{
   path: Scalars['String']['input']
   content: Scalars['Upload']['input']
@@ -237,28 +259,25 @@ export type CreateFolderMutationVariables = Exact<{
 
 export type CreateFolderMutation = { __typename?: 'Mutation'; createFolder: boolean }
 
-export type SetMetadataMutationVariables = Exact<{
-  key: Scalars['String']['input']
-  value: Scalars['String']['input']
-}>
-
-export type SetMetadataMutation = {
-  __typename?: 'Mutation'
-  setMetadata: {
-    __typename?: 'Metadata'
-    key: string
-    value: string
-    createdAt: string
-    updatedAt: string
-  }
-}
-
-export type DeleteMetadataMutationVariables = Exact<{
-  key: Scalars['String']['input']
-}>
-
-export type DeleteMetadataMutation = { __typename?: 'Mutation'; deleteMetadata: boolean }
-
+export const MetadataInfoFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'MetadataInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MetadataInfoFragment, unknown>
 export const FileInfoFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -299,9 +318,43 @@ export const FileStatInfoFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<FileStatInfoFragment, unknown>
-export const MetadataInfoFragmentDoc = {
+export const ListMetadataDocument = {
   kind: 'Document',
   definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ListMetadata' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'prefix' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'listMetadata' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'prefix' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'prefix' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
     {
       kind: 'FragmentDefinition',
       name: { kind: 'Name', value: 'MetadataInfo' },
@@ -317,7 +370,168 @@ export const MetadataInfoFragmentDoc = {
       },
     },
   ],
-} as unknown as DocumentNode<MetadataInfoFragment, unknown>
+} as unknown as DocumentNode<ListMetadataQuery, ListMetadataQueryVariables>
+export const GetMetadataDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetMetadata' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getMetadata' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'key' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'MetadataInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetMetadataQuery, GetMetadataQueryVariables>
+export const SetMetadataDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SetMetadata' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'value' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'setMetadata' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'key' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'value' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'value' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'MetadataInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetMetadataMutation, SetMetadataMutationVariables>
+export const DeleteMetadataDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeleteMetadata' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'deleteMetadata' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'key' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteMetadataMutation, DeleteMetadataMutationVariables>
 export const ListFilesDocument = {
   kind: 'Document',
   definitions: [
@@ -508,115 +722,6 @@ export const StatFileDocument = {
     },
   ],
 } as unknown as DocumentNode<StatFileQuery, StatFileQueryVariables>
-export const ListMetadataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ListMetadata' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'prefix' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'listMetadata' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'prefix' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'prefix' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'MetadataInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<ListMetadataQuery, ListMetadataQueryVariables>
-export const GetMetadataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'GetMetadata' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'getMetadata' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'key' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'MetadataInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<GetMetadataQuery, GetMetadataQueryVariables>
 export const UploadFileDocument = {
   kind: 'Document',
   definitions: [
@@ -738,108 +843,3 @@ export const CreateFolderDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateFolderMutation, CreateFolderMutationVariables>
-export const SetMetadataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'SetMetadata' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'value' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'setMetadata' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'key' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'value' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'value' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'MetadataInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<SetMetadataMutation, SetMetadataMutationVariables>
-export const DeleteMetadataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'DeleteMetadata' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'deleteMetadata' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'key' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
-              },
-            ],
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<DeleteMetadataMutation, DeleteMetadataMutationVariables>

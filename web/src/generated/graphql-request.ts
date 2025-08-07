@@ -121,6 +121,66 @@ export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
 
 export type SortOrder = 'ASC' | 'DESC'
 
+export type MetadataInfoFragment = {
+  __typename?: 'Metadata'
+  key: string
+  value: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type ListMetadataQueryVariables = Exact<{
+  prefix?: InputMaybe<Scalars['String']['input']>
+}>
+
+export type ListMetadataQuery = {
+  __typename?: 'Query'
+  listMetadata: Array<{
+    __typename?: 'Metadata'
+    key: string
+    value: string
+    createdAt: string
+    updatedAt: string
+  }>
+}
+
+export type GetMetadataQueryVariables = Exact<{
+  key: Scalars['String']['input']
+}>
+
+export type GetMetadataQuery = {
+  __typename?: 'Query'
+  getMetadata: {
+    __typename?: 'Metadata'
+    key: string
+    value: string
+    createdAt: string
+    updatedAt: string
+  } | null
+}
+
+export type SetMetadataMutationVariables = Exact<{
+  key: Scalars['String']['input']
+  value: Scalars['String']['input']
+}>
+
+export type SetMetadataMutation = {
+  __typename?: 'Mutation'
+  setMetadata: {
+    __typename?: 'Metadata'
+    key: string
+    value: string
+    createdAt: string
+    updatedAt: string
+  }
+}
+
+export type DeleteMetadataMutationVariables = Exact<{
+  key: Scalars['String']['input']
+}>
+
+export type DeleteMetadataMutation = { __typename?: 'Mutation'; deleteMetadata: boolean }
+
 export type FileInfoFragment = {
   __typename?: 'FileItem'
   name: string
@@ -137,14 +197,6 @@ export type FileStatInfoFragment = {
   isDirectory: boolean
   modifiedTime: string
   etag: string | null
-}
-
-export type MetadataInfoFragment = {
-  __typename?: 'Metadata'
-  key: string
-  value: string
-  createdAt: string
-  updatedAt: string
 }
 
 export type ListFilesQueryVariables = Exact<{
@@ -189,36 +241,6 @@ export type StatFileQuery = {
   } | null
 }
 
-export type ListMetadataQueryVariables = Exact<{
-  prefix?: InputMaybe<Scalars['String']['input']>
-}>
-
-export type ListMetadataQuery = {
-  __typename?: 'Query'
-  listMetadata: Array<{
-    __typename?: 'Metadata'
-    key: string
-    value: string
-    createdAt: string
-    updatedAt: string
-  }>
-}
-
-export type GetMetadataQueryVariables = Exact<{
-  key: Scalars['String']['input']
-}>
-
-export type GetMetadataQuery = {
-  __typename?: 'Query'
-  getMetadata: {
-    __typename?: 'Metadata'
-    key: string
-    value: string
-    createdAt: string
-    updatedAt: string
-  } | null
-}
-
 export type UploadFileMutationVariables = Exact<{
   path: Scalars['String']['input']
   content: Scalars['Upload']['input']
@@ -238,28 +260,14 @@ export type CreateFolderMutationVariables = Exact<{
 
 export type CreateFolderMutation = { __typename?: 'Mutation'; createFolder: boolean }
 
-export type SetMetadataMutationVariables = Exact<{
-  key: Scalars['String']['input']
-  value: Scalars['String']['input']
-}>
-
-export type SetMetadataMutation = {
-  __typename?: 'Mutation'
-  setMetadata: {
-    __typename?: 'Metadata'
-    key: string
-    value: string
-    createdAt: string
-    updatedAt: string
+export const MetadataInfoFragmentDoc = gql`
+  fragment MetadataInfo on Metadata {
+    key
+    value
+    createdAt
+    updatedAt
   }
-}
-
-export type DeleteMetadataMutationVariables = Exact<{
-  key: Scalars['String']['input']
-}>
-
-export type DeleteMetadataMutation = { __typename?: 'Mutation'; deleteMetadata: boolean }
-
+`
 export const FileInfoFragmentDoc = gql`
   fragment FileInfo on FileItem {
     name
@@ -278,12 +286,33 @@ export const FileStatInfoFragmentDoc = gql`
     etag
   }
 `
-export const MetadataInfoFragmentDoc = gql`
-  fragment MetadataInfo on Metadata {
-    key
-    value
-    createdAt
-    updatedAt
+export const ListMetadataDocument = gql`
+  query ListMetadata($prefix: String) {
+    listMetadata(prefix: $prefix) {
+      ...MetadataInfo
+    }
+  }
+  ${MetadataInfoFragmentDoc}
+`
+export const GetMetadataDocument = gql`
+  query GetMetadata($key: String!) {
+    getMetadata(key: $key) {
+      ...MetadataInfo
+    }
+  }
+  ${MetadataInfoFragmentDoc}
+`
+export const SetMetadataDocument = gql`
+  mutation SetMetadata($key: String!, $value: String!) {
+    setMetadata(key: $key, value: $value) {
+      ...MetadataInfo
+    }
+  }
+  ${MetadataInfoFragmentDoc}
+`
+export const DeleteMetadataDocument = gql`
+  mutation DeleteMetadata($key: String!) {
+    deleteMetadata(key: $key)
   }
 `
 export const ListFilesDocument = gql`
@@ -321,22 +350,6 @@ export const StatFileDocument = gql`
   }
   ${FileStatInfoFragmentDoc}
 `
-export const ListMetadataDocument = gql`
-  query ListMetadata($prefix: String) {
-    listMetadata(prefix: $prefix) {
-      ...MetadataInfo
-    }
-  }
-  ${MetadataInfoFragmentDoc}
-`
-export const GetMetadataDocument = gql`
-  query GetMetadata($key: String!) {
-    getMetadata(key: $key) {
-      ...MetadataInfo
-    }
-  }
-  ${MetadataInfoFragmentDoc}
-`
 export const UploadFileDocument = gql`
   mutation UploadFile($path: String!, $content: Upload!) {
     uploadFile(path: $path, content: $content)
@@ -352,19 +365,6 @@ export const CreateFolderDocument = gql`
     createFolder(path: $path)
   }
 `
-export const SetMetadataDocument = gql`
-  mutation SetMetadata($key: String!, $value: String!) {
-    setMetadata(key: $key, value: $value) {
-      ...MetadataInfo
-    }
-  }
-  ${MetadataInfoFragmentDoc}
-`
-export const DeleteMetadataDocument = gql`
-  mutation DeleteMetadata($key: String!) {
-    deleteMetadata(key: $key)
-  }
-`
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -378,42 +378,6 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    ListFiles(
-      variables: ListFilesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal'],
-    ): Promise<ListFilesQuery> {
-      return withWrapper(
-        (wrappedRequestHeaders) =>
-          client.request<ListFilesQuery>({
-            document: ListFilesDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'ListFiles',
-        'query',
-        variables,
-      )
-    },
-    StatFile(
-      variables: StatFileQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal'],
-    ): Promise<StatFileQuery> {
-      return withWrapper(
-        (wrappedRequestHeaders) =>
-          client.request<StatFileQuery>({
-            document: StatFileDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'StatFile',
-        'query',
-        variables,
-      )
-    },
     ListMetadata(
       variables?: ListMetadataQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
@@ -446,6 +410,78 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'GetMetadata',
+        'query',
+        variables,
+      )
+    },
+    SetMetadata(
+      variables: SetMetadataMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<SetMetadataMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<SetMetadataMutation>({
+            document: SetMetadataDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'SetMetadata',
+        'mutation',
+        variables,
+      )
+    },
+    DeleteMetadata(
+      variables: DeleteMetadataMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<DeleteMetadataMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<DeleteMetadataMutation>({
+            document: DeleteMetadataDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'DeleteMetadata',
+        'mutation',
+        variables,
+      )
+    },
+    ListFiles(
+      variables: ListFilesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<ListFilesQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<ListFilesQuery>({
+            document: ListFilesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'ListFiles',
+        'query',
+        variables,
+      )
+    },
+    StatFile(
+      variables: StatFileQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<StatFileQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<StatFileQuery>({
+            document: StatFileDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'StatFile',
         'query',
         variables,
       )
@@ -500,42 +536,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'CreateFolder',
-        'mutation',
-        variables,
-      )
-    },
-    SetMetadata(
-      variables: SetMetadataMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal'],
-    ): Promise<SetMetadataMutation> {
-      return withWrapper(
-        (wrappedRequestHeaders) =>
-          client.request<SetMetadataMutation>({
-            document: SetMetadataDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'SetMetadata',
-        'mutation',
-        variables,
-      )
-    },
-    DeleteMetadata(
-      variables: DeleteMetadataMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal'],
-    ): Promise<DeleteMetadataMutation> {
-      return withWrapper(
-        (wrappedRequestHeaders) =>
-          client.request<DeleteMetadataMutation>({
-            document: DeleteMetadataDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'DeleteMetadata',
         'mutation',
         variables,
       )
