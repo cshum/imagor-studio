@@ -126,7 +126,7 @@ export type FileInfoFragment = {
   path: string
   size: number
   isDirectory: boolean
-} & { ' $fragmentName'?: 'FileInfoFragment' }
+}
 
 export type FileStatInfoFragment = {
   __typename?: 'FileStat'
@@ -136,7 +136,7 @@ export type FileStatInfoFragment = {
   isDirectory: boolean
   modifiedTime: string
   etag: string | null
-} & { ' $fragmentName'?: 'FileStatInfoFragment' }
+}
 
 export type MetadataInfoFragment = {
   __typename?: 'Metadata'
@@ -144,7 +144,7 @@ export type MetadataInfoFragment = {
   value: string
   createdAt: string
   updatedAt: string
-} & { ' $fragmentName'?: 'MetadataInfoFragment' }
+}
 
 export type ListFilesQueryVariables = Exact<{
   path: Scalars['String']['input']
@@ -161,9 +161,13 @@ export type ListFilesQuery = {
   listFiles: {
     __typename?: 'FileList'
     totalCount: number
-    items: Array<
-      { __typename?: 'File' } & { ' $fragmentRefs'?: { FileInfoFragment: FileInfoFragment } }
-    >
+    items: Array<{
+      __typename?: 'File'
+      name: string
+      path: string
+      size: number
+      isDirectory: boolean
+    }>
   }
 }
 
@@ -173,11 +177,15 @@ export type StatFileQueryVariables = Exact<{
 
 export type StatFileQuery = {
   __typename?: 'Query'
-  statFile:
-    | ({ __typename?: 'FileStat' } & {
-        ' $fragmentRefs'?: { FileStatInfoFragment: FileStatInfoFragment }
-      })
-    | null
+  statFile: {
+    __typename?: 'FileStat'
+    name: string
+    path: string
+    size: number
+    isDirectory: boolean
+    modifiedTime: string
+    etag: string | null
+  } | null
 }
 
 export type ListMetadataQueryVariables = Exact<{
@@ -186,11 +194,13 @@ export type ListMetadataQueryVariables = Exact<{
 
 export type ListMetadataQuery = {
   __typename?: 'Query'
-  listMetadata: Array<
-    { __typename?: 'Metadata' } & {
-      ' $fragmentRefs'?: { MetadataInfoFragment: MetadataInfoFragment }
-    }
-  >
+  listMetadata: Array<{
+    __typename?: 'Metadata'
+    key: string
+    value: string
+    createdAt: string
+    updatedAt: string
+  }>
 }
 
 export type GetMetadataQueryVariables = Exact<{
@@ -199,11 +209,13 @@ export type GetMetadataQueryVariables = Exact<{
 
 export type GetMetadataQuery = {
   __typename?: 'Query'
-  getMetadata:
-    | ({ __typename?: 'Metadata' } & {
-        ' $fragmentRefs'?: { MetadataInfoFragment: MetadataInfoFragment }
-      })
-    | null
+  getMetadata: {
+    __typename?: 'Metadata'
+    key: string
+    value: string
+    createdAt: string
+    updatedAt: string
+  } | null
 }
 
 export type UploadFileMutationVariables = Exact<{
@@ -232,8 +244,12 @@ export type SetMetadataMutationVariables = Exact<{
 
 export type SetMetadataMutation = {
   __typename?: 'Mutation'
-  setMetadata: { __typename?: 'Metadata' } & {
-    ' $fragmentRefs'?: { MetadataInfoFragment: MetadataInfoFragment }
+  setMetadata: {
+    __typename?: 'Metadata'
+    key: string
+    value: string
+    createdAt: string
+    updatedAt: string
   }
 }
 
