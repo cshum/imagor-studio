@@ -2,15 +2,9 @@ import type { CodegenConfig } from '@graphql-codegen/cli'
 
 const config: CodegenConfig = {
   // Point to your GraphQL schema
-  schema: {
-    'http://localhost:8080/query': {
-      headers: {
-        Authorization: `Bearer ${process.env.GRAPHQL_AUTH_TOKEN}`,
-      },
-    },
-  },
+  schema: '../server/graphql/storage.graphql',
   // Patterns to find GraphQL documents (queries, mutations, subscriptions)
-  documents: ['src/**/*.{ts,tsx}', '!src/generated/**'],
+  documents: 'src/**/*.gql.ts',
 
   // Output configuration
   generates: {
@@ -24,6 +18,9 @@ const config: CodegenConfig = {
           Upload: 'File',
           JSON: 'Record<string, any>',
         },
+      },
+      presetConfig: {
+        gqlTagName: 'gql',
       },
       plugins: [],
     },
