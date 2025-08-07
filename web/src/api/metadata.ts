@@ -81,38 +81,3 @@ export async function getMetadataObject(prefix?: string): Promise<Record<string,
 
   return metadataObject
 }
-
-/**
- * Set multiple metadata entries at once
- */
-export async function setMultipleMetadata(
-  entries: Array<{ key: string; value: string }>,
-): Promise<Array<SetMetadataMutation['setMetadata']>> {
-  const promises = entries.map(({ key, value }) => setMetadata(key, value))
-  return Promise.all(promises)
-}
-
-/**
- * Delete multiple metadata entries
- */
-export async function deleteMultipleMetadata(keys: string[]): Promise<boolean[]> {
-  const promises = keys.map((key) => deleteMetadata(key))
-  return Promise.all(promises)
-}
-
-/**
- * Get metadata statistics
- */
-export async function getMetadataStats(prefix?: string) {
-  const metadataList = await listMetadata(prefix)
-
-  return {
-    totalCount: metadataList.length,
-    keys: metadataList.map((item) => item.key),
-    totalValueLength: metadataList.reduce((sum, item) => sum + item.value.length, 0),
-    averageValueLength:
-      metadataList.length > 0
-        ? metadataList.reduce((sum, item) => sum + item.value.length, 0) / metadataList.length
-        : 0,
-  }
-}
