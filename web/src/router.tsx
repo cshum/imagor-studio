@@ -10,7 +10,7 @@ import {
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
-import { galleryLoader, imageLoader } from '@/loaders/gallery.ts'
+import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { AccountPage } from '@/pages/account-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
