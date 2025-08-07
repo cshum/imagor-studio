@@ -18,26 +18,10 @@ import { getGraphQLClient } from '@/lib/graphql-client'
 /**
  * List files and folders in a directory
  */
-export async function listFiles(params: {
-  path: string
-  offset?: number
-  limit?: number
-  onlyFiles?: boolean
-  onlyFolders?: boolean
-  sortBy?: SortOption
-  sortOrder?: SortOrder
-}): Promise<ListFilesQuery['listFiles']> {
+export async function listFiles(
+  variables: ListFilesQueryVariables,
+): Promise<ListFilesQuery['listFiles']> {
   const sdk = getSdk(getGraphQLClient())
-
-  const variables: ListFilesQueryVariables = {
-    path: params.path,
-    offset: params.offset ?? 0,
-    limit: params.limit ?? 50,
-    onlyFiles: params.onlyFiles ?? null,
-    onlyFolders: params.onlyFolders ?? null,
-    sortBy: params.sortBy ?? null,
-    sortOrder: params.sortOrder ?? null,
-  }
 
   const result = await sdk.ListFiles(variables)
   return result.listFiles
@@ -67,7 +51,6 @@ export async function uploadFile(
     path,
     content: file,
   }
-
   const result = await sdk.UploadFile(variables)
   return result.uploadFile
 }
@@ -128,32 +111,5 @@ export async function listFilesPaginated(params: {
     totalPages: Math.ceil(result.totalCount / pageSize),
     hasNextPage: offset + pageSize < result.totalCount,
     hasPreviousPage: page > 1,
-  }
-}
-
-/**
- * Get directory contents (files and folders separately)
- */
-export async function getDirectoryContents(path: string) {
-  const [files, folders] = await Promise.all([
-    listFiles({
-      path,
-      onlyFiles: true,
-      sortBy: 'NAME' as SortOption,
-      sortOrder: 'ASC' as SortOrder,
-    }),
-    listFiles({
-      path,
-      onlyFolders: true,
-      sortBy: 'NAME' as SortOption,
-      sortOrder: 'ASC' as SortOrder,
-    }),
-  ])
-
-  return {
-    files: files.items,
-    folders: folders.items,
-    totalFiles: files.totalCount,
-    totalFolders: folders.totalCount,
   }
 }
