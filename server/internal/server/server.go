@@ -1,4 +1,3 @@
-// internal/server/server.go
 package server
 
 import (
@@ -117,17 +116,7 @@ func New(cfg *config.Config) (*Server, error) {
 	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
 
 	// Protected endpoints
-	protectedHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cfg.Logger.Info("Handling GraphQL request",
-			zap.String("method", r.Method),
-			zap.String("path", r.URL.Path),
-			zap.String("content-type", r.Header.Get("Content-Type")),
-		)
-		// Apply JWT middleware
-		jwtMiddleware := middleware.JWTMiddleware(tokenManager)
-		jwtMiddleware(gqlHandler).ServeHTTP(w, r)
-	})
-
+	protectedHandler := middleware.JWTMiddleware(tokenManager)(gqlHandler)
 	mux.Handle("/query", protectedHandler)
 
 	// Configure CORS
