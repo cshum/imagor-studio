@@ -20,6 +20,7 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/cshum/imagor-studio/server/pkg/storage/filestorage"
 	"github.com/cshum/imagor-studio/server/pkg/storage/s3storage"
+	"github.com/cshum/imagor-studio/server/pkg/userstore"
 	"github.com/cshum/imagor-studio/server/resolver"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
@@ -73,11 +74,12 @@ func New(cfg *config.Config) (*Server, error) {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
 
-	// Initialize metadata store
+	// Initialize stores
 	metadataStore := metadatastore.New(db, cfg.Logger)
+	userStore := userstore.New(db, cfg.Logger)
 
 	// Initialize GraphQL
-	storageResolver := resolver.NewResolver(stor, metadataStore, cfg.Logger)
+	storageResolver := resolver.NewResolver(stor, metadataStore, userStore, cfg.Logger)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
 
@@ -96,7 +98,7 @@ func New(cfg *config.Config) (*Server, error) {
 	gqlHandler.Use(extension.Introspection{})
 
 	// Create auth handler
-	authHandler := handlers.NewAuthHandler(tokenManager, cfg.Logger)
+	authHandler := handlers.NewAuthHandler(tokenManager, userStore, cfg.Logger)
 
 	// Create middleware chain
 	mux := http.NewServeMux()
@@ -108,9 +110,11 @@ func New(cfg *config.Config) (*Server, error) {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
-	// Dev login endpoints (no auth required)
-	mux.HandleFunc("/auth/dev-login", authHandler.DevLogin)
+	// Auth endpoints (no auth required)
+	mux.HandleFunc("/auth/register", authHandler.Register)
+	mux.HandleFunc("/auth/login", authHandler.Login)
 	mux.HandleFunc("/auth/refresh", authHandler.RefreshToken)
+	mux.HandleFunc("/auth/dev-login", authHandler.DevLogin) // Keep for development
 
 	// GraphQL playground (available in development, might want to disable in production)
 	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))

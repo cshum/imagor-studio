@@ -2,9 +2,10 @@ package resolver
 
 import (
 	"context"
-	"github.com/cshum/imagor-studio/server/pkg/metadatastore"
 	"testing"
 	"time"
+
+	"github.com/cshum/imagor-studio/server/pkg/metadatastore"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -42,8 +43,9 @@ func (m *MockMetadataStore) Delete(ctx context.Context, ownerID, key string) err
 func TestListMetadata(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
+	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	prefix := "app:"
@@ -70,8 +72,9 @@ func TestListMetadata(t *testing.T) {
 func TestGetMetadata(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
+	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	key := "app:setting1"
@@ -99,8 +102,9 @@ func TestGetMetadata(t *testing.T) {
 func TestGetMetadataNotFound(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
+	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	key := "non-existent"
@@ -118,8 +122,9 @@ func TestGetMetadataNotFound(t *testing.T) {
 func TestSetMetadata(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
+	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	key := "app:new-setting"
@@ -148,8 +153,9 @@ func TestSetMetadata(t *testing.T) {
 func TestDeleteMetadata(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
+	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	key := "app:setting-to-delete"
