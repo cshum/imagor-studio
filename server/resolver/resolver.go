@@ -42,14 +42,14 @@ func (r *mutationResolver) requirePermission(ctx context.Context, requiredScope 
 	if err != nil {
 		return fmt.Errorf("unauthorized")
 	}
-	hasWriteScope := false
+	hasScope := false
 	for _, scope := range claims.Scopes {
 		if scope == requiredScope {
-			hasWriteScope = true
+			hasScope = true
 			break
 		}
 	}
-	if !hasWriteScope {
+	if !hasScope {
 		return fmt.Errorf("insufficient permission: %s", requiredScope)
 	}
 	return nil
