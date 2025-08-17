@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"github.com/cshum/imagor-studio/server/pkg/errors"
-	"go.uber.org/zap"
 	"net/http"
 	"runtime/debug"
+
+	"github.com/cshum/imagor-studio/server/pkg/errors"
+	"go.uber.org/zap"
 )
 
 // ErrorMiddleware handles panics and errors in a standardized way
