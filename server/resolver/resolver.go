@@ -4,19 +4,22 @@ import (
 	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/pkg/metadatastore"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
+	"github.com/cshum/imagor-studio/server/pkg/userstore"
 	"go.uber.org/zap"
 )
 
 type Resolver struct {
 	storage       storage.Storage
 	metadataStore metadatastore.Store
+	userStore     userstore.Store
 	logger        *zap.Logger
 }
 
-func NewResolver(storage storage.Storage, metadataStore metadatastore.Store, logger *zap.Logger) *Resolver {
+func NewResolver(storage storage.Storage, metadataStore metadatastore.Store, userStore userstore.Store, logger *zap.Logger) *Resolver {
 	return &Resolver{
 		storage:       storage,
 		metadataStore: metadataStore,
+		userStore:     userStore,
 		logger:        logger,
 	}
 }

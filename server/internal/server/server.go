@@ -79,7 +79,7 @@ func New(cfg *config.Config) (*Server, error) {
 	userStore := userstore.New(db, cfg.Logger)
 
 	// Initialize GraphQL
-	storageResolver := resolver.NewResolver(stor, metadataStore, cfg.Logger)
+	storageResolver := resolver.NewResolver(stor, metadataStore, userStore, cfg.Logger)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
 

@@ -13,6 +13,10 @@ type Query {
 
     listMetadata(prefix: String): [Metadata!]!
     getMetadata(key: String!): Metadata
+
+    me: User
+    user(id: ID!): User
+    users(offset: Int = 0, limit: Int = 20): UserList!
 }
 
 type Mutation {
@@ -22,8 +26,38 @@ type Mutation {
 
     setMetadata(key: String!, value: String!): Metadata!
     deleteMetadata(key: String!): Boolean!
+
+    updateProfile(input: UpdateProfileInput!): User!
+    changePassword(input: ChangePasswordInput!): Boolean!
+    deactivateAccount: Boolean!
 }
 
+type User {
+    id: ID!
+    username: String!
+    email: String!
+    role: String!
+    isActive: Boolean!
+    createdAt: String!
+    updatedAt: String!
+}
+
+type UserList {
+    items: [User!]!
+    totalCount: Int!
+}
+
+input UpdateProfileInput {
+    username: String
+    email: String
+}
+
+input ChangePasswordInput {
+    currentPassword: String!
+    newPassword: String!
+}
+
+# Existing types...
 type FileList {
     items: [FileItem!]!
     totalCount: Int!

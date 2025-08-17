@@ -9,6 +9,11 @@ import (
 	"strconv"
 )
 
+type ChangePasswordInput struct {
+	CurrentPassword string `json:"currentPassword"`
+	NewPassword     string `json:"newPassword"`
+}
+
 type FileItem struct {
 	Name        string `json:"name"`
 	Path        string `json:"path"`
@@ -41,6 +46,26 @@ type Mutation struct {
 }
 
 type Query struct {
+}
+
+type UpdateProfileInput struct {
+	Username *string `json:"username,omitempty"`
+	Email    *string `json:"email,omitempty"`
+}
+
+type User struct {
+	ID        string `json:"id"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Role      string `json:"role"`
+	IsActive  bool   `json:"isActive"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
+}
+
+type UserList struct {
+	Items      []*User `json:"items"`
+	TotalCount int     `json:"totalCount"`
 }
 
 type SortOption string

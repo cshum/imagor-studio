@@ -30,7 +30,10 @@ type Store interface {
 	GetByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (*model.User, error)
 	UpdateLastLogin(ctx context.Context, id string) error
 	UpdatePassword(ctx context.Context, id string, hashedPassword string) error
+	UpdateUsername(ctx context.Context, id string, username string) error
+	UpdateEmail(ctx context.Context, id string, email string) error
 	SetActive(ctx context.Context, id string, active bool) error
+	List(ctx context.Context, offset, limit int) ([]*User, int, error)
 }
 
 type store struct {
@@ -179,4 +182,90 @@ func (s *store) SetActive(ctx context.Context, id string, active bool) error {
 		return fmt.Errorf("error updating user active status: %w", err)
 	}
 	return nil
+}
+
+func (s *store) UpdateUsername(ctx context.Context, id string, username string) error {
+	username = strings.TrimSpace(username)
+	if username == "" {
+		return fmt.Errorf("username cannot be empty")
+	}
+
+	_, err := s.db.NewUpdate().
+		Model((*model.User)(nil)).
+		Set("username = ?", username).
+		Set("updated_at = ?", time.Now()).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		// Check for unique constraint violations
+		errStr := strings.ToLower(err.Error())
+		if strings.Contains(errStr, "username") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint")) {
+			return fmt.Errorf("username already exists")
+		}
+		return fmt.Errorf("error updating username: %w", err)
+	}
+	return nil
+}
+
+func (s *store) UpdateEmail(ctx context.Context, id string, email string) error {
+	email = strings.TrimSpace(email)
+	if email == "" {
+		return fmt.Errorf("email cannot be empty")
+	}
+
+	_, err := s.db.NewUpdate().
+		Model((*model.User)(nil)).
+		Set("email = ?", email).
+		Set("updated_at = ?", time.Now()).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		// Check for unique constraint violations
+		errStr := strings.ToLower(err.Error())
+		if strings.Contains(errStr, "email") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint")) {
+			return fmt.Errorf("email already exists")
+		}
+		return fmt.Errorf("error updating email: %w", err)
+	}
+	return nil
+}
+
+func (s *store) List(ctx context.Context, offset, limit int) ([]*User, int, error) {
+	var users []model.User
+
+	// Get total count
+	totalCount, err := s.db.NewSelect().
+		Model((*model.User)(nil)).
+		Where("is_active = true").
+		Count(ctx)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error counting users: %w", err)
+	}
+
+	// Get paginated results
+	err = s.db.NewSelect().
+		Model(&users).
+		Where("is_active = true").
+		OrderExpr("created_at DESC").
+		Offset(offset).
+		Limit(limit).
+		Scan(ctx)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error listing users: %w", err)
+	}
+
+	result := make([]*User, len(users))
+	for i, user := range users {
+		result[i] = &User{
+			ID:        user.ID,
+			Username:  user.Username,
+			Email:     user.Email,
+			Role:      user.Role,
+			IsActive:  user.IsActive,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		}
+	}
+
+	return result, totalCount, nil
 }

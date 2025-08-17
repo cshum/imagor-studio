@@ -58,9 +58,35 @@ func (m *MockUserStore) UpdatePassword(ctx context.Context, id string, hashedPas
 	return args.Error(0)
 }
 
+func (m *MockUserStore) UpdateUsername(ctx context.Context, id string, username string) error {
+	args := m.Called(ctx, id, username)
+	return args.Error(0)
+}
+
+func (m *MockUserStore) UpdateEmail(ctx context.Context, id string, email string) error {
+	args := m.Called(ctx, id, email)
+	return args.Error(0)
+}
+
 func (m *MockUserStore) SetActive(ctx context.Context, id string, active bool) error {
 	args := m.Called(ctx, id, active)
 	return args.Error(0)
+}
+
+func (m *MockUserStore) List(ctx context.Context, offset, limit int) ([]*userstore.User, int, error) {
+	args := m.Called(ctx, offset, limit)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int), args.Error(2)
+	}
+	return args.Get(0).([]*userstore.User), args.Get(1).(int), args.Error(2)
+}
+
+func (m *MockUserStore) GetByIDWithPassword(ctx context.Context, id string) (*model.User, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.User), args.Error(1)
 }
 
 func TestRegister(t *testing.T) {

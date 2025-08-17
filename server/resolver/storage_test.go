@@ -50,8 +50,9 @@ func (m *MockStorage) Stat(ctx context.Context, path string) (storage.FileInfo, 
 func TestListFiles(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
+	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
 
 	// Create context with owner ID
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
@@ -88,8 +89,9 @@ func TestListFiles(t *testing.T) {
 func TestStatFile(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
+	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	path := "/test/file1.txt"
@@ -120,8 +122,9 @@ func TestStatFile(t *testing.T) {
 func TestCreateFolder(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
+	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	path := "/test/new-folder"
@@ -139,8 +142,9 @@ func TestCreateFolder(t *testing.T) {
 func TestDeleteFile(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
+	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
 
 	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
 	path := "/test/file-to-delete.txt"
