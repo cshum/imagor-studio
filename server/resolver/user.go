@@ -3,6 +3,7 @@ package resolver
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cshum/imagor-studio/server/gql"
@@ -162,27 +163,35 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 	}
 
 	// Update fields if provided
-	if input.Username != nil && *input.Username != "" {
-		// Validate username
-		username := *input.Username
-		if len(username) < 3 || len(username) > 50 {
-			return nil, fmt.Errorf("username must be between 3 and 50 characters")
+	if input.Username != nil && strings.TrimSpace(*input.Username) != "" {
+		username := strings.TrimSpace(*input.Username)
+
+		// Use validation package
+		if err := validation.ValidateUsername(username); err != nil {
+			return nil, fmt.Errorf("invalid username: %w", err)
 		}
 
-		err = r.userStore.UpdateUsername(ctx, ownerID, username)
+		// Normalize username
+		normalizedUsername := validation.NormalizeUsername(username)
+
+		err = r.userStore.UpdateUsername(ctx, ownerID, normalizedUsername)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update username: %w", err)
 		}
 	}
 
-	if input.Email != nil && *input.Email != "" {
-		// Basic email validation
-		email := *input.Email
-		if !validation.IsValidEmail(email) {
+	if input.Email != nil && strings.TrimSpace(*input.Email) != "" {
+		email := strings.TrimSpace(*input.Email)
+
+		// Use validation package
+		if !validation.IsValidEmailRequired(email) {
 			return nil, fmt.Errorf("invalid email format")
 		}
 
-		err = r.userStore.UpdateEmail(ctx, ownerID, email)
+		// Normalize email
+		normalizedEmail := validation.NormalizeEmail(email)
+
+		err = r.userStore.UpdateEmail(ctx, ownerID, normalizedEmail)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update email: %w", err)
 		}
@@ -214,13 +223,8 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 		return false, fmt.Errorf("failed to get owner ID: %w", err)
 	}
 
-	// Validate new password
-	if len(input.NewPassword) < 8 {
-		return false, fmt.Errorf("new password must be at least 8 characters long")
-	}
-
-	if len(input.NewPassword) > auth.MaxPasswordLength {
-		return false, fmt.Errorf("new password must be at most %d characters long", auth.MaxPasswordLength)
+	if err := validation.ValidatePassword(input.NewPassword); err != nil {
+		return false, fmt.Errorf("invalid new password: %w", err)
 	}
 
 	// Get current user with password - we need to use a different method or modify GetByUsernameOrEmail

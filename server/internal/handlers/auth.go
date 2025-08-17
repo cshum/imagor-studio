@@ -9,6 +9,7 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/errors"
 	"github.com/cshum/imagor-studio/server/pkg/userstore"
+	"github.com/cshum/imagor-studio/server/pkg/validation"
 	"go.uber.org/zap"
 )
 
@@ -327,25 +328,19 @@ type RefreshTokenRequest struct {
 }
 
 func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest) error {
-	if strings.TrimSpace(req.Username) == "" {
-		return fmt.Errorf("username is required")
+	// Validate username
+	if err := validation.ValidateUsername(req.Username); err != nil {
+		return err
 	}
 
-	if len(req.Username) < 3 || len(req.Username) > 50 {
-		return fmt.Errorf("username must be between 3 and 50 characters")
+	// Validate email
+	if !validation.IsValidEmailRequired(req.Email) {
+		return fmt.Errorf("valid email is required")
 	}
 
-	if strings.TrimSpace(req.Email) == "" {
-		return fmt.Errorf("email is required")
-	}
-
-	// Basic email validation
-	if !strings.Contains(req.Email, "@") || !strings.Contains(req.Email, ".") {
-		return fmt.Errorf("invalid email format")
-	}
-
-	if len(req.Password) < 8 {
-		return fmt.Errorf("password must be at least 8 characters long")
+	// Validate password
+	if err := validation.ValidatePassword(req.Password); err != nil {
+		return err
 	}
 
 	return nil
