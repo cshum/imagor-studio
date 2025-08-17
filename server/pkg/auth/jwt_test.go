@@ -31,11 +31,10 @@ func TestGenerateToken(t *testing.T) {
 	tm := NewTokenManager("test-secret", time.Hour)
 
 	userID := "test-user-id"
-	email := "test@example.com"
 	role := "admin"
 	scopes := []string{"read", "write"}
 
-	token, err := tm.GenerateToken(userID, email, role, scopes)
+	token, err := tm.GenerateToken(userID, role, scopes)
 	require.NoError(t, err)
 	assert.NotEmpty(t, token)
 
@@ -49,7 +48,6 @@ func TestGenerateToken(t *testing.T) {
 	claims, ok := parsedToken.Claims.(*Claims)
 	require.True(t, ok)
 	assert.Equal(t, userID, claims.UserID)
-	assert.Equal(t, email, claims.Email)
 	assert.Equal(t, role, claims.Role)
 	assert.Equal(t, scopes, claims.Scopes)
 	assert.Equal(t, userID, claims.Subject)
@@ -62,12 +60,11 @@ func TestValidateToken(t *testing.T) {
 	tm := NewTokenManager("test-secret", time.Hour)
 
 	userID := "test-user-id"
-	email := "test@example.com"
 	role := "admin"
 	scopes := []string{"read", "write"}
 
 	// Generate a valid token
-	token, err := tm.GenerateToken(userID, email, role, scopes)
+	token, err := tm.GenerateToken(userID, role, scopes)
 	require.NoError(t, err)
 
 	// Validate the token
@@ -75,7 +72,6 @@ func TestValidateToken(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, claims)
 	assert.Equal(t, userID, claims.UserID)
-	assert.Equal(t, email, claims.Email)
 	assert.Equal(t, role, claims.Role)
 	assert.Equal(t, scopes, claims.Scopes)
 }
@@ -94,7 +90,7 @@ func TestValidateToken_WrongSecret(t *testing.T) {
 	tm2 := NewTokenManager("secret2", time.Hour)
 
 	// Generate token with first secret
-	token, err := tm1.GenerateToken("user1", "test@example.com", "user", []string{"read"})
+	token, err := tm1.GenerateToken("user1", "user", []string{"read"})
 	require.NoError(t, err)
 
 	// Try to validate with different secret
@@ -106,7 +102,7 @@ func TestValidateToken_ExpiredToken(t *testing.T) {
 	tm := NewTokenManager("test-secret", -time.Hour) // Negative duration for immediate expiration
 
 	// Generate an expired token
-	token, err := tm.GenerateToken("user1", "test@example.com", "user", []string{"read"})
+	token, err := tm.GenerateToken("user1", "user", []string{"read"})
 	require.NoError(t, err)
 
 	// Wait a moment to ensure token is expired
@@ -131,7 +127,6 @@ func TestRefreshToken(t *testing.T) {
 			ID:        "original-test-id",
 		},
 		UserID: "user1",
-		Email:  "test@example.com",
 		Role:   "user",
 		Scopes: []string{"read"},
 	}
@@ -145,7 +140,6 @@ func TestRefreshToken(t *testing.T) {
 	refreshedClaims, err := tm.ValidateToken(refreshedToken)
 	require.NoError(t, err)
 	assert.Equal(t, originalClaims.UserID, refreshedClaims.UserID)
-	assert.Equal(t, originalClaims.Email, refreshedClaims.Email)
 	assert.Equal(t, originalClaims.Role, refreshedClaims.Role)
 	assert.Equal(t, originalClaims.Scopes, refreshedClaims.Scopes)
 
@@ -237,7 +231,6 @@ func TestExtractTokenFromHeader(t *testing.T) {
 func TestClaimsContext(t *testing.T) {
 	claims := &Claims{
 		UserID: "user1",
-		Email:  "test@example.com",
 		Role:   "admin",
 		Scopes: []string{"read", "write"},
 	}
