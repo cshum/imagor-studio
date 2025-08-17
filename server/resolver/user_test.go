@@ -73,6 +73,14 @@ func (m *MockUserStore) List(ctx context.Context, offset, limit int) ([]*usersto
 	return args.Get(0).([]*userstore.User), args.Get(1).(int), args.Error(2)
 }
 
+func (m *MockUserStore) GetByIDWithPassword(ctx context.Context, id string) (*model.User, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.User), args.Error(1)
+}
+
 func TestMe(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockMetadataStore := new(MockMetadataStore)
@@ -243,18 +251,6 @@ func TestChangePassword(t *testing.T) {
 	hashedCurrentPassword, err := auth.HashPassword("currentpassword")
 	require.NoError(t, err)
 
-	// First, the user returned by GetByID (without password)
-	user := &userstore.User{
-		ID:        "test-user-id",
-		Username:  "testuser",
-		Email:     "test@example.com",
-		Role:      "user",
-		IsActive:  true,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	// Then, the user returned by GetByUsernameOrEmail (with password)
 	currentUser := &model.User{
 		ID:             "test-user-id",
 		Username:       "testuser",
@@ -264,9 +260,7 @@ func TestChangePassword(t *testing.T) {
 		IsActive:       true,
 	}
 
-	// Set up all the expected mock calls in order
-	mockUserStore.On("GetByID", ctx, "test-user-id").Return(user, nil)
-	mockUserStore.On("GetByUsernameOrEmail", ctx, "testuser").Return(currentUser, nil)
+	mockUserStore.On("GetByIDWithPassword", ctx, "test-user-id").Return(currentUser, nil)
 	mockUserStore.On("UpdatePassword", ctx, "test-user-id", mock.AnythingOfType("string")).Return(nil)
 
 	input := gql.ChangePasswordInput{

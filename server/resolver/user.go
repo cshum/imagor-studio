@@ -223,23 +223,13 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 		return false, fmt.Errorf("failed to get owner ID: %w", err)
 	}
 
+	// Use validation package for new password
 	if err := validation.ValidatePassword(input.NewPassword); err != nil {
 		return false, fmt.Errorf("invalid new password: %w", err)
 	}
 
-	// Get current user with password - we need to use a different method or modify GetByUsernameOrEmail
-	// Let's get the user first to get their username/email, then get the full user with password
-	user, err := r.userStore.GetByID(ctx, ownerID)
-	if err != nil {
-		return false, fmt.Errorf("failed to get current user: %w", err)
-	}
-
-	if user == nil {
-		return false, fmt.Errorf("user not found")
-	}
-
-	// Get user with password using their username
-	currentUser, err := r.userStore.GetByUsernameOrEmail(ctx, user.Username)
+	// Get current user with password
+	currentUser, err := r.userStore.GetByIDWithPassword(ctx, ownerID)
 	if err != nil {
 		return false, fmt.Errorf("failed to get current user: %w", err)
 	}

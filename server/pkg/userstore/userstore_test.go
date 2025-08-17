@@ -555,6 +555,43 @@ func BenchmarkUserStore_GetByUsernameOrEmail(b *testing.B) {
 	}
 }
 
+func TestUserStore_GetByIDWithPassword(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	store := New(db, logger)
+	ctx := context.Background()
+
+	// Create test user
+	hashedPassword := "hashed-password-123"
+	createdUser, err := store.Create(ctx, "testuser", "test@example.com", hashedPassword, "user")
+	require.NoError(t, err)
+
+	// Test getting by ID with password
+	foundUser, err := store.GetByIDWithPassword(ctx, createdUser.ID)
+	assert.NoError(t, err)
+	assert.NotNil(t, foundUser)
+	assert.Equal(t, createdUser.ID, foundUser.ID)
+	assert.Equal(t, "testuser", foundUser.Username)
+	assert.Equal(t, "test@example.com", foundUser.Email)
+	assert.Equal(t, hashedPassword, foundUser.HashedPassword)
+	assert.Equal(t, "user", foundUser.Role)
+
+	// Test getting non-existent user
+	nonExistentUser, err := store.GetByIDWithPassword(ctx, "non-existent-id")
+	assert.NoError(t, err)
+	assert.Nil(t, nonExistentUser)
+
+	// Test getting inactive user
+	err = store.SetActive(ctx, createdUser.ID, false)
+	require.NoError(t, err)
+
+	inactiveUser, err := store.GetByIDWithPassword(ctx, createdUser.ID)
+	assert.NoError(t, err)
+	assert.Nil(t, inactiveUser) // Should not return inactive users
+}
+
 func TestUserStore_InputValidation(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
