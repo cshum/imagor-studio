@@ -338,25 +338,3 @@ func (r *mutationResolver) DeactivateAccount(ctx context.Context, userID *string
 
 	return true, nil
 }
-
-// Helper function to check admin permissions
-func (r *mutationResolver) requireAdminPermission(ctx context.Context) error {
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return fmt.Errorf("unauthorized")
-	}
-
-	hasAdminScope := false
-	for _, scope := range claims.Scopes {
-		if scope == "admin" {
-			hasAdminScope = true
-			break
-		}
-	}
-
-	if !hasAdminScope {
-		return fmt.Errorf("insufficient permissions: admin access required")
-	}
-
-	return nil
-}

@@ -13,6 +13,10 @@ import (
 
 // UploadFile is the resolver for the uploadFile field.
 func (r *mutationResolver) UploadFile(ctx context.Context, path string, content graphql.Upload) (bool, error) {
+	// Check write permissions
+	if err := r.requireWritePermission(ctx); err != nil {
+		return false, err
+	}
 	r.logger.Info("Uploading file", zap.String("path", path), zap.String("filename", content.Filename))
 
 	if err := r.storage.Put(ctx, path, content.File); err != nil {
@@ -25,6 +29,11 @@ func (r *mutationResolver) UploadFile(ctx context.Context, path string, content 
 
 // DeleteFile is the resolver for the deleteFile field.
 func (r *mutationResolver) DeleteFile(ctx context.Context, path string) (bool, error) {
+	// Check write permissions
+	if err := r.requireWritePermission(ctx); err != nil {
+		return false, err
+	}
+
 	r.logger.Info("Deleting file", zap.String("path", path))
 
 	if err := r.storage.Delete(ctx, path); err != nil {
@@ -37,6 +46,11 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, path string) (bool, e
 
 // CreateFolder is the resolver for the createFolder field.
 func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool, error) {
+	// Check write permissions
+	if err := r.requireWritePermission(ctx); err != nil {
+		return false, err
+	}
+
 	r.logger.Info("Creating folder", zap.String("path", path))
 
 	if err := r.storage.CreateFolder(ctx, path); err != nil {
