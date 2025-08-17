@@ -7,6 +7,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/validation"
 	"go.uber.org/zap"
 )
 
@@ -177,7 +178,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 	if input.Email != nil && *input.Email != "" {
 		// Basic email validation
 		email := *input.Email
-		if !isValidEmail(email) {
+		if !validation.IsValidEmail(email) {
 			return nil, fmt.Errorf("invalid email format")
 		}
 
@@ -276,25 +277,4 @@ func (r *mutationResolver) DeactivateAccount(ctx context.Context) (bool, error) 
 
 	r.logger.Info("User deactivated account", zap.String("userID", ownerID))
 	return true, nil
-}
-
-// Helper function for email validation
-func isValidEmail(email string) bool {
-	// Basic email validation - you might want to use a more robust validation
-	return len(email) >= 3 &&
-		email != "" &&
-		email[0] != '@' &&
-		email[len(email)-1] != '@' &&
-		countChar(email, '@') == 1 &&
-		countChar(email, '.') >= 1
-}
-
-func countChar(s string, c rune) int {
-	count := 0
-	for _, char := range s {
-		if char == c {
-			count++
-		}
-	}
-	return count
 }
