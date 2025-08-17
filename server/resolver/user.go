@@ -338,3 +338,102 @@ func (r *mutationResolver) DeactivateAccount(ctx context.Context, userID *string
 
 	return true, nil
 }
+
+// CreateUser creates a new user (admin only)
+func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserInput) (*gql.User, error) {
+	// Check admin permissions
+	if err := r.requireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+
+	// Get current admin user ID for logging
+	currentUserID, err := GetOwnerIDFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current user ID: %w", err)
+	}
+
+	// Validate input
+	if err := r.validateCreateUserInput(&input); err != nil {
+		return nil, err
+	}
+
+	// Normalize inputs
+	normalizedUsername := validation.NormalizeUsername(input.Username)
+	normalizedEmail := validation.NormalizeEmail(input.Email)
+	normalizedRole := strings.TrimSpace(input.Role)
+
+	// Validate role
+	if !r.isValidRole(normalizedRole) {
+		return nil, fmt.Errorf("invalid role: %s (valid roles: user, admin)", normalizedRole)
+	}
+
+	// Hash password
+	hashedPassword, err := auth.HashPassword(input.Password)
+	if err != nil {
+		r.logger.Error("Failed to hash password for new user", zap.Error(err))
+		return nil, fmt.Errorf("failed to process password")
+	}
+
+	// Create user
+	user, err := r.userStore.Create(ctx, normalizedUsername, normalizedEmail, hashedPassword, normalizedRole)
+	if err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			return nil, fmt.Errorf("user creation failed: %w", err)
+		}
+		r.logger.Error("Failed to create user", zap.Error(err))
+		return nil, fmt.Errorf("failed to create user")
+	}
+
+	r.logger.Info("User created by admin",
+		zap.String("newUserID", user.ID),
+		zap.String("newUsername", user.Username),
+		zap.String("newUserRole", user.Role),
+		zap.String("createdByAdminID", currentUserID))
+
+	return &gql.User{
+		ID:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
+		Role:      user.Role,
+		IsActive:  user.IsActive,
+		CreatedAt: user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
+	}, nil
+}
+
+// Helper function to validate CreateUserInput
+func (r *mutationResolver) validateCreateUserInput(input *gql.CreateUserInput) error {
+	// Validate username
+	if err := validation.ValidateUsername(input.Username); err != nil {
+		return fmt.Errorf("invalid username: %w", err)
+	}
+
+	// Validate email
+	if !validation.IsValidEmailRequired(input.Email) {
+		return fmt.Errorf("invalid email format")
+	}
+
+	// Validate password
+	if err := validation.ValidatePassword(input.Password); err != nil {
+		return fmt.Errorf("invalid password: %w", err)
+	}
+
+	// Validate role (if provided)
+	role := strings.TrimSpace(input.Role)
+	if role == "" {
+		return fmt.Errorf("role cannot be empty")
+	}
+
+	return nil
+}
+
+// Helper function to check if role is valid
+func (r *mutationResolver) isValidRole(role string) bool {
+	validRoles := []string{"user", "admin"}
+	for _, validRole := range validRoles {
+		if role == validRole {
+			return true
+		}
+	}
+	return false
+}

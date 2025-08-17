@@ -27,10 +27,13 @@ type Mutation {
     setMetadata(key: String!, value: String!): Metadata!
     deleteMetadata(key: String!): Boolean!
 
-    # User mutations - self operations, or admin operations with userId
+    # self operations, or admin operations with userId
     updateProfile(input: UpdateProfileInput!, userId: ID): User!
     changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
     deactivateAccount(userId: ID): Boolean!
+
+    # admin only operations
+    createUser(input: CreateUserInput!): User!
 }
 
 type User {
@@ -56,6 +59,13 @@ input UpdateProfileInput {
 input ChangePasswordInput {
     currentPassword: String  # Optional when admin is changing another user's password
     newPassword: String!
+}
+
+input CreateUserInput {
+    username: String!
+    email: String!
+    password: String!
+    role: String!
 }
 
 # Existing types...

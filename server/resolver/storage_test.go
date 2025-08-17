@@ -2,72 +2,17 @@ package resolver
 
 import (
 	"context"
-	"io"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/cshum/imagor-studio/server/gql"
-	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 )
-
-type MockStorage struct {
-	mock.Mock
-}
-
-func (m *MockStorage) List(ctx context.Context, path string, options storage.ListOptions) (storage.ListResult, error) {
-	args := m.Called(ctx, path, options)
-	return args.Get(0).(storage.ListResult), args.Error(1)
-}
-
-func (m *MockStorage) Get(ctx context.Context, path string) (io.ReadCloser, error) {
-	args := m.Called(ctx, path)
-	return args.Get(0).(io.ReadCloser), args.Error(1)
-}
-
-func (m *MockStorage) Put(ctx context.Context, path string, content io.Reader) error {
-	args := m.Called(ctx, path, content)
-	return args.Error(0)
-}
-
-func (m *MockStorage) Delete(ctx context.Context, path string) error {
-	args := m.Called(ctx, path)
-	return args.Error(0)
-}
-
-func (m *MockStorage) CreateFolder(ctx context.Context, path string) error {
-	args := m.Called(ctx, path)
-	return args.Error(0)
-}
-
-func (m *MockStorage) Stat(ctx context.Context, path string) (storage.FileInfo, error) {
-	args := m.Called(ctx, path)
-	return args.Get(0).(storage.FileInfo), args.Error(1)
-}
-
-// Helper functions to create contexts with different scopes
-func createContextWithScopes(userID string, scopes []string) context.Context {
-	claims := &auth.Claims{
-		UserID: userID,
-		Role:   "user",
-		Scopes: scopes,
-	}
-	ctx := auth.SetClaimsInContext(context.Background(), claims)
-	return context.WithValue(ctx, OwnerIDContextKey, userID)
-}
-
-func createReadOnlyContext(userID string) context.Context {
-	return createContextWithScopes(userID, []string{"read"})
-}
-
-func createReadWriteContext(userID string) context.Context {
-	return createContextWithScopes(userID, []string{"read", "write"})
-}
 
 func TestUploadFile_RequiresWriteScope(t *testing.T) {
 	mockStorage := new(MockStorage)
@@ -399,7 +344,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name+" - UploadFile", func(t *testing.T) {
 			mockStorage.ExpectedCalls = nil
-			ctx := createContextWithScopes("test-user-id", tt.scopes)
+			ctx := createUserContext("test-user-id", "user", tt.scopes)
 
 			if !tt.expectError {
 				mockStorage.On("Put", ctx, "test.txt", mock.Anything).Return(nil)
@@ -426,7 +371,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 
 		t.Run(tt.name+" - DeleteFile", func(t *testing.T) {
 			mockStorage.ExpectedCalls = nil
-			ctx := createContextWithScopes("test-user-id", tt.scopes)
+			ctx := createUserContext("test-user-id", "user", tt.scopes)
 
 			if !tt.expectError {
 				mockStorage.On("Delete", ctx, "test.txt").Return(nil)
@@ -448,7 +393,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 
 		t.Run(tt.name+" - CreateFolder", func(t *testing.T) {
 			mockStorage.ExpectedCalls = nil
-			ctx := createContextWithScopes("test-user-id", tt.scopes)
+			ctx := createUserContext("test-user-id", "user", tt.scopes)
 
 			if !tt.expectError {
 				mockStorage.On("CreateFolder", ctx, "newfolder").Return(nil)
@@ -596,4 +541,76 @@ func TestReadOperations_StillWork(t *testing.T) {
 
 		mockStorage.AssertExpectations(t)
 	})
+}
+
+func TestListFiles(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockMetadataStore := new(MockMetadataStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+
+	// Create context with owner ID
+	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
+	path := "/test"
+	offset := 0
+	limit := 10
+	onlyFiles := new(bool)
+	*onlyFiles = true
+	sortBy := gql.SortOptionName
+	sortOrder := gql.SortOrderAsc
+
+	mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
+		Items: []storage.FileInfo{
+			{Name: "file1.txt", Path: "/test/file1.txt", Size: 100, IsDir: false},
+			{Name: "file2.txt", Path: "/test/file2.txt", Size: 200, IsDir: false},
+		},
+		TotalCount: 2,
+	}, nil)
+
+	result, err := resolver.Query().ListFiles(ctx, path, offset, limit, onlyFiles, nil, &sortBy, &sortOrder)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 2, result.TotalCount)
+	assert.Len(t, result.Items, 2)
+	assert.Equal(t, "file1.txt", result.Items[0].Name)
+	assert.Equal(t, "/test/file1.txt", result.Items[0].Path)
+	assert.Equal(t, 100, result.Items[0].Size)
+	assert.False(t, result.Items[0].IsDirectory)
+
+	mockStorage.AssertExpectations(t)
+}
+
+func TestStatFile(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockMetadataStore := new(MockMetadataStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+
+	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
+	path := "/test/file1.txt"
+
+	mockStorage.On("Stat", ctx, path).Return(storage.FileInfo{
+		Name:         "file1.txt",
+		Path:         "/test/file1.txt",
+		Size:         100,
+		IsDir:        false,
+		ModifiedTime: time.Now(),
+		ETag:         "abc123",
+	}, nil)
+
+	result, err := resolver.Query().StatFile(ctx, path)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "file1.txt", result.Name)
+	assert.Equal(t, "/test/file1.txt", result.Path)
+	assert.Equal(t, 100, result.Size)
+	assert.False(t, result.IsDirectory)
+	assert.NotEmpty(t, result.ModifiedTime)
+	assert.Equal(t, "abc123", *result.Etag)
+
+	mockStorage.AssertExpectations(t)
 }

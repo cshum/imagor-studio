@@ -50,7 +50,7 @@ func (r *mutationResolver) requirePermission(ctx context.Context, requiredScope 
 		}
 	}
 	if !hasScope {
-		return fmt.Errorf("insufficient permission: %s", requiredScope)
+		return fmt.Errorf("insufficient permissions: %s access required", requiredScope)
 	}
 	return nil
 }
