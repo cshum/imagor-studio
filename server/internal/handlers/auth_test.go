@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -708,6 +709,295 @@ func TestDevLogin(t *testing.T) {
 				assert.Contains(t, claims.Scopes, "write")
 				assert.Contains(t, claims.Scopes, "admin")
 			}
+		})
+	}
+}
+
+func TestRegister_ValidationEdgeCases(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+
+	tests := []struct {
+		name           string
+		body           RegisterRequest
+		setupMocks     func()
+		expectedStatus int
+		errorCode      errors.ErrorCode
+		errorMessage   string
+	}{
+		{
+			name: "Username too short",
+			body: RegisterRequest{
+				Username: "ab",
+				Email:    "test@example.com",
+				Password: "password123",
+			},
+			setupMocks:     func() {},
+			expectedStatus: http.StatusBadRequest,
+			errorCode:      errors.ErrInvalidInput,
+			errorMessage:   "username must be at least 3 characters long",
+		},
+		{
+			name: "Username too long",
+			body: RegisterRequest{
+				Username: strings.Repeat("a", 51),
+				Email:    "test@example.com",
+				Password: "password123",
+			},
+			setupMocks:     func() {},
+			expectedStatus: http.StatusBadRequest,
+			errorCode:      errors.ErrInvalidInput,
+			errorMessage:   "username must be at most 50 characters long",
+		},
+		{
+			name: "Username with invalid characters",
+			body: RegisterRequest{
+				Username: "test@user",
+				Email:    "test@example.com",
+				Password: "password123",
+			},
+			setupMocks:     func() {},
+			expectedStatus: http.StatusBadRequest,
+			errorCode:      errors.ErrInvalidInput,
+			errorMessage:   "username contains invalid character: @",
+		},
+		{
+			name: "Username starts with special character",
+			body: RegisterRequest{
+				Username: "_testuser",
+				Email:    "test@example.com",
+				Password: "password123",
+			},
+			setupMocks:     func() {},
+			expectedStatus: http.StatusBadRequest,
+			errorCode:      errors.ErrInvalidInput,
+			errorMessage:   "username cannot start with special character",
+		},
+		{
+			name: "Invalid email format",
+			body: RegisterRequest{
+				Username: "testuser",
+				Email:    "invalid-email",
+				Password: "password123",
+			},
+			setupMocks:     func() {},
+			expectedStatus: http.StatusBadRequest,
+			errorCode:      errors.ErrInvalidInput,
+			errorMessage:   "valid email is required",
+		},
+		{
+			name: "Email without TLD",
+			body: RegisterRequest{
+				Username: "testuser",
+				Email:    "test@localhost",
+				Password: "password123",
+			},
+			setupMocks:     func() {},
+			expectedStatus: http.StatusBadRequest,
+			errorCode:      errors.ErrInvalidInput,
+			errorMessage:   "valid email is required",
+		},
+		{
+			name: "Password too short",
+			body: RegisterRequest{
+				Username: "testuser",
+				Email:    "test@example.com",
+				Password: "1234567",
+			},
+			setupMocks:     func() {},
+			expectedStatus: http.StatusBadRequest,
+			errorCode:      errors.ErrInvalidInput,
+			errorMessage:   "password must be at least 8 characters long",
+		},
+		{
+			name: "Password too long",
+			body: RegisterRequest{
+				Username: "testuser",
+				Email:    "test@example.com",
+				Password: strings.Repeat("a", 73),
+			},
+			setupMocks:     func() {},
+			expectedStatus: http.StatusBadRequest,
+			errorCode:      errors.ErrInvalidInput,
+			errorMessage:   "password must be at most 72 characters long",
+		},
+		{
+			name: "Valid registration with normalization",
+			body: RegisterRequest{
+				Username: "  TestUser  ",
+				Email:    "  TEST@EXAMPLE.COM  ",
+				Password: "password123",
+			},
+			setupMocks: func() {
+				mockUserStore.On("Create", mock.Anything, "TestUser", "test@example.com", mock.AnythingOfType("string"), "user").Return(&userstore.User{
+					ID:       "user-123",
+					Username: "TestUser",
+					Email:    "test@example.com",
+					Role:     "user",
+					IsActive: true,
+				}, nil)
+			},
+			expectedStatus: http.StatusCreated,
+			errorCode:      "",
+		},
+		{
+			name: "Empty username after trimming",
+			body: RegisterRequest{
+				Username: "   ",
+				Email:    "test@example.com",
+				Password: "password123",
+			},
+			setupMocks:     func() {},
+			expectedStatus: http.StatusBadRequest,
+			errorCode:      errors.ErrInvalidInput,
+			errorMessage:   "username is required",
+		},
+		{
+			name: "Empty email",
+			body: RegisterRequest{
+				Username: "testuser",
+				Email:    "",
+				Password: "password123",
+			},
+			setupMocks:     func() {},
+			expectedStatus: http.StatusBadRequest,
+			errorCode:      errors.ErrInvalidInput,
+			errorMessage:   "valid email is required",
+		},
+		{
+			name: "Empty password",
+			body: RegisterRequest{
+				Username: "testuser",
+				Email:    "test@example.com",
+				Password: "",
+			},
+			setupMocks:     func() {},
+			expectedStatus: http.StatusBadRequest,
+			errorCode:      errors.ErrInvalidInput,
+			errorMessage:   "password must be at least 8 characters long",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockUserStore.ExpectedCalls = nil
+			tt.setupMocks()
+
+			body, err := json.Marshal(tt.body)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader(body))
+			rr := httptest.NewRecorder()
+
+			handler.Register(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+
+			if tt.errorMessage != "" {
+				var errResp errors.ErrorResponse
+				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
+				require.NoError(t, err)
+				assert.Equal(t, tt.errorCode, errResp.Error.Code)
+				assert.Contains(t, errResp.Error.Message, tt.errorMessage)
+			} else {
+				var loginResp LoginResponse
+				err := json.Unmarshal(rr.Body.Bytes(), &loginResp)
+				require.NoError(t, err)
+				assert.NotEmpty(t, loginResp.Token)
+				assert.Greater(t, loginResp.ExpiresIn, int64(0))
+			}
+
+			mockUserStore.AssertExpectations(t)
+		})
+	}
+}
+
+func TestLogin_InputNormalization(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+
+	// Create a valid hashed password for testing
+	hashedPassword, err := auth.HashPassword("password123")
+	require.NoError(t, err)
+
+	tests := []struct {
+		name           string
+		body           LoginRequest
+		setupMocks     func()
+		expectedStatus int
+		description    string
+	}{
+		{
+			name: "Login with username (trimmed and normalized)",
+			body: LoginRequest{
+				Username: "  TestUser  ",
+				Password: "password123",
+			},
+			setupMocks: func() {
+				mockUserStore.On("GetByUsernameOrEmail", mock.Anything, "TestUser").Return(&model.User{
+					ID:             "user-123",
+					Username:       "TestUser",
+					Email:          "test@example.com",
+					HashedPassword: hashedPassword,
+					Role:           "user",
+					IsActive:       true,
+				}, nil)
+				mockUserStore.On("UpdateLastLogin", mock.Anything, "user-123").Return(nil)
+			},
+			expectedStatus: http.StatusOK,
+			description:    "Should trim and normalize username",
+		},
+		{
+			name: "Login with email (normalized to lowercase)",
+			body: LoginRequest{
+				Username: "  TEST@EXAMPLE.COM  ",
+				Password: "password123",
+			},
+			setupMocks: func() {
+				mockUserStore.On("GetByUsernameOrEmail", mock.Anything, "test@example.com").Return(&model.User{
+					ID:             "user-123",
+					Username:       "TestUser",
+					Email:          "test@example.com",
+					HashedPassword: hashedPassword,
+					Role:           "user",
+					IsActive:       true,
+				}, nil)
+				mockUserStore.On("UpdateLastLogin", mock.Anything, "user-123").Return(nil)
+			},
+			expectedStatus: http.StatusOK,
+			description:    "Should normalize email to lowercase",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockUserStore.ExpectedCalls = nil
+			tt.setupMocks()
+
+			body, err := json.Marshal(tt.body)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewReader(body))
+			rr := httptest.NewRecorder()
+
+			handler.Login(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code, tt.description)
+
+			if tt.expectedStatus == http.StatusOK {
+				var loginResp LoginResponse
+				err := json.Unmarshal(rr.Body.Bytes(), &loginResp)
+				require.NoError(t, err)
+				assert.NotEmpty(t, loginResp.Token)
+				assert.Equal(t, "TestUser", loginResp.User.Username)
+				assert.Equal(t, "test@example.com", loginResp.User.Email)
+			}
+
+			mockUserStore.AssertExpectations(t)
 		})
 	}
 }

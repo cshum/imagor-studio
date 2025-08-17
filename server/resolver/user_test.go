@@ -15,6 +15,11 @@ import (
 	"go.uber.org/zap"
 )
 
+// Helper function for tests
+func intPtr(i int) *int {
+	return &i
+}
+
 type MockUserStore struct {
 	mock.Mock
 }
@@ -370,9 +375,4 @@ func TestUsers_AdminOnly(t *testing.T) {
 			mockUserStore.AssertExpectations(t)
 		})
 	}
-}
-
-// Helper function for tests
-func intPtr(i int) *int {
-	return &i
 }
