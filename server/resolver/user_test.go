@@ -104,7 +104,7 @@ func TestUser_AdminOnly(t *testing.T) {
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.Nil(t, result)
-				assert.Contains(t, err.Error(), "insufficient permissions")
+				assert.Contains(t, err.Error(), "insufficient permission")
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
@@ -243,7 +243,7 @@ func TestUpdateProfile_NonAdminCannotUpdateOthers(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "insufficient permissions: admin access required")
+	assert.Contains(t, err.Error(), "insufficient permission: admin access required")
 
 	mockUserStore.AssertExpectations(t)
 }
@@ -706,7 +706,7 @@ func TestDeactivateAccount_NonAdminCannotDeactivateOthers(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.False(t, result)
-	assert.Contains(t, err.Error(), "insufficient permissions: admin access required")
+	assert.Contains(t, err.Error(), "insufficient permission: admin access required")
 
 	mockUserStore.AssertExpectations(t)
 }
@@ -789,7 +789,7 @@ func TestUsers_AdminOnly(t *testing.T) {
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.Nil(t, result)
-				assert.Contains(t, err.Error(), "insufficient permissions")
+				assert.Contains(t, err.Error(), "insufficient permission")
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
@@ -922,14 +922,14 @@ func TestPermissionErrors(t *testing.T) {
 			execute: func() (interface{}, error) {
 				return resolver.Query().User(regularUserCtx, "other-user-id")
 			},
-			errorMsg: "insufficient permissions",
+			errorMsg: "insufficient permission",
 		},
 		{
 			name: "Regular user cannot access Users query",
 			execute: func() (interface{}, error) {
 				return resolver.Query().Users(regularUserCtx, nil, nil)
 			},
-			errorMsg: "insufficient permissions",
+			errorMsg: "insufficient permission",
 		},
 		{
 			name: "Regular user cannot update other user's profile",
@@ -938,7 +938,7 @@ func TestPermissionErrors(t *testing.T) {
 				otherUserID := "other-user-id"
 				return resolver.Mutation().UpdateProfile(regularUserCtx, input, &otherUserID)
 			},
-			errorMsg: "insufficient permissions",
+			errorMsg: "insufficient permission",
 		},
 		{
 			name: "Regular user cannot change other user's password",
@@ -947,7 +947,7 @@ func TestPermissionErrors(t *testing.T) {
 				otherUserID := "other-user-id"
 				return resolver.Mutation().ChangePassword(regularUserCtx, input, &otherUserID)
 			},
-			errorMsg: "insufficient permissions",
+			errorMsg: "insufficient permission",
 		},
 		{
 			name: "Regular user cannot deactivate other user's account",
@@ -955,7 +955,7 @@ func TestPermissionErrors(t *testing.T) {
 				otherUserID := "other-user-id"
 				return resolver.Mutation().DeactivateAccount(regularUserCtx, &otherUserID)
 			},
-			errorMsg: "insufficient permissions",
+			errorMsg: "insufficient permission",
 		},
 	}
 
@@ -1086,14 +1086,14 @@ func TestCreateUser_AdminOnly(t *testing.T) {
 			userRole:    "user",
 			userScopes:  []string{"read", "write"},
 			expectError: true,
-			errorMsg:    "insufficient permissions: admin access required",
+			errorMsg:    "insufficient permission: admin access required",
 		},
 		{
 			name:        "User with admin role but no admin scope cannot create user",
 			userRole:    "admin",
 			userScopes:  []string{"read", "write"}, // Missing "admin" scope
 			expectError: true,
-			errorMsg:    "insufficient permissions: admin access required",
+			errorMsg:    "insufficient permission: admin access required",
 		},
 	}
 

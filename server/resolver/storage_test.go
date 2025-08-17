@@ -40,7 +40,7 @@ func TestUploadFile_RequiresWriteScope(t *testing.T) {
 				return createReadOnlyContext("test-user-id")
 			},
 			expectError: true,
-			errorMsg:    "insufficient permissions: write access required",
+			errorMsg:    "insufficient permission: write access required",
 		},
 		{
 			name: "Admin can upload",
@@ -107,7 +107,7 @@ func TestDeleteFile_RequiresWriteScope(t *testing.T) {
 				return createReadOnlyContext("test-user-id")
 			},
 			expectError: true,
-			errorMsg:    "insufficient permissions: write access required",
+			errorMsg:    "insufficient permission: write access required",
 		},
 		{
 			name: "Admin can delete",
@@ -169,7 +169,7 @@ func TestCreateFolder_RequiresWriteScope(t *testing.T) {
 				return createReadOnlyContext("test-user-id")
 			},
 			expectError: true,
-			errorMsg:    "insufficient permissions: write access required",
+			errorMsg:    "insufficient permission: write access required",
 		},
 		{
 			name: "Admin can create folder",
@@ -360,7 +360,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.False(t, result)
-				assert.Contains(t, err.Error(), "insufficient permissions: write access required")
+				assert.Contains(t, err.Error(), "insufficient permission: write access required")
 			} else {
 				assert.NoError(t, err)
 				assert.True(t, result)
@@ -382,7 +382,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.False(t, result)
-				assert.Contains(t, err.Error(), "insufficient permissions: write access required")
+				assert.Contains(t, err.Error(), "insufficient permission: write access required")
 			} else {
 				assert.NoError(t, err)
 				assert.True(t, result)
@@ -404,7 +404,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.False(t, result)
-				assert.Contains(t, err.Error(), "insufficient permissions: write access required")
+				assert.Contains(t, err.Error(), "insufficient permission: write access required")
 			} else {
 				assert.NoError(t, err)
 				assert.True(t, result)

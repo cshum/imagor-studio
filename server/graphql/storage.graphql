@@ -20,14 +20,15 @@ type Query {
 }
 
 type Mutation {
+    setMetadata(key: String!, value: String!): Metadata!
+    deleteMetadata(key: String!): Boolean!
+
+    # write scope required
     uploadFile(path: String!, content: Upload!): Boolean!
     deleteFile(path: String!): Boolean!
     createFolder(path: String!): Boolean!
 
-    setMetadata(key: String!, value: String!): Metadata!
-    deleteMetadata(key: String!): Boolean!
-
-    # self operations, or admin operations with userId
+    # self operations, or admin scope with userId
     updateProfile(input: UpdateProfileInput!, userId: ID): User!
     changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
     deactivateAccount(userId: ID): Boolean!

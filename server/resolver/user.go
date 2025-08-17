@@ -42,22 +42,9 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.User, error) {
 
 // User returns a user by ID (admin only)
 func (r *queryResolver) User(ctx context.Context, id string) (*gql.User, error) {
-	// Check if the current user has admin privileges
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unauthorized")
-	}
-
-	hasAdminScope := false
-	for _, scope := range claims.Scopes {
-		if scope == "admin" {
-			hasAdminScope = true
-			break
-		}
-	}
-
-	if !hasAdminScope {
-		return nil, fmt.Errorf("insufficient permissions: admin access required")
+	// Check admin permissions
+	if err := requireAdminPermission(ctx); err != nil {
+		return nil, err
 	}
 
 	user, err := r.userStore.GetByID(ctx, id)
@@ -83,22 +70,9 @@ func (r *queryResolver) User(ctx context.Context, id string) (*gql.User, error) 
 
 // Users returns a list of users (admin only)
 func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) (*gql.UserList, error) {
-	// Check if the current user has admin privileges
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unauthorized")
-	}
-
-	hasAdminScope := false
-	for _, scope := range claims.Scopes {
-		if scope == "admin" {
-			hasAdminScope = true
-			break
-		}
-	}
-
-	if !hasAdminScope {
-		return nil, fmt.Errorf("insufficient permissions: admin access required")
+	// Check admin permissions
+	if err := requireAdminPermission(ctx); err != nil {
+		return nil, err
 	}
 
 	// Handle default values for nullable parameters
@@ -156,7 +130,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 	targetUserID := currentUserID // Default to self
 	if userID != nil {
 		// Admin operation - check permissions
-		if err := r.requireAdminPermission(ctx); err != nil {
+		if err := requireAdminPermission(ctx); err != nil {
 			return nil, err
 		}
 		targetUserID = *userID
@@ -241,7 +215,7 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 	isAdminOperation := userID != nil
 	if isAdminOperation {
 		// Admin operation - check permissions
-		if err := r.requireAdminPermission(ctx); err != nil {
+		if err := requireAdminPermission(ctx); err != nil {
 			return false, err
 		}
 		targetUserID = *userID
@@ -307,7 +281,7 @@ func (r *mutationResolver) DeactivateAccount(ctx context.Context, userID *string
 	targetUserID := currentUserID // Default to self
 	if userID != nil {
 		// Admin operation - check permissions
-		if err := r.requireAdminPermission(ctx); err != nil {
+		if err := requireAdminPermission(ctx); err != nil {
 			return false, err
 		}
 		targetUserID = *userID
@@ -342,7 +316,7 @@ func (r *mutationResolver) DeactivateAccount(ctx context.Context, userID *string
 // CreateUser creates a new user (admin only)
 func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserInput) (*gql.User, error) {
 	// Check admin permissions
-	if err := r.requireAdminPermission(ctx); err != nil {
+	if err := requireAdminPermission(ctx); err != nil {
 		return nil, err
 	}
 

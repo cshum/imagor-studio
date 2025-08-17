@@ -3,8 +3,9 @@ package resolver
 import (
 	"context"
 	"fmt"
-	"github.com/cshum/imagor-studio/server/gql"
 	"time"
+
+	"github.com/cshum/imagor-studio/server/gql"
 )
 
 // SetMetadata is the resolver for the setMetadata field.

@@ -84,7 +84,7 @@ func AuthorizationMiddleware(requiredScope string) func(http.Handler) http.Handl
 			if !hasScope {
 				errors.WriteErrorResponse(w, http.StatusForbidden,
 					errors.ErrPermissionDenied,
-					"Insufficient permissions",
+					"insufficient permission",
 					map[string]interface{}{
 						"requiredScope": requiredScope,
 						"userScopes":    claims.Scopes,
