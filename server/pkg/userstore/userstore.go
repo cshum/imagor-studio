@@ -46,8 +46,27 @@ func New(db *bun.DB, logger *zap.Logger) Store {
 }
 
 func (s *store) Create(ctx context.Context, username, email, hashedPassword, role string) (*User, error) {
+	// Validate inputs
+	username = strings.TrimSpace(username)
+	email = strings.TrimSpace(email)
+	hashedPassword = strings.TrimSpace(hashedPassword)
+	role = strings.TrimSpace(role)
+
+	if username == "" {
+		return nil, fmt.Errorf("username cannot be empty")
+	}
+	if email == "" {
+		return nil, fmt.Errorf("email cannot be empty")
+	}
+	if hashedPassword == "" {
+		return nil, fmt.Errorf("hashed password cannot be empty")
+	}
+	if role == "" {
+		return nil, fmt.Errorf("role cannot be empty")
+	}
+
 	now := time.Now()
-	user := &model.User{
+	entry := &model.User{
 		ID:             uuid.GenerateUUID(),
 		Username:       username,
 		Email:          email,
@@ -59,27 +78,28 @@ func (s *store) Create(ctx context.Context, username, email, hashedPassword, rol
 	}
 
 	_, err := s.db.NewInsert().
-		Model(user).
+		Model(entry).
 		Exec(ctx)
 	if err != nil {
 		// Check for unique constraint violations
-		if strings.Contains(err.Error(), "username") {
+		errStr := strings.ToLower(err.Error())
+		if strings.Contains(errStr, "username") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint")) {
 			return nil, fmt.Errorf("username already exists")
 		}
-		if strings.Contains(err.Error(), "email") {
+		if strings.Contains(errStr, "email") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint")) {
 			return nil, fmt.Errorf("email already exists")
 		}
 		return nil, fmt.Errorf("error creating user: %w", err)
 	}
 
 	return &User{
-		ID:        user.ID,
-		Username:  user.Username,
-		Email:     user.Email,
-		Role:      user.Role,
-		IsActive:  user.IsActive,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:        entry.ID,
+		Username:  entry.Username,
+		Email:     entry.Email,
+		Role:      entry.Role,
+		IsActive:  entry.IsActive,
+		CreatedAt: entry.CreatedAt,
+		UpdatedAt: entry.UpdatedAt,
 	}, nil
 }
 
