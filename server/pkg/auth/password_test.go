@@ -10,8 +10,10 @@ import (
 
 func TestHashPassword(t *testing.T) {
 	tests := []struct {
-		name     string
-		password string
+		name        string
+		password    string
+		expectError bool
+		errorMsg    string
 	}{
 		{
 			name:     "Simple password",
@@ -29,10 +31,16 @@ func TestHashPassword(t *testing.T) {
 			name:     "Unicode password",
 			password: "пароль123测试",
 		},
-		//{
-		//	name:     "Very long password",
-		//	password: strings.Repeat("a", 1000),
-		//},
+		{
+			name:     "Maximum length password (72 bytes)",
+			password: strings.Repeat("a", 72),
+		},
+		{
+			name:        "Password too long (73 bytes)",
+			password:    strings.Repeat("a", 73),
+			expectError: true,
+			errorMsg:    "password length exceeds 72 bytes",
+		},
 		{
 			name:     "Single character",
 			password: "a",
@@ -58,6 +66,16 @@ func TestHashPassword(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			hash, err := HashPassword(tt.password)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if tt.errorMsg != "" {
+					assert.Contains(t, err.Error(), tt.errorMsg)
+				}
+				assert.Empty(t, hash)
+				return
+			}
+
 			require.NoError(t, err)
 			assert.NotEmpty(t, hash)
 			assert.NotEqual(t, tt.password, hash)
@@ -84,6 +102,7 @@ func TestCheckPassword(t *testing.T) {
 		hashedPwd   string
 		plainPwd    string
 		expectError bool
+		errorMsg    string
 	}{
 		{
 			name:      "Correct password",
@@ -114,6 +133,13 @@ func TestCheckPassword(t *testing.T) {
 			plainPwd:    password,
 			expectError: true,
 		},
+		{
+			name:        "Password too long",
+			hashedPwd:   hash,
+			plainPwd:    strings.Repeat("a", 73),
+			expectError: true,
+			errorMsg:    "password length exceeds 72 bytes",
+		},
 	}
 
 	for _, tt := range tests {
@@ -122,8 +148,56 @@ func TestCheckPassword(t *testing.T) {
 
 			if tt.expectError {
 				assert.Error(t, err)
+				if tt.errorMsg != "" {
+					assert.Contains(t, err.Error(), tt.errorMsg)
+				}
 			} else {
 				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Test edge cases with updated expectations
+func TestHashPassword_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		password    string
+		expectError bool
+		errorMsg    string
+	}{
+		{"Null bytes", "password\x00with\x00nulls", false, ""},
+		{"Only spaces", "     ", false, ""},
+		{"Only numbers", "123456789", false, ""},
+		{"Only special chars", "!@#$%^&*()", false, ""},
+		{"Very short", "a", false, ""},
+		{"Mixed encodings", "café🔐тест", false, ""},
+		{"At limit", strings.Repeat("x", 72), false, ""},
+		{"Over limit", strings.Repeat("x", 73), true, "password length exceeds 72 bytes"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hash, err := HashPassword(tt.password)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if tt.errorMsg != "" {
+					assert.Contains(t, err.Error(), tt.errorMsg)
+				}
+				assert.Empty(t, hash)
+			} else {
+				require.NoError(t, err)
+				assert.NotEmpty(t, hash)
+
+				err = CheckPassword(hash, tt.password)
+				assert.NoError(t, err)
+
+				// Should fail with different password
+				if len(tt.password+"different") <= 72 { // Only test if within bcrypt limit
+					err = CheckPassword(hash, tt.password+"different")
+					assert.Error(t, err)
+				}
 			}
 		})
 	}
@@ -214,34 +288,5 @@ func BenchmarkCheckPassword(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-	}
-}
-
-// Test edge cases
-func TestHashPassword_EdgeCases(t *testing.T) {
-	tests := []struct {
-		name     string
-		password string
-	}{
-		{"Null bytes", "password\x00with\x00nulls"},
-		{"Only spaces", "     "},
-		{"Only numbers", "123456789"},
-		{"Only special chars", "!@#$%^&*()"},
-		{"Very short", "a"},
-		{"Mixed encodings", "café🔐тест"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			hash, err := HashPassword(tt.password)
-			require.NoError(t, err)
-
-			err = CheckPassword(hash, tt.password)
-			assert.NoError(t, err)
-
-			// Should fail with different password
-			err = CheckPassword(hash, tt.password+"different")
-			assert.Error(t, err)
-		})
 	}
 }

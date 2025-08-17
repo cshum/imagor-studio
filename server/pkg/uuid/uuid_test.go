@@ -38,8 +38,13 @@ func TestIsValidUUID(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "Valid UUID format",
+			name:     "Valid UUID format with dashes",
 			uuid:     "550e8400-e29b-41d4-a716-446655440000",
+			expected: true,
+		},
+		{
+			name:     "Valid UUID format without dashes", // google/uuid accepts this
+			uuid:     "550e8400e29b41d4a716446655440000",
 			expected: true,
 		},
 		{
@@ -47,11 +52,6 @@ func TestIsValidUUID(t *testing.T) {
 			uuid:     "550e8400-e29b-41d4-a716",
 			expected: false,
 		},
-		//{
-		//	name:     "Invalid UUID - no dashes",
-		//	uuid:     "550e8400e29b41d4a716446655440000",
-		//	expected: false,
-		//},
 		{
 			name:     "Invalid UUID - wrong format",
 			uuid:     "not-a-uuid-at-all",
@@ -67,12 +67,27 @@ func TestIsValidUUID(t *testing.T) {
 			uuid:     "550e8400-e29b-41d4-a716-44665544000g",
 			expected: false,
 		},
+		{
+			name:     "Too short without dashes",
+			uuid:     "550e8400e29b41d4a716",
+			expected: false,
+		},
+		{
+			name:     "Too long",
+			uuid:     "550e8400-e29b-41d4-a716-446655440000-extra",
+			expected: false,
+		},
+		{
+			name:     "Wrong dash placement",
+			uuid:     "550e8400-e29b4-1d4a-716-446655440000",
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := IsValidUUID(tt.uuid)
-			assert.Equal(t, tt.expected, result)
+			assert.Equal(t, tt.expected, result, "UUID: %s", tt.uuid)
 		})
 	}
 }
