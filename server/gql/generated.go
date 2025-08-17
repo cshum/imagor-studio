@@ -74,13 +74,13 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		ChangePassword    func(childComplexity int, input ChangePasswordInput) int
+		ChangePassword    func(childComplexity int, input ChangePasswordInput, userID *string) int
 		CreateFolder      func(childComplexity int, path string) int
-		DeactivateAccount func(childComplexity int) int
+		DeactivateAccount func(childComplexity int, userID *string) int
 		DeleteFile        func(childComplexity int, path string) int
 		DeleteMetadata    func(childComplexity int, key string) int
 		SetMetadata       func(childComplexity int, key string, value string) int
-		UpdateProfile     func(childComplexity int, input UpdateProfileInput) int
+		UpdateProfile     func(childComplexity int, input UpdateProfileInput, userID *string) int
 		UploadFile        func(childComplexity int, path string, content graphql.Upload) int
 	}
 
@@ -116,9 +116,9 @@ type MutationResolver interface {
 	CreateFolder(ctx context.Context, path string) (bool, error)
 	SetMetadata(ctx context.Context, key string, value string) (*Metadata, error)
 	DeleteMetadata(ctx context.Context, key string) (bool, error)
-	UpdateProfile(ctx context.Context, input UpdateProfileInput) (*User, error)
-	ChangePassword(ctx context.Context, input ChangePasswordInput) (bool, error)
-	DeactivateAccount(ctx context.Context) (bool, error)
+	UpdateProfile(ctx context.Context, input UpdateProfileInput, userID *string) (*User, error)
+	ChangePassword(ctx context.Context, input ChangePasswordInput, userID *string) (bool, error)
+	DeactivateAccount(ctx context.Context, userID *string) (bool, error)
 }
 type QueryResolver interface {
 	ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error)
@@ -271,7 +271,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ChangePassword(childComplexity, args["input"].(ChangePasswordInput)), true
+		return e.complexity.Mutation.ChangePassword(childComplexity, args["input"].(ChangePasswordInput), args["userId"].(*string)), true
 
 	case "Mutation.createFolder":
 		if e.complexity.Mutation.CreateFolder == nil {
@@ -290,7 +290,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			break
 		}
 
-		return e.complexity.Mutation.DeactivateAccount(childComplexity), true
+		args, err := ec.field_Mutation_deactivateAccount_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeactivateAccount(childComplexity, args["userId"].(*string)), true
 
 	case "Mutation.deleteFile":
 		if e.complexity.Mutation.DeleteFile == nil {
@@ -338,7 +343,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateProfile(childComplexity, args["input"].(UpdateProfileInput)), true
+		return e.complexity.Mutation.UpdateProfile(childComplexity, args["input"].(UpdateProfileInput), args["userId"].(*string)), true
 
 	case "Mutation.uploadFile":
 		if e.complexity.Mutation.UploadFile == nil {
@@ -630,9 +635,9 @@ type Mutation {
     setMetadata(key: String!, value: String!): Metadata!
     deleteMetadata(key: String!): Boolean!
 
-    updateProfile(input: UpdateProfileInput!): User!
-    changePassword(input: ChangePasswordInput!): Boolean!
-    deactivateAccount: Boolean!
+    updateProfile(input: UpdateProfileInput!, userId: ID): User!
+    changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
+    deactivateAccount(userId: ID): Boolean!
 }
 
 type User {
@@ -656,7 +661,7 @@ input UpdateProfileInput {
 }
 
 input ChangePasswordInput {
-    currentPassword: String!
+    currentPassword: String  # Optional when admin is changing another user's password
     newPassword: String!
 }
 
@@ -719,6 +724,11 @@ func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Conte
 		return nil, err
 	}
 	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalOID2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg1
 	return args, nil
 }
 
@@ -730,6 +740,17 @@ func (ec *executionContext) field_Mutation_createFolder_args(ctx context.Context
 		return nil, err
 	}
 	args["path"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deactivateAccount_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalOID2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
 	return args, nil
 }
 
@@ -779,6 +800,11 @@ func (ec *executionContext) field_Mutation_updateProfile_args(ctx context.Contex
 		return nil, err
 	}
 	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalOID2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg1
 	return args, nil
 }
 
@@ -1972,7 +1998,7 @@ func (ec *executionContext) _Mutation_updateProfile(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateProfile(rctx, fc.Args["input"].(UpdateProfileInput))
+		return ec.resolvers.Mutation().UpdateProfile(rctx, fc.Args["input"].(UpdateProfileInput), fc.Args["userId"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2043,7 +2069,7 @@ func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ChangePassword(rctx, fc.Args["input"].(ChangePasswordInput))
+		return ec.resolvers.Mutation().ChangePassword(rctx, fc.Args["input"].(ChangePasswordInput), fc.Args["userId"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2098,7 +2124,7 @@ func (ec *executionContext) _Mutation_deactivateAccount(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeactivateAccount(rctx)
+		return ec.resolvers.Mutation().DeactivateAccount(rctx, fc.Args["userId"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2115,7 +2141,7 @@ func (ec *executionContext) _Mutation_deactivateAccount(ctx context.Context, fie
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deactivateAccount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deactivateAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -2124,6 +2150,17 @@ func (ec *executionContext) fieldContext_Mutation_deactivateAccount(_ context.Co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deactivateAccount_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -5078,7 +5115,7 @@ func (ec *executionContext) unmarshalInputChangePasswordInput(ctx context.Contex
 		switch k {
 		case "currentPassword":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentPassword"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6665,6 +6702,24 @@ func (ec *executionContext) marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑ
 		return graphql.Null
 	}
 	return ec._FileStat(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalID(*v)
+	return res
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {

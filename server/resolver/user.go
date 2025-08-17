@@ -145,17 +145,27 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) (*gq
 	}, nil
 }
 
-// UpdateProfile updates the current user's profile
-func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdateProfileInput) (*gql.User, error) {
-	ownerID, err := GetOwnerIDFromContext(ctx)
+// UpdateProfile updates a user's profile (self or admin operation)
+func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdateProfileInput, userID *string) (*gql.User, error) {
+	currentUserID, err := GetOwnerIDFromContext(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get owner ID: %w", err)
+		return nil, fmt.Errorf("failed to get current user ID: %w", err)
+	}
+
+	// Determine target user ID and check permissions
+	targetUserID := currentUserID // Default to self
+	if userID != nil {
+		// Admin operation - check permissions
+		if err := r.requireAdminPermission(ctx); err != nil {
+			return nil, err
+		}
+		targetUserID = *userID
 	}
 
 	// Get current user
-	currentUser, err := r.userStore.GetByID(ctx, ownerID)
+	currentUser, err := r.userStore.GetByID(ctx, targetUserID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get current user: %w", err)
+		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
 	if currentUser == nil {
@@ -174,7 +184,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 		// Normalize username
 		normalizedUsername := validation.NormalizeUsername(username)
 
-		err = r.userStore.UpdateUsername(ctx, ownerID, normalizedUsername)
+		err = r.userStore.UpdateUsername(ctx, targetUserID, normalizedUsername)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update username: %w", err)
 		}
@@ -191,19 +201,22 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 		// Normalize email
 		normalizedEmail := validation.NormalizeEmail(email)
 
-		err = r.userStore.UpdateEmail(ctx, ownerID, normalizedEmail)
+		err = r.userStore.UpdateEmail(ctx, targetUserID, normalizedEmail)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update email: %w", err)
 		}
 	}
 
 	// Get updated user
-	updatedUser, err := r.userStore.GetByID(ctx, ownerID)
+	updatedUser, err := r.userStore.GetByID(ctx, targetUserID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get updated user: %w", err)
 	}
 
-	r.logger.Info("User updated profile", zap.String("userID", ownerID))
+	r.logger.Info("User profile updated",
+		zap.String("targetUserID", targetUserID),
+		zap.String("updatedByUserID", currentUserID),
+		zap.Bool("isAdminOperation", userID != nil))
 
 	return &gql.User{
 		ID:        updatedUser.ID,
@@ -216,11 +229,22 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 	}, nil
 }
 
-// ChangePassword changes the current user's password
-func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangePasswordInput) (bool, error) {
-	ownerID, err := GetOwnerIDFromContext(ctx)
+// ChangePassword changes a user's password (self or admin operation)
+func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangePasswordInput, userID *string) (bool, error) {
+	currentUserID, err := GetOwnerIDFromContext(ctx)
 	if err != nil {
-		return false, fmt.Errorf("failed to get owner ID: %w", err)
+		return false, fmt.Errorf("failed to get current user ID: %w", err)
+	}
+
+	// Determine target user ID and check permissions
+	targetUserID := currentUserID // Default to self
+	isAdminOperation := userID != nil
+	if isAdminOperation {
+		// Admin operation - check permissions
+		if err := r.requireAdminPermission(ctx); err != nil {
+			return false, err
+		}
+		targetUserID = *userID
 	}
 
 	// Use validation package for new password
@@ -229,18 +253,28 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 	}
 
 	// Get current user with password
-	currentUser, err := r.userStore.GetByIDWithPassword(ctx, ownerID)
+	currentUser, err := r.userStore.GetByIDWithPassword(ctx, targetUserID)
 	if err != nil {
-		return false, fmt.Errorf("failed to get current user: %w", err)
+		return false, fmt.Errorf("failed to get user: %w", err)
 	}
 
 	if currentUser == nil {
 		return false, fmt.Errorf("user not found")
 	}
 
-	// Verify current password
-	if err := auth.CheckPassword(currentUser.HashedPassword, input.CurrentPassword); err != nil {
-		return false, fmt.Errorf("current password is incorrect")
+	// Verify current password (only required for self-operation)
+	if !isAdminOperation {
+		if input.CurrentPassword == nil || *input.CurrentPassword == "" {
+			return false, fmt.Errorf("current password is required")
+		}
+		if err := auth.CheckPassword(currentUser.HashedPassword, *input.CurrentPassword); err != nil {
+			return false, fmt.Errorf("current password is incorrect")
+		}
+	} else {
+		// Admin operation - log the override
+		r.logger.Warn("Admin password change without current password verification",
+			zap.String("targetUserID", targetUserID),
+			zap.String("adminUserID", currentUserID))
 	}
 
 	// Hash new password
@@ -250,25 +284,79 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 	}
 
 	// Update password
-	if err := r.userStore.UpdatePassword(ctx, ownerID, hashedNewPassword); err != nil {
+	if err := r.userStore.UpdatePassword(ctx, targetUserID, hashedNewPassword); err != nil {
 		return false, fmt.Errorf("failed to update password: %w", err)
 	}
 
-	r.logger.Info("User changed password", zap.String("userID", ownerID))
+	r.logger.Info("Password changed",
+		zap.String("targetUserID", targetUserID),
+		zap.String("changedByUserID", currentUserID),
+		zap.Bool("isAdminOperation", isAdminOperation))
+
 	return true, nil
 }
 
-// DeactivateAccount deactivates the current user's account
-func (r *mutationResolver) DeactivateAccount(ctx context.Context) (bool, error) {
-	ownerID, err := GetOwnerIDFromContext(ctx)
+// DeactivateAccount deactivates a user's account (self or admin operation)
+func (r *mutationResolver) DeactivateAccount(ctx context.Context, userID *string) (bool, error) {
+	currentUserID, err := GetOwnerIDFromContext(ctx)
 	if err != nil {
-		return false, fmt.Errorf("failed to get owner ID: %w", err)
+		return false, fmt.Errorf("failed to get current user ID: %w", err)
 	}
 
-	if err := r.userStore.SetActive(ctx, ownerID, false); err != nil {
+	// Determine target user ID and check permissions
+	targetUserID := currentUserID // Default to self
+	if userID != nil {
+		// Admin operation - check permissions
+		if err := r.requireAdminPermission(ctx); err != nil {
+			return false, err
+		}
+		targetUserID = *userID
+
+		// Prevent admin from deactivating themselves through this method
+		if targetUserID == currentUserID {
+			return false, fmt.Errorf("use self-deactivation (no userID parameter) to deactivate your own account")
+		}
+	}
+
+	// Check if target user exists
+	targetUser, err := r.userStore.GetByID(ctx, targetUserID)
+	if err != nil {
+		return false, fmt.Errorf("failed to get target user: %w", err)
+	}
+	if targetUser == nil {
+		return false, fmt.Errorf("target user not found")
+	}
+
+	if err := r.userStore.SetActive(ctx, targetUserID, false); err != nil {
 		return false, fmt.Errorf("failed to deactivate account: %w", err)
 	}
 
-	r.logger.Info("User deactivated account", zap.String("userID", ownerID))
+	r.logger.Info("Account deactivated",
+		zap.String("targetUserID", targetUserID),
+		zap.String("deactivatedByUserID", currentUserID),
+		zap.Bool("isAdminOperation", userID != nil))
+
 	return true, nil
+}
+
+// Helper function to check admin permissions
+func (r *mutationResolver) requireAdminPermission(ctx context.Context) error {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("unauthorized")
+	}
+
+	hasAdminScope := false
+	for _, scope := range claims.Scopes {
+		if scope == "admin" {
+			hasAdminScope = true
+			break
+		}
+	}
+
+	if !hasAdminScope {
+		return fmt.Errorf("insufficient permissions: admin access required")
+	}
+
+	return nil
 }
