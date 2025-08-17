@@ -81,6 +81,10 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Normalize the email
+	normalizedEmail := validation.NormalizeEmail(req.Email)
+	normalizedUsername := validation.NormalizeUsername(req.Username)
+
 	// Hash password
 	hashedPassword, err := auth.HashPassword(req.Password)
 	if err != nil {
@@ -93,7 +97,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create user
-	user, err := h.userStore.Create(r.Context(), req.Username, req.Email, hashedPassword, "user")
+	user, err := h.userStore.Create(r.Context(), normalizedUsername, normalizedEmail, hashedPassword, "user")
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			errors.WriteErrorResponse(w, http.StatusConflict,
@@ -172,8 +176,16 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Normalize the username/email input
+	usernameOrEmail := strings.TrimSpace(req.Username)
+	if validation.IsValidEmail(usernameOrEmail) {
+		usernameOrEmail = validation.NormalizeEmail(usernameOrEmail)
+	} else {
+		usernameOrEmail = validation.NormalizeUsername(usernameOrEmail)
+	}
+
 	// Get user by username or email
-	user, err := h.userStore.GetByUsernameOrEmail(r.Context(), req.Username)
+	user, err := h.userStore.GetByUsernameOrEmail(r.Context(), usernameOrEmail)
 	if err != nil {
 		h.logger.Error("Failed to get user", zap.Error(err))
 		errors.WriteErrorResponse(w, http.StatusInternalServerError,
@@ -183,10 +195,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user == nil {
+	if user == nil || !user.IsActive {
 		errors.WriteErrorResponse(w, http.StatusUnauthorized,
 			errors.ErrInvalidCredentials,
-			"Invalid username or password",
+			"Invalid credentials",
 			nil)
 		return
 	}
@@ -195,14 +207,14 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err := auth.CheckPassword(user.HashedPassword, req.Password); err != nil {
 		errors.WriteErrorResponse(w, http.StatusUnauthorized,
 			errors.ErrInvalidCredentials,
-			"Invalid username or password",
+			"Invalid credentials",
 			nil)
 		return
 	}
 
 	// Update last login
 	if err := h.userStore.UpdateLastLogin(r.Context(), user.ID); err != nil {
-		h.logger.Warn("Failed to update last login", zap.Error(err))
+		h.logger.Warn("Failed to update last login", zap.Error(err), zap.String("userID", user.ID))
 	}
 
 	// Determine scopes based on role
