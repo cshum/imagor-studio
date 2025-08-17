@@ -270,7 +270,6 @@ func TestRegister(t *testing.T) {
 				claims, err := tokenManager.ValidateToken(loginResp.Token)
 				require.NoError(t, err)
 				assert.Equal(t, "user-123", claims.UserID)
-				assert.Equal(t, "test@example.com", claims.Email)
 				assert.Equal(t, "user", claims.Role)
 				assert.Contains(t, claims.Scopes, "read")
 				assert.Contains(t, claims.Scopes, "write")
@@ -502,7 +501,7 @@ func TestRefreshToken(t *testing.T) {
 	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
 
 	// Generate a valid token first
-	validToken, err := tokenManager.GenerateToken("user1", "test@example.com", "user", []string{"read"})
+	validToken, err := tokenManager.GenerateToken("user1", "user", []string{"read"})
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -617,7 +616,6 @@ func TestRefreshToken(t *testing.T) {
 				claims, err := tokenManager.ValidateToken(refreshResp.Token)
 				require.NoError(t, err)
 				assert.Equal(t, "user1", claims.UserID)
-				assert.Equal(t, "test@example.com", claims.Email)
 			}
 
 			mockUserStore.AssertExpectations(t)

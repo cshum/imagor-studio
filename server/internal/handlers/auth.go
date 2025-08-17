@@ -117,7 +117,6 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// Generate token
 	token, err := h.tokenManager.GenerateToken(
 		user.ID,
-		user.Email,
 		user.Role,
 		[]string{"read", "write"}, // Default scopes for regular users
 	)
@@ -226,7 +225,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Generate token
 	token, err := h.tokenManager.GenerateToken(
 		user.ID,
-		user.Email,
 		user.Role,
 		scopes,
 	)
@@ -385,7 +383,6 @@ func (h *AuthHandler) DevLogin(w http.ResponseWriter, r *http.Request) {
 	// Generate token
 	token, err := h.tokenManager.GenerateToken(
 		userID,
-		req.Username,
 		"admin",                            // For development, give admin role
 		[]string{"read", "write", "admin"}, // All scopes for development
 	)

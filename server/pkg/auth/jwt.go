@@ -13,7 +13,6 @@ import (
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string   `json:"user_id"`
-	Email  string   `json:"email"`
 	Role   string   `json:"role"`
 	Scopes []string `json:"scopes"`
 }
@@ -38,7 +37,7 @@ func NewTokenManager(secret string, tokenDuration time.Duration) *TokenManager {
 }
 
 // GenerateToken creates a new JWT token
-func (tm *TokenManager) GenerateToken(userID, email, role string, scopes []string) (string, error) {
+func (tm *TokenManager) GenerateToken(userID, role string, scopes []string) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -49,7 +48,6 @@ func (tm *TokenManager) GenerateToken(userID, email, role string, scopes []strin
 			ID:        fmt.Sprintf("%d", time.Now().UnixNano()),
 		},
 		UserID: userID,
-		Email:  email,
 		Role:   role,
 		Scopes: scopes,
 	}
@@ -94,7 +92,6 @@ func (tm *TokenManager) RefreshToken(claims *Claims) (string, error) {
 			ID:        fmt.Sprintf("%d", now.UnixNano()),
 		},
 		UserID: claims.UserID,
-		Email:  claims.Email,
 		Role:   claims.Role,
 		Scopes: claims.Scopes,
 	}
