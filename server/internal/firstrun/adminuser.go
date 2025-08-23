@@ -62,13 +62,13 @@ func EnsureAdminUser(ctx context.Context, cfg *config.Config, userStore userstor
 		zap.String("email", adminUser.Email))
 
 	// Print credentials to console for first-time setup
-	fmt.Printf("\n" + strings.Repeat("=", 60) + "\n")
+	fmt.Printf("\n%s\n", strings.Repeat("=", 60)+"\n")
 	fmt.Printf("🎉 FIRST RUN: Default admin user created!\n")
 	fmt.Printf("Username: %s\n", cfg.DefaultAdminUsername)
 	fmt.Printf("Email: %s\n", cfg.DefaultAdminEmail)
 	fmt.Printf("Password: %s\n", adminPassword)
 	fmt.Printf("⚠️  Please change the password after first login!\n")
-	fmt.Printf(strings.Repeat("=", 60) + "\n\n")
+	fmt.Printf("%s\n\n", strings.Repeat("=", 60))
 
 	return nil
 }
