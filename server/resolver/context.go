@@ -32,6 +32,14 @@ func requirePermission(ctx context.Context, requiredScope string) error {
 	if err != nil {
 		return fmt.Errorf("unauthorized")
 	}
+
+	if claims.Role == "guest" {
+		if requiredScope == "read" {
+			return nil // Guests can read
+		}
+		return fmt.Errorf("guests have read-only access")
+	}
+
 	hasScope := false
 	for _, scope := range claims.Scopes {
 		if scope == requiredScope {
