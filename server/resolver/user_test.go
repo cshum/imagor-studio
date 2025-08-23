@@ -987,7 +987,7 @@ func TestDatabaseErrors(t *testing.T) {
 				input := gql.UpdateProfileInput{DisplayName: stringPtr("newname")}
 				return resolver.Mutation().UpdateProfile(ctx, input, nil)
 			},
-			errorMsg: "failed to update username",
+			errorMsg: "failed to update display name",
 		},
 		{
 			name: "ChangePassword - database error on GetByIDWithPassword",

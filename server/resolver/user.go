@@ -165,19 +165,19 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 
 	// Update fields if provided
 	if input.DisplayName != nil && strings.TrimSpace(*input.DisplayName) != "" {
-		username := strings.TrimSpace(*input.DisplayName)
+		displayName := strings.TrimSpace(*input.DisplayName)
 
 		// Use validation package
-		if err := validation.ValidateDisplayName(username); err != nil {
-			return nil, fmt.Errorf("invalid username: %w", err)
+		if err := validation.ValidateDisplayName(displayName); err != nil {
+			return nil, fmt.Errorf("invalid display name: %w", err)
 		}
 
-		// Normalize username
-		normalizedDisplayName := validation.NormalizeDisplayName(username)
+		// Normalize displayName
+		normalizedDisplayName := validation.NormalizeDisplayName(displayName)
 
 		err = r.userStore.UpdateDisplayName(ctx, targetUserID, normalizedDisplayName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to update username: %w", err)
+			return nil, fmt.Errorf("failed to update display name: %w", err)
 		}
 	}
 
@@ -400,9 +400,9 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserI
 
 // Helper function to validate CreateUserInput
 func (r *mutationResolver) validateCreateUserInput(input *gql.CreateUserInput) error {
-	// Validate username
+	// Validate displayName
 	if err := validation.ValidateDisplayName(input.DisplayName); err != nil {
-		return fmt.Errorf("invalid username: %w", err)
+		return fmt.Errorf("invalid display name: %w", err)
 	}
 
 	// Validate email
