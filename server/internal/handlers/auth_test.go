@@ -911,3 +911,39 @@ func TestLogin_InputNormalization(t *testing.T) {
 		})
 	}
 }
+
+func TestGuestLogin(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+
+	// Test with no body
+	req := httptest.NewRequest(http.MethodPost, "/auth/guest", nil)
+	rr := httptest.NewRecorder()
+
+	handler.GuestLogin(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var loginResp LoginResponse
+	err := json.Unmarshal(rr.Body.Bytes(), &loginResp)
+	require.NoError(t, err)
+	assert.NotEmpty(t, loginResp.Token)
+
+	// Test with empty body
+	req2 := httptest.NewRequest(http.MethodPost, "/auth/guest", strings.NewReader(""))
+	rr2 := httptest.NewRecorder()
+
+	handler.GuestLogin(rr2, req2)
+
+	assert.Equal(t, http.StatusOK, rr2.Code)
+
+	var loginResp2 LoginResponse
+	err = json.Unmarshal(rr2.Body.Bytes(), &loginResp2)
+	require.NoError(t, err)
+	assert.NotEmpty(t, loginResp2.Token)
+
+	// Verify different tokens were generated
+	assert.NotEqual(t, loginResp.Token, loginResp2.Token)
+}
