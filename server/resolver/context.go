@@ -55,3 +55,12 @@ func requireWritePermission(ctx context.Context) error {
 func requireAdminPermission(ctx context.Context) error {
 	return requirePermission(ctx, "admin")
 }
+
+// Helper function to check if user is a guest
+func isGuestUser(ctx context.Context) bool {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return false
+	}
+	return claims.Role == "guest"
+}

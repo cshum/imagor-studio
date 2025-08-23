@@ -19,6 +19,20 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.User, error) {
 		return nil, fmt.Errorf("failed to get owner ID: %w", err)
 	}
 
+	// Handle guest users - they don't exist in the database
+	if isGuestUser(ctx) {
+		return &gql.User{
+			ID:        ownerID,
+			Username:  "guest",
+			Email:     "guest@temporary.local",
+			Role:      "guest",
+			IsActive:  true,
+			CreatedAt: time.Now().Format(time.RFC3339), // Use current time for guests
+			UpdatedAt: time.Now().Format(time.RFC3339),
+		}, nil
+	}
+
+	// For regular users, get from database
 	user, err := r.userStore.GetByID(ctx, ownerID)
 	if err != nil {
 		r.logger.Error("Failed to get current user", zap.Error(err), zap.String("userID", ownerID))
@@ -121,6 +135,9 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) (*gq
 
 // UpdateProfile updates a user's profile (self or admin operation)
 func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdateProfileInput, userID *string) (*gql.User, error) {
+	if isGuestUser(ctx) {
+		return nil, fmt.Errorf("cannot update a guest user")
+	}
 	currentUserID, err := GetOwnerIDFromContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current user ID: %w", err)
@@ -205,6 +222,9 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 
 // ChangePassword changes a user's password (self or admin operation)
 func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangePasswordInput, userID *string) (bool, error) {
+	if isGuestUser(ctx) {
+		return false, fmt.Errorf("cannot update a guest user")
+	}
 	currentUserID, err := GetOwnerIDFromContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get current user ID: %w", err)
@@ -272,6 +292,9 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 
 // DeactivateAccount deactivates a user's account (self or admin operation)
 func (r *mutationResolver) DeactivateAccount(ctx context.Context, userID *string) (bool, error) {
+	if isGuestUser(ctx) {
+		return false, fmt.Errorf("cannot update a guest user")
+	}
 	currentUserID, err := GetOwnerIDFromContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get current user ID: %w", err)
