@@ -947,3 +947,124 @@ func TestGuestLogin(t *testing.T) {
 	// Verify different tokens were generated
 	assert.NotEqual(t, loginResp.Token, loginResp2.Token)
 }
+
+func TestCheckFirstRun(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+
+	tests := []struct {
+		name           string
+		userCount      int
+		expectFirstRun bool
+	}{
+		{"No users - first run", 0, true},
+		{"Users exist - not first run", 5, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockUserStore.ExpectedCalls = nil
+			mockUserStore.On("List", mock.Anything, 0, 1).Return([]*userstore.User{}, tt.userCount, nil)
+
+			req := httptest.NewRequest(http.MethodGet, "/auth/first-run", nil)
+			rr := httptest.NewRecorder()
+
+			handler.CheckFirstRun(rr, req)
+
+			assert.Equal(t, http.StatusOK, rr.Code)
+
+			var response map[string]interface{}
+			err := json.Unmarshal(rr.Body.Bytes(), &response)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectFirstRun, response["isFirstRun"])
+			assert.Equal(t, float64(tt.userCount), response["userCount"])
+
+			mockUserStore.AssertExpectations(t)
+		})
+	}
+}
+
+func TestRegisterAdmin(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+
+	tests := []struct {
+		name           string
+		body           RegisterRequest
+		existingUsers  int
+		expectedStatus int
+		expectError    bool
+		errorCode      errors.ErrorCode
+	}{
+		{
+			name: "Valid admin registration on first run",
+			body: RegisterRequest{
+				Username: "admin",
+				Email:    "admin@example.com",
+				Password: "securepassword123",
+			},
+			existingUsers:  0,
+			expectedStatus: http.StatusCreated,
+			expectError:    false,
+		},
+		{
+			name: "Admin registration when users already exist",
+			body: RegisterRequest{
+				Username: "admin",
+				Email:    "admin@example.com",
+				Password: "securepassword123",
+			},
+			existingUsers:  1,
+			expectedStatus: http.StatusConflict,
+			expectError:    true,
+			errorCode:      errors.ErrAlreadyExists,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockUserStore.ExpectedCalls = nil
+			mockUserStore.On("List", mock.Anything, 0, 1).Return([]*userstore.User{}, tt.existingUsers, nil)
+
+			if !tt.expectError && tt.existingUsers == 0 {
+				mockUserStore.On("Create", mock.Anything, tt.body.Username, mock.AnythingOfType("string"), mock.AnythingOfType("string"), "admin").Return(&userstore.User{
+					ID:       "admin-123",
+					Username: tt.body.Username,
+					Email:    strings.ToLower(tt.body.Email),
+					Role:     "admin",
+					IsActive: true,
+				}, nil)
+			}
+
+			body, err := json.Marshal(tt.body)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodPost, "/auth/register-admin", bytes.NewReader(body))
+			rr := httptest.NewRecorder()
+
+			handler.RegisterAdmin(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+
+			if tt.expectError {
+				var errResp errors.ErrorResponse
+				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
+				require.NoError(t, err)
+				assert.Equal(t, tt.errorCode, errResp.Error.Code)
+			} else {
+				var loginResp LoginResponse
+				err := json.Unmarshal(rr.Body.Bytes(), &loginResp)
+				require.NoError(t, err)
+				assert.NotEmpty(t, loginResp.Token)
+				assert.Equal(t, "admin", loginResp.User.Role)
+			}
+
+			mockUserStore.AssertExpectations(t)
+		})
+	}
+}

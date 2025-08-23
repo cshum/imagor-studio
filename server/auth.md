@@ -270,17 +270,227 @@ This script will:
 6. Guest tokens should have short expiration times
 7. Monitor guest usage to prevent abuse
 
-## First Run Setup
+## First Run Admin Setup
 
-On first startup, if no users exist, an admin user will be automatically created:
+Instead of automatic admin creation, the system provides API endpoints to check first-run status and create the initial admin user through the API.
 
-```env
-# Configure default admin (optional)
-DEFAULT_ADMIN_USERNAME=admin
-DEFAULT_ADMIN_EMAIL=admin@yourdomain.com
-DEFAULT_ADMIN_PASSWORD=  # Leave empty for auto-generated password
-CREATE_ADMIN_ON_FIRST_RUN=true
+### 1. Check First Run Status
+
+Check if the system needs initial admin setup.
+
+```
+GET /auth/first-run
 ```
 
-The admin credentials will be displayed in the console on first run.
+Response:
+```json
+{
+  "isFirstRun": true,
+  "userCount": 0,
+  "timestamp": 1704067200000
+}
 ```
+
+### 2. Register First Admin User
+
+Create the initial admin user (only available when no users exist).
+
+```
+POST /auth/register-admin
+```
+
+Request body:
+```json
+{
+  "username": "admin",
+  "email": "admin@yourdomain.com",
+  "password": "securepassword123"
+}
+```
+
+Response:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "expiresIn": 86400,
+  "user": {
+    "id": "admin-123",
+    "username": "admin",
+    "email": "admin@yourdomain.com",
+    "role": "admin"
+  }
+}
+```
+
+### First Run Setup Flow
+
+1. **Start the server** - No automatic admin creation occurs
+2. **Check first run status** using `GET /auth/first-run`
+3. **If `isFirstRun: true`**, use `/auth/register-admin` to create admin
+4. **If `isFirstRun: false`**, users already exist - use regular login
+
+### API Examples
+
+#### Complete First Run Setup
+
+```bash
+# 1. Check if this is the first run
+curl http://localhost:8080/auth/first-run
+
+# Response: {"isFirstRun": true, "userCount": 0, "timestamp": 1704067200000}
+
+# 2. Register the first admin user
+curl -X POST http://localhost:8080/auth/register-admin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "email": "admin@yourdomain.com", 
+    "password": "securepassword123"
+  }'
+
+# 3. Use the returned token for admin operations
+curl -X POST http://localhost:8080/query \
+  -H "Authorization: Bearer <admin_token>" \
+  -d '{"query":"query { users { items { username role } } }"}'
+```
+
+#### When System is Already Initialized
+
+```bash
+# 1. Check first run status
+curl http://localhost:8080/auth/first-run
+
+# Response: {"isFirstRun": false, "userCount": 3, "timestamp": 1704067200000}
+
+# 2. Regular login instead
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "securepassword123"
+  }'
+```
+
+### Error Scenarios
+
+#### Trying to Register Admin When Users Exist
+
+```bash
+curl -X POST http://localhost:8080/auth/register-admin \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","email":"admin@example.com","password":"password123"}'
+```
+
+Response:
+```json
+{
+  "error": {
+    "code": "ALREADY_EXISTS",
+    "message": "Admin user already exists. System is already initialized.",
+    "details": {
+      "userCount": 3
+    }
+  },
+  "timestamp": 1704067200000
+}
+```
+
+#### Invalid Admin Registration Data
+
+```bash
+curl -X POST http://localhost:8080/auth/register-admin \
+  -H "Content-Type: application/json" \
+  -d '{"username":"ad","email":"invalid-email","password":"short"}'
+```
+
+Response:
+```json
+{
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "invalid username: username must be at least 3 characters long"
+  },
+  "timestamp": 1704067200000
+}
+```
+
+### Validation Rules for Admin Registration
+
+The admin registration endpoint enforces the same validation as regular user registration:
+
+- **Username**: 3-50 characters, alphanumeric plus `_`, `-`, `.`, cannot start/end with special chars
+- **Email**: Valid email format with TLD required
+- **Password**: 8-72 characters
+- **Role**: Automatically set to "admin" (cannot be changed)
+
+### Security Considerations
+
+1. **First Run Protection**: Admin registration is only available when no users exist
+2. **Input Validation**: All inputs are validated and normalized
+3. **Password Security**: Passwords are hashed using bcrypt with cost 12
+4. **Token Generation**: Admin receives full privileges (read, write, admin scopes)
+5. **Logging**: Admin creation is logged for security auditing
+6. **Rate Limiting**: Consider implementing rate limiting on these endpoints in production
+
+### Testing First Run Setup
+
+Use the provided test script to validate the first run flow:
+
+```bash
+chmod +x test-first-run.sh
+./test-first-run.sh
+```
+
+This script will:
+1. Check first run status
+2. Register admin user (if first run)
+3. Test admin access
+4. Verify protection against duplicate admin registration
+5. Test error scenarios
+
+### Frontend Integration
+
+For frontend applications, implement this flow:
+
+```javascript
+// 1. Check if first run is needed
+const checkFirstRun = async () => {
+  const response = await fetch('/auth/first-run');
+  const data = await response.json();
+  return data.isFirstRun;
+};
+
+// 2. Show admin setup form if first run
+const setupAdmin = async (adminData) => {
+  const response = await fetch('/auth/register-admin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(adminData)
+  });
+  
+  if (response.ok) {
+    const { token, user } = await response.json();
+    // Store token and redirect to admin dashboard
+    localStorage.setItem('authToken', token);
+    return { success: true, user };
+  } else {
+    const error = await response.json();
+    return { success: false, error };
+  }
+};
+
+// 3. Usage in app initialization
+const initializeApp = async () => {
+  const isFirstRun = await checkFirstRun();
+  
+  if (isFirstRun) {
+    // Show admin setup form
+    showAdminSetupForm();
+  } else {
+    // Show regular login form
+    showLoginForm();
+  }
+};
+```
+
+This approach provides better control and visibility over the admin setup process while maintaining security and validation.

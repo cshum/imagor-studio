@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/errors"
@@ -50,6 +51,158 @@ type UserResponse struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Role     string `json:"role"`
+}
+
+// CheckFirstRun checks if this is the first run (no users exist)
+func (h *AuthHandler) CheckFirstRun(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		errors.WriteErrorResponse(w, http.StatusMethodNotAllowed,
+			errors.ErrInvalidInput,
+			"Method not allowed",
+			nil)
+		return
+	}
+
+	// Check if any users exist
+	_, totalCount, err := h.userStore.List(r.Context(), 0, 1)
+	if err != nil {
+		h.logger.Error("Failed to check existing users", zap.Error(err))
+		errors.WriteErrorResponse(w, http.StatusInternalServerError,
+			errors.ErrInternalServer,
+			"Failed to check system status",
+			nil)
+		return
+	}
+
+	response := map[string]interface{}{
+		"isFirstRun": totalCount == 0,
+		"userCount":  totalCount,
+		"timestamp":  time.Now().UnixMilli(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// RegisterAdmin handles admin user registration (only on first run)
+func (h *AuthHandler) RegisterAdmin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		errors.WriteErrorResponse(w, http.StatusMethodNotAllowed,
+			errors.ErrInvalidInput,
+			"Method not allowed",
+			nil)
+		return
+	}
+
+	var req RegisterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		errors.WriteErrorResponse(w, http.StatusBadRequest,
+			errors.ErrInvalidInput,
+			"Invalid request body",
+			map[string]interface{}{
+				"error": err.Error(),
+			})
+		return
+	}
+
+	// Check if this is truly the first run
+	_, totalCount, err := h.userStore.List(r.Context(), 0, 1)
+	if err != nil {
+		h.logger.Error("Failed to check existing users", zap.Error(err))
+		errors.WriteErrorResponse(w, http.StatusInternalServerError,
+			errors.ErrInternalServer,
+			"Failed to check system status",
+			nil)
+		return
+	}
+
+	if totalCount > 0 {
+		errors.WriteErrorResponse(w, http.StatusConflict,
+			errors.ErrAlreadyExists,
+			"Admin user already exists. System is already initialized.",
+			map[string]interface{}{
+				"userCount": totalCount,
+			})
+		return
+	}
+
+	// Validate input
+	if err := h.validateRegisterRequest(&req); err != nil {
+		errors.WriteErrorResponse(w, http.StatusBadRequest,
+			errors.ErrInvalidInput,
+			err.Error(),
+			nil)
+		return
+	}
+
+	// Normalize the email and username
+	normalizedEmail := validation.NormalizeEmail(req.Email)
+	normalizedUsername := validation.NormalizeUsername(req.Username)
+
+	// Hash password
+	hashedPassword, err := auth.HashPassword(req.Password)
+	if err != nil {
+		h.logger.Error("Failed to hash password", zap.Error(err))
+		errors.WriteErrorResponse(w, http.StatusInternalServerError,
+			errors.ErrInternalServer,
+			"Failed to process registration",
+			nil)
+		return
+	}
+
+	// Create admin user (force admin role)
+	user, err := h.userStore.Create(r.Context(), normalizedUsername, normalizedEmail, hashedPassword, "admin")
+	if err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			errors.WriteErrorResponse(w, http.StatusConflict,
+				errors.ErrAlreadyExists,
+				err.Error(),
+				nil)
+			return
+		}
+		h.logger.Error("Failed to create admin user", zap.Error(err))
+		errors.WriteErrorResponse(w, http.StatusInternalServerError,
+			errors.ErrInternalServer,
+			"Failed to create admin user",
+			nil)
+		return
+	}
+
+	// Generate token with admin privileges
+	token, err := h.tokenManager.GenerateToken(
+		user.ID,
+		user.Role,
+		[]string{"read", "write", "admin"}, // Admin gets all scopes
+	)
+	if err != nil {
+		h.logger.Error("Failed to generate token", zap.Error(err))
+		errors.WriteErrorResponse(w, http.StatusInternalServerError,
+			errors.ErrInternalServer,
+			"Failed to generate token",
+			nil)
+		return
+	}
+
+	h.logger.Info("First admin user created via API",
+		zap.String("userID", user.ID),
+		zap.String("username", user.Username),
+		zap.String("email", user.Email))
+
+	response := LoginResponse{
+		Token:     token,
+		ExpiresIn: h.tokenManager.TokenDuration().Milliseconds() / 1000,
+		User: UserResponse{
+			ID:       user.ID,
+			Username: user.Username,
+			Email:    user.Email,
+			Role:     user.Role,
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
 }
 
 // Register handles user registration
