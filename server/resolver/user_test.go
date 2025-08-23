@@ -128,7 +128,7 @@ func TestUpdateProfile_SelfOperation(t *testing.T) {
 	now := time.Now()
 	currentUser := &userstore.User{
 		ID:          "test-user-id",
-		DisplayName: "oldusername",
+		DisplayName: "oldDisplayName",
 		Email:       "old@example.com",
 		Role:        "user",
 		IsActive:    true,
@@ -138,7 +138,7 @@ func TestUpdateProfile_SelfOperation(t *testing.T) {
 
 	updatedUser := &userstore.User{
 		ID:          "test-user-id",
-		DisplayName: "newusername",
+		DisplayName: "newDisplayName",
 		Email:       "new@example.com",
 		Role:        "user",
 		IsActive:    true,
@@ -146,11 +146,11 @@ func TestUpdateProfile_SelfOperation(t *testing.T) {
 		UpdatedAt:   now.Add(time.Minute),
 	}
 
-	newDisplayName := "newusername"
+	newDisplayName := "newDisplayName"
 	newEmail := "new@example.com"
 
 	mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
-	mockUserStore.On("UpdateDisplayName", ctx, "test-user-id", "newusername").Return(nil)
+	mockUserStore.On("UpdateDisplayName", ctx, "test-user-id", "newDisplayName").Return(nil)
 	mockUserStore.On("UpdateEmail", ctx, "test-user-id", "new@example.com").Return(nil)
 	mockUserStore.On("GetByID", ctx, "test-user-id").Return(updatedUser, nil).Once()
 
@@ -163,7 +163,7 @@ func TestUpdateProfile_SelfOperation(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, "newusername", result.DisplayName)
+	assert.Equal(t, "newDisplayName", result.DisplayName)
 	assert.Equal(t, "new@example.com", result.Email)
 
 	mockUserStore.AssertExpectations(t)
@@ -181,7 +181,7 @@ func TestUpdateProfile_AdminOperation(t *testing.T) {
 	now := time.Now()
 	targetUser := &userstore.User{
 		ID:          "target-user-id",
-		DisplayName: "oldusername",
+		DisplayName: "oldDisplayName",
 		Email:       "old@example.com",
 		Role:        "user",
 		IsActive:    true,
@@ -191,7 +191,7 @@ func TestUpdateProfile_AdminOperation(t *testing.T) {
 
 	updatedUser := &userstore.User{
 		ID:          "target-user-id",
-		DisplayName: "newusername",
+		DisplayName: "newDisplayName",
 		Email:       "new@example.com",
 		Role:        "user",
 		IsActive:    true,
@@ -200,11 +200,11 @@ func TestUpdateProfile_AdminOperation(t *testing.T) {
 	}
 
 	targetUserID := "target-user-id"
-	newDisplayName := "newusername"
+	newDisplayName := "newDisplayName"
 	newEmail := "new@example.com"
 
 	mockUserStore.On("GetByID", ctx, "target-user-id").Return(targetUser, nil).Once()
-	mockUserStore.On("UpdateDisplayName", ctx, "target-user-id", "newusername").Return(nil)
+	mockUserStore.On("UpdateDisplayName", ctx, "target-user-id", "newDisplayName").Return(nil)
 	mockUserStore.On("UpdateEmail", ctx, "target-user-id", "new@example.com").Return(nil)
 	mockUserStore.On("GetByID", ctx, "target-user-id").Return(updatedUser, nil).Once()
 
@@ -217,7 +217,7 @@ func TestUpdateProfile_AdminOperation(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, "newusername", result.DisplayName)
+	assert.Equal(t, "newDisplayName", result.DisplayName)
 	assert.Equal(t, "new@example.com", result.Email)
 
 	mockUserStore.AssertExpectations(t)
@@ -233,7 +233,7 @@ func TestUpdateProfile_NonAdminCannotUpdateOthers(t *testing.T) {
 	ctx := createReadWriteContext("regular-user-id")
 
 	targetUserID := "other-user-id"
-	newDisplayName := "newusername"
+	newDisplayName := "newDisplayName"
 
 	input := gql.UpdateProfileInput{
 		DisplayName: &newDisplayName,
@@ -276,7 +276,7 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 		errorMsg    string
 	}{
 		{
-			name: "Invalid username - too long",
+			name: "Invalid displayName - too long",
 			input: gql.UpdateProfileInput{
 				DisplayName: stringPtr(strings.Repeat("a", 101)),
 			},
@@ -309,7 +309,7 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 			errorMsg:    "invalid email format",
 		},
 		{
-			name: "Empty username after trimming - should ignore",
+			name: "Empty displayName after trimming - should ignore",
 			input: gql.UpdateProfileInput{
 				DisplayName: stringPtr("   "),
 			},
@@ -331,7 +331,7 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 			expectError: false, // Empty after trimming should be ignored
 		},
 		{
-			name: "Valid username normalization",
+			name: "Valid displayName normalization",
 			input: gql.UpdateProfileInput{
 				DisplayName: stringPtr("  ValidUser  "),
 			},
@@ -1147,7 +1147,7 @@ func TestCreateUser_ValidationErrors(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "Invalid username - too long",
+			name: "Invalid displayName - too long",
 			input: gql.CreateUserInput{
 				DisplayName: strings.Repeat("a", 101),
 				Email:       "test@example.com",
@@ -1224,7 +1224,7 @@ func TestCreateUser_ValidationErrors(t *testing.T) {
 			errorMsg:    "role cannot be empty",
 		},
 		{
-			name: "Empty username",
+			name: "Empty displayName",
 			input: gql.CreateUserInput{
 				DisplayName: "",
 				Email:       "test@example.com",
@@ -1307,9 +1307,9 @@ func TestCreateUser_InputNormalization(t *testing.T) {
 		name     string
 		input    gql.CreateUserInput
 		expected struct {
-			username string
-			email    string
-			role     string
+			displayName string
+			email       string
+			role        string
 		}
 	}{
 		{
@@ -1321,13 +1321,13 @@ func TestCreateUser_InputNormalization(t *testing.T) {
 				Role:        "  user  ",
 			},
 			expected: struct {
-				username string
-				email    string
-				role     string
+				displayName string
+				email       string
+				role        string
 			}{
-				username: "TestUser",
-				email:    "test@example.com",
-				role:     "user",
+				displayName: "TestUser",
+				email:       "test@example.com",
+				role:        "user",
 			},
 		},
 		{
@@ -1339,13 +1339,13 @@ func TestCreateUser_InputNormalization(t *testing.T) {
 				Role:        "admin",
 			},
 			expected: struct {
-				username string
-				email    string
-				role     string
+				displayName string
+				email       string
+				role        string
 			}{
-				username: "displayuser",
-				email:    "john@example.com",
-				role:     "admin",
+				displayName: "displayuser",
+				email:       "john@example.com",
+				role:        "admin",
 			},
 		},
 	}
@@ -1357,7 +1357,7 @@ func TestCreateUser_InputNormalization(t *testing.T) {
 			now := time.Now()
 			createdUser := &userstore.User{
 				ID:          "new-user-id",
-				DisplayName: tt.expected.username,
+				DisplayName: tt.expected.displayName,
 				Email:       tt.expected.email,
 				Role:        tt.expected.role,
 				IsActive:    true,
@@ -1365,13 +1365,13 @@ func TestCreateUser_InputNormalization(t *testing.T) {
 				UpdatedAt:   now,
 			}
 
-			mockUserStore.On("Create", ctx, tt.expected.username, tt.expected.email, mock.AnythingOfType("string"), tt.expected.role).Return(createdUser, nil)
+			mockUserStore.On("Create", ctx, tt.expected.displayName, tt.expected.email, mock.AnythingOfType("string"), tt.expected.role).Return(createdUser, nil)
 
 			result, err := resolver.Mutation().CreateUser(ctx, tt.input)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
-			assert.Equal(t, tt.expected.username, result.DisplayName)
+			assert.Equal(t, tt.expected.displayName, result.DisplayName)
 			assert.Equal(t, tt.expected.email, result.Email)
 			assert.Equal(t, tt.expected.role, result.Role)
 
@@ -1395,14 +1395,6 @@ func TestCreateUser_DatabaseErrors(t *testing.T) {
 		expectError bool
 		errorMsg    string
 	}{
-		{
-			name: "DisplayName already exists",
-			setupMock: func() {
-				mockUserStore.On("Create", ctx, "existinguser", "new@example.com", mock.AnythingOfType("string"), "user").Return(nil, fmt.Errorf("username already exists"))
-			},
-			expectError: true,
-			errorMsg:    "user creation failed: username already exists",
-		},
 		{
 			name: "Email already exists",
 			setupMock: func() {
@@ -1618,7 +1610,7 @@ func TestCreateUser_EdgeCases(t *testing.T) {
 		setupMock   func()
 	}{
 		{
-			name: "Unicode username",
+			name: "Unicode displayName",
 			input: gql.CreateUserInput{
 				DisplayName: "пользователь",
 				Email:       "unicode@example.com",
@@ -1636,7 +1628,7 @@ func TestCreateUser_EdgeCases(t *testing.T) {
 			},
 		},
 		{
-			name: "Special characters in username",
+			name: "Special characters in displayName",
 			input: gql.CreateUserInput{
 				DisplayName: "user-with_special.chars",
 				Email:       "special@example.com",
