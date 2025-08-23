@@ -15,23 +15,23 @@ import (
 )
 
 type User struct {
-	ID        string    `json:"id"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
-	IsActive  bool      `json:"isActive"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID          string    `json:"id"`
+	DisplayName string    `json:"displayName"`
+	Email       string    `json:"email"`
+	Role        string    `json:"role"`
+	IsActive    bool      `json:"isActive"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type Store interface {
-	Create(ctx context.Context, username, email, hashedPassword, role string) (*User, error)
+	Create(ctx context.Context, displayName, email, hashedPassword, role string) (*User, error)
 	GetByID(ctx context.Context, id string) (*User, error)
-	GetByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (*model.User, error)
+	GetByEmail(ctx context.Context, email string) (*model.User, error)
 	GetByIDWithPassword(ctx context.Context, id string) (*model.User, error)
 	UpdateLastLogin(ctx context.Context, id string) error
 	UpdatePassword(ctx context.Context, id string, hashedPassword string) error
-	UpdateUsername(ctx context.Context, id string, username string) error
+	UpdateDisplayName(ctx context.Context, id string, displayName string) error
 	UpdateEmail(ctx context.Context, id string, email string) error
 	SetActive(ctx context.Context, id string, active bool) error
 	List(ctx context.Context, offset, limit int) ([]*User, int, error)
@@ -49,15 +49,15 @@ func New(db *bun.DB, logger *zap.Logger) Store {
 	}
 }
 
-func (s *store) Create(ctx context.Context, username, email, hashedPassword, role string) (*User, error) {
+func (s *store) Create(ctx context.Context, displayName, email, hashedPassword, role string) (*User, error) {
 	// Validate inputs
-	username = strings.TrimSpace(username)
+	displayName = strings.TrimSpace(displayName)
 	email = strings.TrimSpace(email)
 	hashedPassword = strings.TrimSpace(hashedPassword)
 	role = strings.TrimSpace(role)
 
-	if username == "" {
-		return nil, fmt.Errorf("username cannot be empty")
+	if displayName == "" {
+		return nil, fmt.Errorf("displayName cannot be empty")
 	}
 	if email == "" {
 		return nil, fmt.Errorf("email cannot be empty")
@@ -72,7 +72,7 @@ func (s *store) Create(ctx context.Context, username, email, hashedPassword, rol
 	now := time.Now()
 	entry := &model.User{
 		ID:             uuid.GenerateUUID(),
-		Username:       username,
+		DisplayName:    displayName,
 		Email:          email,
 		HashedPassword: hashedPassword,
 		Role:           role,
@@ -97,13 +97,13 @@ func (s *store) Create(ctx context.Context, username, email, hashedPassword, rol
 	}
 
 	return &User{
-		ID:        entry.ID,
-		Username:  entry.Username,
-		Email:     entry.Email,
-		Role:      entry.Role,
-		IsActive:  entry.IsActive,
-		CreatedAt: entry.CreatedAt,
-		UpdatedAt: entry.UpdatedAt,
+		ID:          entry.ID,
+		DisplayName: entry.DisplayName,
+		Email:       entry.Email,
+		Role:        entry.Role,
+		IsActive:    entry.IsActive,
+		CreatedAt:   entry.CreatedAt,
+		UpdatedAt:   entry.UpdatedAt,
 	}, nil
 }
 
@@ -121,27 +121,27 @@ func (s *store) GetByID(ctx context.Context, id string) (*User, error) {
 	}
 
 	return &User{
-		ID:        user.ID,
-		Username:  user.Username,
-		Email:     user.Email,
-		Role:      user.Role,
-		IsActive:  user.IsActive,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:          user.ID,
+		DisplayName: user.DisplayName,
+		Email:       user.Email,
+		Role:        user.Role,
+		IsActive:    user.IsActive,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
 	}, nil
 }
 
-func (s *store) GetByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (*model.User, error) {
+func (s *store) GetByEmail(ctx context.Context, email string) (*model.User, error) {
 	var user model.User
 	err := s.db.NewSelect().
 		Model(&user).
-		Where("(username = ? OR email = ?) AND is_active = true", usernameOrEmail, usernameOrEmail).
+		Where("email = ? AND is_active = true", email).
 		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("error getting user by username or email: %w", err)
+		return nil, fmt.Errorf("error getting user by email: %w", err)
 	}
 
 	return &user, nil
@@ -200,7 +200,7 @@ func (s *store) SetActive(ctx context.Context, id string, active bool) error {
 	return nil
 }
 
-func (s *store) UpdateUsername(ctx context.Context, id string, username string) error {
+func (s *store) UpdateDisplayName(ctx context.Context, id string, username string) error {
 	username = strings.TrimSpace(username)
 	if username == "" {
 		return fmt.Errorf("username cannot be empty")
@@ -273,13 +273,13 @@ func (s *store) List(ctx context.Context, offset, limit int) ([]*User, int, erro
 	result := make([]*User, len(users))
 	for i, user := range users {
 		result[i] = &User{
-			ID:        user.ID,
-			Username:  user.Username,
-			Email:     user.Email,
-			Role:      user.Role,
-			IsActive:  user.IsActive,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
+			ID:          user.ID,
+			DisplayName: user.DisplayName,
+			Email:       user.Email,
+			Role:        user.Role,
+			IsActive:    user.IsActive,
+			CreatedAt:   user.CreatedAt,
+			UpdatedAt:   user.UpdatedAt,
 		}
 	}
 

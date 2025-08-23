@@ -21,6 +21,11 @@ type MockUserStore struct {
 	mock.Mock
 }
 
+func (m *MockUserStore) UpdateDisplayName(ctx context.context.Context, id string, displayName string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *MockUserStore) Create(ctx context.Context, username, email, hashedPassword, role string) (*userstore.User, error) {
 	args := m.Called(ctx, username, email, hashedPassword, role)
 	if args.Get(0) == nil {
@@ -38,8 +43,8 @@ func (m *MockUserStore) GetByID(ctx context.Context, id string) (*userstore.User
 }
 
 // Note: This returns *model.User, not *userstore.User
-func (m *MockUserStore) GetByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (*model.User, error) {
-	args := m.Called(ctx, usernameOrEmail)
+func (m *MockUserStore) GetByEmail(ctx context.Context, email string) (*model.User, error) {
+	args := m.Called(ctx, email)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

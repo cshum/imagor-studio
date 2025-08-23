@@ -3,39 +3,22 @@ package validation
 import (
 	"fmt"
 	"strings"
-	"unicode"
 )
 
-// ValidateUsername validates a username according to common rules
-func ValidateUsername(username string) error {
-	username = strings.TrimSpace(username)
+// ValidateDisplayName validates a displayName according to common rules
+func ValidateDisplayName(displayName string) error {
+	displayName = strings.TrimSpace(displayName)
 
-	if username == "" {
-		return fmt.Errorf("username is required")
+	if displayName == "" {
+		return fmt.Errorf("display name is required")
 	}
 
-	if len(username) < 3 {
-		return fmt.Errorf("username must be at least 3 characters long")
+	if len(displayName) < 1 {
+		return fmt.Errorf("display name must be at least 1 character long")
 	}
 
-	if len(username) > 50 {
-		return fmt.Errorf("username must be at most 50 characters long")
-	}
-
-	// Check for invalid characters (optional - adjust as needed)
-	for _, r := range username {
-		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_' && r != '-' && r != '.' {
-			return fmt.Errorf("username contains invalid character: %c", r)
-		}
-	}
-
-	// Username cannot start or end with special characters
-	if username[0] == '_' || username[0] == '-' || username[0] == '.' {
-		return fmt.Errorf("username cannot start with special character")
-	}
-
-	if username[len(username)-1] == '_' || username[len(username)-1] == '-' || username[len(username)-1] == '.' {
-		return fmt.Errorf("username cannot end with special character")
+	if len(displayName) > 100 {
+		return fmt.Errorf("display name must be at most 100 characters long")
 	}
 
 	return nil
@@ -73,7 +56,7 @@ func ValidatePassword(password string) error {
 	return nil
 }
 
-// NormalizeUsername normalizes a username
-func NormalizeUsername(username string) string {
-	return strings.TrimSpace(username)
+// NormalizeDisplayName normalizes a displayName
+func NormalizeDisplayName(displayName string) string {
+	return strings.TrimSpace(displayName)
 }

@@ -168,7 +168,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 		username := strings.TrimSpace(*input.Username)
 
 		// Use validation package
-		if err := validation.ValidateUsername(username); err != nil {
+		if err := validation.ValidateDisplayName(username); err != nil {
 			return nil, fmt.Errorf("invalid username: %w", err)
 		}
 
@@ -401,7 +401,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserI
 // Helper function to validate CreateUserInput
 func (r *mutationResolver) validateCreateUserInput(input *gql.CreateUserInput) error {
 	// Validate username
-	if err := validation.ValidateUsername(input.Username); err != nil {
+	if err := validation.ValidateDisplayName(input.Username); err != nil {
 		return fmt.Errorf("invalid username: %w", err)
 	}
 

@@ -30,13 +30,13 @@ func NewAuthHandler(tokenManager *auth.TokenManager, userStore userstore.Store, 
 }
 
 type RegisterRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	DisplayName string `json:"displayName"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
 }
 
 type LoginRequest struct {
-	Username string `json:"username"` // Can be username or email
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -47,10 +47,10 @@ type LoginResponse struct {
 }
 
 type UserResponse struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
+	ID          string `json:"id"`
+	DisplayName string `json:"username"`
+	Email       string `json:"email"`
+	Role        string `json:"role"`
 }
 
 // CheckFirstRun checks if this is the first run (no users exist)
@@ -138,7 +138,7 @@ func (h *AuthHandler) RegisterAdmin(w http.ResponseWriter, r *http.Request) {
 
 	// Normalize the email and username
 	normalizedEmail := validation.NormalizeEmail(req.Email)
-	normalizedUsername := validation.NormalizeUsername(req.Username)
+	normalizedDisplayName := validation.NormalizeDisplayName(req.DisplayName)
 
 	// Hash password
 	hashedPassword, err := auth.HashPassword(req.Password)
@@ -152,7 +152,7 @@ func (h *AuthHandler) RegisterAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create admin user (force admin role)
-	user, err := h.userStore.Create(r.Context(), normalizedUsername, normalizedEmail, hashedPassword, "admin")
+	user, err := h.userStore.Create(r.Context(), normalizedDisplayName, normalizedEmail, hashedPassword, "admin")
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			errors.WriteErrorResponse(w, http.StatusConflict,
@@ -186,17 +186,17 @@ func (h *AuthHandler) RegisterAdmin(w http.ResponseWriter, r *http.Request) {
 
 	h.logger.Info("First admin user created via API",
 		zap.String("userID", user.ID),
-		zap.String("username", user.Username),
+		zap.String("username", user.DisplayName),
 		zap.String("email", user.Email))
 
 	response := LoginResponse{
 		Token:     token,
 		ExpiresIn: h.tokenManager.TokenDuration().Milliseconds() / 1000,
 		User: UserResponse{
-			ID:       user.ID,
-			Username: user.Username,
-			Email:    user.Email,
-			Role:     user.Role,
+			ID:          user.ID,
+			DisplayName: user.DisplayName,
+			Email:       user.Email,
+			Role:        user.Role,
 		},
 	}
 
@@ -237,7 +237,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	// Normalize the email
 	normalizedEmail := validation.NormalizeEmail(req.Email)
-	normalizedUsername := validation.NormalizeUsername(req.Username)
+	normalizedDisplayName := validation.NormalizeDisplayName(req.DisplayName)
 
 	// Hash password
 	hashedPassword, err := auth.HashPassword(req.Password)
@@ -251,7 +251,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create user
-	user, err := h.userStore.Create(r.Context(), normalizedUsername, normalizedEmail, hashedPassword, "user")
+	user, err := h.userStore.Create(r.Context(), normalizedDisplayName, normalizedEmail, hashedPassword, "user")
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			errors.WriteErrorResponse(w, http.StatusConflict,
@@ -287,10 +287,10 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		Token:     token,
 		ExpiresIn: h.tokenManager.TokenDuration().Milliseconds() / 1000,
 		User: UserResponse{
-			ID:       user.ID,
-			Username: user.Username,
-			Email:    user.Email,
-			Role:     user.Role,
+			ID:          user.ID,
+			DisplayName: user.DisplayName,
+			Email:       user.Email,
+			Role:        user.Role,
 		},
 	}
 
@@ -321,24 +321,19 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate input
-	if strings.TrimSpace(req.Username) == "" || strings.TrimSpace(req.Password) == "" {
+	if strings.TrimSpace(req.Email) == "" || strings.TrimSpace(req.Password) == "" {
 		errors.WriteErrorResponse(w, http.StatusBadRequest,
 			errors.ErrInvalidInput,
-			"Username and password are required",
+			"DisplayName and password are required",
 			nil)
 		return
 	}
 
-	// Normalize the username/email input
-	usernameOrEmail := strings.TrimSpace(req.Username)
-	if validation.IsValidEmail(usernameOrEmail) {
-		usernameOrEmail = validation.NormalizeEmail(usernameOrEmail)
-	} else {
-		usernameOrEmail = validation.NormalizeUsername(usernameOrEmail)
-	}
+	// Normalize email
+	email := validation.NormalizeEmail(req.Email)
 
 	// Get user by username or email
-	user, err := h.userStore.GetByUsernameOrEmail(r.Context(), usernameOrEmail)
+	user, err := h.userStore.GetByEmail(r.Context(), email)
 	if err != nil {
 		h.logger.Error("Failed to get user", zap.Error(err))
 		errors.WriteErrorResponse(w, http.StatusInternalServerError,
@@ -395,10 +390,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Token:     token,
 		ExpiresIn: h.tokenManager.TokenDuration().Milliseconds() / 1000,
 		User: UserResponse{
-			ID:       user.ID,
-			Username: user.Username,
-			Email:    user.Email,
-			Role:     user.Role,
+			ID:          user.ID,
+			DisplayName: user.DisplayName,
+			Email:       user.Email,
+			Role:        user.Role,
 		},
 	}
 
@@ -438,10 +433,10 @@ func (h *AuthHandler) GuestLogin(w http.ResponseWriter, r *http.Request) {
 		Token:     token,
 		ExpiresIn: h.tokenManager.TokenDuration().Milliseconds() / 1000,
 		User: UserResponse{
-			ID:       guestID,
-			Username: "guest",
-			Email:    "guest@temporary.local",
-			Role:     "guest",
+			ID:          guestID,
+			DisplayName: "guest",
+			Email:       "guest@temporary.local",
+			Role:        "guest",
 		},
 	}
 
@@ -519,10 +514,10 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		Token:     newToken,
 		ExpiresIn: h.tokenManager.TokenDuration().Milliseconds() / 1000,
 		User: UserResponse{
-			ID:       user.ID,
-			Username: user.Username,
-			Email:    user.Email,
-			Role:     user.Role,
+			ID:          user.ID,
+			DisplayName: user.DisplayName,
+			Email:       user.Email,
+			Role:        user.Role,
 		},
 	}
 
@@ -538,7 +533,7 @@ type RefreshTokenRequest struct {
 
 func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest) error {
 	// Validate username
-	if err := validation.ValidateUsername(req.Username); err != nil {
+	if err := validation.ValidateDisplayName(req.DisplayName); err != nil {
 		return err
 	}
 

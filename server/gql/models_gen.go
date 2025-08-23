@@ -15,10 +15,10 @@ type ChangePasswordInput struct {
 }
 
 type CreateUserInput struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
+	DisplayName string `json:"displayName"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	Role        string `json:"role"`
 }
 
 type FileItem struct {
@@ -56,18 +56,18 @@ type Query struct {
 }
 
 type UpdateProfileInput struct {
-	Username *string `json:"username,omitempty"`
-	Email    *string `json:"email,omitempty"`
+	DisplayName *string `json:"displayName,omitempty"`
+	Email       *string `json:"email,omitempty"`
 }
 
 type User struct {
-	ID        string `json:"id"`
-	Username  string `json:"username"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
-	IsActive  bool   `json:"isActive"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
+	ID          string `json:"id"`
+	DisplayName string `json:"displayName"`
+	Email       string `json:"email"`
+	Role        string `json:"role"`
+	IsActive    bool   `json:"isActive"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
 }
 
 type UserList struct {
