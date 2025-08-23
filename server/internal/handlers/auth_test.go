@@ -25,8 +25,8 @@ type MockUserStore struct {
 	mock.Mock
 }
 
-func (m *MockUserStore) Create(ctx context.Context, username, email, hashedPassword, role string) (*userstore.User, error) {
-	args := m.Called(ctx, username, email, hashedPassword, role)
+func (m *MockUserStore) Create(ctx context.Context, displayName, email, hashedPassword, role string) (*userstore.User, error) {
+	args := m.Called(ctx, displayName, email, hashedPassword, role)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -59,8 +59,8 @@ func (m *MockUserStore) UpdatePassword(ctx context.Context, id string, hashedPas
 	return args.Error(0)
 }
 
-func (m *MockUserStore) UpdateDisplayName(ctx context.Context, id string, username string) error {
-	args := m.Called(ctx, id, username)
+func (m *MockUserStore) UpdateDisplayName(ctx context.Context, id string, displayName string) error {
+	args := m.Called(ctx, id, displayName)
 	return args.Error(0)
 }
 
@@ -134,7 +134,7 @@ func TestRegister(t *testing.T) {
 				Password:    "password123",
 			},
 			setupMocks: func() {
-				mockUserStore.On("Create", mock.Anything, "existinguser", "new@example.com", mock.AnythingOfType("string"), "user").Return(nil, fmt.Errorf("username already exists"))
+				mockUserStore.On("Create", mock.Anything, "existinguser", "new@example.com", mock.AnythingOfType("string"), "user").Return(nil, fmt.Errorf("displayName already exists"))
 			},
 			expectedStatus: http.StatusConflict,
 			expectError:    true,
@@ -169,7 +169,7 @@ func TestRegister(t *testing.T) {
 			errorCode:      errors.ErrInvalidInput,
 		},
 		{
-			name:   "Missing username",
+			name:   "Missing displayName",
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "",

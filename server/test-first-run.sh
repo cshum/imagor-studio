@@ -27,7 +27,7 @@ if [ "$IS_FIRST_RUN" = "true" ]; then
     echo -e "\n${GREEN}2. Registering admin user...${NC}"
     ADMIN_REGISTER_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/register-admin" \
       -H "Content-Type: application/json" \
-      -d '{"username":"admin","email":"admin@yourdomain.com","password":"securepassword123"}')
+      -d '{"displayName":"admin","email":"admin@yourdomain.com","password":"securepassword123"}')
 
     ADMIN_TOKEN=$(echo $ADMIN_REGISTER_RESPONSE | jq -r '.token')
 
@@ -40,7 +40,7 @@ if [ "$IS_FIRST_RUN" = "true" ]; then
         ADMIN_ACCESS_RESPONSE=$(curl -s -X POST "${BASE_URL}/query" \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer $ADMIN_TOKEN" \
-          -d '{"query":"query { me { id username role } }"}')
+          -d '{"query":"query { me { id displayName role } }"}')
 
         echo "Admin access response:"
         echo $ADMIN_ACCESS_RESPONSE | jq .
@@ -55,7 +55,7 @@ if [ "$IS_FIRST_RUN" = "true" ]; then
         echo -e "\n${GREEN}5. Trying to register another admin (should fail)...${NC}"
         SECOND_ADMIN_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/register-admin" \
           -H "Content-Type: application/json" \
-          -d '{"username":"admin2","email":"admin2@yourdomain.com","password":"password123"}')
+          -d '{"displayName":"admin2","email":"admin2@yourdomain.com","password":"password123"}')
 
         echo "Second admin registration response (should fail):"
         echo $SECOND_ADMIN_RESPONSE | jq .
@@ -71,7 +71,7 @@ else
     echo -e "\n${GREEN}2. Trying to register admin when users exist (should fail)...${NC}"
     ADMIN_REGISTER_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/register-admin" \
       -H "Content-Type: application/json" \
-      -d '{"username":"admin","email":"admin@yourdomain.com","password":"securepassword123"}')
+      -d '{"displayName":"admin","email":"admin@yourdomain.com","password":"securepassword123"}')
 
     echo "Admin registration response (should fail):"
     echo $ADMIN_REGISTER_RESPONSE | jq .

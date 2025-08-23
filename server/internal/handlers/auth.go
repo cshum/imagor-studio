@@ -48,7 +48,7 @@ type LoginResponse struct {
 
 type UserResponse struct {
 	ID          string `json:"id"`
-	DisplayName string `json:"username"`
+	DisplayName string `json:"displayName"`
 	Email       string `json:"email"`
 	Role        string `json:"role"`
 }
@@ -136,7 +136,7 @@ func (h *AuthHandler) RegisterAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Normalize the email and username
+	// Normalize the email and displayName
 	normalizedEmail := validation.NormalizeEmail(req.Email)
 	normalizedDisplayName := validation.NormalizeDisplayName(req.DisplayName)
 
@@ -186,7 +186,7 @@ func (h *AuthHandler) RegisterAdmin(w http.ResponseWriter, r *http.Request) {
 
 	h.logger.Info("First admin user created via API",
 		zap.String("userID", user.ID),
-		zap.String("username", user.DisplayName),
+		zap.String("displayName", user.DisplayName),
 		zap.String("email", user.Email))
 
 	response := LoginResponse{
@@ -324,7 +324,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if strings.TrimSpace(req.Email) == "" || strings.TrimSpace(req.Password) == "" {
 		errors.WriteErrorResponse(w, http.StatusBadRequest,
 			errors.ErrInvalidInput,
-			"DisplayName and password are required",
+			"Email and password are required",
 			nil)
 		return
 	}
@@ -332,7 +332,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Normalize email
 	email := validation.NormalizeEmail(req.Email)
 
-	// Get user by username or email
+	// Get user by displayName or email
 	user, err := h.userStore.GetByEmail(r.Context(), email)
 	if err != nil {
 		h.logger.Error("Failed to get user", zap.Error(err))
@@ -532,7 +532,7 @@ type RefreshTokenRequest struct {
 }
 
 func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest) error {
-	// Validate username
+	// Validate displayName
 	if err := validation.ValidateDisplayName(req.DisplayName); err != nil {
 		return err
 	}

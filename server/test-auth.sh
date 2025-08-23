@@ -35,7 +35,7 @@ echo -e "\n${GREEN}2. Testing guest read access...${NC}"
 GUEST_READ_RESPONSE=$(curl -s -X POST "${BASE_URL}/query" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $GUEST_TOKEN" \
-  -d '{"query":"query { me { id username role } }"}')
+  -d '{"query":"query { me { id displayName role } }"}')
 
 echo "Guest read response:"
 echo $GUEST_READ_RESPONSE | jq .
@@ -54,7 +54,7 @@ echo $GUEST_WRITE_RESPONSE | jq .
 echo -e "\n${GREEN}4. Testing user registration...${NC}"
 REGISTER_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/register" \
   -H "Content-Type: application/json" \
-  -d '{"username":"testuser","email":"test@example.com","password":"password123"}')
+  -d '{"displayName":"testuser","email":"test@example.com","password":"password123"}')
 
 USER_TOKEN=$(echo $REGISTER_RESPONSE | jq -r '.token')
 
@@ -70,7 +70,7 @@ fi
 echo -e "\n${GREEN}5. Testing user login...${NC}"
 LOGIN_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"username":"testuser","password":"password123"}')
+  -d '{"email":"test@example.com","password":"password123"}')
 
 LOGIN_TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.token')
 
@@ -87,7 +87,7 @@ echo -e "\n${GREEN}6. Testing authenticated user request...${NC}"
 USER_RESPONSE=$(curl -s -X POST "${BASE_URL}/query" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $LOGIN_TOKEN" \
-  -d '{"query":"query { me { id username role } }"}')
+  -d '{"query":"query { me { id displayName role } }"}')
 
 echo "User response:"
 echo $USER_RESPONSE | jq .
@@ -97,7 +97,7 @@ echo -e "\n${GREEN}7. Testing invalid token...${NC}"
 INVALID_RESPONSE=$(curl -s -X POST "${BASE_URL}/query" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer invalid_token_123" \
-  -d '{"query":"query { me { id username role } }"}')
+  -d '{"query":"query { me { id displayName role } }"}')
 
 echo "Invalid token response:"
 echo $INVALID_RESPONSE | jq .

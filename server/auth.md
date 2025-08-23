@@ -26,7 +26,7 @@ POST /auth/register
 Request body:
 ```json
 {
-  "username": "testuser",
+  "displayName": "testuser",
   "email": "test@example.com",
   "password": "password123"
 }
@@ -39,7 +39,7 @@ Response:
   "expiresIn": 86400,
   "user": {
     "id": "user-123",
-    "username": "testuser",
+    "displayName": "testuser",
     "email": "test@example.com",
     "role": "user"
   }
@@ -57,7 +57,7 @@ POST /auth/login
 Request body:
 ```json
 {
-  "username": "testuser",
+  "email": "test@example.com",
   "password": "password123"
 }
 ```
@@ -69,7 +69,7 @@ Response:
   "expiresIn": 86400,
   "user": {
     "id": "user-123",
-    "username": "testuser",
+    "displayName": "testuser",
     "email": "test@example.com",
     "role": "user"
   }
@@ -93,7 +93,7 @@ Response:
   "expiresIn": 86400,
   "user": {
     "id": "guest-uuid-here",
-    "username": "guest",
+    "displayName": "guest",
     "email": "guest@temporary.local",
     "role": "guest"
   }
@@ -129,7 +129,7 @@ Response:
   "expiresIn": 86400,
   "user": {
     "id": "user-123",
-    "username": "testuser",
+    "displayName": "testuser",
     "email": "test@example.com",
     "role": "user"
   }
@@ -161,7 +161,7 @@ curl -X POST http://localhost:8080/auth/guest
 # 2. Use token for read operations
 curl -X POST http://localhost:8080/query \
   -H "Authorization: Bearer <guest_token>" \
-  -d '{"query":"query { me { id username role } }"}'
+  -d '{"query":"query { me { id displayName role } }"}'
 
 # 3. Guest write operations will fail
 curl -X POST http://localhost:8080/query \
@@ -302,7 +302,7 @@ POST /auth/register-admin
 Request body:
 ```json
 {
-  "username": "admin",
+  "displayName": "admin",
   "email": "admin@yourdomain.com",
   "password": "securepassword123"
 }
@@ -315,7 +315,7 @@ Response:
   "expiresIn": 86400,
   "user": {
     "id": "admin-123",
-    "username": "admin",
+    "displayName": "admin",
     "email": "admin@yourdomain.com",
     "role": "admin"
   }
@@ -343,7 +343,7 @@ curl http://localhost:8080/auth/first-run
 curl -X POST http://localhost:8080/auth/register-admin \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "admin",
+    "displayName": "admin",
     "email": "admin@yourdomain.com", 
     "password": "securepassword123"
   }'
@@ -351,7 +351,7 @@ curl -X POST http://localhost:8080/auth/register-admin \
 # 3. Use the returned token for admin operations
 curl -X POST http://localhost:8080/query \
   -H "Authorization: Bearer <admin_token>" \
-  -d '{"query":"query { users { items { username role } } }"}'
+  -d '{"query":"query { users { items { displayName role } } }"}'
 ```
 
 #### When System is Already Initialized
@@ -366,7 +366,7 @@ curl http://localhost:8080/auth/first-run
 curl -X POST http://localhost:8080/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "admin",
+    "email": "admin@yourdomain.com",
     "password": "securepassword123"
   }'
 ```
@@ -378,7 +378,7 @@ curl -X POST http://localhost:8080/auth/login \
 ```bash
 curl -X POST http://localhost:8080/auth/register-admin \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","email":"admin@example.com","password":"password123"}'
+  -d '{"displayName":"admin","email":"admin@example.com","password":"password123"}'
 ```
 
 Response:
@@ -400,7 +400,7 @@ Response:
 ```bash
 curl -X POST http://localhost:8080/auth/register-admin \
   -H "Content-Type: application/json" \
-  -d '{"username":"ad","email":"invalid-email","password":"short"}'
+  -d '{"displayName":"ad","email":"invalid-email","password":"short"}'
 ```
 
 Response:
@@ -408,7 +408,7 @@ Response:
 {
   "error": {
     "code": "INVALID_INPUT",
-    "message": "invalid username: username must be at least 3 characters long"
+    "message": "invalid displayName: displayName must be at least 3 characters long"
   },
   "timestamp": 1704067200000
 }

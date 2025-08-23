@@ -87,9 +87,6 @@ func (s *store) Create(ctx context.Context, displayName, email, hashedPassword, 
 	if err != nil {
 		// Check for unique constraint violations
 		errStr := strings.ToLower(err.Error())
-		if strings.Contains(errStr, "username") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint")) {
-			return nil, fmt.Errorf("username already exists")
-		}
 		if strings.Contains(errStr, "email") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint")) {
 			return nil, fmt.Errorf("email already exists")
 		}
@@ -200,25 +197,19 @@ func (s *store) SetActive(ctx context.Context, id string, active bool) error {
 	return nil
 }
 
-func (s *store) UpdateDisplayName(ctx context.Context, id string, username string) error {
-	username = strings.TrimSpace(username)
-	if username == "" {
-		return fmt.Errorf("username cannot be empty")
+func (s *store) UpdateDisplayName(ctx context.Context, id string, displayName string) error {
+	displayName = strings.TrimSpace(displayName)
+	if displayName == "" {
+		return fmt.Errorf("displayName cannot be empty")
 	}
-
 	_, err := s.db.NewUpdate().
 		Model((*model.User)(nil)).
-		Set("username = ?", username).
+		Set("display_name = ?", displayName).
 		Set("updated_at = ?", time.Now()).
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
-		// Check for unique constraint violations
-		errStr := strings.ToLower(err.Error())
-		if strings.Contains(errStr, "username") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint")) {
-			return fmt.Errorf("username already exists")
-		}
-		return fmt.Errorf("error updating username: %w", err)
+		return fmt.Errorf("error updating displayName: %w", err)
 	}
 	return nil
 }
