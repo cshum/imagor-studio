@@ -13,63 +13,100 @@ echo -e "${YELLOW}Testing JWT Authentication${NC}\n"
 # Base URL
 BASE_URL="http://localhost:8080"
 
-# 1. Get a token using dev login
-echo -e "${GREEN}1. Getting JWT token...${NC}"
-TOKEN_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/dev-login" \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password"}')
+# 1. Test guest login
+echo -e "${GREEN}1. Testing guest login...${NC}"
+GUEST_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/guest")
 
-TOKEN=$(echo $TOKEN_RESPONSE | jq -r '.token')
-EXPIRES_IN=$(echo $TOKEN_RESPONSE | jq -r '.expiresIn')
+GUEST_TOKEN=$(echo $GUEST_RESPONSE | jq -r '.token')
+GUEST_USER=$(echo $GUEST_RESPONSE | jq -r '.user')
 
-if [ "$TOKEN" != "null" ]; then
-  echo -e "${GREEN}Token obtained successfully!${NC}"
-  echo "Token: ${TOKEN:0:50}..."
-  echo "Expires in: $EXPIRES_IN seconds"
+if [ "$GUEST_TOKEN" != "null" ]; then
+  echo -e "${GREEN}Guest token obtained successfully!${NC}"
+  echo "Token: ${GUEST_TOKEN:0:50}..."
+  echo "User: $GUEST_USER"
 else
-  echo -e "${RED}Failed to get token${NC}"
-  echo "Response: $TOKEN_RESPONSE"
+  echo -e "${RED}Failed to get guest token${NC}"
+  echo "Response: $GUEST_RESPONSE"
   exit 1
 fi
 
-echo -e "\n${GREEN}2. Making authenticated GraphQL request...${NC}"
-
-# Make a GraphQL request with the token
-GRAPHQL_RESPONSE=$(curl -s -X POST "${BASE_URL}/query" \
+# 2. Test guest read access
+echo -e "\n${GREEN}2. Testing guest read access...${NC}"
+GUEST_READ_RESPONSE=$(curl -s -X POST "${BASE_URL}/query" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"query":"query { listStorageConfigs { name key type } }"}')
+  -H "Authorization: Bearer $GUEST_TOKEN" \
+  -d '{"query":"query { me { id username role } }"}')
 
-echo "GraphQL Response:"
-echo $GRAPHQL_RESPONSE | jq .
+echo "Guest read response:"
+echo $GUEST_READ_RESPONSE | jq .
 
-echo -e "\n${GREEN}3. Testing invalid token...${NC}"
+# 3. Test guest write restrictions
+echo -e "\n${GREEN}3. Testing guest write restrictions...${NC}"
+GUEST_WRITE_RESPONSE=$(curl -s -X POST "${BASE_URL}/query" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $GUEST_TOKEN" \
+  -d '{"query":"mutation { createFolder(path: \"test\") }"}')
 
-# Make a request with an invalid token
+echo "Guest write response (should fail):"
+echo $GUEST_WRITE_RESPONSE | jq .
+
+# 4. Test user registration
+echo -e "\n${GREEN}4. Testing user registration...${NC}"
+REGISTER_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","email":"test@example.com","password":"password123"}')
+
+USER_TOKEN=$(echo $REGISTER_RESPONSE | jq -r '.token')
+
+if [ "$USER_TOKEN" != "null" ]; then
+  echo -e "${GREEN}User registered successfully!${NC}"
+  echo "Token: ${USER_TOKEN:0:50}..."
+else
+  echo -e "${RED}Failed to register user${NC}"
+  echo "Response: $REGISTER_RESPONSE"
+fi
+
+# 5. Test user login
+echo -e "\n${GREEN}5. Testing user login...${NC}"
+LOGIN_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","password":"password123"}')
+
+LOGIN_TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.token')
+
+if [ "$LOGIN_TOKEN" != "null" ]; then
+  echo -e "${GREEN}User login successful!${NC}"
+  echo "Token: ${LOGIN_TOKEN:0:50}..."
+else
+  echo -e "${RED}Failed to login user${NC}"
+  echo "Response: $LOGIN_RESPONSE"
+fi
+
+# 6. Test authenticated user request
+echo -e "\n${GREEN}6. Testing authenticated user request...${NC}"
+USER_RESPONSE=$(curl -s -X POST "${BASE_URL}/query" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $LOGIN_TOKEN" \
+  -d '{"query":"query { me { id username role } }"}')
+
+echo "User response:"
+echo $USER_RESPONSE | jq .
+
+# 7. Test invalid token
+echo -e "\n${GREEN}7. Testing invalid token...${NC}"
 INVALID_RESPONSE=$(curl -s -X POST "${BASE_URL}/query" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer invalid_token_123" \
-  -d '{"query":"query { listStorageConfigs { name key type } }"}')
+  -d '{"query":"query { me { id username role } }"}')
 
 echo "Invalid token response:"
 echo $INVALID_RESPONSE | jq .
 
-echo -e "\n${GREEN}4. Testing missing token...${NC}"
-
-# Make a request without a token
-NO_TOKEN_RESPONSE=$(curl -s -X POST "${BASE_URL}/query" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"query { listStorageConfigs { name key type } }"}')
-
-echo "No token response:"
-echo $NO_TOKEN_RESPONSE | jq .
-
-echo -e "\n${GREEN}5. Testing token refresh...${NC}"
-
-# Refresh the token
+# 8. Test token refresh
+echo -e "\n${GREEN}8. Testing token refresh...${NC}"
 REFRESH_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/refresh" \
   -H "Content-Type: application/json" \
-  -d "{\"token\":\"$TOKEN\"}")
+  -d "{\"token\":\"$LOGIN_TOKEN\"}")
 
 NEW_TOKEN=$(echo $REFRESH_RESPONSE | jq -r '.token')
 

@@ -623,94 +623,6 @@ func TestRefreshToken(t *testing.T) {
 	}
 }
 
-func TestDevLogin(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
-	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
-
-	tests := []struct {
-		name           string
-		method         string
-		body           interface{}
-		expectedStatus int
-		expectError    bool
-		errorCode      errors.ErrorCode
-	}{
-		{
-			name:   "Valid dev login request",
-			method: http.MethodPost,
-			body: LoginRequest{
-				Username: "test@example.com",
-				Password: "password",
-			},
-			expectedStatus: http.StatusOK,
-			expectError:    false,
-		},
-		{
-			name:           "Invalid method",
-			method:         http.MethodGet,
-			body:           nil,
-			expectedStatus: http.StatusMethodNotAllowed,
-			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
-		},
-		{
-			name:           "Invalid JSON body",
-			method:         http.MethodPost,
-			body:           "invalid json",
-			expectedStatus: http.StatusBadRequest,
-			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var body []byte
-			if tt.body != nil {
-				switch v := tt.body.(type) {
-				case string:
-					body = []byte(v)
-				default:
-					var err error
-					body, err = json.Marshal(tt.body)
-					require.NoError(t, err)
-				}
-			}
-
-			req := httptest.NewRequest(tt.method, "/auth/dev-login", bytes.NewReader(body))
-			rr := httptest.NewRecorder()
-
-			handler.DevLogin(rr, req)
-
-			assert.Equal(t, tt.expectedStatus, rr.Code)
-
-			if tt.expectError {
-				var errResp errors.ErrorResponse
-				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
-				require.NoError(t, err)
-				assert.Equal(t, tt.errorCode, errResp.Error.Code)
-			} else {
-				var loginResp LoginResponse
-				err := json.Unmarshal(rr.Body.Bytes(), &loginResp)
-				require.NoError(t, err)
-				assert.NotEmpty(t, loginResp.Token)
-				assert.Greater(t, loginResp.ExpiresIn, int64(0))
-				assert.Equal(t, "admin", loginResp.User.Role)
-
-				// Verify the token is valid
-				claims, err := tokenManager.ValidateToken(loginResp.Token)
-				require.NoError(t, err)
-				assert.Equal(t, "admin", claims.Role)
-				assert.Contains(t, claims.Scopes, "read")
-				assert.Contains(t, claims.Scopes, "write")
-				assert.Contains(t, claims.Scopes, "admin")
-			}
-		})
-	}
-}
-
 func TestRegister_ValidationEdgeCases(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
@@ -998,4 +910,40 @@ func TestLogin_InputNormalization(t *testing.T) {
 			mockUserStore.AssertExpectations(t)
 		})
 	}
+}
+
+func TestGuestLogin(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+
+	// Test with no body
+	req := httptest.NewRequest(http.MethodPost, "/auth/guest", nil)
+	rr := httptest.NewRecorder()
+
+	handler.GuestLogin(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var loginResp LoginResponse
+	err := json.Unmarshal(rr.Body.Bytes(), &loginResp)
+	require.NoError(t, err)
+	assert.NotEmpty(t, loginResp.Token)
+
+	// Test with empty body
+	req2 := httptest.NewRequest(http.MethodPost, "/auth/guest", strings.NewReader(""))
+	rr2 := httptest.NewRecorder()
+
+	handler.GuestLogin(rr2, req2)
+
+	assert.Equal(t, http.StatusOK, rr2.Code)
+
+	var loginResp2 LoginResponse
+	err = json.Unmarshal(rr2.Body.Bytes(), &loginResp2)
+	require.NoError(t, err)
+	assert.NotEmpty(t, loginResp2.Token)
+
+	// Verify different tokens were generated
+	assert.NotEqual(t, loginResp.Token, loginResp2.Token)
 }

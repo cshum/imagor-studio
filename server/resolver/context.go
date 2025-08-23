@@ -32,6 +32,7 @@ func requirePermission(ctx context.Context, requiredScope string) error {
 	if err != nil {
 		return fmt.Errorf("unauthorized")
 	}
+
 	hasScope := false
 	for _, scope := range claims.Scopes {
 		if scope == requiredScope {
@@ -53,4 +54,13 @@ func requireWritePermission(ctx context.Context) error {
 // Helper function to check admin permissions
 func requireAdminPermission(ctx context.Context) error {
 	return requirePermission(ctx, "admin")
+}
+
+// Helper function to check if user is a guest
+func isGuestUser(ctx context.Context) bool {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return false
+	}
+	return claims.Role == "guest"
 }

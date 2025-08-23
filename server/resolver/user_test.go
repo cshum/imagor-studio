@@ -1869,3 +1869,127 @@ func TestCreateUser_ContextErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestMe_GuestUser(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockMetadataStore := new(MockMetadataStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+
+	// Create guest context
+	guestID := "guest-12345"
+	claims := &auth.Claims{
+		UserID: guestID,
+		Role:   "guest",
+		Scopes: []string{"read"},
+	}
+	ctx := auth.SetClaimsInContext(context.Background(), claims)
+	ctx = context.WithValue(ctx, OwnerIDContextKey, guestID)
+
+	// Guest users should NOT trigger database lookup
+	// mockUserStore should not be called
+
+	result, err := resolver.Query().Me(ctx)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, guestID, result.ID)
+	assert.Equal(t, "guest", result.Username)
+	assert.Equal(t, "guest@temporary.local", result.Email)
+	assert.Equal(t, "guest", result.Role)
+	assert.True(t, result.IsActive)
+	assert.NotEmpty(t, result.CreatedAt)
+	assert.NotEmpty(t, result.UpdatedAt)
+
+	// Verify no database calls were made
+	mockUserStore.AssertExpectations(t)
+}
+
+func TestGuestUserRestrictions(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockMetadataStore := new(MockMetadataStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+
+	// Create guest context
+	guestID := "guest-12345"
+	claims := &auth.Claims{
+		UserID: guestID,
+		Role:   "guest",
+		Scopes: []string{"read"},
+	}
+	ctx := auth.SetClaimsInContext(context.Background(), claims)
+	ctx = context.WithValue(ctx, OwnerIDContextKey, guestID)
+
+	t.Run("UpdateProfile_GuestBlocked", func(t *testing.T) {
+		input := gql.UpdateProfileInput{
+			Username: stringPtr("newname"),
+		}
+
+		result, err := resolver.Mutation().UpdateProfile(ctx, input, nil)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "cannot update a guest user")
+		mockUserStore.AssertExpectations(t)
+	})
+
+	t.Run("ChangePassword_GuestBlocked", func(t *testing.T) {
+		input := gql.ChangePasswordInput{
+			CurrentPassword: stringPtr("current"),
+			NewPassword:     "newpassword123",
+		}
+
+		result, err := resolver.Mutation().ChangePassword(ctx, input, nil)
+
+		assert.Error(t, err)
+		assert.False(t, result)
+		assert.Contains(t, err.Error(), "cannot update a guest user")
+		mockUserStore.AssertExpectations(t)
+	})
+
+	t.Run("DeactivateAccount_GuestBlocked", func(t *testing.T) {
+		result, err := resolver.Mutation().DeactivateAccount(ctx, nil)
+
+		assert.Error(t, err)
+		assert.False(t, result)
+		assert.Contains(t, err.Error(), "cannot update a guest user")
+		mockUserStore.AssertExpectations(t)
+	})
+
+	t.Run("CreateUser_GuestBlocked", func(t *testing.T) {
+		input := gql.CreateUserInput{
+			Username: "newuser",
+			Email:    "new@example.com",
+			Password: "password123",
+			Role:     "user",
+		}
+
+		result, err := resolver.Mutation().CreateUser(ctx, input)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "insufficient permission: admin access required")
+		mockUserStore.AssertExpectations(t)
+	})
+
+	t.Run("User_GuestBlocked", func(t *testing.T) {
+		result, err := resolver.Query().User(ctx, "some-user-id")
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "insufficient permission: admin access required")
+		mockUserStore.AssertExpectations(t)
+	})
+
+	t.Run("Users_GuestBlocked", func(t *testing.T) {
+		result, err := resolver.Query().Users(ctx, nil, nil)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "insufficient permission: admin access required")
+		mockUserStore.AssertExpectations(t)
+	})
+}

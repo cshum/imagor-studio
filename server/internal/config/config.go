@@ -12,15 +12,19 @@ import (
 )
 
 type Config struct {
-	Port   int
-	DBPath string
+	Port        int
+	DBPath      string
+	StorageType string
 
 	// JWT Configuration
 	JWTSecret     string
 	JWTExpiration time.Duration
 
-	// Storage Configuration
-	StorageType string
+	// Admin Configuration for first run
+	DefaultAdminUsername  string
+	DefaultAdminEmail     string
+	DefaultAdminPassword  string
+	CreateAdminOnFirstRun bool
 
 	// File Storage
 	FileBaseDir          string
@@ -45,10 +49,15 @@ func Load() (*Config, error) {
 	var (
 		port          = fs.String("port", "8080", "port to listen on")
 		dbPath        = fs.String("db-path", "storage.db", "path to SQLite database file")
+		storageType   = fs.String("storage-type", "file", "storage type: file or s3")
 		jwtSecret     = fs.String("jwt-secret", "", "secret key for JWT signing")
 		imagorSecret  = fs.String("imagor-secret", "", "secret key for imagor")
 		jwtExpiration = fs.String("jwt-expiration", "24h", "JWT token expiration duration")
-		storageType   = fs.String("storage-type", "file", "storage type: file or s3")
+		// Admin configuration
+		defaultAdminUsername  = fs.String("default-admin-username", "admin", "default admin username for first run")
+		defaultAdminEmail     = fs.String("default-admin-email", "admin@localhost", "default admin email for first run")
+		defaultAdminPassword  = fs.String("default-admin-password", "", "default admin password for first run (if empty, random password will be generated)")
+		createAdminOnFirstRun = fs.Bool("create-admin-on-first-run", true, "create default admin user if no users exist")
 
 		fileBaseDir          = fs.String("file-base-dir", "./storage", "base directory for file storage")
 		fileMkdirPermissions = fs.String("file-mkdir-permissions", "0755", "directory creation permissions")
@@ -111,22 +120,26 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		Port:                 portInt,
-		DBPath:               *dbPath,
-		JWTSecret:            *jwtSecret,
-		JWTExpiration:        jwtExp,
-		StorageType:          *storageType,
-		FileBaseDir:          *fileBaseDir,
-		FileMkdirPermissions: os.FileMode(mkdirPerm),
-		FileWritePermissions: os.FileMode(writePerm),
-		S3Bucket:             *s3Bucket,
-		S3Region:             *s3Region,
-		S3Endpoint:           *s3Endpoint,
-		S3AccessKeyID:        *s3AccessKeyID,
-		S3SecretAccessKey:    *s3SecretAccessKey,
-		S3SessionToken:       *s3SessionToken,
-		S3BaseDir:            *s3BaseDir,
-		Logger:               logger,
+		Port:                  portInt,
+		DBPath:                *dbPath,
+		JWTSecret:             *jwtSecret,
+		JWTExpiration:         jwtExp,
+		StorageType:           *storageType,
+		DefaultAdminUsername:  *defaultAdminUsername,
+		DefaultAdminEmail:     *defaultAdminEmail,
+		DefaultAdminPassword:  *defaultAdminPassword,
+		CreateAdminOnFirstRun: *createAdminOnFirstRun,
+		FileBaseDir:           *fileBaseDir,
+		FileMkdirPermissions:  os.FileMode(mkdirPerm),
+		FileWritePermissions:  os.FileMode(writePerm),
+		S3Bucket:              *s3Bucket,
+		S3Region:              *s3Region,
+		S3Endpoint:            *s3Endpoint,
+		S3AccessKeyID:         *s3AccessKeyID,
+		S3SecretAccessKey:     *s3SecretAccessKey,
+		S3SessionToken:        *s3SessionToken,
+		S3BaseDir:             *s3BaseDir,
+		Logger:                logger,
 	}
 
 	// Validate storage configuration

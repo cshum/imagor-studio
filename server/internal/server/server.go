@@ -12,6 +12,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/internal/config"
+	"github.com/cshum/imagor-studio/server/internal/firstrun"
 	"github.com/cshum/imagor-studio/server/internal/handlers"
 	"github.com/cshum/imagor-studio/server/internal/middleware"
 	"github.com/cshum/imagor-studio/server/internal/migrations"
@@ -78,6 +79,11 @@ func New(cfg *config.Config) (*Server, error) {
 	metadataStore := metadatastore.New(db, cfg.Logger)
 	userStore := userstore.New(db, cfg.Logger)
 
+	ctx := context.TODO()
+	if err := firstrun.EnsureAdminUser(ctx, cfg, userStore); err != nil {
+		cfg.Logger.Fatal("Failed to ensure admin user", zap.Error(err))
+	}
+
 	// Initialize GraphQL
 	storageResolver := resolver.NewResolver(stor, metadataStore, userStore, cfg.Logger)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
@@ -114,7 +120,7 @@ func New(cfg *config.Config) (*Server, error) {
 	mux.HandleFunc("/auth/register", authHandler.Register)
 	mux.HandleFunc("/auth/login", authHandler.Login)
 	mux.HandleFunc("/auth/refresh", authHandler.RefreshToken)
-	mux.HandleFunc("/auth/dev-login", authHandler.DevLogin) // Keep for development
+	mux.HandleFunc("/auth/guest", authHandler.GuestLogin)
 
 	// GraphQL playground (available in development, might want to disable in production)
 	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
