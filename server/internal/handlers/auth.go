@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/errors"
 	"github.com/cshum/imagor-studio/server/pkg/userstore"
+	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/cshum/imagor-studio/server/pkg/validation"
 	"go.uber.org/zap"
 )
@@ -264,19 +264,7 @@ func (h *AuthHandler) GuestLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		errors.WriteErrorResponse(w, http.StatusBadRequest,
-			errors.ErrInvalidInput,
-			"Invalid request body",
-			map[string]interface{}{
-				"error": err.Error(),
-			})
-		return
-	}
-
-	// For guest login, create a temporary user ID based on timestamp
-	guestID := fmt.Sprintf("guest-%d", time.Now().UnixNano())
+	guestID := uuid.GenerateUUID()
 
 	// Generate token with limited scopes (read-only for guests)
 	token, err := h.tokenManager.GenerateToken(
@@ -412,59 +400,4 @@ func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest) error {
 	}
 
 	return nil
-}
-
-// DevLogin - keep for development/testing
-func (h *AuthHandler) DevLogin(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		errors.WriteErrorResponse(w, http.StatusMethodNotAllowed,
-			errors.ErrInvalidInput,
-			"Method not allowed",
-			nil)
-		return
-	}
-
-	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		errors.WriteErrorResponse(w, http.StatusBadRequest,
-			errors.ErrInvalidInput,
-			"Invalid request body",
-			map[string]interface{}{
-				"error": err.Error(),
-			})
-		return
-	}
-
-	// For development, create a test user ID
-	userID := "dev-user-" + strings.ReplaceAll(req.Username, "@", "-")
-
-	// Generate token
-	token, err := h.tokenManager.GenerateToken(
-		userID,
-		"admin",                            // For development, give admin role
-		[]string{"read", "write", "admin"}, // All scopes for development
-	)
-	if err != nil {
-		h.logger.Error("Failed to generate token", zap.Error(err))
-		errors.WriteErrorResponse(w, http.StatusInternalServerError,
-			errors.ErrInternalServer,
-			"Failed to generate token",
-			nil)
-		return
-	}
-
-	response := LoginResponse{
-		Token:     token,
-		ExpiresIn: h.tokenManager.TokenDuration().Milliseconds() / 1000,
-		User: UserResponse{
-			ID:       userID,
-			Username: req.Username,
-			Email:    req.Username,
-			Role:     "admin",
-		},
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
 }

@@ -121,7 +121,6 @@ func New(cfg *config.Config) (*Server, error) {
 	mux.HandleFunc("/auth/login", authHandler.Login)
 	mux.HandleFunc("/auth/refresh", authHandler.RefreshToken)
 	mux.HandleFunc("/auth/guest", authHandler.GuestLogin)
-	mux.HandleFunc("/auth/dev-login", authHandler.DevLogin)
 
 	// GraphQL playground (available in development, might want to disable in production)
 	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))

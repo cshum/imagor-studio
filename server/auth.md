@@ -15,30 +15,6 @@ JWT_EXPIRATION=24h
 
 ## Authentication Endpoints
 
-### 1. Development Login
-
-**For development/testing only** - generates a token without credential validation.
-
-```
-POST /auth/dev-login
-```
-
-Request body:
-```json
-{
-  "email": "test@example.com",
-  "password": "any_password"
-}
-```
-
-Response:
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "expiresIn": 86400
-}
-```
-
 ### 2. Refresh Token
 
 Refresh an existing token to extend its expiration.
