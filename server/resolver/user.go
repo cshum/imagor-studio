@@ -22,13 +22,13 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.User, error) {
 	// Handle guest users - they don't exist in the database
 	if isGuestUser(ctx) {
 		return &gql.User{
-			ID:        ownerID,
-			Username:  "guest",
-			Email:     "guest@temporary.local",
-			Role:      "guest",
-			IsActive:  true,
-			CreatedAt: time.Now().Format(time.RFC3339), // Use current time for guests
-			UpdatedAt: time.Now().Format(time.RFC3339),
+			ID:          ownerID,
+			DisplayName: "guest",
+			Email:       "guest@temporary.local",
+			Role:        "guest",
+			IsActive:    true,
+			CreatedAt:   time.Now().Format(time.RFC3339), // Use current time for guests
+			UpdatedAt:   time.Now().Format(time.RFC3339),
 		}, nil
 	}
 
@@ -44,13 +44,13 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.User, error) {
 	}
 
 	return &gql.User{
-		ID:        user.ID,
-		Username:  user.Username,
-		Email:     user.Email,
-		Role:      user.Role,
-		IsActive:  user.IsActive,
-		CreatedAt: user.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
+		ID:          user.ID,
+		DisplayName: user.DisplayName,
+		Email:       user.Email,
+		Role:        user.Role,
+		IsActive:    user.IsActive,
+		CreatedAt:   user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }
 
@@ -72,13 +72,13 @@ func (r *queryResolver) User(ctx context.Context, id string) (*gql.User, error) 
 	}
 
 	return &gql.User{
-		ID:        user.ID,
-		Username:  user.Username,
-		Email:     user.Email,
-		Role:      user.Role,
-		IsActive:  user.IsActive,
-		CreatedAt: user.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
+		ID:          user.ID,
+		DisplayName: user.DisplayName,
+		Email:       user.Email,
+		Role:        user.Role,
+		IsActive:    user.IsActive,
+		CreatedAt:   user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }
 
@@ -117,13 +117,13 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) (*gq
 	gqlUsers := make([]*gql.User, len(users))
 	for i, user := range users {
 		gqlUsers[i] = &gql.User{
-			ID:        user.ID,
-			Username:  user.Username,
-			Email:     user.Email,
-			Role:      user.Role,
-			IsActive:  user.IsActive,
-			CreatedAt: user.CreatedAt.Format(time.RFC3339),
-			UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
+			ID:          user.ID,
+			DisplayName: user.DisplayName,
+			Email:       user.Email,
+			Role:        user.Role,
+			IsActive:    user.IsActive,
+			CreatedAt:   user.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
 		}
 	}
 
@@ -164,20 +164,20 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 	}
 
 	// Update fields if provided
-	if input.Username != nil && strings.TrimSpace(*input.Username) != "" {
-		username := strings.TrimSpace(*input.Username)
+	if input.DisplayName != nil && strings.TrimSpace(*input.DisplayName) != "" {
+		displayName := strings.TrimSpace(*input.DisplayName)
 
 		// Use validation package
-		if err := validation.ValidateUsername(username); err != nil {
-			return nil, fmt.Errorf("invalid username: %w", err)
+		if err := validation.ValidateDisplayName(displayName); err != nil {
+			return nil, fmt.Errorf("invalid display name: %w", err)
 		}
 
-		// Normalize username
-		normalizedUsername := validation.NormalizeUsername(username)
+		// Normalize displayName
+		normalizedDisplayName := validation.NormalizeDisplayName(displayName)
 
-		err = r.userStore.UpdateUsername(ctx, targetUserID, normalizedUsername)
+		err = r.userStore.UpdateDisplayName(ctx, targetUserID, normalizedDisplayName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to update username: %w", err)
+			return nil, fmt.Errorf("failed to update display name: %w", err)
 		}
 	}
 
@@ -210,13 +210,13 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 		zap.Bool("isAdminOperation", userID != nil))
 
 	return &gql.User{
-		ID:        updatedUser.ID,
-		Username:  updatedUser.Username,
-		Email:     updatedUser.Email,
-		Role:      updatedUser.Role,
-		IsActive:  updatedUser.IsActive,
-		CreatedAt: updatedUser.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: updatedUser.UpdatedAt.Format(time.RFC3339),
+		ID:          updatedUser.ID,
+		DisplayName: updatedUser.DisplayName,
+		Email:       updatedUser.Email,
+		Role:        updatedUser.Role,
+		IsActive:    updatedUser.IsActive,
+		CreatedAt:   updatedUser.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   updatedUser.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }
 
@@ -355,7 +355,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserI
 	}
 
 	// Normalize inputs
-	normalizedUsername := validation.NormalizeUsername(input.Username)
+	normalizedDisplayName := validation.NormalizeDisplayName(input.DisplayName)
 	normalizedEmail := validation.NormalizeEmail(input.Email)
 	normalizedRole := strings.TrimSpace(input.Role)
 
@@ -372,7 +372,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserI
 	}
 
 	// Create user
-	user, err := r.userStore.Create(ctx, normalizedUsername, normalizedEmail, hashedPassword, normalizedRole)
+	user, err := r.userStore.Create(ctx, normalizedDisplayName, normalizedEmail, hashedPassword, normalizedRole)
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			return nil, fmt.Errorf("user creation failed: %w", err)
@@ -383,26 +383,26 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserI
 
 	r.logger.Info("User created by admin",
 		zap.String("newUserID", user.ID),
-		zap.String("newUsername", user.Username),
+		zap.String("newDisplayName", user.DisplayName),
 		zap.String("newUserRole", user.Role),
 		zap.String("createdByAdminID", currentUserID))
 
 	return &gql.User{
-		ID:        user.ID,
-		Username:  user.Username,
-		Email:     user.Email,
-		Role:      user.Role,
-		IsActive:  user.IsActive,
-		CreatedAt: user.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
+		ID:          user.ID,
+		DisplayName: user.DisplayName,
+		Email:       user.Email,
+		Role:        user.Role,
+		IsActive:    user.IsActive,
+		CreatedAt:   user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }
 
 // Helper function to validate CreateUserInput
 func (r *mutationResolver) validateCreateUserInput(input *gql.CreateUserInput) error {
-	// Validate username
-	if err := validation.ValidateUsername(input.Username); err != nil {
-		return fmt.Errorf("invalid username: %w", err)
+	// Validate displayName
+	if err := validation.ValidateDisplayName(input.DisplayName); err != nil {
+		return fmt.Errorf("invalid display name: %w", err)
 	}
 
 	// Validate email

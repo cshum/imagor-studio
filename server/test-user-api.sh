@@ -15,7 +15,7 @@ BASE_URL="http://localhost:8080"
 echo -e "${GREEN}1. Registering a new user...${NC}"
 REGISTER_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/register" \
   -H "Content-Type: application/json" \
-  -d '{"username":"testuser","email":"test@example.com","password":"password123"}')
+  -d '{"displayName":"testuser","email":"test@example.com","password":"password123"}')
 
 TOKEN=$(echo $REGISTER_RESPONSE | jq -r '.token')
 echo "Token obtained: ${TOKEN:0:50}..."
@@ -25,7 +25,7 @@ echo -e "\n${GREEN}2. Getting current user info...${NC}"
 CURRENT_USER_RESPONSE=$(curl -s -X POST "${BASE_URL}/query" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"query":"query { me { id username email role isActive createdAt updatedAt } }"}')
+  -d '{"query":"query { me { id displayName email role isActive createdAt updatedAt } }"}')
 
 echo "Current user response:"
 echo $CURRENT_USER_RESPONSE | jq .
@@ -35,7 +35,7 @@ echo -e "\n${GREEN}3. Updating user profile...${NC}"
 UPDATE_RESPONSE=$(curl -s -X POST "${BASE_URL}/query" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"query":"mutation { updateProfile(input: { username: \"updateduser\" }) { id username email updatedAt } }"}')
+  -d '{"query":"mutation { updateProfile(input: { displayName: \"updateduser\" }) { id displayName email updatedAt } }"}')
 
 echo "Update profile response:"
 echo $UPDATE_RESPONSE | jq .

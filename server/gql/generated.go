@@ -96,13 +96,13 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		CreatedAt func(childComplexity int) int
-		Email     func(childComplexity int) int
-		ID        func(childComplexity int) int
-		IsActive  func(childComplexity int) int
-		Role      func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
-		Username  func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		DisplayName func(childComplexity int) int
+		Email       func(childComplexity int) int
+		ID          func(childComplexity int) int
+		IsActive    func(childComplexity int) int
+		Role        func(childComplexity int) int
+		UpdatedAt   func(childComplexity int) int
 	}
 
 	UserList struct {
@@ -112,11 +112,11 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
+	SetMetadata(ctx context.Context, key string, value string) (*Metadata, error)
+	DeleteMetadata(ctx context.Context, key string) (bool, error)
 	UploadFile(ctx context.Context, path string, content graphql.Upload) (bool, error)
 	DeleteFile(ctx context.Context, path string) (bool, error)
 	CreateFolder(ctx context.Context, path string) (bool, error)
-	SetMetadata(ctx context.Context, key string, value string) (*Metadata, error)
-	DeleteMetadata(ctx context.Context, key string) (bool, error)
 	UpdateProfile(ctx context.Context, input UpdateProfileInput, userID *string) (*User, error)
 	ChangePassword(ctx context.Context, input ChangePasswordInput, userID *string) (bool, error)
 	DeactivateAccount(ctx context.Context, userID *string) (bool, error)
@@ -457,6 +457,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.User.CreatedAt(childComplexity), true
 
+	case "User.displayName":
+		if e.complexity.User.DisplayName == nil {
+			break
+		}
+
+		return e.complexity.User.DisplayName(childComplexity), true
+
 	case "User.email":
 		if e.complexity.User.Email == nil {
 			break
@@ -491,13 +498,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.UpdatedAt(childComplexity), true
-
-	case "User.username":
-		if e.complexity.User.Username == nil {
-			break
-		}
-
-		return e.complexity.User.Username(childComplexity), true
 
 	case "UserList.items":
 		if e.complexity.UserList.Items == nil {
@@ -638,19 +638,22 @@ var sources = []*ast.Source{
     getMetadata(key: String!): Metadata
 
     me: User
+
+    # admin only operations
     user(id: ID!): User
     users(offset: Int = 0, limit: Int = 20): UserList!
 }
 
 type Mutation {
+    setMetadata(key: String!, value: String!): Metadata!
+    deleteMetadata(key: String!): Boolean!
+
+    # write scope required
     uploadFile(path: String!, content: Upload!): Boolean!
     deleteFile(path: String!): Boolean!
     createFolder(path: String!): Boolean!
 
-    setMetadata(key: String!, value: String!): Metadata!
-    deleteMetadata(key: String!): Boolean!
-
-    # self operations, or admin operations with userId
+    # self operations, or admin scope with userId
     updateProfile(input: UpdateProfileInput!, userId: ID): User!
     changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
     deactivateAccount(userId: ID): Boolean!
@@ -661,7 +664,7 @@ type Mutation {
 
 type User {
     id: ID!
-    username: String!
+    displayName: String!
     email: String!
     role: String!
     isActive: Boolean!
@@ -675,7 +678,7 @@ type UserList {
 }
 
 input UpdateProfileInput {
-    username: String
+    displayName: String
     email: String
 }
 
@@ -685,7 +688,7 @@ input ChangePasswordInput {
 }
 
 input CreateUserInput {
-    username: String!
+    displayName: String!
     email: String!
     password: String!
     role: String!
@@ -1736,6 +1739,126 @@ func (ec *executionContext) fieldContext_Metadata_updatedAt(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_setMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_setMetadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetMetadata(rctx, fc.Args["key"].(string), fc.Args["value"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*Metadata)
+	fc.Result = res
+	return ec.marshalNMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_setMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_Metadata_key(ctx, field)
+			case "value":
+				return ec.fieldContext_Metadata_value(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Metadata_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Metadata_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteMetadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteMetadata(rctx, fc.Args["key"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_uploadFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_uploadFile(ctx, field)
 	if err != nil {
@@ -1901,126 +2024,6 @@ func (ec *executionContext) fieldContext_Mutation_createFolder(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_setMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_setMetadata(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SetMetadata(rctx, fc.Args["key"].(string), fc.Args["value"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*Metadata)
-	fc.Result = res
-	return ec.marshalNMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_setMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "key":
-				return ec.fieldContext_Metadata_key(ctx, field)
-			case "value":
-				return ec.fieldContext_Metadata_value(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Metadata_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Metadata_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_setMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteMetadata(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteMetadata(rctx, fc.Args["key"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_updateProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_updateProfile(ctx, field)
 	if err != nil {
@@ -2062,8 +2065,8 @@ func (ec *executionContext) fieldContext_Mutation_updateProfile(ctx context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "username":
-				return ec.fieldContext_User_username(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "role":
@@ -2243,8 +2246,8 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "username":
-				return ec.fieldContext_User_username(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "role":
@@ -2565,8 +2568,8 @@ func (ec *executionContext) fieldContext_Query_me(_ context.Context, field graph
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "username":
-				return ec.fieldContext_User_username(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "role":
@@ -2622,8 +2625,8 @@ func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field g
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "username":
-				return ec.fieldContext_User_username(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "role":
@@ -2888,8 +2891,8 @@ func (ec *executionContext) fieldContext_User_id(_ context.Context, field graphq
 	return fc, nil
 }
 
-func (ec *executionContext) _User_username(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_User_username(ctx, field)
+func (ec *executionContext) _User_displayName(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_displayName(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2902,7 +2905,7 @@ func (ec *executionContext) _User_username(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Username, nil
+		return obj.DisplayName, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2919,7 +2922,7 @@ func (ec *executionContext) _User_username(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -3193,8 +3196,8 @@ func (ec *executionContext) fieldContext_UserList_items(_ context.Context, field
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "username":
-				return ec.fieldContext_User_username(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "role":
@@ -5248,20 +5251,20 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"username", "email", "password", "role"}
+	fieldsInOrder := [...]string{"displayName", "email", "password", "role"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "username":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		case "displayName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Username = data
+			it.DisplayName = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -5296,20 +5299,20 @@ func (ec *executionContext) unmarshalInputUpdateProfileInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"username", "email"}
+	fieldsInOrder := [...]string{"displayName", "email"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "username":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		case "displayName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Username = data
+			it.DisplayName = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -5563,6 +5566,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
+		case "setMetadata":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setMetadata(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteMetadata":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteMetadata(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "uploadFile":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_uploadFile(ctx, field)
@@ -5580,20 +5597,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "createFolder":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createFolder(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "setMetadata":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_setMetadata(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deleteMetadata":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteMetadata(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -5857,8 +5860,8 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "username":
-			out.Values[i] = ec._User_username(ctx, field, obj)
+		case "displayName":
+			out.Values[i] = ec._User_displayName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

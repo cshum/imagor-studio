@@ -41,7 +41,7 @@ type Mutation {
 
 type User {
     id: ID!
-    username: String!
+    displayName: String!
     email: String!
     role: String!
     isActive: Boolean!
@@ -55,7 +55,7 @@ type UserList {
 }
 
 input UpdateProfileInput {
-    username: String
+    displayName: String
     email: String
 }
 
@@ -65,7 +65,7 @@ input ChangePasswordInput {
 }
 
 input CreateUserInput {
-    username: String!
+    displayName: String!
     email: String!
     password: String!
     role: String!
