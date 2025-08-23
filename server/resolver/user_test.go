@@ -28,13 +28,13 @@ func TestMe(t *testing.T) {
 
 	now := time.Now()
 	mockUser := &userstore.User{
-		ID:        "test-user-id",
-		Username:  "testuser",
-		Email:     "test@example.com",
-		Role:      "user",
-		IsActive:  true,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:          "test-user-id",
+		DisplayName: "testuser",
+		Email:       "test@example.com",
+		Role:        "user",
+		IsActive:    true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	mockUserStore.On("GetByID", ctx, "test-user-id").Return(mockUser, nil)
@@ -44,7 +44,7 @@ func TestMe(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "test-user-id", result.ID)
-	assert.Equal(t, "testuser", result.Username)
+	assert.Equal(t, "testuser", result.DisplayName)
 	assert.Equal(t, "test@example.com", result.Email)
 	assert.Equal(t, "user", result.Role)
 	assert.True(t, result.IsActive)
@@ -88,13 +88,13 @@ func TestUser_AdminOnly(t *testing.T) {
 			if !tt.expectError {
 				now := time.Now()
 				targetUser := &userstore.User{
-					ID:        "target-user-id",
-					Username:  "targetuser",
-					Email:     "target@example.com",
-					Role:      "user",
-					IsActive:  true,
-					CreatedAt: now,
-					UpdatedAt: now,
+					ID:          "target-user-id",
+					DisplayName: "targetuser",
+					Email:       "target@example.com",
+					Role:        "user",
+					IsActive:    true,
+					CreatedAt:   now,
+					UpdatedAt:   now,
 				}
 				mockUserStore.On("GetByID", ctx, "target-user-id").Return(targetUser, nil)
 			}
@@ -127,43 +127,43 @@ func TestUpdateProfile_SelfOperation(t *testing.T) {
 
 	now := time.Now()
 	currentUser := &userstore.User{
-		ID:        "test-user-id",
-		Username:  "oldusername",
-		Email:     "old@example.com",
-		Role:      "user",
-		IsActive:  true,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:          "test-user-id",
+		DisplayName: "oldusername",
+		Email:       "old@example.com",
+		Role:        "user",
+		IsActive:    true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	updatedUser := &userstore.User{
-		ID:        "test-user-id",
-		Username:  "newusername",
-		Email:     "new@example.com",
-		Role:      "user",
-		IsActive:  true,
-		CreatedAt: now,
-		UpdatedAt: now.Add(time.Minute),
+		ID:          "test-user-id",
+		DisplayName: "newusername",
+		Email:       "new@example.com",
+		Role:        "user",
+		IsActive:    true,
+		CreatedAt:   now,
+		UpdatedAt:   now.Add(time.Minute),
 	}
 
-	newUsername := "newusername"
+	newDisplayName := "newusername"
 	newEmail := "new@example.com"
 
 	mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
-	mockUserStore.On("UpdateUsername", ctx, "test-user-id", "newusername").Return(nil)
+	mockUserStore.On("UpdateDisplayName", ctx, "test-user-id", "newusername").Return(nil)
 	mockUserStore.On("UpdateEmail", ctx, "test-user-id", "new@example.com").Return(nil)
 	mockUserStore.On("GetByID", ctx, "test-user-id").Return(updatedUser, nil).Once()
 
 	input := gql.UpdateProfileInput{
-		Username: &newUsername,
-		Email:    &newEmail,
+		DisplayName: &newDisplayName,
+		Email:       &newEmail,
 	}
 
 	result, err := resolver.Mutation().UpdateProfile(ctx, input, nil) // nil userID means self-operation
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, "newusername", result.Username)
+	assert.Equal(t, "newusername", result.DisplayName)
 	assert.Equal(t, "new@example.com", result.Email)
 
 	mockUserStore.AssertExpectations(t)
@@ -180,44 +180,44 @@ func TestUpdateProfile_AdminOperation(t *testing.T) {
 
 	now := time.Now()
 	targetUser := &userstore.User{
-		ID:        "target-user-id",
-		Username:  "oldusername",
-		Email:     "old@example.com",
-		Role:      "user",
-		IsActive:  true,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:          "target-user-id",
+		DisplayName: "oldusername",
+		Email:       "old@example.com",
+		Role:        "user",
+		IsActive:    true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	updatedUser := &userstore.User{
-		ID:        "target-user-id",
-		Username:  "newusername",
-		Email:     "new@example.com",
-		Role:      "user",
-		IsActive:  true,
-		CreatedAt: now,
-		UpdatedAt: now.Add(time.Minute),
+		ID:          "target-user-id",
+		DisplayName: "newusername",
+		Email:       "new@example.com",
+		Role:        "user",
+		IsActive:    true,
+		CreatedAt:   now,
+		UpdatedAt:   now.Add(time.Minute),
 	}
 
 	targetUserID := "target-user-id"
-	newUsername := "newusername"
+	newDisplayName := "newusername"
 	newEmail := "new@example.com"
 
 	mockUserStore.On("GetByID", ctx, "target-user-id").Return(targetUser, nil).Once()
-	mockUserStore.On("UpdateUsername", ctx, "target-user-id", "newusername").Return(nil)
+	mockUserStore.On("UpdateDisplayName", ctx, "target-user-id", "newusername").Return(nil)
 	mockUserStore.On("UpdateEmail", ctx, "target-user-id", "new@example.com").Return(nil)
 	mockUserStore.On("GetByID", ctx, "target-user-id").Return(updatedUser, nil).Once()
 
 	input := gql.UpdateProfileInput{
-		Username: &newUsername,
-		Email:    &newEmail,
+		DisplayName: &newDisplayName,
+		Email:       &newEmail,
 	}
 
 	result, err := resolver.Mutation().UpdateProfile(ctx, input, &targetUserID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, "newusername", result.Username)
+	assert.Equal(t, "newusername", result.DisplayName)
 	assert.Equal(t, "new@example.com", result.Email)
 
 	mockUserStore.AssertExpectations(t)
@@ -233,10 +233,10 @@ func TestUpdateProfile_NonAdminCannotUpdateOthers(t *testing.T) {
 	ctx := createReadWriteContext("regular-user-id")
 
 	targetUserID := "other-user-id"
-	newUsername := "newusername"
+	newDisplayName := "newusername"
 
 	input := gql.UpdateProfileInput{
-		Username: &newUsername,
+		DisplayName: &newDisplayName,
 	}
 
 	result, err := resolver.Mutation().UpdateProfile(ctx, input, &targetUserID)
@@ -259,13 +259,13 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 
 	now := time.Now()
 	currentUser := &userstore.User{
-		ID:        "test-user-id",
-		Username:  "currentuser",
-		Email:     "current@example.com",
-		Role:      "user",
-		IsActive:  true,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:          "test-user-id",
+		DisplayName: "currentuser",
+		Email:       "current@example.com",
+		Role:        "user",
+		IsActive:    true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	tests := []struct {
@@ -276,48 +276,15 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 		errorMsg    string
 	}{
 		{
-			name: "Invalid username - too short",
-			input: gql.UpdateProfileInput{
-				Username: stringPtr("ab"),
-			},
-			setupMocks: func() {
-				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil)
-			},
-			expectError: true,
-			errorMsg:    "invalid username: username must be at least 3 characters long",
-		},
-		{
 			name: "Invalid username - too long",
 			input: gql.UpdateProfileInput{
-				Username: stringPtr(strings.Repeat("a", 51)),
+				DisplayName: stringPtr(strings.Repeat("a", 101)),
 			},
 			setupMocks: func() {
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil)
 			},
 			expectError: true,
-			errorMsg:    "invalid username: username must be at most 50 characters long",
-		},
-		{
-			name: "Invalid username - starts with special character",
-			input: gql.UpdateProfileInput{
-				Username: stringPtr("_invaliduser"),
-			},
-			setupMocks: func() {
-				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil)
-			},
-			expectError: true,
-			errorMsg:    "invalid username: username cannot start with special character",
-		},
-		{
-			name: "Invalid username - contains invalid characters",
-			input: gql.UpdateProfileInput{
-				Username: stringPtr("invalid@user"),
-			},
-			setupMocks: func() {
-				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil)
-			},
-			expectError: true,
-			errorMsg:    "invalid username: username contains invalid character: @",
+			errorMsg:    "display name must be at most 100 characters long",
 		},
 		{
 			name: "Invalid email format",
@@ -344,7 +311,7 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 		{
 			name: "Empty username after trimming - should ignore",
 			input: gql.UpdateProfileInput{
-				Username: stringPtr("   "),
+				DisplayName: stringPtr("   "),
 			},
 			setupMocks: func() {
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
@@ -366,19 +333,19 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 		{
 			name: "Valid username normalization",
 			input: gql.UpdateProfileInput{
-				Username: stringPtr("  ValidUser  "),
+				DisplayName: stringPtr("  ValidUser  "),
 			},
 			setupMocks: func() {
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
-				mockUserStore.On("UpdateUsername", ctx, "test-user-id", "ValidUser").Return(nil)
+				mockUserStore.On("UpdateDisplayName", ctx, "test-user-id", "ValidUser").Return(nil)
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(&userstore.User{
-					ID:        "test-user-id",
-					Username:  "ValidUser",
-					Email:     "current@example.com",
-					Role:      "user",
-					IsActive:  true,
-					CreatedAt: now,
-					UpdatedAt: now.Add(time.Minute),
+					ID:          "test-user-id",
+					DisplayName: "ValidUser",
+					Email:       "current@example.com",
+					Role:        "user",
+					IsActive:    true,
+					CreatedAt:   now,
+					UpdatedAt:   now.Add(time.Minute),
 				}, nil).Once()
 			},
 			expectError: false,
@@ -392,13 +359,13 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
 				mockUserStore.On("UpdateEmail", ctx, "test-user-id", "test@example.com").Return(nil)
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(&userstore.User{
-					ID:        "test-user-id",
-					Username:  "currentuser",
-					Email:     "test@example.com",
-					Role:      "user",
-					IsActive:  true,
-					CreatedAt: now,
-					UpdatedAt: now.Add(time.Minute),
+					ID:          "test-user-id",
+					DisplayName: "currentuser",
+					Email:       "test@example.com",
+					Role:        "user",
+					IsActive:    true,
+					CreatedAt:   now,
+					UpdatedAt:   now.Add(time.Minute),
 				}, nil).Once()
 			},
 			expectError: false,
@@ -443,7 +410,7 @@ func TestChangePassword_SelfOperation(t *testing.T) {
 
 	currentUser := &model.User{
 		ID:             "test-user-id",
-		Username:       "testuser",
+		DisplayName:    "testuser",
 		Email:          "test@example.com",
 		HashedPassword: hashedCurrentPassword,
 		Role:           "user",
@@ -477,7 +444,7 @@ func TestChangePassword_AdminOperation(t *testing.T) {
 
 	targetUser := &model.User{
 		ID:             "target-user-id",
-		Username:       "targetuser",
+		DisplayName:    "targetuser",
 		Email:          "target@example.com",
 		HashedPassword: "old-hashed-password",
 		Role:           "user",
@@ -516,7 +483,7 @@ func TestChangePassword_ValidationErrors(t *testing.T) {
 
 	currentUser := &model.User{
 		ID:             "test-user-id",
-		Username:       "testuser",
+		DisplayName:    "testuser",
 		Email:          "test@example.com",
 		HashedPassword: hashedCurrentPassword,
 		Role:           "user",
@@ -618,13 +585,13 @@ func TestDeactivateAccount_SelfOperation(t *testing.T) {
 	// For self-operation, we need to mock the GetByID call that checks if user exists
 	now := time.Now()
 	targetUser := &userstore.User{
-		ID:        "test-user-id",
-		Username:  "testuser",
-		Email:     "test@example.com",
-		Role:      "user",
-		IsActive:  true,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:          "test-user-id",
+		DisplayName: "testuser",
+		Email:       "test@example.com",
+		Role:        "user",
+		IsActive:    true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	mockUserStore.On("GetByID", ctx, "test-user-id").Return(targetUser, nil)
@@ -649,13 +616,13 @@ func TestDeactivateAccount_AdminOperation(t *testing.T) {
 
 	now := time.Now()
 	targetUser := &userstore.User{
-		ID:        "target-user-id",
-		Username:  "targetuser",
-		Email:     "target@example.com",
-		Role:      "user",
-		IsActive:  true,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:          "target-user-id",
+		DisplayName: "targetuser",
+		Email:       "target@example.com",
+		Role:        "user",
+		IsActive:    true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	targetUserID := "target-user-id"
@@ -762,13 +729,13 @@ func TestUsers_AdminOnly(t *testing.T) {
 				now := time.Now()
 				users := []*userstore.User{
 					{
-						ID:        "user1",
-						Username:  "user1",
-						Email:     "user1@example.com",
-						Role:      "user",
-						IsActive:  true,
-						CreatedAt: now,
-						UpdatedAt: now,
+						ID:          "user1",
+						DisplayName: "user1",
+						Email:       "user1@example.com",
+						Role:        "user",
+						IsActive:    true,
+						CreatedAt:   now,
+						UpdatedAt:   now,
 					},
 				}
 
@@ -839,7 +806,7 @@ func TestUserOperations_UserNotFound(t *testing.T) {
 				mockUserStore.On("GetByID", ctx, "non-existent-user").Return(nil, nil)
 			},
 			execute: func(ctx context.Context) (interface{}, error) {
-				input := gql.UpdateProfileInput{Username: stringPtr("newname")}
+				input := gql.UpdateProfileInput{DisplayName: stringPtr("newname")}
 				return resolver.Mutation().UpdateProfile(ctx, input, nil)
 			},
 		},
@@ -934,7 +901,7 @@ func TestPermissionErrors(t *testing.T) {
 		{
 			name: "Regular user cannot update other user's profile",
 			execute: func() (interface{}, error) {
-				input := gql.UpdateProfileInput{Username: stringPtr("newname")}
+				input := gql.UpdateProfileInput{DisplayName: stringPtr("newname")}
 				otherUserID := "other-user-id"
 				return resolver.Mutation().UpdateProfile(regularUserCtx, input, &otherUserID)
 			},
@@ -1000,24 +967,24 @@ func TestDatabaseErrors(t *testing.T) {
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(nil, assert.AnError)
 			},
 			execute: func() (interface{}, error) {
-				input := gql.UpdateProfileInput{Username: stringPtr("newname")}
+				input := gql.UpdateProfileInput{DisplayName: stringPtr("newname")}
 				return resolver.Mutation().UpdateProfile(ctx, input, nil)
 			},
 			errorMsg: "failed to get user",
 		},
 		{
-			name: "UpdateProfile - database error on UpdateUsername",
+			name: "UpdateProfile - database error on UpdateDisplayName",
 			setupMock: func() {
 				now := time.Now()
 				user := &userstore.User{
-					ID: "test-user-id", Username: "current", Email: "test@example.com",
+					ID: "test-user-id", DisplayName: "current", Email: "test@example.com",
 					Role: "user", IsActive: true, CreatedAt: now, UpdatedAt: now,
 				}
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(user, nil).Once()
-				mockUserStore.On("UpdateUsername", ctx, "test-user-id", "newname").Return(assert.AnError)
+				mockUserStore.On("UpdateDisplayName", ctx, "test-user-id", "newname").Return(assert.AnError)
 			},
 			execute: func() (interface{}, error) {
-				input := gql.UpdateProfileInput{Username: stringPtr("newname")}
+				input := gql.UpdateProfileInput{DisplayName: stringPtr("newname")}
 				return resolver.Mutation().UpdateProfile(ctx, input, nil)
 			},
 			errorMsg: "failed to update username",
@@ -1106,22 +1073,22 @@ func TestCreateUser_AdminOnly(t *testing.T) {
 			if !tt.expectError {
 				now := time.Now()
 				createdUser := &userstore.User{
-					ID:        "new-user-id",
-					Username:  "newuser",
-					Email:     "new@example.com",
-					Role:      "user",
-					IsActive:  true,
-					CreatedAt: now,
-					UpdatedAt: now,
+					ID:          "new-user-id",
+					DisplayName: "newuser",
+					Email:       "new@example.com",
+					Role:        "user",
+					IsActive:    true,
+					CreatedAt:   now,
+					UpdatedAt:   now,
 				}
 				mockUserStore.On("Create", ctx, "newuser", "new@example.com", mock.AnythingOfType("string"), "user").Return(createdUser, nil)
 			}
 
 			input := gql.CreateUserInput{
-				Username: "newuser",
-				Email:    "new@example.com",
-				Password: "password123",
-				Role:     "user",
+				DisplayName: "newuser",
+				Email:       "new@example.com",
+				Password:    "password123",
+				Role:        "user",
 			}
 
 			result, err := resolver.Mutation().CreateUser(ctx, input)
@@ -1134,7 +1101,7 @@ func TestCreateUser_AdminOnly(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
 				assert.Equal(t, "new-user-id", result.ID)
-				assert.Equal(t, "newuser", result.Username)
+				assert.Equal(t, "newuser", result.DisplayName)
 				assert.Equal(t, "new@example.com", result.Email)
 				assert.Equal(t, "user", result.Role)
 			}
@@ -1162,74 +1129,41 @@ func TestCreateUser_ValidationErrors(t *testing.T) {
 		{
 			name: "Valid user creation with default role",
 			input: gql.CreateUserInput{
-				Username: "validuser",
-				Email:    "valid@example.com",
-				Password: "validpassword123",
-				Role:     "user",
+				DisplayName: "validuser",
+				Email:       "valid@example.com",
+				Password:    "validpassword123",
+				Role:        "user",
 			},
 			expectError: false,
 		},
 		{
 			name: "Valid admin user creation",
 			input: gql.CreateUserInput{
-				Username: "adminuser",
-				Email:    "admin@example.com",
-				Password: "adminpassword123",
-				Role:     "admin",
+				DisplayName: "adminuser",
+				Email:       "admin@example.com",
+				Password:    "adminpassword123",
+				Role:        "admin",
 			},
 			expectError: false,
 		},
 		{
-			name: "Invalid username - too short",
-			input: gql.CreateUserInput{
-				Username: "ab",
-				Email:    "test@example.com",
-				Password: "password123",
-				Role:     "user",
-			},
-			expectError: true,
-			errorMsg:    "invalid username: username must be at least 3 characters long",
-		},
-		{
 			name: "Invalid username - too long",
 			input: gql.CreateUserInput{
-				Username: strings.Repeat("a", 51),
-				Email:    "test@example.com",
-				Password: "password123",
-				Role:     "user",
+				DisplayName: strings.Repeat("a", 101),
+				Email:       "test@example.com",
+				Password:    "password123",
+				Role:        "user",
 			},
 			expectError: true,
-			errorMsg:    "invalid username: username must be at most 50 characters long",
-		},
-		{
-			name: "Invalid username - starts with special character",
-			input: gql.CreateUserInput{
-				Username: "_invaliduser",
-				Email:    "test@example.com",
-				Password: "password123",
-				Role:     "user",
-			},
-			expectError: true,
-			errorMsg:    "invalid username: username cannot start with special character",
-		},
-		{
-			name: "Invalid username - contains invalid characters",
-			input: gql.CreateUserInput{
-				Username: "invalid@user",
-				Email:    "test@example.com",
-				Password: "password123",
-				Role:     "user",
-			},
-			expectError: true,
-			errorMsg:    "invalid username: username contains invalid character: @",
+			errorMsg:    "display name must be at most 100 characters long",
 		},
 		{
 			name: "Invalid email format",
 			input: gql.CreateUserInput{
-				Username: "testuser",
-				Email:    "invalid-email",
-				Password: "password123",
-				Role:     "user",
+				DisplayName: "testuser",
+				Email:       "invalid-email",
+				Password:    "password123",
+				Role:        "user",
 			},
 			expectError: true,
 			errorMsg:    "invalid email format",
@@ -1237,10 +1171,10 @@ func TestCreateUser_ValidationErrors(t *testing.T) {
 		{
 			name: "Invalid email - no TLD",
 			input: gql.CreateUserInput{
-				Username: "testuser",
-				Email:    "test@localhost",
-				Password: "password123",
-				Role:     "user",
+				DisplayName: "testuser",
+				Email:       "test@localhost",
+				Password:    "password123",
+				Role:        "user",
 			},
 			expectError: true,
 			errorMsg:    "invalid email format",
@@ -1248,10 +1182,10 @@ func TestCreateUser_ValidationErrors(t *testing.T) {
 		{
 			name: "Invalid password - too short",
 			input: gql.CreateUserInput{
-				Username: "testuser",
-				Email:    "test@example.com",
-				Password: "short",
-				Role:     "user",
+				DisplayName: "testuser",
+				Email:       "test@example.com",
+				Password:    "short",
+				Role:        "user",
 			},
 			expectError: true,
 			errorMsg:    "invalid password: password must be at least 8 characters long",
@@ -1259,10 +1193,10 @@ func TestCreateUser_ValidationErrors(t *testing.T) {
 		{
 			name: "Invalid password - too long",
 			input: gql.CreateUserInput{
-				Username: "testuser",
-				Email:    "test@example.com",
-				Password: strings.Repeat("a", 73),
-				Role:     "user",
+				DisplayName: "testuser",
+				Email:       "test@example.com",
+				Password:    strings.Repeat("a", 73),
+				Role:        "user",
 			},
 			expectError: true,
 			errorMsg:    "invalid password: password must be at most 72 characters long",
@@ -1270,10 +1204,10 @@ func TestCreateUser_ValidationErrors(t *testing.T) {
 		{
 			name: "Invalid role",
 			input: gql.CreateUserInput{
-				Username: "testuser",
-				Email:    "test@example.com",
-				Password: "password123",
-				Role:     "invalidrole",
+				DisplayName: "testuser",
+				Email:       "test@example.com",
+				Password:    "password123",
+				Role:        "invalidrole",
 			},
 			expectError: true,
 			errorMsg:    "invalid role: invalidrole (valid roles: user, admin)",
@@ -1281,10 +1215,10 @@ func TestCreateUser_ValidationErrors(t *testing.T) {
 		{
 			name: "Empty role",
 			input: gql.CreateUserInput{
-				Username: "testuser",
-				Email:    "test@example.com",
-				Password: "password123",
-				Role:     "",
+				DisplayName: "testuser",
+				Email:       "test@example.com",
+				Password:    "password123",
+				Role:        "",
 			},
 			expectError: true,
 			errorMsg:    "role cannot be empty",
@@ -1292,21 +1226,21 @@ func TestCreateUser_ValidationErrors(t *testing.T) {
 		{
 			name: "Empty username",
 			input: gql.CreateUserInput{
-				Username: "",
-				Email:    "test@example.com",
-				Password: "password123",
-				Role:     "user",
+				DisplayName: "",
+				Email:       "test@example.com",
+				Password:    "password123",
+				Role:        "user",
 			},
 			expectError: true,
-			errorMsg:    "invalid username: username is required",
+			errorMsg:    "display name is required",
 		},
 		{
 			name: "Empty email",
 			input: gql.CreateUserInput{
-				Username: "testuser",
-				Email:    "",
-				Password: "password123",
-				Role:     "user",
+				DisplayName: "testuser",
+				Email:       "",
+				Password:    "password123",
+				Role:        "user",
 			},
 			expectError: true,
 			errorMsg:    "invalid email format",
@@ -1314,10 +1248,10 @@ func TestCreateUser_ValidationErrors(t *testing.T) {
 		{
 			name: "Empty password",
 			input: gql.CreateUserInput{
-				Username: "testuser",
-				Email:    "test@example.com",
-				Password: "",
-				Role:     "user",
+				DisplayName: "testuser",
+				Email:       "test@example.com",
+				Password:    "",
+				Role:        "user",
 			},
 			expectError: true,
 			errorMsg:    "invalid password: password must be at least 8 characters long",
@@ -1331,13 +1265,13 @@ func TestCreateUser_ValidationErrors(t *testing.T) {
 			if !tt.expectError {
 				now := time.Now()
 				createdUser := &userstore.User{
-					ID:        "new-user-id",
-					Username:  tt.input.Username,
-					Email:     strings.ToLower(tt.input.Email), // Should be normalized
-					Role:      tt.input.Role,
-					IsActive:  true,
-					CreatedAt: now,
-					UpdatedAt: now,
+					ID:          "new-user-id",
+					DisplayName: tt.input.DisplayName,
+					Email:       strings.ToLower(tt.input.Email), // Should be normalized
+					Role:        tt.input.Role,
+					IsActive:    true,
+					CreatedAt:   now,
+					UpdatedAt:   now,
 				}
 				mockUserStore.On("Create", ctx, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), tt.input.Role).Return(createdUser, nil)
 			}
@@ -1379,12 +1313,12 @@ func TestCreateUser_InputNormalization(t *testing.T) {
 		}
 	}{
 		{
-			name: "Username and email normalization",
+			name: "DisplayName and email normalization",
 			input: gql.CreateUserInput{
-				Username: "  TestUser  ",
-				Email:    "  TEST@EXAMPLE.COM  ",
-				Password: "password123",
-				Role:     "  user  ",
+				DisplayName: "  TestUser  ",
+				Email:       "  TEST@EXAMPLE.COM  ",
+				Password:    "password123",
+				Role:        "  user  ",
 			},
 			expected: struct {
 				username string
@@ -1399,10 +1333,10 @@ func TestCreateUser_InputNormalization(t *testing.T) {
 		{
 			name: "Email with display name normalization",
 			input: gql.CreateUserInput{
-				Username: "displayuser",
-				Email:    "John Doe <john@example.com>",
-				Password: "password123",
-				Role:     "admin",
+				DisplayName: "displayuser",
+				Email:       "John Doe <john@example.com>",
+				Password:    "password123",
+				Role:        "admin",
 			},
 			expected: struct {
 				username string
@@ -1422,13 +1356,13 @@ func TestCreateUser_InputNormalization(t *testing.T) {
 
 			now := time.Now()
 			createdUser := &userstore.User{
-				ID:        "new-user-id",
-				Username:  tt.expected.username,
-				Email:     tt.expected.email,
-				Role:      tt.expected.role,
-				IsActive:  true,
-				CreatedAt: now,
-				UpdatedAt: now,
+				ID:          "new-user-id",
+				DisplayName: tt.expected.username,
+				Email:       tt.expected.email,
+				Role:        tt.expected.role,
+				IsActive:    true,
+				CreatedAt:   now,
+				UpdatedAt:   now,
 			}
 
 			mockUserStore.On("Create", ctx, tt.expected.username, tt.expected.email, mock.AnythingOfType("string"), tt.expected.role).Return(createdUser, nil)
@@ -1437,7 +1371,7 @@ func TestCreateUser_InputNormalization(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
-			assert.Equal(t, tt.expected.username, result.Username)
+			assert.Equal(t, tt.expected.username, result.DisplayName)
 			assert.Equal(t, tt.expected.email, result.Email)
 			assert.Equal(t, tt.expected.role, result.Role)
 
@@ -1462,7 +1396,7 @@ func TestCreateUser_DatabaseErrors(t *testing.T) {
 		errorMsg    string
 	}{
 		{
-			name: "Username already exists",
+			name: "DisplayName already exists",
 			setupMock: func() {
 				mockUserStore.On("Create", ctx, "existinguser", "new@example.com", mock.AnythingOfType("string"), "user").Return(nil, fmt.Errorf("username already exists"))
 			},
@@ -1493,18 +1427,18 @@ func TestCreateUser_DatabaseErrors(t *testing.T) {
 			tt.setupMock()
 
 			input := gql.CreateUserInput{
-				Username: "testuser",
-				Email:    "test@example.com",
-				Password: "password123",
-				Role:     "user",
+				DisplayName: "testuser",
+				Email:       "test@example.com",
+				Password:    "password123",
+				Role:        "user",
 			}
 
 			// Override specific fields for test cases
-			if tt.name == "Username already exists" {
-				input.Username = "existinguser"
+			if tt.name == "DisplayName already exists" {
+				input.DisplayName = "existinguser"
 				input.Email = "new@example.com"
 			} else if tt.name == "Email already exists" {
-				input.Username = "newuser"
+				input.DisplayName = "newuser"
 				input.Email = "existing@example.com"
 			}
 
@@ -1587,22 +1521,22 @@ func TestCreateUser_RoleValidation(t *testing.T) {
 				}
 
 				createdUser := &userstore.User{
-					ID:        "new-user-id",
-					Username:  "testuser",
-					Email:     "test@example.com",
-					Role:      expectedRole,
-					IsActive:  true,
-					CreatedAt: now,
-					UpdatedAt: now,
+					ID:          "new-user-id",
+					DisplayName: "testuser",
+					Email:       "test@example.com",
+					Role:        expectedRole,
+					IsActive:    true,
+					CreatedAt:   now,
+					UpdatedAt:   now,
 				}
 				mockUserStore.On("Create", ctx, "testuser", "test@example.com", mock.AnythingOfType("string"), expectedRole).Return(createdUser, nil)
 			}
 
 			input := gql.CreateUserInput{
-				Username: "testuser",
-				Email:    "test@example.com",
-				Password: "password123",
-				Role:     tt.role,
+				DisplayName: "testuser",
+				Email:       "test@example.com",
+				Password:    "password123",
+				Role:        tt.role,
 			}
 
 			result, err := resolver.Mutation().CreateUser(ctx, input)
@@ -1637,13 +1571,13 @@ func TestCreateUser_PasswordHashing(t *testing.T) {
 
 	now := time.Now()
 	createdUser := &userstore.User{
-		ID:        "new-user-id",
-		Username:  "testuser",
-		Email:     "test@example.com",
-		Role:      "user",
-		IsActive:  true,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:          "new-user-id",
+		DisplayName: "testuser",
+		Email:       "test@example.com",
+		Role:        "user",
+		IsActive:    true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	// Mock expects that the hashed password is different from the plain password
@@ -1653,10 +1587,10 @@ func TestCreateUser_PasswordHashing(t *testing.T) {
 	}), "user").Return(createdUser, nil)
 
 	input := gql.CreateUserInput{
-		Username: "testuser",
-		Email:    "test@example.com",
-		Password: "plainpassword123",
-		Role:     "user",
+		DisplayName: "testuser",
+		Email:       "test@example.com",
+		Password:    "plainpassword123",
+		Role:        "user",
 	}
 
 	result, err := resolver.Mutation().CreateUser(ctx, input)
@@ -1686,16 +1620,16 @@ func TestCreateUser_EdgeCases(t *testing.T) {
 		{
 			name: "Unicode username",
 			input: gql.CreateUserInput{
-				Username: "пользователь",
-				Email:    "unicode@example.com",
-				Password: "password123",
-				Role:     "user",
+				DisplayName: "пользователь",
+				Email:       "unicode@example.com",
+				Password:    "password123",
+				Role:        "user",
 			},
 			expectError: false,
 			setupMock: func() {
 				now := time.Now()
 				createdUser := &userstore.User{
-					ID: "new-user-id", Username: "пользователь", Email: "unicode@example.com",
+					ID: "new-user-id", DisplayName: "пользователь", Email: "unicode@example.com",
 					Role: "user", IsActive: true, CreatedAt: now, UpdatedAt: now,
 				}
 				mockUserStore.On("Create", ctx, "пользователь", "unicode@example.com", mock.AnythingOfType("string"), "user").Return(createdUser, nil)
@@ -1704,16 +1638,16 @@ func TestCreateUser_EdgeCases(t *testing.T) {
 		{
 			name: "Special characters in username",
 			input: gql.CreateUserInput{
-				Username: "user-with_special.chars",
-				Email:    "special@example.com",
-				Password: "password123",
-				Role:     "user",
+				DisplayName: "user-with_special.chars",
+				Email:       "special@example.com",
+				Password:    "password123",
+				Role:        "user",
 			},
 			expectError: false,
 			setupMock: func() {
 				now := time.Now()
 				createdUser := &userstore.User{
-					ID: "new-user-id", Username: "user-with_special.chars", Email: "special@example.com",
+					ID: "new-user-id", DisplayName: "user-with_special.chars", Email: "special@example.com",
 					Role: "user", IsActive: true, CreatedAt: now, UpdatedAt: now,
 				}
 				mockUserStore.On("Create", ctx, "user-with_special.chars", "special@example.com", mock.AnythingOfType("string"), "user").Return(createdUser, nil)
@@ -1722,16 +1656,16 @@ func TestCreateUser_EdgeCases(t *testing.T) {
 		{
 			name: "Email with plus addressing",
 			input: gql.CreateUserInput{
-				Username: "plususer",
-				Email:    "user+tag@example.com",
-				Password: "password123",
-				Role:     "user",
+				DisplayName: "plususer",
+				Email:       "user+tag@example.com",
+				Password:    "password123",
+				Role:        "user",
 			},
 			expectError: false,
 			setupMock: func() {
 				now := time.Now()
 				createdUser := &userstore.User{
-					ID: "new-user-id", Username: "plususer", Email: "user+tag@example.com",
+					ID: "new-user-id", DisplayName: "plususer", Email: "user+tag@example.com",
 					Role: "user", IsActive: true, CreatedAt: now, UpdatedAt: now,
 				}
 				mockUserStore.On("Create", ctx, "plususer", "user+tag@example.com", mock.AnythingOfType("string"), "user").Return(createdUser, nil)
@@ -1754,7 +1688,7 @@ func TestCreateUser_EdgeCases(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
-				assert.Equal(t, tt.input.Username, result.Username)
+				assert.Equal(t, tt.input.DisplayName, result.DisplayName)
 			}
 
 			mockUserStore.AssertExpectations(t)
@@ -1795,22 +1729,22 @@ func TestCreateUser_RoleAssignment(t *testing.T) {
 
 			now := time.Now()
 			createdUser := &userstore.User{
-				ID:        "new-user-id",
-				Username:  "newuser",
-				Email:     "new@example.com",
-				Role:      tt.expectedRole,
-				IsActive:  true,
-				CreatedAt: now,
-				UpdatedAt: now,
+				ID:          "new-user-id",
+				DisplayName: "newuser",
+				Email:       "new@example.com",
+				Role:        tt.expectedRole,
+				IsActive:    true,
+				CreatedAt:   now,
+				UpdatedAt:   now,
 			}
 
 			mockUserStore.On("Create", ctx, "newuser", "new@example.com", mock.AnythingOfType("string"), tt.expectedRole).Return(createdUser, nil)
 
 			input := gql.CreateUserInput{
-				Username: "newuser",
-				Email:    "new@example.com",
-				Password: "password123",
-				Role:     tt.inputRole,
+				DisplayName: "newuser",
+				Email:       "new@example.com",
+				Password:    "password123",
+				Role:        tt.inputRole,
 			}
 
 			result, err := resolver.Mutation().CreateUser(ctx, input)
@@ -1855,10 +1789,10 @@ func TestCreateUser_ContextErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			input := gql.CreateUserInput{
-				Username: "testuser",
-				Email:    "test@example.com",
-				Password: "password123",
-				Role:     "user",
+				DisplayName: "testuser",
+				Email:       "test@example.com",
+				Password:    "password123",
+				Role:        "user",
 			}
 
 			result, err := resolver.Mutation().CreateUser(tt.context, input)
@@ -1895,7 +1829,7 @@ func TestMe_GuestUser(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, guestID, result.ID)
-	assert.Equal(t, "guest", result.Username)
+	assert.Equal(t, "guest", result.DisplayName)
 	assert.Equal(t, "guest@temporary.local", result.Email)
 	assert.Equal(t, "guest", result.Role)
 	assert.True(t, result.IsActive)
@@ -1925,7 +1859,7 @@ func TestGuestUserRestrictions(t *testing.T) {
 
 	t.Run("UpdateProfile_GuestBlocked", func(t *testing.T) {
 		input := gql.UpdateProfileInput{
-			Username: stringPtr("newname"),
+			DisplayName: stringPtr("newname"),
 		}
 
 		result, err := resolver.Mutation().UpdateProfile(ctx, input, nil)
@@ -1961,10 +1895,10 @@ func TestGuestUserRestrictions(t *testing.T) {
 
 	t.Run("CreateUser_GuestBlocked", func(t *testing.T) {
 		input := gql.CreateUserInput{
-			Username: "newuser",
-			Email:    "new@example.com",
-			Password: "password123",
-			Role:     "user",
+			DisplayName: "newuser",
+			Email:       "new@example.com",
+			Password:    "password123",
+			Role:        "user",
 		}
 
 		result, err := resolver.Mutation().CreateUser(ctx, input)
