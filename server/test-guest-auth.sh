@@ -13,8 +13,7 @@ BASE_URL="http://localhost:8080"
 # 1. Test guest login
 echo -e "${GREEN}1. Testing guest login...${NC}"
 GUEST_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/guest" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"guest","password":"any"}')
+  -H "Content-Type: application/json")
 
 GUEST_TOKEN=$(echo $GUEST_RESPONSE | jq -r '.token')
 echo "Guest token obtained: ${GUEST_TOKEN:0:50}..."
@@ -24,7 +23,7 @@ echo -e "\n${GREEN}2. Testing guest read access...${NC}"
 READ_RESPONSE=$(curl -s -X POST "${BASE_URL}/query" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $GUEST_TOKEN" \
-  -d '{"query":"query { me { id username role } }"}')
+  -d '{"query":"query { me { id displayName role } }"}')
 
 echo "Guest read response:"
 echo $READ_RESPONSE | jq .

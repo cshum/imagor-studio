@@ -418,7 +418,7 @@ Response:
 
 The admin registration endpoint enforces the same validation as regular user registration:
 
-- **Username**: 3-50 characters, alphanumeric plus `_`, `-`, `.`, cannot start/end with special chars
+- **Display Name**: 1-00 characters
 - **Email**: Valid email format with TLD required
 - **Password**: 8-72 characters
 - **Role**: Automatically set to "admin" (cannot be changed)
