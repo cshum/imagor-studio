@@ -135,22 +135,9 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) (*gq
 
 // UpdateProfile updates a user's profile (self or admin operation)
 func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdateProfileInput, userID *string) (*gql.User, error) {
-	if isGuestUser(ctx) {
-		return nil, fmt.Errorf("cannot update a guest user")
-	}
-	currentUserID, err := GetOwnerIDFromContext(ctx)
+	targetUserID, err := r.getEffectiveTargetUserID(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get current user ID: %w", err)
-	}
-
-	// Determine target user ID and check permissions
-	targetUserID := currentUserID // Default to self
-	if userID != nil {
-		// Admin operation - check permissions
-		if err := requireAdminPermission(ctx); err != nil {
-			return nil, err
-		}
-		targetUserID = *userID
+		return nil, err
 	}
 
 	// Get current user
@@ -204,11 +191,6 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 		return nil, fmt.Errorf("failed to get updated user: %w", err)
 	}
 
-	r.logger.Info("User profile updated",
-		zap.String("targetUserID", targetUserID),
-		zap.String("updatedByUserID", currentUserID),
-		zap.Bool("isAdminOperation", userID != nil))
-
 	return &gql.User{
 		ID:          updatedUser.ID,
 		DisplayName: updatedUser.DisplayName,
@@ -222,23 +204,10 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 
 // ChangePassword changes a user's password (self or admin operation)
 func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangePasswordInput, userID *string) (bool, error) {
-	if isGuestUser(ctx) {
-		return false, fmt.Errorf("cannot update a guest user")
-	}
-	currentUserID, err := GetOwnerIDFromContext(ctx)
-	if err != nil {
-		return false, fmt.Errorf("failed to get current user ID: %w", err)
-	}
-
-	// Determine target user ID and check permissions
-	targetUserID := currentUserID // Default to self
 	isAdminOperation := userID != nil
-	if isAdminOperation {
-		// Admin operation - check permissions
-		if err := requireAdminPermission(ctx); err != nil {
-			return false, err
-		}
-		targetUserID = *userID
+	targetUserID, err := r.getEffectiveTargetUserID(ctx, userID)
+	if err != nil {
+		return false, err
 	}
 
 	// Use validation package for new password
@@ -264,11 +233,6 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 		if err := auth.CheckPassword(currentUser.HashedPassword, *input.CurrentPassword); err != nil {
 			return false, fmt.Errorf("current password is incorrect")
 		}
-	} else {
-		// Admin operation - log the override
-		r.logger.Warn("Admin password change without current password verification",
-			zap.String("targetUserID", targetUserID),
-			zap.String("adminUserID", currentUserID))
 	}
 
 	// Hash new password
@@ -282,37 +246,23 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 		return false, fmt.Errorf("failed to update password: %w", err)
 	}
 
-	r.logger.Info("Password changed",
-		zap.String("targetUserID", targetUserID),
-		zap.String("changedByUserID", currentUserID),
-		zap.Bool("isAdminOperation", isAdminOperation))
-
 	return true, nil
 }
 
 // DeactivateAccount deactivates a user's account (self or admin operation)
 func (r *mutationResolver) DeactivateAccount(ctx context.Context, userID *string) (bool, error) {
-	if isGuestUser(ctx) {
-		return false, fmt.Errorf("cannot update a guest user")
+	targetUserID, err := r.getEffectiveTargetUserID(ctx, userID)
+	if err != nil {
+		return false, err
 	}
 	currentUserID, err := GetOwnerIDFromContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get current user ID: %w", err)
 	}
+	isAdminOperation := userID != nil
 
-	// Determine target user ID and check permissions
-	targetUserID := currentUserID // Default to self
-	if userID != nil {
-		// Admin operation - check permissions
-		if err := requireAdminPermission(ctx); err != nil {
-			return false, err
-		}
-		targetUserID = *userID
-
-		// Prevent admin from deactivating themselves through this method
-		if targetUserID == currentUserID {
-			return false, fmt.Errorf("use self-deactivation (no userID parameter) to deactivate your own account")
-		}
+	if isAdminOperation && targetUserID == currentUserID {
+		return false, fmt.Errorf("use self-deactivation (no userID parameter) to deactivate your own account")
 	}
 
 	// Check if target user exists

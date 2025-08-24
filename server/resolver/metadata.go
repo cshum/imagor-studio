@@ -10,7 +10,7 @@ import (
 
 // SetUserMetadata sets user-specific metadata
 func (r *mutationResolver) SetUserMetadata(ctx context.Context, key string, value string, ownerID *string) (*gql.Metadata, error) {
-	effectiveOwnerID, err := r.getEffectiveUserOwnerID(ctx, ownerID)
+	effectiveOwnerID, err := r.getEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func (r *mutationResolver) SetUserMetadata(ctx context.Context, key string, valu
 
 // DeleteUserMetadata deletes user-specific metadata
 func (r *mutationResolver) DeleteUserMetadata(ctx context.Context, key string, ownerID *string) (bool, error) {
-	effectiveOwnerID, err := r.getEffectiveUserOwnerID(ctx, ownerID)
+	effectiveOwnerID, err := r.getEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return false, err
 	}
@@ -46,7 +46,7 @@ func (r *mutationResolver) DeleteUserMetadata(ctx context.Context, key string, o
 
 // ListUserMetadata lists user-specific metadata
 func (r *queryResolver) ListUserMetadata(ctx context.Context, prefix *string, ownerID *string) ([]*gql.Metadata, error) {
-	effectiveOwnerID, err := r.getEffectiveUserOwnerIDForQuery(ctx, ownerID)
+	effectiveOwnerID, err := r.getEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (r *queryResolver) ListUserMetadata(ctx context.Context, prefix *string, ow
 
 // GetUserMetadata gets specific user metadata
 func (r *queryResolver) GetUserMetadata(ctx context.Context, key string, ownerID *string) (*gql.Metadata, error) {
-	effectiveOwnerID, err := r.getEffectiveUserOwnerIDForQuery(ctx, ownerID)
+	effectiveOwnerID, err := r.getEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}

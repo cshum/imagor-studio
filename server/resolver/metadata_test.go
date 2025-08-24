@@ -140,7 +140,7 @@ func TestSetUserMetadata_GuestCannotSet(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "guests cannot manage user metadata")
+	assert.Contains(t, err.Error(), "cannot update a guest user")
 
 	mockMetadataStore.AssertExpectations(t)
 }

@@ -39,54 +39,30 @@ type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 
 // Helper function to determine effective owner ID for user metadata operations
-func (r *mutationResolver) getEffectiveUserOwnerID(ctx context.Context, providedOwnerID *string) (string, error) {
+func (r *Resolver) getEffectiveTargetUserID(ctx context.Context, providedUserID *string) (string, error) {
 	currentUserID, err := GetOwnerIDFromContext(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get current user ID: %w", err)
 	}
 
-	// Guests cannot manage user metadata
+	// Check guest permissions
 	if isGuestUser(ctx) {
-		return "", fmt.Errorf("guests cannot manage user metadata")
+		return "", fmt.Errorf("cannot update a guest user")
 	}
 
 	// If no ownerID provided, use current user
-	if providedOwnerID == nil {
+	if providedUserID == nil {
 		return currentUserID, nil
 	}
 
-	targetOwnerID := *providedOwnerID
+	targetUserID := *providedUserID
 
 	// Users can only access their own metadata, admins can access any user's metadata
-	if targetOwnerID != currentUserID {
+	if targetUserID != currentUserID {
 		if err := requireAdminPermission(ctx); err != nil {
 			return "", fmt.Errorf("admin permission required to access other user's metadata: %w", err)
 		}
 	}
 
-	return targetOwnerID, nil
-}
-
-// Helper function for user metadata queries (more permissive for reads)
-func (r *queryResolver) getEffectiveUserOwnerIDForQuery(ctx context.Context, providedOwnerID *string) (string, error) {
-	currentUserID, err := GetOwnerIDFromContext(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to get current user ID: %w", err)
-	}
-
-	// If no ownerID provided, use current user (even for guests)
-	if providedOwnerID == nil {
-		return currentUserID, nil
-	}
-
-	targetOwnerID := *providedOwnerID
-
-	// Users can read their own metadata, admins can read any user's metadata
-	if targetOwnerID != currentUserID {
-		if err := requireAdminPermission(ctx); err != nil {
-			return "", fmt.Errorf("admin permission required to access other user's metadata: %w", err)
-		}
-	}
-
-	return targetOwnerID, nil
+	return targetUserID, nil
 }
