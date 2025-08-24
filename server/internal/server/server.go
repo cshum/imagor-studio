@@ -13,7 +13,7 @@ import (
 	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/config"
-	"github.com/cshum/imagor-studio/server/internal/handlers"
+	"github.com/cshum/imagor-studio/server/internal/httphandler"
 	"github.com/cshum/imagor-studio/server/internal/metadatastore"
 	"github.com/cshum/imagor-studio/server/internal/middleware"
 	"github.com/cshum/imagor-studio/server/internal/migrations"
@@ -98,7 +98,7 @@ func New(cfg *config.Config) (*Server, error) {
 	gqlHandler.Use(extension.Introspection{})
 
 	// Create auth handler
-	authHandler := handlers.NewAuthHandler(tokenManager, userStore, cfg.Logger)
+	authHandler := httphandler.NewAuthHandler(tokenManager, userStore, cfg.Logger)
 
 	// Create middleware chain
 	mux := http.NewServeMux()
