@@ -94,7 +94,7 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 		if totalCount > 0 {
 			return apperror.NewAppError(http.StatusConflict, apperror.ErrAlreadyExists,
 				"Admin user already exists. System is already initialized.",
-				map[string]interface{}{"userCount": totalCount})
+				nil)
 		}
 
 		response, err := h.createUser(r.Context(), req, "admin")
