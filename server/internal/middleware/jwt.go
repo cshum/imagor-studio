@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cshum/imagor-studio/server/pkg/apperror"
-	"github.com/cshum/imagor-studio/server/pkg/auth"
-	"github.com/cshum/imagor-studio/server/resolver"
+	"github.com/cshum/imagor-studio/server/internal/apperror"
+	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/resolver"
 )
 
 // JWTMiddleware creates a JWT authentication middleware

@@ -4,10 +4,10 @@ import (
 	"context"
 	"io"
 
-	"github.com/cshum/imagor-studio/server/model"
-	"github.com/cshum/imagor-studio/server/pkg/auth"
-	"github.com/cshum/imagor-studio/server/pkg/storage"
-	"github.com/cshum/imagor-studio/server/pkg/userstore"
+	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/model"
+	"github.com/cshum/imagor-studio/server/internal/storage"
+	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/mock"
 )
 

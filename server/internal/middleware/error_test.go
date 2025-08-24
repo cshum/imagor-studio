@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"

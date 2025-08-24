@@ -2,9 +2,9 @@ package resolver
 
 import (
 	"github.com/cshum/imagor-studio/server/gql"
-	"github.com/cshum/imagor-studio/server/pkg/metadatastore"
-	"github.com/cshum/imagor-studio/server/pkg/storage"
-	"github.com/cshum/imagor-studio/server/pkg/userstore"
+	"github.com/cshum/imagor-studio/server/internal/metadatastore"
+	"github.com/cshum/imagor-studio/server/internal/storage"
+	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"go.uber.org/zap"
 )
 

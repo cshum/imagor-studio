@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/internal/auth"
 )
 
 type contextKey string

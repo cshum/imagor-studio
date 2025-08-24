@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/gql"
-	"github.com/cshum/imagor-studio/server/model"
-	"github.com/cshum/imagor-studio/server/pkg/auth"
-	"github.com/cshum/imagor-studio/server/pkg/userstore"
+	auth2 "github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/model"
+	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -405,7 +405,7 @@ func TestChangePassword_SelfOperation(t *testing.T) {
 	ctx := createReadWriteContext("test-user-id")
 
 	// Hash current password for testing
-	hashedCurrentPassword, err := auth.HashPassword("currentpassword")
+	hashedCurrentPassword, err := auth2.HashPassword("currentpassword")
 	require.NoError(t, err)
 
 	currentUser := &model.User{
@@ -478,7 +478,7 @@ func TestChangePassword_ValidationErrors(t *testing.T) {
 
 	ctx := createReadWriteContext("test-user-id")
 
-	hashedCurrentPassword, err := auth.HashPassword("currentpassword")
+	hashedCurrentPassword, err := auth2.HashPassword("currentpassword")
 	require.NoError(t, err)
 
 	currentUser := &model.User{
@@ -1772,7 +1772,7 @@ func TestCreateUser_ContextErrors(t *testing.T) {
 		},
 		{
 			name:        "No owner ID in context",
-			context:     auth.SetClaimsInContext(context.Background(), &auth.Claims{UserID: "test", Scopes: []string{"admin"}}),
+			context:     auth2.SetClaimsInContext(context.Background(), &auth2.Claims{UserID: "test", Scopes: []string{"admin"}}),
 			expectError: true,
 			errorMsg:    "failed to get current user ID",
 		},
@@ -1805,12 +1805,12 @@ func TestMe_GuestUser(t *testing.T) {
 
 	// Create guest context
 	guestID := "guest-12345"
-	claims := &auth.Claims{
+	claims := &auth2.Claims{
 		UserID: guestID,
 		Role:   "guest",
 		Scopes: []string{"read"},
 	}
-	ctx := auth.SetClaimsInContext(context.Background(), claims)
+	ctx := auth2.SetClaimsInContext(context.Background(), claims)
 	ctx = context.WithValue(ctx, UserIDContextKey, guestID)
 
 	// Guest users should NOT trigger database lookup
@@ -1841,12 +1841,12 @@ func TestGuestUserRestrictions(t *testing.T) {
 
 	// Create guest context
 	guestID := "guest-12345"
-	claims := &auth.Claims{
+	claims := &auth2.Claims{
 		UserID: guestID,
 		Role:   "guest",
 		Scopes: []string{"read"},
 	}
-	ctx := auth.SetClaimsInContext(context.Background(), claims)
+	ctx := auth2.SetClaimsInContext(context.Background(), claims)
 	ctx = context.WithValue(ctx, UserIDContextKey, guestID)
 
 	t.Run("UpdateProfile_GuestBlocked", func(t *testing.T) {

@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/pkg/apperror"
-	"github.com/cshum/imagor-studio/server/pkg/auth"
-	"github.com/cshum/imagor-studio/server/resolver"
+	"github.com/cshum/imagor-studio/server/internal/apperror"
+	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/resolver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

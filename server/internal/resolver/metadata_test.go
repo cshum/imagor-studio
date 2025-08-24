@@ -5,8 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/pkg/metadatastore"
-
+	"github.com/cshum/imagor-studio/server/internal/metadatastore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"

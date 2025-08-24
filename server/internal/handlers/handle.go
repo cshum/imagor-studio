@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/internal/apperror"
 )
 
 // HTTPHandler represents a simplified handler function

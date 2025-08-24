@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/cshum/imagor-studio/server/pkg/storage"
+	"github.com/cshum/imagor-studio/server/internal/storage"
 )
 
 type FileStorage struct {

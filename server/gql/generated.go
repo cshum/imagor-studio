@@ -685,7 +685,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../graphql/storage.graphql", Input: `type Query {
+	{Name: "../../graphql/storage.graphql", Input: `type Query {
     listFiles(
         path: String!
         offset: Int!

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/gql"
-	"github.com/cshum/imagor-studio/server/pkg/auth"
-	"github.com/cshum/imagor-studio/server/pkg/validation"
+	"github.com/cshum/imagor-studio/server/internal/auth"
+	validation2 "github.com/cshum/imagor-studio/server/internal/validation"
 	"go.uber.org/zap"
 )
 
@@ -155,12 +155,12 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 		displayName := strings.TrimSpace(*input.DisplayName)
 
 		// Use validation package
-		if err := validation.ValidateDisplayName(displayName); err != nil {
+		if err := validation2.ValidateDisplayName(displayName); err != nil {
 			return nil, fmt.Errorf("invalid display name: %w", err)
 		}
 
 		// Normalize displayName
-		normalizedDisplayName := validation.NormalizeDisplayName(displayName)
+		normalizedDisplayName := validation2.NormalizeDisplayName(displayName)
 
 		err = r.userStore.UpdateDisplayName(ctx, targetUserID, normalizedDisplayName)
 		if err != nil {
@@ -172,12 +172,12 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 		email := strings.TrimSpace(*input.Email)
 
 		// Use validation package
-		if !validation.IsValidEmailRequired(email) {
+		if !validation2.IsValidEmailRequired(email) {
 			return nil, fmt.Errorf("invalid email format")
 		}
 
 		// Normalize email
-		normalizedEmail := validation.NormalizeEmail(email)
+		normalizedEmail := validation2.NormalizeEmail(email)
 
 		err = r.userStore.UpdateEmail(ctx, targetUserID, normalizedEmail)
 		if err != nil {
@@ -211,7 +211,7 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 	}
 
 	// Use validation package for new password
-	if err := validation.ValidatePassword(input.NewPassword); err != nil {
+	if err := validation2.ValidatePassword(input.NewPassword); err != nil {
 		return false, fmt.Errorf("invalid new password: %w", err)
 	}
 
@@ -305,8 +305,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserI
 	}
 
 	// Normalize inputs
-	normalizedDisplayName := validation.NormalizeDisplayName(input.DisplayName)
-	normalizedEmail := validation.NormalizeEmail(input.Email)
+	normalizedDisplayName := validation2.NormalizeDisplayName(input.DisplayName)
+	normalizedEmail := validation2.NormalizeEmail(input.Email)
 	normalizedRole := strings.TrimSpace(input.Role)
 
 	// Validate role
@@ -351,17 +351,17 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserI
 // Helper function to validate CreateUserInput
 func (r *mutationResolver) validateCreateUserInput(input *gql.CreateUserInput) error {
 	// Validate displayName
-	if err := validation.ValidateDisplayName(input.DisplayName); err != nil {
+	if err := validation2.ValidateDisplayName(input.DisplayName); err != nil {
 		return fmt.Errorf("invalid display name: %w", err)
 	}
 
 	// Validate email
-	if !validation.IsValidEmailRequired(input.Email) {
+	if !validation2.IsValidEmailRequired(input.Email) {
 		return fmt.Errorf("invalid email format")
 	}
 
 	// Validate password
-	if err := validation.ValidatePassword(input.Password); err != nil {
+	if err := validation2.ValidatePassword(input.Password); err != nil {
 		return fmt.Errorf("invalid password: %w", err)
 	}
 

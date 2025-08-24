@@ -3,11 +3,12 @@ package s3storage
 import (
 	"bytes"
 	"context"
-	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"io"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/cshum/imagor-studio/server/internal/storage"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"

@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/model"
-	"github.com/cshum/imagor-studio/server/pkg/apperror"
-	"github.com/cshum/imagor-studio/server/pkg/auth"
-	"github.com/cshum/imagor-studio/server/pkg/userstore"
+	"github.com/cshum/imagor-studio/server/internal/apperror"
+	auth2 "github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/model"
+	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -92,7 +92,7 @@ func (m *MockUserStore) GetByIDWithPassword(ctx context.Context, id string) (*mo
 
 func TestRegister(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
 
@@ -282,12 +282,12 @@ func TestRegister(t *testing.T) {
 
 func TestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
 
 	// Create a valid hashed password for testing
-	hashedPassword, err := auth.HashPassword("password123")
+	hashedPassword, err := auth2.HashPassword("password123")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -475,7 +475,7 @@ func TestLogin(t *testing.T) {
 
 func TestRefreshToken(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
 
@@ -604,7 +604,7 @@ func TestRefreshToken(t *testing.T) {
 
 func TestRegister_ValidationEdgeCases(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
 
@@ -769,12 +769,12 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 
 func TestLogin_InputNormalization(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
 
 	// Create a valid hashed password for testing
-	hashedPassword, err := auth.HashPassword("password123")
+	hashedPassword, err := auth2.HashPassword("password123")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -837,7 +837,7 @@ func TestLogin_InputNormalization(t *testing.T) {
 
 func TestGuestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
 
@@ -873,7 +873,7 @@ func TestGuestLogin(t *testing.T) {
 
 func TestCheckFirstRun(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
 
@@ -911,7 +911,7 @@ func TestCheckFirstRun(t *testing.T) {
 
 func TestRegisterAdmin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
 

@@ -7,7 +7,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/cshum/imagor-studio/server/gql"
-	"github.com/cshum/imagor-studio/server/pkg/storage"
+	"github.com/cshum/imagor-studio/server/internal/storage"
 	"go.uber.org/zap"
 )
 

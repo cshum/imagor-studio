@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/model"
+	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"

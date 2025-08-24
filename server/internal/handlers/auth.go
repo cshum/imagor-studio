@@ -7,21 +7,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/pkg/apperror"
-	"github.com/cshum/imagor-studio/server/pkg/auth"
-	"github.com/cshum/imagor-studio/server/pkg/userstore"
-	"github.com/cshum/imagor-studio/server/pkg/uuid"
-	"github.com/cshum/imagor-studio/server/pkg/validation"
+	"github.com/cshum/imagor-studio/server/internal/apperror"
+	auth2 "github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/userstore"
+	"github.com/cshum/imagor-studio/server/internal/uuid"
+	validation2 "github.com/cshum/imagor-studio/server/internal/validation"
 	"go.uber.org/zap"
 )
 
 type AuthHandler struct {
-	tokenManager *auth.TokenManager
+	tokenManager *auth2.TokenManager
 	userStore    userstore.Store
 	logger       *zap.Logger
 }
 
-func NewAuthHandler(tokenManager *auth.TokenManager, userStore userstore.Store, logger *zap.Logger) *AuthHandler {
+func NewAuthHandler(tokenManager *auth2.TokenManager, userStore userstore.Store, logger *zap.Logger) *AuthHandler {
 	return &AuthHandler{
 		tokenManager: tokenManager,
 		userStore:    userStore,
@@ -141,7 +141,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 		}
 
 		// Normalize email
-		email := validation.NormalizeEmail(req.Email)
+		email := validation2.NormalizeEmail(req.Email)
 
 		// Get user by email
 		user, err := h.userStore.GetByEmail(r.Context(), email)
@@ -156,7 +156,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 		}
 
 		// Check password
-		if err := auth.CheckPassword(user.HashedPassword, req.Password); err != nil {
+		if err := auth2.CheckPassword(user.HashedPassword, req.Password); err != nil {
 			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidCredentials,
 				"Invalid credentials", nil)
 		}
@@ -256,11 +256,11 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	}
 
 	// Normalize inputs
-	normalizedEmail := validation.NormalizeEmail(req.Email)
-	normalizedDisplayName := validation.NormalizeDisplayName(req.DisplayName)
+	normalizedEmail := validation2.NormalizeEmail(req.Email)
+	normalizedDisplayName := validation2.NormalizeDisplayName(req.DisplayName)
 
 	// Hash password
-	hashedPassword, err := auth.HashPassword(req.Password)
+	hashedPassword, err := auth2.HashPassword(req.Password)
 	if err != nil {
 		h.logger.Error("Failed to hash password", zap.Error(err))
 		return nil, apperror.InternalServerError("Failed to process registration")
@@ -307,17 +307,17 @@ func (h *AuthHandler) generateAuthResponse(userID, displayName, email, role stri
 
 func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest) error {
 	// Validate displayName
-	if err := validation.ValidateDisplayName(req.DisplayName); err != nil {
+	if err := validation2.ValidateDisplayName(req.DisplayName); err != nil {
 		return err
 	}
 
 	// Validate email
-	if !validation.IsValidEmailRequired(req.Email) {
+	if !validation2.IsValidEmailRequired(req.Email) {
 		return fmt.Errorf("valid email is required")
 	}
 
 	// Validate password
-	if err := validation.ValidatePassword(req.Password); err != nil {
+	if err := validation2.ValidatePassword(req.Password); err != nil {
 		return err
 	}
 

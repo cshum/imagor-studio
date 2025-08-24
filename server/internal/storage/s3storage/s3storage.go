@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/cshum/imagor-studio/server/pkg/storage"
+	"github.com/cshum/imagor-studio/server/internal/storage"
 )
 
 type S3Storage struct {
