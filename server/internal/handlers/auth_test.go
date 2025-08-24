@@ -247,7 +247,7 @@ func TestRegister(t *testing.T) {
 			req := httptest.NewRequest(tt.method, "/auth/register", bytes.NewReader(body))
 			rr := httptest.NewRecorder()
 
-			handler.Register(rr, req)
+			handler.Register()(rr, req)
 
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
@@ -440,7 +440,7 @@ func TestLogin(t *testing.T) {
 			req := httptest.NewRequest(tt.method, "/auth/login", bytes.NewReader(body))
 			rr := httptest.NewRecorder()
 
-			handler.Login(rr, req)
+			handler.Login()(rr, req)
 
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
@@ -574,7 +574,7 @@ func TestRefreshToken(t *testing.T) {
 			req := httptest.NewRequest(tt.method, "/auth/refresh", bytes.NewReader(body))
 			rr := httptest.NewRecorder()
 
-			handler.RefreshToken(rr, req)
+			handler.RefreshToken()(rr, req)
 
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
@@ -744,7 +744,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader(body))
 			rr := httptest.NewRecorder()
 
-			handler.Register(rr, req)
+			handler.Register()(rr, req)
 
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
@@ -817,7 +817,7 @@ func TestLogin_InputNormalization(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewReader(body))
 			rr := httptest.NewRecorder()
 
-			handler.Login(rr, req)
+			handler.Login()(rr, req)
 
 			assert.Equal(t, tt.expectedStatus, rr.Code, tt.description)
 
@@ -845,7 +845,7 @@ func TestGuestLogin(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/auth/guest", nil)
 	rr := httptest.NewRecorder()
 
-	handler.GuestLogin(rr, req)
+	handler.GuestLogin()(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
 
@@ -858,7 +858,7 @@ func TestGuestLogin(t *testing.T) {
 	req2 := httptest.NewRequest(http.MethodPost, "/auth/guest", strings.NewReader(""))
 	rr2 := httptest.NewRecorder()
 
-	handler.GuestLogin(rr2, req2)
+	handler.GuestLogin()(rr2, req2)
 
 	assert.Equal(t, http.StatusOK, rr2.Code)
 
@@ -894,7 +894,7 @@ func TestCheckFirstRun(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/auth/first-run", nil)
 			rr := httptest.NewRecorder()
 
-			handler.CheckFirstRun(rr, req)
+			handler.CheckFirstRun()(rr, req)
 
 			assert.Equal(t, http.StatusOK, rr.Code)
 
@@ -969,7 +969,7 @@ func TestRegisterAdmin(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/auth/register-admin", bytes.NewReader(body))
 			rr := httptest.NewRecorder()
 
-			handler.RegisterAdmin(rr, req)
+			handler.RegisterAdmin()(rr, req)
 
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 

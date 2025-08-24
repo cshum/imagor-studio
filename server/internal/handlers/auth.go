@@ -62,8 +62,8 @@ type RefreshTokenRequest struct {
 	Token string `json:"token"`
 }
 
-func (h *AuthHandler) CheckFirstRun(w http.ResponseWriter, r *http.Request) {
-	Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
+func (h *AuthHandler) CheckFirstRun() http.HandlerFunc {
+	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
 		_, totalCount, err := h.userStore.List(r.Context(), 0, 1)
 		if err != nil {
 			h.logger.Error("Failed to check existing users", zap.Error(err))
@@ -74,11 +74,11 @@ func (h *AuthHandler) CheckFirstRun(w http.ResponseWriter, r *http.Request) {
 			IsFirstRun: totalCount == 0,
 			Timestamp:  time.Now().UnixMilli(),
 		})
-	})(w, r)
+	})
 }
 
-func (h *AuthHandler) RegisterAdmin(w http.ResponseWriter, r *http.Request) {
-	Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
 		var req RegisterRequest
 		if err := DecodeJSON(r, &req); err != nil {
 			return err
@@ -108,11 +108,11 @@ func (h *AuthHandler) RegisterAdmin(w http.ResponseWriter, r *http.Request) {
 			zap.String("email", response.User.Email))
 
 		return WriteCreated(w, response)
-	})(w, r)
+	})
 }
 
-func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+func (h *AuthHandler) Register() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
 		var req RegisterRequest
 		if err := DecodeJSON(r, &req); err != nil {
 			return err
@@ -124,11 +124,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		}
 
 		return WriteCreated(w, response)
-	})(w, r)
+	})
 }
 
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+func (h *AuthHandler) Login() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
 		var req LoginRequest
 		if err := DecodeJSON(r, &req); err != nil {
 			return err
@@ -172,11 +172,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		}
 
 		return WriteSuccess(w, response)
-	})(w, r)
+	})
 }
 
-func (h *AuthHandler) GuestLogin(w http.ResponseWriter, r *http.Request) {
-	Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+func (h *AuthHandler) GuestLogin() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
 		guestID := uuid.GenerateUUID()
 
 		token, err := h.tokenManager.GenerateToken(guestID, "guest", []string{"read"})
@@ -198,11 +198,11 @@ func (h *AuthHandler) GuestLogin(w http.ResponseWriter, r *http.Request) {
 
 		h.logger.Info("Guest login successful", zap.String("guestID", guestID))
 		return WriteSuccess(w, response)
-	})(w, r)
+	})
 }
 
-func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
-	Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+func (h *AuthHandler) RefreshToken() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
 		var req RefreshTokenRequest
 		if err := DecodeJSON(r, &req); err != nil {
 			return err
@@ -246,7 +246,7 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		}
 
 		return WriteSuccess(w, response)
-	})(w, r)
+	})
 }
 
 func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role string) (*LoginResponse, error) {

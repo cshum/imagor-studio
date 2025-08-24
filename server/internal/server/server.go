@@ -111,14 +111,14 @@ func New(cfg *config.Config) (*Server, error) {
 	})
 
 	// Auth endpoints (no auth required)
-	mux.HandleFunc("/auth/register", authHandler.Register)
-	mux.HandleFunc("/auth/login", authHandler.Login)
-	mux.HandleFunc("/auth/refresh", authHandler.RefreshToken)
-	mux.HandleFunc("/auth/guest", authHandler.GuestLogin)
+	mux.HandleFunc("/auth/register", authHandler.Register())
+	mux.HandleFunc("/auth/login", authHandler.Login())
+	mux.HandleFunc("/auth/refresh", authHandler.RefreshToken())
+	mux.HandleFunc("/auth/guest", authHandler.GuestLogin())
 
 	// Add the new endpoints
-	mux.HandleFunc("/auth/first-run", authHandler.CheckFirstRun)
-	mux.HandleFunc("/auth/register-admin", authHandler.RegisterAdmin)
+	mux.HandleFunc("/auth/first-run", authHandler.CheckFirstRun())
+	mux.HandleFunc("/auth/register-admin", authHandler.RegisterAdmin())
 
 	// GraphQL playground (available in development, might want to disable in production)
 	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
