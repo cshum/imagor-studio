@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
-	"github.com/cshum/imagor-studio/server/pkg/errors"
 	"github.com/cshum/imagor-studio/server/resolver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +26,7 @@ func TestJWTMiddleware(t *testing.T) {
 		name           string
 		authHeader     string
 		expectedStatus int
-		expectedError  errors.ErrorCode
+		expectedError  apperror.ErrorCode
 		setupRequest   func(*http.Request)
 	}{
 		{
@@ -38,25 +38,25 @@ func TestJWTMiddleware(t *testing.T) {
 			name:           "Missing Authorization header",
 			authHeader:     "",
 			expectedStatus: http.StatusUnauthorized,
-			expectedError:  errors.ErrInvalidToken,
+			expectedError:  apperror.ErrInvalidToken,
 		},
 		{
 			name:           "Invalid header format",
 			authHeader:     "InvalidFormat " + token,
 			expectedStatus: http.StatusUnauthorized,
-			expectedError:  errors.ErrInvalidToken,
+			expectedError:  apperror.ErrInvalidToken,
 		},
 		{
 			name:           "Invalid token",
 			authHeader:     "Bearer invalid.token.here",
 			expectedStatus: http.StatusUnauthorized,
-			expectedError:  errors.ErrInvalidToken,
+			expectedError:  apperror.ErrInvalidToken,
 		},
 		{
 			name:           "Expired token",
 			authHeader:     "Bearer " + generateExpiredToken(t),
 			expectedStatus: http.StatusUnauthorized,
-			expectedError:  errors.ErrTokenExpired,
+			expectedError:  apperror.ErrTokenExpired,
 		},
 	}
 
@@ -97,7 +97,7 @@ func TestJWTMiddleware(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
 			if tt.expectedError != "" {
-				var errResp errors.ErrorResponse
+				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedError, errResp.Error.Code)
@@ -112,7 +112,7 @@ func TestAuthorizationMiddleware(t *testing.T) {
 		requiredScope  string
 		userScopes     []string
 		expectedStatus int
-		expectedError  errors.ErrorCode
+		expectedError  apperror.ErrorCode
 	}{
 		{
 			name:           "User has required scope",
@@ -125,14 +125,14 @@ func TestAuthorizationMiddleware(t *testing.T) {
 			requiredScope:  "admin",
 			userScopes:     []string{"read", "write"},
 			expectedStatus: http.StatusForbidden,
-			expectedError:  errors.ErrPermissionDenied,
+			expectedError:  apperror.ErrPermissionDenied,
 		},
 		{
 			name:           "Empty user scopes",
 			requiredScope:  "read",
 			userScopes:     []string{},
 			expectedStatus: http.StatusForbidden,
-			expectedError:  errors.ErrPermissionDenied,
+			expectedError:  apperror.ErrPermissionDenied,
 		},
 	}
 
@@ -161,7 +161,7 @@ func TestAuthorizationMiddleware(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
 			if tt.expectedError != "" {
-				var errResp errors.ErrorResponse
+				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedError, errResp.Error.Code)
@@ -185,10 +185,10 @@ func TestAuthorizationMiddleware_NoClaimsInContext(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnauthorized, rr.Code)
 
-	var errResp errors.ErrorResponse
+	var errResp apperror.ErrorResponse
 	err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 	require.NoError(t, err)
-	assert.Equal(t, errors.ErrUnauthorized, errResp.Error.Code)
+	assert.Equal(t, apperror.ErrUnauthorized, errResp.Error.Code)
 }
 
 // Helper function to generate expired token for testing

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/cshum/imagor-studio/server/pkg/errors"
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"go.uber.org/zap"
 )
 
@@ -21,8 +21,8 @@ func ErrorMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 					)
 
 					// Return standardized error response
-					errors.WriteErrorResponse(w, http.StatusInternalServerError,
-						errors.ErrInternalServer,
+					apperror.WriteErrorResponse(w, http.StatusInternalServerError,
+						apperror.ErrInternalServer,
 						"An unexpected error occurred",
 						nil)
 				}

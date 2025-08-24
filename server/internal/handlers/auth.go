@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
-	"github.com/cshum/imagor-studio/server/pkg/errors"
 	"github.com/cshum/imagor-studio/server/pkg/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/cshum/imagor-studio/server/pkg/validation"
@@ -67,7 +67,7 @@ func (h *AuthHandler) CheckFirstRun(w http.ResponseWriter, r *http.Request) {
 		_, totalCount, err := h.userStore.List(r.Context(), 0, 1)
 		if err != nil {
 			h.logger.Error("Failed to check existing users", zap.Error(err))
-			return errors.InternalServerError("Failed to check system status")
+			return apperror.InternalServerError("Failed to check system status")
 		}
 
 		return WriteSuccess(w, FirstRunResponse{
@@ -88,11 +88,11 @@ func (h *AuthHandler) RegisterAdmin(w http.ResponseWriter, r *http.Request) {
 		_, totalCount, err := h.userStore.List(r.Context(), 0, 1)
 		if err != nil {
 			h.logger.Error("Failed to check existing users", zap.Error(err))
-			return errors.InternalServerError("Failed to check system status")
+			return apperror.InternalServerError("Failed to check system status")
 		}
 
 		if totalCount > 0 {
-			return errors.NewAppError(http.StatusConflict, errors.ErrAlreadyExists,
+			return apperror.NewAppError(http.StatusConflict, apperror.ErrAlreadyExists,
 				"Admin user already exists. System is already initialized.",
 				map[string]interface{}{"userCount": totalCount})
 		}
@@ -136,7 +136,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 		// Validate input
 		if strings.TrimSpace(req.Email) == "" || strings.TrimSpace(req.Password) == "" {
-			return errors.NewAppError(http.StatusBadRequest, errors.ErrInvalidInput,
+			return apperror.NewAppError(http.StatusBadRequest, apperror.ErrInvalidInput,
 				"Email and password are required", nil)
 		}
 
@@ -147,17 +147,17 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		user, err := h.userStore.GetByEmail(r.Context(), email)
 		if err != nil {
 			h.logger.Error("Failed to get user", zap.Error(err))
-			return errors.InternalServerError("Login failed")
+			return apperror.InternalServerError("Login failed")
 		}
 
 		if user == nil || !user.IsActive {
-			return errors.NewAppError(http.StatusUnauthorized, errors.ErrInvalidCredentials,
+			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidCredentials,
 				"Invalid credentials", nil)
 		}
 
 		// Check password
 		if err := auth.CheckPassword(user.HashedPassword, req.Password); err != nil {
-			return errors.NewAppError(http.StatusUnauthorized, errors.ErrInvalidCredentials,
+			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidCredentials,
 				"Invalid credentials", nil)
 		}
 
@@ -182,7 +182,7 @@ func (h *AuthHandler) GuestLogin(w http.ResponseWriter, r *http.Request) {
 		token, err := h.tokenManager.GenerateToken(guestID, "guest", []string{"read"})
 		if err != nil {
 			h.logger.Error("Failed to generate guest token", zap.Error(err))
-			return errors.InternalServerError("Failed to generate token")
+			return apperror.InternalServerError("Failed to generate token")
 		}
 
 		response := LoginResponse{
@@ -211,7 +211,7 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		// Validate existing token
 		claims, err := h.tokenManager.ValidateToken(req.Token)
 		if err != nil {
-			return errors.NewAppError(http.StatusUnauthorized, errors.ErrInvalidToken,
+			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidToken,
 				"Invalid token", map[string]interface{}{"error": err.Error()})
 		}
 
@@ -219,11 +219,11 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		user, err := h.userStore.GetByID(r.Context(), claims.UserID)
 		if err != nil {
 			h.logger.Error("Failed to get user for token refresh", zap.Error(err))
-			return errors.InternalServerError("Failed to refresh token")
+			return apperror.InternalServerError("Failed to refresh token")
 		}
 
 		if user == nil {
-			return errors.NewAppError(http.StatusUnauthorized, errors.ErrInvalidToken,
+			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidToken,
 				"User not found or inactive", nil)
 		}
 
@@ -231,7 +231,7 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		newToken, err := h.tokenManager.RefreshToken(claims)
 		if err != nil {
 			h.logger.Error("Failed to refresh token", zap.Error(err))
-			return errors.InternalServerError("Failed to refresh token")
+			return apperror.InternalServerError("Failed to refresh token")
 		}
 
 		response := LoginResponse{
@@ -252,7 +252,7 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role string) (*LoginResponse, error) {
 	// Validate input
 	if err := h.validateRegisterRequest(&req); err != nil {
-		return nil, errors.NewAppError(http.StatusBadRequest, errors.ErrInvalidInput, err.Error(), nil)
+		return nil, apperror.NewAppError(http.StatusBadRequest, apperror.ErrInvalidInput, err.Error(), nil)
 	}
 
 	// Normalize inputs
@@ -263,17 +263,17 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	hashedPassword, err := auth.HashPassword(req.Password)
 	if err != nil {
 		h.logger.Error("Failed to hash password", zap.Error(err))
-		return nil, errors.InternalServerError("Failed to process registration")
+		return nil, apperror.InternalServerError("Failed to process registration")
 	}
 
 	// Create user
 	user, err := h.userStore.Create(ctx, normalizedDisplayName, normalizedEmail, hashedPassword, role)
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
-			return nil, errors.NewAppError(http.StatusConflict, errors.ErrAlreadyExists, err.Error(), nil)
+			return nil, apperror.NewAppError(http.StatusConflict, apperror.ErrAlreadyExists, err.Error(), nil)
 		}
 		h.logger.Error("Failed to create user", zap.Error(err))
-		return nil, errors.InternalServerError("Failed to create user")
+		return nil, apperror.InternalServerError("Failed to create user")
 	}
 
 	return h.generateAuthResponse(user.ID, user.DisplayName, user.Email, user.Role)
@@ -290,7 +290,7 @@ func (h *AuthHandler) generateAuthResponse(userID, displayName, email, role stri
 	token, err := h.tokenManager.GenerateToken(userID, role, scopes)
 	if err != nil {
 		h.logger.Error("Failed to generate token", zap.Error(err))
-		return nil, errors.InternalServerError("Failed to generate token")
+		return nil, apperror.InternalServerError("Failed to generate token")
 	}
 
 	return &LoginResponse{

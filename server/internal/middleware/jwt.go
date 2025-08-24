@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
-	"github.com/cshum/imagor-studio/server/pkg/errors"
 	"github.com/cshum/imagor-studio/server/resolver"
 )
 
@@ -18,8 +18,8 @@ func JWTMiddleware(tokenManager *auth.TokenManager) func(http.Handler) http.Hand
 
 			token, err := auth.ExtractTokenFromHeader(authHeader)
 			if err != nil {
-				errors.WriteErrorResponse(w, http.StatusUnauthorized,
-					errors.ErrInvalidToken,
+				apperror.WriteErrorResponse(w, http.StatusUnauthorized,
+					apperror.ErrInvalidToken,
 					"Authorization header is missing or invalid",
 					map[string]interface{}{
 						"error": err.Error(),
@@ -32,15 +32,15 @@ func JWTMiddleware(tokenManager *auth.TokenManager) func(http.Handler) http.Hand
 			if err != nil {
 				// Check if it's a token expired error
 				if strings.Contains(err.Error(), "token is expired") {
-					errors.WriteErrorResponse(w, http.StatusUnauthorized,
-						errors.ErrTokenExpired,
+					apperror.WriteErrorResponse(w, http.StatusUnauthorized,
+						apperror.ErrTokenExpired,
 						"Token has expired",
 						nil)
 					return
 				}
 
-				errors.WriteErrorResponse(w, http.StatusUnauthorized,
-					errors.ErrInvalidToken,
+				apperror.WriteErrorResponse(w, http.StatusUnauthorized,
+					apperror.ErrInvalidToken,
 					"Invalid or expired token",
 					map[string]interface{}{
 						"error": err.Error(),
@@ -66,8 +66,8 @@ func AuthorizationMiddleware(requiredScope string) func(http.Handler) http.Handl
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			claims, err := auth.GetClaimsFromContext(r.Context())
 			if err != nil {
-				errors.WriteErrorResponse(w, http.StatusUnauthorized,
-					errors.ErrUnauthorized,
+				apperror.WriteErrorResponse(w, http.StatusUnauthorized,
+					apperror.ErrUnauthorized,
 					"Unauthorized access",
 					nil)
 				return
@@ -83,8 +83,8 @@ func AuthorizationMiddleware(requiredScope string) func(http.Handler) http.Handl
 			}
 
 			if !hasScope {
-				errors.WriteErrorResponse(w, http.StatusForbidden,
-					errors.ErrPermissionDenied,
+				apperror.WriteErrorResponse(w, http.StatusForbidden,
+					apperror.ErrPermissionDenied,
 					"insufficient permission",
 					map[string]interface{}{
 						"requiredScope": requiredScope,

@@ -1,4 +1,4 @@
-package errors
+package apperror
 
 import (
 	"encoding/json"

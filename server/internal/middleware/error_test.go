@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cshum/imagor-studio/server/pkg/errors"
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -42,7 +42,7 @@ func TestErrorMiddleware(t *testing.T) {
 		{
 			name: "Panic with custom error",
 			handler: func(w http.ResponseWriter, r *http.Request) {
-				panic(errors.InternalServerError("custom error"))
+				panic(apperror.InternalServerError("custom error"))
 			},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
@@ -61,10 +61,10 @@ func TestErrorMiddleware(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
 			if tt.expectError {
-				var errResp errors.ErrorResponse
+				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, errors.ErrInternalServer, errResp.Error.Code)
+				assert.Equal(t, apperror.ErrInternalServer, errResp.Error.Code)
 				assert.Equal(t, "An unexpected error occurred", errResp.Error.Message)
 			}
 		})

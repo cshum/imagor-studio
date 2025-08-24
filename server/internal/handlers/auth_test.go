@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/model"
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
-	"github.com/cshum/imagor-studio/server/pkg/errors"
 	"github.com/cshum/imagor-studio/server/pkg/userstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -103,7 +103,7 @@ func TestRegister(t *testing.T) {
 		setupMocks     func()
 		expectedStatus int
 		expectError    bool
-		errorCode      errors.ErrorCode
+		errorCode      apperror.ErrorCode
 	}{
 		{
 			name:   "Valid registration",
@@ -138,7 +138,7 @@ func TestRegister(t *testing.T) {
 			},
 			expectedStatus: http.StatusConflict,
 			expectError:    true,
-			errorCode:      errors.ErrAlreadyExists,
+			errorCode:      apperror.ErrAlreadyExists,
 		},
 		{
 			name:   "Email already exists",
@@ -153,7 +153,7 @@ func TestRegister(t *testing.T) {
 			},
 			expectedStatus: http.StatusConflict,
 			expectError:    true,
-			errorCode:      errors.ErrAlreadyExists,
+			errorCode:      apperror.ErrAlreadyExists,
 		},
 		{
 			name:   "Invalid password too short",
@@ -166,7 +166,7 @@ func TestRegister(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
 			name:   "Missing displayName",
@@ -179,7 +179,7 @@ func TestRegister(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
 			name:   "Missing email",
@@ -192,7 +192,7 @@ func TestRegister(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
 			name:   "Invalid email format",
@@ -205,7 +205,7 @@ func TestRegister(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
 			name:           "Invalid method",
@@ -214,7 +214,7 @@ func TestRegister(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusMethodNotAllowed,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
 			name:           "Invalid JSON body",
@@ -223,7 +223,7 @@ func TestRegister(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 		},
 	}
 
@@ -252,7 +252,7 @@ func TestRegister(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
 			if tt.expectError {
-				var errResp errors.ErrorResponse
+				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
 				assert.Equal(t, tt.errorCode, errResp.Error.Code)
@@ -297,7 +297,7 @@ func TestLogin(t *testing.T) {
 		setupMocks     func()
 		expectedStatus int
 		expectError    bool
-		errorCode      errors.ErrorCode
+		errorCode      apperror.ErrorCode
 	}{
 		{
 			name:   "Valid login with email",
@@ -360,7 +360,7 @@ func TestLogin(t *testing.T) {
 			},
 			expectedStatus: http.StatusUnauthorized,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidCredentials,
+			errorCode:      apperror.ErrInvalidCredentials,
 		},
 		{
 			name:   "User not found",
@@ -374,7 +374,7 @@ func TestLogin(t *testing.T) {
 			},
 			expectedStatus: http.StatusUnauthorized,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidCredentials,
+			errorCode:      apperror.ErrInvalidCredentials,
 		},
 		{
 			name:   "Empty email",
@@ -386,7 +386,7 @@ func TestLogin(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
 			name:   "Empty password",
@@ -398,7 +398,7 @@ func TestLogin(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
 			name:           "Invalid method",
@@ -407,7 +407,7 @@ func TestLogin(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusMethodNotAllowed,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
 			name:           "Invalid JSON body",
@@ -416,7 +416,7 @@ func TestLogin(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 		},
 	}
 
@@ -445,7 +445,7 @@ func TestLogin(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
 			if tt.expectError {
-				var errResp errors.ErrorResponse
+				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
 				assert.Equal(t, tt.errorCode, errResp.Error.Code)
@@ -490,7 +490,7 @@ func TestRefreshToken(t *testing.T) {
 		setupMocks     func()
 		expectedStatus int
 		expectError    bool
-		errorCode      errors.ErrorCode
+		errorCode      apperror.ErrorCode
 	}{
 		{
 			name:   "Valid refresh request",
@@ -521,7 +521,7 @@ func TestRefreshToken(t *testing.T) {
 			},
 			expectedStatus: http.StatusUnauthorized,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidToken,
+			errorCode:      apperror.ErrInvalidToken,
 		},
 		{
 			name:           "Invalid method",
@@ -530,7 +530,7 @@ func TestRefreshToken(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusMethodNotAllowed,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
 			name:           "Invalid JSON body",
@@ -539,7 +539,7 @@ func TestRefreshToken(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
 			name:   "Invalid token",
@@ -550,7 +550,7 @@ func TestRefreshToken(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusUnauthorized,
 			expectError:    true,
-			errorCode:      errors.ErrInvalidToken,
+			errorCode:      apperror.ErrInvalidToken,
 		},
 	}
 
@@ -579,7 +579,7 @@ func TestRefreshToken(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
 			if tt.expectError {
-				var errResp errors.ErrorResponse
+				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
 				assert.Equal(t, tt.errorCode, errResp.Error.Code)
@@ -613,7 +613,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 		body           RegisterRequest
 		setupMocks     func()
 		expectedStatus int
-		errorCode      errors.ErrorCode
+		errorCode      apperror.ErrorCode
 		errorMessage   string
 	}{
 		{
@@ -625,7 +625,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			},
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 			errorMessage:   "display name must be at most 100 characters long",
 		},
 		{
@@ -637,7 +637,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			},
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 			errorMessage:   "valid email is required",
 		},
 		{
@@ -649,7 +649,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			},
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 			errorMessage:   "valid email is required",
 		},
 		{
@@ -661,7 +661,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			},
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 			errorMessage:   "password must be at least 8 characters long",
 		},
 		{
@@ -673,7 +673,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			},
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 			errorMessage:   "password must be at most 72 characters long",
 		},
 		{
@@ -704,7 +704,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			},
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 			errorMessage:   "display name is required",
 		},
 		{
@@ -716,7 +716,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			},
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 			errorMessage:   "valid email is required",
 		},
 		{
@@ -728,7 +728,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			},
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
-			errorCode:      errors.ErrInvalidInput,
+			errorCode:      apperror.ErrInvalidInput,
 			errorMessage:   "password must be at least 8 characters long",
 		},
 	}
@@ -749,7 +749,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
 			if tt.errorMessage != "" {
-				var errResp errors.ErrorResponse
+				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
 				assert.Equal(t, tt.errorCode, errResp.Error.Code)
@@ -921,7 +921,7 @@ func TestRegisterAdmin(t *testing.T) {
 		existingUsers  int
 		expectedStatus int
 		expectError    bool
-		errorCode      errors.ErrorCode
+		errorCode      apperror.ErrorCode
 	}{
 		{
 			name: "Valid admin registration on first run",
@@ -944,7 +944,7 @@ func TestRegisterAdmin(t *testing.T) {
 			existingUsers:  1,
 			expectedStatus: http.StatusConflict,
 			expectError:    true,
-			errorCode:      errors.ErrAlreadyExists,
+			errorCode:      apperror.ErrAlreadyExists,
 		},
 	}
 
@@ -974,7 +974,7 @@ func TestRegisterAdmin(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
 			if tt.expectError {
-				var errResp errors.ErrorResponse
+				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
 				assert.Equal(t, tt.errorCode, errResp.Error.Code)
