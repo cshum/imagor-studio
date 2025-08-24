@@ -45,6 +45,7 @@ type FileStat struct {
 type Metadata struct {
 	Key       string `json:"key"`
 	Value     string `json:"value"`
+	OwnerID   string `json:"ownerID"`
 	CreatedAt string `json:"createdAt"`
 	UpdatedAt string `json:"updatedAt"`
 }
