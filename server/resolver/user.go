@@ -20,7 +20,7 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.User, error) {
 	}
 
 	// Handle guest users - they don't exist in the database
-	if isGuestUser(ctx) {
+	if IsGuestUser(ctx) {
 		return &gql.User{
 			ID:          ownerID,
 			DisplayName: "guest",
@@ -57,7 +57,7 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.User, error) {
 // User returns a user by ID (admin only)
 func (r *queryResolver) User(ctx context.Context, id string) (*gql.User, error) {
 	// Check admin permissions
-	if err := requireAdminPermission(ctx); err != nil {
+	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
 	}
 
@@ -85,7 +85,7 @@ func (r *queryResolver) User(ctx context.Context, id string) (*gql.User, error) 
 // Users returns a list of users (admin only)
 func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) (*gql.UserList, error) {
 	// Check admin permissions
-	if err := requireAdminPermission(ctx); err != nil {
+	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
 	}
 
@@ -135,7 +135,7 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) (*gq
 
 // UpdateProfile updates a user's profile (self or admin operation)
 func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdateProfileInput, userID *string) (*gql.User, error) {
-	targetUserID, err := r.getEffectiveTargetUserID(ctx, userID)
+	targetUserID, err := GetEffectiveTargetUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 // ChangePassword changes a user's password (self or admin operation)
 func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangePasswordInput, userID *string) (bool, error) {
 	isAdminOperation := userID != nil
-	targetUserID, err := r.getEffectiveTargetUserID(ctx, userID)
+	targetUserID, err := GetEffectiveTargetUserID(ctx, userID)
 	if err != nil {
 		return false, err
 	}
@@ -251,7 +251,7 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 
 // DeactivateAccount deactivates a user's account (self or admin operation)
 func (r *mutationResolver) DeactivateAccount(ctx context.Context, userID *string) (bool, error) {
-	targetUserID, err := r.getEffectiveTargetUserID(ctx, userID)
+	targetUserID, err := GetEffectiveTargetUserID(ctx, userID)
 	if err != nil {
 		return false, err
 	}
@@ -289,7 +289,7 @@ func (r *mutationResolver) DeactivateAccount(ctx context.Context, userID *string
 // CreateUser creates a new user (admin only)
 func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserInput) (*gql.User, error) {
 	// Check admin permissions
-	if err := requireAdminPermission(ctx); err != nil {
+	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
 	}
 

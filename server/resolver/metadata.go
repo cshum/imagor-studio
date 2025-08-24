@@ -10,7 +10,7 @@ import (
 
 // SetUserMetadata sets user-specific metadata
 func (r *mutationResolver) SetUserMetadata(ctx context.Context, key string, value string, ownerID *string) (*gql.Metadata, error) {
-	effectiveOwnerID, err := r.getEffectiveTargetUserID(ctx, ownerID)
+	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func (r *mutationResolver) SetUserMetadata(ctx context.Context, key string, valu
 
 // DeleteUserMetadata deletes user-specific metadata
 func (r *mutationResolver) DeleteUserMetadata(ctx context.Context, key string, ownerID *string) (bool, error) {
-	effectiveOwnerID, err := r.getEffectiveTargetUserID(ctx, ownerID)
+	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return false, err
 	}
@@ -46,7 +46,7 @@ func (r *mutationResolver) DeleteUserMetadata(ctx context.Context, key string, o
 
 // ListUserMetadata lists user-specific metadata
 func (r *queryResolver) ListUserMetadata(ctx context.Context, prefix *string, ownerID *string) ([]*gql.Metadata, error) {
-	effectiveOwnerID, err := r.getEffectiveTargetUserID(ctx, ownerID)
+	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (r *queryResolver) ListUserMetadata(ctx context.Context, prefix *string, ow
 
 // GetUserMetadata gets specific user metadata
 func (r *queryResolver) GetUserMetadata(ctx context.Context, key string, ownerID *string) (*gql.Metadata, error) {
-	effectiveOwnerID, err := r.getEffectiveTargetUserID(ctx, ownerID)
+	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (r *queryResolver) GetUserMetadata(ctx context.Context, key string, ownerID
 // SetSystemMetadata sets system-wide metadata (admin only)
 func (r *mutationResolver) SetSystemMetadata(ctx context.Context, key string, value string) (*gql.Metadata, error) {
 	// Only admins can write system metadata
-	if err := requireAdminPermission(ctx); err != nil {
+	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, fmt.Errorf("admin permission required for system metadata write: %w", err)
 	}
 
@@ -118,7 +118,7 @@ func (r *mutationResolver) SetSystemMetadata(ctx context.Context, key string, va
 // DeleteSystemMetadata deletes system-wide metadata (admin only)
 func (r *mutationResolver) DeleteSystemMetadata(ctx context.Context, key string) (bool, error) {
 	// Only admins can delete system metadata
-	if err := requireAdminPermission(ctx); err != nil {
+	if err := RequireAdminPermission(ctx); err != nil {
 		return false, fmt.Errorf("admin permission required for system metadata delete: %w", err)
 	}
 

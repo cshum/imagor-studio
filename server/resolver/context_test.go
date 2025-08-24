@@ -20,7 +20,7 @@ func TestWithUserID(t *testing.T) {
 	assert.Equal(t, ownerID, value.(string))
 }
 
-func TestGetOwnerIDFromContext(t *testing.T) {
+func TestGetUserIDFromContext(t *testing.T) {
 	tests := []struct {
 		name         string
 		setupContext func() context.Context
@@ -60,7 +60,7 @@ func TestGetOwnerIDFromContext(t *testing.T) {
 
 			if tt.expectError {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), "owner ID not found in context")
+				assert.Contains(t, err.Error(), "user ID not found in context")
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expectedID, ownerID)
