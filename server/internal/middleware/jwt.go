@@ -52,7 +52,7 @@ func JWTMiddleware(tokenManager *auth.TokenManager) func(http.Handler) http.Hand
 			ctx := auth.SetClaimsInContext(r.Context(), claims)
 
 			// Add owner ID to context (using user ID from claims)
-			ctx = resolver.WithOwnerID(ctx, claims.UserID)
+			ctx = resolver.WithUserID(ctx, claims.UserID)
 
 			// Pass the request with the new context
 			next.ServeHTTP(w, r.WithContext(ctx))

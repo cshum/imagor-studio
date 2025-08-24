@@ -71,7 +71,7 @@ func TestJWTMiddleware(t *testing.T) {
 				}
 
 				// Check if context has owner ID
-				ownerID, err := resolver.GetOwnerIDFromContext(r.Context())
+				ownerID, err := resolver.GetUserIDFromContext(r.Context())
 				if tt.expectedStatus == http.StatusOK {
 					require.NoError(t, err)
 					assert.Equal(t, userID, ownerID)

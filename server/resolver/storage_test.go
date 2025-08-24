@@ -551,7 +551,7 @@ func TestListFiles(t *testing.T) {
 	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
 
 	// Create context with owner ID
-	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
+	ctx := context.WithValue(context.Background(), UserIDContextKey, "test-owner-id")
 	path := "/test"
 	offset := 0
 	limit := 10
@@ -589,7 +589,7 @@ func TestStatFile(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
 
-	ctx := context.WithValue(context.Background(), OwnerIDContextKey, "test-owner-id")
+	ctx := context.WithValue(context.Background(), UserIDContextKey, "test-owner-id")
 	path := "/test/file1.txt"
 
 	mockStorage.On("Stat", ctx, path).Return(storage.FileInfo{

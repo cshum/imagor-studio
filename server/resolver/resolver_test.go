@@ -19,7 +19,7 @@ func createUserContext(userID, role string, scopes []string) context.Context {
 		Scopes: scopes,
 	}
 	ctx := auth.SetClaimsInContext(context.Background(), claims)
-	return context.WithValue(ctx, OwnerIDContextKey, userID)
+	return context.WithValue(ctx, UserIDContextKey, userID)
 }
 
 // Helper function to create admin context

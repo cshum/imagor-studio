@@ -14,7 +14,7 @@ import (
 
 // Me returns the current authenticated user
 func (r *queryResolver) Me(ctx context.Context) (*gql.User, error) {
-	ownerID, err := GetOwnerIDFromContext(ctx)
+	ownerID, err := GetUserIDFromContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get owner ID: %w", err)
 	}
@@ -255,7 +255,7 @@ func (r *mutationResolver) DeactivateAccount(ctx context.Context, userID *string
 	if err != nil {
 		return false, err
 	}
-	currentUserID, err := GetOwnerIDFromContext(ctx)
+	currentUserID, err := GetUserIDFromContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get current user ID: %w", err)
 	}
@@ -294,7 +294,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserI
 	}
 
 	// Get current admin user ID for logging
-	currentUserID, err := GetOwnerIDFromContext(ctx)
+	currentUserID, err := GetUserIDFromContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current user ID: %w", err)
 	}

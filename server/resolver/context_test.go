@@ -7,15 +7,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWithOwnerID(t *testing.T) {
+func TestWithUserID(t *testing.T) {
 	ctx := context.Background()
 	ownerID := "test-owner-123"
 
 	// Add owner ID to context
-	ctxWithOwner := WithOwnerID(ctx, ownerID)
+	ctxWithOwner := WithUserID(ctx, ownerID)
 
 	// Verify the owner ID is in the context
-	value := ctxWithOwner.Value(OwnerIDContextKey)
+	value := ctxWithOwner.Value(UserIDContextKey)
 	assert.NotNil(t, value)
 	assert.Equal(t, ownerID, value.(string))
 }
@@ -31,7 +31,7 @@ func TestGetOwnerIDFromContext(t *testing.T) {
 			name: "Valid owner ID in context",
 			setupContext: func() context.Context {
 				ctx := context.Background()
-				return WithOwnerID(ctx, "test-owner-123")
+				return WithUserID(ctx, "test-owner-123")
 			},
 			expectError: false,
 			expectedID:  "test-owner-123",
@@ -47,7 +47,7 @@ func TestGetOwnerIDFromContext(t *testing.T) {
 			name: "Wrong type in context",
 			setupContext: func() context.Context {
 				ctx := context.Background()
-				return context.WithValue(ctx, OwnerIDContextKey, 12345) // int instead of string
+				return context.WithValue(ctx, UserIDContextKey, 12345) // int instead of string
 			},
 			expectError: true,
 		},
@@ -56,7 +56,7 @@ func TestGetOwnerIDFromContext(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := tt.setupContext()
-			ownerID, err := GetOwnerIDFromContext(ctx)
+			ownerID, err := GetUserIDFromContext(ctx)
 
 			if tt.expectError {
 				assert.Error(t, err)

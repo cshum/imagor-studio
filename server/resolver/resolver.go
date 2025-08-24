@@ -40,7 +40,7 @@ type queryResolver struct{ *Resolver }
 
 // Helper function to determine effective owner ID for user metadata operations
 func (r *Resolver) getEffectiveTargetUserID(ctx context.Context, providedUserID *string) (string, error) {
-	currentUserID, err := GetOwnerIDFromContext(ctx)
+	currentUserID, err := GetUserIDFromContext(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get current user ID: %w", err)
 	}

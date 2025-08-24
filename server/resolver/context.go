@@ -10,17 +10,17 @@ import (
 type contextKey string
 
 const (
-	OwnerIDContextKey contextKey = "ownerID"
+	UserIDContextKey contextKey = "userID"
 )
 
-// WithOwnerID adds owner ID to context
-func WithOwnerID(ctx context.Context, ownerID string) context.Context {
-	return context.WithValue(ctx, OwnerIDContextKey, ownerID)
+// WithUserID adds owner ID to context
+func WithUserID(ctx context.Context, ownerID string) context.Context {
+	return context.WithValue(ctx, UserIDContextKey, ownerID)
 }
 
-// GetOwnerIDFromContext extracts the owner ID from the context
-func GetOwnerIDFromContext(ctx context.Context) (string, error) {
-	ownerID, ok := ctx.Value(OwnerIDContextKey).(string)
+// GetUserIDFromContext extracts the owner ID from the context
+func GetUserIDFromContext(ctx context.Context) (string, error) {
+	ownerID, ok := ctx.Value(UserIDContextKey).(string)
 	if !ok {
 		return "", fmt.Errorf("owner ID not found in context")
 	}

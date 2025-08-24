@@ -1811,7 +1811,7 @@ func TestMe_GuestUser(t *testing.T) {
 		Scopes: []string{"read"},
 	}
 	ctx := auth.SetClaimsInContext(context.Background(), claims)
-	ctx = context.WithValue(ctx, OwnerIDContextKey, guestID)
+	ctx = context.WithValue(ctx, UserIDContextKey, guestID)
 
 	// Guest users should NOT trigger database lookup
 	// mockUserStore should not be called
@@ -1847,7 +1847,7 @@ func TestGuestUserRestrictions(t *testing.T) {
 		Scopes: []string{"read"},
 	}
 	ctx := auth.SetClaimsInContext(context.Background(), claims)
-	ctx = context.WithValue(ctx, OwnerIDContextKey, guestID)
+	ctx = context.WithValue(ctx, UserIDContextKey, guestID)
 
 	t.Run("UpdateProfile_GuestBlocked", func(t *testing.T) {
 		input := gql.UpdateProfileInput{
