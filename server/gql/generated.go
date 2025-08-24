@@ -69,30 +69,35 @@ type ComplexityRoot struct {
 	Metadata struct {
 		CreatedAt func(childComplexity int) int
 		Key       func(childComplexity int) int
+		OwnerID   func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 		Value     func(childComplexity int) int
 	}
 
 	Mutation struct {
-		ChangePassword    func(childComplexity int, input ChangePasswordInput, userID *string) int
-		CreateFolder      func(childComplexity int, path string) int
-		CreateUser        func(childComplexity int, input CreateUserInput) int
-		DeactivateAccount func(childComplexity int, userID *string) int
-		DeleteFile        func(childComplexity int, path string) int
-		DeleteMetadata    func(childComplexity int, key string) int
-		SetMetadata       func(childComplexity int, key string, value string) int
-		UpdateProfile     func(childComplexity int, input UpdateProfileInput, userID *string) int
-		UploadFile        func(childComplexity int, path string, content graphql.Upload) int
+		ChangePassword       func(childComplexity int, input ChangePasswordInput, userID *string) int
+		CreateFolder         func(childComplexity int, path string) int
+		CreateUser           func(childComplexity int, input CreateUserInput) int
+		DeactivateAccount    func(childComplexity int, userID *string) int
+		DeleteFile           func(childComplexity int, path string) int
+		DeleteSystemMetadata func(childComplexity int, key string) int
+		DeleteUserMetadata   func(childComplexity int, key string, ownerID *string) int
+		SetSystemMetadata    func(childComplexity int, key string, value string) int
+		SetUserMetadata      func(childComplexity int, key string, value string, ownerID *string) int
+		UpdateProfile        func(childComplexity int, input UpdateProfileInput, userID *string) int
+		UploadFile           func(childComplexity int, path string, content graphql.Upload) int
 	}
 
 	Query struct {
-		GetMetadata  func(childComplexity int, key string) int
-		ListFiles    func(childComplexity int, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) int
-		ListMetadata func(childComplexity int, prefix *string) int
-		Me           func(childComplexity int) int
-		StatFile     func(childComplexity int, path string) int
-		User         func(childComplexity int, id string) int
-		Users        func(childComplexity int, offset *int, limit *int) int
+		GetSystemMetadata  func(childComplexity int, key string) int
+		GetUserMetadata    func(childComplexity int, key string, ownerID *string) int
+		ListFiles          func(childComplexity int, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) int
+		ListSystemMetadata func(childComplexity int, prefix *string) int
+		ListUserMetadata   func(childComplexity int, prefix *string, ownerID *string) int
+		Me                 func(childComplexity int) int
+		StatFile           func(childComplexity int, path string) int
+		User               func(childComplexity int, id string) int
+		Users              func(childComplexity int, offset *int, limit *int) int
 	}
 
 	User struct {
@@ -112,21 +117,25 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	SetMetadata(ctx context.Context, key string, value string) (*Metadata, error)
-	DeleteMetadata(ctx context.Context, key string) (bool, error)
 	UploadFile(ctx context.Context, path string, content graphql.Upload) (bool, error)
 	DeleteFile(ctx context.Context, path string) (bool, error)
 	CreateFolder(ctx context.Context, path string) (bool, error)
 	UpdateProfile(ctx context.Context, input UpdateProfileInput, userID *string) (*User, error)
 	ChangePassword(ctx context.Context, input ChangePasswordInput, userID *string) (bool, error)
 	DeactivateAccount(ctx context.Context, userID *string) (bool, error)
+	SetUserMetadata(ctx context.Context, key string, value string, ownerID *string) (*Metadata, error)
+	DeleteUserMetadata(ctx context.Context, key string, ownerID *string) (bool, error)
+	SetSystemMetadata(ctx context.Context, key string, value string) (*Metadata, error)
+	DeleteSystemMetadata(ctx context.Context, key string) (bool, error)
 	CreateUser(ctx context.Context, input CreateUserInput) (*User, error)
 }
 type QueryResolver interface {
 	ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error)
 	StatFile(ctx context.Context, path string) (*FileStat, error)
-	ListMetadata(ctx context.Context, prefix *string) ([]*Metadata, error)
-	GetMetadata(ctx context.Context, key string) (*Metadata, error)
+	ListUserMetadata(ctx context.Context, prefix *string, ownerID *string) ([]*Metadata, error)
+	GetUserMetadata(ctx context.Context, key string, ownerID *string) (*Metadata, error)
+	ListSystemMetadata(ctx context.Context, prefix *string) ([]*Metadata, error)
+	GetSystemMetadata(ctx context.Context, key string) (*Metadata, error)
 	Me(ctx context.Context) (*User, error)
 	User(ctx context.Context, id string) (*User, error)
 	Users(ctx context.Context, offset *int, limit *int) (*UserList, error)
@@ -249,6 +258,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Metadata.Key(childComplexity), true
 
+	case "Metadata.ownerID":
+		if e.complexity.Metadata.OwnerID == nil {
+			break
+		}
+
+		return e.complexity.Metadata.OwnerID(childComplexity), true
+
 	case "Metadata.updatedAt":
 		if e.complexity.Metadata.UpdatedAt == nil {
 			break
@@ -323,29 +339,53 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.DeleteFile(childComplexity, args["path"].(string)), true
 
-	case "Mutation.deleteMetadata":
-		if e.complexity.Mutation.DeleteMetadata == nil {
+	case "Mutation.deleteSystemMetadata":
+		if e.complexity.Mutation.DeleteSystemMetadata == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteMetadata_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_deleteSystemMetadata_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteMetadata(childComplexity, args["key"].(string)), true
+		return e.complexity.Mutation.DeleteSystemMetadata(childComplexity, args["key"].(string)), true
 
-	case "Mutation.setMetadata":
-		if e.complexity.Mutation.SetMetadata == nil {
+	case "Mutation.deleteUserMetadata":
+		if e.complexity.Mutation.DeleteUserMetadata == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_setMetadata_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_deleteUserMetadata_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SetMetadata(childComplexity, args["key"].(string), args["value"].(string)), true
+		return e.complexity.Mutation.DeleteUserMetadata(childComplexity, args["key"].(string), args["ownerID"].(*string)), true
+
+	case "Mutation.setSystemMetadata":
+		if e.complexity.Mutation.SetSystemMetadata == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setSystemMetadata_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetSystemMetadata(childComplexity, args["key"].(string), args["value"].(string)), true
+
+	case "Mutation.setUserMetadata":
+		if e.complexity.Mutation.SetUserMetadata == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setUserMetadata_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetUserMetadata(childComplexity, args["key"].(string), args["value"].(string), args["ownerID"].(*string)), true
 
 	case "Mutation.updateProfile":
 		if e.complexity.Mutation.UpdateProfile == nil {
@@ -371,17 +411,29 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.UploadFile(childComplexity, args["path"].(string), args["content"].(graphql.Upload)), true
 
-	case "Query.getMetadata":
-		if e.complexity.Query.GetMetadata == nil {
+	case "Query.getSystemMetadata":
+		if e.complexity.Query.GetSystemMetadata == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getMetadata_args(ctx, rawArgs)
+		args, err := ec.field_Query_getSystemMetadata_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetMetadata(childComplexity, args["key"].(string)), true
+		return e.complexity.Query.GetSystemMetadata(childComplexity, args["key"].(string)), true
+
+	case "Query.getUserMetadata":
+		if e.complexity.Query.GetUserMetadata == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getUserMetadata_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetUserMetadata(childComplexity, args["key"].(string), args["ownerID"].(*string)), true
 
 	case "Query.listFiles":
 		if e.complexity.Query.ListFiles == nil {
@@ -395,17 +447,29 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.ListFiles(childComplexity, args["path"].(string), args["offset"].(int), args["limit"].(int), args["onlyFiles"].(*bool), args["onlyFolders"].(*bool), args["sortBy"].(*SortOption), args["sortOrder"].(*SortOrder)), true
 
-	case "Query.listMetadata":
-		if e.complexity.Query.ListMetadata == nil {
+	case "Query.listSystemMetadata":
+		if e.complexity.Query.ListSystemMetadata == nil {
 			break
 		}
 
-		args, err := ec.field_Query_listMetadata_args(ctx, rawArgs)
+		args, err := ec.field_Query_listSystemMetadata_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.ListMetadata(childComplexity, args["prefix"].(*string)), true
+		return e.complexity.Query.ListSystemMetadata(childComplexity, args["prefix"].(*string)), true
+
+	case "Query.listUserMetadata":
+		if e.complexity.Query.ListUserMetadata == nil {
+			break
+		}
+
+		args, err := ec.field_Query_listUserMetadata_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ListUserMetadata(childComplexity, args["prefix"].(*string), args["ownerID"].(*string)), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -634,8 +698,11 @@ var sources = []*ast.Source{
 
     statFile(path: String!): FileStat
 
-    listMetadata(prefix: String): [Metadata!]!
-    getMetadata(key: String!): Metadata
+    # Metadata APIs
+    listUserMetadata(prefix: String, ownerID: String): [Metadata!]!
+    getUserMetadata(key: String!, ownerID: String): Metadata
+    listSystemMetadata(prefix: String): [Metadata!]!
+    getSystemMetadata(key: String!): Metadata
 
     me: User
 
@@ -645,9 +712,6 @@ var sources = []*ast.Source{
 }
 
 type Mutation {
-    setMetadata(key: String!, value: String!): Metadata!
-    deleteMetadata(key: String!): Boolean!
-
     # write scope required
     uploadFile(path: String!, content: Upload!): Boolean!
     deleteFile(path: String!): Boolean!
@@ -657,6 +721,14 @@ type Mutation {
     updateProfile(input: UpdateProfileInput!, userId: ID): User!
     changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
     deactivateAccount(userId: ID): Boolean!
+
+    # User Metadata APIs
+    setUserMetadata(key: String!, value: String!, ownerID: String): Metadata!
+    deleteUserMetadata(key: String!, ownerID: String): Boolean!
+
+    # System Metadata APIs (admin only for write)
+    setSystemMetadata(key: String!, value: String!): Metadata!
+    deleteSystemMetadata(key: String!): Boolean!
 
     # admin only operations
     createUser(input: CreateUserInput!): User!
@@ -732,6 +804,7 @@ scalar Upload
 type Metadata {
     key: String!
     value: String!
+    ownerID: String!
     createdAt: String!
     updatedAt: String!
 }
@@ -805,7 +878,7 @@ func (ec *executionContext) field_Mutation_deleteFile_args(ctx context.Context, 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteMetadata_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_deleteSystemMetadata_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
@@ -816,7 +889,23 @@ func (ec *executionContext) field_Mutation_deleteMetadata_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_setMetadata_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_deleteUserMetadata_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["key"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "ownerID", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["ownerID"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setSystemMetadata_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
@@ -829,6 +918,27 @@ func (ec *executionContext) field_Mutation_setMetadata_args(ctx context.Context,
 		return nil, err
 	}
 	args["value"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setUserMetadata_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["key"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "value", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["value"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "ownerID", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["ownerID"] = arg2
 	return args, nil
 }
 
@@ -875,7 +985,7 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_getMetadata_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Query_getSystemMetadata_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
@@ -883,6 +993,22 @@ func (ec *executionContext) field_Query_getMetadata_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["key"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getUserMetadata_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["key"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "ownerID", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["ownerID"] = arg1
 	return args, nil
 }
 
@@ -927,7 +1053,7 @@ func (ec *executionContext) field_Query_listFiles_args(ctx context.Context, rawA
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_listMetadata_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Query_listSystemMetadata_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "prefix", ec.unmarshalOString2ᚖstring)
@@ -935,6 +1061,22 @@ func (ec *executionContext) field_Query_listMetadata_args(ctx context.Context, r
 		return nil, err
 	}
 	args["prefix"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_listUserMetadata_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "prefix", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["prefix"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "ownerID", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["ownerID"] = arg1
 	return args, nil
 }
 
@@ -1651,6 +1793,50 @@ func (ec *executionContext) fieldContext_Metadata_value(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Metadata_ownerID(ctx context.Context, field graphql.CollectedField, obj *Metadata) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Metadata_ownerID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OwnerID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Metadata_ownerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Metadata",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Metadata_createdAt(ctx context.Context, field graphql.CollectedField, obj *Metadata) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_createdAt(ctx, field)
 	if err != nil {
@@ -1735,126 +1921,6 @@ func (ec *executionContext) fieldContext_Metadata_updatedAt(_ context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_setMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_setMetadata(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SetMetadata(rctx, fc.Args["key"].(string), fc.Args["value"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*Metadata)
-	fc.Result = res
-	return ec.marshalNMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_setMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "key":
-				return ec.fieldContext_Metadata_key(ctx, field)
-			case "value":
-				return ec.fieldContext_Metadata_value(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Metadata_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Metadata_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_setMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteMetadata(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteMetadata(rctx, fc.Args["key"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -2205,6 +2271,250 @@ func (ec *executionContext) fieldContext_Mutation_deactivateAccount(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_setUserMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_setUserMetadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetUserMetadata(rctx, fc.Args["key"].(string), fc.Args["value"].(string), fc.Args["ownerID"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*Metadata)
+	fc.Result = res
+	return ec.marshalNMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_setUserMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_Metadata_key(ctx, field)
+			case "value":
+				return ec.fieldContext_Metadata_value(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Metadata_ownerID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Metadata_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Metadata_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setUserMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteUserMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteUserMetadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteUserMetadata(rctx, fc.Args["key"].(string), fc.Args["ownerID"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteUserMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteUserMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_setSystemMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_setSystemMetadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetSystemMetadata(rctx, fc.Args["key"].(string), fc.Args["value"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*Metadata)
+	fc.Result = res
+	return ec.marshalNMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_setSystemMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_Metadata_key(ctx, field)
+			case "value":
+				return ec.fieldContext_Metadata_value(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Metadata_ownerID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Metadata_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Metadata_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setSystemMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteSystemMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteSystemMetadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteSystemMetadata(rctx, fc.Args["key"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteSystemMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteSystemMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createUser(ctx, field)
 	if err != nil {
@@ -2403,8 +2713,8 @@ func (ec *executionContext) fieldContext_Query_statFile(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_listMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_listMetadata(ctx, field)
+func (ec *executionContext) _Query_listUserMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_listUserMetadata(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2417,7 +2727,7 @@ func (ec *executionContext) _Query_listMetadata(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ListMetadata(rctx, fc.Args["prefix"].(*string))
+		return ec.resolvers.Query().ListUserMetadata(rctx, fc.Args["prefix"].(*string), fc.Args["ownerID"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2434,7 +2744,7 @@ func (ec *executionContext) _Query_listMetadata(ctx context.Context, field graph
 	return ec.marshalNMetadata2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadataᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_listMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_listUserMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -2446,6 +2756,8 @@ func (ec *executionContext) fieldContext_Query_listMetadata(ctx context.Context,
 				return ec.fieldContext_Metadata_key(ctx, field)
 			case "value":
 				return ec.fieldContext_Metadata_value(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Metadata_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Metadata_createdAt(ctx, field)
 			case "updatedAt":
@@ -2461,15 +2773,15 @@ func (ec *executionContext) fieldContext_Query_listMetadata(ctx context.Context,
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_listMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_listUserMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getMetadata(ctx, field)
+func (ec *executionContext) _Query_getUserMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getUserMetadata(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2482,7 +2794,7 @@ func (ec *executionContext) _Query_getMetadata(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetMetadata(rctx, fc.Args["key"].(string))
+		return ec.resolvers.Query().GetUserMetadata(rctx, fc.Args["key"].(string), fc.Args["ownerID"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2496,7 +2808,7 @@ func (ec *executionContext) _Query_getMetadata(ctx context.Context, field graphq
 	return ec.marshalOMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getUserMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -2508,6 +2820,8 @@ func (ec *executionContext) fieldContext_Query_getMetadata(ctx context.Context, 
 				return ec.fieldContext_Metadata_key(ctx, field)
 			case "value":
 				return ec.fieldContext_Metadata_value(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Metadata_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Metadata_createdAt(ctx, field)
 			case "updatedAt":
@@ -2523,7 +2837,138 @@ func (ec *executionContext) fieldContext_Query_getMetadata(ctx context.Context, 
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_getUserMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_listSystemMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_listSystemMetadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ListSystemMetadata(rctx, fc.Args["prefix"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Metadata)
+	fc.Result = res
+	return ec.marshalNMetadata2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadataᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_listSystemMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_Metadata_key(ctx, field)
+			case "value":
+				return ec.fieldContext_Metadata_value(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Metadata_ownerID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Metadata_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Metadata_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_listSystemMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getSystemMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getSystemMetadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetSystemMetadata(rctx, fc.Args["key"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*Metadata)
+	fc.Result = res
+	return ec.marshalOMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getSystemMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_Metadata_key(ctx, field)
+			case "value":
+				return ec.fieldContext_Metadata_value(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Metadata_ownerID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Metadata_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Metadata_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getSystemMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -5514,6 +5959,11 @@ func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "ownerID":
+			out.Values[i] = ec._Metadata_ownerID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createdAt":
 			out.Values[i] = ec._Metadata_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5566,20 +6016,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "setMetadata":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_setMetadata(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deleteMetadata":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteMetadata(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "uploadFile":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_uploadFile(ctx, field)
@@ -5618,6 +6054,34 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deactivateAccount":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deactivateAccount(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setUserMetadata":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setUserMetadata(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteUserMetadata":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteUserMetadata(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setSystemMetadata":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setSystemMetadata(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteSystemMetadata":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteSystemMetadata(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -5712,7 +6176,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "listMetadata":
+		case "listUserMetadata":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -5721,7 +6185,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_listMetadata(ctx, field)
+				res = ec._Query_listUserMetadata(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -5734,7 +6198,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getMetadata":
+		case "getUserMetadata":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -5743,7 +6207,48 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getMetadata(ctx, field)
+				res = ec._Query_getUserMetadata(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "listSystemMetadata":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_listSystemMetadata(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getSystemMetadata":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getSystemMetadata(ctx, field)
 				return res
 			}
 

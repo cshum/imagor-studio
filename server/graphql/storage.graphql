@@ -11,8 +11,11 @@ type Query {
 
     statFile(path: String!): FileStat
 
-    listMetadata(prefix: String): [Metadata!]!
-    getMetadata(key: String!): Metadata
+    # Metadata APIs
+    listUserMetadata(prefix: String, ownerID: String): [Metadata!]!
+    getUserMetadata(key: String!, ownerID: String): Metadata
+    listSystemMetadata(prefix: String): [Metadata!]!
+    getSystemMetadata(key: String!): Metadata
 
     me: User
 
@@ -22,9 +25,6 @@ type Query {
 }
 
 type Mutation {
-    setMetadata(key: String!, value: String!): Metadata!
-    deleteMetadata(key: String!): Boolean!
-
     # write scope required
     uploadFile(path: String!, content: Upload!): Boolean!
     deleteFile(path: String!): Boolean!
@@ -34,6 +34,14 @@ type Mutation {
     updateProfile(input: UpdateProfileInput!, userId: ID): User!
     changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
     deactivateAccount(userId: ID): Boolean!
+
+    # User Metadata APIs
+    setUserMetadata(key: String!, value: String!, ownerID: String): Metadata!
+    deleteUserMetadata(key: String!, ownerID: String): Boolean!
+
+    # System Metadata APIs (admin only for write)
+    setSystemMetadata(key: String!, value: String!): Metadata!
+    deleteSystemMetadata(key: String!): Boolean!
 
     # admin only operations
     createUser(input: CreateUserInput!): User!
@@ -109,6 +117,7 @@ scalar Upload
 type Metadata {
     key: String!
     value: String!
+    ownerID: String!
     createdAt: String!
     updatedAt: String!
 }
