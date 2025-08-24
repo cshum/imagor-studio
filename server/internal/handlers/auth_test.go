@@ -903,7 +903,6 @@ func TestCheckFirstRun(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.expectFirstRun, response["isFirstRun"])
-			assert.Equal(t, float64(tt.userCount), response["userCount"])
 
 			mockUserStore.AssertExpectations(t)
 		})

@@ -53,6 +53,11 @@ type UserResponse struct {
 	Role        string `json:"role"`
 }
 
+type FirstRunResponse struct {
+	IsFirstRun bool  `json:"isFirstRun"`
+	Timestamp  int64 `json:"timestamp"`
+}
+
 type RefreshTokenRequest struct {
 	Token string `json:"token"`
 }
@@ -65,13 +70,10 @@ func (h *AuthHandler) CheckFirstRun(w http.ResponseWriter, r *http.Request) {
 			return errors.InternalServerError("Failed to check system status")
 		}
 
-		response := map[string]interface{}{
-			"isFirstRun": totalCount == 0,
-			"userCount":  totalCount,
-			"timestamp":  time.Now().UnixMilli(),
-		}
-
-		return WriteSuccess(w, response)
+		return WriteSuccess(w, FirstRunResponse{
+			IsFirstRun: totalCount == 0,
+			Timestamp:  time.Now().UnixMilli(),
+		})
 	})(w, r)
 }
 
