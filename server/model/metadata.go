@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/uptrace/bun"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type Metadata struct {
