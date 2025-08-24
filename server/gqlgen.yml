@@ -1,10 +1,10 @@
 schema:
   - ../graphql/*.graphql
 exec:
-  filename: gql/generated.go
+  filename: internal/generated/gql/generated.go
   package: gql
 model:
-  filename: gql/models_gen.go
+  filename: internal/generated/gql/models_gen.go
   package: gql
 #resolver:
 #  layout: follow-schema

@@ -1,7 +1,7 @@
 package resolver
 
 import (
-	"github.com/cshum/imagor-studio/server/gql"
+	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/metadatastore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"

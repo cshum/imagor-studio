@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/gql"
 	auth2 "github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/cshum/imagor-studio/server/gql"
+	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"go.uber.org/zap"
 )

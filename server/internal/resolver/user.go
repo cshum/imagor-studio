@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/gql"
 	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	validation2 "github.com/cshum/imagor-studio/server/internal/validation"
 	"go.uber.org/zap"
 )

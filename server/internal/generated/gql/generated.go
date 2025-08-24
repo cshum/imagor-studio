@@ -685,7 +685,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../../graphql/storage.graphql", Input: `type Query {
+	{Name: "../../../../graphql/storage.graphql", Input: `type Query {
     listFiles(
         path: String!
         offset: Int!
@@ -821,7 +821,7 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNChangePasswordInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐChangePasswordInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNChangePasswordInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐChangePasswordInput)
 	if err != nil {
 		return nil, err
 	}
@@ -848,7 +848,7 @@ func (ec *executionContext) field_Mutation_createFolder_args(ctx context.Context
 func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateUserInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐCreateUserInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateUserInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐCreateUserInput)
 	if err != nil {
 		return nil, err
 	}
@@ -945,7 +945,7 @@ func (ec *executionContext) field_Mutation_setUserMetadata_args(ctx context.Cont
 func (ec *executionContext) field_Mutation_updateProfile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateProfileInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUpdateProfileInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateProfileInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUpdateProfileInput)
 	if err != nil {
 		return nil, err
 	}
@@ -1040,12 +1040,12 @@ func (ec *executionContext) field_Query_listFiles_args(ctx context.Context, rawA
 		return nil, err
 	}
 	args["onlyFolders"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐSortOption)
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOption)
 	if err != nil {
 		return nil, err
 	}
 	args["sortBy"] = arg5
-	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐSortOrder)
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -1374,7 +1374,7 @@ func (ec *executionContext) _FileList_items(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*FileItem)
 	fc.Result = res
-	return ec.marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileItemᚄ(ctx, field.Selections, res)
+	return ec.marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileItemᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_FileList_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2118,7 +2118,7 @@ func (ec *executionContext) _Mutation_updateProfile(ctx context.Context, field g
 	}
 	res := resTmp.(*User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateProfile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2299,7 +2299,7 @@ func (ec *executionContext) _Mutation_setUserMetadata(ctx context.Context, field
 	}
 	res := resTmp.(*Metadata)
 	fc.Result = res
-	return ec.marshalNMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx, field.Selections, res)
+	return ec.marshalNMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐMetadata(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_setUserMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2421,7 +2421,7 @@ func (ec *executionContext) _Mutation_setSystemMetadata(ctx context.Context, fie
 	}
 	res := resTmp.(*Metadata)
 	fc.Result = res
-	return ec.marshalNMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx, field.Selections, res)
+	return ec.marshalNMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐMetadata(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_setSystemMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2543,7 +2543,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	}
 	res := resTmp.(*User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2614,7 +2614,7 @@ func (ec *executionContext) _Query_listFiles(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*FileList)
 	fc.Result = res
-	return ec.marshalNFileList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileList(ctx, field.Selections, res)
+	return ec.marshalNFileList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileList(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_listFiles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2672,7 +2672,7 @@ func (ec *executionContext) _Query_statFile(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*FileStat)
 	fc.Result = res
-	return ec.marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileStat(ctx, field.Selections, res)
+	return ec.marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileStat(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_statFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2741,7 +2741,7 @@ func (ec *executionContext) _Query_listUserMetadata(ctx context.Context, field g
 	}
 	res := resTmp.([]*Metadata)
 	fc.Result = res
-	return ec.marshalNMetadata2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadataᚄ(ctx, field.Selections, res)
+	return ec.marshalNMetadata2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐMetadataᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_listUserMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2805,7 +2805,7 @@ func (ec *executionContext) _Query_getUserMetadata(ctx context.Context, field gr
 	}
 	res := resTmp.(*Metadata)
 	fc.Result = res
-	return ec.marshalOMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx, field.Selections, res)
+	return ec.marshalOMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐMetadata(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getUserMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2872,7 +2872,7 @@ func (ec *executionContext) _Query_listSystemMetadata(ctx context.Context, field
 	}
 	res := resTmp.([]*Metadata)
 	fc.Result = res
-	return ec.marshalNMetadata2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadataᚄ(ctx, field.Selections, res)
+	return ec.marshalNMetadata2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐMetadataᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_listSystemMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2936,7 +2936,7 @@ func (ec *executionContext) _Query_getSystemMetadata(ctx context.Context, field 
 	}
 	res := resTmp.(*Metadata)
 	fc.Result = res
-	return ec.marshalOMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx, field.Selections, res)
+	return ec.marshalOMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐMetadata(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getSystemMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3000,7 +3000,7 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 	}
 	res := resTmp.(*User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_me(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3057,7 +3057,7 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3128,7 +3128,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*UserList)
 	fc.Result = res
-	return ec.marshalNUserList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUserList(ctx, field.Selections, res)
+	return ec.marshalNUserList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserList(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_users(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3628,7 +3628,7 @@ func (ec *executionContext) _UserList_items(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*User)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserList_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6813,17 +6813,17 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNChangePasswordInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐChangePasswordInput(ctx context.Context, v any) (ChangePasswordInput, error) {
+func (ec *executionContext) unmarshalNChangePasswordInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐChangePasswordInput(ctx context.Context, v any) (ChangePasswordInput, error) {
 	res, err := ec.unmarshalInputChangePasswordInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐCreateUserInput(ctx context.Context, v any) (CreateUserInput, error) {
+func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐCreateUserInput(ctx context.Context, v any) (CreateUserInput, error) {
 	res, err := ec.unmarshalInputCreateUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*FileItem) graphql.Marshaler {
+func (ec *executionContext) marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*FileItem) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6847,7 +6847,7 @@ func (ec *executionContext) marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagor
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNFileItem2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileItem(ctx, sel, v[i])
+			ret[i] = ec.marshalNFileItem2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileItem(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6867,7 +6867,7 @@ func (ec *executionContext) marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagor
 	return ret
 }
 
-func (ec *executionContext) marshalNFileItem2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileItem(ctx context.Context, sel ast.SelectionSet, v *FileItem) graphql.Marshaler {
+func (ec *executionContext) marshalNFileItem2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileItem(ctx context.Context, sel ast.SelectionSet, v *FileItem) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6877,11 +6877,11 @@ func (ec *executionContext) marshalNFileItem2ᚖgithubᚗcomᚋcshumᚋimagorᚑ
 	return ec._FileItem(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNFileList2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileList(ctx context.Context, sel ast.SelectionSet, v FileList) graphql.Marshaler {
+func (ec *executionContext) marshalNFileList2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileList(ctx context.Context, sel ast.SelectionSet, v FileList) graphql.Marshaler {
 	return ec._FileList(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNFileList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileList(ctx context.Context, sel ast.SelectionSet, v *FileList) graphql.Marshaler {
+func (ec *executionContext) marshalNFileList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileList(ctx context.Context, sel ast.SelectionSet, v *FileList) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6923,11 +6923,11 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNMetadata2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx context.Context, sel ast.SelectionSet, v Metadata) graphql.Marshaler {
+func (ec *executionContext) marshalNMetadata2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐMetadata(ctx context.Context, sel ast.SelectionSet, v Metadata) graphql.Marshaler {
 	return ec._Metadata(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMetadata2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadataᚄ(ctx context.Context, sel ast.SelectionSet, v []*Metadata) graphql.Marshaler {
+func (ec *executionContext) marshalNMetadata2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐMetadataᚄ(ctx context.Context, sel ast.SelectionSet, v []*Metadata) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6951,7 +6951,7 @@ func (ec *executionContext) marshalNMetadata2ᚕᚖgithubᚗcomᚋcshumᚋimagor
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx, sel, v[i])
+			ret[i] = ec.marshalNMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐMetadata(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6971,7 +6971,7 @@ func (ec *executionContext) marshalNMetadata2ᚕᚖgithubᚗcomᚋcshumᚋimagor
 	return ret
 }
 
-func (ec *executionContext) marshalNMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx context.Context, sel ast.SelectionSet, v *Metadata) graphql.Marshaler {
+func (ec *executionContext) marshalNMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐMetadata(ctx context.Context, sel ast.SelectionSet, v *Metadata) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6997,7 +6997,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNUpdateProfileInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUpdateProfileInput(ctx context.Context, v any) (UpdateProfileInput, error) {
+func (ec *executionContext) unmarshalNUpdateProfileInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUpdateProfileInput(ctx context.Context, v any) (UpdateProfileInput, error) {
 	res, err := ec.unmarshalInputUpdateProfileInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -7018,11 +7018,11 @@ func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋg
 	return res
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUser(ctx context.Context, sel ast.SelectionSet, v User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx context.Context, sel ast.SelectionSet, v User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*User) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -7046,7 +7046,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑs
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7066,7 +7066,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑs
 	return ret
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUser(ctx context.Context, sel ast.SelectionSet, v *User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx context.Context, sel ast.SelectionSet, v *User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -7076,11 +7076,11 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstud
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUserList2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUserList(ctx context.Context, sel ast.SelectionSet, v UserList) graphql.Marshaler {
+func (ec *executionContext) marshalNUserList2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserList(ctx context.Context, sel ast.SelectionSet, v UserList) graphql.Marshaler {
 	return ec._UserList(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUserList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUserList(ctx context.Context, sel ast.SelectionSet, v *UserList) graphql.Marshaler {
+func (ec *executionContext) marshalNUserList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserList(ctx context.Context, sel ast.SelectionSet, v *UserList) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -7373,7 +7373,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐFileStat(ctx context.Context, sel ast.SelectionSet, v *FileStat) graphql.Marshaler {
+func (ec *executionContext) marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileStat(ctx context.Context, sel ast.SelectionSet, v *FileStat) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7416,14 +7416,14 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) marshalOMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐMetadata(ctx context.Context, sel ast.SelectionSet, v *Metadata) graphql.Marshaler {
+func (ec *executionContext) marshalOMetadata2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐMetadata(ctx context.Context, sel ast.SelectionSet, v *Metadata) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Metadata(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐSortOption(ctx context.Context, v any) (*SortOption, error) {
+func (ec *executionContext) unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOption(ctx context.Context, v any) (*SortOption, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7432,14 +7432,14 @@ func (ec *executionContext) unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimago
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐSortOption(ctx context.Context, sel ast.SelectionSet, v *SortOption) graphql.Marshaler {
+func (ec *executionContext) marshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOption(ctx context.Context, sel ast.SelectionSet, v *SortOption) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐSortOrder(ctx context.Context, v any) (*SortOrder, error) {
+func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOrder(ctx context.Context, v any) (*SortOrder, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7448,7 +7448,7 @@ func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagor
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *SortOrder) graphql.Marshaler {
+func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *SortOrder) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7473,7 +7473,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋgqlᚐUser(ctx context.Context, sel ast.SelectionSet, v *User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx context.Context, sel ast.SelectionSet, v *User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

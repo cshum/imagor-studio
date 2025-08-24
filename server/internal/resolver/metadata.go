@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/gql"
+	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 )
 
 // SetUserMetadata sets user-specific metadata
