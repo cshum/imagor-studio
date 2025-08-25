@@ -15,11 +15,15 @@ import * as types from './graphql'
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-  '\n  fragment MetadataInfo on Metadata {\n    key\n    value\n    createdAt\n    updatedAt\n  }\n': typeof types.MetadataInfoFragmentDoc
-  '\n  query ListMetadata($prefix: String) {\n    listMetadata(prefix: $prefix) {\n      ...MetadataInfo\n    }\n  }\n': typeof types.ListMetadataDocument
-  '\n  query GetMetadata($key: String!) {\n    getMetadata(key: $key) {\n      ...MetadataInfo\n    }\n  }\n': typeof types.GetMetadataDocument
-  '\n  mutation SetMetadata($key: String!, $value: String!) {\n    setMetadata(key: $key, value: $value) {\n      ...MetadataInfo\n    }\n  }\n': typeof types.SetMetadataDocument
-  '\n  mutation DeleteMetadata($key: String!) {\n    deleteMetadata(key: $key)\n  }\n': typeof types.DeleteMetadataDocument
+  '\n  fragment MetadataInfo on Metadata {\n    key\n    value\n    ownerID\n    createdAt\n    updatedAt\n  }\n': typeof types.MetadataInfoFragmentDoc
+  '\n  query ListUserMetadata($prefix: String, $ownerID: String) {\n    listUserMetadata(prefix: $prefix, ownerID: $ownerID) {\n      ...MetadataInfo\n    }\n  }\n': typeof types.ListUserMetadataDocument
+  '\n  query GetUserMetadata($key: String!, $ownerID: String) {\n    getUserMetadata(key: $key, ownerID: $ownerID) {\n      ...MetadataInfo\n    }\n  }\n': typeof types.GetUserMetadataDocument
+  '\n  query ListSystemMetadata($prefix: String) {\n    listSystemMetadata(prefix: $prefix) {\n      ...MetadataInfo\n    }\n  }\n': typeof types.ListSystemMetadataDocument
+  '\n  query GetSystemMetadata($key: String!) {\n    getSystemMetadata(key: $key) {\n      ...MetadataInfo\n    }\n  }\n': typeof types.GetSystemMetadataDocument
+  '\n  mutation SetUserMetadata($key: String!, $value: String!, $ownerID: String) {\n    setUserMetadata(key: $key, value: $value, ownerID: $ownerID) {\n      ...MetadataInfo\n    }\n  }\n': typeof types.SetUserMetadataDocument
+  '\n  mutation DeleteUserMetadata($key: String!, $ownerID: String) {\n    deleteUserMetadata(key: $key, ownerID: $ownerID)\n  }\n': typeof types.DeleteUserMetadataDocument
+  '\n  mutation SetSystemMetadata($key: String!, $value: String!) {\n    setSystemMetadata(key: $key, value: $value) {\n      ...MetadataInfo\n    }\n  }\n': typeof types.SetSystemMetadataDocument
+  '\n  mutation DeleteSystemMetadata($key: String!) {\n    deleteSystemMetadata(key: $key)\n  }\n': typeof types.DeleteSystemMetadataDocument
   '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n  }\n': typeof types.FileInfoFragmentDoc
   '\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n  }\n': typeof types.FileStatInfoFragmentDoc
   '\n  query ListFiles(\n    $path: String!\n    $offset: Int!\n    $limit: Int!\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        ...FileInfo\n      }\n      totalCount\n    }\n  }\n': typeof types.ListFilesDocument
@@ -27,18 +31,34 @@ type Documents = {
   '\n  mutation UploadFile($path: String!, $content: Upload!) {\n    uploadFile(path: $path, content: $content)\n  }\n': typeof types.UploadFileDocument
   '\n  mutation DeleteFile($path: String!) {\n    deleteFile(path: $path)\n  }\n': typeof types.DeleteFileDocument
   '\n  mutation CreateFolder($path: String!) {\n    createFolder(path: $path)\n  }\n': typeof types.CreateFolderDocument
+  '\n  fragment UserInfo on User {\n    id\n    displayName\n    email\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n': typeof types.UserInfoFragmentDoc
+  '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n': typeof types.MeDocument
+  '\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserInfo\n    }\n  }\n': typeof types.GetUserDocument
+  '\n  query ListUsers($offset: Int = 0, $limit: Int = 20) {\n    users(offset: $offset, limit: $limit) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n': typeof types.ListUsersDocument
+  '\n  mutation UpdateProfile($input: UpdateProfileInput!, $userId: ID) {\n    updateProfile(input: $input, userId: $userId) {\n      ...UserInfo\n    }\n  }\n': typeof types.UpdateProfileDocument
+  '\n  mutation ChangePassword($input: ChangePasswordInput!, $userId: ID) {\n    changePassword(input: $input, userId: $userId)\n  }\n': typeof types.ChangePasswordDocument
+  '\n  mutation DeactivateAccount($userId: ID) {\n    deactivateAccount(userId: $userId)\n  }\n': typeof types.DeactivateAccountDocument
+  '\n  mutation CreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      ...UserInfo\n    }\n  }\n': typeof types.CreateUserDocument
 }
 const documents: Documents = {
-  '\n  fragment MetadataInfo on Metadata {\n    key\n    value\n    createdAt\n    updatedAt\n  }\n':
+  '\n  fragment MetadataInfo on Metadata {\n    key\n    value\n    ownerID\n    createdAt\n    updatedAt\n  }\n':
     types.MetadataInfoFragmentDoc,
-  '\n  query ListMetadata($prefix: String) {\n    listMetadata(prefix: $prefix) {\n      ...MetadataInfo\n    }\n  }\n':
-    types.ListMetadataDocument,
-  '\n  query GetMetadata($key: String!) {\n    getMetadata(key: $key) {\n      ...MetadataInfo\n    }\n  }\n':
-    types.GetMetadataDocument,
-  '\n  mutation SetMetadata($key: String!, $value: String!) {\n    setMetadata(key: $key, value: $value) {\n      ...MetadataInfo\n    }\n  }\n':
-    types.SetMetadataDocument,
-  '\n  mutation DeleteMetadata($key: String!) {\n    deleteMetadata(key: $key)\n  }\n':
-    types.DeleteMetadataDocument,
+  '\n  query ListUserMetadata($prefix: String, $ownerID: String) {\n    listUserMetadata(prefix: $prefix, ownerID: $ownerID) {\n      ...MetadataInfo\n    }\n  }\n':
+    types.ListUserMetadataDocument,
+  '\n  query GetUserMetadata($key: String!, $ownerID: String) {\n    getUserMetadata(key: $key, ownerID: $ownerID) {\n      ...MetadataInfo\n    }\n  }\n':
+    types.GetUserMetadataDocument,
+  '\n  query ListSystemMetadata($prefix: String) {\n    listSystemMetadata(prefix: $prefix) {\n      ...MetadataInfo\n    }\n  }\n':
+    types.ListSystemMetadataDocument,
+  '\n  query GetSystemMetadata($key: String!) {\n    getSystemMetadata(key: $key) {\n      ...MetadataInfo\n    }\n  }\n':
+    types.GetSystemMetadataDocument,
+  '\n  mutation SetUserMetadata($key: String!, $value: String!, $ownerID: String) {\n    setUserMetadata(key: $key, value: $value, ownerID: $ownerID) {\n      ...MetadataInfo\n    }\n  }\n':
+    types.SetUserMetadataDocument,
+  '\n  mutation DeleteUserMetadata($key: String!, $ownerID: String) {\n    deleteUserMetadata(key: $key, ownerID: $ownerID)\n  }\n':
+    types.DeleteUserMetadataDocument,
+  '\n  mutation SetSystemMetadata($key: String!, $value: String!) {\n    setSystemMetadata(key: $key, value: $value) {\n      ...MetadataInfo\n    }\n  }\n':
+    types.SetSystemMetadataDocument,
+  '\n  mutation DeleteSystemMetadata($key: String!) {\n    deleteSystemMetadata(key: $key)\n  }\n':
+    types.DeleteSystemMetadataDocument,
   '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n  }\n':
     types.FileInfoFragmentDoc,
   '\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n  }\n':
@@ -53,6 +73,21 @@ const documents: Documents = {
     types.DeleteFileDocument,
   '\n  mutation CreateFolder($path: String!) {\n    createFolder(path: $path)\n  }\n':
     types.CreateFolderDocument,
+  '\n  fragment UserInfo on User {\n    id\n    displayName\n    email\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n':
+    types.UserInfoFragmentDoc,
+  '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n': types.MeDocument,
+  '\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserInfo\n    }\n  }\n':
+    types.GetUserDocument,
+  '\n  query ListUsers($offset: Int = 0, $limit: Int = 20) {\n    users(offset: $offset, limit: $limit) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n':
+    types.ListUsersDocument,
+  '\n  mutation UpdateProfile($input: UpdateProfileInput!, $userId: ID) {\n    updateProfile(input: $input, userId: $userId) {\n      ...UserInfo\n    }\n  }\n':
+    types.UpdateProfileDocument,
+  '\n  mutation ChangePassword($input: ChangePasswordInput!, $userId: ID) {\n    changePassword(input: $input, userId: $userId)\n  }\n':
+    types.ChangePasswordDocument,
+  '\n  mutation DeactivateAccount($userId: ID) {\n    deactivateAccount(userId: $userId)\n  }\n':
+    types.DeactivateAccountDocument,
+  '\n  mutation CreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      ...UserInfo\n    }\n  }\n':
+    types.CreateUserDocument,
 }
 
 /**
@@ -73,32 +108,56 @@ export function gql(source: string): unknown
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  fragment MetadataInfo on Metadata {\n    key\n    value\n    createdAt\n    updatedAt\n  }\n',
-): (typeof documents)['\n  fragment MetadataInfo on Metadata {\n    key\n    value\n    createdAt\n    updatedAt\n  }\n']
+  source: '\n  fragment MetadataInfo on Metadata {\n    key\n    value\n    ownerID\n    createdAt\n    updatedAt\n  }\n',
+): (typeof documents)['\n  fragment MetadataInfo on Metadata {\n    key\n    value\n    ownerID\n    createdAt\n    updatedAt\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query ListMetadata($prefix: String) {\n    listMetadata(prefix: $prefix) {\n      ...MetadataInfo\n    }\n  }\n',
-): (typeof documents)['\n  query ListMetadata($prefix: String) {\n    listMetadata(prefix: $prefix) {\n      ...MetadataInfo\n    }\n  }\n']
+  source: '\n  query ListUserMetadata($prefix: String, $ownerID: String) {\n    listUserMetadata(prefix: $prefix, ownerID: $ownerID) {\n      ...MetadataInfo\n    }\n  }\n',
+): (typeof documents)['\n  query ListUserMetadata($prefix: String, $ownerID: String) {\n    listUserMetadata(prefix: $prefix, ownerID: $ownerID) {\n      ...MetadataInfo\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query GetMetadata($key: String!) {\n    getMetadata(key: $key) {\n      ...MetadataInfo\n    }\n  }\n',
-): (typeof documents)['\n  query GetMetadata($key: String!) {\n    getMetadata(key: $key) {\n      ...MetadataInfo\n    }\n  }\n']
+  source: '\n  query GetUserMetadata($key: String!, $ownerID: String) {\n    getUserMetadata(key: $key, ownerID: $ownerID) {\n      ...MetadataInfo\n    }\n  }\n',
+): (typeof documents)['\n  query GetUserMetadata($key: String!, $ownerID: String) {\n    getUserMetadata(key: $key, ownerID: $ownerID) {\n      ...MetadataInfo\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation SetMetadata($key: String!, $value: String!) {\n    setMetadata(key: $key, value: $value) {\n      ...MetadataInfo\n    }\n  }\n',
-): (typeof documents)['\n  mutation SetMetadata($key: String!, $value: String!) {\n    setMetadata(key: $key, value: $value) {\n      ...MetadataInfo\n    }\n  }\n']
+  source: '\n  query ListSystemMetadata($prefix: String) {\n    listSystemMetadata(prefix: $prefix) {\n      ...MetadataInfo\n    }\n  }\n',
+): (typeof documents)['\n  query ListSystemMetadata($prefix: String) {\n    listSystemMetadata(prefix: $prefix) {\n      ...MetadataInfo\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation DeleteMetadata($key: String!) {\n    deleteMetadata(key: $key)\n  }\n',
-): (typeof documents)['\n  mutation DeleteMetadata($key: String!) {\n    deleteMetadata(key: $key)\n  }\n']
+  source: '\n  query GetSystemMetadata($key: String!) {\n    getSystemMetadata(key: $key) {\n      ...MetadataInfo\n    }\n  }\n',
+): (typeof documents)['\n  query GetSystemMetadata($key: String!) {\n    getSystemMetadata(key: $key) {\n      ...MetadataInfo\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation SetUserMetadata($key: String!, $value: String!, $ownerID: String) {\n    setUserMetadata(key: $key, value: $value, ownerID: $ownerID) {\n      ...MetadataInfo\n    }\n  }\n',
+): (typeof documents)['\n  mutation SetUserMetadata($key: String!, $value: String!, $ownerID: String) {\n    setUserMetadata(key: $key, value: $value, ownerID: $ownerID) {\n      ...MetadataInfo\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation DeleteUserMetadata($key: String!, $ownerID: String) {\n    deleteUserMetadata(key: $key, ownerID: $ownerID)\n  }\n',
+): (typeof documents)['\n  mutation DeleteUserMetadata($key: String!, $ownerID: String) {\n    deleteUserMetadata(key: $key, ownerID: $ownerID)\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation SetSystemMetadata($key: String!, $value: String!) {\n    setSystemMetadata(key: $key, value: $value) {\n      ...MetadataInfo\n    }\n  }\n',
+): (typeof documents)['\n  mutation SetSystemMetadata($key: String!, $value: String!) {\n    setSystemMetadata(key: $key, value: $value) {\n      ...MetadataInfo\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation DeleteSystemMetadata($key: String!) {\n    deleteSystemMetadata(key: $key)\n  }\n',
+): (typeof documents)['\n  mutation DeleteSystemMetadata($key: String!) {\n    deleteSystemMetadata(key: $key)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -141,6 +200,54 @@ export function gql(
 export function gql(
   source: '\n  mutation CreateFolder($path: String!) {\n    createFolder(path: $path)\n  }\n',
 ): (typeof documents)['\n  mutation CreateFolder($path: String!) {\n    createFolder(path: $path)\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  fragment UserInfo on User {\n    id\n    displayName\n    email\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n',
+): (typeof documents)['\n  fragment UserInfo on User {\n    id\n    displayName\n    email\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n',
+): (typeof documents)['\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserInfo\n    }\n  }\n',
+): (typeof documents)['\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserInfo\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  query ListUsers($offset: Int = 0, $limit: Int = 20) {\n    users(offset: $offset, limit: $limit) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n',
+): (typeof documents)['\n  query ListUsers($offset: Int = 0, $limit: Int = 20) {\n    users(offset: $offset, limit: $limit) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation UpdateProfile($input: UpdateProfileInput!, $userId: ID) {\n    updateProfile(input: $input, userId: $userId) {\n      ...UserInfo\n    }\n  }\n',
+): (typeof documents)['\n  mutation UpdateProfile($input: UpdateProfileInput!, $userId: ID) {\n    updateProfile(input: $input, userId: $userId) {\n      ...UserInfo\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation ChangePassword($input: ChangePasswordInput!, $userId: ID) {\n    changePassword(input: $input, userId: $userId)\n  }\n',
+): (typeof documents)['\n  mutation ChangePassword($input: ChangePasswordInput!, $userId: ID) {\n    changePassword(input: $input, userId: $userId)\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation DeactivateAccount($userId: ID) {\n    deactivateAccount(userId: $userId)\n  }\n',
+): (typeof documents)['\n  mutation DeactivateAccount($userId: ID) {\n    deactivateAccount(userId: $userId)\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation CreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      ...UserInfo\n    }\n  }\n',
+): (typeof documents)['\n  mutation CreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      ...UserInfo\n    }\n  }\n']
 
 export function gql(source: string) {
   return (documents as any)[source] ?? {}
