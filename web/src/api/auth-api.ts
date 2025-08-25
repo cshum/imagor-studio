@@ -1,6 +1,10 @@
-import { authManager } from '@/lib/graphql-client'
-
 export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface RegisterRequest {
+  displayName: string
   email: string
   password: string
 }
@@ -8,128 +12,121 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string
   expiresIn: number
+  user: {
+    id: string
+    displayName: string
+    email: string
+    role: string
+  }
+}
+
+export interface FirstRunResponse {
+  isFirstRun: boolean
+  timestamp: number
 }
 
 export interface RefreshTokenRequest {
   token: string
 }
 
+const API_BASE = 'http://localhost:8080'
+
 /**
- * Development login - creates a token for testing
- * In production, this should validate credentials against a user database
+ * Check if this is the first run (no admin exists)
  */
-export const devLogin = async (credentials: LoginRequest): Promise<LoginResponse> => {
-  try {
-    const response = await fetch('http://localhost:8080/auth/dev-login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
-    }
-
-    const data: LoginResponse = await response.json()
-
-    // Store tokens in auth manager
-    authManager.setTokens({
-      accessToken: data.token,
-      expiresIn: Date.now() + data.expiresIn * 1000, // Convert to timestamp
-    })
-
-    return data
-  } catch (error) {
-    console.error('Login failed:', error)
-    throw error instanceof Error ? error : new Error('Login failed')
+export async function checkFirstRun(): Promise<FirstRunResponse> {
+  const response = await fetch(`${API_BASE}/auth/first-run`)
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
   }
+  return response.json()
 }
 
 /**
- * Refresh an existing token
+ * Register the first admin user
  */
-export const refreshToken = async (): Promise<LoginResponse> => {
-  const currentToken = authManager.getAccessToken()
+export async function registerAdmin(credentials: RegisterRequest): Promise<LoginResponse> {
+  const response = await fetch(`${API_BASE}/auth/register-admin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials),
+  })
 
-  if (!currentToken) {
-    throw new Error('No token available to refresh')
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
   }
 
-  try {
-    const response = await fetch('http://localhost:8080/auth/refresh', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token: currentToken }),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
-    }
-
-    const data: LoginResponse = await response.json()
-
-    // Update tokens in auth manager
-    authManager.setTokens({
-      accessToken: data.token,
-      expiresIn: Date.now() + data.expiresIn * 1000, // Convert to timestamp
-    })
-
-    return data
-  } catch (error) {
-    console.error('Token refresh failed:', error)
-    // Clear invalid tokens
-    authManager.clearTokens()
-    throw error instanceof Error ? error : new Error('Token refresh failed')
-  }
+  return response.json()
 }
 
 /**
- * Logout user by clearing tokens
+ * Register a new user
  */
-export const logout = async (): Promise<void> => {
-  authManager.clearTokens()
+export async function register(credentials: RegisterRequest): Promise<LoginResponse> {
+  const response = await fetch(`${API_BASE}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+  }
+
+  return response.json()
 }
 
 /**
- * Check if user is authenticated
+ * Login with email and password
  */
-export const isAuthenticated = (): boolean => {
-  return authManager.isAuthenticated() && !authManager.isTokenExpired()
+export async function login(credentials: LoginRequest): Promise<LoginResponse> {
+  const response = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+  }
+
+  return response.json()
 }
 
 /**
- * Get current access token
+ * Login as guest
  */
-export const getAccessToken = (): string | null => {
-  if (authManager.isTokenExpired()) {
-    return null
+export async function guestLogin(): Promise<LoginResponse> {
+  const response = await fetch(`${API_BASE}/auth/guest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
   }
-  return authManager.getAccessToken()
+
+  return response.json()
 }
 
 /**
- * Auto-refresh token if it's about to expire
+ * Refresh access token
  */
-export const ensureValidToken = async (): Promise<string | null> => {
-  if (!authManager.isAuthenticated()) {
-    return null
+export async function refreshToken(token: string): Promise<LoginResponse> {
+  const response = await fetch(`${API_BASE}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
   }
 
-  if (authManager.isTokenExpired()) {
-    try {
-      await refreshToken()
-      return authManager.getAccessToken()
-    } catch (error) {
-      console.warn('Auto token refresh failed:', error)
-      return null
-    }
-  }
-
-  return authManager.getAccessToken()
+  return response.json()
 }
