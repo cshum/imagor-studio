@@ -57,6 +57,7 @@ export const StatFileQuery = gql(`
   }
 `)
 
+// Mutations
 export const UploadFileMutation = gql(`
   mutation UploadFile($path: String!, $content: Upload!) {
     uploadFile(path: $path, content: $content)

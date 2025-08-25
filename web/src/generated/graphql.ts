@@ -23,6 +23,18 @@ export type Scalars = {
   Upload: { input: File; output: File }
 }
 
+export type ChangePasswordInput = {
+  currentPassword: InputMaybe<Scalars['String']['input']>
+  newPassword: Scalars['String']['input']
+}
+
+export type CreateUserInput = {
+  displayName: Scalars['String']['input']
+  email: Scalars['String']['input']
+  password: Scalars['String']['input']
+  role: Scalars['String']['input']
+}
+
 export type FileItem = {
   __typename?: 'FileItem'
   isDirectory: Scalars['Boolean']['output']
@@ -51,34 +63,70 @@ export type Metadata = {
   __typename?: 'Metadata'
   createdAt: Scalars['String']['output']
   key: Scalars['String']['output']
+  ownerID: Scalars['String']['output']
   updatedAt: Scalars['String']['output']
   value: Scalars['String']['output']
 }
 
 export type Mutation = {
   __typename?: 'Mutation'
+  changePassword: Scalars['Boolean']['output']
   createFolder: Scalars['Boolean']['output']
+  createUser: User
+  deactivateAccount: Scalars['Boolean']['output']
   deleteFile: Scalars['Boolean']['output']
-  deleteMetadata: Scalars['Boolean']['output']
-  setMetadata: Metadata
+  deleteSystemMetadata: Scalars['Boolean']['output']
+  deleteUserMetadata: Scalars['Boolean']['output']
+  setSystemMetadata: Metadata
+  setUserMetadata: Metadata
+  updateProfile: User
   uploadFile: Scalars['Boolean']['output']
+}
+
+export type MutationChangePasswordArgs = {
+  input: ChangePasswordInput
+  userId?: InputMaybe<Scalars['ID']['input']>
 }
 
 export type MutationCreateFolderArgs = {
   path: Scalars['String']['input']
 }
 
+export type MutationCreateUserArgs = {
+  input: CreateUserInput
+}
+
+export type MutationDeactivateAccountArgs = {
+  userId?: InputMaybe<Scalars['ID']['input']>
+}
+
 export type MutationDeleteFileArgs = {
   path: Scalars['String']['input']
 }
 
-export type MutationDeleteMetadataArgs = {
+export type MutationDeleteSystemMetadataArgs = {
   key: Scalars['String']['input']
 }
 
-export type MutationSetMetadataArgs = {
+export type MutationDeleteUserMetadataArgs = {
+  key: Scalars['String']['input']
+  ownerID?: InputMaybe<Scalars['String']['input']>
+}
+
+export type MutationSetSystemMetadataArgs = {
   key: Scalars['String']['input']
   value: Scalars['String']['input']
+}
+
+export type MutationSetUserMetadataArgs = {
+  key: Scalars['String']['input']
+  ownerID?: InputMaybe<Scalars['String']['input']>
+  value: Scalars['String']['input']
+}
+
+export type MutationUpdateProfileArgs = {
+  input: UpdateProfileInput
+  userId?: InputMaybe<Scalars['ID']['input']>
 }
 
 export type MutationUploadFileArgs = {
@@ -88,14 +136,24 @@ export type MutationUploadFileArgs = {
 
 export type Query = {
   __typename?: 'Query'
-  getMetadata: Maybe<Metadata>
+  getSystemMetadata: Maybe<Metadata>
+  getUserMetadata: Maybe<Metadata>
   listFiles: FileList
-  listMetadata: Array<Metadata>
+  listSystemMetadata: Array<Metadata>
+  listUserMetadata: Array<Metadata>
+  me: Maybe<User>
   statFile: Maybe<FileStat>
+  user: Maybe<User>
+  users: UserList
 }
 
-export type QueryGetMetadataArgs = {
+export type QueryGetSystemMetadataArgs = {
   key: Scalars['String']['input']
+}
+
+export type QueryGetUserMetadataArgs = {
+  key: Scalars['String']['input']
+  ownerID?: InputMaybe<Scalars['String']['input']>
 }
 
 export type QueryListFilesArgs = {
@@ -108,7 +166,12 @@ export type QueryListFilesArgs = {
   sortOrder?: InputMaybe<SortOrder>
 }
 
-export type QueryListMetadataArgs = {
+export type QueryListSystemMetadataArgs = {
+  prefix?: InputMaybe<Scalars['String']['input']>
+}
+
+export type QueryListUserMetadataArgs = {
+  ownerID?: InputMaybe<Scalars['String']['input']>
   prefix?: InputMaybe<Scalars['String']['input']>
 }
 
@@ -116,69 +179,166 @@ export type QueryStatFileArgs = {
   path: Scalars['String']['input']
 }
 
+export type QueryUserArgs = {
+  id: Scalars['ID']['input']
+}
+
+export type QueryUsersArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>
+  offset?: InputMaybe<Scalars['Int']['input']>
+}
+
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
 
 export type SortOrder = 'ASC' | 'DESC'
+
+export type UpdateProfileInput = {
+  displayName: InputMaybe<Scalars['String']['input']>
+  email: InputMaybe<Scalars['String']['input']>
+}
+
+export type User = {
+  __typename?: 'User'
+  createdAt: Scalars['String']['output']
+  displayName: Scalars['String']['output']
+  email: Scalars['String']['output']
+  id: Scalars['ID']['output']
+  isActive: Scalars['Boolean']['output']
+  role: Scalars['String']['output']
+  updatedAt: Scalars['String']['output']
+}
+
+export type UserList = {
+  __typename?: 'UserList'
+  items: Array<User>
+  totalCount: Scalars['Int']['output']
+}
 
 export type MetadataInfoFragment = {
   __typename?: 'Metadata'
   key: string
   value: string
+  ownerID: string
   createdAt: string
   updatedAt: string
 }
 
-export type ListMetadataQueryVariables = Exact<{
+export type ListUserMetadataQueryVariables = Exact<{
   prefix?: InputMaybe<Scalars['String']['input']>
+  ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
-export type ListMetadataQuery = {
+export type ListUserMetadataQuery = {
   __typename?: 'Query'
-  listMetadata: Array<{
+  listUserMetadata: Array<{
     __typename?: 'Metadata'
     key: string
     value: string
+    ownerID: string
     createdAt: string
     updatedAt: string
   }>
 }
 
-export type GetMetadataQueryVariables = Exact<{
+export type GetUserMetadataQueryVariables = Exact<{
   key: Scalars['String']['input']
+  ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
-export type GetMetadataQuery = {
+export type GetUserMetadataQuery = {
   __typename?: 'Query'
-  getMetadata: {
+  getUserMetadata: {
     __typename?: 'Metadata'
     key: string
     value: string
+    ownerID: string
     createdAt: string
     updatedAt: string
   } | null
 }
 
-export type SetMetadataMutationVariables = Exact<{
-  key: Scalars['String']['input']
-  value: Scalars['String']['input']
+export type ListSystemMetadataQueryVariables = Exact<{
+  prefix?: InputMaybe<Scalars['String']['input']>
 }>
 
-export type SetMetadataMutation = {
-  __typename?: 'Mutation'
-  setMetadata: {
+export type ListSystemMetadataQuery = {
+  __typename?: 'Query'
+  listSystemMetadata: Array<{
     __typename?: 'Metadata'
     key: string
     value: string
+    ownerID: string
+    createdAt: string
+    updatedAt: string
+  }>
+}
+
+export type GetSystemMetadataQueryVariables = Exact<{
+  key: Scalars['String']['input']
+}>
+
+export type GetSystemMetadataQuery = {
+  __typename?: 'Query'
+  getSystemMetadata: {
+    __typename?: 'Metadata'
+    key: string
+    value: string
+    ownerID: string
+    createdAt: string
+    updatedAt: string
+  } | null
+}
+
+export type SetUserMetadataMutationVariables = Exact<{
+  key: Scalars['String']['input']
+  value: Scalars['String']['input']
+  ownerID?: InputMaybe<Scalars['String']['input']>
+}>
+
+export type SetUserMetadataMutation = {
+  __typename?: 'Mutation'
+  setUserMetadata: {
+    __typename?: 'Metadata'
+    key: string
+    value: string
+    ownerID: string
     createdAt: string
     updatedAt: string
   }
 }
 
-export type DeleteMetadataMutationVariables = Exact<{
+export type DeleteUserMetadataMutationVariables = Exact<{
+  key: Scalars['String']['input']
+  ownerID?: InputMaybe<Scalars['String']['input']>
+}>
+
+export type DeleteUserMetadataMutation = { __typename?: 'Mutation'; deleteUserMetadata: boolean }
+
+export type SetSystemMetadataMutationVariables = Exact<{
+  key: Scalars['String']['input']
+  value: Scalars['String']['input']
+}>
+
+export type SetSystemMetadataMutation = {
+  __typename?: 'Mutation'
+  setSystemMetadata: {
+    __typename?: 'Metadata'
+    key: string
+    value: string
+    ownerID: string
+    createdAt: string
+    updatedAt: string
+  }
+}
+
+export type DeleteSystemMetadataMutationVariables = Exact<{
   key: Scalars['String']['input']
 }>
 
-export type DeleteMetadataMutation = { __typename?: 'Mutation'; deleteMetadata: boolean }
+export type DeleteSystemMetadataMutation = {
+  __typename?: 'Mutation'
+  deleteSystemMetadata: boolean
+}
 
 export type FileInfoFragment = {
   __typename?: 'FileItem'
@@ -259,6 +419,124 @@ export type CreateFolderMutationVariables = Exact<{
 
 export type CreateFolderMutation = { __typename?: 'Mutation'; createFolder: boolean }
 
+export type UserInfoFragment = {
+  __typename?: 'User'
+  id: string
+  displayName: string
+  email: string
+  role: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type MeQueryVariables = Exact<{ [key: string]: never }>
+
+export type MeQuery = {
+  __typename?: 'Query'
+  me: {
+    __typename?: 'User'
+    id: string
+    displayName: string
+    email: string
+    role: string
+    isActive: boolean
+    createdAt: string
+    updatedAt: string
+  } | null
+}
+
+export type GetUserQueryVariables = Exact<{
+  id: Scalars['ID']['input']
+}>
+
+export type GetUserQuery = {
+  __typename?: 'Query'
+  user: {
+    __typename?: 'User'
+    id: string
+    displayName: string
+    email: string
+    role: string
+    isActive: boolean
+    createdAt: string
+    updatedAt: string
+  } | null
+}
+
+export type ListUsersQueryVariables = Exact<{
+  offset?: InputMaybe<Scalars['Int']['input']>
+  limit?: InputMaybe<Scalars['Int']['input']>
+}>
+
+export type ListUsersQuery = {
+  __typename?: 'Query'
+  users: {
+    __typename?: 'UserList'
+    totalCount: number
+    items: Array<{
+      __typename?: 'User'
+      id: string
+      displayName: string
+      email: string
+      role: string
+      isActive: boolean
+      createdAt: string
+      updatedAt: string
+    }>
+  }
+}
+
+export type UpdateProfileMutationVariables = Exact<{
+  input: UpdateProfileInput
+  userId?: InputMaybe<Scalars['ID']['input']>
+}>
+
+export type UpdateProfileMutation = {
+  __typename?: 'Mutation'
+  updateProfile: {
+    __typename?: 'User'
+    id: string
+    displayName: string
+    email: string
+    role: string
+    isActive: boolean
+    createdAt: string
+    updatedAt: string
+  }
+}
+
+export type ChangePasswordMutationVariables = Exact<{
+  input: ChangePasswordInput
+  userId?: InputMaybe<Scalars['ID']['input']>
+}>
+
+export type ChangePasswordMutation = { __typename?: 'Mutation'; changePassword: boolean }
+
+export type DeactivateAccountMutationVariables = Exact<{
+  userId?: InputMaybe<Scalars['ID']['input']>
+}>
+
+export type DeactivateAccountMutation = { __typename?: 'Mutation'; deactivateAccount: boolean }
+
+export type CreateUserMutationVariables = Exact<{
+  input: CreateUserInput
+}>
+
+export type CreateUserMutation = {
+  __typename?: 'Mutation'
+  createUser: {
+    __typename?: 'User'
+    id: string
+    displayName: string
+    email: string
+    role: string
+    isActive: boolean
+    createdAt: string
+    updatedAt: string
+  }
+}
+
 export const MetadataInfoFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -271,6 +549,7 @@ export const MetadataInfoFragmentDoc = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
@@ -318,13 +597,166 @@ export const FileStatInfoFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<FileStatInfoFragment, unknown>
-export const ListMetadataDocument = {
+export const UserInfoFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'UserInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'User' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UserInfoFragment, unknown>
+export const ListUserMetadataDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'query',
-      name: { kind: 'Name', value: 'ListMetadata' },
+      name: { kind: 'Name', value: 'ListUserMetadata' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'prefix' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ownerID' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'listUserMetadata' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'prefix' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'prefix' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ownerID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ownerID' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'MetadataInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ListUserMetadataQuery, ListUserMetadataQueryVariables>
+export const GetUserMetadataDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetUserMetadata' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ownerID' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getUserMetadata' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'key' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ownerID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ownerID' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'MetadataInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetUserMetadataQuery, GetUserMetadataQueryVariables>
+export const ListSystemMetadataDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ListSystemMetadata' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -337,7 +769,7 @@ export const ListMetadataDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'listMetadata' },
+            name: { kind: 'Name', value: 'listSystemMetadata' },
             arguments: [
               {
                 kind: 'Argument',
@@ -364,20 +796,21 @@ export const ListMetadataDocument = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
       },
     },
   ],
-} as unknown as DocumentNode<ListMetadataQuery, ListMetadataQueryVariables>
-export const GetMetadataDocument = {
+} as unknown as DocumentNode<ListSystemMetadataQuery, ListSystemMetadataQueryVariables>
+export const GetSystemMetadataDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'query',
-      name: { kind: 'Name', value: 'GetMetadata' },
+      name: { kind: 'Name', value: 'GetSystemMetadata' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -393,7 +826,7 @@ export const GetMetadataDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'getMetadata' },
+            name: { kind: 'Name', value: 'getSystemMetadata' },
             arguments: [
               {
                 kind: 'Argument',
@@ -420,20 +853,147 @@ export const GetMetadataDocument = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
       },
     },
   ],
-} as unknown as DocumentNode<GetMetadataQuery, GetMetadataQueryVariables>
-export const SetMetadataDocument = {
+} as unknown as DocumentNode<GetSystemMetadataQuery, GetSystemMetadataQueryVariables>
+export const SetUserMetadataDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'mutation',
-      name: { kind: 'Name', value: 'SetMetadata' },
+      name: { kind: 'Name', value: 'SetUserMetadata' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'value' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ownerID' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'setUserMetadata' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'key' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'value' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'value' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ownerID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ownerID' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'MetadataInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetUserMetadataMutation, SetUserMetadataMutationVariables>
+export const DeleteUserMetadataDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeleteUserMetadata' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ownerID' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'deleteUserMetadata' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'key' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ownerID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ownerID' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteUserMetadataMutation, DeleteUserMetadataMutationVariables>
+export const SetSystemMetadataDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SetSystemMetadata' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -457,7 +1017,7 @@ export const SetMetadataDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'setMetadata' },
+            name: { kind: 'Name', value: 'setSystemMetadata' },
             arguments: [
               {
                 kind: 'Argument',
@@ -489,20 +1049,21 @@ export const SetMetadataDocument = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
       },
     },
   ],
-} as unknown as DocumentNode<SetMetadataMutation, SetMetadataMutationVariables>
-export const DeleteMetadataDocument = {
+} as unknown as DocumentNode<SetSystemMetadataMutation, SetSystemMetadataMutationVariables>
+export const DeleteSystemMetadataDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'mutation',
-      name: { kind: 'Name', value: 'DeleteMetadata' },
+      name: { kind: 'Name', value: 'DeleteSystemMetadata' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -518,7 +1079,7 @@ export const DeleteMetadataDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'deleteMetadata' },
+            name: { kind: 'Name', value: 'deleteSystemMetadata' },
             arguments: [
               {
                 kind: 'Argument',
@@ -531,7 +1092,7 @@ export const DeleteMetadataDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<DeleteMetadataMutation, DeleteMetadataMutationVariables>
+} as unknown as DocumentNode<DeleteSystemMetadataMutation, DeleteSystemMetadataMutationVariables>
 export const ListFilesDocument = {
   kind: 'Document',
   definitions: [
@@ -843,3 +1404,381 @@ export const CreateFolderDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateFolderMutation, CreateFolderMutationVariables>
+export const MeDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'Me' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'me' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'UserInfo' } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'UserInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'User' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MeQuery, MeQueryVariables>
+export const GetUserDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetUser' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'user' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'UserInfo' } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'UserInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'User' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetUserQuery, GetUserQueryVariables>
+export const ListUsersDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ListUsers' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'offset' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          defaultValue: { kind: 'IntValue', value: '0' },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          defaultValue: { kind: 'IntValue', value: '20' },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'users' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'offset' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'offset' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'limit' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'items' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'UserInfo' } },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'UserInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'User' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ListUsersQuery, ListUsersQueryVariables>
+export const UpdateProfileDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateProfile' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'UpdateProfileInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updateProfile' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'userId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'UserInfo' } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'UserInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'User' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateProfileMutation, UpdateProfileMutationVariables>
+export const ChangePasswordDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ChangePassword' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ChangePasswordInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'changePassword' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'userId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ChangePasswordMutation, ChangePasswordMutationVariables>
+export const DeactivateAccountDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeactivateAccount' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'deactivateAccount' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'userId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeactivateAccountMutation, DeactivateAccountMutationVariables>
+export const CreateUserDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateUser' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CreateUserInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'createUser' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'UserInfo' } }],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'UserInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'User' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateUserMutation, CreateUserMutationVariables>
