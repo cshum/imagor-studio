@@ -98,7 +98,7 @@ func New(cfg *config.Config) (*Server, error) {
 	gqlHandler.Use(extension.Introspection{})
 
 	// Create auth handler
-	authHandler := httphandler.NewAuthHandler(tokenManager, userStore, cfg.Logger)
+	authHandler := httphandler.NewAuthHandler(tokenManager, userStore, metadataStore, cfg.Logger)
 
 	// Create middleware chain
 	mux := http.NewServeMux()

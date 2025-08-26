@@ -9,6 +9,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/metadatastore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/internal/uuid"
 	"github.com/cshum/imagor-studio/server/internal/validation"
@@ -16,16 +17,18 @@ import (
 )
 
 type AuthHandler struct {
-	tokenManager *auth.TokenManager
-	userStore    userstore.Store
-	logger       *zap.Logger
+	tokenManager  *auth.TokenManager
+	userStore     userstore.Store
+	metadataStore metadatastore.Store
+	logger        *zap.Logger
 }
 
-func NewAuthHandler(tokenManager *auth.TokenManager, userStore userstore.Store, logger *zap.Logger) *AuthHandler {
+func NewAuthHandler(tokenManager *auth.TokenManager, userStore userstore.Store, metadataStore metadatastore.Store, logger *zap.Logger) *AuthHandler {
 	return &AuthHandler{
-		tokenManager: tokenManager,
-		userStore:    userStore,
-		logger:       logger,
+		tokenManager:  tokenManager,
+		userStore:     userStore,
+		metadataStore: metadataStore,
+		logger:        logger,
 	}
 }
 
@@ -33,6 +36,13 @@ type RegisterRequest struct {
 	DisplayName string `json:"displayName"`
 	Email       string `json:"email"`
 	Password    string `json:"password"`
+}
+
+type RegisterAdminRequest struct {
+	DisplayName     string `json:"displayName"`
+	Email           string `json:"email"`
+	Password        string `json:"password"`
+	EnableGuestMode *bool  `json:"enableGuestMode,omitempty"`
 }
 
 type LoginRequest struct {
@@ -79,7 +89,7 @@ func (h *AuthHandler) CheckFirstRun() http.HandlerFunc {
 
 func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
-		var req RegisterRequest
+		var req RegisterAdminRequest
 		if err := DecodeJSON(r, &req); err != nil {
 			return err
 		}
@@ -97,9 +107,31 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 				nil)
 		}
 
-		response, err := h.createUser(r.Context(), req, "admin")
+		// Convert to RegisterRequest for user creation
+		userReq := RegisterRequest{
+			DisplayName: req.DisplayName,
+			Email:       req.Email,
+			Password:    req.Password,
+		}
+
+		response, err := h.createUser(r.Context(), userReq, "admin")
 		if err != nil {
 			return err
+		}
+
+		// Set guest mode system metadata if provided
+		if req.EnableGuestMode != nil {
+			guestModeValue := "false"
+			if *req.EnableGuestMode {
+				guestModeValue = "true"
+			}
+
+			_, err = h.metadataStore.Set(r.Context(), "system", "enableGuestMode", guestModeValue)
+			if err != nil {
+				h.logger.Warn("Admin user created but guest mode setting failed to save", zap.Error(err))
+			} else {
+				h.logger.Info("Guest mode setting configured", zap.Bool("enabled", *req.EnableGuestMode))
+			}
 		}
 
 		h.logger.Info("First admin user created via API",
@@ -177,6 +209,19 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 
 func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		// Check if guest mode is enabled via system metadata
+		guestModeMetadata, err := h.metadataStore.Get(r.Context(), "system", "enableGuestMode")
+		if err != nil {
+			h.logger.Error("Failed to check guest mode setting", zap.Error(err))
+			return apperror.InternalServerError("Failed to check system configuration")
+		}
+
+		// If enableGuestMode is not set or not "true", block guest login
+		if guestModeMetadata == nil || guestModeMetadata.Value != "true" {
+			return apperror.NewAppError(http.StatusForbidden, apperror.ErrPermissionDenied,
+				"Guest mode is not enabled", nil)
+		}
+
 		guestID := uuid.GenerateUUID()
 
 		token, err := h.tokenManager.GenerateToken(guestID, "guest", []string{"read"})
