@@ -1,5 +1,5 @@
 import { checkFirstRun } from '@/api/auth-api'
-import { getCurrentUser } from '@/api/user-api'
+import { getCurrentUser } from '@/api/user-api.ts'
 import type { MeQuery } from '@/generated/graphql'
 import { createStore } from '@/lib/create-store.ts'
 import { getToken, removeToken, setToken } from '@/lib/token'
@@ -91,7 +91,7 @@ const initAuth = async (accessToken?: string): Promise<Auth> => {
     const currentAccessToken = accessToken || getAuth().accessToken
 
     if (currentAccessToken) {
-      const profile = await getCurrentUser()
+      const profile = await getCurrentUser(currentAccessToken)
       return authStore.dispatch({
         type: 'INIT',
         payload: { accessToken: currentAccessToken, profile },

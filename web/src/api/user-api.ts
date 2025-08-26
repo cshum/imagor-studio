@@ -20,8 +20,8 @@ import { getSdk } from '../generated/graphql-request'
 /**
  * Get current user information
  */
-export async function getCurrentUser(): Promise<MeQuery['me']> {
-  const sdk = getSdk(getGraphQLClient())
+export async function getCurrentUser(token?: string): Promise<MeQuery['me']> {
+  const sdk = getSdk(getGraphQLClient(token))
   const result = await sdk.Me()
   return result.me
 }

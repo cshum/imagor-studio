@@ -8,15 +8,12 @@ export const createGraphQLClient = (token?: string) => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
-
   if (token) {
     headers.Authorization = `Bearer ${token}`
   }
-
   return new GraphQLClient(endpoint, { headers })
 }
 
-export const getGraphQLClient = () => {
-  const auth = getAuth()
-  return createGraphQLClient(auth.accessToken || undefined)
+export const getGraphQLClient = (token?: string) => {
+  return createGraphQLClient(token || getAuth().accessToken || undefined)
 }

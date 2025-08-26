@@ -37,7 +37,8 @@ const API_BASE = 'http://localhost:8080'
 export async function checkFirstRun(): Promise<FirstRunResponse> {
   const response = await fetch(`${API_BASE}/auth/first-run`)
   if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
   }
   return response.json()
 }
