@@ -4,11 +4,11 @@ import type { MeQuery } from '@/generated/graphql'
 import { createStore } from '@/lib/create-store.ts'
 import { getToken, removeToken, setToken } from '@/lib/token'
 
-type UserProfile = MeQuery['me']
+export type UserProfile = MeQuery['me']
 
-type AuthState = 'loading' | 'authenticated' | 'unauthenticated' | 'guest'
+export type AuthState = 'loading' | 'authenticated' | 'unauthenticated' | 'guest'
 
-interface Auth {
+export interface Auth {
   state: AuthState
   accessToken: string | null
   profile: UserProfile | null
@@ -81,12 +81,12 @@ function reducer(state: Auth, action: AuthAction): Auth {
   }
 }
 
-const authStore = createStore(initialState, reducer)
+export const authStore = createStore(initialState, reducer)
 
 /**
  * Initialize auth state from existing token or provided token
  */
-const initAuth = async (accessToken?: string): Promise<Auth> => {
+export const initAuth = async (accessToken?: string): Promise<Auth> => {
   try {
     const currentAccessToken = accessToken || getAuth().accessToken
 
@@ -120,27 +120,27 @@ const initAuth = async (accessToken?: string): Promise<Auth> => {
 /**
  * Logout user
  */
-const logout = async (): Promise<Auth> => {
+export const logout = async (): Promise<Auth> => {
   return authStore.dispatch({ type: 'LOGOUT' })
 }
 
 /**
  * Get current auth state
  */
-const getAuth = (): Auth => {
+export const getAuth = (): Auth => {
   return authStore.getState()
 }
 
 /**
  * Clear auth error
  */
-const clearAuthError = (): Auth => {
+export const clearAuthError = (): Auth => {
   return authStore.dispatch({ type: 'CLEAR_ERROR' })
 }
 
-const useAuthEffect = authStore.useStoreEffect
+export const useAuthEffect = authStore.useStoreEffect
 
-const useAuth = () => {
+export const useAuth = () => {
   const authState = authStore.useStore()
   return {
     authState,
@@ -149,7 +149,3 @@ const useAuth = () => {
     clearAuthError,
   }
 }
-
-export { initAuth, logout, getAuth, clearAuthError, useAuth, useAuthEffect }
-
-export type { Auth, UserProfile }

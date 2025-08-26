@@ -222,83 +222,83 @@ class ScrollPositionManager {
 // Global scroll position manager instance
 let scrollPositionManager: ScrollPositionManager | null = null
 
-// Scroll position actions
-export const scrollPositionActions = {
-  /**
-   * Initialize scroll position system with storage
-   */
-  initializeScrollPositions: async (storage: ConfigStorage, saveDelay: number = 300) => {
-    if (!scrollPositionManager) {
-      scrollPositionManager = new ScrollPositionManager(storage, saveDelay)
-      await scrollPositionManager.initialize()
-    }
-  },
+/**
+ * Initialize scroll position system with storage
+ */
+export const initializeScrollPositions = async (
+  storage: ConfigStorage,
+  saveDelay: number = 300,
+) => {
+  if (!scrollPositionManager) {
+    scrollPositionManager = new ScrollPositionManager(storage, saveDelay)
+    await scrollPositionManager.initialize()
+  }
+}
 
-  /**
-   * Set scroll position for a key
-   */
-  setPosition: (key: string, position: number) => {
-    scrollPositionManager?.setPosition(key, position)
-  },
+/**
+ * Set scroll position for a key
+ */
+export const setPosition = (key: string, position: number) => {
+  scrollPositionManager?.setPosition(key, position)
+}
 
-  /**
-   * Set scrolling state for a key
-   */
-  setScrolling: (key: string, isScrolling: boolean) => {
-    scrollPositionManager?.setScrolling(key, isScrolling)
-  },
+/**
+ * Set scrolling state for a key
+ */
+export const setScrolling = (key: string, isScrolling: boolean) => {
+  scrollPositionManager?.setScrolling(key, isScrolling)
+}
 
-  /**
-   * Get scroll position for a key
-   */
-  getPosition: (key: string): number => {
-    return scrollPositionManager?.getPosition(key) || 0
-  },
+/**
+ * Get scroll position for a key
+ */
+export const getPosition = (key: string): number => {
+  return scrollPositionManager?.getPosition(key) || 0
+}
 
-  /**
-   * Check if scrolling for a key
-   */
-  isScrolling: (key: string): boolean => {
-    return scrollPositionManager?.isScrolling(key) || false
-  },
+/**
+ * Check if scrolling for a key
+ */
+export const isScrolling = (key: string): boolean => {
+  return scrollPositionManager?.isScrolling(key) || false
+}
 
-  /**
-   * Clear position for a key
-   */
-  clearPosition: (key: string) => {
-    scrollPositionManager?.clearPosition(key)
-  },
+/**
+ * Clear position for a key
+ */
+export const clearPosition = (key: string) => {
+  scrollPositionManager?.clearPosition(key)
+}
 
-  /**
-   * Clear all positions
-   */
-  clearAllPositions: () => {
-    scrollPositionManager?.clearAllPositions()
-  },
+/**
+ * Clear all positions
+ */
+export const clearAllPositions = () => {
+  scrollPositionManager?.clearAllPositions()
+}
 
-  /**
-   * Force immediate save to storage (bypasses debounce)
-   */
-  forceSave: async () => {
-    await scrollPositionManager?.forceSave()
-  },
+/**
+ * Force immediate save to storage (bypasses debounce)
+ */
+export const forceSave = async () => {
+  await scrollPositionManager?.forceSave()
+}
 
-  /**
-   * Check if scroll positions are loaded
-   */
-  isLoaded: (): boolean => {
-    return scrollPositionStore.getState().isLoaded
-  },
+/**
+ * Check if scroll positions are loaded
+ */
+export const isLoaded = (): boolean => {
+  return scrollPositionStore.getState().isLoaded
+}
 
-  /**
-   * Cleanup scroll position manager
-   */
-  cleanup: () => {
-    if (scrollPositionManager) {
-      scrollPositionManager.cleanup()
-      scrollPositionManager = null
-    }
-  },
+/**
+ * Cleanup scroll position manager
+ */
+export const cleanup = () => {
+  if (scrollPositionManager) {
+    scrollPositionManager.cleanup()
+    scrollPositionManager = null
+  }
 }
 
 // Hook for components to use the scroll position store
@@ -309,6 +309,15 @@ export const useScrollPositions = () => {
     positions: state.positions,
     isScrollingStates: state.isScrolling,
     isStoreLoaded: state.isLoaded,
-    ...scrollPositionActions,
+    initializeScrollPositions,
+    setPosition,
+    setScrolling,
+    getPosition,
+    isScrolling,
+    clearPosition,
+    clearAllPositions,
+    forceSave,
+    isLoaded,
+    cleanup,
   }
 }

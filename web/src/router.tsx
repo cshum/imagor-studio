@@ -14,12 +14,14 @@ import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { AccountPage } from '@/pages/account-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
+import { authStore } from '@/stores/auth-store.ts'
 import { themeStore } from '@/stores/theme-store.ts'
 
 const rootRoute = createRootRoute({
   loader: async () => {
     // Wait for theme to be loaded before rendering
     await themeStore.waitFor((state) => state.isLoaded)
+    await authStore.waitFor((state) => state.state !== 'loading')
     return null
   },
   component: () => (

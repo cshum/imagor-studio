@@ -13,9 +13,7 @@ import { useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
-import { ImagePosition, imagePositionActions } from '@/stores/image-position-store.ts'
-
-const { setPosition } = imagePositionActions
+import { ImagePosition, setPosition } from '@/stores/image-position-store.ts'
 
 export interface GalleryPageProps extends React.PropsWithChildren {
   galleryLoaderData: GalleryLoaderData

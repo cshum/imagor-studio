@@ -150,64 +150,61 @@ class ThemeManager {
 // Global theme manager instance
 let themeManager: ThemeManager | null = null
 
-// Theme actions
-export const themeActions = {
-  /**
-   * Initialize theme system with storage
-   */
-  initializeTheme: async (storage: ConfigStorage, attribute: string = 'class') => {
-    if (themeManager) {
-      themeManager.destroy()
-    }
-    themeManager = new ThemeManager(storage, attribute)
-    await themeManager.initialize()
-  },
+/**
+ * Initialize theme system with storage
+ */
+export const initializeTheme = async (storage: ConfigStorage, attribute: string = 'class') => {
+  if (themeManager) {
+    themeManager.destroy()
+  }
+  themeManager = new ThemeManager(storage, attribute)
+  await themeManager.initialize()
+}
 
-  /**
-   * Set theme
-   */
-  setTheme: async (theme: Theme) => {
-    await themeManager?.setTheme(theme)
-  },
+/**
+ * Set theme
+ */
+export const setTheme = async (theme: Theme) => {
+  await themeManager?.setTheme(theme)
+}
 
-  /**
-   * Get current theme state
-   */
-  getTheme: (): Theme => {
-    return themeStore.getState().theme
-  },
+/**
+ * Get current theme state
+ */
+export const getTheme = (): Theme => {
+  return themeStore.getState().theme
+}
 
-  /**
-   * Get resolved theme (actual applied theme)
-   */
-  getResolvedTheme: (): 'light' | 'dark' => {
-    return themeStore.getState().resolvedTheme
-  },
+/**
+ * Get resolved theme (actual applied theme)
+ */
+export const getResolvedTheme = (): 'light' | 'dark' => {
+  return themeStore.getState().resolvedTheme
+}
 
-  /**
-   * Check if theme is loaded
-   */
-  isLoaded: (): boolean => {
-    return themeStore.getState().isLoaded
-  },
+/**
+ * Check if theme is loaded
+ */
+export const isLoaded = (): boolean => {
+  return themeStore.getState().isLoaded
+}
 
-  /**
-   * Cleanup theme manager
-   */
-  destroy: () => {
-    if (themeManager) {
-      themeManager.destroy()
-      themeManager = null
-    }
-  },
+/**
+ * Cleanup theme manager
+ */
+export const destroy = () => {
+  if (themeManager) {
+    themeManager.destroy()
+    themeManager = null
+  }
+}
 
-  /**
-   * Reset theme to system default and clear storage
-   */
-  resetTheme: async () => {
-    await themeManager?.storage.remove()
-    await themeManager?.setTheme('system')
-  },
+/**
+ * Reset theme to system default and clear storage
+ */
+export const resetTheme = async () => {
+  await themeManager?.storage.remove()
+  await themeManager?.setTheme('system')
 }
 
 // Hook for components to use the theme store
@@ -218,6 +215,6 @@ export const useTheme = () => {
     theme: state.theme,
     resolvedTheme: state.resolvedTheme,
     isLoaded: state.isLoaded,
-    setTheme: themeActions.setTheme,
+    setTheme,
   }
 }
