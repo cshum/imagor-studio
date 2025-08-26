@@ -29,13 +29,13 @@ export interface RefreshTokenRequest {
   token: string
 }
 
-const API_BASE = 'http://localhost:8080'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 /**
  * Check if this is the first run (no admin exists)
  */
 export async function checkFirstRun(): Promise<FirstRunResponse> {
-  const response = await fetch(`${API_BASE}/auth/first-run`)
+  const response = await fetch(`${BASE_URL}/auth/first-run`)
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
     throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
@@ -47,7 +47,7 @@ export async function checkFirstRun(): Promise<FirstRunResponse> {
  * Register the first admin user
  */
 export async function registerAdmin(credentials: RegisterRequest): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE}/auth/register-admin`, {
+  const response = await fetch(`${BASE_URL}/auth/register-admin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(credentials),
@@ -65,7 +65,7 @@ export async function registerAdmin(credentials: RegisterRequest): Promise<Login
  * Register a new user
  */
 export async function register(credentials: RegisterRequest): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE}/auth/register`, {
+  const response = await fetch(`${BASE_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(credentials),
@@ -83,7 +83,7 @@ export async function register(credentials: RegisterRequest): Promise<LoginRespo
  * Login with email and password
  */
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE}/auth/login`, {
+  const response = await fetch(`${BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(credentials),
@@ -101,7 +101,7 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
  * Login as guest
  */
 export async function guestLogin(): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE}/auth/guest`, {
+  const response = await fetch(`${BASE_URL}/auth/guest`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
   })
@@ -118,7 +118,7 @@ export async function guestLogin(): Promise<LoginResponse> {
  * Refresh access token
  */
 export async function refreshToken(token: string): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE}/auth/refresh`, {
+  const response = await fetch(`${BASE_URL}/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token }),

@@ -2,7 +2,7 @@ import { GraphQLClient } from 'graphql-request'
 
 import { getAuth } from '@/stores/auth-store.ts'
 
-const endpoint = 'http://localhost:8080/query'
+const endpoint = `${import.meta.env.VITE_API_BASE_URL}/query`
 
 export const createGraphQLClient = (token?: string) => {
   const headers: Record<string, string> = {

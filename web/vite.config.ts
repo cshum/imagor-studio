@@ -9,4 +9,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // Configure environment file loading
+  envDir: './',
+  envPrefix: 'VITE_',
 })
