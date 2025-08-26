@@ -12,6 +12,7 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { AccountPage } from '@/pages/account-page'
+import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { authStore } from '@/stores/auth-store.ts'
@@ -36,8 +37,22 @@ const rootPath = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: () => {
+    const auth = authStore.useStore()
+
+    // If it's first run, redirect to admin setup
+    if (auth.isFirstRun === true && auth.state === 'unauthenticated') {
+      return <Navigate to='/admin-setup' replace />
+    }
+
+    // Otherwise redirect to gallery
     return <Navigate to='/gallery/$galleryKey' params={{ galleryKey: 'default' }} replace />
   },
+})
+
+const adminSetupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin-setup',
+  component: AdminSetupPage,
 })
 
 const adminPanelLayoutRoute = createRoute({
@@ -107,6 +122,7 @@ const accountPage = createRoute({
 
 const routeTree = rootRoute.addChildren([
   rootPath,
+  adminSetupRoute,
   adminPanelLayoutRoute.addChildren([galleryRoute.addChildren([galleryPage, imagePage])]),
   accountPage,
 ])

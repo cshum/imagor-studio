@@ -1,0 +1,181 @@
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useNavigate } from '@tanstack/react-router'
+import * as z from 'zod'
+
+import { registerAdmin } from '@/api/auth-api'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { initAuth } from '@/stores/auth-store'
+
+const adminSetupSchema = z
+  .object({
+    displayName: z
+      .string()
+      .min(3, 'Display name must be at least 3 characters long')
+      .max(100, 'Display name must be less than 100 characters'),
+    email: z.string().email('Please enter a valid email address'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters long')
+      .max(72, 'Password must be less than 72 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  })
+
+type AdminSetupForm = z.infer<typeof adminSetupSchema>
+
+export function AdminSetupPage() {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
+
+  const form = useForm<AdminSetupForm>({
+    resolver: zodResolver(adminSetupSchema),
+    defaultValues: {
+      displayName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  })
+
+  const onSubmit = async (values: AdminSetupForm) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await registerAdmin({
+        displayName: values.displayName,
+        email: values.email,
+        password: values.password,
+      })
+
+      // Initialize auth with the new token
+      await initAuth(response.token)
+
+      // Navigate to the main gallery
+      navigate({ to: '/gallery/$galleryKey', params: { galleryKey: 'default' } })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create admin account')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className='bg-background flex min-h-screen items-center justify-center p-4'>
+      <Card className='w-full max-w-md'>
+        <CardHeader className='text-center'>
+          <CardTitle className='text-2xl font-bold'>Welcome to Imagor Studio</CardTitle>
+          <CardDescription>
+            Set up your admin account to get started. This is a one-time setup for the first user.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+              <FormField
+                control={form.control}
+                name='displayName'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Display Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder='Enter your display name'
+                        {...field}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='email'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='email'
+                        placeholder='Enter your email address'
+                        {...field}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='password'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='password'
+                        placeholder='Enter your password'
+                        {...field}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='confirmPassword'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='password'
+                        placeholder='Confirm your password'
+                        {...field}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {error && (
+                <div className='text-destructive bg-destructive/10 rounded-md p-3 text-sm'>
+                  {error}
+                </div>
+              )}
+
+              <Button type='submit' className='w-full' disabled={isLoading}>
+                {isLoading ? 'Creating Admin Account...' : 'Create Admin Account'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
