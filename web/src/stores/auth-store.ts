@@ -1,4 +1,4 @@
-import { checkFirstRun } from '@/api/auth-api'
+import { checkFirstRun, guestLogin } from '@/api/auth-api'
 import { getCurrentUser } from '@/api/user-api.ts'
 import type { MeQuery } from '@/generated/graphql'
 import { createStore } from '@/lib/create-store.ts'
@@ -99,14 +99,30 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
     }
 
     // Check if this is first run when no token
+    let isFirstRun = false
     try {
       const firstRunResponse = await checkFirstRun()
+      isFirstRun = firstRunResponse.isFirstRun
       authStore.dispatch({
         type: 'SET_FIRST_RUN',
-        payload: { isFirstRun: firstRunResponse.isFirstRun },
+        payload: { isFirstRun },
       })
     } catch {
       // Ignore first run check failures
+    }
+
+    // If not first run and no token, try guest login
+    if (!isFirstRun) {
+      try {
+        const guestResponse = await guestLogin()
+        const profile = await getCurrentUser(guestResponse.token)
+        return authStore.dispatch({
+          type: 'INIT',
+          payload: { accessToken: guestResponse.token, profile },
+        })
+      } catch {
+        // Guest login failed, remain unauthenticated
+      }
     }
 
     return authStore.dispatch({ type: 'LOGOUT' })

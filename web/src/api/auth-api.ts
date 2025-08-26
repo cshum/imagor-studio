@@ -9,6 +9,13 @@ export interface RegisterRequest {
   password: string
 }
 
+export interface RegisterAdminRequest {
+  displayName: string
+  email: string
+  password: string
+  enableGuestMode?: boolean
+}
+
 export interface LoginResponse {
   token: string
   expiresIn: number
@@ -46,7 +53,7 @@ export async function checkFirstRun(): Promise<FirstRunResponse> {
 /**
  * Register the first admin user
  */
-export async function registerAdmin(credentials: RegisterRequest): Promise<LoginResponse> {
+export async function registerAdmin(credentials: RegisterAdminRequest): Promise<LoginResponse> {
   const response = await fetch(`${BASE_URL}/auth/register-admin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -5,6 +5,7 @@ import {
   createRouter,
   Navigate,
   Outlet,
+  redirect,
   RouterProvider,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
@@ -15,6 +16,7 @@ import { AccountPage } from '@/pages/account-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
+import { LoginPage } from '@/pages/login-page.tsx'
 import { authStore } from '@/stores/auth-store.ts'
 import { themeStore } from '@/stores/theme-store.ts'
 
@@ -37,16 +39,15 @@ const rootPath = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: () => {
-    const auth = authStore.useStore()
-
-    // If it's first run, redirect to admin setup
-    if (auth.isFirstRun === true && auth.state === 'unauthenticated') {
-      return <Navigate to='/admin-setup' replace />
-    }
-
-    // Otherwise redirect to gallery
+    // Always redirect to gallery - AuthenticatedRoute will handle auth logic
     return <Navigate to='/gallery/$galleryKey' params={{ galleryKey: 'default' }} replace />
   },
+})
+
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/login',
+  component: LoginPage,
 })
 
 const adminSetupRoute = createRoute({
@@ -58,6 +59,29 @@ const adminSetupRoute = createRoute({
 const adminPanelLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'admin-panel',
+  beforeLoad: async () => {
+    const auth = authStore.getState()
+
+    // If still loading, wait
+    if (auth.state === 'loading') {
+      await authStore.waitFor((state) => state.state !== 'loading')
+    }
+
+    const currentAuth = authStore.getState()
+
+    // If it's first run, redirect to admin setup
+    if (currentAuth.isFirstRun === true && currentAuth.state === 'unauthenticated') {
+      throw redirect({ to: '/admin-setup' })
+    }
+
+    // If unauthenticated and not first run, redirect to login
+    if (currentAuth.state === 'unauthenticated' && currentAuth.isFirstRun === false) {
+      throw redirect({ to: '/login' })
+    }
+
+    // Allow authenticated or guest users
+    return {}
+  },
   component: () => (
     <AdminPanelLayout hideFooter={true}>
       <Outlet />
@@ -107,6 +131,29 @@ const imagePage = createRoute({
 const accountLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'account-layout',
+  beforeLoad: async () => {
+    const auth = authStore.getState()
+
+    // If still loading, wait
+    if (auth.state === 'loading') {
+      await authStore.waitFor((state) => state.state !== 'loading')
+    }
+
+    const currentAuth = authStore.getState()
+
+    // If it's first run, redirect to admin setup
+    if (currentAuth.isFirstRun === true && currentAuth.state === 'unauthenticated') {
+      throw redirect({ to: '/admin-setup' })
+    }
+
+    // If unauthenticated and not first run, redirect to login
+    if (currentAuth.state === 'unauthenticated' && currentAuth.isFirstRun === false) {
+      throw redirect({ to: '/login' })
+    }
+
+    // Allow authenticated or guest users
+    return {}
+  },
   component: () => (
     <AdminPanelLayout>
       <Outlet />
@@ -122,6 +169,7 @@ const accountPage = createRoute({
 
 const routeTree = rootRoute.addChildren([
   rootPath,
+  loginRoute,
   adminSetupRoute,
   adminPanelLayoutRoute.addChildren([galleryRoute.addChildren([galleryPage, imagePage])]),
   accountPage,
