@@ -90,6 +90,15 @@ type FileItem {
     path: String!
     size: Int!
     isDirectory: Boolean!
+    thumbnailUrls: ThumbnailUrls
+}
+
+type ThumbnailUrls {
+  grid: String
+  preview: String
+  full: String
+  original: String
+  meta: String
 }
 
 type FileStat {

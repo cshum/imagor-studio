@@ -32,10 +32,11 @@ const reducer = (state: ImagePositionState, action: ImagePositionAction): ImageP
       }
 
     case 'CLEAR_POSITION': {
-      const { [action.payload.key]: _, ...remainingPositions } = state.positions
+      const newPositions = { ...state.positions }
+      delete newPositions[action.payload.key]
       return {
         ...state,
-        positions: remainingPositions,
+        positions: newPositions,
       }
     }
 

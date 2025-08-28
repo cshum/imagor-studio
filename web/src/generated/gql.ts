@@ -24,7 +24,7 @@ type Documents = {
   '\n  mutation DeleteUserMetadata($key: String!, $ownerID: String) {\n    deleteUserMetadata(key: $key, ownerID: $ownerID)\n  }\n': typeof types.DeleteUserMetadataDocument
   '\n  mutation SetSystemMetadata($key: String!, $value: String!) {\n    setSystemMetadata(key: $key, value: $value) {\n      ...MetadataInfo\n    }\n  }\n': typeof types.SetSystemMetadataDocument
   '\n  mutation DeleteSystemMetadata($key: String!) {\n    deleteSystemMetadata(key: $key)\n  }\n': typeof types.DeleteSystemMetadataDocument
-  '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n  }\n': typeof types.FileInfoFragmentDoc
+  '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n    thumbnailUrls {\n      grid\n      preview\n      full\n      original\n      meta\n    }\n  }\n': typeof types.FileInfoFragmentDoc
   '\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n  }\n': typeof types.FileStatInfoFragmentDoc
   '\n  query ListFiles(\n    $path: String!\n    $offset: Int!\n    $limit: Int!\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        ...FileInfo\n      }\n      totalCount\n    }\n  }\n': typeof types.ListFilesDocument
   '\n  query StatFile($path: String!) {\n    statFile(path: $path) {\n      ...FileStatInfo\n    }\n  }\n': typeof types.StatFileDocument
@@ -59,7 +59,7 @@ const documents: Documents = {
     types.SetSystemMetadataDocument,
   '\n  mutation DeleteSystemMetadata($key: String!) {\n    deleteSystemMetadata(key: $key)\n  }\n':
     types.DeleteSystemMetadataDocument,
-  '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n  }\n':
+  '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n    thumbnailUrls {\n      grid\n      preview\n      full\n      original\n      meta\n    }\n  }\n':
     types.FileInfoFragmentDoc,
   '\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n  }\n':
     types.FileStatInfoFragmentDoc,
@@ -162,8 +162,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n  }\n',
-): (typeof documents)['\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n  }\n']
+  source: '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n    thumbnailUrls {\n      grid\n      preview\n      full\n      original\n      meta\n    }\n  }\n',
+): (typeof documents)['\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n    thumbnailUrls {\n      grid\n      preview\n      full\n      original\n      meta\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

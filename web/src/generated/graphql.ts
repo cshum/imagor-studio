@@ -41,6 +41,7 @@ export type FileItem = {
   name: Scalars['String']['output']
   path: Scalars['String']['output']
   size: Scalars['Int']['output']
+  thumbnailUrls: Maybe<ThumbnailUrls>
 }
 
 export type FileList = {
@@ -191,6 +192,15 @@ export type QueryUsersArgs = {
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
 
 export type SortOrder = 'ASC' | 'DESC'
+
+export type ThumbnailUrls = {
+  __typename?: 'ThumbnailUrls'
+  full: Maybe<Scalars['String']['output']>
+  grid: Maybe<Scalars['String']['output']>
+  meta: Maybe<Scalars['String']['output']>
+  original: Maybe<Scalars['String']['output']>
+  preview: Maybe<Scalars['String']['output']>
+}
 
 export type UpdateProfileInput = {
   displayName: InputMaybe<Scalars['String']['input']>
@@ -346,6 +356,14 @@ export type FileInfoFragment = {
   path: string
   size: number
   isDirectory: boolean
+  thumbnailUrls: {
+    __typename?: 'ThumbnailUrls'
+    grid: string | null
+    preview: string | null
+    full: string | null
+    original: string | null
+    meta: string | null
+  } | null
 }
 
 export type FileStatInfoFragment = {
@@ -379,6 +397,14 @@ export type ListFilesQuery = {
       path: string
       size: number
       isDirectory: boolean
+      thumbnailUrls: {
+        __typename?: 'ThumbnailUrls'
+        grid: string | null
+        preview: string | null
+        full: string | null
+        original: string | null
+        meta: string | null
+      } | null
     }>
   }
 }
@@ -571,6 +597,20 @@ export const FileInfoFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'path' } },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isDirectory' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'thumbnailUrls' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'grid' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'preview' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'full' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'original' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'meta' } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -1220,6 +1260,20 @@ export const ListFilesDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'path' } },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isDirectory' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'thumbnailUrls' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'grid' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'preview' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'full' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'original' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'meta' } },
+              ],
+            },
+          },
         ],
       },
     },

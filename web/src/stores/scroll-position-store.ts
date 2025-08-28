@@ -42,12 +42,14 @@ const reducer = (state: ScrollPositionState, action: ScrollPositionAction): Scro
       }
 
     case 'CLEAR_POSITION': {
-      const { [action.payload.key]: _, ...remainingPositions } = state.positions
-      const { [action.payload.key]: __, ...remainingScrolling } = state.isScrolling
+      const newPositions = { ...state.positions }
+      const newScrolling = { ...state.isScrolling }
+      delete newPositions[action.payload.key]
+      delete newScrolling[action.payload.key]
       return {
         ...state,
-        positions: remainingPositions,
-        isScrolling: remainingScrolling,
+        positions: newPositions,
+        isScrolling: newScrolling,
       }
     }
 

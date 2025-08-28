@@ -1,0 +1,91 @@
+version: "3.8"
+
+services:
+  # External Imagor service for image processing
+  imagor:
+    image: shumc/imagor:latest
+    container_name: imagor-studio-imagor
+    environment:
+      PORT: 8000
+      IMAGOR_UNSAFE: 1  # Set to 0 and configure IMAGOR_SECRET for production
+      # IMAGOR_SECRET: your-secret-key-here  # Uncomment for production
+
+      # File storage configuration (default)
+      FILE_LOADER_BASE_DIR: /mnt/data
+      FILE_STORAGE_BASE_DIR: /mnt/data
+      FILE_STORAGE_MKDIR_PERMISSION: 0755
+      FILE_STORAGE_WRITE_PERMISSION: 0666
+      FILE_RESULT_STORAGE_BASE_DIR: /mnt/data/result
+      FILE_RESULT_STORAGE_MKDIR_PERMISSION: 0755
+      FILE_RESULT_STORAGE_WRITE_PERMISSION: 0666
+
+      # S3 storage configuration (uncomment to use S3)
+      # AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      # AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      # AWS_REGION: ${AWS_REGION}
+      # S3_LOADER_BUCKET: ${S3_BUCKET}
+      # S3_LOADER_BASE_DIR: images
+      # S3_STORAGE_BUCKET: ${S3_BUCKET}
+      # S3_STORAGE_BASE_DIR: images
+      # S3_STORAGE_ACL: public-read
+      # S3_RESULT_STORAGE_BUCKET: ${S3_BUCKET}
+      # S3_RESULT_STORAGE_BASE_DIR: images/result
+      # S3_RESULT_STORAGE_ACL: public-read
+    volumes:
+      - ./storage:/mnt/data  # Mount local storage directory
+    ports:
+      - "8000:8000"
+    networks:
+      - imagor-studio-network
+
+  # Imagor Studio application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: imagor-studio-app
+    environment:
+      # Server configuration
+      PORT: 8080
+      DB_PATH: /data/storage.db
+      JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-change-in-production}
+      JWT_EXPIRATION: 86400
+
+      # Storage configuration (file storage by default)
+      STORAGE_TYPE: file
+      FILE_BASE_DIR: /data/storage
+      FILE_MKDIR_PERMISSIONS: 0755
+      FILE_WRITE_PERMISSIONS: 0644
+
+      # S3 storage configuration (uncomment to use S3)
+      # STORAGE_TYPE: s3
+      # S3_BUCKET: ${S3_BUCKET}
+      # S3_REGION: ${S3_REGION}
+      # S3_ENDPOINT: ${S3_ENDPOINT}
+      # S3_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      # S3_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      # S3_BASE_DIR: images
+
+      # Imagor configuration (external mode)
+      IMAGOR_MODE: external
+      IMAGOR_URL: http://imagor:8000
+      IMAGOR_UNSAFE: 1  # Set to 0 and configure IMAGOR_SECRET for production
+      # IMAGOR_SECRET: your-secret-key-here  # Uncomment for production
+      IMAGOR_RESULT_STORAGE: true
+    volumes:
+      - ./storage:/data/storage  # Mount local storage directory
+      - ./data:/data  # Mount data directory for database
+    ports:
+      - "8080:8080"
+    depends_on:
+      - imagor
+    networks:
+      - imagor-studio-network
+
+networks:
+  imagor-studio-network:
+    driver: bridge
+
+volumes:
+  storage:
+  data:

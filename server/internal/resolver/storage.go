@@ -7,6 +7,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/imageservice"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"go.uber.org/zap"
 )
@@ -110,12 +111,20 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, 
 
 	files := make([]*gql.FileItem, len(result.Items))
 	for i, item := range result.Items {
-		files[i] = &gql.FileItem{
+		fileItem := &gql.FileItem{
 			Name:        item.Name,
 			Path:        item.Path,
 			Size:        int(item.Size),
 			IsDirectory: item.IsDir,
 		}
+
+		// Generate thumbnail URLs for image files
+		if !item.IsDir && r.isImageFile(item.Name) {
+			thumbnailUrls := r.generateThumbnailUrls(item.Path)
+			fileItem.ThumbnailUrls = thumbnailUrls
+		}
+
+		files[i] = fileItem
 	}
 
 	return &gql.FileList{
@@ -142,4 +151,53 @@ func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileSta
 		ModifiedTime: fileInfo.ModifiedTime.Format(time.RFC3339),
 		Etag:         &fileInfo.ETag,
 	}, nil
+}
+
+// Helper function to check if a file is an image
+func (r *queryResolver) isImageFile(filename string) bool {
+	return imageservice.IsImageFile(filename)
+}
+
+// Helper function to generate thumbnail URLs using the image service
+func (r *queryResolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUrls {
+	// Generate different sized URLs using the image service
+	gridURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{
+		Width:   300,
+		Height:  225,
+		Quality: 85,
+		Format:  "webp",
+		FitIn:   true,
+	})
+
+	previewURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{
+		Width:   800,
+		Height:  600,
+		Quality: 90,
+		FitIn:   true,
+	})
+
+	fullURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{
+		Width:   1200,
+		Height:  900,
+		Quality: 95,
+		FitIn:   true,
+	})
+
+	// For original, use direct file access
+	originalURL := fmt.Sprintf("/api/file/%s", imagePath)
+
+	// Generate meta URL for EXIF data
+	metaURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{
+		Filters: []imageservice.Filter{
+			{Name: "meta", Args: ""},
+		},
+	})
+
+	return &gql.ThumbnailUrls{
+		Grid:     &gridURL,
+		Preview:  &previewURL,
+		Full:     &fullURL,
+		Original: &originalURL,
+		Meta:     &metaURL,
+	}
 }
