@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	auth2 "github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -22,7 +22,7 @@ func TestMe(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -57,7 +57,7 @@ func TestUser_AdminOnly(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -121,7 +121,7 @@ func TestUpdateProfile_SelfOperation(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -174,7 +174,7 @@ func TestUpdateProfile_AdminOperation(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -228,7 +228,7 @@ func TestUpdateProfile_NonAdminCannotUpdateOthers(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("regular-user-id")
 
@@ -253,7 +253,7 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -400,12 +400,12 @@ func TestChangePassword_SelfOperation(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
 	// Hash current password for testing
-	hashedCurrentPassword, err := auth2.HashPassword("currentpassword")
+	hashedCurrentPassword, err := auth.HashPassword("currentpassword")
 	require.NoError(t, err)
 
 	currentUser := &model.User{
@@ -438,7 +438,7 @@ func TestChangePassword_AdminOperation(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -474,11 +474,11 @@ func TestChangePassword_ValidationErrors(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
-	hashedCurrentPassword, err := auth2.HashPassword("currentpassword")
+	hashedCurrentPassword, err := auth.HashPassword("currentpassword")
 	require.NoError(t, err)
 
 	currentUser := &model.User{
@@ -578,7 +578,7 @@ func TestDeactivateAccount_SelfOperation(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -610,7 +610,7 @@ func TestDeactivateAccount_AdminOperation(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -643,7 +643,7 @@ func TestDeactivateAccount_AdminCannotDeactivateSelfViaAdminOperation(t *testing
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -663,7 +663,7 @@ func TestDeactivateAccount_NonAdminCannotDeactivateOthers(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("regular-user-id")
 
@@ -683,7 +683,7 @@ func TestUsers_AdminOnly(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -774,7 +774,7 @@ func TestUserOperations_UserNotFound(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name      string
@@ -875,7 +875,7 @@ func TestPermissionErrors(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	regularUserCtx := createReadWriteContext("regular-user-id")
 
@@ -951,7 +951,7 @@ func TestDatabaseErrors(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -1033,7 +1033,7 @@ func TestCreateUser_AdminOnly(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -1116,7 +1116,7 @@ func TestCreateUser_ValidationErrors(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -1299,7 +1299,7 @@ func TestCreateUser_InputNormalization(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -1385,7 +1385,7 @@ func TestCreateUser_DatabaseErrors(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -1450,7 +1450,7 @@ func TestCreateUser_RoleValidation(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -1557,7 +1557,7 @@ func TestCreateUser_PasswordHashing(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -1599,7 +1599,7 @@ func TestCreateUser_EdgeCases(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -1694,7 +1694,7 @@ func TestCreateUser_RoleAssignment(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -1756,7 +1756,7 @@ func TestCreateUser_ContextErrors(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -1772,7 +1772,7 @@ func TestCreateUser_ContextErrors(t *testing.T) {
 		},
 		{
 			name:        "No owner ID in context",
-			context:     auth2.SetClaimsInContext(context.Background(), &auth2.Claims{UserID: "test", Scopes: []string{"admin"}}),
+			context:     auth.SetClaimsInContext(context.Background(), &auth.Claims{UserID: "test", Scopes: []string{"admin"}}),
 			expectError: true,
 			errorMsg:    "failed to get current user ID",
 		},
@@ -1801,16 +1801,16 @@ func TestMe_GuestUser(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	// Create guest context
 	guestID := "guest-12345"
-	claims := &auth2.Claims{
+	claims := &auth.Claims{
 		UserID: guestID,
 		Role:   "guest",
 		Scopes: []string{"read"},
 	}
-	ctx := auth2.SetClaimsInContext(context.Background(), claims)
+	ctx := auth.SetClaimsInContext(context.Background(), claims)
 	ctx = context.WithValue(ctx, UserIDContextKey, guestID)
 
 	// Guest users should NOT trigger database lookup
@@ -1837,16 +1837,16 @@ func TestGuestUserRestrictions(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	// Create guest context
 	guestID := "guest-12345"
-	claims := &auth2.Claims{
+	claims := &auth.Claims{
 		UserID: guestID,
 		Role:   "guest",
 		Scopes: []string{"read"},
 	}
-	ctx := auth2.SetClaimsInContext(context.Background(), claims)
+	ctx := auth.SetClaimsInContext(context.Background(), claims)
 	ctx = context.WithValue(ctx, UserIDContextKey, guestID)
 
 	t.Run("UpdateProfile_GuestBlocked", func(t *testing.T) {

@@ -43,7 +43,7 @@ func TestSetUserMetadata_SelfOperation(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:preference"
@@ -75,7 +75,7 @@ func TestSetUserMetadata_AdminForOtherUser(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	targetOwnerID := "target-user-id"
@@ -108,7 +108,7 @@ func TestSetUserMetadata_RegularUserCannotAccessOthers(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("regular-user-id")
 	targetOwnerID := "other-user-id"
@@ -129,7 +129,7 @@ func TestSetUserMetadata_GuestCannotSet(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createGuestContext("guest-id")
 	key := "test:key"
@@ -149,7 +149,7 @@ func TestGetUserMetadata_SelfOperation(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:preference"
@@ -180,7 +180,7 @@ func TestGetUserMetadata_NotFound(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "non-existent"
@@ -200,7 +200,7 @@ func TestListUserMetadata_SelfOperation(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	prefix := "app:"
@@ -230,7 +230,7 @@ func TestDeleteUserMetadata_SelfOperation(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:setting-to-delete"
@@ -250,7 +250,7 @@ func TestSetSystemMetadata_AdminOnly(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -323,7 +323,7 @@ func TestGetSystemMetadata_OpenRead(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name    string
@@ -382,7 +382,7 @@ func TestListSystemMetadata_OpenRead(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("user-id")
 	prefix := "config:"
@@ -412,7 +412,7 @@ func TestDeleteSystemMetadata_AdminOnly(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -467,7 +467,7 @@ func TestUserMetadata_PermissionEdgeCases(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
