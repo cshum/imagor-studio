@@ -133,11 +133,6 @@ func New(cfg *config.Config) (*Server, error) {
 	mux.HandleFunc("/auth/first-run", authHandler.CheckFirstRun())
 	mux.HandleFunc("/auth/register-admin", authHandler.RegisterAdmin())
 
-	// Image metadata endpoint (protected)
-	metadataHandler := httphandler.NewImagorMetaHandler(imgService, cfg.Logger)
-	protectedMetadataHandler := middleware.JWTMiddleware(tokenManager)(metadataHandler)
-	mux.Handle("/api/image/metadata", protectedMetadataHandler)
-
 	// Protected endpoints
 	protectedHandler := middleware.JWTMiddleware(tokenManager)(gqlHandler)
 	mux.Handle("/query", protectedHandler)
