@@ -16,7 +16,7 @@ COPY web/ .
 RUN npm run build
 
 # Go build stage
-FROM golang:1.21-bookworm AS go-builder
+FROM golang:1.24-bookworm AS go-builder
 
 WORKDIR /app
 

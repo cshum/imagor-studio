@@ -3,7 +3,6 @@ package imageservice
 import (
 	"context"
 	"crypto/sha1"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -18,9 +17,6 @@ type Service interface {
 	// GenerateURL generates an imagor URL for the given image path and parameters
 	GenerateURL(imagePath string, params URLParams) (string, error)
 
-	// GetMetadata fetches image metadata including EXIF data from imagor
-	GetMetadata(ctx context.Context, imagePath string) (map[string]interface{}, error)
-
 	// IsHealthy checks if the imagor service is available (for external mode)
 	IsHealthy(ctx context.Context) bool
 
@@ -33,6 +29,7 @@ type Service interface {
 
 // URLParams defines parameters for imagor URL generation
 type URLParams struct {
+	Meta    bool
 	Width   int
 	Height  int
 	Quality int
@@ -80,6 +77,7 @@ func (s *externalService) GenerateURL(imagePath string, params URLParams) (strin
 	// Build imagorpath.Params
 	imagorParams := imagorpath.Params{
 		Image:  imagePath,
+		Meta:   params.Meta,
 		Width:  params.Width,
 		Height: params.Height,
 		FitIn:  params.FitIn,
@@ -156,56 +154,6 @@ func (s *externalService) GetMode() string {
 	return "external"
 }
 
-func (s *externalService) GetMetadata(ctx context.Context, imagePath string) (map[string]interface{}, error) {
-	if s.config.URL == "" {
-		return nil, fmt.Errorf("imagor URL not configured")
-	}
-
-	// Build meta URL using imagor's meta endpoint
-	metaParams := imagorpath.Params{
-		Image: imagePath,
-		Meta:  true,
-	}
-
-	var path string
-	if s.config.Unsafe {
-		path = imagorpath.GenerateUnsafe(metaParams)
-	} else {
-		if s.config.Secret == "" {
-			return nil, fmt.Errorf("imagor secret is required for signed URLs")
-		}
-		signer := imagorpath.NewDefaultSigner(s.config.Secret)
-		path = imagorpath.Generate(metaParams, signer)
-	}
-
-	metaURL := fmt.Sprintf("%s/%s", s.config.URL, path)
-
-	// Make HTTP request to get metadata
-	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequestWithContext(ctx, "GET", metaURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch metadata: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("metadata request failed with status: %d", resp.StatusCode)
-	}
-
-	// Parse JSON response
-	var metadata map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&metadata); err != nil {
-		return nil, fmt.Errorf("failed to parse metadata JSON: %w", err)
-	}
-
-	return metadata, nil
-}
-
 func (s *externalService) GetHandler() http.Handler {
 	return nil
 }
@@ -241,6 +189,7 @@ func (s *embeddedService) GenerateURL(imagePath string, params URLParams) (strin
 	// Build imagorpath.Params
 	imagorParams := imagorpath.Params{
 		Image:  imagePath,
+		Meta:   params.Meta,
 		Width:  params.Width,
 		Height: params.Height,
 		FitIn:  params.FitIn,
@@ -300,52 +249,6 @@ func (s *embeddedService) IsHealthy(ctx context.Context) bool {
 
 func (s *embeddedService) GetMode() string {
 	return "embedded"
-}
-
-func (s *embeddedService) GetMetadata(ctx context.Context, imagePath string) (map[string]interface{}, error) {
-	// For embedded service, we can make a request to our own meta endpoint
-	metaParams := imagorpath.Params{
-		Image: imagePath,
-		Meta:  true,
-	}
-
-	var path string
-	if s.config.Unsafe {
-		path = imagorpath.GenerateUnsafe(metaParams)
-	} else {
-		if s.config.Secret == "" {
-			return nil, fmt.Errorf("imagor secret is required for signed URLs")
-		}
-		signer := imagorpath.NewDefaultSigner(s.config.Secret)
-		path = imagorpath.Generate(metaParams, signer)
-	}
-
-	metaURL := fmt.Sprintf("/imagor/%s", path)
-
-	// Make internal HTTP request
-	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:8080"+metaURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch metadata: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("metadata request failed with status: %d", resp.StatusCode)
-	}
-
-	// Parse JSON response
-	var metadata map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&metadata); err != nil {
-		return nil, fmt.Errorf("failed to parse metadata JSON: %w", err)
-	}
-
-	return metadata, nil
 }
 
 func (s *embeddedService) GetHandler() http.Handler {

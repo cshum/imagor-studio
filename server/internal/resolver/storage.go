@@ -166,19 +166,18 @@ func (r *queryResolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUr
 		Height:  225,
 		Quality: 85,
 		Format:  "webp",
-		FitIn:   true,
 	})
 
 	previewURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{
-		Width:   800,
-		Height:  600,
+		Width:   1200,
+		Height:  900,
 		Quality: 90,
 		FitIn:   true,
 	})
 
 	fullURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{
-		Width:   1200,
-		Height:  900,
+		Width:   2400,
+		Height:  1800,
 		Quality: 95,
 		FitIn:   true,
 	})
@@ -188,9 +187,7 @@ func (r *queryResolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUr
 
 	// Generate meta URL for EXIF data
 	metaURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{
-		Filters: []imageservice.Filter{
-			{Name: "meta", Args: ""},
-		},
+		Meta: true,
 	})
 
 	return &gql.ThumbnailUrls{

@@ -7,16 +7,50 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependencies
+node_modules/
+jspm_packages/
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+web/dist/
+
+# Database files
 storage.db
-*.local
-.vite
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment files (keep templates)
 .env
+.env.local
+.env.*.local
+web/.env
+web/.env.local
+
+# Storage directories (runtime data)
+server/storage/
+data/
+storage/
+test-data/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.vite/
+.turbo/
 
 # Editor directories and files
-.idea
+.idea/
 .vscode/*
 !.vscode/extensions.json
 .DS_Store
@@ -25,5 +59,39 @@ storage.db
 *.njsproj
 *.sln
 *.sw?
+tsconfig.*.tsbuildinfo
 
-imagor-studio-server
+# Go build artifacts
+server/imagor-studio-server
+server/server
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test coverage
+*.out
+coverage/
+
+# IDE files
+.clj-kondo/
+.lsp/
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Docker volumes
+volumes/
+
+# SSL certificates (keep templates)
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
+!nginx/ssl/*.example
+
+# Backup files
+*.bak
+*.backup
