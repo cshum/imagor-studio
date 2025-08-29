@@ -22,10 +22,11 @@ type CreateUserInput struct {
 }
 
 type FileItem struct {
-	Name        string `json:"name"`
-	Path        string `json:"path"`
-	Size        int    `json:"size"`
-	IsDirectory bool   `json:"isDirectory"`
+	Name          string         `json:"name"`
+	Path          string         `json:"path"`
+	Size          int            `json:"size"`
+	IsDirectory   bool           `json:"isDirectory"`
+	ThumbnailUrls *ThumbnailUrls `json:"thumbnailUrls,omitempty"`
 }
 
 type FileList struct {
@@ -54,6 +55,14 @@ type Mutation struct {
 }
 
 type Query struct {
+}
+
+type ThumbnailUrls struct {
+	Grid     *string `json:"grid,omitempty"`
+	Preview  *string `json:"preview,omitempty"`
+	Full     *string `json:"full,omitempty"`
+	Original *string `json:"original,omitempty"`
+	Meta     *string `json:"meta,omitempty"`
 }
 
 type UpdateProfileInput struct {

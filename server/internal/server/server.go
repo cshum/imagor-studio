@@ -5,15 +5,18 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
-	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/httphandler"
+	"github.com/cshum/imagor-studio/server/internal/imageservice"
 	"github.com/cshum/imagor-studio/server/internal/metadatastore"
 	"github.com/cshum/imagor-studio/server/internal/middleware"
 	"github.com/cshum/imagor-studio/server/internal/migrations"
@@ -78,8 +81,18 @@ func New(cfg *config.Config) (*Server, error) {
 	metadataStore := metadatastore.New(db, cfg.Logger)
 	userStore := userstore.New(db, cfg.Logger)
 
+	// Initialize image service
+	imageServiceConfig := imageservice.Config{
+		Mode:          cfg.ImagorMode,
+		URL:           cfg.ImagorURL,
+		Secret:        cfg.ImagorSecret,
+		Unsafe:        cfg.ImagorUnsafe,
+		ResultStorage: cfg.ImagorResultStorage,
+	}
+	imgService := imageservice.NewService(imageServiceConfig)
+
 	// Initialize GraphQL
-	storageResolver := resolver.NewResolver(stor, metadataStore, userStore, cfg.Logger)
+	storageResolver := resolver.NewResolver(stor, metadataStore, userStore, imgService, cfg.Logger)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
 
@@ -120,12 +133,13 @@ func New(cfg *config.Config) (*Server, error) {
 	mux.HandleFunc("/auth/first-run", authHandler.CheckFirstRun())
 	mux.HandleFunc("/auth/register-admin", authHandler.RegisterAdmin())
 
-	// GraphQL playground (available in development, might want to disable in production)
-	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
-
 	// Protected endpoints
 	protectedHandler := middleware.JWTMiddleware(tokenManager)(gqlHandler)
 	mux.Handle("/query", protectedHandler)
+
+	// Static file serving for web frontend
+	staticHandler := createStaticHandler(cfg.Logger)
+	mux.Handle("/", staticHandler)
 
 	// Configure CORS
 	corsConfig := middleware.DefaultCORSConfig()
@@ -209,4 +223,50 @@ func (s *Server) Run() error {
 
 func (s *Server) Close() error {
 	return s.db.Close()
+}
+
+// createStaticHandler creates a handler for serving static files with SPA fallback
+func createStaticHandler(logger *zap.Logger) http.Handler {
+	// Try to find the web/dist directory
+	webDistDir := "./web/dist"
+
+	// Check if we're running from Docker (web assets copied to ./web/dist)
+	if _, err := os.Stat(webDistDir); os.IsNotExist(err) {
+		// Fallback to development mode or other locations
+		possiblePaths := []string{
+			"../web/dist",
+			"../../web/dist",
+			"./dist",
+		}
+
+		for _, path := range possiblePaths {
+			if _, err := os.Stat(path); err == nil {
+				webDistDir = path
+				break
+			}
+		}
+	}
+
+	logger.Info("Static file handler configured", zap.String("webDistDir", webDistDir))
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Handle API routes - these should not serve static files
+		if strings.HasPrefix(r.URL.Path, "/auth/") ||
+			strings.HasPrefix(r.URL.Path, "/query") ||
+			strings.HasPrefix(r.URL.Path, "/health") {
+			http.NotFound(w, r)
+			return
+		}
+
+		// If path contains no file extension (no dot), serve index.html for SPA routing
+		if !strings.Contains(filepath.Base(r.URL.Path), ".") {
+			indexPath := filepath.Join(webDistDir, "index.html")
+			http.ServeFile(w, r, indexPath)
+			return
+		}
+
+		// For paths with extensions, serve the actual file
+		filePath := filepath.Join(webDistDir, r.URL.Path)
+		http.ServeFile(w, r, filePath)
+	})
 }

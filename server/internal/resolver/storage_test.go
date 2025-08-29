@@ -19,7 +19,7 @@ func TestUploadFile_RequiresWriteScope(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -86,7 +86,7 @@ func TestDeleteFile_RequiresWriteScope(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -148,7 +148,7 @@ func TestCreateFolder_RequiresWriteScope(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -211,7 +211,7 @@ func TestListFiles_OnlyRequiresReadScope(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name    string
@@ -273,7 +273,7 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadOnlyContext("test-user-id")
 	path := "/test/file1.txt"
@@ -302,7 +302,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -420,7 +420,7 @@ func TestStorageOperations_StorageErrors(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -492,7 +492,7 @@ func TestReadOperations_StillWork(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	// Test with read-only context
 	ctx := createReadOnlyContext("test-user-id")
@@ -548,7 +548,7 @@ func TestListFiles(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	// Create context with owner ID
 	ctx := context.WithValue(context.Background(), UserIDContextKey, "test-owner-id")
@@ -587,7 +587,7 @@ func TestStatFile(t *testing.T) {
 	mockMetadataStore := new(MockMetadataStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, logger)
+	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
 
 	ctx := context.WithValue(context.Background(), UserIDContextKey, "test-owner-id")
 	path := "/test/file1.txt"

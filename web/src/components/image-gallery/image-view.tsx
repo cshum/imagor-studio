@@ -5,9 +5,10 @@ import { ChevronLeft, ChevronRight, Info, X, ZoomIn, ZoomOut } from 'lucide-reac
 
 import { ImageInfo, ImageViewInfo } from '@/components/image-gallery/image-view-info.tsx'
 import { Sheet } from '@/components/ui/sheet'
+import { FileInfoFragment } from '@/generated/graphql'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 
-export interface GalleryImage {
+export interface GalleryImage extends Omit<FileInfoFragment, 'path' | 'size' | 'isDirectory'> {
   imageSrc: string
   imageName: string
   imageKey: string

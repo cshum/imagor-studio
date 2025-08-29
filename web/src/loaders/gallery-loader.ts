@@ -1,6 +1,7 @@
+import { listFiles } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
-import { ImageInfo } from '@/components/image-gallery/image-view-info.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
+import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
 
 export interface GalleryLoaderData {
@@ -16,79 +17,49 @@ export interface ImageLoaderData {
   galleryKey: string
 }
 
-export const generateDummyImages = (count: number) => {
-  return Array.from({ length: count }, (_, i) => ({
-    imageKey: `${i + 1}.jpg`,
-    imageSrc: `https://placedog.net/300/225?id=${(i + 1) % 1000}`,
-    imageName: `Random image ${i + 1}`,
-  }))
-}
-
-// Helper function to generate folders based on gallery key
-const generateDummyFolders = (galleryKey?: string): Gallery[] => {
-  const baseFolders = [
-    { galleryKey: 'vacation', galleryName: 'Vacation Photos' },
-    { galleryKey: 'work', galleryName: 'Work Projects' },
-    { galleryKey: 'family', galleryName: 'Family Events' },
-    { galleryKey: 'hobbies', galleryName: 'Hobbies' },
-    { galleryKey: 'miscellaneous', galleryName: 'Miscellaneous' },
-    { galleryKey: 'documents', galleryName: 'Documents' },
-  ]
-
-  // Customize folder names based on gallery key
-  if (galleryKey) {
-    return baseFolders.map((folder) => ({
-      ...folder,
-      galleryName: folder.galleryName,
-    }))
-  }
-
-  return baseFolders
-}
-
-// Helper function to generate image info
-const generateImageInfo = (galleryKey?: string): ImageInfo => ({
-  exif: {
-    Camera: 'Canon EOS 5D Mark IV',
-    Lens: 'EF 24-70mm f/2.8L II USM',
-    'Focal Length': '50mm',
-    Aperture: 'f/4.0',
-    'Shutter Speed': '1/250s',
-    ISO: '100',
-    'Date Taken': '2023-09-15 14:30:22',
-    'GPS Coordinates': '40°42\'46.0"N 74°00\'21.0"W',
-    'File Size': '24.5 MB',
-    'Color Space': 'sRGB',
-    Software: 'Adobe Lightroom Classic 10.0',
-    Gallery: galleryKey || 'Unknown',
-  },
-})
-
-// Generate gallery title based on galleryKey
-const getGalleryTitle = (key: string) => {
-  switch (key) {
-    case 'favorites':
-      return 'Favorite Images'
-    case 'recent':
-      return 'Recent Images'
-    case 'default':
-      return 'Gallery'
-    default:
-      return `Gallery: ${key}`
-  }
-}
-
 /**
- * Updated loader for the gallery page with galleryKey support
- * Generates dummy images and folders data based on gallery key
+ * Real gallery loader using imagor for thumbnail generation
+ * Loads images and folders from storage API with imagor-generated thumbnails
  */
 export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderData> => {
-  // Generate different content based on gallery key
-  const imageCount = galleryKey === 'favorites' ? 123 : galleryKey === 'recent' ? 89 : 246 // default count
+  // Use galleryKey as the path for storage API
+  const path = galleryKey === 'default' ? '' : galleryKey
 
-  const images = generateDummyImages(imageCount)
-  const folders = generateDummyFolders(galleryKey)
-  const galleryName = getGalleryTitle(galleryKey)
+  // Fetch files from storage API
+  const result = await listFiles({
+    path,
+    offset: 0,
+    limit: 1000, // Load a large number for now, can implement pagination later
+    sortBy: 'NAME',
+    sortOrder: 'ASC',
+  })
+
+  // Separate files and folders
+  const folders: Gallery[] = result.items
+    .filter((item) => item.isDirectory)
+    .map((item) => ({
+      galleryKey: item.path,
+      galleryName: item.name,
+    }))
+
+  // Filter and convert image files
+  const images: GalleryImage[] = result.items
+    .filter((item) => !item.isDirectory && item.thumbnailUrls)
+    .map((item) => ({
+      // Required fields from FileInfoFragment
+      name: item.name,
+      thumbnailUrls: item.thumbnailUrls,
+      // Additional GalleryImage fields
+      imageKey: item.name,
+      imageSrc: item.thumbnailUrls?.grid || `/api/file/${item.path}`,
+      imageName: item.name,
+    }))
+
+  // Use the actual folder name, or "Gallery" for root
+  const galleryName =
+    galleryKey === 'default' || galleryKey === ''
+      ? 'Gallery'
+      : galleryKey.split('/').pop() || galleryKey
 
   return {
     galleryName,
@@ -99,8 +70,8 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
 }
 
 /**
- * Updated loader for the image detail page with galleryKey support
- * Generates data and preloads the selected image
+ * Real image loader using imagor for image processing
+ * Loads real image data from storage API and preloads the selected image
  */
 export const imageLoader = async ({
   params,
@@ -109,27 +80,57 @@ export const imageLoader = async ({
 }): Promise<ImageLoaderData> => {
   const { imageKey, galleryKey } = params
 
-  // Generate all images for this gallery (same as gallery route)
-  const imageCount = galleryKey === 'favorites' ? 123 : galleryKey === 'recent' ? 89 : 246 // default count
+  // Use galleryKey as the path for storage API
+  const path = galleryKey === 'default' ? '' : galleryKey
 
-  const images = generateDummyImages(imageCount)
+  // Fetch files from storage API
+  const result = await listFiles({
+    path,
+    offset: 0,
+    limit: 1000,
+    sortBy: 'NAME',
+    sortOrder: 'ASC',
+  })
 
-  // Find the selected image
-  const imageData = images.find((img) => img.imageKey === imageKey)
+  // Find the selected image from real API data
+  const imageItem = result.items.find(
+    (item) => !item.isDirectory && item.name === imageKey && item.thumbnailUrls,
+  )
 
-  if (!imageData) {
-    throw new Error('not found')
+  if (!imageItem || !imageItem.thumbnailUrls) {
+    throw new Error('Image not found')
   }
 
-  const fullSizeSrc = imageData.imageSrc.replace('/300/225', '/1200/900')
+  // Use the full-size thumbnail URL for the detail view
+  const fullSizeSrc =
+    imageItem.thumbnailUrls.full ||
+    imageItem.thumbnailUrls.original ||
+    `/api/file/${imageItem.path}`
 
   const imageElement = await preloadImage(fullSizeSrc)
 
-  const image: GalleryImage = {
-    ...imageData,
-    imageSrc: fullSizeSrc,
-    imageInfo: generateImageInfo(galleryKey),
+  // Fetch real EXIF data from imagor meta API
+  let imageInfo = convertMetadataToImageInfo(null, imageItem.name, galleryKey)
+  if (imageItem.thumbnailUrls.meta) {
+    try {
+      const metadata = await fetchImageMetadata(imageItem.thumbnailUrls.meta)
+      imageInfo = convertMetadataToImageInfo(metadata, imageItem.name, galleryKey)
+    } catch {
+      // Fall back to basic info without EXIF data
+    }
   }
+
+  const image: GalleryImage = {
+    // Required fields from FileInfoFragment
+    name: imageItem.name,
+    thumbnailUrls: imageItem.thumbnailUrls,
+    // Additional GalleryImage fields
+    imageKey: imageItem.name,
+    imageSrc: fullSizeSrc,
+    imageName: imageItem.name,
+    imageInfo,
+  }
+
   return {
     image,
     imageElement,

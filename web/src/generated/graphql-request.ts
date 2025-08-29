@@ -42,6 +42,7 @@ export type FileItem = {
   name: Scalars['String']['output']
   path: Scalars['String']['output']
   size: Scalars['Int']['output']
+  thumbnailUrls: Maybe<ThumbnailUrls>
 }
 
 export type FileList = {
@@ -192,6 +193,15 @@ export type QueryUsersArgs = {
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
 
 export type SortOrder = 'ASC' | 'DESC'
+
+export type ThumbnailUrls = {
+  __typename?: 'ThumbnailUrls'
+  full: Maybe<Scalars['String']['output']>
+  grid: Maybe<Scalars['String']['output']>
+  meta: Maybe<Scalars['String']['output']>
+  original: Maybe<Scalars['String']['output']>
+  preview: Maybe<Scalars['String']['output']>
+}
 
 export type UpdateProfileInput = {
   displayName: InputMaybe<Scalars['String']['input']>
@@ -347,6 +357,14 @@ export type FileInfoFragment = {
   path: string
   size: number
   isDirectory: boolean
+  thumbnailUrls: {
+    __typename?: 'ThumbnailUrls'
+    grid: string | null
+    preview: string | null
+    full: string | null
+    original: string | null
+    meta: string | null
+  } | null
 }
 
 export type FileStatInfoFragment = {
@@ -380,6 +398,14 @@ export type ListFilesQuery = {
       path: string
       size: number
       isDirectory: boolean
+      thumbnailUrls: {
+        __typename?: 'ThumbnailUrls'
+        grid: string | null
+        preview: string | null
+        full: string | null
+        original: string | null
+        meta: string | null
+      } | null
     }>
   }
 }
@@ -553,6 +579,13 @@ export const FileInfoFragmentDoc = gql`
     path
     size
     isDirectory
+    thumbnailUrls {
+      grid
+      preview
+      full
+      original
+      meta
+    }
   }
 `
 export const FileStatInfoFragmentDoc = gql`

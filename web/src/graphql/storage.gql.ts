@@ -7,6 +7,13 @@ export const FileFragment = gql(`
     path
     size
     isDirectory
+    thumbnailUrls {
+      grid
+      preview
+      full
+      original
+      meta
+    }
   }
 `)
 

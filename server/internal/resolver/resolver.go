@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/imageservice"
 	"github.com/cshum/imagor-studio/server/internal/metadatastore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -14,14 +15,16 @@ type Resolver struct {
 	storage       storage.Storage
 	metadataStore metadatastore.Store
 	userStore     userstore.Store
+	imageService  imageservice.Service
 	logger        *zap.Logger
 }
 
-func NewResolver(storage storage.Storage, metadataStore metadatastore.Store, userStore userstore.Store, logger *zap.Logger) *Resolver {
+func NewResolver(storage storage.Storage, metadataStore metadatastore.Store, userStore userstore.Store, imageService imageservice.Service, logger *zap.Logger) *Resolver {
 	return &Resolver{
 		storage:       storage,
 		metadataStore: metadataStore,
 		userStore:     userStore,
+		imageService:  imageService,
 		logger:        logger,
 	}
 }

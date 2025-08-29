@@ -46,10 +46,11 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	FileItem struct {
-		IsDirectory func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Path        func(childComplexity int) int
-		Size        func(childComplexity int) int
+		IsDirectory   func(childComplexity int) int
+		Name          func(childComplexity int) int
+		Path          func(childComplexity int) int
+		Size          func(childComplexity int) int
+		ThumbnailUrls func(childComplexity int) int
 	}
 
 	FileList struct {
@@ -98,6 +99,14 @@ type ComplexityRoot struct {
 		StatFile           func(childComplexity int, path string) int
 		User               func(childComplexity int, id string) int
 		Users              func(childComplexity int, offset *int, limit *int) int
+	}
+
+	ThumbnailUrls struct {
+		Full     func(childComplexity int) int
+		Grid     func(childComplexity int) int
+		Meta     func(childComplexity int) int
+		Original func(childComplexity int) int
+		Preview  func(childComplexity int) int
 	}
 
 	User struct {
@@ -187,6 +196,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.FileItem.Size(childComplexity), true
+
+	case "FileItem.thumbnailUrls":
+		if e.complexity.FileItem.ThumbnailUrls == nil {
+			break
+		}
+
+		return e.complexity.FileItem.ThumbnailUrls(childComplexity), true
 
 	case "FileList.items":
 		if e.complexity.FileList.Items == nil {
@@ -514,6 +530,41 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.Users(childComplexity, args["offset"].(*int), args["limit"].(*int)), true
 
+	case "ThumbnailUrls.full":
+		if e.complexity.ThumbnailUrls.Full == nil {
+			break
+		}
+
+		return e.complexity.ThumbnailUrls.Full(childComplexity), true
+
+	case "ThumbnailUrls.grid":
+		if e.complexity.ThumbnailUrls.Grid == nil {
+			break
+		}
+
+		return e.complexity.ThumbnailUrls.Grid(childComplexity), true
+
+	case "ThumbnailUrls.meta":
+		if e.complexity.ThumbnailUrls.Meta == nil {
+			break
+		}
+
+		return e.complexity.ThumbnailUrls.Meta(childComplexity), true
+
+	case "ThumbnailUrls.original":
+		if e.complexity.ThumbnailUrls.Original == nil {
+			break
+		}
+
+		return e.complexity.ThumbnailUrls.Original(childComplexity), true
+
+	case "ThumbnailUrls.preview":
+		if e.complexity.ThumbnailUrls.Preview == nil {
+			break
+		}
+
+		return e.complexity.ThumbnailUrls.Preview(childComplexity), true
+
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
 			break
@@ -777,6 +828,15 @@ type FileItem {
     path: String!
     size: Int!
     isDirectory: Boolean!
+    thumbnailUrls: ThumbnailUrls
+}
+
+type ThumbnailUrls {
+  grid: String
+  preview: String
+  full: String
+  original: String
+  meta: String
 }
 
 type FileStat {
@@ -1346,6 +1406,59 @@ func (ec *executionContext) fieldContext_FileItem_isDirectory(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _FileItem_thumbnailUrls(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileItem_thumbnailUrls(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ThumbnailUrls, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ThumbnailUrls)
+	fc.Result = res
+	return ec.marshalOThumbnailUrls2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐThumbnailUrls(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileItem_thumbnailUrls(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "grid":
+				return ec.fieldContext_ThumbnailUrls_grid(ctx, field)
+			case "preview":
+				return ec.fieldContext_ThumbnailUrls_preview(ctx, field)
+			case "full":
+				return ec.fieldContext_ThumbnailUrls_full(ctx, field)
+			case "original":
+				return ec.fieldContext_ThumbnailUrls_original(ctx, field)
+			case "meta":
+				return ec.fieldContext_ThumbnailUrls_meta(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ThumbnailUrls", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _FileList_items(ctx context.Context, field graphql.CollectedField, obj *FileList) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_FileList_items(ctx, field)
 	if err != nil {
@@ -1393,6 +1506,8 @@ func (ec *executionContext) fieldContext_FileList_items(_ context.Context, field
 				return ec.fieldContext_FileItem_size(ctx, field)
 			case "isDirectory":
 				return ec.fieldContext_FileItem_isDirectory(ctx, field)
+			case "thumbnailUrls":
+				return ec.fieldContext_FileItem_thumbnailUrls(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type FileItem", field.Name)
 		},
@@ -3287,6 +3402,211 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ThumbnailUrls_grid(ctx context.Context, field graphql.CollectedField, obj *ThumbnailUrls) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ThumbnailUrls_grid(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Grid, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ThumbnailUrls_grid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ThumbnailUrls",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ThumbnailUrls_preview(ctx context.Context, field graphql.CollectedField, obj *ThumbnailUrls) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ThumbnailUrls_preview(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Preview, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ThumbnailUrls_preview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ThumbnailUrls",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ThumbnailUrls_full(ctx context.Context, field graphql.CollectedField, obj *ThumbnailUrls) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ThumbnailUrls_full(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Full, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ThumbnailUrls_full(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ThumbnailUrls",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ThumbnailUrls_original(ctx context.Context, field graphql.CollectedField, obj *ThumbnailUrls) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ThumbnailUrls_original(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Original, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ThumbnailUrls_original(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ThumbnailUrls",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ThumbnailUrls_meta(ctx context.Context, field graphql.CollectedField, obj *ThumbnailUrls) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ThumbnailUrls_meta(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Meta, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ThumbnailUrls_meta(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ThumbnailUrls",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5810,6 +6130,8 @@ func (ec *executionContext) _FileItem(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "thumbnailUrls":
+			out.Values[i] = ec._FileItem_thumbnailUrls(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6326,6 +6648,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var thumbnailUrlsImplementors = []string{"ThumbnailUrls"}
+
+func (ec *executionContext) _ThumbnailUrls(ctx context.Context, sel ast.SelectionSet, obj *ThumbnailUrls) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, thumbnailUrlsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ThumbnailUrls")
+		case "grid":
+			out.Values[i] = ec._ThumbnailUrls_grid(ctx, field, obj)
+		case "preview":
+			out.Values[i] = ec._ThumbnailUrls_preview(ctx, field, obj)
+		case "full":
+			out.Values[i] = ec._ThumbnailUrls_full(ctx, field, obj)
+		case "original":
+			out.Values[i] = ec._ThumbnailUrls_original(ctx, field, obj)
+		case "meta":
+			out.Values[i] = ec._ThumbnailUrls_meta(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7471,6 +7837,13 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	_ = ctx
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOThumbnailUrls2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐThumbnailUrls(ctx context.Context, sel ast.SelectionSet, v *ThumbnailUrls) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ThumbnailUrls(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx context.Context, sel ast.SelectionSet, v *User) graphql.Marshaler {

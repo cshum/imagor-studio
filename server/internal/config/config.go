@@ -34,6 +34,13 @@ type Config struct {
 	S3SessionToken    string
 	S3BaseDir         string
 
+	// Imagor Configuration
+	ImagorMode          string // "external", "embedded", "disabled"
+	ImagorURL           string // External imagor service URL
+	ImagorSecret        string // Imagor secret key
+	ImagorUnsafe        bool   // For development
+	ImagorResultStorage string // "same", "separate"
+
 	Logger *zap.Logger
 }
 
@@ -59,6 +66,11 @@ func Load() (*Config, error) {
 		s3SecretAccessKey = fs.String("s3-secret-access-key", "", "S3 secret access key (optional)")
 		s3SessionToken    = fs.String("s3-session-token", "", "S3 session token (optional)")
 		s3BaseDir         = fs.String("s3-base-dir", "", "S3 base directory (optional)")
+
+		imagorMode          = fs.String("imagor-mode", "external", "imagor mode: external, embedded, or disabled")
+		imagorURL           = fs.String("imagor-url", "http://localhost:8000", "external imagor service URL")
+		imagorUnsafe        = fs.Bool("imagor-unsafe", false, "enable unsafe imagor URLs for development")
+		imagorResultStorage = fs.String("imagor-result-storage", "same", "imagor result storage: same or separate")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -124,6 +136,11 @@ func Load() (*Config, error) {
 		S3SecretAccessKey:    *s3SecretAccessKey,
 		S3SessionToken:       *s3SessionToken,
 		S3BaseDir:            *s3BaseDir,
+		ImagorMode:           *imagorMode,
+		ImagorURL:            *imagorURL,
+		ImagorSecret:         *imagorSecret,
+		ImagorUnsafe:         *imagorUnsafe,
+		ImagorResultStorage:  *imagorResultStorage,
 		Logger:               logger,
 	}
 

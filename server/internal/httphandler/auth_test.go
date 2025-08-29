@@ -12,7 +12,8 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
-	auth2 "github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/metadatastore"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"
@@ -90,11 +91,44 @@ func (m *MockUserStore) GetByIDWithPassword(ctx context.Context, id string) (*mo
 	return args.Get(0).(*model.User), args.Error(1)
 }
 
+type MockMetadataStore struct {
+	mock.Mock
+}
+
+func (m *MockMetadataStore) List(ctx context.Context, ownerID string, prefix *string) ([]*metadatastore.Metadata, error) {
+	args := m.Called(ctx, ownerID, prefix)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*metadatastore.Metadata), args.Error(1)
+}
+
+func (m *MockMetadataStore) Get(ctx context.Context, ownerID, key string) (*metadatastore.Metadata, error) {
+	args := m.Called(ctx, ownerID, key)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*metadatastore.Metadata), args.Error(1)
+}
+
+func (m *MockMetadataStore) Set(ctx context.Context, ownerID, key, value string) (*metadatastore.Metadata, error) {
+	args := m.Called(ctx, ownerID, key, value)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*metadatastore.Metadata), args.Error(1)
+}
+
+func (m *MockMetadataStore) Delete(ctx context.Context, ownerID, key string) error {
+	args := m.Called(ctx, ownerID, key)
+	return args.Error(0)
+}
+
 func TestRegister(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name           string
@@ -282,12 +316,12 @@ func TestRegister(t *testing.T) {
 
 func TestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger)
 
 	// Create a valid hashed password for testing
-	hashedPassword, err := auth2.HashPassword("password123")
+	hashedPassword, err := auth.HashPassword("password123")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -475,9 +509,9 @@ func TestLogin(t *testing.T) {
 
 func TestRefreshToken(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger)
 
 	// Generate a valid token first
 	validToken, err := tokenManager.GenerateToken("user1", "user", []string{"read"})
@@ -604,9 +638,9 @@ func TestRefreshToken(t *testing.T) {
 
 func TestRegister_ValidationEdgeCases(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name           string
@@ -769,12 +803,12 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 
 func TestLogin_InputNormalization(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger)
 
 	// Create a valid hashed password for testing
-	hashedPassword, err := auth2.HashPassword("password123")
+	hashedPassword, err := auth.HashPassword("password123")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -837,45 +871,98 @@ func TestLogin_InputNormalization(t *testing.T) {
 
 func TestGuestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+	mockMetadataStore := new(MockMetadataStore)
 
-	// Test with no body
-	req := httptest.NewRequest(http.MethodPost, "/auth/guest", nil)
-	rr := httptest.NewRecorder()
+	tests := []struct {
+		name           string
+		setupMocks     func()
+		expectedStatus int
+		expectError    bool
+		errorCode      apperror.ErrorCode
+	}{
+		{
+			name: "Guest login enabled",
+			setupMocks: func() {
+				mockMetadataStore.On("Get", mock.Anything, "system", "auth.enableGuestMode").Return(&metadatastore.Metadata{
+					Key:   "auth.enableGuestMode",
+					Value: "true",
+				}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectError:    false,
+		},
+		{
+			name: "Guest login disabled",
+			setupMocks: func() {
+				mockMetadataStore.On("Get", mock.Anything, "system", "auth.enableGuestMode").Return(&metadatastore.Metadata{
+					Key:   "auth.enableGuestMode",
+					Value: "false",
+				}, nil)
+			},
+			expectedStatus: http.StatusForbidden,
+			expectError:    true,
+			errorCode:      apperror.ErrPermissionDenied,
+		},
+		{
+			name: "Guest mode setting not found",
+			setupMocks: func() {
+				mockMetadataStore.On("Get", mock.Anything, "system", "auth.enableGuestMode").Return(nil, nil)
+			},
+			expectedStatus: http.StatusForbidden,
+			expectError:    true,
+			errorCode:      apperror.ErrPermissionDenied,
+		},
+	}
 
-	handler.GuestLogin()(rr, req)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockMetadataStore.ExpectedCalls = nil
+			tt.setupMocks()
 
-	assert.Equal(t, http.StatusOK, rr.Code)
+			handler := NewAuthHandler(tokenManager, mockUserStore, mockMetadataStore, logger)
 
-	var loginResp LoginResponse
-	err := json.Unmarshal(rr.Body.Bytes(), &loginResp)
-	require.NoError(t, err)
-	assert.NotEmpty(t, loginResp.Token)
+			req := httptest.NewRequest(http.MethodPost, "/auth/guest", nil)
+			rr := httptest.NewRecorder()
 
-	// Test with empty body
-	req2 := httptest.NewRequest(http.MethodPost, "/auth/guest", strings.NewReader(""))
-	rr2 := httptest.NewRecorder()
+			handler.GuestLogin()(rr, req)
 
-	handler.GuestLogin()(rr2, req2)
+			assert.Equal(t, tt.expectedStatus, rr.Code)
 
-	assert.Equal(t, http.StatusOK, rr2.Code)
+			if tt.expectError {
+				var errResp apperror.ErrorResponse
+				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
+				require.NoError(t, err)
+				assert.Equal(t, tt.errorCode, errResp.Error.Code)
+			} else {
+				var loginResp LoginResponse
+				err := json.Unmarshal(rr.Body.Bytes(), &loginResp)
+				require.NoError(t, err)
+				assert.NotEmpty(t, loginResp.Token)
+				assert.Equal(t, "guest", loginResp.User.Role)
+				assert.Equal(t, "guest", loginResp.User.DisplayName)
+				assert.Equal(t, "guest@temporary.local", loginResp.User.Email)
 
-	var loginResp2 LoginResponse
-	err = json.Unmarshal(rr2.Body.Bytes(), &loginResp2)
-	require.NoError(t, err)
-	assert.NotEmpty(t, loginResp2.Token)
+				// Verify the token is valid
+				claims, err := tokenManager.ValidateToken(loginResp.Token)
+				require.NoError(t, err)
+				assert.Equal(t, "guest", claims.Role)
+				assert.Contains(t, claims.Scopes, "read")
+				assert.NotContains(t, claims.Scopes, "write")
+				assert.NotContains(t, claims.Scopes, "admin")
+			}
 
-	// Verify different tokens were generated
-	assert.NotEqual(t, loginResp.Token, loginResp2.Token)
+			mockMetadataStore.AssertExpectations(t)
+		})
+	}
 }
 
 func TestCheckFirstRun(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name           string
@@ -911,9 +998,9 @@ func TestCheckFirstRun(t *testing.T) {
 
 func TestRegisterAdmin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, logger)
+	mockMetadataStore := new(MockMetadataStore)
 
 	tests := []struct {
 		name           string
@@ -922,6 +1009,7 @@ func TestRegisterAdmin(t *testing.T) {
 		expectedStatus int
 		expectError    bool
 		errorCode      apperror.ErrorCode
+		setupMocks     func()
 	}{
 		{
 			name: "Valid admin registration on first run",
@@ -933,6 +1021,20 @@ func TestRegisterAdmin(t *testing.T) {
 			existingUsers:  0,
 			expectedStatus: http.StatusCreated,
 			expectError:    false,
+			setupMocks: func() {
+				mockUserStore.On("Create", mock.Anything, "admin", mock.AnythingOfType("string"), mock.AnythingOfType("string"), "admin").Return(&userstore.User{
+					ID:          "admin-123",
+					DisplayName: "admin",
+					Email:       "admin@example.com",
+					Role:        "admin",
+					IsActive:    true,
+				}, nil)
+				// Mock the metadata store calls for setupDefaultGalleryMetadata
+				mockMetadataStore.On("Set", mock.Anything, "system", "gallery.supported_extensions", mock.AnythingOfType("string")).Return(&metadatastore.Metadata{}, nil)
+				mockMetadataStore.On("Set", mock.Anything, "system", "gallery.thumbnail_sizes", mock.AnythingOfType("string")).Return(&metadatastore.Metadata{}, nil)
+				mockMetadataStore.On("Set", mock.Anything, "system", "gallery.config", mock.AnythingOfType("string")).Return(&metadatastore.Metadata{}, nil)
+				mockMetadataStore.On("Set", mock.Anything, "system", "imagor.config", mock.AnythingOfType("string")).Return(&metadatastore.Metadata{}, nil)
+			},
 		},
 		{
 			name: "Admin registration when users already exist",
@@ -945,23 +1047,19 @@ func TestRegisterAdmin(t *testing.T) {
 			expectedStatus: http.StatusConflict,
 			expectError:    true,
 			errorCode:      apperror.ErrAlreadyExists,
+			setupMocks:     func() {},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockUserStore.ExpectedCalls = nil
-			mockUserStore.On("List", mock.Anything, 0, 1).Return([]*userstore.User{}, tt.existingUsers, nil)
+			mockMetadataStore.ExpectedCalls = nil
 
-			if !tt.expectError && tt.existingUsers == 0 {
-				mockUserStore.On("Create", mock.Anything, tt.body.DisplayName, mock.AnythingOfType("string"), mock.AnythingOfType("string"), "admin").Return(&userstore.User{
-					ID:          "admin-123",
-					DisplayName: tt.body.DisplayName,
-					Email:       strings.ToLower(tt.body.Email),
-					Role:        "admin",
-					IsActive:    true,
-				}, nil)
-			}
+			mockUserStore.On("List", mock.Anything, 0, 1).Return([]*userstore.User{}, tt.existingUsers, nil)
+			tt.setupMocks()
+
+			handler := NewAuthHandler(tokenManager, mockUserStore, mockMetadataStore, logger)
 
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
@@ -987,6 +1085,7 @@ func TestRegisterAdmin(t *testing.T) {
 			}
 
 			mockUserStore.AssertExpectations(t)
+			mockMetadataStore.AssertExpectations(t)
 		})
 	}
 }
