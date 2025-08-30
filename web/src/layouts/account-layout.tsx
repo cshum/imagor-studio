@@ -1,7 +1,7 @@
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { useRef } from 'react'
 
-import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
+import { FixedHeaderBar } from '@/components/fixed-header-bar'
 import { LoadingBar } from '@/components/loading-bar'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
