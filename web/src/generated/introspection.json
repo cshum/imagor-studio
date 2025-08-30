@@ -334,78 +334,6 @@
       },
       {
         "kind": "OBJECT",
-        "name": "Metadata",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "createdAt",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "key",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "ownerID",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "updatedAt",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "value",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
         "name": "Mutation",
         "description": null,
         "isOneOf": null,
@@ -544,7 +472,7 @@
             "deprecationReason": null
           },
           {
-            "name": "deleteSystemMetadata",
+            "name": "deleteSystemRegistry",
             "description": null,
             "args": [
               {
@@ -569,7 +497,7 @@
             "deprecationReason": null
           },
           {
-            "name": "deleteUserMetadata",
+            "name": "deleteUserRegistry",
             "description": null,
             "args": [
               {
@@ -602,7 +530,7 @@
             "deprecationReason": null
           },
           {
-            "name": "setSystemMetadata",
+            "name": "setSystemRegistry",
             "description": null,
             "args": [
               {
@@ -633,13 +561,13 @@
             "type": {
               "kind": "NON_NULL",
               "name": null,
-              "ofType": { "kind": "OBJECT", "name": "Metadata", "ofType": null }
+              "ofType": { "kind": "OBJECT", "name": "Registry", "ofType": null }
             },
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
-            "name": "setUserMetadata",
+            "name": "setUserRegistry",
             "description": null,
             "args": [
               {
@@ -678,7 +606,7 @@
             "type": {
               "kind": "NON_NULL",
               "name": null,
-              "ofType": { "kind": "OBJECT", "name": "Metadata", "ofType": null }
+              "ofType": { "kind": "OBJECT", "name": "Registry", "ofType": null }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -766,7 +694,7 @@
         "isOneOf": null,
         "fields": [
           {
-            "name": "getSystemMetadata",
+            "name": "getSystemRegistry",
             "description": null,
             "args": [
               {
@@ -782,12 +710,12 @@
                 "deprecationReason": null
               }
             ],
-            "type": { "kind": "OBJECT", "name": "Metadata", "ofType": null },
+            "type": { "kind": "OBJECT", "name": "Registry", "ofType": null },
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
-            "name": "getUserMetadata",
+            "name": "getUserRegistry",
             "description": null,
             "args": [
               {
@@ -811,7 +739,7 @@
                 "deprecationReason": null
               }
             ],
-            "type": { "kind": "OBJECT", "name": "Metadata", "ofType": null },
+            "type": { "kind": "OBJECT", "name": "Registry", "ofType": null },
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -897,7 +825,7 @@
             "deprecationReason": null
           },
           {
-            "name": "listSystemMetadata",
+            "name": "listSystemRegistry",
             "description": null,
             "args": [
               {
@@ -918,7 +846,7 @@
                 "ofType": {
                   "kind": "NON_NULL",
                   "name": null,
-                  "ofType": { "kind": "OBJECT", "name": "Metadata", "ofType": null }
+                  "ofType": { "kind": "OBJECT", "name": "Registry", "ofType": null }
                 }
               }
             },
@@ -926,7 +854,7 @@
             "deprecationReason": null
           },
           {
-            "name": "listUserMetadata",
+            "name": "listUserRegistry",
             "description": null,
             "args": [
               {
@@ -955,7 +883,7 @@
                 "ofType": {
                   "kind": "NON_NULL",
                   "name": null,
-                  "ofType": { "kind": "OBJECT", "name": "Metadata", "ofType": null }
+                  "ofType": { "kind": "OBJECT", "name": "Registry", "ofType": null }
                 }
               }
             },
@@ -1037,6 +965,78 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": { "kind": "OBJECT", "name": "UserList", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Registry",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "createdAt",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "key",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ownerID",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "updatedAt",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "value",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
             },
             "isDeprecated": false,
             "deprecationReason": null

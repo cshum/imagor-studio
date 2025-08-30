@@ -8,17 +8,20 @@ import {
   redirect,
   RouterProvider,
 } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
+import { AccountLayout } from '@/layouts/account-layout'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
-import { AccountPage } from '@/pages/account-page'
+import { profileLoader, adminLoader } from '@/loaders/account-loader.ts'
+import { ProfilePage } from '@/pages/profile-page'
+import { AdminPage } from '@/pages/admin-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { authStore } from '@/stores/auth-store.ts'
 import { themeStore } from '@/stores/theme-store.ts'
+import { Toaster } from '@/components/ui/sonner'
 
 const rootRoute = createRootRoute({
   loader: async () => {
@@ -30,7 +33,7 @@ const rootRoute = createRootRoute({
   component: () => (
     <>
       <Outlet />
-      <TanStackRouterDevtools />
+      <Toaster />
     </>
   ),
 })
@@ -156,15 +159,46 @@ const accountLayoutRoute = createRoute({
   },
   component: () => (
     <AdminPanelLayout>
-      <Outlet />
+      <AccountLayout />
     </AdminPanelLayout>
   ),
 })
 
-const accountPage = createRoute({
+// Redirect /account to /account/profile
+const accountRedirectRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account',
-  component: AccountPage,
+  component: () => <Navigate to='/account/profile' replace />,
+})
+
+const accountProfileRoute = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  path: '/account/profile',
+  loader: profileLoader,
+  component: () => {
+    const loaderData = accountProfileRoute.useLoaderData()
+    return <ProfilePage loaderData={loaderData} />
+  },
+})
+
+const accountAdminRoute = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  path: '/account/admin',
+  beforeLoad: async () => {
+    const auth = authStore.getState()
+    
+    // Only allow admin users
+    if (auth.profile?.role !== 'admin') {
+      throw redirect({ to: '/account/profile' })
+    }
+    
+    return {}
+  },
+  loader: adminLoader,
+  component: () => {
+    const loaderData = accountAdminRoute.useLoaderData()
+    return <AdminPage loaderData={loaderData} />
+  },
 })
 
 const routeTree = rootRoute.addChildren([
@@ -172,7 +206,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   adminSetupRoute,
   adminPanelLayoutRoute.addChildren([galleryRoute.addChildren([galleryPage, imagePage])]),
-  accountLayoutRoute.addChildren([accountPage]),
+  accountLayoutRoute.addChildren([accountRedirectRoute, accountProfileRoute, accountAdminRoute]),
 ])
 
 // Create router

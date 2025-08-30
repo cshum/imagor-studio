@@ -61,15 +61,6 @@ export type FileStat = {
   size: Scalars['Int']['output']
 }
 
-export type Metadata = {
-  __typename?: 'Metadata'
-  createdAt: Scalars['String']['output']
-  key: Scalars['String']['output']
-  ownerID: Scalars['String']['output']
-  updatedAt: Scalars['String']['output']
-  value: Scalars['String']['output']
-}
-
 export type Mutation = {
   __typename?: 'Mutation'
   changePassword: Scalars['Boolean']['output']
@@ -77,10 +68,10 @@ export type Mutation = {
   createUser: User
   deactivateAccount: Scalars['Boolean']['output']
   deleteFile: Scalars['Boolean']['output']
-  deleteSystemMetadata: Scalars['Boolean']['output']
-  deleteUserMetadata: Scalars['Boolean']['output']
-  setSystemMetadata: Metadata
-  setUserMetadata: Metadata
+  deleteSystemRegistry: Scalars['Boolean']['output']
+  deleteUserRegistry: Scalars['Boolean']['output']
+  setSystemRegistry: Registry
+  setUserRegistry: Registry
   updateProfile: User
   uploadFile: Scalars['Boolean']['output']
 }
@@ -106,21 +97,21 @@ export type MutationDeleteFileArgs = {
   path: Scalars['String']['input']
 }
 
-export type MutationDeleteSystemMetadataArgs = {
+export type MutationDeleteSystemRegistryArgs = {
   key: Scalars['String']['input']
 }
 
-export type MutationDeleteUserMetadataArgs = {
+export type MutationDeleteUserRegistryArgs = {
   key: Scalars['String']['input']
   ownerID?: InputMaybe<Scalars['String']['input']>
 }
 
-export type MutationSetSystemMetadataArgs = {
+export type MutationSetSystemRegistryArgs = {
   key: Scalars['String']['input']
   value: Scalars['String']['input']
 }
 
-export type MutationSetUserMetadataArgs = {
+export type MutationSetUserRegistryArgs = {
   key: Scalars['String']['input']
   ownerID?: InputMaybe<Scalars['String']['input']>
   value: Scalars['String']['input']
@@ -138,22 +129,22 @@ export type MutationUploadFileArgs = {
 
 export type Query = {
   __typename?: 'Query'
-  getSystemMetadata: Maybe<Metadata>
-  getUserMetadata: Maybe<Metadata>
+  getSystemRegistry: Maybe<Registry>
+  getUserRegistry: Maybe<Registry>
   listFiles: FileList
-  listSystemMetadata: Array<Metadata>
-  listUserMetadata: Array<Metadata>
+  listSystemRegistry: Array<Registry>
+  listUserRegistry: Array<Registry>
   me: Maybe<User>
   statFile: Maybe<FileStat>
   user: Maybe<User>
   users: UserList
 }
 
-export type QueryGetSystemMetadataArgs = {
+export type QueryGetSystemRegistryArgs = {
   key: Scalars['String']['input']
 }
 
-export type QueryGetUserMetadataArgs = {
+export type QueryGetUserRegistryArgs = {
   key: Scalars['String']['input']
   ownerID?: InputMaybe<Scalars['String']['input']>
 }
@@ -168,11 +159,11 @@ export type QueryListFilesArgs = {
   sortOrder?: InputMaybe<SortOrder>
 }
 
-export type QueryListSystemMetadataArgs = {
+export type QueryListSystemRegistryArgs = {
   prefix?: InputMaybe<Scalars['String']['input']>
 }
 
-export type QueryListUserMetadataArgs = {
+export type QueryListUserRegistryArgs = {
   ownerID?: InputMaybe<Scalars['String']['input']>
   prefix?: InputMaybe<Scalars['String']['input']>
 }
@@ -188,6 +179,15 @@ export type QueryUserArgs = {
 export type QueryUsersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>
   offset?: InputMaybe<Scalars['Int']['input']>
+}
+
+export type Registry = {
+  __typename?: 'Registry'
+  createdAt: Scalars['String']['output']
+  key: Scalars['String']['output']
+  ownerID: Scalars['String']['output']
+  updatedAt: Scalars['String']['output']
+  value: Scalars['String']['output']
 }
 
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
@@ -225,8 +225,8 @@ export type UserList = {
   totalCount: Scalars['Int']['output']
 }
 
-export type MetadataInfoFragment = {
-  __typename?: 'Metadata'
+export type RegistryInfoFragment = {
+  __typename?: 'Registry'
   key: string
   value: string
   ownerID: string
@@ -234,15 +234,15 @@ export type MetadataInfoFragment = {
   updatedAt: string
 }
 
-export type ListUserMetadataQueryVariables = Exact<{
+export type ListUserRegistryQueryVariables = Exact<{
   prefix?: InputMaybe<Scalars['String']['input']>
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
-export type ListUserMetadataQuery = {
+export type ListUserRegistryQuery = {
   __typename?: 'Query'
-  listUserMetadata: Array<{
-    __typename?: 'Metadata'
+  listUserRegistry: Array<{
+    __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
@@ -251,15 +251,15 @@ export type ListUserMetadataQuery = {
   }>
 }
 
-export type GetUserMetadataQueryVariables = Exact<{
+export type GetUserRegistryQueryVariables = Exact<{
   key: Scalars['String']['input']
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
-export type GetUserMetadataQuery = {
+export type GetUserRegistryQuery = {
   __typename?: 'Query'
-  getUserMetadata: {
-    __typename?: 'Metadata'
+  getUserRegistry: {
+    __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
@@ -268,14 +268,14 @@ export type GetUserMetadataQuery = {
   } | null
 }
 
-export type ListSystemMetadataQueryVariables = Exact<{
+export type ListSystemRegistryQueryVariables = Exact<{
   prefix?: InputMaybe<Scalars['String']['input']>
 }>
 
-export type ListSystemMetadataQuery = {
+export type ListSystemRegistryQuery = {
   __typename?: 'Query'
-  listSystemMetadata: Array<{
-    __typename?: 'Metadata'
+  listSystemRegistry: Array<{
+    __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
@@ -284,14 +284,14 @@ export type ListSystemMetadataQuery = {
   }>
 }
 
-export type GetSystemMetadataQueryVariables = Exact<{
+export type GetSystemRegistryQueryVariables = Exact<{
   key: Scalars['String']['input']
 }>
 
-export type GetSystemMetadataQuery = {
+export type GetSystemRegistryQuery = {
   __typename?: 'Query'
-  getSystemMetadata: {
-    __typename?: 'Metadata'
+  getSystemRegistry: {
+    __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
@@ -300,16 +300,16 @@ export type GetSystemMetadataQuery = {
   } | null
 }
 
-export type SetUserMetadataMutationVariables = Exact<{
+export type SetUserRegistryMutationVariables = Exact<{
   key: Scalars['String']['input']
   value: Scalars['String']['input']
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
-export type SetUserMetadataMutation = {
+export type SetUserRegistryMutation = {
   __typename?: 'Mutation'
-  setUserMetadata: {
-    __typename?: 'Metadata'
+  setUserRegistry: {
+    __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
@@ -318,22 +318,22 @@ export type SetUserMetadataMutation = {
   }
 }
 
-export type DeleteUserMetadataMutationVariables = Exact<{
+export type DeleteUserRegistryMutationVariables = Exact<{
   key: Scalars['String']['input']
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
-export type DeleteUserMetadataMutation = { __typename?: 'Mutation'; deleteUserMetadata: boolean }
+export type DeleteUserRegistryMutation = { __typename?: 'Mutation'; deleteUserRegistry: boolean }
 
-export type SetSystemMetadataMutationVariables = Exact<{
+export type SetSystemRegistryMutationVariables = Exact<{
   key: Scalars['String']['input']
   value: Scalars['String']['input']
 }>
 
-export type SetSystemMetadataMutation = {
+export type SetSystemRegistryMutation = {
   __typename?: 'Mutation'
-  setSystemMetadata: {
-    __typename?: 'Metadata'
+  setSystemRegistry: {
+    __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
@@ -342,13 +342,13 @@ export type SetSystemMetadataMutation = {
   }
 }
 
-export type DeleteSystemMetadataMutationVariables = Exact<{
+export type DeleteSystemRegistryMutationVariables = Exact<{
   key: Scalars['String']['input']
 }>
 
-export type DeleteSystemMetadataMutation = {
+export type DeleteSystemRegistryMutation = {
   __typename?: 'Mutation'
-  deleteSystemMetadata: boolean
+  deleteSystemRegistry: boolean
 }
 
 export type FileInfoFragment = {
@@ -564,8 +564,8 @@ export type CreateUserMutation = {
   }
 }
 
-export const MetadataInfoFragmentDoc = gql`
-  fragment MetadataInfo on Metadata {
+export const RegistryInfoFragmentDoc = gql`
+  fragment RegistryInfo on Registry {
     key
     value
     ownerID
@@ -609,62 +609,62 @@ export const UserInfoFragmentDoc = gql`
     updatedAt
   }
 `
-export const ListUserMetadataDocument = gql`
-  query ListUserMetadata($prefix: String, $ownerID: String) {
-    listUserMetadata(prefix: $prefix, ownerID: $ownerID) {
-      ...MetadataInfo
+export const ListUserRegistryDocument = gql`
+  query ListUserRegistry($prefix: String, $ownerID: String) {
+    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {
+      ...RegistryInfo
     }
   }
-  ${MetadataInfoFragmentDoc}
+  ${RegistryInfoFragmentDoc}
 `
-export const GetUserMetadataDocument = gql`
-  query GetUserMetadata($key: String!, $ownerID: String) {
-    getUserMetadata(key: $key, ownerID: $ownerID) {
-      ...MetadataInfo
+export const GetUserRegistryDocument = gql`
+  query GetUserRegistry($key: String!, $ownerID: String) {
+    getUserRegistry(key: $key, ownerID: $ownerID) {
+      ...RegistryInfo
     }
   }
-  ${MetadataInfoFragmentDoc}
+  ${RegistryInfoFragmentDoc}
 `
-export const ListSystemMetadataDocument = gql`
-  query ListSystemMetadata($prefix: String) {
-    listSystemMetadata(prefix: $prefix) {
-      ...MetadataInfo
+export const ListSystemRegistryDocument = gql`
+  query ListSystemRegistry($prefix: String) {
+    listSystemRegistry(prefix: $prefix) {
+      ...RegistryInfo
     }
   }
-  ${MetadataInfoFragmentDoc}
+  ${RegistryInfoFragmentDoc}
 `
-export const GetSystemMetadataDocument = gql`
-  query GetSystemMetadata($key: String!) {
-    getSystemMetadata(key: $key) {
-      ...MetadataInfo
+export const GetSystemRegistryDocument = gql`
+  query GetSystemRegistry($key: String!) {
+    getSystemRegistry(key: $key) {
+      ...RegistryInfo
     }
   }
-  ${MetadataInfoFragmentDoc}
+  ${RegistryInfoFragmentDoc}
 `
-export const SetUserMetadataDocument = gql`
-  mutation SetUserMetadata($key: String!, $value: String!, $ownerID: String) {
-    setUserMetadata(key: $key, value: $value, ownerID: $ownerID) {
-      ...MetadataInfo
+export const SetUserRegistryDocument = gql`
+  mutation SetUserRegistry($key: String!, $value: String!, $ownerID: String) {
+    setUserRegistry(key: $key, value: $value, ownerID: $ownerID) {
+      ...RegistryInfo
     }
   }
-  ${MetadataInfoFragmentDoc}
+  ${RegistryInfoFragmentDoc}
 `
-export const DeleteUserMetadataDocument = gql`
-  mutation DeleteUserMetadata($key: String!, $ownerID: String) {
-    deleteUserMetadata(key: $key, ownerID: $ownerID)
+export const DeleteUserRegistryDocument = gql`
+  mutation DeleteUserRegistry($key: String!, $ownerID: String) {
+    deleteUserRegistry(key: $key, ownerID: $ownerID)
   }
 `
-export const SetSystemMetadataDocument = gql`
-  mutation SetSystemMetadata($key: String!, $value: String!) {
-    setSystemMetadata(key: $key, value: $value) {
-      ...MetadataInfo
+export const SetSystemRegistryDocument = gql`
+  mutation SetSystemRegistry($key: String!, $value: String!) {
+    setSystemRegistry(key: $key, value: $value) {
+      ...RegistryInfo
     }
   }
-  ${MetadataInfoFragmentDoc}
+  ${RegistryInfoFragmentDoc}
 `
-export const DeleteSystemMetadataDocument = gql`
-  mutation DeleteSystemMetadata($key: String!) {
-    deleteSystemMetadata(key: $key)
+export const DeleteSystemRegistryDocument = gql`
+  mutation DeleteSystemRegistry($key: String!) {
+    deleteSystemRegistry(key: $key)
   }
 `
 export const ListFilesDocument = gql`
@@ -783,146 +783,146 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    ListUserMetadata(
-      variables?: ListUserMetadataQueryVariables,
+    ListUserRegistry(
+      variables?: ListUserRegistryQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
-    ): Promise<ListUserMetadataQuery> {
+    ): Promise<ListUserRegistryQuery> {
       return withWrapper(
         (wrappedRequestHeaders) =>
-          client.request<ListUserMetadataQuery>({
-            document: ListUserMetadataDocument,
+          client.request<ListUserRegistryQuery>({
+            document: ListUserRegistryDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'ListUserMetadata',
+        'ListUserRegistry',
         'query',
         variables,
       )
     },
-    GetUserMetadata(
-      variables: GetUserMetadataQueryVariables,
+    GetUserRegistry(
+      variables: GetUserRegistryQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
-    ): Promise<GetUserMetadataQuery> {
+    ): Promise<GetUserRegistryQuery> {
       return withWrapper(
         (wrappedRequestHeaders) =>
-          client.request<GetUserMetadataQuery>({
-            document: GetUserMetadataDocument,
+          client.request<GetUserRegistryQuery>({
+            document: GetUserRegistryDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'GetUserMetadata',
+        'GetUserRegistry',
         'query',
         variables,
       )
     },
-    ListSystemMetadata(
-      variables?: ListSystemMetadataQueryVariables,
+    ListSystemRegistry(
+      variables?: ListSystemRegistryQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
-    ): Promise<ListSystemMetadataQuery> {
+    ): Promise<ListSystemRegistryQuery> {
       return withWrapper(
         (wrappedRequestHeaders) =>
-          client.request<ListSystemMetadataQuery>({
-            document: ListSystemMetadataDocument,
+          client.request<ListSystemRegistryQuery>({
+            document: ListSystemRegistryDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'ListSystemMetadata',
+        'ListSystemRegistry',
         'query',
         variables,
       )
     },
-    GetSystemMetadata(
-      variables: GetSystemMetadataQueryVariables,
+    GetSystemRegistry(
+      variables: GetSystemRegistryQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
-    ): Promise<GetSystemMetadataQuery> {
+    ): Promise<GetSystemRegistryQuery> {
       return withWrapper(
         (wrappedRequestHeaders) =>
-          client.request<GetSystemMetadataQuery>({
-            document: GetSystemMetadataDocument,
+          client.request<GetSystemRegistryQuery>({
+            document: GetSystemRegistryDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'GetSystemMetadata',
+        'GetSystemRegistry',
         'query',
         variables,
       )
     },
-    SetUserMetadata(
-      variables: SetUserMetadataMutationVariables,
+    SetUserRegistry(
+      variables: SetUserRegistryMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
-    ): Promise<SetUserMetadataMutation> {
+    ): Promise<SetUserRegistryMutation> {
       return withWrapper(
         (wrappedRequestHeaders) =>
-          client.request<SetUserMetadataMutation>({
-            document: SetUserMetadataDocument,
+          client.request<SetUserRegistryMutation>({
+            document: SetUserRegistryDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'SetUserMetadata',
+        'SetUserRegistry',
         'mutation',
         variables,
       )
     },
-    DeleteUserMetadata(
-      variables: DeleteUserMetadataMutationVariables,
+    DeleteUserRegistry(
+      variables: DeleteUserRegistryMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
-    ): Promise<DeleteUserMetadataMutation> {
+    ): Promise<DeleteUserRegistryMutation> {
       return withWrapper(
         (wrappedRequestHeaders) =>
-          client.request<DeleteUserMetadataMutation>({
-            document: DeleteUserMetadataDocument,
+          client.request<DeleteUserRegistryMutation>({
+            document: DeleteUserRegistryDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'DeleteUserMetadata',
+        'DeleteUserRegistry',
         'mutation',
         variables,
       )
     },
-    SetSystemMetadata(
-      variables: SetSystemMetadataMutationVariables,
+    SetSystemRegistry(
+      variables: SetSystemRegistryMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
-    ): Promise<SetSystemMetadataMutation> {
+    ): Promise<SetSystemRegistryMutation> {
       return withWrapper(
         (wrappedRequestHeaders) =>
-          client.request<SetSystemMetadataMutation>({
-            document: SetSystemMetadataDocument,
+          client.request<SetSystemRegistryMutation>({
+            document: SetSystemRegistryDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'SetSystemMetadata',
+        'SetSystemRegistry',
         'mutation',
         variables,
       )
     },
-    DeleteSystemMetadata(
-      variables: DeleteSystemMetadataMutationVariables,
+    DeleteSystemRegistry(
+      variables: DeleteSystemRegistryMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
-    ): Promise<DeleteSystemMetadataMutation> {
+    ): Promise<DeleteSystemRegistryMutation> {
       return withWrapper(
         (wrappedRequestHeaders) =>
-          client.request<DeleteSystemMetadataMutation>({
-            document: DeleteSystemMetadataDocument,
+          client.request<DeleteSystemRegistryMutation>({
+            document: DeleteSystemRegistryDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'DeleteSystemMetadata',
+        'DeleteSystemRegistry',
         'mutation',
         variables,
       )

@@ -10,7 +10,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
-	"github.com/cshum/imagor-studio/server/internal/metadatastore"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/internal/uuid"
 	"github.com/cshum/imagor-studio/server/internal/validation"
@@ -20,15 +20,15 @@ import (
 type AuthHandler struct {
 	tokenManager  *auth.TokenManager
 	userStore     userstore.Store
-	metadataStore metadatastore.Store
+	registryStore registrystore.Store
 	logger        *zap.Logger
 }
 
-func NewAuthHandler(tokenManager *auth.TokenManager, userStore userstore.Store, metadataStore metadatastore.Store, logger *zap.Logger) *AuthHandler {
+func NewAuthHandler(tokenManager *auth.TokenManager, userStore userstore.Store, registryStore registrystore.Store, logger *zap.Logger) *AuthHandler {
 	return &AuthHandler{
 		tokenManager:  tokenManager,
 		userStore:     userStore,
-		metadataStore: metadataStore,
+		registryStore: registryStore,
 		logger:        logger,
 	}
 }
@@ -127,7 +127,7 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 				guestModeValue = "true"
 			}
 
-			_, err = h.metadataStore.Set(r.Context(), "system", "auth.enableGuestMode", guestModeValue)
+			_, err = h.registryStore.Set(r.Context(), "system", "auth.enableGuestMode", guestModeValue)
 			if err != nil {
 				h.logger.Warn("Admin user created but guest mode setting failed to save", zap.Error(err))
 			} else {
@@ -214,7 +214,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
 		// Check if guest mode is enabled via system metadata
-		guestModeMetadata, err := h.metadataStore.Get(r.Context(), "system", "auth.enableGuestMode")
+		guestModeMetadata, err := h.registryStore.Get(r.Context(), "system", "auth.enableGuestMode")
 		if err != nil {
 			h.logger.Error("Failed to check guest mode setting", zap.Error(err))
 			return apperror.InternalServerError("Failed to check system configuration")
@@ -431,7 +431,7 @@ func (h *AuthHandler) setupDefaultGalleryMetadata(ctx context.Context) {
 	}
 
 	for _, entry := range metadataEntries {
-		_, err := h.metadataStore.Set(ctx, "system", entry.key, entry.value)
+		_, err := h.registryStore.Set(ctx, "system", entry.key, entry.value)
 		if err != nil {
 			h.logger.Warn("Failed to set gallery metadata",
 				zap.String("key", entry.key),

@@ -1,4 +1,4 @@
-package metadatastore
+package registrystore
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type Metadata struct {
+type Registry struct {
 	Key       string    `json:"key"`
 	Value     string    `json:"value"`
 	CreatedAt time.Time `json:"createdAt"`
@@ -21,9 +21,9 @@ type Metadata struct {
 }
 
 type Store interface {
-	List(ctx context.Context, ownerID string, prefix *string) ([]*Metadata, error)
-	Get(ctx context.Context, ownerID, key string) (*Metadata, error)
-	Set(ctx context.Context, ownerID, key, value string) (*Metadata, error)
+	List(ctx context.Context, ownerID string, prefix *string) ([]*Registry, error)
+	Get(ctx context.Context, ownerID, key string) (*Registry, error)
+	Set(ctx context.Context, ownerID, key, value string) (*Registry, error)
 	Delete(ctx context.Context, ownerID, key string) error
 }
 
@@ -39,8 +39,8 @@ func New(db *bun.DB, logger *zap.Logger) Store {
 	}
 }
 
-func (s *store) List(ctx context.Context, ownerID string, prefix *string) ([]*Metadata, error) {
-	var entries []model.Metadata
+func (s *store) List(ctx context.Context, ownerID string, prefix *string) ([]*Registry, error) {
+	var entries []model.Registry
 	query := s.db.NewSelect().
 		Model(&entries).
 		Where("owner_id = ?", ownerID)
@@ -51,12 +51,12 @@ func (s *store) List(ctx context.Context, ownerID string, prefix *string) ([]*Me
 
 	err := query.OrderExpr("key ASC").Scan(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error listing metadata: %w", err)
+		return nil, fmt.Errorf("error listing registry: %w", err)
 	}
 
-	var result []*Metadata
+	var result []*Registry
 	for _, entry := range entries {
-		result = append(result, &Metadata{
+		result = append(result, &Registry{
 			Key:       entry.Key,
 			Value:     entry.Value,
 			CreatedAt: entry.CreatedAt,
@@ -67,8 +67,8 @@ func (s *store) List(ctx context.Context, ownerID string, prefix *string) ([]*Me
 	return result, nil
 }
 
-func (s *store) Get(ctx context.Context, ownerID, key string) (*Metadata, error) {
-	var entry model.Metadata
+func (s *store) Get(ctx context.Context, ownerID, key string) (*Registry, error) {
+	var entry model.Registry
 	err := s.db.NewSelect().
 		Model(&entry).
 		Where("owner_id = ? AND key = ?", ownerID, key).
@@ -77,10 +77,10 @@ func (s *store) Get(ctx context.Context, ownerID, key string) (*Metadata, error)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("error getting metadata: %w", err)
+		return nil, fmt.Errorf("error getting registry: %w", err)
 	}
 
-	return &Metadata{
+	return &Registry{
 		Key:       entry.Key,
 		Value:     entry.Value,
 		CreatedAt: entry.CreatedAt,
@@ -88,9 +88,9 @@ func (s *store) Get(ctx context.Context, ownerID, key string) (*Metadata, error)
 	}, nil
 }
 
-func (s *store) Set(ctx context.Context, ownerID, key, value string) (*Metadata, error) {
+func (s *store) Set(ctx context.Context, ownerID, key, value string) (*Registry, error) {
 	now := time.Now()
-	entry := &model.Metadata{
+	entry := &model.Registry{
 		ID:        uuid.GenerateUUID(),
 		OwnerID:   ownerID,
 		Key:       key,
@@ -106,10 +106,10 @@ func (s *store) Set(ctx context.Context, ownerID, key, value string) (*Metadata,
 		Set("updated_at = EXCLUDED.updated_at").
 		Exec(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error setting metadata: %w", err)
+		return nil, fmt.Errorf("error setting registry: %w", err)
 	}
 
-	return &Metadata{
+	return &Registry{
 		Key:       entry.Key,
 		Value:     entry.Value,
 		CreatedAt: entry.CreatedAt,
@@ -119,11 +119,11 @@ func (s *store) Set(ctx context.Context, ownerID, key, value string) (*Metadata,
 
 func (s *store) Delete(ctx context.Context, ownerID, key string) error {
 	result, err := s.db.NewDelete().
-		Model((*model.Metadata)(nil)).
+		Model((*model.Registry)(nil)).
 		Where("owner_id = ? AND key = ?", ownerID, key).
 		Exec(ctx)
 	if err != nil {
-		return fmt.Errorf("error deleting metadata: %w", err)
+		return fmt.Errorf("error deleting registry: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -132,7 +132,7 @@ func (s *store) Delete(ctx context.Context, ownerID, key string) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("metadata with key %s not found for owner %s", key, ownerID)
+		return fmt.Errorf("registry with key %s not found for owner %s", key, ownerID)
 	}
 
 	return nil

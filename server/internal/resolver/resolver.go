@@ -3,7 +3,7 @@ package resolver
 import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imageservice"
-	"github.com/cshum/imagor-studio/server/internal/metadatastore"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"go.uber.org/zap"
@@ -13,16 +13,16 @@ const SystemOwnerID = "system"
 
 type Resolver struct {
 	storage       storage.Storage
-	metadataStore metadatastore.Store
+	registryStore registrystore.Store
 	userStore     userstore.Store
 	imageService  imageservice.Service
 	logger        *zap.Logger
 }
 
-func NewResolver(storage storage.Storage, metadataStore metadatastore.Store, userStore userstore.Store, imageService imageservice.Service, logger *zap.Logger) *Resolver {
+func NewResolver(storage storage.Storage, registryStore registrystore.Store, userStore userstore.Store, imageService imageservice.Service, logger *zap.Logger) *Resolver {
 	return &Resolver{
 		storage:       storage,
-		metadataStore: metadataStore,
+		registryStore: registryStore,
 		userStore:     userStore,
 		imageService:  imageService,
 		logger:        logger,

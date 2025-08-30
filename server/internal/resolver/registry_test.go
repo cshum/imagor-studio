@@ -5,61 +5,61 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/metadatastore"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 )
 
-type MockMetadataStore struct {
+type MockRegistryStore struct {
 	mock.Mock
 }
 
-func (m *MockMetadataStore) List(ctx context.Context, ownerID string, prefix *string) ([]*metadatastore.Metadata, error) {
+func (m *MockRegistryStore) List(ctx context.Context, ownerID string, prefix *string) ([]*registrystore.Registry, error) {
 	args := m.Called(ctx, ownerID, prefix)
-	return args.Get(0).([]*metadatastore.Metadata), args.Error(1)
+	return args.Get(0).([]*registrystore.Registry), args.Error(1)
 }
 
-func (m *MockMetadataStore) Get(ctx context.Context, ownerID, key string) (*metadatastore.Metadata, error) {
+func (m *MockRegistryStore) Get(ctx context.Context, ownerID, key string) (*registrystore.Registry, error) {
 	args := m.Called(ctx, ownerID, key)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*metadatastore.Metadata), args.Error(1)
+	return args.Get(0).(*registrystore.Registry), args.Error(1)
 }
 
-func (m *MockMetadataStore) Set(ctx context.Context, ownerID, key, value string) (*metadatastore.Metadata, error) {
+func (m *MockRegistryStore) Set(ctx context.Context, ownerID, key, value string) (*registrystore.Registry, error) {
 	args := m.Called(ctx, ownerID, key, value)
-	return args.Get(0).(*metadatastore.Metadata), args.Error(1)
+	return args.Get(0).(*registrystore.Registry), args.Error(1)
 }
 
-func (m *MockMetadataStore) Delete(ctx context.Context, ownerID, key string) error {
+func (m *MockRegistryStore) Delete(ctx context.Context, ownerID, key string) error {
 	args := m.Called(ctx, ownerID, key)
 	return args.Error(0)
 }
 
-func TestSetUserMetadata_SelfOperation(t *testing.T) {
+func TestSetUserRegistry_SelfOperation(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:preference"
 	value := "dark_mode"
 
 	now := time.Now()
-	resultMetadata := &metadatastore.Metadata{
+	resultRegistry := &registrystore.Registry{
 		Key:       key,
 		Value:     value,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 
-	mockMetadataStore.On("Set", ctx, "test-user-id", key, value).Return(resultMetadata, nil)
+	mockRegistryStore.On("Set", ctx, "test-user-id", key, value).Return(resultRegistry, nil)
 
-	result, err := resolver.Mutation().SetUserMetadata(ctx, key, value, nil) // nil ownerID = self
+	result, err := resolver.Mutation().SetUserRegistry(ctx, key, value, nil) // nil ownerID = self
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -67,15 +67,15 @@ func TestSetUserMetadata_SelfOperation(t *testing.T) {
 	assert.Equal(t, value, result.Value)
 	assert.Equal(t, "test-user-id", result.OwnerID)
 
-	mockMetadataStore.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
 }
 
-func TestSetUserMetadata_AdminForOtherUser(t *testing.T) {
+func TestSetUserRegistry_AdminForOtherUser(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	targetOwnerID := "target-user-id"
@@ -83,16 +83,16 @@ func TestSetUserMetadata_AdminForOtherUser(t *testing.T) {
 	value := "VIP user"
 
 	now := time.Now()
-	resultMetadata := &metadatastore.Metadata{
+	resultRegistry := &registrystore.Registry{
 		Key:       key,
 		Value:     value,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 
-	mockMetadataStore.On("Set", ctx, targetOwnerID, key, value).Return(resultMetadata, nil)
+	mockRegistryStore.On("Set", ctx, targetOwnerID, key, value).Return(resultRegistry, nil)
 
-	result, err := resolver.Mutation().SetUserMetadata(ctx, key, value, &targetOwnerID)
+	result, err := resolver.Mutation().SetUserRegistry(ctx, key, value, &targetOwnerID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -100,71 +100,71 @@ func TestSetUserMetadata_AdminForOtherUser(t *testing.T) {
 	assert.Equal(t, value, result.Value)
 	assert.Equal(t, targetOwnerID, result.OwnerID)
 
-	mockMetadataStore.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
 }
 
-func TestSetUserMetadata_RegularUserCannotAccessOthers(t *testing.T) {
+func TestSetUserRegistry_RegularUserCannotAccessOthers(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("regular-user-id")
 	targetOwnerID := "other-user-id"
 	key := "test:key"
 	value := "test value"
 
-	result, err := resolver.Mutation().SetUserMetadata(ctx, key, value, &targetOwnerID)
+	result, err := resolver.Mutation().SetUserRegistry(ctx, key, value, &targetOwnerID)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
 	assert.Contains(t, err.Error(), "admin permission required")
 
-	mockMetadataStore.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
 }
 
-func TestSetUserMetadata_GuestCannotSet(t *testing.T) {
+func TestSetUserRegistry_GuestCannotSet(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	ctx := createGuestContext("guest-id")
 	key := "test:key"
 	value := "test value"
 
-	result, err := resolver.Mutation().SetUserMetadata(ctx, key, value, nil)
+	result, err := resolver.Mutation().SetUserRegistry(ctx, key, value, nil)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
 	assert.Contains(t, err.Error(), "cannot update a guest user")
 
-	mockMetadataStore.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
 }
 
-func TestGetUserMetadata_SelfOperation(t *testing.T) {
+func TestGetUserRegistry_SelfOperation(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:preference"
 
 	now := time.Now()
-	mockMetadata := &metadatastore.Metadata{
+	mockRegistry := &registrystore.Registry{
 		Key:       key,
 		Value:     "dark_mode",
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 
-	mockMetadataStore.On("Get", ctx, "test-user-id", key).Return(mockMetadata, nil)
+	mockRegistryStore.On("Get", ctx, "test-user-id", key).Return(mockRegistry, nil)
 
-	result, err := resolver.Query().GetUserMetadata(ctx, key, nil)
+	result, err := resolver.Query().GetUserRegistry(ctx, key, nil)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -172,48 +172,48 @@ func TestGetUserMetadata_SelfOperation(t *testing.T) {
 	assert.Equal(t, "dark_mode", result.Value)
 	assert.Equal(t, "test-user-id", result.OwnerID)
 
-	mockMetadataStore.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
 }
 
-func TestGetUserMetadata_NotFound(t *testing.T) {
+func TestGetUserRegistry_NotFound(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "non-existent"
 
-	mockMetadataStore.On("Get", ctx, "test-user-id", key).Return(nil, nil)
+	mockRegistryStore.On("Get", ctx, "test-user-id", key).Return(nil, nil)
 
-	result, err := resolver.Query().GetUserMetadata(ctx, key, nil)
+	result, err := resolver.Query().GetUserRegistry(ctx, key, nil)
 
 	assert.NoError(t, err)
 	assert.Nil(t, result)
 
-	mockMetadataStore.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
 }
 
-func TestListUserMetadata_SelfOperation(t *testing.T) {
+func TestListUserRegistry_SelfOperation(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	prefix := "app:"
 
 	now := time.Now()
-	mockMetadata := []*metadatastore.Metadata{
+	mockRegistry := []*registrystore.Registry{
 		{Key: "app:setting1", Value: "value1", CreatedAt: now, UpdatedAt: now},
 		{Key: "app:setting2", Value: "value2", CreatedAt: now, UpdatedAt: now},
 	}
 
-	mockMetadataStore.On("List", ctx, "test-user-id", &prefix).Return(mockMetadata, nil)
+	mockRegistryStore.On("List", ctx, "test-user-id", &prefix).Return(mockRegistry, nil)
 
-	result, err := resolver.Query().ListUserMetadata(ctx, &prefix, nil)
+	result, err := resolver.Query().ListUserRegistry(ctx, &prefix, nil)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -222,35 +222,35 @@ func TestListUserMetadata_SelfOperation(t *testing.T) {
 	assert.Equal(t, "value1", result[0].Value)
 	assert.Equal(t, "test-user-id", result[0].OwnerID)
 
-	mockMetadataStore.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
 }
 
-func TestDeleteUserMetadata_SelfOperation(t *testing.T) {
+func TestDeleteUserRegistry_SelfOperation(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:setting-to-delete"
 
-	mockMetadataStore.On("Delete", ctx, "test-user-id", key).Return(nil)
+	mockRegistryStore.On("Delete", ctx, "test-user-id", key).Return(nil)
 
-	result, err := resolver.Mutation().DeleteUserMetadata(ctx, key, nil)
+	result, err := resolver.Mutation().DeleteUserRegistry(ctx, key, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
 
-	mockMetadataStore.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
 }
 
-func TestSetSystemMetadata_AdminOnly(t *testing.T) {
+func TestSetSystemRegistry_AdminOnly(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -259,14 +259,14 @@ func TestSetSystemMetadata_AdminOnly(t *testing.T) {
 		errorMsg    string
 	}{
 		{
-			name: "Admin can set system metadata",
+			name: "Admin can set system registry",
 			context: func() context.Context {
 				return createAdminContext("admin-user-id")
 			},
 			expectError: false,
 		},
 		{
-			name: "Regular user cannot set system metadata",
+			name: "Regular user cannot set system registry",
 			context: func() context.Context {
 				return createReadWriteContext("user-id")
 			},
@@ -274,7 +274,7 @@ func TestSetSystemMetadata_AdminOnly(t *testing.T) {
 			errorMsg:    "admin permission required",
 		},
 		{
-			name: "Guest cannot set system metadata",
+			name: "Guest cannot set system registry",
 			context: func() context.Context {
 				return createGuestContext("guest-id")
 			},
@@ -285,21 +285,21 @@ func TestSetSystemMetadata_AdminOnly(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockMetadataStore.ExpectedCalls = nil
+			mockRegistryStore.ExpectedCalls = nil
 			ctx := tt.context()
 
 			if !tt.expectError {
 				now := time.Now()
-				resultMetadata := &metadatastore.Metadata{
+				resultRegistry := &registrystore.Registry{
 					Key:       "app_version",
 					Value:     "1.0.0",
 					CreatedAt: now,
 					UpdatedAt: now,
 				}
-				mockMetadataStore.On("Set", ctx, "system", "app_version", "1.0.0").Return(resultMetadata, nil)
+				mockRegistryStore.On("Set", ctx, "system", "app_version", "1.0.0").Return(resultRegistry, nil)
 			}
 
-			result, err := resolver.Mutation().SetSystemMetadata(ctx, "app_version", "1.0.0")
+			result, err := resolver.Mutation().SetSystemRegistry(ctx, "app_version", "1.0.0")
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -313,36 +313,36 @@ func TestSetSystemMetadata_AdminOnly(t *testing.T) {
 				assert.Equal(t, "system", result.OwnerID)
 			}
 
-			mockMetadataStore.AssertExpectations(t)
+			mockRegistryStore.AssertExpectations(t)
 		})
 	}
 }
 
-func TestGetSystemMetadata_OpenRead(t *testing.T) {
+func TestGetSystemRegistry_OpenRead(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name    string
 		context func() context.Context
 	}{
 		{
-			name: "Admin can read system metadata",
+			name: "Admin can read system registry",
 			context: func() context.Context {
 				return createAdminContext("admin-user-id")
 			},
 		},
 		{
-			name: "Regular user can read system metadata",
+			name: "Regular user can read system registry",
 			context: func() context.Context {
 				return createReadWriteContext("user-id")
 			},
 		},
 		{
-			name: "Guest can read system metadata",
+			name: "Guest can read system registry",
 			context: func() context.Context {
 				return createGuestContext("guest-id")
 			},
@@ -351,20 +351,20 @@ func TestGetSystemMetadata_OpenRead(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockMetadataStore.ExpectedCalls = nil
+			mockRegistryStore.ExpectedCalls = nil
 			ctx := tt.context()
 
 			now := time.Now()
-			mockMetadata := &metadatastore.Metadata{
+			mockRegistry := &registrystore.Registry{
 				Key:       "app_version",
 				Value:     "1.0.0",
 				CreatedAt: now,
 				UpdatedAt: now,
 			}
 
-			mockMetadataStore.On("Get", ctx, "system", "app_version").Return(mockMetadata, nil)
+			mockRegistryStore.On("Get", ctx, "system", "app_version").Return(mockRegistry, nil)
 
-			result, err := resolver.Query().GetSystemMetadata(ctx, "app_version")
+			result, err := resolver.Query().GetSystemRegistry(ctx, "app_version")
 
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
@@ -372,30 +372,30 @@ func TestGetSystemMetadata_OpenRead(t *testing.T) {
 			assert.Equal(t, "1.0.0", result.Value)
 			assert.Equal(t, "system", result.OwnerID)
 
-			mockMetadataStore.AssertExpectations(t)
+			mockRegistryStore.AssertExpectations(t)
 		})
 	}
 }
 
-func TestListSystemMetadata_OpenRead(t *testing.T) {
+func TestListSystemRegistry_OpenRead(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("user-id")
 	prefix := "config:"
 
 	now := time.Now()
-	mockMetadata := []*metadatastore.Metadata{
+	mockRegistry := []*registrystore.Registry{
 		{Key: "config:setting1", Value: "value1", CreatedAt: now, UpdatedAt: now},
 		{Key: "config:setting2", Value: "value2", CreatedAt: now, UpdatedAt: now},
 	}
 
-	mockMetadataStore.On("List", ctx, "system", &prefix).Return(mockMetadata, nil)
+	mockRegistryStore.On("List", ctx, "system", &prefix).Return(mockRegistry, nil)
 
-	result, err := resolver.Query().ListSystemMetadata(ctx, &prefix)
+	result, err := resolver.Query().ListSystemRegistry(ctx, &prefix)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -404,15 +404,15 @@ func TestListSystemMetadata_OpenRead(t *testing.T) {
 	assert.Equal(t, "value1", result[0].Value)
 	assert.Equal(t, "system", result[0].OwnerID)
 
-	mockMetadataStore.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
 }
 
-func TestDeleteSystemMetadata_AdminOnly(t *testing.T) {
+func TestDeleteSystemRegistry_AdminOnly(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -421,14 +421,14 @@ func TestDeleteSystemMetadata_AdminOnly(t *testing.T) {
 		errorMsg    string
 	}{
 		{
-			name: "Admin can delete system metadata",
+			name: "Admin can delete system registry",
 			context: func() context.Context {
 				return createAdminContext("admin-user-id")
 			},
 			expectError: false,
 		},
 		{
-			name: "Regular user cannot delete system metadata",
+			name: "Regular user cannot delete system registry",
 			context: func() context.Context {
 				return createReadWriteContext("user-id")
 			},
@@ -439,14 +439,14 @@ func TestDeleteSystemMetadata_AdminOnly(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockMetadataStore.ExpectedCalls = nil
+			mockRegistryStore.ExpectedCalls = nil
 			ctx := tt.context()
 
 			if !tt.expectError {
-				mockMetadataStore.On("Delete", ctx, "system", "old_config").Return(nil)
+				mockRegistryStore.On("Delete", ctx, "system", "old_config").Return(nil)
 			}
 
-			result, err := resolver.Mutation().DeleteSystemMetadata(ctx, "old_config")
+			result, err := resolver.Mutation().DeleteSystemRegistry(ctx, "old_config")
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -457,17 +457,17 @@ func TestDeleteSystemMetadata_AdminOnly(t *testing.T) {
 				assert.True(t, result)
 			}
 
-			mockMetadataStore.AssertExpectations(t)
+			mockRegistryStore.AssertExpectations(t)
 		})
 	}
 }
 
-func TestUserMetadata_PermissionEdgeCases(t *testing.T) {
+func TestUserRegistry_PermissionEdgeCases(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -477,7 +477,7 @@ func TestUserMetadata_PermissionEdgeCases(t *testing.T) {
 		errorMsg    string
 	}{
 		{
-			name: "User can access own metadata explicitly",
+			name: "User can access own registry explicitly",
 			context: func() context.Context {
 				return createReadWriteContext("user-123")
 			},
@@ -485,7 +485,7 @@ func TestUserMetadata_PermissionEdgeCases(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "User cannot access other user's metadata",
+			name: "User cannot access other user's registry",
 			context: func() context.Context {
 				return createReadWriteContext("user-123")
 			},
@@ -494,7 +494,7 @@ func TestUserMetadata_PermissionEdgeCases(t *testing.T) {
 			errorMsg:    "admin permission required",
 		},
 		{
-			name: "Admin can access any user's metadata",
+			name: "Admin can access any user's registry",
 			context: func() context.Context {
 				return createAdminContext("admin-123")
 			},
@@ -505,15 +505,15 @@ func TestUserMetadata_PermissionEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockMetadataStore.ExpectedCalls = nil
+			mockRegistryStore.ExpectedCalls = nil
 			ctx := tt.context()
 
 			if !tt.expectError {
 				expectedOwnerID := *tt.ownerID
-				mockMetadataStore.On("List", ctx, expectedOwnerID, (*string)(nil)).Return([]*metadatastore.Metadata{}, nil)
+				mockRegistryStore.On("List", ctx, expectedOwnerID, (*string)(nil)).Return([]*registrystore.Registry{}, nil)
 			}
 
-			result, err := resolver.Query().ListUserMetadata(ctx, nil, tt.ownerID)
+			result, err := resolver.Query().ListUserRegistry(ctx, nil, tt.ownerID)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -523,7 +523,7 @@ func TestUserMetadata_PermissionEdgeCases(t *testing.T) {
 				assert.NotNil(t, result)
 			}
 
-			mockMetadataStore.AssertExpectations(t)
+			mockRegistryStore.AssertExpectations(t)
 		})
 	}
 }

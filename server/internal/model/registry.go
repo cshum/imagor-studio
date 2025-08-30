@@ -6,8 +6,8 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type Metadata struct {
-	bun.BaseModel `bun:"table:metadata,alias:m"`
+type Registry struct {
+	bun.BaseModel `bun:"table:registry,alias:r"`
 
 	ID        string    `bun:"id,pk,type:text"`
 	OwnerID   string    `bun:"owner_id,notnull,type:text"`

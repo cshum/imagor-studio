@@ -13,8 +13,8 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
-	"github.com/cshum/imagor-studio/server/internal/metadatastore"
 	"github.com/cshum/imagor-studio/server/internal/model"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -91,35 +91,35 @@ func (m *MockUserStore) GetByIDWithPassword(ctx context.Context, id string) (*mo
 	return args.Get(0).(*model.User), args.Error(1)
 }
 
-type MockMetadataStore struct {
+type MockRegistryStore struct {
 	mock.Mock
 }
 
-func (m *MockMetadataStore) List(ctx context.Context, ownerID string, prefix *string) ([]*metadatastore.Metadata, error) {
+func (m *MockRegistryStore) List(ctx context.Context, ownerID string, prefix *string) ([]*registrystore.Registry, error) {
 	args := m.Called(ctx, ownerID, prefix)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*metadatastore.Metadata), args.Error(1)
+	return args.Get(0).([]*registrystore.Registry), args.Error(1)
 }
 
-func (m *MockMetadataStore) Get(ctx context.Context, ownerID, key string) (*metadatastore.Metadata, error) {
+func (m *MockRegistryStore) Get(ctx context.Context, ownerID, key string) (*registrystore.Registry, error) {
 	args := m.Called(ctx, ownerID, key)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*metadatastore.Metadata), args.Error(1)
+	return args.Get(0).(*registrystore.Registry), args.Error(1)
 }
 
-func (m *MockMetadataStore) Set(ctx context.Context, ownerID, key, value string) (*metadatastore.Metadata, error) {
+func (m *MockRegistryStore) Set(ctx context.Context, ownerID, key, value string) (*registrystore.Registry, error) {
 	args := m.Called(ctx, ownerID, key, value)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*metadatastore.Metadata), args.Error(1)
+	return args.Get(0).(*registrystore.Registry), args.Error(1)
 }
 
-func (m *MockMetadataStore) Delete(ctx context.Context, ownerID, key string) error {
+func (m *MockRegistryStore) Delete(ctx context.Context, ownerID, key string) error {
 	args := m.Called(ctx, ownerID, key)
 	return args.Error(0)
 }
@@ -873,7 +873,7 @@ func TestGuestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 
 	tests := []struct {
 		name           string
@@ -885,7 +885,7 @@ func TestGuestLogin(t *testing.T) {
 		{
 			name: "Guest login enabled",
 			setupMocks: func() {
-				mockMetadataStore.On("Get", mock.Anything, "system", "auth.enableGuestMode").Return(&metadatastore.Metadata{
+				mockRegistryStore.On("Get", mock.Anything, "system", "auth.enableGuestMode").Return(&registrystore.Registry{
 					Key:   "auth.enableGuestMode",
 					Value: "true",
 				}, nil)
@@ -896,7 +896,7 @@ func TestGuestLogin(t *testing.T) {
 		{
 			name: "Guest login disabled",
 			setupMocks: func() {
-				mockMetadataStore.On("Get", mock.Anything, "system", "auth.enableGuestMode").Return(&metadatastore.Metadata{
+				mockRegistryStore.On("Get", mock.Anything, "system", "auth.enableGuestMode").Return(&registrystore.Registry{
 					Key:   "auth.enableGuestMode",
 					Value: "false",
 				}, nil)
@@ -908,7 +908,7 @@ func TestGuestLogin(t *testing.T) {
 		{
 			name: "Guest mode setting not found",
 			setupMocks: func() {
-				mockMetadataStore.On("Get", mock.Anything, "system", "auth.enableGuestMode").Return(nil, nil)
+				mockRegistryStore.On("Get", mock.Anything, "system", "auth.enableGuestMode").Return(nil, nil)
 			},
 			expectedStatus: http.StatusForbidden,
 			expectError:    true,
@@ -918,10 +918,10 @@ func TestGuestLogin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockMetadataStore.ExpectedCalls = nil
+			mockRegistryStore.ExpectedCalls = nil
 			tt.setupMocks()
 
-			handler := NewAuthHandler(tokenManager, mockUserStore, mockMetadataStore, logger)
+			handler := NewAuthHandler(tokenManager, mockUserStore, mockRegistryStore, logger)
 
 			req := httptest.NewRequest(http.MethodPost, "/auth/guest", nil)
 			rr := httptest.NewRecorder()
@@ -953,7 +953,7 @@ func TestGuestLogin(t *testing.T) {
 				assert.NotContains(t, claims.Scopes, "admin")
 			}
 
-			mockMetadataStore.AssertExpectations(t)
+			mockRegistryStore.AssertExpectations(t)
 		})
 	}
 }
@@ -1000,7 +1000,7 @@ func TestRegisterAdmin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 
 	tests := []struct {
 		name           string
@@ -1029,11 +1029,11 @@ func TestRegisterAdmin(t *testing.T) {
 					Role:        "admin",
 					IsActive:    true,
 				}, nil)
-				// Mock the metadata store calls for setupDefaultGalleryMetadata
-				mockMetadataStore.On("Set", mock.Anything, "system", "gallery.supported_extensions", mock.AnythingOfType("string")).Return(&metadatastore.Metadata{}, nil)
-				mockMetadataStore.On("Set", mock.Anything, "system", "gallery.thumbnail_sizes", mock.AnythingOfType("string")).Return(&metadatastore.Metadata{}, nil)
-				mockMetadataStore.On("Set", mock.Anything, "system", "gallery.config", mock.AnythingOfType("string")).Return(&metadatastore.Metadata{}, nil)
-				mockMetadataStore.On("Set", mock.Anything, "system", "imagor.config", mock.AnythingOfType("string")).Return(&metadatastore.Metadata{}, nil)
+				// Mock the registry store calls for setupDefaultGalleryMetadata
+				mockRegistryStore.On("Set", mock.Anything, "system", "gallery.supported_extensions", mock.AnythingOfType("string")).Return(&registrystore.Registry{}, nil)
+				mockRegistryStore.On("Set", mock.Anything, "system", "gallery.thumbnail_sizes", mock.AnythingOfType("string")).Return(&registrystore.Registry{}, nil)
+				mockRegistryStore.On("Set", mock.Anything, "system", "gallery.config", mock.AnythingOfType("string")).Return(&registrystore.Registry{}, nil)
+				mockRegistryStore.On("Set", mock.Anything, "system", "imagor.config", mock.AnythingOfType("string")).Return(&registrystore.Registry{}, nil)
 			},
 		},
 		{
@@ -1054,12 +1054,12 @@ func TestRegisterAdmin(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockUserStore.ExpectedCalls = nil
-			mockMetadataStore.ExpectedCalls = nil
+			mockRegistryStore.ExpectedCalls = nil
 
 			mockUserStore.On("List", mock.Anything, 0, 1).Return([]*userstore.User{}, tt.existingUsers, nil)
 			tt.setupMocks()
 
-			handler := NewAuthHandler(tokenManager, mockUserStore, mockMetadataStore, logger)
+			handler := NewAuthHandler(tokenManager, mockUserStore, mockRegistryStore, logger)
 
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
@@ -1085,7 +1085,7 @@ func TestRegisterAdmin(t *testing.T) {
 			}
 
 			mockUserStore.AssertExpectations(t)
-			mockMetadataStore.AssertExpectations(t)
+			mockRegistryStore.AssertExpectations(t)
 		})
 	}
 }

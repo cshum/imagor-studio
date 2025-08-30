@@ -39,16 +39,17 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
 
+  // Check if we're on account pages
+  const isAccountPage = window.location.pathname.startsWith('/account')
+  const isAdminAccountPage = window.location.pathname.includes('/account/admin')
+
 
   // Get user display name
   const getUserDisplayName = () => {
     if (authState.state === 'guest') {
       return 'Guest'
     }
-    if (authState.profile?.email) {
-      return authState.profile.email
-    }
-    return 'User'
+    return authState.profile?.displayName || authState.profile?.email || 'User'
   }
 
   // Get user role display (only for authenticated users)
@@ -124,7 +125,7 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
               {isScrolledDown && (
                 <div className='block sm:hidden'>
                   <span className='max-w-[140px] truncate font-medium'>
-                    {getGalleryDisplayName(galleryKey)}
+                    {isAccountPage ? 'Account Settings' : getGalleryDisplayName(galleryKey)}
                   </span>
                 </div>
               )}
@@ -138,13 +139,21 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <Link to='/gallery/$galleryKey' params={{ galleryKey }}>
-                        {getGalleryDisplayName(galleryKey)}
-                      </Link>
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
+                  {isAccountPage ? (
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <Link to='/account/profile'>Account Settings</Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                  ) : (
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <Link to='/gallery/$galleryKey' params={{ galleryKey }}>
+                          {getGalleryDisplayName(galleryKey)}
+                        </Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                  )}
                   <BreadcrumbSeparator />
                 </BreadcrumbList>
               </Breadcrumb>

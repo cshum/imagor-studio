@@ -1,4 +1,4 @@
-package metadatastore
+package registrystore
 
 import (
 	"context"
@@ -24,10 +24,10 @@ func setupTestDB(t *testing.T) (*bun.DB, func()) {
 
 	db := bun.NewDB(sqldb, sqlitedialect.New())
 
-	// Create a metadata table directly with SQL
+	// Create a registry table directly with SQL
 	ctx := context.Background()
 	_, err = db.ExecContext(ctx, `
-		CREATE TABLE IF NOT EXISTS metadata (
+		CREATE TABLE IF NOT EXISTS registry (
 			id TEXT PRIMARY KEY,
 			owner_id TEXT NOT NULL,
 			key TEXT NOT NULL,
@@ -40,8 +40,8 @@ func setupTestDB(t *testing.T) (*bun.DB, func()) {
 
 	// Create unique constraint on owner_id + key
 	_, err = db.ExecContext(ctx, `
-		CREATE UNIQUE INDEX IF NOT EXISTS idx_metadata_owner_id_key 
-		ON metadata (owner_id, key)
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_registry_owner_id_key 
+		ON registry (owner_id, key)
 	`)
 	require.NoError(t, err)
 
@@ -50,10 +50,10 @@ func setupTestDB(t *testing.T) (*bun.DB, func()) {
 	err = db.NewSelect().
 		ColumnExpr("COUNT(*)").
 		TableExpr("sqlite_master").
-		Where("type = 'table' AND name = 'metadata'").
+		Where("type = 'table' AND name = 'registry'").
 		Scan(ctx, &count)
 	require.NoError(t, err)
-	require.Equal(t, 1, count, "metadata table should exist")
+	require.Equal(t, 1, count, "registry table should exist")
 
 	cleanup := func() {
 		db.Close()
@@ -70,7 +70,7 @@ func TestDatabaseSetup(t *testing.T) {
 	// Test that we can directly insert data
 	ctx := context.Background()
 	_, err := db.ExecContext(ctx, `
-		INSERT INTO metadata (id, owner_id, key, value) 
+		INSERT INTO registry (id, owner_id, key, value) 
 		VALUES (?, ?, ?, ?)
 	`, "test-id", "test-owner", "test-key", "test-value")
 	require.NoError(t, err)
@@ -78,7 +78,7 @@ func TestDatabaseSetup(t *testing.T) {
 	// Verify we can read it back
 	var value string
 	err = db.NewSelect().
-		Model((*model.Metadata)(nil)).
+		Model((*model.Registry)(nil)).
 		Column("value").
 		Where("owner_id = ? AND key = ?", "test-owner", "test-key").
 		Scan(ctx, &value)
@@ -86,7 +86,7 @@ func TestDatabaseSetup(t *testing.T) {
 	assert.Equal(t, "test-value", value)
 }
 
-func TestMetadataStore_Set(t *testing.T) {
+func TestRegistryStore_Set(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
@@ -94,7 +94,7 @@ func TestMetadataStore_Set(t *testing.T) {
 	store := New(db, logger)
 	ctx := context.Background()
 
-	// Test creating new metadata
+	// Test creating new registry
 	result, err := store.Set(ctx, "owner1", "key1", "value1")
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -103,7 +103,7 @@ func TestMetadataStore_Set(t *testing.T) {
 	assert.False(t, result.CreatedAt.IsZero())
 	assert.False(t, result.UpdatedAt.IsZero())
 
-	// Test updating existing metadata
+	// Test updating existing registry
 	time.Sleep(10 * time.Millisecond) // Ensure different timestamp
 	updatedResult, err := store.Set(ctx, "owner1", "key1", "value2")
 	assert.NoError(t, err)
@@ -113,7 +113,7 @@ func TestMetadataStore_Set(t *testing.T) {
 	assert.True(t, updatedResult.UpdatedAt.After(result.UpdatedAt))
 }
 
-func TestMetadataStore_Get(t *testing.T) {
+func TestRegistryStore_Get(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
@@ -125,25 +125,25 @@ func TestMetadataStore_Get(t *testing.T) {
 	_, err := store.Set(ctx, "owner1", "key1", "value1")
 	require.NoError(t, err)
 
-	// Test getting existing metadata
+	// Test getting existing registry
 	result, err := store.Get(ctx, "owner1", "key1")
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "key1", result.Key)
 	assert.Equal(t, "value1", result.Value)
 
-	// Test getting non-existent metadata
+	// Test getting non-existent registry
 	result, err = store.Get(ctx, "owner1", "non-existent")
 	assert.NoError(t, err)
 	assert.Nil(t, result)
 
-	// Test getting metadata for wrong owner
+	// Test getting registry for wrong owner
 	result, err = store.Get(ctx, "owner2", "key1")
 	assert.NoError(t, err)
 	assert.Nil(t, result)
 }
 
-func TestMetadataStore_List(t *testing.T) {
+func TestRegistryStore_List(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
@@ -161,7 +161,7 @@ func TestMetadataStore_List(t *testing.T) {
 	_, err = store.Set(ctx, "owner2", "app:setting1", "value4")
 	require.NoError(t, err)
 
-	// Test listing all metadata for owner1
+	// Test listing all registry for owner1
 	results, err := store.List(ctx, "owner1", nil)
 	assert.NoError(t, err)
 	assert.Len(t, results, 3)
@@ -188,7 +188,7 @@ func TestMetadataStore_List(t *testing.T) {
 	assert.Len(t, results, 0)
 }
 
-func TestMetadataStore_Delete(t *testing.T) {
+func TestRegistryStore_Delete(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
@@ -200,7 +200,7 @@ func TestMetadataStore_Delete(t *testing.T) {
 	_, err := store.Set(ctx, "owner1", "key1", "value1")
 	require.NoError(t, err)
 
-	// Test deleting existing metadata
+	// Test deleting existing registry
 	err = store.Delete(ctx, "owner1", "key1")
 	assert.NoError(t, err)
 
@@ -209,12 +209,12 @@ func TestMetadataStore_Delete(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Nil(t, result)
 
-	// Test deleting non-existent metadata
+	// Test deleting non-existent registry
 	err = store.Delete(ctx, "owner1", "non-existent")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not found")
 
-	// Test deleting metadata for wrong owner
+	// Test deleting registry for wrong owner
 	_, err = store.Set(ctx, "owner1", "key2", "value2")
 	require.NoError(t, err)
 
@@ -223,7 +223,7 @@ func TestMetadataStore_Delete(t *testing.T) {
 	assert.Contains(t, err.Error(), "not found")
 }
 
-func TestMetadataStore_IsolationByOwner(t *testing.T) {
+func TestRegistryStore_IsolationByOwner(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
@@ -248,7 +248,7 @@ func TestMetadataStore_IsolationByOwner(t *testing.T) {
 	assert.Equal(t, "value2", result2.Value)
 }
 
-func TestMetadataStore_LargeValue(t *testing.T) {
+func TestRegistryStore_LargeValue(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
@@ -280,7 +280,7 @@ func TestMetadataStore_LargeValue(t *testing.T) {
 	assert.Equal(t, largeBinaryData, decodedData)
 }
 
-func TestMetadataStore_LargeTextValue(t *testing.T) {
+func TestRegistryStore_LargeTextValue(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
@@ -305,7 +305,7 @@ func TestMetadataStore_LargeTextValue(t *testing.T) {
 	assert.Equal(t, largeValue, retrieved.Value)
 }
 
-func TestMetadataStore_ListOrdering(t *testing.T) {
+func TestRegistryStore_ListOrdering(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
@@ -330,7 +330,7 @@ func TestMetadataStore_ListOrdering(t *testing.T) {
 	assert.Equal(t, "key-c", results[2].Key)
 }
 
-func TestMetadataStore_EmptyPrefix(t *testing.T) {
+func TestRegistryStore_EmptyPrefix(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
@@ -351,7 +351,7 @@ func TestMetadataStore_EmptyPrefix(t *testing.T) {
 	assert.Len(t, results, 2)
 }
 
-func TestMetadataStore_SpecialCharacters(t *testing.T) {
+func TestRegistryStore_SpecialCharacters(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
@@ -374,7 +374,7 @@ func TestMetadataStore_SpecialCharacters(t *testing.T) {
 	assert.Equal(t, specialValue, retrieved.Value)
 }
 
-func BenchmarkMetadataStore_Set(b *testing.B) {
+func BenchmarkRegistryStore_Set(b *testing.B) {
 	db, cleanup := setupTestDB(&testing.T{})
 	defer cleanup()
 
@@ -391,7 +391,7 @@ func BenchmarkMetadataStore_Set(b *testing.B) {
 	}
 }
 
-func BenchmarkMetadataStore_Get(b *testing.B) {
+func BenchmarkRegistryStore_Get(b *testing.B) {
 	db, cleanup := setupTestDB(&testing.T{})
 	defer cleanup()
 
@@ -414,7 +414,7 @@ func BenchmarkMetadataStore_Get(b *testing.B) {
 	}
 }
 
-func BenchmarkMetadataStore_List(b *testing.B) {
+func BenchmarkRegistryStore_List(b *testing.B) {
 	db, cleanup := setupTestDB(&testing.T{})
 	defer cleanup()
 

@@ -60,15 +60,6 @@ export type FileStat = {
   size: Scalars['Int']['output']
 }
 
-export type Metadata = {
-  __typename?: 'Metadata'
-  createdAt: Scalars['String']['output']
-  key: Scalars['String']['output']
-  ownerID: Scalars['String']['output']
-  updatedAt: Scalars['String']['output']
-  value: Scalars['String']['output']
-}
-
 export type Mutation = {
   __typename?: 'Mutation'
   changePassword: Scalars['Boolean']['output']
@@ -76,10 +67,10 @@ export type Mutation = {
   createUser: User
   deactivateAccount: Scalars['Boolean']['output']
   deleteFile: Scalars['Boolean']['output']
-  deleteSystemMetadata: Scalars['Boolean']['output']
-  deleteUserMetadata: Scalars['Boolean']['output']
-  setSystemMetadata: Metadata
-  setUserMetadata: Metadata
+  deleteSystemRegistry: Scalars['Boolean']['output']
+  deleteUserRegistry: Scalars['Boolean']['output']
+  setSystemRegistry: Registry
+  setUserRegistry: Registry
   updateProfile: User
   uploadFile: Scalars['Boolean']['output']
 }
@@ -105,21 +96,21 @@ export type MutationDeleteFileArgs = {
   path: Scalars['String']['input']
 }
 
-export type MutationDeleteSystemMetadataArgs = {
+export type MutationDeleteSystemRegistryArgs = {
   key: Scalars['String']['input']
 }
 
-export type MutationDeleteUserMetadataArgs = {
+export type MutationDeleteUserRegistryArgs = {
   key: Scalars['String']['input']
   ownerID?: InputMaybe<Scalars['String']['input']>
 }
 
-export type MutationSetSystemMetadataArgs = {
+export type MutationSetSystemRegistryArgs = {
   key: Scalars['String']['input']
   value: Scalars['String']['input']
 }
 
-export type MutationSetUserMetadataArgs = {
+export type MutationSetUserRegistryArgs = {
   key: Scalars['String']['input']
   ownerID?: InputMaybe<Scalars['String']['input']>
   value: Scalars['String']['input']
@@ -137,22 +128,22 @@ export type MutationUploadFileArgs = {
 
 export type Query = {
   __typename?: 'Query'
-  getSystemMetadata: Maybe<Metadata>
-  getUserMetadata: Maybe<Metadata>
+  getSystemRegistry: Maybe<Registry>
+  getUserRegistry: Maybe<Registry>
   listFiles: FileList
-  listSystemMetadata: Array<Metadata>
-  listUserMetadata: Array<Metadata>
+  listSystemRegistry: Array<Registry>
+  listUserRegistry: Array<Registry>
   me: Maybe<User>
   statFile: Maybe<FileStat>
   user: Maybe<User>
   users: UserList
 }
 
-export type QueryGetSystemMetadataArgs = {
+export type QueryGetSystemRegistryArgs = {
   key: Scalars['String']['input']
 }
 
-export type QueryGetUserMetadataArgs = {
+export type QueryGetUserRegistryArgs = {
   key: Scalars['String']['input']
   ownerID?: InputMaybe<Scalars['String']['input']>
 }
@@ -167,11 +158,11 @@ export type QueryListFilesArgs = {
   sortOrder?: InputMaybe<SortOrder>
 }
 
-export type QueryListSystemMetadataArgs = {
+export type QueryListSystemRegistryArgs = {
   prefix?: InputMaybe<Scalars['String']['input']>
 }
 
-export type QueryListUserMetadataArgs = {
+export type QueryListUserRegistryArgs = {
   ownerID?: InputMaybe<Scalars['String']['input']>
   prefix?: InputMaybe<Scalars['String']['input']>
 }
@@ -187,6 +178,15 @@ export type QueryUserArgs = {
 export type QueryUsersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>
   offset?: InputMaybe<Scalars['Int']['input']>
+}
+
+export type Registry = {
+  __typename?: 'Registry'
+  createdAt: Scalars['String']['output']
+  key: Scalars['String']['output']
+  ownerID: Scalars['String']['output']
+  updatedAt: Scalars['String']['output']
+  value: Scalars['String']['output']
 }
 
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
@@ -224,8 +224,8 @@ export type UserList = {
   totalCount: Scalars['Int']['output']
 }
 
-export type MetadataInfoFragment = {
-  __typename?: 'Metadata'
+export type RegistryInfoFragment = {
+  __typename?: 'Registry'
   key: string
   value: string
   ownerID: string
@@ -233,15 +233,15 @@ export type MetadataInfoFragment = {
   updatedAt: string
 }
 
-export type ListUserMetadataQueryVariables = Exact<{
+export type ListUserRegistryQueryVariables = Exact<{
   prefix?: InputMaybe<Scalars['String']['input']>
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
-export type ListUserMetadataQuery = {
+export type ListUserRegistryQuery = {
   __typename?: 'Query'
-  listUserMetadata: Array<{
-    __typename?: 'Metadata'
+  listUserRegistry: Array<{
+    __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
@@ -250,15 +250,15 @@ export type ListUserMetadataQuery = {
   }>
 }
 
-export type GetUserMetadataQueryVariables = Exact<{
+export type GetUserRegistryQueryVariables = Exact<{
   key: Scalars['String']['input']
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
-export type GetUserMetadataQuery = {
+export type GetUserRegistryQuery = {
   __typename?: 'Query'
-  getUserMetadata: {
-    __typename?: 'Metadata'
+  getUserRegistry: {
+    __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
@@ -267,14 +267,14 @@ export type GetUserMetadataQuery = {
   } | null
 }
 
-export type ListSystemMetadataQueryVariables = Exact<{
+export type ListSystemRegistryQueryVariables = Exact<{
   prefix?: InputMaybe<Scalars['String']['input']>
 }>
 
-export type ListSystemMetadataQuery = {
+export type ListSystemRegistryQuery = {
   __typename?: 'Query'
-  listSystemMetadata: Array<{
-    __typename?: 'Metadata'
+  listSystemRegistry: Array<{
+    __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
@@ -283,14 +283,14 @@ export type ListSystemMetadataQuery = {
   }>
 }
 
-export type GetSystemMetadataQueryVariables = Exact<{
+export type GetSystemRegistryQueryVariables = Exact<{
   key: Scalars['String']['input']
 }>
 
-export type GetSystemMetadataQuery = {
+export type GetSystemRegistryQuery = {
   __typename?: 'Query'
-  getSystemMetadata: {
-    __typename?: 'Metadata'
+  getSystemRegistry: {
+    __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
@@ -299,16 +299,16 @@ export type GetSystemMetadataQuery = {
   } | null
 }
 
-export type SetUserMetadataMutationVariables = Exact<{
+export type SetUserRegistryMutationVariables = Exact<{
   key: Scalars['String']['input']
   value: Scalars['String']['input']
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
-export type SetUserMetadataMutation = {
+export type SetUserRegistryMutation = {
   __typename?: 'Mutation'
-  setUserMetadata: {
-    __typename?: 'Metadata'
+  setUserRegistry: {
+    __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
@@ -317,22 +317,22 @@ export type SetUserMetadataMutation = {
   }
 }
 
-export type DeleteUserMetadataMutationVariables = Exact<{
+export type DeleteUserRegistryMutationVariables = Exact<{
   key: Scalars['String']['input']
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
-export type DeleteUserMetadataMutation = { __typename?: 'Mutation'; deleteUserMetadata: boolean }
+export type DeleteUserRegistryMutation = { __typename?: 'Mutation'; deleteUserRegistry: boolean }
 
-export type SetSystemMetadataMutationVariables = Exact<{
+export type SetSystemRegistryMutationVariables = Exact<{
   key: Scalars['String']['input']
   value: Scalars['String']['input']
 }>
 
-export type SetSystemMetadataMutation = {
+export type SetSystemRegistryMutation = {
   __typename?: 'Mutation'
-  setSystemMetadata: {
-    __typename?: 'Metadata'
+  setSystemRegistry: {
+    __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
@@ -341,13 +341,13 @@ export type SetSystemMetadataMutation = {
   }
 }
 
-export type DeleteSystemMetadataMutationVariables = Exact<{
+export type DeleteSystemRegistryMutationVariables = Exact<{
   key: Scalars['String']['input']
 }>
 
-export type DeleteSystemMetadataMutation = {
+export type DeleteSystemRegistryMutation = {
   __typename?: 'Mutation'
-  deleteSystemMetadata: boolean
+  deleteSystemRegistry: boolean
 }
 
 export type FileInfoFragment = {
@@ -563,13 +563,13 @@ export type CreateUserMutation = {
   }
 }
 
-export const MetadataInfoFragmentDoc = {
+export const RegistryInfoFragmentDoc = {
   kind: 'Document',
   definitions: [
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'MetadataInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
+      name: { kind: 'Name', value: 'RegistryInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -582,7 +582,7 @@ export const MetadataInfoFragmentDoc = {
       },
     },
   ],
-} as unknown as DocumentNode<MetadataInfoFragment, unknown>
+} as unknown as DocumentNode<RegistryInfoFragment, unknown>
 export const FileInfoFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -659,13 +659,13 @@ export const UserInfoFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<UserInfoFragment, unknown>
-export const ListUserMetadataDocument = {
+export const ListUserRegistryDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'query',
-      name: { kind: 'Name', value: 'ListUserMetadata' },
+      name: { kind: 'Name', value: 'ListUserRegistry' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -683,7 +683,7 @@ export const ListUserMetadataDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'listUserMetadata' },
+            name: { kind: 'Name', value: 'listUserRegistry' },
             arguments: [
               {
                 kind: 'Argument',
@@ -699,7 +699,7 @@ export const ListUserMetadataDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'RegistryInfo' } },
               ],
             },
           },
@@ -708,8 +708,8 @@ export const ListUserMetadataDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'MetadataInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
+      name: { kind: 'Name', value: 'RegistryInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -722,14 +722,14 @@ export const ListUserMetadataDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<ListUserMetadataQuery, ListUserMetadataQueryVariables>
-export const GetUserMetadataDocument = {
+} as unknown as DocumentNode<ListUserRegistryQuery, ListUserRegistryQueryVariables>
+export const GetUserRegistryDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'query',
-      name: { kind: 'Name', value: 'GetUserMetadata' },
+      name: { kind: 'Name', value: 'GetUserRegistry' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -750,7 +750,7 @@ export const GetUserMetadataDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'getUserMetadata' },
+            name: { kind: 'Name', value: 'getUserRegistry' },
             arguments: [
               {
                 kind: 'Argument',
@@ -766,7 +766,7 @@ export const GetUserMetadataDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'RegistryInfo' } },
               ],
             },
           },
@@ -775,8 +775,8 @@ export const GetUserMetadataDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'MetadataInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
+      name: { kind: 'Name', value: 'RegistryInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -789,14 +789,14 @@ export const GetUserMetadataDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<GetUserMetadataQuery, GetUserMetadataQueryVariables>
-export const ListSystemMetadataDocument = {
+} as unknown as DocumentNode<GetUserRegistryQuery, GetUserRegistryQueryVariables>
+export const ListSystemRegistryDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'query',
-      name: { kind: 'Name', value: 'ListSystemMetadata' },
+      name: { kind: 'Name', value: 'ListSystemRegistry' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -809,7 +809,7 @@ export const ListSystemMetadataDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'listSystemMetadata' },
+            name: { kind: 'Name', value: 'listSystemRegistry' },
             arguments: [
               {
                 kind: 'Argument',
@@ -820,7 +820,7 @@ export const ListSystemMetadataDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'RegistryInfo' } },
               ],
             },
           },
@@ -829,8 +829,8 @@ export const ListSystemMetadataDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'MetadataInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
+      name: { kind: 'Name', value: 'RegistryInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -843,14 +843,14 @@ export const ListSystemMetadataDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<ListSystemMetadataQuery, ListSystemMetadataQueryVariables>
-export const GetSystemMetadataDocument = {
+} as unknown as DocumentNode<ListSystemRegistryQuery, ListSystemRegistryQueryVariables>
+export const GetSystemRegistryDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'query',
-      name: { kind: 'Name', value: 'GetSystemMetadata' },
+      name: { kind: 'Name', value: 'GetSystemRegistry' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -866,7 +866,7 @@ export const GetSystemMetadataDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'getSystemMetadata' },
+            name: { kind: 'Name', value: 'getSystemRegistry' },
             arguments: [
               {
                 kind: 'Argument',
@@ -877,7 +877,7 @@ export const GetSystemMetadataDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'RegistryInfo' } },
               ],
             },
           },
@@ -886,8 +886,8 @@ export const GetSystemMetadataDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'MetadataInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
+      name: { kind: 'Name', value: 'RegistryInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -900,14 +900,14 @@ export const GetSystemMetadataDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<GetSystemMetadataQuery, GetSystemMetadataQueryVariables>
-export const SetUserMetadataDocument = {
+} as unknown as DocumentNode<GetSystemRegistryQuery, GetSystemRegistryQueryVariables>
+export const SetUserRegistryDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'mutation',
-      name: { kind: 'Name', value: 'SetUserMetadata' },
+      name: { kind: 'Name', value: 'SetUserRegistry' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -936,7 +936,7 @@ export const SetUserMetadataDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'setUserMetadata' },
+            name: { kind: 'Name', value: 'setUserRegistry' },
             arguments: [
               {
                 kind: 'Argument',
@@ -957,7 +957,7 @@ export const SetUserMetadataDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'RegistryInfo' } },
               ],
             },
           },
@@ -966,8 +966,8 @@ export const SetUserMetadataDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'MetadataInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
+      name: { kind: 'Name', value: 'RegistryInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -980,14 +980,14 @@ export const SetUserMetadataDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<SetUserMetadataMutation, SetUserMetadataMutationVariables>
-export const DeleteUserMetadataDocument = {
+} as unknown as DocumentNode<SetUserRegistryMutation, SetUserRegistryMutationVariables>
+export const DeleteUserRegistryDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'mutation',
-      name: { kind: 'Name', value: 'DeleteUserMetadata' },
+      name: { kind: 'Name', value: 'DeleteUserRegistry' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -1008,7 +1008,7 @@ export const DeleteUserMetadataDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'deleteUserMetadata' },
+            name: { kind: 'Name', value: 'deleteUserRegistry' },
             arguments: [
               {
                 kind: 'Argument',
@@ -1026,14 +1026,14 @@ export const DeleteUserMetadataDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<DeleteUserMetadataMutation, DeleteUserMetadataMutationVariables>
-export const SetSystemMetadataDocument = {
+} as unknown as DocumentNode<DeleteUserRegistryMutation, DeleteUserRegistryMutationVariables>
+export const SetSystemRegistryDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'mutation',
-      name: { kind: 'Name', value: 'SetSystemMetadata' },
+      name: { kind: 'Name', value: 'SetSystemRegistry' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -1057,7 +1057,7 @@ export const SetSystemMetadataDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'setSystemMetadata' },
+            name: { kind: 'Name', value: 'setSystemRegistry' },
             arguments: [
               {
                 kind: 'Argument',
@@ -1073,7 +1073,7 @@ export const SetSystemMetadataDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataInfo' } },
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'RegistryInfo' } },
               ],
             },
           },
@@ -1082,8 +1082,8 @@ export const SetSystemMetadataDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'MetadataInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Metadata' } },
+      name: { kind: 'Name', value: 'RegistryInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -1096,14 +1096,14 @@ export const SetSystemMetadataDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<SetSystemMetadataMutation, SetSystemMetadataMutationVariables>
-export const DeleteSystemMetadataDocument = {
+} as unknown as DocumentNode<SetSystemRegistryMutation, SetSystemRegistryMutationVariables>
+export const DeleteSystemRegistryDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'mutation',
-      name: { kind: 'Name', value: 'DeleteSystemMetadata' },
+      name: { kind: 'Name', value: 'DeleteSystemRegistry' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -1119,7 +1119,7 @@ export const DeleteSystemMetadataDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'deleteSystemMetadata' },
+            name: { kind: 'Name', value: 'deleteSystemRegistry' },
             arguments: [
               {
                 kind: 'Argument',
@@ -1132,7 +1132,7 @@ export const DeleteSystemMetadataDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<DeleteSystemMetadataMutation, DeleteSystemMetadataMutationVariables>
+} as unknown as DocumentNode<DeleteSystemRegistryMutation, DeleteSystemRegistryMutationVariables>
 export const ListFilesDocument = {
   kind: 'Document',
   definitions: [
