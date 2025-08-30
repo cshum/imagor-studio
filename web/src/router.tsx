@@ -27,18 +27,12 @@ import { themeStore } from '@/stores/theme-store.ts'
 
 const rootRoute = createRootRoute({
   beforeLoad: async () => {
-    // Wait for theme to be loaded before rendering
     await themeStore.waitFor((state) => state.isLoaded)
-    await authStore.waitFor((state) => state.state !== 'loading')
 
-    const currentAuth = authStore.getState()
-
-    // If it's first run, redirect to admin setup
+    const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
     if (currentAuth.isFirstRun === true && currentAuth.state === 'unauthenticated') {
       throw redirect({ to: '/admin-setup' })
     }
-
-    return null
   },
   component: () => (
     <>
@@ -80,18 +74,12 @@ const adminPanelLayoutRoute = createRoute({
   id: 'admin-panel',
   beforeLoad: async () => {
     const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
-
-    // If unauthenticated and not first run, redirect to login
     if (currentAuth.state === 'unauthenticated' && currentAuth.isFirstRun === false) {
       throw redirect({ to: '/login' })
     }
-
-    return {}
   },
-  context: () => ({
-    breadcrumb: {
-      label: 'Home',
-    },
+  loader: () => ({
+    breadcrumb: { label: 'Home' },
   }),
   component: () => (
     <AdminPanelLayout>
@@ -123,11 +111,6 @@ const galleryPage = createRoute({
 const imagePage = createRoute({
   getParentRoute: () => galleryRoute,
   path: '/$imageKey',
-  context: () => ({
-    breadcrumb: {
-      label: (loaderData: any, params: any) => params?.imageKey || 'Image',
-    },
-  }),
   loader: ({ params }) => imageLoader({ params }),
   component: () => {
     const galleryLoaderData = galleryRoute.useLoaderData()
@@ -147,26 +130,16 @@ const imagePage = createRoute({
 const accountLayoutRoute = createRoute({
   getParentRoute: () => adminPanelLayoutRoute,
   id: 'account-layout',
-  context: () => ({
+  loader: () => ({
     breadcrumb: {
       label: 'Account',
     },
   }),
   beforeLoad: async () => {
-    const auth = authStore.getState()
-
-    // If still loading, wait
-    if (auth.state === 'loading') {
-      await authStore.waitFor((state) => state.state !== 'loading')
-    }
-
-    const currentAuth = authStore.getState()
-
+    const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
     if (currentAuth.state !== 'authenticated') {
       throw redirect({ to: '/login' })
     }
-
-    return {}
   },
   component: () => <AccountLayout />,
 })
@@ -181,11 +154,6 @@ const accountRedirectRoute = createRoute({
 const accountProfileRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/profile',
-  context: () => ({
-    breadcrumb: {
-      label: 'Profile',
-    },
-  }),
   loader: profileLoader,
   component: () => {
     const loaderData = accountProfileRoute.useLoaderData()
@@ -196,20 +164,11 @@ const accountProfileRoute = createRoute({
 const accountAdminRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/admin',
-  context: () => ({
-    breadcrumb: {
-      label: 'Admin',
-    },
-  }),
   beforeLoad: async () => {
     const auth = authStore.getState()
-
-    // Only allow admin users
     if (auth.profile?.role !== 'admin') {
       throw redirect({ to: '/account/profile' })
     }
-
-    return {}
   },
   loader: adminLoader,
   component: () => {
@@ -221,20 +180,11 @@ const accountAdminRoute = createRoute({
 const accountUsersRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/users',
-  context: () => ({
-    breadcrumb: {
-      label: 'Users',
-    },
-  }),
   beforeLoad: async () => {
     const auth = authStore.getState()
-
-    // Only allow admin users
     if (auth.profile?.role !== 'admin') {
       throw redirect({ to: '/account/profile' })
     }
-
-    return {}
   },
   loader: usersLoader,
   component: () => {

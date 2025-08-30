@@ -1,9 +1,9 @@
 import { listFiles } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
+import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
-import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 
 export interface GalleryLoaderData {
   galleryName: string
@@ -33,7 +33,7 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
     sortBy: 'MODIFIED_TIME',
     sortOrder: 'DESC',
     offset: 0,
-    limit: 0
+    limit: 0,
   })
 
   // Separate files and folders
@@ -65,26 +65,26 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
 
   // Generate breadcrumbs based on galleryKey
   const breadcrumbs: BreadcrumbItem[] = []
-  
+
   // Always start with Gallery
   breadcrumbs.push({ label: 'Gallery', href: '/gallery/default' })
-  
+
   // Add breadcrumbs for nested paths
   if (galleryKey && galleryKey !== 'default') {
     const segments = galleryKey.split('/')
-    
+
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i]
       const capitalizedSegmentName = segment.charAt(0).toUpperCase() + segment.slice(1)
       const segmentPath = segments.slice(0, i + 1).join('/')
       const segmentHref = `/gallery/${segmentPath}`
-      
+
       // Last segment should not have href (it's the current page)
       const isLastSegment = i === segments.length - 1
-      
+
       breadcrumbs.push({
         label: capitalizedSegmentName,
-        ...(isLastSegment ? {} : { href: segmentHref })
+        ...(isLastSegment ? {} : { href: segmentHref }),
       })
     }
   }

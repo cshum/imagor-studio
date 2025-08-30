@@ -30,57 +30,28 @@ export function isBreadcrumbItems(obj: unknown): obj is BreadcrumbItem[] {
 
 export function useBreadcrumb(): BreadcrumbItem[] {
   const matches = useMatches()
-
   return useMemo(() => {
     const breadcrumbs: BreadcrumbItem[] = []
 
     // Process matches that have breadcrumb data
     matches.forEach((match, index) => {
       const typedMatch = match as RouteMatch
-      const context = typedMatch.context
       const loaderData = typedMatch.loaderData
 
       // Check in priority order:
-      // 1. context.breadcrumbs (array) - highest priority
-      // 2. loaderData.breadcrumbs (array)
-      // 3. context.breadcrumb (single) - only if it's a direct BreadcrumbItem, not a context object
-      // 4. loaderData.breadcrumb (single)
-      // 5. fallback to existing label-based approach
-
-      if (isBreadcrumbItems(context?.breadcrumbs)) {
-        // Handle breadcrumb array from context
-        context.breadcrumbs.forEach((breadcrumb: BreadcrumbItem, breadcrumbIndex: number) => {
-          const isActive = index === matches.length - 1 && breadcrumbIndex === context.breadcrumbs.length - 1
-          breadcrumbs.push({
-            ...breadcrumb,
-            href: isActive ? undefined : breadcrumb.href,
-            isActive,
-          })
-        })
-        return
-      }
+      // 1. loaderData.breadcrumbs (array)
+      // 2. loaderData.breadcrumb (single)
 
       if (isBreadcrumbItems(loaderData?.breadcrumbs)) {
         // Handle breadcrumb array from loader data
         loaderData.breadcrumbs.forEach((breadcrumb: BreadcrumbItem, breadcrumbIndex: number) => {
-          const isActive = index === matches.length - 1 && breadcrumbIndex === loaderData.breadcrumbs.length - 1
+          const isActive =
+            index === matches.length - 1 && breadcrumbIndex === loaderData.breadcrumbs.length - 1
           breadcrumbs.push({
             ...breadcrumb,
             href: isActive ? undefined : breadcrumb.href,
             isActive,
           })
-        })
-        return
-      }
-
-      // Check if context.breadcrumb is a direct BreadcrumbItem (not a context object with label property)
-      if (isBreadcrumbItem(context?.breadcrumb) && !('label' in context.breadcrumb && typeof context.breadcrumb.label === 'function')) {
-        // Handle single breadcrumb from context
-        const isActive = index === matches.length - 1
-        breadcrumbs.push({
-          ...context.breadcrumb,
-          href: isActive ? undefined : context.breadcrumb.href || typedMatch.pathname,
-          isActive,
         })
         return
       }
@@ -95,30 +66,6 @@ export function useBreadcrumb(): BreadcrumbItem[] {
         })
         return
       }
-
-      // Fallback to existing label-based approach
-      const breadcrumbInfo = context?.breadcrumb
-      if (!breadcrumbInfo) return
-
-      // Handle regular breadcrumb info (object with label)
-      const label = typeof breadcrumbInfo.label === 'function'
-        ? breadcrumbInfo.label(loaderData, typedMatch.params)
-        : breadcrumbInfo.label
-
-      // Skip if label is empty or hidden
-      if (!label || breadcrumbInfo.hidden) return
-
-      // Determine if this is the active (last) breadcrumb
-      const isActive = index === matches.length - 1
-
-      // Build href for navigation (exclude active breadcrumb)
-      const href = !isActive ? typedMatch.pathname : undefined
-
-      breadcrumbs.push({
-        label,
-        href,
-        isActive,
-      })
     })
 
     return breadcrumbs
