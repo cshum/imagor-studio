@@ -1,6 +1,6 @@
 import React from 'react'
-import { Link, useParams } from '@tanstack/react-router'
-import { Forward, MoreVertical, PanelLeft, PanelLeftClose } from 'lucide-react'
+import { Link, useNavigate, useParams } from '@tanstack/react-router'
+import { Forward, LogOut, MoreVertical, PanelLeft, PanelLeftClose } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useAuth } from '@/stores/auth-store'
 
 interface FixedHeaderBarProps {
   isScrolled: boolean
@@ -33,6 +34,13 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
   // Get current route parameters
   const params = useParams({ strict: false })
   const galleryKey = params.galleryKey || 'default'
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    await logout()
+    navigate({ to: '/login' })
+  }
 
   const getGalleryDisplayName = (key: string) => {
     switch (key) {
@@ -126,25 +134,13 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align='end'>
-                  <DropdownMenuItem>
-                    <Link to='/gallery/$galleryKey' params={{ galleryKey: 'favourites' }}>
-                      View Favorites
-                    </Link>
+                  <DropdownMenuItem
+                    className='hover:cursor-pointer'
+                    onClick={handleLogout}
+                  >
+                    <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
+                    Sign Out
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to='/gallery/$galleryKey' params={{ galleryKey: 'recent' }}>
-                      View Recent
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to='/gallery/$galleryKey' params={{ galleryKey: 'default' }}>
-                      View All
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>Mark as unread</DropdownMenuItem>
-                  <DropdownMenuItem>Star thread</DropdownMenuItem>
-                  <DropdownMenuItem>Add label</DropdownMenuItem>
-                  <DropdownMenuItem>Mute thread</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
