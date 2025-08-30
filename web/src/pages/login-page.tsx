@@ -37,7 +37,7 @@ export function LoginPage() {
 
   // If already authenticated or guest, redirect to gallery
   if (authState.state === 'authenticated' || authState.state === 'guest') {
-    return <Navigate to='/gallery/$galleryKey' params={{ galleryKey: 'default' }} replace />
+    return <Navigate to='/' replace />
   }
 
   const onSubmit = async (values: LoginFormValues) => {

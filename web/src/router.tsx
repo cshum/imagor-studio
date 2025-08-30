@@ -30,6 +30,14 @@ const rootRoute = createRootRoute({
     // Wait for theme to be loaded before rendering
     await themeStore.waitFor((state) => state.isLoaded)
     await authStore.waitFor((state) => state.state !== 'loading')
+
+    const currentAuth = authStore.getState()
+
+    // If it's first run, redirect to admin setup
+    if (currentAuth.isFirstRun === true && currentAuth.state === 'unauthenticated') {
+      throw redirect({ to: '/admin-setup' })
+    }
+
     return null
   },
   component: () => (
@@ -51,7 +59,6 @@ const rootPath = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: () => {
-    // Always redirect to gallery - AuthenticatedRoute will handle auth logic
     return <Navigate to='/gallery/$galleryKey' params={{ galleryKey: 'default' }} replace />
   },
 })
@@ -72,19 +79,7 @@ const adminPanelLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'admin-panel',
   beforeLoad: async () => {
-    const auth = authStore.getState()
-
-    // If still loading, wait
-    if (auth.state === 'loading') {
-      await authStore.waitFor((state) => state.state !== 'loading')
-    }
-
-    const currentAuth = authStore.getState()
-
-    // If it's first run, redirect to admin setup
-    if (currentAuth.isFirstRun === true && currentAuth.state === 'unauthenticated') {
-      throw redirect({ to: '/admin-setup' })
-    }
+    const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
 
     // If unauthenticated and not first run, redirect to login
     if (currentAuth.state === 'unauthenticated' && currentAuth.isFirstRun === false) {
@@ -153,11 +148,6 @@ const accountLayoutRoute = createRoute({
 
     const currentAuth = authStore.getState()
 
-    // If it's first run, redirect to admin setup
-    if (currentAuth.isFirstRun === true && currentAuth.state === 'unauthenticated') {
-      throw redirect({ to: '/admin-setup' })
-    }
-
     if (currentAuth.state !== 'authenticated') {
       throw redirect({ to: '/login' })
     }
@@ -181,16 +171,11 @@ const accountRedirectRoute = createRoute({
 const accountProfileRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/profile',
-  beforeLoad: async () => {
-    const auth = authStore.getState()
-    
-    // Only allow authenticated users (no guest access to profile)
-    if (auth.state !== 'authenticated') {
-      throw redirect({ to: '/login' })
+  context: () => ({
+    breadcrumb: {
+      label: 'Profile'
     }
-    
-    return {}
-  },
+  }),
   loader: profileLoader,
   component: () => {
     const loaderData = accountProfileRoute.useLoaderData()

@@ -51,7 +51,7 @@ export function AdminSetupPage() {
     try {
       // Auto-generate display name from email (part before @)
       const displayName = values.email.split('@')[0]
-      
+
       const response = await registerAdmin({
         displayName,
         email: values.email,
@@ -62,8 +62,7 @@ export function AdminSetupPage() {
       // Initialize auth with the new token
       await initAuth(response.token)
 
-      // Navigate to the main gallery
-      navigate({ to: '/gallery/$galleryKey', params: { galleryKey: 'default' } })
+      navigate({ to: '/' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create admin account')
     } finally {
