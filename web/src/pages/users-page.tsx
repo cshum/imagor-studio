@@ -3,11 +3,11 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { toast } from 'sonner'
-import { Plus, Search, MoreHorizontal, Edit, Trash2, UserX, UserCheck } from 'lucide-react'
+import { Plus, Search, MoreHorizontal, Edit, UserX, UserCheck } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
@@ -51,7 +51,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
   const [totalCount, setTotalCount] = useState(loaderData?.totalCount || 0)
   const [isLoading, setIsLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [currentPage, setCurrentPage] = useState(0)
+  const [currentPage] = useState(0)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
@@ -81,7 +81,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
     },
   })
 
-  const loadUsers = async (offset = 0, search = '') => {
+  const loadUsers = async (offset = 0) => {
     setIsLoading(true)
     try {
       const result = await listUsers(offset, pageSize)

@@ -1,9 +1,8 @@
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
-import { useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
 
 import { FixedHeaderBar } from '@/components/demo/fixed-header-bar'
 import { LoadingBar } from '@/components/loading-bar'
-import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useScrollHandler } from '@/hooks/use-scroll-handler'
