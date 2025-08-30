@@ -9,28 +9,30 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
-import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
+import { ErrorPage } from '@/components/ui/error-page'
+import { Toaster } from '@/components/ui/sonner'
 import { AccountLayout } from '@/layouts/account-layout'
+import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
+import { adminLoader, profileLoader, usersLoader } from '@/loaders/account-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
-import { profileLoader, adminLoader, usersLoader } from '@/loaders/account-loader.ts'
-import { ProfilePage } from '@/pages/profile-page'
 import { AdminPage } from '@/pages/admin-page'
-import { UsersPage } from '@/pages/users-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
+import { ProfilePage } from '@/pages/profile-page'
+import { UsersPage } from '@/pages/users-page'
 import { authStore } from '@/stores/auth-store.ts'
 import { themeStore } from '@/stores/theme-store.ts'
-import { Toaster } from '@/components/ui/sonner'
-import { ErrorPage } from '@/components/ui/error-page'
 
 const rootRoute = createRootRoute({
   beforeLoad: async () => {
-    // Wait for theme to be loaded before rendering
     await themeStore.waitFor((state) => state.isLoaded)
-    await authStore.waitFor((state) => state.state !== 'loading')
-    return null
+
+    const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
+    if (currentAuth.isFirstRun === true && currentAuth.state === 'unauthenticated') {
+      throw redirect({ to: '/admin-setup' })
+    }
   },
   component: () => (
     <>
@@ -39,10 +41,10 @@ const rootRoute = createRootRoute({
     </>
   ),
   errorComponent: ({ error }) => (
-    <ErrorPage 
+    <ErrorPage
       error={error}
-      title="Failed to load data"
-      description="There was an error loading the requested data. Please try again."
+      title='Failed to load data'
+      description='There was an error loading the requested data. Please try again.'
     />
   ),
 })
@@ -51,7 +53,6 @@ const rootPath = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: () => {
-    // Always redirect to gallery - AuthenticatedRoute will handle auth logic
     return <Navigate to='/gallery/$galleryKey' params={{ galleryKey: 'default' }} replace />
   },
 })
@@ -72,28 +73,14 @@ const adminPanelLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'admin-panel',
   beforeLoad: async () => {
-    const auth = authStore.getState()
-
-    // If still loading, wait
-    if (auth.state === 'loading') {
-      await authStore.waitFor((state) => state.state !== 'loading')
-    }
-
-    const currentAuth = authStore.getState()
-
-    // If it's first run, redirect to admin setup
-    if (currentAuth.isFirstRun === true && currentAuth.state === 'unauthenticated') {
-      throw redirect({ to: '/admin-setup' })
-    }
-
-    // If unauthenticated and not first run, redirect to login
+    const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
     if (currentAuth.state === 'unauthenticated' && currentAuth.isFirstRun === false) {
       throw redirect({ to: '/login' })
     }
-
-    // Allow authenticated or guest users
-    return {}
   },
+  loader: () => ({
+    breadcrumb: { label: 'Home' },
+  }),
   component: () => (
     <AdminPanelLayout>
       <Outlet />
@@ -141,34 +128,20 @@ const imagePage = createRoute({
 })
 
 const accountLayoutRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => adminPanelLayoutRoute,
   id: 'account-layout',
+  loader: () => ({
+    breadcrumb: {
+      label: 'Account',
+    },
+  }),
   beforeLoad: async () => {
-    const auth = authStore.getState()
-
-    // If still loading, wait
-    if (auth.state === 'loading') {
-      await authStore.waitFor((state) => state.state !== 'loading')
-    }
-
-    const currentAuth = authStore.getState()
-
-    // If it's first run, redirect to admin setup
-    if (currentAuth.isFirstRun === true && currentAuth.state === 'unauthenticated') {
-      throw redirect({ to: '/admin-setup' })
-    }
-
+    const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
     if (currentAuth.state !== 'authenticated') {
       throw redirect({ to: '/login' })
     }
-
-    return {}
   },
-  component: () => (
-    <AdminPanelLayout>
-      <AccountLayout />
-    </AdminPanelLayout>
-  ),
+  component: () => <AccountLayout />,
 })
 
 // Redirect /account to /account/profile
@@ -181,16 +154,6 @@ const accountRedirectRoute = createRoute({
 const accountProfileRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/profile',
-  beforeLoad: async () => {
-    const auth = authStore.getState()
-    
-    // Only allow authenticated users (no guest access to profile)
-    if (auth.state !== 'authenticated') {
-      throw redirect({ to: '/login' })
-    }
-    
-    return {}
-  },
   loader: profileLoader,
   component: () => {
     const loaderData = accountProfileRoute.useLoaderData()
@@ -203,13 +166,9 @@ const accountAdminRoute = createRoute({
   path: '/account/admin',
   beforeLoad: async () => {
     const auth = authStore.getState()
-    
-    // Only allow admin users
     if (auth.profile?.role !== 'admin') {
       throw redirect({ to: '/account/profile' })
     }
-    
-    return {}
   },
   loader: adminLoader,
   component: () => {
@@ -223,13 +182,9 @@ const accountUsersRoute = createRoute({
   path: '/account/users',
   beforeLoad: async () => {
     const auth = authStore.getState()
-    
-    // Only allow admin users
     if (auth.profile?.role !== 'admin') {
       throw redirect({ to: '/account/profile' })
     }
-    
-    return {}
   },
   loader: usersLoader,
   component: () => {
@@ -242,8 +197,15 @@ const routeTree = rootRoute.addChildren([
   rootPath,
   loginRoute,
   adminSetupRoute,
-  adminPanelLayoutRoute.addChildren([galleryRoute.addChildren([galleryPage, imagePage])]),
-  accountLayoutRoute.addChildren([accountRedirectRoute, accountProfileRoute, accountAdminRoute, accountUsersRoute]),
+  adminPanelLayoutRoute.addChildren([
+    galleryRoute.addChildren([galleryPage, imagePage]),
+    accountLayoutRoute.addChildren([
+      accountRedirectRoute,
+      accountProfileRoute,
+      accountAdminRoute,
+      accountUsersRoute,
+    ]),
+  ]),
 ])
 
 // Create router

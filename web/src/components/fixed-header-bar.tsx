@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useNavigate, useParams } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { LogOut, MoreVertical, PanelLeft, PanelLeftClose, Settings } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useBreadcrumb } from '@/hooks/use-breadcrumb'
 import { useAuth } from '@/stores/auth-store'
 
 interface FixedHeaderBarProps {
@@ -33,14 +34,15 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
   onTreeToggle = () => {},
   isTreeOpen = false,
 }) => {
-  // Get current route parameters
-  const params = useParams({ strict: false })
-  const galleryKey = params.galleryKey || 'default'
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
+  const breadcrumbs = useBreadcrumb()
 
-  // Check if we're on account pages
-  const isAccountPage = window.location.pathname.startsWith('/account')
+  // Get the current page title for mobile display
+  const getCurrentPageTitle = () => {
+    const lastBreadcrumb = breadcrumbs[breadcrumbs.length - 1]
+    return lastBreadcrumb?.label || 'Gallery'
+  }
 
 
   // Get user display name
@@ -77,19 +79,6 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
     navigate({ to: '/account' })
   }
 
-  const getGalleryDisplayName = (key: string) => {
-    switch (key) {
-      case 'favorites':
-        return 'Favorites'
-      case 'recent':
-        return 'Recent'
-      case 'default':
-        return 'Gallery'
-      default:
-        return key.charAt(0).toUpperCase() + key.slice(1)
-    }
-  }
-
   return (
     <TooltipProvider>
       <header
@@ -124,36 +113,30 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
               {isScrolledDown && (
                 <div className='block sm:hidden'>
                   <span className='max-w-[140px] truncate font-medium'>
-                    {isAccountPage ? 'Account Settings' : getGalleryDisplayName(galleryKey)}
+                    {getCurrentPageTitle()}
                   </span>
                 </div>
               )}
 
-              {/* Desktop: Full breadcrumb */}
+              {/* Desktop: Dynamic breadcrumb */}
               <Breadcrumb className='hidden sm:block'>
                 <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <Link to='/'>Home</Link>
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  {isAccountPage ? (
-                    <BreadcrumbItem>
-                      <BreadcrumbLink asChild>
-                        <Link to='/account/profile'>Account Settings</Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                  ) : (
-                    <BreadcrumbItem>
-                      <BreadcrumbLink asChild>
-                        <Link to='/gallery/$galleryKey' params={{ galleryKey }}>
-                          {getGalleryDisplayName(galleryKey)}
-                        </Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                  )}
-                  <BreadcrumbSeparator />
+                  {breadcrumbs.map((breadcrumb, index) => (
+                    <React.Fragment key={index}>
+                      <BreadcrumbItem>
+                        {breadcrumb.href && !breadcrumb.isActive ? (
+                          <BreadcrumbLink asChild>
+                            <Link to={breadcrumb.href}>{breadcrumb.label}</Link>
+                          </BreadcrumbLink>
+                        ) : (
+                          <span className={breadcrumb.isActive ? 'font-medium' : ''}>
+                            {breadcrumb.label}
+                          </span>
+                        )}
+                      </BreadcrumbItem>
+                      {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
+                    </React.Fragment>
+                  ))}
                 </BreadcrumbList>
               </Breadcrumb>
             </div>

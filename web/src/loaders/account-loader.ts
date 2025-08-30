@@ -1,21 +1,25 @@
-import { listUsers } from '@/api/user-api'
 import { getSystemRegistryObject } from '@/api/registry-api'
-import { getAuth } from '@/stores/auth-store'
+import { listUsers } from '@/api/user-api'
 import type { ListUsersQuery } from '@/generated/graphql'
+import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
+import { getAuth } from '@/stores/auth-store'
 
 export interface ProfileLoaderData {
   profile: {
     displayName: string
     email: string
   } | null
+  breadcrumb: BreadcrumbItem
 }
 
 export interface AdminLoaderData {
   registry: Record<string, string>
+  breadcrumb: BreadcrumbItem
 }
 
 export interface UsersLoaderData {
   users: ListUsersQuery['users']
+  breadcrumb: BreadcrumbItem
 }
 
 /**
@@ -24,10 +28,15 @@ export interface UsersLoaderData {
 export const profileLoader = async (): Promise<ProfileLoaderData> => {
   const auth = getAuth()
   return {
-    profile: auth.profile ? {
-      displayName: auth.profile.displayName || '',
-      email: auth.profile.email || '',
-    } : null,
+    profile: auth.profile
+      ? {
+          displayName: auth.profile.displayName || '',
+          email: auth.profile.email || '',
+        }
+      : null,
+    breadcrumb: {
+      label: 'Profile',
+    },
   }
 }
 
@@ -36,15 +45,23 @@ export const profileLoader = async (): Promise<ProfileLoaderData> => {
  */
 export const adminLoader = async (): Promise<AdminLoaderData> => {
   const registry = await getSystemRegistryObject()
-  return { registry }
+  return {
+    registry,
+    breadcrumb: {
+      label: 'Admin',
+    },
+  }
 }
 
 /**
  * Load users data for the users management page
  */
 export const usersLoader = async (): Promise<UsersLoaderData> => {
-    const users = await listUsers()
-    return {
-      users,
-    }
+  const users = await listUsers()
+  return {
+    users,
+    breadcrumb: {
+      label: 'Users',
+    },
+  }
 }

@@ -96,7 +96,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                     aspectRatio={4 / 3}
                     width={contentWidth}
                     scrollTop={scrollPosition}
-                    maxImageWidth={280}
+                    maxImageWidth={250}
                     isScrolling={isScrolling}
                     onRendered={() => setGridRendered(true)}
                     onImageClick={handleImageClick}
