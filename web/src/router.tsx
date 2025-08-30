@@ -50,7 +50,7 @@ const rootRoute = createRootRoute({
 })
 
 const rootPath = createRoute({
-  getParentRoute: () => adminPanelLayoutRoute,
+  getParentRoute: () => galleryLayoutRoute,
   path: '/',
   component: () => {
     const galleryLoaderData = rootPath.useLoaderData()
@@ -94,9 +94,9 @@ const adminSetupRoute = createRoute({
   component: AdminSetupPage,
 })
 
-const adminPanelLayoutRoute = createRoute({
+const galleryLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
-  id: 'admin-panel',
+  id: 'gallery-layout',
   beforeLoad: async () => {
     const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
     if (currentAuth.state === 'unauthenticated' && currentAuth.isFirstRun === false) {
@@ -114,7 +114,7 @@ const adminPanelLayoutRoute = createRoute({
 })
 
 const galleryRoute = createRoute({
-  getParentRoute: () => adminPanelLayoutRoute,
+  getParentRoute: () => galleryLayoutRoute,
   path: '/gallery/$galleryKey',
   component: () => {
     const galleryLoaderData = galleryRoute.useLoaderData()
@@ -153,7 +153,7 @@ const imagePage = createRoute({
 })
 
 const accountLayoutRoute = createRoute({
-  getParentRoute: () => adminPanelLayoutRoute,
+  getParentRoute: () => galleryLayoutRoute,
   id: 'account-layout',
   loader: () => ({
     breadcrumb: {
@@ -221,7 +221,7 @@ const accountUsersRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   loginRoute,
   adminSetupRoute,
-  adminPanelLayoutRoute.addChildren([
+  galleryLayoutRoute.addChildren([
     rootPath.addChildren([rootImagePage]),
     galleryRoute.addChildren([galleryPage, imagePage]),
     accountLayoutRoute.addChildren([
