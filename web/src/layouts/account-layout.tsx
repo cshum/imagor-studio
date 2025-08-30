@@ -35,7 +35,7 @@ export function AccountLayout({ children }: AccountLayoutProps) {
     <>
       <LoadingBar isLoading={false} />
       <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
-        <ContentLayout title="Account Settings" isBounded={false}>
+        <ContentLayout title="Account Settings" isBounded={true}>
           <div className='mx-4 my-2 grid'>
             <h1 className='text-3xl md:text-4xl'>Account Settings</h1>
           </div>
