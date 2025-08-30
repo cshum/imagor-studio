@@ -34,18 +34,35 @@ export function ImagePage({
 
   const handleImageClick = ({ imageKey }: GalleryImage) => {
     clearPosition(galleryKey, imageKey)
-    navigate({
-      to: '/gallery/$galleryKey/$imageKey',
-      params: { galleryKey, imageKey },
-    })
+    if (galleryKey === '') {
+      // For root images, navigate to /$imageKey
+      navigate({
+        to: '/$imageKey',
+        params: { imageKey },
+      })
+    } else {
+      // For gallery images, navigate to /gallery/$galleryKey/$imageKey
+      navigate({
+        to: '/gallery/$galleryKey/$imageKey',
+        params: { galleryKey, imageKey },
+      })
+    }
   }
 
   const handleCloseFullView = () => {
     clearPosition(galleryKey, imageKey)
-    navigate({
-      to: '/gallery/$galleryKey',
-      params: { galleryKey },
-    })
+    if (galleryKey === '') {
+      // For root images, navigate back to root gallery
+      navigate({
+        to: '/',
+      })
+    } else {
+      // For gallery images, navigate back to the gallery
+      navigate({
+        to: '/gallery/$galleryKey',
+        params: { galleryKey },
+      })
+    }
   }
 
   return (
