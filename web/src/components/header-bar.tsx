@@ -10,6 +10,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { MobileBreadcrumb } from '@/components/ui/mobile-breadcrumb'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -37,13 +38,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
   const breadcrumbs = useBreadcrumb()
-
-  // Get the current page title for mobile display
-  const getCurrentPageTitle = () => {
-    const lastBreadcrumb = breadcrumbs[breadcrumbs.length - 1]
-    return lastBreadcrumb?.label || 'Gallery'
-  }
-
 
   // Get user display name
   const getUserDisplayName = () => {
@@ -109,14 +103,11 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                 <TooltipContent>{isTreeOpen ? 'Hide Tree' : 'Show Tree'}</TooltipContent>
               </Tooltip>
 
-              {/* Mobile: Show current page title only */}
-              {isScrolledDown && (
-                <div className='block sm:hidden'>
-                  <span className='max-w-[140px] truncate font-medium'>
-                    {getCurrentPageTitle()}
-                  </span>
-                </div>
-              )}
+              {/* Mobile: Dropdown-style breadcrumb */}
+              <MobileBreadcrumb 
+                breadcrumbs={breadcrumbs} 
+                className='block sm:hidden' 
+              />
 
               {/* Desktop: Dynamic breadcrumb */}
               <Breadcrumb className='hidden sm:block'>
