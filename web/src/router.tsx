@@ -23,6 +23,7 @@ import { LoginPage } from '@/pages/login-page.tsx'
 import { authStore } from '@/stores/auth-store.ts'
 import { themeStore } from '@/stores/theme-store.ts'
 import { Toaster } from '@/components/ui/sonner'
+import { ErrorPage } from '@/components/ui/error-page'
 
 const rootRoute = createRootRoute({
   beforeLoad: async () => {
@@ -36,6 +37,13 @@ const rootRoute = createRootRoute({
       <Outlet />
       <Toaster />
     </>
+  ),
+  errorComponent: ({ error }) => (
+    <ErrorPage 
+      error={error}
+      title="Failed to load data"
+      description="There was an error loading the requested data. Please try again."
+    />
   ),
 })
 

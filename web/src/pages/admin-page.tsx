@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { toast } from 'sonner'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { setSystemRegistry, setSystemRegistryMultiple } from '@/api/registry-api'
+import { setSystemRegistryMultiple } from '@/api/registry-api'
 import { extractErrorMessage } from '@/lib/error-utils'
 import type { AdminLoaderData } from '@/loaders/account-loader'
 
@@ -13,32 +13,25 @@ interface AdminPageProps {
 }
 
 export function AdminPage({ loaderData }: AdminPageProps) {
-  const [isUpdatingGuestMode, setIsUpdatingGuestMode] = useState(false)
-  const [isSavingAllSettings, setIsSavingAllSettings] = useState(false)
-  const [guestModeEnabled, setGuestModeEnabled] = useState(
-    loaderData?.guestModeEnabled ?? false
-  )
+  const [isUpdatingSettings, setIsUpdatingSettings] = useState(false)
+  
+  // Original values from loader
+  const originalGuestModeEnabled = loaderData?.guestModeEnabled ?? false
+  
+  // Current form state
+  const [guestModeEnabled, setGuestModeEnabled] = useState(originalGuestModeEnabled)
 
-  const onGuestModeToggle = async (enabled: boolean) => {
-    setIsUpdatingGuestMode(true)
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = useMemo(() => {
+    return guestModeEnabled !== originalGuestModeEnabled
+  }, [guestModeEnabled, originalGuestModeEnabled])
 
-    try {
-      await setSystemRegistry('auth.enableGuestMode', enabled ? 'true' : 'false')
-      setGuestModeEnabled(enabled)
-      toast.success(`Guest mode ${enabled ? 'enabled' : 'disabled'} successfully!`)
-    } catch (err) {
-      const errorMessage = extractErrorMessage(err)
-      toast.error(`Failed to update guest mode: ${errorMessage}`)
-      
-      // Revert the checkbox state on error
-      setGuestModeEnabled(!enabled)
-    } finally {
-      setIsUpdatingGuestMode(false)
-    }
+  const onGuestModeToggle = (enabled: boolean) => {
+    setGuestModeEnabled(enabled)
   }
 
-  const onSaveAllSettings = async () => {
-    setIsSavingAllSettings(true)
+  const onUpdateSettings = async () => {
+    setIsUpdatingSettings(true)
 
     try {
       // Prepare all settings to save
@@ -48,12 +41,15 @@ export function AdminPage({ loaderData }: AdminPageProps) {
       ]
 
       await setSystemRegistryMultiple(settingsToSave)
-      toast.success('All settings saved successfully!')
+      toast.success('Settings updated successfully!')
+      
+      // Refresh the page to get updated loader data
+      window.location.reload()
     } catch (err) {
       const errorMessage = extractErrorMessage(err)
-      toast.error(`Failed to save settings: ${errorMessage}`)
+      toast.error(`Failed to update settings: ${errorMessage}`)
     } finally {
-      setIsSavingAllSettings(false)
+      setIsUpdatingSettings(false)
     }
   }
 
@@ -78,17 +74,23 @@ export function AdminPage({ loaderData }: AdminPageProps) {
               <Checkbox
                 checked={guestModeEnabled}
                 onCheckedChange={onGuestModeToggle}
-                disabled={isUpdatingGuestMode}
+                disabled={isUpdatingSettings}
               />
             </div>
             
+            {hasUnsavedChanges && (
+              <div className='text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-md p-3'>
+                You have unsaved changes. Click "Update Settings" to save them.
+              </div>
+            )}
+            
             <div className='flex justify-end pt-4 border-t'>
               <ButtonWithLoading
-                onClick={onSaveAllSettings}
-                isLoading={isSavingAllSettings}
-                disabled={isUpdatingGuestMode}
+                onClick={onUpdateSettings}
+                isLoading={isUpdatingSettings}
+                disabled={!hasUnsavedChanges}
               >
-                Save All Settings
+                Update Settings
               </ButtonWithLoading>
             </div>
           </div>
