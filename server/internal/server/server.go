@@ -17,9 +17,9 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/httphandler"
 	"github.com/cshum/imagor-studio/server/internal/imageservice"
-	"github.com/cshum/imagor-studio/server/internal/metadatastore"
 	"github.com/cshum/imagor-studio/server/internal/middleware"
 	"github.com/cshum/imagor-studio/server/internal/migrations"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/resolver"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storage/filestorage"
@@ -47,7 +47,7 @@ func New(cfg *config.Config) (*Server, error) {
 
 	db := bun.NewDB(sqldb, sqlitedialect.New())
 
-	// Run migrations (only metadata table now)
+	// Run migrations (only registry table now)
 	migrator := migrate.NewMigrator(db, migrations.Migrations)
 	err = migrator.Init(context.Background())
 	if err != nil {
@@ -78,7 +78,7 @@ func New(cfg *config.Config) (*Server, error) {
 	}
 
 	// Initialize stores
-	metadataStore := metadatastore.New(db, cfg.Logger)
+	registryStore := registrystore.New(db, cfg.Logger)
 	userStore := userstore.New(db, cfg.Logger)
 
 	// Initialize image service
@@ -92,7 +92,7 @@ func New(cfg *config.Config) (*Server, error) {
 	imgService := imageservice.NewService(imageServiceConfig)
 
 	// Initialize GraphQL
-	storageResolver := resolver.NewResolver(stor, metadataStore, userStore, imgService, cfg.Logger)
+	storageResolver := resolver.NewResolver(stor, registryStore, userStore, imgService, cfg.Logger)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
 
@@ -111,7 +111,7 @@ func New(cfg *config.Config) (*Server, error) {
 	gqlHandler.Use(extension.Introspection{})
 
 	// Create auth handler
-	authHandler := httphandler.NewAuthHandler(tokenManager, userStore, metadataStore, cfg.Logger)
+	authHandler := httphandler.NewAuthHandler(tokenManager, userStore, registryStore, cfg.Logger)
 
 	// Create middleware chain
 	mux := http.NewServeMux()

@@ -16,10 +16,10 @@ import (
 
 func TestUploadFile_RequiresWriteScope(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -83,10 +83,10 @@ func TestUploadFile_RequiresWriteScope(t *testing.T) {
 
 func TestDeleteFile_RequiresWriteScope(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -145,10 +145,10 @@ func TestDeleteFile_RequiresWriteScope(t *testing.T) {
 
 func TestCreateFolder_RequiresWriteScope(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -208,10 +208,10 @@ func TestCreateFolder_RequiresWriteScope(t *testing.T) {
 // Test that read operations don't require write scope
 func TestListFiles_OnlyRequiresReadScope(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name    string
@@ -270,10 +270,10 @@ func TestListFiles_OnlyRequiresReadScope(t *testing.T) {
 
 func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	ctx := createReadOnlyContext("test-user-id")
 	path := "/test/file1.txt"
@@ -299,10 +299,10 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 // Test write operations with different scope combinations
 func TestWriteOperations_ScopeValidation(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -417,10 +417,10 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 
 func TestStorageOperations_StorageErrors(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -489,10 +489,10 @@ func TestStorageOperations_StorageErrors(t *testing.T) {
 // Test that existing read operations work as before (no breaking changes)
 func TestReadOperations_StillWork(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	// Test with read-only context
 	ctx := createReadOnlyContext("test-user-id")
@@ -545,10 +545,10 @@ func TestReadOperations_StillWork(t *testing.T) {
 
 func TestListFiles(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	// Create context with owner ID
 	ctx := context.WithValue(context.Background(), UserIDContextKey, "test-owner-id")
@@ -584,10 +584,10 @@ func TestListFiles(t *testing.T) {
 
 func TestStatFile(t *testing.T) {
 	mockStorage := new(MockStorage)
-	mockMetadataStore := new(MockMetadataStore)
+	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockMetadataStore, mockUserStore, nil, logger)
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
 
 	ctx := context.WithValue(context.Background(), UserIDContextKey, "test-owner-id")
 	path := "/test/file1.txt"

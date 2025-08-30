@@ -11,11 +11,11 @@ type Query {
 
     statFile(path: String!): FileStat
 
-    # Metadata APIs
-    listUserMetadata(prefix: String, ownerID: String): [Metadata!]!
-    getUserMetadata(key: String!, ownerID: String): Metadata
-    listSystemMetadata(prefix: String): [Metadata!]!
-    getSystemMetadata(key: String!): Metadata
+    # Registry APIs
+    listUserRegistry(prefix: String, ownerID: String): [Registry!]!
+    getUserRegistry(key: String!, ownerID: String): Registry
+    listSystemRegistry(prefix: String): [Registry!]!
+    getSystemRegistry(key: String!): Registry
 
     me: User
 
@@ -35,13 +35,13 @@ type Mutation {
     changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
     deactivateAccount(userId: ID): Boolean!
 
-    # User Metadata APIs
-    setUserMetadata(key: String!, value: String!, ownerID: String): Metadata!
-    deleteUserMetadata(key: String!, ownerID: String): Boolean!
+    # User Registry APIs
+    setUserRegistry(key: String!, value: String!, ownerID: String): Registry!
+    deleteUserRegistry(key: String!, ownerID: String): Boolean!
 
-    # System Metadata APIs (admin only for write)
-    setSystemMetadata(key: String!, value: String!): Metadata!
-    deleteSystemMetadata(key: String!): Boolean!
+    # System Registry APIs (admin only for write)
+    setSystemRegistry(key: String!, value: String!): Registry!
+    deleteSystemRegistry(key: String!): Boolean!
 
     # admin only operations
     createUser(input: CreateUserInput!): User!
@@ -123,7 +123,7 @@ enum SortOrder {
 
 scalar Upload
 
-type Metadata {
+type Registry {
     key: String!
     value: String!
     ownerID: String!

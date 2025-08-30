@@ -43,18 +43,18 @@ type FileStat struct {
 	Etag         *string `json:"etag,omitempty"`
 }
 
-type Metadata struct {
+type Mutation struct {
+}
+
+type Query struct {
+}
+
+type Registry struct {
 	Key       string `json:"key"`
 	Value     string `json:"value"`
 	OwnerID   string `json:"ownerID"`
 	CreatedAt string `json:"createdAt"`
 	UpdatedAt string `json:"updatedAt"`
-}
-
-type Mutation struct {
-}
-
-type Query struct {
 }
 
 type ThumbnailUrls struct {

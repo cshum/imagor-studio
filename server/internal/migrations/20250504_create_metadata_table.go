@@ -9,9 +9,9 @@ import (
 
 func init() {
 	Migrations.MustRegister(func(ctx context.Context, db *bun.DB) error {
-		// Create metadata table
+		// Create registry table
 		_, err := db.NewCreateTable().
-			Model((*Metadata)(nil)).
+			Model((*Registry)(nil)).
 			IfNotExists().
 			Exec(ctx)
 		if err != nil {
@@ -20,8 +20,8 @@ func init() {
 
 		// Create unique constraint on owner_id + key
 		_, err = db.NewCreateIndex().
-			Model((*Metadata)(nil)).
-			Index("idx_metadata_owner_id_key").
+			Model((*Registry)(nil)).
+			Index("idx_registry_owner_id_key").
 			Unique().
 			Column("owner_id", "key").
 			Exec(ctx)
@@ -29,8 +29,8 @@ func init() {
 	}, func(ctx context.Context, db *bun.DB) error {
 		// Drop the composite index
 		_, err := db.NewDropIndex().
-			Model((*Metadata)(nil)).
-			Index("idx_metadata_owner_id_key").
+			Model((*Registry)(nil)).
+			Index("idx_registry_owner_id_key").
 			IfExists().
 			Exec(ctx)
 		if err != nil {
@@ -39,15 +39,15 @@ func init() {
 
 		// Drop the table
 		_, err = db.NewDropTable().
-			Model((*Metadata)(nil)).
+			Model((*Registry)(nil)).
 			IfExists().
 			Exec(ctx)
 		return err
 	})
 }
 
-type Metadata struct {
-	bun.BaseModel `bun:"table:metadata,alias:m"`
+type Registry struct {
+	bun.BaseModel `bun:"table:registry,alias:r"`
 
 	ID        string    `bun:"id,pk,type:text"`
 	OwnerID   string    `bun:"owner_id,notnull,type:text"`

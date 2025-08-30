@@ -36,6 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ContentLayout } from '@/layouts/content-layout'
 import { useAuth } from '@/stores/auth-store'
 import { changePassword, updateProfile } from '@/api/user-api'
+import { setSystemRegistry } from '@/api/registry-api'
 import { extractErrorMessage } from '@/lib/error-utils'
 
 const profileSchema = z.object({
@@ -139,11 +140,7 @@ export function AccountPage() {
     setGuestModeSuccess(null)
 
     try {
-      // TODO: Implement guest mode toggle API call
-      console.log('Toggling guest mode:', enabled)
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await setSystemRegistry('auth.enableGuestMode', enabled ? 'true' : 'false')
       
       setGuestModeEnabled(enabled)
       setGuestModeSuccess(`Guest mode ${enabled ? 'enabled' : 'disabled'} successfully!`)
