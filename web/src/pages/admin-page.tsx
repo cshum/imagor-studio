@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { toast } from 'sonner'
+import { useRouter } from '@tanstack/react-router'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -13,6 +14,7 @@ interface AdminPageProps {
 }
 
 export function AdminPage({ loaderData }: AdminPageProps) {
+  const router = useRouter()
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false)
   
   // Original values from loader
@@ -43,8 +45,7 @@ export function AdminPage({ loaderData }: AdminPageProps) {
       await setSystemRegistryMultiple(settingsToSave)
       toast.success('Settings updated successfully!')
       
-      // Refresh the page to get updated loader data
-      window.location.reload()
+      await router.invalidate()
     } catch (err) {
       const errorMessage = extractErrorMessage(err)
       toast.error(`Failed to update settings: ${errorMessage}`)
