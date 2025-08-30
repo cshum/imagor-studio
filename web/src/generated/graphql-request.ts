@@ -70,8 +70,8 @@ export type Mutation = {
   deleteFile: Scalars['Boolean']['output']
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
-  setSystemRegistry: Registry
-  setUserRegistry: Registry
+  setSystemRegistry: Array<Registry>
+  setUserRegistry: Array<Registry>
   updateProfile: User
   uploadFile: Scalars['Boolean']['output']
 }
@@ -107,14 +107,12 @@ export type MutationDeleteUserRegistryArgs = {
 }
 
 export type MutationSetSystemRegistryArgs = {
-  key: Scalars['String']['input']
-  value: Scalars['String']['input']
+  entries: Array<RegistryEntryInput>
 }
 
 export type MutationSetUserRegistryArgs = {
-  key: Scalars['String']['input']
+  entries: Array<RegistryEntryInput>
   ownerID?: InputMaybe<Scalars['String']['input']>
-  value: Scalars['String']['input']
 }
 
 export type MutationUpdateProfileArgs = {
@@ -188,6 +186,11 @@ export type Registry = {
   ownerID: Scalars['String']['output']
   updatedAt: Scalars['String']['output']
   value: Scalars['String']['output']
+}
+
+export type RegistryEntryInput = {
+  key: Scalars['String']['input']
+  value: Scalars['String']['input']
 }
 
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
@@ -301,21 +304,20 @@ export type GetSystemRegistryQuery = {
 }
 
 export type SetUserRegistryMutationVariables = Exact<{
-  key: Scalars['String']['input']
-  value: Scalars['String']['input']
+  entries: Array<RegistryEntryInput> | RegistryEntryInput
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type SetUserRegistryMutation = {
   __typename?: 'Mutation'
-  setUserRegistry: {
+  setUserRegistry: Array<{
     __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
     createdAt: string
     updatedAt: string
-  }
+  }>
 }
 
 export type DeleteUserRegistryMutationVariables = Exact<{
@@ -326,20 +328,19 @@ export type DeleteUserRegistryMutationVariables = Exact<{
 export type DeleteUserRegistryMutation = { __typename?: 'Mutation'; deleteUserRegistry: boolean }
 
 export type SetSystemRegistryMutationVariables = Exact<{
-  key: Scalars['String']['input']
-  value: Scalars['String']['input']
+  entries: Array<RegistryEntryInput> | RegistryEntryInput
 }>
 
 export type SetSystemRegistryMutation = {
   __typename?: 'Mutation'
-  setSystemRegistry: {
+  setSystemRegistry: Array<{
     __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
     createdAt: string
     updatedAt: string
-  }
+  }>
 }
 
 export type DeleteSystemRegistryMutationVariables = Exact<{
@@ -642,8 +643,8 @@ export const GetSystemRegistryDocument = gql`
   ${RegistryInfoFragmentDoc}
 `
 export const SetUserRegistryDocument = gql`
-  mutation SetUserRegistry($key: String!, $value: String!, $ownerID: String) {
-    setUserRegistry(key: $key, value: $value, ownerID: $ownerID) {
+  mutation SetUserRegistry($entries: [RegistryEntryInput!]!, $ownerID: String) {
+    setUserRegistry(entries: $entries, ownerID: $ownerID) {
       ...RegistryInfo
     }
   }
@@ -655,8 +656,8 @@ export const DeleteUserRegistryDocument = gql`
   }
 `
 export const SetSystemRegistryDocument = gql`
-  mutation SetSystemRegistry($key: String!, $value: String!) {
-    setSystemRegistry(key: $key, value: $value) {
+  mutation SetSystemRegistry($entries: [RegistryEntryInput!]!) {
+    setSystemRegistry(entries: $entries) {
       ...RegistryInfo
     }
   }

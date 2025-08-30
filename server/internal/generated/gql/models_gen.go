@@ -57,6 +57,11 @@ type Registry struct {
 	UpdatedAt string `json:"updatedAt"`
 }
 
+type RegistryEntryInput struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 type ThumbnailUrls struct {
 	Grid     *string `json:"grid,omitempty"`
 	Preview  *string `json:"preview,omitempty"`

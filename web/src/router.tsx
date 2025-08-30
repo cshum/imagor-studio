@@ -12,9 +12,10 @@ import {
 import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
 import { AccountLayout } from '@/layouts/account-layout'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
-import { profileLoader, adminLoader } from '@/loaders/account-loader.ts'
+import { profileLoader, adminLoader, usersLoader } from '@/loaders/account-loader.ts'
 import { ProfilePage } from '@/pages/profile-page'
 import { AdminPage } from '@/pages/admin-page'
+import { UsersPage } from '@/pages/users-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
@@ -22,9 +23,10 @@ import { LoginPage } from '@/pages/login-page.tsx'
 import { authStore } from '@/stores/auth-store.ts'
 import { themeStore } from '@/stores/theme-store.ts'
 import { Toaster } from '@/components/ui/sonner'
+import { ErrorPage } from '@/components/ui/error-page'
 
 const rootRoute = createRootRoute({
-  loader: async () => {
+  beforeLoad: async () => {
     // Wait for theme to be loaded before rendering
     await themeStore.waitFor((state) => state.isLoaded)
     await authStore.waitFor((state) => state.state !== 'loading')
@@ -35,6 +37,13 @@ const rootRoute = createRootRoute({
       <Outlet />
       <Toaster />
     </>
+  ),
+  errorComponent: ({ error }) => (
+    <ErrorPage 
+      error={error}
+      title="Failed to load data"
+      description="There was an error loading the requested data. Please try again."
+    />
   ),
 })
 
@@ -86,7 +95,7 @@ const adminPanelLayoutRoute = createRoute({
     return {}
   },
   component: () => (
-    <AdminPanelLayout hideFooter={true}>
+    <AdminPanelLayout>
       <Outlet />
     </AdminPanelLayout>
   ),
@@ -149,12 +158,10 @@ const accountLayoutRoute = createRoute({
       throw redirect({ to: '/admin-setup' })
     }
 
-    // If unauthenticated and not first run, redirect to login
-    if (currentAuth.state === 'unauthenticated' && currentAuth.isFirstRun === false) {
+    if (currentAuth.state !== 'authenticated') {
       throw redirect({ to: '/login' })
     }
 
-    // Allow authenticated or guest users
     return {}
   },
   component: () => (
@@ -174,6 +181,16 @@ const accountRedirectRoute = createRoute({
 const accountProfileRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/profile',
+  beforeLoad: async () => {
+    const auth = authStore.getState()
+    
+    // Only allow authenticated users (no guest access to profile)
+    if (auth.state !== 'authenticated') {
+      throw redirect({ to: '/login' })
+    }
+    
+    return {}
+  },
   loader: profileLoader,
   component: () => {
     const loaderData = accountProfileRoute.useLoaderData()
@@ -201,12 +218,32 @@ const accountAdminRoute = createRoute({
   },
 })
 
+const accountUsersRoute = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  path: '/account/users',
+  beforeLoad: async () => {
+    const auth = authStore.getState()
+    
+    // Only allow admin users
+    if (auth.profile?.role !== 'admin') {
+      throw redirect({ to: '/account/profile' })
+    }
+    
+    return {}
+  },
+  loader: usersLoader,
+  component: () => {
+    const loaderData = accountUsersRoute.useLoaderData()
+    return <UsersPage loaderData={loaderData.users} />
+  },
+})
+
 const routeTree = rootRoute.addChildren([
   rootPath,
   loginRoute,
   adminSetupRoute,
   adminPanelLayoutRoute.addChildren([galleryRoute.addChildren([galleryPage, imagePage])]),
-  accountLayoutRoute.addChildren([accountRedirectRoute, accountProfileRoute, accountAdminRoute]),
+  accountLayoutRoute.addChildren([accountRedirectRoute, accountProfileRoute, accountAdminRoute, accountUsersRoute]),
 ])
 
 // Create router

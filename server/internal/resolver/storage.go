@@ -165,6 +165,7 @@ func (r *queryResolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUr
 		Width:   300,
 		Height:  225,
 		Quality: 85,
+		Smart:   true,
 		Format:  "webp",
 	})
 

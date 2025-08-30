@@ -41,7 +41,6 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
 
   // Check if we're on account pages
   const isAccountPage = window.location.pathname.startsWith('/account')
-  const isAdminAccountPage = window.location.pathname.includes('/account/admin')
 
 
   // Get user display name

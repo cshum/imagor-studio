@@ -57,7 +57,7 @@ export async function getUserRegistry(
 }
 
 /**
- * Set or update a user registry entry
+ * Set or update a user registry entry (single value)
  */
 export async function setUserRegistry(
   key: string,
@@ -67,8 +67,25 @@ export async function setUserRegistry(
   const sdk = getSdk(getGraphQLClient())
 
   const variables: SetUserRegistryMutationVariables = {
-    key,
-    value,
+    entries: [{ key, value }],
+    ownerID: ownerID ?? null,
+  }
+
+  const result = await sdk.SetUserRegistry(variables)
+  return result.setUserRegistry
+}
+
+/**
+ * Set or update multiple user registry entries
+ */
+export async function setUserRegistryMultiple(
+  entries: Array<{ key: string; value: string }>,
+  ownerID?: string,
+): Promise<SetUserRegistryMutation['setUserRegistry']> {
+  const sdk = getSdk(getGraphQLClient())
+
+  const variables: SetUserRegistryMutationVariables = {
+    entries,
     ownerID: ownerID ?? null,
   }
 
@@ -141,7 +158,7 @@ export async function getSystemRegistry(
 }
 
 /**
- * Set or update a system registry entry (admin only)
+ * Set or update a system registry entry (admin only, single value)
  */
 export async function setSystemRegistry(
   key: string,
@@ -150,8 +167,7 @@ export async function setSystemRegistry(
   const sdk = getSdk(getGraphQLClient())
 
   const variables: SetSystemRegistryMutationVariables = {
-    key,
-    value,
+    entries: [{ key, value }],
   }
 
   const result = await sdk.SetSystemRegistry(variables)
@@ -183,4 +199,17 @@ export async function getSystemRegistryObject(prefix?: string): Promise<Record<s
   }
 
   return registryObject
+}
+
+/**
+ * Set system registry from a key-value object (admin only)
+ */
+export async function setSystemRegistryObject(
+  registryObject: Record<string, string>
+): Promise<SetSystemRegistryMutation['setSystemRegistry']> {
+  const sdk = getSdk(getGraphQLClient())
+
+  const entries = Object.entries(registryObject).map(([key, value]) => ({ key, value }))
+  const result = await sdk.SetSystemRegistry({ entries })
+  return result.setSystemRegistry
 }

@@ -36,11 +36,11 @@ type Mutation {
     deactivateAccount(userId: ID): Boolean!
 
     # User Registry APIs
-    setUserRegistry(key: String!, value: String!, ownerID: String): Registry!
+    setUserRegistry(entries: [RegistryEntryInput!]!, ownerID: String): [Registry!]!
     deleteUserRegistry(key: String!, ownerID: String): Boolean!
 
     # System Registry APIs (admin only for write)
-    setSystemRegistry(key: String!, value: String!): Registry!
+    setSystemRegistry(entries: [RegistryEntryInput!]!): [Registry!]!
     deleteSystemRegistry(key: String!): Boolean!
 
     # admin only operations
@@ -77,6 +77,11 @@ input CreateUserInput {
     email: String!
     password: String!
     role: String!
+}
+
+input RegistryEntryInput {
+    key: String!
+    value: String!
 }
 
 # Existing types...

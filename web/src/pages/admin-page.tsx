@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { toast } from 'sonner'
+import { useRouter } from '@tanstack/react-router'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { setSystemRegistry } from '@/api/registry-api'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading'
+import { setSystemRegistryObject } from '@/api/registry-api'
 import { extractErrorMessage } from '@/lib/error-utils'
 import type { AdminLoaderData } from '@/loaders/account-loader'
 
@@ -12,26 +14,46 @@ interface AdminPageProps {
 }
 
 export function AdminPage({ loaderData }: AdminPageProps) {
-  const [isUpdatingGuestMode, setIsUpdatingGuestMode] = useState(false)
-  const [guestModeEnabled, setGuestModeEnabled] = useState(
-    loaderData?.guestModeEnabled ?? false
-  )
+  const router = useRouter()
+  const [isUpdatingSettings, setIsUpdatingSettings] = useState(false)
+  
+  // Registry is Record<string, string> - all values are strings
+  type RegistryMap = Record<string, string>
+  
+  // Original values from loader - already in string format
+  const originalSettings = useMemo<RegistryMap>(() => 
+    loaderData?.registry || {}
+  , [loaderData])
+  
+  // Current form state - map of registry keys to string values
+  const [settings, setSettings] = useState<RegistryMap>(originalSettings)
 
-  const onGuestModeToggle = async (enabled: boolean) => {
-    setIsUpdatingGuestMode(true)
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = useMemo(() => {
+    return Object.keys(originalSettings).some(key => 
+      settings[key] !== originalSettings[key]
+    )
+  }, [settings, originalSettings])
+
+  const updateSetting = (key: string, value: string) => {
+    setSettings(prev => ({ ...prev, [key]: value }))
+  }
+
+  const onUpdateSettings = async () => {
+    setIsUpdatingSettings(true)
 
     try {
-      await setSystemRegistry('auth.enableGuestMode', enabled ? 'true' : 'false')
-      setGuestModeEnabled(enabled)
-      toast.success(`Guest mode ${enabled ? 'enabled' : 'disabled'} successfully!`)
+      // Save settings directly as Record<string, string>
+      await setSystemRegistryObject(settings)
+      toast.success('Settings updated successfully!')
+      
+      // Invalidate the current route to refresh loader data
+      await router.invalidate()
     } catch (err) {
       const errorMessage = extractErrorMessage(err)
-      toast.error(`Failed to update guest mode: ${errorMessage}`)
-      
-      // Revert the checkbox state on error
-      setGuestModeEnabled(!enabled)
+      toast.error(`Failed to update settings: ${errorMessage}`)
     } finally {
-      setIsUpdatingGuestMode(false)
+      setIsUpdatingSettings(false)
     }
   }
 
@@ -54,10 +76,22 @@ export function AdminPage({ loaderData }: AdminPageProps) {
                 </div>
               </div>
               <Checkbox
-                checked={guestModeEnabled}
-                onCheckedChange={onGuestModeToggle}
-                disabled={isUpdatingGuestMode}
+                checked={settings['auth.enableGuestMode'] === 'true'}
+                onCheckedChange={(checked) => 
+                  updateSetting('auth.enableGuestMode', checked ? 'true' : 'false')
+                }
+                disabled={isUpdatingSettings}
               />
+            </div>
+            
+            <div className='flex justify-end pt-4 border-t'>
+              <ButtonWithLoading
+                onClick={onUpdateSettings}
+                isLoading={isUpdatingSettings}
+                disabled={!hasUnsavedChanges}
+              >
+                Update Settings
+              </ButtonWithLoading>
             </div>
           </div>
         </CardContent>
