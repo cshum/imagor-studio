@@ -27,12 +27,7 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 export function LoginPage() {
   const { authState } = useAuth()
-
-  // If already authenticated or guest, redirect to gallery
-  if (authState.state === 'authenticated' || authState.state === 'guest') {
-    return <Navigate to='/gallery/$galleryKey' params={{ galleryKey: 'default' }} replace />
-  }
-
+  
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -40,6 +35,11 @@ export function LoginPage() {
       password: '',
     },
   })
+
+  // If already authenticated or guest, redirect to gallery
+  if (authState.state === 'authenticated' || authState.state === 'guest') {
+    return <Navigate to='/gallery/$galleryKey' params={{ galleryKey: 'default' }} replace />
+  }
 
   const onSubmit = async (values: LoginFormValues) => {
     try {
