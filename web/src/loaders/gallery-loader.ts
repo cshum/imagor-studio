@@ -28,10 +28,10 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
   // Fetch files from storage API
   const result = await listFiles({
     path,
+    sortBy: 'MODIFIED_TIME',
+    sortOrder: 'DESC',
     offset: 0,
-    limit: 1000, // Load a large number for now, can implement pagination later
-    sortBy: 'NAME',
-    sortOrder: 'ASC',
+    limit: 0
   })
 
   // Separate files and folders
