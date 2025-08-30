@@ -1,4 +1,5 @@
 # Development environment with hot reload and external imagor
+version: "3.8"
 
 services:
   # External Imagor service for image processing (development)

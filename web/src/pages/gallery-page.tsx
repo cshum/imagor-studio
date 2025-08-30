@@ -85,7 +85,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     <>
       <LoadingBar isLoading={isLoading} />
       <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
-        <ContentLayout title={galleryName} isBounded={false}>
+        <ContentLayout title={galleryName}>
           <div className='mx-4 my-2 grid'>
             <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
           </div>
