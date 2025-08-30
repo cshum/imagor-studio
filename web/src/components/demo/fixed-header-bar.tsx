@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
-import { Forward, LogOut, MoreVertical, PanelLeft, PanelLeftClose } from 'lucide-react'
+import { LogOut, MoreVertical, PanelLeft, PanelLeftClose, Settings } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
@@ -15,6 +15,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -28,18 +30,51 @@ interface FixedHeaderBarProps {
 
 export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
   isScrolled: isScrolledDown,
-  onTreeToggle,
+  onTreeToggle = () => {},
   isTreeOpen = false,
 }) => {
   // Get current route parameters
   const params = useParams({ strict: false })
   const galleryKey = params.galleryKey || 'default'
-  const { logout } = useAuth()
+  const { logout, authState } = useAuth()
   const navigate = useNavigate()
 
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    if (authState.state === 'guest') {
+      return 'Guest'
+    }
+    if (authState.profile?.email) {
+      return authState.profile.email
+    }
+    return 'User'
+  }
+
+  // Get user role display (only for authenticated users)
+  const getUserRole = () => {
+    if (authState.state === 'guest') {
+      return null // No role subtitle for guests
+    }
+    return authState.profile?.role || null
+  }
+
+  // Handle login navigation for guests
+  const handleLoginClick = async () => {
+    // First logout to clear guest state, then navigate to login
+    await logout()
+    navigate({ to: '/login' })
+  }
+
+  // Handle logout for authenticated users
   const handleLogout = async () => {
     await logout()
     navigate({ to: '/login' })
+  }
+
+  // Handle account settings navigation
+  const handleAccountClick = () => {
+    navigate({ to: '/account' })
   }
 
   const getGalleryDisplayName = (key: string) => {
@@ -117,15 +152,6 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
 
             <div className='flex items-center space-x-1'>
               <ModeToggle />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant='ghost' size='icon'>
-                    <Forward className='h-4 w-4' />
-                    <span className='sr-only'>Forward</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Forward</TooltipContent>
-              </Tooltip>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant='ghost' size='icon'>
@@ -133,14 +159,48 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
                     <span className='sr-only'>More</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end'>
-                  <DropdownMenuItem
-                    className='hover:cursor-pointer'
-                    onClick={handleLogout}
-                  >
-                    <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
-                    Sign Out
-                  </DropdownMenuItem>
+                <DropdownMenuContent align='end' className='w-56'>
+                  <DropdownMenuLabel className='font-normal'>
+                    <div className='flex flex-col space-y-1'>
+                      <p className='text-sm leading-none font-medium'>{getUserDisplayName()}</p>
+                      {getUserRole() && (
+                        <p className='text-muted-foreground text-xs leading-none capitalize'>
+                          {getUserRole()}
+                        </p>
+                      )}
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  
+                  {authState.state === 'guest' ? (
+                    // Guest user menu
+                    <DropdownMenuItem
+                      className='hover:cursor-pointer'
+                      onClick={handleLoginClick}
+                    >
+                      <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
+                      Login
+                    </DropdownMenuItem>
+                  ) : (
+                    // Authenticated user menu
+                    <>
+                      <DropdownMenuItem
+                        className='hover:cursor-pointer'
+                        onClick={handleAccountClick}
+                      >
+                        <Settings className='text-muted-foreground mr-3 h-4 w-4' />
+                        Account Settings
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className='hover:cursor-pointer'
+                        onClick={handleLogout}
+                      >
+                        <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
+                        Sign Out
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
