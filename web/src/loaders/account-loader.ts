@@ -1,6 +1,7 @@
-import { getCurrentUser } from '@/api/user-api'
+import { getCurrentUser, listUsers } from '@/api/user-api'
 import { getSystemRegistry } from '@/api/registry-api'
 import { getAuth } from '@/stores/auth-store'
+import type { ListUsersQuery } from '@/generated/graphql'
 
 export interface ProfileLoaderData {
   profile: {
@@ -11,6 +12,10 @@ export interface ProfileLoaderData {
 
 export interface AdminLoaderData {
   guestModeEnabled: boolean
+}
+
+export interface UsersLoaderData {
+  users: ListUsersQuery['users']
 }
 
 /**
@@ -70,6 +75,30 @@ export const adminLoader = async (): Promise<AdminLoaderData> => {
     // Default to false if we can't load the setting
     return {
       guestModeEnabled: false,
+    }
+  }
+}
+
+/**
+ * Load users data for the users management page
+ */
+export const usersLoader = async (): Promise<UsersLoaderData> => {
+  try {
+    // Fetch initial list of users
+    const users = await listUsers(0, 20)
+    
+    return {
+      users,
+    }
+  } catch (error) {
+    console.warn('Failed to load users data:', error)
+    
+    // Return empty data on error
+    return {
+      users: {
+        items: [],
+        totalCount: 0,
+      },
     }
   }
 }

@@ -12,9 +12,10 @@ import {
 import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
 import { AccountLayout } from '@/layouts/account-layout'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
-import { profileLoader, adminLoader } from '@/loaders/account-loader.ts'
+import { profileLoader, adminLoader, usersLoader } from '@/loaders/account-loader.ts'
 import { ProfilePage } from '@/pages/profile-page'
 import { AdminPage } from '@/pages/admin-page'
+import { UsersPage } from '@/pages/users-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
@@ -86,7 +87,7 @@ const adminPanelLayoutRoute = createRoute({
     return {}
   },
   component: () => (
-    <AdminPanelLayout hideFooter={true}>
+    <AdminPanelLayout>
       <Outlet />
     </AdminPanelLayout>
   ),
@@ -201,12 +202,32 @@ const accountAdminRoute = createRoute({
   },
 })
 
+const accountUsersRoute = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  path: '/account/users',
+  beforeLoad: async () => {
+    const auth = authStore.getState()
+    
+    // Only allow admin users
+    if (auth.profile?.role !== 'admin') {
+      throw redirect({ to: '/account/profile' })
+    }
+    
+    return {}
+  },
+  loader: usersLoader,
+  component: () => {
+    const loaderData = accountUsersRoute.useLoaderData()
+    return <UsersPage loaderData={loaderData.users} />
+  },
+})
+
 const routeTree = rootRoute.addChildren([
   rootPath,
   loginRoute,
   adminSetupRoute,
   adminPanelLayoutRoute.addChildren([galleryRoute.addChildren([galleryPage, imagePage])]),
-  accountLayoutRoute.addChildren([accountRedirectRoute, accountProfileRoute, accountAdminRoute]),
+  accountLayoutRoute.addChildren([accountRedirectRoute, accountProfileRoute, accountAdminRoute, accountUsersRoute]),
 ])
 
 // Create router

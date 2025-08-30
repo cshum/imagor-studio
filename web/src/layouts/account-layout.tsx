@@ -23,7 +23,11 @@ export function AccountLayout({ children }: AccountLayoutProps) {
   const isDesktop = useBreakpoint('md')
   
   // Determine current tab based on pathname
-  const currentTab = location.pathname.includes('/admin') ? 'admin' : 'profile'
+  const currentTab = location.pathname.includes('/admin') 
+    ? 'admin' 
+    : location.pathname.includes('/users') 
+    ? 'users' 
+    : 'profile'
 
   const { scrollPosition } = useScrollHandler(containerRef, 'account')
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 40 : 30)
@@ -39,13 +43,18 @@ export function AccountLayout({ children }: AccountLayoutProps) {
           <FixedHeaderBar isScrolled={isScrolledDown} />
               {/* Tab Navigation */}
               <Tabs value={currentTab} className='w-full'>
-                <TabsList className={`grid w-full mb-4 ${isAdmin ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                <TabsList className={`grid w-full mb-4 ${isAdmin ? 'grid-cols-3' : 'grid-cols-1'}`}>
                   <TabsTrigger value='profile' asChild>
                     <Link to='/account/profile'>Profile</Link>
                   </TabsTrigger>
                   {isAdmin && (
                     <TabsTrigger value='admin' asChild>
-                      <Link to='/account/admin'>Admin</Link>
+                      <Link to='/account/admin'>System</Link>
+                    </TabsTrigger>
+                  )}
+                  {isAdmin && (
+                    <TabsTrigger value='users' asChild>
+                      <Link to='/account/users'>Users</Link>
                     </TabsTrigger>
                   )}
                 </TabsList>
