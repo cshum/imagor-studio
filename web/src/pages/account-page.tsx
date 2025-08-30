@@ -172,14 +172,15 @@ export function AccountPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <Tabs defaultValue='profile' className='w-full'>
-        <TabsList className='grid w-full grid-cols-3'>
+      <div className='mt-4'>
+        <Tabs defaultValue='profile' className='w-full'>
+        <TabsList className='grid w-full grid-cols-3 mb-6'>
           <TabsTrigger value='profile'>Profile</TabsTrigger>
           <TabsTrigger value='security'>Security</TabsTrigger>
           {isAdmin && <TabsTrigger value='admin'>Admin</TabsTrigger>}
         </TabsList>
 
-        <TabsContent value='profile' className='space-y-4'>
+        <TabsContent value='profile' className='space-y-6 mt-0'>
           <Card>
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
@@ -248,7 +249,7 @@ export function AccountPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value='security' className='space-y-4'>
+        <TabsContent value='security' className='space-y-6 mt-0'>
           <Card>
             <CardHeader>
               <CardTitle>Security Settings</CardTitle>
@@ -268,7 +269,7 @@ export function AccountPage() {
                   <DialogTrigger asChild>
                     <Button variant='outline'>Change Password</Button>
                   </DialogTrigger>
-                  <DialogContent className='sm:max-w-[425px]'>
+                  <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Change Password</DialogTitle>
                       <DialogDescription>
@@ -369,7 +370,7 @@ export function AccountPage() {
         </TabsContent>
 
         {isAdmin && (
-          <TabsContent value='admin' className='space-y-4'>
+          <TabsContent value='admin' className='space-y-6 mt-0'>
             <Card>
               <CardHeader>
                 <CardTitle>System Settings</CardTitle>
@@ -409,7 +410,8 @@ export function AccountPage() {
             </Card>
           </TabsContent>
         )}
-      </Tabs>
+        </Tabs>
+      </div>
     </ContentLayout>
   )
 }
