@@ -327,8 +327,8 @@ export function UsersPage({ loaderData }: UsersPageProps) {
               />
             </div>
 
-            {/* Users Table */}
-            <div className='border rounded-lg'>
+            {/* Users Table - Desktop */}
+            <div className='hidden md:block border rounded-lg'>
               <div className='grid grid-cols-5 gap-4 p-4 font-medium border-b bg-muted/50'>
                 <div>Name</div>
                 <div>Email</div>
@@ -404,6 +404,94 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Users Cards - Mobile */}
+            <div className='md:hidden space-y-4'>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className='border rounded-lg p-4 space-y-3'>
+                    <div className='flex justify-between items-start'>
+                      <Skeleton className='h-5 w-32' />
+                      <Skeleton className='h-5 w-16' />
+                    </div>
+                    <Skeleton className='h-4 w-48' />
+                    <div className='flex justify-between items-center'>
+                      <Skeleton className='h-5 w-12' />
+                      <div className='flex gap-2'>
+                        <Skeleton className='h-8 w-16' />
+                        <Skeleton className='h-8 w-20' />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : filteredUsers.length === 0 ? (
+                <div className='border rounded-lg p-8 text-center text-muted-foreground'>
+                  No users found
+                </div>
+              ) : (
+                filteredUsers.map((user) => (
+                  <div key={user.id} className='border rounded-lg p-4 space-y-3'>
+                    {/* Header: Name and Status */}
+                    <div className='flex justify-between items-start'>
+                      <h3 className='font-medium text-lg'>{user.displayName}</h3>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        user.isActive 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                      }`}>
+                        {user.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    
+                    {/* Email */}
+                    <div className='text-muted-foreground'>{user.email}</div>
+                    
+                    {/* Role and Actions */}
+                    <div className='flex justify-between items-center pt-2'>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        user.role === 'admin' 
+                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                          : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                      }`}>
+                        {user.role}
+                      </span>
+                      
+                      {/* Mobile Action Buttons */}
+                      <div className='flex gap-2'>
+                        <Button 
+                          variant='outline' 
+                          size='sm'
+                          onClick={() => openEditDialog(user)}
+                          className='px-3 py-2'
+                        >
+                          <Edit className='h-4 w-4 mr-1' />
+                          Edit
+                        </Button>
+                        <Button 
+                          variant={user.isActive ? 'destructive' : 'default'}
+                          size='sm'
+                          onClick={() => handleDeactivateUser(user.id, user.isActive)}
+                          disabled={isDeactivating === user.id}
+                          className='px-3 py-2'
+                        >
+                          {user.isActive ? (
+                            <>
+                              <UserX className='h-4 w-4 mr-1' />
+                              Deactivate
+                            </>
+                          ) : (
+                            <>
+                              <UserCheck className='h-4 w-4 mr-1' />
+                              Activate
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))

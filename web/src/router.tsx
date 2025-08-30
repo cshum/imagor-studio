@@ -25,7 +25,7 @@ import { themeStore } from '@/stores/theme-store.ts'
 import { Toaster } from '@/components/ui/sonner'
 
 const rootRoute = createRootRoute({
-  loader: async () => {
+  beforeLoad: async () => {
     // Wait for theme to be loaded before rendering
     await themeStore.waitFor((state) => state.isLoaded)
     await authStore.waitFor((state) => state.state !== 'loading')
@@ -150,12 +150,10 @@ const accountLayoutRoute = createRoute({
       throw redirect({ to: '/admin-setup' })
     }
 
-    // If unauthenticated and not first run, redirect to login
-    if (currentAuth.state === 'unauthenticated' && currentAuth.isFirstRun === false) {
+    if (currentAuth.state !== 'authenticated') {
       throw redirect({ to: '/login' })
     }
 
-    // Allow authenticated or guest users
     return {}
   },
   component: () => (
@@ -175,6 +173,16 @@ const accountRedirectRoute = createRoute({
 const accountProfileRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/profile',
+  beforeLoad: async () => {
+    const auth = authStore.getState()
+    
+    // Only allow authenticated users (no guest access to profile)
+    if (auth.state !== 'authenticated') {
+      throw redirect({ to: '/login' })
+    }
+    
+    return {}
+  },
   loader: profileLoader,
   component: () => {
     const loaderData = accountProfileRoute.useLoaderData()
