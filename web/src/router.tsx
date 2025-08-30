@@ -103,12 +103,6 @@ const adminPanelLayoutRoute = createRoute({
 const galleryRoute = createRoute({
   getParentRoute: () => adminPanelLayoutRoute,
   path: '/gallery/$galleryKey',
-  context: () => ({
-    breadcrumb: {
-      // Use breadcrumbs from loader data
-      fromLoader: true
-    }
-  }),
   component: () => {
     const galleryLoaderData = galleryRoute.useLoaderData()
     const { galleryKey } = galleryRoute.useParams()
