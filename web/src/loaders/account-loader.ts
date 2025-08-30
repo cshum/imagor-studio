@@ -1,5 +1,5 @@
 import { getCurrentUser, listUsers } from '@/api/user-api'
-import { getSystemRegistry, getSystemRegistryObject } from '@/api/registry-api'
+import { getSystemRegistryObject } from '@/api/registry-api'
 import { getAuth } from '@/stores/auth-store'
 import type { ListUsersQuery } from '@/generated/graphql'
 

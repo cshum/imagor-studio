@@ -175,22 +175,6 @@ export async function setSystemRegistry(
 }
 
 /**
- * Set or update multiple system registry entries (admin only)
- */
-export async function setSystemRegistryMultiple(
-  entries: Array<{ key: string; value: string }>,
-): Promise<SetSystemRegistryMutation['setSystemRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
-
-  const variables: SetSystemRegistryMutationVariables = {
-    entries,
-  }
-
-  const result = await sdk.SetSystemRegistry(variables)
-  return result.setSystemRegistry
-}
-
-/**
  * Delete a system registry entry (admin only)
  */
 export async function deleteSystemRegistry(
@@ -215,4 +199,17 @@ export async function getSystemRegistryObject(prefix?: string): Promise<Record<s
   }
 
   return registryObject
+}
+
+/**
+ * Set system registry from a key-value object (admin only)
+ */
+export async function setSystemRegistryObject(
+  registryObject: Record<string, string>
+): Promise<SetSystemRegistryMutation['setSystemRegistry']> {
+  const sdk = getSdk(getGraphQLClient())
+
+  const entries = Object.entries(registryObject).map(([key, value]) => ({ key, value }))
+  const result = await sdk.SetSystemRegistry({ entries })
+  return result.setSystemRegistry
 }

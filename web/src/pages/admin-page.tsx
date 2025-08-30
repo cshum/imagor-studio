@@ -5,7 +5,7 @@ import { useRouter } from '@tanstack/react-router'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { setSystemRegistryMultiple } from '@/api/registry-api'
+import { setSystemRegistryObject } from '@/api/registry-api'
 import { extractErrorMessage } from '@/lib/error-utils'
 import type { AdminLoaderData } from '@/loaders/account-loader'
 
@@ -21,7 +21,9 @@ export function AdminPage({ loaderData }: AdminPageProps) {
   type RegistryMap = Record<string, string>
   
   // Original values from loader - already in string format
-  const originalSettings = loaderData?.registry 
+  const originalSettings = useMemo<RegistryMap>(() => 
+    loaderData?.registry || {}
+  , [loaderData])
   
   // Current form state - map of registry keys to string values
   const [settings, setSettings] = useState<RegistryMap>(originalSettings)
@@ -41,15 +43,11 @@ export function AdminPage({ loaderData }: AdminPageProps) {
     setIsUpdatingSettings(true)
 
     try {
-      // Prepare all settings to save - convert from settings map
-      const settingsToSave = Object.entries(settings).map(([key, value]) => ({
-        key,
-        value
-      }))
-
-      await setSystemRegistryMultiple(settingsToSave)
+      // Save settings directly as Record<string, string>
+      await setSystemRegistryObject(settings)
       toast.success('Settings updated successfully!')
       
+      // Invalidate the current route to refresh loader data
       await router.invalidate()
     } catch (err) {
       const errorMessage = extractErrorMessage(err)
