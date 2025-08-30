@@ -50,10 +50,35 @@ const rootRoute = createRootRoute({
 })
 
 const rootPath = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => adminPanelLayoutRoute,
   path: '/',
   component: () => {
-    return <Navigate to='/gallery/$galleryKey' params={{ galleryKey: 'default' }} replace />
+    const galleryLoaderData = rootPath.useLoaderData()
+    return (
+      <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey=''>
+        <Outlet />
+      </GalleryPage>
+    )
+  },
+  loader: () => galleryLoader(''),
+})
+
+const rootImagePage = createRoute({
+  getParentRoute: () => rootPath,
+  path: '/$imageKey',
+  loader: ({ params }) => imageLoader({ params: { ...params, galleryKey: '' } }),
+  component: () => {
+    const galleryLoaderData = rootPath.useLoaderData()
+    const imageLoaderData = rootImagePage.useLoaderData()
+    const { imageKey } = rootImagePage.useParams()
+    return (
+      <ImagePage
+        imageLoaderData={imageLoaderData}
+        galleryLoaderData={galleryLoaderData}
+        galleryKey=''
+        imageKey={imageKey}
+      />
+    )
   },
 })
 
@@ -194,10 +219,10 @@ const accountUsersRoute = createRoute({
 })
 
 const routeTree = rootRoute.addChildren([
-  rootPath,
   loginRoute,
   adminSetupRoute,
   adminPanelLayoutRoute.addChildren([
+    rootPath.addChildren([rootImagePage]),
     galleryRoute.addChildren([galleryPage, imagePage]),
     accountLayoutRoute.addChildren([
       accountRedirectRoute,

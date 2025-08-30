@@ -57,10 +57,19 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     if (position) {
       setPosition(galleryKey, imageKey, position)
     }
-    return navigate({
-      to: '/gallery/$galleryKey/$imageKey',
-      params: { galleryKey, imageKey },
-    })
+    
+    // Handle navigation for root gallery vs sub-galleries
+    if (galleryKey === '') {
+      return navigate({
+        to: '/$imageKey',
+        params: { imageKey },
+      })
+    } else {
+      return navigate({
+        to: '/gallery/$galleryKey/$imageKey',
+        params: { galleryKey, imageKey },
+      })
+    }
   }
 
   const handleFolderClick = ({ galleryKey }: Gallery) => {
