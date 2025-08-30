@@ -34,7 +34,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ContentLayout } from '@/layouts/content-layout'
-import { useAuth } from '@/stores/auth-store'
+import { initAuth, useAuth } from '@/stores/auth-store'
 import { changePassword, updateProfile } from '@/api/user-api'
 import { setSystemRegistry } from '@/api/registry-api'
 import { extractErrorMessage } from '@/lib/error-utils'
@@ -105,6 +105,7 @@ export function AccountPage() {
         displayName: values.displayName,
         email: values.email,
       })
+      await initAuth()
       setProfileSuccess('Profile updated successfully!')
     } catch (err) {
       setProfileError(extractErrorMessage(err))

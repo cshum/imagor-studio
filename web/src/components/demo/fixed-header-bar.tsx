@@ -45,10 +45,7 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
     if (authState.state === 'guest') {
       return 'Guest'
     }
-    if (authState.profile?.email) {
-      return authState.profile.email
-    }
-    return 'User'
+    return authState.profile?.displayName || authState.profile?.email || 'User'
   }
 
   // Get user role display (only for authenticated users)
