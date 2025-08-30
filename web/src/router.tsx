@@ -172,7 +172,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   adminSetupRoute,
   adminPanelLayoutRoute.addChildren([galleryRoute.addChildren([galleryPage, imagePage])]),
-  accountPage,
+  accountLayoutRoute.addChildren([accountPage]),
 ])
 
 // Create router

@@ -16,25 +16,17 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { initAuth } from '@/stores/auth-store'
 
-const adminSetupSchema = z
-  .object({
-    displayName: z
-      .string()
-      .min(3, 'Display name must be at least 3 characters long')
-      .max(100, 'Display name must be less than 100 characters'),
-    email: z.string().email('Please enter a valid email address'),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters long')
-      .max(72, 'Password must be less than 72 characters'),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
-  })
+const adminSetupSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters long')
+    .max(72, 'Password must be less than 72 characters'),
+  enableGuestMode: z.boolean(),
+})
 
 type AdminSetupForm = z.infer<typeof adminSetupSchema>
 
@@ -46,10 +38,9 @@ export function AdminSetupPage() {
   const form = useForm<AdminSetupForm>({
     resolver: zodResolver(adminSetupSchema),
     defaultValues: {
-      displayName: '',
       email: '',
       password: '',
-      confirmPassword: '',
+      enableGuestMode: false,
     },
   })
 
@@ -58,10 +49,14 @@ export function AdminSetupPage() {
     setError(null)
 
     try {
+      // Auto-generate display name from email (part before @)
+      const displayName = values.email.split('@')[0]
+      
       const response = await registerAdmin({
-        displayName: values.displayName,
+        displayName,
         email: values.email,
         password: values.password,
+        enableGuestMode: values.enableGuestMode,
       })
 
       // Initialize auth with the new token
@@ -88,24 +83,6 @@ export function AdminSetupPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='displayName'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Display Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='Enter your display name'
-                        {...field}
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <FormField
                 control={form.control}
                 name='email'
@@ -146,19 +123,22 @@ export function AdminSetupPage() {
 
               <FormField
                 control={form.control}
-                name='confirmPassword'
+                name='enableGuestMode'
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                  <FormItem className='flex flex-row items-start space-x-3 space-y-0'>
                     <FormControl>
-                      <Input
-                        type='password'
-                        placeholder='Confirm your password'
-                        {...field}
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
                         disabled={isLoading}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <div className='space-y-1 leading-none'>
+                      <FormLabel>Enable Guest Mode</FormLabel>
+                      <p className='text-sm text-muted-foreground'>
+                        Allow users to browse without creating an account
+                      </p>
+                    </div>
                   </FormItem>
                 )}
               />
