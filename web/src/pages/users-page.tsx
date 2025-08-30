@@ -196,12 +196,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       <Card>
         <CardHeader>
           <div className='flex items-center justify-between'>
-            <div>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>
-                Manage user accounts, roles, and permissions. Create new users or modify existing ones.
-              </CardDescription>
-            </div>
+            <CardTitle>Users</CardTitle>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
