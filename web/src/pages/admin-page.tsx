@@ -17,30 +17,35 @@ export function AdminPage({ loaderData }: AdminPageProps) {
   const router = useRouter()
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false)
   
-  // Original values from loader
-  const originalGuestModeEnabled = loaderData?.guestModeEnabled ?? false
+  // Registry is Record<string, string> - all values are strings
+  type RegistryMap = Record<string, string>
   
-  // Current form state
-  const [guestModeEnabled, setGuestModeEnabled] = useState(originalGuestModeEnabled)
+  // Original values from loader - already in string format
+  const originalSettings = loaderData?.registry 
+  
+  // Current form state - map of registry keys to string values
+  const [settings, setSettings] = useState<RegistryMap>(originalSettings)
 
   // Check if there are unsaved changes
   const hasUnsavedChanges = useMemo(() => {
-    return guestModeEnabled !== originalGuestModeEnabled
-  }, [guestModeEnabled, originalGuestModeEnabled])
+    return Object.keys(originalSettings).some(key => 
+      settings[key] !== originalSettings[key]
+    )
+  }, [settings, originalSettings])
 
-  const onGuestModeToggle = (enabled: boolean) => {
-    setGuestModeEnabled(enabled)
+  const updateSetting = (key: string, value: string) => {
+    setSettings(prev => ({ ...prev, [key]: value }))
   }
 
   const onUpdateSettings = async () => {
     setIsUpdatingSettings(true)
 
     try {
-      // Prepare all settings to save
-      const settingsToSave = [
-        { key: 'auth.enableGuestMode', value: guestModeEnabled ? 'true' : 'false' },
-        // Add more settings here as needed
-      ]
+      // Prepare all settings to save - convert from settings map
+      const settingsToSave = Object.entries(settings).map(([key, value]) => ({
+        key,
+        value
+      }))
 
       await setSystemRegistryMultiple(settingsToSave)
       toast.success('Settings updated successfully!')
@@ -73,8 +78,10 @@ export function AdminPage({ loaderData }: AdminPageProps) {
                 </div>
               </div>
               <Checkbox
-                checked={guestModeEnabled}
-                onCheckedChange={onGuestModeToggle}
+                checked={settings['auth.enableGuestMode'] === 'true'}
+                onCheckedChange={(checked) => 
+                  updateSetting('auth.enableGuestMode', checked ? 'true' : 'false')
+                }
                 disabled={isUpdatingSettings}
               />
             </div>

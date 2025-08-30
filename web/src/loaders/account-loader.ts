@@ -1,5 +1,5 @@
 import { getCurrentUser, listUsers } from '@/api/user-api'
-import { getSystemRegistry } from '@/api/registry-api'
+import { getSystemRegistry, getSystemRegistryObject } from '@/api/registry-api'
 import { getAuth } from '@/stores/auth-store'
 import type { ListUsersQuery } from '@/generated/graphql'
 
@@ -11,7 +11,7 @@ export interface ProfileLoaderData {
 }
 
 export interface AdminLoaderData {
-  guestModeEnabled: boolean
+  registry: Record<string, string>
 }
 
 export interface UsersLoaderData {
@@ -35,12 +35,8 @@ export const profileLoader = async (): Promise<ProfileLoaderData> => {
  * Load admin settings for the admin page
  */
 export const adminLoader = async (): Promise<AdminLoaderData> => {
-  // Fetch system registry settings
-  const guestModeRegistry = await getSystemRegistry('auth.enableGuestMode')
-  
-  return {
-    guestModeEnabled: guestModeRegistry?.value === 'true',
-  }
+  const registry = await getSystemRegistryObject()
+  return { registry }
 }
 
 /**
