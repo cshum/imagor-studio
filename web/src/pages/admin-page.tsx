@@ -78,12 +78,6 @@ export function AdminPage({ loaderData }: AdminPageProps) {
               />
             </div>
             
-            {hasUnsavedChanges && (
-              <div className='text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-md p-3'>
-                You have unsaved changes. Click "Update Settings" to save them.
-              </div>
-            )}
-            
             <div className='flex justify-end pt-4 border-t'>
               <ButtonWithLoading
                 onClick={onUpdateSettings}
