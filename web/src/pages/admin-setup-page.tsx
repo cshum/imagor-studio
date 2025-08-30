@@ -7,6 +7,7 @@ import * as z from 'zod'
 import { registerAdmin } from '@/api/auth-api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
@@ -16,7 +17,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
 import { initAuth } from '@/stores/auth-store'
 
 const adminSetupSchema = z.object({
@@ -124,7 +124,7 @@ export function AdminSetupPage() {
                 control={form.control}
                 name='enableGuestMode'
                 render={({ field }) => (
-                  <FormItem className='flex flex-row items-start space-x-3 space-y-0'>
+                  <FormItem className='flex flex-row items-start space-y-0 space-x-3'>
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -134,7 +134,7 @@ export function AdminSetupPage() {
                     </FormControl>
                     <div className='space-y-1 leading-none'>
                       <FormLabel>Enable Guest Mode</FormLabel>
-                      <p className='text-sm text-muted-foreground'>
+                      <p className='text-muted-foreground text-sm'>
                         Allow users to browse without creating an account
                       </p>
                     </div>
