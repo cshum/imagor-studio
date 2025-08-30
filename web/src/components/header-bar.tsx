@@ -23,14 +23,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useBreadcrumb } from '@/hooks/use-breadcrumb'
 import { useAuth } from '@/stores/auth-store'
 
-interface FixedHeaderBarProps {
-  isScrolled: boolean
+interface HeaderBarProps {
+  isScrolled?: boolean
   onTreeToggle?: () => void // New prop for tree sidebar toggle
   isTreeOpen?: boolean // New prop for tree sidebar state
 }
 
-export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
-  isScrolled: isScrolledDown,
+export const HeaderBar: React.FC<HeaderBarProps> = ({
+  isScrolled: isScrolledDown = false,
   onTreeToggle = () => {},
   isTreeOpen = false,
 }) => {
@@ -82,7 +82,7 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
   return (
     <TooltipProvider>
       <header
-        className={`sticky top-0 z-10 w-full px-2 ${isScrolledDown ? 'bg-card/75 dark:shadow-secondary shadow backdrop-blur md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
+        className={`top-0 z-10 w-full px-2 ${isScrolledDown ? 'sticky bg-card/75 dark:shadow-secondary shadow backdrop-blur md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
       >
         <div className='mx-auto'>
           <div

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 
-import { FixedHeaderBar } from '@/components/fixed-header-bar'
+import { HeaderBar } from '@/components/header-bar'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
@@ -89,7 +89,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           <div className='mx-4 my-2 grid'>
             <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
           </div>
-          <FixedHeaderBar isScrolled={isScrolledDown} />
+          <HeaderBar isScrolled={isScrolledDown} />
           <Card className='rounded-lg border-none'>
             <CardContent className='p-2 md:p-4' ref={contentRef}>
               {contentWidth > 0 && (
