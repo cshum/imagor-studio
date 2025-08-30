@@ -16,6 +16,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
   Form,
   FormControl,
   FormField,
@@ -24,9 +32,11 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ContentLayout } from '@/layouts/content-layout'
 import { useAuth } from '@/stores/auth-store'
 import { changePassword, updateProfile } from '@/api/user-api'
+import { extractErrorMessage } from '@/lib/error-utils'
 
 const profileSchema = z.object({
   displayName: z
@@ -65,6 +75,7 @@ export function AccountPage() {
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null)
   const [guestModeSuccess, setGuestModeSuccess] = useState<string | null>(null)
   const [guestModeEnabled, setGuestModeEnabled] = useState(false) // TODO: Get from API
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -95,7 +106,7 @@ export function AccountPage() {
       })
       setProfileSuccess('Profile updated successfully!')
     } catch (err) {
-      setProfileError(err instanceof Error ? err.message : 'Failed to update profile')
+      setProfileError(extractErrorMessage(err))
     } finally {
       setIsUpdatingProfile(false)
     }
@@ -110,8 +121,13 @@ export function AccountPage() {
       await changePassword(values.currentPassword, values.newPassword)
       setPasswordSuccess('Password updated successfully!')
       passwordForm.reset()
+      // Close dialog after successful password change
+      setTimeout(() => {
+        setPasswordDialogOpen(false)
+        setPasswordSuccess(null)
+      }, 2000)
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Failed to update password')
+      setPasswordError(extractErrorMessage(err))
     } finally {
       setIsUpdatingPassword(false)
     }
@@ -132,7 +148,7 @@ export function AccountPage() {
       setGuestModeEnabled(enabled)
       setGuestModeSuccess(`Guest mode ${enabled ? 'enabled' : 'disabled'} successfully!`)
     } catch (err) {
-      setGuestModeError(err instanceof Error ? err.message : 'Failed to update guest mode setting')
+      setGuestModeError(extractErrorMessage(err))
     } finally {
       setIsUpdatingGuestMode(false)
     }
@@ -156,204 +172,244 @@ export function AccountPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className='space-y-6'>
-        {/* Profile Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
-            <CardDescription>
-              Update your account profile information.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...profileForm}>
-              <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className='space-y-4'>
-                <FormField
-                  control={profileForm.control}
-                  name='displayName'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Display Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder='Enter your display name'
-                          {...field}
-                          disabled={isUpdatingProfile}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+      <Tabs defaultValue='profile' className='w-full'>
+        <TabsList className='grid w-full grid-cols-3'>
+          <TabsTrigger value='profile'>Profile</TabsTrigger>
+          <TabsTrigger value='security'>Security</TabsTrigger>
+          {isAdmin && <TabsTrigger value='admin'>Admin</TabsTrigger>}
+        </TabsList>
 
-                <FormField
-                  control={profileForm.control}
-                  name='email'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='email'
-                          placeholder='Enter your email address'
-                          {...field}
-                          disabled={isUpdatingProfile}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {profileError && (
-                  <div className='text-destructive bg-destructive/10 rounded-md p-3 text-sm'>
-                    {profileError}
-                  </div>
-                )}
-
-                {profileSuccess && (
-                  <div className='text-green-600 bg-green-50 dark:bg-green-950 rounded-md p-3 text-sm'>
-                    {profileSuccess}
-                  </div>
-                )}
-
-                <Button type='submit' disabled={isUpdatingProfile}>
-                  {isUpdatingProfile ? 'Updating...' : 'Update Profile'}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        {/* Password Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Change Password</CardTitle>
-            <CardDescription>
-              Update your account password. You'll need to enter your current password.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...passwordForm}>
-              <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className='space-y-4'>
-                <FormField
-                  control={passwordForm.control}
-                  name='currentPassword'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Password</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='password'
-                          placeholder='Enter your current password'
-                          {...field}
-                          disabled={isUpdatingPassword}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={passwordForm.control}
-                  name='newPassword'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New Password</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='password'
-                          placeholder='Enter your new password'
-                          {...field}
-                          disabled={isUpdatingPassword}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={passwordForm.control}
-                  name='confirmPassword'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm New Password</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='password'
-                          placeholder='Confirm your new password'
-                          {...field}
-                          disabled={isUpdatingPassword}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {passwordError && (
-                  <div className='text-destructive bg-destructive/10 rounded-md p-3 text-sm'>
-                    {passwordError}
-                  </div>
-                )}
-
-                {passwordSuccess && (
-                  <div className='text-green-600 bg-green-50 dark:bg-green-950 rounded-md p-3 text-sm'>
-                    {passwordSuccess}
-                  </div>
-                )}
-
-                <Button type='submit' disabled={isUpdatingPassword}>
-                  {isUpdatingPassword ? 'Updating...' : 'Change Password'}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        {/* Admin Settings */}
-        {isAdmin && (
+        <TabsContent value='profile' className='space-y-4'>
           <Card>
             <CardHeader>
-              <CardTitle>System Settings</CardTitle>
+              <CardTitle>Profile Information</CardTitle>
               <CardDescription>
-                Configure system-wide settings. These options are only available to administrators.
+                Update your account profile information.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className='space-y-4'>
-                <div className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                  <div className='space-y-0.5'>
-                    <div className='text-base font-medium'>Guest Mode</div>
-                    <div className='text-sm text-muted-foreground'>
-                      Allow users to browse the gallery without creating an account
-                    </div>
-                  </div>
-                  <Checkbox
-                    checked={guestModeEnabled}
-                    onCheckedChange={onGuestModeToggle}
-                    disabled={isUpdatingGuestMode}
+              <Form {...profileForm}>
+                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className='space-y-4'>
+                  <FormField
+                    control={profileForm.control}
+                    name='displayName'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Display Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder='Enter your display name'
+                            {...field}
+                            disabled={isUpdatingProfile}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
+
+                  <FormField
+                    control={profileForm.control}
+                    name='email'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type='email'
+                            placeholder='Enter your email address'
+                            {...field}
+                            disabled={isUpdatingProfile}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {profileError && (
+                    <div className='text-destructive bg-destructive/10 rounded-md p-3 text-sm'>
+                      {profileError}
+                    </div>
+                  )}
+
+                  {profileSuccess && (
+                    <div className='text-green-600 bg-green-50 dark:bg-green-950 rounded-md p-3 text-sm'>
+                      {profileSuccess}
+                    </div>
+                  )}
+
+                  <Button type='submit' disabled={isUpdatingProfile}>
+                    {isUpdatingProfile ? 'Updating...' : 'Update Profile'}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value='security' className='space-y-4'>
+          <Card>
+            <CardHeader>
+              <CardTitle>Security Settings</CardTitle>
+              <CardDescription>
+                Manage your account security and password.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className='space-y-4'>
+              <div className='flex items-center justify-between p-4 border rounded-lg'>
+                <div className='space-y-0.5'>
+                  <div className='text-base font-medium'>Password</div>
+                  <div className='text-sm text-muted-foreground'>
+                    Change your account password
+                  </div>
                 </div>
+                <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant='outline'>Change Password</Button>
+                  </DialogTrigger>
+                  <DialogContent className='sm:max-w-[425px]'>
+                    <DialogHeader>
+                      <DialogTitle>Change Password</DialogTitle>
+                      <DialogDescription>
+                        Enter your current password and choose a new one.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Form {...passwordForm}>
+                      <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className='space-y-4'>
+                        <FormField
+                          control={passwordForm.control}
+                          name='currentPassword'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Current Password</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type='password'
+                                  placeholder='Enter your current password'
+                                  {...field}
+                                  disabled={isUpdatingPassword}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                {guestModeError && (
-                  <div className='text-destructive bg-destructive/10 rounded-md p-3 text-sm'>
-                    {guestModeError}
-                  </div>
-                )}
+                        <FormField
+                          control={passwordForm.control}
+                          name='newPassword'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>New Password</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type='password'
+                                  placeholder='Enter your new password'
+                                  {...field}
+                                  disabled={isUpdatingPassword}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                {guestModeSuccess && (
-                  <div className='text-green-600 bg-green-50 dark:bg-green-950 rounded-md p-3 text-sm'>
-                    {guestModeSuccess}
-                  </div>
-                )}
+                        <FormField
+                          control={passwordForm.control}
+                          name='confirmPassword'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Confirm New Password</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type='password'
+                                  placeholder='Confirm your new password'
+                                  {...field}
+                                  disabled={isUpdatingPassword}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        {passwordError && (
+                          <div className='text-destructive bg-destructive/10 rounded-md p-3 text-sm'>
+                            {passwordError}
+                          </div>
+                        )}
+
+                        {passwordSuccess && (
+                          <div className='text-green-600 bg-green-50 dark:bg-green-950 rounded-md p-3 text-sm'>
+                            {passwordSuccess}
+                          </div>
+                        )}
+
+                        <div className='flex justify-end space-x-2'>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            onClick={() => setPasswordDialogOpen(false)}
+                            disabled={isUpdatingPassword}
+                          >
+                            Cancel
+                          </Button>
+                          <Button type='submit' disabled={isUpdatingPassword}>
+                            {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {isAdmin && (
+          <TabsContent value='admin' className='space-y-4'>
+            <Card>
+              <CardHeader>
+                <CardTitle>System Settings</CardTitle>
+                <CardDescription>
+                  Configure system-wide settings. These options are only available to administrators.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className='space-y-4'>
+                  <div className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                    <div className='space-y-0.5'>
+                      <div className='text-base font-medium'>Guest Mode</div>
+                      <div className='text-sm text-muted-foreground'>
+                        Allow users to browse the gallery without creating an account
+                      </div>
+                    </div>
+                    <Checkbox
+                      checked={guestModeEnabled}
+                      onCheckedChange={onGuestModeToggle}
+                      disabled={isUpdatingGuestMode}
+                    />
+                  </div>
+
+                  {guestModeError && (
+                    <div className='text-destructive bg-destructive/10 rounded-md p-3 text-sm'>
+                      {guestModeError}
+                    </div>
+                  )}
+
+                  {guestModeSuccess && (
+                    <div className='text-green-600 bg-green-50 dark:bg-green-950 rounded-md p-3 text-sm'>
+                      {guestModeSuccess}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         )}
-      </div>
+      </Tabs>
     </ContentLayout>
   )
 }
