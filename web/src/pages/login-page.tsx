@@ -1,11 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Navigate } from '@tanstack/react-router'
-import { Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { login } from '@/api/auth-api'
-import { Button } from '@/components/ui/button'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
@@ -105,20 +104,13 @@ export function LoginPage() {
                   {form.formState.errors.root.message}
                 </div>
               )}
-              <Button
+              <ButtonWithLoading
                 type='submit'
                 className='w-full'
-                disabled={form.formState.isSubmitting}
+                isLoading={form.formState.isSubmitting}
               >
-                {form.formState.isSubmitting ? (
-                  <>
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign In'
-                )}
-              </Button>
+                Sign In
+              </ButtonWithLoading>
             </form>
           </Form>
         </CardContent>

@@ -5,6 +5,7 @@ import * as z from 'zod'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
@@ -189,9 +190,12 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                 )}
               />
 
-              <Button type='submit' disabled={isUpdatingProfile}>
-                {isUpdatingProfile ? 'Updating...' : 'Update Profile'}
-              </Button>
+              <ButtonWithLoading
+                type='submit'
+                isLoading={isUpdatingProfile}
+              >
+                Update Profile
+              </ButtonWithLoading>
             </form>
           </Form>
         </CardContent>
@@ -291,9 +295,12 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                       >
                         Cancel
                       </Button>
-                      <Button type='submit' disabled={isUpdatingPassword}>
-                        {isUpdatingPassword ? 'Updating...' : 'Update Password'}
-                      </Button>
+                      <ButtonWithLoading
+                        type='submit'
+                        isLoading={isUpdatingPassword}
+                      >
+                        Update Password
+                      </ButtonWithLoading>
                     </div>
                   </form>
                 </Form>
