@@ -58,6 +58,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isDeactivating, setIsDeactivating] = useState<string | null>(null)
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
 
   const pageSize = 20
 
@@ -158,6 +159,8 @@ export function UsersPage({ loaderData }: UsersPageProps) {
     try {
       await deactivateAccount(userId)
       toast.success(`User ${isActive ? 'deactivated' : 'reactivated'} successfully!`)
+      setIsEditDialogOpen(false)
+      setSelectedUser(null)
       loadUsers(currentPage * pageSize)
     } catch (err) {
       const errorMessage = extractErrorMessage(err)
@@ -386,22 +389,6 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                             <Edit className='h-4 w-4 mr-2' />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleDeactivateUser(user.id, user.isActive)}
-                            disabled={isDeactivating === user.id}
-                          >
-                            {user.isActive ? (
-                              <>
-                                <UserX className='h-4 w-4 mr-2' />
-                                Deactivate
-                              </>
-                            ) : (
-                              <>
-                                <UserCheck className='h-4 w-4 mr-2' />
-                                Reactivate
-                              </>
-                            )}
-                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -471,25 +458,6 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                         >
                           <Edit className='h-4 w-4 mr-1' />
                           Edit
-                        </Button>
-                        <Button 
-                          variant={user.isActive ? 'destructive' : 'default'}
-                          size='sm'
-                          onClick={() => handleDeactivateUser(user.id, user.isActive)}
-                          disabled={isDeactivating === user.id}
-                          className='px-3 py-2'
-                        >
-                          {user.isActive ? (
-                            <>
-                              <UserX className='h-4 w-4 mr-1' />
-                              Deactivate
-                            </>
-                          ) : (
-                            <>
-                              <UserCheck className='h-4 w-4 mr-1' />
-                              Activate
-                            </>
-                          )}
                         </Button>
                       </div>
                     </div>
@@ -575,24 +543,105 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                 )}
               />
 
-              <DialogFooter>
+              {/* Deactivate Section - Separate Row */}
+              <div className='border-t pt-4 mt-4'>
+                <div className='flex items-center justify-between p-3 bg-muted/50 rounded-lg'>
+                  <div>
+                    <h4 className='text-sm font-medium'>
+                      {selectedUser?.isActive ? 'Deactivate User' : 'Reactivate User'}
+                    </h4>
+                    <p className='text-xs text-muted-foreground'>
+                      {selectedUser?.isActive 
+                        ? 'This will prevent the user from logging in'
+                        : 'This will allow the user to log in again'
+                      }
+                    </p>
+                  </div>
+                  <Button 
+                    type='button'
+                    variant={selectedUser?.isActive ? 'destructive' : 'default'}
+                    size='sm'
+                    onClick={() => {
+                      if (selectedUser?.isActive) {
+                        // Show confirmation dialog for deactivation
+                        setIsConfirmDialogOpen(true)
+                      } else {
+                        // No confirmation needed for reactivation
+                        handleDeactivateUser(selectedUser.id, selectedUser.isActive)
+                      }
+                    }}
+                    disabled={isUpdating || isDeactivating === selectedUser?.id}
+                  >
+                    {selectedUser?.isActive ? (
+                      <>
+                        <UserX className='h-4 w-4 mr-2' />
+                        Deactivate
+                      </>
+                    ) : (
+                      <>
+                        <UserCheck className='h-4 w-4 mr-2' />
+                        Reactivate
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <DialogFooter className='flex flex-col sm:flex-row sm:justify-end gap-2'>
                 <Button 
                   type='button'
                   variant='outline' 
                   onClick={() => setIsEditDialogOpen(false)}
                   disabled={isUpdating}
+                  className='w-full sm:w-auto'
                 >
                   Cancel
                 </Button>
                 <ButtonWithLoading
                   type='submit'
                   isLoading={isUpdating}
+                  className='w-full sm:w-auto'
                 >
                   Update User
                 </ButtonWithLoading>
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog for Deactivation */}
+      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Deactivate User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to deactivate <strong>{selectedUser?.displayName}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className='flex flex-col sm:flex-row sm:justify-end gap-2'>
+            <Button 
+              variant='outline' 
+              onClick={() => setIsConfirmDialogOpen(false)}
+              disabled={isDeactivating === selectedUser?.id}
+              className='w-full sm:w-auto'
+            >
+              Cancel
+            </Button>
+            <ButtonWithLoading
+              variant='destructive'
+              onClick={() => {
+                if (selectedUser) {
+                  handleDeactivateUser(selectedUser.id, selectedUser.isActive)
+                  setIsConfirmDialogOpen(false)
+                }
+              }}
+              isLoading={isDeactivating === selectedUser?.id}
+              className='w-full sm:w-auto'
+            >
+              Deactivate
+            </ButtonWithLoading>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
