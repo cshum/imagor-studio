@@ -9,21 +9,21 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
-import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
+import { ErrorPage } from '@/components/ui/error-page'
+import { Toaster } from '@/components/ui/sonner'
 import { AccountLayout } from '@/layouts/account-layout'
+import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
+import { adminLoader, profileLoader, usersLoader } from '@/loaders/account-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
-import { profileLoader, adminLoader, usersLoader } from '@/loaders/account-loader.ts'
-import { ProfilePage } from '@/pages/profile-page'
 import { AdminPage } from '@/pages/admin-page'
-import { UsersPage } from '@/pages/users-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
+import { ProfilePage } from '@/pages/profile-page'
+import { UsersPage } from '@/pages/users-page'
 import { authStore } from '@/stores/auth-store.ts'
 import { themeStore } from '@/stores/theme-store.ts'
-import { Toaster } from '@/components/ui/sonner'
-import { ErrorPage } from '@/components/ui/error-page'
 
 const rootRoute = createRootRoute({
   beforeLoad: async () => {
@@ -47,10 +47,10 @@ const rootRoute = createRootRoute({
     </>
   ),
   errorComponent: ({ error }) => (
-    <ErrorPage 
+    <ErrorPage
       error={error}
-      title="Failed to load data"
-      description="There was an error loading the requested data. Please try again."
+      title='Failed to load data'
+      description='There was an error loading the requested data. Please try again.'
     />
   ),
 })
@@ -86,9 +86,13 @@ const adminPanelLayoutRoute = createRoute({
       throw redirect({ to: '/login' })
     }
 
-    // Allow authenticated or guest users
     return {}
   },
+  context: () => ({
+    breadcrumb: {
+      label: 'Home',
+    },
+  }),
   component: () => (
     <AdminPanelLayout>
       <Outlet />
@@ -99,6 +103,12 @@ const adminPanelLayoutRoute = createRoute({
 const galleryRoute = createRoute({
   getParentRoute: () => adminPanelLayoutRoute,
   path: '/gallery/$galleryKey',
+  context: () => ({
+    breadcrumb: {
+      // Use breadcrumbs from loader data
+      fromLoader: true
+    }
+  }),
   component: () => {
     const galleryLoaderData = galleryRoute.useLoaderData()
     const { galleryKey } = galleryRoute.useParams()
@@ -119,6 +129,11 @@ const galleryPage = createRoute({
 const imagePage = createRoute({
   getParentRoute: () => galleryRoute,
   path: '/$imageKey',
+  context: () => ({
+    breadcrumb: {
+      label: (loaderData: any, params: any) => params?.imageKey || 'Image',
+    },
+  }),
   loader: ({ params }) => imageLoader({ params }),
   component: () => {
     const galleryLoaderData = galleryRoute.useLoaderData()
@@ -136,8 +151,13 @@ const imagePage = createRoute({
 })
 
 const accountLayoutRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => adminPanelLayoutRoute,
   id: 'account-layout',
+  context: () => ({
+    breadcrumb: {
+      label: 'Account',
+    },
+  }),
   beforeLoad: async () => {
     const auth = authStore.getState()
 
@@ -154,11 +174,7 @@ const accountLayoutRoute = createRoute({
 
     return {}
   },
-  component: () => (
-    <AdminPanelLayout>
-      <AccountLayout />
-    </AdminPanelLayout>
-  ),
+  component: () => <AccountLayout />,
 })
 
 // Redirect /account to /account/profile
@@ -173,8 +189,8 @@ const accountProfileRoute = createRoute({
   path: '/account/profile',
   context: () => ({
     breadcrumb: {
-      label: 'Profile'
-    }
+      label: 'Profile',
+    },
   }),
   loader: profileLoader,
   component: () => {
@@ -186,14 +202,19 @@ const accountProfileRoute = createRoute({
 const accountAdminRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/admin',
+  context: () => ({
+    breadcrumb: {
+      label: 'Admin',
+    },
+  }),
   beforeLoad: async () => {
     const auth = authStore.getState()
-    
+
     // Only allow admin users
     if (auth.profile?.role !== 'admin') {
       throw redirect({ to: '/account/profile' })
     }
-    
+
     return {}
   },
   loader: adminLoader,
@@ -206,14 +227,19 @@ const accountAdminRoute = createRoute({
 const accountUsersRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/users',
+  context: () => ({
+    breadcrumb: {
+      label: 'Users',
+    },
+  }),
   beforeLoad: async () => {
     const auth = authStore.getState()
-    
+
     // Only allow admin users
     if (auth.profile?.role !== 'admin') {
       throw redirect({ to: '/account/profile' })
     }
-    
+
     return {}
   },
   loader: usersLoader,
@@ -227,8 +253,15 @@ const routeTree = rootRoute.addChildren([
   rootPath,
   loginRoute,
   adminSetupRoute,
-  adminPanelLayoutRoute.addChildren([galleryRoute.addChildren([galleryPage, imagePage])]),
-  accountLayoutRoute.addChildren([accountRedirectRoute, accountProfileRoute, accountAdminRoute, accountUsersRoute]),
+  adminPanelLayoutRoute.addChildren([
+    galleryRoute.addChildren([galleryPage, imagePage]),
+    accountLayoutRoute.addChildren([
+      accountRedirectRoute,
+      accountProfileRoute,
+      accountAdminRoute,
+      accountUsersRoute,
+    ]),
+  ]),
 ])
 
 // Create router

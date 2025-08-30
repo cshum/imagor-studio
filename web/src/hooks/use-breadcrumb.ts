@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { useMatches, useRouterState } from '@tanstack/react-router'
+import { useMatches } from '@tanstack/react-router'
+import type { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 
 export interface BreadcrumbItem {
   label: string
@@ -7,102 +8,72 @@ export interface BreadcrumbItem {
   isActive?: boolean
 }
 
+interface BreadcrumbContext {
+  label?: string | ((loaderData: unknown, params: unknown) => string)
+  fromLoader?: boolean
+  hidden?: boolean
+}
+
+interface RouteMatch {
+  context: {
+    breadcrumb?: BreadcrumbContext
+  }
+  loaderData?: unknown
+  params?: Record<string, string>
+  pathname: string
+}
+
 export function useBreadcrumb(): BreadcrumbItem[] {
   const matches = useMatches()
-  const routerState = useRouterState()
 
   return useMemo(() => {
     const breadcrumbs: BreadcrumbItem[] = []
 
-    // Always start with Home
-    breadcrumbs.push({
-      label: 'Home',
-      href: '/',
-    })
+    // Process matches that have breadcrumb context
+    matches.forEach((match, index) => {
+      const typedMatch = match as RouteMatch
+      const breadcrumbInfo = typedMatch.context?.breadcrumb
 
-    // Find the current route match
-    const currentMatch = matches[matches.length - 1]
-    if (!currentMatch) return breadcrumbs
+      if (!breadcrumbInfo) return
 
-    const pathname = routerState.location.pathname
-
-    // Handle account pages
-    if (pathname.startsWith('/account')) {
-      breadcrumbs.push({
-        label: 'Account Settings',
-        href: '/account/profile',
-      })
-
-      // Add specific account page
-      if (pathname.includes('/admin')) {
-        breadcrumbs.push({
-          label: 'Admin',
-          isActive: true,
-        })
-      } else if (pathname.includes('/users')) {
-        breadcrumbs.push({
-          label: 'Users',
-          isActive: true,
-        })
-      } else if (pathname.includes('/profile')) {
-        breadcrumbs.push({
-          label: 'Profile',
-          isActive: true,
-        })
-      }
-
-      return breadcrumbs
-    }
-
-    // Handle gallery pages
-    if (pathname.startsWith('/gallery')) {
-      // Extract gallery key and image key from the current match
-      const params = currentMatch.params as any
-      const galleryKey = params?.galleryKey as string
-      const imageKey = params?.imageKey as string
-
-      if (galleryKey) {
-        // Get gallery name from loader data if available
-        const galleryLoaderData = currentMatch.loaderData as any
-
-        // Always add Gallery as the base level
-        breadcrumbs.push({
-          label: 'Gallery',
-          href: imageKey || galleryKey !== 'default' ? '/gallery/default' : undefined,
-          isActive: galleryKey === 'default' && !imageKey,
-        })
-
-        // Build gallery path breadcrumbs for nested folders
-        if (galleryKey !== 'default') {
-          const pathSegments = galleryKey.split('/')
-          let currentPath = ''
-
-          pathSegments.forEach((segment, index) => {
-            currentPath = currentPath ? `${currentPath}/${segment}` : segment
-            const isLast = index === pathSegments.length - 1
-            const segmentName = segment.charAt(0).toUpperCase() + segment.slice(1)
-
+      // Handle loader-based breadcrumbs (for gallery route)
+      if (breadcrumbInfo.fromLoader) {
+        const loaderData = typedMatch.loaderData as GalleryLoaderData
+        if (loaderData?.breadcrumbs) {
+          // Add all breadcrumbs from the loader
+          loaderData.breadcrumbs.forEach((breadcrumb, breadcrumbIndex) => {
+            const isActive = index === matches.length - 1 && breadcrumbIndex === loaderData.breadcrumbs.length - 1
             breadcrumbs.push({
-              label: isLast && galleryLoaderData?.galleryName ? galleryLoaderData.galleryName : segmentName,
-              href: imageKey || !isLast ? `/gallery/${currentPath}` : undefined,
-              isActive: !imageKey && isLast,
+              label: breadcrumb.label,
+              href: isActive ? undefined : breadcrumb.href,
+              isActive,
             })
           })
         }
-
-        // Add image breadcrumb if viewing an image
-        if (imageKey) {
-          breadcrumbs.push({
-            label: imageKey,
-            isActive: true,
-          })
-        }
+        return
       }
 
-      return breadcrumbs
-    }
+      // Handle regular breadcrumb info (object with label)
+      const label = typeof breadcrumbInfo.label === 'function'
+        ? breadcrumbInfo.label(typedMatch.loaderData, typedMatch.params)
+        : breadcrumbInfo.label
 
-    // Default fallback
+      // Skip if label is empty or hidden
+      if (!label || breadcrumbInfo.hidden) return
+
+      // Determine if this is the active (last) breadcrumb
+      const isActive = index === matches.length - 1
+
+      // Build href for navigation (exclude active breadcrumb)
+      const href = !isActive ? typedMatch.pathname : undefined
+
+      breadcrumbs.push({
+        label,
+        href,
+        isActive,
+      })
+    })
+
     return breadcrumbs
-  }, [matches, routerState.location.pathname])
+  }, [matches])
 }
