@@ -24,9 +24,9 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
 import { ContentLayout } from '@/layouts/content-layout'
 import { useAuth } from '@/stores/auth-store'
+import { changePassword, updateProfile } from '@/api/user-api'
 
 const profileSchema = z.object({
   displayName: z
@@ -89,12 +89,10 @@ export function AccountPage() {
     setProfileSuccess(null)
 
     try {
-      // TODO: Implement profile update API call
-      console.log('Updating profile:', values)
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      await updateProfile({
+        displayName: values.displayName,
+        email: values.email,
+      })
       setProfileSuccess('Profile updated successfully!')
     } catch (err) {
       setProfileError(err instanceof Error ? err.message : 'Failed to update profile')
@@ -109,12 +107,7 @@ export function AccountPage() {
     setPasswordSuccess(null)
 
     try {
-      // TODO: Implement password update API call
-      console.log('Updating password')
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      await changePassword(values.currentPassword, values.newPassword)
       setPasswordSuccess('Password updated successfully!')
       passwordForm.reset()
     } catch (err) {
