@@ -69,8 +69,8 @@ export type Mutation = {
   deleteFile: Scalars['Boolean']['output']
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
-  setSystemRegistry: Registry
-  setUserRegistry: Registry
+  setSystemRegistry: Array<Registry>
+  setUserRegistry: Array<Registry>
   updateProfile: User
   uploadFile: Scalars['Boolean']['output']
 }
@@ -106,14 +106,12 @@ export type MutationDeleteUserRegistryArgs = {
 }
 
 export type MutationSetSystemRegistryArgs = {
-  key: Scalars['String']['input']
-  value: Scalars['String']['input']
+  entries: Array<RegistryEntryInput>
 }
 
 export type MutationSetUserRegistryArgs = {
-  key: Scalars['String']['input']
+  entries: Array<RegistryEntryInput>
   ownerID?: InputMaybe<Scalars['String']['input']>
-  value: Scalars['String']['input']
 }
 
 export type MutationUpdateProfileArgs = {
@@ -187,6 +185,11 @@ export type Registry = {
   ownerID: Scalars['String']['output']
   updatedAt: Scalars['String']['output']
   value: Scalars['String']['output']
+}
+
+export type RegistryEntryInput = {
+  key: Scalars['String']['input']
+  value: Scalars['String']['input']
 }
 
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
@@ -300,21 +303,20 @@ export type GetSystemRegistryQuery = {
 }
 
 export type SetUserRegistryMutationVariables = Exact<{
-  key: Scalars['String']['input']
-  value: Scalars['String']['input']
+  entries: Array<RegistryEntryInput> | RegistryEntryInput
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type SetUserRegistryMutation = {
   __typename?: 'Mutation'
-  setUserRegistry: {
+  setUserRegistry: Array<{
     __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
     createdAt: string
     updatedAt: string
-  }
+  }>
 }
 
 export type DeleteUserRegistryMutationVariables = Exact<{
@@ -325,20 +327,19 @@ export type DeleteUserRegistryMutationVariables = Exact<{
 export type DeleteUserRegistryMutation = { __typename?: 'Mutation'; deleteUserRegistry: boolean }
 
 export type SetSystemRegistryMutationVariables = Exact<{
-  key: Scalars['String']['input']
-  value: Scalars['String']['input']
+  entries: Array<RegistryEntryInput> | RegistryEntryInput
 }>
 
 export type SetSystemRegistryMutation = {
   __typename?: 'Mutation'
-  setSystemRegistry: {
+  setSystemRegistry: Array<{
     __typename?: 'Registry'
     key: string
     value: string
     ownerID: string
     createdAt: string
     updatedAt: string
-  }
+  }>
 }
 
 export type DeleteSystemRegistryMutationVariables = Exact<{
@@ -911,18 +912,16 @@ export const SetUserRegistryDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'entries' } },
           type: {
             kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'value' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: { kind: 'NamedType', name: { kind: 'Name', value: 'RegistryEntryInput' } },
+              },
+            },
           },
         },
         {
@@ -940,13 +939,8 @@ export const SetUserRegistryDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'key' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'value' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'value' } },
+                name: { kind: 'Name', value: 'entries' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'entries' } },
               },
               {
                 kind: 'Argument',
@@ -1037,18 +1031,16 @@ export const SetSystemRegistryDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'entries' } },
           type: {
             kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'value' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: { kind: 'NamedType', name: { kind: 'Name', value: 'RegistryEntryInput' } },
+              },
+            },
           },
         },
       ],
@@ -1061,13 +1053,8 @@ export const SetSystemRegistryDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'key' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'value' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'value' } },
+                name: { kind: 'Name', value: 'entries' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'entries' } },
               },
             ],
             selectionSet: {

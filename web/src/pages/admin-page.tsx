@@ -3,7 +3,8 @@ import { toast } from 'sonner'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { setSystemRegistry } from '@/api/registry-api'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading'
+import { setSystemRegistry, setSystemRegistryMultiple } from '@/api/registry-api'
 import { extractErrorMessage } from '@/lib/error-utils'
 import type { AdminLoaderData } from '@/loaders/account-loader'
 
@@ -13,6 +14,7 @@ interface AdminPageProps {
 
 export function AdminPage({ loaderData }: AdminPageProps) {
   const [isUpdatingGuestMode, setIsUpdatingGuestMode] = useState(false)
+  const [isSavingAllSettings, setIsSavingAllSettings] = useState(false)
   const [guestModeEnabled, setGuestModeEnabled] = useState(
     loaderData?.guestModeEnabled ?? false
   )
@@ -32,6 +34,26 @@ export function AdminPage({ loaderData }: AdminPageProps) {
       setGuestModeEnabled(!enabled)
     } finally {
       setIsUpdatingGuestMode(false)
+    }
+  }
+
+  const onSaveAllSettings = async () => {
+    setIsSavingAllSettings(true)
+
+    try {
+      // Prepare all settings to save
+      const settingsToSave = [
+        { key: 'auth.enableGuestMode', value: guestModeEnabled ? 'true' : 'false' },
+        // Add more settings here as needed
+      ]
+
+      await setSystemRegistryMultiple(settingsToSave)
+      toast.success('All settings saved successfully!')
+    } catch (err) {
+      const errorMessage = extractErrorMessage(err)
+      toast.error(`Failed to save settings: ${errorMessage}`)
+    } finally {
+      setIsSavingAllSettings(false)
     }
   }
 
@@ -58,6 +80,16 @@ export function AdminPage({ loaderData }: AdminPageProps) {
                 onCheckedChange={onGuestModeToggle}
                 disabled={isUpdatingGuestMode}
               />
+            </div>
+            
+            <div className='flex justify-end pt-4 border-t'>
+              <ButtonWithLoading
+                onClick={onSaveAllSettings}
+                isLoading={isSavingAllSettings}
+                disabled={isUpdatingGuestMode}
+              >
+                Save All Settings
+              </ButtonWithLoading>
             </div>
           </div>
         </CardContent>

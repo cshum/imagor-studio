@@ -75,8 +75,8 @@ type ComplexityRoot struct {
 		DeleteFile           func(childComplexity int, path string) int
 		DeleteSystemRegistry func(childComplexity int, key string) int
 		DeleteUserRegistry   func(childComplexity int, key string, ownerID *string) int
-		SetSystemRegistry    func(childComplexity int, key string, value string) int
-		SetUserRegistry      func(childComplexity int, key string, value string, ownerID *string) int
+		SetSystemRegistry    func(childComplexity int, entries []*RegistryEntryInput) int
+		SetUserRegistry      func(childComplexity int, entries []*RegistryEntryInput, ownerID *string) int
 		UpdateProfile        func(childComplexity int, input UpdateProfileInput, userID *string) int
 		UploadFile           func(childComplexity int, path string, content graphql.Upload) int
 	}
@@ -132,9 +132,9 @@ type MutationResolver interface {
 	UpdateProfile(ctx context.Context, input UpdateProfileInput, userID *string) (*User, error)
 	ChangePassword(ctx context.Context, input ChangePasswordInput, userID *string) (bool, error)
 	DeactivateAccount(ctx context.Context, userID *string) (bool, error)
-	SetUserRegistry(ctx context.Context, key string, value string, ownerID *string) (*Registry, error)
+	SetUserRegistry(ctx context.Context, entries []*RegistryEntryInput, ownerID *string) ([]*Registry, error)
 	DeleteUserRegistry(ctx context.Context, key string, ownerID *string) (bool, error)
-	SetSystemRegistry(ctx context.Context, key string, value string) (*Registry, error)
+	SetSystemRegistry(ctx context.Context, entries []*RegistryEntryInput) ([]*Registry, error)
 	DeleteSystemRegistry(ctx context.Context, key string) (bool, error)
 	CreateUser(ctx context.Context, input CreateUserInput) (*User, error)
 }
@@ -354,7 +354,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SetSystemRegistry(childComplexity, args["key"].(string), args["value"].(string)), true
+		return e.complexity.Mutation.SetSystemRegistry(childComplexity, args["entries"].([]*RegistryEntryInput)), true
 
 	case "Mutation.setUserRegistry":
 		if e.complexity.Mutation.SetUserRegistry == nil {
@@ -366,7 +366,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SetUserRegistry(childComplexity, args["key"].(string), args["value"].(string), args["ownerID"].(*string)), true
+		return e.complexity.Mutation.SetUserRegistry(childComplexity, args["entries"].([]*RegistryEntryInput), args["ownerID"].(*string)), true
 
 	case "Mutation.updateProfile":
 		if e.complexity.Mutation.UpdateProfile == nil {
@@ -638,6 +638,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputChangePasswordInput,
 		ec.unmarshalInputCreateUserInput,
+		ec.unmarshalInputRegistryEntryInput,
 		ec.unmarshalInputUpdateProfileInput,
 	)
 	first := true
@@ -774,11 +775,11 @@ type Mutation {
     deactivateAccount(userId: ID): Boolean!
 
     # User Registry APIs
-    setUserRegistry(key: String!, value: String!, ownerID: String): Registry!
+    setUserRegistry(entries: [RegistryEntryInput!]!, ownerID: String): [Registry!]!
     deleteUserRegistry(key: String!, ownerID: String): Boolean!
 
     # System Registry APIs (admin only for write)
-    setSystemRegistry(key: String!, value: String!): Registry!
+    setSystemRegistry(entries: [RegistryEntryInput!]!): [Registry!]!
     deleteSystemRegistry(key: String!): Boolean!
 
     # admin only operations
@@ -815,6 +816,11 @@ input CreateUserInput {
     email: String!
     password: String!
     role: String!
+}
+
+input RegistryEntryInput {
+    key: String!
+    value: String!
 }
 
 # Existing types...
@@ -968,37 +974,27 @@ func (ec *executionContext) field_Mutation_deleteUserRegistry_args(ctx context.C
 func (ec *executionContext) field_Mutation_setSystemRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "entries", ec.unmarshalNRegistryEntryInput2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryEntryInputᚄ)
 	if err != nil {
 		return nil, err
 	}
-	args["key"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "value", ec.unmarshalNString2string)
-	if err != nil {
-		return nil, err
-	}
-	args["value"] = arg1
+	args["entries"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_setUserRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "entries", ec.unmarshalNRegistryEntryInput2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryEntryInputᚄ)
 	if err != nil {
 		return nil, err
 	}
-	args["key"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "value", ec.unmarshalNString2string)
+	args["entries"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "ownerID", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["value"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "ownerID", ec.unmarshalOString2ᚖstring)
-	if err != nil {
-		return nil, err
-	}
-	args["ownerID"] = arg2
+	args["ownerID"] = arg1
 	return args, nil
 }
 
@@ -2180,7 +2176,7 @@ func (ec *executionContext) _Mutation_setUserRegistry(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SetUserRegistry(rctx, fc.Args["key"].(string), fc.Args["value"].(string), fc.Args["ownerID"].(*string))
+		return ec.resolvers.Mutation().SetUserRegistry(rctx, fc.Args["entries"].([]*RegistryEntryInput), fc.Args["ownerID"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2192,9 +2188,9 @@ func (ec *executionContext) _Mutation_setUserRegistry(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*Registry)
+	res := resTmp.([]*Registry)
 	fc.Result = res
-	return ec.marshalNRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistry(ctx, field.Selections, res)
+	return ec.marshalNRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_setUserRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2302,7 +2298,7 @@ func (ec *executionContext) _Mutation_setSystemRegistry(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SetSystemRegistry(rctx, fc.Args["key"].(string), fc.Args["value"].(string))
+		return ec.resolvers.Mutation().SetSystemRegistry(rctx, fc.Args["entries"].([]*RegistryEntryInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2314,9 +2310,9 @@ func (ec *executionContext) _Mutation_setSystemRegistry(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*Registry)
+	res := resTmp.([]*Registry)
 	fc.Result = res
-	return ec.marshalNRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistry(ctx, field.Selections, res)
+	return ec.marshalNRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_setSystemRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6057,6 +6053,40 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputRegistryEntryInput(ctx context.Context, obj any) (RegistryEntryInput, error) {
+	var it RegistryEntryInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"key", "value"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Key = data
+		case "value":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Value = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateProfileInput(ctx context.Context, obj any) (UpdateProfileInput, error) {
 	var it UpdateProfileInput
 	asMap := map[string]any{}
@@ -7289,10 +7319,6 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNRegistry2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistry(ctx context.Context, sel ast.SelectionSet, v Registry) graphql.Marshaler {
-	return ec._Registry(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryᚄ(ctx context.Context, sel ast.SelectionSet, v []*Registry) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -7345,6 +7371,26 @@ func (ec *executionContext) marshalNRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑ
 		return graphql.Null
 	}
 	return ec._Registry(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNRegistryEntryInput2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryEntryInputᚄ(ctx context.Context, v any) ([]*RegistryEntryInput, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*RegistryEntryInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNRegistryEntryInput2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryEntryInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNRegistryEntryInput2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryEntryInput(ctx context.Context, v any) (*RegistryEntryInput, error) {
+	res, err := ec.unmarshalInputRegistryEntryInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {

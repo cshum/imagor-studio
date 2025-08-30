@@ -46,8 +46,8 @@ export const GetSystemRegistryQuery = gql(`
 
 // User Registry Mutations
 export const SetUserRegistryMutation = gql(`
-  mutation SetUserRegistry($key: String!, $value: String!, $ownerID: String) {
-    setUserRegistry(key: $key, value: $value, ownerID: $ownerID) {
+  mutation SetUserRegistry($entries: [RegistryEntryInput!]!, $ownerID: String) {
+    setUserRegistry(entries: $entries, ownerID: $ownerID) {
       ...RegistryInfo
     }
   }
@@ -61,8 +61,8 @@ export const DeleteUserRegistryMutation = gql(`
 
 // System Registry Mutations (admin only)
 export const SetSystemRegistryMutation = gql(`
-  mutation SetSystemRegistry($key: String!, $value: String!) {
-    setSystemRegistry(key: $key, value: $value) {
+  mutation SetSystemRegistry($entries: [RegistryEntryInput!]!) {
+    setSystemRegistry(entries: $entries) {
       ...RegistryInfo
     }
   }

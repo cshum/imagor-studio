@@ -8,25 +8,32 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 )
 
-// SetUserRegistry sets user-specific registry
-func (r *mutationResolver) SetUserRegistry(ctx context.Context, key string, value string, ownerID *string) (*gql.Registry, error) {
+// SetUserRegistry sets user-specific registry (supports multiple values)
+func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.RegistryEntryInput, ownerID *string) ([]*gql.Registry, error) {
 	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
 
-	registry, err := r.registryStore.Set(ctx, effectiveOwnerID, key, value)
-	if err != nil {
-		return nil, fmt.Errorf("failed to set user registry: %w", err)
+	var result []*gql.Registry
+
+	// Handle entries
+	for _, entry := range entries {
+		registry, err := r.registryStore.Set(ctx, effectiveOwnerID, entry.Key, entry.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set user registry for key %s: %w", entry.Key, err)
+		}
+
+		result = append(result, &gql.Registry{
+			Key:       registry.Key,
+			Value:     registry.Value,
+			OwnerID:   effectiveOwnerID,
+			CreatedAt: registry.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: registry.UpdatedAt.Format(time.RFC3339),
+		})
 	}
 
-	return &gql.Registry{
-		Key:       registry.Key,
-		Value:     registry.Value,
-		OwnerID:   effectiveOwnerID,
-		CreatedAt: registry.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: registry.UpdatedAt.Format(time.RFC3339),
-	}, nil
+	return result, nil
 }
 
 // DeleteUserRegistry deletes user-specific registry
@@ -94,25 +101,32 @@ func (r *queryResolver) GetUserRegistry(ctx context.Context, key string, ownerID
 	}, nil
 }
 
-// SetSystemRegistry sets system-wide registry (admin only)
-func (r *mutationResolver) SetSystemRegistry(ctx context.Context, key string, value string) (*gql.Registry, error) {
+// SetSystemRegistry sets system-wide registry (admin only, supports multiple values)
+func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql.RegistryEntryInput) ([]*gql.Registry, error) {
 	// Only admins can write system registry
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, fmt.Errorf("admin permission required for system registry write: %w", err)
 	}
 
-	registry, err := r.registryStore.Set(ctx, SystemOwnerID, key, value)
-	if err != nil {
-		return nil, fmt.Errorf("failed to set system registry: %w", err)
+	var result []*gql.Registry
+
+	// Handle entries
+	for _, entry := range entries {
+		registry, err := r.registryStore.Set(ctx, SystemOwnerID, entry.Key, entry.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set system registry for key %s: %w", entry.Key, err)
+		}
+
+		result = append(result, &gql.Registry{
+			Key:       registry.Key,
+			Value:     registry.Value,
+			OwnerID:   SystemOwnerID,
+			CreatedAt: registry.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: registry.UpdatedAt.Format(time.RFC3339),
+		})
 	}
 
-	return &gql.Registry{
-		Key:       registry.Key,
-		Value:     registry.Value,
-		OwnerID:   SystemOwnerID,
-		CreatedAt: registry.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: registry.UpdatedAt.Format(time.RFC3339),
-	}, nil
+	return result, nil
 }
 
 // DeleteSystemRegistry deletes system-wide registry (admin only)
