@@ -53,7 +53,11 @@ export const convertMetadataToImageInfo = (
   if (metadata?.exif) {
     Object.entries(metadata.exif).forEach(([key, value]) => {
       // Convert camelCase or PascalCase to readable format by adding spaces
-      const readableKey = key.replace(/([A-Z])/g, ' $1').trim()
+      // Handle acronyms properly (e.g., GPSAltitude -> GPS Altitude, not G P S Altitude)
+      const readableKey = key
+        .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space between lowercase and uppercase
+        .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2') // Add space between acronym and word
+        .trim()
       exifData[readableKey] = value
     })
   }
