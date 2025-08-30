@@ -10,6 +10,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { MobileBreadcrumb } from '@/components/ui/mobile-breadcrumb'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -23,27 +24,20 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useBreadcrumb } from '@/hooks/use-breadcrumb'
 import { useAuth } from '@/stores/auth-store'
 
-interface FixedHeaderBarProps {
-  isScrolled: boolean
+interface HeaderBarProps {
+  isScrolled?: boolean
   onTreeToggle?: () => void // New prop for tree sidebar toggle
   isTreeOpen?: boolean // New prop for tree sidebar state
 }
 
-export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
-  isScrolled: isScrolledDown,
+export const HeaderBar: React.FC<HeaderBarProps> = ({
+  isScrolled: isScrolledDown = false,
   onTreeToggle = () => {},
   isTreeOpen = false,
 }) => {
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
   const breadcrumbs = useBreadcrumb()
-
-  // Get the current page title for mobile display
-  const getCurrentPageTitle = () => {
-    const lastBreadcrumb = breadcrumbs[breadcrumbs.length - 1]
-    return lastBreadcrumb?.label || 'Gallery'
-  }
-
 
   // Get user display name
   const getUserDisplayName = () => {
@@ -82,7 +76,7 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
   return (
     <TooltipProvider>
       <header
-        className={`sticky top-0 z-10 w-full px-2 ${isScrolledDown ? 'bg-card/75 dark:shadow-secondary shadow backdrop-blur md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
+        className={`top-0 z-10 w-full px-2 ${isScrolledDown ? 'sticky bg-card/75 dark:shadow-secondary shadow backdrop-blur md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
       >
         <div className='mx-auto'>
           <div
@@ -109,14 +103,11 @@ export const FixedHeaderBar: React.FC<FixedHeaderBarProps> = ({
                 <TooltipContent>{isTreeOpen ? 'Hide Tree' : 'Show Tree'}</TooltipContent>
               </Tooltip>
 
-              {/* Mobile: Show current page title only */}
-              {isScrolledDown && (
-                <div className='block sm:hidden'>
-                  <span className='max-w-[140px] truncate font-medium'>
-                    {getCurrentPageTitle()}
-                  </span>
-                </div>
-              )}
+              {/* Mobile: Dropdown-style breadcrumb */}
+              <MobileBreadcrumb 
+                breadcrumbs={breadcrumbs} 
+                className='block sm:hidden' 
+              />
 
               {/* Desktop: Dynamic breadcrumb */}
               <Breadcrumb className='hidden sm:block'>

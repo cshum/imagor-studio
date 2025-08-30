@@ -1,7 +1,7 @@
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { useRef } from 'react'
 
-import { FixedHeaderBar } from '@/components/fixed-header-bar'
+import { HeaderBar } from '@/components/header-bar'
 import { LoadingBar } from '@/components/loading-bar'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
@@ -28,9 +28,6 @@ export function AccountLayout({ children }: AccountLayoutProps) {
     ? 'users' 
     : 'profile'
 
-  const { scrollPosition } = useScrollHandler(containerRef, 'account')
-  const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 40 : 30)
-
   return (
     <>
       <LoadingBar isLoading={false} />
@@ -39,7 +36,7 @@ export function AccountLayout({ children }: AccountLayoutProps) {
           <div className='mx-4 my-2 grid'>
             <h1 className='text-3xl md:text-4xl'>Account Settings</h1>
           </div>
-          <FixedHeaderBar isScrolled={isScrolledDown} />
+          <HeaderBar />
               {/* Tab Navigation */}
               <Tabs value={currentTab} className='w-full'>
                 <TabsList className={`grid w-full mb-4 ${isAdmin ? 'grid-cols-3' : 'grid-cols-1'}`}>

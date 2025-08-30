@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 
-import { FixedHeaderBar } from '@/components/fixed-header-bar'
+import { HeaderBar } from '@/components/header-bar'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
@@ -57,10 +57,19 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     if (position) {
       setPosition(galleryKey, imageKey, position)
     }
-    return navigate({
-      to: '/gallery/$galleryKey/$imageKey',
-      params: { galleryKey, imageKey },
-    })
+    
+    // Handle navigation for root gallery vs sub-galleries
+    if (galleryKey === '') {
+      return navigate({
+        to: '/$imageKey',
+        params: { imageKey },
+      })
+    } else {
+      return navigate({
+        to: '/gallery/$galleryKey/$imageKey',
+        params: { galleryKey, imageKey },
+      })
+    }
   }
 
   const handleFolderClick = ({ galleryKey }: Gallery) => {
@@ -76,11 +85,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     <>
       <LoadingBar isLoading={isLoading} />
       <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
-        <ContentLayout title={galleryName} isBounded={false}>
+        <ContentLayout title={galleryName}>
           <div className='mx-4 my-2 grid'>
             <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
           </div>
-          <FixedHeaderBar isScrolled={isScrolledDown} />
+          <HeaderBar isScrolled={isScrolledDown} />
           <Card className='rounded-lg border-none'>
             <CardContent className='p-2 md:p-4' ref={contentRef}>
               {contentWidth > 0 && (

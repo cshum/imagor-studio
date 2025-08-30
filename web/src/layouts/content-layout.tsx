@@ -14,7 +14,7 @@ export function ContentLayout({
   return (
     <div>
       <div
-        className={`${className || ''} ${isBounded === false ? '' : 'container'} px-0 pt-4 pb-8 sm:px-6 sm:pt-6`}
+        className={`${className || ''} ${isBounded ? 'container' : ''} px-0 pt-4 pb-8 sm:px-6 sm:pt-6`}
       >
         {children}
       </div>

@@ -66,11 +66,14 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
   // Generate breadcrumbs based on galleryKey
   const breadcrumbs: BreadcrumbItem[] = []
 
-  // Always start with Gallery
-  breadcrumbs.push({ label: 'Gallery', href: '/gallery/default' })
+  // For root gallery (empty galleryKey), just show Gallery without href
+  if (!galleryKey || galleryKey === 'default') {
+    breadcrumbs.push({ label: 'Gallery' })
+  } else {
+    // Always start with Gallery for sub-galleries
+    breadcrumbs.push({ label: 'Gallery', href: '/' })
 
-  // Add breadcrumbs for nested paths
-  if (galleryKey && galleryKey !== 'default') {
+    // Add breadcrumbs for nested paths
     const segments = galleryKey.split('/')
 
     for (let i = 0; i < segments.length; i++) {
