@@ -12,7 +12,7 @@ import {
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { AccountLayout } from '@/layouts/account-layout'
-import { AdminPanelLayout } from '@/layouts/admin-panel-layout'
+import { BasePanelLayout } from '@/layouts/base-panel-layout'
 import { adminLoader, profileLoader, usersLoader } from '@/loaders/account-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { AdminPage } from '@/pages/admin-page'
@@ -50,7 +50,7 @@ const rootRoute = createRootRoute({
 })
 
 const rootPath = createRoute({
-  getParentRoute: () => galleryLayoutRoute,
+  getParentRoute: () => baseLayoutRoute,
   path: '/',
   component: () => {
     const galleryLoaderData = rootPath.useLoaderData()
@@ -94,7 +94,7 @@ const adminSetupRoute = createRoute({
   component: AdminSetupPage,
 })
 
-const galleryLayoutRoute = createRoute({
+const baseLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'gallery-layout',
   beforeLoad: async () => {
@@ -107,14 +107,14 @@ const galleryLayoutRoute = createRoute({
     breadcrumb: { label: 'Home' },
   }),
   component: () => (
-    <AdminPanelLayout>
+    <BasePanelLayout>
       <Outlet />
-    </AdminPanelLayout>
+    </BasePanelLayout>
   ),
 })
 
 const galleryRoute = createRoute({
-  getParentRoute: () => galleryLayoutRoute,
+  getParentRoute: () => baseLayoutRoute,
   path: '/gallery/$galleryKey',
   component: () => {
     const galleryLoaderData = galleryRoute.useLoaderData()
@@ -153,7 +153,7 @@ const imagePage = createRoute({
 })
 
 const accountLayoutRoute = createRoute({
-  getParentRoute: () => galleryLayoutRoute,
+  getParentRoute: () => baseLayoutRoute,
   id: 'account-layout',
   loader: () => ({
     breadcrumb: {
@@ -221,7 +221,7 @@ const accountUsersRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   loginRoute,
   adminSetupRoute,
-  galleryLayoutRoute.addChildren([
+  baseLayoutRoute.addChildren([
     rootPath.addChildren([rootImagePage]),
     galleryRoute.addChildren([galleryPage, imagePage]),
     accountLayoutRoute.addChildren([

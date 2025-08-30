@@ -2,10 +2,10 @@ import { PropsWithChildren } from 'react'
 
 import { cn } from '@/lib/utils'
 
-interface AdminPanelLayoutProps extends PropsWithChildren {
+interface BasePanelLayoutProps extends PropsWithChildren {
 }
 
-export function AdminPanelLayout({ children }: AdminPanelLayoutProps) {
+export function BasePanelLayout({ children }: BasePanelLayoutProps) {
   return (
     <>
       <main
