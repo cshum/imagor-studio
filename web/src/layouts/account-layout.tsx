@@ -37,11 +37,9 @@ export function AccountLayout({ children }: AccountLayoutProps) {
             <h1 className='text-3xl md:text-4xl'>Account Settings</h1>
           </div>
           <FixedHeaderBar isScrolled={isScrolledDown} />
-          <Card className='rounded-lg border-none'>
-            <CardContent className='p-2 md:p-4'>
               {/* Tab Navigation */}
               <Tabs value={currentTab} className='w-full'>
-                <TabsList className={`grid w-full mb-6 ${isAdmin ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                <TabsList className={`grid w-full mb-4 ${isAdmin ? 'grid-cols-2' : 'grid-cols-1'}`}>
                   <TabsTrigger value='profile' asChild>
                     <Link to='/account/profile'>Profile</Link>
                   </TabsTrigger>
@@ -57,8 +55,6 @@ export function AccountLayout({ children }: AccountLayoutProps) {
                   {children || <Outlet />}
                 </div>
               </Tabs>
-            </CardContent>
-          </Card>
         </ContentLayout>
       </div>
     </>

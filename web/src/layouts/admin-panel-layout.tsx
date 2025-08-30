@@ -1,13 +1,11 @@
 import { PropsWithChildren } from 'react'
 
-import { Footer } from '@/components/admin-panel/footer'
 import { cn } from '@/lib/utils'
 
 interface AdminPanelLayoutProps extends PropsWithChildren {
-  hideFooter?: boolean // New prop to control footer visibility
 }
 
-export function AdminPanelLayout({ children, hideFooter }: AdminPanelLayoutProps) {
+export function AdminPanelLayout({ children }: AdminPanelLayoutProps) {
   return (
     <>
       <main
@@ -17,11 +15,6 @@ export function AdminPanelLayout({ children, hideFooter }: AdminPanelLayoutProps
       >
         {children}
       </main>
-      {!hideFooter && (
-        <footer className={cn('transition-[margin-left] duration-300 ease-in-out')}>
-          <Footer />
-        </footer>
-      )}
     </>
   )
 }
