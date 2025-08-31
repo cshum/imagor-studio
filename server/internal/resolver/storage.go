@@ -184,7 +184,9 @@ func (r *queryResolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUr
 	})
 
 	// For original, use direct file access
-	originalURL := fmt.Sprintf("/api/file/%s", imagePath)
+	originalURL := fmt.Sprintf(imagePath, imageservice.URLParams{
+		Raw: true,
+	})
 
 	// Generate meta URL for EXIF data
 	metaURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{

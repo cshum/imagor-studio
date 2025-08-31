@@ -30,6 +30,7 @@ type Service interface {
 // URLParams defines parameters for imagor URL generation
 type URLParams struct {
 	Meta    bool
+	Raw     bool
 	Width   int
 	Height  int
 	Quality int
@@ -93,6 +94,14 @@ func (s *externalService) GenerateURL(imagePath string, params URLParams) (strin
 				Args: filter.Args,
 			}
 		}
+	}
+
+	// Add raw filter if specified
+	if params.Raw {
+		rawFilter := imagorpath.Filter{
+			Name: "raw",
+		}
+		imagorParams.Filters = append(imagorParams.Filters, rawFilter)
 	}
 
 	// Add quality filter if specified
