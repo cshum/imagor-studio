@@ -53,7 +53,7 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
       thumbnailUrls: item.thumbnailUrls,
       // Additional GalleryImage fields
       imageKey: item.name,
-      imageSrc: item.thumbnailUrls?.grid,
+      imageSrc: item.thumbnailUrls?.grid || '',
       imageName: item.name,
     }))
 
@@ -134,9 +134,7 @@ export const imageLoader = async ({
   }
 
   // Use the full-size thumbnail URL for the detail view
-  const fullSizeSrc =
-    imageItem.thumbnailUrls.full ||
-    imageItem.thumbnailUrls.original
+  const fullSizeSrc = imageItem.thumbnailUrls.full || imageItem.thumbnailUrls.original || ''
 
   const imageElement = await preloadImage(fullSizeSrc)
 
@@ -152,10 +150,8 @@ export const imageLoader = async ({
   }
 
   const image: GalleryImage = {
-    // Required fields from FileInfoFragment
     name: imageItem.name,
     thumbnailUrls: imageItem.thumbnailUrls,
-    // Additional GalleryImage fields
     imageKey: imageItem.name,
     imageSrc: fullSizeSrc,
     imageName: imageItem.name,
