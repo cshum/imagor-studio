@@ -184,7 +184,7 @@ func (r *queryResolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUr
 	})
 
 	// For original, use direct file access
-	originalURL := fmt.Sprintf(imagePath, imageservice.URLParams{
+	originalURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{
 		Raw: true,
 	})
 
