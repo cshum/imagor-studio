@@ -88,26 +88,11 @@ func TestJWTSecretFromEnv(t *testing.T) {
 	tmpDB := "/tmp/test_jwt_env.db"
 	defer os.Remove(tmpDB)
 
-	cfg := &config.Config{
-		Port:                 8080,
-		DBPath:               tmpDB,
-		JWTSecret:            "fallback-secret", // Provide fallback in case env isn't read
-		JWTExpiration:        24 * time.Hour,
-		StorageType:          "file",
-		FileBaseDir:          "/tmp/test-storage",
-		FileMkdirPermissions: 0755,
-		FileWritePermissions: 0644,
-		ImagorMode:           "external",
-		ImagorURL:            "http://localhost:8000",
-		ImagorSecret:         "",
-		ImagorUnsafe:         false,
-		ImagorResultStorage:  "same",
-		Logger:               zap.NewNop(),
-	}
-
-	services, err := Initialize(cfg)
+	// Test the config loading directly to verify environment variable priority
+	cfg, err := config.Load(&config.LoadOptions{
+		Args: []string{"--db-path", tmpDB},
+	})
 	require.NoError(t, err)
-	defer services.DB.Close()
 
 	// Verify JWT secret from environment was used
 	assert.Equal(t, envSecret, cfg.JWTSecret)
@@ -139,30 +124,15 @@ func TestJWTSecretFromRegistry(t *testing.T) {
 	_, err = registryStore.Set(ctx, "system", "jwt_secret", existingSecret, true)
 	require.NoError(t, err)
 
-	// Now test full initialization
-	cfg = &config.Config{
-		Port:                 8080,
-		DBPath:               tmpDB,
-		JWTSecret:            "fallback-secret", // Provide fallback
-		JWTExpiration:        24 * time.Hour,
-		StorageType:          "file",
-		FileBaseDir:          "/tmp/test-storage",
-		FileMkdirPermissions: 0755,
-		FileWritePermissions: 0644,
-		ImagorMode:           "external",
-		ImagorURL:            "http://localhost:8000",
-		ImagorSecret:         "",
-		ImagorUnsafe:         false,
-		ImagorResultStorage:  "same",
-		Logger:               zap.NewNop(),
-	}
-
-	services, err := Initialize(cfg)
+	// Test config loading with registry enhancement
+	enhancedCfg, err := config.Load(&config.LoadOptions{
+		RegistryStore: registryStore,
+		Args:          []string{"--db-path", tmpDB},
+	})
 	require.NoError(t, err)
-	defer services.DB.Close()
 
 	// Verify JWT secret from registry was used
-	assert.Equal(t, existingSecret, cfg.JWTSecret)
+	assert.Equal(t, existingSecret, enhancedCfg.JWTSecret)
 }
 
 func TestConfigEnhancement(t *testing.T) {
