@@ -5,7 +5,6 @@ import {
   createRouter,
   Navigate,
   Outlet,
-  redirect,
   RouterProvider,
 } from '@tanstack/react-router'
 
@@ -14,6 +13,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { AccountLayout } from '@/layouts/account-layout'
 import { BasePanelLayout } from '@/layouts/base-panel-layout'
 import { adminLoader, profileLoader, usersLoader } from '@/loaders/account-loader.ts'
+import { requireAccountAuth, requireAdminAccountAuth, requireAuth } from '@/loaders/auth-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { AdminPage } from '@/pages/admin-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
@@ -28,11 +28,7 @@ import { themeStore } from '@/stores/theme-store.ts'
 const rootRoute = createRootRoute({
   beforeLoad: async () => {
     await themeStore.waitFor((state) => state.isLoaded)
-
-    const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
-    if (currentAuth.isFirstRun === true && currentAuth.state === 'unauthenticated') {
-      throw redirect({ to: '/admin-setup' })
-    }
+    await authStore.waitFor((state) => state.state !== 'loading')
   },
   component: () => (
     <>
@@ -40,12 +36,32 @@ const rootRoute = createRootRoute({
       <Toaster />
     </>
   ),
-  errorComponent: ({ error }) => (
-    <ErrorPage
-      error={error}
-      title='Failed to load data'
-      description='There was an error loading the requested data. Please try again.'
-    />
+  errorComponent: ErrorPage,
+})
+
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/login',
+  component: LoginPage,
+})
+
+const adminSetupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin-setup',
+  component: AdminSetupPage,
+})
+
+const baseLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: 'gallery-layout',
+  beforeLoad: requireAuth,
+  loader: () => ({
+    breadcrumb: { label: 'Home' },
+  }),
+  component: () => (
+    <BasePanelLayout>
+      <Outlet />
+    </BasePanelLayout>
   ),
 })
 
@@ -80,37 +96,6 @@ const rootImagePage = createRoute({
       />
     )
   },
-})
-
-const loginRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/login',
-  component: LoginPage,
-})
-
-const adminSetupRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/admin-setup',
-  component: AdminSetupPage,
-})
-
-const baseLayoutRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  id: 'gallery-layout',
-  beforeLoad: async () => {
-    const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
-    if (currentAuth.state === 'unauthenticated' && currentAuth.isFirstRun === false) {
-      throw redirect({ to: '/login' })
-    }
-  },
-  loader: () => ({
-    breadcrumb: { label: 'Home' },
-  }),
-  component: () => (
-    <BasePanelLayout>
-      <Outlet />
-    </BasePanelLayout>
-  ),
 })
 
 const galleryRoute = createRoute({
@@ -155,17 +140,12 @@ const imagePage = createRoute({
 const accountLayoutRoute = createRoute({
   getParentRoute: () => baseLayoutRoute,
   id: 'account-layout',
+  beforeLoad: requireAccountAuth,
   loader: () => ({
     breadcrumb: {
       label: 'Account',
     },
   }),
-  beforeLoad: async () => {
-    const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
-    if (currentAuth.state !== 'authenticated') {
-      throw redirect({ to: '/login' })
-    }
-  },
   component: () => <AccountLayout />,
 })
 
@@ -189,12 +169,7 @@ const accountProfileRoute = createRoute({
 const accountAdminRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/admin',
-  beforeLoad: async () => {
-    const auth = authStore.getState()
-    if (auth.profile?.role !== 'admin') {
-      throw redirect({ to: '/account/profile' })
-    }
-  },
+  beforeLoad: requireAdminAccountAuth,
   loader: adminLoader,
   component: () => {
     const loaderData = accountAdminRoute.useLoaderData()
@@ -205,12 +180,7 @@ const accountAdminRoute = createRoute({
 const accountUsersRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/users',
-  beforeLoad: async () => {
-    const auth = authStore.getState()
-    if (auth.profile?.role !== 'admin') {
-      throw redirect({ to: '/account/profile' })
-    }
-  },
+  beforeLoad: requireAdminAccountAuth,
   loader: usersLoader,
   component: () => {
     const loaderData = accountUsersRoute.useLoaderData()
@@ -233,7 +203,6 @@ const routeTree = rootRoute.addChildren([
   ]),
 ])
 
-// Create router
 const createAppRouter = () => createRouter({ routeTree })
 
 export function AppRouter() {
@@ -241,7 +210,6 @@ export function AppRouter() {
   return <RouterProvider router={router} />
 }
 
-// Type registration
 declare module '@tanstack/react-router' {
   interface Register {
     router: ReturnType<typeof createAppRouter>
