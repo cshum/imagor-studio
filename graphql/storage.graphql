@@ -82,6 +82,7 @@ input CreateUserInput {
 input RegistryEntryInput {
     key: String!
     value: String!
+    isEncrypted: Boolean!
 }
 
 # Existing types...
@@ -132,6 +133,7 @@ type Registry {
     key: String!
     value: String!
     ownerID: String!
+    isEncrypted: Boolean!
     createdAt: String!
     updatedAt: String!
 }

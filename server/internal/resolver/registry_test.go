@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -28,8 +29,8 @@ func (m *MockRegistryStore) Get(ctx context.Context, ownerID, key string) (*regi
 	return args.Get(0).(*registrystore.Registry), args.Error(1)
 }
 
-func (m *MockRegistryStore) Set(ctx context.Context, ownerID, key, value string) (*registrystore.Registry, error) {
-	args := m.Called(ctx, ownerID, key, value)
+func (m *MockRegistryStore) Set(ctx context.Context, ownerID, key, value string, isEncrypted bool) (*registrystore.Registry, error) {
+	args := m.Called(ctx, ownerID, key, value, isEncrypted)
 	return args.Get(0).(*registrystore.Registry), args.Error(1)
 }
 
@@ -57,15 +58,17 @@ func TestSetUserRegistry_SelfOperation(t *testing.T) {
 		UpdatedAt: now,
 	}
 
-	mockRegistryStore.On("Set", ctx, "test-user-id", key, value).Return(resultRegistry, nil)
+	mockRegistryStore.On("Set", ctx, "test-user-id", key, value, false).Return(resultRegistry, nil)
 
-	result, err := resolver.Mutation().SetUserRegistry(ctx, key, value, nil) // nil ownerID = self
+	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
+	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, nil) // nil ownerID = self
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, key, result.Key)
-	assert.Equal(t, value, result.Value)
-	assert.Equal(t, "test-user-id", result.OwnerID)
+	assert.Len(t, result, 1)
+	assert.Equal(t, key, result[0].Key)
+	assert.Equal(t, value, result[0].Value)
+	assert.Equal(t, "test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -90,15 +93,17 @@ func TestSetUserRegistry_AdminForOtherUser(t *testing.T) {
 		UpdatedAt: now,
 	}
 
-	mockRegistryStore.On("Set", ctx, targetOwnerID, key, value).Return(resultRegistry, nil)
+	mockRegistryStore.On("Set", ctx, targetOwnerID, key, value, false).Return(resultRegistry, nil)
 
-	result, err := resolver.Mutation().SetUserRegistry(ctx, key, value, &targetOwnerID)
+	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
+	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, &targetOwnerID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, key, result.Key)
-	assert.Equal(t, value, result.Value)
-	assert.Equal(t, targetOwnerID, result.OwnerID)
+	assert.Len(t, result, 1)
+	assert.Equal(t, key, result[0].Key)
+	assert.Equal(t, value, result[0].Value)
+	assert.Equal(t, targetOwnerID, result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -115,7 +120,8 @@ func TestSetUserRegistry_RegularUserCannotAccessOthers(t *testing.T) {
 	key := "test:key"
 	value := "test value"
 
-	result, err := resolver.Mutation().SetUserRegistry(ctx, key, value, &targetOwnerID)
+	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
+	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, &targetOwnerID)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
@@ -135,7 +141,8 @@ func TestSetUserRegistry_GuestCannotSet(t *testing.T) {
 	key := "test:key"
 	value := "test value"
 
-	result, err := resolver.Mutation().SetUserRegistry(ctx, key, value, nil)
+	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
+	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, nil)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
@@ -296,10 +303,11 @@ func TestSetSystemRegistry_AdminOnly(t *testing.T) {
 					CreatedAt: now,
 					UpdatedAt: now,
 				}
-				mockRegistryStore.On("Set", ctx, "system", "app_version", "1.0.0").Return(resultRegistry, nil)
+				mockRegistryStore.On("Set", ctx, "system", "app_version", "1.0.0", false).Return(resultRegistry, nil)
 			}
 
-			result, err := resolver.Mutation().SetSystemRegistry(ctx, "app_version", "1.0.0")
+			entries := []*gql.RegistryEntryInput{{Key: "app_version", Value: "1.0.0"}}
+			result, err := resolver.Mutation().SetSystemRegistry(ctx, entries)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -308,9 +316,10 @@ func TestSetSystemRegistry_AdminOnly(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
-				assert.Equal(t, "app_version", result.Key)
-				assert.Equal(t, "1.0.0", result.Value)
-				assert.Equal(t, "system", result.OwnerID)
+				assert.Len(t, result, 1)
+				assert.Equal(t, "app_version", result[0].Key)
+				assert.Equal(t, "1.0.0", result[0].Value)
+				assert.Equal(t, "system", result[0].OwnerID)
 			}
 
 			mockRegistryStore.AssertExpectations(t)
@@ -531,4 +540,145 @@ func TestUserRegistry_PermissionEdgeCases(t *testing.T) {
 // Helper function to create guest context
 func createGuestContext(guestID string) context.Context {
 	return createUserContext(guestID, "guest", []string{"read"})
+}
+
+func TestSetUserRegistry_EncryptedValueHidden(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	key := "api_secret"
+	value := "super-secret-value"
+
+	now := time.Now()
+	resultRegistry := &registrystore.Registry{
+		Key:         key,
+		Value:       value,
+		IsEncrypted: true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+
+	mockRegistryStore.On("Set", ctx, "test-user-id", key, value, true).Return(resultRegistry, nil)
+
+	entries := []*gql.RegistryEntryInput{{Key: key, Value: value, IsEncrypted: true}}
+	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, nil)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 1)
+	assert.Equal(t, key, result[0].Key)
+	assert.Equal(t, "", result[0].Value) // Value should be empty for encrypted entries
+	assert.Equal(t, true, result[0].IsEncrypted)
+	assert.Equal(t, "test-user-id", result[0].OwnerID)
+
+	mockRegistryStore.AssertExpectations(t)
+}
+
+func TestGetUserRegistry_EncryptedValueHidden(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	key := "api_secret"
+
+	now := time.Now()
+	mockRegistry := &registrystore.Registry{
+		Key:         key,
+		Value:       "super-secret-value",
+		IsEncrypted: true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+
+	mockRegistryStore.On("Get", ctx, "test-user-id", key).Return(mockRegistry, nil)
+
+	result, err := resolver.Query().GetUserRegistry(ctx, key, nil)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, key, result.Key)
+	assert.Equal(t, "", result.Value) // Value should be empty for encrypted entries
+	assert.Equal(t, true, result.IsEncrypted)
+	assert.Equal(t, "test-user-id", result.OwnerID)
+
+	mockRegistryStore.AssertExpectations(t)
+}
+
+func TestListUserRegistry_EncryptedValueHidden(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+
+	now := time.Now()
+	mockRegistry := []*registrystore.Registry{
+		{Key: "normal_setting", Value: "visible_value", IsEncrypted: false, CreatedAt: now, UpdatedAt: now},
+		{Key: "api_secret", Value: "super-secret-value", IsEncrypted: true, CreatedAt: now, UpdatedAt: now},
+	}
+
+	mockRegistryStore.On("List", ctx, "test-user-id", (*string)(nil)).Return(mockRegistry, nil)
+
+	result, err := resolver.Query().ListUserRegistry(ctx, nil, nil)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 2)
+
+	// First entry (not encrypted)
+	assert.Equal(t, "normal_setting", result[0].Key)
+	assert.Equal(t, "visible_value", result[0].Value)
+	assert.Equal(t, false, result[0].IsEncrypted)
+
+	// Second entry (encrypted)
+	assert.Equal(t, "api_secret", result[1].Key)
+	assert.Equal(t, "", result[1].Value) // Value should be empty for encrypted entries
+	assert.Equal(t, true, result[1].IsEncrypted)
+
+	mockRegistryStore.AssertExpectations(t)
+}
+
+func TestSetSystemRegistry_EncryptedValueHidden(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+
+	ctx := createAdminContext("admin-user-id")
+	key := "jwt_secret"
+	value := "super-secret-jwt-key"
+
+	now := time.Now()
+	resultRegistry := &registrystore.Registry{
+		Key:         key,
+		Value:       value,
+		IsEncrypted: true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+
+	mockRegistryStore.On("Set", ctx, "system", key, value, true).Return(resultRegistry, nil)
+
+	entries := []*gql.RegistryEntryInput{{Key: key, Value: value, IsEncrypted: true}}
+	result, err := resolver.Mutation().SetSystemRegistry(ctx, entries)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 1)
+	assert.Equal(t, key, result[0].Key)
+	assert.Equal(t, "", result[0].Value) // Value should be empty for encrypted entries
+	assert.Equal(t, true, result[0].IsEncrypted)
+	assert.Equal(t, "system", result[0].OwnerID)
+
+	mockRegistryStore.AssertExpectations(t)
 }
