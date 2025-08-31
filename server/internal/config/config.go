@@ -1,12 +1,16 @@
 package config
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/peterbourgon/ff/v3"
 	"go.uber.org/zap"
 )
@@ -44,8 +48,19 @@ type Config struct {
 	Logger *zap.Logger
 }
 
-func Load() (*Config, error) {
-	fs := flag.NewFlagSet("imagor-studio", flag.ExitOnError)
+// LoadOptions contains options for loading configuration
+type LoadOptions struct {
+	RegistryStore registrystore.Store // Optional registry store for enhanced loading
+	Args          []string            // Optional args override (defaults to os.Args[1:])
+}
+
+// Load loads configuration with optional registry enhancement
+func Load(opts *LoadOptions) (*Config, error) {
+	if opts == nil {
+		opts = &LoadOptions{}
+	}
+
+	fs := flag.NewFlagSet("imagor-studio", flag.ContinueOnError)
 
 	var (
 		port          = fs.String("port", "8080", "port to listen on")
@@ -75,14 +90,36 @@ func Load() (*Config, error) {
 
 	_ = fs.String("config", ".env", "config file (optional)")
 
-	if err := ff.Parse(fs, os.Args[1:],
+	// Prepare ff options
+	args := opts.Args
+	if args == nil {
+		args = os.Args[1:]
+	}
+
+	ffOptions := []ff.Option{
 		ff.WithEnvVars(),
 		ff.WithConfigFileFlag("config"),
+		ff.WithConfigFileParser(ff.EnvParser),
 		ff.WithIgnoreUndefined(true),
 		ff.WithAllowMissingConfigFile(true),
-		ff.WithConfigFileParser(ff.EnvParser),
-	); err != nil {
-		return nil, fmt.Errorf("error parsing configuration: %w", err)
+	}
+
+	// Pre-populate registry values if registry store is available
+	if opts.RegistryStore != nil {
+		if err := prePopulateRegistryValues(fs, opts.RegistryStore); err != nil {
+			return nil, fmt.Errorf("error loading registry values: %w", err)
+		}
+	}
+
+	// For tests, we need to handle the case where test flags might conflict
+	// We'll catch the error and try to parse without unknown flags
+	err := ff.Parse(fs, args, ffOptions...)
+	if err != nil {
+		// If parsing failed, try again with ignore undefined to handle test flags
+		ffOptionsWithIgnore := append(ffOptions, ff.WithIgnoreUndefined(true))
+		if err := ff.Parse(fs, args, ffOptionsWithIgnore...); err != nil {
+			return nil, fmt.Errorf("error parsing configuration: %w", err)
+		}
 	}
 
 	logger, err := zap.NewProduction()
@@ -159,6 +196,16 @@ func Load() (*Config, error) {
 	return cfg, nil
 }
 
+// LoadBasic loads configuration without registry enhancement (for initial bootstrap)
+func LoadBasic() (*Config, error) {
+	return Load(nil)
+}
+
+// LoadWithRegistry loads configuration with registry enhancement
+func LoadWithRegistry(registryStore registrystore.Store) (*Config, error) {
+	return Load(&LoadOptions{RegistryStore: registryStore})
+}
+
 func (c *Config) validateStorageConfig() error {
 	switch c.StorageType {
 	case "file", "filesystem":
@@ -172,4 +219,113 @@ func (c *Config) validateStorageConfig() error {
 	default:
 		return fmt.Errorf("unsupported storage-type: %s (supported: file, s3)", c.StorageType)
 	}
+}
+
+// RegistryParser implements ff.ConfigFileParser for registry-based configuration
+type RegistryParser struct {
+	registryStore registrystore.Store
+}
+
+// NewRegistryParser creates a new registry parser
+func NewRegistryParser(registryStore registrystore.Store) *RegistryParser {
+	return &RegistryParser{registryStore: registryStore}
+}
+
+// Parse implements ff.ConfigFileParser interface
+func (p *RegistryParser) Parse(r io.Reader, set func(name, value string) error) error {
+	// The reader is not used for registry parsing, but we need to implement the interface
+	// Registry values are fetched directly from the store
+
+	ctx := context.Background()
+
+	// Define the mapping of flag names to registry keys
+	flagToRegistryKey := map[string]string{
+		"storage-type":          "storage_type",
+		"file-base-dir":         "file_base_dir",
+		"s3-bucket":             "s3_bucket",
+		"s3-region":             "s3_region",
+		"s3-endpoint":           "s3_endpoint",
+		"s3-access-key-id":      "s3_access_key_id",
+		"s3-secret-access-key":  "s3_secret_access_key",
+		"s3-session-token":      "s3_session_token",
+		"s3-base-dir":           "s3_base_dir",
+		"imagor-mode":           "imagor_mode",
+		"imagor-url":            "imagor_url",
+		"imagor-secret":         "imagor_secret",
+		"imagor-result-storage": "imagor_result_storage",
+	}
+
+	// Fetch values from registry and set them
+	for flagName, registryKey := range flagToRegistryKey {
+		entry, err := p.registryStore.Get(ctx, "system", registryKey)
+		if err != nil {
+			// Log error but continue - registry values are optional
+			continue
+		}
+
+		if entry != nil && entry.Value != "" {
+			if err := set(flagName, entry.Value); err != nil {
+				return fmt.Errorf("failed to set flag %s from registry: %w", flagName, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// prePopulateRegistryValues loads values from registry and sets them as defaults in the flag set
+func prePopulateRegistryValues(fs *flag.FlagSet, registryStore registrystore.Store) error {
+	ctx := context.Background()
+
+	// Define the mapping of flag names to registry keys
+	flagToRegistryKey := map[string]string{
+		"storage-type":          "storage_type",
+		"file-base-dir":         "file_base_dir",
+		"s3-bucket":             "s3_bucket",
+		"s3-region":             "s3_region",
+		"s3-endpoint":           "s3_endpoint",
+		"s3-access-key-id":      "s3_access_key_id",
+		"s3-secret-access-key":  "s3_secret_access_key",
+		"s3-session-token":      "s3_session_token",
+		"s3-base-dir":           "s3_base_dir",
+		"imagor-mode":           "imagor_mode",
+		"imagor-url":            "imagor_url",
+		"imagor-secret":         "imagor_secret",
+		"imagor-result-storage": "imagor_result_storage",
+	}
+
+	// Fetch values from registry and set them as defaults
+	for flagName, registryKey := range flagToRegistryKey {
+		entry, err := registryStore.Get(ctx, "system", registryKey)
+		if err != nil {
+			// Log error but continue - registry values are optional
+			continue
+		}
+
+		if entry != nil && entry.Value != "" {
+			// Find the flag and set its default value
+			flag := fs.Lookup(flagName)
+			if flag != nil {
+				// Set the default value by updating the flag's DefValue and Value
+				flag.DefValue = entry.Value
+				flag.Value.Set(entry.Value)
+			}
+		}
+	}
+
+	return nil
+}
+
+// GetRegistryKeyForFlag returns the registry key for a given flag name
+func GetRegistryKeyForFlag(flagName string) string {
+	// Convert flag name to registry key format
+	// e.g., "storage-type" -> "storage_type"
+	return strings.ReplaceAll(strings.ToLower(flagName), "-", "_")
+}
+
+// GetFlagNameForRegistryKey returns the flag name for a given registry key
+func GetFlagNameForRegistryKey(registryKey string) string {
+	// Convert registry key to flag name format
+	// e.g., "storage_type" -> "storage-type"
+	return strings.ReplaceAll(strings.ToLower(registryKey), "_", "-")
 }

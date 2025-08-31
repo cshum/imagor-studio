@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/config"
@@ -69,8 +68,22 @@ func Initialize(cfg *config.Config) (*Services, error) {
 	// Initialize token manager
 	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
 
+	// Reload config with registry enhancement
+	enhancedCfg, err := config.Load(&config.LoadOptions{
+		RegistryStore: registryStore,
+		Args:          []string{"--jwt-secret", cfg.JWTSecret}, // Use the current JWT secret
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to reload config with registry: %w", err)
+	}
+
+	// Update the original config with enhanced values but keep the same logger and JWT secret
+	enhancedCfg.Logger = cfg.Logger
+	enhancedCfg.JWTSecret = cfg.JWTSecret
+	cfg = enhancedCfg
+
 	// Initialize storage provider and create storage
-	storageProvider := storageprovider.New(cfg.Logger, registryStore)
+	storageProvider := storageprovider.New(cfg.Logger)
 	stor, err := storageProvider.NewStorageFromConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
@@ -182,35 +195,11 @@ func generateSecureSecret(length int) string {
 // initializeImageService creates and configures the image service
 func initializeImageService(cfg *config.Config, registryStore registrystore.Store) imageservice.Service {
 	imageServiceConfig := imageservice.Config{
-		Mode:          getConfigValue("IMAGOR_MODE", cfg.ImagorMode, registryStore, "external"),
-		URL:           getConfigValue("IMAGOR_URL", cfg.ImagorURL, registryStore, "http://localhost:8000"),
-		Secret:        getConfigValue("IMAGOR_SECRET", cfg.ImagorSecret, registryStore, ""),
+		Mode:          cfg.ImagorMode,
+		URL:           cfg.ImagorURL,
+		Secret:        cfg.ImagorSecret,
 		Unsafe:        cfg.ImagorUnsafe,
-		ResultStorage: getConfigValue("IMAGOR_RESULT_STORAGE", cfg.ImagorResultStorage, registryStore, "same"),
+		ResultStorage: cfg.ImagorResultStorage,
 	}
 	return imageservice.NewService(imageServiceConfig)
-}
-
-// getConfigValue implements the priority system: env var -> registry -> default
-func getConfigValue(envKey, envValue string, registryStore registrystore.Store, defaultValue string) string {
-	// 1. Environment variable (highest priority)
-	if envValue != "" {
-		return envValue
-	}
-
-	// 2. Check environment variable directly
-	if envVal := os.Getenv(envKey); envVal != "" {
-		return envVal
-	}
-
-	// 3. System registry (middle priority)
-	ctx := context.Background()
-	registryKey := strings.ToLower(strings.ReplaceAll(envKey, "_", "_"))
-	registryEntry, err := registryStore.Get(ctx, "system", registryKey)
-	if err == nil && registryEntry != nil && registryEntry.Value != "" {
-		return registryEntry.Value
-	}
-
-	// 4. Default value (lowest priority)
-	return defaultValue
 }

@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"context"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -188,8 +187,8 @@ func TestGenerateSecureSecret(t *testing.T) {
 	assert.NotEqual(t, secret, secret2)
 }
 
-func TestGetConfigValue_Priority(t *testing.T) {
-	tmpDB := "/tmp/test_config_value.db"
+func TestConfigEnhancement(t *testing.T) {
+	tmpDB := "/tmp/test_config_enhancement.db"
 	defer os.Remove(tmpDB)
 
 	cfg := &config.Config{
@@ -208,73 +207,71 @@ func TestGetConfigValue_Priority(t *testing.T) {
 	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
 	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
 
-	tests := []struct {
-		name          string
-		envKey        string
-		envValue      string
-		envVarValue   string
-		registryValue string
-		defaultValue  string
-		expectedValue string
-	}{
-		{
-			name:          "env value takes priority",
-			envKey:        "TEST_KEY",
-			envValue:      "env-value",
-			envVarValue:   "direct-env-value",
-			registryValue: "registry-value",
-			defaultValue:  "default-value",
-			expectedValue: "env-value",
-		},
-		{
-			name:          "direct env var when env value empty",
-			envKey:        "TEST_KEY2",
-			envValue:      "",
-			envVarValue:   "direct-env-value",
-			registryValue: "registry-value",
-			defaultValue:  "default-value",
-			expectedValue: "direct-env-value",
-		},
-		{
-			name:          "registry value when env empty",
-			envKey:        "TEST_KEY3",
-			envValue:      "",
-			envVarValue:   "",
-			registryValue: "registry-value",
-			defaultValue:  "default-value",
-			expectedValue: "registry-value",
-		},
-		{
-			name:          "default value when all empty",
-			envKey:        "TEST_KEY4",
-			envValue:      "",
-			envVarValue:   "",
-			registryValue: "",
-			defaultValue:  "default-value",
-			expectedValue: "default-value",
-		},
+	// Test that config enhancement works with registry values
+	ctx := context.Background()
+
+	// Set some registry values
+	_, err = registryStore.Set(ctx, "system", "storage_type", "s3")
+	require.NoError(t, err)
+
+	_, err = registryStore.Set(ctx, "system", "s3_bucket", "test-bucket")
+	require.NoError(t, err)
+
+	// Load config with registry enhancement
+	enhancedCfg, err := config.Load(&config.LoadOptions{
+		RegistryStore: registryStore,
+		Args:          []string{"--jwt-secret", "test-secret"},
+	})
+	require.NoError(t, err)
+
+	// Verify that registry values were applied
+	assert.Equal(t, "s3", enhancedCfg.StorageType)
+	assert.Equal(t, "test-bucket", enhancedCfg.S3Bucket)
+}
+
+func TestConfigEnhancementWithEnvPriority(t *testing.T) {
+	tmpDB := "/tmp/test_config_env_priority.db"
+	defer os.Remove(tmpDB)
+
+	cfg := &config.Config{
+		DBPath: tmpDB,
+		Logger: zap.NewNop(),
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Set environment variable if needed
-			if tt.envVarValue != "" {
-				os.Setenv(tt.envKey, tt.envVarValue)
-				defer os.Unsetenv(tt.envKey)
-			}
+	// Initialize minimal services for test
+	db, err := initializeDatabase(cfg)
+	require.NoError(t, err)
+	defer db.Close()
 
-			// Set registry value if needed
-			if tt.registryValue != "" {
-				ctx := context.Background()
-				registryKey := strings.ToLower(strings.ReplaceAll(tt.envKey, "_", "_"))
-				_, err := registryStore.Set(ctx, "system", registryKey, tt.registryValue)
-				require.NoError(t, err)
-			}
+	err = runMigrations(db, cfg.Logger)
+	require.NoError(t, err)
 
-			result := getConfigValue(tt.envKey, tt.envValue, registryStore, tt.defaultValue)
-			assert.Equal(t, tt.expectedValue, result)
-		})
-	}
+	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
+	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
+
+	// Set environment variables (s3 requires bucket)
+	os.Setenv("STORAGE_TYPE", "s3")
+	os.Setenv("S3_BUCKET", "env-test-bucket")
+	defer func() {
+		os.Unsetenv("STORAGE_TYPE")
+		os.Unsetenv("S3_BUCKET")
+	}()
+
+	// Set registry value (should be overridden by env)
+	ctx := context.Background()
+	_, err = registryStore.Set(ctx, "system", "storage_type", "file")
+	require.NoError(t, err)
+
+	// Load config with registry enhancement (env should take priority)
+	enhancedCfg, err := config.Load(&config.LoadOptions{
+		RegistryStore: registryStore,
+		Args:          []string{"--jwt-secret", "test-secret"},
+	})
+	require.NoError(t, err)
+
+	// Verify that env value takes priority over registry
+	assert.Equal(t, "s3", enhancedCfg.StorageType)
+	assert.Equal(t, "env-test-bucket", enhancedCfg.S3Bucket)
 }
 
 func TestInitializeImageService(t *testing.T) {
