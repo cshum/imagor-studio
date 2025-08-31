@@ -182,6 +182,7 @@ export type QueryUsersArgs = {
 export type Registry = {
   __typename?: 'Registry'
   createdAt: Scalars['String']['output']
+  isEncrypted: Scalars['Boolean']['output']
   key: Scalars['String']['output']
   ownerID: Scalars['String']['output']
   updatedAt: Scalars['String']['output']
@@ -189,6 +190,7 @@ export type Registry = {
 }
 
 export type RegistryEntryInput = {
+  isEncrypted: Scalars['Boolean']['input']
   key: Scalars['String']['input']
   value: Scalars['String']['input']
 }
@@ -233,6 +235,7 @@ export type RegistryInfoFragment = {
   key: string
   value: string
   ownerID: string
+  isEncrypted: boolean
   createdAt: string
   updatedAt: string
 }
@@ -249,6 +252,7 @@ export type ListUserRegistryQuery = {
     key: string
     value: string
     ownerID: string
+    isEncrypted: boolean
     createdAt: string
     updatedAt: string
   }>
@@ -266,6 +270,7 @@ export type GetUserRegistryQuery = {
     key: string
     value: string
     ownerID: string
+    isEncrypted: boolean
     createdAt: string
     updatedAt: string
   } | null
@@ -282,6 +287,7 @@ export type ListSystemRegistryQuery = {
     key: string
     value: string
     ownerID: string
+    isEncrypted: boolean
     createdAt: string
     updatedAt: string
   }>
@@ -298,6 +304,7 @@ export type GetSystemRegistryQuery = {
     key: string
     value: string
     ownerID: string
+    isEncrypted: boolean
     createdAt: string
     updatedAt: string
   } | null
@@ -315,6 +322,7 @@ export type SetUserRegistryMutation = {
     key: string
     value: string
     ownerID: string
+    isEncrypted: boolean
     createdAt: string
     updatedAt: string
   }>
@@ -338,6 +346,7 @@ export type SetSystemRegistryMutation = {
     key: string
     value: string
     ownerID: string
+    isEncrypted: boolean
     createdAt: string
     updatedAt: string
   }>
@@ -570,6 +579,7 @@ export const RegistryInfoFragmentDoc = gql`
     key
     value
     ownerID
+    isEncrypted
     createdAt
     updatedAt
   }

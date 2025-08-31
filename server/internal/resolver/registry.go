@@ -24,9 +24,15 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.R
 			return nil, fmt.Errorf("failed to set user registry for key %s: %w", entry.Key, err)
 		}
 
+		// Hide encrypted values in GraphQL responses
+		value := registry.Value
+		if registry.IsEncrypted {
+			value = ""
+		}
+
 		result = append(result, &gql.Registry{
 			Key:         registry.Key,
-			Value:       registry.Value,
+			Value:       value,
 			OwnerID:     effectiveOwnerID,
 			IsEncrypted: registry.IsEncrypted,
 			CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
@@ -66,12 +72,19 @@ func (r *queryResolver) ListUserRegistry(ctx context.Context, prefix *string, ow
 
 	result := make([]*gql.Registry, len(registryList))
 	for i, registry := range registryList {
+		// Hide encrypted values in GraphQL responses
+		value := registry.Value
+		if registry.IsEncrypted {
+			value = ""
+		}
+
 		result[i] = &gql.Registry{
-			Key:       registry.Key,
-			Value:     registry.Value,
-			OwnerID:   effectiveOwnerID,
-			CreatedAt: registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt: registry.UpdatedAt.Format(time.RFC3339),
+			Key:         registry.Key,
+			Value:       value,
+			OwnerID:     effectiveOwnerID,
+			IsEncrypted: registry.IsEncrypted,
+			CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
 		}
 	}
 	return result, nil
@@ -93,12 +106,19 @@ func (r *queryResolver) GetUserRegistry(ctx context.Context, key string, ownerID
 		return nil, nil
 	}
 
+	// Hide encrypted values in GraphQL responses
+	value := registry.Value
+	if registry.IsEncrypted {
+		value = ""
+	}
+
 	return &gql.Registry{
-		Key:       registry.Key,
-		Value:     registry.Value,
-		OwnerID:   effectiveOwnerID,
-		CreatedAt: registry.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: registry.UpdatedAt.Format(time.RFC3339),
+		Key:         registry.Key,
+		Value:       value,
+		OwnerID:     effectiveOwnerID,
+		IsEncrypted: registry.IsEncrypted,
+		CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }
 
@@ -118,9 +138,15 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql
 			return nil, fmt.Errorf("failed to set system registry for key %s: %w", entry.Key, err)
 		}
 
+		// Hide encrypted values in GraphQL responses
+		value := registry.Value
+		if registry.IsEncrypted {
+			value = ""
+		}
+
 		result = append(result, &gql.Registry{
 			Key:         registry.Key,
-			Value:       registry.Value,
+			Value:       value,
 			OwnerID:     SystemOwnerID,
 			IsEncrypted: registry.IsEncrypted,
 			CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
@@ -158,12 +184,19 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 
 	result := make([]*gql.Registry, len(registryList))
 	for i, registry := range registryList {
+		// Hide encrypted values in GraphQL responses
+		value := registry.Value
+		if registry.IsEncrypted {
+			value = ""
+		}
+
 		result[i] = &gql.Registry{
-			Key:       registry.Key,
-			Value:     registry.Value,
-			OwnerID:   SystemOwnerID,
-			CreatedAt: registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt: registry.UpdatedAt.Format(time.RFC3339),
+			Key:         registry.Key,
+			Value:       value,
+			OwnerID:     SystemOwnerID,
+			IsEncrypted: registry.IsEncrypted,
+			CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
 		}
 	}
 	return result, nil
@@ -183,11 +216,18 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key string) (*gql
 		return nil, nil
 	}
 
+	// Hide encrypted values in GraphQL responses
+	value := registry.Value
+	if registry.IsEncrypted {
+		value = ""
+	}
+
 	return &gql.Registry{
-		Key:       registry.Key,
-		Value:     registry.Value,
-		OwnerID:   SystemOwnerID,
-		CreatedAt: registry.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: registry.UpdatedAt.Format(time.RFC3339),
+		Key:         registry.Key,
+		Value:       value,
+		OwnerID:     SystemOwnerID,
+		IsEncrypted: registry.IsEncrypted,
+		CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }

@@ -5,6 +5,7 @@ export const RegistryFragment = gql(`
     key
     value
     ownerID
+    isEncrypted
     createdAt
     updatedAt
   }

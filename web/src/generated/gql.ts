@@ -15,7 +15,7 @@ import * as types from './graphql'
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-  '\n  fragment RegistryInfo on Registry {\n    key\n    value\n    ownerID\n    createdAt\n    updatedAt\n  }\n': typeof types.RegistryInfoFragmentDoc
+  '\n  fragment RegistryInfo on Registry {\n    key\n    value\n    ownerID\n    isEncrypted\n    createdAt\n    updatedAt\n  }\n': typeof types.RegistryInfoFragmentDoc
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.ListUserRegistryDocument
   '\n  query GetUserRegistry($key: String!, $ownerID: String) {\n    getUserRegistry(key: $key, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.GetUserRegistryDocument
   '\n  query ListSystemRegistry($prefix: String) {\n    listSystemRegistry(prefix: $prefix) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.ListSystemRegistryDocument
@@ -41,7 +41,7 @@ type Documents = {
   '\n  mutation CreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      ...UserInfo\n    }\n  }\n': typeof types.CreateUserDocument
 }
 const documents: Documents = {
-  '\n  fragment RegistryInfo on Registry {\n    key\n    value\n    ownerID\n    createdAt\n    updatedAt\n  }\n':
+  '\n  fragment RegistryInfo on Registry {\n    key\n    value\n    ownerID\n    isEncrypted\n    createdAt\n    updatedAt\n  }\n':
     types.RegistryInfoFragmentDoc,
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n':
     types.ListUserRegistryDocument,
@@ -108,8 +108,8 @@ export function gql(source: string): unknown
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  fragment RegistryInfo on Registry {\n    key\n    value\n    ownerID\n    createdAt\n    updatedAt\n  }\n',
-): (typeof documents)['\n  fragment RegistryInfo on Registry {\n    key\n    value\n    ownerID\n    createdAt\n    updatedAt\n  }\n']
+  source: '\n  fragment RegistryInfo on Registry {\n    key\n    value\n    ownerID\n    isEncrypted\n    createdAt\n    updatedAt\n  }\n',
+): (typeof documents)['\n  fragment RegistryInfo on Registry {\n    key\n    value\n    ownerID\n    isEncrypted\n    createdAt\n    updatedAt\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

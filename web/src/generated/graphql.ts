@@ -181,6 +181,7 @@ export type QueryUsersArgs = {
 export type Registry = {
   __typename?: 'Registry'
   createdAt: Scalars['String']['output']
+  isEncrypted: Scalars['Boolean']['output']
   key: Scalars['String']['output']
   ownerID: Scalars['String']['output']
   updatedAt: Scalars['String']['output']
@@ -188,6 +189,7 @@ export type Registry = {
 }
 
 export type RegistryEntryInput = {
+  isEncrypted: Scalars['Boolean']['input']
   key: Scalars['String']['input']
   value: Scalars['String']['input']
 }
@@ -232,6 +234,7 @@ export type RegistryInfoFragment = {
   key: string
   value: string
   ownerID: string
+  isEncrypted: boolean
   createdAt: string
   updatedAt: string
 }
@@ -248,6 +251,7 @@ export type ListUserRegistryQuery = {
     key: string
     value: string
     ownerID: string
+    isEncrypted: boolean
     createdAt: string
     updatedAt: string
   }>
@@ -265,6 +269,7 @@ export type GetUserRegistryQuery = {
     key: string
     value: string
     ownerID: string
+    isEncrypted: boolean
     createdAt: string
     updatedAt: string
   } | null
@@ -281,6 +286,7 @@ export type ListSystemRegistryQuery = {
     key: string
     value: string
     ownerID: string
+    isEncrypted: boolean
     createdAt: string
     updatedAt: string
   }>
@@ -297,6 +303,7 @@ export type GetSystemRegistryQuery = {
     key: string
     value: string
     ownerID: string
+    isEncrypted: boolean
     createdAt: string
     updatedAt: string
   } | null
@@ -314,6 +321,7 @@ export type SetUserRegistryMutation = {
     key: string
     value: string
     ownerID: string
+    isEncrypted: boolean
     createdAt: string
     updatedAt: string
   }>
@@ -337,6 +345,7 @@ export type SetSystemRegistryMutation = {
     key: string
     value: string
     ownerID: string
+    isEncrypted: boolean
     createdAt: string
     updatedAt: string
   }>
@@ -577,6 +586,7 @@ export const RegistryInfoFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
@@ -717,6 +727,7 @@ export const ListUserRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
@@ -784,6 +795,7 @@ export const GetUserRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
@@ -838,6 +850,7 @@ export const ListSystemRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
@@ -895,6 +908,7 @@ export const GetSystemRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
@@ -968,6 +982,7 @@ export const SetUserRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
@@ -1077,6 +1092,7 @@ export const SetSystemRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],

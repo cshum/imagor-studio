@@ -21,6 +21,16 @@ import type {
 import { getSdk } from '../generated/graphql-request'
 
 /**
+ * Display value for a registry entry, showing dots for encrypted values
+ */
+export function displayRegistryValue(entry: { value: string; isEncrypted: boolean }): string {
+  if (entry.isEncrypted) {
+    return "••••••••" // Always show dots for encrypted
+  }
+  return entry.value || "(empty)"
+}
+
+/**
  * List user registry entries with optional prefix filter and owner
  */
 export async function listUserRegistry(
@@ -62,12 +72,13 @@ export async function getUserRegistry(
 export async function setUserRegistry(
   key: string,
   value: string,
+  isEncrypted: boolean = false,
   ownerID?: string,
 ): Promise<SetUserRegistryMutation['setUserRegistry']> {
   const sdk = getSdk(getGraphQLClient())
 
   const variables: SetUserRegistryMutationVariables = {
-    entries: [{ key, value }],
+    entries: [{ key, value, isEncrypted }],
     ownerID: ownerID ?? null,
   }
 
@@ -79,13 +90,19 @@ export async function setUserRegistry(
  * Set or update multiple user registry entries
  */
 export async function setUserRegistryMultiple(
-  entries: Array<{ key: string; value: string }>,
+  entries: Array<{ key: string; value: string; isEncrypted?: boolean }>,
   ownerID?: string,
 ): Promise<SetUserRegistryMutation['setUserRegistry']> {
   const sdk = getSdk(getGraphQLClient())
 
+  const entriesWithEncryption = entries.map(entry => ({
+    key: entry.key,
+    value: entry.value,
+    isEncrypted: entry.isEncrypted ?? false,
+  }))
+
   const variables: SetUserRegistryMutationVariables = {
-    entries,
+    entries: entriesWithEncryption,
     ownerID: ownerID ?? null,
   }
 
@@ -112,7 +129,7 @@ export async function deleteUserRegistry(
 }
 
 /**
- * Get user registry as a key-value object
+ * Get user registry as a key-value object (excludes encrypted entries)
  */
 export async function getUserRegistryObject(
   prefix?: string,
@@ -122,7 +139,10 @@ export async function getUserRegistryObject(
 
   const registryObject: Record<string, string> = {}
   for (const item of registryList) {
-    registryObject[item.key] = item.value
+    // Skip encrypted entries - they're write-only
+    if (!item.isEncrypted) {
+      registryObject[item.key] = item.value
+    }
   }
 
   return registryObject
@@ -163,11 +183,12 @@ export async function getSystemRegistry(
 export async function setSystemRegistry(
   key: string,
   value: string,
+  isEncrypted: boolean = false,
 ): Promise<SetSystemRegistryMutation['setSystemRegistry']> {
   const sdk = getSdk(getGraphQLClient())
 
   const variables: SetSystemRegistryMutationVariables = {
-    entries: [{ key, value }],
+    entries: [{ key, value, isEncrypted }],
   }
 
   const result = await sdk.SetSystemRegistry(variables)
@@ -188,14 +209,17 @@ export async function deleteSystemRegistry(
 }
 
 /**
- * Get system registry as a key-value object (admin only)
+ * Get system registry as a key-value object (admin only, excludes encrypted entries)
  */
 export async function getSystemRegistryObject(prefix?: string): Promise<Record<string, string>> {
   const registryList = await listSystemRegistry(prefix)
 
   const registryObject: Record<string, string> = {}
   for (const item of registryList) {
-    registryObject[item.key] = item.value
+    // Skip encrypted entries - they're write-only
+    if (!item.isEncrypted) {
+      registryObject[item.key] = item.value
+    }
   }
 
   return registryObject
@@ -209,7 +233,11 @@ export async function setSystemRegistryObject(
 ): Promise<SetSystemRegistryMutation['setSystemRegistry']> {
   const sdk = getSdk(getGraphQLClient())
 
-  const entries = Object.entries(registryObject).map(([key, value]) => ({ key, value }))
+  const entries = Object.entries(registryObject).map(([key, value]) => ({ 
+    key, 
+    value, 
+    isEncrypted: false 
+  }))
   const result = await sdk.SetSystemRegistry({ entries })
   return result.setSystemRegistry
 }
