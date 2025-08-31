@@ -12,7 +12,7 @@ export function ModeToggle() {
       <Tooltip delayDuration={100}>
         <TooltipTrigger asChild>
           <Button
-            className='bg-background h-8 w-8 rounded-full'
+            className='bg-background h-8 w-8 rounded-full relative'
             variant='outline'
             size='icon'
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
