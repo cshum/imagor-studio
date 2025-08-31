@@ -238,32 +238,33 @@ func (p *RegistryParser) Parse(r io.Reader, set func(name, value string) error) 
 
 	ctx := context.Background()
 
-	// Define the mapping of flag names to registry keys
-	flagToRegistryKey := map[string]string{
-		"storage-type":          "storage_type",
-		"file-base-dir":         "file_base_dir",
-		"s3-bucket":             "s3_bucket",
-		"s3-region":             "s3_region",
-		"s3-endpoint":           "s3_endpoint",
-		"s3-access-key-id":      "s3_access_key_id",
-		"s3-secret-access-key":  "s3_secret_access_key",
-		"s3-session-token":      "s3_session_token",
-		"s3-base-dir":           "s3_base_dir",
-		"imagor-mode":           "imagor_mode",
-		"imagor-url":            "imagor_url",
-		"imagor-secret":         "imagor_secret",
-		"imagor-result-storage": "imagor_result_storage",
+	// Define the mapping of registry keys to flag names
+	registryKeyToFlag := map[string]string{
+		"storage_type":          "storage-type",
+		"file_base_dir":         "file-base-dir",
+		"s3_bucket":             "s3-bucket",
+		"s3_region":             "s3-region",
+		"s3_endpoint":           "s3-endpoint",
+		"s3_access_key_id":      "s3-access-key-id",
+		"s3_secret_access_key":  "s3-secret-access-key",
+		"s3_session_token":      "s3-session-token",
+		"s3_base_dir":           "s3-base-dir",
+		"imagor_mode":           "imagor-mode",
+		"imagor_url":            "imagor-url",
+		"imagor_secret":         "imagor-secret",
+		"imagor_result_storage": "imagor-result-storage",
 	}
 
-	// Fetch values from registry and set them
-	for flagName, registryKey := range flagToRegistryKey {
-		entry, err := p.registryStore.Get(ctx, "system", registryKey)
-		if err != nil {
-			// Log error but continue - registry values are optional
-			continue
-		}
+	// Fetch all system registry entries at once (more efficient than individual Gets)
+	entries, err := p.registryStore.List(ctx, "system", nil)
+	if err != nil {
+		// Log error but continue - registry values are optional
+		return nil
+	}
 
-		if entry != nil && entry.Value != "" {
+	// Apply registry values to flags
+	for _, entry := range entries {
+		if flagName, exists := registryKeyToFlag[entry.Key]; exists && entry.Value != "" {
 			if err := set(flagName, entry.Value); err != nil {
 				return fmt.Errorf("failed to set flag %s from registry: %w", flagName, err)
 			}
@@ -277,32 +278,33 @@ func (p *RegistryParser) Parse(r io.Reader, set func(name, value string) error) 
 func prePopulateRegistryValues(fs *flag.FlagSet, registryStore registrystore.Store) error {
 	ctx := context.Background()
 
-	// Define the mapping of flag names to registry keys
-	flagToRegistryKey := map[string]string{
-		"storage-type":          "storage_type",
-		"file-base-dir":         "file_base_dir",
-		"s3-bucket":             "s3_bucket",
-		"s3-region":             "s3_region",
-		"s3-endpoint":           "s3_endpoint",
-		"s3-access-key-id":      "s3_access_key_id",
-		"s3-secret-access-key":  "s3_secret_access_key",
-		"s3-session-token":      "s3_session_token",
-		"s3-base-dir":           "s3_base_dir",
-		"imagor-mode":           "imagor_mode",
-		"imagor-url":            "imagor_url",
-		"imagor-secret":         "imagor_secret",
-		"imagor-result-storage": "imagor_result_storage",
+	// Define the mapping of registry keys to flag names
+	registryKeyToFlag := map[string]string{
+		"storage_type":          "storage-type",
+		"file_base_dir":         "file-base-dir",
+		"s3_bucket":             "s3-bucket",
+		"s3_region":             "s3-region",
+		"s3_endpoint":           "s3-endpoint",
+		"s3_access_key_id":      "s3-access-key-id",
+		"s3_secret_access_key":  "s3-secret-access-key",
+		"s3_session_token":      "s3-session-token",
+		"s3_base_dir":           "s3-base-dir",
+		"imagor_mode":           "imagor-mode",
+		"imagor_url":            "imagor-url",
+		"imagor_secret":         "imagor-secret",
+		"imagor_result_storage": "imagor-result-storage",
 	}
 
-	// Fetch values from registry and set them as defaults
-	for flagName, registryKey := range flagToRegistryKey {
-		entry, err := registryStore.Get(ctx, "system", registryKey)
-		if err != nil {
-			// Log error but continue - registry values are optional
-			continue
-		}
+	// Fetch all system registry entries at once (more efficient than individual Gets)
+	entries, err := registryStore.List(ctx, "system", nil)
+	if err != nil {
+		// Log error but continue - registry values are optional
+		return nil
+	}
 
-		if entry != nil && entry.Value != "" {
+	// Apply registry values to flags
+	for _, entry := range entries {
+		if flagName, exists := registryKeyToFlag[entry.Key]; exists && entry.Value != "" {
 			// Find the flag and set its default value
 			flag := fs.Lookup(flagName)
 			if flag != nil {
