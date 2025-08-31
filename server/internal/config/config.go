@@ -240,6 +240,7 @@ func (p *RegistryParser) Parse(r io.Reader, set func(name, value string) error) 
 
 	// Define the mapping of registry keys to flag names
 	registryKeyToFlag := map[string]string{
+		"jwt_secret":            "jwt-secret",
 		"storage_type":          "storage-type",
 		"file_base_dir":         "file-base-dir",
 		"s3_bucket":             "s3-bucket",
@@ -280,6 +281,7 @@ func prePopulateRegistryValues(fs *flag.FlagSet, registryStore registrystore.Sto
 
 	// Define the mapping of registry keys to flag names
 	registryKeyToFlag := map[string]string{
+		"jwt_secret":            "jwt-secret",
 		"storage_type":          "storage-type",
 		"file_base_dir":         "file-base-dir",
 		"s3_bucket":             "s3-bucket",

@@ -2,10 +2,8 @@ package bootstrap
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
 	"fmt"
-	"os"
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/config"
@@ -53,34 +51,24 @@ func Initialize(cfg *config.Config) (*Services, error) {
 	// Initialize registry store
 	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
 
-	// Bootstrap JWT secret
-	jwtSecret, err := bootstrapJWTSecret(cfg, registryStore, encryptionService)
-	if err != nil {
-		return nil, fmt.Errorf("failed to bootstrap JWT secret: %w", err)
-	}
-
-	// Update encryption service with JWT secret
-	encryptionService.SetJWTKey(jwtSecret)
-
-	// Update config with final JWT secret
-	cfg.JWTSecret = jwtSecret
-
-	// Initialize token manager
-	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
-
-	// Reload config with registry enhancement
+	// Reload config with registry enhancement, preserving the current JWT secret
 	enhancedCfg, err := config.Load(&config.LoadOptions{
 		RegistryStore: registryStore,
-		Args:          []string{"--jwt-secret", cfg.JWTSecret}, // Use the current JWT secret
+		Args:          []string{"--jwt-secret", cfg.JWTSecret}, // Preserve current JWT secret
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to reload config with registry: %w", err)
 	}
 
-	// Update the original config with enhanced values but keep the same logger and JWT secret
+	// Only preserve the logger from the original config
 	enhancedCfg.Logger = cfg.Logger
-	enhancedCfg.JWTSecret = cfg.JWTSecret
 	cfg = enhancedCfg
+
+	// Update encryption service with final JWT secret
+	encryptionService.SetJWTKey(cfg.JWTSecret)
+
+	// Initialize token manager
+	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
 
 	// Initialize storage provider and create storage
 	storageProvider := storageprovider.New(cfg.Logger)
@@ -138,58 +126,6 @@ func runMigrations(db *bun.DB, logger *zap.Logger) error {
 	}
 
 	return nil
-}
-
-// bootstrapJWTSecret loads or generates JWT secret from registry or environment
-func bootstrapJWTSecret(cfg *config.Config, registryStore registrystore.Store, encryptionService *encryption.Service) (string, error) {
-	const SystemOwnerID = "system"
-
-	// 1. Check environment variable first (highest priority)
-	if envSecret := os.Getenv("JWT_SECRET"); envSecret != "" {
-		return envSecret, nil
-	}
-
-	// 2. Check system registry
-	ctx := context.Background()
-	registryEntry, err := registryStore.Get(ctx, SystemOwnerID, "jwt_secret")
-	if err != nil {
-		return "", fmt.Errorf("failed to get JWT secret from registry: %w", err)
-	}
-
-	if registryEntry != nil && registryEntry.Value != "" {
-		return registryEntry.Value, nil
-	}
-
-	// 3. Auto-generate and store in registry
-	newSecret := generateSecureSecret(32)
-	_, err = registryStore.Set(ctx, SystemOwnerID, "jwt_secret", newSecret, true)
-	if err != nil {
-		return "", fmt.Errorf("failed to store generated JWT secret: %w", err)
-	}
-
-	cfg.Logger.Info("Generated new JWT secret and stored in registry")
-	return newSecret, nil
-}
-
-// generateSecureSecret generates a cryptographically secure random string
-func generateSecureSecret(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	b := make([]byte, length)
-	randomBytes := make([]byte, length)
-
-	_, err := rand.Read(randomBytes)
-	if err != nil {
-		// Fallback to a simple implementation if crypto/rand fails
-		for i := range b {
-			b[i] = charset[i%len(charset)]
-		}
-		return string(b)
-	}
-
-	for i := range b {
-		b[i] = charset[randomBytes[i]%byte(len(charset))]
-	}
-	return string(b)
 }
 
 // initializeImageService creates and configures the image service

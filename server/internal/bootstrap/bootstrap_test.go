@@ -22,7 +22,7 @@ func TestInitialize(t *testing.T) {
 	cfg := &config.Config{
 		Port:                 8080,
 		DBPath:               tmpDB,
-		JWTSecret:            "",
+		JWTSecret:            "test-jwt-secret",
 		JWTExpiration:        24 * time.Hour,
 		StorageType:          "file",
 		FileBaseDir:          "/tmp/test-storage",
@@ -79,7 +79,7 @@ func TestInitializeDatabase(t *testing.T) {
 	db.Close()
 }
 
-func TestBootstrapJWTSecret_FromEnv(t *testing.T) {
+func TestJWTSecretFromEnv(t *testing.T) {
 	// Set environment variable
 	envSecret := "test-env-secret"
 	os.Setenv("JWT_SECRET", envSecret)
@@ -89,71 +89,40 @@ func TestBootstrapJWTSecret_FromEnv(t *testing.T) {
 	defer os.Remove(tmpDB)
 
 	cfg := &config.Config{
-		DBPath: tmpDB,
-		Logger: zap.NewNop(),
+		Port:                 8080,
+		DBPath:               tmpDB,
+		JWTSecret:            "fallback-secret", // Provide fallback in case env isn't read
+		JWTExpiration:        24 * time.Hour,
+		StorageType:          "file",
+		FileBaseDir:          "/tmp/test-storage",
+		FileMkdirPermissions: 0755,
+		FileWritePermissions: 0644,
+		ImagorMode:           "external",
+		ImagorURL:            "http://localhost:8000",
+		ImagorSecret:         "",
+		ImagorUnsafe:         false,
+		ImagorResultStorage:  "same",
+		Logger:               zap.NewNop(),
 	}
 
-	// Initialize minimal services for test
-	db, err := initializeDatabase(cfg)
+	services, err := Initialize(cfg)
 	require.NoError(t, err)
-	defer db.Close()
+	defer services.DB.Close()
 
-	err = runMigrations(db, cfg.Logger)
-	require.NoError(t, err)
-
-	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
-	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
-
-	secret, err := bootstrapJWTSecret(cfg, registryStore, encryptionService)
-
-	require.NoError(t, err)
-	assert.Equal(t, envSecret, secret)
+	// Verify JWT secret from environment was used
+	assert.Equal(t, envSecret, cfg.JWTSecret)
 }
 
-func TestBootstrapJWTSecret_Generated(t *testing.T) {
-	tmpDB := "/tmp/test_jwt_gen.db"
-	defer os.Remove(tmpDB)
-
-	cfg := &config.Config{
-		DBPath: tmpDB,
-		Logger: zap.NewNop(),
-	}
-
-	// Initialize minimal services for test
-	db, err := initializeDatabase(cfg)
-	require.NoError(t, err)
-	defer db.Close()
-
-	err = runMigrations(db, cfg.Logger)
-	require.NoError(t, err)
-
-	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
-	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
-
-	secret, err := bootstrapJWTSecret(cfg, registryStore, encryptionService)
-
-	require.NoError(t, err)
-	assert.NotEmpty(t, secret)
-	assert.Len(t, secret, 32) // Should be 32 characters
-
-	// Verify it was stored in registry
-	ctx := context.Background()
-	entry, err := registryStore.Get(ctx, "system", "jwt_secret")
-	require.NoError(t, err)
-	require.NotNil(t, entry)
-	assert.Equal(t, secret, entry.Value)
-}
-
-func TestBootstrapJWTSecret_FromRegistry(t *testing.T) {
+func TestJWTSecretFromRegistry(t *testing.T) {
 	tmpDB := "/tmp/test_jwt_registry.db"
 	defer os.Remove(tmpDB)
 
+	// Initialize database and registry store first
 	cfg := &config.Config{
 		DBPath: tmpDB,
 		Logger: zap.NewNop(),
 	}
 
-	// Initialize minimal services for test
 	db, err := initializeDatabase(cfg)
 	require.NoError(t, err)
 	defer db.Close()
@@ -164,27 +133,36 @@ func TestBootstrapJWTSecret_FromRegistry(t *testing.T) {
 	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
 	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
 
-	// Pre-store a secret in registry
+	// Pre-store a secret in registry (JWT secrets must be encrypted)
 	existingSecret := "existing-registry-secret"
 	ctx := context.Background()
 	_, err = registryStore.Set(ctx, "system", "jwt_secret", existingSecret, true)
 	require.NoError(t, err)
 
-	secret, err := bootstrapJWTSecret(cfg, registryStore, encryptionService)
+	// Now test full initialization
+	cfg = &config.Config{
+		Port:                 8080,
+		DBPath:               tmpDB,
+		JWTSecret:            "fallback-secret", // Provide fallback
+		JWTExpiration:        24 * time.Hour,
+		StorageType:          "file",
+		FileBaseDir:          "/tmp/test-storage",
+		FileMkdirPermissions: 0755,
+		FileWritePermissions: 0644,
+		ImagorMode:           "external",
+		ImagorURL:            "http://localhost:8000",
+		ImagorSecret:         "",
+		ImagorUnsafe:         false,
+		ImagorResultStorage:  "same",
+		Logger:               zap.NewNop(),
+	}
 
+	services, err := Initialize(cfg)
 	require.NoError(t, err)
-	assert.Equal(t, existingSecret, secret)
-}
+	defer services.DB.Close()
 
-func TestGenerateSecureSecret(t *testing.T) {
-	secret := generateSecureSecret(32)
-
-	assert.Len(t, secret, 32)
-	assert.NotEmpty(t, secret)
-
-	// Generate another one to ensure they're different
-	secret2 := generateSecureSecret(32)
-	assert.NotEqual(t, secret, secret2)
+	// Verify JWT secret from registry was used
+	assert.Equal(t, existingSecret, cfg.JWTSecret)
 }
 
 func TestConfigEnhancement(t *testing.T) {
