@@ -92,11 +92,11 @@ func TestLoadWithRegistry(t *testing.T) {
 
 	// Set registry values
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "storage_type", "s3")
+	_, err := registryStore.Set(ctx, "system", "storage_type", "s3", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "s3_bucket", "registry-bucket")
+	_, err = registryStore.Set(ctx, "system", "s3_bucket", "registry-bucket", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "imagor_mode", "disabled")
+	_, err = registryStore.Set(ctx, "system", "imagor_mode", "disabled", false)
 	require.NoError(t, err)
 
 	// Load config with registry
@@ -124,7 +124,7 @@ func TestConfigPriority(t *testing.T) {
 
 	// Set registry value
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "storage_type", "s3")
+	_, err := registryStore.Set(ctx, "system", "storage_type", "s3", false)
 	require.NoError(t, err)
 
 	// Set environment variable (should override registry)
@@ -154,7 +154,7 @@ func TestConfigPriorityWithArgs(t *testing.T) {
 
 	// Set registry value
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "storage_type", "s3")
+	_, err := registryStore.Set(ctx, "system", "storage_type", "s3", false)
 	require.NoError(t, err)
 
 	// Set environment variable
@@ -242,9 +242,9 @@ func TestRegistryParser(t *testing.T) {
 
 	// Set registry values
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "storage_type", "s3")
+	_, err := registryStore.Set(ctx, "system", "storage_type", "s3", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "s3_bucket", "parser-bucket")
+	_, err = registryStore.Set(ctx, "system", "s3_bucket", "parser-bucket", false)
 	require.NoError(t, err)
 
 	// Create parser

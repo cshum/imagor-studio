@@ -96,7 +96,7 @@ func TestRegistryStore_Set(t *testing.T) {
 	ctx := context.Background()
 
 	// Test creating new registry
-	result, err := store.Set(ctx, "owner1", "key1", "value1")
+	result, err := store.Set(ctx, "owner1", "key1", "value1", false)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "key1", result.Key)
@@ -106,7 +106,7 @@ func TestRegistryStore_Set(t *testing.T) {
 
 	// Test updating existing registry
 	time.Sleep(10 * time.Millisecond) // Ensure different timestamp
-	updatedResult, err := store.Set(ctx, "owner1", "key1", "value2")
+	updatedResult, err := store.Set(ctx, "owner1", "key1", "value2", false)
 	assert.NoError(t, err)
 	assert.NotNil(t, updatedResult)
 	assert.Equal(t, "key1", updatedResult.Key)
@@ -123,7 +123,7 @@ func TestRegistryStore_Get(t *testing.T) {
 	ctx := context.Background()
 
 	// Insert test data
-	_, err := store.Set(ctx, "owner1", "key1", "value1")
+	_, err := store.Set(ctx, "owner1", "key1", "value1", false)
 	require.NoError(t, err)
 
 	// Test getting existing registry
@@ -153,13 +153,13 @@ func TestRegistryStore_List(t *testing.T) {
 	ctx := context.Background()
 
 	// Insert test data
-	_, err := store.Set(ctx, "owner1", "app:setting1", "value1")
+	_, err := store.Set(ctx, "owner1", "app:setting1", "value1", false)
 	require.NoError(t, err)
-	_, err = store.Set(ctx, "owner1", "app:setting2", "value2")
+	_, err = store.Set(ctx, "owner1", "app:setting2", "value2", false)
 	require.NoError(t, err)
-	_, err = store.Set(ctx, "owner1", "config:option1", "value3")
+	_, err = store.Set(ctx, "owner1", "config:option1", "value3", false)
 	require.NoError(t, err)
-	_, err = store.Set(ctx, "owner2", "app:setting1", "value4")
+	_, err = store.Set(ctx, "owner2", "app:setting1", "value4", false)
 	require.NoError(t, err)
 
 	// Test listing all registry for owner1
@@ -198,7 +198,7 @@ func TestRegistryStore_Delete(t *testing.T) {
 	ctx := context.Background()
 
 	// Insert test data
-	_, err := store.Set(ctx, "owner1", "key1", "value1")
+	_, err := store.Set(ctx, "owner1", "key1", "value1", false)
 	require.NoError(t, err)
 
 	// Test deleting existing registry
@@ -216,7 +216,7 @@ func TestRegistryStore_Delete(t *testing.T) {
 	assert.Contains(t, err.Error(), "not found")
 
 	// Test deleting registry for wrong owner
-	_, err = store.Set(ctx, "owner1", "key2", "value2")
+	_, err = store.Set(ctx, "owner1", "key2", "value2", false)
 	require.NoError(t, err)
 
 	err = store.Delete(ctx, "owner2", "key2")
@@ -233,10 +233,10 @@ func TestRegistryStore_IsolationByOwner(t *testing.T) {
 	ctx := context.Background()
 
 	// Set same key for different owners
-	_, err := store.Set(ctx, "owner1", "shared-key", "value1")
+	_, err := store.Set(ctx, "owner1", "shared-key", "value1", false)
 	require.NoError(t, err)
 
-	_, err = store.Set(ctx, "owner2", "shared-key", "value2")
+	_, err = store.Set(ctx, "owner2", "shared-key", "value2", false)
 	require.NoError(t, err)
 
 	// Verify isolation
@@ -266,7 +266,7 @@ func TestRegistryStore_LargeValue(t *testing.T) {
 	// Encode binary data as base64
 	largeValue := base64.StdEncoding.EncodeToString(largeBinaryData)
 
-	result, err := store.Set(ctx, "owner1", "large-key", largeValue)
+	result, err := store.Set(ctx, "owner1", "large-key", largeValue, false)
 	assert.NoError(t, err)
 	assert.Equal(t, largeValue, result.Value)
 
@@ -296,7 +296,7 @@ func TestRegistryStore_LargeTextValue(t *testing.T) {
 	}
 	largeValue := sb.String()
 
-	result, err := store.Set(ctx, "owner1", "large-text-key", largeValue)
+	result, err := store.Set(ctx, "owner1", "large-text-key", largeValue, false)
 	assert.NoError(t, err)
 	assert.Equal(t, largeValue, result.Value)
 
@@ -315,11 +315,11 @@ func TestRegistryStore_ListOrdering(t *testing.T) {
 	ctx := context.Background()
 
 	// Insert data in non-alphabetical order
-	_, err := store.Set(ctx, "owner1", "key-c", "value-c")
+	_, err := store.Set(ctx, "owner1", "key-c", "value-c", false)
 	require.NoError(t, err)
-	_, err = store.Set(ctx, "owner1", "key-a", "value-a")
+	_, err = store.Set(ctx, "owner1", "key-a", "value-a", false)
 	require.NoError(t, err)
-	_, err = store.Set(ctx, "owner1", "key-b", "value-b")
+	_, err = store.Set(ctx, "owner1", "key-b", "value-b", false)
 	require.NoError(t, err)
 
 	// Verify ordering
@@ -340,9 +340,9 @@ func TestRegistryStore_EmptyPrefix(t *testing.T) {
 	ctx := context.Background()
 
 	// Insert test data
-	_, err := store.Set(ctx, "owner1", "key1", "value1")
+	_, err := store.Set(ctx, "owner1", "key1", "value1", false)
 	require.NoError(t, err)
-	_, err = store.Set(ctx, "owner1", "key2", "value2")
+	_, err = store.Set(ctx, "owner1", "key2", "value2", false)
 	require.NoError(t, err)
 
 	// Test with empty prefix (should return all)
@@ -364,7 +364,7 @@ func TestRegistryStore_SpecialCharacters(t *testing.T) {
 	specialKey := "key:with/special@chars#123"
 	specialValue := "value with spaces, 新的价值, emojis 🚀"
 
-	result, err := store.Set(ctx, "owner1", specialKey, specialValue)
+	result, err := store.Set(ctx, "owner1", specialKey, specialValue, false)
 	assert.NoError(t, err)
 	assert.Equal(t, specialKey, result.Key)
 	assert.Equal(t, specialValue, result.Value)
@@ -385,7 +385,7 @@ func BenchmarkRegistryStore_Set(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := store.Set(ctx, "owner1", "bench-key", "bench-value")
+		_, err := store.Set(ctx, "owner1", "bench-key", "bench-value", false)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -401,7 +401,7 @@ func BenchmarkRegistryStore_Get(b *testing.B) {
 	ctx := context.Background()
 
 	// Setup data
-	_, err := store.Set(ctx, "owner1", "bench-key", "bench-value")
+	_, err := store.Set(ctx, "owner1", "bench-key", "bench-value", false)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -427,7 +427,7 @@ func BenchmarkRegistryStore_List(b *testing.B) {
 	for i := 0; i < 100; i++ {
 		key := fmt.Sprintf("key-%d", i)
 		value := fmt.Sprintf("value-%d", i)
-		_, err := store.Set(ctx, "owner1", key, value)
+		_, err := store.Set(ctx, "owner1", key, value, false)
 		if err != nil {
 			b.Fatal(err)
 		}

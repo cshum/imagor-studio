@@ -111,8 +111,8 @@ func (m *MockRegistryStore) Get(ctx context.Context, ownerID, key string) (*regi
 	return args.Get(0).(*registrystore.Registry), args.Error(1)
 }
 
-func (m *MockRegistryStore) Set(ctx context.Context, ownerID, key, value string) (*registrystore.Registry, error) {
-	args := m.Called(ctx, ownerID, key, value)
+func (m *MockRegistryStore) Set(ctx context.Context, ownerID, key, value string, isEncrypted bool) (*registrystore.Registry, error) {
+	args := m.Called(ctx, ownerID, key, value, isEncrypted)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -1030,10 +1030,10 @@ func TestRegisterAdmin(t *testing.T) {
 					IsActive:    true,
 				}, nil)
 				// Mock the registry store calls for setupDefaultGalleryMetadata
-				mockRegistryStore.On("Set", mock.Anything, "system", "gallery.supported_extensions", mock.AnythingOfType("string")).Return(&registrystore.Registry{}, nil)
-				mockRegistryStore.On("Set", mock.Anything, "system", "gallery.thumbnail_sizes", mock.AnythingOfType("string")).Return(&registrystore.Registry{}, nil)
-				mockRegistryStore.On("Set", mock.Anything, "system", "gallery.config", mock.AnythingOfType("string")).Return(&registrystore.Registry{}, nil)
-				mockRegistryStore.On("Set", mock.Anything, "system", "imagor.config", mock.AnythingOfType("string")).Return(&registrystore.Registry{}, nil)
+				mockRegistryStore.On("Set", mock.Anything, "system", "gallery.supported_extensions", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
+				mockRegistryStore.On("Set", mock.Anything, "system", "gallery.thumbnail_sizes", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
+				mockRegistryStore.On("Set", mock.Anything, "system", "gallery.config", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
+				mockRegistryStore.On("Set", mock.Anything, "system", "imagor.config", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
 			},
 		},
 		{

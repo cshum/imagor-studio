@@ -152,15 +152,3 @@ func (s *Service) decrypt(encodedCiphertext string, key []byte) (string, error) 
 func IsJWTSecret(key string) bool {
 	return key == "jwt_secret"
 }
-
-// IsEncryptedKey checks if a key should be encrypted
-func IsEncryptedKey(key string) bool {
-	encryptedKeys := map[string]bool{
-		"jwt_secret":           true,
-		"imagor_secret":        true,
-		"s3_secret_access_key": true,
-		"s3_access_key_id":     true,
-		"s3_session_token":     true,
-	}
-	return encryptedKeys[key]
-}

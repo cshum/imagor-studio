@@ -127,7 +127,7 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 				guestModeValue = "true"
 			}
 
-			_, err = h.registryStore.Set(r.Context(), "system", "auth.enableGuestMode", guestModeValue)
+			_, err = h.registryStore.Set(r.Context(), "system", "auth.enableGuestMode", guestModeValue, false)
 			if err != nil {
 				h.logger.Warn("Admin user created but guest mode setting failed to save", zap.Error(err))
 			} else {
@@ -431,7 +431,7 @@ func (h *AuthHandler) setupDefaultGalleryMetadata(ctx context.Context) {
 	}
 
 	for _, entry := range metadataEntries {
-		_, err := h.registryStore.Set(ctx, "system", entry.key, entry.value)
+		_, err := h.registryStore.Set(ctx, "system", entry.key, entry.value, false)
 		if err != nil {
 			h.logger.Warn("Failed to set gallery metadata",
 				zap.String("key", entry.key),

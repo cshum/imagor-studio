@@ -162,7 +162,7 @@ func bootstrapJWTSecret(cfg *config.Config, registryStore registrystore.Store, e
 
 	// 3. Auto-generate and store in registry
 	newSecret := generateSecureSecret(32)
-	_, err = registryStore.Set(ctx, SystemOwnerID, "jwt_secret", newSecret)
+	_, err = registryStore.Set(ctx, SystemOwnerID, "jwt_secret", newSecret, true)
 	if err != nil {
 		return "", fmt.Errorf("failed to store generated JWT secret: %w", err)
 	}

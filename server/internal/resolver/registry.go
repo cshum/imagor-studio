@@ -19,17 +19,18 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.R
 
 	// Handle entries
 	for _, entry := range entries {
-		registry, err := r.registryStore.Set(ctx, effectiveOwnerID, entry.Key, entry.Value)
+		registry, err := r.registryStore.Set(ctx, effectiveOwnerID, entry.Key, entry.Value, entry.IsEncrypted)
 		if err != nil {
 			return nil, fmt.Errorf("failed to set user registry for key %s: %w", entry.Key, err)
 		}
 
 		result = append(result, &gql.Registry{
-			Key:       registry.Key,
-			Value:     registry.Value,
-			OwnerID:   effectiveOwnerID,
-			CreatedAt: registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt: registry.UpdatedAt.Format(time.RFC3339),
+			Key:         registry.Key,
+			Value:       registry.Value,
+			OwnerID:     effectiveOwnerID,
+			IsEncrypted: registry.IsEncrypted,
+			CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
 		})
 	}
 
@@ -112,17 +113,18 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql
 
 	// Handle entries
 	for _, entry := range entries {
-		registry, err := r.registryStore.Set(ctx, SystemOwnerID, entry.Key, entry.Value)
+		registry, err := r.registryStore.Set(ctx, SystemOwnerID, entry.Key, entry.Value, entry.IsEncrypted)
 		if err != nil {
 			return nil, fmt.Errorf("failed to set system registry for key %s: %w", entry.Key, err)
 		}
 
 		result = append(result, &gql.Registry{
-			Key:       registry.Key,
-			Value:     registry.Value,
-			OwnerID:   SystemOwnerID,
-			CreatedAt: registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt: registry.UpdatedAt.Format(time.RFC3339),
+			Key:         registry.Key,
+			Value:       registry.Value,
+			OwnerID:     SystemOwnerID,
+			IsEncrypted: registry.IsEncrypted,
+			CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
 		})
 	}
 

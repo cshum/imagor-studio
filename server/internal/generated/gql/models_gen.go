@@ -50,16 +50,18 @@ type Query struct {
 }
 
 type Registry struct {
-	Key       string `json:"key"`
-	Value     string `json:"value"`
-	OwnerID   string `json:"ownerID"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
+	Key         string `json:"key"`
+	Value       string `json:"value"`
+	OwnerID     string `json:"ownerID"`
+	IsEncrypted bool   `json:"isEncrypted"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
 }
 
 type RegistryEntryInput struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	Key         string `json:"key"`
+	Value       string `json:"value"`
+	IsEncrypted bool   `json:"isEncrypted"`
 }
 
 type ThumbnailUrls struct {
