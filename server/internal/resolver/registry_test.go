@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -59,13 +60,15 @@ func TestSetUserRegistry_SelfOperation(t *testing.T) {
 
 	mockRegistryStore.On("Set", ctx, "test-user-id", key, value).Return(resultRegistry, nil)
 
-	result, err := resolver.Mutation().SetUserRegistry(ctx, key, value, nil) // nil ownerID = self
+	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
+	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, nil) // nil ownerID = self
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, key, result.Key)
-	assert.Equal(t, value, result.Value)
-	assert.Equal(t, "test-user-id", result.OwnerID)
+	assert.Len(t, result, 1)
+	assert.Equal(t, key, result[0].Key)
+	assert.Equal(t, value, result[0].Value)
+	assert.Equal(t, "test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -92,13 +95,15 @@ func TestSetUserRegistry_AdminForOtherUser(t *testing.T) {
 
 	mockRegistryStore.On("Set", ctx, targetOwnerID, key, value).Return(resultRegistry, nil)
 
-	result, err := resolver.Mutation().SetUserRegistry(ctx, key, value, &targetOwnerID)
+	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
+	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, &targetOwnerID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, key, result.Key)
-	assert.Equal(t, value, result.Value)
-	assert.Equal(t, targetOwnerID, result.OwnerID)
+	assert.Len(t, result, 1)
+	assert.Equal(t, key, result[0].Key)
+	assert.Equal(t, value, result[0].Value)
+	assert.Equal(t, targetOwnerID, result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -115,7 +120,8 @@ func TestSetUserRegistry_RegularUserCannotAccessOthers(t *testing.T) {
 	key := "test:key"
 	value := "test value"
 
-	result, err := resolver.Mutation().SetUserRegistry(ctx, key, value, &targetOwnerID)
+	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
+	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, &targetOwnerID)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
@@ -135,7 +141,8 @@ func TestSetUserRegistry_GuestCannotSet(t *testing.T) {
 	key := "test:key"
 	value := "test value"
 
-	result, err := resolver.Mutation().SetUserRegistry(ctx, key, value, nil)
+	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
+	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, nil)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
@@ -299,7 +306,8 @@ func TestSetSystemRegistry_AdminOnly(t *testing.T) {
 				mockRegistryStore.On("Set", ctx, "system", "app_version", "1.0.0").Return(resultRegistry, nil)
 			}
 
-			result, err := resolver.Mutation().SetSystemRegistry(ctx, "app_version", "1.0.0")
+			entries := []*gql.RegistryEntryInput{{Key: "app_version", Value: "1.0.0"}}
+			result, err := resolver.Mutation().SetSystemRegistry(ctx, entries)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -308,9 +316,10 @@ func TestSetSystemRegistry_AdminOnly(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
-				assert.Equal(t, "app_version", result.Key)
-				assert.Equal(t, "1.0.0", result.Value)
-				assert.Equal(t, "system", result.OwnerID)
+				assert.Len(t, result, 1)
+				assert.Equal(t, "app_version", result[0].Key)
+				assert.Equal(t, "1.0.0", result[0].Value)
+				assert.Equal(t, "system", result[0].OwnerID)
 			}
 
 			mockRegistryStore.AssertExpectations(t)

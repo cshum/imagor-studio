@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/config"
+	"github.com/cshum/imagor-studio/server/internal/encryption"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/httphandler"
 	"github.com/cshum/imagor-studio/server/internal/imageservice"
@@ -65,29 +67,46 @@ func New(cfg *config.Config) (*Server, error) {
 		cfg.Logger.Info("Migrations applied", zap.String("group", group.String()))
 	}
 
+	// Initialize encryption service with master key only (for JWT secret bootstrap)
+	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
+
+	// Initialize registry store with encryption
+	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
+
+	// Bootstrap JWT secret from registry or environment
+	jwtSecret, err := bootstrapJWTSecret(cfg, registryStore, encryptionService)
+	if err != nil {
+		return nil, fmt.Errorf("failed to bootstrap JWT secret: %w", err)
+	}
+
+	// Update encryption service with JWT secret
+	encryptionService.SetJWTKey(jwtSecret)
+
+	// Update config with final JWT secret
+	cfg.JWTSecret = jwtSecret
+
 	// Initialize token manager
 	tokenManager := auth.NewTokenManager(
 		cfg.JWTSecret,
 		cfg.JWTExpiration,
 	)
 
-	// Create storage based on configuration
-	stor, err := createStorage(cfg)
+	// Create storage based on configuration (now with registry-first loading)
+	stor, err := createStorageWithRegistry(cfg, registryStore)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
 
-	// Initialize stores
-	registryStore := registrystore.New(db, cfg.Logger)
+	// Initialize user store
 	userStore := userstore.New(db, cfg.Logger)
 
-	// Initialize image service
+	// Initialize image service (with registry-first config)
 	imageServiceConfig := imageservice.Config{
-		Mode:          cfg.ImagorMode,
-		URL:           cfg.ImagorURL,
-		Secret:        cfg.ImagorSecret,
+		Mode:          getConfigValue("IMAGOR_MODE", cfg.ImagorMode, registryStore, "external"),
+		URL:           getConfigValue("IMAGOR_URL", cfg.ImagorURL, registryStore, "http://localhost:8000"),
+		Secret:        getConfigValue("IMAGOR_SECRET", cfg.ImagorSecret, registryStore, ""),
 		Unsafe:        cfg.ImagorUnsafe,
-		ResultStorage: cfg.ImagorResultStorage,
+		ResultStorage: getConfigValue("IMAGOR_RESULT_STORAGE", cfg.ImagorResultStorage, registryStore, "same"),
 	}
 	imgService := imageservice.NewService(imageServiceConfig)
 
@@ -223,6 +242,146 @@ func (s *Server) Run() error {
 
 func (s *Server) Close() error {
 	return s.db.Close()
+}
+
+// bootstrapJWTSecret loads or generates JWT secret from registry or environment
+func bootstrapJWTSecret(cfg *config.Config, registryStore registrystore.Store, encryptionService *encryption.Service) (string, error) {
+	const SystemOwnerID = "system"
+
+	// 1. Check environment variable first (highest priority)
+	if envSecret := os.Getenv("JWT_SECRET"); envSecret != "" {
+		return envSecret, nil
+	}
+
+	// 2. Check system registry
+	ctx := context.Background()
+	registryEntry, err := registryStore.Get(ctx, SystemOwnerID, "jwt_secret")
+	if err != nil {
+		return "", fmt.Errorf("failed to get JWT secret from registry: %w", err)
+	}
+
+	if registryEntry != nil && registryEntry.Value != "" {
+		return registryEntry.Value, nil
+	}
+
+	// 3. Auto-generate and store in registry
+	newSecret := generateSecureSecret(32)
+	_, err = registryStore.Set(ctx, SystemOwnerID, "jwt_secret", newSecret)
+	if err != nil {
+		return "", fmt.Errorf("failed to store generated JWT secret: %w", err)
+	}
+
+	cfg.Logger.Info("Generated new JWT secret and stored in registry")
+	return newSecret, nil
+}
+
+// generateSecureSecret generates a cryptographically secure random string
+func generateSecureSecret(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	randomBytes := make([]byte, length)
+
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		// Fallback to a simple implementation if crypto/rand fails
+		for i := range b {
+			b[i] = charset[i%len(charset)]
+		}
+		return string(b)
+	}
+
+	for i := range b {
+		b[i] = charset[randomBytes[i]%byte(len(charset))]
+	}
+	return string(b)
+}
+
+// getConfigValue implements the priority system: env var -> registry -> default
+func getConfigValue(envKey, envValue string, registryStore registrystore.Store, defaultValue string) string {
+	// 1. Environment variable (highest priority)
+	if envValue != "" {
+		return envValue
+	}
+
+	// 2. System registry (middle priority)
+	ctx := context.Background()
+	registryKey := strings.ToLower(strings.ReplaceAll(envKey, "_", "_"))
+	registryEntry, err := registryStore.Get(ctx, "system", registryKey)
+	if err == nil && registryEntry != nil && registryEntry.Value != "" {
+		return registryEntry.Value
+	}
+
+	// 3. Default value (lowest priority)
+	return defaultValue
+}
+
+// createStorageWithRegistry creates storage with registry-first configuration
+func createStorageWithRegistry(cfg *config.Config, registryStore registrystore.Store) (storage.Storage, error) {
+	// Get storage type with priority: env -> registry -> config default
+	storageType := getConfigValue("STORAGE_TYPE", cfg.StorageType, registryStore, "file")
+
+	switch storageType {
+	case "file", "filesystem":
+		baseDir := getConfigValue("FILE_BASE_DIR", cfg.FileBaseDir, registryStore, "./storage")
+
+		cfg.Logger.Info("Creating file storage",
+			zap.String("baseDir", baseDir),
+			zap.String("mkdirPermissions", cfg.FileMkdirPermissions.String()),
+			zap.String("writePermissions", cfg.FileWritePermissions.String()),
+		)
+
+		return filestorage.New(baseDir,
+			filestorage.WithMkdirPermission(cfg.FileMkdirPermissions),
+			filestorage.WithWritePermission(cfg.FileWritePermissions),
+		)
+
+	case "s3":
+		bucket := getConfigValue("S3_BUCKET", cfg.S3Bucket, registryStore, "")
+		region := getConfigValue("S3_REGION", cfg.S3Region, registryStore, "")
+		endpoint := getConfigValue("S3_ENDPOINT", cfg.S3Endpoint, registryStore, "")
+		accessKeyID := getConfigValue("S3_ACCESS_KEY_ID", cfg.S3AccessKeyID, registryStore, "")
+		secretAccessKey := getConfigValue("S3_SECRET_ACCESS_KEY", cfg.S3SecretAccessKey, registryStore, "")
+		sessionToken := getConfigValue("S3_SESSION_TOKEN", cfg.S3SessionToken, registryStore, "")
+		baseDir := getConfigValue("S3_BASE_DIR", cfg.S3BaseDir, registryStore, "")
+
+		if bucket == "" {
+			return nil, fmt.Errorf("s3-bucket is required when storage-type is s3")
+		}
+
+		cfg.Logger.Info("Creating S3 storage",
+			zap.String("bucket", bucket),
+			zap.String("region", region),
+			zap.String("endpoint", endpoint),
+			zap.String("baseDir", baseDir),
+		)
+
+		var options []s3storage.Option
+
+		if region != "" {
+			options = append(options, s3storage.WithRegion(region))
+		}
+
+		if endpoint != "" {
+			options = append(options, s3storage.WithEndpoint(endpoint))
+		}
+
+		if accessKeyID != "" && secretAccessKey != "" {
+			options = append(options, s3storage.WithCredentials(
+				accessKeyID,
+				secretAccessKey,
+				sessionToken,
+			))
+		}
+
+		if baseDir != "" {
+			options = append(options, s3storage.WithBaseDir(baseDir))
+		}
+
+		return s3storage.New(bucket, options...)
+
+	default:
+		return nil, fmt.Errorf("unsupported storage type: %s", storageType)
+	}
 }
 
 // createStaticHandler creates a handler for serving static files with SPA fallback

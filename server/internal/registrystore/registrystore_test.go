@@ -32,6 +32,7 @@ func setupTestDB(t *testing.T) (*bun.DB, func()) {
 			owner_id TEXT NOT NULL,
 			key TEXT NOT NULL,
 			value TEXT NOT NULL,
+			is_encrypted BOOLEAN NOT NULL DEFAULT FALSE,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 		)
@@ -91,7 +92,7 @@ func TestRegistryStore_Set(t *testing.T) {
 	defer cleanup()
 
 	logger, _ := zap.NewDevelopment()
-	store := New(db, logger)
+	store := New(db, logger, nil)
 	ctx := context.Background()
 
 	// Test creating new registry
@@ -118,7 +119,7 @@ func TestRegistryStore_Get(t *testing.T) {
 	defer cleanup()
 
 	logger, _ := zap.NewDevelopment()
-	store := New(db, logger)
+	store := New(db, logger, nil)
 	ctx := context.Background()
 
 	// Insert test data
@@ -148,7 +149,7 @@ func TestRegistryStore_List(t *testing.T) {
 	defer cleanup()
 
 	logger, _ := zap.NewDevelopment()
-	store := New(db, logger)
+	store := New(db, logger, nil)
 	ctx := context.Background()
 
 	// Insert test data
@@ -193,7 +194,7 @@ func TestRegistryStore_Delete(t *testing.T) {
 	defer cleanup()
 
 	logger, _ := zap.NewDevelopment()
-	store := New(db, logger)
+	store := New(db, logger, nil)
 	ctx := context.Background()
 
 	// Insert test data
@@ -228,7 +229,7 @@ func TestRegistryStore_IsolationByOwner(t *testing.T) {
 	defer cleanup()
 
 	logger, _ := zap.NewDevelopment()
-	store := New(db, logger)
+	store := New(db, logger, nil)
 	ctx := context.Background()
 
 	// Set same key for different owners
@@ -253,7 +254,7 @@ func TestRegistryStore_LargeValue(t *testing.T) {
 	defer cleanup()
 
 	logger, _ := zap.NewDevelopment()
-	store := New(db, logger)
+	store := New(db, logger, nil)
 	ctx := context.Background()
 
 	// Test with large binary value - encode as base64 for safe storage
@@ -285,7 +286,7 @@ func TestRegistryStore_LargeTextValue(t *testing.T) {
 	defer cleanup()
 
 	logger, _ := zap.NewDevelopment()
-	store := New(db, logger)
+	store := New(db, logger, nil)
 	ctx := context.Background()
 
 	// Test with large text value (e.g., a large JSON document)
@@ -310,7 +311,7 @@ func TestRegistryStore_ListOrdering(t *testing.T) {
 	defer cleanup()
 
 	logger, _ := zap.NewDevelopment()
-	store := New(db, logger)
+	store := New(db, logger, nil)
 	ctx := context.Background()
 
 	// Insert data in non-alphabetical order
@@ -335,7 +336,7 @@ func TestRegistryStore_EmptyPrefix(t *testing.T) {
 	defer cleanup()
 
 	logger, _ := zap.NewDevelopment()
-	store := New(db, logger)
+	store := New(db, logger, nil)
 	ctx := context.Background()
 
 	// Insert test data
@@ -356,7 +357,7 @@ func TestRegistryStore_SpecialCharacters(t *testing.T) {
 	defer cleanup()
 
 	logger, _ := zap.NewDevelopment()
-	store := New(db, logger)
+	store := New(db, logger, nil)
 	ctx := context.Background()
 
 	// Test with special characters in key and value
@@ -379,7 +380,7 @@ func BenchmarkRegistryStore_Set(b *testing.B) {
 	defer cleanup()
 
 	logger, _ := zap.NewDevelopment()
-	store := New(db, logger)
+	store := New(db, logger, nil)
 	ctx := context.Background()
 
 	b.ResetTimer()
@@ -396,7 +397,7 @@ func BenchmarkRegistryStore_Get(b *testing.B) {
 	defer cleanup()
 
 	logger, _ := zap.NewDevelopment()
-	store := New(db, logger)
+	store := New(db, logger, nil)
 	ctx := context.Background()
 
 	// Setup data
@@ -419,7 +420,7 @@ func BenchmarkRegistryStore_List(b *testing.B) {
 	defer cleanup()
 
 	logger, _ := zap.NewDevelopment()
-	store := New(db, logger)
+	store := New(db, logger, nil)
 	ctx := context.Background()
 
 	// Setup data
