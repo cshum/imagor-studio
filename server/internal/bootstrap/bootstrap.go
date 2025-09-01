@@ -35,7 +35,7 @@ type Services struct {
 }
 
 // Initialize sets up the database, runs migrations, and initializes all services
-func Initialize(cfg *config.Config, logger *zap.Logger) (*Services, error) {
+func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
 
 	// Initialize database
 	db, err := initializeDatabase(cfg)
@@ -54,9 +54,8 @@ func Initialize(cfg *config.Config, logger *zap.Logger) (*Services, error) {
 	// Initialize registry store
 	registryStore := registrystore.New(db, logger, encryptionService)
 
-	// Apply registry values to the existing config
-	enhancedCfg := *cfg // Copy the config
-	err = config.ApplyRegistryToConfig(&enhancedCfg, registryStore)
+	// Load enhanced config with registry values using the original args
+	enhancedCfg, err := config.Load(args, registryStore)
 	if err != nil {
 		return nil, fmt.Errorf("failed to apply registry values to config: %w", err)
 	}
@@ -69,7 +68,7 @@ func Initialize(cfg *config.Config, logger *zap.Logger) (*Services, error) {
 
 	// Initialize storage provider and create storage
 	storageProvider := storageprovider.New(logger)
-	stor, err := storageProvider.NewStorageFromConfig(&enhancedCfg)
+	stor, err := storageProvider.NewStorageFromConfig(enhancedCfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
@@ -78,7 +77,7 @@ func Initialize(cfg *config.Config, logger *zap.Logger) (*Services, error) {
 	userStore := userstore.New(db, logger)
 
 	// Initialize image service
-	imageService := initializeImageService(&enhancedCfg, registryStore)
+	imageService := initializeImageService(enhancedCfg, registryStore)
 
 	// Log configuration loaded
 	logger.Info("Configuration loaded",
@@ -96,7 +95,7 @@ func Initialize(cfg *config.Config, logger *zap.Logger) (*Services, error) {
 		UserStore:     userStore,
 		ImageService:  imageService,
 		Encryption:    encryptionService,
-		Config:        &enhancedCfg,
+		Config:        enhancedCfg,
 		Logger:        logger,
 	}, nil
 }

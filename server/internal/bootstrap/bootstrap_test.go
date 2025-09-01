@@ -36,7 +36,8 @@ func TestInitialize(t *testing.T) {
 	}
 
 	logger := zap.NewNop()
-	services, err := Initialize(cfg, logger)
+	args := []string{"--jwt-secret", "test-jwt-secret", "--db-path", tmpDB}
+	services, err := Initialize(cfg, logger, args)
 
 	require.NoError(t, err)
 	require.NotNil(t, services)

@@ -183,16 +183,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 	return cfg, nil
 }
 
-// LoadBasic loads configuration without registry enhancement (for initial bootstrap)
-func LoadBasic() (*Config, error) {
-	return Load(nil, nil)
-}
-
-// LoadWithRegistry loads configuration with registry enhancement
-func LoadWithRegistry(registryStore registrystore.Store) (*Config, error) {
-	return Load(nil, registryStore)
-}
-
 func (c *Config) validateStorageConfig() error {
 	switch c.StorageType {
 	case "file", "filesystem":

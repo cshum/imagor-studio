@@ -18,13 +18,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	cfg, err := config.LoadBasic()
+	args := os.Args[1:]
+	cfg, err := config.Load(args, nil)
 	if err != nil {
 		logger.Fatal("Failed to load configuration", zap.Error(err))
 	}
 
-	// Create and start server with logger
-	server, err := server.New(cfg, logger)
+	// Create and start server with logger and args
+	server, err := server.New(cfg, logger, args)
 	if err != nil {
 		logger.Fatal("Failed to create server", zap.Error(err))
 	}
