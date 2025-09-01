@@ -116,12 +116,14 @@ func TestJWTSecretFromRegistry(t *testing.T) {
 	require.NoError(t, err)
 
 	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
+	// Set a JWT key for encryption to work
+	encryptionService.SetJWTKey("test-jwt-key")
 	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
 
 	// Pre-store a secret in registry (JWT secrets must be encrypted)
 	existingSecret := "existing-registry-secret"
 	ctx := context.Background()
-	_, err = registryStore.Set(ctx, "system", "jwt_secret", existingSecret, true)
+	_, err = registryStore.Set(ctx, "system", "config.jwt_secret", existingSecret, true)
 	require.NoError(t, err)
 
 	// Test config loading with registry enhancement
@@ -159,10 +161,10 @@ func TestConfigEnhancement(t *testing.T) {
 	ctx := context.Background()
 
 	// Set some registry values
-	_, err = registryStore.Set(ctx, "system", "storage_type", "s3", false)
+	_, err = registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
 	require.NoError(t, err)
 
-	_, err = registryStore.Set(ctx, "system", "s3_bucket", "test-bucket", false)
+	_, err = registryStore.Set(ctx, "system", "config.s3_bucket", "test-bucket", false)
 	require.NoError(t, err)
 
 	// Load config with registry enhancement
@@ -207,7 +209,7 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 
 	// Set registry value (should be overridden by env)
 	ctx := context.Background()
-	_, err = registryStore.Set(ctx, "system", "storage_type", "file", false)
+	_, err = registryStore.Set(ctx, "system", "config.storage_type", "file", false)
 	require.NoError(t, err)
 
 	// Load config with registry enhancement (env should take priority)
