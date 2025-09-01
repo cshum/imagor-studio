@@ -36,8 +36,13 @@ export function LoginPage() {
   })
 
   // If already authenticated or guest, redirect to gallery
-  if (authState.state === 'authenticated' || authState.state === 'guest' || authState.isFirstRun) {
+  if (authState.state === 'authenticated' || authState.state === 'guest') {
     return <Navigate to='/' replace />
+  }
+
+  // If first run, redirect to admin setup
+  if (authState.isFirstRun) {
+    return <Navigate to='/admin-setup' replace />
   }
 
   const onSubmit = async (values: LoginFormValues) => {
