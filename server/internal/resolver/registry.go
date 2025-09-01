@@ -133,6 +133,12 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql
 
 	// Handle entries
 	for _, entry := range entries {
+		// Check if this registry key has a corresponding config flag
+		_, configExists := r.config.GetByRegistryKey(entry.Key)
+		if configExists {
+			return nil, fmt.Errorf("cannot set registry key '%s': this configuration is managed by external config", entry.Key)
+		}
+
 		registry, err := r.registryStore.Set(ctx, SystemOwnerID, entry.Key, entry.Value, entry.IsEncrypted)
 		if err != nil {
 			return nil, fmt.Errorf("failed to set system registry for key %s: %w", entry.Key, err)
@@ -145,8 +151,11 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql
 		}
 
 		// Check for config override
-		effectiveValue, isOverridden := r.config.GetEffectiveValueByRegistryKey(registry.Key)
-		if effectiveValue == "" {
+		configValue, configExists := r.config.GetByRegistryKey(registry.Key)
+		var effectiveValue string
+		if configExists {
+			effectiveValue = configValue
+		} else {
 			effectiveValue = value
 		}
 
@@ -155,7 +164,7 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql
 			Value:                effectiveValue,
 			OwnerID:              SystemOwnerID,
 			IsEncrypted:          registry.IsEncrypted,
-			IsOverriddenByConfig: isOverridden,
+			IsOverriddenByConfig: configExists,
 			CreatedAt:            registry.CreatedAt.Format(time.RFC3339),
 			UpdatedAt:            registry.UpdatedAt.Format(time.RFC3339),
 		})
@@ -198,8 +207,11 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 		}
 
 		// Check for config override
-		effectiveValue, isOverridden := r.config.GetEffectiveValueByRegistryKey(registry.Key)
-		if effectiveValue == "" {
+		configValue, configExists := r.config.GetByRegistryKey(registry.Key)
+		var effectiveValue string
+		if configExists {
+			effectiveValue = configValue
+		} else {
 			effectiveValue = value
 		}
 
@@ -208,7 +220,7 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 			Value:                effectiveValue,
 			OwnerID:              SystemOwnerID,
 			IsEncrypted:          registry.IsEncrypted,
-			IsOverriddenByConfig: isOverridden,
+			IsOverriddenByConfig: configExists,
 			CreatedAt:            registry.CreatedAt.Format(time.RFC3339),
 			UpdatedAt:            registry.UpdatedAt.Format(time.RFC3339),
 		}
@@ -237,8 +249,11 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key string) (*gql
 	}
 
 	// Check for config override
-	effectiveValue, isOverridden := r.config.GetEffectiveValueByRegistryKey(registry.Key)
-	if effectiveValue == "" {
+	configValue, configExists := r.config.GetByRegistryKey(registry.Key)
+	var effectiveValue string
+	if configExists {
+		effectiveValue = configValue
+	} else {
 		effectiveValue = value
 	}
 
@@ -247,7 +262,7 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key string) (*gql
 		Value:                effectiveValue,
 		OwnerID:              SystemOwnerID,
 		IsEncrypted:          registry.IsEncrypted,
-		IsOverriddenByConfig: isOverridden,
+		IsOverriddenByConfig: configExists,
 		CreatedAt:            registry.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:            registry.UpdatedAt.Format(time.RFC3339),
 	}, nil

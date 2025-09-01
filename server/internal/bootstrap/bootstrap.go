@@ -52,24 +52,11 @@ func Initialize(cfg *config.Config) (*Services, error) {
 	// Initialize registry store
 	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
 
-	// Reload config with registry enhancement, preserving the current JWT secret
-	// Pass nil for Args to use os.Args[1:] which includes environment variables
-	enhancedCfg, err := config.Load(&config.LoadOptions{
-		RegistryStore: registryStore,
-		Args:          nil, // Use os.Args[1:] to preserve original command line and env vars
-	})
-
-	// Preserve the JWT secret from the original config if it was set
-	if cfg.JWTSecret != "" {
-		enhancedCfg.JWTSecret = cfg.JWTSecret
+	// Enhance the existing config with registry values instead of reloading
+	// This preserves all the original config values while adding registry enhancement
+	if err := enhanceConfigWithRegistry(cfg, registryStore); err != nil {
+		return nil, fmt.Errorf("failed to enhance config with registry: %w", err)
 	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to reload config with registry: %w", err)
-	}
-
-	// Only preserve the logger from the original config
-	enhancedCfg.Logger = cfg.Logger
-	cfg = enhancedCfg
 
 	// Update encryption service with final JWT secret
 	encryptionService.SetJWTKey(cfg.JWTSecret)
@@ -131,6 +118,88 @@ func runMigrations(db *bun.DB, logger *zap.Logger) error {
 		logger.Info("No migrations to run")
 	} else {
 		logger.Info("Migrations applied", zap.String("group", group.String()))
+	}
+
+	return nil
+}
+
+// enhanceConfigWithRegistry enhances the existing config with registry values
+func enhanceConfigWithRegistry(cfg *config.Config, registryStore registrystore.Store) error {
+	ctx := context.Background()
+
+	// Get all registry entries with "config." prefix
+	prefix := "config."
+	entries, err := registryStore.List(ctx, "system", &prefix)
+	if err != nil {
+		// Registry values are optional, so we can continue without them
+		return nil
+	}
+
+	// Apply registry values to the config if they exist and aren't overridden by environment/args
+	for _, entry := range entries {
+		if entry.Value == "" {
+			continue
+		}
+
+		// Convert registry key to config field and apply if not overridden
+		switch entry.Key {
+		case "config.storage_type":
+			if cfg.StorageType == "file" { // default value, can be overridden
+				cfg.StorageType = entry.Value
+			}
+		case "config.allow_guest_mode":
+			if entry.Value == "true" {
+				cfg.AllowGuestMode = true
+			} else {
+				cfg.AllowGuestMode = false
+			}
+		case "config.s3_bucket":
+			if cfg.S3Bucket == "" {
+				cfg.S3Bucket = entry.Value
+			}
+		case "config.s3_region":
+			if cfg.S3Region == "" {
+				cfg.S3Region = entry.Value
+			}
+		case "config.s3_endpoint":
+			if cfg.S3Endpoint == "" {
+				cfg.S3Endpoint = entry.Value
+			}
+		case "config.s3_access_key_id":
+			if cfg.S3AccessKeyID == "" {
+				cfg.S3AccessKeyID = entry.Value
+			}
+		case "config.s3_secret_access_key":
+			if cfg.S3SecretAccessKey == "" {
+				cfg.S3SecretAccessKey = entry.Value
+			}
+		case "config.s3_base_dir":
+			if cfg.S3BaseDir == "" {
+				cfg.S3BaseDir = entry.Value
+			}
+		case "config.imagor_mode":
+			if cfg.ImagorMode == "external" { // default value
+				cfg.ImagorMode = entry.Value
+			}
+		case "config.imagor_url":
+			if cfg.ImagorURL == "http://localhost:8000" { // default value
+				cfg.ImagorURL = entry.Value
+			}
+		case "config.imagor_secret":
+			if cfg.ImagorSecret == "" {
+				cfg.ImagorSecret = entry.Value
+			}
+		case "config.imagor_unsafe":
+			if entry.Value == "true" {
+				cfg.ImagorUnsafe = true
+			} else {
+				cfg.ImagorUnsafe = false
+			}
+		case "config.imagor_result_storage":
+			if cfg.ImagorResultStorage == "same" { // default value
+				cfg.ImagorResultStorage = entry.Value
+			}
+		}
 	}
 
 	return nil

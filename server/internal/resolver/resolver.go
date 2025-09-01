@@ -1,7 +1,6 @@
 package resolver
 
 import (
-	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imageservice"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
@@ -12,16 +11,21 @@ import (
 
 const SystemOwnerID = "system"
 
+// ConfigProvider interface for configuration methods used by the resolver
+type ConfigProvider interface {
+	GetByRegistryKey(registryKey string) (effectiveValue string, exists bool)
+}
+
 type Resolver struct {
 	storage       storage.Storage
 	registryStore registrystore.Store
 	userStore     userstore.Store
 	imageService  imageservice.Service
-	config        *config.Config
+	config        ConfigProvider
 	logger        *zap.Logger
 }
 
-func NewResolver(storage storage.Storage, registryStore registrystore.Store, userStore userstore.Store, imageService imageservice.Service, cfg *config.Config, logger *zap.Logger) *Resolver {
+func NewResolver(storage storage.Storage, registryStore registrystore.Store, userStore userstore.Store, imageService imageservice.Service, cfg ConfigProvider, logger *zap.Logger) *Resolver {
 	return &Resolver{
 		storage:       storage,
 		registryStore: registryStore,

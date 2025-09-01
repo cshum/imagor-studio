@@ -463,28 +463,26 @@ func TestConfigInvalidValues(t *testing.T) {
 	}
 }
 
-func TestGetEffectiveValueByRegistryKey_OverrideDetection(t *testing.T) {
+func TestGetByRegistryKey_ConfigDetection(t *testing.T) {
 	tests := []struct {
-		name               string
-		registryValues     map[string]string
-		envVars            map[string]string
-		args               []string
-		testKey            string
-		expectedValue      string
-		expectedExists     bool
-		expectedOverridden bool
-		description        string
+		name           string
+		registryValues map[string]string
+		envVars        map[string]string
+		args           []string
+		testKey        string
+		expectedValue  string
+		expectedExists bool
+		description    string
 	}{
 		{
-			name: "Registry value only - not overridden",
+			name: "Registry value only",
 			registryValues: map[string]string{
 				"config.storage_type": "file",
 			},
-			testKey:            "config.storage_type",
-			expectedValue:      "file",
-			expectedExists:     true,
-			expectedOverridden: false,
-			description:        "When value comes from registry only, should not be marked as overridden",
+			testKey:        "config.storage_type",
+			expectedValue:  "file",
+			expectedExists: true,
+			description:    "When value comes from registry only",
 		},
 		{
 			name: "Registry value overridden by environment",
@@ -494,70 +492,51 @@ func TestGetEffectiveValueByRegistryKey_OverrideDetection(t *testing.T) {
 			envVars: map[string]string{
 				"STORAGE_TYPE": "file",
 			},
-			testKey:            "config.storage_type",
-			expectedValue:      "file",
-			expectedExists:     true,
-			expectedOverridden: true,
-			description:        "When registry value is overridden by env var, should be marked as overridden",
+			testKey:        "config.storage_type",
+			expectedValue:  "file",
+			expectedExists: true,
+			description:    "When registry value is overridden by env var, should return env value",
 		},
 		{
 			name: "Registry value overridden by args",
 			registryValues: map[string]string{
 				"config.storage_type": "s3",
 			},
-			args:               []string{"--storage-type", "filesystem"},
-			testKey:            "config.storage_type",
-			expectedValue:      "filesystem",
-			expectedExists:     true,
-			expectedOverridden: true,
-			description:        "When registry value is overridden by command line args, should be marked as overridden",
+			args:           []string{"--storage-type", "filesystem"},
+			testKey:        "config.storage_type",
+			expectedValue:  "filesystem",
+			expectedExists: true,
+			description:    "When registry value is overridden by command line args, should return args value",
 		},
 		{
-			name: "Registry value matches override value - still overridden",
-			registryValues: map[string]string{
-				"config.storage_type": "file",
-			},
+			name: "No registry value, env only",
 			envVars: map[string]string{
 				"STORAGE_TYPE": "file",
 			},
-			testKey:            "config.storage_type",
-			expectedValue:      "file",
-			expectedExists:     true,
-			expectedOverridden: true,
-			description:        "Even when values match, if there's an external override, should be marked as overridden",
-		},
-		{
-			name: "No registry value, env only - not overridden",
-			envVars: map[string]string{
-				"STORAGE_TYPE": "file",
-			},
-			testKey:            "config.storage_type",
-			expectedValue:      "file",
-			expectedExists:     true,
-			expectedOverridden: false,
-			description:        "When there's no registry value to override, should not be marked as overridden",
+			testKey:        "config.storage_type",
+			expectedValue:  "file",
+			expectedExists: true,
+			description:    "When there's no registry value but env var exists, should return env value",
 		},
 		{
 			name: "Non-config registry key - not tracked",
 			registryValues: map[string]string{
 				"app.version": "1.0.0",
 			},
-			testKey:            "app.version",
-			expectedValue:      "",
-			expectedExists:     false,
-			expectedOverridden: false,
-			description:        "Non-config registry keys should not be tracked for overrides",
+			testKey:        "app.version",
+			expectedValue:  "",
+			expectedExists: false,
+			description:    "Non-config registry keys should not be tracked",
 		},
 		{
 			name: "Guest mode registry value only",
 			registryValues: map[string]string{
 				"config.allow_guest_mode": "true",
 			},
-			testKey:            "config.allow_guest_mode",
-			expectedValue:      "true",
-			expectedExists:     true,
-			expectedOverridden: false,
-			description:        "Guest mode from registry should not be marked as overridden",
+			testKey:        "config.allow_guest_mode",
+			expectedValue:  "true",
+			expectedExists: true,
+			description:    "Guest mode from registry should be returned",
 		},
 		{
 			name: "Guest mode overridden by environment",
@@ -567,18 +546,17 @@ func TestGetEffectiveValueByRegistryKey_OverrideDetection(t *testing.T) {
 			envVars: map[string]string{
 				"ALLOW_GUEST_MODE": "false",
 			},
-			testKey:            "config.allow_guest_mode",
-			expectedValue:      "false",
-			expectedExists:     true,
-			expectedOverridden: true,
-			description:        "Guest mode overridden by env should be marked as overridden",
+			testKey:        "config.allow_guest_mode",
+			expectedValue:  "false",
+			expectedExists: true,
+			description:    "Guest mode overridden by env should return env value",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create temporary database
-			tmpDB := "/tmp/test_override_detection_" + strings.ReplaceAll(tt.name, " ", "_") + ".db"
+			tmpDB := "/tmp/test_config_detection_" + strings.ReplaceAll(tt.name, " ", "_") + ".db"
 			defer os.Remove(tmpDB)
 
 			// Initialize database and registry store
@@ -609,15 +587,15 @@ func TestGetEffectiveValueByRegistryKey_OverrideDetection(t *testing.T) {
 			require.NoError(t, err, tt.description)
 			require.NotNil(t, cfg)
 
-			// Test GetEffectiveValueByRegistryKey
-			effectiveValue, isOverridden := cfg.GetEffectiveValueByRegistryKey(tt.testKey)
+			// Test GetByRegistryKey
+			effectiveValue, exists := cfg.GetByRegistryKey(tt.testKey)
 
 			if tt.expectedExists {
+				assert.True(t, exists, "Config should exist: %s", tt.description)
 				assert.Equal(t, tt.expectedValue, effectiveValue, "Effective value mismatch: %s", tt.description)
-				assert.Equal(t, tt.expectedOverridden, isOverridden, "Override detection mismatch: %s", tt.description)
 			} else {
+				assert.False(t, exists, "Config should not exist: %s", tt.description)
 				assert.Empty(t, effectiveValue, "Should return empty value for non-existent key: %s", tt.description)
-				assert.False(t, isOverridden, "Should return false for non-existent key: %s", tt.description)
 			}
 		})
 	}

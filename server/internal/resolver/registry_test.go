@@ -700,3 +700,288 @@ func TestSetSystemRegistry_EncryptedValueHidden(t *testing.T) {
 
 	mockRegistryStore.AssertExpectations(t)
 }
+
+func TestSetSystemRegistry_OverridePrevention(t *testing.T) {
+	tests := []struct {
+		name          string
+		registryKey   string
+		configExists  bool
+		configValue   string
+		expectError   bool
+		errorContains string
+		description   string
+	}{
+		{
+			name:         "Allow setting non-config registry key",
+			registryKey:  "app.version",
+			configExists: false,
+			expectError:  false,
+			description:  "Non-config keys should be allowed",
+		},
+		{
+			name:         "Allow setting config key when no external config exists",
+			registryKey:  "config.storage_type",
+			configExists: false,
+			expectError:  false,
+			description:  "Config keys should be allowed when no external config exists",
+		},
+		{
+			name:          "Prevent setting config key when external config exists",
+			registryKey:   "config.allow_guest_mode",
+			configExists:  true,
+			configValue:   "true",
+			expectError:   true,
+			errorContains: "this configuration is managed by external config",
+			description:   "Should prevent setting when external config exists",
+		},
+		{
+			name:          "Prevent setting config.storage_type when external config exists",
+			registryKey:   "config.storage_type",
+			configExists:  true,
+			configValue:   "s3",
+			expectError:   true,
+			errorContains: "this configuration is managed by external config",
+			description:   "Should prevent setting storage type when external config exists",
+		},
+		{
+			name:          "Prevent setting config.jwt_secret when external config exists",
+			registryKey:   "config.jwt_secret",
+			configExists:  true,
+			configValue:   "external-secret",
+			expectError:   true,
+			errorContains: "this configuration is managed by external config",
+			description:   "Should prevent setting JWT secret when external config exists",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockStorage := new(MockStorage)
+			mockRegistryStore := new(MockRegistryStore)
+			mockUserStore := new(MockUserStore)
+			logger, _ := zap.NewDevelopment()
+
+			// Create a mock config that simulates GetByRegistryKey behavior
+			mockConfig := &MockConfig{
+				configExists: tt.configExists,
+				configValue:  tt.configValue,
+			}
+
+			resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, mockConfig, logger)
+
+			ctx := createAdminContext("admin-user-id")
+
+			if !tt.expectError {
+				// Only expect registry store call if we're not expecting an error
+				now := time.Now()
+				resultRegistry := &registrystore.Registry{
+					Key:       tt.registryKey,
+					Value:     "test-value",
+					CreatedAt: now,
+					UpdatedAt: now,
+				}
+				mockRegistryStore.On("Set", ctx, "system", tt.registryKey, "test-value", false).Return(resultRegistry, nil)
+			}
+
+			entries := []*gql.RegistryEntryInput{{Key: tt.registryKey, Value: "test-value"}}
+			result, err := resolver.Mutation().SetSystemRegistry(ctx, entries)
+
+			if tt.expectError {
+				assert.Error(t, err, tt.description)
+				assert.Nil(t, result)
+				assert.Contains(t, err.Error(), tt.errorContains, tt.description)
+			} else {
+				assert.NoError(t, err, tt.description)
+				assert.NotNil(t, result)
+				assert.Len(t, result, 1)
+				assert.Equal(t, tt.registryKey, result[0].Key)
+			}
+
+			mockRegistryStore.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGetSystemRegistry_OverrideDetection(t *testing.T) {
+	tests := []struct {
+		name                 string
+		registryKey          string
+		registryValue        string
+		configExists         bool
+		configValue          string
+		expectedValue        string
+		expectedIsOverridden bool
+		description          string
+	}{
+		{
+			name:                 "Registry value only - not overridden",
+			registryKey:          "app.version",
+			registryValue:        "1.0.0",
+			configExists:         false,
+			expectedValue:        "1.0.0",
+			expectedIsOverridden: false,
+			description:          "Non-config registry values should not be marked as overridden",
+		},
+		{
+			name:                 "Config key exists - overridden",
+			registryKey:          "config.allow_guest_mode",
+			registryValue:        "true",
+			configExists:         true,
+			configValue:          "false",
+			expectedValue:        "false",
+			expectedIsOverridden: true,
+			description:          "Config values should be marked as overridden when external config exists",
+		},
+		{
+			name:                 "Config key exists with same value - still overridden",
+			registryKey:          "config.storage_type",
+			registryValue:        "file",
+			configExists:         true,
+			configValue:          "file",
+			expectedValue:        "file",
+			expectedIsOverridden: true,
+			description:          "Should be marked as overridden even when values match",
+		},
+		{
+			name:                 "Config key without external config - not overridden",
+			registryKey:          "config.imagor_mode",
+			registryValue:        "external",
+			configExists:         false,
+			expectedValue:        "external",
+			expectedIsOverridden: false,
+			description:          "Config keys without external config should not be overridden",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockStorage := new(MockStorage)
+			mockRegistryStore := new(MockRegistryStore)
+			mockUserStore := new(MockUserStore)
+			logger, _ := zap.NewDevelopment()
+
+			// Create a mock config that simulates GetByRegistryKey behavior
+			mockConfig := &MockConfig{
+				configExists: tt.configExists,
+				configValue:  tt.configValue,
+			}
+
+			resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, mockConfig, logger)
+
+			ctx := createReadWriteContext("user-id")
+
+			now := time.Now()
+			mockRegistry := &registrystore.Registry{
+				Key:       tt.registryKey,
+				Value:     tt.registryValue,
+				CreatedAt: now,
+				UpdatedAt: now,
+			}
+
+			mockRegistryStore.On("Get", ctx, "system", tt.registryKey).Return(mockRegistry, nil)
+
+			result, err := resolver.Query().GetSystemRegistry(ctx, tt.registryKey)
+
+			assert.NoError(t, err, tt.description)
+			assert.NotNil(t, result)
+			assert.Equal(t, tt.registryKey, result.Key)
+			assert.Equal(t, tt.expectedValue, result.Value, "Value mismatch: %s", tt.description)
+			assert.Equal(t, tt.expectedIsOverridden, result.IsOverriddenByConfig, "Override detection mismatch: %s", tt.description)
+			assert.Equal(t, "system", result.OwnerID)
+
+			mockRegistryStore.AssertExpectations(t)
+		})
+	}
+}
+
+func TestListSystemRegistry_OverrideDetection(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+
+	// Create a mock config that simulates different override scenarios
+	mockConfig := &MockConfigMultiple{
+		configs: map[string]MockConfigEntry{
+			"config.allow_guest_mode": {exists: true, value: "false"},
+			"config.storage_type":     {exists: false, value: ""},
+			"app.version":             {exists: false, value: ""},
+		},
+	}
+
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, mockConfig, logger)
+
+	ctx := createReadWriteContext("user-id")
+
+	now := time.Now()
+	mockRegistries := []*registrystore.Registry{
+		{Key: "config.allow_guest_mode", Value: "true", CreatedAt: now, UpdatedAt: now},
+		{Key: "config.storage_type", Value: "file", CreatedAt: now, UpdatedAt: now},
+		{Key: "app.version", Value: "1.0.0", CreatedAt: now, UpdatedAt: now},
+	}
+
+	mockRegistryStore.On("List", ctx, "system", (*string)(nil)).Return(mockRegistries, nil)
+
+	result, err := resolver.Query().ListSystemRegistry(ctx, nil)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 3)
+
+	// Check config.allow_guest_mode - should be overridden
+	guestModeEntry := findRegistryByKey(result, "config.allow_guest_mode")
+	assert.NotNil(t, guestModeEntry)
+	assert.Equal(t, "false", guestModeEntry.Value) // Should use config value
+	assert.True(t, guestModeEntry.IsOverriddenByConfig)
+
+	// Check config.storage_type - should not be overridden
+	storageEntry := findRegistryByKey(result, "config.storage_type")
+	assert.NotNil(t, storageEntry)
+	assert.Equal(t, "file", storageEntry.Value) // Should use registry value
+	assert.False(t, storageEntry.IsOverriddenByConfig)
+
+	// Check app.version - should not be overridden
+	versionEntry := findRegistryByKey(result, "app.version")
+	assert.NotNil(t, versionEntry)
+	assert.Equal(t, "1.0.0", versionEntry.Value) // Should use registry value
+	assert.False(t, versionEntry.IsOverriddenByConfig)
+
+	mockRegistryStore.AssertExpectations(t)
+}
+
+// Helper function to find registry entry by key
+func findRegistryByKey(registries []*gql.SystemRegistry, key string) *gql.SystemRegistry {
+	for _, registry := range registries {
+		if registry.Key == key {
+			return registry
+		}
+	}
+	return nil
+}
+
+// MockConfig for testing GetByRegistryKey behavior
+type MockConfig struct {
+	configExists bool
+	configValue  string
+}
+
+func (m *MockConfig) GetByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
+	return m.configValue, m.configExists
+}
+
+// MockConfigMultiple for testing multiple registry keys
+type MockConfigMultiple struct {
+	configs map[string]MockConfigEntry
+}
+
+type MockConfigEntry struct {
+	exists bool
+	value  string
+}
+
+func (m *MockConfigMultiple) GetByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
+	if entry, found := m.configs[registryKey]; found {
+		return entry.value, entry.exists
+	}
+	return "", false
+}
