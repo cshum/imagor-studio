@@ -55,6 +55,9 @@ type Config struct {
 
 	// Track which flags were explicitly set (overridden from defaults)
 	OverriddenFlags map[string]string // flag_name -> effective_value
+
+	// Store original args for potential reloading
+	OriginalArgs []string
 }
 
 // LoadOptions contains options for loading configuration
@@ -193,19 +196,13 @@ func Load(opts *LoadOptions) (*Config, error) {
 		Logger:               logger,
 		FlagSet:              fs,
 		OverriddenFlags:      make(map[string]string),
+		OriginalArgs:         args,
 	}
 
 	// Track overridden flags AFTER flag parsing
 	cfg.FlagSet.Visit(func(f *flag.Flag) {
 		cfg.OverriddenFlags[f.Name] = f.Value.String()
 	})
-
-	// Apply registry values if registry store is provided
-	if opts.RegistryStore != nil {
-		if err := cfg.ApplyRegistryValues(opts.RegistryStore); err != nil {
-			return nil, fmt.Errorf("failed to apply registry values: %w", err)
-		}
-	}
 
 	// Validate storage configuration
 	if err := cfg.validateStorageConfig(); err != nil {
@@ -361,35 +358,4 @@ func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, ex
 	}
 
 	return "", false
-}
-
-// ApplyRegistryValues applies registry values to config fields that weren't overridden by CLI/env
-// This is a simplified version that leverages the flag system for automatic type conversion
-func (c *Config) ApplyRegistryValues(registryStore registrystore.Store) error {
-	ctx := context.Background()
-	prefix := "config."
-	entries, err := registryStore.List(ctx, "system", &prefix)
-	if err != nil {
-		// Registry values are optional, so we can continue without them
-		return nil
-	}
-
-	for _, entry := range entries {
-		if entry.Value == "" {
-			continue
-		}
-
-		flagName := GetFlagNameForRegistryKey(entry.Key)
-
-		// Only apply if not overridden by CLI/env
-		if _, overridden := c.OverriddenFlags[flagName]; !overridden {
-			// Use the existing flag system to set the value
-			// The flag system automatically handles type conversion and updates the config struct
-			if flag := c.FlagSet.Lookup(flagName); flag != nil {
-				flag.Value.Set(entry.Value)
-			}
-		}
-	}
-
-	return nil
 }

@@ -52,10 +52,22 @@ func Initialize(cfg *config.Config) (*Services, error) {
 	// Initialize registry store
 	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
 
-	// Apply registry values to the existing config
-	if err := cfg.ApplyRegistryValues(registryStore); err != nil {
-		return nil, fmt.Errorf("failed to apply registry values: %w", err)
+	// Reload config with registry values - this implements the simplified approach
+	// where we call Load twice: once without registry (already done), then with registry
+	// Only do this if the config has OriginalArgs (i.e., was loaded via config.Load)
+	if cfg.OriginalArgs != nil {
+		enhancedCfg, err := config.Load(&config.LoadOptions{
+			RegistryStore: registryStore,
+			Args:          cfg.OriginalArgs,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to load config with registry values: %w", err)
+		}
+		// Use the enhanced config from here on
+		cfg = enhancedCfg
 	}
+	// If OriginalArgs is nil (e.g., manually created config in tests),
+	// we skip registry enhancement and continue with the existing config
 
 	// Update encryption service with final JWT secret
 	encryptionService.SetJWTKey(cfg.JWTSecret)
