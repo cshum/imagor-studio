@@ -885,8 +885,8 @@ func TestGuestLogin(t *testing.T) {
 		{
 			name: "Guest login enabled",
 			setupMocks: func() {
-				mockRegistryStore.On("Get", mock.Anything, "system", "auth.enableGuestMode").Return(&registrystore.Registry{
-					Key:   "auth.enableGuestMode",
+				mockRegistryStore.On("Get", mock.Anything, "system", "config.allow_guest_mode").Return(&registrystore.Registry{
+					Key:   "config.allow_guest_mode",
 					Value: "true",
 				}, nil)
 			},
@@ -896,8 +896,8 @@ func TestGuestLogin(t *testing.T) {
 		{
 			name: "Guest login disabled",
 			setupMocks: func() {
-				mockRegistryStore.On("Get", mock.Anything, "system", "auth.enableGuestMode").Return(&registrystore.Registry{
-					Key:   "auth.enableGuestMode",
+				mockRegistryStore.On("Get", mock.Anything, "system", "config.allow_guest_mode").Return(&registrystore.Registry{
+					Key:   "config.allow_guest_mode",
 					Value: "false",
 				}, nil)
 			},
@@ -906,8 +906,11 @@ func TestGuestLogin(t *testing.T) {
 			errorCode:      apperror.ErrPermissionDenied,
 		},
 		{
-			name: "Guest mode setting not found",
+			name: "Guest mode setting not found - fallback to old key",
 			setupMocks: func() {
+				// First call for new key returns nil
+				mockRegistryStore.On("Get", mock.Anything, "system", "config.allow_guest_mode").Return(nil, nil)
+				// Second call for old key also returns nil
 				mockRegistryStore.On("Get", mock.Anything, "system", "auth.enableGuestMode").Return(nil, nil)
 			},
 			expectedStatus: http.StatusForbidden,

@@ -127,7 +127,8 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 				guestModeValue = "true"
 			}
 
-			_, err = h.registryStore.Set(r.Context(), "system", "auth.enableGuestMode", guestModeValue, false)
+			// Use new config.allow_guest_mode key format
+			_, err = h.registryStore.Set(r.Context(), "system", "config.allow_guest_mode", guestModeValue, false)
 			if err != nil {
 				h.logger.Warn("Admin user created but guest mode setting failed to save", zap.Error(err))
 			} else {
@@ -214,13 +215,23 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
 		// Check if guest mode is enabled via system metadata
-		guestModeMetadata, err := h.registryStore.Get(r.Context(), "system", "auth.enableGuestMode")
+		// Try new format first: config.allow_guest_mode
+		guestModeMetadata, err := h.registryStore.Get(r.Context(), "system", "config.allow_guest_mode")
 		if err != nil {
 			h.logger.Error("Failed to check guest mode setting", zap.Error(err))
 			return apperror.InternalServerError("Failed to check system configuration")
 		}
 
-		// If enableGuestMode is not set or not "true", block guest login
+		// If new format not found, try old format: auth.enableGuestMode
+		if guestModeMetadata == nil {
+			guestModeMetadata, err = h.registryStore.Get(r.Context(), "system", "auth.enableGuestMode")
+			if err != nil {
+				h.logger.Error("Failed to check legacy guest mode setting", zap.Error(err))
+				return apperror.InternalServerError("Failed to check system configuration")
+			}
+		}
+
+		// If guest mode is not set or not "true", block guest login
 		if guestModeMetadata == nil || guestModeMetadata.Value != "true" {
 			return apperror.NewAppError(http.StatusForbidden, apperror.ErrPermissionDenied,
 				"Guest mode is not enabled", nil)

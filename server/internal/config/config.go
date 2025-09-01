@@ -24,6 +24,9 @@ type Config struct {
 	JWTSecret     string
 	JWTExpiration time.Duration
 
+	// Authentication Configuration
+	AllowGuestMode bool // Allow guest mode access
+
 	// File Storage
 	FileBaseDir          string
 	FileMkdirPermissions os.FileMode
@@ -69,6 +72,8 @@ func Load(opts *LoadOptions) (*Config, error) {
 		jwtSecret     = fs.String("jwt-secret", "", "secret key for JWT signing")
 		imagorSecret  = fs.String("imagor-secret", "", "secret key for imagor")
 		jwtExpiration = fs.String("jwt-expiration", "24h", "JWT token expiration duration")
+
+		allowGuestMode = fs.Bool("allow-guest-mode", false, "allow guest mode access")
 
 		fileBaseDir          = fs.String("file-base-dir", "./storage", "base directory for file storage")
 		fileMkdirPermissions = fs.String("file-mkdir-permissions", "0755", "directory creation permissions")
@@ -162,6 +167,7 @@ func Load(opts *LoadOptions) (*Config, error) {
 		DBPath:               *dbPath,
 		JWTSecret:            *jwtSecret,
 		JWTExpiration:        jwtExp,
+		AllowGuestMode:       *allowGuestMode,
 		StorageType:          *storageType,
 		FileBaseDir:          *fileBaseDir,
 		FileMkdirPermissions: os.FileMode(mkdirPerm),
@@ -238,34 +244,22 @@ func (p *RegistryParser) Parse(r io.Reader, set func(name, value string) error) 
 
 	ctx := context.Background()
 
-	// Define the mapping of registry keys to flag names
-	registryKeyToFlag := map[string]string{
-		"jwt_secret":            "jwt-secret",
-		"storage_type":          "storage-type",
-		"file_base_dir":         "file-base-dir",
-		"s3_bucket":             "s3-bucket",
-		"s3_region":             "s3-region",
-		"s3_endpoint":           "s3-endpoint",
-		"s3_access_key_id":      "s3-access-key-id",
-		"s3_secret_access_key":  "s3-secret-access-key",
-		"s3_session_token":      "s3-session-token",
-		"s3_base_dir":           "s3-base-dir",
-		"imagor_mode":           "imagor-mode",
-		"imagor_url":            "imagor-url",
-		"imagor_secret":         "imagor-secret",
-		"imagor_result_storage": "imagor-result-storage",
-	}
-
-	// Fetch all system registry entries at once (more efficient than individual Gets)
-	entries, err := p.registryStore.List(ctx, "system", nil)
+	// Auto-parse registry entries with "config." prefix
+	prefix := "config."
+	entries, err := p.registryStore.List(ctx, "system", &prefix)
 	if err != nil {
 		// Log error but continue - registry values are optional
 		return nil
 	}
 
-	// Apply registry values to flags
+	// Apply registry values to flags using auto-parsing
 	for _, entry := range entries {
-		if flagName, exists := registryKeyToFlag[entry.Key]; exists && entry.Value != "" {
+		if entry.Value != "" {
+			// Strip "config." prefix: config.jwt_secret -> jwt_secret
+			configKey := strings.TrimPrefix(entry.Key, prefix)
+			// Convert to flag format: jwt_secret -> jwt-secret
+			flagName := strings.ReplaceAll(configKey, "_", "-")
+
 			if err := set(flagName, entry.Value); err != nil {
 				return fmt.Errorf("failed to set flag %s from registry: %w", flagName, err)
 			}
@@ -279,34 +273,22 @@ func (p *RegistryParser) Parse(r io.Reader, set func(name, value string) error) 
 func prePopulateRegistryValues(fs *flag.FlagSet, registryStore registrystore.Store) error {
 	ctx := context.Background()
 
-	// Define the mapping of registry keys to flag names
-	registryKeyToFlag := map[string]string{
-		"jwt_secret":            "jwt-secret",
-		"storage_type":          "storage-type",
-		"file_base_dir":         "file-base-dir",
-		"s3_bucket":             "s3-bucket",
-		"s3_region":             "s3-region",
-		"s3_endpoint":           "s3-endpoint",
-		"s3_access_key_id":      "s3-access-key-id",
-		"s3_secret_access_key":  "s3-secret-access-key",
-		"s3_session_token":      "s3-session-token",
-		"s3_base_dir":           "s3-base-dir",
-		"imagor_mode":           "imagor-mode",
-		"imagor_url":            "imagor-url",
-		"imagor_secret":         "imagor-secret",
-		"imagor_result_storage": "imagor-result-storage",
-	}
-
-	// Fetch all system registry entries at once (more efficient than individual Gets)
-	entries, err := registryStore.List(ctx, "system", nil)
+	// Auto-parse registry entries with "config." prefix
+	prefix := "config."
+	entries, err := registryStore.List(ctx, "system", &prefix)
 	if err != nil {
 		// Log error but continue - registry values are optional
 		return nil
 	}
 
-	// Apply registry values to flags
+	// Apply registry values to flags using auto-parsing
 	for _, entry := range entries {
-		if flagName, exists := registryKeyToFlag[entry.Key]; exists && entry.Value != "" {
+		if entry.Value != "" {
+			// Strip "config." prefix: config.jwt_secret -> jwt_secret
+			configKey := strings.TrimPrefix(entry.Key, prefix)
+			// Convert to flag format: jwt_secret -> jwt-secret
+			flagName := strings.ReplaceAll(configKey, "_", "-")
+
 			// Find the flag and set its default value
 			flag := fs.Lookup(flagName)
 			if flag != nil {
@@ -322,14 +304,23 @@ func prePopulateRegistryValues(fs *flag.FlagSet, registryStore registrystore.Sto
 
 // GetRegistryKeyForFlag returns the registry key for a given flag name
 func GetRegistryKeyForFlag(flagName string) string {
-	// Convert flag name to registry key format
-	// e.g., "storage-type" -> "storage_type"
-	return strings.ReplaceAll(strings.ToLower(flagName), "-", "_")
+	// Convert flag name to registry key format with config. prefix
+	// e.g., "storage-type" -> "config.storage_type"
+	configKey := strings.ReplaceAll(strings.ToLower(flagName), "-", "_")
+	return "config." + configKey
 }
 
 // GetFlagNameForRegistryKey returns the flag name for a given registry key
 func GetFlagNameForRegistryKey(registryKey string) string {
+	// Handle both old format and new config. prefix format
+	key := strings.ToLower(registryKey)
+
+	// If it has config. prefix, strip it
+	if strings.HasPrefix(key, "config.") {
+		key = strings.TrimPrefix(key, "config.")
+	}
+
 	// Convert registry key to flag name format
 	// e.g., "storage_type" -> "storage-type"
-	return strings.ReplaceAll(strings.ToLower(registryKey), "_", "-")
+	return strings.ReplaceAll(key, "_", "-")
 }

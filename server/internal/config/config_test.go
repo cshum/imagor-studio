@@ -90,13 +90,13 @@ func TestLoadWithRegistry(t *testing.T) {
 	db, registryStore := setupTestRegistry(t, tmpDB)
 	defer db.Close()
 
-	// Set registry values
+	// Set registry values using new config. prefix format
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "storage_type", "s3", false)
+	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "s3_bucket", "registry-bucket", false)
+	_, err = registryStore.Set(ctx, "system", "config.s3_bucket", "registry-bucket", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "imagor_mode", "disabled", false)
+	_, err = registryStore.Set(ctx, "system", "config.imagor_mode", "disabled", false)
 	require.NoError(t, err)
 
 	// Load config with registry
@@ -240,11 +240,11 @@ func TestRegistryParser(t *testing.T) {
 	db, registryStore := setupTestRegistry(t, tmpDB)
 	defer db.Close()
 
-	// Set registry values
+	// Set registry values using new config. prefix format
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "storage_type", "s3", false)
+	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "s3_bucket", "parser-bucket", false)
+	_, err = registryStore.Set(ctx, "system", "config.s3_bucket", "parser-bucket", false)
 	require.NoError(t, err)
 
 	// Create parser
@@ -266,15 +266,79 @@ func TestRegistryParser(t *testing.T) {
 	assert.Equal(t, "parser-bucket", values["s3-bucket"])
 }
 
+func TestAutoParsingWithConfigPrefix(t *testing.T) {
+	// Create temporary database
+	tmpDB := "/tmp/test_auto_parsing.db"
+	defer os.Remove(tmpDB)
+
+	// Initialize database and registry store
+	db, registryStore := setupTestRegistry(t, tmpDB)
+	defer db.Close()
+
+	// Set registry values using new config. prefix format
+	ctx := context.Background()
+	_, err := registryStore.Set(ctx, "system", "config.jwt_secret", "registry-jwt-secret", false)
+	require.NoError(t, err)
+	_, err = registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
+	require.NoError(t, err)
+	_, err = registryStore.Set(ctx, "system", "config.s3_bucket", "auto-parsed-bucket", false)
+	require.NoError(t, err)
+	_, err = registryStore.Set(ctx, "system", "config.allow_guest_mode", "true", false)
+	require.NoError(t, err)
+
+	// Load config with registry
+	cfg, err := Load(&LoadOptions{
+		RegistryStore: registryStore,
+		Args:          []string{}, // No args, should use registry values
+	})
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	// Verify auto-parsed registry values were applied
+	assert.Equal(t, "registry-jwt-secret", cfg.JWTSecret)
+	assert.Equal(t, "s3", cfg.StorageType)
+	assert.Equal(t, "auto-parsed-bucket", cfg.S3Bucket)
+	assert.Equal(t, true, cfg.AllowGuestMode)
+}
+
+func TestGuestModeConfig(t *testing.T) {
+	// Test guest mode configuration with registry
+	tmpDB := "/tmp/test_guest_mode_config.db"
+	defer os.Remove(tmpDB)
+
+	// Initialize database and registry store
+	db, registryStore := setupTestRegistry(t, tmpDB)
+	defer db.Close()
+
+	// Set registry values including JWT secret and guest mode
+	ctx := context.Background()
+	_, err := registryStore.Set(ctx, "system", "config.jwt_secret", "test-secret", false)
+	require.NoError(t, err)
+	_, err = registryStore.Set(ctx, "system", "config.allow_guest_mode", "true", false)
+	require.NoError(t, err)
+
+	// Load config with registry
+	cfg, err := Load(&LoadOptions{
+		RegistryStore: registryStore,
+		Args:          []string{}, // No args, should use registry values
+	})
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	assert.Equal(t, true, cfg.AllowGuestMode)
+	assert.Equal(t, "test-secret", cfg.JWTSecret)
+}
+
 func TestGetRegistryKeyForFlag(t *testing.T) {
 	tests := []struct {
 		flagName    string
 		expectedKey string
 	}{
-		{"storage-type", "storage_type"},
-		{"s3-bucket", "s3_bucket"},
-		{"imagor-mode", "imagor_mode"},
-		{"file-base-dir", "file_base_dir"},
+		{"storage-type", "config.storage_type"},
+		{"s3-bucket", "config.s3_bucket"},
+		{"imagor-mode", "config.imagor_mode"},
+		{"file-base-dir", "config.file_base_dir"},
+		{"allow-guest-mode", "config.allow_guest_mode"},
 	}
 
 	for _, tt := range tests {
@@ -294,6 +358,9 @@ func TestGetFlagNameForRegistryKey(t *testing.T) {
 		{"s3_bucket", "s3-bucket"},
 		{"imagor_mode", "imagor-mode"},
 		{"file_base_dir", "file-base-dir"},
+		{"config.storage_type", "storage-type"},
+		{"config.s3_bucket", "s3-bucket"},
+		{"config.allow_guest_mode", "allow-guest-mode"},
 	}
 
 	for _, tt := range tests {
