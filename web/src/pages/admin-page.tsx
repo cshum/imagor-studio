@@ -28,6 +28,15 @@ export function AdminPage({ loaderData }: AdminPageProps) {
   // Current form state - map of registry keys to string values
   const [settings, setSettings] = useState<RegistryMap>(originalSettings)
 
+  // Get guest mode config from system registry list
+  const guestModeConfig = useMemo(() => {
+    const entry = loaderData?.systemRegistryList?.find(item => item.key === 'config.allow_guest_mode')
+    return entry ? {
+      value: entry.value,
+      isOverriddenByConfig: entry.isOverriddenByConfig
+    } : null
+  }, [loaderData?.systemRegistryList])
+
   // Check if there are unsaved changes
   const hasUnsavedChanges = useMemo(() => {
     return Object.keys(originalSettings).some(key => 
@@ -73,14 +82,19 @@ export function AdminPage({ loaderData }: AdminPageProps) {
                 <div className='text-base font-medium'>Guest Mode</div>
                 <div className='text-sm text-muted-foreground'>
                   Allow users to browse the gallery without creating an account
+                  {guestModeConfig?.isOverriddenByConfig && (
+                    <span className='block text-orange-600 dark:text-orange-400 mt-1'>
+                      This setting is overridden by configuration file or environment variable
+                    </span>
+                  )}
                 </div>
               </div>
               <Checkbox
-                checked={settings['auth.enableGuestMode'] === 'true'}
+                checked={guestModeConfig?.value === 'true' || settings['config.allow_guest_mode'] === 'true'}
                 onCheckedChange={(checked) => 
-                  updateSetting('auth.enableGuestMode', checked ? 'true' : 'false')
+                  updateSetting('config.allow_guest_mode', checked ? 'true' : 'false')
                 }
-                disabled={isUpdatingSettings}
+                disabled={isUpdatingSettings || guestModeConfig?.isOverriddenByConfig}
               />
             </div>
             

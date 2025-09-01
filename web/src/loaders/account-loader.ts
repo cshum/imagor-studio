@@ -1,6 +1,6 @@
-import { getSystemRegistryObject } from '@/api/registry-api'
+import { getSystemRegistryObject, listSystemRegistry } from '@/api/registry-api'
 import { listUsers } from '@/api/user-api'
-import type { ListUsersQuery } from '@/generated/graphql'
+import type { ListUsersQuery, ListSystemRegistryQuery } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { getAuth } from '@/stores/auth-store'
 
@@ -14,6 +14,7 @@ export interface ProfileLoaderData {
 
 export interface AdminLoaderData {
   registry: Record<string, string>
+  systemRegistryList: ListSystemRegistryQuery['listSystemRegistry']
   breadcrumb: BreadcrumbItem
 }
 
@@ -45,8 +46,13 @@ export const profileLoader = async (): Promise<ProfileLoaderData> => {
  */
 export const adminLoader = async (): Promise<AdminLoaderData> => {
   const registry = await getSystemRegistryObject()
+  
+  // Get all system registry entries with override information
+  const systemRegistryList = await listSystemRegistry()
+  
   return {
     registry,
+    systemRegistryList,
     breadcrumb: {
       label: 'Admin',
     },

@@ -1,13 +1,25 @@
 import { gql } from '@/generated'
 
 export const RegistryFragment = gql(`
-  fragment RegistryInfo on Registry {
+  fragment RegistryInfo on UserRegistry {
     key
     value
     ownerID
     isEncrypted
     createdAt
     updatedAt
+  }
+`)
+
+export const SystemRegistryFragment = gql(`
+  fragment SystemRegistryInfo on SystemRegistry {
+    key
+    value
+    ownerID
+    isEncrypted
+    createdAt
+    updatedAt
+    isOverriddenByConfig
   }
 `)
 
@@ -32,7 +44,7 @@ export const GetUserRegistryQuery = gql(`
 export const ListSystemRegistryQuery = gql(`
   query ListSystemRegistry($prefix: String) {
     listSystemRegistry(prefix: $prefix) {
-      ...RegistryInfo
+      ...SystemRegistryInfo
     }
   }
 `)
@@ -40,7 +52,7 @@ export const ListSystemRegistryQuery = gql(`
 export const GetSystemRegistryQuery = gql(`
   query GetSystemRegistry($key: String!) {
     getSystemRegistry(key: $key) {
-      ...RegistryInfo
+      ...SystemRegistryInfo
     }
   }
 `)
@@ -64,7 +76,7 @@ export const DeleteUserRegistryMutation = gql(`
 export const SetSystemRegistryMutation = gql(`
   mutation SetSystemRegistry($entries: [RegistryEntryInput!]!) {
     setSystemRegistry(entries: $entries) {
-      ...RegistryInfo
+      ...SystemRegistryInfo
     }
   }
 `)
