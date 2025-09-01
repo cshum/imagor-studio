@@ -60,17 +60,9 @@ type Config struct {
 	OriginalArgs []string
 }
 
-// LoadOptions contains options for loading configuration
-type LoadOptions struct {
-	RegistryStore registrystore.Store // Optional registry store for enhanced loading
-	Args          []string            // Optional args override (defaults to os.Args[1:])
-}
-
 // Load loads configuration with optional registry enhancement
-func Load(opts *LoadOptions) (*Config, error) {
-	if opts == nil {
-		opts = &LoadOptions{}
-	}
+// Both args and registryStore are optional (can be nil)
+func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 
 	fs := flag.NewFlagSet("imagor-studio", flag.ContinueOnError)
 
@@ -105,7 +97,6 @@ func Load(opts *LoadOptions) (*Config, error) {
 	_ = fs.String("config", ".env", "config file (optional)")
 
 	// Prepare ff options
-	args := opts.Args
 	if args == nil {
 		args = os.Args[1:]
 	}
@@ -118,13 +109,6 @@ func Load(opts *LoadOptions) (*Config, error) {
 		ff.WithAllowMissingConfigFile(true),
 	}
 
-	// Pre-populate registry values if registry store is available
-	if opts.RegistryStore != nil {
-		if err := prePopulateRegistryValues(fs, opts.RegistryStore); err != nil {
-			return nil, fmt.Errorf("error loading registry values: %w", err)
-		}
-	}
-
 	// For tests, we need to handle the case where test flags might conflict
 	// We'll catch the error and try to parse without unknown flags
 	err := ff.Parse(fs, args, ffOptions...)
@@ -133,6 +117,19 @@ func Load(opts *LoadOptions) (*Config, error) {
 		ffOptionsWithIgnore := append(ffOptions, ff.WithIgnoreUndefined(true))
 		if err := ff.Parse(fs, args, ffOptionsWithIgnore...); err != nil {
 			return nil, fmt.Errorf("error parsing configuration: %w", err)
+		}
+	}
+
+	// Track overridden flags AFTER flag parsing
+	overriddenFlags := make(map[string]string)
+	fs.Visit(func(f *flag.Flag) {
+		overriddenFlags[f.Name] = f.Value.String()
+	})
+
+	// Apply registry values if registry store is provided
+	if registryStore != nil {
+		if err := ApplyRegistryValues(fs, overriddenFlags, registryStore); err != nil {
+			return nil, fmt.Errorf("failed to apply registry values: %w", err)
 		}
 	}
 
@@ -195,14 +192,9 @@ func Load(opts *LoadOptions) (*Config, error) {
 		ImagorResultStorage:  *imagorResultStorage,
 		Logger:               logger,
 		FlagSet:              fs,
-		OverriddenFlags:      make(map[string]string),
+		OverriddenFlags:      overriddenFlags,
 		OriginalArgs:         args,
 	}
-
-	// Track overridden flags AFTER flag parsing
-	cfg.FlagSet.Visit(func(f *flag.Flag) {
-		cfg.OverriddenFlags[f.Name] = f.Value.String()
-	})
 
 	// Validate storage configuration
 	if err := cfg.validateStorageConfig(); err != nil {
@@ -221,12 +213,12 @@ func Load(opts *LoadOptions) (*Config, error) {
 
 // LoadBasic loads configuration without registry enhancement (for initial bootstrap)
 func LoadBasic() (*Config, error) {
-	return Load(nil)
+	return Load(nil, nil)
 }
 
 // LoadWithRegistry loads configuration with registry enhancement
 func LoadWithRegistry(registryStore registrystore.Store) (*Config, error) {
-	return Load(&LoadOptions{RegistryStore: registryStore})
+	return Load(nil, registryStore)
 }
 
 func (c *Config) validateStorageConfig() error {
@@ -286,39 +278,6 @@ func (p *RegistryParser) Parse(r io.Reader, set func(name, value string) error) 
 	return nil
 }
 
-// prePopulateRegistryValues loads values from registry and sets them as defaults in the flag set
-func prePopulateRegistryValues(fs *flag.FlagSet, registryStore registrystore.Store) error {
-	ctx := context.Background()
-
-	// Auto-parse registry entries with "config." prefix
-	prefix := "config."
-	entries, err := registryStore.List(ctx, "system", &prefix)
-	if err != nil {
-		// Log error but continue - registry values are optional
-		return nil
-	}
-
-	// Apply registry values to flags using auto-parsing
-	for _, entry := range entries {
-		if entry.Value != "" {
-			// Strip "config." prefix: config.jwt_secret -> jwt_secret
-			configKey := strings.TrimPrefix(entry.Key, prefix)
-			// Convert to flag format: jwt_secret -> jwt-secret
-			flagName := strings.ReplaceAll(configKey, "_", "-")
-
-			// Find the flag and set its default value
-			flag := fs.Lookup(flagName)
-			if flag != nil {
-				// Set the default value by updating the flag's DefValue and Value
-				flag.DefValue = entry.Value
-				flag.Value.Set(entry.Value)
-			}
-		}
-	}
-
-	return nil
-}
-
 // GetRegistryKeyForFlag returns the registry key for a given flag name
 func GetRegistryKeyForFlag(flagName string) string {
 	// Convert flag name to registry key format with config. prefix
@@ -358,4 +317,36 @@ func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, ex
 	}
 
 	return "", false
+}
+
+// ApplyRegistryValues applies registry values to flags that weren't overridden by CLI/env
+// This is a standalone function that uses the flag system for automatic type conversion
+func ApplyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]string, registryStore registrystore.Store) error {
+	ctx := context.Background()
+	prefix := "config."
+	entries, err := registryStore.List(ctx, "system", &prefix)
+	if err != nil {
+		// Registry values are optional, so we can continue without them
+		return nil
+	}
+
+	for _, entry := range entries {
+		if entry.Value == "" {
+			continue
+		}
+
+		flagName := GetFlagNameForRegistryKey(entry.Key)
+
+		// Only apply if not overridden by CLI/env
+		if _, overridden := overriddenFlags[flagName]; !overridden {
+			// Use the flag system to set the value - this handles type conversion automatically
+			if flag := flagSet.Lookup(flagName); flag != nil {
+				if err := flag.Value.Set(entry.Value); err != nil {
+					return fmt.Errorf("failed to set flag %s to value %s: %w", flagName, entry.Value, err)
+				}
+			}
+		}
+	}
+
+	return nil
 }

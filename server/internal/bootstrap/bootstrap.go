@@ -52,41 +52,31 @@ func Initialize(cfg *config.Config) (*Services, error) {
 	// Initialize registry store
 	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
 
-	// Reload config with registry values - this implements the simplified approach
-	// where we call Load twice: once without registry (already done), then with registry
-	// Only do this if the config has OriginalArgs (i.e., was loaded via config.Load)
-	if cfg.OriginalArgs != nil {
-		enhancedCfg, err := config.Load(&config.LoadOptions{
-			RegistryStore: registryStore,
-			Args:          cfg.OriginalArgs,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to load config with registry values: %w", err)
-		}
-		// Use the enhanced config from here on
-		cfg = enhancedCfg
+	// Create a new config with registry values properly applied
+	// This replaces the old ApplyRegistryValues approach with a clean config creation
+	enhancedCfg, err := config.Load(cfg.OriginalArgs, registryStore)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create enhanced config with registry values: %w", err)
 	}
-	// If OriginalArgs is nil (e.g., manually created config in tests),
-	// we skip registry enhancement and continue with the existing config
 
 	// Update encryption service with final JWT secret
-	encryptionService.SetJWTKey(cfg.JWTSecret)
+	encryptionService.SetJWTKey(enhancedCfg.JWTSecret)
 
 	// Initialize token manager
-	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
+	tokenManager := auth.NewTokenManager(enhancedCfg.JWTSecret, enhancedCfg.JWTExpiration)
 
 	// Initialize storage provider and create storage
-	storageProvider := storageprovider.New(cfg.Logger)
-	stor, err := storageProvider.NewStorageFromConfig(cfg)
+	storageProvider := storageprovider.New(enhancedCfg.Logger)
+	stor, err := storageProvider.NewStorageFromConfig(enhancedCfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
 
 	// Initialize user store
-	userStore := userstore.New(db, cfg.Logger)
+	userStore := userstore.New(db, enhancedCfg.Logger)
 
 	// Initialize image service
-	imageService := initializeImageService(cfg, registryStore)
+	imageService := initializeImageService(enhancedCfg, registryStore)
 
 	return &Services{
 		DB:            db,
@@ -96,7 +86,7 @@ func Initialize(cfg *config.Config) (*Services, error) {
 		UserStore:     userStore,
 		ImageService:  imageService,
 		Encryption:    encryptionService,
-		Config:        cfg, // Return the enhanced config
+		Config:        enhancedCfg, // Return the enhanced config
 	}, nil
 }
 

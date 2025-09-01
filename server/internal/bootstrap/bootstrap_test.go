@@ -34,6 +34,7 @@ func TestInitialize(t *testing.T) {
 		ImagorUnsafe:         false,
 		ImagorResultStorage:  "same",
 		Logger:               zap.NewNop(),
+		OriginalArgs:         []string{"--jwt-secret", "test-jwt-secret", "--db-path", tmpDB}, // Set OriginalArgs for the test
 	}
 
 	services, err := Initialize(cfg)
@@ -89,9 +90,7 @@ func TestJWTSecretFromEnv(t *testing.T) {
 	defer os.Remove(tmpDB)
 
 	// Test the config loading directly to verify environment variable priority
-	cfg, err := config.Load(&config.LoadOptions{
-		Args: []string{"--db-path", tmpDB},
-	})
+	cfg, err := config.Load([]string{"--db-path", tmpDB}, nil)
 	require.NoError(t, err)
 
 	// Verify JWT secret from environment was used
@@ -127,10 +126,7 @@ func TestJWTSecretFromRegistry(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test config loading with registry enhancement
-	enhancedCfg, err := config.Load(&config.LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{"--db-path", tmpDB},
-	})
+	enhancedCfg, err := config.Load([]string{"--db-path", tmpDB}, registryStore)
 	require.NoError(t, err)
 
 	// Verify JWT secret from registry was used
@@ -168,10 +164,7 @@ func TestConfigEnhancement(t *testing.T) {
 	require.NoError(t, err)
 
 	// Load config with registry enhancement
-	enhancedCfg, err := config.Load(&config.LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{"--jwt-secret", "test-secret"},
-	})
+	enhancedCfg, err := config.Load([]string{"--jwt-secret", "test-secret"}, registryStore)
 	require.NoError(t, err)
 
 	// Verify that registry values were applied
@@ -213,10 +206,7 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 	require.NoError(t, err)
 
 	// Load config with registry enhancement (env should take priority)
-	enhancedCfg, err := config.Load(&config.LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{"--jwt-secret", "test-secret"},
-	})
+	enhancedCfg, err := config.Load([]string{"--jwt-secret", "test-secret"}, registryStore)
 	require.NoError(t, err)
 
 	// Verify that env value takes priority over registry

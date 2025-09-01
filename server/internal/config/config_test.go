@@ -22,7 +22,7 @@ import (
 
 func TestLoadBasic(t *testing.T) {
 	// Test basic config loading without registry
-	cfg, err := Load(&LoadOptions{Args: []string{"--jwt-secret", "test-secret"}})
+	cfg, err := Load([]string{"--jwt-secret", "test-secret"}, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -47,7 +47,7 @@ func TestLoadWithArgs(t *testing.T) {
 		"--jwt-secret", "test-secret",
 	}
 
-	cfg, err := Load(&LoadOptions{Args: args})
+	cfg, err := Load(args, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -71,7 +71,7 @@ func TestLoadWithEnvVars(t *testing.T) {
 		os.Unsetenv("IMAGOR_MODE")
 	}()
 
-	cfg, err := Load(&LoadOptions{Args: []string{"--jwt-secret", "test-secret"}})
+	cfg, err := Load([]string{"--jwt-secret", "test-secret"}, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -101,10 +101,7 @@ func TestLoadWithRegistry(t *testing.T) {
 	require.NoError(t, err)
 
 	// Load config with registry
-	cfg, err := Load(&LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{"--jwt-secret", "test-secret"},
-	})
+	cfg, err := Load([]string{"--jwt-secret", "test-secret"}, registryStore)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -125,7 +122,7 @@ func TestConfigPriority(t *testing.T) {
 
 	// Set registry value
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "storage_type", "s3", false)
+	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
 	require.NoError(t, err)
 
 	// Set environment variable (should override registry)
@@ -133,10 +130,7 @@ func TestConfigPriority(t *testing.T) {
 	defer os.Unsetenv("STORAGE_TYPE")
 
 	// Load config with registry
-	cfg, err := Load(&LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{"--jwt-secret", "test-secret"},
-	})
+	cfg, err := Load([]string{"--jwt-secret", "test-secret"}, registryStore)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -155,7 +149,7 @@ func TestConfigPriorityWithArgs(t *testing.T) {
 
 	// Set registry value
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "storage_type", "s3", false)
+	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
 	require.NoError(t, err)
 
 	// Set environment variable
@@ -165,10 +159,7 @@ func TestConfigPriorityWithArgs(t *testing.T) {
 	// Use command line args (should have highest priority)
 	args := []string{"--storage-type", "filesystem", "--jwt-secret", "test-secret"}
 
-	cfg, err := Load(&LoadOptions{
-		RegistryStore: registryStore,
-		Args:          args,
-	})
+	cfg, err := Load(args, registryStore)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -288,10 +279,7 @@ func TestAutoParsingWithConfigPrefix(t *testing.T) {
 	require.NoError(t, err)
 
 	// Load config with registry
-	cfg, err := Load(&LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{}, // No args, should use registry values
-	})
+	cfg, err := Load([]string{}, registryStore) // No args, should use registry values
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -319,10 +307,7 @@ func TestGuestModeConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	// Load config with registry
-	cfg, err := Load(&LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{}, // No args, should use registry values
-	})
+	cfg, err := Load([]string{}, registryStore) // No args, should use registry values
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -378,7 +363,7 @@ func TestConfigWithJWTSecret(t *testing.T) {
 		"--jwt-secret", "test-jwt-secret",
 	}
 
-	cfg, err := Load(&LoadOptions{Args: args})
+	cfg, err := Load(args, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -391,7 +376,7 @@ func TestConfigWithImagorSecret(t *testing.T) {
 		"--imagor-secret", "test-imagor-secret",
 	}
 
-	cfg, err := Load(&LoadOptions{Args: args})
+	cfg, err := Load(args, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -405,7 +390,7 @@ func TestConfigRequiresJWTSecret(t *testing.T) {
 		"--port", "8080",
 	}
 
-	_, err := Load(&LoadOptions{Args: args})
+	_, err := Load(args, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "jwt-secret is required")
 }
@@ -418,7 +403,7 @@ func TestConfigFilePermissions(t *testing.T) {
 		"--jwt-secret", "test-secret",
 	}
 
-	cfg, err := Load(&LoadOptions{Args: args})
+	cfg, err := Load(args, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -456,7 +441,7 @@ func TestConfigInvalidValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := Load(&LoadOptions{Args: tt.args})
+			_, err := Load(tt.args, nil)
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), tt.errorContains)
 		})
@@ -598,10 +583,7 @@ func TestGetByRegistryKey_ConfigDetection(t *testing.T) {
 			args := append([]string{"--jwt-secret", "test-secret"}, tt.args...)
 
 			// Load config with registry
-			cfg, err := Load(&LoadOptions{
-				RegistryStore: registryStore,
-				Args:          args,
-			})
+			cfg, err := Load(args, registryStore)
 			require.NoError(t, err, tt.description)
 			require.NotNil(t, cfg)
 
@@ -640,10 +622,7 @@ func TestValueSourceTracking(t *testing.T) {
 	defer os.Unsetenv("STORAGE_TYPE")
 
 	// Load config
-	cfg, err := Load(&LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{"--jwt-secret", "test-secret", "--imagor-mode", "disabled"},
-	})
+	cfg, err := Load([]string{"--jwt-secret", "test-secret", "--imagor-mode", "disabled"}, registryStore)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
