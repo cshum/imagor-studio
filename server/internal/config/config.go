@@ -198,7 +198,7 @@ func Load(opts *LoadOptions) (*Config, error) {
 		ValueSources:         make(map[string]string),
 	}
 
-	// Track value sources for configuration override detection
+	// Track value sources for configuration override detection AFTER flag parsing
 	if err := cfg.trackValueSources(opts.RegistryStore, args); err != nil {
 		return nil, fmt.Errorf("error tracking value sources: %w", err)
 	}
@@ -373,8 +373,15 @@ func (c *Config) trackValueSources(registryStore registrystore.Store, args []str
 	// Track environment variables
 	c.FlagSet.VisitAll(func(f *flag.Flag) {
 		envName := strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
-		if _, exists := os.LookupEnv(envName); exists {
-			c.ValueSources[f.Name] = "env"
+		if envValue, exists := os.LookupEnv(envName); exists {
+			// Only mark as env override if the env value is actually being used
+			// and there was a registry value that could be overridden
+			if c.registryFlags[f.Name] {
+				c.ValueSources[f.Name] = "env"
+			} else if envValue != "" {
+				// If no registry value exists, but env var is set, it's still env source
+				c.ValueSources[f.Name] = "env"
+			}
 		}
 	})
 

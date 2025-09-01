@@ -31,14 +31,14 @@ func New(cfg *config.Config) (*Server, error) {
 		return nil, fmt.Errorf("failed to initialize services: %w", err)
 	}
 
-	// Initialize GraphQL
+	// Initialize GraphQL with enhanced config from services
 	storageResolver := resolver.NewResolver(
 		services.Storage,
 		services.RegistryStore,
 		services.UserStore,
 		services.ImageService,
-		cfg,
-		cfg.Logger,
+		services.Config, // Use enhanced config from services
+		services.Config.Logger,
 	)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)

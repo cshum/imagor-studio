@@ -30,6 +30,7 @@ type Services struct {
 	UserStore     userstore.Store
 	ImageService  imageservice.Service
 	Encryption    *encryption.Service
+	Config        *config.Config
 }
 
 // Initialize sets up the database, runs migrations, and initializes all services
@@ -52,10 +53,16 @@ func Initialize(cfg *config.Config) (*Services, error) {
 	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
 
 	// Reload config with registry enhancement, preserving the current JWT secret
+	// Pass nil for Args to use os.Args[1:] which includes environment variables
 	enhancedCfg, err := config.Load(&config.LoadOptions{
 		RegistryStore: registryStore,
-		Args:          []string{"--jwt-secret", cfg.JWTSecret}, // Preserve current JWT secret
+		Args:          nil, // Use os.Args[1:] to preserve original command line and env vars
 	})
+
+	// Preserve the JWT secret from the original config if it was set
+	if cfg.JWTSecret != "" {
+		enhancedCfg.JWTSecret = cfg.JWTSecret
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to reload config with registry: %w", err)
 	}
@@ -91,6 +98,7 @@ func Initialize(cfg *config.Config) (*Services, error) {
 		UserStore:     userStore,
 		ImageService:  imageService,
 		Encryption:    encryptionService,
+		Config:        cfg, // Return the enhanced config
 	}, nil
 }
 
