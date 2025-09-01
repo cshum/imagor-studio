@@ -355,3 +355,34 @@ func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, ex
 
 	return "", false
 }
+
+// ApplyRegistryValues applies registry values to config fields that weren't overridden by CLI/env
+// This is a simplified version that leverages the flag system for automatic type conversion
+func (c *Config) ApplyRegistryValues(registryStore registrystore.Store) error {
+	ctx := context.Background()
+	prefix := "config."
+	entries, err := registryStore.List(ctx, "system", &prefix)
+	if err != nil {
+		// Registry values are optional, so we can continue without them
+		return nil
+	}
+
+	for _, entry := range entries {
+		if entry.Value == "" {
+			continue
+		}
+
+		flagName := GetFlagNameForRegistryKey(entry.Key)
+
+		// Only apply if not overridden by CLI/env
+		if _, overridden := c.OverriddenFlags[flagName]; !overridden {
+			// Use the existing flag system to set the value
+			// The flag system automatically handles type conversion and updates the config struct
+			if flag := c.FlagSet.Lookup(flagName); flag != nil {
+				flag.Value.Set(entry.Value)
+			}
+		}
+	}
+
+	return nil
+}
