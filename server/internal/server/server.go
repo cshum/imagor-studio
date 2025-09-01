@@ -38,7 +38,7 @@ func New(cfg *config.Config) (*Server, error) {
 		services.UserStore,
 		services.ImageService,
 		services.Config, // Use enhanced config from services
-		services.Config.Logger,
+		services.Logger,
 	)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
@@ -62,7 +62,7 @@ func New(cfg *config.Config) (*Server, error) {
 		services.TokenManager,
 		services.UserStore,
 		services.RegistryStore,
-		cfg.Logger,
+		services.Logger,
 	)
 
 	// Create middleware chain
@@ -90,7 +90,7 @@ func New(cfg *config.Config) (*Server, error) {
 	mux.Handle("/query", protectedHandler)
 
 	// Static file serving for web frontend
-	staticHandler := createStaticHandler(cfg.Logger)
+	staticHandler := createStaticHandler(services.Logger)
 	mux.Handle("/", staticHandler)
 
 	// Configure CORS
@@ -98,8 +98,8 @@ func New(cfg *config.Config) (*Server, error) {
 
 	// Apply global middleware to the entire mux
 	h := middleware.CORSMiddleware(corsConfig)(
-		middleware.LoggingMiddleware(cfg.Logger)(
-			middleware.ErrorMiddleware(cfg.Logger)(
+		middleware.LoggingMiddleware(services.Logger)(
+			middleware.ErrorMiddleware(services.Logger)(
 				mux,
 			),
 		),
@@ -116,7 +116,7 @@ func New(cfg *config.Config) (*Server, error) {
 
 func (s *Server) Run() error {
 	addr := fmt.Sprintf(":%d", s.cfg.Port)
-	s.cfg.Logger.Info("Server is running", zap.String("address", fmt.Sprintf("http://localhost%s", addr)))
+	s.services.Logger.Info("Server is running", zap.String("address", fmt.Sprintf("http://localhost%s", addr)))
 	return http.ListenAndServe(addr, nil)
 }
 

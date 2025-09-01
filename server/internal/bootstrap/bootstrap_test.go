@@ -33,8 +33,6 @@ func TestInitialize(t *testing.T) {
 		ImagorSecret:         "",
 		ImagorUnsafe:         false,
 		ImagorResultStorage:  "same",
-		Logger:               zap.NewNop(),
-		OriginalArgs:         []string{"--jwt-secret", "test-jwt-secret", "--db-path", tmpDB}, // Set OriginalArgs for the test
 	}
 
 	services, err := Initialize(cfg)
@@ -50,6 +48,7 @@ func TestInitialize(t *testing.T) {
 	assert.NotNil(t, services.UserStore)
 	assert.NotNil(t, services.ImageService)
 	assert.NotNil(t, services.Encryption)
+	assert.NotNil(t, services.Logger)
 
 	// Verify JWT secret was generated
 	assert.NotEmpty(t, cfg.JWTSecret)
@@ -64,7 +63,6 @@ func TestInitializeDatabase(t *testing.T) {
 
 	cfg := &config.Config{
 		DBPath: tmpDB,
-		Logger: zap.NewNop(),
 	}
 
 	db, err := initializeDatabase(cfg)
@@ -104,20 +102,20 @@ func TestJWTSecretFromRegistry(t *testing.T) {
 	// Initialize database and registry store first
 	cfg := &config.Config{
 		DBPath: tmpDB,
-		Logger: zap.NewNop(),
 	}
 
 	db, err := initializeDatabase(cfg)
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = runMigrations(db, cfg.Logger)
+	logger := zap.NewNop()
+	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
 	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
 	// Set a JWT key for encryption to work
 	encryptionService.SetJWTKey("test-jwt-key")
-	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
+	registryStore := registrystore.New(db, logger, encryptionService)
 
 	// Pre-store a secret in registry (JWT secrets must be encrypted)
 	existingSecret := "existing-registry-secret"
@@ -139,7 +137,6 @@ func TestConfigEnhancement(t *testing.T) {
 
 	cfg := &config.Config{
 		DBPath: tmpDB,
-		Logger: zap.NewNop(),
 	}
 
 	// Initialize minimal services for test
@@ -147,11 +144,12 @@ func TestConfigEnhancement(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = runMigrations(db, cfg.Logger)
+	logger := zap.NewNop()
+	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
 	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
-	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
+	registryStore := registrystore.New(db, logger, encryptionService)
 
 	// Test that config enhancement works with registry values
 	ctx := context.Background()
@@ -178,7 +176,6 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 
 	cfg := &config.Config{
 		DBPath: tmpDB,
-		Logger: zap.NewNop(),
 	}
 
 	// Initialize minimal services for test
@@ -186,11 +183,12 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = runMigrations(db, cfg.Logger)
+	logger := zap.NewNop()
+	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
 	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
-	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
+	registryStore := registrystore.New(db, logger, encryptionService)
 
 	// Set environment variables (s3 requires bucket)
 	os.Setenv("STORAGE_TYPE", "s3")
@@ -225,7 +223,6 @@ func TestInitializeImageService(t *testing.T) {
 		ImagorSecret:        "test-secret",
 		ImagorUnsafe:        false,
 		ImagorResultStorage: "same",
-		Logger:              zap.NewNop(),
 	}
 
 	// Initialize minimal services for test
@@ -233,11 +230,12 @@ func TestInitializeImageService(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = runMigrations(db, cfg.Logger)
+	logger := zap.NewNop()
+	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
 	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
-	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
+	registryStore := registrystore.New(db, logger, encryptionService)
 
 	imageService := initializeImageService(cfg, registryStore)
 

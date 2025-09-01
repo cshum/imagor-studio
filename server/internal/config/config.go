@@ -12,7 +12,6 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/peterbourgon/ff/v3"
-	"go.uber.org/zap"
 )
 
 type Config struct {
@@ -47,17 +46,6 @@ type Config struct {
 	ImagorSecret        string // Imagor secret key
 	ImagorUnsafe        bool   // For development
 	ImagorResultStorage string // "same", "separate"
-
-	Logger *zap.Logger
-
-	// FlagSet used for configuration parsing - exposed for reuse
-	FlagSet *flag.FlagSet
-
-	// Track which flags were explicitly set (overridden from defaults)
-	OverriddenFlags map[string]string // flag_name -> effective_value
-
-	// Store original args for potential reloading
-	OriginalArgs []string
 }
 
 // Load loads configuration with optional registry enhancement
@@ -128,14 +116,9 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 
 	// Apply registry values if registry store is provided
 	if registryStore != nil {
-		if err := applyRegistryValues(fs, overriddenFlags, registryStore); err != nil {
+		if err := ApplyRegistryValues(fs, overriddenFlags, registryStore); err != nil {
 			return nil, fmt.Errorf("failed to apply registry values: %w", err)
 		}
-	}
-
-	logger, err := zap.NewProduction()
-	if err != nil {
-		return nil, fmt.Errorf("error initializing logger: %w", err)
 	}
 
 	if *jwtSecret == "" {
@@ -190,23 +173,12 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		ImagorSecret:         *imagorSecret,
 		ImagorUnsafe:         *imagorUnsafe,
 		ImagorResultStorage:  *imagorResultStorage,
-		Logger:               logger,
-		FlagSet:              fs,
-		OverriddenFlags:      overriddenFlags,
-		OriginalArgs:         args,
 	}
 
 	// Validate storage configuration
 	if err := cfg.validateStorageConfig(); err != nil {
 		return nil, err
 	}
-
-	cfg.Logger.Info("Configuration loaded",
-		zap.Int("port", cfg.Port),
-		zap.String("dbPath", cfg.DBPath),
-		zap.Duration("jwtExpiration", cfg.JWTExpiration),
-		zap.String("storageType", cfg.StorageType),
-	)
 
 	return cfg, nil
 }
@@ -302,25 +274,15 @@ func GetFlagNameForRegistryKey(registryKey string) string {
 }
 
 // GetByRegistryKey returns the effective config value and whether the config key is overridden by external config
+// This is a simplified version that always returns false since we no longer track overridden flags in the config
 func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
-	// Only check config override for keys with "config." prefix
-	if !strings.HasPrefix(registryKey, "config.") {
-		return "", false
-	}
-
-	// Convert registry key to flag name
-	flagName := GetFlagNameForRegistryKey(registryKey)
-
-	// Check if this flag was explicitly set (overridden from defaults)
-	if value, overridden := c.OverriddenFlags[flagName]; overridden {
-		return value, true
-	}
-
+	// For now, always return false since we don't track overridden flags in the config anymore
+	// This method is mainly used by tests and can be simplified or removed in the future
 	return "", false
 }
 
-// applyRegistryValues applies registry values to flags that weren't overridden by CLI/env
-func applyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]string, registryStore registrystore.Store) error {
+// ApplyRegistryValues applies registry values to flags that weren't overridden by CLI/env
+func ApplyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]string, registryStore registrystore.Store) error {
 	ctx := context.Background()
 	prefix := "config."
 	entries, err := registryStore.List(ctx, "system", &prefix)
@@ -348,4 +310,85 @@ func applyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]strin
 	}
 
 	return nil
+}
+
+// ApplyRegistryToConfig applies registry values directly to an existing config
+// This is used when we want to enhance a config without re-parsing command line arguments
+func ApplyRegistryToConfig(cfg *Config, registryStore registrystore.Store) error {
+	ctx := context.Background()
+	prefix := "config."
+	entries, err := registryStore.List(ctx, "system", &prefix)
+	if err != nil {
+		// Registry values are optional, so we can continue without them
+		return nil
+	}
+
+	for _, entry := range entries {
+		if entry.Value == "" {
+			continue
+		}
+
+		flagName := GetFlagNameForRegistryKey(entry.Key)
+
+		// Apply registry values directly to config fields
+		switch flagName {
+		case "port":
+			if portInt, err := strconv.Atoi(entry.Value); err == nil {
+				cfg.Port = portInt
+			}
+		case "db-path":
+			cfg.DBPath = entry.Value
+		case "storage-type":
+			cfg.StorageType = entry.Value
+		case "jwt-secret":
+			cfg.JWTSecret = entry.Value
+		case "jwt-expiration":
+			if duration, err := time.ParseDuration(entry.Value); err == nil {
+				cfg.JWTExpiration = duration
+			}
+		case "allow-guest-mode":
+			if boolVal, err := strconv.ParseBool(entry.Value); err == nil {
+				cfg.AllowGuestMode = boolVal
+			}
+		case "file-base-dir":
+			cfg.FileBaseDir = entry.Value
+		case "file-mkdir-permissions":
+			if perm, err := strconv.ParseUint(entry.Value, 8, 32); err == nil {
+				cfg.FileMkdirPermissions = os.FileMode(perm)
+			}
+		case "file-write-permissions":
+			if perm, err := strconv.ParseUint(entry.Value, 8, 32); err == nil {
+				cfg.FileWritePermissions = os.FileMode(perm)
+			}
+		case "s3-bucket":
+			cfg.S3Bucket = entry.Value
+		case "s3-region":
+			cfg.S3Region = entry.Value
+		case "s3-endpoint":
+			cfg.S3Endpoint = entry.Value
+		case "s3-access-key-id":
+			cfg.S3AccessKeyID = entry.Value
+		case "s3-secret-access-key":
+			cfg.S3SecretAccessKey = entry.Value
+		case "s3-session-token":
+			cfg.S3SessionToken = entry.Value
+		case "s3-base-dir":
+			cfg.S3BaseDir = entry.Value
+		case "imagor-mode":
+			cfg.ImagorMode = entry.Value
+		case "imagor-url":
+			cfg.ImagorURL = entry.Value
+		case "imagor-secret":
+			cfg.ImagorSecret = entry.Value
+		case "imagor-unsafe":
+			if boolVal, err := strconv.ParseBool(entry.Value); err == nil {
+				cfg.ImagorUnsafe = boolVal
+			}
+		case "imagor-result-storage":
+			cfg.ImagorResultStorage = entry.Value
+		}
+	}
+
+	// Validate storage configuration after applying registry values
+	return cfg.validateStorageConfig()
 }

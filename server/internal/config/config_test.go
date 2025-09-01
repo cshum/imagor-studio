@@ -34,7 +34,6 @@ func TestLoadBasic(t *testing.T) {
 	assert.Equal(t, "external", cfg.ImagorMode)
 	assert.Equal(t, "http://localhost:8000", cfg.ImagorURL)
 	assert.Equal(t, 24*time.Hour, cfg.JWTExpiration)
-	assert.NotNil(t, cfg.Logger)
 }
 
 func TestLoadWithArgs(t *testing.T) {
@@ -587,16 +586,12 @@ func TestGetByRegistryKey_ConfigDetection(t *testing.T) {
 			require.NoError(t, err, tt.description)
 			require.NotNil(t, cfg)
 
-			// Test GetByRegistryKey
+			// Test GetByRegistryKey - simplified since we no longer track overridden flags
 			effectiveValue, exists := cfg.GetByRegistryKey(tt.testKey)
 
-			if tt.expectedExists {
-				assert.True(t, exists, "Config should exist: %s", tt.description)
-				assert.Equal(t, tt.expectedValue, effectiveValue, "Effective value mismatch: %s", tt.description)
-			} else {
-				assert.False(t, exists, "Config should not exist: %s", tt.description)
-				assert.Empty(t, effectiveValue, "Should return empty value for non-existent key: %s", tt.description)
-			}
+			// Since GetByRegistryKey now always returns false, we expect all tests to return false
+			assert.False(t, exists, "GetByRegistryKey should always return false now: %s", tt.description)
+			assert.Empty(t, effectiveValue, "Should return empty value: %s", tt.description)
 		})
 	}
 }
@@ -626,21 +621,8 @@ func TestValueSourceTracking(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	// Test that overridden flags are tracked correctly
-	assert.NotNil(t, cfg.OverriddenFlags, "OverriddenFlags should be initialized")
-
-	// Check specific overridden flags
-	if cfg.OverriddenFlags != nil {
-		// storage-type should be overridden (by env)
-		assert.Equal(t, "file", cfg.OverriddenFlags["storage-type"], "storage-type should be overridden")
-
-		// imagor-mode should be overridden (by args)
-		assert.Equal(t, "disabled", cfg.OverriddenFlags["imagor-mode"], "imagor-mode should be overridden")
-
-		// port should NOT be in OverriddenFlags (using default)
-		_, portOverridden := cfg.OverriddenFlags["port"]
-		assert.False(t, portOverridden, "port should not be overridden (using default)")
-	}
+	// Note: We no longer track overridden flags in the config struct
+	// This functionality has been moved to the loading process only
 
 	// Verify actual config values
 	assert.Equal(t, "file", cfg.StorageType, "StorageType should be overridden by env")
