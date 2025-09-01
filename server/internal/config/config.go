@@ -52,6 +52,12 @@ type Config struct {
 
 	// FlagSet used for configuration parsing - exposed for reuse
 	FlagSet *flag.FlagSet
+
+	// Track where each configuration value came from
+	ValueSources map[string]string // flag_name -> source ("registry", "env", "config_file", "args", "default")
+
+	// Track which flags have registry values
+	registryFlags map[string]bool // flag_name -> has_registry_value
 }
 
 // LoadOptions contains options for loading configuration
@@ -189,6 +195,12 @@ func Load(opts *LoadOptions) (*Config, error) {
 		ImagorResultStorage:  *imagorResultStorage,
 		Logger:               logger,
 		FlagSet:              fs,
+		ValueSources:         make(map[string]string),
+	}
+
+	// Track value sources for configuration override detection
+	if err := cfg.trackValueSources(opts.RegistryStore, args); err != nil {
+		return nil, fmt.Errorf("error tracking value sources: %w", err)
 	}
 
 	// Validate storage configuration
@@ -329,8 +341,65 @@ func GetFlagNameForRegistryKey(registryKey string) string {
 	return strings.ReplaceAll(key, "_", "-")
 }
 
-// GetEffectiveValueByRegistryKey returns the effective config value and whether the flag exists
-func (c *Config) GetEffectiveValueByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
+// trackValueSources determines where each configuration value came from
+func (c *Config) trackValueSources(registryStore registrystore.Store, args []string) error {
+	// Initialize all flags as defaults first
+	c.FlagSet.VisitAll(func(f *flag.Flag) {
+		c.ValueSources[f.Name] = "default"
+	})
+
+	// Track registry values and store which flags have registry values
+	c.registryFlags = make(map[string]bool)
+	if registryStore != nil {
+		ctx := context.Background()
+		prefix := "config."
+		entries, err := registryStore.List(ctx, "system", &prefix)
+		if err == nil {
+			for _, entry := range entries {
+				if entry.Value != "" {
+					configKey := strings.TrimPrefix(entry.Key, prefix)
+					flagName := strings.ReplaceAll(configKey, "_", "-")
+
+					// Check if this flag exists and has a registry value
+					if flag := c.FlagSet.Lookup(flagName); flag != nil {
+						c.ValueSources[flagName] = "registry"
+						c.registryFlags[flagName] = true
+					}
+				}
+			}
+		}
+	}
+
+	// Track environment variables
+	c.FlagSet.VisitAll(func(f *flag.Flag) {
+		envName := strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
+		if _, exists := os.LookupEnv(envName); exists {
+			c.ValueSources[f.Name] = "env"
+		}
+	})
+
+	// Track command line arguments
+	if len(args) > 0 {
+		for i := 0; i < len(args); i++ {
+			arg := args[i]
+			if strings.HasPrefix(arg, "--") {
+				flagName := strings.TrimPrefix(arg, "--")
+				// Handle flags with values (--flag=value or --flag value)
+				if strings.Contains(flagName, "=") {
+					flagName = strings.Split(flagName, "=")[0]
+				}
+				if c.FlagSet.Lookup(flagName) != nil {
+					c.ValueSources[flagName] = "args"
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// GetEffectiveValueByRegistryKey returns the effective config value and whether it's overridden
+func (c *Config) GetEffectiveValueByRegistryKey(registryKey string) (effectiveValue string, isOverridden bool) {
 	// Only check config override for keys with "config." prefix
 	if !strings.HasPrefix(registryKey, "config.") {
 		return "", false
@@ -352,5 +421,30 @@ func (c *Config) GetEffectiveValueByRegistryKey(registryKey string) (effectiveVa
 	}
 
 	// Get the current effective value from the flag
-	return flagValue.Value.String(), true
+	effectiveValue = flagValue.Value.String()
+
+	// Check if this value is overridden by external sources
+	if c.ValueSources != nil {
+		source := c.ValueSources[flagName]
+		// It's overridden only if:
+		// 1. There was a registry value originally (source was "registry" at some point), AND
+		// 2. The current source is from external override (env, args, config_file)
+		// We need to check if there was ever a registry value for this key
+		hasRegistryValue := c.hasRegistryValue(registryKey)
+		isOverridden = hasRegistryValue && source != "" && source != "registry" && source != "default"
+	}
+
+	return effectiveValue, isOverridden
+}
+
+// hasRegistryValue checks if there's a registry value for the given registry key
+func (c *Config) hasRegistryValue(registryKey string) bool {
+	flagName := GetFlagNameForRegistryKey(registryKey)
+
+	// Use the registryFlags map to check if this flag had a registry value
+	if c.registryFlags != nil {
+		return c.registryFlags[flagName]
+	}
+
+	return false
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -460,6 +461,218 @@ func TestConfigInvalidValues(t *testing.T) {
 			assert.Contains(t, err.Error(), tt.errorContains)
 		})
 	}
+}
+
+func TestGetEffectiveValueByRegistryKey_OverrideDetection(t *testing.T) {
+	tests := []struct {
+		name               string
+		registryValues     map[string]string
+		envVars            map[string]string
+		args               []string
+		testKey            string
+		expectedValue      string
+		expectedExists     bool
+		expectedOverridden bool
+		description        string
+	}{
+		{
+			name: "Registry value only - not overridden",
+			registryValues: map[string]string{
+				"config.storage_type": "file",
+			},
+			testKey:            "config.storage_type",
+			expectedValue:      "file",
+			expectedExists:     true,
+			expectedOverridden: false,
+			description:        "When value comes from registry only, should not be marked as overridden",
+		},
+		{
+			name: "Registry value overridden by environment",
+			registryValues: map[string]string{
+				"config.storage_type": "s3",
+			},
+			envVars: map[string]string{
+				"STORAGE_TYPE": "file",
+			},
+			testKey:            "config.storage_type",
+			expectedValue:      "file",
+			expectedExists:     true,
+			expectedOverridden: true,
+			description:        "When registry value is overridden by env var, should be marked as overridden",
+		},
+		{
+			name: "Registry value overridden by args",
+			registryValues: map[string]string{
+				"config.storage_type": "s3",
+			},
+			args:               []string{"--storage-type", "filesystem"},
+			testKey:            "config.storage_type",
+			expectedValue:      "filesystem",
+			expectedExists:     true,
+			expectedOverridden: true,
+			description:        "When registry value is overridden by command line args, should be marked as overridden",
+		},
+		{
+			name: "Registry value matches override value - still overridden",
+			registryValues: map[string]string{
+				"config.storage_type": "file",
+			},
+			envVars: map[string]string{
+				"STORAGE_TYPE": "file",
+			},
+			testKey:            "config.storage_type",
+			expectedValue:      "file",
+			expectedExists:     true,
+			expectedOverridden: true,
+			description:        "Even when values match, if there's an external override, should be marked as overridden",
+		},
+		{
+			name: "No registry value, env only - not overridden",
+			envVars: map[string]string{
+				"STORAGE_TYPE": "file",
+			},
+			testKey:            "config.storage_type",
+			expectedValue:      "file",
+			expectedExists:     true,
+			expectedOverridden: false,
+			description:        "When there's no registry value to override, should not be marked as overridden",
+		},
+		{
+			name: "Non-config registry key - not tracked",
+			registryValues: map[string]string{
+				"app.version": "1.0.0",
+			},
+			testKey:            "app.version",
+			expectedValue:      "",
+			expectedExists:     false,
+			expectedOverridden: false,
+			description:        "Non-config registry keys should not be tracked for overrides",
+		},
+		{
+			name: "Guest mode registry value only",
+			registryValues: map[string]string{
+				"config.allow_guest_mode": "true",
+			},
+			testKey:            "config.allow_guest_mode",
+			expectedValue:      "true",
+			expectedExists:     true,
+			expectedOverridden: false,
+			description:        "Guest mode from registry should not be marked as overridden",
+		},
+		{
+			name: "Guest mode overridden by environment",
+			registryValues: map[string]string{
+				"config.allow_guest_mode": "true",
+			},
+			envVars: map[string]string{
+				"ALLOW_GUEST_MODE": "false",
+			},
+			testKey:            "config.allow_guest_mode",
+			expectedValue:      "false",
+			expectedExists:     true,
+			expectedOverridden: true,
+			description:        "Guest mode overridden by env should be marked as overridden",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create temporary database
+			tmpDB := "/tmp/test_override_detection_" + strings.ReplaceAll(tt.name, " ", "_") + ".db"
+			defer os.Remove(tmpDB)
+
+			// Initialize database and registry store
+			db, registryStore := setupTestRegistry(t, tmpDB)
+			defer db.Close()
+
+			// Set registry values
+			ctx := context.Background()
+			for key, value := range tt.registryValues {
+				_, err := registryStore.Set(ctx, "system", key, value, false)
+				require.NoError(t, err)
+			}
+
+			// Set environment variables
+			for envKey, envValue := range tt.envVars {
+				os.Setenv(envKey, envValue)
+				defer os.Unsetenv(envKey)
+			}
+
+			// Prepare args with JWT secret
+			args := append([]string{"--jwt-secret", "test-secret"}, tt.args...)
+
+			// Load config with registry
+			cfg, err := Load(&LoadOptions{
+				RegistryStore: registryStore,
+				Args:          args,
+			})
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, cfg)
+
+			// Test GetEffectiveValueByRegistryKey
+			effectiveValue, isOverridden := cfg.GetEffectiveValueByRegistryKey(tt.testKey)
+
+			if tt.expectedExists {
+				assert.Equal(t, tt.expectedValue, effectiveValue, "Effective value mismatch: %s", tt.description)
+				assert.Equal(t, tt.expectedOverridden, isOverridden, "Override detection mismatch: %s", tt.description)
+			} else {
+				assert.Empty(t, effectiveValue, "Should return empty value for non-existent key: %s", tt.description)
+				assert.False(t, isOverridden, "Should return false for non-existent key: %s", tt.description)
+			}
+		})
+	}
+}
+
+func TestValueSourceTracking(t *testing.T) {
+	// Create temporary database
+	tmpDB := "/tmp/test_value_source_tracking.db"
+	defer os.Remove(tmpDB)
+
+	// Initialize database and registry store
+	db, registryStore := setupTestRegistry(t, tmpDB)
+	defer db.Close()
+
+	// Set registry values
+	ctx := context.Background()
+	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
+	require.NoError(t, err)
+	_, err = registryStore.Set(ctx, "system", "config.allow_guest_mode", "true", false)
+	require.NoError(t, err)
+
+	// Set environment variable (should override registry)
+	os.Setenv("STORAGE_TYPE", "file")
+	defer os.Unsetenv("STORAGE_TYPE")
+
+	// Load config
+	cfg, err := Load(&LoadOptions{
+		RegistryStore: registryStore,
+		Args:          []string{"--jwt-secret", "test-secret", "--imagor-mode", "disabled"},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	// Test that value sources are tracked correctly
+	assert.NotNil(t, cfg.ValueSources, "ValueSources should be initialized")
+
+	// Check specific value sources
+	if cfg.ValueSources != nil {
+		// storage-type should be from env (overriding registry)
+		assert.Equal(t, "env", cfg.ValueSources["storage-type"], "storage-type should be from env")
+
+		// allow-guest-mode should be from registry
+		assert.Equal(t, "registry", cfg.ValueSources["allow-guest-mode"], "allow-guest-mode should be from registry")
+
+		// imagor-mode should be from args
+		assert.Equal(t, "args", cfg.ValueSources["imagor-mode"], "imagor-mode should be from args")
+
+		// port should be from default (not explicitly set)
+		assert.Equal(t, "default", cfg.ValueSources["port"], "port should be from default")
+	}
+
+	// Verify actual config values
+	assert.Equal(t, "file", cfg.StorageType, "StorageType should be overridden by env")
+	assert.Equal(t, true, cfg.AllowGuestMode, "AllowGuestMode should come from registry")
+	assert.Equal(t, "disabled", cfg.ImagorMode, "ImagorMode should come from args")
 }
 
 // Helper function to set up test registry

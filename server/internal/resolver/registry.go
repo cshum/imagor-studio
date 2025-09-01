@@ -145,9 +145,8 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql
 		}
 
 		// Check for config override
-		effectiveValue, exists := r.config.GetEffectiveValueByRegistryKey(registry.Key)
-		isOverridden := exists && effectiveValue != value
-		if !exists {
+		effectiveValue, isOverridden := r.config.GetEffectiveValueByRegistryKey(registry.Key)
+		if effectiveValue == "" {
 			effectiveValue = value
 		}
 
@@ -199,9 +198,8 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 		}
 
 		// Check for config override
-		effectiveValue, exists := r.config.GetEffectiveValueByRegistryKey(registry.Key)
-		isOverridden := exists && effectiveValue != value
-		if !exists {
+		effectiveValue, isOverridden := r.config.GetEffectiveValueByRegistryKey(registry.Key)
+		if effectiveValue == "" {
 			effectiveValue = value
 		}
 
@@ -239,9 +237,8 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key string) (*gql
 	}
 
 	// Check for config override
-	effectiveValue, exists := r.config.GetEffectiveValueByRegistryKey(registry.Key)
-	isOverridden := exists && effectiveValue != value
-	if !exists {
+	effectiveValue, isOverridden := r.config.GetEffectiveValueByRegistryKey(registry.Key)
+	if effectiveValue == "" {
 		effectiveValue = value
 	}
 
