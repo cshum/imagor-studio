@@ -39,14 +39,33 @@ export function AdminPage({ loaderData }: AdminPageProps) {
 
   // Check if there are unsaved changes
   const hasUnsavedChanges = useMemo(() => {
-    return Object.keys(originalSettings).some(key => 
+    // Check for changes in existing settings
+    const hasExistingChanges = Object.keys(originalSettings).some(key => 
       settings[key] !== originalSettings[key]
     )
+    
+    // Check for new settings that weren't in original (like guest mode if not set)
+    const hasNewSettings = Object.keys(settings).some(key => 
+      !(key in originalSettings) && settings[key] !== undefined
+    )
+    
+    return hasExistingChanges || hasNewSettings
   }, [settings, originalSettings])
 
   const updateSetting = (key: string, value: string) => {
     setSettings(prev => ({ ...prev, [key]: value }))
   }
+
+  // Get the current effective value for guest mode
+  const guestModeValue = useMemo(() => {
+    if (guestModeConfig?.isOverriddenByConfig) {
+      // If overridden by config, show the effective value from config
+      return guestModeConfig.value === 'true'
+    }
+    // Otherwise, use the registry value (either from settings or original)
+    const registryValue = settings['config.allow_guest_mode'] ?? originalSettings['config.allow_guest_mode']
+    return registryValue === 'true'
+  }, [guestModeConfig, settings, originalSettings])
 
   const onUpdateSettings = async () => {
     setIsUpdatingSettings(true)
@@ -90,10 +109,12 @@ export function AdminPage({ loaderData }: AdminPageProps) {
                 </div>
               </div>
               <Checkbox
-                checked={guestModeConfig?.value === 'true' || settings['config.allow_guest_mode'] === 'true'}
-                onCheckedChange={(checked) => 
-                  updateSetting('config.allow_guest_mode', checked ? 'true' : 'false')
-                }
+                checked={guestModeValue}
+                onCheckedChange={(checked) => {
+                  if (!guestModeConfig?.isOverriddenByConfig) {
+                    updateSetting('config.allow_guest_mode', checked ? 'true' : 'false')
+                  }
+                }}
                 disabled={isUpdatingSettings || guestModeConfig?.isOverriddenByConfig}
               />
             </div>
