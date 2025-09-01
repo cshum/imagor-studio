@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,8 @@ func TestUploadFile_RequiresWriteScope(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -86,7 +88,8 @@ func TestDeleteFile_RequiresWriteScope(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -148,7 +151,8 @@ func TestCreateFolder_RequiresWriteScope(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -211,7 +215,8 @@ func TestListFiles_OnlyRequiresReadScope(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name    string
@@ -273,7 +278,8 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadOnlyContext("test-user-id")
 	path := "/test/file1.txt"
@@ -302,7 +308,8 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -420,7 +427,8 @@ func TestStorageOperations_StorageErrors(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -492,7 +500,8 @@ func TestReadOperations_StillWork(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	// Test with read-only context
 	ctx := createReadOnlyContext("test-user-id")
@@ -548,7 +557,8 @@ func TestListFiles(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	// Create context with owner ID
 	ctx := context.WithValue(context.Background(), UserIDContextKey, "test-owner-id")
@@ -587,7 +597,8 @@ func TestStatFile(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := context.WithValue(context.Background(), UserIDContextKey, "test-owner-id")
 	path := "/test/file1.txt"

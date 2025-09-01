@@ -324,3 +324,104 @@ func GetFlagNameForRegistryKey(registryKey string) string {
 	// e.g., "storage_type" -> "storage-type"
 	return strings.ReplaceAll(key, "_", "-")
 }
+
+// GetEffectiveValueByRegistryKey returns the effective config value and whether it's overridden by config/env
+func (c *Config) GetEffectiveValueByRegistryKey(registryKey, registryValue string) (effectiveValue string, isOverridden bool) {
+	// Only check config override for keys with "config." prefix
+	if !strings.HasPrefix(registryKey, "config.") {
+		return registryValue, false
+	}
+
+	// Convert registry key to flag name
+	flagName := GetFlagNameForRegistryKey(registryKey)
+
+	// Create a temporary flag set with the same flags as the main config
+	fs := flag.NewFlagSet("temp", flag.ContinueOnError)
+
+	// Add all the flags that we support (same as in Load function)
+	fs.String("port", "8080", "")
+	fs.String("db-path", "storage.db", "")
+	fs.String("storage-type", "file", "")
+	fs.String("jwt-secret", "", "")
+	fs.String("imagor-secret", "", "")
+	fs.String("jwt-expiration", "24h", "")
+	fs.Bool("allow-guest-mode", false, "")
+	fs.String("file-base-dir", "./storage", "")
+	fs.String("file-mkdir-permissions", "0755", "")
+	fs.String("file-write-permissions", "0644", "")
+	fs.String("s3-bucket", "", "")
+	fs.String("s3-region", "", "")
+	fs.String("s3-endpoint", "", "")
+	fs.String("s3-access-key-id", "", "")
+	fs.String("s3-secret-access-key", "", "")
+	fs.String("s3-session-token", "", "")
+	fs.String("s3-base-dir", "", "")
+	fs.String("imagor-mode", "external", "")
+	fs.String("imagor-url", "http://localhost:8000", "")
+	fs.Bool("imagor-unsafe", false, "")
+	fs.String("imagor-result-storage", "same", "")
+
+	// Look up the flag
+	flagValue := fs.Lookup(flagName)
+	if flagValue == nil {
+		// Unknown flag, return registry value
+		return registryValue, false
+	}
+
+	// Get the actual config value by accessing the config struct directly
+	var configStringValue string
+	switch flagName {
+	case "port":
+		configStringValue = fmt.Sprintf("%d", c.Port)
+	case "db-path":
+		configStringValue = c.DBPath
+	case "storage-type":
+		configStringValue = c.StorageType
+	case "jwt-secret":
+		configStringValue = c.JWTSecret
+	case "jwt-expiration":
+		configStringValue = c.JWTExpiration.String()
+	case "allow-guest-mode":
+		configStringValue = fmt.Sprintf("%t", c.AllowGuestMode)
+	case "file-base-dir":
+		configStringValue = c.FileBaseDir
+	case "file-mkdir-permissions":
+		configStringValue = fmt.Sprintf("%o", c.FileMkdirPermissions)
+	case "file-write-permissions":
+		configStringValue = fmt.Sprintf("%o", c.FileWritePermissions)
+	case "s3-bucket":
+		configStringValue = c.S3Bucket
+	case "s3-region":
+		configStringValue = c.S3Region
+	case "s3-endpoint":
+		configStringValue = c.S3Endpoint
+	case "s3-access-key-id":
+		configStringValue = c.S3AccessKeyID
+	case "s3-secret-access-key":
+		configStringValue = c.S3SecretAccessKey
+	case "s3-session-token":
+		configStringValue = c.S3SessionToken
+	case "s3-base-dir":
+		configStringValue = c.S3BaseDir
+	case "imagor-mode":
+		configStringValue = c.ImagorMode
+	case "imagor-url":
+		configStringValue = c.ImagorURL
+	case "imagor-secret":
+		configStringValue = c.ImagorSecret
+	case "imagor-unsafe":
+		configStringValue = fmt.Sprintf("%t", c.ImagorUnsafe)
+	case "imagor-result-storage":
+		configStringValue = c.ImagorResultStorage
+	default:
+		// Unknown flag, return registry value
+		return registryValue, false
+	}
+
+	// If config value differs from registry value, it means config overrides registry
+	if configStringValue != registryValue {
+		return configStringValue, true
+	}
+
+	return registryValue, false
+}

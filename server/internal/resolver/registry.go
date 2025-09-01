@@ -9,13 +9,13 @@ import (
 )
 
 // SetUserRegistry sets user-specific registry (supports multiple values)
-func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.RegistryEntryInput, ownerID *string) ([]*gql.Registry, error) {
+func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.RegistryEntryInput, ownerID *string) ([]*gql.UserRegistry, error) {
 	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
 
-	var result []*gql.Registry
+	var result []*gql.UserRegistry
 
 	// Handle entries
 	for _, entry := range entries {
@@ -30,7 +30,7 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.R
 			value = ""
 		}
 
-		result = append(result, &gql.Registry{
+		result = append(result, &gql.UserRegistry{
 			Key:         registry.Key,
 			Value:       value,
 			OwnerID:     effectiveOwnerID,
@@ -59,7 +59,7 @@ func (r *mutationResolver) DeleteUserRegistry(ctx context.Context, key string, o
 }
 
 // ListUserRegistry lists user-specific registry
-func (r *queryResolver) ListUserRegistry(ctx context.Context, prefix *string, ownerID *string) ([]*gql.Registry, error) {
+func (r *queryResolver) ListUserRegistry(ctx context.Context, prefix *string, ownerID *string) ([]*gql.UserRegistry, error) {
 	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (r *queryResolver) ListUserRegistry(ctx context.Context, prefix *string, ow
 		return nil, fmt.Errorf("failed to list user registry: %w", err)
 	}
 
-	result := make([]*gql.Registry, len(registryList))
+	result := make([]*gql.UserRegistry, len(registryList))
 	for i, registry := range registryList {
 		// Hide encrypted values in GraphQL responses
 		value := registry.Value
@@ -78,7 +78,7 @@ func (r *queryResolver) ListUserRegistry(ctx context.Context, prefix *string, ow
 			value = ""
 		}
 
-		result[i] = &gql.Registry{
+		result[i] = &gql.UserRegistry{
 			Key:         registry.Key,
 			Value:       value,
 			OwnerID:     effectiveOwnerID,
@@ -91,7 +91,7 @@ func (r *queryResolver) ListUserRegistry(ctx context.Context, prefix *string, ow
 }
 
 // GetUserRegistry gets specific user registry
-func (r *queryResolver) GetUserRegistry(ctx context.Context, key string, ownerID *string) (*gql.Registry, error) {
+func (r *queryResolver) GetUserRegistry(ctx context.Context, key string, ownerID *string) (*gql.UserRegistry, error) {
 	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func (r *queryResolver) GetUserRegistry(ctx context.Context, key string, ownerID
 		value = ""
 	}
 
-	return &gql.Registry{
+	return &gql.UserRegistry{
 		Key:         registry.Key,
 		Value:       value,
 		OwnerID:     effectiveOwnerID,
@@ -123,13 +123,13 @@ func (r *queryResolver) GetUserRegistry(ctx context.Context, key string, ownerID
 }
 
 // SetSystemRegistry sets system-wide registry (admin only, supports multiple values)
-func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql.RegistryEntryInput) ([]*gql.Registry, error) {
+func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql.RegistryEntryInput) ([]*gql.SystemRegistry, error) {
 	// Only admins can write system registry
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, fmt.Errorf("admin permission required for system registry write: %w", err)
 	}
 
-	var result []*gql.Registry
+	var result []*gql.SystemRegistry
 
 	// Handle entries
 	for _, entry := range entries {
@@ -144,13 +144,17 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql
 			value = ""
 		}
 
-		result = append(result, &gql.Registry{
-			Key:         registry.Key,
-			Value:       value,
-			OwnerID:     SystemOwnerID,
-			IsEncrypted: registry.IsEncrypted,
-			CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
+		// Check for config override
+		effectiveValue, isOverridden := r.config.GetEffectiveValueByRegistryKey(registry.Key, value)
+
+		result = append(result, &gql.SystemRegistry{
+			Key:                  registry.Key,
+			Value:                effectiveValue,
+			OwnerID:              SystemOwnerID,
+			IsEncrypted:          registry.IsEncrypted,
+			IsOverriddenByConfig: isOverridden,
+			CreatedAt:            registry.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:            registry.UpdatedAt.Format(time.RFC3339),
 		})
 	}
 
@@ -173,7 +177,7 @@ func (r *mutationResolver) DeleteSystemRegistry(ctx context.Context, key string)
 }
 
 // ListSystemRegistry lists system-wide registry (open read access)
-func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) ([]*gql.Registry, error) {
+func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) ([]*gql.SystemRegistry, error) {
 	// All authenticated users can read system registry
 	// No additional permission check needed
 
@@ -182,7 +186,7 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 		return nil, fmt.Errorf("failed to list system registry: %w", err)
 	}
 
-	result := make([]*gql.Registry, len(registryList))
+	result := make([]*gql.SystemRegistry, len(registryList))
 	for i, registry := range registryList {
 		// Hide encrypted values in GraphQL responses
 		value := registry.Value
@@ -190,20 +194,24 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 			value = ""
 		}
 
-		result[i] = &gql.Registry{
-			Key:         registry.Key,
-			Value:       value,
-			OwnerID:     SystemOwnerID,
-			IsEncrypted: registry.IsEncrypted,
-			CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
+		// Check for config override
+		effectiveValue, isOverridden := r.config.GetEffectiveValueByRegistryKey(registry.Key, value)
+
+		result[i] = &gql.SystemRegistry{
+			Key:                  registry.Key,
+			Value:                effectiveValue,
+			OwnerID:              SystemOwnerID,
+			IsEncrypted:          registry.IsEncrypted,
+			IsOverriddenByConfig: isOverridden,
+			CreatedAt:            registry.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:            registry.UpdatedAt.Format(time.RFC3339),
 		}
 	}
 	return result, nil
 }
 
 // GetSystemRegistry gets specific system registry (open read access)
-func (r *queryResolver) GetSystemRegistry(ctx context.Context, key string) (*gql.Registry, error) {
+func (r *queryResolver) GetSystemRegistry(ctx context.Context, key string) (*gql.SystemRegistry, error) {
 	// All authenticated users can read system registry
 	// No additional permission check needed
 
@@ -222,12 +230,16 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key string) (*gql
 		value = ""
 	}
 
-	return &gql.Registry{
-		Key:         registry.Key,
-		Value:       value,
-		OwnerID:     SystemOwnerID,
-		IsEncrypted: registry.IsEncrypted,
-		CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
+	// Check for config override
+	effectiveValue, isOverridden := r.config.GetEffectiveValueByRegistryKey(registry.Key, value)
+
+	return &gql.SystemRegistry{
+		Key:                  registry.Key,
+		Value:                effectiveValue,
+		OwnerID:              SystemOwnerID,
+		IsEncrypted:          registry.IsEncrypted,
+		IsOverriddenByConfig: isOverridden,
+		CreatedAt:            registry.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:            registry.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }

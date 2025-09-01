@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +45,8 @@ func TestSetUserRegistry_SelfOperation(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:preference"
@@ -78,7 +80,8 @@ func TestSetUserRegistry_AdminForOtherUser(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	targetOwnerID := "target-user-id"
@@ -113,7 +116,8 @@ func TestSetUserRegistry_RegularUserCannotAccessOthers(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("regular-user-id")
 	targetOwnerID := "other-user-id"
@@ -135,7 +139,8 @@ func TestSetUserRegistry_GuestCannotSet(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createGuestContext("guest-id")
 	key := "test:key"
@@ -156,7 +161,8 @@ func TestGetUserRegistry_SelfOperation(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:preference"
@@ -187,7 +193,8 @@ func TestGetUserRegistry_NotFound(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "non-existent"
@@ -207,7 +214,8 @@ func TestListUserRegistry_SelfOperation(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	prefix := "app:"
@@ -237,7 +245,8 @@ func TestDeleteUserRegistry_SelfOperation(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:setting-to-delete"
@@ -257,7 +266,8 @@ func TestSetSystemRegistry_AdminOnly(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -332,7 +342,8 @@ func TestGetSystemRegistry_OpenRead(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name    string
@@ -391,7 +402,8 @@ func TestListSystemRegistry_OpenRead(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("user-id")
 	prefix := "config:"
@@ -421,7 +433,8 @@ func TestDeleteSystemRegistry_AdminOnly(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -476,7 +489,8 @@ func TestUserRegistry_PermissionEdgeCases(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -547,7 +561,8 @@ func TestSetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "api_secret"
@@ -583,7 +598,8 @@ func TestGetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "api_secret"
@@ -616,7 +632,8 @@ func TestListUserRegistry_EncryptedValueHidden(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -652,7 +669,8 @@ func TestSetSystemRegistry_EncryptedValueHidden(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, logger)
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	key := "jwt_secret"

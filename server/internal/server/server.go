@@ -37,6 +37,7 @@ func New(cfg *config.Config) (*Server, error) {
 		services.RegistryStore,
 		services.UserStore,
 		services.ImageService,
+		cfg,
 		cfg.Logger,
 	)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
