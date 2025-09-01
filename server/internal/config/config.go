@@ -200,6 +200,13 @@ func Load(opts *LoadOptions) (*Config, error) {
 		cfg.OverriddenFlags[f.Name] = f.Value.String()
 	})
 
+	// Apply registry values if registry store is provided
+	if opts.RegistryStore != nil {
+		if err := cfg.ApplyRegistryValues(opts.RegistryStore); err != nil {
+			return nil, fmt.Errorf("failed to apply registry values: %w", err)
+		}
+	}
+
 	// Validate storage configuration
 	if err := cfg.validateStorageConfig(); err != nil {
 		return nil, err

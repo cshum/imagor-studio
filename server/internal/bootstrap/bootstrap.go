@@ -52,7 +52,7 @@ func Initialize(cfg *config.Config) (*Services, error) {
 	// Initialize registry store
 	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
 
-	// Apply registry values to config fields that weren't overridden by CLI/env
+	// Apply registry values to the existing config
 	if err := cfg.ApplyRegistryValues(registryStore); err != nil {
 		return nil, fmt.Errorf("failed to apply registry values: %w", err)
 	}
