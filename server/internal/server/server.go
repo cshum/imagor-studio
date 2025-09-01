@@ -24,9 +24,9 @@ type Server struct {
 	services *bootstrap.Services
 }
 
-func New(cfg *config.Config) (*Server, error) {
+func New(cfg *config.Config, logger *zap.Logger) (*Server, error) {
 	// Initialize all services using bootstrap package
-	services, err := bootstrap.Initialize(cfg)
+	services, err := bootstrap.Initialize(cfg, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize services: %w", err)
 	}

@@ -35,7 +35,8 @@ func TestInitialize(t *testing.T) {
 		ImagorResultStorage:  "same",
 	}
 
-	services, err := Initialize(cfg)
+	logger := zap.NewNop()
+	services, err := Initialize(cfg, logger)
 
 	require.NoError(t, err)
 	require.NotNil(t, services)

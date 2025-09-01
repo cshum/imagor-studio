@@ -35,12 +35,7 @@ type Services struct {
 }
 
 // Initialize sets up the database, runs migrations, and initializes all services
-func Initialize(cfg *config.Config) (*Services, error) {
-	// Create logger based on config
-	logger, err := zap.NewProduction()
-	if err != nil {
-		return nil, fmt.Errorf("error initializing logger: %w", err)
-	}
+func Initialize(cfg *config.Config, logger *zap.Logger) (*Services, error) {
 
 	// Initialize database
 	db, err := initializeDatabase(cfg)
