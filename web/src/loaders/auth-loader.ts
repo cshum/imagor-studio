@@ -27,7 +27,11 @@ export const requireAccountAuth = async () => {
   const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
   
   if (currentAuth.state !== 'authenticated') {
-    throw redirect({ to: '/login' })
+    if (!currentAuth.isFirstRun) {
+      throw redirect({ to: '/login' })
+    } else {
+      throw redirect({ to: '/admin-setup' })
+    }
   }
   
   return currentAuth

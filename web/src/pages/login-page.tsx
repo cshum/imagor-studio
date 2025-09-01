@@ -36,7 +36,7 @@ export function LoginPage() {
   })
 
   // If already authenticated or guest, redirect to gallery
-  if (authState.state === 'authenticated' || authState.state === 'guest') {
+  if (authState.state === 'authenticated' || authState.state === 'guest' || authState.isFirstRun) {
     return <Navigate to='/' replace />
   }
 

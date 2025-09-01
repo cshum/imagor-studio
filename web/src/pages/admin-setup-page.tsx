@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from '@tanstack/react-router'
+import { Navigate, useNavigate } from '@tanstack/react-router'
 import * as z from 'zod'
 
 import { registerAdmin } from '@/api/auth-api'
@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { initAuth } from '@/stores/auth-store'
+import { initAuth, useAuth } from '@/stores/auth-store'
 
 const adminSetupSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -34,6 +34,7 @@ export function AdminSetupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
+  const { authState } = useAuth()
 
   const form = useForm<AdminSetupForm>({
     resolver: zodResolver(adminSetupSchema),
@@ -68,6 +69,10 @@ export function AdminSetupPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (!authState.isFirstRun) {
+    return <Navigate to='/' replace />
   }
 
   return (
