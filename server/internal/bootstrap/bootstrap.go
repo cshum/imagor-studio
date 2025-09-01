@@ -53,7 +53,6 @@ func Initialize(cfg *config.Config) (*Services, error) {
 	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
 
 	// Create a new config with registry values properly applied
-	// This replaces the old ApplyRegistryValues approach with a clean config creation
 	enhancedCfg, err := config.Load(cfg.OriginalArgs, registryStore)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create enhanced config with registry values: %w", err)

@@ -128,7 +128,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 
 	// Apply registry values if registry store is provided
 	if registryStore != nil {
-		if err := ApplyRegistryValues(fs, overriddenFlags, registryStore); err != nil {
+		if err := applyRegistryValues(fs, overriddenFlags, registryStore); err != nil {
 			return nil, fmt.Errorf("failed to apply registry values: %w", err)
 		}
 	}
@@ -319,9 +319,8 @@ func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, ex
 	return "", false
 }
 
-// ApplyRegistryValues applies registry values to flags that weren't overridden by CLI/env
-// This is a standalone function that uses the flag system for automatic type conversion
-func ApplyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]string, registryStore registrystore.Store) error {
+// applyRegistryValues applies registry values to flags that weren't overridden by CLI/env
+func applyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]string, registryStore registrystore.Store) error {
 	ctx := context.Background()
 	prefix := "config."
 	entries, err := registryStore.List(ctx, "system", &prefix)
