@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/peterbourgon/ff/v3"
-	"go.uber.org/zap"
 )
 
 type Config struct {
@@ -23,6 +21,9 @@ type Config struct {
 	// JWT Configuration
 	JWTSecret     string
 	JWTExpiration time.Duration
+
+	// Authentication Configuration
+	AllowGuestMode bool // Allow guest mode access
 
 	// File Storage
 	FileBaseDir          string
@@ -45,20 +46,13 @@ type Config struct {
 	ImagorUnsafe        bool   // For development
 	ImagorResultStorage string // "same", "separate"
 
-	Logger *zap.Logger
-}
-
-// LoadOptions contains options for loading configuration
-type LoadOptions struct {
-	RegistryStore registrystore.Store // Optional registry store for enhanced loading
-	Args          []string            // Optional args override (defaults to os.Args[1:])
+	// Internal tracking for config overrides
+	overriddenFlags map[string]string
 }
 
 // Load loads configuration with optional registry enhancement
-func Load(opts *LoadOptions) (*Config, error) {
-	if opts == nil {
-		opts = &LoadOptions{}
-	}
+// Both args and registryStore are optional (can be nil)
+func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 
 	fs := flag.NewFlagSet("imagor-studio", flag.ContinueOnError)
 
@@ -69,6 +63,8 @@ func Load(opts *LoadOptions) (*Config, error) {
 		jwtSecret     = fs.String("jwt-secret", "", "secret key for JWT signing")
 		imagorSecret  = fs.String("imagor-secret", "", "secret key for imagor")
 		jwtExpiration = fs.String("jwt-expiration", "24h", "JWT token expiration duration")
+
+		allowGuestMode = fs.Bool("allow-guest-mode", false, "allow guest mode access")
 
 		fileBaseDir          = fs.String("file-base-dir", "./storage", "base directory for file storage")
 		fileMkdirPermissions = fs.String("file-mkdir-permissions", "0755", "directory creation permissions")
@@ -91,7 +87,6 @@ func Load(opts *LoadOptions) (*Config, error) {
 	_ = fs.String("config", ".env", "config file (optional)")
 
 	// Prepare ff options
-	args := opts.Args
 	if args == nil {
 		args = os.Args[1:]
 	}
@@ -102,13 +97,6 @@ func Load(opts *LoadOptions) (*Config, error) {
 		ff.WithConfigFileParser(ff.EnvParser),
 		ff.WithIgnoreUndefined(true),
 		ff.WithAllowMissingConfigFile(true),
-	}
-
-	// Pre-populate registry values if registry store is available
-	if opts.RegistryStore != nil {
-		if err := prePopulateRegistryValues(fs, opts.RegistryStore); err != nil {
-			return nil, fmt.Errorf("error loading registry values: %w", err)
-		}
 	}
 
 	// For tests, we need to handle the case where test flags might conflict
@@ -122,9 +110,17 @@ func Load(opts *LoadOptions) (*Config, error) {
 		}
 	}
 
-	logger, err := zap.NewProduction()
-	if err != nil {
-		return nil, fmt.Errorf("error initializing logger: %w", err)
+	// Track overridden flags AFTER flag parsing
+	overriddenFlags := make(map[string]string)
+	fs.Visit(func(f *flag.Flag) {
+		overriddenFlags[f.Name] = f.Value.String()
+	})
+
+	// Apply registry values if registry store is provided
+	if registryStore != nil {
+		if err := applyRegistryValues(fs, overriddenFlags, registryStore); err != nil {
+			return nil, fmt.Errorf("failed to apply registry values: %w", err)
+		}
 	}
 
 	if *jwtSecret == "" {
@@ -162,6 +158,7 @@ func Load(opts *LoadOptions) (*Config, error) {
 		DBPath:               *dbPath,
 		JWTSecret:            *jwtSecret,
 		JWTExpiration:        jwtExp,
+		AllowGuestMode:       *allowGuestMode,
 		StorageType:          *storageType,
 		FileBaseDir:          *fileBaseDir,
 		FileMkdirPermissions: os.FileMode(mkdirPerm),
@@ -178,7 +175,7 @@ func Load(opts *LoadOptions) (*Config, error) {
 		ImagorSecret:         *imagorSecret,
 		ImagorUnsafe:         *imagorUnsafe,
 		ImagorResultStorage:  *imagorResultStorage,
-		Logger:               logger,
+		overriddenFlags:      overriddenFlags,
 	}
 
 	// Validate storage configuration
@@ -186,24 +183,7 @@ func Load(opts *LoadOptions) (*Config, error) {
 		return nil, err
 	}
 
-	cfg.Logger.Info("Configuration loaded",
-		zap.Int("port", cfg.Port),
-		zap.String("dbPath", cfg.DBPath),
-		zap.Duration("jwtExpiration", cfg.JWTExpiration),
-		zap.String("storageType", cfg.StorageType),
-	)
-
 	return cfg, nil
-}
-
-// LoadBasic loads configuration without registry enhancement (for initial bootstrap)
-func LoadBasic() (*Config, error) {
-	return Load(nil)
-}
-
-// LoadWithRegistry loads configuration with registry enhancement
-func LoadWithRegistry(registryStore registrystore.Store) (*Config, error) {
-	return Load(&LoadOptions{RegistryStore: registryStore})
 }
 
 func (c *Config) validateStorageConfig() error {
@@ -221,115 +201,74 @@ func (c *Config) validateStorageConfig() error {
 	}
 }
 
-// RegistryParser implements ff.ConfigFileParser for registry-based configuration
-type RegistryParser struct {
-	registryStore registrystore.Store
-}
-
-// NewRegistryParser creates a new registry parser
-func NewRegistryParser(registryStore registrystore.Store) *RegistryParser {
-	return &RegistryParser{registryStore: registryStore}
-}
-
-// Parse implements ff.ConfigFileParser interface
-func (p *RegistryParser) Parse(r io.Reader, set func(name, value string) error) error {
-	// The reader is not used for registry parsing, but we need to implement the interface
-	// Registry values are fetched directly from the store
-
-	ctx := context.Background()
-
-	// Define the mapping of registry keys to flag names
-	registryKeyToFlag := map[string]string{
-		"jwt_secret":            "jwt-secret",
-		"storage_type":          "storage-type",
-		"file_base_dir":         "file-base-dir",
-		"s3_bucket":             "s3-bucket",
-		"s3_region":             "s3-region",
-		"s3_endpoint":           "s3-endpoint",
-		"s3_access_key_id":      "s3-access-key-id",
-		"s3_secret_access_key":  "s3-secret-access-key",
-		"s3_session_token":      "s3-session-token",
-		"s3_base_dir":           "s3-base-dir",
-		"imagor_mode":           "imagor-mode",
-		"imagor_url":            "imagor-url",
-		"imagor_secret":         "imagor-secret",
-		"imagor_result_storage": "imagor-result-storage",
-	}
-
-	// Fetch all system registry entries at once (more efficient than individual Gets)
-	entries, err := p.registryStore.List(ctx, "system", nil)
-	if err != nil {
-		// Log error but continue - registry values are optional
-		return nil
-	}
-
-	// Apply registry values to flags
-	for _, entry := range entries {
-		if flagName, exists := registryKeyToFlag[entry.Key]; exists && entry.Value != "" {
-			if err := set(flagName, entry.Value); err != nil {
-				return fmt.Errorf("failed to set flag %s from registry: %w", flagName, err)
-			}
-		}
-	}
-
-	return nil
-}
-
-// prePopulateRegistryValues loads values from registry and sets them as defaults in the flag set
-func prePopulateRegistryValues(fs *flag.FlagSet, registryStore registrystore.Store) error {
-	ctx := context.Background()
-
-	// Define the mapping of registry keys to flag names
-	registryKeyToFlag := map[string]string{
-		"jwt_secret":            "jwt-secret",
-		"storage_type":          "storage-type",
-		"file_base_dir":         "file-base-dir",
-		"s3_bucket":             "s3-bucket",
-		"s3_region":             "s3-region",
-		"s3_endpoint":           "s3-endpoint",
-		"s3_access_key_id":      "s3-access-key-id",
-		"s3_secret_access_key":  "s3-secret-access-key",
-		"s3_session_token":      "s3-session-token",
-		"s3_base_dir":           "s3-base-dir",
-		"imagor_mode":           "imagor-mode",
-		"imagor_url":            "imagor-url",
-		"imagor_secret":         "imagor-secret",
-		"imagor_result_storage": "imagor-result-storage",
-	}
-
-	// Fetch all system registry entries at once (more efficient than individual Gets)
-	entries, err := registryStore.List(ctx, "system", nil)
-	if err != nil {
-		// Log error but continue - registry values are optional
-		return nil
-	}
-
-	// Apply registry values to flags
-	for _, entry := range entries {
-		if flagName, exists := registryKeyToFlag[entry.Key]; exists && entry.Value != "" {
-			// Find the flag and set its default value
-			flag := fs.Lookup(flagName)
-			if flag != nil {
-				// Set the default value by updating the flag's DefValue and Value
-				flag.DefValue = entry.Value
-				flag.Value.Set(entry.Value)
-			}
-		}
-	}
-
-	return nil
-}
-
 // GetRegistryKeyForFlag returns the registry key for a given flag name
 func GetRegistryKeyForFlag(flagName string) string {
-	// Convert flag name to registry key format
-	// e.g., "storage-type" -> "storage_type"
-	return strings.ReplaceAll(strings.ToLower(flagName), "-", "_")
+	// Convert flag name to registry key format with config. prefix
+	// e.g., "storage-type" -> "config.storage_type"
+	configKey := strings.ReplaceAll(strings.ToLower(flagName), "-", "_")
+	return "config." + configKey
 }
 
 // GetFlagNameForRegistryKey returns the flag name for a given registry key
 func GetFlagNameForRegistryKey(registryKey string) string {
+	// Handle both old format and new config. prefix format
+	key := strings.ToLower(registryKey)
+
+	// If it has config. prefix, strip it
+	if strings.HasPrefix(key, "config.") {
+		key = strings.TrimPrefix(key, "config.")
+	}
+
 	// Convert registry key to flag name format
 	// e.g., "storage_type" -> "storage-type"
-	return strings.ReplaceAll(strings.ToLower(registryKey), "_", "-")
+	return strings.ReplaceAll(key, "_", "-")
+}
+
+// GetByRegistryKey returns the effective config value and whether the config key is overridden by external config
+func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
+	// Only handle config. prefixed keys
+	if !strings.HasPrefix(strings.ToLower(registryKey), "config.") {
+		return "", false
+	}
+
+	// Convert registry key to flag name
+	flagName := GetFlagNameForRegistryKey(registryKey)
+
+	// Check if this flag was overridden by CLI/env
+	if value, overridden := c.overriddenFlags[flagName]; overridden {
+		return value, true
+	}
+
+	return "", false
+}
+
+// applyRegistryValues applies registry values to flags that weren't overridden by CLI/env
+func applyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]string, registryStore registrystore.Store) error {
+	ctx := context.Background()
+	prefix := "config."
+	entries, err := registryStore.List(ctx, "system", &prefix)
+	if err != nil {
+		// Registry values are optional, so we can continue without them
+		return nil
+	}
+
+	for _, entry := range entries {
+		if entry.Value == "" {
+			continue
+		}
+
+		flagName := GetFlagNameForRegistryKey(entry.Key)
+
+		// Only apply if not overridden by CLI/env
+		if _, overridden := overriddenFlags[flagName]; !overridden {
+			// Use the flag system to set the value - this handles type conversion automatically
+			if flag := flagSet.Lookup(flagName); flag != nil {
+				if err := flag.Value.Set(entry.Value); err != nil {
+					return fmt.Errorf("failed to set flag %s to value %s: %w", flagName, entry.Value, err)
+				}
+			}
+		}
+	}
+
+	return nil
 }

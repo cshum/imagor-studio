@@ -33,27 +33,23 @@ export function AccountLayout({ children }: AccountLayoutProps) {
             <h1 className='text-3xl md:text-4xl'>Account Settings</h1>
           </div>
           <HeaderBar />
-          {/* Tab Navigation */}
-          <Tabs value={currentTab} className='w-full'>
-            <TabsList className={`mb-4 grid w-full ${isAdmin ? 'grid-cols-3' : 'grid-cols-1'}`}>
-              <TabsTrigger value='profile' asChild>
-                <Link to='/account/profile'>Profile</Link>
-              </TabsTrigger>
-              {isAdmin && (
+          {/* Tab Navigation - Only show for admins */}
+          {isAdmin && (
+            <Tabs value={currentTab} className='w-full'>
+              <TabsList className='mb-4 grid w-full grid-cols-3'>
+                <TabsTrigger value='profile' asChild>
+                  <Link to='/account/profile'>Profile</Link>
+                </TabsTrigger>
                 <TabsTrigger value='admin' asChild>
                   <Link to='/account/admin'>System</Link>
                 </TabsTrigger>
-              )}
-              {isAdmin && (
                 <TabsTrigger value='users' asChild>
                   <Link to='/account/users'>Users</Link>
                 </TabsTrigger>
-              )}
-            </TabsList>
-
-            {/* Tab Content */}
-            <div className='mt-0'>{children || <Outlet />}</div>
-          </Tabs>
+              </TabsList>
+            </Tabs>
+          )}
+          <div className='mt-0'>{children || <Outlet />}</div>
         </ContentLayout>
       </div>
     </>

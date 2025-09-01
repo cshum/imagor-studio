@@ -2,7 +2,8 @@
 package main
 
 import (
-	"log"
+	"fmt"
+	"os"
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/server"
@@ -10,25 +11,33 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadBasic()
+	// Create logger early in the application lifecycle
+	logger, err := zap.NewProduction()
 	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+		fmt.Printf("Failed to initialize logger: %v\n", err)
+		os.Exit(1)
 	}
 
-	defer cfg.Logger.Sync()
-
-	srv, err := server.New(cfg)
+	args := os.Args[1:]
+	cfg, err := config.Load(args, nil)
 	if err != nil {
-		cfg.Logger.Fatal("Failed to create server", zap.Error(err))
+		logger.Fatal("Failed to load configuration", zap.Error(err))
 	}
 
+	// Create and start server with logger and args
+	server, err := server.New(cfg, logger, args)
+	if err != nil {
+		logger.Fatal("Failed to create server", zap.Error(err))
+	}
+
+	// Graceful shutdown
 	defer func() {
-		if err := srv.Close(); err != nil {
-			cfg.Logger.Error("Failed to close server", zap.Error(err))
+		if err := server.Close(); err != nil {
+			logger.Error("Error closing server", zap.Error(err))
 		}
 	}()
 
-	if err := srv.Run(); err != nil {
-		cfg.Logger.Fatal("Failed to run server", zap.Error(err))
+	if err := server.Run(); err != nil {
+		logger.Fatal("Server failed", zap.Error(err))
 	}
 }

@@ -30,10 +30,13 @@ type Services struct {
 	UserStore     userstore.Store
 	ImageService  imageservice.Service
 	Encryption    *encryption.Service
+	Config        *config.Config
+	Logger        *zap.Logger
 }
 
 // Initialize sets up the database, runs migrations, and initializes all services
-func Initialize(cfg *config.Config) (*Services, error) {
+func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
+
 	// Initialize database
 	db, err := initializeDatabase(cfg)
 	if err != nil {
@@ -41,7 +44,7 @@ func Initialize(cfg *config.Config) (*Services, error) {
 	}
 
 	// Run migrations
-	if err := runMigrations(db, cfg.Logger); err != nil {
+	if err := runMigrations(db, logger); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
@@ -49,39 +52,40 @@ func Initialize(cfg *config.Config) (*Services, error) {
 	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
 
 	// Initialize registry store
-	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
+	registryStore := registrystore.New(db, logger, encryptionService)
 
-	// Reload config with registry enhancement, preserving the current JWT secret
-	enhancedCfg, err := config.Load(&config.LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{"--jwt-secret", cfg.JWTSecret}, // Preserve current JWT secret
-	})
+	// Load enhanced config with registry values using the original args
+	enhancedCfg, err := config.Load(args, registryStore)
 	if err != nil {
-		return nil, fmt.Errorf("failed to reload config with registry: %w", err)
+		return nil, fmt.Errorf("failed to apply registry values to config: %w", err)
 	}
 
-	// Only preserve the logger from the original config
-	enhancedCfg.Logger = cfg.Logger
-	cfg = enhancedCfg
-
 	// Update encryption service with final JWT secret
-	encryptionService.SetJWTKey(cfg.JWTSecret)
+	encryptionService.SetJWTKey(enhancedCfg.JWTSecret)
 
 	// Initialize token manager
-	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
+	tokenManager := auth.NewTokenManager(enhancedCfg.JWTSecret, enhancedCfg.JWTExpiration)
 
 	// Initialize storage provider and create storage
-	storageProvider := storageprovider.New(cfg.Logger)
-	stor, err := storageProvider.NewStorageFromConfig(cfg)
+	storageProvider := storageprovider.New(logger)
+	stor, err := storageProvider.NewStorageFromConfig(enhancedCfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage: %w", err)
 	}
 
 	// Initialize user store
-	userStore := userstore.New(db, cfg.Logger)
+	userStore := userstore.New(db, logger)
 
 	// Initialize image service
-	imageService := initializeImageService(cfg, registryStore)
+	imageService := initializeImageService(enhancedCfg, registryStore)
+
+	// Log configuration loaded
+	logger.Info("Configuration loaded",
+		zap.Int("port", enhancedCfg.Port),
+		zap.String("dbPath", enhancedCfg.DBPath),
+		zap.Duration("jwtExpiration", enhancedCfg.JWTExpiration),
+		zap.String("storageType", enhancedCfg.StorageType),
+	)
 
 	return &Services{
 		DB:            db,
@@ -91,6 +95,8 @@ func Initialize(cfg *config.Config) (*Services, error) {
 		UserStore:     userStore,
 		ImageService:  imageService,
 		Encryption:    encryptionService,
+		Config:        enhancedCfg,
+		Logger:        logger,
 	}, nil
 }
 

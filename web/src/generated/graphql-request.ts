@@ -70,8 +70,8 @@ export type Mutation = {
   deleteFile: Scalars['Boolean']['output']
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
-  setSystemRegistry: Array<Registry>
-  setUserRegistry: Array<Registry>
+  setSystemRegistry: Array<SystemRegistry>
+  setUserRegistry: Array<UserRegistry>
   updateProfile: User
   uploadFile: Scalars['Boolean']['output']
 }
@@ -127,11 +127,11 @@ export type MutationUploadFileArgs = {
 
 export type Query = {
   __typename?: 'Query'
-  getSystemRegistry: Maybe<Registry>
-  getUserRegistry: Maybe<Registry>
+  getSystemRegistry: Maybe<SystemRegistry>
+  getUserRegistry: Maybe<UserRegistry>
   listFiles: FileList
-  listSystemRegistry: Array<Registry>
-  listUserRegistry: Array<Registry>
+  listSystemRegistry: Array<SystemRegistry>
+  listUserRegistry: Array<UserRegistry>
   me: Maybe<User>
   statFile: Maybe<FileStat>
   user: Maybe<User>
@@ -179,16 +179,6 @@ export type QueryUsersArgs = {
   offset?: InputMaybe<Scalars['Int']['input']>
 }
 
-export type Registry = {
-  __typename?: 'Registry'
-  createdAt: Scalars['String']['output']
-  isEncrypted: Scalars['Boolean']['output']
-  key: Scalars['String']['output']
-  ownerID: Scalars['String']['output']
-  updatedAt: Scalars['String']['output']
-  value: Scalars['String']['output']
-}
-
 export type RegistryEntryInput = {
   isEncrypted: Scalars['Boolean']['input']
   key: Scalars['String']['input']
@@ -198,6 +188,17 @@ export type RegistryEntryInput = {
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
 
 export type SortOrder = 'ASC' | 'DESC'
+
+export type SystemRegistry = {
+  __typename?: 'SystemRegistry'
+  createdAt: Scalars['String']['output']
+  isEncrypted: Scalars['Boolean']['output']
+  isOverriddenByConfig: Scalars['Boolean']['output']
+  key: Scalars['String']['output']
+  ownerID: Scalars['String']['output']
+  updatedAt: Scalars['String']['output']
+  value: Scalars['String']['output']
+}
 
 export type ThumbnailUrls = {
   __typename?: 'ThumbnailUrls'
@@ -230,14 +231,35 @@ export type UserList = {
   totalCount: Scalars['Int']['output']
 }
 
+export type UserRegistry = {
+  __typename?: 'UserRegistry'
+  createdAt: Scalars['String']['output']
+  isEncrypted: Scalars['Boolean']['output']
+  key: Scalars['String']['output']
+  ownerID: Scalars['String']['output']
+  updatedAt: Scalars['String']['output']
+  value: Scalars['String']['output']
+}
+
 export type RegistryInfoFragment = {
-  __typename?: 'Registry'
+  __typename?: 'UserRegistry'
   key: string
   value: string
   ownerID: string
   isEncrypted: boolean
   createdAt: string
   updatedAt: string
+}
+
+export type SystemRegistryInfoFragment = {
+  __typename?: 'SystemRegistry'
+  key: string
+  value: string
+  ownerID: string
+  isEncrypted: boolean
+  createdAt: string
+  updatedAt: string
+  isOverriddenByConfig: boolean
 }
 
 export type ListUserRegistryQueryVariables = Exact<{
@@ -248,7 +270,7 @@ export type ListUserRegistryQueryVariables = Exact<{
 export type ListUserRegistryQuery = {
   __typename?: 'Query'
   listUserRegistry: Array<{
-    __typename?: 'Registry'
+    __typename?: 'UserRegistry'
     key: string
     value: string
     ownerID: string
@@ -266,7 +288,7 @@ export type GetUserRegistryQueryVariables = Exact<{
 export type GetUserRegistryQuery = {
   __typename?: 'Query'
   getUserRegistry: {
-    __typename?: 'Registry'
+    __typename?: 'UserRegistry'
     key: string
     value: string
     ownerID: string
@@ -283,13 +305,14 @@ export type ListSystemRegistryQueryVariables = Exact<{
 export type ListSystemRegistryQuery = {
   __typename?: 'Query'
   listSystemRegistry: Array<{
-    __typename?: 'Registry'
+    __typename?: 'SystemRegistry'
     key: string
     value: string
     ownerID: string
     isEncrypted: boolean
     createdAt: string
     updatedAt: string
+    isOverriddenByConfig: boolean
   }>
 }
 
@@ -300,13 +323,14 @@ export type GetSystemRegistryQueryVariables = Exact<{
 export type GetSystemRegistryQuery = {
   __typename?: 'Query'
   getSystemRegistry: {
-    __typename?: 'Registry'
+    __typename?: 'SystemRegistry'
     key: string
     value: string
     ownerID: string
     isEncrypted: boolean
     createdAt: string
     updatedAt: string
+    isOverriddenByConfig: boolean
   } | null
 }
 
@@ -318,7 +342,7 @@ export type SetUserRegistryMutationVariables = Exact<{
 export type SetUserRegistryMutation = {
   __typename?: 'Mutation'
   setUserRegistry: Array<{
-    __typename?: 'Registry'
+    __typename?: 'UserRegistry'
     key: string
     value: string
     ownerID: string
@@ -342,13 +366,14 @@ export type SetSystemRegistryMutationVariables = Exact<{
 export type SetSystemRegistryMutation = {
   __typename?: 'Mutation'
   setSystemRegistry: Array<{
-    __typename?: 'Registry'
+    __typename?: 'SystemRegistry'
     key: string
     value: string
     ownerID: string
     isEncrypted: boolean
     createdAt: string
     updatedAt: string
+    isOverriddenByConfig: boolean
   }>
 }
 
@@ -575,13 +600,24 @@ export type CreateUserMutation = {
 }
 
 export const RegistryInfoFragmentDoc = gql`
-  fragment RegistryInfo on Registry {
+  fragment RegistryInfo on UserRegistry {
     key
     value
     ownerID
     isEncrypted
     createdAt
     updatedAt
+  }
+`
+export const SystemRegistryInfoFragmentDoc = gql`
+  fragment SystemRegistryInfo on SystemRegistry {
+    key
+    value
+    ownerID
+    isEncrypted
+    createdAt
+    updatedAt
+    isOverriddenByConfig
   }
 `
 export const FileInfoFragmentDoc = gql`
@@ -639,18 +675,18 @@ export const GetUserRegistryDocument = gql`
 export const ListSystemRegistryDocument = gql`
   query ListSystemRegistry($prefix: String) {
     listSystemRegistry(prefix: $prefix) {
-      ...RegistryInfo
+      ...SystemRegistryInfo
     }
   }
-  ${RegistryInfoFragmentDoc}
+  ${SystemRegistryInfoFragmentDoc}
 `
 export const GetSystemRegistryDocument = gql`
   query GetSystemRegistry($key: String!) {
     getSystemRegistry(key: $key) {
-      ...RegistryInfo
+      ...SystemRegistryInfo
     }
   }
-  ${RegistryInfoFragmentDoc}
+  ${SystemRegistryInfoFragmentDoc}
 `
 export const SetUserRegistryDocument = gql`
   mutation SetUserRegistry($entries: [RegistryEntryInput!]!, $ownerID: String) {
@@ -668,10 +704,10 @@ export const DeleteUserRegistryDocument = gql`
 export const SetSystemRegistryDocument = gql`
   mutation SetSystemRegistry($entries: [RegistryEntryInput!]!) {
     setSystemRegistry(entries: $entries) {
-      ...RegistryInfo
+      ...SystemRegistryInfo
     }
   }
-  ${RegistryInfoFragmentDoc}
+  ${SystemRegistryInfoFragmentDoc}
 `
 export const DeleteSystemRegistryDocument = gql`
   mutation DeleteSystemRegistry($key: String!) {

@@ -33,10 +33,11 @@ func TestInitialize(t *testing.T) {
 		ImagorSecret:         "",
 		ImagorUnsafe:         false,
 		ImagorResultStorage:  "same",
-		Logger:               zap.NewNop(),
 	}
 
-	services, err := Initialize(cfg)
+	logger := zap.NewNop()
+	args := []string{"--jwt-secret", "test-jwt-secret", "--db-path", tmpDB}
+	services, err := Initialize(cfg, logger, args)
 
 	require.NoError(t, err)
 	require.NotNil(t, services)
@@ -49,6 +50,7 @@ func TestInitialize(t *testing.T) {
 	assert.NotNil(t, services.UserStore)
 	assert.NotNil(t, services.ImageService)
 	assert.NotNil(t, services.Encryption)
+	assert.NotNil(t, services.Logger)
 
 	// Verify JWT secret was generated
 	assert.NotEmpty(t, cfg.JWTSecret)
@@ -63,7 +65,6 @@ func TestInitializeDatabase(t *testing.T) {
 
 	cfg := &config.Config{
 		DBPath: tmpDB,
-		Logger: zap.NewNop(),
 	}
 
 	db, err := initializeDatabase(cfg)
@@ -89,9 +90,7 @@ func TestJWTSecretFromEnv(t *testing.T) {
 	defer os.Remove(tmpDB)
 
 	// Test the config loading directly to verify environment variable priority
-	cfg, err := config.Load(&config.LoadOptions{
-		Args: []string{"--db-path", tmpDB},
-	})
+	cfg, err := config.Load([]string{"--db-path", tmpDB}, nil)
 	require.NoError(t, err)
 
 	// Verify JWT secret from environment was used
@@ -105,30 +104,29 @@ func TestJWTSecretFromRegistry(t *testing.T) {
 	// Initialize database and registry store first
 	cfg := &config.Config{
 		DBPath: tmpDB,
-		Logger: zap.NewNop(),
 	}
 
 	db, err := initializeDatabase(cfg)
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = runMigrations(db, cfg.Logger)
+	logger := zap.NewNop()
+	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
 	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
-	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
+	// Set a JWT key for encryption to work
+	encryptionService.SetJWTKey("test-jwt-key")
+	registryStore := registrystore.New(db, logger, encryptionService)
 
 	// Pre-store a secret in registry (JWT secrets must be encrypted)
 	existingSecret := "existing-registry-secret"
 	ctx := context.Background()
-	_, err = registryStore.Set(ctx, "system", "jwt_secret", existingSecret, true)
+	_, err = registryStore.Set(ctx, "system", "config.jwt_secret", existingSecret, true)
 	require.NoError(t, err)
 
 	// Test config loading with registry enhancement
-	enhancedCfg, err := config.Load(&config.LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{"--db-path", tmpDB},
-	})
+	enhancedCfg, err := config.Load([]string{"--db-path", tmpDB}, registryStore)
 	require.NoError(t, err)
 
 	// Verify JWT secret from registry was used
@@ -141,7 +139,6 @@ func TestConfigEnhancement(t *testing.T) {
 
 	cfg := &config.Config{
 		DBPath: tmpDB,
-		Logger: zap.NewNop(),
 	}
 
 	// Initialize minimal services for test
@@ -149,27 +146,25 @@ func TestConfigEnhancement(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = runMigrations(db, cfg.Logger)
+	logger := zap.NewNop()
+	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
 	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
-	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
+	registryStore := registrystore.New(db, logger, encryptionService)
 
 	// Test that config enhancement works with registry values
 	ctx := context.Background()
 
 	// Set some registry values
-	_, err = registryStore.Set(ctx, "system", "storage_type", "s3", false)
+	_, err = registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
 	require.NoError(t, err)
 
-	_, err = registryStore.Set(ctx, "system", "s3_bucket", "test-bucket", false)
+	_, err = registryStore.Set(ctx, "system", "config.s3_bucket", "test-bucket", false)
 	require.NoError(t, err)
 
 	// Load config with registry enhancement
-	enhancedCfg, err := config.Load(&config.LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{"--jwt-secret", "test-secret"},
-	})
+	enhancedCfg, err := config.Load([]string{"--jwt-secret", "test-secret"}, registryStore)
 	require.NoError(t, err)
 
 	// Verify that registry values were applied
@@ -183,7 +178,6 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 
 	cfg := &config.Config{
 		DBPath: tmpDB,
-		Logger: zap.NewNop(),
 	}
 
 	// Initialize minimal services for test
@@ -191,11 +185,12 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = runMigrations(db, cfg.Logger)
+	logger := zap.NewNop()
+	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
 	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
-	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
+	registryStore := registrystore.New(db, logger, encryptionService)
 
 	// Set environment variables (s3 requires bucket)
 	os.Setenv("STORAGE_TYPE", "s3")
@@ -207,14 +202,11 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 
 	// Set registry value (should be overridden by env)
 	ctx := context.Background()
-	_, err = registryStore.Set(ctx, "system", "storage_type", "file", false)
+	_, err = registryStore.Set(ctx, "system", "config.storage_type", "file", false)
 	require.NoError(t, err)
 
 	// Load config with registry enhancement (env should take priority)
-	enhancedCfg, err := config.Load(&config.LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{"--jwt-secret", "test-secret"},
-	})
+	enhancedCfg, err := config.Load([]string{"--jwt-secret", "test-secret"}, registryStore)
 	require.NoError(t, err)
 
 	// Verify that env value takes priority over registry
@@ -233,7 +225,6 @@ func TestInitializeImageService(t *testing.T) {
 		ImagorSecret:        "test-secret",
 		ImagorUnsafe:        false,
 		ImagorResultStorage: "same",
-		Logger:              zap.NewNop(),
 	}
 
 	// Initialize minimal services for test
@@ -241,11 +232,12 @@ func TestInitializeImageService(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = runMigrations(db, cfg.Logger)
+	logger := zap.NewNop()
+	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
 	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
-	registryStore := registrystore.New(db, cfg.Logger, encryptionService)
+	registryStore := registrystore.New(db, logger, encryptionService)
 
 	imageService := initializeImageService(cfg, registryStore)
 

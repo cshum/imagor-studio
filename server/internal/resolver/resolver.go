@@ -11,20 +11,27 @@ import (
 
 const SystemOwnerID = "system"
 
+// ConfigProvider interface for configuration methods used by the resolver
+type ConfigProvider interface {
+	GetByRegistryKey(registryKey string) (effectiveValue string, exists bool)
+}
+
 type Resolver struct {
 	storage       storage.Storage
 	registryStore registrystore.Store
 	userStore     userstore.Store
 	imageService  imageservice.Service
+	config        ConfigProvider
 	logger        *zap.Logger
 }
 
-func NewResolver(storage storage.Storage, registryStore registrystore.Store, userStore userstore.Store, imageService imageservice.Service, logger *zap.Logger) *Resolver {
+func NewResolver(storage storage.Storage, registryStore registrystore.Store, userStore userstore.Store, imageService imageservice.Service, cfg ConfigProvider, logger *zap.Logger) *Resolver {
 	return &Resolver{
 		storage:       storage,
 		registryStore: registryStore,
 		userStore:     userStore,
 		imageService:  imageService,
+		config:        cfg,
 		logger:        logger,
 	}
 }

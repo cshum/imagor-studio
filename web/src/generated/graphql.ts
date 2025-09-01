@@ -69,8 +69,8 @@ export type Mutation = {
   deleteFile: Scalars['Boolean']['output']
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
-  setSystemRegistry: Array<Registry>
-  setUserRegistry: Array<Registry>
+  setSystemRegistry: Array<SystemRegistry>
+  setUserRegistry: Array<UserRegistry>
   updateProfile: User
   uploadFile: Scalars['Boolean']['output']
 }
@@ -126,11 +126,11 @@ export type MutationUploadFileArgs = {
 
 export type Query = {
   __typename?: 'Query'
-  getSystemRegistry: Maybe<Registry>
-  getUserRegistry: Maybe<Registry>
+  getSystemRegistry: Maybe<SystemRegistry>
+  getUserRegistry: Maybe<UserRegistry>
   listFiles: FileList
-  listSystemRegistry: Array<Registry>
-  listUserRegistry: Array<Registry>
+  listSystemRegistry: Array<SystemRegistry>
+  listUserRegistry: Array<UserRegistry>
   me: Maybe<User>
   statFile: Maybe<FileStat>
   user: Maybe<User>
@@ -178,16 +178,6 @@ export type QueryUsersArgs = {
   offset?: InputMaybe<Scalars['Int']['input']>
 }
 
-export type Registry = {
-  __typename?: 'Registry'
-  createdAt: Scalars['String']['output']
-  isEncrypted: Scalars['Boolean']['output']
-  key: Scalars['String']['output']
-  ownerID: Scalars['String']['output']
-  updatedAt: Scalars['String']['output']
-  value: Scalars['String']['output']
-}
-
 export type RegistryEntryInput = {
   isEncrypted: Scalars['Boolean']['input']
   key: Scalars['String']['input']
@@ -197,6 +187,17 @@ export type RegistryEntryInput = {
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
 
 export type SortOrder = 'ASC' | 'DESC'
+
+export type SystemRegistry = {
+  __typename?: 'SystemRegistry'
+  createdAt: Scalars['String']['output']
+  isEncrypted: Scalars['Boolean']['output']
+  isOverriddenByConfig: Scalars['Boolean']['output']
+  key: Scalars['String']['output']
+  ownerID: Scalars['String']['output']
+  updatedAt: Scalars['String']['output']
+  value: Scalars['String']['output']
+}
 
 export type ThumbnailUrls = {
   __typename?: 'ThumbnailUrls'
@@ -229,14 +230,35 @@ export type UserList = {
   totalCount: Scalars['Int']['output']
 }
 
+export type UserRegistry = {
+  __typename?: 'UserRegistry'
+  createdAt: Scalars['String']['output']
+  isEncrypted: Scalars['Boolean']['output']
+  key: Scalars['String']['output']
+  ownerID: Scalars['String']['output']
+  updatedAt: Scalars['String']['output']
+  value: Scalars['String']['output']
+}
+
 export type RegistryInfoFragment = {
-  __typename?: 'Registry'
+  __typename?: 'UserRegistry'
   key: string
   value: string
   ownerID: string
   isEncrypted: boolean
   createdAt: string
   updatedAt: string
+}
+
+export type SystemRegistryInfoFragment = {
+  __typename?: 'SystemRegistry'
+  key: string
+  value: string
+  ownerID: string
+  isEncrypted: boolean
+  createdAt: string
+  updatedAt: string
+  isOverriddenByConfig: boolean
 }
 
 export type ListUserRegistryQueryVariables = Exact<{
@@ -247,7 +269,7 @@ export type ListUserRegistryQueryVariables = Exact<{
 export type ListUserRegistryQuery = {
   __typename?: 'Query'
   listUserRegistry: Array<{
-    __typename?: 'Registry'
+    __typename?: 'UserRegistry'
     key: string
     value: string
     ownerID: string
@@ -265,7 +287,7 @@ export type GetUserRegistryQueryVariables = Exact<{
 export type GetUserRegistryQuery = {
   __typename?: 'Query'
   getUserRegistry: {
-    __typename?: 'Registry'
+    __typename?: 'UserRegistry'
     key: string
     value: string
     ownerID: string
@@ -282,13 +304,14 @@ export type ListSystemRegistryQueryVariables = Exact<{
 export type ListSystemRegistryQuery = {
   __typename?: 'Query'
   listSystemRegistry: Array<{
-    __typename?: 'Registry'
+    __typename?: 'SystemRegistry'
     key: string
     value: string
     ownerID: string
     isEncrypted: boolean
     createdAt: string
     updatedAt: string
+    isOverriddenByConfig: boolean
   }>
 }
 
@@ -299,13 +322,14 @@ export type GetSystemRegistryQueryVariables = Exact<{
 export type GetSystemRegistryQuery = {
   __typename?: 'Query'
   getSystemRegistry: {
-    __typename?: 'Registry'
+    __typename?: 'SystemRegistry'
     key: string
     value: string
     ownerID: string
     isEncrypted: boolean
     createdAt: string
     updatedAt: string
+    isOverriddenByConfig: boolean
   } | null
 }
 
@@ -317,7 +341,7 @@ export type SetUserRegistryMutationVariables = Exact<{
 export type SetUserRegistryMutation = {
   __typename?: 'Mutation'
   setUserRegistry: Array<{
-    __typename?: 'Registry'
+    __typename?: 'UserRegistry'
     key: string
     value: string
     ownerID: string
@@ -341,13 +365,14 @@ export type SetSystemRegistryMutationVariables = Exact<{
 export type SetSystemRegistryMutation = {
   __typename?: 'Mutation'
   setSystemRegistry: Array<{
-    __typename?: 'Registry'
+    __typename?: 'SystemRegistry'
     key: string
     value: string
     ownerID: string
     isEncrypted: boolean
     createdAt: string
     updatedAt: string
+    isOverriddenByConfig: boolean
   }>
 }
 
@@ -579,7 +604,7 @@ export const RegistryInfoFragmentDoc = {
     {
       kind: 'FragmentDefinition',
       name: { kind: 'Name', value: 'RegistryInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'UserRegistry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -594,6 +619,28 @@ export const RegistryInfoFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<RegistryInfoFragment, unknown>
+export const SystemRegistryInfoFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SystemRegistryInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'SystemRegistry' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SystemRegistryInfoFragment, unknown>
 export const FileInfoFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -720,7 +767,7 @@ export const ListUserRegistryDocument = {
     {
       kind: 'FragmentDefinition',
       name: { kind: 'Name', value: 'RegistryInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'UserRegistry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -788,7 +835,7 @@ export const GetUserRegistryDocument = {
     {
       kind: 'FragmentDefinition',
       name: { kind: 'Name', value: 'RegistryInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'UserRegistry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -833,7 +880,7 @@ export const ListSystemRegistryDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'RegistryInfo' } },
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'SystemRegistryInfo' } },
               ],
             },
           },
@@ -842,8 +889,8 @@ export const ListSystemRegistryDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'RegistryInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
+      name: { kind: 'Name', value: 'SystemRegistryInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'SystemRegistry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -853,6 +900,7 @@ export const ListSystemRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
         ],
       },
     },
@@ -891,7 +939,7 @@ export const GetSystemRegistryDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'RegistryInfo' } },
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'SystemRegistryInfo' } },
               ],
             },
           },
@@ -900,8 +948,8 @@ export const GetSystemRegistryDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'RegistryInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
+      name: { kind: 'Name', value: 'SystemRegistryInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'SystemRegistry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -911,6 +959,7 @@ export const GetSystemRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
         ],
       },
     },
@@ -975,7 +1024,7 @@ export const SetUserRegistryDocument = {
     {
       kind: 'FragmentDefinition',
       name: { kind: 'Name', value: 'RegistryInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'UserRegistry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -1075,7 +1124,7 @@ export const SetSystemRegistryDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'RegistryInfo' } },
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'SystemRegistryInfo' } },
               ],
             },
           },
@@ -1084,8 +1133,8 @@ export const SetSystemRegistryDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'RegistryInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Registry' } },
+      name: { kind: 'Name', value: 'SystemRegistryInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'SystemRegistry' } },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -1095,6 +1144,7 @@ export const SetSystemRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
         ],
       },
     },

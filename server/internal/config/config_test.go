@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -21,7 +22,7 @@ import (
 
 func TestLoadBasic(t *testing.T) {
 	// Test basic config loading without registry
-	cfg, err := Load(&LoadOptions{Args: []string{"--jwt-secret", "test-secret"}})
+	cfg, err := Load([]string{"--jwt-secret", "test-secret"}, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -33,7 +34,6 @@ func TestLoadBasic(t *testing.T) {
 	assert.Equal(t, "external", cfg.ImagorMode)
 	assert.Equal(t, "http://localhost:8000", cfg.ImagorURL)
 	assert.Equal(t, 24*time.Hour, cfg.JWTExpiration)
-	assert.NotNil(t, cfg.Logger)
 }
 
 func TestLoadWithArgs(t *testing.T) {
@@ -46,7 +46,7 @@ func TestLoadWithArgs(t *testing.T) {
 		"--jwt-secret", "test-secret",
 	}
 
-	cfg, err := Load(&LoadOptions{Args: args})
+	cfg, err := Load(args, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -70,7 +70,7 @@ func TestLoadWithEnvVars(t *testing.T) {
 		os.Unsetenv("IMAGOR_MODE")
 	}()
 
-	cfg, err := Load(&LoadOptions{Args: []string{"--jwt-secret", "test-secret"}})
+	cfg, err := Load([]string{"--jwt-secret", "test-secret"}, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -90,20 +90,17 @@ func TestLoadWithRegistry(t *testing.T) {
 	db, registryStore := setupTestRegistry(t, tmpDB)
 	defer db.Close()
 
-	// Set registry values
+	// Set registry values using new config. prefix format
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "storage_type", "s3", false)
+	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "s3_bucket", "registry-bucket", false)
+	_, err = registryStore.Set(ctx, "system", "config.s3_bucket", "registry-bucket", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "imagor_mode", "disabled", false)
+	_, err = registryStore.Set(ctx, "system", "config.imagor_mode", "disabled", false)
 	require.NoError(t, err)
 
 	// Load config with registry
-	cfg, err := Load(&LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{"--jwt-secret", "test-secret"},
-	})
+	cfg, err := Load([]string{"--jwt-secret", "test-secret"}, registryStore)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -124,7 +121,7 @@ func TestConfigPriority(t *testing.T) {
 
 	// Set registry value
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "storage_type", "s3", false)
+	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
 	require.NoError(t, err)
 
 	// Set environment variable (should override registry)
@@ -132,10 +129,7 @@ func TestConfigPriority(t *testing.T) {
 	defer os.Unsetenv("STORAGE_TYPE")
 
 	// Load config with registry
-	cfg, err := Load(&LoadOptions{
-		RegistryStore: registryStore,
-		Args:          []string{"--jwt-secret", "test-secret"},
-	})
+	cfg, err := Load([]string{"--jwt-secret", "test-secret"}, registryStore)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -154,7 +148,7 @@ func TestConfigPriorityWithArgs(t *testing.T) {
 
 	// Set registry value
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "storage_type", "s3", false)
+	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
 	require.NoError(t, err)
 
 	// Set environment variable
@@ -164,10 +158,7 @@ func TestConfigPriorityWithArgs(t *testing.T) {
 	// Use command line args (should have highest priority)
 	args := []string{"--storage-type", "filesystem", "--jwt-secret", "test-secret"}
 
-	cfg, err := Load(&LoadOptions{
-		RegistryStore: registryStore,
-		Args:          args,
-	})
+	cfg, err := Load(args, registryStore)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -231,39 +222,61 @@ func TestValidateStorageConfig(t *testing.T) {
 	}
 }
 
-func TestRegistryParser(t *testing.T) {
+func TestAutoParsingWithConfigPrefix(t *testing.T) {
 	// Create temporary database
-	tmpDB := "/tmp/test_registry_parser.db"
+	tmpDB := "/tmp/test_auto_parsing.db"
 	defer os.Remove(tmpDB)
 
 	// Initialize database and registry store
 	db, registryStore := setupTestRegistry(t, tmpDB)
 	defer db.Close()
 
-	// Set registry values
+	// Set registry values using new config. prefix format
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "storage_type", "s3", false)
+	_, err := registryStore.Set(ctx, "system", "config.jwt_secret", "registry-jwt-secret", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "s3_bucket", "parser-bucket", false)
+	_, err = registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
 	require.NoError(t, err)
-
-	// Create parser
-	parser := NewRegistryParser(registryStore)
-	require.NotNil(t, parser)
-
-	// Test parsing
-	values := make(map[string]string)
-	setFunc := func(name, value string) error {
-		values[name] = value
-		return nil
-	}
-
-	err = parser.Parse(nil, setFunc) // reader is not used
+	_, err = registryStore.Set(ctx, "system", "config.s3_bucket", "auto-parsed-bucket", false)
+	require.NoError(t, err)
+	_, err = registryStore.Set(ctx, "system", "config.allow_guest_mode", "true", false)
 	require.NoError(t, err)
 
-	// Verify values were set
-	assert.Equal(t, "s3", values["storage-type"])
-	assert.Equal(t, "parser-bucket", values["s3-bucket"])
+	// Load config with registry
+	cfg, err := Load([]string{}, registryStore) // No args, should use registry values
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	// Verify auto-parsed registry values were applied
+	assert.Equal(t, "registry-jwt-secret", cfg.JWTSecret)
+	assert.Equal(t, "s3", cfg.StorageType)
+	assert.Equal(t, "auto-parsed-bucket", cfg.S3Bucket)
+	assert.Equal(t, true, cfg.AllowGuestMode)
+}
+
+func TestGuestModeConfig(t *testing.T) {
+	// Test guest mode configuration with registry
+	tmpDB := "/tmp/test_guest_mode_config.db"
+	defer os.Remove(tmpDB)
+
+	// Initialize database and registry store
+	db, registryStore := setupTestRegistry(t, tmpDB)
+	defer db.Close()
+
+	// Set registry values including JWT secret and guest mode
+	ctx := context.Background()
+	_, err := registryStore.Set(ctx, "system", "config.jwt_secret", "test-secret", false)
+	require.NoError(t, err)
+	_, err = registryStore.Set(ctx, "system", "config.allow_guest_mode", "true", false)
+	require.NoError(t, err)
+
+	// Load config with registry
+	cfg, err := Load([]string{}, registryStore) // No args, should use registry values
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	assert.Equal(t, true, cfg.AllowGuestMode)
+	assert.Equal(t, "test-secret", cfg.JWTSecret)
 }
 
 func TestGetRegistryKeyForFlag(t *testing.T) {
@@ -271,10 +284,11 @@ func TestGetRegistryKeyForFlag(t *testing.T) {
 		flagName    string
 		expectedKey string
 	}{
-		{"storage-type", "storage_type"},
-		{"s3-bucket", "s3_bucket"},
-		{"imagor-mode", "imagor_mode"},
-		{"file-base-dir", "file_base_dir"},
+		{"storage-type", "config.storage_type"},
+		{"s3-bucket", "config.s3_bucket"},
+		{"imagor-mode", "config.imagor_mode"},
+		{"file-base-dir", "config.file_base_dir"},
+		{"allow-guest-mode", "config.allow_guest_mode"},
 	}
 
 	for _, tt := range tests {
@@ -294,6 +308,9 @@ func TestGetFlagNameForRegistryKey(t *testing.T) {
 		{"s3_bucket", "s3-bucket"},
 		{"imagor_mode", "imagor-mode"},
 		{"file_base_dir", "file-base-dir"},
+		{"config.storage_type", "storage-type"},
+		{"config.s3_bucket", "s3-bucket"},
+		{"config.allow_guest_mode", "allow-guest-mode"},
 	}
 
 	for _, tt := range tests {
@@ -310,7 +327,7 @@ func TestConfigWithJWTSecret(t *testing.T) {
 		"--jwt-secret", "test-jwt-secret",
 	}
 
-	cfg, err := Load(&LoadOptions{Args: args})
+	cfg, err := Load(args, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -323,7 +340,7 @@ func TestConfigWithImagorSecret(t *testing.T) {
 		"--imagor-secret", "test-imagor-secret",
 	}
 
-	cfg, err := Load(&LoadOptions{Args: args})
+	cfg, err := Load(args, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -337,7 +354,7 @@ func TestConfigRequiresJWTSecret(t *testing.T) {
 		"--port", "8080",
 	}
 
-	_, err := Load(&LoadOptions{Args: args})
+	_, err := Load(args, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "jwt-secret is required")
 }
@@ -350,7 +367,7 @@ func TestConfigFilePermissions(t *testing.T) {
 		"--jwt-secret", "test-secret",
 	}
 
-	cfg, err := Load(&LoadOptions{Args: args})
+	cfg, err := Load(args, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -388,11 +405,194 @@ func TestConfigInvalidValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := Load(&LoadOptions{Args: tt.args})
+			_, err := Load(tt.args, nil)
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), tt.errorContains)
 		})
 	}
+}
+
+func TestGetByRegistryKey_ConfigDetection(t *testing.T) {
+	tests := []struct {
+		name           string
+		registryValues map[string]string
+		envVars        map[string]string
+		args           []string
+		testKey        string
+		expectedValue  string
+		expectedExists bool
+		description    string
+	}{
+		{
+			name: "Registry value only - not overridden",
+			registryValues: map[string]string{
+				"config.storage_type": "file",
+			},
+			testKey:        "config.storage_type",
+			expectedValue:  "",
+			expectedExists: false,
+			description:    "Registry values alone should not be considered overridden by external config",
+		},
+		{
+			name: "Registry value overridden by environment",
+			registryValues: map[string]string{
+				"config.storage_type": "s3",
+			},
+			envVars: map[string]string{
+				"STORAGE_TYPE": "file",
+			},
+			testKey:        "config.storage_type",
+			expectedValue:  "file",
+			expectedExists: true,
+			description:    "When registry value is overridden by env var, should return env value",
+		},
+		{
+			name: "Registry value overridden by args",
+			registryValues: map[string]string{
+				"config.storage_type": "s3",
+			},
+			args:           []string{"--storage-type", "filesystem"},
+			testKey:        "config.storage_type",
+			expectedValue:  "filesystem",
+			expectedExists: true,
+			description:    "When registry value is overridden by command line args, should return args value",
+		},
+		{
+			name: "No registry value, env only",
+			envVars: map[string]string{
+				"STORAGE_TYPE": "file",
+			},
+			testKey:        "config.storage_type",
+			expectedValue:  "file",
+			expectedExists: true,
+			description:    "When there's no registry value but env var exists, should return env value",
+		},
+		{
+			name: "Non-config registry key - not tracked",
+			registryValues: map[string]string{
+				"app.version": "1.0.0",
+			},
+			testKey:        "app.version",
+			expectedValue:  "",
+			expectedExists: false,
+			description:    "Non-config registry keys should not be tracked",
+		},
+		{
+			name: "Guest mode registry value only - not overridden",
+			registryValues: map[string]string{
+				"config.allow_guest_mode": "true",
+			},
+			testKey:        "config.allow_guest_mode",
+			expectedValue:  "",
+			expectedExists: false,
+			description:    "Guest mode from registry alone should not be considered overridden",
+		},
+		{
+			name: "Guest mode overridden by environment",
+			registryValues: map[string]string{
+				"config.allow_guest_mode": "true",
+			},
+			envVars: map[string]string{
+				"ALLOW_GUEST_MODE": "false",
+			},
+			testKey:        "config.allow_guest_mode",
+			expectedValue:  "false",
+			expectedExists: true,
+			description:    "Guest mode overridden by env should return env value",
+		},
+		{
+			name:           "Default value only - not overridden",
+			testKey:        "config.storage_type",
+			expectedValue:  "",
+			expectedExists: false,
+			description:    "Default values should not be considered overridden by external config",
+		},
+		{
+			name: "Config file override",
+			envVars: map[string]string{
+				"CONFIG": "/path/to/config.env",
+			},
+			args:           []string{"--config", "/test/config.env"},
+			testKey:        "config.storage_type",
+			expectedValue:  "",
+			expectedExists: false,
+			description:    "Config file args should be detected (though file doesn't exist in test)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create temporary database
+			tmpDB := "/tmp/test_config_detection_" + strings.ReplaceAll(tt.name, " ", "_") + ".db"
+			defer os.Remove(tmpDB)
+
+			// Initialize database and registry store
+			db, registryStore := setupTestRegistry(t, tmpDB)
+			defer db.Close()
+
+			// Set registry values
+			ctx := context.Background()
+			for key, value := range tt.registryValues {
+				_, err := registryStore.Set(ctx, "system", key, value, false)
+				require.NoError(t, err)
+			}
+
+			// Set environment variables
+			for envKey, envValue := range tt.envVars {
+				os.Setenv(envKey, envValue)
+				defer os.Unsetenv(envKey)
+			}
+
+			// Prepare args with JWT secret
+			args := append([]string{"--jwt-secret", "test-secret"}, tt.args...)
+
+			// Load config with registry
+			cfg, err := Load(args, registryStore)
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, cfg)
+
+			// Test GetByRegistryKey - now properly tracks overridden flags
+			effectiveValue, exists := cfg.GetByRegistryKey(tt.testKey)
+
+			// Check if the result matches expectations
+			assert.Equal(t, tt.expectedExists, exists, "GetByRegistryKey exists should match expected: %s", tt.description)
+			assert.Equal(t, tt.expectedValue, effectiveValue, "GetByRegistryKey value should match expected: %s", tt.description)
+		})
+	}
+}
+
+func TestValueSourceTracking(t *testing.T) {
+	// Create temporary database
+	tmpDB := "/tmp/test_value_source_tracking.db"
+	defer os.Remove(tmpDB)
+
+	// Initialize database and registry store
+	db, registryStore := setupTestRegistry(t, tmpDB)
+	defer db.Close()
+
+	// Set registry values
+	ctx := context.Background()
+	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
+	require.NoError(t, err)
+	_, err = registryStore.Set(ctx, "system", "config.allow_guest_mode", "true", false)
+	require.NoError(t, err)
+
+	// Set environment variable (should override registry)
+	os.Setenv("STORAGE_TYPE", "file")
+	defer os.Unsetenv("STORAGE_TYPE")
+
+	// Load config
+	cfg, err := Load([]string{"--jwt-secret", "test-secret", "--imagor-mode", "disabled"}, registryStore)
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	// Note: We no longer track overridden flags in the config struct
+	// This functionality has been moved to the loading process only
+
+	// Verify actual config values
+	assert.Equal(t, "file", cfg.StorageType, "StorageType should be overridden by env")
+	assert.Equal(t, true, cfg.AllowGuestMode, "AllowGuestMode should come from registry")
+	assert.Equal(t, "disabled", cfg.ImagorMode, "ImagorMode should come from args")
 }
 
 // Helper function to set up test registry

@@ -93,13 +93,14 @@ type ComplexityRoot struct {
 		Users              func(childComplexity int, offset *int, limit *int) int
 	}
 
-	Registry struct {
-		CreatedAt   func(childComplexity int) int
-		IsEncrypted func(childComplexity int) int
-		Key         func(childComplexity int) int
-		OwnerID     func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
-		Value       func(childComplexity int) int
+	SystemRegistry struct {
+		CreatedAt            func(childComplexity int) int
+		IsEncrypted          func(childComplexity int) int
+		IsOverriddenByConfig func(childComplexity int) int
+		Key                  func(childComplexity int) int
+		OwnerID              func(childComplexity int) int
+		UpdatedAt            func(childComplexity int) int
+		Value                func(childComplexity int) int
 	}
 
 	ThumbnailUrls struct {
@@ -124,6 +125,15 @@ type ComplexityRoot struct {
 		Items      func(childComplexity int) int
 		TotalCount func(childComplexity int) int
 	}
+
+	UserRegistry struct {
+		CreatedAt   func(childComplexity int) int
+		IsEncrypted func(childComplexity int) int
+		Key         func(childComplexity int) int
+		OwnerID     func(childComplexity int) int
+		UpdatedAt   func(childComplexity int) int
+		Value       func(childComplexity int) int
+	}
 }
 
 type MutationResolver interface {
@@ -133,19 +143,19 @@ type MutationResolver interface {
 	UpdateProfile(ctx context.Context, input UpdateProfileInput, userID *string) (*User, error)
 	ChangePassword(ctx context.Context, input ChangePasswordInput, userID *string) (bool, error)
 	DeactivateAccount(ctx context.Context, userID *string) (bool, error)
-	SetUserRegistry(ctx context.Context, entries []*RegistryEntryInput, ownerID *string) ([]*Registry, error)
+	SetUserRegistry(ctx context.Context, entries []*RegistryEntryInput, ownerID *string) ([]*UserRegistry, error)
 	DeleteUserRegistry(ctx context.Context, key string, ownerID *string) (bool, error)
-	SetSystemRegistry(ctx context.Context, entries []*RegistryEntryInput) ([]*Registry, error)
+	SetSystemRegistry(ctx context.Context, entries []*RegistryEntryInput) ([]*SystemRegistry, error)
 	DeleteSystemRegistry(ctx context.Context, key string) (bool, error)
 	CreateUser(ctx context.Context, input CreateUserInput) (*User, error)
 }
 type QueryResolver interface {
 	ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error)
 	StatFile(ctx context.Context, path string) (*FileStat, error)
-	ListUserRegistry(ctx context.Context, prefix *string, ownerID *string) ([]*Registry, error)
-	GetUserRegistry(ctx context.Context, key string, ownerID *string) (*Registry, error)
-	ListSystemRegistry(ctx context.Context, prefix *string) ([]*Registry, error)
-	GetSystemRegistry(ctx context.Context, key string) (*Registry, error)
+	ListUserRegistry(ctx context.Context, prefix *string, ownerID *string) ([]*UserRegistry, error)
+	GetUserRegistry(ctx context.Context, key string, ownerID *string) (*UserRegistry, error)
+	ListSystemRegistry(ctx context.Context, prefix *string) ([]*SystemRegistry, error)
+	GetSystemRegistry(ctx context.Context, key string) (*SystemRegistry, error)
 	Me(ctx context.Context) (*User, error)
 	User(ctx context.Context, id string) (*User, error)
 	Users(ctx context.Context, offset *int, limit *int) (*UserList, error)
@@ -496,47 +506,54 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.Users(childComplexity, args["offset"].(*int), args["limit"].(*int)), true
 
-	case "Registry.createdAt":
-		if e.complexity.Registry.CreatedAt == nil {
+	case "SystemRegistry.createdAt":
+		if e.complexity.SystemRegistry.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.Registry.CreatedAt(childComplexity), true
+		return e.complexity.SystemRegistry.CreatedAt(childComplexity), true
 
-	case "Registry.isEncrypted":
-		if e.complexity.Registry.IsEncrypted == nil {
+	case "SystemRegistry.isEncrypted":
+		if e.complexity.SystemRegistry.IsEncrypted == nil {
 			break
 		}
 
-		return e.complexity.Registry.IsEncrypted(childComplexity), true
+		return e.complexity.SystemRegistry.IsEncrypted(childComplexity), true
 
-	case "Registry.key":
-		if e.complexity.Registry.Key == nil {
+	case "SystemRegistry.isOverriddenByConfig":
+		if e.complexity.SystemRegistry.IsOverriddenByConfig == nil {
 			break
 		}
 
-		return e.complexity.Registry.Key(childComplexity), true
+		return e.complexity.SystemRegistry.IsOverriddenByConfig(childComplexity), true
 
-	case "Registry.ownerID":
-		if e.complexity.Registry.OwnerID == nil {
+	case "SystemRegistry.key":
+		if e.complexity.SystemRegistry.Key == nil {
 			break
 		}
 
-		return e.complexity.Registry.OwnerID(childComplexity), true
+		return e.complexity.SystemRegistry.Key(childComplexity), true
 
-	case "Registry.updatedAt":
-		if e.complexity.Registry.UpdatedAt == nil {
+	case "SystemRegistry.ownerID":
+		if e.complexity.SystemRegistry.OwnerID == nil {
 			break
 		}
 
-		return e.complexity.Registry.UpdatedAt(childComplexity), true
+		return e.complexity.SystemRegistry.OwnerID(childComplexity), true
 
-	case "Registry.value":
-		if e.complexity.Registry.Value == nil {
+	case "SystemRegistry.updatedAt":
+		if e.complexity.SystemRegistry.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.Registry.Value(childComplexity), true
+		return e.complexity.SystemRegistry.UpdatedAt(childComplexity), true
+
+	case "SystemRegistry.value":
+		if e.complexity.SystemRegistry.Value == nil {
+			break
+		}
+
+		return e.complexity.SystemRegistry.Value(childComplexity), true
 
 	case "ThumbnailUrls.full":
 		if e.complexity.ThumbnailUrls.Full == nil {
@@ -635,6 +652,48 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.UserList.TotalCount(childComplexity), true
+
+	case "UserRegistry.createdAt":
+		if e.complexity.UserRegistry.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.UserRegistry.CreatedAt(childComplexity), true
+
+	case "UserRegistry.isEncrypted":
+		if e.complexity.UserRegistry.IsEncrypted == nil {
+			break
+		}
+
+		return e.complexity.UserRegistry.IsEncrypted(childComplexity), true
+
+	case "UserRegistry.key":
+		if e.complexity.UserRegistry.Key == nil {
+			break
+		}
+
+		return e.complexity.UserRegistry.Key(childComplexity), true
+
+	case "UserRegistry.ownerID":
+		if e.complexity.UserRegistry.OwnerID == nil {
+			break
+		}
+
+		return e.complexity.UserRegistry.OwnerID(childComplexity), true
+
+	case "UserRegistry.updatedAt":
+		if e.complexity.UserRegistry.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.UserRegistry.UpdatedAt(childComplexity), true
+
+	case "UserRegistry.value":
+		if e.complexity.UserRegistry.Value == nil {
+			break
+		}
+
+		return e.complexity.UserRegistry.Value(childComplexity), true
 
 	}
 	return 0, false
@@ -759,10 +818,10 @@ var sources = []*ast.Source{
     statFile(path: String!): FileStat
 
     # Registry APIs
-    listUserRegistry(prefix: String, ownerID: String): [Registry!]!
-    getUserRegistry(key: String!, ownerID: String): Registry
-    listSystemRegistry(prefix: String): [Registry!]!
-    getSystemRegistry(key: String!): Registry
+    listUserRegistry(prefix: String, ownerID: String): [UserRegistry!]!
+    getUserRegistry(key: String!, ownerID: String): UserRegistry
+    listSystemRegistry(prefix: String): [SystemRegistry!]!
+    getSystemRegistry(key: String!): SystemRegistry
 
     me: User
 
@@ -783,11 +842,11 @@ type Mutation {
     deactivateAccount(userId: ID): Boolean!
 
     # User Registry APIs
-    setUserRegistry(entries: [RegistryEntryInput!]!, ownerID: String): [Registry!]!
+    setUserRegistry(entries: [RegistryEntryInput!]!, ownerID: String): [UserRegistry!]!
     deleteUserRegistry(key: String!, ownerID: String): Boolean!
 
     # System Registry APIs (admin only for write)
-    setSystemRegistry(entries: [RegistryEntryInput!]!): [Registry!]!
+    setSystemRegistry(entries: [RegistryEntryInput!]!): [SystemRegistry!]!
     deleteSystemRegistry(key: String!): Boolean!
 
     # admin only operations
@@ -876,13 +935,23 @@ enum SortOrder {
 
 scalar Upload
 
-type Registry {
+type UserRegistry {
     key: String!
     value: String!
     ownerID: String!
     isEncrypted: Boolean!
     createdAt: String!
     updatedAt: String!
+}
+
+type SystemRegistry {
+    key: String!
+    value: String!
+    ownerID: String!
+    isEncrypted: Boolean!
+    createdAt: String!
+    updatedAt: String!
+    isOverriddenByConfig: Boolean!
 }
 
 scalar JSON
@@ -2198,9 +2267,9 @@ func (ec *executionContext) _Mutation_setUserRegistry(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*Registry)
+	res := resTmp.([]*UserRegistry)
 	fc.Result = res
-	return ec.marshalNRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryᚄ(ctx, field.Selections, res)
+	return ec.marshalNUserRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_setUserRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2212,19 +2281,19 @@ func (ec *executionContext) fieldContext_Mutation_setUserRegistry(ctx context.Co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "key":
-				return ec.fieldContext_Registry_key(ctx, field)
+				return ec.fieldContext_UserRegistry_key(ctx, field)
 			case "value":
-				return ec.fieldContext_Registry_value(ctx, field)
+				return ec.fieldContext_UserRegistry_value(ctx, field)
 			case "ownerID":
-				return ec.fieldContext_Registry_ownerID(ctx, field)
+				return ec.fieldContext_UserRegistry_ownerID(ctx, field)
 			case "isEncrypted":
-				return ec.fieldContext_Registry_isEncrypted(ctx, field)
+				return ec.fieldContext_UserRegistry_isEncrypted(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Registry_createdAt(ctx, field)
+				return ec.fieldContext_UserRegistry_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Registry_updatedAt(ctx, field)
+				return ec.fieldContext_UserRegistry_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Registry", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type UserRegistry", field.Name)
 		},
 	}
 	defer func() {
@@ -2322,9 +2391,9 @@ func (ec *executionContext) _Mutation_setSystemRegistry(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*Registry)
+	res := resTmp.([]*SystemRegistry)
 	fc.Result = res
-	return ec.marshalNRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryᚄ(ctx, field.Selections, res)
+	return ec.marshalNSystemRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_setSystemRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2336,19 +2405,21 @@ func (ec *executionContext) fieldContext_Mutation_setSystemRegistry(ctx context.
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "key":
-				return ec.fieldContext_Registry_key(ctx, field)
+				return ec.fieldContext_SystemRegistry_key(ctx, field)
 			case "value":
-				return ec.fieldContext_Registry_value(ctx, field)
+				return ec.fieldContext_SystemRegistry_value(ctx, field)
 			case "ownerID":
-				return ec.fieldContext_Registry_ownerID(ctx, field)
+				return ec.fieldContext_SystemRegistry_ownerID(ctx, field)
 			case "isEncrypted":
-				return ec.fieldContext_Registry_isEncrypted(ctx, field)
+				return ec.fieldContext_SystemRegistry_isEncrypted(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Registry_createdAt(ctx, field)
+				return ec.fieldContext_SystemRegistry_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Registry_updatedAt(ctx, field)
+				return ec.fieldContext_SystemRegistry_updatedAt(ctx, field)
+			case "isOverriddenByConfig":
+				return ec.fieldContext_SystemRegistry_isOverriddenByConfig(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Registry", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type SystemRegistry", field.Name)
 		},
 	}
 	defer func() {
@@ -2644,9 +2715,9 @@ func (ec *executionContext) _Query_listUserRegistry(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*Registry)
+	res := resTmp.([]*UserRegistry)
 	fc.Result = res
-	return ec.marshalNRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryᚄ(ctx, field.Selections, res)
+	return ec.marshalNUserRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_listUserRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2658,19 +2729,19 @@ func (ec *executionContext) fieldContext_Query_listUserRegistry(ctx context.Cont
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "key":
-				return ec.fieldContext_Registry_key(ctx, field)
+				return ec.fieldContext_UserRegistry_key(ctx, field)
 			case "value":
-				return ec.fieldContext_Registry_value(ctx, field)
+				return ec.fieldContext_UserRegistry_value(ctx, field)
 			case "ownerID":
-				return ec.fieldContext_Registry_ownerID(ctx, field)
+				return ec.fieldContext_UserRegistry_ownerID(ctx, field)
 			case "isEncrypted":
-				return ec.fieldContext_Registry_isEncrypted(ctx, field)
+				return ec.fieldContext_UserRegistry_isEncrypted(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Registry_createdAt(ctx, field)
+				return ec.fieldContext_UserRegistry_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Registry_updatedAt(ctx, field)
+				return ec.fieldContext_UserRegistry_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Registry", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type UserRegistry", field.Name)
 		},
 	}
 	defer func() {
@@ -2710,9 +2781,9 @@ func (ec *executionContext) _Query_getUserRegistry(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*Registry)
+	res := resTmp.(*UserRegistry)
 	fc.Result = res
-	return ec.marshalORegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistry(ctx, field.Selections, res)
+	return ec.marshalOUserRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistry(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getUserRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2724,19 +2795,19 @@ func (ec *executionContext) fieldContext_Query_getUserRegistry(ctx context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "key":
-				return ec.fieldContext_Registry_key(ctx, field)
+				return ec.fieldContext_UserRegistry_key(ctx, field)
 			case "value":
-				return ec.fieldContext_Registry_value(ctx, field)
+				return ec.fieldContext_UserRegistry_value(ctx, field)
 			case "ownerID":
-				return ec.fieldContext_Registry_ownerID(ctx, field)
+				return ec.fieldContext_UserRegistry_ownerID(ctx, field)
 			case "isEncrypted":
-				return ec.fieldContext_Registry_isEncrypted(ctx, field)
+				return ec.fieldContext_UserRegistry_isEncrypted(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Registry_createdAt(ctx, field)
+				return ec.fieldContext_UserRegistry_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Registry_updatedAt(ctx, field)
+				return ec.fieldContext_UserRegistry_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Registry", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type UserRegistry", field.Name)
 		},
 	}
 	defer func() {
@@ -2779,9 +2850,9 @@ func (ec *executionContext) _Query_listSystemRegistry(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*Registry)
+	res := resTmp.([]*SystemRegistry)
 	fc.Result = res
-	return ec.marshalNRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryᚄ(ctx, field.Selections, res)
+	return ec.marshalNSystemRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_listSystemRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2793,19 +2864,21 @@ func (ec *executionContext) fieldContext_Query_listSystemRegistry(ctx context.Co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "key":
-				return ec.fieldContext_Registry_key(ctx, field)
+				return ec.fieldContext_SystemRegistry_key(ctx, field)
 			case "value":
-				return ec.fieldContext_Registry_value(ctx, field)
+				return ec.fieldContext_SystemRegistry_value(ctx, field)
 			case "ownerID":
-				return ec.fieldContext_Registry_ownerID(ctx, field)
+				return ec.fieldContext_SystemRegistry_ownerID(ctx, field)
 			case "isEncrypted":
-				return ec.fieldContext_Registry_isEncrypted(ctx, field)
+				return ec.fieldContext_SystemRegistry_isEncrypted(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Registry_createdAt(ctx, field)
+				return ec.fieldContext_SystemRegistry_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Registry_updatedAt(ctx, field)
+				return ec.fieldContext_SystemRegistry_updatedAt(ctx, field)
+			case "isOverriddenByConfig":
+				return ec.fieldContext_SystemRegistry_isOverriddenByConfig(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Registry", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type SystemRegistry", field.Name)
 		},
 	}
 	defer func() {
@@ -2845,9 +2918,9 @@ func (ec *executionContext) _Query_getSystemRegistry(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*Registry)
+	res := resTmp.(*SystemRegistry)
 	fc.Result = res
-	return ec.marshalORegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistry(ctx, field.Selections, res)
+	return ec.marshalOSystemRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistry(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getSystemRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2859,19 +2932,21 @@ func (ec *executionContext) fieldContext_Query_getSystemRegistry(ctx context.Con
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "key":
-				return ec.fieldContext_Registry_key(ctx, field)
+				return ec.fieldContext_SystemRegistry_key(ctx, field)
 			case "value":
-				return ec.fieldContext_Registry_value(ctx, field)
+				return ec.fieldContext_SystemRegistry_value(ctx, field)
 			case "ownerID":
-				return ec.fieldContext_Registry_ownerID(ctx, field)
+				return ec.fieldContext_SystemRegistry_ownerID(ctx, field)
 			case "isEncrypted":
-				return ec.fieldContext_Registry_isEncrypted(ctx, field)
+				return ec.fieldContext_SystemRegistry_isEncrypted(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Registry_createdAt(ctx, field)
+				return ec.fieldContext_SystemRegistry_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Registry_updatedAt(ctx, field)
+				return ec.fieldContext_SystemRegistry_updatedAt(ctx, field)
+			case "isOverriddenByConfig":
+				return ec.fieldContext_SystemRegistry_isOverriddenByConfig(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Registry", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type SystemRegistry", field.Name)
 		},
 	}
 	defer func() {
@@ -3205,8 +3280,8 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Registry_key(ctx context.Context, field graphql.CollectedField, obj *Registry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Registry_key(ctx, field)
+func (ec *executionContext) _SystemRegistry_key(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SystemRegistry_key(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3236,9 +3311,9 @@ func (ec *executionContext) _Registry_key(ctx context.Context, field graphql.Col
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Registry_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SystemRegistry_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Registry",
+		Object:     "SystemRegistry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3249,8 +3324,8 @@ func (ec *executionContext) fieldContext_Registry_key(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Registry_value(ctx context.Context, field graphql.CollectedField, obj *Registry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Registry_value(ctx, field)
+func (ec *executionContext) _SystemRegistry_value(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SystemRegistry_value(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3280,9 +3355,9 @@ func (ec *executionContext) _Registry_value(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Registry_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SystemRegistry_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Registry",
+		Object:     "SystemRegistry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3293,8 +3368,8 @@ func (ec *executionContext) fieldContext_Registry_value(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Registry_ownerID(ctx context.Context, field graphql.CollectedField, obj *Registry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Registry_ownerID(ctx, field)
+func (ec *executionContext) _SystemRegistry_ownerID(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SystemRegistry_ownerID(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3324,9 +3399,9 @@ func (ec *executionContext) _Registry_ownerID(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Registry_ownerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SystemRegistry_ownerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Registry",
+		Object:     "SystemRegistry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3337,8 +3412,8 @@ func (ec *executionContext) fieldContext_Registry_ownerID(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Registry_isEncrypted(ctx context.Context, field graphql.CollectedField, obj *Registry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Registry_isEncrypted(ctx, field)
+func (ec *executionContext) _SystemRegistry_isEncrypted(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SystemRegistry_isEncrypted(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3368,9 +3443,9 @@ func (ec *executionContext) _Registry_isEncrypted(ctx context.Context, field gra
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Registry_isEncrypted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SystemRegistry_isEncrypted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Registry",
+		Object:     "SystemRegistry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3381,8 +3456,8 @@ func (ec *executionContext) fieldContext_Registry_isEncrypted(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Registry_createdAt(ctx context.Context, field graphql.CollectedField, obj *Registry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Registry_createdAt(ctx, field)
+func (ec *executionContext) _SystemRegistry_createdAt(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SystemRegistry_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3412,9 +3487,9 @@ func (ec *executionContext) _Registry_createdAt(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Registry_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SystemRegistry_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Registry",
+		Object:     "SystemRegistry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3425,8 +3500,8 @@ func (ec *executionContext) fieldContext_Registry_createdAt(_ context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Registry_updatedAt(ctx context.Context, field graphql.CollectedField, obj *Registry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Registry_updatedAt(ctx, field)
+func (ec *executionContext) _SystemRegistry_updatedAt(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SystemRegistry_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3456,14 +3531,58 @@ func (ec *executionContext) _Registry_updatedAt(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Registry_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SystemRegistry_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Registry",
+		Object:     "SystemRegistry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SystemRegistry_isOverriddenByConfig(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SystemRegistry_isOverriddenByConfig(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsOverriddenByConfig, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SystemRegistry_isOverriddenByConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SystemRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4081,6 +4200,270 @@ func (ec *executionContext) fieldContext_UserList_totalCount(_ context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserRegistry_key(ctx context.Context, field graphql.CollectedField, obj *UserRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserRegistry_key(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Key, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserRegistry_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserRegistry_value(ctx context.Context, field graphql.CollectedField, obj *UserRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserRegistry_value(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Value, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserRegistry_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserRegistry_ownerID(ctx context.Context, field graphql.CollectedField, obj *UserRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserRegistry_ownerID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OwnerID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserRegistry_ownerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserRegistry_isEncrypted(ctx context.Context, field graphql.CollectedField, obj *UserRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserRegistry_isEncrypted(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsEncrypted, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserRegistry_isEncrypted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserRegistry_createdAt(ctx context.Context, field graphql.CollectedField, obj *UserRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserRegistry_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserRegistry_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserRegistry_updatedAt(ctx context.Context, field graphql.CollectedField, obj *UserRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserRegistry_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserRegistry_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6715,44 +7098,49 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
-var registryImplementors = []string{"Registry"}
+var systemRegistryImplementors = []string{"SystemRegistry"}
 
-func (ec *executionContext) _Registry(ctx context.Context, sel ast.SelectionSet, obj *Registry) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, registryImplementors)
+func (ec *executionContext) _SystemRegistry(ctx context.Context, sel ast.SelectionSet, obj *SystemRegistry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, systemRegistryImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Registry")
+			out.Values[i] = graphql.MarshalString("SystemRegistry")
 		case "key":
-			out.Values[i] = ec._Registry_key(ctx, field, obj)
+			out.Values[i] = ec._SystemRegistry_key(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "value":
-			out.Values[i] = ec._Registry_value(ctx, field, obj)
+			out.Values[i] = ec._SystemRegistry_value(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "ownerID":
-			out.Values[i] = ec._Registry_ownerID(ctx, field, obj)
+			out.Values[i] = ec._SystemRegistry_ownerID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "isEncrypted":
-			out.Values[i] = ec._Registry_isEncrypted(ctx, field, obj)
+			out.Values[i] = ec._SystemRegistry_isEncrypted(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "createdAt":
-			out.Values[i] = ec._Registry_createdAt(ctx, field, obj)
+			out.Values[i] = ec._SystemRegistry_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "updatedAt":
-			out.Values[i] = ec._Registry_updatedAt(ctx, field, obj)
+			out.Values[i] = ec._SystemRegistry_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isOverriddenByConfig":
+			out.Values[i] = ec._SystemRegistry_isOverriddenByConfig(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6910,6 +7298,70 @@ func (ec *executionContext) _UserList(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "totalCount":
 			out.Values[i] = ec._UserList_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var userRegistryImplementors = []string{"UserRegistry"}
+
+func (ec *executionContext) _UserRegistry(ctx context.Context, sel ast.SelectionSet, obj *UserRegistry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userRegistryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserRegistry")
+		case "key":
+			out.Values[i] = ec._UserRegistry_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "value":
+			out.Values[i] = ec._UserRegistry_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ownerID":
+			out.Values[i] = ec._UserRegistry_ownerID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isEncrypted":
+			out.Values[i] = ec._UserRegistry_isEncrypted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._UserRegistry_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._UserRegistry_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7397,60 +7849,6 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryᚄ(ctx context.Context, sel ast.SelectionSet, v []*Registry) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistry(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistry(ctx context.Context, sel ast.SelectionSet, v *Registry) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Registry(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNRegistryEntryInput2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryEntryInputᚄ(ctx context.Context, v any) ([]*RegistryEntryInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
@@ -7485,6 +7883,60 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNSystemRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistryᚄ(ctx context.Context, sel ast.SelectionSet, v []*SystemRegistry) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSystemRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistry(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSystemRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistry(ctx context.Context, sel ast.SelectionSet, v *SystemRegistry) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SystemRegistry(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateProfileInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUpdateProfileInput(ctx context.Context, v any) (UpdateProfileInput, error) {
@@ -7578,6 +8030,60 @@ func (ec *executionContext) marshalNUserList2ᚖgithubᚗcomᚋcshumᚋimagorᚑ
 		return graphql.Null
 	}
 	return ec._UserList(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUserRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistryᚄ(ctx context.Context, sel ast.SelectionSet, v []*UserRegistry) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNUserRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistry(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNUserRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistry(ctx context.Context, sel ast.SelectionSet, v *UserRegistry) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UserRegistry(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -7906,13 +8412,6 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) marshalORegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistry(ctx context.Context, sel ast.SelectionSet, v *Registry) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Registry(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOption(ctx context.Context, v any) (*SortOption, error) {
 	if v == nil {
 		return nil, nil
@@ -7963,6 +8462,13 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
+func (ec *executionContext) marshalOSystemRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistry(ctx context.Context, sel ast.SelectionSet, v *SystemRegistry) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SystemRegistry(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOThumbnailUrls2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐThumbnailUrls(ctx context.Context, sel ast.SelectionSet, v *ThumbnailUrls) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -7975,6 +8481,13 @@ func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstud
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUserRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistry(ctx context.Context, sel ast.SelectionSet, v *UserRegistry) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UserRegistry(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

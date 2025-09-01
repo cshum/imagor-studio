@@ -40,6 +40,11 @@ export function LoginPage() {
     return <Navigate to='/' replace />
   }
 
+  // If first run, redirect to admin setup
+  if (authState.isFirstRun) {
+    return <Navigate to='/admin-setup' replace />
+  }
+
   const onSubmit = async (values: LoginFormValues) => {
     try {
       const response = await login(values)

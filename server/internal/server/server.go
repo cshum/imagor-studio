@@ -24,20 +24,21 @@ type Server struct {
 	services *bootstrap.Services
 }
 
-func New(cfg *config.Config) (*Server, error) {
+func New(cfg *config.Config, logger *zap.Logger, args []string) (*Server, error) {
 	// Initialize all services using bootstrap package
-	services, err := bootstrap.Initialize(cfg)
+	services, err := bootstrap.Initialize(cfg, logger, args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize services: %w", err)
 	}
 
-	// Initialize GraphQL
+	// Initialize GraphQL with enhanced config from services
 	storageResolver := resolver.NewResolver(
 		services.Storage,
 		services.RegistryStore,
 		services.UserStore,
 		services.ImageService,
-		cfg.Logger,
+		services.Config, // Use enhanced config from services
+		services.Logger,
 	)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
@@ -61,7 +62,7 @@ func New(cfg *config.Config) (*Server, error) {
 		services.TokenManager,
 		services.UserStore,
 		services.RegistryStore,
-		cfg.Logger,
+		services.Logger,
 	)
 
 	// Create middleware chain
@@ -89,7 +90,7 @@ func New(cfg *config.Config) (*Server, error) {
 	mux.Handle("/query", protectedHandler)
 
 	// Static file serving for web frontend
-	staticHandler := createStaticHandler(cfg.Logger)
+	staticHandler := createStaticHandler(services.Logger)
 	mux.Handle("/", staticHandler)
 
 	// Configure CORS
@@ -97,8 +98,8 @@ func New(cfg *config.Config) (*Server, error) {
 
 	// Apply global middleware to the entire mux
 	h := middleware.CORSMiddleware(corsConfig)(
-		middleware.LoggingMiddleware(cfg.Logger)(
-			middleware.ErrorMiddleware(cfg.Logger)(
+		middleware.LoggingMiddleware(services.Logger)(
+			middleware.ErrorMiddleware(services.Logger)(
 				mux,
 			),
 		),
@@ -115,7 +116,7 @@ func New(cfg *config.Config) (*Server, error) {
 
 func (s *Server) Run() error {
 	addr := fmt.Sprintf(":%d", s.cfg.Port)
-	s.cfg.Logger.Info("Server is running", zap.String("address", fmt.Sprintf("http://localhost%s", addr)))
+	s.services.Logger.Info("Server is running", zap.String("address", fmt.Sprintf("http://localhost%s", addr)))
 	return http.ListenAndServe(addr, nil)
 }
 
