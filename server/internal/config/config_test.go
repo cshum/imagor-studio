@@ -647,22 +647,20 @@ func TestValueSourceTracking(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	// Test that value sources are tracked correctly
-	assert.NotNil(t, cfg.ValueSources, "ValueSources should be initialized")
+	// Test that overridden flags are tracked correctly
+	assert.NotNil(t, cfg.OverriddenFlags, "OverriddenFlags should be initialized")
 
-	// Check specific value sources
-	if cfg.ValueSources != nil {
-		// storage-type should be from env (overriding registry)
-		assert.Equal(t, "env", cfg.ValueSources["storage-type"], "storage-type should be from env")
+	// Check specific overridden flags
+	if cfg.OverriddenFlags != nil {
+		// storage-type should be overridden (by env)
+		assert.Equal(t, "file", cfg.OverriddenFlags["storage-type"], "storage-type should be overridden")
 
-		// allow-guest-mode should be from registry
-		assert.Equal(t, "registry", cfg.ValueSources["allow-guest-mode"], "allow-guest-mode should be from registry")
+		// imagor-mode should be overridden (by args)
+		assert.Equal(t, "disabled", cfg.OverriddenFlags["imagor-mode"], "imagor-mode should be overridden")
 
-		// imagor-mode should be from args
-		assert.Equal(t, "args", cfg.ValueSources["imagor-mode"], "imagor-mode should be from args")
-
-		// port should be from default (not explicitly set)
-		assert.Equal(t, "default", cfg.ValueSources["port"], "port should be from default")
+		// port should NOT be in OverriddenFlags (using default)
+		_, portOverridden := cfg.OverriddenFlags["port"]
+		assert.False(t, portOverridden, "port should not be overridden (using default)")
 	}
 
 	// Verify actual config values

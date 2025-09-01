@@ -53,8 +53,8 @@ type Config struct {
 	// FlagSet used for configuration parsing - exposed for reuse
 	FlagSet *flag.FlagSet
 
-	// Track where each configuration value came from
-	ValueSources map[string]string // flag_name -> source ("registry", "env", "config_file", "args", "default")
+	// Track which flags were explicitly set (overridden from defaults)
+	OverriddenFlags map[string]string // flag_name -> effective_value
 }
 
 // LoadOptions contains options for loading configuration
@@ -192,13 +192,13 @@ func Load(opts *LoadOptions) (*Config, error) {
 		ImagorResultStorage:  *imagorResultStorage,
 		Logger:               logger,
 		FlagSet:              fs,
-		ValueSources:         make(map[string]string),
+		OverriddenFlags:      make(map[string]string),
 	}
 
-	// Track value sources for configuration override detection AFTER flag parsing
-	if err := cfg.trackValueSources(opts.RegistryStore, args); err != nil {
-		return nil, fmt.Errorf("error tracking value sources: %w", err)
-	}
+	// Track overridden flags AFTER flag parsing
+	cfg.FlagSet.Visit(func(f *flag.Flag) {
+		cfg.OverriddenFlags[f.Name] = f.Value.String()
+	})
 
 	// Validate storage configuration
 	if err := cfg.validateStorageConfig(); err != nil {
@@ -338,61 +338,6 @@ func GetFlagNameForRegistryKey(registryKey string) string {
 	return strings.ReplaceAll(key, "_", "-")
 }
 
-// trackValueSources determines where each configuration value came from
-func (c *Config) trackValueSources(registryStore registrystore.Store, args []string) error {
-	// Initialize all flags as defaults first
-	c.FlagSet.VisitAll(func(f *flag.Flag) {
-		c.ValueSources[f.Name] = "default"
-	})
-
-	// Track registry values
-	if registryStore != nil {
-		ctx := context.Background()
-		prefix := "config."
-		entries, err := registryStore.List(ctx, "system", &prefix)
-		if err == nil {
-			for _, entry := range entries {
-				if entry.Value != "" {
-					configKey := strings.TrimPrefix(entry.Key, prefix)
-					flagName := strings.ReplaceAll(configKey, "_", "-")
-
-					// Check if this flag exists and has a registry value
-					if flag := c.FlagSet.Lookup(flagName); flag != nil {
-						c.ValueSources[flagName] = "registry"
-					}
-				}
-			}
-		}
-	}
-
-	// Track environment variables
-	c.FlagSet.VisitAll(func(f *flag.Flag) {
-		envName := strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
-		if envValue, exists := os.LookupEnv(envName); exists && envValue != "" {
-			c.ValueSources[f.Name] = "env"
-		}
-	})
-
-	// Track command line arguments
-	if len(args) > 0 {
-		for i := 0; i < len(args); i++ {
-			arg := args[i]
-			if strings.HasPrefix(arg, "--") {
-				flagName := strings.TrimPrefix(arg, "--")
-				// Handle flags with values (--flag=value or --flag value)
-				if strings.Contains(flagName, "=") {
-					flagName = strings.Split(flagName, "=")[0]
-				}
-				if c.FlagSet.Lookup(flagName) != nil {
-					c.ValueSources[flagName] = "args"
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
 // GetByRegistryKey returns the effective config value and whether the config key is overridden by external config
 func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
 	// Only check config override for keys with "config." prefix
@@ -403,33 +348,10 @@ func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, ex
 	// Convert registry key to flag name
 	flagName := GetFlagNameForRegistryKey(registryKey)
 
-	// Use the exposed FlagSet to check if the flag exists and get its current value
-	if c.FlagSet == nil {
-		return "", false
+	// Check if this flag was explicitly set (overridden from defaults)
+	if value, overridden := c.OverriddenFlags[flagName]; overridden {
+		return value, true
 	}
 
-	// Look up the flag to verify it exists
-	flagValue := c.FlagSet.Lookup(flagName)
-	if flagValue == nil {
-		return "", false
-	}
-
-	// Check if this flag is being set by external configuration sources
-	// Only return exists=true if the value source is from external config (not default or registry)
-	valueSource, hasSource := c.ValueSources[flagName]
-	if !hasSource {
-		return "", false
-	}
-
-	// Consider it overridden only if set by env vars, config file, or command line args
-	// Not if it's just the default value or set by registry
-	isOverriddenByExternalConfig := valueSource == "env" || valueSource == "config_file" || valueSource == "args"
-	if !isOverriddenByExternalConfig {
-		return "", false
-	}
-
-	// Get the current effective value from the flag
-	effectiveValue = flagValue.Value.String()
-
-	return effectiveValue, true
+	return "", false
 }
