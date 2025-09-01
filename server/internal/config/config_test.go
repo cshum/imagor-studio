@@ -222,41 +222,6 @@ func TestValidateStorageConfig(t *testing.T) {
 	}
 }
 
-func TestRegistryParser(t *testing.T) {
-	// Create temporary database
-	tmpDB := "/tmp/test_registry_parser.db"
-	defer os.Remove(tmpDB)
-
-	// Initialize database and registry store
-	db, registryStore := setupTestRegistry(t, tmpDB)
-	defer db.Close()
-
-	// Set registry values using new config. prefix format
-	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
-	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "config.s3_bucket", "parser-bucket", false)
-	require.NoError(t, err)
-
-	// Create parser
-	parser := NewRegistryParser(registryStore)
-	require.NotNil(t, parser)
-
-	// Test parsing
-	values := make(map[string]string)
-	setFunc := func(name, value string) error {
-		values[name] = value
-		return nil
-	}
-
-	err = parser.Parse(nil, setFunc) // reader is not used
-	require.NoError(t, err)
-
-	// Verify values were set
-	assert.Equal(t, "s3", values["storage-type"])
-	assert.Equal(t, "parser-bucket", values["s3-bucket"])
-}
-
 func TestAutoParsingWithConfigPrefix(t *testing.T) {
 	// Create temporary database
 	tmpDB := "/tmp/test_auto_parsing.db"
@@ -586,12 +551,12 @@ func TestGetByRegistryKey_ConfigDetection(t *testing.T) {
 			require.NoError(t, err, tt.description)
 			require.NotNil(t, cfg)
 
-			// Test GetByRegistryKey - simplified since we no longer track overridden flags
+			// Test GetByRegistryKey - now properly tracks overridden flags
 			effectiveValue, exists := cfg.GetByRegistryKey(tt.testKey)
 
-			// Since GetByRegistryKey now always returns false, we expect all tests to return false
-			assert.False(t, exists, "GetByRegistryKey should always return false now: %s", tt.description)
-			assert.Empty(t, effectiveValue, "Should return empty value: %s", tt.description)
+			// Check if the result matches expectations
+			assert.Equal(t, tt.expectedExists, exists, "GetByRegistryKey exists should match expected: %s", tt.description)
+			assert.Equal(t, tt.expectedValue, effectiveValue, "GetByRegistryKey value should match expected: %s", tt.description)
 		})
 	}
 }

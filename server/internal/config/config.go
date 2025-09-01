@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -46,6 +45,9 @@ type Config struct {
 	ImagorSecret        string // Imagor secret key
 	ImagorUnsafe        bool   // For development
 	ImagorResultStorage string // "same", "separate"
+
+	// Internal tracking for config overrides
+	overriddenFlags map[string]string
 }
 
 // Load loads configuration with optional registry enhancement
@@ -116,7 +118,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 
 	// Apply registry values if registry store is provided
 	if registryStore != nil {
-		if err := ApplyRegistryValues(fs, overriddenFlags, registryStore); err != nil {
+		if err := applyRegistryValues(fs, overriddenFlags, registryStore); err != nil {
 			return nil, fmt.Errorf("failed to apply registry values: %w", err)
 		}
 	}
@@ -173,6 +175,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		ImagorSecret:         *imagorSecret,
 		ImagorUnsafe:         *imagorUnsafe,
 		ImagorResultStorage:  *imagorResultStorage,
+		overriddenFlags:      overriddenFlags,
 	}
 
 	// Validate storage configuration
@@ -196,48 +199,6 @@ func (c *Config) validateStorageConfig() error {
 	default:
 		return fmt.Errorf("unsupported storage-type: %s (supported: file, s3)", c.StorageType)
 	}
-}
-
-// RegistryParser implements ff.ConfigFileParser for registry-based configuration
-type RegistryParser struct {
-	registryStore registrystore.Store
-}
-
-// NewRegistryParser creates a new registry parser
-func NewRegistryParser(registryStore registrystore.Store) *RegistryParser {
-	return &RegistryParser{registryStore: registryStore}
-}
-
-// Parse implements ff.ConfigFileParser interface
-func (p *RegistryParser) Parse(r io.Reader, set func(name, value string) error) error {
-	// The reader is not used for registry parsing, but we need to implement the interface
-	// Registry values are fetched directly from the store
-
-	ctx := context.Background()
-
-	// Auto-parse registry entries with "config." prefix
-	prefix := "config."
-	entries, err := p.registryStore.List(ctx, "system", &prefix)
-	if err != nil {
-		// Log error but continue - registry values are optional
-		return nil
-	}
-
-	// Apply registry values to flags using auto-parsing
-	for _, entry := range entries {
-		if entry.Value != "" {
-			// Strip "config." prefix: config.jwt_secret -> jwt_secret
-			configKey := strings.TrimPrefix(entry.Key, prefix)
-			// Convert to flag format: jwt_secret -> jwt-secret
-			flagName := strings.ReplaceAll(configKey, "_", "-")
-
-			if err := set(flagName, entry.Value); err != nil {
-				return fmt.Errorf("failed to set flag %s from registry: %w", flagName, err)
-			}
-		}
-	}
-
-	return nil
 }
 
 // GetRegistryKeyForFlag returns the registry key for a given flag name
@@ -264,15 +225,25 @@ func GetFlagNameForRegistryKey(registryKey string) string {
 }
 
 // GetByRegistryKey returns the effective config value and whether the config key is overridden by external config
-// This is a simplified version that always returns false since we no longer track overridden flags in the config
 func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
-	// For now, always return false since we don't track overridden flags in the config anymore
-	// This method is mainly used by tests and can be simplified or removed in the future
+	// Only handle config. prefixed keys
+	if !strings.HasPrefix(strings.ToLower(registryKey), "config.") {
+		return "", false
+	}
+
+	// Convert registry key to flag name
+	flagName := GetFlagNameForRegistryKey(registryKey)
+
+	// Check if this flag was overridden by CLI/env
+	if value, overridden := c.overriddenFlags[flagName]; overridden {
+		return value, true
+	}
+
 	return "", false
 }
 
-// ApplyRegistryValues applies registry values to flags that weren't overridden by CLI/env
-func ApplyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]string, registryStore registrystore.Store) error {
+// applyRegistryValues applies registry values to flags that weren't overridden by CLI/env
+func applyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]string, registryStore registrystore.Store) error {
 	ctx := context.Background()
 	prefix := "config."
 	entries, err := registryStore.List(ctx, "system", &prefix)
