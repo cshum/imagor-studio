@@ -329,11 +329,11 @@ func GetFlagNameForRegistryKey(registryKey string) string {
 	return strings.ReplaceAll(key, "_", "-")
 }
 
-// GetEffectiveValueByRegistryKey returns the effective config value and whether it's overridden by config/env
-func (c *Config) GetEffectiveValueByRegistryKey(registryKey, registryValue string) (effectiveValue string, isOverridden bool) {
+// GetEffectiveValueByRegistryKey returns the effective config value and whether the flag exists
+func (c *Config) GetEffectiveValueByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
 	// Only check config override for keys with "config." prefix
 	if !strings.HasPrefix(registryKey, "config.") {
-		return registryValue, false
+		return "", false
 	}
 
 	// Convert registry key to flag name
@@ -341,23 +341,16 @@ func (c *Config) GetEffectiveValueByRegistryKey(registryKey, registryValue strin
 
 	// Use the exposed FlagSet to check if the flag exists and get its current value
 	if c.FlagSet == nil {
-		return registryValue, false
+		return "", false
 	}
 
 	// Look up the flag to verify it exists
 	flagValue := c.FlagSet.Lookup(flagName)
 	if flagValue == nil {
-		// Unknown flag, return registry value
-		return registryValue, false
+		// Unknown flag
+		return "", false
 	}
 
 	// Get the current effective value from the flag
-	configStringValue := flagValue.Value.String()
-
-	// If config value differs from registry value, it means config overrides registry
-	if configStringValue != registryValue {
-		return configStringValue, true
-	}
-
-	return registryValue, false
+	return flagValue.Value.String(), true
 }
