@@ -393,7 +393,7 @@ func (c *Config) trackValueSources(registryStore registrystore.Store, args []str
 	return nil
 }
 
-// GetByRegistryKey returns the effective config value and whether the config key exists
+// GetByRegistryKey returns the effective config value and whether the config key is overridden by external config
 func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
 	// Only check config override for keys with "config." prefix
 	if !strings.HasPrefix(registryKey, "config.") {
@@ -411,6 +411,20 @@ func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, ex
 	// Look up the flag to verify it exists
 	flagValue := c.FlagSet.Lookup(flagName)
 	if flagValue == nil {
+		return "", false
+	}
+
+	// Check if this flag is being set by external configuration sources
+	// Only return exists=true if the value source is from external config (not default or registry)
+	valueSource, hasSource := c.ValueSources[flagName]
+	if !hasSource {
+		return "", false
+	}
+
+	// Consider it overridden only if set by env vars, config file, or command line args
+	// Not if it's just the default value or set by registry
+	isOverriddenByExternalConfig := valueSource == "env" || valueSource == "config_file" || valueSource == "args"
+	if !isOverriddenByExternalConfig {
 		return "", false
 	}
 

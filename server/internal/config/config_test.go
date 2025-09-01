@@ -475,14 +475,14 @@ func TestGetByRegistryKey_ConfigDetection(t *testing.T) {
 		description    string
 	}{
 		{
-			name: "Registry value only",
+			name: "Registry value only - not overridden",
 			registryValues: map[string]string{
 				"config.storage_type": "file",
 			},
 			testKey:        "config.storage_type",
-			expectedValue:  "file",
-			expectedExists: true,
-			description:    "When value comes from registry only",
+			expectedValue:  "",
+			expectedExists: false,
+			description:    "Registry values alone should not be considered overridden by external config",
 		},
 		{
 			name: "Registry value overridden by environment",
@@ -529,14 +529,14 @@ func TestGetByRegistryKey_ConfigDetection(t *testing.T) {
 			description:    "Non-config registry keys should not be tracked",
 		},
 		{
-			name: "Guest mode registry value only",
+			name: "Guest mode registry value only - not overridden",
 			registryValues: map[string]string{
 				"config.allow_guest_mode": "true",
 			},
 			testKey:        "config.allow_guest_mode",
-			expectedValue:  "true",
-			expectedExists: true,
-			description:    "Guest mode from registry should be returned",
+			expectedValue:  "",
+			expectedExists: false,
+			description:    "Guest mode from registry alone should not be considered overridden",
 		},
 		{
 			name: "Guest mode overridden by environment",
@@ -550,6 +550,24 @@ func TestGetByRegistryKey_ConfigDetection(t *testing.T) {
 			expectedValue:  "false",
 			expectedExists: true,
 			description:    "Guest mode overridden by env should return env value",
+		},
+		{
+			name:           "Default value only - not overridden",
+			testKey:        "config.storage_type",
+			expectedValue:  "",
+			expectedExists: false,
+			description:    "Default values should not be considered overridden by external config",
+		},
+		{
+			name: "Config file override",
+			envVars: map[string]string{
+				"CONFIG": "/path/to/config.env",
+			},
+			args:           []string{"--config", "/test/config.env"},
+			testKey:        "config.storage_type",
+			expectedValue:  "",
+			expectedExists: false,
+			description:    "Config file args should be detected (though file doesn't exist in test)",
 		},
 	}
 
