@@ -20,9 +20,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { useBreadcrumb } from '@/hooks/use-breadcrumb'
 import { useAuth } from '@/stores/auth-store'
 
@@ -82,8 +81,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           >
             <div className='flex items-center space-x-2'>
               {/* Sidebar Toggle */}
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 h-4" />
+              <SidebarTrigger className="mr-4 size-5" />
 
               {/* Mobile: Dropdown-style breadcrumb */}
               <MobileBreadcrumb 
