@@ -5,8 +5,6 @@ import { Navigate, useNavigate } from '@tanstack/react-router'
 import * as z from 'zod'
 
 import { registerAdmin } from '@/api/auth-api'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -18,6 +16,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { initAuth, useAuth } from '@/stores/auth-store'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
+import { MultiStepForm, type MultiStepFormStep } from '@/components/ui/multi-step-form'
+import { CheckCircle } from 'lucide-react'
 
 const adminSetupSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -41,9 +41,9 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
 ]
 
 export function AdminSetupPage() {
-  const [currentStep, setCurrentStep] = useState<'user' | 'settings'>('user')
-  const [isLoading, setIsLoading] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
+  const [systemSettingsChanged, setSystemSettingsChanged] = useState(false)
   const navigate = useNavigate()
   const { authState } = useAuth()
 
@@ -55,9 +55,17 @@ export function AdminSetupPage() {
     },
   })
 
-  const onSubmitUserForm = async (values: AdminSetupForm) => {
-    setIsLoading(true)
+  const isFormValid = form.formState.isValid && !form.formState.isSubmitting
+
+  const handleCreateAccount = async (): Promise<boolean> => {
     setError(null)
+    
+    const values = form.getValues()
+    const isValid = await form.trigger()
+    
+    if (!isValid) {
+      return false
+    }
 
     try {
       // Auto-generate display name from email (part before @)
@@ -71,23 +79,23 @@ export function AdminSetupPage() {
 
       // Initialize auth with the new token
       await initAuth(response.token)
-
-      // Move to step 2 (system settings)
-      setCurrentStep('settings')
+      return true
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create admin account')
-    } finally {
-      setIsLoading(false)
+      return false
     }
   }
 
-  const onSystemSettingsComplete = () => {
-    // Navigate to main app after system settings are configured
+  const handleSystemSettingsNext = (): boolean => {
+    // Always allow proceeding from system settings
+    return true
+  }
+
+  const handleComplete = () => {
     navigate({ to: '/' })
   }
 
-  const skipSystemSettings = () => {
-    // Allow user to skip system settings and go directly to main app
+  const handleSkipSettings = () => {
     navigate({ to: '/' })
   }
 
@@ -95,64 +103,27 @@ export function AdminSetupPage() {
     return <Navigate to='/' replace />
   }
 
-  if (currentStep === 'settings') {
-    return (
-      <div className='bg-background flex min-h-screen items-center justify-center p-4'>
-        <div className='w-full max-w-2xl space-y-6'>
-          <Card>
-            <CardHeader className='text-center'>
-              <CardTitle className='text-2xl font-bold'>System Configuration</CardTitle>
-              <CardDescription>
-                Configure your system settings. You can change these later in the admin panel.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SystemSettingsForm
-                title=""
-                description=""
-                settings={SYSTEM_SETTINGS}
-                initialValues={{}}
-                systemRegistryList={[]}
-                onSuccess={onSystemSettingsComplete}
-                showCard={false}
-              />
-              
-              <div className='flex justify-between pt-4 border-t mt-6'>
-                <Button variant='outline' onClick={skipSystemSettings}>
-                  Skip for Now
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className='bg-background flex min-h-screen items-center justify-center p-4'>
-      <Card className='w-full max-w-md'>
-        <CardHeader className='text-center'>
-          <CardTitle className='text-2xl font-bold'>Welcome to Imagor Studio</CardTitle>
-          <CardDescription>
-            Set up your admin account to get started. This is a one-time setup for the first user.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+  const steps: MultiStepFormStep[] = [
+    {
+      id: 'account',
+      title: 'Create Admin Account',
+      description: 'Set up your administrator credentials',
+      content: (
+        <div className="space-y-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmitUserForm)} className='space-y-4'>
+            <div className="space-y-4">
               <FormField
                 control={form.control}
                 name='email'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Email Address</FormLabel>
                     <FormControl>
                       <Input
                         type='email'
                         placeholder='Enter your email address'
                         {...field}
-                        disabled={isLoading}
+                        disabled={form.formState.isSubmitting}
                       />
                     </FormControl>
                     <FormMessage />
@@ -169,9 +140,9 @@ export function AdminSetupPage() {
                     <FormControl>
                       <Input
                         type='password'
-                        placeholder='Enter your password'
+                        placeholder='Enter a secure password (min. 8 characters)'
                         {...field}
-                        disabled={isLoading}
+                        disabled={form.formState.isSubmitting}
                       />
                     </FormControl>
                     <FormMessage />
@@ -184,14 +155,75 @@ export function AdminSetupPage() {
                   {error}
                 </div>
               )}
-
-              <Button type='submit' className='w-full' disabled={isLoading}>
-                {isLoading ? 'Creating Admin Account...' : 'Create Admin Account'}
-              </Button>
-            </form>
+            </div>
           </Form>
-        </CardContent>
-      </Card>
+        </div>
+      ),
+      onNext: handleCreateAccount,
+      isValid: isFormValid,
+      nextLabel: 'Create Account',
+      hideBack: true,
+    },
+    {
+      id: 'settings',
+      title: 'System Configuration',
+      description: 'Configure your system preferences',
+      content: (
+        <div className="space-y-6">
+          <SystemSettingsForm
+            title=""
+            description="These settings can be changed later in the admin panel."
+            settings={SYSTEM_SETTINGS}
+            initialValues={{}}
+            systemRegistryList={[]}
+            onSuccess={() => setSystemSettingsChanged(true)}
+            showCard={false}
+          />
+        </div>
+      ),
+      onNext: handleSystemSettingsNext,
+      onSkip: handleSkipSettings,
+      canSkip: true,
+      skipLabel: 'Skip for Now',
+      nextLabel: 'Save & Continue',
+    },
+    {
+      id: 'complete',
+      title: 'Setup Complete',
+      description: 'Your Imagor Studio is ready to use',
+      content: (
+        <div className="text-center space-y-6 py-8">
+          <div className="flex justify-center">
+            <CheckCircle className="h-16 w-16 text-green-500" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold">Welcome to Imagor Studio!</h3>
+            <p className="text-muted-foreground">
+              Your admin account has been created and the system is configured.
+              {systemSettingsChanged && ' Your system settings have been saved.'}
+            </p>
+          </div>
+          <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
+            <p>You can access the admin panel anytime to manage users, configure settings, and monitor your image gallery.</p>
+          </div>
+        </div>
+      ),
+      nextLabel: 'Enter Imagor Studio',
+      hideBack: true,
+    },
+  ]
+
+  return (
+    <div className='bg-background min-h-screen flex items-center justify-center p-4'>
+      <MultiStepForm
+        steps={steps}
+        currentStep={currentStep}
+        onStepChange={setCurrentStep}
+        onComplete={handleComplete}
+        title="Welcome to Imagor Studio"
+        description="Let's get your image gallery set up in just a few steps"
+        className="w-full max-w-2xl"
+      />
     </div>
   )
 }
