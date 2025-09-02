@@ -8,7 +8,7 @@ interface RectangleStepperProps {
 
 export function RectangleStepper({ currentStep, totalSteps, className }: RectangleStepperProps) {
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <div className={cn('flex items-center gap-3 w-full', className)}>
       {Array.from({ length: totalSteps }, (_, index) => {
         const stepNumber = index + 1
         const isCompleted = stepNumber <= currentStep
@@ -17,10 +17,10 @@ export function RectangleStepper({ currentStep, totalSteps, className }: Rectang
           <div
             key={stepNumber}
             className={cn(
-              'w-3 h-1 rounded-sm transition-all duration-200',
+              'flex-1 h-1 rounded-sm transition-all duration-200',
               isCompleted 
                 ? 'bg-primary' 
-                : 'border border-muted-foreground/30'
+                : 'bg-muted'
             )}
           />
         )
