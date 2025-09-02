@@ -28,7 +28,7 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
   const hasChildren = folder.children && folder.children.length > 0
   const canExpand = folder.isDirectory && (!folder.isLoaded || hasChildren)
 
-  const handleFolderClick = async () => {
+  const handleFolderClick = () => {
     // Navigate to the folder
     if (folder.path === '') {
       navigate({ to: '/' })
@@ -41,6 +41,7 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
   }
 
   const handleExpandClick = async () => {
+    handleFolderClick()
     if (!folder.isLoaded && folder.isDirectory) {
       // Load children if not loaded yet
       await loadFolderChildren(folder.path)
