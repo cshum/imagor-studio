@@ -47,6 +47,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   )
   const { contentWidth, updateWidth } = useWidthHandler(
     contentRef,
+    true,
+    sidebar.open,
     isDesktop ? 32 : 16,
   )
   useResizeHandler(updateWidth)
