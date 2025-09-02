@@ -14,6 +14,22 @@ func (s *store) getDatabaseDialect() dialect.Name {
 	return s.db.Dialect().Name()
 }
 
+// upsertRegistry selects the appropriate upsert method based on the database dialect
+func (s *store) upsertRegistry(ctx context.Context, db bun.IDB, modelEntry *model.Registry) error {
+	dialectName := s.getDatabaseDialect()
+
+	switch dialectName {
+	case dialect.PG:
+		return s.upsertPostgreSQL(ctx, db, modelEntry)
+	case dialect.SQLite:
+		return s.upsertSQLite(ctx, db, modelEntry)
+	case dialect.MySQL:
+		return s.upsertMySQL(ctx, db, modelEntry)
+	default:
+		return fmt.Errorf("unsupported database dialect: %s", dialectName.String())
+	}
+}
+
 // upsertPostgreSQL handles upsert operations for PostgreSQL
 func (s *store) upsertPostgreSQL(ctx context.Context, db bun.IDB, modelEntry *model.Registry) error {
 	_, err := db.NewInsert().
@@ -48,20 +64,4 @@ func (s *store) upsertMySQL(ctx context.Context, db bun.IDB, modelEntry *model.R
 		Set("is_encrypted = VALUES(is_encrypted)").
 		Exec(ctx)
 	return err
-}
-
-// upsertRegistry selects the appropriate upsert method based on the database dialect
-func (s *store) upsertRegistry(ctx context.Context, db bun.IDB, modelEntry *model.Registry) error {
-	dialectName := s.getDatabaseDialect()
-
-	switch dialectName {
-	case dialect.PG:
-		return s.upsertPostgreSQL(ctx, db, modelEntry)
-	case dialect.SQLite:
-		return s.upsertSQLite(ctx, db, modelEntry)
-	case dialect.MySQL:
-		return s.upsertMySQL(ctx, db, modelEntry)
-	default:
-		return fmt.Errorf("unsupported database dialect: %s", dialectName.String())
-	}
 }
