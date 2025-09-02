@@ -1,6 +1,7 @@
 import { useState, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { RectangleStepper } from '@/components/ui/rectangle-stepper'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -183,20 +184,14 @@ export function MultiStepForm({
               )}
               
               {!currentStepData?.hideNext && (
-                <Button
+                <ButtonWithLoading
                   onClick={handleNext}
+                  isLoading={isLoading}
                   disabled={isNextDisabled()}
                   className="flex items-center gap-2"
                 >
-                  {isLoading ? (
-                    'Loading...'
-                  ) : (
-                    <>
-                      {getNextButtonLabel()}
-                      {!isLastStep && <ChevronRight className="h-4 w-4" />}
-                    </>
-                  )}
-                </Button>
+                  {getNextButtonLabel()}
+                </ButtonWithLoading>
               )}
             </div>
           </div>

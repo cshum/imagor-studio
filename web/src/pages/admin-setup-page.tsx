@@ -206,6 +206,7 @@ export function AdminSetupPage() {
       canSkip: true,
       skipLabel: 'Skip for Now',
       nextLabel: 'Complete Setup',
+      hideBack: true,
     },
   ]
 
