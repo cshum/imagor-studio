@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react'
-import { FolderOpen } from 'lucide-react'
 
 import {
   Sidebar,
@@ -30,22 +29,17 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
     <Sidebar {...props}>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2">
-            <FolderOpen className="h-4 w-4" />
-            Folders
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>Folders</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {isLoadingRoot ? (
                 // Loading skeleton
-                <div className="space-y-2 p-2">
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Skeleton className="h-4 w-4" />
-                      <Skeleton className="h-4 flex-1" />
-                    </div>
-                  ))}
-                </div>
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="flex h-8 items-center gap-2 rounded-md px-2">
+                    <Skeleton className="h-4 w-4 rounded-md" />
+                    <Skeleton className="h-4 flex-1" />
+                  </div>
+                ))
               ) : rootFolders.length === 0 ? (
                 // Empty state
                 <div className="p-4 text-center text-sm text-muted-foreground">
