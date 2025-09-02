@@ -190,12 +190,10 @@ export type SortOrder = 'ASC' | 'DESC'
 
 export type SystemRegistry = {
   __typename?: 'SystemRegistry'
-  createdAt: Scalars['String']['output']
   isEncrypted: Scalars['Boolean']['output']
   isOverriddenByConfig: Scalars['Boolean']['output']
   key: Scalars['String']['output']
   ownerID: Scalars['String']['output']
-  updatedAt: Scalars['String']['output']
   value: Scalars['String']['output']
 }
 
@@ -232,11 +230,9 @@ export type UserList = {
 
 export type UserRegistry = {
   __typename?: 'UserRegistry'
-  createdAt: Scalars['String']['output']
   isEncrypted: Scalars['Boolean']['output']
   key: Scalars['String']['output']
   ownerID: Scalars['String']['output']
-  updatedAt: Scalars['String']['output']
   value: Scalars['String']['output']
 }
 
@@ -246,8 +242,6 @@ export type RegistryInfoFragment = {
   value: string
   ownerID: string
   isEncrypted: boolean
-  createdAt: string
-  updatedAt: string
 }
 
 export type SystemRegistryInfoFragment = {
@@ -256,8 +250,6 @@ export type SystemRegistryInfoFragment = {
   value: string
   ownerID: string
   isEncrypted: boolean
-  createdAt: string
-  updatedAt: string
   isOverriddenByConfig: boolean
 }
 
@@ -274,8 +266,6 @@ export type ListUserRegistryQuery = {
     value: string
     ownerID: string
     isEncrypted: boolean
-    createdAt: string
-    updatedAt: string
   }>
 }
 
@@ -292,8 +282,6 @@ export type GetUserRegistryQuery = {
     value: string
     ownerID: string
     isEncrypted: boolean
-    createdAt: string
-    updatedAt: string
   } | null
 }
 
@@ -309,8 +297,6 @@ export type ListSystemRegistryQuery = {
     value: string
     ownerID: string
     isEncrypted: boolean
-    createdAt: string
-    updatedAt: string
     isOverriddenByConfig: boolean
   }>
 }
@@ -327,8 +313,6 @@ export type GetSystemRegistryQuery = {
     value: string
     ownerID: string
     isEncrypted: boolean
-    createdAt: string
-    updatedAt: string
     isOverriddenByConfig: boolean
   } | null
 }
@@ -346,8 +330,6 @@ export type SetUserRegistryMutation = {
     value: string
     ownerID: string
     isEncrypted: boolean
-    createdAt: string
-    updatedAt: string
   }>
 }
 
@@ -370,8 +352,6 @@ export type SetSystemRegistryMutation = {
     value: string
     ownerID: string
     isEncrypted: boolean
-    createdAt: string
-    updatedAt: string
     isOverriddenByConfig: boolean
   }>
 }
@@ -612,8 +592,6 @@ export const RegistryInfoFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
       },
     },
@@ -633,8 +611,6 @@ export const SystemRegistryInfoFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
         ],
       },
@@ -775,8 +751,6 @@ export const ListUserRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
       },
     },
@@ -843,8 +817,6 @@ export const GetUserRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
       },
     },
@@ -898,8 +870,6 @@ export const ListSystemRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
         ],
       },
@@ -957,8 +927,6 @@ export const GetSystemRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
         ],
       },
@@ -1032,8 +1000,6 @@ export const SetUserRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
         ],
       },
     },
@@ -1142,8 +1108,6 @@ export const SetSystemRegistryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
         ],
       },

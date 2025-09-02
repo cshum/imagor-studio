@@ -3,9 +3,9 @@ package resolver
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 )
 
 // SetUserRegistry sets user-specific registry (supports multiple values)
@@ -15,15 +15,24 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.R
 		return nil, err
 	}
 
-	var result []*gql.UserRegistry
-
-	// Handle entries
+	// Convert GraphQL input to registrystore entries
+	var registryEntries []*registrystore.Registry
 	for _, entry := range entries {
-		registry, err := r.registryStore.Set(ctx, effectiveOwnerID, entry.Key, entry.Value, entry.IsEncrypted)
-		if err != nil {
-			return nil, fmt.Errorf("failed to set user registry for key %s: %w", entry.Key, err)
-		}
+		registryEntries = append(registryEntries, &registrystore.Registry{
+			Key:         entry.Key,
+			Value:       entry.Value,
+			IsEncrypted: entry.IsEncrypted,
+		})
+	}
 
+	// Use SetMulti for better performance
+	registries, err := r.registryStore.SetMulti(ctx, effectiveOwnerID, registryEntries)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set user registry: %w", err)
+	}
+
+	var result []*gql.UserRegistry
+	for _, registry := range registries {
 		// Hide encrypted values in GraphQL responses
 		value := registry.Value
 		if registry.IsEncrypted {
@@ -35,8 +44,6 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.R
 			Value:       value,
 			OwnerID:     effectiveOwnerID,
 			IsEncrypted: registry.IsEncrypted,
-			CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
 		})
 	}
 
@@ -83,8 +90,6 @@ func (r *queryResolver) ListUserRegistry(ctx context.Context, prefix *string, ow
 			Value:       value,
 			OwnerID:     effectiveOwnerID,
 			IsEncrypted: registry.IsEncrypted,
-			CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
 		}
 	}
 	return result, nil
@@ -117,8 +122,6 @@ func (r *queryResolver) GetUserRegistry(ctx context.Context, key string, ownerID
 		Value:       value,
 		OwnerID:     effectiveOwnerID,
 		IsEncrypted: registry.IsEncrypted,
-		CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }
 
@@ -129,21 +132,32 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql
 		return nil, fmt.Errorf("admin permission required for system registry write: %w", err)
 	}
 
-	var result []*gql.SystemRegistry
-
-	// Handle entries
+	// Check all entries for config conflicts first
 	for _, entry := range entries {
-		// Check if this registry key has a corresponding config flag
 		_, configExists := r.config.GetByRegistryKey(entry.Key)
 		if configExists {
 			return nil, fmt.Errorf("cannot set registry key '%s': this configuration is managed by external config", entry.Key)
 		}
+	}
 
-		registry, err := r.registryStore.Set(ctx, SystemOwnerID, entry.Key, entry.Value, entry.IsEncrypted)
-		if err != nil {
-			return nil, fmt.Errorf("failed to set system registry for key %s: %w", entry.Key, err)
-		}
+	// Convert GraphQL input to registrystore entries
+	var registryEntries []*registrystore.Registry
+	for _, entry := range entries {
+		registryEntries = append(registryEntries, &registrystore.Registry{
+			Key:         entry.Key,
+			Value:       entry.Value,
+			IsEncrypted: entry.IsEncrypted,
+		})
+	}
 
+	// Use SetMulti for better performance
+	registries, err := r.registryStore.SetMulti(ctx, SystemOwnerID, registryEntries)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set system registry: %w", err)
+	}
+
+	var result []*gql.SystemRegistry
+	for _, registry := range registries {
 		// Hide encrypted values in GraphQL responses
 		value := registry.Value
 		if registry.IsEncrypted {
@@ -165,8 +179,6 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql
 			OwnerID:              SystemOwnerID,
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
-			CreatedAt:            registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:            registry.UpdatedAt.Format(time.RFC3339),
 		})
 	}
 
@@ -221,8 +233,6 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 			OwnerID:              SystemOwnerID,
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
-			CreatedAt:            registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:            registry.UpdatedAt.Format(time.RFC3339),
 		}
 	}
 	return result, nil
@@ -263,7 +273,5 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key string) (*gql
 		OwnerID:              SystemOwnerID,
 		IsEncrypted:          registry.IsEncrypted,
 		IsOverriddenByConfig: configExists,
-		CreatedAt:            registry.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:            registry.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }

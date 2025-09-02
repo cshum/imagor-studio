@@ -3,7 +3,6 @@ package resolver
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
@@ -35,6 +34,11 @@ func (m *MockRegistryStore) Set(ctx context.Context, ownerID, key, value string,
 	return args.Get(0).(*registrystore.Registry), args.Error(1)
 }
 
+func (m *MockRegistryStore) SetMulti(ctx context.Context, ownerID string, entries []*registrystore.Registry) ([]*registrystore.Registry, error) {
+	args := m.Called(ctx, ownerID, entries)
+	return args.Get(0).([]*registrystore.Registry), args.Error(1)
+}
+
 func (m *MockRegistryStore) Delete(ctx context.Context, ownerID, key string) error {
 	args := m.Called(ctx, ownerID, key)
 	return args.Error(0)
@@ -52,15 +56,13 @@ func TestSetUserRegistry_SelfOperation(t *testing.T) {
 	key := "user:preference"
 	value := "dark_mode"
 
-	now := time.Now()
 	resultRegistry := &registrystore.Registry{
-		Key:       key,
-		Value:     value,
-		CreatedAt: now,
-		UpdatedAt: now,
+		Key:   key,
+		Value: value,
 	}
 
-	mockRegistryStore.On("Set", ctx, "test-user-id", key, value, false).Return(resultRegistry, nil)
+	expectedEntries := []*registrystore.Registry{{Key: key, Value: value, IsEncrypted: false}}
+	mockRegistryStore.On("SetMulti", ctx, "test-user-id", expectedEntries).Return([]*registrystore.Registry{resultRegistry}, nil)
 
 	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
 	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, nil) // nil ownerID = self
@@ -88,15 +90,13 @@ func TestSetUserRegistry_AdminForOtherUser(t *testing.T) {
 	key := "admin:note"
 	value := "VIP user"
 
-	now := time.Now()
 	resultRegistry := &registrystore.Registry{
-		Key:       key,
-		Value:     value,
-		CreatedAt: now,
-		UpdatedAt: now,
+		Key:   key,
+		Value: value,
 	}
 
-	mockRegistryStore.On("Set", ctx, targetOwnerID, key, value, false).Return(resultRegistry, nil)
+	expectedEntries := []*registrystore.Registry{{Key: key, Value: value, IsEncrypted: false}}
+	mockRegistryStore.On("SetMulti", ctx, targetOwnerID, expectedEntries).Return([]*registrystore.Registry{resultRegistry}, nil)
 
 	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
 	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, &targetOwnerID)
@@ -167,12 +167,9 @@ func TestGetUserRegistry_SelfOperation(t *testing.T) {
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:preference"
 
-	now := time.Now()
 	mockRegistry := &registrystore.Registry{
-		Key:       key,
-		Value:     "dark_mode",
-		CreatedAt: now,
-		UpdatedAt: now,
+		Key:   key,
+		Value: "dark_mode",
 	}
 
 	mockRegistryStore.On("Get", ctx, "test-user-id", key).Return(mockRegistry, nil)
@@ -220,10 +217,9 @@ func TestListUserRegistry_SelfOperation(t *testing.T) {
 	ctx := createReadWriteContext("test-user-id")
 	prefix := "app:"
 
-	now := time.Now()
 	mockRegistry := []*registrystore.Registry{
-		{Key: "app:setting1", Value: "value1", CreatedAt: now, UpdatedAt: now},
-		{Key: "app:setting2", Value: "value2", CreatedAt: now, UpdatedAt: now},
+		{Key: "app:setting1", Value: "value1"},
+		{Key: "app:setting2", Value: "value2"},
 	}
 
 	mockRegistryStore.On("List", ctx, "test-user-id", &prefix).Return(mockRegistry, nil)
@@ -306,14 +302,13 @@ func TestSetSystemRegistry_AdminOnly(t *testing.T) {
 			ctx := tt.context()
 
 			if !tt.expectError {
-				now := time.Now()
+
 				resultRegistry := &registrystore.Registry{
-					Key:       "app_version",
-					Value:     "1.0.0",
-					CreatedAt: now,
-					UpdatedAt: now,
+					Key:   "app_version",
+					Value: "1.0.0",
 				}
-				mockRegistryStore.On("Set", ctx, "system", "app_version", "1.0.0", false).Return(resultRegistry, nil)
+				expectedEntries := []*registrystore.Registry{{Key: "app_version", Value: "1.0.0", IsEncrypted: false}}
+				mockRegistryStore.On("SetMulti", ctx, "system", expectedEntries).Return([]*registrystore.Registry{resultRegistry}, nil)
 			}
 
 			entries := []*gql.RegistryEntryInput{{Key: "app_version", Value: "1.0.0"}}
@@ -374,12 +369,9 @@ func TestGetSystemRegistry_OpenRead(t *testing.T) {
 			mockRegistryStore.ExpectedCalls = nil
 			ctx := tt.context()
 
-			now := time.Now()
 			mockRegistry := &registrystore.Registry{
-				Key:       "app_version",
-				Value:     "1.0.0",
-				CreatedAt: now,
-				UpdatedAt: now,
+				Key:   "app_version",
+				Value: "1.0.0",
 			}
 
 			mockRegistryStore.On("Get", ctx, "system", "app_version").Return(mockRegistry, nil)
@@ -408,10 +400,9 @@ func TestListSystemRegistry_OpenRead(t *testing.T) {
 	ctx := createReadWriteContext("user-id")
 	prefix := "config:"
 
-	now := time.Now()
 	mockRegistry := []*registrystore.Registry{
-		{Key: "config:setting1", Value: "value1", CreatedAt: now, UpdatedAt: now},
-		{Key: "config:setting2", Value: "value2", CreatedAt: now, UpdatedAt: now},
+		{Key: "config:setting1", Value: "value1"},
+		{Key: "config:setting2", Value: "value2"},
 	}
 
 	mockRegistryStore.On("List", ctx, "system", &prefix).Return(mockRegistry, nil)
@@ -568,16 +559,14 @@ func TestSetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	key := "api_secret"
 	value := "super-secret-value"
 
-	now := time.Now()
 	resultRegistry := &registrystore.Registry{
 		Key:         key,
 		Value:       value,
 		IsEncrypted: true,
-		CreatedAt:   now,
-		UpdatedAt:   now,
 	}
 
-	mockRegistryStore.On("Set", ctx, "test-user-id", key, value, true).Return(resultRegistry, nil)
+	expectedEntries := []*registrystore.Registry{{Key: key, Value: value, IsEncrypted: true}}
+	mockRegistryStore.On("SetMulti", ctx, "test-user-id", expectedEntries).Return([]*registrystore.Registry{resultRegistry}, nil)
 
 	entries := []*gql.RegistryEntryInput{{Key: key, Value: value, IsEncrypted: true}}
 	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, nil)
@@ -604,13 +593,10 @@ func TestGetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	ctx := createReadWriteContext("test-user-id")
 	key := "api_secret"
 
-	now := time.Now()
 	mockRegistry := &registrystore.Registry{
 		Key:         key,
 		Value:       "super-secret-value",
 		IsEncrypted: true,
-		CreatedAt:   now,
-		UpdatedAt:   now,
 	}
 
 	mockRegistryStore.On("Get", ctx, "test-user-id", key).Return(mockRegistry, nil)
@@ -637,10 +623,9 @@ func TestListUserRegistry_EncryptedValueHidden(t *testing.T) {
 
 	ctx := createReadWriteContext("test-user-id")
 
-	now := time.Now()
 	mockRegistry := []*registrystore.Registry{
-		{Key: "normal_setting", Value: "visible_value", IsEncrypted: false, CreatedAt: now, UpdatedAt: now},
-		{Key: "api_secret", Value: "super-secret-value", IsEncrypted: true, CreatedAt: now, UpdatedAt: now},
+		{Key: "normal_setting", Value: "visible_value", IsEncrypted: false},
+		{Key: "api_secret", Value: "super-secret-value", IsEncrypted: true},
 	}
 
 	mockRegistryStore.On("List", ctx, "test-user-id", (*string)(nil)).Return(mockRegistry, nil)
@@ -676,16 +661,14 @@ func TestSetSystemRegistry_EncryptedValueHidden(t *testing.T) {
 	key := "jwt_secret"
 	value := "super-secret-jwt-key"
 
-	now := time.Now()
 	resultRegistry := &registrystore.Registry{
 		Key:         key,
 		Value:       value,
 		IsEncrypted: true,
-		CreatedAt:   now,
-		UpdatedAt:   now,
 	}
 
-	mockRegistryStore.On("Set", ctx, "system", key, value, true).Return(resultRegistry, nil)
+	expectedEntries := []*registrystore.Registry{{Key: key, Value: value, IsEncrypted: true}}
+	mockRegistryStore.On("SetMulti", ctx, "system", expectedEntries).Return([]*registrystore.Registry{resultRegistry}, nil)
 
 	entries := []*gql.RegistryEntryInput{{Key: key, Value: value, IsEncrypted: true}}
 	result, err := resolver.Mutation().SetSystemRegistry(ctx, entries)
@@ -773,14 +756,13 @@ func TestSetSystemRegistry_OverridePrevention(t *testing.T) {
 
 			if !tt.expectError {
 				// Only expect registry store call if we're not expecting an error
-				now := time.Now()
+
 				resultRegistry := &registrystore.Registry{
-					Key:       tt.registryKey,
-					Value:     "test-value",
-					CreatedAt: now,
-					UpdatedAt: now,
+					Key:   tt.registryKey,
+					Value: "test-value",
 				}
-				mockRegistryStore.On("Set", ctx, "system", tt.registryKey, "test-value", false).Return(resultRegistry, nil)
+				expectedEntries := []*registrystore.Registry{{Key: tt.registryKey, Value: "test-value", IsEncrypted: false}}
+				mockRegistryStore.On("SetMulti", ctx, "system", expectedEntries).Return([]*registrystore.Registry{resultRegistry}, nil)
 			}
 
 			entries := []*gql.RegistryEntryInput{{Key: tt.registryKey, Value: "test-value"}}
@@ -870,12 +852,9 @@ func TestGetSystemRegistry_OverrideDetection(t *testing.T) {
 
 			ctx := createReadWriteContext("user-id")
 
-			now := time.Now()
 			mockRegistry := &registrystore.Registry{
-				Key:       tt.registryKey,
-				Value:     tt.registryValue,
-				CreatedAt: now,
-				UpdatedAt: now,
+				Key:   tt.registryKey,
+				Value: tt.registryValue,
 			}
 
 			mockRegistryStore.On("Get", ctx, "system", tt.registryKey).Return(mockRegistry, nil)
@@ -913,11 +892,10 @@ func TestListSystemRegistry_OverrideDetection(t *testing.T) {
 
 	ctx := createReadWriteContext("user-id")
 
-	now := time.Now()
 	mockRegistries := []*registrystore.Registry{
-		{Key: "config.allow_guest_mode", Value: "true", CreatedAt: now, UpdatedAt: now},
-		{Key: "config.storage_type", Value: "file", CreatedAt: now, UpdatedAt: now},
-		{Key: "app.version", Value: "1.0.0", CreatedAt: now, UpdatedAt: now},
+		{Key: "config.allow_guest_mode", Value: "true"},
+		{Key: "config.storage_type", Value: "file"},
+		{Key: "app.version", Value: "1.0.0"},
 	}
 
 	mockRegistryStore.On("List", ctx, "system", (*string)(nil)).Return(mockRegistries, nil)

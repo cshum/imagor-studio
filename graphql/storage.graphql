@@ -134,8 +134,6 @@ type UserRegistry {
     value: String!
     ownerID: String!
     isEncrypted: Boolean!
-    createdAt: String!
-    updatedAt: String!
 }
 
 type SystemRegistry {
@@ -143,8 +141,6 @@ type SystemRegistry {
     value: String!
     ownerID: String!
     isEncrypted: Boolean!
-    createdAt: String!
-    updatedAt: String!
     isOverriddenByConfig: Boolean!
 }
 
