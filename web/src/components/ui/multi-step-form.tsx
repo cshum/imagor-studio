@@ -140,7 +140,7 @@ export function MultiStepForm({
       )}
 
       {/* Step Content */}
-      <Card className="min-h-[400px]">
+      <Card className="min-h-[400px] p-4">
         <CardHeader>
           <CardTitle>{currentStepData?.title}</CardTitle>
           {currentStepData?.description && (
