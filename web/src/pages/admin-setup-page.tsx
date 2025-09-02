@@ -7,7 +7,6 @@ import * as z from 'zod'
 import { registerAdmin } from '@/api/auth-api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
@@ -18,6 +17,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { initAuth, useAuth } from '@/stores/auth-store'
+import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 
 const adminSetupSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -25,12 +25,23 @@ const adminSetupSchema = z.object({
     .string()
     .min(8, 'Password must be at least 8 characters long')
     .max(72, 'Password must be less than 72 characters'),
-  enableGuestMode: z.boolean(),
 })
 
 type AdminSetupForm = z.infer<typeof adminSetupSchema>
 
+// Define system settings for step 2
+const SYSTEM_SETTINGS: SystemSetting[] = [
+  {
+    key: 'config.allow_guest_mode',
+    type: 'boolean',
+    label: 'Guest Mode',
+    description: 'Allow users to browse the gallery without creating an account',
+    defaultValue: false,
+  },
+]
+
 export function AdminSetupPage() {
+  const [currentStep, setCurrentStep] = useState<'user' | 'settings'>('user')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
@@ -41,11 +52,10 @@ export function AdminSetupPage() {
     defaultValues: {
       email: '',
       password: '',
-      enableGuestMode: false,
     },
   })
 
-  const onSubmit = async (values: AdminSetupForm) => {
+  const onSubmitUserForm = async (values: AdminSetupForm) => {
     setIsLoading(true)
     setError(null)
 
@@ -57,13 +67,13 @@ export function AdminSetupPage() {
         displayName,
         email: values.email,
         password: values.password,
-        enableGuestMode: values.enableGuestMode,
       })
 
       // Initialize auth with the new token
       await initAuth(response.token)
 
-      navigate({ to: '/' })
+      // Move to step 2 (system settings)
+      setCurrentStep('settings')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create admin account')
     } finally {
@@ -71,8 +81,52 @@ export function AdminSetupPage() {
     }
   }
 
+  const onSystemSettingsComplete = () => {
+    // Navigate to main app after system settings are configured
+    navigate({ to: '/' })
+  }
+
+  const skipSystemSettings = () => {
+    // Allow user to skip system settings and go directly to main app
+    navigate({ to: '/' })
+  }
+
   if (!authState.isFirstRun) {
     return <Navigate to='/' replace />
+  }
+
+  if (currentStep === 'settings') {
+    return (
+      <div className='bg-background flex min-h-screen items-center justify-center p-4'>
+        <div className='w-full max-w-2xl space-y-6'>
+          <Card>
+            <CardHeader className='text-center'>
+              <CardTitle className='text-2xl font-bold'>System Configuration</CardTitle>
+              <CardDescription>
+                Configure your system settings. You can change these later in the admin panel.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SystemSettingsForm
+                title=""
+                description=""
+                settings={SYSTEM_SETTINGS}
+                initialValues={{}}
+                systemRegistryList={[]}
+                onSuccess={onSystemSettingsComplete}
+                showCard={false}
+              />
+              
+              <div className='flex justify-between pt-4 border-t mt-6'>
+                <Button variant='outline' onClick={skipSystemSettings}>
+                  Skip for Now
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -86,7 +140,7 @@ export function AdminSetupPage() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+            <form onSubmit={form.handleSubmit(onSubmitUserForm)} className='space-y-4'>
               <FormField
                 control={form.control}
                 name='email'
@@ -121,28 +175,6 @@ export function AdminSetupPage() {
                       />
                     </FormControl>
                     <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='enableGuestMode'
-                render={({ field }) => (
-                  <FormItem className='flex flex-row items-start space-y-0 space-x-3'>
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <div className='space-y-1 leading-none'>
-                      <FormLabel>Enable Guest Mode</FormLabel>
-                      <p className='text-muted-foreground text-sm'>
-                        Allow users to browse without creating an account
-                      </p>
-                    </div>
                   </FormItem>
                 )}
               />

@@ -13,7 +13,6 @@ export interface RegisterAdminRequest {
   displayName: string
   email: string
   password: string
-  enableGuestMode?: boolean
 }
 
 export interface LoginResponse {
