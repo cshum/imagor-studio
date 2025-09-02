@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/stretchr/testify/assert"
@@ -101,17 +100,12 @@ func TestRegistryStore_Set(t *testing.T) {
 	assert.NotNil(t, result)
 	assert.Equal(t, "key1", result.Key)
 	assert.Equal(t, "value1", result.Value)
-	assert.False(t, result.CreatedAt.IsZero())
-	assert.False(t, result.UpdatedAt.IsZero())
-
 	// Test updating existing registry
-	time.Sleep(10 * time.Millisecond) // Ensure different timestamp
 	updatedResult, err := store.Set(ctx, "owner1", "key1", "value2", false)
 	assert.NoError(t, err)
 	assert.NotNil(t, updatedResult)
 	assert.Equal(t, "key1", updatedResult.Key)
 	assert.Equal(t, "value2", updatedResult.Value)
-	assert.True(t, updatedResult.UpdatedAt.After(result.UpdatedAt))
 }
 
 func TestRegistryStore_Get(t *testing.T) {
@@ -187,6 +181,84 @@ func TestRegistryStore_List(t *testing.T) {
 	results, err = store.List(ctx, "owner1", &nonMatchingPrefix)
 	assert.NoError(t, err)
 	assert.Len(t, results, 0)
+}
+
+func TestRegistryStore_SetMulti(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	store := New(db, logger, nil)
+	ctx := context.Background()
+
+	// Test setting multiple entries
+	entries := []RegistryEntry{
+		{Key: "key1", Value: "value1", IsEncrypted: false},
+		{Key: "key2", Value: "value2", IsEncrypted: false},
+		{Key: "key3", Value: "value3", IsEncrypted: true},
+	}
+
+	results, err := store.SetMulti(ctx, "owner1", entries)
+	assert.NoError(t, err)
+	assert.Len(t, results, 3)
+
+	// Verify all entries were set correctly
+	for i, result := range results {
+		assert.Equal(t, entries[i].Key, result.Key)
+		assert.Equal(t, entries[i].Value, result.Value)
+		assert.Equal(t, entries[i].IsEncrypted, result.IsEncrypted)
+	}
+
+	// Verify entries can be retrieved individually
+	for _, entry := range entries {
+		result, err := store.Get(ctx, "owner1", entry.Key)
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, entry.Key, result.Key)
+		assert.Equal(t, entry.Value, result.Value)
+		assert.Equal(t, entry.IsEncrypted, result.IsEncrypted)
+	}
+
+	// Test updating existing entries with SetMulti
+	updateEntries := []RegistryEntry{
+		{Key: "key1", Value: "updated_value1", IsEncrypted: false},
+		{Key: "key2", Value: "updated_value2", IsEncrypted: true},
+	}
+
+	updateResults, err := store.SetMulti(ctx, "owner1", updateEntries)
+	assert.NoError(t, err)
+	assert.Len(t, updateResults, 2)
+
+	// Verify updates
+	for i, result := range updateResults {
+		assert.Equal(t, updateEntries[i].Key, result.Key)
+		assert.Equal(t, updateEntries[i].Value, result.Value)
+		assert.Equal(t, updateEntries[i].IsEncrypted, result.IsEncrypted)
+	}
+
+	// Test empty entries slice
+	emptyResults, err := store.SetMulti(ctx, "owner1", []RegistryEntry{})
+	assert.NoError(t, err)
+	assert.Len(t, emptyResults, 0)
+
+	// Test SetMulti with different owners
+	owner2Entries := []RegistryEntry{
+		{Key: "key1", Value: "owner2_value1", IsEncrypted: false},
+	}
+
+	owner2Results, err := store.SetMulti(ctx, "owner2", owner2Entries)
+	assert.NoError(t, err)
+	assert.Len(t, owner2Results, 1)
+	assert.Equal(t, "owner2_value1", owner2Results[0].Value)
+
+	// Verify owner isolation
+	owner1Result, err := store.Get(ctx, "owner1", "key1")
+	assert.NoError(t, err)
+	assert.Equal(t, "updated_value1", owner1Result.Value)
+
+	owner2Result, err := store.Get(ctx, "owner2", "key1")
+	assert.NoError(t, err)
+	assert.Equal(t, "owner2_value1", owner2Result.Value)
 }
 
 func TestRegistryStore_Delete(t *testing.T) {

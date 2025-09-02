@@ -3,7 +3,6 @@ package resolver
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
@@ -45,8 +44,6 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.R
 			Value:       value,
 			OwnerID:     effectiveOwnerID,
 			IsEncrypted: registry.IsEncrypted,
-			CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
 		})
 	}
 
@@ -93,8 +90,6 @@ func (r *queryResolver) ListUserRegistry(ctx context.Context, prefix *string, ow
 			Value:       value,
 			OwnerID:     effectiveOwnerID,
 			IsEncrypted: registry.IsEncrypted,
-			CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
 		}
 	}
 	return result, nil
@@ -127,8 +122,6 @@ func (r *queryResolver) GetUserRegistry(ctx context.Context, key string, ownerID
 		Value:       value,
 		OwnerID:     effectiveOwnerID,
 		IsEncrypted: registry.IsEncrypted,
-		CreatedAt:   registry.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   registry.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }
 
@@ -186,8 +179,6 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql
 			OwnerID:              SystemOwnerID,
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
-			CreatedAt:            registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:            registry.UpdatedAt.Format(time.RFC3339),
 		})
 	}
 
@@ -242,8 +233,6 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 			OwnerID:              SystemOwnerID,
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
-			CreatedAt:            registry.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:            registry.UpdatedAt.Format(time.RFC3339),
 		}
 	}
 	return result, nil
@@ -284,7 +273,5 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key string) (*gql
 		OwnerID:              SystemOwnerID,
 		IsEncrypted:          registry.IsEncrypted,
 		IsOverriddenByConfig: configExists,
-		CreatedAt:            registry.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:            registry.UpdatedAt.Format(time.RFC3339),
 	}, nil
 }

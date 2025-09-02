@@ -15,11 +15,9 @@ import (
 )
 
 type Registry struct {
-	Key         string    `json:"key"`
-	Value       string    `json:"value"`
-	IsEncrypted bool      `json:"isEncrypted"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	Key         string `json:"key"`
+	Value       string `json:"value"`
+	IsEncrypted bool   `json:"isEncrypted"`
 }
 
 type RegistryEntry struct {
@@ -89,8 +87,6 @@ func (s *store) List(ctx context.Context, ownerID string, prefix *string) ([]*Re
 			Key:         entry.Key,
 			Value:       value,
 			IsEncrypted: entry.IsEncrypted,
-			CreatedAt:   entry.CreatedAt,
-			UpdatedAt:   entry.UpdatedAt,
 		})
 	}
 
@@ -129,13 +125,11 @@ func (s *store) Get(ctx context.Context, ownerID, key string) (*Registry, error)
 		Key:         entry.Key,
 		Value:       value,
 		IsEncrypted: entry.IsEncrypted,
-		CreatedAt:   entry.CreatedAt,
-		UpdatedAt:   entry.UpdatedAt,
 	}, nil
 }
 
 // setWithinTx is a private method that handles the core logic for setting registry entries within a transaction
-func (s *store) setWithinTx(ctx context.Context, tx bun.Tx, ownerID string, entries []RegistryEntry, now time.Time) ([]*Registry, error) {
+func (s *store) setWithinTx(ctx context.Context, db bun.IDB, ownerID string, entries []RegistryEntry) ([]*Registry, error) {
 	var result []*Registry
 
 	for _, entry := range entries {
@@ -159,6 +153,7 @@ func (s *store) setWithinTx(ctx context.Context, tx bun.Tx, ownerID string, entr
 			}
 		}
 
+		now := time.Now()
 		modelEntry := &model.Registry{
 			ID:          uuid.GenerateUUID(),
 			OwnerID:     ownerID,
@@ -171,7 +166,7 @@ func (s *store) setWithinTx(ctx context.Context, tx bun.Tx, ownerID string, entr
 
 		// Database-level enforcement: prevent changing encryption state of existing entries
 		// For new entries, insert normally. For existing entries, only allow update if encryption state matches
-		_, err := tx.NewInsert().
+		_, err := db.NewInsert().
 			Model(modelEntry).
 			On("CONFLICT (owner_id, key) DO UPDATE").
 			Set("value = EXCLUDED.value").
@@ -187,8 +182,6 @@ func (s *store) setWithinTx(ctx context.Context, tx bun.Tx, ownerID string, entr
 			Key:         entry.Key,
 			Value:       entry.Value, // Return original unencrypted value
 			IsEncrypted: entry.IsEncrypted,
-			CreatedAt:   now,
-			UpdatedAt:   now,
 		})
 	}
 
@@ -196,20 +189,11 @@ func (s *store) setWithinTx(ctx context.Context, tx bun.Tx, ownerID string, entr
 }
 
 func (s *store) Set(ctx context.Context, ownerID, key, value string, isEncrypted bool) (*Registry, error) {
-	now := time.Now()
 	entries := []RegistryEntry{{Key: key, Value: value, IsEncrypted: isEncrypted}}
-
-	var result []*Registry
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		var txErr error
-		result, txErr = s.setWithinTx(ctx, tx, ownerID, entries, now)
-		return txErr
-	})
-
+	result, err := s.setWithinTx(ctx, s.db, ownerID, entries)
 	if err != nil {
 		return nil, err
 	}
-
 	return result[0], nil
 }
 
@@ -218,12 +202,10 @@ func (s *store) SetMulti(ctx context.Context, ownerID string, entries []Registry
 		return []*Registry{}, nil
 	}
 
-	now := time.Now()
 	var result []*Registry
-
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		var txErr error
-		result, txErr = s.setWithinTx(ctx, tx, ownerID, entries, now)
+		result, txErr = s.setWithinTx(ctx, tx, ownerID, entries)
 		return txErr
 	})
 
