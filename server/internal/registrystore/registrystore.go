@@ -22,10 +22,17 @@ type Registry struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
+type RegistryEntry struct {
+	Key         string `json:"key"`
+	Value       string `json:"value"`
+	IsEncrypted bool   `json:"isEncrypted"`
+}
+
 type Store interface {
 	List(ctx context.Context, ownerID string, prefix *string) ([]*Registry, error)
 	Get(ctx context.Context, ownerID, key string) (*Registry, error)
 	Set(ctx context.Context, ownerID, key, value string, isEncrypted bool) (*Registry, error)
+	SetMulti(ctx context.Context, ownerID string, entries []RegistryEntry) ([]*Registry, error)
 	Delete(ctx context.Context, ownerID, key string) error
 }
 
@@ -195,6 +202,100 @@ func (s *store) Set(ctx context.Context, ownerID, key, value string, isEncrypted
 		CreatedAt:   updatedEntry.CreatedAt,
 		UpdatedAt:   updatedEntry.UpdatedAt,
 	}, nil
+}
+
+func (s *store) SetMulti(ctx context.Context, ownerID string, entries []RegistryEntry) ([]*Registry, error) {
+	if len(entries) == 0 {
+		return []*Registry{}, nil
+	}
+
+	now := time.Now()
+	var modelEntries []*model.Registry
+	var result []*Registry
+
+	// Process and validate all entries first
+	for _, entry := range entries {
+		// Validate JWT secret must always be encrypted
+		if encryption.IsJWTSecret(entry.Key) && !entry.IsEncrypted {
+			return nil, fmt.Errorf("JWT secret must always be encrypted")
+		}
+
+		finalValue := entry.Value
+
+		// Encrypt if needed
+		if entry.IsEncrypted && s.encryption != nil {
+			var encryptErr error
+			if encryption.IsJWTSecret(entry.Key) {
+				finalValue, encryptErr = s.encryption.EncryptWithMaster(entry.Value)
+			} else {
+				finalValue, encryptErr = s.encryption.EncryptWithJWT(entry.Value)
+			}
+			if encryptErr != nil {
+				return nil, fmt.Errorf("failed to encrypt registry value for key %s: %w", entry.Key, encryptErr)
+			}
+		}
+
+		modelEntry := &model.Registry{
+			ID:          uuid.GenerateUUID(),
+			OwnerID:     ownerID,
+			Key:         entry.Key,
+			Value:       finalValue,
+			IsEncrypted: entry.IsEncrypted,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+
+		modelEntries = append(modelEntries, modelEntry)
+	}
+
+	// Use a transaction for atomicity
+	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		// Insert/update all entries in a single transaction
+		for _, modelEntry := range modelEntries {
+			_, err := tx.NewInsert().
+				Model(modelEntry).
+				On("CONFLICT (owner_id, key) DO UPDATE").
+				Set("value = EXCLUDED.value").
+				Set("updated_at = EXCLUDED.updated_at").
+				Where("r.is_encrypted = EXCLUDED.is_encrypted").
+				Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("error setting registry for key %s: %w", modelEntry.Key, err)
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Verify all entries and build result
+	for _, entry := range entries {
+		var updatedEntry model.Registry
+		err = s.db.NewSelect().
+			Model(&updatedEntry).
+			Where("owner_id = ? AND key = ?", ownerID, entry.Key).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error verifying registry update for key %s: %w", entry.Key, err)
+		}
+
+		// If encryption state doesn't match, the WHERE clause prevented the update
+		if updatedEntry.IsEncrypted != entry.IsEncrypted {
+			return nil, fmt.Errorf("cannot change encryption state of existing registry entry '%s'", entry.Key)
+		}
+
+		result = append(result, &Registry{
+			Key:         entry.Key,
+			Value:       entry.Value, // Return original unencrypted value
+			IsEncrypted: entry.IsEncrypted,
+			CreatedAt:   updatedEntry.CreatedAt,
+			UpdatedAt:   updatedEntry.UpdatedAt,
+		})
+	}
+
+	return result, nil
 }
 
 func (s *store) Delete(ctx context.Context, ownerID, key string) error {

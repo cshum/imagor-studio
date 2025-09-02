@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 )
 
 // SetUserRegistry sets user-specific registry (supports multiple values)
@@ -15,15 +16,24 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.R
 		return nil, err
 	}
 
-	var result []*gql.UserRegistry
-
-	// Handle entries
+	// Convert GraphQL input to registrystore entries
+	var registryEntries []registrystore.RegistryEntry
 	for _, entry := range entries {
-		registry, err := r.registryStore.Set(ctx, effectiveOwnerID, entry.Key, entry.Value, entry.IsEncrypted)
-		if err != nil {
-			return nil, fmt.Errorf("failed to set user registry for key %s: %w", entry.Key, err)
-		}
+		registryEntries = append(registryEntries, registrystore.RegistryEntry{
+			Key:         entry.Key,
+			Value:       entry.Value,
+			IsEncrypted: entry.IsEncrypted,
+		})
+	}
 
+	// Use SetMulti for better performance
+	registries, err := r.registryStore.SetMulti(ctx, effectiveOwnerID, registryEntries)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set user registry: %w", err)
+	}
+
+	var result []*gql.UserRegistry
+	for _, registry := range registries {
 		// Hide encrypted values in GraphQL responses
 		value := registry.Value
 		if registry.IsEncrypted {
@@ -129,21 +139,32 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql
 		return nil, fmt.Errorf("admin permission required for system registry write: %w", err)
 	}
 
-	var result []*gql.SystemRegistry
-
-	// Handle entries
+	// Check all entries for config conflicts first
 	for _, entry := range entries {
-		// Check if this registry key has a corresponding config flag
 		_, configExists := r.config.GetByRegistryKey(entry.Key)
 		if configExists {
 			return nil, fmt.Errorf("cannot set registry key '%s': this configuration is managed by external config", entry.Key)
 		}
+	}
 
-		registry, err := r.registryStore.Set(ctx, SystemOwnerID, entry.Key, entry.Value, entry.IsEncrypted)
-		if err != nil {
-			return nil, fmt.Errorf("failed to set system registry for key %s: %w", entry.Key, err)
-		}
+	// Convert GraphQL input to registrystore entries
+	var registryEntries []registrystore.RegistryEntry
+	for _, entry := range entries {
+		registryEntries = append(registryEntries, registrystore.RegistryEntry{
+			Key:         entry.Key,
+			Value:       entry.Value,
+			IsEncrypted: entry.IsEncrypted,
+		})
+	}
 
+	// Use SetMulti for better performance
+	registries, err := r.registryStore.SetMulti(ctx, SystemOwnerID, registryEntries)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set system registry: %w", err)
+	}
+
+	var result []*gql.SystemRegistry
+	for _, registry := range registries {
 		// Hide encrypted values in GraphQL responses
 		value := registry.Value
 		if registry.IsEncrypted {
