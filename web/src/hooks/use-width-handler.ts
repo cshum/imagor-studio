@@ -2,8 +2,6 @@ import { RefObject, useCallback, useEffect, useState } from 'react'
 
 export const useWidthHandler = (
   contentRef: RefObject<HTMLDivElement | null>,
-  handleSidebar = false,
-  sidebarOpen = false,
   padding: number = 48, // Add padding argument with default value
 ) => {
   const [contentWidth, setContentWidth] = useState(0)
@@ -14,19 +12,6 @@ export const useWidthHandler = (
       setContentWidth(calculatedWidth)
     }
   }, [contentRef, padding])
-
-  useEffect(() => {
-    updateWidth()
-
-    if (handleSidebar) {
-      const transitionDuration = 300 // Adjust as needed
-      const timeoutId = setTimeout(() => {
-        updateWidth() // Recalculate width after sidebar transition
-      }, transitionDuration)
-
-      return () => clearTimeout(timeoutId) // Cleanup timeout on unmount
-    }
-  }, [updateWidth, sidebarOpen, handleSidebar])
 
   return {
     contentWidth,

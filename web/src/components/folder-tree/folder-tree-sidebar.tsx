@@ -26,7 +26,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
   }, [rootFolders.length, isLoadingRoot, loadRootFolders])
 
   return (
-    <Sidebar {...props}>
+    <Sidebar collapsible="offcanvas" {...props}>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Folders</SidebarGroupLabel>

@@ -7,6 +7,7 @@ import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Card, CardContent } from '@/components/ui/card'
+import { useSidebar } from '@/components/ui/sidebar'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { useScrollHandler } from '@/hooks/use-scroll-handler'
@@ -29,8 +30,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const { galleryName, images, folders } = galleryLoaderData
   const { dispatch } = useFolderTree()
+  const sidebar = useSidebar()
 
-  const isOpen = false
   const isDesktop = useBreakpoint('md')
 
   // Sync current path with folder tree store
@@ -46,11 +47,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   )
   const { contentWidth, updateWidth } = useWidthHandler(
     contentRef,
-    true,
-    isOpen,
     isDesktop ? 32 : 16,
   )
   useResizeHandler(updateWidth)
+
+  useEffect(() => {
+    setTimeout(updateWidth, 300)
+  }, [sidebar.open])
 
   const [gridRendered, setGridRendered] = useState(false)
 
