@@ -495,8 +495,8 @@ func TestRegistryStore_DatabaseDialectDetection(t *testing.T) {
 	store := New(db, logger, nil).(*store)
 
 	// Test that we can detect the SQLite dialect
-	dialect := store.getDatabaseDialect()
-	assert.Equal(t, "sqlite", dialect)
+	dialectName := store.getDatabaseDialect()
+	assert.Equal(t, "sqlite", dialectName.String())
 }
 
 func TestRegistryStore_DatabaseAgnosticUpsert(t *testing.T) {
@@ -553,8 +553,8 @@ func TestRegistryStore_UnsupportedDialect(t *testing.T) {
 	store := New(db, logger, nil).(*store)
 
 	// Verify that SQLite dialect is supported
-	dialect := store.getDatabaseDialect()
-	assert.Contains(t, []string{"sqlite", "pg", "mysql"}, dialect, "Dialect should be supported")
+	dialectName := store.getDatabaseDialect()
+	assert.Contains(t, []string{"sqlite", "pg", "mysql"}, dialectName.String(), "Dialect should be supported")
 }
 
 func BenchmarkRegistryStore_List(b *testing.B) {

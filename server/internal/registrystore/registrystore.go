@@ -11,6 +11,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/uuid"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 	"go.uber.org/zap"
 )
 
@@ -122,10 +123,9 @@ func (s *store) Get(ctx context.Context, ownerID, key string) (*Registry, error)
 	}, nil
 }
 
-// setWithinTx is a private method that handles the core logic for setting registry entries within a transaction
-// getDatabaseDialect returns the name of the current database dialect
-func (s *store) getDatabaseDialect() string {
-	return s.db.Dialect().Name().String()
+// getDatabaseDialect returns the current database dialect
+func (s *store) getDatabaseDialect() dialect.Name {
+	return s.db.Dialect().Name()
 }
 
 // upsertPostgreSQL handles upsert operations for PostgreSQL
@@ -166,17 +166,17 @@ func (s *store) upsertMySQL(ctx context.Context, db bun.IDB, modelEntry *model.R
 
 // upsertRegistry selects the appropriate upsert method based on the database dialect
 func (s *store) upsertRegistry(ctx context.Context, db bun.IDB, modelEntry *model.Registry) error {
-	dialect := s.getDatabaseDialect()
+	dialectName := s.getDatabaseDialect()
 
-	switch dialect {
-	case "pg", "postgres", "postgresql":
+	switch dialectName {
+	case dialect.PG:
 		return s.upsertPostgreSQL(ctx, db, modelEntry)
-	case "sqlite", "sqlite3":
+	case dialect.SQLite:
 		return s.upsertSQLite(ctx, db, modelEntry)
-	case "mysql":
+	case dialect.MySQL:
 		return s.upsertMySQL(ctx, db, modelEntry)
 	default:
-		return fmt.Errorf("unsupported database dialect: %s", dialect)
+		return fmt.Errorf("unsupported database dialect: %s", dialectName.String())
 	}
 }
 
