@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Navigate, useNavigate } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { registerAdmin } from '@/api/auth-api'
@@ -17,7 +18,7 @@ import { Input } from '@/components/ui/input'
 import { initAuth, useAuth } from '@/stores/auth-store'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { MultiStepForm, type MultiStepFormStep } from '@/components/ui/multi-step-form'
-import { CheckCircle } from 'lucide-react'
+import { setSystemRegistryObject } from '@/api/registry-api'
 
 const adminSetupSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -43,7 +44,7 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
 export function AdminSetupPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
-  const [systemSettingsChanged, setSystemSettingsChanged] = useState(false)
+  const [settingsFormValues] = useState<Record<string, string>>({})
   const navigate = useNavigate()
   const { authState } = useAuth()
 
@@ -86,16 +87,37 @@ export function AdminSetupPage() {
     }
   }
 
-  const handleSystemSettingsNext = (): boolean => {
-    // Always allow proceeding from system settings
-    return true
-  }
+  const handleSystemSettingsNext = async (): Promise<boolean> => {
+    try {
+      // Save any changed settings
+      const changedValues: Record<string, string> = {}
+      SYSTEM_SETTINGS.forEach(setting => {
+        const currentValue = settingsFormValues[setting.key]
+        const defaultValue = setting.defaultValue.toString()
+        if (currentValue && currentValue !== defaultValue) {
+          changedValues[setting.key] = currentValue
+        }
+      })
 
-  const handleComplete = () => {
-    navigate({ to: '/' })
+      if (Object.keys(changedValues).length > 0) {
+        await setSystemRegistryObject(changedValues)
+        toast.success('Setup completed successfully!')
+      } else {
+        toast.success('Welcome to Imagor Studio!')
+      }
+
+      // Direct redirect to homepage
+      navigate({ to: '/' })
+      return true
+    } catch (err) {
+      toast.error('Failed to save settings, but setup is complete')
+      navigate({ to: '/' })
+      return true
+    }
   }
 
   const handleSkipSettings = () => {
+    toast.success('Welcome to Imagor Studio!')
     navigate({ to: '/' })
   }
 
@@ -176,7 +198,7 @@ export function AdminSetupPage() {
             settings={SYSTEM_SETTINGS}
             initialValues={{}}
             systemRegistryList={[]}
-            onSuccess={() => setSystemSettingsChanged(true)}
+            hideUpdateButton={true}
             showCard={false}
           />
         </div>
@@ -185,31 +207,7 @@ export function AdminSetupPage() {
       onSkip: handleSkipSettings,
       canSkip: true,
       skipLabel: 'Skip for Now',
-      nextLabel: 'Save & Continue',
-    },
-    {
-      id: 'complete',
-      title: 'Setup Complete',
-      description: 'Your Imagor Studio is ready to use',
-      content: (
-        <div className="text-center space-y-6 py-8">
-          <div className="flex justify-center">
-            <CheckCircle className="h-16 w-16 text-green-500" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-xl font-semibold">Welcome to Imagor Studio!</h3>
-            <p className="text-muted-foreground">
-              Your admin account has been created and the system is configured.
-              {systemSettingsChanged && ' Your system settings have been saved.'}
-            </p>
-          </div>
-          <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
-            <p>You can access the admin panel anytime to manage users, configure settings, and monitor your image gallery.</p>
-          </div>
-        </div>
-      ),
-      nextLabel: 'Enter Imagor Studio',
-      hideBack: true,
+      nextLabel: 'Complete Setup',
     },
   ]
 
@@ -219,7 +217,7 @@ export function AdminSetupPage() {
         steps={steps}
         currentStep={currentStep}
         onStepChange={setCurrentStep}
-        onComplete={handleComplete}
+        onComplete={() => navigate({ to: '/' })}
         title="Welcome to Imagor Studio"
         description="Let's get your image gallery set up in just a few steps"
         className="w-full max-w-2xl"

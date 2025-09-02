@@ -29,6 +29,7 @@ export interface SystemSettingsFormProps {
   }>
   onSuccess?: () => void
   showCard?: boolean
+  hideUpdateButton?: boolean
 }
 
 export function SystemSettingsForm({
@@ -39,6 +40,7 @@ export function SystemSettingsForm({
   systemRegistryList = [],
   onSuccess,
   showCard = true,
+  hideUpdateButton = false,
 }: SystemSettingsFormProps) {
   const router = useRouter()
   const [isUpdating, setIsUpdating] = useState(false)
@@ -163,15 +165,17 @@ export function SystemSettingsForm({
     <div className='space-y-4'>
       {settings.map(renderSetting)}
       
-      <div className='flex justify-end pt-4 border-t'>
-        <ButtonWithLoading
-          onClick={onUpdateSettings}
-          isLoading={isUpdating}
-          disabled={!hasUnsavedChanges}
-        >
-          Update Settings
-        </ButtonWithLoading>
-      </div>
+      {!hideUpdateButton && (
+        <div className='flex justify-end pt-4 border-t'>
+          <ButtonWithLoading
+            onClick={onUpdateSettings}
+            isLoading={isUpdating}
+            disabled={!hasUnsavedChanges}
+          >
+            Update Settings
+          </ButtonWithLoading>
+        </div>
+      )}
     </div>
   )
 

@@ -47,14 +47,14 @@ export function Stepper({
             <div className="flex flex-col items-center">
               <div
                 className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-medium transition-colors',
+                  'flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-medium transition-colors',
                   isCompleted && 'border-primary bg-primary text-primary-foreground',
                   isCurrent && 'border-primary bg-background text-primary',
                   isUpcoming && 'border-muted-foreground/25 bg-background text-muted-foreground'
                 )}
               >
                 {isCompleted ? (
-                  <Check className="h-5 w-5" />
+                  <Check className="h-4 w-4" />
                 ) : (
                   stepNumber
                 )}
@@ -63,10 +63,10 @@ export function Stepper({
               {/* Step Content */}
               <div className={cn(
                 'text-center',
-                orientation === 'horizontal' ? 'mt-2' : 'mt-2 mb-4'
+                orientation === 'horizontal' ? 'mt-1.5' : 'mt-1.5 mb-3'
               )}>
                 <div className={cn(
-                  'text-sm font-medium',
+                  'text-xs font-medium',
                   isCurrent && 'text-foreground',
                   isCompleted && 'text-foreground',
                   isUpcoming && 'text-muted-foreground'
@@ -75,7 +75,7 @@ export function Stepper({
                 </div>
                 {step.description && (
                   <div className={cn(
-                    'text-xs mt-1',
+                    'text-xs mt-0.5 max-w-24',
                     isCurrent && 'text-muted-foreground',
                     isCompleted && 'text-muted-foreground',
                     isUpcoming && 'text-muted-foreground/75'
