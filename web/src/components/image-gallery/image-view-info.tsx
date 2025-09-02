@@ -12,11 +12,11 @@ export interface ImageViewInfoProps {
 
 export const ImageViewInfo = ({ imageInfo }: ImageViewInfoProps) => {
   return (
-    <SheetContent className='w-[300px] sm:w-[300px]' side='left' hideOverlay>
+    <SheetContent className='w-[300px] sm:w-[300px] pr-0' side='left' hideOverlay>
       <SheetHeader className='text-left'>
         <SheetTitle>Image Information</SheetTitle>
       </SheetHeader>
-      <ScrollArea className='mt-4 h-[calc(100vh-80px)]'>
+      <ScrollArea className='mt-4 h-[calc(100vh-80px)] pr-6'>
         {imageInfo?.exif ? (
           Object.entries(imageInfo.exif).map(([key, value]) => (
             <div key={key} className='mb-2'>
