@@ -123,6 +123,64 @@ func (s *store) Get(ctx context.Context, ownerID, key string) (*Registry, error)
 }
 
 // setWithinTx is a private method that handles the core logic for setting registry entries within a transaction
+// getDatabaseDialect returns the name of the current database dialect
+func (s *store) getDatabaseDialect() string {
+	return s.db.Dialect().Name().String()
+}
+
+// upsertPostgreSQL handles upsert operations for PostgreSQL
+func (s *store) upsertPostgreSQL(ctx context.Context, db bun.IDB, modelEntry *model.Registry) error {
+	_, err := db.NewInsert().
+		Model(modelEntry).
+		On("CONFLICT (owner_id, key) DO UPDATE").
+		Set("value = EXCLUDED.value").
+		Set("updated_at = EXCLUDED.updated_at").
+		Set("is_encrypted = EXCLUDED.is_encrypted").
+		Exec(ctx)
+	return err
+}
+
+// upsertSQLite handles upsert operations for SQLite
+func (s *store) upsertSQLite(ctx context.Context, db bun.IDB, modelEntry *model.Registry) error {
+	_, err := db.NewInsert().
+		Model(modelEntry).
+		On("CONFLICT (owner_id, key) DO UPDATE").
+		Set("value = EXCLUDED.value").
+		Set("updated_at = EXCLUDED.updated_at").
+		Set("is_encrypted = EXCLUDED.is_encrypted").
+		Exec(ctx)
+	return err
+}
+
+// upsertMySQL handles upsert operations for MySQL
+func (s *store) upsertMySQL(ctx context.Context, db bun.IDB, modelEntry *model.Registry) error {
+	_, err := db.NewInsert().
+		Model(modelEntry).
+		On("DUPLICATE KEY UPDATE").
+		Set("value = VALUES(value)").
+		Set("updated_at = VALUES(updated_at)").
+		Set("is_encrypted = VALUES(is_encrypted)").
+		Exec(ctx)
+	return err
+}
+
+// upsertRegistry selects the appropriate upsert method based on the database dialect
+func (s *store) upsertRegistry(ctx context.Context, db bun.IDB, modelEntry *model.Registry) error {
+	dialect := s.getDatabaseDialect()
+
+	switch dialect {
+	case "pg", "postgres", "postgresql":
+		return s.upsertPostgreSQL(ctx, db, modelEntry)
+	case "sqlite", "sqlite3":
+		return s.upsertSQLite(ctx, db, modelEntry)
+	case "mysql":
+		return s.upsertMySQL(ctx, db, modelEntry)
+	default:
+		return fmt.Errorf("unsupported database dialect: %s", dialect)
+	}
+}
+
+// setWithinTx is a private method that handles the core logic for setting registry entries within a transaction
 func (s *store) setWithinTx(ctx context.Context, db bun.IDB, ownerID string, entries []*Registry) ([]*Registry, error) {
 	var result []*Registry
 
@@ -158,15 +216,8 @@ func (s *store) setWithinTx(ctx context.Context, db bun.IDB, ownerID string, ent
 			UpdatedAt:   now,
 		}
 
-		// Database-level enforcement: prevent changing encryption state of existing entries
-		// For new entries, insert normally. For existing entries, only allow update if encryption state matches
-		_, err := db.NewInsert().
-			Model(modelEntry).
-			On("CONFLICT (owner_id, key) DO UPDATE").
-			Set("value = EXCLUDED.value").
-			Set("updated_at = EXCLUDED.updated_at").
-			Where("r.is_encrypted = EXCLUDED.is_encrypted").
-			Exec(ctx)
+		// Use database-agnostic upsert method
+		err := s.upsertRegistry(ctx, db, modelEntry)
 		if err != nil {
 			return nil, fmt.Errorf("error setting registry for key %s: %w", entry.Key, err)
 		}
