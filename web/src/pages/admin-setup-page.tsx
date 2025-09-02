@@ -129,7 +129,6 @@ export function AdminSetupPage() {
     {
       id: 'account',
       title: 'Create Admin Account',
-      description: 'Set up your administrator credentials',
       content: (
         <div className="space-y-6">
           <Form {...form}>
@@ -189,7 +188,6 @@ export function AdminSetupPage() {
     {
       id: 'settings',
       title: 'System Configuration',
-      description: 'Configure your system preferences',
       content: (
         <div className="space-y-6">
           <SystemSettingsForm

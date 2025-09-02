@@ -2,6 +2,7 @@ import { useState, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ProgressBar } from '@/components/ui/progress-bar'
 import { Stepper, type Step } from '@/components/ui/stepper'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
@@ -127,13 +128,12 @@ export function MultiStepForm({
         </div>
       )}
 
-      {/* Stepper */}
+      {/* Progress Bar */}
       {showStepper && (
         <div className="mb-8">
-          <Stepper
-            steps={steps}
+          <ProgressBar
             currentStep={currentStep}
-            orientation={stepperOrientation}
+            totalSteps={steps.length}
             className="max-w-2xl mx-auto"
           />
         </div>
