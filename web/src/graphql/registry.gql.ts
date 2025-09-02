@@ -6,8 +6,6 @@ export const RegistryFragment = gql(`
     value
     ownerID
     isEncrypted
-    createdAt
-    updatedAt
   }
 `)
 
@@ -17,8 +15,6 @@ export const SystemRegistryFragment = gql(`
     value
     ownerID
     isEncrypted
-    createdAt
-    updatedAt
     isOverriddenByConfig
   }
 `)
