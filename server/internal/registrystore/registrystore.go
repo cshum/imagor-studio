@@ -134,86 +134,10 @@ func (s *store) Get(ctx context.Context, ownerID, key string) (*Registry, error)
 	}, nil
 }
 
-func (s *store) Set(ctx context.Context, ownerID, key, value string, isEncrypted bool) (*Registry, error) {
-	now := time.Now()
-
-	// Validate JWT secret must always be encrypted
-	if encryption.IsJWTSecret(key) && !isEncrypted {
-		return nil, fmt.Errorf("JWT secret must always be encrypted")
-	}
-
-	finalValue := value
-
-	// Encrypt if needed
-	if isEncrypted && s.encryption != nil {
-		var encryptErr error
-		if encryption.IsJWTSecret(key) {
-			finalValue, encryptErr = s.encryption.EncryptWithMaster(value)
-		} else {
-			finalValue, encryptErr = s.encryption.EncryptWithJWT(value)
-		}
-		if encryptErr != nil {
-			return nil, fmt.Errorf("failed to encrypt registry value for key %s: %w", key, encryptErr)
-		}
-	}
-
-	entry := &model.Registry{
-		ID:          uuid.GenerateUUID(),
-		OwnerID:     ownerID,
-		Key:         key,
-		Value:       finalValue,
-		IsEncrypted: isEncrypted,
-		CreatedAt:   now,
-		UpdatedAt:   now,
-	}
-
-	// Database-level enforcement: prevent changing encryption state of existing entries
-	// For new entries, insert normally. For existing entries, only allow update if encryption state matches
-	_, err := s.db.NewInsert().
-		Model(entry).
-		On("CONFLICT (owner_id, key) DO UPDATE").
-		Set("value = EXCLUDED.value").
-		Set("updated_at = EXCLUDED.updated_at").
-		Where("r.is_encrypted = EXCLUDED.is_encrypted").
-		Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error setting registry: %w", err)
-	}
-
-	// Check if the update actually happened (encryption state constraint)
-	var updatedEntry model.Registry
-	err = s.db.NewSelect().
-		Model(&updatedEntry).
-		Where("owner_id = ? AND key = ?", ownerID, key).
-		Scan(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error verifying registry update: %w", err)
-	}
-
-	// If encryption state doesn't match, the WHERE clause prevented the update
-	if updatedEntry.IsEncrypted != isEncrypted {
-		return nil, fmt.Errorf("cannot change encryption state of existing registry entry '%s'", key)
-	}
-
-	return &Registry{
-		Key:         entry.Key,
-		Value:       value, // Return original unencrypted value
-		IsEncrypted: isEncrypted,
-		CreatedAt:   updatedEntry.CreatedAt,
-		UpdatedAt:   updatedEntry.UpdatedAt,
-	}, nil
-}
-
-func (s *store) SetMulti(ctx context.Context, ownerID string, entries []RegistryEntry) ([]*Registry, error) {
-	if len(entries) == 0 {
-		return []*Registry{}, nil
-	}
-
-	now := time.Now()
-	var modelEntries []*model.Registry
+// setWithinTx is a private method that handles the core logic for setting registry entries within a transaction
+func (s *store) setWithinTx(ctx context.Context, tx bun.Tx, ownerID string, entries []RegistryEntry, now time.Time) ([]*Registry, error) {
 	var result []*Registry
 
-	// Process and validate all entries first
 	for _, entry := range entries {
 		// Validate JWT secret must always be encrypted
 		if encryption.IsJWTSecret(entry.Key) && !entry.IsEncrypted {
@@ -245,54 +169,66 @@ func (s *store) SetMulti(ctx context.Context, ownerID string, entries []Registry
 			UpdatedAt:   now,
 		}
 
-		modelEntries = append(modelEntries, modelEntry)
+		// Database-level enforcement: prevent changing encryption state of existing entries
+		// For new entries, insert normally. For existing entries, only allow update if encryption state matches
+		_, err := tx.NewInsert().
+			Model(modelEntry).
+			On("CONFLICT (owner_id, key) DO UPDATE").
+			Set("value = EXCLUDED.value").
+			Set("updated_at = EXCLUDED.updated_at").
+			Where("r.is_encrypted = EXCLUDED.is_encrypted").
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error setting registry for key %s: %w", entry.Key, err)
+		}
+
+		// Return the data we know without SELECT query
+		result = append(result, &Registry{
+			Key:         entry.Key,
+			Value:       entry.Value, // Return original unencrypted value
+			IsEncrypted: entry.IsEncrypted,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		})
 	}
 
-	// Use a transaction for atomicity
+	return result, nil
+}
+
+func (s *store) Set(ctx context.Context, ownerID, key, value string, isEncrypted bool) (*Registry, error) {
+	now := time.Now()
+	entries := []RegistryEntry{{Key: key, Value: value, IsEncrypted: isEncrypted}}
+
+	var result []*Registry
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		// Insert/update all entries in a single transaction
-		for _, modelEntry := range modelEntries {
-			_, err := tx.NewInsert().
-				Model(modelEntry).
-				On("CONFLICT (owner_id, key) DO UPDATE").
-				Set("value = EXCLUDED.value").
-				Set("updated_at = EXCLUDED.updated_at").
-				Where("r.is_encrypted = EXCLUDED.is_encrypted").
-				Exec(ctx)
-			if err != nil {
-				return fmt.Errorf("error setting registry for key %s: %w", modelEntry.Key, err)
-			}
-		}
-		return nil
+		var txErr error
+		result, txErr = s.setWithinTx(ctx, tx, ownerID, entries, now)
+		return txErr
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	// Verify all entries and build result
-	for _, entry := range entries {
-		var updatedEntry model.Registry
-		err = s.db.NewSelect().
-			Model(&updatedEntry).
-			Where("owner_id = ? AND key = ?", ownerID, entry.Key).
-			Scan(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("error verifying registry update for key %s: %w", entry.Key, err)
-		}
+	return result[0], nil
+}
 
-		// If encryption state doesn't match, the WHERE clause prevented the update
-		if updatedEntry.IsEncrypted != entry.IsEncrypted {
-			return nil, fmt.Errorf("cannot change encryption state of existing registry entry '%s'", entry.Key)
-		}
+func (s *store) SetMulti(ctx context.Context, ownerID string, entries []RegistryEntry) ([]*Registry, error) {
+	if len(entries) == 0 {
+		return []*Registry{}, nil
+	}
 
-		result = append(result, &Registry{
-			Key:         entry.Key,
-			Value:       entry.Value, // Return original unencrypted value
-			IsEncrypted: entry.IsEncrypted,
-			CreatedAt:   updatedEntry.CreatedAt,
-			UpdatedAt:   updatedEntry.UpdatedAt,
-		})
+	now := time.Now()
+	var result []*Registry
+
+	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		var txErr error
+		result, txErr = s.setWithinTx(ctx, tx, ownerID, entries, now)
+		return txErr
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return result, nil
