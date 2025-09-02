@@ -40,10 +40,9 @@ type RegisterRequest struct {
 }
 
 type RegisterAdminRequest struct {
-	DisplayName     string `json:"displayName"`
-	Email           string `json:"email"`
-	Password        string `json:"password"`
-	EnableGuestMode *bool  `json:"enableGuestMode,omitempty"`
+	DisplayName string `json:"displayName"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
 }
 
 type LoginRequest struct {
@@ -118,22 +117,6 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 		response, err := h.createUser(r.Context(), userReq, "admin")
 		if err != nil {
 			return err
-		}
-
-		// Set guest mode system metadata if provided
-		if req.EnableGuestMode != nil {
-			guestModeValue := "false"
-			if *req.EnableGuestMode {
-				guestModeValue = "true"
-			}
-
-			// Use new config.allow_guest_mode key format
-			_, err = h.registryStore.Set(r.Context(), "system", "config.allow_guest_mode", guestModeValue, false)
-			if err != nil {
-				h.logger.Warn("Admin user created but guest mode setting failed to save", zap.Error(err))
-			} else {
-				h.logger.Info("Guest mode setting configured", zap.Bool("enabled", *req.EnableGuestMode))
-			}
 		}
 
 		// Set default gallery configuration metadata

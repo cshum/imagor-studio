@@ -1,136 +1,29 @@
-import { useState, useMemo } from 'react'
-import { toast } from 'sonner'
-import { useRouter } from '@tanstack/react-router'
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
-import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { setSystemRegistryObject } from '@/api/registry-api'
-import { extractErrorMessage } from '@/lib/error-utils'
+import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import type { AdminLoaderData } from '@/loaders/account-loader'
 
 interface AdminPageProps {
   loaderData?: AdminLoaderData
 }
 
+// Define system settings configuration
+const SYSTEM_SETTINGS: SystemSetting[] = [
+  {
+    key: 'config.allow_guest_mode',
+    type: 'boolean',
+    label: 'Guest Mode',
+    description: 'Allow users to browse the gallery without creating an account',
+    defaultValue: false,
+  },
+]
+
 export function AdminPage({ loaderData }: AdminPageProps) {
-  const router = useRouter()
-  const [isUpdatingSettings, setIsUpdatingSettings] = useState(false)
-  
-  // Registry is Record<string, string> - all values are strings
-  type RegistryMap = Record<string, string>
-  
-  // Original values from loader - already in string format
-  const originalSettings = useMemo<RegistryMap>(() => 
-    loaderData?.registry || {}
-  , [loaderData])
-  
-  // Current form state - map of registry keys to string values
-  const [settings, setSettings] = useState<RegistryMap>(originalSettings)
-
-  // Get guest mode config from system registry list
-  const guestModeConfig = useMemo(() => {
-    const entry = loaderData?.systemRegistryList?.find(item => item.key === 'config.allow_guest_mode')
-    return entry ? {
-      value: entry.value,
-      isOverriddenByConfig: entry.isOverriddenByConfig
-    } : null
-  }, [loaderData?.systemRegistryList])
-
-  // Check if there are unsaved changes
-  const hasUnsavedChanges = useMemo(() => {
-    // Check for changes in existing settings
-    const hasExistingChanges = Object.keys(originalSettings).some(key => 
-      settings[key] !== originalSettings[key]
-    )
-    
-    // Check for new settings that weren't in original (like guest mode if not set)
-    const hasNewSettings = Object.keys(settings).some(key => 
-      !(key in originalSettings) && settings[key] !== undefined
-    )
-    
-    return hasExistingChanges || hasNewSettings
-  }, [settings, originalSettings])
-
-  const updateSetting = (key: string, value: string) => {
-    setSettings(prev => ({ ...prev, [key]: value }))
-  }
-
-  // Get the current effective value for guest mode
-  const guestModeValue = useMemo(() => {
-    if (guestModeConfig?.isOverriddenByConfig) {
-      // If overridden by config, show the effective value from config
-      return guestModeConfig.value === 'true'
-    }
-    // Otherwise, use the registry value (either from settings or original)
-    const registryValue = settings['config.allow_guest_mode'] ?? originalSettings['config.allow_guest_mode']
-    return registryValue === 'true'
-  }, [guestModeConfig, settings, originalSettings])
-
-  const onUpdateSettings = async () => {
-    setIsUpdatingSettings(true)
-
-    try {
-      // Save settings directly as Record<string, string>
-      await setSystemRegistryObject(settings)
-      toast.success('Settings updated successfully!')
-      
-      // Invalidate the current route to refresh loader data
-      await router.invalidate()
-    } catch (err) {
-      const errorMessage = extractErrorMessage(err)
-      toast.error(`Failed to update settings: ${errorMessage}`)
-    } finally {
-      setIsUpdatingSettings(false)
-    }
-  }
-
   return (
     <div className='space-y-6'>
-      <Card>
-        <CardHeader>
-          <CardTitle>System Settings</CardTitle>
-          <CardDescription>
-            Configure system-wide settings. These options are only available to administrators.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className='space-y-4'>
-            <div className='flex flex-row items-center justify-between rounded-lg border p-4'>
-              <div className='space-y-0.5'>
-                <div className='text-base font-medium'>Guest Mode</div>
-                <div className='text-sm text-muted-foreground'>
-                  Allow users to browse the gallery without creating an account
-                  {guestModeConfig?.isOverriddenByConfig && (
-                    <span className='block text-orange-600 dark:text-orange-400 mt-1'>
-                      This setting is overridden by configuration file or environment variable
-                    </span>
-                  )}
-                </div>
-              </div>
-              <Checkbox
-                checked={guestModeValue}
-                onCheckedChange={(checked) => {
-                  if (!guestModeConfig?.isOverriddenByConfig) {
-                    updateSetting('config.allow_guest_mode', checked ? 'true' : 'false')
-                  }
-                }}
-                disabled={isUpdatingSettings || guestModeConfig?.isOverriddenByConfig}
-              />
-            </div>
-            
-            <div className='flex justify-end pt-4 border-t'>
-              <ButtonWithLoading
-                onClick={onUpdateSettings}
-                isLoading={isUpdatingSettings}
-                disabled={!hasUnsavedChanges}
-              >
-                Update Settings
-              </ButtonWithLoading>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <SystemSettingsForm
+        settings={SYSTEM_SETTINGS}
+        initialValues={loaderData?.registry || {}}
+        systemRegistryList={loaderData?.systemRegistryList || []}
+      />
     </div>
   )
 }
