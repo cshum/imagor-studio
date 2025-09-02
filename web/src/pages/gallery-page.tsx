@@ -14,6 +14,7 @@ import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { ImagePosition, setPosition } from '@/stores/image-position-store.ts'
+import { useFolderTree } from '@/stores/folder-tree-store'
 
 export interface GalleryPageProps extends React.PropsWithChildren {
   galleryLoaderData: GalleryLoaderData
@@ -27,9 +28,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const contentRef = useRef<HTMLDivElement | null>(null)
 
   const { galleryName, images, folders } = galleryLoaderData
+  const { dispatch } = useFolderTree()
 
   const isOpen = false
   const isDesktop = useBreakpoint('md')
+
+  // Sync current path with folder tree store
+  useEffect(() => {
+    dispatch({ type: 'SET_CURRENT_PATH', path: galleryKey })
+  }, [galleryKey, dispatch])
 
   const maxItemWidth = 280
 

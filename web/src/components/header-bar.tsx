@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { LogOut, MoreVertical, PanelLeft, PanelLeftClose, Settings } from 'lucide-react'
+import { LogOut, MoreVertical, Settings } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
@@ -20,20 +20,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Separator } from '@/components/ui/separator'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useBreadcrumb } from '@/hooks/use-breadcrumb'
 import { useAuth } from '@/stores/auth-store'
 
 interface HeaderBarProps {
   isScrolled?: boolean
-  onTreeToggle?: () => void // New prop for tree sidebar toggle
-  isTreeOpen?: boolean // New prop for tree sidebar state
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
   isScrolled: isScrolledDown = false,
-  onTreeToggle = () => {},
-  isTreeOpen = false,
 }) => {
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
@@ -83,25 +81,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             className={`flex items-center justify-between px-2 py-1 ${isScrolledDown ? 'md:mx-6' : ''}`}
           >
             <div className='flex items-center space-x-2'>
-              {/* Tree Sidebar Toggle Button */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    onClick={onTreeToggle}
-                    className={`h-8 w-8 ${isTreeOpen ? 'bg-accent' : ''}`}
-                  >
-                    {isTreeOpen ? (
-                      <PanelLeftClose className='h-4 w-4' />
-                    ) : (
-                      <PanelLeft className='h-4 w-4' />
-                    )}
-                    <span className='sr-only'>Toggle Tree Sidebar</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{isTreeOpen ? 'Hide Tree' : 'Show Tree'}</TooltipContent>
-              </Tooltip>
+              {/* Sidebar Toggle */}
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
 
               {/* Mobile: Dropdown-style breadcrumb */}
               <MobileBreadcrumb 
