@@ -20,17 +20,11 @@ type Registry struct {
 	IsEncrypted bool   `json:"isEncrypted"`
 }
 
-type RegistryEntry struct {
-	Key         string `json:"key"`
-	Value       string `json:"value"`
-	IsEncrypted bool   `json:"isEncrypted"`
-}
-
 type Store interface {
 	List(ctx context.Context, ownerID string, prefix *string) ([]*Registry, error)
 	Get(ctx context.Context, ownerID, key string) (*Registry, error)
 	Set(ctx context.Context, ownerID, key, value string, isEncrypted bool) (*Registry, error)
-	SetMulti(ctx context.Context, ownerID string, entries []RegistryEntry) ([]*Registry, error)
+	SetMulti(ctx context.Context, ownerID string, entries []*Registry) ([]*Registry, error)
 	Delete(ctx context.Context, ownerID, key string) error
 }
 
@@ -129,7 +123,7 @@ func (s *store) Get(ctx context.Context, ownerID, key string) (*Registry, error)
 }
 
 // setWithinTx is a private method that handles the core logic for setting registry entries within a transaction
-func (s *store) setWithinTx(ctx context.Context, db bun.IDB, ownerID string, entries []RegistryEntry) ([]*Registry, error) {
+func (s *store) setWithinTx(ctx context.Context, db bun.IDB, ownerID string, entries []*Registry) ([]*Registry, error) {
 	var result []*Registry
 
 	for _, entry := range entries {
@@ -189,7 +183,7 @@ func (s *store) setWithinTx(ctx context.Context, db bun.IDB, ownerID string, ent
 }
 
 func (s *store) Set(ctx context.Context, ownerID, key, value string, isEncrypted bool) (*Registry, error) {
-	entries := []RegistryEntry{{Key: key, Value: value, IsEncrypted: isEncrypted}}
+	entries := []*Registry{{Key: key, Value: value, IsEncrypted: isEncrypted}}
 	result, err := s.setWithinTx(ctx, s.db, ownerID, entries)
 	if err != nil {
 		return nil, err
@@ -197,7 +191,7 @@ func (s *store) Set(ctx context.Context, ownerID, key, value string, isEncrypted
 	return result[0], nil
 }
 
-func (s *store) SetMulti(ctx context.Context, ownerID string, entries []RegistryEntry) ([]*Registry, error) {
+func (s *store) SetMulti(ctx context.Context, ownerID string, entries []*Registry) ([]*Registry, error) {
 	if len(entries) == 0 {
 		return []*Registry{}, nil
 	}

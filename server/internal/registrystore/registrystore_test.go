@@ -192,7 +192,7 @@ func TestRegistryStore_SetMulti(t *testing.T) {
 	ctx := context.Background()
 
 	// Test setting multiple entries
-	entries := []RegistryEntry{
+	entries := []*Registry{
 		{Key: "key1", Value: "value1", IsEncrypted: false},
 		{Key: "key2", Value: "value2", IsEncrypted: false},
 		{Key: "key3", Value: "value3", IsEncrypted: true},
@@ -220,7 +220,7 @@ func TestRegistryStore_SetMulti(t *testing.T) {
 	}
 
 	// Test updating existing entries with SetMulti
-	updateEntries := []RegistryEntry{
+	updateEntries := []*Registry{
 		{Key: "key1", Value: "updated_value1", IsEncrypted: false},
 		{Key: "key2", Value: "updated_value2", IsEncrypted: true},
 	}
@@ -237,12 +237,12 @@ func TestRegistryStore_SetMulti(t *testing.T) {
 	}
 
 	// Test empty entries slice
-	emptyResults, err := store.SetMulti(ctx, "owner1", []RegistryEntry{})
+	emptyResults, err := store.SetMulti(ctx, "owner1", []*Registry{})
 	assert.NoError(t, err)
 	assert.Len(t, emptyResults, 0)
 
 	// Test SetMulti with different owners
-	owner2Entries := []RegistryEntry{
+	owner2Entries := []*Registry{
 		{Key: "key1", Value: "owner2_value1", IsEncrypted: false},
 	}
 

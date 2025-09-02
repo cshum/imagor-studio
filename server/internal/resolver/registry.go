@@ -16,9 +16,9 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.R
 	}
 
 	// Convert GraphQL input to registrystore entries
-	var registryEntries []registrystore.RegistryEntry
+	var registryEntries []*registrystore.Registry
 	for _, entry := range entries {
-		registryEntries = append(registryEntries, registrystore.RegistryEntry{
+		registryEntries = append(registryEntries, &registrystore.Registry{
 			Key:         entry.Key,
 			Value:       entry.Value,
 			IsEncrypted: entry.IsEncrypted,
@@ -141,9 +141,9 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql
 	}
 
 	// Convert GraphQL input to registrystore entries
-	var registryEntries []registrystore.RegistryEntry
+	var registryEntries []*registrystore.Registry
 	for _, entry := range entries {
-		registryEntries = append(registryEntries, registrystore.RegistryEntry{
+		registryEntries = append(registryEntries, &registrystore.Registry{
 			Key:         entry.Key,
 			Value:       entry.Value,
 			IsEncrypted: entry.IsEncrypted,

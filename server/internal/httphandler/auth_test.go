@@ -124,7 +124,7 @@ func (m *MockRegistryStore) Delete(ctx context.Context, ownerID, key string) err
 	return args.Error(0)
 }
 
-func (m *MockRegistryStore) SetMulti(ctx context.Context, ownerID string, entries []registrystore.RegistryEntry) ([]*registrystore.Registry, error) {
+func (m *MockRegistryStore) SetMulti(ctx context.Context, ownerID string, entries []*registrystore.Registry) ([]*registrystore.Registry, error) {
 	args := m.Called(ctx, ownerID, entries)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
