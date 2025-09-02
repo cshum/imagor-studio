@@ -158,15 +158,8 @@ func (s *store) setWithinTx(ctx context.Context, db bun.IDB, ownerID string, ent
 			UpdatedAt:   now,
 		}
 
-		// Database-level enforcement: prevent changing encryption state of existing entries
-		// For new entries, insert normally. For existing entries, only allow update if encryption state matches
-		_, err := db.NewInsert().
-			Model(modelEntry).
-			On("CONFLICT (owner_id, key) DO UPDATE").
-			Set("value = EXCLUDED.value").
-			Set("updated_at = EXCLUDED.updated_at").
-			Where("r.is_encrypted = EXCLUDED.is_encrypted").
-			Exec(ctx)
+		// Use database-agnostic upsert method
+		err := s.upsertRegistry(ctx, db, modelEntry)
 		if err != nil {
 			return nil, fmt.Errorf("error setting registry for key %s: %w", entry.Key, err)
 		}
