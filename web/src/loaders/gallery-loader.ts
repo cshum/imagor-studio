@@ -80,7 +80,7 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
       const segment = segments[i]
       const capitalizedSegmentName = segment.charAt(0).toUpperCase() + segment.slice(1)
       const segmentPath = segments.slice(0, i + 1).join('/')
-      const segmentHref = `/gallery/${segmentPath}`
+      const segmentHref = `/gallery/${encodeURIComponent(segmentPath)}`
 
       // Last segment should not have href (it's the current page)
       const isLastSegment = i === segments.length - 1
