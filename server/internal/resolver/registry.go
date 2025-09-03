@@ -66,16 +66,30 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entry *gql.Regis
 	return result, nil
 }
 
-// DeleteUserRegistry deletes user-specific registry
-func (r *mutationResolver) DeleteUserRegistry(ctx context.Context, key string, ownerID *string) (bool, error) {
+// DeleteUserRegistry deletes user-specific registry (unified flexible API)
+func (r *mutationResolver) DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error) {
+	// Validate input: exactly one of key or keys must be provided
+	if (key != nil && len(keys) > 0) || (key == nil && len(keys) == 0) {
+		return false, fmt.Errorf("exactly one of 'key' or 'keys' must be provided")
+	}
+
 	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return false, err
 	}
 
-	err = r.registryStore.Delete(ctx, effectiveOwnerID, key)
-	if err != nil {
-		return false, fmt.Errorf("failed to delete user registry: %w", err)
+	if key != nil {
+		// Single key operation
+		err = r.registryStore.Delete(ctx, effectiveOwnerID, *key)
+		if err != nil {
+			return false, fmt.Errorf("failed to delete user registry: %w", err)
+		}
+	} else {
+		// Multi key operation
+		err = r.registryStore.DeleteMulti(ctx, effectiveOwnerID, keys)
+		if err != nil {
+			return false, fmt.Errorf("failed to delete user registries: %w", err)
+		}
 	}
 
 	return true, nil
@@ -235,16 +249,30 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entry *gql.Reg
 	return result, nil
 }
 
-// DeleteSystemRegistry deletes system-wide registry (admin only)
-func (r *mutationResolver) DeleteSystemRegistry(ctx context.Context, key string) (bool, error) {
+// DeleteSystemRegistry deletes system-wide registry (unified flexible API, admin only)
+func (r *mutationResolver) DeleteSystemRegistry(ctx context.Context, key *string, keys []string) (bool, error) {
+	// Validate input: exactly one of key or keys must be provided
+	if (key != nil && len(keys) > 0) || (key == nil && len(keys) == 0) {
+		return false, fmt.Errorf("exactly one of 'key' or 'keys' must be provided")
+	}
+
 	// Only admins can delete system registry
 	if err := RequireAdminPermission(ctx); err != nil {
 		return false, fmt.Errorf("admin permission required for system registry delete: %w", err)
 	}
 
-	err := r.registryStore.Delete(ctx, SystemOwnerID, key)
-	if err != nil {
-		return false, fmt.Errorf("failed to delete system registry: %w", err)
+	if key != nil {
+		// Single key operation
+		err := r.registryStore.Delete(ctx, SystemOwnerID, *key)
+		if err != nil {
+			return false, fmt.Errorf("failed to delete system registry: %w", err)
+		}
+	} else {
+		// Multi key operation
+		err := r.registryStore.DeleteMulti(ctx, SystemOwnerID, keys)
+		if err != nil {
+			return false, fmt.Errorf("failed to delete system registries: %w", err)
+		}
 	}
 
 	return true, nil

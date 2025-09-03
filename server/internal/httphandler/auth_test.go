@@ -137,6 +137,11 @@ func (m *MockRegistryStore) SetMulti(ctx context.Context, ownerID string, entrie
 	return args.Get(0).([]*registrystore.Registry), args.Error(1)
 }
 
+func (m *MockRegistryStore) DeleteMulti(ctx context.Context, ownerID string, keys []string) error {
+	args := m.Called(ctx, ownerID, keys)
+	return args.Error(0)
+}
+
 func TestRegister(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
