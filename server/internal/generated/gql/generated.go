@@ -73,8 +73,8 @@ type ComplexityRoot struct {
 		CreateUser           func(childComplexity int, input CreateUserInput) int
 		DeactivateAccount    func(childComplexity int, userID *string) int
 		DeleteFile           func(childComplexity int, path string) int
-		DeleteSystemRegistry func(childComplexity int, key string) int
-		DeleteUserRegistry   func(childComplexity int, key string, ownerID *string) int
+		DeleteSystemRegistry func(childComplexity int, key *string, keys []string) int
+		DeleteUserRegistry   func(childComplexity int, key *string, keys []string, ownerID *string) int
 		SetSystemRegistry    func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
 		SetUserRegistry      func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
 		UpdateProfile        func(childComplexity int, input UpdateProfileInput, userID *string) int
@@ -140,9 +140,9 @@ type MutationResolver interface {
 	ChangePassword(ctx context.Context, input ChangePasswordInput, userID *string) (bool, error)
 	DeactivateAccount(ctx context.Context, userID *string) (bool, error)
 	SetUserRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) ([]*UserRegistry, error)
-	DeleteUserRegistry(ctx context.Context, key string, ownerID *string) (bool, error)
+	DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error)
 	SetSystemRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput) ([]*SystemRegistry, error)
-	DeleteSystemRegistry(ctx context.Context, key string) (bool, error)
+	DeleteSystemRegistry(ctx context.Context, key *string, keys []string) (bool, error)
 	CreateUser(ctx context.Context, input CreateUserInput) (*User, error)
 }
 type QueryResolver interface {
@@ -337,7 +337,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteSystemRegistry(childComplexity, args["key"].(string)), true
+		return e.complexity.Mutation.DeleteSystemRegistry(childComplexity, args["key"].(*string), args["keys"].([]string)), true
 
 	case "Mutation.deleteUserRegistry":
 		if e.complexity.Mutation.DeleteUserRegistry == nil {
@@ -349,7 +349,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteUserRegistry(childComplexity, args["key"].(string), args["ownerID"].(*string)), true
+		return e.complexity.Mutation.DeleteUserRegistry(childComplexity, args["key"].(*string), args["keys"].([]string), args["ownerID"].(*string)), true
 
 	case "Mutation.setSystemRegistry":
 		if e.complexity.Mutation.SetSystemRegistry == nil {
@@ -811,11 +811,11 @@ type Mutation {
 
     # User Registry APIs
     setUserRegistry(entry: RegistryEntryInput, entries: [RegistryEntryInput!], ownerID: String): [UserRegistry!]!
-    deleteUserRegistry(key: String!, ownerID: String): Boolean!
+    deleteUserRegistry(key: String, keys: [String!], ownerID: String): Boolean!
 
     # System Registry APIs (admin only for write)
     setSystemRegistry(entry: RegistryEntryInput, entries: [RegistryEntryInput!]): [SystemRegistry!]!
-    deleteSystemRegistry(key: String!): Boolean!
+    deleteSystemRegistry(key: String, keys: [String!]): Boolean!
 
     # admin only operations
     createUser(input: CreateUserInput!): User!
@@ -990,27 +990,37 @@ func (ec *executionContext) field_Mutation_deleteFile_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_deleteSystemRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
 	args["key"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "keys", ec.unmarshalOString2ᚕstringᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["keys"] = arg1
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_deleteUserRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
 	args["key"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "ownerID", ec.unmarshalOString2ᚖstring)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "keys", ec.unmarshalOString2ᚕstringᚄ)
 	if err != nil {
 		return nil, err
 	}
-	args["ownerID"] = arg1
+	args["keys"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "ownerID", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["ownerID"] = arg2
 	return args, nil
 }
 
@@ -2304,7 +2314,7 @@ func (ec *executionContext) _Mutation_deleteUserRegistry(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteUserRegistry(rctx, fc.Args["key"].(string), fc.Args["ownerID"].(*string))
+		return ec.resolvers.Mutation().DeleteUserRegistry(rctx, fc.Args["key"].(*string), fc.Args["keys"].([]string), fc.Args["ownerID"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2426,7 +2436,7 @@ func (ec *executionContext) _Mutation_deleteSystemRegistry(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteSystemRegistry(rctx, fc.Args["key"].(string))
+		return ec.resolvers.Mutation().DeleteSystemRegistry(rctx, fc.Args["key"].(*string), fc.Args["keys"].([]string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

@@ -49,6 +49,11 @@ func (m *MockRegistryStore) Delete(ctx context.Context, ownerID, key string) err
 	return args.Error(0)
 }
 
+func (m *MockRegistryStore) DeleteMulti(ctx context.Context, ownerID string, keys []string) error {
+	args := m.Called(ctx, ownerID, keys)
+	return args.Error(0)
+}
+
 func TestSetUserRegistry_SelfOperation(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockRegistryStore := new(MockRegistryStore)
@@ -255,7 +260,7 @@ func TestDeleteUserRegistry_SelfOperation(t *testing.T) {
 
 	mockRegistryStore.On("Delete", ctx, "test-user-id", key).Return(nil)
 
-	result, err := resolver.Mutation().DeleteUserRegistry(ctx, key, nil)
+	result, err := resolver.Mutation().DeleteUserRegistry(ctx, &key, nil, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -467,7 +472,8 @@ func TestDeleteSystemRegistry_AdminOnly(t *testing.T) {
 				mockRegistryStore.On("Delete", ctx, "system", "old_config").Return(nil)
 			}
 
-			result, err := resolver.Mutation().DeleteSystemRegistry(ctx, "old_config")
+			key := "old_config"
+			result, err := resolver.Mutation().DeleteSystemRegistry(ctx, &key, nil)
 
 			if tt.expectError {
 				assert.Error(t, err)
