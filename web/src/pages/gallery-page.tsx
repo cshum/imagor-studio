@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useNavigate, useRouterState } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 
 import { HeaderBar } from '@/components/header-bar'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
