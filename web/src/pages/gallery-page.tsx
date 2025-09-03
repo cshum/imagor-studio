@@ -5,7 +5,6 @@ import { HeaderBar } from '@/components/header-bar'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
-import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Card, CardContent } from '@/components/ui/card'
 import { useSidebar } from '@/components/ui/sidebar'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
@@ -24,7 +23,6 @@ export interface GalleryPageProps extends React.PropsWithChildren {
 
 export function GalleryPage({ galleryLoaderData, galleryKey, children }: GalleryPageProps) {
   const navigate = useNavigate()
-  const { isLoading } = useRouterState()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const contentRef = useRef<HTMLDivElement | null>(null)
 
@@ -95,7 +93,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   return (
     <>
-      <LoadingBar isLoading={isLoading} />
       <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
         <ContentLayout title={galleryName}>
           <div className='mx-4 my-2 grid'>
