@@ -18,12 +18,12 @@ type Documents = {
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n    isOverriddenByConfig\n  }\n': typeof types.SystemRegistryInfoFragmentDoc
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.ListUserRegistryDocument
-  '\n  query GetUserRegistry($key: String!, $ownerID: String) {\n    getUserRegistry(key: $key, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.GetUserRegistryDocument
+  '\n  query GetUserRegistry($key: String, $keys: [String!], $ownerID: String) {\n    getUserRegistry(key: $key, keys: $keys, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.GetUserRegistryDocument
   '\n  query ListSystemRegistry($prefix: String) {\n    listSystemRegistry(prefix: $prefix) {\n      ...SystemRegistryInfo\n    }\n  }\n': typeof types.ListSystemRegistryDocument
-  '\n  query GetSystemRegistry($key: String!) {\n    getSystemRegistry(key: $key) {\n      ...SystemRegistryInfo\n    }\n  }\n': typeof types.GetSystemRegistryDocument
-  '\n  mutation SetUserRegistry($entries: [RegistryEntryInput!]!, $ownerID: String) {\n    setUserRegistry(entries: $entries, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.SetUserRegistryDocument
+  '\n  query GetSystemRegistry($key: String, $keys: [String!]) {\n    getSystemRegistry(key: $key, keys: $keys) {\n      ...SystemRegistryInfo\n    }\n  }\n': typeof types.GetSystemRegistryDocument
+  '\n  mutation SetUserRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!], $ownerID: String) {\n    setUserRegistry(entry: $entry, entries: $entries, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.SetUserRegistryDocument
   '\n  mutation DeleteUserRegistry($key: String!, $ownerID: String) {\n    deleteUserRegistry(key: $key, ownerID: $ownerID)\n  }\n': typeof types.DeleteUserRegistryDocument
-  '\n  mutation SetSystemRegistry($entries: [RegistryEntryInput!]!) {\n    setSystemRegistry(entries: $entries) {\n      ...SystemRegistryInfo\n    }\n  }\n': typeof types.SetSystemRegistryDocument
+  '\n  mutation SetSystemRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!]) {\n    setSystemRegistry(entry: $entry, entries: $entries) {\n      ...SystemRegistryInfo\n    }\n  }\n': typeof types.SetSystemRegistryDocument
   '\n  mutation DeleteSystemRegistry($key: String!) {\n    deleteSystemRegistry(key: $key)\n  }\n': typeof types.DeleteSystemRegistryDocument
   '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n    thumbnailUrls {\n      grid\n      preview\n      full\n      original\n      meta\n    }\n  }\n': typeof types.FileInfoFragmentDoc
   '\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n  }\n': typeof types.FileStatInfoFragmentDoc
@@ -48,17 +48,17 @@ const documents: Documents = {
     types.SystemRegistryInfoFragmentDoc,
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n':
     types.ListUserRegistryDocument,
-  '\n  query GetUserRegistry($key: String!, $ownerID: String) {\n    getUserRegistry(key: $key, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n':
+  '\n  query GetUserRegistry($key: String, $keys: [String!], $ownerID: String) {\n    getUserRegistry(key: $key, keys: $keys, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n':
     types.GetUserRegistryDocument,
   '\n  query ListSystemRegistry($prefix: String) {\n    listSystemRegistry(prefix: $prefix) {\n      ...SystemRegistryInfo\n    }\n  }\n':
     types.ListSystemRegistryDocument,
-  '\n  query GetSystemRegistry($key: String!) {\n    getSystemRegistry(key: $key) {\n      ...SystemRegistryInfo\n    }\n  }\n':
+  '\n  query GetSystemRegistry($key: String, $keys: [String!]) {\n    getSystemRegistry(key: $key, keys: $keys) {\n      ...SystemRegistryInfo\n    }\n  }\n':
     types.GetSystemRegistryDocument,
-  '\n  mutation SetUserRegistry($entries: [RegistryEntryInput!]!, $ownerID: String) {\n    setUserRegistry(entries: $entries, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n':
+  '\n  mutation SetUserRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!], $ownerID: String) {\n    setUserRegistry(entry: $entry, entries: $entries, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n':
     types.SetUserRegistryDocument,
   '\n  mutation DeleteUserRegistry($key: String!, $ownerID: String) {\n    deleteUserRegistry(key: $key, ownerID: $ownerID)\n  }\n':
     types.DeleteUserRegistryDocument,
-  '\n  mutation SetSystemRegistry($entries: [RegistryEntryInput!]!) {\n    setSystemRegistry(entries: $entries) {\n      ...SystemRegistryInfo\n    }\n  }\n':
+  '\n  mutation SetSystemRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!]) {\n    setSystemRegistry(entry: $entry, entries: $entries) {\n      ...SystemRegistryInfo\n    }\n  }\n':
     types.SetSystemRegistryDocument,
   '\n  mutation DeleteSystemRegistry($key: String!) {\n    deleteSystemRegistry(key: $key)\n  }\n':
     types.DeleteSystemRegistryDocument,
@@ -129,8 +129,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query GetUserRegistry($key: String!, $ownerID: String) {\n    getUserRegistry(key: $key, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n',
-): (typeof documents)['\n  query GetUserRegistry($key: String!, $ownerID: String) {\n    getUserRegistry(key: $key, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n']
+  source: '\n  query GetUserRegistry($key: String, $keys: [String!], $ownerID: String) {\n    getUserRegistry(key: $key, keys: $keys, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n',
+): (typeof documents)['\n  query GetUserRegistry($key: String, $keys: [String!], $ownerID: String) {\n    getUserRegistry(key: $key, keys: $keys, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -141,14 +141,14 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query GetSystemRegistry($key: String!) {\n    getSystemRegistry(key: $key) {\n      ...SystemRegistryInfo\n    }\n  }\n',
-): (typeof documents)['\n  query GetSystemRegistry($key: String!) {\n    getSystemRegistry(key: $key) {\n      ...SystemRegistryInfo\n    }\n  }\n']
+  source: '\n  query GetSystemRegistry($key: String, $keys: [String!]) {\n    getSystemRegistry(key: $key, keys: $keys) {\n      ...SystemRegistryInfo\n    }\n  }\n',
+): (typeof documents)['\n  query GetSystemRegistry($key: String, $keys: [String!]) {\n    getSystemRegistry(key: $key, keys: $keys) {\n      ...SystemRegistryInfo\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation SetUserRegistry($entries: [RegistryEntryInput!]!, $ownerID: String) {\n    setUserRegistry(entries: $entries, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n',
-): (typeof documents)['\n  mutation SetUserRegistry($entries: [RegistryEntryInput!]!, $ownerID: String) {\n    setUserRegistry(entries: $entries, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n']
+  source: '\n  mutation SetUserRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!], $ownerID: String) {\n    setUserRegistry(entry: $entry, entries: $entries, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n',
+): (typeof documents)['\n  mutation SetUserRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!], $ownerID: String) {\n    setUserRegistry(entry: $entry, entries: $entries, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -159,8 +159,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation SetSystemRegistry($entries: [RegistryEntryInput!]!) {\n    setSystemRegistry(entries: $entries) {\n      ...SystemRegistryInfo\n    }\n  }\n',
-): (typeof documents)['\n  mutation SetSystemRegistry($entries: [RegistryEntryInput!]!) {\n    setSystemRegistry(entries: $entries) {\n      ...SystemRegistryInfo\n    }\n  }\n']
+  source: '\n  mutation SetSystemRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!]) {\n    setSystemRegistry(entry: $entry, entries: $entries) {\n      ...SystemRegistryInfo\n    }\n  }\n',
+): (typeof documents)['\n  mutation SetSystemRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!]) {\n    setSystemRegistry(entry: $entry, entries: $entries) {\n      ...SystemRegistryInfo\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

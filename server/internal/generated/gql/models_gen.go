@@ -60,8 +60,6 @@ type SystemRegistry struct {
 	Value                string `json:"value"`
 	OwnerID              string `json:"ownerID"`
 	IsEncrypted          bool   `json:"isEncrypted"`
-	CreatedAt            string `json:"createdAt"`
-	UpdatedAt            string `json:"updatedAt"`
 	IsOverriddenByConfig bool   `json:"isOverriddenByConfig"`
 }
 
@@ -98,8 +96,6 @@ type UserRegistry struct {
 	Value       string `json:"value"`
 	OwnerID     string `json:"ownerID"`
 	IsEncrypted bool   `json:"isEncrypted"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
 }
 
 type SortOption string

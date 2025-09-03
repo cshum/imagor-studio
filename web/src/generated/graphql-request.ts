@@ -107,11 +107,13 @@ export type MutationDeleteUserRegistryArgs = {
 }
 
 export type MutationSetSystemRegistryArgs = {
-  entries: Array<RegistryEntryInput>
+  entries?: InputMaybe<Array<RegistryEntryInput>>
+  entry?: InputMaybe<RegistryEntryInput>
 }
 
 export type MutationSetUserRegistryArgs = {
-  entries: Array<RegistryEntryInput>
+  entries?: InputMaybe<Array<RegistryEntryInput>>
+  entry?: InputMaybe<RegistryEntryInput>
   ownerID?: InputMaybe<Scalars['String']['input']>
 }
 
@@ -127,8 +129,8 @@ export type MutationUploadFileArgs = {
 
 export type Query = {
   __typename?: 'Query'
-  getSystemRegistry: Maybe<SystemRegistry>
-  getUserRegistry: Maybe<UserRegistry>
+  getSystemRegistry: Array<SystemRegistry>
+  getUserRegistry: Array<UserRegistry>
   listFiles: FileList
   listSystemRegistry: Array<SystemRegistry>
   listUserRegistry: Array<UserRegistry>
@@ -139,11 +141,13 @@ export type Query = {
 }
 
 export type QueryGetSystemRegistryArgs = {
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
 }
 
 export type QueryGetUserRegistryArgs = {
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
   ownerID?: InputMaybe<Scalars['String']['input']>
 }
 
@@ -271,19 +275,20 @@ export type ListUserRegistryQuery = {
 }
 
 export type GetUserRegistryQueryVariables = Exact<{
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type GetUserRegistryQuery = {
   __typename?: 'Query'
-  getUserRegistry: {
+  getUserRegistry: Array<{
     __typename?: 'UserRegistry'
     key: string
     value: string
     ownerID: string
     isEncrypted: boolean
-  } | null
+  }>
 }
 
 export type ListSystemRegistryQueryVariables = Exact<{
@@ -303,23 +308,25 @@ export type ListSystemRegistryQuery = {
 }
 
 export type GetSystemRegistryQueryVariables = Exact<{
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
 }>
 
 export type GetSystemRegistryQuery = {
   __typename?: 'Query'
-  getSystemRegistry: {
+  getSystemRegistry: Array<{
     __typename?: 'SystemRegistry'
     key: string
     value: string
     ownerID: string
     isEncrypted: boolean
     isOverriddenByConfig: boolean
-  } | null
+  }>
 }
 
 export type SetUserRegistryMutationVariables = Exact<{
-  entries: Array<RegistryEntryInput> | RegistryEntryInput
+  entry?: InputMaybe<RegistryEntryInput>
+  entries?: InputMaybe<Array<RegistryEntryInput> | RegistryEntryInput>
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
@@ -342,7 +349,8 @@ export type DeleteUserRegistryMutationVariables = Exact<{
 export type DeleteUserRegistryMutation = { __typename?: 'Mutation'; deleteUserRegistry: boolean }
 
 export type SetSystemRegistryMutationVariables = Exact<{
-  entries: Array<RegistryEntryInput> | RegistryEntryInput
+  entry?: InputMaybe<RegistryEntryInput>
+  entries?: InputMaybe<Array<RegistryEntryInput> | RegistryEntryInput>
 }>
 
 export type SetSystemRegistryMutation = {
@@ -641,8 +649,8 @@ export const ListUserRegistryDocument = gql`
   ${RegistryInfoFragmentDoc}
 `
 export const GetUserRegistryDocument = gql`
-  query GetUserRegistry($key: String!, $ownerID: String) {
-    getUserRegistry(key: $key, ownerID: $ownerID) {
+  query GetUserRegistry($key: String, $keys: [String!], $ownerID: String) {
+    getUserRegistry(key: $key, keys: $keys, ownerID: $ownerID) {
       ...RegistryInfo
     }
   }
@@ -657,16 +665,20 @@ export const ListSystemRegistryDocument = gql`
   ${SystemRegistryInfoFragmentDoc}
 `
 export const GetSystemRegistryDocument = gql`
-  query GetSystemRegistry($key: String!) {
-    getSystemRegistry(key: $key) {
+  query GetSystemRegistry($key: String, $keys: [String!]) {
+    getSystemRegistry(key: $key, keys: $keys) {
       ...SystemRegistryInfo
     }
   }
   ${SystemRegistryInfoFragmentDoc}
 `
 export const SetUserRegistryDocument = gql`
-  mutation SetUserRegistry($entries: [RegistryEntryInput!]!, $ownerID: String) {
-    setUserRegistry(entries: $entries, ownerID: $ownerID) {
+  mutation SetUserRegistry(
+    $entry: RegistryEntryInput
+    $entries: [RegistryEntryInput!]
+    $ownerID: String
+  ) {
+    setUserRegistry(entry: $entry, entries: $entries, ownerID: $ownerID) {
       ...RegistryInfo
     }
   }
@@ -678,8 +690,8 @@ export const DeleteUserRegistryDocument = gql`
   }
 `
 export const SetSystemRegistryDocument = gql`
-  mutation SetSystemRegistry($entries: [RegistryEntryInput!]!) {
-    setSystemRegistry(entries: $entries) {
+  mutation SetSystemRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!]) {
+    setSystemRegistry(entry: $entry, entries: $entries) {
       ...SystemRegistryInfo
     }
   }
@@ -825,7 +837,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
       )
     },
     GetUserRegistry(
-      variables: GetUserRegistryQueryVariables,
+      variables?: GetUserRegistryQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
     ): Promise<GetUserRegistryQuery> {
@@ -861,7 +873,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
       )
     },
     GetSystemRegistry(
-      variables: GetSystemRegistryQueryVariables,
+      variables?: GetSystemRegistryQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
     ): Promise<GetSystemRegistryQuery> {
@@ -879,7 +891,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
       )
     },
     SetUserRegistry(
-      variables: SetUserRegistryMutationVariables,
+      variables?: SetUserRegistryMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
     ): Promise<SetUserRegistryMutation> {
@@ -915,7 +927,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
       )
     },
     SetSystemRegistry(
-      variables: SetSystemRegistryMutationVariables,
+      variables?: SetSystemRegistryMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
     ): Promise<SetSystemRegistryMutation> {
