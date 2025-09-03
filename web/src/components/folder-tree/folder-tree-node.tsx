@@ -20,9 +20,8 @@ interface FolderTreeNodeProps {
 
 export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
   const navigate = useNavigate()
-  const { currentPath, loadingPaths, dispatch, loadFolderChildren } = useFolderTree()
+  const { currentPath, dispatch, loadFolderChildren } = useFolderTree()
   
-  const isLoading = loadingPaths.has(folder.path)
   const isActive = currentPath === folder.path
   const hasChildren = folder.children && folder.children.length > 0
   const canExpand = folder.isDirectory && (!folder.isLoaded || hasChildren)
@@ -63,9 +62,7 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
   // If this is a leaf folder (no children), render as a simple button
   if (!canExpand) {
     return (
-      <SidebarMenuButton
-        onClick={handleFolderClick}
-      >
+      <SidebarMenuButton onClick={handleFolderClick} isActive={isActive}>
         <Folder className="h-4 w-4 ml-6" />
         <span className="truncate">{folder.name || 'Root'}</span>
       </SidebarMenuButton>
@@ -80,7 +77,7 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
         className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
       >
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton onClick={handleFolderClick}>
+          <SidebarMenuButton onClick={handleFolderClick} isActive={isActive}>
             <ChevronRight onClick={handleExpandClick} className="transition-transform" />
             <Folder className="h-4 w-4" />
             <span className="truncate">{folder.name || 'Root'}</span>
