@@ -70,7 +70,7 @@ func TestSetUserRegistry_SelfOperation(t *testing.T) {
 	mockRegistryStore.On("SetMulti", ctx, "test-user-id", expectedEntries).Return([]*registrystore.Registry{resultRegistry}, nil)
 
 	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
-	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, nil) // nil ownerID = self
+	result, err := resolver.Mutation().SetUserRegistry(ctx, nil, entries, nil) // nil ownerID = self
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -104,7 +104,7 @@ func TestSetUserRegistry_AdminForOtherUser(t *testing.T) {
 	mockRegistryStore.On("SetMulti", ctx, targetOwnerID, expectedEntries).Return([]*registrystore.Registry{resultRegistry}, nil)
 
 	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
-	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, &targetOwnerID)
+	result, err := resolver.Mutation().SetUserRegistry(ctx, nil, entries, &targetOwnerID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -130,7 +130,7 @@ func TestSetUserRegistry_RegularUserCannotAccessOthers(t *testing.T) {
 	value := "test value"
 
 	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
-	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, &targetOwnerID)
+	result, err := resolver.Mutation().SetUserRegistry(ctx, nil, entries, &targetOwnerID)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
@@ -152,7 +152,7 @@ func TestSetUserRegistry_GuestCannotSet(t *testing.T) {
 	value := "test value"
 
 	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
-	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, nil)
+	result, err := resolver.Mutation().SetUserRegistry(ctx, nil, entries, nil)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
@@ -179,13 +179,14 @@ func TestGetUserRegistry_SelfOperation(t *testing.T) {
 
 	mockRegistryStore.On("Get", ctx, "test-user-id", key).Return(mockRegistry, nil)
 
-	result, err := resolver.Query().GetUserRegistry(ctx, key, nil)
+	result, err := resolver.Query().GetUserRegistry(ctx, &key, nil, nil)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, key, result.Key)
-	assert.Equal(t, "dark_mode", result.Value)
-	assert.Equal(t, "test-user-id", result.OwnerID)
+	assert.Len(t, result, 1)
+	assert.Equal(t, key, result[0].Key)
+	assert.Equal(t, "dark_mode", result[0].Value)
+	assert.Equal(t, "test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -203,10 +204,10 @@ func TestGetUserRegistry_NotFound(t *testing.T) {
 
 	mockRegistryStore.On("Get", ctx, "test-user-id", key).Return(nil, nil)
 
-	result, err := resolver.Query().GetUserRegistry(ctx, key, nil)
+	result, err := resolver.Query().GetUserRegistry(ctx, &key, nil, nil)
 
 	assert.NoError(t, err)
-	assert.Nil(t, result)
+	assert.Len(t, result, 0)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -317,7 +318,7 @@ func TestSetSystemRegistry_AdminOnly(t *testing.T) {
 			}
 
 			entries := []*gql.RegistryEntryInput{{Key: "app_version", Value: "1.0.0"}}
-			result, err := resolver.Mutation().SetSystemRegistry(ctx, entries)
+			result, err := resolver.Mutation().SetSystemRegistry(ctx, nil, entries)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -381,13 +382,15 @@ func TestGetSystemRegistry_OpenRead(t *testing.T) {
 
 			mockRegistryStore.On("Get", ctx, "system", "app_version").Return(mockRegistry, nil)
 
-			result, err := resolver.Query().GetSystemRegistry(ctx, "app_version")
+			key := "app_version"
+			result, err := resolver.Query().GetSystemRegistry(ctx, &key, nil)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
-			assert.Equal(t, "app_version", result.Key)
-			assert.Equal(t, "1.0.0", result.Value)
-			assert.Equal(t, "system", result.OwnerID)
+			assert.Len(t, result, 1)
+			assert.Equal(t, "app_version", result[0].Key)
+			assert.Equal(t, "1.0.0", result[0].Value)
+			assert.Equal(t, "system", result[0].OwnerID)
 
 			mockRegistryStore.AssertExpectations(t)
 		})
@@ -574,7 +577,7 @@ func TestSetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	mockRegistryStore.On("SetMulti", ctx, "test-user-id", expectedEntries).Return([]*registrystore.Registry{resultRegistry}, nil)
 
 	entries := []*gql.RegistryEntryInput{{Key: key, Value: value, IsEncrypted: true}}
-	result, err := resolver.Mutation().SetUserRegistry(ctx, entries, nil)
+	result, err := resolver.Mutation().SetUserRegistry(ctx, nil, entries, nil)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -606,14 +609,15 @@ func TestGetUserRegistry_EncryptedValueHidden(t *testing.T) {
 
 	mockRegistryStore.On("Get", ctx, "test-user-id", key).Return(mockRegistry, nil)
 
-	result, err := resolver.Query().GetUserRegistry(ctx, key, nil)
+	result, err := resolver.Query().GetUserRegistry(ctx, &key, nil, nil)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, key, result.Key)
-	assert.Equal(t, "", result.Value) // Value should be empty for encrypted entries
-	assert.Equal(t, true, result.IsEncrypted)
-	assert.Equal(t, "test-user-id", result.OwnerID)
+	assert.Len(t, result, 1)
+	assert.Equal(t, key, result[0].Key)
+	assert.Equal(t, "", result[0].Value) // Value should be empty for encrypted entries
+	assert.Equal(t, true, result[0].IsEncrypted)
+	assert.Equal(t, "test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -676,7 +680,7 @@ func TestSetSystemRegistry_EncryptedValueHidden(t *testing.T) {
 	mockRegistryStore.On("SetMulti", ctx, "system", expectedEntries).Return([]*registrystore.Registry{resultRegistry}, nil)
 
 	entries := []*gql.RegistryEntryInput{{Key: key, Value: value, IsEncrypted: true}}
-	result, err := resolver.Mutation().SetSystemRegistry(ctx, entries)
+	result, err := resolver.Mutation().SetSystemRegistry(ctx, nil, entries)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -771,7 +775,7 @@ func TestSetSystemRegistry_OverridePrevention(t *testing.T) {
 			}
 
 			entries := []*gql.RegistryEntryInput{{Key: tt.registryKey, Value: "test-value"}}
-			result, err := resolver.Mutation().SetSystemRegistry(ctx, entries)
+			result, err := resolver.Mutation().SetSystemRegistry(ctx, nil, entries)
 
 			if tt.expectError {
 				assert.Error(t, err, tt.description)
@@ -864,14 +868,15 @@ func TestGetSystemRegistry_OverrideDetection(t *testing.T) {
 
 			mockRegistryStore.On("Get", ctx, "system", tt.registryKey).Return(mockRegistry, nil)
 
-			result, err := resolver.Query().GetSystemRegistry(ctx, tt.registryKey)
+			result, err := resolver.Query().GetSystemRegistry(ctx, &tt.registryKey, nil)
 
 			assert.NoError(t, err, tt.description)
 			assert.NotNil(t, result)
-			assert.Equal(t, tt.registryKey, result.Key)
-			assert.Equal(t, tt.expectedValue, result.Value, "Value mismatch: %s", tt.description)
-			assert.Equal(t, tt.expectedIsOverridden, result.IsOverriddenByConfig, "Override detection mismatch: %s", tt.description)
-			assert.Equal(t, "system", result.OwnerID)
+			assert.Len(t, result, 1)
+			assert.Equal(t, tt.registryKey, result[0].Key)
+			assert.Equal(t, tt.expectedValue, result[0].Value, "Value mismatch: %s", tt.description)
+			assert.Equal(t, tt.expectedIsOverridden, result[0].IsOverriddenByConfig, "Override detection mismatch: %s", tt.description)
+			assert.Equal(t, "system", result[0].OwnerID)
 
 			mockRegistryStore.AssertExpectations(t)
 		})
