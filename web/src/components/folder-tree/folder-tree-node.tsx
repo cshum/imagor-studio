@@ -12,7 +12,6 @@ import {
   SidebarMenuItem,
   SidebarMenuSub,
 } from '@/components/ui/sidebar'
-import { cn } from '@/lib/utils'
 import { FolderNode, useFolderTree } from '@/stores/folder-tree-store'
 
 interface FolderTreeNodeProps {
@@ -28,7 +27,7 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
   const hasChildren = folder.children && folder.children.length > 0
   const canExpand = folder.isDirectory && (!folder.isLoaded || hasChildren)
 
-  const handleFolderClick = () => {
+  const handleFolderClick = async () => {
     // Navigate to the folder
     if (folder.path === '') {
       navigate({ to: '/' })
@@ -38,10 +37,17 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
     
     // Update current path
     dispatch({ type: 'SET_CURRENT_PATH', path: folder.path })
+    if (folder.isDirectory) {
+      if (!folder.isLoaded) {
+        await loadFolderChildren(folder.path)
+      } else if (!folder.isExpanded) {
+        dispatch({ type: 'EXPAND_FOLDER', path: folder.path })
+      }
+    }
   }
 
-  const handleExpandClick = async () => {
-    handleFolderClick()
+  const handleExpandClick = async (evt?: React.MouseEvent) => {
+    evt?.stopPropagation()
     if (!folder.isLoaded && folder.isDirectory) {
       // Load children if not loaded yet
       await loadFolderChildren(folder.path)
@@ -59,10 +65,8 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
     return (
       <SidebarMenuButton
         onClick={handleFolderClick}
-        isActive={isActive}
-        className="data-[active=true]:bg-transparent"
       >
-        <Folder className="h-4 w-4" />
+        <Folder className="h-4 w-4 ml-6" />
         <span className="truncate">{folder.name || 'Root'}</span>
       </SidebarMenuButton>
     )
@@ -76,14 +80,14 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
         className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
       >
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton onClick={handleExpandClick} disabled={isLoading}>
+          <SidebarMenuButton disabled={isLoading} onClick={handleFolderClick}>
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <ChevronRight className="transition-transform" />
+              <ChevronRight onClick={handleExpandClick} className="transition-transform" />
             )}
-            <Folder className="h-4 w-4" />
-            <span className="truncate">{folder.name || 'Root'}</span>
+              <Folder className="h-4 w-4" />
+              <span className="truncate">{folder.name || 'Root'}</span>
           </SidebarMenuButton>
         </CollapsibleTrigger>
         
