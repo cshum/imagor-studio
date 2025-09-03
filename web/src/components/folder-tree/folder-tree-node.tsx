@@ -80,14 +80,10 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
         className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
       >
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton disabled={isLoading} onClick={handleFolderClick}>
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <ChevronRight onClick={handleExpandClick} className="transition-transform" />
-            )}
-              <Folder className="h-4 w-4" />
-              <span className="truncate">{folder.name || 'Root'}</span>
+          <SidebarMenuButton onClick={handleFolderClick}>
+            <ChevronRight onClick={handleExpandClick} className="transition-transform" />
+            <Folder className="h-4 w-4" />
+            <span className="truncate">{folder.name || 'Root'}</span>
           </SidebarMenuButton>
         </CollapsibleTrigger>
         
