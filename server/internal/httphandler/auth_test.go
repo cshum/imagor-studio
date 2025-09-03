@@ -111,6 +111,11 @@ func (m *MockRegistryStore) Get(ctx context.Context, ownerID, key string) (*regi
 	return args.Get(0).(*registrystore.Registry), args.Error(1)
 }
 
+func (m *MockRegistryStore) GetMulti(ctx context.Context, ownerID string, keys []string) ([]*registrystore.Registry, error) {
+	args := m.Called(ctx, ownerID, keys)
+	return args.Get(0).([]*registrystore.Registry), args.Error(1)
+}
+
 func (m *MockRegistryStore) Set(ctx context.Context, ownerID, key, value string, isEncrypted bool) (*registrystore.Registry, error) {
 	args := m.Called(ctx, ownerID, key, value, isEncrypted)
 	if args.Get(0) == nil {

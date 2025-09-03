@@ -23,6 +23,7 @@ type Registry struct {
 type Store interface {
 	List(ctx context.Context, ownerID string, prefix *string) ([]*Registry, error)
 	Get(ctx context.Context, ownerID, key string) (*Registry, error)
+	GetMulti(ctx context.Context, ownerID string, keys []string) ([]*Registry, error)
 	Set(ctx context.Context, ownerID, key, value string, isEncrypted bool) (*Registry, error)
 	SetMulti(ctx context.Context, ownerID string, entries []*Registry) ([]*Registry, error)
 	Delete(ctx context.Context, ownerID, key string) error
@@ -42,6 +43,30 @@ func New(db *bun.DB, logger *zap.Logger, encryptionService *encryption.Service) 
 	}
 }
 
+// processRegistryEntry handles the decryption logic for a single registry entry
+func (s *store) processRegistryEntry(entry model.Registry) (*Registry, error) {
+	value := entry.Value
+
+	// Decrypt if encrypted
+	if entry.IsEncrypted && s.encryption != nil {
+		var decryptErr error
+		if encryption.IsJWTSecret(entry.Key) {
+			value, decryptErr = s.encryption.DecryptWithMaster(entry.Value)
+		} else {
+			value, decryptErr = s.encryption.DecryptWithJWT(entry.Value)
+		}
+		if decryptErr != nil {
+			return nil, fmt.Errorf("failed to decrypt registry value for key %s: %w", entry.Key, decryptErr)
+		}
+	}
+
+	return &Registry{
+		Key:         entry.Key,
+		Value:       value,
+		IsEncrypted: entry.IsEncrypted,
+	}, nil
+}
+
 func (s *store) List(ctx context.Context, ownerID string, prefix *string) ([]*Registry, error) {
 	var entries []model.Registry
 	query := s.db.NewSelect().
@@ -59,29 +84,21 @@ func (s *store) List(ctx context.Context, ownerID string, prefix *string) ([]*Re
 
 	var result []*Registry
 	for _, entry := range entries {
-		value := entry.Value
-
-		// Decrypt if encrypted
-		if entry.IsEncrypted && s.encryption != nil {
-			var decryptErr error
-			if encryption.IsJWTSecret(entry.Key) {
-				value, decryptErr = s.encryption.DecryptWithMaster(entry.Value)
-			} else {
-				value, decryptErr = s.encryption.DecryptWithJWT(entry.Value)
-			}
-			if decryptErr != nil {
-				s.logger.Error("Failed to decrypt registry value",
-					zap.String("key", entry.Key),
-					zap.Error(decryptErr))
-				// Continue with encrypted value rather than failing
-			}
+		processedEntry, err := s.processRegistryEntry(entry)
+		if err != nil {
+			// For List, we log the error and continue with encrypted value rather than failing
+			s.logger.Error("Failed to decrypt registry value",
+				zap.String("key", entry.Key),
+				zap.Error(err))
+			// Continue with encrypted value
+			result = append(result, &Registry{
+				Key:         entry.Key,
+				Value:       entry.Value,
+				IsEncrypted: entry.IsEncrypted,
+			})
+		} else {
+			result = append(result, processedEntry)
 		}
-
-		result = append(result, &Registry{
-			Key:         entry.Key,
-			Value:       value,
-			IsEncrypted: entry.IsEncrypted,
-		})
 	}
 
 	return result, nil
@@ -100,26 +117,34 @@ func (s *store) Get(ctx context.Context, ownerID, key string) (*Registry, error)
 		return nil, fmt.Errorf("error getting registry: %w", err)
 	}
 
-	value := entry.Value
+	return s.processRegistryEntry(entry)
+}
 
-	// Decrypt if encrypted
-	if entry.IsEncrypted && s.encryption != nil {
-		var decryptErr error
-		if encryption.IsJWTSecret(entry.Key) {
-			value, decryptErr = s.encryption.DecryptWithMaster(entry.Value)
-		} else {
-			value, decryptErr = s.encryption.DecryptWithJWT(entry.Value)
-		}
-		if decryptErr != nil {
-			return nil, fmt.Errorf("failed to decrypt registry value for key %s: %w", key, decryptErr)
-		}
+func (s *store) GetMulti(ctx context.Context, ownerID string, keys []string) ([]*Registry, error) {
+	if len(keys) == 0 {
+		return []*Registry{}, nil
 	}
 
-	return &Registry{
-		Key:         entry.Key,
-		Value:       value,
-		IsEncrypted: entry.IsEncrypted,
-	}, nil
+	var entries []model.Registry
+	err := s.db.NewSelect().
+		Model(&entries).
+		Where("owner_id = ?", ownerID).
+		Where("key IN (?)", bun.In(keys)).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error getting multiple registry entries: %w", err)
+	}
+
+	var result []*Registry
+	for _, entry := range entries {
+		processedEntry, err := s.processRegistryEntry(entry)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, processedEntry)
+	}
+
+	return result, nil
 }
 
 // setWithinTx is a private method that handles the core logic for setting registry entries within a transaction

@@ -138,6 +138,78 @@ func TestRegistryStore_Get(t *testing.T) {
 	assert.Nil(t, result)
 }
 
+func TestRegistryStore_GetMulti(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	store := New(db, logger, nil)
+	ctx := context.Background()
+
+	// Insert test data
+	_, err := store.Set(ctx, "owner1", "key1", "value1", false)
+	require.NoError(t, err)
+	_, err = store.Set(ctx, "owner1", "key2", "value2", false)
+	require.NoError(t, err)
+	_, err = store.Set(ctx, "owner1", "key3", "value3", true)
+	require.NoError(t, err)
+	_, err = store.Set(ctx, "owner2", "key1", "owner2_value1", false)
+	require.NoError(t, err)
+
+	// Test getting multiple existing keys
+	results, err := store.GetMulti(ctx, "owner1", []string{"key1", "key2", "key3"})
+	assert.NoError(t, err)
+	assert.Len(t, results, 3)
+
+	// Verify results (order may vary, so check by creating a map)
+	resultMap := make(map[string]*Registry)
+	for _, result := range results {
+		resultMap[result.Key] = result
+	}
+
+	assert.Equal(t, "value1", resultMap["key1"].Value)
+	assert.False(t, resultMap["key1"].IsEncrypted)
+	assert.Equal(t, "value2", resultMap["key2"].Value)
+	assert.False(t, resultMap["key2"].IsEncrypted)
+	assert.Equal(t, "value3", resultMap["key3"].Value)
+	assert.True(t, resultMap["key3"].IsEncrypted)
+
+	// Test getting mix of existing and non-existent keys
+	results, err = store.GetMulti(ctx, "owner1", []string{"key1", "non-existent", "key2"})
+	assert.NoError(t, err)
+	assert.Len(t, results, 2) // Only existing keys should be returned
+
+	resultMap = make(map[string]*Registry)
+	for _, result := range results {
+		resultMap[result.Key] = result
+	}
+	assert.Contains(t, resultMap, "key1")
+	assert.Contains(t, resultMap, "key2")
+	assert.NotContains(t, resultMap, "non-existent")
+
+	// Test getting keys for different owner
+	results, err = store.GetMulti(ctx, "owner2", []string{"key1", "key2"})
+	assert.NoError(t, err)
+	assert.Len(t, results, 1) // Only key1 exists for owner2
+	assert.Equal(t, "key1", results[0].Key)
+	assert.Equal(t, "owner2_value1", results[0].Value)
+
+	// Test with empty keys slice
+	results, err = store.GetMulti(ctx, "owner1", []string{})
+	assert.NoError(t, err)
+	assert.Len(t, results, 0)
+
+	// Test with all non-existent keys
+	results, err = store.GetMulti(ctx, "owner1", []string{"non-existent1", "non-existent2"})
+	assert.NoError(t, err)
+	assert.Len(t, results, 0)
+
+	// Test owner isolation
+	results, err = store.GetMulti(ctx, "owner3", []string{"key1", "key2", "key3"})
+	assert.NoError(t, err)
+	assert.Len(t, results, 0)
+}
+
 func TestRegistryStore_List(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
