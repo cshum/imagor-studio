@@ -8,8 +8,13 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 )
 
-// SetUserRegistry sets user-specific registry (supports multiple values)
-func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.RegistryEntryInput, ownerID *string) ([]*gql.UserRegistry, error) {
+// SetUserRegistry sets user-specific registry (unified flexible API)
+func (r *mutationResolver) SetUserRegistry(ctx context.Context, entry *gql.RegistryEntryInput, entries []*gql.RegistryEntryInput, ownerID *string) ([]*gql.UserRegistry, error) {
+	// Validate input: exactly one of entry or entries must be provided
+	if (entry != nil && len(entries) > 0) || (entry == nil && len(entries) == 0) {
+		return nil, fmt.Errorf("exactly one of 'entry' or 'entries' must be provided")
+	}
+
 	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
@@ -17,12 +22,23 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.R
 
 	// Convert GraphQL input to registrystore entries
 	var registryEntries []*registrystore.Registry
-	for _, entry := range entries {
-		registryEntries = append(registryEntries, &registrystore.Registry{
+
+	if entry != nil {
+		// Single entry operation
+		registryEntries = []*registrystore.Registry{{
 			Key:         entry.Key,
 			Value:       entry.Value,
 			IsEncrypted: entry.IsEncrypted,
-		})
+		}}
+	} else {
+		// Multi entries operation
+		for _, e := range entries {
+			registryEntries = append(registryEntries, &registrystore.Registry{
+				Key:         e.Key,
+				Value:       e.Value,
+				IsEncrypted: e.IsEncrypted,
+			})
+		}
 	}
 
 	// Use SetMulti for better performance
@@ -50,16 +66,30 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entries []*gql.R
 	return result, nil
 }
 
-// DeleteUserRegistry deletes user-specific registry
-func (r *mutationResolver) DeleteUserRegistry(ctx context.Context, key string, ownerID *string) (bool, error) {
+// DeleteUserRegistry deletes user-specific registry (unified flexible API)
+func (r *mutationResolver) DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error) {
+	// Validate input: exactly one of key or keys must be provided
+	if (key != nil && len(keys) > 0) || (key == nil && len(keys) == 0) {
+		return false, fmt.Errorf("exactly one of 'key' or 'keys' must be provided")
+	}
+
 	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return false, err
 	}
 
-	err = r.registryStore.Delete(ctx, effectiveOwnerID, key)
-	if err != nil {
-		return false, fmt.Errorf("failed to delete user registry: %w", err)
+	if key != nil {
+		// Single key operation
+		err = r.registryStore.Delete(ctx, effectiveOwnerID, *key)
+		if err != nil {
+			return false, fmt.Errorf("failed to delete user registry: %w", err)
+		}
+	} else {
+		// Multi key operation
+		err = r.registryStore.DeleteMulti(ctx, effectiveOwnerID, keys)
+		if err != nil {
+			return false, fmt.Errorf("failed to delete user registries: %w", err)
+		}
 	}
 
 	return true, nil
@@ -95,58 +125,92 @@ func (r *queryResolver) ListUserRegistry(ctx context.Context, prefix *string, ow
 	return result, nil
 }
 
-// GetUserRegistry gets specific user registry
-func (r *queryResolver) GetUserRegistry(ctx context.Context, key string, ownerID *string) (*gql.UserRegistry, error) {
+// GetUserRegistry gets specific user registry (unified flexible API)
+func (r *queryResolver) GetUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) ([]*gql.UserRegistry, error) {
+	// Validate input: exactly one of key or keys must be provided
+	if (key != nil && len(keys) > 0) || (key == nil && len(keys) == 0) {
+		return nil, fmt.Errorf("exactly one of 'key' or 'keys' must be provided")
+	}
+
 	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
 
-	registry, err := r.registryStore.Get(ctx, effectiveOwnerID, key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user registry: %w", err)
+	var registries []*registrystore.Registry
+
+	if key != nil {
+		// Single key operation
+		registry, err := r.registryStore.Get(ctx, effectiveOwnerID, *key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user registry: %w", err)
+		}
+		if registry != nil {
+			registries = []*registrystore.Registry{registry}
+		}
+	} else {
+		// Multi key operation
+		var err error
+		registries, err = r.registryStore.GetMulti(ctx, effectiveOwnerID, keys)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user registries: %w", err)
+		}
 	}
 
-	if registry == nil {
-		return nil, nil
+	var result []*gql.UserRegistry
+	for _, registry := range registries {
+		// Hide encrypted values in GraphQL responses
+		value := registry.Value
+		if registry.IsEncrypted {
+			value = ""
+		}
+
+		result = append(result, &gql.UserRegistry{
+			Key:         registry.Key,
+			Value:       value,
+			OwnerID:     effectiveOwnerID,
+			IsEncrypted: registry.IsEncrypted,
+		})
 	}
 
-	// Hide encrypted values in GraphQL responses
-	value := registry.Value
-	if registry.IsEncrypted {
-		value = ""
-	}
-
-	return &gql.UserRegistry{
-		Key:         registry.Key,
-		Value:       value,
-		OwnerID:     effectiveOwnerID,
-		IsEncrypted: registry.IsEncrypted,
-	}, nil
+	return result, nil
 }
 
-// SetSystemRegistry sets system-wide registry (admin only, supports multiple values)
-func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql.RegistryEntryInput) ([]*gql.SystemRegistry, error) {
+// SetSystemRegistry sets system-wide registry (unified flexible API)
+func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entry *gql.RegistryEntryInput, entries []*gql.RegistryEntryInput) ([]*gql.SystemRegistry, error) {
+	// Validate input: exactly one of entry or entries must be provided
+	if (entry != nil && len(entries) > 0) || (entry == nil && len(entries) == 0) {
+		return nil, fmt.Errorf("exactly one of 'entry' or 'entries' must be provided")
+	}
+
 	// Only admins can write system registry
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, fmt.Errorf("admin permission required for system registry write: %w", err)
 	}
 
+	// Prepare entries for validation
+	var allEntries []*gql.RegistryEntryInput
+	if entry != nil {
+		allEntries = []*gql.RegistryEntryInput{entry}
+	} else {
+		allEntries = entries
+	}
+
 	// Check all entries for config conflicts first
-	for _, entry := range entries {
-		_, configExists := r.config.GetByRegistryKey(entry.Key)
+	for _, e := range allEntries {
+		_, configExists := r.config.GetByRegistryKey(e.Key)
 		if configExists {
-			return nil, fmt.Errorf("cannot set registry key '%s': this configuration is managed by external config", entry.Key)
+			return nil, fmt.Errorf("cannot set registry key '%s': this configuration is managed by external config", e.Key)
 		}
 	}
 
 	// Convert GraphQL input to registrystore entries
 	var registryEntries []*registrystore.Registry
-	for _, entry := range entries {
+	for _, e := range allEntries {
 		registryEntries = append(registryEntries, &registrystore.Registry{
-			Key:         entry.Key,
-			Value:       entry.Value,
-			IsEncrypted: entry.IsEncrypted,
+			Key:         e.Key,
+			Value:       e.Value,
+			IsEncrypted: e.IsEncrypted,
 		})
 	}
 
@@ -185,16 +249,30 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entries []*gql
 	return result, nil
 }
 
-// DeleteSystemRegistry deletes system-wide registry (admin only)
-func (r *mutationResolver) DeleteSystemRegistry(ctx context.Context, key string) (bool, error) {
+// DeleteSystemRegistry deletes system-wide registry (unified flexible API, admin only)
+func (r *mutationResolver) DeleteSystemRegistry(ctx context.Context, key *string, keys []string) (bool, error) {
+	// Validate input: exactly one of key or keys must be provided
+	if (key != nil && len(keys) > 0) || (key == nil && len(keys) == 0) {
+		return false, fmt.Errorf("exactly one of 'key' or 'keys' must be provided")
+	}
+
 	// Only admins can delete system registry
 	if err := RequireAdminPermission(ctx); err != nil {
 		return false, fmt.Errorf("admin permission required for system registry delete: %w", err)
 	}
 
-	err := r.registryStore.Delete(ctx, SystemOwnerID, key)
-	if err != nil {
-		return false, fmt.Errorf("failed to delete system registry: %w", err)
+	if key != nil {
+		// Single key operation
+		err := r.registryStore.Delete(ctx, SystemOwnerID, *key)
+		if err != nil {
+			return false, fmt.Errorf("failed to delete system registry: %w", err)
+		}
+	} else {
+		// Multi key operation
+		err := r.registryStore.DeleteMulti(ctx, SystemOwnerID, keys)
+		if err != nil {
+			return false, fmt.Errorf("failed to delete system registries: %w", err)
+		}
 	}
 
 	return true, nil
@@ -238,40 +316,61 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 	return result, nil
 }
 
-// GetSystemRegistry gets specific system registry (open read access)
-func (r *queryResolver) GetSystemRegistry(ctx context.Context, key string) (*gql.SystemRegistry, error) {
+// GetSystemRegistry gets specific system registry (unified flexible API)
+func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys []string) ([]*gql.SystemRegistry, error) {
+	// Validate input: exactly one of key or keys must be provided
+	if (key != nil && len(keys) > 0) || (key == nil && len(keys) == 0) {
+		return nil, fmt.Errorf("exactly one of 'key' or 'keys' must be provided")
+	}
+
 	// All authenticated users can read system registry
 	// No additional permission check needed
 
-	registry, err := r.registryStore.Get(ctx, SystemOwnerID, key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get system registry: %w", err)
-	}
+	var registries []*registrystore.Registry
 
-	if registry == nil {
-		return nil, nil
-	}
-
-	// Hide encrypted values in GraphQL responses
-	value := registry.Value
-	if registry.IsEncrypted {
-		value = ""
-	}
-
-	// Check for config override
-	configValue, configExists := r.config.GetByRegistryKey(registry.Key)
-	var effectiveValue string
-	if configExists {
-		effectiveValue = configValue
+	if key != nil {
+		// Single key operation
+		registry, err := r.registryStore.Get(ctx, SystemOwnerID, *key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get system registry: %w", err)
+		}
+		if registry != nil {
+			registries = []*registrystore.Registry{registry}
+		}
 	} else {
-		effectiveValue = value
+		// Multi key operation
+		var err error
+		registries, err = r.registryStore.GetMulti(ctx, SystemOwnerID, keys)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get system registries: %w", err)
+		}
 	}
 
-	return &gql.SystemRegistry{
-		Key:                  registry.Key,
-		Value:                effectiveValue,
-		OwnerID:              SystemOwnerID,
-		IsEncrypted:          registry.IsEncrypted,
-		IsOverriddenByConfig: configExists,
-	}, nil
+	var result []*gql.SystemRegistry
+	for _, registry := range registries {
+		// Hide encrypted values in GraphQL responses
+		value := registry.Value
+		if registry.IsEncrypted {
+			value = ""
+		}
+
+		// Check for config override
+		configValue, configExists := r.config.GetByRegistryKey(registry.Key)
+		var effectiveValue string
+		if configExists {
+			effectiveValue = configValue
+		} else {
+			effectiveValue = value
+		}
+
+		result = append(result, &gql.SystemRegistry{
+			Key:                  registry.Key,
+			Value:                effectiveValue,
+			OwnerID:              SystemOwnerID,
+			IsEncrypted:          registry.IsEncrypted,
+			IsOverriddenByConfig: configExists,
+		})
+	}
+
+	return result, nil
 }

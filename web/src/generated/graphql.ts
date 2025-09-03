@@ -106,11 +106,13 @@ export type MutationDeleteUserRegistryArgs = {
 }
 
 export type MutationSetSystemRegistryArgs = {
-  entries: Array<RegistryEntryInput>
+  entries?: InputMaybe<Array<RegistryEntryInput>>
+  entry?: InputMaybe<RegistryEntryInput>
 }
 
 export type MutationSetUserRegistryArgs = {
-  entries: Array<RegistryEntryInput>
+  entries?: InputMaybe<Array<RegistryEntryInput>>
+  entry?: InputMaybe<RegistryEntryInput>
   ownerID?: InputMaybe<Scalars['String']['input']>
 }
 
@@ -126,8 +128,8 @@ export type MutationUploadFileArgs = {
 
 export type Query = {
   __typename?: 'Query'
-  getSystemRegistry: Maybe<SystemRegistry>
-  getUserRegistry: Maybe<UserRegistry>
+  getSystemRegistry: Array<SystemRegistry>
+  getUserRegistry: Array<UserRegistry>
   listFiles: FileList
   listSystemRegistry: Array<SystemRegistry>
   listUserRegistry: Array<UserRegistry>
@@ -138,11 +140,13 @@ export type Query = {
 }
 
 export type QueryGetSystemRegistryArgs = {
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
 }
 
 export type QueryGetUserRegistryArgs = {
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
   ownerID?: InputMaybe<Scalars['String']['input']>
 }
 
@@ -270,19 +274,20 @@ export type ListUserRegistryQuery = {
 }
 
 export type GetUserRegistryQueryVariables = Exact<{
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type GetUserRegistryQuery = {
   __typename?: 'Query'
-  getUserRegistry: {
+  getUserRegistry: Array<{
     __typename?: 'UserRegistry'
     key: string
     value: string
     ownerID: string
     isEncrypted: boolean
-  } | null
+  }>
 }
 
 export type ListSystemRegistryQueryVariables = Exact<{
@@ -302,23 +307,25 @@ export type ListSystemRegistryQuery = {
 }
 
 export type GetSystemRegistryQueryVariables = Exact<{
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
 }>
 
 export type GetSystemRegistryQuery = {
   __typename?: 'Query'
-  getSystemRegistry: {
+  getSystemRegistry: Array<{
     __typename?: 'SystemRegistry'
     key: string
     value: string
     ownerID: string
     isEncrypted: boolean
     isOverriddenByConfig: boolean
-  } | null
+  }>
 }
 
 export type SetUserRegistryMutationVariables = Exact<{
-  entries: Array<RegistryEntryInput> | RegistryEntryInput
+  entry?: InputMaybe<RegistryEntryInput>
+  entries?: InputMaybe<Array<RegistryEntryInput> | RegistryEntryInput>
   ownerID?: InputMaybe<Scalars['String']['input']>
 }>
 
@@ -341,7 +348,8 @@ export type DeleteUserRegistryMutationVariables = Exact<{
 export type DeleteUserRegistryMutation = { __typename?: 'Mutation'; deleteUserRegistry: boolean }
 
 export type SetSystemRegistryMutationVariables = Exact<{
-  entries: Array<RegistryEntryInput> | RegistryEntryInput
+  entry?: InputMaybe<RegistryEntryInput>
+  entries?: InputMaybe<Array<RegistryEntryInput> | RegistryEntryInput>
 }>
 
 export type SetSystemRegistryMutation = {
@@ -767,9 +775,17 @@ export const GetUserRegistryDocument = {
         {
           kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'keys' } },
           type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+            kind: 'ListType',
+            type: {
+              kind: 'NonNullType',
+              type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+            },
           },
         },
         {
@@ -789,6 +805,11 @@ export const GetUserRegistryDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'key' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'keys' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'keys' } },
               },
               {
                 kind: 'Argument',
@@ -887,9 +908,17 @@ export const GetSystemRegistryDocument = {
         {
           kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'keys' } },
           type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+            kind: 'ListType',
+            type: {
+              kind: 'NonNullType',
+              type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+            },
           },
         },
       ],
@@ -904,6 +933,11 @@ export const GetSystemRegistryDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'key' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'keys' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'keys' } },
               },
             ],
             selectionSet: {
@@ -943,15 +977,17 @@ export const SetUserRegistryDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'entry' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'RegistryEntryInput' } },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'entries' } },
           type: {
-            kind: 'NonNullType',
+            kind: 'ListType',
             type: {
-              kind: 'ListType',
-              type: {
-                kind: 'NonNullType',
-                type: { kind: 'NamedType', name: { kind: 'Name', value: 'RegistryEntryInput' } },
-              },
+              kind: 'NonNullType',
+              type: { kind: 'NamedType', name: { kind: 'Name', value: 'RegistryEntryInput' } },
             },
           },
         },
@@ -968,6 +1004,11 @@ export const SetUserRegistryDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'setUserRegistry' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'entry' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'entry' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'entries' },
@@ -1061,15 +1102,17 @@ export const SetSystemRegistryDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'entry' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'RegistryEntryInput' } },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'entries' } },
           type: {
-            kind: 'NonNullType',
+            kind: 'ListType',
             type: {
-              kind: 'ListType',
-              type: {
-                kind: 'NonNullType',
-                type: { kind: 'NamedType', name: { kind: 'Name', value: 'RegistryEntryInput' } },
-              },
+              kind: 'NonNullType',
+              type: { kind: 'NamedType', name: { kind: 'Name', value: 'RegistryEntryInput' } },
             },
           },
         },
@@ -1081,6 +1124,11 @@ export const SetSystemRegistryDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'setSystemRegistry' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'entry' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'entry' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'entries' },

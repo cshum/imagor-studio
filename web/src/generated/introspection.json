@@ -537,22 +537,26 @@
                 "name": "entries",
                 "description": null,
                 "type": {
-                  "kind": "NON_NULL",
+                  "kind": "LIST",
                   "name": null,
                   "ofType": {
-                    "kind": "LIST",
+                    "kind": "NON_NULL",
                     "name": null,
                     "ofType": {
-                      "kind": "NON_NULL",
-                      "name": null,
-                      "ofType": {
-                        "kind": "INPUT_OBJECT",
-                        "name": "RegistryEntryInput",
-                        "ofType": null
-                      }
+                      "kind": "INPUT_OBJECT",
+                      "name": "RegistryEntryInput",
+                      "ofType": null
                     }
                   }
                 },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "entry",
+                "description": null,
+                "type": { "kind": "INPUT_OBJECT", "name": "RegistryEntryInput", "ofType": null },
                 "defaultValue": null,
                 "isDeprecated": false,
                 "deprecationReason": null
@@ -582,22 +586,26 @@
                 "name": "entries",
                 "description": null,
                 "type": {
-                  "kind": "NON_NULL",
+                  "kind": "LIST",
                   "name": null,
                   "ofType": {
-                    "kind": "LIST",
+                    "kind": "NON_NULL",
                     "name": null,
                     "ofType": {
-                      "kind": "NON_NULL",
-                      "name": null,
-                      "ofType": {
-                        "kind": "INPUT_OBJECT",
-                        "name": "RegistryEntryInput",
-                        "ofType": null
-                      }
+                      "kind": "INPUT_OBJECT",
+                      "name": "RegistryEntryInput",
+                      "ofType": null
                     }
                   }
                 },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "entry",
+                "description": null,
+                "type": { "kind": "INPUT_OBJECT", "name": "RegistryEntryInput", "ofType": null },
                 "defaultValue": null,
                 "isDeprecated": false,
                 "deprecationReason": null
@@ -716,17 +724,41 @@
               {
                 "name": "key",
                 "description": null,
+                "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "keys",
+                "description": null,
                 "type": {
-                  "kind": "NON_NULL",
+                  "kind": "LIST",
                   "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  }
                 },
                 "defaultValue": null,
                 "isDeprecated": false,
                 "deprecationReason": null
               }
             ],
-            "type": { "kind": "OBJECT", "name": "SystemRegistry", "ofType": null },
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": { "kind": "OBJECT", "name": "SystemRegistry", "ofType": null }
+                }
+              }
+            },
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -737,10 +769,22 @@
               {
                 "name": "key",
                 "description": null,
+                "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "keys",
+                "description": null,
                 "type": {
-                  "kind": "NON_NULL",
+                  "kind": "LIST",
                   "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  }
                 },
                 "defaultValue": null,
                 "isDeprecated": false,
@@ -755,7 +799,19 @@
                 "deprecationReason": null
               }
             ],
-            "type": { "kind": "OBJECT", "name": "UserRegistry", "ofType": null },
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": { "kind": "OBJECT", "name": "UserRegistry", "ofType": null }
+                }
+              }
+            },
             "isDeprecated": false,
             "deprecationReason": null
           },

@@ -59,7 +59,27 @@ export async function getUserRegistry(
 
   const variables: GetUserRegistryQueryVariables = {
     key,
-    ownerID: ownerID ?? null,
+    keys: undefined,
+    ownerID: ownerID ?? undefined,
+  }
+
+  const result = await sdk.GetUserRegistry(variables)
+  return result.getUserRegistry
+}
+
+/**
+ * Get multiple user registry entries by keys and owner
+ */
+export async function getUserRegistryMultiple(
+  keys: string[],
+  ownerID?: string,
+): Promise<GetUserRegistryQuery['getUserRegistry']> {
+  const sdk = getSdk(getGraphQLClient())
+
+  const variables: GetUserRegistryQueryVariables = {
+    key: undefined,
+    keys,
+    ownerID: ownerID ?? undefined,
   }
 
   const result = await sdk.GetUserRegistry(variables)
@@ -78,8 +98,9 @@ export async function setUserRegistry(
   const sdk = getSdk(getGraphQLClient())
 
   const variables: SetUserRegistryMutationVariables = {
-    entries: [{ key, value, isEncrypted }],
-    ownerID: ownerID ?? null,
+    entry: { key, value, isEncrypted },
+    entries: undefined,
+    ownerID: ownerID ?? undefined,
   }
 
   const result = await sdk.SetUserRegistry(variables)
@@ -102,8 +123,9 @@ export async function setUserRegistryMultiple(
   }))
 
   const variables: SetUserRegistryMutationVariables = {
+    entry: undefined,
     entries: entriesWithEncryption,
-    ownerID: ownerID ?? null,
+    ownerID: ownerID ?? undefined,
   }
 
   const result = await sdk.SetUserRegistry(variables)
@@ -172,7 +194,26 @@ export async function getSystemRegistry(
 ): Promise<GetSystemRegistryQuery['getSystemRegistry']> {
   const sdk = getSdk(getGraphQLClient())
 
-  const variables: GetSystemRegistryQueryVariables = { key }
+  const variables: GetSystemRegistryQueryVariables = { 
+    key,
+    keys: undefined,
+  }
+  const result = await sdk.GetSystemRegistry(variables)
+  return result.getSystemRegistry
+}
+
+/**
+ * Get multiple system registry entries by keys (admin only)
+ */
+export async function getSystemRegistryMultiple(
+  keys: string[],
+): Promise<GetSystemRegistryQuery['getSystemRegistry']> {
+  const sdk = getSdk(getGraphQLClient())
+
+  const variables: GetSystemRegistryQueryVariables = { 
+    key: undefined,
+    keys,
+  }
   const result = await sdk.GetSystemRegistry(variables)
   return result.getSystemRegistry
 }
@@ -188,7 +229,31 @@ export async function setSystemRegistry(
   const sdk = getSdk(getGraphQLClient())
 
   const variables: SetSystemRegistryMutationVariables = {
-    entries: [{ key, value, isEncrypted }],
+    entry: { key, value, isEncrypted },
+    entries: undefined,
+  }
+
+  const result = await sdk.SetSystemRegistry(variables)
+  return result.setSystemRegistry
+}
+
+/**
+ * Set or update multiple system registry entries (admin only)
+ */
+export async function setSystemRegistryMultiple(
+  entries: Array<{ key: string; value: string; isEncrypted?: boolean }>,
+): Promise<SetSystemRegistryMutation['setSystemRegistry']> {
+  const sdk = getSdk(getGraphQLClient())
+
+  const entriesWithEncryption = entries.map(entry => ({
+    key: entry.key,
+    value: entry.value,
+    isEncrypted: entry.isEncrypted ?? false,
+  }))
+
+  const variables: SetSystemRegistryMutationVariables = {
+    entry: undefined,
+    entries: entriesWithEncryption,
   }
 
   const result = await sdk.SetSystemRegistry(variables)
@@ -238,6 +303,9 @@ export async function setSystemRegistryObject(
     value, 
     isEncrypted: false 
   }))
-  const result = await sdk.SetSystemRegistry({ entries })
+  const result = await sdk.SetSystemRegistry({ 
+    entry: undefined,
+    entries 
+  })
   return result.setSystemRegistry
 }

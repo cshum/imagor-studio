@@ -13,9 +13,9 @@ type Query {
 
     # Registry APIs
     listUserRegistry(prefix: String, ownerID: String): [UserRegistry!]!
-    getUserRegistry(key: String!, ownerID: String): UserRegistry
+    getUserRegistry(key: String, keys: [String!], ownerID: String): [UserRegistry!]!
     listSystemRegistry(prefix: String): [SystemRegistry!]!
-    getSystemRegistry(key: String!): SystemRegistry
+    getSystemRegistry(key: String, keys: [String!]): [SystemRegistry!]!
 
     me: User
 
@@ -36,12 +36,12 @@ type Mutation {
     deactivateAccount(userId: ID): Boolean!
 
     # User Registry APIs
-    setUserRegistry(entries: [RegistryEntryInput!]!, ownerID: String): [UserRegistry!]!
-    deleteUserRegistry(key: String!, ownerID: String): Boolean!
+    setUserRegistry(entry: RegistryEntryInput, entries: [RegistryEntryInput!], ownerID: String): [UserRegistry!]!
+    deleteUserRegistry(key: String, keys: [String!], ownerID: String): Boolean!
 
     # System Registry APIs (admin only for write)
-    setSystemRegistry(entries: [RegistryEntryInput!]!): [SystemRegistry!]!
-    deleteSystemRegistry(key: String!): Boolean!
+    setSystemRegistry(entry: RegistryEntryInput, entries: [RegistryEntryInput!]): [SystemRegistry!]!
+    deleteSystemRegistry(key: String, keys: [String!]): Boolean!
 
     # admin only operations
     createUser(input: CreateUserInput!): User!
