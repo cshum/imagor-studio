@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 
 import {
   Sidebar,
@@ -11,19 +11,13 @@ import {
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useFolderTree } from '@/stores/folder-tree-store'
+
 import { FolderTreeNode } from './folder-tree-node'
 
 export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { rootFolders, loadingPaths, loadRootFolders } = useFolderTree()
-  
-  const isLoadingRoot = loadingPaths.has('')
+  const { rootFolders, loadingPaths } = useFolderTree()
 
-  // Load root folders on mount
-  useEffect(() => {
-    if (rootFolders.length === 0 && !isLoadingRoot) {
-      loadRootFolders()
-    }
-  }, [rootFolders.length, isLoadingRoot, loadRootFolders])
+  const isLoadingRoot = loadingPaths.has('')
 
   return (
     <Sidebar {...props}>
@@ -35,14 +29,14 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
               {isLoadingRoot ? (
                 // Loading skeleton
                 Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="flex h-8 items-center gap-2 rounded-md px-2">
-                    <Skeleton className="h-4 w-4 rounded-md" />
-                    <Skeleton className="h-4 flex-1" />
+                  <div key={index} className='flex h-8 items-center gap-2 rounded-md px-2'>
+                    <Skeleton className='h-4 w-4 rounded-md' />
+                    <Skeleton className='h-4 flex-1' />
                   </div>
                 ))
               ) : rootFolders.length === 0 ? (
                 // Empty state
-                <div className="p-4 text-center text-sm text-muted-foreground">
+                <div className='text-muted-foreground p-4 text-center text-sm'>
                   No folders found
                 </div>
               ) : (

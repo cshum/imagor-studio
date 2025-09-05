@@ -22,7 +22,8 @@ import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
 import { UsersPage } from '@/pages/users-page'
-import { authStore } from '@/stores/auth-store.ts'
+import { authStore, useAuthEffect } from '@/stores/auth-store.ts'
+import { loadRootFolders } from '@/stores/folder-tree-store.ts'
 import { themeStore } from '@/stores/theme-store.ts'
 
 const rootRoute = createRootRoute({
@@ -207,6 +208,12 @@ const createAppRouter = () => createRouter({ routeTree })
 
 export function AppRouter() {
   const router = useMemo(() => createAppRouter(), [])
+  useAuthEffect((_, action) => {
+    if (action.type === 'INIT') {
+      loadRootFolders()
+    } else if (action.type === 'LOGOUT') {
+    }
+  })
   return <RouterProvider router={router} />
 }
 
