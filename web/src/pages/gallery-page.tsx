@@ -13,8 +13,8 @@ import { useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
-import { ImagePosition, setPosition } from '@/stores/image-position-store.ts'
 import { useFolderTree } from '@/stores/folder-tree-store'
+import { ImagePosition, setPosition } from '@/stores/image-position-store.ts'
 
 export interface GalleryPageProps extends React.PropsWithChildren {
   galleryLoaderData: GalleryLoaderData
@@ -67,7 +67,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     if (position) {
       setPosition(galleryKey, imageKey, position)
     }
-    
+
     // Handle navigation for root gallery vs sub-galleries
     if (galleryKey === '') {
       return navigate({
@@ -92,40 +92,38 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 40 : 30)
 
   return (
-    <>
-      <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
-        <ContentLayout title={galleryName}>
-          <div className='mx-4 my-2 grid'>
-            <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
-          </div>
-          <HeaderBar isScrolled={isScrolledDown} />
-          <Card className='rounded-lg border-none'>
-            <CardContent className='p-2 md:p-4' ref={contentRef}>
-              {contentWidth > 0 && (
-                <>
-                  <FolderGrid
-                    folders={folders}
-                    onFolderClick={handleFolderClick}
-                    width={contentWidth}
-                    maxFolderWidth={maxItemWidth}
-                  />
-                  <ImageGrid
-                    images={images}
-                    aspectRatio={4 / 3}
-                    width={contentWidth}
-                    scrollTop={scrollPosition}
-                    maxImageWidth={250}
-                    isScrolling={isScrolling}
-                    onRendered={() => setGridRendered(true)}
-                    onImageClick={handleImageClick}
-                  />
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </ContentLayout>
-        {children}
-      </div>
-    </>
+    <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
+      <ContentLayout title={galleryName}>
+        <div className='mx-4 my-2 grid'>
+          <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
+        </div>
+        <HeaderBar isScrolled={isScrolledDown} />
+        <Card className='rounded-lg border-none'>
+          <CardContent className='p-2 md:p-4' ref={contentRef}>
+            {contentWidth > 0 && (
+              <>
+                <FolderGrid
+                  folders={folders}
+                  onFolderClick={handleFolderClick}
+                  width={contentWidth}
+                  maxFolderWidth={maxItemWidth}
+                />
+                <ImageGrid
+                  images={images}
+                  aspectRatio={4 / 3}
+                  width={contentWidth}
+                  scrollTop={scrollPosition}
+                  maxImageWidth={250}
+                  isScrolling={isScrolling}
+                  onRendered={() => setGridRendered(true)}
+                  onImageClick={handleImageClick}
+                />
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </ContentLayout>
+      {children}
+    </div>
   )
 }
