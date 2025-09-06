@@ -1,3 +1,6 @@
+import { useEffect } from 'react'
+
+import { useIsMobile } from '@/hooks/use-mobile'
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
 import { createStore } from '@/lib/create-store'
 
@@ -81,7 +84,7 @@ export const initializeSidebar = async (configStorage: ConfigStorage) => {
   try {
     // Load sidebar state from storage
     const savedState = await storage.get()
-    const open = savedState === 'true' ? true : false // Default false (closed)
+    const open = savedState === 'true'
 
     sidebarStore.dispatch({
       type: 'SET_OPEN',
@@ -184,6 +187,12 @@ export const cleanup = () => {
 // Hook for components to use the sidebar store
 export const useSidebar = () => {
   const state = sidebarStore.useStore()
+  const isMobile = useIsMobile()
+
+  // Update mobile state in store when it changes
+  useEffect(() => {
+    setIsMobile(isMobile)
+  }, [isMobile])
 
   return {
     open: state.open,

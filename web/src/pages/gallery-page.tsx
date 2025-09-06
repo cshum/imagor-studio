@@ -6,7 +6,6 @@ import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { Card, CardContent } from '@/components/ui/card'
-import { useSidebar } from '@/components/ui/sidebar'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { useScrollHandler } from '@/hooks/use-scroll-handler'
@@ -15,6 +14,7 @@ import { ContentLayout } from '@/layouts/content-layout'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useFolderTree } from '@/stores/folder-tree-store'
 import { ImagePosition, setPosition } from '@/stores/image-position-store.ts'
+import { useSidebar } from '@/stores/sidebar-store.ts'
 
 export interface GalleryPageProps extends React.PropsWithChildren {
   galleryLoaderData: GalleryLoaderData

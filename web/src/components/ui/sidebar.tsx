@@ -15,34 +15,16 @@ import {
 } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
-import { setIsMobile, toggleSidebar, useSidebar as useSidebarStore } from '@/stores/sidebar-store'
+import { toggleSidebar, useSidebar } from '@/stores/sidebar-store'
 
 const SIDEBAR_WIDTH = '16rem'
 const SIDEBAR_WIDTH_MOBILE = '18rem'
 const SIDEBAR_WIDTH_ICON = '3rem'
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b'
 
-// Use the store-based useSidebar hook
-function useSidebar() {
-  const storeState = useSidebarStore()
-  const isMobile = useIsMobile()
-
-  // Update mobile state in store when it changes
-  React.useEffect(() => {
-    setIsMobile(isMobile)
-  }, [isMobile])
-
-  return {
-    ...storeState,
-    setOpen: storeState.setOpen,
-    setOpenMobile: storeState.setOpenMobile,
-  }
-}
-
-// Global keyboard shortcut setup
-const useSidebarKeyboardShortcut = () => {
+function SidebarWrapper({ className, style, children, ...props }: React.ComponentProps<'div'>) {
+  // Enable keyboard shortcut
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
@@ -54,11 +36,6 @@ const useSidebarKeyboardShortcut = () => {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
-}
-
-function SidebarWrapper({ className, style, children, ...props }: React.ComponentProps<'div'>) {
-  // Enable keyboard shortcut
-  useSidebarKeyboardShortcut()
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -630,6 +607,4 @@ export {
   SidebarSeparator,
   SidebarTrigger,
   SidebarWrapper,
-  useSidebar,
-  useSidebarKeyboardShortcut,
 }
