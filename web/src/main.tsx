@@ -5,20 +5,7 @@ import './i18n'
 import 'non.geist'
 import './index.css'
 
-import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage.ts'
-import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { AppRouter } from '@/router.tsx'
-import { initAuth } from '@/stores/auth-store.ts'
-import { initializeFolderTreeCache } from '@/stores/folder-tree-store.ts'
-import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
-import { initializeSidebar } from '@/stores/sidebar-store.ts'
-import { initializeTheme } from '@/stores/theme-store.ts'
-
-initializeTheme(new LocalConfigStorage('theme'), 'class')
-initializeScrollPositions(new SessionConfigStorage('scroll_positions'))
-initializeFolderTreeCache(new SessionConfigStorage('folder_tree'))
-initializeSidebar(new LocalConfigStorage('sidebar_state'))
-initAuth()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
