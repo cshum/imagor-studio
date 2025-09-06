@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useRouter } from '@tanstack/react-router'
 import { getSystemRegistryObject } from '@/api/registry-api'
 
 const HOME_TITLE_KEY = 'config.home_title'
@@ -10,13 +11,14 @@ const DEFAULT_HOME_TITLE = 'Home'
  */
 export function useHomeTitle(): string {
   const [homeTitle, setHomeTitle] = useState<string>(DEFAULT_HOME_TITLE)
+  const router = useRouter()
 
   useEffect(() => {
     const fetchHomeTitle = async () => {
       try {
         const registry = await getSystemRegistryObject('config.')
         const customTitle = registry[HOME_TITLE_KEY]
-        
+
         if (customTitle && customTitle.trim()) {
           setHomeTitle(customTitle.trim())
         } else {
@@ -30,7 +32,7 @@ export function useHomeTitle(): string {
     }
 
     fetchHomeTitle()
-  }, [])
+  }, [router.state.location.pathname]) // Re-fetch when route changes
 
   return homeTitle
 }

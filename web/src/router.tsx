@@ -56,9 +56,6 @@ const baseLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'gallery-layout',
   beforeLoad: requireAuth,
-  loader: () => ({
-    breadcrumb: { label: 'Home' },
-  }),
   component: () => (
     <BasePanelLayout>
       <Outlet />
@@ -212,6 +209,7 @@ export function AppRouter() {
     if (action.type === 'INIT') {
       loadRootFolders()
     } else if (action.type === 'LOGOUT') {
+      // Handle logout if needed
     }
   })
   return <RouterProvider router={router} />
