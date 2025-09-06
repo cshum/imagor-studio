@@ -321,6 +321,10 @@ export const setHomeTitle = (title: string) => {
   folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title })
 }
 
+export const setCurrentPath = (path: string) => {
+  folderTreeStore.dispatch({ type: 'SET_CURRENT_PATH', path })
+}
+
 /**
  * Force immediate save to storage (bypasses debounce)
  */
@@ -363,6 +367,7 @@ export const useFolderTree = () => {
     loadFolderChildren,
     loadHomeTitle,
     setHomeTitle,
+    setCurrentPath,
     forceSave,
   }
 }

@@ -12,7 +12,7 @@ import { useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
-import { useFolderTree } from '@/stores/folder-tree-store'
+import { setCurrentPath } from '@/stores/folder-tree-store'
 import { ImagePosition, setPosition } from '@/stores/image-position-store.ts'
 import { useSidebar } from '@/stores/sidebar-store.ts'
 
@@ -27,15 +27,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const contentRef = useRef<HTMLDivElement | null>(null)
 
   const { galleryName, images, folders } = galleryLoaderData
-  const { dispatch } = useFolderTree()
   const sidebar = useSidebar()
 
   const isDesktop = useBreakpoint('md')
 
   // Sync current path with folder tree store
   useEffect(() => {
-    dispatch({ type: 'SET_CURRENT_PATH', path: galleryKey })
-  }, [galleryKey, dispatch])
+    setCurrentPath(galleryKey)
+  }, [galleryKey])
 
   const maxItemWidth = 280
 
