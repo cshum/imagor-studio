@@ -155,7 +155,7 @@ export type QueryGetUserRegistryArgs = {
 
 export type QueryListFilesArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>
-  offset: Scalars['Int']['input']
+  offset?: InputMaybe<Scalars['Int']['input']>
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
   onlyFolders?: InputMaybe<Scalars['Boolean']['input']>
   path: Scalars['String']['input']
