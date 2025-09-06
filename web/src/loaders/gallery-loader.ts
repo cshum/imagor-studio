@@ -40,8 +40,6 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
     path,
     sortBy: 'MODIFIED_TIME',
     sortOrder: 'DESC',
-    offset: 0,
-    limit: 0,
   })
 
   // Separate files and folders
@@ -126,8 +124,6 @@ export const imageLoader = async ({
   // Fetch files from storage API
   const result = await listFiles({
     path,
-    offset: 0,
-    limit: 0,
     sortBy: 'NAME',
     sortOrder: 'ASC',
   })

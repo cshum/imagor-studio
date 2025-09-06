@@ -404,8 +404,8 @@ export type FileStatInfoFragment = {
 
 export type ListFilesQueryVariables = Exact<{
   path: Scalars['String']['input']
-  offset: Scalars['Int']['input']
-  limit: Scalars['Int']['input']
+  offset?: InputMaybe<Scalars['Int']['input']>
+  limit?: InputMaybe<Scalars['Int']['input']>
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
   onlyFolders?: InputMaybe<Scalars['Boolean']['input']>
   sortBy?: InputMaybe<SortOption>
@@ -707,8 +707,8 @@ export const DeleteSystemRegistryDocument = gql`
 export const ListFilesDocument = gql`
   query ListFiles(
     $path: String!
-    $offset: Int!
-    $limit: Int!
+    $offset: Int
+    $limit: Int
     $onlyFiles: Boolean
     $onlyFolders: Boolean
     $sortBy: SortOption

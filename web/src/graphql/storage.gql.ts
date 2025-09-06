@@ -32,8 +32,8 @@ export const FileStatFragment = gql(`
 export const ListFilesQuery = gql(`
   query ListFiles(
     $path: String!
-    $offset: Int!
-    $limit: Int!
+    $offset: Int
+    $limit: Int
     $onlyFiles: Boolean
     $onlyFolders: Boolean
     $sortBy: SortOption

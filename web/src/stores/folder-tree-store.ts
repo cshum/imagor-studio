@@ -253,8 +253,6 @@ export const loadRootFolders = async () => {
 
     const result = await listFiles({
       path: '',
-      offset: 0,
-      limit: 0,
       onlyFolders: true,
     })
 
@@ -280,8 +278,6 @@ export const loadFolderChildren = async (path: string) => {
 
     const result = await listFiles({
       path,
-      offset: 0,
-      limit: 0,
       onlyFolders: true,
     })
 
