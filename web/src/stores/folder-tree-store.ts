@@ -1,3 +1,4 @@
+import { getSystemRegistryObject } from '@/api/registry-api'
 import { listFiles } from '@/api/storage-api'
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
 import { createStore } from '@/lib/create-store'
@@ -16,6 +17,7 @@ export interface FolderTreeState {
   loadingPaths: Set<string>
   currentPath: string
   isLoaded: boolean
+  homeTitle: string
 }
 
 export type FolderTreeAction =
@@ -28,12 +30,15 @@ export type FolderTreeAction =
   | { type: 'SET_LOADED'; payload: { isLoaded: boolean } }
   | { type: 'LOAD_TREE_STATE'; payload: { rootFolders: FolderNode[]; currentPath: string } }
   | { type: 'LOAD_ROOT_FOLDERS' }
+  | { type: 'SET_HOME_TITLE'; title: string }
+  | { type: 'LOAD_HOME_TITLE' }
 
 const initialState: FolderTreeState = {
   rootFolders: [],
   loadingPaths: new Set(),
   currentPath: '',
   isLoaded: false,
+  homeTitle: 'Home',
 }
 
 function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): FolderTreeState {
@@ -145,6 +150,15 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
       }
 
     case 'LOAD_ROOT_FOLDERS':
+      return state // This will be handled by the async action
+
+    case 'SET_HOME_TITLE':
+      return {
+        ...state,
+        homeTitle: action.title,
+      }
+
+    case 'LOAD_HOME_TITLE':
       return state // This will be handled by the async action
 
     default:
@@ -284,6 +298,26 @@ export const loadFolderChildren = async (path: string) => {
   }
 }
 
+export const loadHomeTitle = async () => {
+  try {
+    const registry = await getSystemRegistryObject('config.')
+    const customTitle = registry['config.home_title']
+
+    if (customTitle && customTitle.trim()) {
+      folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title: customTitle.trim() })
+    } else {
+      folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title: 'Home' })
+    }
+  } catch {
+    // On error, fall back to default
+    folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title: 'Home' })
+  }
+}
+
+export const setHomeTitle = (title: string) => {
+  folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title })
+}
+
 /**
  * Force immediate save to storage (bypasses debounce)
  */
@@ -331,6 +365,8 @@ export const useFolderTree = () => {
     dispatch: folderTreeStore.dispatch,
     loadRootFolders,
     loadFolderChildren,
+    loadHomeTitle,
+    setHomeTitle,
     forceSave,
     isLoaded,
   }

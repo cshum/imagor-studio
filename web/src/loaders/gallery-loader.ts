@@ -4,7 +4,7 @@ import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
-import { getSystemRegistryObject } from '@/api/registry-api.ts'
+import { folderTreeStore } from '@/stores/folder-tree-store.ts'
 
 export interface GalleryLoaderData {
   galleryName: string
@@ -28,18 +28,8 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
   // Use galleryKey as the path for storage API
   const path = galleryKey === 'default' ? '' : galleryKey
 
-  // Fetch custom home title from system registry
-  let homeTitle = 'Home' // Default fallback
-  try {
-    const registry = await getSystemRegistryObject('config.')
-    const customTitle = registry['config.home_title']
-    if (customTitle && customTitle.trim()) {
-      homeTitle = customTitle.trim()
-    }
-  } catch (error) {
-    // On error, use default title
-    console.warn('Failed to fetch home title from registry:', error)
-  }
+  // Get home title from the folder tree store
+  const homeTitle = folderTreeStore.getState().homeTitle
 
   // Fetch files from storage API
   const result = await listFiles({

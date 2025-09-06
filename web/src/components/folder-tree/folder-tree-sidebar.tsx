@@ -15,14 +15,12 @@ import {
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useFolderTree } from '@/stores/folder-tree-store'
-import { useHomeTitle } from '@/hooks/use-home-title'
 
 import { FolderTreeNode } from './folder-tree-node'
 
 export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { rootFolders, loadingPaths } = useFolderTree()
+  const { rootFolders, loadingPaths, homeTitle } = useFolderTree()
   const routerState = useRouterState()
-  const homeTitle = useHomeTitle()
 
   const isLoadingRoot = loadingPaths.has('')
   const isOnHomePage = routerState.location.pathname === '/'
