@@ -62,8 +62,22 @@ export const useScrollHandler = (
   const restoreScrollPosition = useCallback(() => {
     const savedPosition = getPosition(scrollKey) // Get scroll position using store
     if (savedPosition > 0 && containerRef.current) {
-      containerRef.current.scrollTop = savedPosition
-      setScrollPosition(savedPosition) // Restore scroll position in state
+      // Check if content is tall enough for this scroll position
+      const containerHeight = containerRef.current.clientHeight
+      const scrollHeight = containerRef.current.scrollHeight
+      const maxScrollPosition = scrollHeight - containerHeight
+
+      // Only restore if the saved position is valid for current content
+      const positionToRestore = Math.min(savedPosition, Math.max(0, maxScrollPosition))
+
+      if (positionToRestore > 0) {
+        containerRef.current.scrollTop = positionToRestore
+        setScrollPosition(positionToRestore) // Restore scroll position in state
+      } else {
+        // Content is too short for saved position, reset to top
+        containerRef.current.scrollTop = 0
+        setScrollPosition(0)
+      }
     }
   }, [containerRef, scrollKey])
 
