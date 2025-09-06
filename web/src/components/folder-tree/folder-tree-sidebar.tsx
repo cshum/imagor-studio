@@ -1,4 +1,6 @@
 import React from 'react'
+import { Link, useRouterState } from '@tanstack/react-router'
+import { Home } from 'lucide-react'
 
 import {
   Sidebar,
@@ -7,6 +9,8 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -16,8 +20,10 @@ import { FolderTreeNode } from './folder-tree-node'
 
 export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { rootFolders, loadingPaths } = useFolderTree()
+  const routerState = useRouterState()
 
   const isLoadingRoot = loadingPaths.has('')
+  const isOnHomePage = routerState.location.pathname === '/'
 
   return (
     <Sidebar {...props}>
@@ -26,6 +32,16 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
           <SidebarGroupLabel>Folders</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              {/* Home Link as first item */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isOnHomePage}>
+                  <Link to='/'>
+                    <Home className='h-4 w-4' />
+                    <span>Home</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
               {isLoadingRoot ? (
                 // Loading skeleton
                 Array.from({ length: 3 }).map((_, index) => (
@@ -35,7 +51,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
                   </div>
                 ))
               ) : rootFolders.length === 0 ? (
-                // Empty state
+                // Empty state (but still show Home link above)
                 <div className='text-muted-foreground p-4 text-center text-sm'>
                   No folders found
                 </div>
