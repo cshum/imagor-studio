@@ -261,7 +261,7 @@ func TestListFiles_OnlyRequiresReadScope(t *testing.T) {
 				TotalCount: 2,
 			}, nil)
 
-			result, err := resolver.Query().ListFiles(ctx, path, offset, limit, onlyFiles, nil, &sortBy, &sortOrder)
+			result, err := resolver.Query().ListFiles(ctx, path, &offset, &limit, onlyFiles, nil, &sortBy, &sortOrder)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
@@ -520,7 +520,7 @@ func TestReadOperations_StillWork(t *testing.T) {
 			TotalCount: 1,
 		}, nil)
 
-		result, err := resolver.Query().ListFiles(ctx, path, offset, limit, nil, nil, &sortBy, &sortOrder)
+		result, err := resolver.Query().ListFiles(ctx, path, &offset, &limit, nil, nil, &sortBy, &sortOrder)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -578,7 +578,7 @@ func TestListFiles(t *testing.T) {
 		TotalCount: 2,
 	}, nil)
 
-	result, err := resolver.Query().ListFiles(ctx, path, offset, limit, onlyFiles, nil, &sortBy, &sortOrder)
+	result, err := resolver.Query().ListFiles(ctx, path, &offset, &limit, onlyFiles, nil, &sortBy, &sortOrder)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)

@@ -15,10 +15,13 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entry *gql.Regis
 		return nil, fmt.Errorf("exactly one of 'entry' or 'entries' must be provided")
 	}
 
-	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
+	effectiveUserID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
+
+	// Build namespaced owner ID
+	effectiveOwnerID := registrystore.UserOwnerID(effectiveUserID)
 
 	// Convert GraphQL input to registrystore entries
 	var registryEntries []*registrystore.Registry
@@ -58,7 +61,7 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entry *gql.Regis
 		result = append(result, &gql.UserRegistry{
 			Key:         registry.Key,
 			Value:       value,
-			OwnerID:     effectiveOwnerID,
+			OwnerID:     effectiveUserID,
 			IsEncrypted: registry.IsEncrypted,
 		})
 	}
@@ -73,10 +76,13 @@ func (r *mutationResolver) DeleteUserRegistry(ctx context.Context, key *string, 
 		return false, fmt.Errorf("exactly one of 'key' or 'keys' must be provided")
 	}
 
-	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
+	effectiveUserID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return false, err
 	}
+
+	// Build namespaced owner ID
+	effectiveOwnerID := registrystore.UserOwnerID(effectiveUserID)
 
 	if key != nil {
 		// Single key operation
@@ -97,10 +103,13 @@ func (r *mutationResolver) DeleteUserRegistry(ctx context.Context, key *string, 
 
 // ListUserRegistry lists user-specific registry
 func (r *queryResolver) ListUserRegistry(ctx context.Context, prefix *string, ownerID *string) ([]*gql.UserRegistry, error) {
-	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
+	effectiveUserID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
+
+	// Build namespaced owner ID
+	effectiveOwnerID := registrystore.UserOwnerID(effectiveUserID)
 
 	registryList, err := r.registryStore.List(ctx, effectiveOwnerID, prefix)
 	if err != nil {
@@ -118,7 +127,7 @@ func (r *queryResolver) ListUserRegistry(ctx context.Context, prefix *string, ow
 		result[i] = &gql.UserRegistry{
 			Key:         registry.Key,
 			Value:       value,
-			OwnerID:     effectiveOwnerID,
+			OwnerID:     effectiveUserID,
 			IsEncrypted: registry.IsEncrypted,
 		}
 	}
@@ -132,10 +141,13 @@ func (r *queryResolver) GetUserRegistry(ctx context.Context, key *string, keys [
 		return nil, fmt.Errorf("exactly one of 'key' or 'keys' must be provided")
 	}
 
-	effectiveOwnerID, err := GetEffectiveTargetUserID(ctx, ownerID)
+	effectiveUserID, err := GetEffectiveTargetUserID(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
+
+	// Build namespaced owner ID
+	effectiveOwnerID := registrystore.UserOwnerID(effectiveUserID)
 
 	var registries []*registrystore.Registry
 
@@ -215,7 +227,7 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entry *gql.Reg
 	}
 
 	// Use SetMulti for better performance
-	registries, err := r.registryStore.SetMulti(ctx, SystemOwnerID, registryEntries)
+	registries, err := r.registryStore.SetMulti(ctx, registrystore.SystemOwnerID(), registryEntries)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set system registry: %w", err)
 	}
@@ -240,7 +252,7 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entry *gql.Reg
 		result = append(result, &gql.SystemRegistry{
 			Key:                  registry.Key,
 			Value:                effectiveValue,
-			OwnerID:              SystemOwnerID,
+			OwnerID:              registrystore.SystemOwnerID(),
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
 		})
@@ -263,13 +275,13 @@ func (r *mutationResolver) DeleteSystemRegistry(ctx context.Context, key *string
 
 	if key != nil {
 		// Single key operation
-		err := r.registryStore.Delete(ctx, SystemOwnerID, *key)
+		err := r.registryStore.Delete(ctx, registrystore.SystemOwnerID(), *key)
 		if err != nil {
 			return false, fmt.Errorf("failed to delete system registry: %w", err)
 		}
 	} else {
 		// Multi key operation
-		err := r.registryStore.DeleteMulti(ctx, SystemOwnerID, keys)
+		err := r.registryStore.DeleteMulti(ctx, registrystore.SystemOwnerID(), keys)
 		if err != nil {
 			return false, fmt.Errorf("failed to delete system registries: %w", err)
 		}
@@ -283,7 +295,7 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 	// All authenticated users can read system registry
 	// No additional permission check needed
 
-	registryList, err := r.registryStore.List(ctx, SystemOwnerID, prefix)
+	registryList, err := r.registryStore.List(ctx, registrystore.SystemOwnerID(), prefix)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list system registry: %w", err)
 	}
@@ -308,7 +320,7 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 		result[i] = &gql.SystemRegistry{
 			Key:                  registry.Key,
 			Value:                effectiveValue,
-			OwnerID:              SystemOwnerID,
+			OwnerID:              registrystore.SystemOwnerID(),
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
 		}
@@ -330,7 +342,7 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 
 	if key != nil {
 		// Single key operation
-		registry, err := r.registryStore.Get(ctx, SystemOwnerID, *key)
+		registry, err := r.registryStore.Get(ctx, registrystore.SystemOwnerID(), *key)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get system registry: %w", err)
 		}
@@ -340,7 +352,7 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 	} else {
 		// Multi key operation
 		var err error
-		registries, err = r.registryStore.GetMulti(ctx, SystemOwnerID, keys)
+		registries, err = r.registryStore.GetMulti(ctx, registrystore.SystemOwnerID(), keys)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get system registries: %w", err)
 		}
@@ -366,7 +378,7 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 		result = append(result, &gql.SystemRegistry{
 			Key:                  registry.Key,
 			Value:                effectiveValue,
-			OwnerID:              SystemOwnerID,
+			OwnerID:              registrystore.SystemOwnerID(),
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
 		})
