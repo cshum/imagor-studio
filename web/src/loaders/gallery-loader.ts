@@ -4,6 +4,7 @@ import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
+import { folderTreeStore } from '@/stores/folder-tree-store.ts'
 
 export interface GalleryLoaderData {
   galleryName: string
@@ -26,6 +27,9 @@ export interface ImageLoaderData {
 export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderData> => {
   // Use galleryKey as the path for storage API
   const path = galleryKey === 'default' ? '' : galleryKey
+
+  // Get home title from the folder tree store
+  const homeTitle = folderTreeStore.getState().homeTitle
 
   // Fetch files from storage API
   const result = await listFiles({
@@ -57,21 +61,21 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
       imageName: item.name,
     }))
 
-  // Use the actual folder name, or "Gallery" for root
+  // Use the actual folder name, or custom home title for root
   const galleryName =
     galleryKey === 'default' || galleryKey === ''
-      ? 'Gallery'
+      ? homeTitle
       : galleryKey.split('/').pop() || galleryKey
 
   // Generate breadcrumbs based on galleryKey
   const breadcrumbs: BreadcrumbItem[] = []
 
-  // For root gallery (empty galleryKey), just show Gallery without href
+  // For root gallery (empty galleryKey), just show custom home title without href
   if (!galleryKey || galleryKey === 'default') {
-    breadcrumbs.push({ label: 'Gallery' })
+    breadcrumbs.push({ label: homeTitle })
   } else {
-    // Always start with Gallery for sub-galleries
-    breadcrumbs.push({ label: 'Gallery', href: '/' })
+    // Always start with custom home title for sub-galleries
+    breadcrumbs.push({ label: homeTitle, href: '/' })
 
     // Add breadcrumbs for nested paths
     const segments = galleryKey.split('/')

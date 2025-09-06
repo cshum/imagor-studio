@@ -1,12 +1,15 @@
-import { useState, useMemo } from 'react'
-import { toast } from 'sonner'
+import { useMemo, useState } from 'react'
 import { useRouter } from '@tanstack/react-router'
+import { toast } from 'sonner'
 
+import { setSystemRegistryObject } from '@/api/registry-api'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { setSystemRegistryObject } from '@/api/registry-api'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { extractErrorMessage } from '@/lib/error-utils'
+import { setHomeTitle } from '@/stores/folder-tree-store'
 
 export interface SystemSetting {
   key: string
@@ -44,30 +47,30 @@ export function SystemSettingsForm({
 }: SystemSettingsFormProps) {
   const router = useRouter()
   const [isUpdating, setIsUpdating] = useState(false)
-  
+
   // Current form state - map of registry keys to string values
   const [formValues, setFormValues] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {}
-    
+
     // Initialize with default values
-    settings.forEach(setting => {
-      const defaultStr = typeof setting.defaultValue === 'boolean' 
-        ? setting.defaultValue.toString() 
-        : setting.defaultValue
-      initial[setting.key] = defaultStr
+    settings.forEach((setting) => {
+      initial[setting.key] =
+        typeof setting.defaultValue === 'boolean'
+          ? setting.defaultValue.toString()
+          : setting.defaultValue
     })
-    
+
     // Override with initial values
     Object.entries(initialValues).forEach(([key, value]) => {
       initial[key] = value
     })
-    
+
     return initial
   })
 
   // Check if there are unsaved changes
   const hasUnsavedChanges = useMemo(() => {
-    return settings.some(setting => {
+    return settings.some((setting) => {
       const currentValue = formValues[setting.key]
       const originalValue = initialValues[setting.key]
       return currentValue !== originalValue
@@ -75,7 +78,7 @@ export function SystemSettingsForm({
   }, [formValues, initialValues, settings])
 
   const updateSetting = (key: string, value: string) => {
-    setFormValues(prev => ({ ...prev, [key]: value }))
+    setFormValues((prev) => ({ ...prev, [key]: value }))
   }
 
   const onUpdateSettings = async () => {
@@ -84,7 +87,7 @@ export function SystemSettingsForm({
     try {
       // Only send changed values
       const changedValues: Record<string, string> = {}
-      settings.forEach(setting => {
+      settings.forEach((setting) => {
         const currentValue = formValues[setting.key]
         const originalValue = initialValues[setting.key]
         if (currentValue !== originalValue) {
@@ -94,11 +97,17 @@ export function SystemSettingsForm({
 
       if (Object.keys(changedValues).length > 0) {
         await setSystemRegistryObject(changedValues)
+
+        // Update the store immediately if home title was changed
+        if (changedValues['config.home_title']) {
+          setHomeTitle(changedValues['config.home_title'])
+        }
+
         toast.success('Settings updated successfully!')
-        
+
         // Invalidate the current route to refresh loader data
         await router.invalidate()
-        
+
         if (onSuccess) {
           onSuccess()
         }
@@ -113,9 +122,9 @@ export function SystemSettingsForm({
 
   const renderSetting = (setting: SystemSetting) => {
     // Check if this setting is overridden by config
-    const registryEntry = systemRegistryList.find(item => item.key === setting.key)
+    const registryEntry = systemRegistryList.find((item) => item.key === setting.key)
     const isOverridden = registryEntry?.isOverriddenByConfig || false
-    
+
     // Get the current effective value
     const getEffectiveValue = () => {
       if (isOverridden && registryEntry) {
@@ -130,15 +139,18 @@ export function SystemSettingsForm({
 
     if (setting.type === 'boolean') {
       const boolValue = effectiveValue === 'true'
-      
+
       return (
-        <div key={setting.key} className='flex flex-row items-center justify-between rounded-lg border p-4'>
+        <div
+          key={setting.key}
+          className='flex flex-row items-center justify-between rounded-lg border p-4'
+        >
           <div className='space-y-0.5'>
             <div className='text-base font-medium'>{setting.label}</div>
-            <div className='text-sm text-muted-foreground'>
+            <div className='text-muted-foreground text-sm'>
               {setting.description}
               {isOverridden && (
-                <span className='block text-orange-600 dark:text-orange-400 mt-1'>
+                <span className='mt-1 block text-orange-600 dark:text-orange-400'>
                   This setting is overridden by configuration file or environment variable
                 </span>
               )}
@@ -157,16 +169,45 @@ export function SystemSettingsForm({
       )
     }
 
-    // Add other setting types (text, select) here in the future
+    if (setting.type === 'text') {
+      return (
+        <div key={setting.key} className='space-y-2 rounded-lg border p-4'>
+          <Label htmlFor={setting.key} className='text-base font-medium'>
+            {setting.label}
+          </Label>
+          <div className='text-muted-foreground text-sm'>
+            {setting.description}
+            {isOverridden && (
+              <span className='mt-1 block text-orange-600 dark:text-orange-400'>
+                This setting is overridden by configuration file or environment variable
+              </span>
+            )}
+          </div>
+          <Input
+            id={setting.key}
+            value={effectiveValue}
+            onChange={(e) => {
+              if (!isOverridden) {
+                updateSetting(setting.key, e.target.value)
+              }
+            }}
+            disabled={isUpdating || isOverridden}
+            placeholder={setting.defaultValue.toString()}
+          />
+        </div>
+      )
+    }
+
+    // Add other setting types (select) here in the future
     return null
   }
 
   const content = (
     <div className='space-y-4'>
       {settings.map(renderSetting)}
-      
+
       {!hideUpdateButton && (
-        <div className='flex justify-end pt-4 border-t'>
+        <div className='flex justify-end border-t pt-4'>
           <ButtonWithLoading
             onClick={onUpdateSettings}
             isLoading={isUpdating}
@@ -189,9 +230,7 @@ export function SystemSettingsForm({
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent>
-        {content}
-      </CardContent>
+      <CardContent>{content}</CardContent>
     </Card>
   )
 }

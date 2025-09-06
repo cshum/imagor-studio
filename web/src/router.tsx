@@ -23,7 +23,7 @@ import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
 import { UsersPage } from '@/pages/users-page'
 import { authStore, useAuthEffect } from '@/stores/auth-store.ts'
-import { loadRootFolders } from '@/stores/folder-tree-store.ts'
+import { loadHomeTitle, loadRootFolders } from '@/stores/folder-tree-store.ts'
 import { themeStore } from '@/stores/theme-store.ts'
 
 const rootRoute = createRootRoute({
@@ -56,9 +56,6 @@ const baseLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'gallery-layout',
   beforeLoad: requireAuth,
-  loader: () => ({
-    breadcrumb: { label: 'Home' },
-  }),
   component: () => (
     <BasePanelLayout>
       <Outlet />
@@ -211,7 +208,9 @@ export function AppRouter() {
   useAuthEffect((_, action) => {
     if (action.type === 'INIT') {
       loadRootFolders()
+      loadHomeTitle()
     } else if (action.type === 'LOGOUT') {
+      // Handle logout if needed
     }
   })
   return <RouterProvider router={router} />

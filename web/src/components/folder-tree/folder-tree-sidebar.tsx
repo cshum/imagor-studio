@@ -19,7 +19,7 @@ import { useFolderTree } from '@/stores/folder-tree-store'
 import { FolderTreeNode } from './folder-tree-node'
 
 export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { rootFolders, loadingPaths } = useFolderTree()
+  const { rootFolders, loadingPaths, homeTitle } = useFolderTree()
   const routerState = useRouterState()
 
   const isLoadingRoot = loadingPaths.has('')
@@ -37,7 +37,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
                 <SidebarMenuButton asChild isActive={isOnHomePage}>
                   <Link to='/'>
                     <Home className='h-4 w-4' />
-                    <span>Home</span>
+                    <span>{homeTitle}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
