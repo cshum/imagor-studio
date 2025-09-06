@@ -29,7 +29,7 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
   const path = galleryKey === 'default' ? '' : galleryKey
 
   // Get home title from the folder tree store
-  const folderTreeState = await folderTreeStore.waitFor((state) => state.isLoaded)
+  const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
   const homeTitle = folderTreeState.homeTitle
 
   // Fetch files from storage API

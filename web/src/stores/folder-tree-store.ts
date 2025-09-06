@@ -16,7 +16,8 @@ export interface FolderTreeState {
   rootFolders: FolderNode[]
   loadingPaths: Set<string>
   currentPath: string
-  isLoaded: boolean
+  isRootFoldersLoaded: boolean
+  isHomeTitleLoaded: boolean
   homeTitle: string
 }
 
@@ -37,7 +38,8 @@ const initialState: FolderTreeState = {
   rootFolders: [],
   loadingPaths: new Set(),
   currentPath: '',
-  isLoaded: false,
+  isRootFoldersLoaded: false,
+  isHomeTitleLoaded: false,
   homeTitle: 'Home',
 }
 
@@ -138,7 +140,7 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
     case 'SET_LOADED':
       return {
         ...state,
-        isLoaded: action.payload.isLoaded,
+        isRootFoldersLoaded: action.payload.isLoaded,
       }
 
     case 'LOAD_TREE_STATE':
@@ -146,7 +148,7 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
         ...state,
         rootFolders: action.payload.rootFolders,
         currentPath: action.payload.currentPath,
-        isLoaded: true,
+        isRootFoldersLoaded: true,
       }
 
     case 'LOAD_ROOT_FOLDERS':
@@ -156,6 +158,7 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
       return {
         ...state,
         homeTitle: action.title,
+        isHomeTitleLoaded: true,
       }
 
     case 'LOAD_HOME_TITLE':
@@ -339,13 +342,6 @@ export const forceSave = async () => {
 }
 
 /**
- * Check if folder tree is loaded
- */
-export const isLoaded = (): boolean => {
-  return folderTreeStore.getState().isLoaded
-}
-
-/**
  * Cleanup folder tree system
  */
 export const cleanup = () => {
@@ -368,6 +364,5 @@ export const useFolderTree = () => {
     loadHomeTitle,
     setHomeTitle,
     forceSave,
-    isLoaded,
   }
 }
