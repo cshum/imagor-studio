@@ -59,6 +59,7 @@ export type FileStat = {
   name: Scalars['String']['output']
   path: Scalars['String']['output']
   size: Scalars['Int']['output']
+  thumbnailUrls: Maybe<ThumbnailUrls>
 }
 
 export type Mutation = {
@@ -98,11 +99,13 @@ export type MutationDeleteFileArgs = {
 }
 
 export type MutationDeleteSystemRegistryArgs = {
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
 }
 
 export type MutationDeleteUserRegistryArgs = {
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
   ownerID?: InputMaybe<Scalars['String']['input']>
 }
 
@@ -152,8 +155,8 @@ export type QueryGetUserRegistryArgs = {
 }
 
 export type QueryListFilesArgs = {
-  limit: Scalars['Int']['input']
-  offset: Scalars['Int']['input']
+  limit?: InputMaybe<Scalars['Int']['input']>
+  offset?: InputMaybe<Scalars['Int']['input']>
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
   onlyFolders?: InputMaybe<Scalars['Boolean']['input']>
   path: Scalars['String']['input']
@@ -398,12 +401,20 @@ export type FileStatInfoFragment = {
   isDirectory: boolean
   modifiedTime: string
   etag: string | null
+  thumbnailUrls: {
+    __typename?: 'ThumbnailUrls'
+    grid: string | null
+    preview: string | null
+    full: string | null
+    original: string | null
+    meta: string | null
+  } | null
 }
 
 export type ListFilesQueryVariables = Exact<{
   path: Scalars['String']['input']
-  offset: Scalars['Int']['input']
-  limit: Scalars['Int']['input']
+  offset?: InputMaybe<Scalars['Int']['input']>
+  limit?: InputMaybe<Scalars['Int']['input']>
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
   onlyFolders?: InputMaybe<Scalars['Boolean']['input']>
   sortBy?: InputMaybe<SortOption>
@@ -447,6 +458,14 @@ export type StatFileQuery = {
     isDirectory: boolean
     modifiedTime: string
     etag: string | null
+    thumbnailUrls: {
+      __typename?: 'ThumbnailUrls'
+      grid: string | null
+      preview: string | null
+      full: string | null
+      original: string | null
+      meta: string | null
+    } | null
   } | null
 }
 
@@ -627,6 +646,13 @@ export const FileStatInfoFragmentDoc = gql`
     isDirectory
     modifiedTime
     etag
+    thumbnailUrls {
+      grid
+      preview
+      full
+      original
+      meta
+    }
   }
 `
 export const UserInfoFragmentDoc = gql`
@@ -705,8 +731,8 @@ export const DeleteSystemRegistryDocument = gql`
 export const ListFilesDocument = gql`
   query ListFiles(
     $path: String!
-    $offset: Int!
-    $limit: Int!
+    $offset: Int
+    $limit: Int
     $onlyFiles: Boolean
     $onlyFolders: Boolean
     $sortBy: SortOption

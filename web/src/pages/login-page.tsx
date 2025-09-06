@@ -1,6 +1,6 @@
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Navigate } from '@tanstack/react-router'
-import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { login } from '@/api/auth-api'
@@ -26,7 +26,7 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 export function LoginPage() {
   const { authState } = useAuth()
-  
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -35,8 +35,8 @@ export function LoginPage() {
     },
   })
 
-  // If already authenticated or guest, redirect to gallery
-  if (authState.state === 'authenticated' || authState.state === 'guest') {
+  // If already authenticated, redirect to gallery
+  if (authState.state === 'authenticated') {
     return <Navigate to='/' replace />
   }
 
@@ -105,7 +105,7 @@ export function LoginPage() {
                 )}
               />
               {form.formState.errors.root && (
-                <div className='rounded-md bg-destructive/15 p-3 text-sm text-destructive'>
+                <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
                   {form.formState.errors.root.message}
                 </div>
               )}

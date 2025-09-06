@@ -35,12 +35,13 @@ type FileList struct {
 }
 
 type FileStat struct {
-	Name         string  `json:"name"`
-	Path         string  `json:"path"`
-	Size         int     `json:"size"`
-	IsDirectory  bool    `json:"isDirectory"`
-	ModifiedTime string  `json:"modifiedTime"`
-	Etag         *string `json:"etag,omitempty"`
+	Name          string         `json:"name"`
+	Path          string         `json:"path"`
+	Size          int            `json:"size"`
+	IsDirectory   bool           `json:"isDirectory"`
+	ModifiedTime  string         `json:"modifiedTime"`
+	Etag          *string        `json:"etag,omitempty"`
+	ThumbnailUrls *ThumbnailUrls `json:"thumbnailUrls,omitempty"`
 }
 
 type Mutation struct {

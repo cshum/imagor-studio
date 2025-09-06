@@ -25,6 +25,13 @@ export const FileStatFragment = gql(`
     isDirectory
     modifiedTime
     etag
+    thumbnailUrls {
+      grid
+      preview
+      full
+      original
+      meta
+    }
   }
 `)
 
@@ -32,8 +39,8 @@ export const FileStatFragment = gql(`
 export const ListFilesQuery = gql(`
   query ListFiles(
     $path: String!
-    $offset: Int!
-    $limit: Int!
+    $offset: Int
+    $limit: Int
     $onlyFiles: Boolean
     $onlyFolders: Boolean
     $sortBy: SortOption

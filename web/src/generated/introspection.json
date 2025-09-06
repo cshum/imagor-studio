@@ -292,6 +292,14 @@
             },
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "thumbnailUrls",
+            "description": null,
+            "args": [],
+            "type": { "kind": "OBJECT", "name": "ThumbnailUrls", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "inputFields": null,
@@ -478,10 +486,22 @@
               {
                 "name": "key",
                 "description": null,
+                "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "keys",
+                "description": null,
                 "type": {
-                  "kind": "NON_NULL",
+                  "kind": "LIST",
                   "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  }
                 },
                 "defaultValue": null,
                 "isDeprecated": false,
@@ -503,10 +523,22 @@
               {
                 "name": "key",
                 "description": null,
+                "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "keys",
+                "description": null,
                 "type": {
-                  "kind": "NON_NULL",
+                  "kind": "LIST",
                   "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  }
                 },
                 "defaultValue": null,
                 "isDeprecated": false,
@@ -822,11 +854,7 @@
               {
                 "name": "limit",
                 "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "Int", "ofType": null }
-                },
+                "type": { "kind": "SCALAR", "name": "Int", "ofType": null },
                 "defaultValue": null,
                 "isDeprecated": false,
                 "deprecationReason": null
@@ -834,11 +862,7 @@
               {
                 "name": "offset",
                 "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "Int", "ofType": null }
-                },
+                "type": { "kind": "SCALAR", "name": "Int", "ofType": null },
                 "defaultValue": null,
                 "isDeprecated": false,
                 "deprecationReason": null

@@ -58,6 +58,7 @@ export type FileStat = {
   name: Scalars['String']['output']
   path: Scalars['String']['output']
   size: Scalars['Int']['output']
+  thumbnailUrls: Maybe<ThumbnailUrls>
 }
 
 export type Mutation = {
@@ -97,11 +98,13 @@ export type MutationDeleteFileArgs = {
 }
 
 export type MutationDeleteSystemRegistryArgs = {
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
 }
 
 export type MutationDeleteUserRegistryArgs = {
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
   ownerID?: InputMaybe<Scalars['String']['input']>
 }
 
@@ -151,8 +154,8 @@ export type QueryGetUserRegistryArgs = {
 }
 
 export type QueryListFilesArgs = {
-  limit: Scalars['Int']['input']
-  offset: Scalars['Int']['input']
+  limit?: InputMaybe<Scalars['Int']['input']>
+  offset?: InputMaybe<Scalars['Int']['input']>
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
   onlyFolders?: InputMaybe<Scalars['Boolean']['input']>
   path: Scalars['String']['input']
@@ -397,12 +400,20 @@ export type FileStatInfoFragment = {
   isDirectory: boolean
   modifiedTime: string
   etag: string | null
+  thumbnailUrls: {
+    __typename?: 'ThumbnailUrls'
+    grid: string | null
+    preview: string | null
+    full: string | null
+    original: string | null
+    meta: string | null
+  } | null
 }
 
 export type ListFilesQueryVariables = Exact<{
   path: Scalars['String']['input']
-  offset: Scalars['Int']['input']
-  limit: Scalars['Int']['input']
+  offset?: InputMaybe<Scalars['Int']['input']>
+  limit?: InputMaybe<Scalars['Int']['input']>
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
   onlyFolders?: InputMaybe<Scalars['Boolean']['input']>
   sortBy?: InputMaybe<SortOption>
@@ -446,6 +457,14 @@ export type StatFileQuery = {
     isDirectory: boolean
     modifiedTime: string
     etag: string | null
+    thumbnailUrls: {
+      __typename?: 'ThumbnailUrls'
+      grid: string | null
+      preview: string | null
+      full: string | null
+      original: string | null
+      meta: string | null
+    } | null
   } | null
 }
 
@@ -674,6 +693,20 @@ export const FileStatInfoFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'isDirectory' } },
           { kind: 'Field', name: { kind: 'Name', value: 'modifiedTime' } },
           { kind: 'Field', name: { kind: 'Name', value: 'etag' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'thumbnailUrls' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'grid' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'preview' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'full' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'original' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'meta' } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -1217,18 +1250,12 @@ export const ListFilesDocument = {
         {
           kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'offset' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
-          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
         },
         {
           kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
-          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
         },
         {
           kind: 'VariableDefinition',
@@ -1397,6 +1424,20 @@ export const StatFileDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'isDirectory' } },
           { kind: 'Field', name: { kind: 'Name', value: 'modifiedTime' } },
           { kind: 'Field', name: { kind: 'Name', value: 'etag' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'thumbnailUrls' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'grid' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'preview' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'full' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'original' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'meta' } },
+              ],
+            },
+          },
         ],
       },
     },

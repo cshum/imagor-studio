@@ -63,18 +63,30 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool,
 }
 
 // ListFiles is the resolver for the listFiles field.
-func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
+func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
+	// Handle optional offset parameter - default to 0 if not provided
+	offsetValue := 0
+	if offset != nil {
+		offsetValue = *offset
+	}
+
+	// Handle optional limit parameter - default to 0 (unlimited) if not provided
+	limitValue := 0
+	if limit != nil {
+		limitValue = *limit
+	}
+
 	r.logger.Info("Listing files",
 		zap.String("path", path),
-		zap.Int("offset", offset),
-		zap.Int("limit", limit),
+		zap.Int("offset", offsetValue),
+		zap.Int("limit", limitValue),
 		zap.Any("sortBy", sortBy),
 		zap.Any("sortOrder", sortOrder),
 	)
 
 	options := storage.ListOptions{
-		Offset:      offset,
-		Limit:       limit,
+		Offset:      offsetValue,
+		Limit:       limitValue,
 		OnlyFiles:   onlyFiles != nil && *onlyFiles,
 		OnlyFolders: onlyFolders != nil && *onlyFolders,
 	}
@@ -143,14 +155,22 @@ func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileSta
 		return nil, fmt.Errorf("failed to get file stats: %w", err)
 	}
 
-	return &gql.FileStat{
+	fileStat := &gql.FileStat{
 		Name:         fileInfo.Name,
 		Path:         fileInfo.Path,
 		Size:         int(fileInfo.Size),
 		IsDirectory:  fileInfo.IsDir,
 		ModifiedTime: fileInfo.ModifiedTime.Format(time.RFC3339),
 		Etag:         &fileInfo.ETag,
-	}, nil
+	}
+
+	// Generate thumbnail URLs for image files
+	if !fileInfo.IsDir && r.isImageFile(fileInfo.Name) {
+		thumbnailUrls := r.generateThumbnailUrls(fileInfo.Path)
+		fileStat.ThumbnailUrls = thumbnailUrls
+	}
+
+	return fileStat, nil
 }
 
 // Helper function to check if a file is an image

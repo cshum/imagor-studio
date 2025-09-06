@@ -1,8 +1,8 @@
 type Query {
     listFiles(
         path: String!
-        offset: Int!
-        limit: Int!
+        offset: Int
+        limit: Int
         onlyFiles: Boolean
         onlyFolders: Boolean
         sortBy: SortOption
@@ -114,6 +114,7 @@ type FileStat {
     isDirectory: Boolean!
     modifiedTime: String!
     etag: String
+    thumbnailUrls: ThumbnailUrls
 }
 
 enum SortOption {

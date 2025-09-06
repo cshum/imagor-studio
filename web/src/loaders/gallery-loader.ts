@@ -1,10 +1,10 @@
-import { listFiles } from '@/api/storage-api.ts'
+import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
-import { folderTreeStore } from '@/stores/folder-tree-store.ts'
+import { folderTreeStore, setCurrentPath } from '@/stores/folder-tree-store.ts'
 
 export interface GalleryLoaderData {
   galleryName: string
@@ -28,16 +28,18 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
   // Use galleryKey as the path for storage API
   const path = galleryKey === 'default' ? '' : galleryKey
 
+  // Set current path in folder tree store
+  setCurrentPath(galleryKey)
+
   // Get home title from the folder tree store
-  const homeTitle = folderTreeStore.getState().homeTitle
+  const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
+  const homeTitle = folderTreeState.homeTitle
 
   // Fetch files from storage API
   const result = await listFiles({
     path,
     sortBy: 'MODIFIED_TIME',
     sortOrder: 'DESC',
-    offset: 0,
-    limit: 0,
   })
 
   // Separate files and folders
@@ -116,49 +118,39 @@ export const imageLoader = async ({
 }): Promise<ImageLoaderData> => {
   const { imageKey, galleryKey } = params
 
-  // Use galleryKey as the path for storage API
-  const path = galleryKey === 'default' ? '' : galleryKey
+  // Use galleryKey as the path for storage API, then append the image name
+  const basePath = galleryKey === 'default' ? '' : galleryKey
+  const imagePath = basePath ? `${basePath}/${imageKey}` : imageKey
 
-  // Fetch files from storage API
-  const result = await listFiles({
-    path,
-    offset: 0,
-    limit: 1000,
-    sortBy: 'NAME',
-    sortOrder: 'ASC',
-  })
+  // Fetch single file stats from storage API - much more efficient than listing all files
+  const fileStat = await statFile(imagePath)
 
-  // Find the selected image from real API data
-  const imageItem = result.items.find(
-    (item) => !item.isDirectory && item.name === imageKey && item.thumbnailUrls,
-  )
-
-  if (!imageItem || !imageItem.thumbnailUrls) {
+  if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
     throw new Error('Image not found')
   }
 
   // Use the full-size thumbnail URL for the detail view
-  const fullSizeSrc = imageItem.thumbnailUrls.full || imageItem.thumbnailUrls.original || ''
+  const fullSizeSrc = fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || ''
 
   const imageElement = await preloadImage(fullSizeSrc)
 
   // Fetch real EXIF data from imagor meta API
-  let imageInfo = convertMetadataToImageInfo(null, imageItem.name, galleryKey)
-  if (imageItem.thumbnailUrls.meta) {
+  let imageInfo = convertMetadataToImageInfo(null, fileStat.name, galleryKey)
+  if (fileStat.thumbnailUrls.meta) {
     try {
-      const metadata = await fetchImageMetadata(imageItem.thumbnailUrls.meta)
-      imageInfo = convertMetadataToImageInfo(metadata, imageItem.name, galleryKey)
+      const metadata = await fetchImageMetadata(fileStat.thumbnailUrls.meta)
+      imageInfo = convertMetadataToImageInfo(metadata, fileStat.name, galleryKey)
     } catch {
       // Fall back to basic info without EXIF data
     }
   }
 
   const image: GalleryImage = {
-    name: imageItem.name,
-    thumbnailUrls: imageItem.thumbnailUrls,
-    imageKey: imageItem.name,
+    name: fileStat.name,
+    thumbnailUrls: fileStat.thumbnailUrls,
+    imageKey: fileStat.name,
     imageSrc: fullSizeSrc,
-    imageName: imageItem.name,
+    imageName: fileStat.name,
     imageInfo,
   }
 
