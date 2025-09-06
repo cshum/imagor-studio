@@ -8,6 +8,13 @@ interface AdminPageProps {
 // Define system settings configuration
 const SYSTEM_SETTINGS: SystemSetting[] = [
   {
+    key: 'config.home_title',
+    type: 'text',
+    label: 'Home Title',
+    description: 'Customize the title shown for the home page in navigation and breadcrumbs',
+    defaultValue: 'Home',
+  },
+  {
     key: 'config.allow_guest_mode',
     type: 'boolean',
     label: 'Guest Mode',

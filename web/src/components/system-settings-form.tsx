@@ -4,6 +4,8 @@ import { useRouter } from '@tanstack/react-router'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { setSystemRegistryObject } from '@/api/registry-api'
 import { extractErrorMessage } from '@/lib/error-utils'
@@ -132,13 +134,16 @@ export function SystemSettingsForm({
       const boolValue = effectiveValue === 'true'
       
       return (
-        <div key={setting.key} className='flex flex-row items-center justify-between rounded-lg border p-4'>
+        <div
+          key={setting.key}
+          className='flex flex-row items-center justify-between rounded-lg border p-4'
+        >
           <div className='space-y-0.5'>
             <div className='text-base font-medium'>{setting.label}</div>
-            <div className='text-sm text-muted-foreground'>
+            <div className='text-muted-foreground text-sm'>
               {setting.description}
               {isOverridden && (
-                <span className='block text-orange-600 dark:text-orange-400 mt-1'>
+                <span className='mt-1 block text-orange-600 dark:text-orange-400'>
                   This setting is overridden by configuration file or environment variable
                 </span>
               )}
@@ -157,7 +162,36 @@ export function SystemSettingsForm({
       )
     }
 
-    // Add other setting types (text, select) here in the future
+    if (setting.type === 'text') {
+      return (
+        <div key={setting.key} className='space-y-2 rounded-lg border p-4'>
+          <Label htmlFor={setting.key} className='text-base font-medium'>
+            {setting.label}
+          </Label>
+          <div className='text-muted-foreground text-sm'>
+            {setting.description}
+            {isOverridden && (
+              <span className='mt-1 block text-orange-600 dark:text-orange-400'>
+                This setting is overridden by configuration file or environment variable
+              </span>
+            )}
+          </div>
+          <Input
+            id={setting.key}
+            value={effectiveValue}
+            onChange={(e) => {
+              if (!isOverridden) {
+                updateSetting(setting.key, e.target.value)
+              }
+            }}
+            disabled={isUpdating || isOverridden}
+            placeholder={setting.defaultValue.toString()}
+          />
+        </div>
+      )
+    }
+
+    // Add other setting types (select) here in the future
     return null
   }
 
@@ -166,7 +200,7 @@ export function SystemSettingsForm({
       {settings.map(renderSetting)}
       
       {!hideUpdateButton && (
-        <div className='flex justify-end pt-4 border-t'>
+        <div className='border-t pt-4 flex justify-end'>
           <ButtonWithLoading
             onClick={onUpdateSettings}
             isLoading={isUpdating}

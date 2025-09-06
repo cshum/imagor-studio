@@ -15,12 +15,14 @@ import {
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useFolderTree } from '@/stores/folder-tree-store'
+import { useHomeTitle } from '@/hooks/use-home-title'
 
 import { FolderTreeNode } from './folder-tree-node'
 
 export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { rootFolders, loadingPaths } = useFolderTree()
   const routerState = useRouterState()
+  const homeTitle = useHomeTitle()
 
   const isLoadingRoot = loadingPaths.has('')
   const isOnHomePage = routerState.location.pathname === '/'
@@ -37,7 +39,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
                 <SidebarMenuButton asChild isActive={isOnHomePage}>
                   <Link to='/'>
                     <Home className='h-4 w-4' />
-                    <span>Home</span>
+                    <span>{homeTitle}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
