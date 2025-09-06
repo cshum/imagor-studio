@@ -135,9 +135,8 @@ export const initializeTheme = async (
       type: 'SET_LOADED',
       payload: { isLoaded: true },
     })
-  } catch (error) {
-    console.warn('Failed to load theme from storage:', error)
-    // Fallback to system theme
+  } catch {
+    // Failed to load from storage - fallback to system theme
     updateResolvedTheme()
     themeStore.dispatch({
       type: 'SET_LOADED',
@@ -156,15 +155,7 @@ export const setTheme = async (theme: Theme) => {
   })
 
   updateResolvedTheme()
-
-  // Save to storage
-  if (storage) {
-    try {
-      await storage.set(theme)
-    } catch (error) {
-      console.warn('Failed to save theme to storage:', error)
-    }
-  }
+  await storage?.set(theme)
 }
 
 /**

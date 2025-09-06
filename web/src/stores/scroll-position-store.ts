@@ -97,13 +97,9 @@ const debouncedSaveToStorage = async () => {
   }
 
   saveTimeout = window.setTimeout(async () => {
-    try {
-      const state = scrollPositionStore.getState()
-      const positionsJson = JSON.stringify(state.positions)
-      await storage!.set(positionsJson)
-    } catch (error) {
-      console.warn('Failed to save scroll positions to storage:', error)
-    }
+    const state = scrollPositionStore.getState()
+    const positionsJson = JSON.stringify(state.positions)
+    await storage!.set(positionsJson)
   }, saveDelay)
 }
 
@@ -131,8 +127,8 @@ export const initializeScrollPositions = async (
         payload: { isLoaded: true },
       })
     }
-  } catch (error) {
-    console.warn('Failed to load scroll positions from storage:', error)
+  } catch {
+    // Failed to load from storage - continue with empty state
     scrollPositionStore.dispatch({
       type: 'SET_LOADED',
       payload: { isLoaded: true },
@@ -217,13 +213,9 @@ export const forceSave = async () => {
     saveTimeout = null
   }
 
-  try {
-    const state = scrollPositionStore.getState()
-    const positionsJson = JSON.stringify(state.positions)
-    await storage.set(positionsJson)
-  } catch (error) {
-    console.warn('Failed to force save scroll positions to storage:', error)
-  }
+  const state = scrollPositionStore.getState()
+  const positionsJson = JSON.stringify(state.positions)
+  await storage.set(positionsJson)
 }
 
 /**
