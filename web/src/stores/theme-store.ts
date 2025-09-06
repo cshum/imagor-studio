@@ -100,7 +100,10 @@ const handleSystemThemeChange = () => {
 /**
  * Initialize theme system with storage
  */
-export const initializeTheme = async (configStorage: ConfigStorage, themeAttribute: string = 'class') => {
+export const initializeTheme = async (
+  configStorage: ConfigStorage,
+  themeAttribute: string = 'class',
+) => {
   // Cleanup previous initialization
   if (mediaQuery) {
     mediaQuery.removeEventListener('change', handleSystemThemeChange)
