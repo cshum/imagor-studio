@@ -4,7 +4,7 @@ import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
-import { folderTreeStore } from '@/stores/folder-tree-store.ts'
+import { folderTreeStore, setCurrentPath } from '@/stores/folder-tree-store.ts'
 
 export interface GalleryLoaderData {
   galleryName: string
@@ -27,6 +27,9 @@ export interface ImageLoaderData {
 export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderData> => {
   // Use galleryKey as the path for storage API
   const path = galleryKey === 'default' ? '' : galleryKey
+
+  // Set current path in folder tree store
+  setCurrentPath(galleryKey)
 
   // Get home title from the folder tree store
   const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
