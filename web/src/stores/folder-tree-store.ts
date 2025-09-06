@@ -1,5 +1,5 @@
-import { createStore } from '@/lib/create-store'
 import { listFiles } from '@/api/storage-api'
+import { createStore } from '@/lib/create-store'
 
 export interface FolderNode {
   name: string
@@ -16,7 +16,7 @@ export interface FolderTreeState {
   currentPath: string
 }
 
-export type FolderTreeAction = 
+export type FolderTreeAction =
   | { type: 'SET_ROOT_FOLDERS'; folders: FolderNode[] }
   | { type: 'EXPAND_FOLDER'; path: string }
   | { type: 'COLLAPSE_FOLDER'; path: string }
@@ -36,7 +36,7 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
     case 'SET_ROOT_FOLDERS':
       return {
         ...state,
-        rootFolders: action.folders.map(folder => ({
+        rootFolders: action.folders.map((folder) => ({
           ...folder,
           isLoaded: false,
           isExpanded: false,
@@ -45,14 +45,14 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
 
     case 'EXPAND_FOLDER': {
       const updateFolder = (folders: FolderNode[]): FolderNode[] =>
-        folders.map(folder =>
+        folders.map((folder) =>
           folder.path === action.path
             ? { ...folder, isExpanded: true }
             : folder.children
-            ? { ...folder, children: updateFolder(folder.children) }
-            : folder
+              ? { ...folder, children: updateFolder(folder.children) }
+              : folder,
         )
-      
+
       return {
         ...state,
         rootFolders: updateFolder(state.rootFolders),
@@ -61,14 +61,14 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
 
     case 'COLLAPSE_FOLDER': {
       const updateFolder = (folders: FolderNode[]): FolderNode[] =>
-        folders.map(folder =>
+        folders.map((folder) =>
           folder.path === action.path
             ? { ...folder, isExpanded: false }
             : folder.children
-            ? { ...folder, children: updateFolder(folder.children) }
-            : folder
+              ? { ...folder, children: updateFolder(folder.children) }
+              : folder,
         )
-      
+
       return {
         ...state,
         rootFolders: updateFolder(state.rootFolders),
@@ -77,11 +77,11 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
 
     case 'SET_FOLDER_CHILDREN': {
       const updateFolder = (folders: FolderNode[]): FolderNode[] =>
-        folders.map(folder =>
+        folders.map((folder) =>
           folder.path === action.path
             ? {
                 ...folder,
-                children: action.children.map(child => ({
+                children: action.children.map((child) => ({
                   ...child,
                   isLoaded: false,
                   isExpanded: false,
@@ -90,10 +90,10 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
                 isExpanded: true,
               }
             : folder.children
-            ? { ...folder, children: updateFolder(folder.children) }
-            : folder
+              ? { ...folder, children: updateFolder(folder.children) }
+              : folder,
         )
-      
+
       return {
         ...state,
         rootFolders: updateFolder(state.rootFolders),
@@ -107,7 +107,7 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
       } else {
         newLoadingPaths.delete(action.path)
       }
-      
+
       return {
         ...state,
         loadingPaths: newLoadingPaths,
@@ -134,7 +134,7 @@ export const folderTreeStore = createStore(initialState, folderTreeReducer)
 export const loadRootFolders = async () => {
   try {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path: '', loading: true })
-    
+
     const result = await listFiles({
       path: '',
       offset: 0,
@@ -142,7 +142,7 @@ export const loadRootFolders = async () => {
       onlyFolders: true,
     })
 
-    const folders: FolderNode[] = result.items.map(item => ({
+    const folders: FolderNode[] = result.items.map((item) => ({
       name: item.name,
       path: item.path,
       isDirectory: item.isDirectory,
@@ -161,7 +161,7 @@ export const loadRootFolders = async () => {
 export const loadFolderChildren = async (path: string) => {
   try {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path, loading: true })
-    
+
     const result = await listFiles({
       path,
       offset: 0,
@@ -169,7 +169,7 @@ export const loadFolderChildren = async (path: string) => {
       onlyFolders: true,
     })
 
-    const children: FolderNode[] = result.items.map(item => ({
+    const children: FolderNode[] = result.items.map((item) => ({
       name: item.name,
       path: item.path,
       isDirectory: item.isDirectory,
@@ -188,7 +188,7 @@ export const loadFolderChildren = async (path: string) => {
 // Hook to use the folder tree store
 export const useFolderTree = () => {
   const state = folderTreeStore.useStore()
-  
+
   return {
     ...state,
     dispatch: folderTreeStore.dispatch,
