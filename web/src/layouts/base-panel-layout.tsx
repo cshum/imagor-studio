@@ -1,11 +1,10 @@
 import { PropsWithChildren } from 'react'
 
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { FolderTreeSidebar } from '@/components/folder-tree/folder-tree-sidebar'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 
-interface BasePanelLayoutProps extends PropsWithChildren {
-}
+type BasePanelLayoutProps = PropsWithChildren
 
 export function BasePanelLayout({ children }: BasePanelLayoutProps) {
   return (
