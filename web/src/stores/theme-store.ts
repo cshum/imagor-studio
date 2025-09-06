@@ -48,124 +48,114 @@ const reducer = (state: ThemeState, action: ThemeAction): ThemeState => {
 // Create the store
 export const themeStore = createStore(initialState, reducer)
 
-// Theme management class
-class ThemeManager {
-  public storage: ConfigStorage // Make storage public for access
-  private mediaQuery: MediaQueryList
-  private attribute: string
+// Theme management
+let storage: ConfigStorage | null = null
+let mediaQuery: MediaQueryList | null = null
+let attribute: string = 'class'
 
-  constructor(storage: ConfigStorage, attribute: string = 'class') {
-    this.storage = storage
-    this.attribute = attribute
-    this.mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+/**
+ * Get system theme preference
+ */
+const getSystemTheme = (): 'light' | 'dark' => {
+  return mediaQuery?.matches ? 'dark' : 'light'
+}
 
-    // Listen for system theme changes
-    this.mediaQuery.addEventListener('change', this.handleSystemThemeChange)
+/**
+ * Apply theme to document
+ */
+const applyTheme = (theme: 'light' | 'dark') => {
+  if (attribute === 'class') {
+    document.documentElement.classList.remove('light', 'dark')
+    document.documentElement.classList.add(theme)
+  } else {
+    document.documentElement.setAttribute(attribute, theme)
+  }
+}
+
+/**
+ * Update resolved theme and apply it
+ */
+const updateResolvedTheme = () => {
+  const state = themeStore.getState()
+  const resolvedTheme = state.theme === 'system' ? getSystemTheme() : state.theme
+
+  themeStore.dispatch({
+    type: 'SET_RESOLVED_THEME',
+    payload: { resolvedTheme },
+  })
+
+  applyTheme(resolvedTheme)
+}
+
+/**
+ * Handle system theme changes
+ */
+const handleSystemThemeChange = () => {
+  const state = themeStore.getState()
+  if (state.theme === 'system') {
+    updateResolvedTheme()
+  }
+}
+
+/**
+ * Initialize theme system with storage
+ */
+export const initializeTheme = async (
+  configStorage: ConfigStorage,
+  themeAttribute: string = 'class',
+) => {
+  // Cleanup previous initialization
+  if (mediaQuery) {
+    mediaQuery.removeEventListener('change', handleSystemThemeChange)
   }
 
-  private handleSystemThemeChange = () => {
-    const state = themeStore.getState()
-    if (state.theme === 'system') {
-      this.updateResolvedTheme()
-    }
-  }
+  storage = configStorage
+  attribute = themeAttribute
+  mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 
-  private getSystemTheme(): 'light' | 'dark' {
-    return this.mediaQuery.matches ? 'dark' : 'light'
-  }
+  // Listen for system theme changes
+  mediaQuery.addEventListener('change', handleSystemThemeChange)
 
-  private updateResolvedTheme() {
-    const state = themeStore.getState()
-    const resolvedTheme = state.theme === 'system' ? this.getSystemTheme() : state.theme
+  try {
+    // Load theme from storage
+    const storedTheme = await storage.get()
+    const theme =
+      storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'system'
+        ? (storedTheme as Theme)
+        : 'system'
 
-    themeStore.dispatch({
-      type: 'SET_RESOLVED_THEME',
-      payload: { resolvedTheme },
-    })
-
-    this.applyTheme(resolvedTheme)
-  }
-
-  private applyTheme(theme: 'light' | 'dark') {
-    if (this.attribute === 'class') {
-      document.documentElement.classList.remove('light', 'dark')
-      document.documentElement.classList.add(theme)
-    } else {
-      document.documentElement.setAttribute(this.attribute, theme)
-    }
-  }
-
-  async initialize() {
-    try {
-      // Load theme from storage
-      const storedTheme = await this.storage.get()
-      const theme =
-        storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'system'
-          ? (storedTheme as Theme)
-          : 'system'
-
-      themeStore.dispatch({
-        type: 'SET_THEME',
-        payload: { theme },
-      })
-
-      this.updateResolvedTheme()
-
-      themeStore.dispatch({
-        type: 'SET_LOADED',
-        payload: { isLoaded: true },
-      })
-    } catch (error) {
-      console.warn('Failed to load theme from storage:', error)
-      // Fallback to system theme
-      this.updateResolvedTheme()
-      themeStore.dispatch({
-        type: 'SET_LOADED',
-        payload: { isLoaded: true },
-      })
-    }
-  }
-
-  async setTheme(theme: Theme) {
     themeStore.dispatch({
       type: 'SET_THEME',
       payload: { theme },
     })
 
-    this.updateResolvedTheme()
+    updateResolvedTheme()
 
-    // Save to storage
-    try {
-      await this.storage.set(theme)
-    } catch (error) {
-      console.warn('Failed to save theme to storage:', error)
-    }
+    themeStore.dispatch({
+      type: 'SET_LOADED',
+      payload: { isLoaded: true },
+    })
+  } catch {
+    // Failed to load from storage - fallback to system theme
+    updateResolvedTheme()
+    themeStore.dispatch({
+      type: 'SET_LOADED',
+      payload: { isLoaded: true },
+    })
   }
-
-  destroy() {
-    this.mediaQuery.removeEventListener('change', this.handleSystemThemeChange)
-  }
-}
-
-// Global theme manager instance
-let themeManager: ThemeManager | null = null
-
-/**
- * Initialize theme system with storage
- */
-export const initializeTheme = async (storage: ConfigStorage, attribute: string = 'class') => {
-  if (themeManager) {
-    themeManager.destroy()
-  }
-  themeManager = new ThemeManager(storage, attribute)
-  await themeManager.initialize()
 }
 
 /**
  * Set theme
  */
 export const setTheme = async (theme: Theme) => {
-  await themeManager?.setTheme(theme)
+  themeStore.dispatch({
+    type: 'SET_THEME',
+    payload: { theme },
+  })
+
+  updateResolvedTheme()
+  await storage?.set(theme)
 }
 
 /**
@@ -190,21 +180,24 @@ export const isLoaded = (): boolean => {
 }
 
 /**
- * Cleanup theme manager
- */
-export const destroy = () => {
-  if (themeManager) {
-    themeManager.destroy()
-    themeManager = null
-  }
-}
-
-/**
  * Reset theme to system default and clear storage
  */
 export const resetTheme = async () => {
-  await themeManager?.storage.remove()
-  await themeManager?.setTheme('system')
+  if (storage) {
+    await storage.remove()
+  }
+  await setTheme('system')
+}
+
+/**
+ * Cleanup theme system
+ */
+export const destroy = () => {
+  if (mediaQuery) {
+    mediaQuery.removeEventListener('change', handleSystemThemeChange)
+    mediaQuery = null
+  }
+  storage = null
 }
 
 // Hook for components to use the theme store
