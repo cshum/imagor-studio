@@ -31,10 +31,6 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
   // Set current path in folder tree store
   setCurrentPath(galleryKey)
 
-  // Get home title from the folder tree store
-  const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
-  const homeTitle = folderTreeState.homeTitle
-
   // Fetch files from storage API
   const result = await listFiles({
     path,
@@ -62,6 +58,10 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
       imageSrc: item.thumbnailUrls?.grid || '',
       imageName: item.name,
     }))
+
+  // Get home title from the folder tree store
+  const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
+  const homeTitle = folderTreeState.homeTitle
 
   // Use the actual folder name, or custom home title for root
   const galleryName =
