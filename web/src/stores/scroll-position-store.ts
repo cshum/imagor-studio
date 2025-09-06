@@ -81,209 +81,149 @@ const reducer = (state: ScrollPositionState, action: ScrollPositionAction): Scro
 // Create the store
 export const scrollPositionStore = createStore(initialState, reducer)
 
-// Scroll position manager class
-class ScrollPositionManager {
-  private storage: ConfigStorage
-  private saveTimeout: number | null = null
-  private saveDelay: number = 100
-  private pendingChanges: boolean = false
+// Storage management
+let storage: ConfigStorage | null = null
+let saveTimeout: number | null = null
+let saveDelay: number = 300
 
-  constructor(storage: ConfigStorage, saveDelay: number = 100) {
-    this.storage = storage
-    this.saveDelay = saveDelay
+/**
+ * Debounced save to storage
+ */
+const debouncedSaveToStorage = async () => {
+  if (!storage) return
+
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
   }
 
-  async initialize() {
+  saveTimeout = window.setTimeout(async () => {
     try {
-      const savedPositions = await this.storage.get()
-      if (savedPositions) {
-        const positions = JSON.parse(savedPositions)
-        scrollPositionStore.dispatch({
-          type: 'LOAD_POSITIONS',
-          payload: { positions },
-        })
-      } else {
-        scrollPositionStore.dispatch({
-          type: 'SET_LOADED',
-          payload: { isLoaded: true },
-        })
-      }
+      const state = scrollPositionStore.getState()
+      const positionsJson = JSON.stringify(state.positions)
+      await storage!.set(positionsJson)
     } catch (error) {
-      console.warn('Failed to load scroll positions from storage:', error)
-      scrollPositionStore.dispatch({
-        type: 'SET_LOADED',
-        payload: { isLoaded: true },
-      })
+      console.warn('Failed to save scroll positions to storage:', error)
     }
-  }
-
-  private debouncedSaveToStorage() {
-    // Mark that we have pending changes
-    this.pendingChanges = true
-
-    // Clear existing timeout
-    if (this.saveTimeout) {
-      clearTimeout(this.saveTimeout)
-    }
-
-    // Set new timeout to save after debounce delay
-    this.saveTimeout = window.setTimeout(async () => {
-      if (this.pendingChanges) {
-        try {
-          const state = scrollPositionStore.getState()
-          const positionsJson = JSON.stringify(state.positions)
-          await this.storage.set(positionsJson)
-          this.pendingChanges = false
-        } catch (error) {
-          console.warn('Failed to save scroll positions to storage:', error)
-        }
-      }
-    }, this.saveDelay)
-  }
-
-  setPosition(key: string, position: number) {
-    // Always update the store immediately
-    scrollPositionStore.dispatch({
-      type: 'SET_POSITION',
-      payload: { key, position },
-    })
-
-    // Debounce the storage save operation
-    this.debouncedSaveToStorage()
-  }
-
-  setScrolling(key: string, isScrolling: boolean) {
-    // Scrolling state doesn't need to be persisted to storage
-    scrollPositionStore.dispatch({
-      type: 'SET_SCROLLING',
-      payload: { key, isScrolling },
-    })
-  }
-
-  getPosition(key: string): number {
-    const state = scrollPositionStore.getState()
-    return state.positions[key] || 0
-  }
-
-  isScrolling(key: string): boolean {
-    const state = scrollPositionStore.getState()
-    return state.isScrolling[key] || false
-  }
-
-  clearPosition(key: string) {
-    scrollPositionStore.dispatch({
-      type: 'CLEAR_POSITION',
-      payload: { key },
-    })
-
-    // Debounce the storage save operation
-    this.debouncedSaveToStorage()
-  }
-
-  clearAllPositions() {
-    scrollPositionStore.dispatch({
-      type: 'CLEAR_ALL_POSITIONS',
-    })
-
-    // Debounce the storage save operation
-    this.debouncedSaveToStorage()
-  }
-
-  // Force immediate save (useful for cleanup or critical saves)
-  async forceSave() {
-    if (this.saveTimeout) {
-      clearTimeout(this.saveTimeout)
-      this.saveTimeout = null
-    }
-
-    if (this.pendingChanges) {
-      try {
-        const state = scrollPositionStore.getState()
-        const positionsJson = JSON.stringify(state.positions)
-        await this.storage.set(positionsJson)
-        this.pendingChanges = false
-      } catch (error) {
-        console.warn('Failed to force save scroll positions to storage:', error)
-      }
-    }
-  }
-
-  cleanup() {
-    // Force save any pending changes before cleanup
-    if (this.pendingChanges) {
-      this.forceSave()
-    }
-
-    if (this.saveTimeout) {
-      clearTimeout(this.saveTimeout)
-      this.saveTimeout = null
-    }
-  }
+  }, saveDelay)
 }
-
-// Global scroll position manager instance
-let scrollPositionManager: ScrollPositionManager | null = null
 
 /**
  * Initialize scroll position system with storage
  */
 export const initializeScrollPositions = async (
-  storage: ConfigStorage,
-  saveDelay: number = 300,
+  configStorage: ConfigStorage,
+  debounceDelay: number = 300,
 ) => {
-  if (!scrollPositionManager) {
-    scrollPositionManager = new ScrollPositionManager(storage, saveDelay)
-    await scrollPositionManager.initialize()
+  storage = configStorage
+  saveDelay = debounceDelay
+
+  try {
+    const savedPositions = await storage.get()
+    if (savedPositions) {
+      const positions = JSON.parse(savedPositions)
+      scrollPositionStore.dispatch({
+        type: 'LOAD_POSITIONS',
+        payload: { positions },
+      })
+    } else {
+      scrollPositionStore.dispatch({
+        type: 'SET_LOADED',
+        payload: { isLoaded: true },
+      })
+    }
+  } catch (error) {
+    console.warn('Failed to load scroll positions from storage:', error)
+    scrollPositionStore.dispatch({
+      type: 'SET_LOADED',
+      payload: { isLoaded: true },
+    })
   }
+
+  // Set up auto-save subscription for position changes
+  scrollPositionStore.subscribe((_, action) => {
+    if (
+      action.type === 'SET_POSITION' ||
+      action.type === 'CLEAR_POSITION' ||
+      action.type === 'CLEAR_ALL_POSITIONS'
+    ) {
+      debouncedSaveToStorage()
+    }
+  })
 }
 
 /**
  * Set scroll position for a key
  */
 export const setPosition = (key: string, position: number) => {
-  scrollPositionManager?.setPosition(key, position)
+  scrollPositionStore.dispatch({
+    type: 'SET_POSITION',
+    payload: { key, position },
+  })
 }
 
 /**
  * Set scrolling state for a key
  */
 export const setScrolling = (key: string, isScrolling: boolean) => {
-  scrollPositionManager?.setScrolling(key, isScrolling)
+  scrollPositionStore.dispatch({
+    type: 'SET_SCROLLING',
+    payload: { key, isScrolling },
+  })
 }
 
 /**
  * Get scroll position for a key
  */
 export const getPosition = (key: string): number => {
-  return scrollPositionManager?.getPosition(key) || 0
+  const state = scrollPositionStore.getState()
+  return state.positions[key] || 0
 }
 
 /**
  * Check if scrolling for a key
  */
 export const isScrolling = (key: string): boolean => {
-  return scrollPositionManager?.isScrolling(key) || false
+  const state = scrollPositionStore.getState()
+  return state.isScrolling[key] || false
 }
 
 /**
  * Clear position for a key
  */
 export const clearPosition = (key: string) => {
-  scrollPositionManager?.clearPosition(key)
+  scrollPositionStore.dispatch({
+    type: 'CLEAR_POSITION',
+    payload: { key },
+  })
 }
 
 /**
  * Clear all positions
  */
 export const clearAllPositions = () => {
-  scrollPositionManager?.clearAllPositions()
+  scrollPositionStore.dispatch({
+    type: 'CLEAR_ALL_POSITIONS',
+  })
 }
 
 /**
  * Force immediate save to storage (bypasses debounce)
  */
 export const forceSave = async () => {
-  await scrollPositionManager?.forceSave()
+  if (!storage) return
+
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+    saveTimeout = null
+  }
+
+  try {
+    const state = scrollPositionStore.getState()
+    const positionsJson = JSON.stringify(state.positions)
+    await storage.set(positionsJson)
+  } catch (error) {
+    console.warn('Failed to force save scroll positions to storage:', error)
+  }
 }
 
 /**
@@ -294,13 +234,14 @@ export const isLoaded = (): boolean => {
 }
 
 /**
- * Cleanup scroll position manager
+ * Cleanup scroll position system
  */
 export const cleanup = () => {
-  if (scrollPositionManager) {
-    scrollPositionManager.cleanup()
-    scrollPositionManager = null
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+    saveTimeout = null
   }
+  storage = null
 }
 
 // Hook for components to use the scroll position store
@@ -311,7 +252,6 @@ export const useScrollPositions = () => {
     positions: state.positions,
     isScrollingStates: state.isScrolling,
     isStoreLoaded: state.isLoaded,
-    initializeScrollPositions,
     setPosition,
     setScrolling,
     getPosition,
@@ -320,6 +260,5 @@ export const useScrollPositions = () => {
     clearAllPositions,
     forceSave,
     isLoaded,
-    cleanup,
   }
 }
