@@ -2,7 +2,7 @@ type Query {
     listFiles(
         path: String!
         offset: Int!
-        limit: Int!
+        limit: Int = 0
         onlyFiles: Boolean
         onlyFolders: Boolean
         sortBy: SortOption

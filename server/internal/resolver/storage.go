@@ -63,18 +63,24 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool,
 }
 
 // ListFiles is the resolver for the listFiles field.
-func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, limit int, onlyFiles *bool, onlyFolders *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
+func (r *queryResolver) ListFiles(ctx context.Context, path string, offset int, limit *int, onlyFiles *bool, onlyFolders *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
+	// Handle optional limit parameter - default to 0 (unlimited) if not provided
+	limitValue := 0
+	if limit != nil {
+		limitValue = *limit
+	}
+
 	r.logger.Info("Listing files",
 		zap.String("path", path),
 		zap.Int("offset", offset),
-		zap.Int("limit", limit),
+		zap.Int("limit", limitValue),
 		zap.Any("sortBy", sortBy),
 		zap.Any("sortOrder", sortOrder),
 	)
 
 	options := storage.ListOptions{
 		Offset:      offset,
-		Limit:       limit,
+		Limit:       limitValue,
 		OnlyFiles:   onlyFiles != nil && *onlyFiles,
 		OnlyFolders: onlyFolders != nil && *onlyFolders,
 	}

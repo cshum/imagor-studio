@@ -98,11 +98,13 @@ export type MutationDeleteFileArgs = {
 }
 
 export type MutationDeleteSystemRegistryArgs = {
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
 }
 
 export type MutationDeleteUserRegistryArgs = {
-  key: Scalars['String']['input']
+  key?: InputMaybe<Scalars['String']['input']>
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
   ownerID?: InputMaybe<Scalars['String']['input']>
 }
 
@@ -152,7 +154,7 @@ export type QueryGetUserRegistryArgs = {
 }
 
 export type QueryListFilesArgs = {
-  limit: Scalars['Int']['input']
+  limit?: InputMaybe<Scalars['Int']['input']>
   offset: Scalars['Int']['input']
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
   onlyFolders?: InputMaybe<Scalars['Boolean']['input']>
