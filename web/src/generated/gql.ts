@@ -26,7 +26,7 @@ type Documents = {
   '\n  mutation SetSystemRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!]) {\n    setSystemRegistry(entry: $entry, entries: $entries) {\n      ...SystemRegistryInfo\n    }\n  }\n': typeof types.SetSystemRegistryDocument
   '\n  mutation DeleteSystemRegistry($key: String!) {\n    deleteSystemRegistry(key: $key)\n  }\n': typeof types.DeleteSystemRegistryDocument
   '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n    thumbnailUrls {\n      grid\n      preview\n      full\n      original\n      meta\n    }\n  }\n': typeof types.FileInfoFragmentDoc
-  '\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n  }\n': typeof types.FileStatInfoFragmentDoc
+  '\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n    thumbnailUrls {\n      grid\n      preview\n      full\n      original\n      meta\n    }\n  }\n': typeof types.FileStatInfoFragmentDoc
   '\n  query ListFiles(\n    $path: String!\n    $offset: Int\n    $limit: Int\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        ...FileInfo\n      }\n      totalCount\n    }\n  }\n': typeof types.ListFilesDocument
   '\n  query StatFile($path: String!) {\n    statFile(path: $path) {\n      ...FileStatInfo\n    }\n  }\n': typeof types.StatFileDocument
   '\n  mutation UploadFile($path: String!, $content: Upload!) {\n    uploadFile(path: $path, content: $content)\n  }\n': typeof types.UploadFileDocument
@@ -64,7 +64,7 @@ const documents: Documents = {
     types.DeleteSystemRegistryDocument,
   '\n  fragment FileInfo on FileItem {\n    name\n    path\n    size\n    isDirectory\n    thumbnailUrls {\n      grid\n      preview\n      full\n      original\n      meta\n    }\n  }\n':
     types.FileInfoFragmentDoc,
-  '\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n  }\n':
+  '\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n    thumbnailUrls {\n      grid\n      preview\n      full\n      original\n      meta\n    }\n  }\n':
     types.FileStatInfoFragmentDoc,
   '\n  query ListFiles(\n    $path: String!\n    $offset: Int\n    $limit: Int\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        ...FileInfo\n      }\n      totalCount\n    }\n  }\n':
     types.ListFilesDocument,
@@ -177,8 +177,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n  }\n',
-): (typeof documents)['\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n  }\n']
+  source: '\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n    thumbnailUrls {\n      grid\n      preview\n      full\n      original\n      meta\n    }\n  }\n',
+): (typeof documents)['\n  fragment FileStatInfo on FileStat {\n    name\n    path\n    size\n    isDirectory\n    modifiedTime\n    etag\n    thumbnailUrls {\n      grid\n      preview\n      full\n      original\n      meta\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

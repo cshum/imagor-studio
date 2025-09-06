@@ -155,14 +155,22 @@ func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileSta
 		return nil, fmt.Errorf("failed to get file stats: %w", err)
 	}
 
-	return &gql.FileStat{
+	fileStat := &gql.FileStat{
 		Name:         fileInfo.Name,
 		Path:         fileInfo.Path,
 		Size:         int(fileInfo.Size),
 		IsDirectory:  fileInfo.IsDir,
 		ModifiedTime: fileInfo.ModifiedTime.Format(time.RFC3339),
 		Etag:         &fileInfo.ETag,
-	}, nil
+	}
+
+	// Generate thumbnail URLs for image files
+	if !fileInfo.IsDir && r.isImageFile(fileInfo.Name) {
+		thumbnailUrls := r.generateThumbnailUrls(fileInfo.Path)
+		fileStat.ThumbnailUrls = thumbnailUrls
+	}
+
+	return fileStat, nil
 }
 
 // Helper function to check if a file is an image

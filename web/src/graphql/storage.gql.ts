@@ -25,6 +25,13 @@ export const FileStatFragment = gql(`
     isDirectory
     modifiedTime
     etag
+    thumbnailUrls {
+      grid
+      preview
+      full
+      original
+      meta
+    }
   }
 `)
 

@@ -292,6 +292,14 @@
             },
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "thumbnailUrls",
+            "description": null,
+            "args": [],
+            "type": { "kind": "OBJECT", "name": "ThumbnailUrls", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "inputFields": null,

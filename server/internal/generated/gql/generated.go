@@ -59,12 +59,13 @@ type ComplexityRoot struct {
 	}
 
 	FileStat struct {
-		Etag         func(childComplexity int) int
-		IsDirectory  func(childComplexity int) int
-		ModifiedTime func(childComplexity int) int
-		Name         func(childComplexity int) int
-		Path         func(childComplexity int) int
-		Size         func(childComplexity int) int
+		Etag          func(childComplexity int) int
+		IsDirectory   func(childComplexity int) int
+		ModifiedTime  func(childComplexity int) int
+		Name          func(childComplexity int) int
+		Path          func(childComplexity int) int
+		Size          func(childComplexity int) int
+		ThumbnailUrls func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -266,6 +267,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.FileStat.Size(childComplexity), true
+
+	case "FileStat.thumbnailUrls":
+		if e.complexity.FileStat.ThumbnailUrls == nil {
+			break
+		}
+
+		return e.complexity.FileStat.ThumbnailUrls(childComplexity), true
 
 	case "Mutation.changePassword":
 		if e.complexity.Mutation.ChangePassword == nil {
@@ -775,8 +783,8 @@ var sources = []*ast.Source{
 	{Name: "../../../../graphql/storage.graphql", Input: `type Query {
     listFiles(
         path: String!
-        offset: Int = 0
-        limit: Int = 0
+        offset: Int
+        limit: Int
         onlyFiles: Boolean
         onlyFolders: Boolean
         sortBy: SortOption
@@ -888,6 +896,7 @@ type FileStat {
     isDirectory: Boolean!
     modifiedTime: String!
     etag: String
+    thumbnailUrls: ThumbnailUrls
 }
 
 enum SortOption {
@@ -1889,6 +1898,59 @@ func (ec *executionContext) fieldContext_FileStat_etag(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _FileStat_thumbnailUrls(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileStat_thumbnailUrls(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ThumbnailUrls, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ThumbnailUrls)
+	fc.Result = res
+	return ec.marshalOThumbnailUrls2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐThumbnailUrls(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileStat_thumbnailUrls(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileStat",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "grid":
+				return ec.fieldContext_ThumbnailUrls_grid(ctx, field)
+			case "preview":
+				return ec.fieldContext_ThumbnailUrls_preview(ctx, field)
+			case "full":
+				return ec.fieldContext_ThumbnailUrls_full(ctx, field)
+			case "original":
+				return ec.fieldContext_ThumbnailUrls_original(ctx, field)
+			case "meta":
+				return ec.fieldContext_ThumbnailUrls_meta(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ThumbnailUrls", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_uploadFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_uploadFile(ctx, field)
 	if err != nil {
@@ -2657,6 +2719,8 @@ func (ec *executionContext) fieldContext_Query_statFile(ctx context.Context, fie
 				return ec.fieldContext_FileStat_modifiedTime(ctx, field)
 			case "etag":
 				return ec.fieldContext_FileStat_etag(ctx, field)
+			case "thumbnailUrls":
+				return ec.fieldContext_FileStat_thumbnailUrls(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type FileStat", field.Name)
 		},
@@ -6523,6 +6587,8 @@ func (ec *executionContext) _FileStat(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "etag":
 			out.Values[i] = ec._FileStat_etag(ctx, field, obj)
+		case "thumbnailUrls":
+			out.Values[i] = ec._FileStat_thumbnailUrls(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

@@ -59,6 +59,7 @@ export type FileStat = {
   name: Scalars['String']['output']
   path: Scalars['String']['output']
   size: Scalars['Int']['output']
+  thumbnailUrls: Maybe<ThumbnailUrls>
 }
 
 export type Mutation = {
@@ -400,6 +401,14 @@ export type FileStatInfoFragment = {
   isDirectory: boolean
   modifiedTime: string
   etag: string | null
+  thumbnailUrls: {
+    __typename?: 'ThumbnailUrls'
+    grid: string | null
+    preview: string | null
+    full: string | null
+    original: string | null
+    meta: string | null
+  } | null
 }
 
 export type ListFilesQueryVariables = Exact<{
@@ -449,6 +458,14 @@ export type StatFileQuery = {
     isDirectory: boolean
     modifiedTime: string
     etag: string | null
+    thumbnailUrls: {
+      __typename?: 'ThumbnailUrls'
+      grid: string | null
+      preview: string | null
+      full: string | null
+      original: string | null
+      meta: string | null
+    } | null
   } | null
 }
 
@@ -629,6 +646,13 @@ export const FileStatInfoFragmentDoc = gql`
     isDirectory
     modifiedTime
     etag
+    thumbnailUrls {
+      grid
+      preview
+      full
+      original
+      meta
+    }
   }
 `
 export const UserInfoFragmentDoc = gql`
