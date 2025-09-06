@@ -51,10 +51,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   )
   useResizeHandler(updateWidth)
 
-  useEffect(() => {
-    setTimeout(updateWidth, 300)
-  }, [sidebar.open])
-
   const [gridRendered, setGridRendered] = useState(false)
 
   useEffect(() => {
