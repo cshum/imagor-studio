@@ -2,12 +2,12 @@ import { deleteUserRegistry, getUserRegistry, setUserRegistry } from '@/api/regi
 
 import { ConfigStorage } from './config-storage'
 
-export class UserRegistryStorage implements ConfigStorage {
+export class UserRegistryConfigStorage implements ConfigStorage {
   private readonly registryKey: string
   private fallbackStorage: ConfigStorage
 
   constructor(registryKey: string, fallbackStorage: ConfigStorage) {
-    this.registryKey = `user.${registryKey}` // Prefix to avoid conflicts
+    this.registryKey = `config.${registryKey}` // Prefix to avoid conflicts
     this.fallbackStorage = fallbackStorage
   }
 

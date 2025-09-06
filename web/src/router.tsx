@@ -14,7 +14,7 @@ import { AccountLayout } from '@/layouts/account-layout'
 import { BasePanelLayout } from '@/layouts/base-panel-layout'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
-import { UserRegistryStorage } from '@/lib/config-storage/user-registry-storage'
+import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
 import { adminLoader, profileLoader, usersLoader } from '@/loaders/account-loader.ts'
 import { requireAccountAuth, requireAdminAccountAuth, requireAuth } from '@/loaders/auth-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
@@ -214,8 +214,8 @@ const createAppRouter = () => createRouter({ routeTree })
 
 const localThemeStorage = new LocalConfigStorage('theme')
 const localSidebarStorage = new LocalConfigStorage('sidebar_state')
-const userThemeStorage = new UserRegistryStorage('theme', localThemeStorage)
-const userSidebarStorage = new UserRegistryStorage('sidebar_state', localSidebarStorage)
+const userThemeStorage = new UserRegistryConfigStorage('theme', localThemeStorage)
+const userSidebarStorage = new UserRegistryConfigStorage('sidebar_state', localSidebarStorage)
 
 initializeTheme(localThemeStorage, 'class')
 initializeSidebar(localSidebarStorage)
