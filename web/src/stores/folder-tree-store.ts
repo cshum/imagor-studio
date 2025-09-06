@@ -26,6 +26,7 @@ export type FolderTreeAction =
   | { type: 'EXPAND_FOLDER'; path: string }
   | { type: 'COLLAPSE_FOLDER'; path: string }
   | { type: 'SET_FOLDER_CHILDREN'; path: string; children: FolderNode[] }
+  | { type: 'UPDATE_TREE_DATA'; path: string; folders: FolderNode[] }
   | { type: 'SET_LOADING'; path: string; loading: boolean }
   | { type: 'SET_CURRENT_PATH'; path: string }
   | { type: 'SET_LOADED'; payload: { isLoaded: boolean } }
@@ -105,6 +106,54 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
                 })),
                 isLoaded: true,
                 isExpanded: true,
+              }
+            : folder.children
+              ? { ...folder, children: updateFolder(folder.children) }
+              : folder,
+        )
+
+      return {
+        ...state,
+        rootFolders: updateFolder(state.rootFolders),
+      }
+    }
+
+    case 'UPDATE_TREE_DATA': {
+      // Handle root level updates
+      if (action.path === '' || action.path === 'default') {
+        return {
+          ...state,
+          rootFolders: action.folders.map((newFolder) => {
+            // Preserve expanded state and children from existing folder if it exists
+            const existingFolder = state.rootFolders.find((f) => f.path === newFolder.path)
+            return {
+              ...newFolder,
+              isLoaded: existingFolder?.isLoaded || false,
+              isExpanded: existingFolder?.isExpanded || false,
+              children: existingFolder?.children,
+            }
+          }),
+          isRootFoldersLoaded: true,
+        }
+      }
+
+      // Handle nested folder updates
+      const updateFolder = (folders: FolderNode[]): FolderNode[] =>
+        folders.map((folder) =>
+          folder.path === action.path
+            ? {
+                ...folder,
+                children: action.folders.map((newChild) => {
+                  // Preserve expanded state and children from existing child if it exists
+                  const existingChild = folder.children?.find((c) => c.path === newChild.path)
+                  return {
+                    ...newChild,
+                    isLoaded: existingChild?.isLoaded || false,
+                    isExpanded: existingChild?.isExpanded || false,
+                    children: existingChild?.children,
+                  }
+                }),
+                isLoaded: true,
               }
             : folder.children
               ? { ...folder, children: updateFolder(folder.children) }
@@ -239,6 +288,7 @@ export const initializeFolderTreeCache = async (
       action.type === 'EXPAND_FOLDER' ||
       action.type === 'COLLAPSE_FOLDER' ||
       action.type === 'SET_FOLDER_CHILDREN' ||
+      action.type === 'UPDATE_TREE_DATA' ||
       action.type === 'SET_CURRENT_PATH'
     ) {
       debouncedSaveToStorage()
@@ -319,6 +369,10 @@ export const setHomeTitle = (title: string) => {
 
 export const setCurrentPath = (path: string) => {
   folderTreeStore.dispatch({ type: 'SET_CURRENT_PATH', path })
+}
+
+export const updateTreeData = (path: string, folders: FolderNode[]) => {
+  folderTreeStore.dispatch({ type: 'UPDATE_TREE_DATA', path, folders })
 }
 
 /**

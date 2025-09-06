@@ -4,7 +4,12 @@ import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
-import { folderTreeStore, setCurrentPath } from '@/stores/folder-tree-store.ts'
+import {
+  FolderNode,
+  folderTreeStore,
+  setCurrentPath,
+  updateTreeData,
+} from '@/stores/folder-tree-store.ts'
 
 export interface GalleryLoaderData {
   galleryName: string
@@ -28,9 +33,6 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
   // Use galleryKey as the path for storage API
   const path = galleryKey === 'default' ? '' : galleryKey
 
-  // Set current path in folder tree store
-  setCurrentPath(galleryKey)
-
   // Fetch files from storage API
   const result = await listFiles({
     path,
@@ -45,6 +47,21 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
       galleryKey: item.path,
       galleryName: item.name,
     }))
+
+  // Convert gallery folders to folder nodes for the tree store
+  const folderNodes: FolderNode[] = folders.map((folder) => ({
+    name: folder.galleryName,
+    path: folder.galleryKey,
+    isDirectory: true,
+    isLoaded: false,
+    isExpanded: false,
+  }))
+
+  // Update folder tree store with fresh data while preserving toggle states
+  updateTreeData(path, folderNodes)
+
+  // Set current path in folder tree store
+  setCurrentPath(galleryKey)
 
   // Filter and convert image files
   const images: GalleryImage[] = result.items
