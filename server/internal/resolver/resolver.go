@@ -9,8 +9,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const SystemOwnerID = "system"
-
 // ConfigProvider interface for configuration methods used by the resolver
 type ConfigProvider interface {
 	GetByRegistryKey(registryKey string) (effectiveValue string, exists bool)
