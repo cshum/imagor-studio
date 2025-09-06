@@ -127,7 +127,7 @@ export const imageLoader = async ({
   const result = await listFiles({
     path,
     offset: 0,
-    limit: 1000,
+    limit: 0,
     sortBy: 'NAME',
     sortOrder: 'ASC',
   })
