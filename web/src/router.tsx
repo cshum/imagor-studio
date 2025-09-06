@@ -12,6 +12,9 @@ import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { AccountLayout } from '@/layouts/account-layout'
 import { BasePanelLayout } from '@/layouts/base-panel-layout'
+import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
+import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
+import { UserRegistryStorage } from '@/lib/config-storage/user-registry-storage'
 import { adminLoader, profileLoader, usersLoader } from '@/loaders/account-loader.ts'
 import { requireAccountAuth, requireAdminAccountAuth, requireAuth } from '@/loaders/auth-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
@@ -22,9 +25,15 @@ import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
 import { UsersPage } from '@/pages/users-page'
-import { authStore, useAuthEffect } from '@/stores/auth-store.ts'
-import { loadHomeTitle, loadRootFolders } from '@/stores/folder-tree-store.ts'
-import { themeStore } from '@/stores/theme-store.ts'
+import { authStore, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
+import {
+  initializeFolderTreeCache,
+  loadHomeTitle,
+  loadRootFolders,
+} from '@/stores/folder-tree-store.ts'
+import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
+import { initializeSidebar } from '@/stores/sidebar-store.ts'
+import { initializeTheme, themeStore } from '@/stores/theme-store.ts'
 
 const rootRoute = createRootRoute({
   beforeLoad: async () => {
@@ -203,14 +212,31 @@ const routeTree = rootRoute.addChildren([
 
 const createAppRouter = () => createRouter({ routeTree })
 
+const localThemeStorage = new LocalConfigStorage('theme')
+const localSidebarStorage = new LocalConfigStorage('sidebar_state')
+const userThemeStorage = new UserRegistryStorage('theme', localThemeStorage)
+const userSidebarStorage = new UserRegistryStorage('sidebar_state', localSidebarStorage)
+
+initializeTheme(localThemeStorage, 'class')
+initializeSidebar(localSidebarStorage)
+initializeScrollPositions(new SessionConfigStorage('scroll_positions'))
+initializeFolderTreeCache(new SessionConfigStorage('folder_tree'))
+initAuth()
+
 export function AppRouter() {
   const router = useMemo(() => createAppRouter(), [])
-  useAuthEffect((_, action) => {
+
+  useAuthEffect((authState, action) => {
     if (action.type === 'INIT') {
+      if (authState.state === 'authenticated') {
+        initializeTheme(userThemeStorage, 'class')
+        initializeSidebar(userSidebarStorage)
+      }
       loadRootFolders()
       loadHomeTitle()
     } else if (action.type === 'LOGOUT') {
-      // Handle logout if needed
+      initializeTheme(localThemeStorage, 'class')
+      initializeSidebar(localSidebarStorage)
     }
   })
   return <RouterProvider router={router} />
