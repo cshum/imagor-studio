@@ -29,8 +29,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const sidebar = useSidebar()
 
   const isDesktop = useBreakpoint('md')
-
-  const maxItemWidth = 280
+  const maxItemWidth = 250
 
   const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
     containerRef,
@@ -101,7 +100,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                   aspectRatio={4 / 3}
                   width={contentWidth}
                   scrollTop={scrollPosition}
-                  maxImageWidth={250}
+                  maxImageWidth={maxItemWidth}
                   isScrolling={isScrolling}
                   onRendered={() => setGridRendered(true)}
                   onImageClick={handleImageClick}
