@@ -1,4 +1,5 @@
 import { listFiles } from '@/api/storage-api'
+import { ConfigStorage } from '@/lib/config-storage/config-storage'
 import { createStore } from '@/lib/create-store'
 
 export interface FolderNode {
@@ -14,6 +15,7 @@ export interface FolderTreeState {
   rootFolders: FolderNode[]
   loadingPaths: Set<string>
   currentPath: string
+  isLoaded: boolean
 }
 
 export type FolderTreeAction =
@@ -23,12 +25,15 @@ export type FolderTreeAction =
   | { type: 'SET_FOLDER_CHILDREN'; path: string; children: FolderNode[] }
   | { type: 'SET_LOADING'; path: string; loading: boolean }
   | { type: 'SET_CURRENT_PATH'; path: string }
+  | { type: 'SET_LOADED'; payload: { isLoaded: boolean } }
+  | { type: 'LOAD_TREE_STATE'; payload: { rootFolders: FolderNode[]; currentPath: string } }
   | { type: 'LOAD_ROOT_FOLDERS' }
 
 const initialState: FolderTreeState = {
   rootFolders: [],
   loadingPaths: new Set(),
   currentPath: '',
+  isLoaded: false,
 }
 
 function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): FolderTreeState {
@@ -36,11 +41,16 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
     case 'SET_ROOT_FOLDERS':
       return {
         ...state,
-        rootFolders: action.folders.map((folder) => ({
-          ...folder,
-          isLoaded: false,
-          isExpanded: false,
-        })),
+        rootFolders: action.folders.map((folder) => {
+          // Preserve expanded state from cache if it exists
+          const existingFolder = state.rootFolders.find((f) => f.path === folder.path)
+          return {
+            ...folder,
+            isLoaded: existingFolder?.isLoaded || false,
+            isExpanded: existingFolder?.isExpanded || false,
+            children: existingFolder?.children,
+          }
+        }),
       }
 
     case 'EXPAND_FOLDER': {
@@ -120,6 +130,20 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
         currentPath: action.path,
       }
 
+    case 'SET_LOADED':
+      return {
+        ...state,
+        isLoaded: action.payload.isLoaded,
+      }
+
+    case 'LOAD_TREE_STATE':
+      return {
+        ...state,
+        rootFolders: action.payload.rootFolders,
+        currentPath: action.payload.currentPath,
+        isLoaded: true,
+      }
+
     case 'LOAD_ROOT_FOLDERS':
       return state // This will be handled by the async action
 
@@ -129,6 +153,81 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
 }
 
 export const folderTreeStore = createStore(initialState, folderTreeReducer)
+
+// Storage management
+let storage: ConfigStorage | null = null
+let saveTimeout: number | null = null
+let saveDelay: number = 300
+
+/**
+ * Debounced save to storage
+ */
+const debouncedSaveToStorage = async () => {
+  if (!storage) return
+
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+  }
+
+  saveTimeout = window.setTimeout(async () => {
+    const state = folderTreeStore.getState()
+    const treeState = {
+      rootFolders: state.rootFolders,
+      currentPath: state.currentPath,
+    }
+    const treeStateJson = JSON.stringify(treeState)
+    await storage?.set(treeStateJson)
+  }, saveDelay)
+}
+
+/**
+ * Initialize folder tree system with storage
+ */
+export const initializeFolderTreeCache = async (
+  configStorage: ConfigStorage,
+  debounceDelay: number = 300,
+) => {
+  storage = configStorage
+  saveDelay = debounceDelay
+
+  try {
+    const savedTreeState = await storage.get()
+    if (savedTreeState) {
+      const treeState = JSON.parse(savedTreeState)
+      folderTreeStore.dispatch({
+        type: 'LOAD_TREE_STATE',
+        payload: {
+          rootFolders: treeState.rootFolders || [],
+          currentPath: treeState.currentPath || '',
+        },
+      })
+    } else {
+      folderTreeStore.dispatch({
+        type: 'SET_LOADED',
+        payload: { isLoaded: true },
+      })
+    }
+  } catch {
+    // Failed to load from storage - continue with empty state
+    folderTreeStore.dispatch({
+      type: 'SET_LOADED',
+      payload: { isLoaded: true },
+    })
+  }
+
+  // Set up auto-save subscription for tree state changes
+  folderTreeStore.subscribe((_, action) => {
+    if (
+      action.type === 'SET_ROOT_FOLDERS' ||
+      action.type === 'EXPAND_FOLDER' ||
+      action.type === 'COLLAPSE_FOLDER' ||
+      action.type === 'SET_FOLDER_CHILDREN' ||
+      action.type === 'SET_CURRENT_PATH'
+    ) {
+      debouncedSaveToStorage()
+    }
+  })
+}
 
 // Async actions
 export const loadRootFolders = async () => {
@@ -151,8 +250,8 @@ export const loadRootFolders = async () => {
     }))
 
     folderTreeStore.dispatch({ type: 'SET_ROOT_FOLDERS', folders })
-  } catch (error) {
-    console.error('Failed to load root folders:', error)
+  } catch {
+    // Failed to load root folders - silently continue
   } finally {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path: '', loading: false })
   }
@@ -178,11 +277,49 @@ export const loadFolderChildren = async (path: string) => {
     }))
 
     folderTreeStore.dispatch({ type: 'SET_FOLDER_CHILDREN', path, children })
-  } catch (error) {
-    console.error(`Failed to load children for ${path}:`, error)
+  } catch {
+    // Failed to load folder children - silently continue
   } finally {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path, loading: false })
   }
+}
+
+/**
+ * Force immediate save to storage (bypasses debounce)
+ */
+export const forceSave = async () => {
+  if (!storage) return
+
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+    saveTimeout = null
+  }
+
+  const state = folderTreeStore.getState()
+  const treeState = {
+    rootFolders: state.rootFolders,
+    currentPath: state.currentPath,
+  }
+  const treeStateJson = JSON.stringify(treeState)
+  await storage.set(treeStateJson)
+}
+
+/**
+ * Check if folder tree is loaded
+ */
+export const isLoaded = (): boolean => {
+  return folderTreeStore.getState().isLoaded
+}
+
+/**
+ * Cleanup folder tree system
+ */
+export const cleanup = () => {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+    saveTimeout = null
+  }
+  storage = null
 }
 
 // Hook to use the folder tree store
@@ -194,5 +331,7 @@ export const useFolderTree = () => {
     dispatch: folderTreeStore.dispatch,
     loadRootFolders,
     loadFolderChildren,
+    forceSave,
+    isLoaded,
   }
 }
