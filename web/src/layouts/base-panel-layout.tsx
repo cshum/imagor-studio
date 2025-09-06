@@ -1,14 +1,14 @@
 import { PropsWithChildren } from 'react'
 
 import { FolderTreeSidebar } from '@/components/folder-tree/folder-tree-sidebar'
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { SidebarInset, SidebarWrapper } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 
 type BasePanelLayoutProps = PropsWithChildren
 
 export function BasePanelLayout({ children }: BasePanelLayoutProps) {
   return (
-    <SidebarProvider>
+    <SidebarWrapper>
       <FolderTreeSidebar />
       <SidebarInset>
         <main
@@ -19,6 +19,6 @@ export function BasePanelLayout({ children }: BasePanelLayoutProps) {
           {children}
         </main>
       </SidebarInset>
-    </SidebarProvider>
+    </SidebarWrapper>
   )
 }
