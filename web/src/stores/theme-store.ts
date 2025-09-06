@@ -157,28 +157,6 @@ export const setTheme = async (theme: Theme) => {
   updateResolvedTheme()
   await storage?.set(theme)
 }
-
-/**
- * Get current theme state
- */
-export const getTheme = (): Theme => {
-  return themeStore.getState().theme
-}
-
-/**
- * Get resolved theme (actual applied theme)
- */
-export const getResolvedTheme = (): 'light' | 'dark' => {
-  return themeStore.getState().resolvedTheme
-}
-
-/**
- * Check if theme is loaded
- */
-export const isLoaded = (): boolean => {
-  return themeStore.getState().isLoaded
-}
-
 /**
  * Reset theme to system default and clear storage
  */
