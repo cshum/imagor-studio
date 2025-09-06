@@ -29,7 +29,9 @@ function SidebarWrapper({ className, style, children, ...props }: React.Componen
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
         event.preventDefault()
-        toggleSidebar()
+        // Calculate mobile state for keyboard shortcut
+        const isMobile = window.innerWidth < 768
+        toggleSidebar(isMobile)
       }
     }
 

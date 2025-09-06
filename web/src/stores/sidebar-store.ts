@@ -1,20 +1,16 @@
-import { useEffect } from 'react'
-
-import { useIsMobile } from '@/hooks/use-mobile'
+import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
 import { createStore } from '@/lib/create-store'
 
 export interface SidebarState {
   open: boolean
   openMobile: boolean
-  isMobile: boolean
   isLoaded: boolean
 }
 
 export type SidebarAction =
   | { type: 'SET_OPEN'; payload: { open: boolean } }
   | { type: 'SET_OPEN_MOBILE'; payload: { openMobile: boolean } }
-  | { type: 'SET_IS_MOBILE'; payload: { isMobile: boolean } }
   | { type: 'SET_LOADED'; payload: { isLoaded: boolean } }
   | { type: 'TOGGLE' }
   | { type: 'TOGGLE_MOBILE' }
@@ -22,7 +18,6 @@ export type SidebarAction =
 const initialState: SidebarState = {
   open: false, // Closed by default
   openMobile: false, // Mobile sidebar also closed by default
-  isMobile: false, // Will be detected on initialization
   isLoaded: false, // Loading state for storage
 }
 
@@ -38,12 +33,6 @@ const reducer = (state: SidebarState, action: SidebarAction): SidebarState => {
       return {
         ...state,
         openMobile: action.payload.openMobile,
-      }
-
-    case 'SET_IS_MOBILE':
-      return {
-        ...state,
-        isMobile: action.payload.isMobile,
       }
 
     case 'SET_LOADED':
@@ -107,10 +96,11 @@ export const initializeSidebar = async (configStorage: ConfigStorage) => {
 /**
  * Set sidebar open state
  */
-export const setSidebarOpen = async (open: boolean) => {
-  const state = sidebarStore.getState()
+export const setSidebarOpen = async (open: boolean, isMobile?: boolean) => {
+  // Calculate isMobile if not provided
+  const mobile = isMobile ?? (typeof window !== 'undefined' && window.innerWidth < 768)
 
-  if (state.isMobile) {
+  if (mobile) {
     sidebarStore.dispatch({
       type: 'SET_OPEN_MOBILE',
       payload: { openMobile: open },
@@ -129,10 +119,11 @@ export const setSidebarOpen = async (open: boolean) => {
 /**
  * Toggle sidebar
  */
-export const toggleSidebar = async () => {
-  const state = sidebarStore.getState()
+export const toggleSidebar = async (isMobile?: boolean) => {
+  // Calculate isMobile if not provided
+  const mobile = isMobile ?? (typeof window !== 'undefined' && window.innerWidth < 768)
 
-  if (state.isMobile) {
+  if (mobile) {
     sidebarStore.dispatch({ type: 'TOGGLE_MOBILE' })
   } else {
     sidebarStore.dispatch({ type: 'TOGGLE' })
@@ -141,16 +132,6 @@ export const toggleSidebar = async () => {
     const newState = sidebarStore.getState()
     await storage?.set(newState.open.toString())
   }
-}
-
-/**
- * Set mobile state
- */
-export const setIsMobile = (isMobile: boolean) => {
-  sidebarStore.dispatch({
-    type: 'SET_IS_MOBILE',
-    payload: { isMobile },
-  })
 }
 
 /**
@@ -187,21 +168,16 @@ export const cleanup = () => {
 // Hook for components to use the sidebar store
 export const useSidebar = () => {
   const state = sidebarStore.useStore()
-  const isMobile = useIsMobile()
-
-  // Update mobile state in store when it changes
-  useEffect(() => {
-    setIsMobile(isMobile)
-  }, [isMobile])
+  const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
 
   return {
     open: state.open,
     openMobile: state.openMobile,
-    isMobile: state.isMobile,
+    isMobile,
     isLoaded: state.isLoaded,
     state: state.open ? 'expanded' : 'collapsed',
-    setOpen: setSidebarOpen,
-    setOpenMobile: (open: boolean) => setSidebarOpen(open),
-    toggleSidebar,
+    setOpen: (open: boolean) => setSidebarOpen(open, isMobile),
+    setOpenMobile: (open: boolean) => setSidebarOpen(open, true),
+    toggleSidebar: () => toggleSidebar(isMobile),
   }
 }
