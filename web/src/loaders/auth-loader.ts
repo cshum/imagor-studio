@@ -1,4 +1,5 @@
 import { redirect } from '@tanstack/react-router'
+
 import { authStore } from '@/stores/auth-store'
 
 /**
@@ -7,7 +8,7 @@ import { authStore } from '@/stores/auth-store'
  */
 export const requireAuth = async () => {
   const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
-  
+
   if (currentAuth.state === 'unauthenticated') {
     if (!currentAuth.isFirstRun) {
       throw redirect({ to: '/login' })
@@ -15,7 +16,7 @@ export const requireAuth = async () => {
       throw redirect({ to: '/admin-setup' })
     }
   }
-  
+
   return currentAuth
 }
 
@@ -25,7 +26,7 @@ export const requireAuth = async () => {
  */
 export const requireAccountAuth = async () => {
   const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
-  
+
   if (currentAuth.state !== 'authenticated') {
     if (!currentAuth.isFirstRun) {
       throw redirect({ to: '/login' })
@@ -33,7 +34,7 @@ export const requireAccountAuth = async () => {
       throw redirect({ to: '/admin-setup' })
     }
   }
-  
+
   return currentAuth
 }
 
