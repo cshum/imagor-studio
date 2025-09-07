@@ -138,11 +138,31 @@ export function ImageView({
   }
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const swipePower = Math.abs(info.offset.x) * info.velocity.x
-    if (swipePower < -SWIPE_CONFIDENCE_THRESHOLD && onNextImage) {
-      handleNextImage()
-    } else if (swipePower > SWIPE_CONFIDENCE_THRESHOLD && onPrevImage) {
-      handlePrevImage()
+    const horizontalSwipePower = Math.abs(info.offset.x) * info.velocity.x
+    const verticalSwipePower = Math.abs(info.offset.y) * info.velocity.y
+
+    // Handle horizontal swipes for navigation (only when not zoomed and navigation is available)
+    if (scale <= 1 && (onPrevImage || onNextImage)) {
+      if (horizontalSwipePower < -SWIPE_CONFIDENCE_THRESHOLD && onNextImage) {
+        handleNextImage()
+        setTimeout(() => setIsDragging(false), 100)
+        return
+      } else if (horizontalSwipePower > SWIPE_CONFIDENCE_THRESHOLD && onPrevImage) {
+        handlePrevImage()
+        setTimeout(() => setIsDragging(false), 100)
+        return
+      }
+    }
+    // Handle vertical swipes for info or closing (only when not zoomed)
+    if (scale <= 1 && verticalSwipePower < -SWIPE_CONFIDENCE_THRESHOLD) {
+      toggleInfo()
+      setTimeout(() => setIsDragging(false), 100)
+      return
+    }
+    if (scale <= 1 && verticalSwipePower > SWIPE_CONFIDENCE_THRESHOLD) {
+      handleCloseFullView()
+      setTimeout(() => setIsDragging(false), 100)
+      return
     }
     // Reset dragging state after a short delay to prevent onClick from firing
     setTimeout(() => setIsDragging(false), 100)
@@ -347,13 +367,13 @@ export function ImageView({
               <motion.div
                 className='absolute top-0 right-0 bottom-0 left-0 z-1'
                 onClick={handleOverlayClick}
-                drag={onPrevImage || onNextImage ? 'x' : false}
-                dragConstraints={{ left: 0, right: 0 }}
+                drag={onPrevImage || onNextImage ? true : 'y'}
+                dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
                 dragElastic={0.2}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 style={{
-                  cursor: onPrevImage || onNextImage ? 'grab' : 'default',
+                  cursor: 'grab',
                 }}
                 whileDrag={{
                   cursor: 'grabbing',
