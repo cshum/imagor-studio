@@ -308,6 +308,46 @@
         "possibleTypes": null
       },
       {
+        "kind": "INPUT_OBJECT",
+        "name": "FileStorageInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "baseDir",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "mkdirPermissions",
+            "description": null,
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "writePermissions",
+            "description": null,
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "SCALAR",
         "name": "ID",
         "description": "The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `\"4\"`) or integer (such as `4`) input value will be accepted as an ID.",
@@ -379,6 +419,56 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": { "kind": "SCALAR", "name": "Boolean", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "configureFileStorage",
+            "description": null,
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": { "kind": "INPUT_OBJECT", "name": "FileStorageInput", "ofType": null }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "OBJECT", "name": "StorageConfigResult", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "configureS3Storage",
+            "description": null,
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": { "kind": "INPUT_OBJECT", "name": "S3StorageInput", "ofType": null }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "OBJECT", "name": "StorageConfigResult", "ofType": null }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -663,6 +753,31 @@
                   "ofType": { "kind": "OBJECT", "name": "UserRegistry", "ofType": null }
                 }
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "testStorageConfig",
+            "description": null,
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": { "kind": "INPUT_OBJECT", "name": "StorageConfigInput", "ofType": null }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "OBJECT", "name": "StorageTestResult", "ofType": null }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -1016,6 +1131,18 @@
             "deprecationReason": null
           },
           {
+            "name": "storageStatus",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "OBJECT", "name": "StorageStatus", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "user",
             "description": null,
             "args": [
@@ -1120,6 +1247,78 @@
         "possibleTypes": null
       },
       {
+        "kind": "INPUT_OBJECT",
+        "name": "S3StorageInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "accessKeyId",
+            "description": null,
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "baseDir",
+            "description": null,
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "bucket",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "endpoint",
+            "description": null,
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "region",
+            "description": null,
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "secretAccessKey",
+            "description": null,
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sessionToken",
+            "description": null,
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "ENUM",
         "name": "SortOption",
         "description": null,
@@ -1150,6 +1349,212 @@
         "enumValues": [
           { "name": "ASC", "description": null, "isDeprecated": false, "deprecationReason": null },
           { "name": "DESC", "description": null, "isDeprecated": false, "deprecationReason": null }
+        ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "StorageConfigInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "fileConfig",
+            "description": null,
+            "type": { "kind": "INPUT_OBJECT", "name": "FileStorageInput", "ofType": null },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "s3Config",
+            "description": null,
+            "type": { "kind": "INPUT_OBJECT", "name": "S3StorageInput", "ofType": null },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "type",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "ENUM", "name": "StorageType", "ofType": null }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "StorageConfigResult",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "message",
+            "description": null,
+            "args": [],
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "restartRequired",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "Boolean", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "success",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "Boolean", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "timestamp",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "StorageStatus",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "configured",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "Boolean", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "lastUpdated",
+            "description": null,
+            "args": [],
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "restartRequired",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "Boolean", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "type",
+            "description": null,
+            "args": [],
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "StorageTestResult",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "details",
+            "description": null,
+            "args": [],
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "message",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "success",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "Boolean", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "StorageType",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          { "name": "FILE", "description": null, "isDeprecated": false, "deprecationReason": null },
+          { "name": "S3", "description": null, "isDeprecated": false, "deprecationReason": null }
         ],
         "possibleTypes": null
       },

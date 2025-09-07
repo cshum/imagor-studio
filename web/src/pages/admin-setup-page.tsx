@@ -7,6 +7,7 @@ import * as z from 'zod'
 
 import { registerAdmin } from '@/api/auth-api'
 import { setSystemRegistryObject } from '@/api/registry-api'
+import { StorageConfigurationWizard } from '@/components/storage/storage-configuration-wizard'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import {
   Form,
@@ -101,24 +102,32 @@ export function AdminSetupPage() {
 
       if (Object.keys(changedValues).length > 0) {
         await setSystemRegistryObject(changedValues)
-        toast.success('Setup completed successfully!')
-      } else {
-        toast.success('Welcome to Imagor Studio!')
       }
 
-      // Direct redirect to homepage
-      navigate({ to: '/' })
       return true
-    } catch (err) {
-      toast.error('Failed to save settings, but setup is complete')
-      navigate({ to: '/' })
-      return true
+    } catch {
+      toast.error('Failed to save settings')
+      return false
     }
   }
 
   const handleSkipSettings = () => {
-    toast.success('Welcome to Imagor Studio!')
+    return true
+  }
+
+  const handleStorageConfigured = (restartRequired: boolean) => {
+    if (restartRequired) {
+      toast.success('Storage configured successfully! Please restart the server to apply changes.')
+    } else {
+      toast.success('Storage configured successfully!')
+    }
     navigate({ to: '/' })
+  }
+
+  const handleSkipStorage = () => {
+    toast.success('Welcome to Imagor Studio! You can configure storage later in the admin panel.')
+    navigate({ to: '/' })
+    return true
   }
 
   if (!authState.isFirstRun) {
@@ -205,6 +214,32 @@ export function AdminSetupPage() {
       onSkip: handleSkipSettings,
       canSkip: true,
       skipLabel: 'Skip for Now',
+      nextLabel: 'Next',
+      hideBack: true,
+    },
+    {
+      id: 'storage',
+      title: 'Storage Configuration',
+      content: (
+        <div className='space-y-6'>
+          <div className='space-y-2 text-center'>
+            <p className='text-muted-foreground'>
+              Configure where your images will be stored. You can skip this step and configure
+              storage later.
+            </p>
+          </div>
+          <StorageConfigurationWizard
+            title=''
+            description=''
+            onSuccess={handleStorageConfigured}
+            showCancel={false}
+          />
+        </div>
+      ),
+      onNext: () => true,
+      onSkip: handleSkipStorage,
+      canSkip: true,
+      skipLabel: 'Skip Storage Setup',
       nextLabel: 'Complete Setup',
       hideBack: true,
     },

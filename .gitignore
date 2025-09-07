@@ -39,7 +39,6 @@ web/.env.local
 # Storage directories (runtime data)
 server/storage/
 data/
-storage/
 test-data/
 
 # Temporary files

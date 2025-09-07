@@ -1,4 +1,8 @@
 import type {
+  ConfigureFileStorageMutation,
+  ConfigureFileStorageMutationVariables,
+  ConfigureS3StorageMutation,
+  ConfigureS3StorageMutationVariables,
   CreateFolderMutation,
   CreateFolderMutationVariables,
   DeleteFileMutation,
@@ -9,6 +13,9 @@ import type {
   SortOrder,
   StatFileQuery,
   StatFileQueryVariables,
+  StorageStatusQuery,
+  TestStorageConfigMutation,
+  TestStorageConfigMutationVariables,
   UploadFileMutation,
   UploadFileMutationVariables,
 } from '@/generated/graphql'
@@ -112,4 +119,46 @@ export async function listFilesPaginated(params: {
     hasNextPage: offset + pageSize < result.totalCount,
     hasPreviousPage: page > 1,
   }
+}
+
+/**
+ * Get storage status
+ */
+export async function getStorageStatus(): Promise<StorageStatusQuery['storageStatus']> {
+  const sdk = getSdk(getGraphQLClient())
+  const result = await sdk.StorageStatus()
+  return result.storageStatus
+}
+
+/**
+ * Configure file storage
+ */
+export async function configureFileStorage(
+  variables: ConfigureFileStorageMutationVariables,
+): Promise<ConfigureFileStorageMutation['configureFileStorage']> {
+  const sdk = getSdk(getGraphQLClient())
+  const result = await sdk.ConfigureFileStorage(variables)
+  return result.configureFileStorage
+}
+
+/**
+ * Configure S3 storage
+ */
+export async function configureS3Storage(
+  variables: ConfigureS3StorageMutationVariables,
+): Promise<ConfigureS3StorageMutation['configureS3Storage']> {
+  const sdk = getSdk(getGraphQLClient())
+  const result = await sdk.ConfigureS3Storage(variables)
+  return result.configureS3Storage
+}
+
+/**
+ * Test storage configuration
+ */
+export async function testStorageConfig(
+  variables: TestStorageConfigMutationVariables,
+): Promise<TestStorageConfigMutation['testStorageConfig']> {
+  const sdk = getSdk(getGraphQLClient())
+  const result = await sdk.TestStorageConfig(variables)
+  return result.testStorageConfig
 }
