@@ -57,7 +57,7 @@ export function AdminPage({ loaderData }: AdminPageProps) {
         systemRegistryList={loaderData?.systemRegistryList || []}
       />
 
-      <StorageManagementSection />
+      <StorageManagementSection initialStorageStatus={loaderData?.storageStatus || null} />
     </div>
   )
 }

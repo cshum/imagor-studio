@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 import { getStorageStatus } from '@/api/storage-api'
@@ -10,12 +11,17 @@ import type { StorageStatusQuery } from '@/generated/graphql'
 
 import { StorageConfigurationWizard } from './storage-configuration-wizard'
 
-export function StorageManagementSection() {
+interface StorageManagementSectionProps {
+  initialStorageStatus: StorageStatusQuery['storageStatus'] | null
+}
+
+export function StorageManagementSection({ initialStorageStatus }: StorageManagementSectionProps) {
   const [storageStatus, setStorageStatus] = useState<StorageStatusQuery['storageStatus'] | null>(
-    null,
+    initialStorageStatus,
   )
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [showConfigDialog, setShowConfigDialog] = useState(false)
+  const router = useRouter()
 
   const loadStorageStatus = async () => {
     try {
@@ -30,10 +36,6 @@ export function StorageManagementSection() {
     }
   }
 
-  useEffect(() => {
-    loadStorageStatus()
-  }, [])
-
   const handleStorageConfigured = (restartRequired: boolean) => {
     setShowConfigDialog(false)
     if (restartRequired) {
@@ -41,8 +43,8 @@ export function StorageManagementSection() {
     } else {
       toast.success('Storage configured successfully!')
     }
-    // Reload storage status
-    loadStorageStatus()
+    // Invalidate the loader data to get fresh storage status
+    router.invalidate()
   }
 
   const getStorageTypeDisplay = (type: string | null) => {
