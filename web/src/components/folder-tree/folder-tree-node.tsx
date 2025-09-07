@@ -5,6 +5,7 @@ import { ChevronRight, Folder } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSub } from '@/components/ui/sidebar'
 import { FolderNode, useFolderTree } from '@/stores/folder-tree-store'
+import { useSidebar } from '@/stores/sidebar-store'
 
 interface FolderTreeNodeProps {
   folder: FolderNode
@@ -13,6 +14,7 @@ interface FolderTreeNodeProps {
 export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
   const navigate = useNavigate()
   const { currentPath, dispatch, loadFolderChildren } = useFolderTree()
+  const { isMobile, setOpenMobile } = useSidebar()
 
   const isActive = currentPath === folder.path
   const hasChildren = folder.children && folder.children.length > 0
@@ -24,6 +26,11 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
       navigate({ to: '/' })
     } else {
       navigate({ to: '/gallery/$galleryKey', params: { galleryKey: folder.path } })
+    }
+
+    // Close mobile sidebar when navigating on mobile
+    if (isMobile) {
+      setOpenMobile(false)
     }
 
     // Update current path

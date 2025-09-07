@@ -15,15 +15,24 @@ import {
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useFolderTree } from '@/stores/folder-tree-store'
+import { useSidebar } from '@/stores/sidebar-store'
 
 import { FolderTreeNode } from './folder-tree-node'
 
 export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { rootFolders, loadingPaths, homeTitle } = useFolderTree()
+  const { isMobile, setOpenMobile } = useSidebar()
   const routerState = useRouterState()
 
   const isLoadingRoot = loadingPaths.has('')
   const isOnHomePage = routerState.location.pathname === '/'
+
+  const handleHomeClick = () => {
+    // Close mobile sidebar when navigating to home on mobile
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
 
   return (
     <Sidebar {...props}>
@@ -35,7 +44,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
               {/* Home Link as first item */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={isOnHomePage}>
-                  <Link to='/'>
+                  <Link to='/' onClick={handleHomeClick}>
                     <Home className='h-4 w-4' />
                     <span>{homeTitle}</span>
                   </Link>
