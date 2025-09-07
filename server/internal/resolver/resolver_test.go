@@ -162,5 +162,10 @@ func (m *MockStorageProvider) IsRestartRequired() bool {
 	return false // Default to false for tests
 }
 
+func (m *MockStorageProvider) ReloadFromRegistry() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
 // Ensure MockStorageProvider implements the StorageProvider interface
 var _ StorageProvider = (*MockStorageProvider)(nil)

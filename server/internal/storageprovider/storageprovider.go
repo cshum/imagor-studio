@@ -172,6 +172,36 @@ func (p *Provider) IsRestartRequired() bool {
 	return configUpdatedAt > p.configLoadedAt
 }
 
+// ReloadFromRegistry forces a reload of storage configuration from registry
+func (p *Provider) ReloadFromRegistry() error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	// Check if storage is configured in registry
+	if !p.isStorageConfiguredInRegistry() {
+		p.logger.Info("No storage configuration found in registry, keeping NoOp storage")
+		return nil
+	}
+
+	// Try to create storage from registry configuration
+	cfg, err := p.buildConfigFromRegistry()
+	if err != nil {
+		return fmt.Errorf("failed to build config from registry: %w", err)
+	}
+
+	s, err := p.NewStorageFromConfig(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to create storage from registry config: %w", err)
+	}
+
+	p.currentStorage = s
+	p.storageState = StorageStateConfigured
+	p.configLoadedAt = time.Now().UnixMilli()
+	p.logger.Info("Storage reloaded from registry", zap.String("type", cfg.StorageType))
+
+	return nil
+}
+
 // loadStorageFromRegistry attempts to load storage configuration from registry
 func (p *Provider) loadStorageFromRegistry() storage.Storage {
 	p.mutex.Lock()
@@ -216,22 +246,29 @@ func (p *Provider) isStorageConfiguredInRegistry() bool {
 // getRegistryValue gets a value from the registry
 func (p *Provider) getRegistryValue(key string) (string, bool) {
 	if p.registryStore == nil {
+		p.logger.Error("registryStore is nil in storage provider getRegistryValue")
 		return "", false
 	}
 
 	// Add defensive programming - catch any panics
 	defer func() {
 		if r := recover(); r != nil {
-			// Log the panic and return safe values
-			return
+			p.logger.Error("Panic in getRegistryValue", zap.String("key", key), zap.Any("panic", r))
 		}
 	}()
 
 	ctx := context.Background()
-	entry, err := p.registryStore.Get(ctx, "system", key)
+	entry, err := p.registryStore.Get(ctx, registrystore.SystemOwnerID(), key)
 	if err != nil {
+		p.logger.Error("Failed to get registry value in storage provider", zap.String("key", key), zap.Error(err))
 		return "", false
 	}
+
+	// Handle case where entry is nil (key not found)
+	if entry == nil {
+		return "", false
+	}
+
 	return entry.Value, true
 }
 

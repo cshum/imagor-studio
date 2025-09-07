@@ -18,6 +18,7 @@ type ConfigProvider interface {
 type StorageProvider interface {
 	GetStorage() storage.Storage
 	IsRestartRequired() bool
+	ReloadFromRegistry() error
 }
 
 type Resolver struct {

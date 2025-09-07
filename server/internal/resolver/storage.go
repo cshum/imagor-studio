@@ -10,6 +10,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imageservice"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"go.uber.org/zap"
@@ -250,7 +251,18 @@ func (r *mutationResolver) ConfigureFileStorage(ctx context.Context, input gql.F
 		}, nil
 	}
 
-	// Check if restart is required (NoOp -> File doesn't need restart)
+	// Reload storage from registry to apply changes immediately
+	if err := r.storageProvider.ReloadFromRegistry(); err != nil {
+		r.logger.Error("Failed to reload storage from registry", zap.Error(err))
+		return &gql.StorageConfigResult{
+			Success:         false,
+			RestartRequired: false,
+			Timestamp:       timestampStr,
+			Message:         &[]string{"Configuration saved but failed to apply"}[0],
+		}, nil
+	}
+
+	// Check if restart is required (should be false for file storage)
 	restartRequired := r.storageProvider.IsRestartRequired()
 
 	return &gql.StorageConfigResult{
@@ -453,7 +465,7 @@ func (r *queryResolver) getRegistryValue(key string) (string, bool) {
 		return "", false
 	}
 
-	entry, err := r.registryStore.Get(ctx, "system", key)
+	entry, err := r.registryStore.Get(ctx, registrystore.SystemOwnerID(), key)
 	if err != nil {
 		r.logger.Error("Failed to get registry value", zap.String("key", key), zap.Error(err))
 		return "", false
@@ -461,7 +473,6 @@ func (r *queryResolver) getRegistryValue(key string) (string, bool) {
 
 	// Handle case where entry is nil (key not found)
 	if entry == nil {
-		r.logger.Debug("Registry key not found", zap.String("key", key))
 		return "", false
 	}
 
