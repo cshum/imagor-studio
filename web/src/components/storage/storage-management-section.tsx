@@ -47,7 +47,7 @@ export function StorageManagementSection() {
 
   const getStorageTypeDisplay = (type: string | null) => {
     if (!type) return 'Not Configured'
-    return type === 'FILE' ? 'File Storage' : 'S3 Storage'
+    return type.toLowerCase() === 'file' ? 'File Storage' : 'S3 Storage'
   }
 
   const getStatusBadge = () => {
@@ -81,11 +81,72 @@ export function StorageManagementSection() {
             </div>
           </div>
 
+          {/* Display detailed configuration */}
+          {storageStatus?.configured && (
+            <div className='bg-muted/50 space-y-4 rounded-lg border p-4'>
+              <div className='text-sm font-medium'>Configuration Details</div>
+
+              {storageStatus.fileConfig && (
+                <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
+                  <div className='space-y-1'>
+                    <div className='text-muted-foreground text-xs font-medium'>Base Directory</div>
+                    <div className='font-mono text-sm'>{storageStatus.fileConfig.baseDir}</div>
+                  </div>
+                  <div className='space-y-1'>
+                    <div className='text-muted-foreground text-xs font-medium'>
+                      Directory Permissions
+                    </div>
+                    <div className='font-mono text-sm'>
+                      {storageStatus.fileConfig.mkdirPermissions}
+                    </div>
+                  </div>
+                  <div className='space-y-1'>
+                    <div className='text-muted-foreground text-xs font-medium'>
+                      File Permissions
+                    </div>
+                    <div className='font-mono text-sm'>
+                      {storageStatus.fileConfig.writePermissions}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {storageStatus.s3Config && (
+                <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
+                  <div className='space-y-1'>
+                    <div className='text-muted-foreground text-xs font-medium'>S3 Bucket</div>
+                    <div className='font-mono text-sm'>{storageStatus.s3Config.bucket}</div>
+                  </div>
+                  {storageStatus.s3Config.region && (
+                    <div className='space-y-1'>
+                      <div className='text-muted-foreground text-xs font-medium'>Region</div>
+                      <div className='font-mono text-sm'>{storageStatus.s3Config.region}</div>
+                    </div>
+                  )}
+                  {storageStatus.s3Config.endpoint && (
+                    <div className='space-y-1'>
+                      <div className='text-muted-foreground text-xs font-medium'>Endpoint</div>
+                      <div className='font-mono text-sm'>{storageStatus.s3Config.endpoint}</div>
+                    </div>
+                  )}
+                  {storageStatus.s3Config.baseDir && (
+                    <div className='space-y-1'>
+                      <div className='text-muted-foreground text-xs font-medium'>
+                        Base Directory
+                      </div>
+                      <div className='font-mono text-sm'>{storageStatus.s3Config.baseDir}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {storageStatus?.lastUpdated && (
             <div className='space-y-2'>
               <div className='text-muted-foreground text-sm font-medium'>Last Updated</div>
               <div className='text-sm'>
-                {new Date(storageStatus.lastUpdated || new Date()).toLocaleString()}
+                {new Date(parseInt(storageStatus.lastUpdated)).toLocaleString()}
               </div>
             </div>
           )}
@@ -124,6 +185,7 @@ export function StorageManagementSection() {
             onSuccess={handleStorageConfigured}
             onCancel={() => setShowConfigDialog(false)}
             showCancel={true}
+            initialConfig={storageStatus}
           />
         </DialogContent>
       </Dialog>

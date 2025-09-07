@@ -44,6 +44,12 @@ type FileStat struct {
 	ThumbnailUrls *ThumbnailUrls `json:"thumbnailUrls,omitempty"`
 }
 
+type FileStorageConfig struct {
+	BaseDir          string `json:"baseDir"`
+	MkdirPermissions string `json:"mkdirPermissions"`
+	WritePermissions string `json:"writePermissions"`
+}
+
 type FileStorageInput struct {
 	BaseDir          string  `json:"baseDir"`
 	MkdirPermissions *string `json:"mkdirPermissions,omitempty"`
@@ -60,6 +66,13 @@ type RegistryEntryInput struct {
 	Key         string `json:"key"`
 	Value       string `json:"value"`
 	IsEncrypted bool   `json:"isEncrypted"`
+}
+
+type S3StorageConfig struct {
+	Bucket   string  `json:"bucket"`
+	Region   *string `json:"region,omitempty"`
+	Endpoint *string `json:"endpoint,omitempty"`
+	BaseDir  *string `json:"baseDir,omitempty"`
 }
 
 type S3StorageInput struct {
@@ -86,10 +99,12 @@ type StorageConfigResult struct {
 }
 
 type StorageStatus struct {
-	Configured      bool    `json:"configured"`
-	Type            *string `json:"type,omitempty"`
-	RestartRequired bool    `json:"restartRequired"`
-	LastUpdated     *string `json:"lastUpdated,omitempty"`
+	Configured      bool               `json:"configured"`
+	Type            *string            `json:"type,omitempty"`
+	RestartRequired bool               `json:"restartRequired"`
+	LastUpdated     *string            `json:"lastUpdated,omitempty"`
+	FileConfig      *FileStorageConfig `json:"fileConfig,omitempty"`
+	S3Config        *S3StorageConfig   `json:"s3Config,omitempty"`
 }
 
 type StorageTestResult struct {

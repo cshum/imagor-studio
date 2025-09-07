@@ -308,6 +308,54 @@
         "possibleTypes": null
       },
       {
+        "kind": "OBJECT",
+        "name": "FileStorageConfig",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "baseDir",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "mkdirPermissions",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "writePermissions",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "INPUT_OBJECT",
         "name": "FileStorageInput",
         "description": null,
@@ -1247,6 +1295,54 @@
         "possibleTypes": null
       },
       {
+        "kind": "OBJECT",
+        "name": "S3StorageConfig",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "baseDir",
+            "description": null,
+            "args": [],
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "bucket",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "endpoint",
+            "description": null,
+            "args": [],
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "region",
+            "description": null,
+            "args": [],
+            "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "INPUT_OBJECT",
         "name": "S3StorageInput",
         "description": null,
@@ -1467,6 +1563,14 @@
             "deprecationReason": null
           },
           {
+            "name": "fileConfig",
+            "description": null,
+            "args": [],
+            "type": { "kind": "OBJECT", "name": "FileStorageConfig", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "lastUpdated",
             "description": null,
             "args": [],
@@ -1483,6 +1587,14 @@
               "name": null,
               "ofType": { "kind": "SCALAR", "name": "Boolean", "ofType": null }
             },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "s3Config",
+            "description": null,
+            "args": [],
+            "type": { "kind": "OBJECT", "name": "S3StorageConfig", "ofType": null },
             "isDeprecated": false,
             "deprecationReason": null
           },

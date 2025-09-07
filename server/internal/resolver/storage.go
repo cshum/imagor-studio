@@ -184,9 +184,20 @@ func (r *queryResolver) StorageStatus(ctx context.Context) (*gql.StorageStatus, 
 	isConfigured := exists && configured == "true"
 
 	var storageType *string
+	var fileConfig *gql.FileStorageConfig
+	var s3Config *gql.S3StorageConfig
+
 	if isConfigured {
 		if sType, exists := r.getRegistryValue("config.storage_type"); exists {
 			storageType = &sType
+
+			// Load type-specific configuration
+			switch sType {
+			case "file", "filesystem":
+				fileConfig = r.getFileStorageConfig()
+			case "s3":
+				s3Config = r.getS3StorageConfig()
+			}
 		}
 	}
 
@@ -203,7 +214,59 @@ func (r *queryResolver) StorageStatus(ctx context.Context) (*gql.StorageStatus, 
 		Type:            storageType,
 		RestartRequired: restartRequired,
 		LastUpdated:     lastUpdated,
+		FileConfig:      fileConfig,
+		S3Config:        s3Config,
 	}, nil
+}
+
+// Helper function to get file storage configuration
+func (r *queryResolver) getFileStorageConfig() *gql.FileStorageConfig {
+	baseDir := "./storage" // Default
+	if dir, exists := r.getRegistryValue("config.file_base_dir"); exists {
+		baseDir = dir
+	}
+
+	mkdirPermissions := "0755" // Default
+	if perm, exists := r.getRegistryValue("config.file_mkdir_permissions"); exists {
+		mkdirPermissions = perm
+	}
+
+	writePermissions := "0644" // Default
+	if perm, exists := r.getRegistryValue("config.file_write_permissions"); exists {
+		writePermissions = perm
+	}
+
+	return &gql.FileStorageConfig{
+		BaseDir:          baseDir,
+		MkdirPermissions: mkdirPermissions,
+		WritePermissions: writePermissions,
+	}
+}
+
+// Helper function to get S3 storage configuration
+func (r *queryResolver) getS3StorageConfig() *gql.S3StorageConfig {
+	bucket, exists := r.getRegistryValue("config.s3_bucket")
+	if !exists {
+		return nil
+	}
+
+	config := &gql.S3StorageConfig{
+		Bucket: bucket,
+	}
+
+	if region, exists := r.getRegistryValue("config.s3_region"); exists {
+		config.Region = &region
+	}
+
+	if endpoint, exists := r.getRegistryValue("config.s3_endpoint"); exists {
+		config.Endpoint = &endpoint
+	}
+
+	if baseDir, exists := r.getRegistryValue("config.s3_base_dir"); exists {
+		config.BaseDir = &baseDir
+	}
+
+	return config
 }
 
 // ConfigureFileStorage is the resolver for the configureFileStorage field.

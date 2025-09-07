@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 
 import { configureFileStorage, configureS3Storage, testStorageConfig } from '@/api/storage-api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import type { StorageType as GraphQLStorageType } from '@/generated/graphql'
+import type { StorageType as GraphQLStorageType, StorageStatusQuery } from '@/generated/graphql'
 
 import { FileStorageForm, type FileStorageFormData } from './file-storage-form'
 import { S3StorageForm, type S3StorageFormData } from './s3-storage-form'
@@ -17,6 +17,7 @@ interface StorageConfigurationWizardProps {
   showCancel?: boolean
   title?: string
   description?: string
+  initialConfig?: StorageStatusQuery['storageStatus'] | null
 }
 
 export function StorageConfigurationWizard({
@@ -25,10 +26,44 @@ export function StorageConfigurationWizard({
   showCancel = false,
   title = 'Configure Storage',
   description = 'Choose how you want to store your images',
+  initialConfig,
 }: StorageConfigurationWizardProps) {
   const [storageType, setStorageType] = useState<StorageType>('file')
   const [isLoading, setIsLoading] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
+
+  // Initialize form with existing configuration
+  useEffect(() => {
+    if (initialConfig?.configured && initialConfig.type) {
+      const type = initialConfig.type.toLowerCase() === 'file' ? 'file' : 's3'
+      setStorageType(type)
+    }
+  }, [initialConfig])
+
+  // Get initial values for file storage form
+  const getFileStorageInitialValues = (): Partial<FileStorageFormData> | undefined => {
+    if (!initialConfig?.fileConfig) return undefined
+    return {
+      baseDir: initialConfig.fileConfig.baseDir,
+      mkdirPermissions: initialConfig.fileConfig.mkdirPermissions,
+      writePermissions: initialConfig.fileConfig.writePermissions,
+    }
+  }
+
+  // Get initial values for S3 storage form
+  const getS3StorageInitialValues = (): Partial<S3StorageFormData> | undefined => {
+    if (!initialConfig?.s3Config) return undefined
+    return {
+      bucket: initialConfig.s3Config.bucket,
+      region: initialConfig.s3Config.region || undefined,
+      endpoint: initialConfig.s3Config.endpoint || undefined,
+      baseDir: initialConfig.s3Config.baseDir || undefined,
+      // Note: We don't pre-populate credentials for security reasons
+      accessKeyId: '',
+      secretAccessKey: '',
+      sessionToken: '',
+    }
+  }
 
   const handleFileStorageSubmit = async (data: FileStorageFormData) => {
     setIsLoading(true)
@@ -143,14 +178,22 @@ export function StorageConfigurationWizard({
         {storageType === 'file' && (
           <div className='space-y-4'>
             <h3 className='text-lg font-medium'>File Storage Configuration</h3>
-            <FileStorageForm onSubmit={handleFileStorageSubmit} disabled={isLoading} />
+            <FileStorageForm 
+              onSubmit={handleFileStorageSubmit} 
+              disabled={isLoading}
+              initialValues={getFileStorageInitialValues()}
+            />
           </div>
         )}
 
         {storageType === 's3' && (
           <div className='space-y-4'>
             <h3 className='text-lg font-medium'>S3 Storage Configuration</h3>
-            <S3StorageForm onSubmit={handleS3StorageSubmit} disabled={isLoading} />
+            <S3StorageForm 
+              onSubmit={handleS3StorageSubmit} 
+              disabled={isLoading}
+              initialValues={getS3StorageInitialValues()}
+            />
           </div>
         )}
 

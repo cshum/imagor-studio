@@ -172,6 +172,21 @@ type StorageStatus {
   type: String
   restartRequired: Boolean!
   lastUpdated: String
+  fileConfig: FileStorageConfig
+  s3Config: S3StorageConfig
+}
+
+type FileStorageConfig {
+  baseDir: String!
+  mkdirPermissions: String!
+  writePermissions: String!
+}
+
+type S3StorageConfig {
+  bucket: String!
+  region: String
+  endpoint: String
+  baseDir: String
 }
 
 type StorageConfigResult {

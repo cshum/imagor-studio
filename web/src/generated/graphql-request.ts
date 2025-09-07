@@ -62,6 +62,13 @@ export type FileStat = {
   thumbnailUrls: Maybe<ThumbnailUrls>
 }
 
+export type FileStorageConfig = {
+  __typename?: 'FileStorageConfig'
+  baseDir: Scalars['String']['output']
+  mkdirPermissions: Scalars['String']['output']
+  writePermissions: Scalars['String']['output']
+}
+
 export type FileStorageInput = {
   baseDir: Scalars['String']['input']
   mkdirPermissions: InputMaybe<Scalars['String']['input']>
@@ -214,6 +221,14 @@ export type RegistryEntryInput = {
   value: Scalars['String']['input']
 }
 
+export type S3StorageConfig = {
+  __typename?: 'S3StorageConfig'
+  baseDir: Maybe<Scalars['String']['output']>
+  bucket: Scalars['String']['output']
+  endpoint: Maybe<Scalars['String']['output']>
+  region: Maybe<Scalars['String']['output']>
+}
+
 export type S3StorageInput = {
   accessKeyId: InputMaybe<Scalars['String']['input']>
   baseDir: InputMaybe<Scalars['String']['input']>
@@ -245,8 +260,10 @@ export type StorageConfigResult = {
 export type StorageStatus = {
   __typename?: 'StorageStatus'
   configured: Scalars['Boolean']['output']
+  fileConfig: Maybe<FileStorageConfig>
   lastUpdated: Maybe<Scalars['String']['output']>
   restartRequired: Scalars['Boolean']['output']
+  s3Config: Maybe<S3StorageConfig>
   type: Maybe<Scalars['String']['output']>
 }
 
@@ -561,6 +578,19 @@ export type StorageStatusQuery = {
     type: string | null
     restartRequired: boolean
     lastUpdated: string | null
+    fileConfig: {
+      __typename?: 'FileStorageConfig'
+      baseDir: string
+      mkdirPermissions: string
+      writePermissions: string
+    } | null
+    s3Config: {
+      __typename?: 'S3StorageConfig'
+      bucket: string
+      region: string | null
+      endpoint: string | null
+      baseDir: string | null
+    } | null
   }
 }
 
@@ -905,6 +935,17 @@ export const StorageStatusDocument = gql`
       type
       restartRequired
       lastUpdated
+      fileConfig {
+        baseDir
+        mkdirPermissions
+        writePermissions
+      }
+      s3Config {
+        bucket
+        region
+        endpoint
+        baseDir
+      }
     }
   }
 `

@@ -98,6 +98,17 @@ export const STORAGE_STATUS = gql(`
       type
       restartRequired
       lastUpdated
+      fileConfig {
+        baseDir
+        mkdirPermissions
+        writePermissions
+      }
+      s3Config {
+        bucket
+        region
+        endpoint
+        baseDir
+      }
     }
   }
 `)
