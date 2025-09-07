@@ -8,6 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { extractErrorMessage } from '@/lib/error-utils'
 import { setHomeTitle } from '@/stores/folder-tree-store'
 
@@ -198,7 +205,44 @@ export function SystemSettingsForm({
       )
     }
 
-    // Add other setting types (select) here in the future
+    if (setting.type === 'select') {
+      return (
+        <div key={setting.key} className='space-y-2 rounded-lg border p-4'>
+          <Label htmlFor={setting.key} className='text-base font-medium'>
+            {setting.label}
+          </Label>
+          <div className='text-muted-foreground text-sm'>
+            {setting.description}
+            {isOverridden && (
+              <span className='mt-1 block text-orange-600 dark:text-orange-400'>
+                This setting is overridden by configuration file or environment variable
+              </span>
+            )}
+          </div>
+          <Select
+            value={effectiveValue}
+            onValueChange={(value: string) => {
+              if (!isOverridden) {
+                updateSetting(setting.key, value)
+              }
+            }}
+            disabled={isUpdating || isOverridden}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={`Select ${setting.label.toLowerCase()}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {setting.options?.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option.charAt(0).toUpperCase() + option.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )
+    }
+
     return null
   }
 

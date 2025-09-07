@@ -40,6 +40,21 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     description: 'Allow users to browse the gallery without creating an account',
     defaultValue: false,
   },
+  {
+    key: 'config.allow_user_registration',
+    type: 'boolean',
+    label: 'Allow User Registration',
+    description: 'Allow new users to register accounts themselves',
+    defaultValue: true,
+  },
+  {
+    key: 'config.default_user_role',
+    type: 'select',
+    label: 'Default User Role',
+    description: 'Default role assigned to new users',
+    defaultValue: 'viewer',
+    options: ['viewer', 'editor'],
+  },
 ]
 
 export function AdminSetupPage() {

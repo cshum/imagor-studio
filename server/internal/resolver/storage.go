@@ -447,10 +447,24 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 // Helper function to get registry value
 func (r *queryResolver) getRegistryValue(key string) (string, bool) {
 	ctx := context.Background()
-	entry, err := r.registryStore.Get(ctx, "system", key)
-	if err != nil {
+
+	if r.registryStore == nil {
+		r.logger.Error("registryStore is nil in getRegistryValue")
 		return "", false
 	}
+
+	entry, err := r.registryStore.Get(ctx, "system", key)
+	if err != nil {
+		r.logger.Error("Failed to get registry value", zap.String("key", key), zap.Error(err))
+		return "", false
+	}
+
+	// Handle case where entry is nil (key not found)
+	if entry == nil {
+		r.logger.Debug("Registry key not found", zap.String("key", key))
+		return "", false
+	}
+
 	return entry.Value, true
 }
 
