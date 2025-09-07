@@ -194,13 +194,16 @@ export function UsersPage({ loaderData }: UsersPageProps) {
   }
 
   const openEditDialog = (user: any) => {
-    setSelectedUser(user)
-    editForm.reset({
-      displayName: user.displayName,
-      email: user.email,
-      role: user.role,
-    })
-    setIsEditDialogOpen(true)
+    // Force close any open dropdown menus first
+    setTimeout(() => {
+      setSelectedUser(user)
+      editForm.reset({
+        displayName: user.displayName,
+        email: user.email,
+        role: user.role,
+      })
+      setIsEditDialogOpen(true)
+    }, 100)
   }
 
   const filteredUsers = users.filter(
