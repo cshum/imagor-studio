@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useRouter } from '@tanstack/react-router'
 import { Edit, MoreHorizontal, Plus, Search, UserCheck, UserX } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { createUser, deactivateAccount, listUsers, updateProfile } from '@/api/user-api'
+import { createUser, deactivateAccount, updateProfile } from '@/api/user-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -34,7 +35,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { ListUsersQuery } from '@/generated/graphql'
+import type { ListUsersQuery, User } from '@/generated/graphql'
 import { extractErrorMessage } from '@/lib/error-utils'
 
 interface UsersPageProps {
@@ -67,20 +68,19 @@ type CreateUserFormData = z.infer<typeof createUserSchema>
 type EditUserFormData = z.infer<typeof editUserSchema>
 
 export function UsersPage({ loaderData }: UsersPageProps) {
-  const [users, setUsers] = useState(loaderData?.items || [])
-  const [totalCount, setTotalCount] = useState(loaderData?.totalCount || 0)
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
-  const [currentPage] = useState(0)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isDeactivating, setIsDeactivating] = useState<string | null>(null)
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
 
-  const pageSize = 20
+  // Use loader data directly
+  const users = loaderData?.items || []
+  const totalCount = loaderData?.totalCount || 0
 
   const createForm = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
@@ -101,20 +101,6 @@ export function UsersPage({ loaderData }: UsersPageProps) {
     },
   })
 
-  const loadUsers = async (offset = 0) => {
-    setIsLoading(true)
-    try {
-      const result = await listUsers(offset, pageSize)
-      setUsers(result.items)
-      setTotalCount(result.totalCount)
-    } catch (err) {
-      const errorMessage = extractErrorMessage(err)
-      toast.error(`Failed to load users: ${errorMessage}`)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleCreateUser = async (values: CreateUserFormData) => {
     setIsCreating(true)
     try {
@@ -122,7 +108,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       toast.success('User created successfully!')
       setIsCreateDialogOpen(false)
       createForm.reset()
-      loadUsers(currentPage * pageSize)
+      await router.invalidate()
     } catch (err) {
       const errorMessage = extractErrorMessage(err)
 
@@ -154,7 +140,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       toast.success('User updated successfully!')
       setIsEditDialogOpen(false)
       setSelectedUser(null)
-      loadUsers(currentPage * pageSize)
+      await router.invalidate()
     } catch (err) {
       const errorMessage = extractErrorMessage(err)
 
@@ -184,7 +170,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       toast.success(`User ${isActive ? 'deactivated' : 'reactivated'} successfully!`)
       setIsEditDialogOpen(false)
       setSelectedUser(null)
-      loadUsers(currentPage * pageSize)
+      await router.invalidate()
     } catch (err) {
       const errorMessage = extractErrorMessage(err)
       toast.error(`Failed to ${isActive ? 'deactivate' : 'reactivate'} user: ${errorMessage}`)
@@ -193,17 +179,17 @@ export function UsersPage({ loaderData }: UsersPageProps) {
     }
   }
 
-  const openEditDialog = (user: any) => {
-    // Force close any open dropdown menus first
+  const openEditDialog = (user: User) => {
     setTimeout(() => {
       setSelectedUser(user)
       editForm.reset({
         displayName: user.displayName,
         email: user.email,
-        role: user.role,
+        ...(user.role === 'user' && { role: 'user' }),
+        ...(user.role === 'admin' && { role: 'admin' }),
       })
       setIsEditDialogOpen(true)
-    }, 100)
+    }, 0)
   }
 
   const filteredUsers = users.filter(
@@ -211,12 +197,6 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()),
   )
-
-  useEffect(() => {
-    if (!loaderData) {
-      loadUsers()
-    }
-  }, [loaderData])
 
   return (
     <div className='space-y-6'>
@@ -360,7 +340,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                 <div>Actions</div>
               </div>
 
-              {isLoading ? (
+              {!loaderData ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className='grid grid-cols-5 gap-4 border-b p-4'>
                     <Skeleton className='h-4 w-full' />
@@ -421,7 +401,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
 
             {/* Users Cards - Mobile */}
             <div className='space-y-4 md:hidden'>
-              {isLoading ? (
+              {!loaderData ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className='space-y-3 rounded-lg border p-4'>
                     <div className='flex items-start justify-between'>
@@ -583,7 +563,10 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                     variant={selectedUser?.isActive ? 'destructive' : 'default'}
                     size='sm'
                     onClick={() => {
-                      if (selectedUser?.isActive) {
+                      if (!selectedUser) {
+                        return
+                      }
+                      if (selectedUser.isActive) {
                         // Show confirmation dialog for deactivation
                         setIsConfirmDialogOpen(true)
                       } else {
