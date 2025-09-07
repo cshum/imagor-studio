@@ -24,7 +24,7 @@ export const ImageGrid = ({
   onImageClick,
 }: ImageGridProps) => {
   // Dynamically calculate the number of columns based on maxImageWidth prop
-  const columnCount = Math.max(2, Math.floor(width / maxImageWidth))
+  const columnCount = Math.max(3, Math.floor(width / maxImageWidth))
   const columnWidth = width / columnCount
   const rowHeight = columnWidth / aspectRatio
 
