@@ -11,6 +11,9 @@ type Query {
 
   statFile(path: String!): FileStat
 
+  # Storage Configuration APIs
+  storageStatus: StorageStatus!
+
   # Registry APIs
   listUserRegistry(prefix: String, ownerID: String): [UserRegistry!]!
   getUserRegistry(
@@ -53,6 +56,11 @@ type Mutation {
     entries: [RegistryEntryInput!]
   ): [SystemRegistry!]!
   deleteSystemRegistry(key: String, keys: [String!]): Boolean!
+
+  # Storage Configuration APIs (admin only)
+  configureFileStorage(input: FileStorageInput!): StorageConfigResult!
+  configureS3Storage(input: S3StorageInput!): StorageConfigResult!
+  testStorageConfig(input: StorageConfigInput!): StorageTestResult!
 
   # admin only operations
   createUser(input: CreateUserInput!): User!
@@ -157,3 +165,51 @@ type SystemRegistry {
 }
 
 scalar JSON
+
+# Storage Configuration Types
+type StorageStatus {
+  configured: Boolean!
+  type: String
+  restartRequired: Boolean!
+  lastUpdated: String
+}
+
+type StorageConfigResult {
+  success: Boolean!
+  restartRequired: Boolean!
+  timestamp: String!
+  message: String
+}
+
+type StorageTestResult {
+  success: Boolean!
+  message: String!
+  details: String
+}
+
+input StorageConfigInput {
+  type: StorageType!
+  fileConfig: FileStorageInput
+  s3Config: S3StorageInput
+}
+
+input FileStorageInput {
+  baseDir: String!
+  mkdirPermissions: String
+  writePermissions: String
+}
+
+input S3StorageInput {
+  bucket: String!
+  region: String
+  endpoint: String
+  accessKeyId: String
+  secretAccessKey: String
+  sessionToken: String
+  baseDir: String
+}
+
+enum StorageType {
+  FILE
+  S3
+}

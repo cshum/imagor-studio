@@ -33,7 +33,7 @@ func New(cfg *config.Config, logger *zap.Logger, args []string) (*Server, error)
 
 	// Initialize GraphQL with enhanced config from services
 	storageResolver := resolver.NewResolver(
-		services.Storage,
+		services.StorageProvider,
 		services.RegistryStore,
 		services.UserStore,
 		services.ImageService,

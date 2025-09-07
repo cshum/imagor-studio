@@ -23,15 +23,16 @@ import (
 
 // Services contains all initialized application services
 type Services struct {
-	DB            *bun.DB
-	TokenManager  *auth.TokenManager
-	Storage       storage.Storage
-	RegistryStore registrystore.Store
-	UserStore     userstore.Store
-	ImageService  imageservice.Service
-	Encryption    *encryption.Service
-	Config        *config.Config
-	Logger        *zap.Logger
+	DB              *bun.DB
+	TokenManager    *auth.TokenManager
+	Storage         storage.Storage
+	StorageProvider *storageprovider.Provider
+	RegistryStore   registrystore.Store
+	UserStore       userstore.Store
+	ImageService    imageservice.Service
+	Encryption      *encryption.Service
+	Config          *config.Config
+	Logger          *zap.Logger
 }
 
 // Initialize sets up the database, runs migrations, and initializes all services
@@ -66,12 +67,17 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	// Initialize token manager
 	tokenManager := auth.NewTokenManager(enhancedCfg.JWTSecret, enhancedCfg.JWTExpiration)
 
-	// Initialize storage provider and create storage
-	storageProvider := storageprovider.New(logger)
-	stor, err := storageProvider.NewStorageFromConfig(enhancedCfg)
+	// Initialize storage provider with registry store
+	storageProvider := storageprovider.New(logger, registryStore)
+
+	// Initialize storage with config (will use NoOp if not configured)
+	err = storageProvider.InitializeWithConfig(enhancedCfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create storage: %w", err)
+		return nil, fmt.Errorf("failed to initialize storage: %w", err)
 	}
+
+	// Get the current storage instance
+	stor := storageProvider.GetStorage()
 
 	// Initialize user store
 	userStore := userstore.New(db, logger)
@@ -88,15 +94,16 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	)
 
 	return &Services{
-		DB:            db,
-		TokenManager:  tokenManager,
-		Storage:       stor,
-		RegistryStore: registryStore,
-		UserStore:     userStore,
-		ImageService:  imageService,
-		Encryption:    encryptionService,
-		Config:        enhancedCfg,
-		Logger:        logger,
+		DB:              db,
+		TokenManager:    tokenManager,
+		Storage:         stor,
+		StorageProvider: storageProvider,
+		RegistryStore:   registryStore,
+		UserStore:       userStore,
+		ImageService:    imageService,
+		Encryption:      encryptionService,
+		Config:          enhancedCfg,
+		Logger:          logger,
 	}, nil
 }
 
