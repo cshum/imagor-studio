@@ -68,7 +68,7 @@ export const ImageGrid = ({
       return (
         <div
           key={image.imageKey}
-          className='absolute box-border cursor-pointer p-1 md:p-2'
+          className='absolute box-border cursor-pointer p-1 md:p-1.5'
           style={{
             width: `${columnWidth}px`,
             height: `${rowHeight}px`,
