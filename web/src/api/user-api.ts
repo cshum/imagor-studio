@@ -39,10 +39,7 @@ export async function getUser(id: string): Promise<GetUserQuery['user']> {
 /**
  * List users with pagination (admin only)
  */
-export async function listUsers(
-  offset?: number,
-  limit?: number,
-): Promise<ListUsersQuery['users']> {
+export async function listUsers(offset?: number, limit?: number): Promise<ListUsersQuery['users']> {
   const sdk = getSdk(getGraphQLClient())
   const variables: ListUsersQueryVariables = { offset, limit }
   const result = await sdk.ListUsers(variables)

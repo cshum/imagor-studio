@@ -1,21 +1,41 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
+import { Edit, MoreHorizontal, Plus, Search, UserCheck, UserX } from 'lucide-react'
 import { toast } from 'sonner'
-import { Plus, Search, MoreHorizontal, Edit, UserX, UserCheck } from 'lucide-react'
+import * as z from 'zod'
 
+import { createUser, deactivateAccount, listUsers, updateProfile } from '@/api/user-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { listUsers, createUser, deactivateAccount, updateProfile } from '@/api/user-api'
-import { extractErrorMessage } from '@/lib/error-utils'
 import type { ListUsersQuery } from '@/generated/graphql'
+import { extractErrorMessage } from '@/lib/error-utils'
 
 interface UsersPageProps {
   loaderData?: ListUsersQuery['users']
@@ -68,7 +88,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       displayName: '',
       email: '',
       password: '',
-      role: 'user'
+      role: 'user',
     },
   })
 
@@ -77,7 +97,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
     defaultValues: {
       displayName: '',
       email: '',
-      role: 'user'
+      role: 'user',
     },
   })
 
@@ -105,9 +125,12 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       loadUsers(currentPage * pageSize)
     } catch (err) {
       const errorMessage = extractErrorMessage(err)
-      
+
       // Check if it's a validation error that should highlight a field
-      if (errorMessage.toLowerCase().includes('email') && errorMessage.toLowerCase().includes('already')) {
+      if (
+        errorMessage.toLowerCase().includes('email') &&
+        errorMessage.toLowerCase().includes('already')
+      ) {
         createForm.setError('email', { message: 'This email is already in use' })
       } else if (errorMessage.toLowerCase().includes('email')) {
         createForm.setError('email', { message: errorMessage })
@@ -127,19 +150,19 @@ export function UsersPage({ loaderData }: UsersPageProps) {
 
     setIsUpdating(true)
     try {
-      await updateProfile(
-        { displayName: values.displayName, email: values.email },
-        selectedUser.id
-      )
+      await updateProfile({ displayName: values.displayName, email: values.email }, selectedUser.id)
       toast.success('User updated successfully!')
       setIsEditDialogOpen(false)
       setSelectedUser(null)
       loadUsers(currentPage * pageSize)
     } catch (err) {
       const errorMessage = extractErrorMessage(err)
-      
+
       // Check if it's a validation error that should highlight a field
-      if (errorMessage.toLowerCase().includes('email') && errorMessage.toLowerCase().includes('already')) {
+      if (
+        errorMessage.toLowerCase().includes('email') &&
+        errorMessage.toLowerCase().includes('already')
+      ) {
         editForm.setError('email', { message: 'This email is already in use' })
       } else if (errorMessage.toLowerCase().includes('email')) {
         editForm.setError('email', { message: errorMessage })
@@ -175,14 +198,15 @@ export function UsersPage({ loaderData }: UsersPageProps) {
     editForm.reset({
       displayName: user.displayName,
       email: user.email,
-      role: user.role
+      role: user.role,
     })
     setIsEditDialogOpen(true)
   }
 
-  const filteredUsers = users.filter(user =>
-    user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(
+    (user) =>
+      user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   useEffect(() => {
@@ -200,7 +224,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
-                  <Plus className='h-4 w-4 mr-2' />
+                  <Plus className='mr-2 h-4 w-4' />
                   Create User
                 </Button>
               </DialogTrigger>
@@ -208,7 +232,8 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                 <DialogHeader>
                   <DialogTitle>Create New User</DialogTitle>
                   <DialogDescription>
-                    Add a new user to the system. They will be able to log in with the provided credentials.
+                    Add a new user to the system. They will be able to log in with the provided
+                    credentials.
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...createForm}>
@@ -279,7 +304,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                             <select
                               {...field}
                               disabled={isCreating}
-                              className='w-full p-2 border border-input rounded-md bg-background'
+                              className='border-input bg-background w-full rounded-md border p-2'
                             >
                               <option value='user'>User</option>
                               <option value='admin'>Admin</option>
@@ -291,18 +316,15 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                     />
 
                     <DialogFooter>
-                      <Button 
+                      <Button
                         type='button'
-                        variant='outline' 
+                        variant='outline'
                         onClick={() => setIsCreateDialogOpen(false)}
                         disabled={isCreating}
                       >
                         Cancel
                       </Button>
-                      <ButtonWithLoading
-                        type='submit'
-                        isLoading={isCreating}
-                      >
+                      <ButtonWithLoading type='submit' isLoading={isCreating}>
                         Create User
                       </ButtonWithLoading>
                     </DialogFooter>
@@ -316,7 +338,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
           <div className='space-y-4'>
             {/* Search */}
             <div className='relative'>
-              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+              <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
               <Input
                 placeholder='Search users by name or email...'
                 value={searchTerm}
@@ -326,18 +348,18 @@ export function UsersPage({ loaderData }: UsersPageProps) {
             </div>
 
             {/* Users Table - Desktop */}
-            <div className='hidden md:block border rounded-lg'>
-              <div className='grid grid-cols-5 gap-4 p-4 font-medium border-b bg-muted/50'>
+            <div className='hidden rounded-lg border md:block'>
+              <div className='bg-muted/50 grid grid-cols-5 gap-4 border-b p-4 font-medium'>
                 <div>Name</div>
                 <div>Email</div>
                 <div>Role</div>
                 <div>Status</div>
                 <div>Actions</div>
               </div>
-              
+
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className='grid grid-cols-5 gap-4 p-4 border-b'>
+                  <div key={i} className='grid grid-cols-5 gap-4 border-b p-4'>
                     <Skeleton className='h-4 w-full' />
                     <Skeleton className='h-4 w-full' />
                     <Skeleton className='h-4 w-16' />
@@ -346,29 +368,31 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                   </div>
                 ))
               ) : filteredUsers.length === 0 ? (
-                <div className='p-8 text-center text-muted-foreground'>
-                  No users found
-                </div>
+                <div className='text-muted-foreground p-8 text-center'>No users found</div>
               ) : (
                 filteredUsers.map((user) => (
-                  <div key={user.id} className='grid grid-cols-5 gap-4 p-4 border-b items-center'>
+                  <div key={user.id} className='grid grid-cols-5 items-center gap-4 border-b p-4'>
                     <div className='font-medium'>{user.displayName}</div>
                     <div className='text-muted-foreground'>{user.email}</div>
                     <div>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        user.role === 'admin' 
-                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                          : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                      }`}>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          user.role === 'admin'
+                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                        }`}
+                      >
                         {user.role}
                       </span>
                     </div>
                     <div>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        user.isActive 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                      }`}>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          user.isActive
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                        }`}
+                      >
                         {user.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
@@ -381,7 +405,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align='end'>
                           <DropdownMenuItem onClick={() => openEditDialog(user)}>
-                            <Edit className='h-4 w-4 mr-2' />
+                            <Edit className='mr-2 h-4 w-4' />
                             Edit
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -393,16 +417,16 @@ export function UsersPage({ loaderData }: UsersPageProps) {
             </div>
 
             {/* Users Cards - Mobile */}
-            <div className='md:hidden space-y-4'>
+            <div className='space-y-4 md:hidden'>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className='border rounded-lg p-4 space-y-3'>
-                    <div className='flex justify-between items-start'>
+                  <div key={i} className='space-y-3 rounded-lg border p-4'>
+                    <div className='flex items-start justify-between'>
                       <Skeleton className='h-5 w-32' />
                       <Skeleton className='h-5 w-16' />
                     </div>
                     <Skeleton className='h-4 w-48' />
-                    <div className='flex justify-between items-center'>
+                    <div className='flex items-center justify-between'>
                       <Skeleton className='h-5 w-12' />
                       <div className='flex gap-2'>
                         <Skeleton className='h-8 w-16' />
@@ -412,46 +436,50 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                   </div>
                 ))
               ) : filteredUsers.length === 0 ? (
-                <div className='border rounded-lg p-8 text-center text-muted-foreground'>
+                <div className='text-muted-foreground rounded-lg border p-8 text-center'>
                   No users found
                 </div>
               ) : (
                 filteredUsers.map((user) => (
-                  <div key={user.id} className='border rounded-lg p-4 space-y-3'>
+                  <div key={user.id} className='space-y-3 rounded-lg border p-4'>
                     {/* Header: Name and Status */}
-                    <div className='flex justify-between items-start'>
-                      <h3 className='font-medium text-lg'>{user.displayName}</h3>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        user.isActive 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                      }`}>
+                    <div className='flex items-start justify-between'>
+                      <h3 className='text-lg font-medium'>{user.displayName}</h3>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          user.isActive
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                        }`}
+                      >
                         {user.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
-                    
+
                     {/* Email */}
                     <div className='text-muted-foreground'>{user.email}</div>
-                    
+
                     {/* Role and Actions */}
-                    <div className='flex justify-between items-center pt-2'>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        user.role === 'admin' 
-                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                          : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                      }`}>
+                    <div className='flex items-center justify-between pt-2'>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          user.role === 'admin'
+                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                        }`}
+                      >
                         {user.role}
                       </span>
-                      
+
                       {/* Mobile Action Buttons */}
                       <div className='flex gap-2'>
-                        <Button 
-                          variant='outline' 
+                        <Button
+                          variant='outline'
                           size='sm'
                           onClick={() => openEditDialog(user)}
                           className='px-3 py-2'
                         >
-                          <Edit className='h-4 w-4 mr-1' />
+                          <Edit className='mr-1 h-4 w-4' />
                           Edit
                         </Button>
                       </div>
@@ -462,7 +490,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
             </div>
 
             {/* Pagination Info */}
-            <div className='text-sm text-muted-foreground'>
+            <div className='text-muted-foreground text-sm'>
               Showing {filteredUsers.length} of {totalCount} users
             </div>
           </div>
@@ -487,11 +515,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                   <FormItem>
                     <FormLabel>Display Name</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder='Enter display name'
-                        {...field}
-                        disabled={isUpdating}
-                      />
+                      <Input placeholder='Enter display name' {...field} disabled={isUpdating} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -527,7 +551,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                       <select
                         {...field}
                         disabled={isUpdating}
-                        className='w-full p-2 border border-input rounded-md bg-background'
+                        className='border-input bg-background w-full rounded-md border p-2'
                       >
                         <option value='user'>User</option>
                         <option value='admin'>Admin</option>
@@ -539,20 +563,19 @@ export function UsersPage({ loaderData }: UsersPageProps) {
               />
 
               {/* Deactivate Section - Separate Row */}
-              <div className='border-t pt-4 mt-4'>
-                <div className='flex items-center justify-between p-3 bg-muted/50 rounded-lg'>
+              <div className='mt-4 border-t pt-4'>
+                <div className='bg-muted/50 flex items-center justify-between rounded-lg p-3'>
                   <div>
                     <h4 className='text-sm font-medium'>
                       {selectedUser?.isActive ? 'Deactivate User' : 'Reactivate User'}
                     </h4>
-                    <p className='text-xs text-muted-foreground'>
-                      {selectedUser?.isActive 
+                    <p className='text-muted-foreground text-xs'>
+                      {selectedUser?.isActive
                         ? 'This will prevent the user from logging in'
-                        : 'This will allow the user to log in again'
-                      }
+                        : 'This will allow the user to log in again'}
                     </p>
                   </div>
-                  <Button 
+                  <Button
                     type='button'
                     variant={selectedUser?.isActive ? 'destructive' : 'default'}
                     size='sm'
@@ -569,12 +592,12 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                   >
                     {selectedUser?.isActive ? (
                       <>
-                        <UserX className='h-4 w-4 mr-2' />
+                        <UserX className='mr-2 h-4 w-4' />
                         Deactivate
                       </>
                     ) : (
                       <>
-                        <UserCheck className='h-4 w-4 mr-2' />
+                        <UserCheck className='mr-2 h-4 w-4' />
                         Reactivate
                       </>
                     )}
@@ -582,10 +605,10 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                 </div>
               </div>
 
-              <DialogFooter className='flex flex-col sm:flex-row sm:justify-end gap-2'>
-                <Button 
+              <DialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
+                <Button
                   type='button'
-                  variant='outline' 
+                  variant='outline'
                   onClick={() => setIsEditDialogOpen(false)}
                   disabled={isUpdating}
                   className='w-full sm:w-auto'
@@ -614,9 +637,9 @@ export function UsersPage({ loaderData }: UsersPageProps) {
               Are you sure you want to deactivate <strong>{selectedUser?.displayName}</strong>?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className='flex flex-col sm:flex-row sm:justify-end gap-2'>
-            <Button 
-              variant='outline' 
+          <DialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
+            <Button
+              variant='outline'
               onClick={() => setIsConfirmDialogOpen(false)}
               disabled={isDeactivating === selectedUser?.id}
               className='w-full sm:w-auto'

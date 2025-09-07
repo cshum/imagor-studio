@@ -6,6 +6,8 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { registerAdmin } from '@/api/auth-api'
+import { setSystemRegistryObject } from '@/api/registry-api'
+import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import {
   Form,
   FormControl,
@@ -15,10 +17,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { initAuth, useAuth } from '@/stores/auth-store'
-import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { MultiStepForm, type MultiStepFormStep } from '@/components/ui/multi-step-form'
-import { setSystemRegistryObject } from '@/api/registry-api'
+import { initAuth, useAuth } from '@/stores/auth-store'
 
 const adminSetupSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -60,10 +60,10 @@ export function AdminSetupPage() {
 
   const handleCreateAccount = async (): Promise<boolean> => {
     setError(null)
-    
+
     const values = form.getValues()
     const isValid = await form.trigger()
-    
+
     if (!isValid) {
       return false
     }
@@ -91,7 +91,7 @@ export function AdminSetupPage() {
     try {
       // Save any changed settings
       const changedValues: Record<string, string> = {}
-      SYSTEM_SETTINGS.forEach(setting => {
+      SYSTEM_SETTINGS.forEach((setting) => {
         const currentValue = settingsFormValues[setting.key]
         const defaultValue = setting.defaultValue.toString()
         if (currentValue && currentValue !== defaultValue) {
@@ -130,9 +130,9 @@ export function AdminSetupPage() {
       id: 'account',
       title: 'Create Admin Account',
       content: (
-        <div className="space-y-6">
+        <div className='space-y-6'>
           <Form {...form}>
-            <div className="space-y-4">
+            <div className='space-y-4'>
               <FormField
                 control={form.control}
                 name='email'
@@ -189,10 +189,10 @@ export function AdminSetupPage() {
       id: 'settings',
       title: 'System Configuration',
       content: (
-        <div className="space-y-6">
+        <div className='space-y-6'>
           <SystemSettingsForm
-            title=""
-            description="These settings can be changed later in the admin panel."
+            title=''
+            description='These settings can be changed later in the admin panel.'
             settings={SYSTEM_SETTINGS}
             initialValues={{}}
             systemRegistryList={[]}
@@ -211,15 +211,15 @@ export function AdminSetupPage() {
   ]
 
   return (
-    <div className='bg-background min-h-screen flex items-center justify-center p-4'>
+    <div className='bg-background flex min-h-screen items-center justify-center p-4'>
       <MultiStepForm
         steps={steps}
         currentStep={currentStep}
         onStepChange={setCurrentStep}
         onComplete={() => navigate({ to: '/' })}
-        title="Welcome to Imagor Studio"
+        title='Welcome to Imagor Studio'
         description="Let's get your image gallery set up in just a few steps"
-        className="w-full max-w-2xl"
+        className='w-full max-w-2xl'
       />
     </div>
   )

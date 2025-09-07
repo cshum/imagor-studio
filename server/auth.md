@@ -24,6 +24,7 @@ POST /auth/register
 ```
 
 Request body:
+
 ```json
 {
   "displayName": "testuser",
@@ -33,6 +34,7 @@ Request body:
 ```
 
 Response:
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIs...",
@@ -55,6 +57,7 @@ POST /auth/login
 ```
 
 Request body:
+
 ```json
 {
   "email": "test@example.com",
@@ -63,6 +66,7 @@ Request body:
 ```
 
 Response:
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIs...",
@@ -87,6 +91,7 @@ POST /auth/guest
 Request body: None
 
 Response:
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIs...",
@@ -101,6 +106,7 @@ Response:
 ```
 
 **Guest Limitations:**
+
 - Read-only access to all endpoints
 - Cannot modify data (upload, delete, create)
 - Cannot access admin functions
@@ -116,6 +122,7 @@ POST /auth/refresh
 ```
 
 Request body:
+
 ```json
 {
   "token": "existing_token_here"
@@ -123,6 +130,7 @@ Request body:
 ```
 
 Response:
+
 ```json
 {
   "token": "new_token_here",
@@ -145,6 +153,7 @@ Authorization: Bearer <your_token_here>
 ```
 
 Example:
+
 ```bash
 curl -X POST http://localhost:8080/query \
   -H "Content-Type: application/json" \
@@ -187,6 +196,7 @@ The API returns standardized JSON error responses:
 ```
 
 Common error codes:
+
 - `UNAUTHORIZED`: No token provided
 - `INVALID_TOKEN`: Token is invalid or malformed
 - `TOKEN_EXPIRED`: Token has expired
@@ -197,6 +207,7 @@ Common error codes:
 JWT tokens include the following claims:
 
 ### Regular User Token
+
 ```json
 {
   "user_id": "user-uuid",
@@ -210,6 +221,7 @@ JWT tokens include the following claims:
 ```
 
 ### Admin User Token
+
 ```json
 {
   "user_id": "admin-uuid",
@@ -223,6 +235,7 @@ JWT tokens include the following claims:
 ```
 
 ### Guest User Token
+
 ```json
 {
   "user_id": "guest-uuid",
@@ -237,11 +250,11 @@ JWT tokens include the following claims:
 
 ## User Roles and Permissions
 
-| Role | Scopes | Capabilities |
-|------|--------|-------------|
-| `guest` | `read` | View files, metadata, and user info. Cannot modify anything. |
-| `user` | `read`, `write` | Full access to own data, file operations, metadata operations. |
-| `admin` | `read`, `write`, `admin` | Full system access, user management, all operations. |
+| Role    | Scopes                   | Capabilities                                                   |
+| ------- | ------------------------ | -------------------------------------------------------------- |
+| `guest` | `read`                   | View files, metadata, and user info. Cannot modify anything.   |
+| `user`  | `read`, `write`          | Full access to own data, file operations, metadata operations. |
+| `admin` | `read`, `write`, `admin` | Full system access, user management, all operations.           |
 
 ## Testing
 
@@ -253,6 +266,7 @@ chmod +x test-auth.sh
 ```
 
 This script will:
+
 1. Test user registration and login
 2. Test guest login functionality
 3. Make authenticated GraphQL requests
@@ -283,6 +297,7 @@ GET /auth/first-run
 ```
 
 Response:
+
 ```json
 {
   "isFirstRun": true,
@@ -300,6 +315,7 @@ POST /auth/register-admin
 ```
 
 Request body:
+
 ```json
 {
   "displayName": "admin",
@@ -309,6 +325,7 @@ Request body:
 ```
 
 Response:
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIs...",
@@ -344,7 +361,7 @@ curl -X POST http://localhost:8080/auth/register-admin \
   -H "Content-Type: application/json" \
   -d '{
     "displayName": "admin",
-    "email": "admin@yourdomain.com", 
+    "email": "admin@yourdomain.com",
     "password": "securepassword123"
   }'
 
@@ -382,6 +399,7 @@ curl -X POST http://localhost:8080/auth/register-admin \
 ```
 
 Response:
+
 ```json
 {
   "error": {
@@ -404,6 +422,7 @@ curl -X POST http://localhost:8080/auth/register-admin \
 ```
 
 Response:
+
 ```json
 {
   "error": {
@@ -442,6 +461,7 @@ chmod +x test-first-run.sh
 ```
 
 This script will:
+
 1. Check first run status
 2. Register admin user (if first run)
 3. Test admin access
@@ -455,23 +475,23 @@ For frontend applications, implement this flow:
 ```javascript
 // 1. Check if first run is needed
 const checkFirstRun = async () => {
-  const response = await fetch('/auth/first-run');
+  const response = await fetch("/auth/first-run");
   const data = await response.json();
   return data.isFirstRun;
 };
 
 // 2. Show admin setup form if first run
 const setupAdmin = async (adminData) => {
-  const response = await fetch('/auth/register-admin', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(adminData)
+  const response = await fetch("/auth/register-admin", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(adminData),
   });
-  
+
   if (response.ok) {
     const { token, user } = await response.json();
     // Store token and redirect to admin dashboard
-    localStorage.setItem('authToken', token);
+    localStorage.setItem("authToken", token);
     return { success: true, user };
   } else {
     const error = await response.json();
@@ -482,7 +502,7 @@ const setupAdmin = async (adminData) => {
 // 3. Usage in app initialization
 const initializeApp = async () => {
   const isFirstRun = await checkFirstRun();
-  
+
   if (isFirstRun) {
     // Show admin setup form
     showAdminSetupForm();

@@ -12,19 +12,17 @@ export function ProgressBar({ currentStep, totalSteps, className }: ProgressBarP
   return (
     <div className={cn('w-full', className)}>
       {/* Step indicator */}
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-sm text-muted-foreground">
+      <div className='mb-2 flex items-center justify-between'>
+        <span className='text-muted-foreground text-sm'>
           Step {currentStep} of {totalSteps}
         </span>
-        <span className="text-sm text-muted-foreground">
-          {Math.round(progress)}%
-        </span>
+        <span className='text-muted-foreground text-sm'>{Math.round(progress)}%</span>
       </div>
-      
+
       {/* Progress bar */}
-      <div className="w-full bg-muted rounded-full h-2">
+      <div className='bg-muted h-2 w-full rounded-full'>
         <div
-          className="bg-primary h-2 rounded-full transition-all duration-300 ease-in-out"
+          className='bg-primary h-2 rounded-full transition-all duration-300 ease-in-out'
           style={{ width: `${progress}%` }}
         />
       </div>

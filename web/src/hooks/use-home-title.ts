@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from '@tanstack/react-router'
+
 import { getSystemRegistryObject } from '@/api/registry-api'
 
 const HOME_TITLE_KEY = 'config.home_title'

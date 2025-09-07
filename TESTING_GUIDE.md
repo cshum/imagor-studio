@@ -51,13 +51,13 @@ services:
     environment:
       PORT: 8000
       IMAGOR_UNSAFE: 1  # For testing only - allows unsigned URLs
-      
+
       # File loader and storage
       FILE_LOADER_BASE_DIR: /mnt/data
       FILE_STORAGE_BASE_DIR: /mnt/data
       FILE_STORAGE_MKDIR_PERMISSION: 0755
       FILE_STORAGE_WRITE_PERMISSION: 0666
-      
+
       # File result storage for thumbnails
       FILE_RESULT_STORAGE_BASE_DIR: /mnt/data/result
       FILE_RESULT_STORAGE_MKDIR_PERMISSION: 0755
@@ -122,7 +122,7 @@ npm run dev
 
 1. **Open the application**: Navigate to `http://localhost:5173`
 
-2. **First-time setup**: 
+2. **First-time setup**:
    - You'll see a setup page for admin registration
    - Create an admin account
    - Enable guest mode if desired
@@ -162,7 +162,7 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin123
     command: server /data --console-address ":9001"
-    
+
   imagor:
     image: shumc/imagor:latest
     ports:
@@ -170,14 +170,14 @@ services:
     environment:
       PORT: 8000
       IMAGOR_UNSAFE: 1
-      
+
       # S3 configuration
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin123
       AWS_REGION: us-east-1
       S3_ENDPOINT: http://minio:9000
       S3_FORCE_PATH_STYLE: 1
-      
+
       S3_LOADER_BUCKET: images
       S3_STORAGE_BUCKET: images
       S3_RESULT_STORAGE_BUCKET: images
@@ -312,6 +312,7 @@ done
 ### Common Issues
 
 1. **Imagor not accessible**:
+
    ```bash
    # Check if imagor is running
    docker ps
@@ -319,20 +320,22 @@ done
    ```
 
 2. **Images not showing**:
+
    ```bash
    # Check file permissions
    ls -la ./test-data/images/
-   
+
    # Check storage configuration
    curl -H "Authorization: Bearer <token>" http://localhost:8080/graphql \
      -d '{"query": "{ listFiles(path: \"/\") { name type } }"}'
    ```
 
 3. **Thumbnails not generating**:
+
    ```bash
    # Check imagor logs
    docker-compose -f docker-compose.imagor.yml logs imagor
-   
+
    # Test imagor directly
    curl http://localhost:8000/300x225/images/nature/landscape1.jpg
    ```
@@ -358,6 +361,7 @@ LOG_LEVEL=debug
 ## Production Deployment
 
 For production deployment, refer to `DOCKER_DEPLOYMENT.md` which includes:
+
 - Secure imagor configuration with signed URLs
 - Proper environment variable management
 - SSL/TLS configuration

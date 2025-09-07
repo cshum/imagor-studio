@@ -1,4 +1,5 @@
 import { AlertTriangle, Home } from 'lucide-react'
+
 import { Button } from './button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card'
 
@@ -20,24 +21,24 @@ export function ErrorPage({
   const errorMessage = typeof error === 'string' ? error : error?.message
 
   return (
-    <div className="flex items-center justify-center min-h-[400px] p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
+    <div className='flex min-h-[400px] items-center justify-center p-4'>
+      <Card className='w-full max-w-md'>
+        <CardHeader className='text-center'>
+          <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100'>
+            <AlertTriangle className='h-6 w-6 text-red-600' />
           </div>
-          <CardTitle className="text-red-900">{title}</CardTitle>
+          <CardTitle className='text-red-900'>{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className='space-y-4'>
           {errorMessage && process.env.NODE_ENV === 'development' && (
-            <div className="rounded-md bg-red-50 p-3">
-              <p className="text-sm font-medium text-red-800">Error Details:</p>
-              <p className="text-xs text-red-700 mt-1 font-mono">{errorMessage}</p>
+            <div className='rounded-md bg-red-50 p-3'>
+              <p className='text-sm font-medium text-red-800'>Error Details:</p>
+              <p className='mt-1 font-mono text-xs text-red-700'>{errorMessage}</p>
             </div>
           )}
-          <Button onClick={handleGoHome} className="w-full">
-            <Home className="h-4 w-4 mr-2" />
+          <Button onClick={handleGoHome} className='w-full'>
+            <Home className='mr-2 h-4 w-4' />
             Home
           </Button>
         </CardContent>

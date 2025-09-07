@@ -48,12 +48,14 @@ imagor-studio/
 ### Option 1: Automated Setup (Recommended)
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd imagor-studio
    ```
 
 2. **Run the development script**
+
    ```bash
    chmod +x scripts/dev.sh
    ./scripts/dev.sh
@@ -65,6 +67,7 @@ imagor-studio/
    - Provide instructions for starting server and frontend
 
 3. **Start the backend server** (in a new terminal)
+
    ```bash
    cd server
    make run
@@ -80,11 +83,13 @@ imagor-studio/
 ### Option 2: Manual Setup
 
 1. **Start Imagor service**
+
    ```bash
    docker compose up -d
    ```
 
 2. **Start the backend server**
+
    ```bash
    cd server
    make run
@@ -106,34 +111,40 @@ imagor-studio/
 ## Environment Configuration
 
 ### Development (.env)
+
 - Uses file storage by default
 - Imagor in unsafe mode for development
 - Permissive CORS settings
 - Debug logging enabled
 
 ### S3 Configuration (.env.s3.example)
+
 Template for S3 storage configuration with AWS or S3-compatible services.
 
 ## Storage Options
 
 ### File Storage (Default)
+
 - Images stored in `server/storage/`
 - Suitable for development and single-server deployments
 - No external dependencies
 
 ### S3 Storage
+
 - Compatible with AWS S3 and S3-compatible services
 - Configure using S3 environment variables from `.env.s3.example`
 
 ## Image Processing
 
 The application uses [Imagor](https://github.com/cshum/imagor) for:
+
 - Dynamic thumbnail generation
 - Image resizing and optimization
 - EXIF metadata extraction
 - Multiple output formats
 
 ### Thumbnail Sizes
+
 - **Grid**: 300x225 (gallery grid view)
 - **Preview**: 800x600 (preview modal)
 - **Full**: 1200x900 (full-size view)
@@ -142,11 +153,13 @@ The application uses [Imagor](https://github.com/cshum/imagor) for:
 ## Development
 
 ### Prerequisites
+
 - Go 1.21+
 - Node.js 18+
 - Docker and Docker Compose
 
 ### Backend Development
+
 ```bash
 cd server
 go mod download
@@ -155,6 +168,7 @@ make run
 ```
 
 ### Frontend Development
+
 ```bash
 cd web
 npm install
@@ -163,6 +177,7 @@ npm run build
 ```
 
 ### Testing
+
 ```bash
 # Backend tests
 cd server && make test
@@ -218,5 +233,6 @@ The application provides a GraphQL API with the following main operations:
 ## Support
 
 For issues and questions:
+
 - Check the [Issues](../../issues) page
 - Review the [Testing Guide](TESTING_GUIDE.md)

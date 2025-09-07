@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
 import { toast } from 'sonner'
+import * as z from 'zod'
 
+import { changePassword, updateProfile } from '@/api/user-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,10 +25,9 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { initAuth, useAuth } from '@/stores/auth-store'
-import { changePassword, updateProfile } from '@/api/user-api'
 import { extractErrorMessage } from '@/lib/error-utils'
 import type { ProfileLoaderData } from '@/loaders/account-loader'
+import { initAuth, useAuth } from '@/stores/auth-store'
 
 const profileSchema = z.object({
   displayName: z
@@ -99,9 +99,12 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       toast.success('Profile updated successfully!')
     } catch (err) {
       const errorMessage = extractErrorMessage(err)
-      
+
       // Check if it's a validation error that should highlight a field
-      if (errorMessage.toLowerCase().includes('email') && errorMessage.toLowerCase().includes('already')) {
+      if (
+        errorMessage.toLowerCase().includes('email') &&
+        errorMessage.toLowerCase().includes('already')
+      ) {
         profileForm.setError('email', { message: 'This email is already in use' })
       } else if (errorMessage.toLowerCase().includes('email')) {
         profileForm.setError('email', { message: errorMessage })
@@ -126,7 +129,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       setPasswordDialogOpen(false)
     } catch (err) {
       const errorMessage = extractErrorMessage(err)
-      
+
       // Check if it's a validation error that should highlight a field
       if (errorMessage.toLowerCase().includes('current password')) {
         passwordForm.setError('currentPassword', { message: 'Current password is incorrect' })
@@ -146,9 +149,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       <Card>
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
-          <CardDescription>
-            Update your account profile information.
-          </CardDescription>
+          <CardDescription>Update your account profile information.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...profileForm}>
@@ -190,10 +191,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                 )}
               />
 
-              <ButtonWithLoading
-                type='submit'
-                isLoading={isUpdatingProfile}
-              >
+              <ButtonWithLoading type='submit' isLoading={isUpdatingProfile}>
                 Update Profile
               </ButtonWithLoading>
             </form>
@@ -204,17 +202,13 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       <Card>
         <CardHeader>
           <CardTitle>Security Settings</CardTitle>
-          <CardDescription>
-            Manage your account security and password.
-          </CardDescription>
+          <CardDescription>Manage your account security and password.</CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
-          <div className='flex items-center justify-between p-4 border rounded-lg'>
+          <div className='flex items-center justify-between rounded-lg border p-4'>
             <div className='space-y-0.5'>
               <div className='text-base font-medium'>Password</div>
-              <div className='text-sm text-muted-foreground'>
-                Change your account password
-              </div>
+              <div className='text-muted-foreground text-sm'>Change your account password</div>
             </div>
             <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
               <DialogTrigger asChild>
@@ -228,7 +222,10 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...passwordForm}>
-                  <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className='space-y-4'>
+                  <form
+                    onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
+                    className='space-y-4'
+                  >
                     <FormField
                       control={passwordForm.control}
                       name='currentPassword'
@@ -295,10 +292,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                       >
                         Cancel
                       </Button>
-                      <ButtonWithLoading
-                        type='submit'
-                        isLoading={isUpdatingPassword}
-                      >
+                      <ButtonWithLoading type='submit' isLoading={isUpdatingPassword}>
                         Update Password
                       </ButtonWithLoading>
                     </div>

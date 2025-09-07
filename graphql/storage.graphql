@@ -1,102 +1,113 @@
 type Query {
-    listFiles(
-        path: String!
-        offset: Int
-        limit: Int
-        onlyFiles: Boolean
-        onlyFolders: Boolean
-        sortBy: SortOption
-        sortOrder: SortOrder
-    ): FileList!
+  listFiles(
+    path: String!
+    offset: Int
+    limit: Int
+    onlyFiles: Boolean
+    onlyFolders: Boolean
+    sortBy: SortOption
+    sortOrder: SortOrder
+  ): FileList!
 
-    statFile(path: String!): FileStat
+  statFile(path: String!): FileStat
 
-    # Registry APIs
-    listUserRegistry(prefix: String, ownerID: String): [UserRegistry!]!
-    getUserRegistry(key: String, keys: [String!], ownerID: String): [UserRegistry!]!
-    listSystemRegistry(prefix: String): [SystemRegistry!]!
-    getSystemRegistry(key: String, keys: [String!]): [SystemRegistry!]!
+  # Registry APIs
+  listUserRegistry(prefix: String, ownerID: String): [UserRegistry!]!
+  getUserRegistry(
+    key: String
+    keys: [String!]
+    ownerID: String
+  ): [UserRegistry!]!
+  listSystemRegistry(prefix: String): [SystemRegistry!]!
+  getSystemRegistry(key: String, keys: [String!]): [SystemRegistry!]!
 
-    me: User
+  me: User
 
-    # admin only operations
-    user(id: ID!): User
-    users(offset: Int = 0, limit: Int = 20): UserList!
+  # admin only operations
+  user(id: ID!): User
+  users(offset: Int = 0, limit: Int = 20): UserList!
 }
 
 type Mutation {
-    # write scope required
-    uploadFile(path: String!, content: Upload!): Boolean!
-    deleteFile(path: String!): Boolean!
-    createFolder(path: String!): Boolean!
+  # write scope required
+  uploadFile(path: String!, content: Upload!): Boolean!
+  deleteFile(path: String!): Boolean!
+  createFolder(path: String!): Boolean!
 
-    # self operations, or admin scope with userId
-    updateProfile(input: UpdateProfileInput!, userId: ID): User!
-    changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
-    deactivateAccount(userId: ID): Boolean!
+  # self operations, or admin scope with userId
+  updateProfile(input: UpdateProfileInput!, userId: ID): User!
+  changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
+  deactivateAccount(userId: ID): Boolean!
 
-    # User Registry APIs
-    setUserRegistry(entry: RegistryEntryInput, entries: [RegistryEntryInput!], ownerID: String): [UserRegistry!]!
-    deleteUserRegistry(key: String, keys: [String!], ownerID: String): Boolean!
+  # User Registry APIs
+  setUserRegistry(
+    entry: RegistryEntryInput
+    entries: [RegistryEntryInput!]
+    ownerID: String
+  ): [UserRegistry!]!
+  deleteUserRegistry(key: String, keys: [String!], ownerID: String): Boolean!
 
-    # System Registry APIs (admin only for write)
-    setSystemRegistry(entry: RegistryEntryInput, entries: [RegistryEntryInput!]): [SystemRegistry!]!
-    deleteSystemRegistry(key: String, keys: [String!]): Boolean!
+  # System Registry APIs (admin only for write)
+  setSystemRegistry(
+    entry: RegistryEntryInput
+    entries: [RegistryEntryInput!]
+  ): [SystemRegistry!]!
+  deleteSystemRegistry(key: String, keys: [String!]): Boolean!
 
-    # admin only operations
-    createUser(input: CreateUserInput!): User!
+  # admin only operations
+  createUser(input: CreateUserInput!): User!
 }
 
 type User {
-    id: ID!
-    displayName: String!
-    email: String!
-    role: String!
-    isActive: Boolean!
-    createdAt: String!
-    updatedAt: String!
+  id: ID!
+  displayName: String!
+  email: String!
+  role: String!
+  isActive: Boolean!
+  createdAt: String!
+  updatedAt: String!
 }
 
 type UserList {
-    items: [User!]!
-    totalCount: Int!
+  items: [User!]!
+  totalCount: Int!
 }
 
 input UpdateProfileInput {
-    displayName: String
-    email: String
+  displayName: String
+  email: String
 }
 
 input ChangePasswordInput {
-    currentPassword: String  # Optional when admin is changing another user's password
-    newPassword: String!
+  currentPassword: String # Optional when admin is changing another user's password
+  newPassword: String!
 }
 
 input CreateUserInput {
-    displayName: String!
-    email: String!
-    password: String!
-    role: String!
+  displayName: String!
+  email: String!
+  password: String!
+  role: String!
 }
 
 input RegistryEntryInput {
-    key: String!
-    value: String!
-    isEncrypted: Boolean!
+  key: String!
+  value: String!
+  isEncrypted: Boolean!
 }
 
 # Existing types...
 type FileList {
-    items: [FileItem!]!
-    totalCount: Int!
+  items: [FileItem!]!
+  totalCount: Int!
 }
 
 type FileItem {
-    name: String!
-    path: String!
-    size: Int!
-    isDirectory: Boolean!
-    thumbnailUrls: ThumbnailUrls
+  name: String!
+  path: String!
+  size: Int!
+  isDirectory: Boolean!
+  thumbnailUrls: ThumbnailUrls
 }
 
 type ThumbnailUrls {
@@ -108,41 +119,41 @@ type ThumbnailUrls {
 }
 
 type FileStat {
-    name: String!
-    path: String!
-    size: Int!
-    isDirectory: Boolean!
-    modifiedTime: String!
-    etag: String
-    thumbnailUrls: ThumbnailUrls
+  name: String!
+  path: String!
+  size: Int!
+  isDirectory: Boolean!
+  modifiedTime: String!
+  etag: String
+  thumbnailUrls: ThumbnailUrls
 }
 
 enum SortOption {
-    NAME
-    SIZE
-    MODIFIED_TIME
+  NAME
+  SIZE
+  MODIFIED_TIME
 }
 
 enum SortOrder {
-    ASC
-    DESC
+  ASC
+  DESC
 }
 
 scalar Upload
 
 type UserRegistry {
-    key: String!
-    value: String!
-    ownerID: String!
-    isEncrypted: Boolean!
+  key: String!
+  value: String!
+  ownerID: String!
+  isEncrypted: Boolean!
 }
 
 type SystemRegistry {
-    key: String!
-    value: String!
-    ownerID: String!
-    isEncrypted: Boolean!
-    isOverriddenByConfig: Boolean!
+  key: String!
+  value: String!
+  ownerID: String!
+  isEncrypted: Boolean!
+  isOverriddenByConfig: Boolean!
 }
 
 scalar JSON

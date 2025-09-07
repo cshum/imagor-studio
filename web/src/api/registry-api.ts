@@ -25,9 +25,9 @@ import { getSdk } from '../generated/graphql-request'
  */
 export function displayRegistryValue(entry: { value: string; isEncrypted: boolean }): string {
   if (entry.isEncrypted) {
-    return "••••••••" // Always show dots for encrypted
+    return '••••••••' // Always show dots for encrypted
   }
-  return entry.value || "(empty)"
+  return entry.value || '(empty)'
 }
 
 /**
@@ -116,7 +116,7 @@ export async function setUserRegistryMultiple(
 ): Promise<SetUserRegistryMutation['setUserRegistry']> {
   const sdk = getSdk(getGraphQLClient())
 
-  const entriesWithEncryption = entries.map(entry => ({
+  const entriesWithEncryption = entries.map((entry) => ({
     key: entry.key,
     value: entry.value,
     isEncrypted: entry.isEncrypted ?? false,
@@ -194,7 +194,7 @@ export async function getSystemRegistry(
 ): Promise<GetSystemRegistryQuery['getSystemRegistry']> {
   const sdk = getSdk(getGraphQLClient())
 
-  const variables: GetSystemRegistryQueryVariables = { 
+  const variables: GetSystemRegistryQueryVariables = {
     key,
     keys: undefined,
   }
@@ -210,7 +210,7 @@ export async function getSystemRegistryMultiple(
 ): Promise<GetSystemRegistryQuery['getSystemRegistry']> {
   const sdk = getSdk(getGraphQLClient())
 
-  const variables: GetSystemRegistryQueryVariables = { 
+  const variables: GetSystemRegistryQueryVariables = {
     key: undefined,
     keys,
   }
@@ -245,7 +245,7 @@ export async function setSystemRegistryMultiple(
 ): Promise<SetSystemRegistryMutation['setSystemRegistry']> {
   const sdk = getSdk(getGraphQLClient())
 
-  const entriesWithEncryption = entries.map(entry => ({
+  const entriesWithEncryption = entries.map((entry) => ({
     key: entry.key,
     value: entry.value,
     isEncrypted: entry.isEncrypted ?? false,
@@ -294,18 +294,18 @@ export async function getSystemRegistryObject(prefix?: string): Promise<Record<s
  * Set system registry from a key-value object (admin only)
  */
 export async function setSystemRegistryObject(
-  registryObject: Record<string, string>
+  registryObject: Record<string, string>,
 ): Promise<SetSystemRegistryMutation['setSystemRegistry']> {
   const sdk = getSdk(getGraphQLClient())
 
-  const entries = Object.entries(registryObject).map(([key, value]) => ({ 
-    key, 
-    value, 
-    isEncrypted: false 
+  const entries = Object.entries(registryObject).map(([key, value]) => ({
+    key,
+    value,
+    isEncrypted: false,
   }))
-  const result = await sdk.SetSystemRegistry({ 
+  const result = await sdk.SetSystemRegistry({
     entry: undefined,
-    entries 
+    entries,
   })
   return result.setSystemRegistry
 }

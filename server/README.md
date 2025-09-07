@@ -5,16 +5,19 @@ Imagor Studio is a file explorer application with a React frontend and a Go back
 ## Backend Setup
 
 1. Navigate to the server directory:
+
    ```
    cd server
    ```
 
 2. Install dependencies:
+
    ```
    go mod download
    ```
 
 3. Set up environment variables (you can create a `.env` file in the `server` directory):
+
    ```
    PORT=8080
    STORAGE_TYPE=filesystem  # or "s3"
@@ -33,11 +36,13 @@ The GraphQL playground will be available at `http://localhost:8080`.
 ## Frontend Setup
 
 1. Navigate to the web directory:
+
    ```
    cd web
    ```
 
 2. Install dependencies:
+
    ```
    npm install
    ```
@@ -54,11 +59,13 @@ The frontend will be available at `http://localhost:5173`.
 ### Backend
 
 1. Navigate to the server directory:
+
    ```
    cd server
    ```
 
 2. Build the binary:
+
    ```
    go build -o imagor-studio-server cmd/server/main.go
    ```
@@ -71,11 +78,13 @@ The frontend will be available at `http://localhost:5173`.
 ### Frontend
 
 1. Navigate to the web directory:
+
    ```
    cd web
    ```
 
 2. Build the frontend:
+
    ```
    npm run build
    ```

@@ -1,10 +1,11 @@
-import { useState, ReactNode } from 'react'
-import { cn } from '@/lib/utils'
+import { ReactNode, useState } from 'react'
+import { ChevronLeft } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { RectangleStepper } from '@/components/ui/rectangle-stepper'
-import { ChevronLeft } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export interface MultiStepFormStep {
   id: string
@@ -45,7 +46,7 @@ export function MultiStepForm({
   showStepper = true,
 }: MultiStepFormProps) {
   const [isLoading, setIsLoading] = useState(false)
-  
+
   const currentStepData = steps[currentStep - 1]
   const isFirstStep = currentStep === 1
   const isLastStep = currentStep === steps.length
@@ -56,11 +57,11 @@ export function MultiStepForm({
     setIsLoading(true)
     try {
       let canProceed = true
-      
+
       if (currentStepData.onNext) {
         canProceed = await currentStepData.onNext()
       }
-      
+
       if (canProceed) {
         if (isLastStep) {
           onComplete()
@@ -75,11 +76,11 @@ export function MultiStepForm({
 
   const handleBack = () => {
     if (isFirstStep) return
-    
+
     if (currentStepData?.onBack) {
       currentStepData.onBack()
     }
-    
+
     onStepChange(currentStep - 1)
   }
 
@@ -116,31 +117,24 @@ export function MultiStepForm({
   }
 
   return (
-    <div className={cn('w-full max-w-4xl mx-auto', className)}>
+    <div className={cn('mx-auto w-full max-w-4xl', className)}>
       {/* Header */}
       {(title || description) && (
-        <div className="text-center mb-8">
-          {title && (
-            <h1 className="text-3xl font-bold tracking-tight mb-2">{title}</h1>
-          )}
-          {description && (
-            <p className="text-muted-foreground text-lg">{description}</p>
-          )}
+        <div className='mb-8 text-center'>
+          {title && <h1 className='mb-2 text-3xl font-bold tracking-tight'>{title}</h1>}
+          {description && <p className='text-muted-foreground text-lg'>{description}</p>}
         </div>
       )}
 
       {/* Rectangle Stepper */}
       {showStepper && (
-        <div className="mb-8">
-          <RectangleStepper
-            currentStep={currentStep}
-            totalSteps={steps.length}
-          />
+        <div className='mb-8'>
+          <RectangleStepper currentStep={currentStep} totalSteps={steps.length} />
         </div>
       )}
 
       {/* Step Content */}
-      <Card className="min-h-[400px] p-4">
+      <Card className='min-h-[400px] p-4'>
         <CardHeader>
           <CardTitle>{currentStepData?.title}</CardTitle>
           {currentStepData?.description && (
@@ -149,46 +143,39 @@ export function MultiStepForm({
         </CardHeader>
         <CardContent>
           {/* Content with fade transition */}
-          <div 
-            key={currentStep}
-            className="animate-in fade-in-50 duration-300"
-          >
+          <div key={currentStep} className='animate-in fade-in-50 duration-300'>
             {currentStepData?.content}
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between pt-6 mt-6 border-t">
-            <div className="flex gap-2">
+          <div className='mt-6 flex items-center justify-between border-t pt-6'>
+            <div className='flex gap-2'>
               {!isFirstStep && !currentStepData?.hideBack && (
                 <Button
-                  variant="outline"
+                  variant='outline'
                   onClick={handleBack}
                   disabled={isLoading}
-                  className="flex items-center gap-2"
+                  className='flex items-center gap-2'
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className='h-4 w-4' />
                   {getBackButtonLabel()}
                 </Button>
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className='flex gap-2'>
               {currentStepData?.canSkip && (
-                <Button
-                  variant="ghost"
-                  onClick={handleSkip}
-                  disabled={isLoading}
-                >
+                <Button variant='ghost' onClick={handleSkip} disabled={isLoading}>
                   {getSkipButtonLabel()}
                 </Button>
               )}
-              
+
               {!currentStepData?.hideNext && (
                 <ButtonWithLoading
                   onClick={handleNext}
                   isLoading={isLoading}
                   disabled={isNextDisabled()}
-                  className="flex items-center gap-2"
+                  className='flex items-center gap-2'
                 >
                   {getNextButtonLabel()}
                 </ButtonWithLoading>
