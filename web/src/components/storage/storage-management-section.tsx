@@ -147,9 +147,7 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
       <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
         <DialogContent className='max-h-[90vh] max-w-4xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>
-              {storageStatus?.configured ? 'Reconfigure Storage' : 'Configure Storage'}
-            </DialogTitle>
+            <DialogTitle>Configure Storage</DialogTitle>
           </DialogHeader>
           <StorageConfigurationWizard
             title=''
