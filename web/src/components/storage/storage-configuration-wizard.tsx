@@ -4,8 +4,6 @@ import { toast } from 'sonner'
 import { configureFileStorage, configureS3Storage, testStorageConfig } from '@/api/storage-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import type { StorageType as GraphQLStorageType, StorageStatusQuery } from '@/generated/graphql'
 
 import {
@@ -18,19 +16,17 @@ import { StorageTypeSelector, type StorageType } from './storage-type-selector'
 
 interface StorageConfigurationWizardProps {
   onSuccess?: (restartRequired: boolean) => void
+  onError?: (error: string) => void
   onCancel?: () => void
   showCancel?: boolean
-  title?: string
-  description?: string
   initialConfig?: StorageStatusQuery['storageStatus'] | null
 }
 
 export function StorageConfigurationWizard({
   onSuccess,
+  onError,
   onCancel,
   showCancel = false,
-  title = 'Configure Storage',
-  description = 'Choose how you want to store your images',
   initialConfig,
 }: StorageConfigurationWizardProps) {
   const [storageType, setStorageType] = useState<StorageType>('file')
@@ -88,10 +84,15 @@ export function StorageConfigurationWizard({
       if (result.success) {
         onSuccess?.(result.restartRequired)
       } else {
-        toast.error(result.message || 'Failed to configure file storage')
+        const errorMessage = result.message || 'Failed to configure file storage'
+        toast.error(errorMessage)
+        onError?.(errorMessage)
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to configure file storage')
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to configure file storage'
+      toast.error(errorMessage)
+      onError?.(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -116,10 +117,14 @@ export function StorageConfigurationWizard({
         toast.success(result.message || 'S3 storage configured successfully!')
         onSuccess?.(result.restartRequired)
       } else {
-        toast.error(result.message || 'Failed to configure S3 storage')
+        const errorMessage = result.message || 'Failed to configure S3 storage'
+        toast.error(errorMessage)
+        onError?.(errorMessage)
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to configure S3 storage')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to configure S3 storage'
+      toast.error(errorMessage)
+      onError?.(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -189,29 +194,23 @@ export function StorageConfigurationWizard({
   }
 
   return (
-    <Card className='mx-auto w-full max-w-2xl'>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className='space-y-6'>
-        {isConfigOverridden && (
-          <span className='mb-4 block text-orange-600 dark:text-orange-400'>
-            Storage configuration is managed by external configuration
-          </span>
-        )}
+    <div>
+      {isConfigOverridden && (
+        <span className='mb-4 block text-orange-600 dark:text-orange-400'>
+          Storage configuration is managed by external configuration
+        </span>
+      )}
 
-        <StorageTypeSelector
-          value={storageType}
-          onChange={setStorageType}
-          disabled={isLoading || isConfigOverridden}
-        />
+      <StorageTypeSelector
+        value={storageType}
+        onChange={setStorageType}
+        disabled={isLoading || isConfigOverridden}
+      />
 
-        <Separator />
-
+      <div className='mt-6'>
         {storageType === 'file' && (
           <div className='space-y-4'>
-            <h3 className='text-lg font-medium'>File Storage Configuration</h3>
+            <h4 className='font-medium'>File Storage Configuration</h4>
             <FileStorageForm
               ref={fileFormRef}
               onSubmit={handleFileStorageSubmit}
@@ -223,7 +222,7 @@ export function StorageConfigurationWizard({
 
         {storageType === 's3' && (
           <div className='space-y-4'>
-            <h3 className='text-lg font-medium'>S3 Storage Configuration</h3>
+            <h4 className='font-medium'>S3 Storage Configuration</h4>
             <S3StorageForm
               ref={s3FormRef}
               onSubmit={handleS3StorageSubmit}
@@ -232,45 +231,45 @@ export function StorageConfigurationWizard({
             />
           </div>
         )}
+      </div>
 
-        <div className='flex flex-col justify-between gap-3 sm:flex-row'>
-          <div className='flex gap-3'>
-            {showCancel && (
-              <Button
-                type='button'
-                variant='outline'
-                onClick={onCancel}
-                disabled={isLoading || isTesting}
-              >
-                Cancel
-              </Button>
-            )}
-            <ButtonWithLoading
+      <div className='mt-6 flex flex-col justify-between gap-3 sm:flex-row'>
+        <div className='flex gap-3'>
+          {showCancel && (
+            <Button
               type='button'
               variant='outline'
-              onClick={handleTestConfiguration}
-              disabled={isLoading || isConfigOverridden}
-              isLoading={isTesting}
+              onClick={onCancel}
+              disabled={isLoading || isTesting}
             >
-              Test Configuration
-            </ButtonWithLoading>
-          </div>
+              Cancel
+            </Button>
+          )}
           <ButtonWithLoading
-            type='submit'
-            disabled={isTesting || isConfigOverridden}
-            isLoading={isLoading}
-            onClick={() => {
-              // Trigger form submission based on storage type
-              const form = document.querySelector('form')
-              if (form) {
-                form.requestSubmit()
-              }
-            }}
+            type='button'
+            variant='outline'
+            onClick={handleTestConfiguration}
+            disabled={isLoading || isConfigOverridden}
+            isLoading={isTesting}
           >
-            Configure Storage
+            Test Configuration
           </ButtonWithLoading>
         </div>
-      </CardContent>
-    </Card>
+        <ButtonWithLoading
+          type='submit'
+          disabled={isTesting || isConfigOverridden}
+          isLoading={isLoading}
+          onClick={() => {
+            // Trigger form submission based on storage type
+            const form = document.querySelector('form')
+            if (form) {
+              form.requestSubmit()
+            }
+          }}
+        >
+          Configure Storage
+        </ButtonWithLoading>
+      </div>
+    </div>
   )
 }

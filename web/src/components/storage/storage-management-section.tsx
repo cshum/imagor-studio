@@ -156,8 +156,6 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
             <DialogTitle>Configure Storage</DialogTitle>
           </DialogHeader>
           <StorageConfigurationWizard
-            title=''
-            description=''
             onSuccess={handleStorageConfigured}
             onCancel={() => setShowConfigDialog(false)}
             showCancel={true}
