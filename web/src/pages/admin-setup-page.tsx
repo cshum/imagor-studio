@@ -207,19 +207,17 @@ function SystemSettingsStepContent({
       />
 
       {/* Navigation */}
-      <div className='mt-6 flex items-center justify-end border-t pt-6'>
-        <div className='flex gap-2'>
-          <Button variant='ghost' onClick={handleSkip} disabled={isLoading}>
-            Skip for Now
-          </Button>
-          <ButtonWithLoading
-            onClick={handleNext}
-            isLoading={isLoading}
-            className='flex items-center gap-2'
-          >
-            Next
-          </ButtonWithLoading>
-        </div>
+      <div className='mt-6 flex items-center justify-between border-t pt-6'>
+        <Button variant='outline' onClick={handleSkip} disabled={isLoading}>
+          Skip for Now
+        </Button>
+        <ButtonWithLoading
+          onClick={handleNext}
+          isLoading={isLoading}
+          className='flex items-center gap-2'
+        >
+          Next
+        </ButtonWithLoading>
       </div>
     </div>
   )
