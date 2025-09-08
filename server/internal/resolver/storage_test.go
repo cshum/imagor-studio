@@ -955,7 +955,13 @@ func TestConfigureFileStorage_RequiresAdminPermission(t *testing.T) {
 
 			if !tt.expectError {
 				// Mock successful operations for admin
-				mockRegistryStore.On("SetMultiple", ctx, mock.AnythingOfType("[]*model.Registry")).Return(nil)
+				resultRegistry := &registrystore.Registry{
+					Key:   "config.storage_type",
+					Value: "file",
+				}
+				mockRegistryStore.On("SetMulti", ctx, "system:global", mock.MatchedBy(func(entries []*registrystore.Registry) bool {
+					return len(entries) >= 3 // At least 3 entries (type, configured, base_dir, timestamp)
+				})).Return([]*registrystore.Registry{resultRegistry}, nil)
 				mockStorageProvider.On("ReloadFromRegistry").Return(nil)
 				mockStorageProvider.On("IsRestartRequired").Return(false)
 			}
