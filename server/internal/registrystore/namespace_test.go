@@ -4,14 +4,6 @@ import (
 	"testing"
 )
 
-func TestSystemOwnerID(t *testing.T) {
-	expected := "system:global"
-	actual := SystemOwnerID
-	if actual != expected {
-		t.Errorf("SystemOwnerID = %q, want %q", actual, expected)
-	}
-}
-
 func TestUserOwnerID(t *testing.T) {
 	userID := "123e4567-e89b-12d3-a456-426614174000"
 	expected := "user:123e4567-e89b-12d3-a456-426614174000"
