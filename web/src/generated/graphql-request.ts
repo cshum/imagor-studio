@@ -65,6 +65,7 @@ export type FileStat = {
 export type FileStorageConfig = {
   __typename?: 'FileStorageConfig'
   baseDir: Scalars['String']['output']
+  isOverriddenByConfig: Scalars['Boolean']['output']
   mkdirPermissions: Scalars['String']['output']
   writePermissions: Scalars['String']['output']
 }
@@ -226,6 +227,7 @@ export type S3StorageConfig = {
   baseDir: Maybe<Scalars['String']['output']>
   bucket: Scalars['String']['output']
   endpoint: Maybe<Scalars['String']['output']>
+  isOverriddenByConfig: Scalars['Boolean']['output']
   region: Maybe<Scalars['String']['output']>
 }
 
@@ -573,6 +575,7 @@ export type StorageStatusQuery = {
       baseDir: string
       mkdirPermissions: string
       writePermissions: string
+      isOverriddenByConfig: boolean
     } | null
     s3Config: {
       __typename?: 'S3StorageConfig'
@@ -580,6 +583,7 @@ export type StorageStatusQuery = {
       region: string | null
       endpoint: string | null
       baseDir: string | null
+      isOverriddenByConfig: boolean
     } | null
   }
 }
@@ -927,12 +931,14 @@ export const StorageStatusDocument = gql`
         baseDir
         mkdirPermissions
         writePermissions
+        isOverriddenByConfig
       }
       s3Config {
         bucket
         region
         endpoint
         baseDir
+        isOverriddenByConfig
       }
     }
   }

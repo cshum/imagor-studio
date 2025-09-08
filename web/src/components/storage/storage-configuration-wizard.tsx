@@ -126,6 +126,15 @@ export function StorageConfigurationWizard({
     }
   }
 
+  // Helper function to check if current storage config is overridden
+  const isConfigOverridden = () => {
+    if (storageType === 'file') {
+      return initialConfig?.fileConfig?.isOverriddenByConfig || false
+    } else {
+      return initialConfig?.s3Config?.isOverriddenByConfig || false
+    }
+  }
+
   const handleTestConfiguration = async () => {
     setIsTesting(true)
     try {
@@ -205,6 +214,7 @@ export function StorageConfigurationWizard({
               onSubmit={handleFileStorageSubmit}
               disabled={isLoading}
               initialValues={getFileStorageInitialValues()}
+              isOverriddenByConfig={initialConfig?.fileConfig?.isOverriddenByConfig}
             />
           </div>
         )}
@@ -217,6 +227,7 @@ export function StorageConfigurationWizard({
               onSubmit={handleS3StorageSubmit}
               disabled={isLoading}
               initialValues={getS3StorageInitialValues()}
+              isOverriddenByConfig={initialConfig?.s3Config?.isOverriddenByConfig}
             />
           </div>
         )}
@@ -239,7 +250,7 @@ export function StorageConfigurationWizard({
               type='button'
               variant='outline'
               onClick={handleTestConfiguration}
-              disabled={isLoading}
+              disabled={isLoading || isConfigOverridden()}
               isLoading={isTesting}
             >
               Test Configuration
@@ -247,7 +258,7 @@ export function StorageConfigurationWizard({
           </div>
           <ButtonWithLoading
             type='submit'
-            disabled={isTesting}
+            disabled={isTesting || isConfigOverridden()}
             isLoading={isLoading}
             onClick={() => {
               // Trigger form submission based on storage type

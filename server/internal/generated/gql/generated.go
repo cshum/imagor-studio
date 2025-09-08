@@ -69,10 +69,10 @@ type ComplexityRoot struct {
 	}
 
 	FileStorageConfig struct {
-		BaseDir          func(childComplexity int) int
-		IsOverridden     func(childComplexity int) int
-		MkdirPermissions func(childComplexity int) int
-		WritePermissions func(childComplexity int) int
+		BaseDir              func(childComplexity int) int
+		IsOverriddenByConfig func(childComplexity int) int
+		MkdirPermissions     func(childComplexity int) int
+		WritePermissions     func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -106,11 +106,11 @@ type ComplexityRoot struct {
 	}
 
 	S3StorageConfig struct {
-		BaseDir      func(childComplexity int) int
-		Bucket       func(childComplexity int) int
-		Endpoint     func(childComplexity int) int
-		IsOverridden func(childComplexity int) int
-		Region       func(childComplexity int) int
+		BaseDir              func(childComplexity int) int
+		Bucket               func(childComplexity int) int
+		Endpoint             func(childComplexity int) int
+		IsOverriddenByConfig func(childComplexity int) int
+		Region               func(childComplexity int) int
 	}
 
 	StorageConfigResult struct {
@@ -325,12 +325,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.FileStorageConfig.BaseDir(childComplexity), true
 
-	case "FileStorageConfig.isOverridden":
-		if e.complexity.FileStorageConfig.IsOverridden == nil {
+	case "FileStorageConfig.isOverriddenByConfig":
+		if e.complexity.FileStorageConfig.IsOverriddenByConfig == nil {
 			break
 		}
 
-		return e.complexity.FileStorageConfig.IsOverridden(childComplexity), true
+		return e.complexity.FileStorageConfig.IsOverriddenByConfig(childComplexity), true
 
 	case "FileStorageConfig.mkdirPermissions":
 		if e.complexity.FileStorageConfig.MkdirPermissions == nil {
@@ -645,12 +645,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.S3StorageConfig.Endpoint(childComplexity), true
 
-	case "S3StorageConfig.isOverridden":
-		if e.complexity.S3StorageConfig.IsOverridden == nil {
+	case "S3StorageConfig.isOverriddenByConfig":
+		if e.complexity.S3StorageConfig.IsOverriddenByConfig == nil {
 			break
 		}
 
-		return e.complexity.S3StorageConfig.IsOverridden(childComplexity), true
+		return e.complexity.S3StorageConfig.IsOverriddenByConfig(childComplexity), true
 
 	case "S3StorageConfig.region":
 		if e.complexity.S3StorageConfig.Region == nil {
@@ -1189,7 +1189,7 @@ type FileStorageConfig {
   baseDir: String!
   mkdirPermissions: String!
   writePermissions: String!
-  isOverridden: Boolean!
+  isOverriddenByConfig: Boolean!
 }
 
 type S3StorageConfig {
@@ -1197,7 +1197,7 @@ type S3StorageConfig {
   region: String
   endpoint: String
   baseDir: String
-  isOverridden: Boolean!
+  isOverriddenByConfig: Boolean!
 }
 
 type StorageConfigResult {
@@ -2427,8 +2427,8 @@ func (ec *executionContext) fieldContext_FileStorageConfig_writePermissions(_ co
 	return fc, nil
 }
 
-func (ec *executionContext) _FileStorageConfig_isOverridden(ctx context.Context, field graphql.CollectedField, obj *FileStorageConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_FileStorageConfig_isOverridden(ctx, field)
+func (ec *executionContext) _FileStorageConfig_isOverriddenByConfig(ctx context.Context, field graphql.CollectedField, obj *FileStorageConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileStorageConfig_isOverriddenByConfig(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2441,7 +2441,7 @@ func (ec *executionContext) _FileStorageConfig_isOverridden(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.IsOverridden, nil
+		return obj.IsOverriddenByConfig, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2458,7 +2458,7 @@ func (ec *executionContext) _FileStorageConfig_isOverridden(ctx context.Context,
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_FileStorageConfig_isOverridden(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_FileStorageConfig_isOverriddenByConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "FileStorageConfig",
 		Field:      field,
@@ -4246,8 +4246,8 @@ func (ec *executionContext) fieldContext_S3StorageConfig_baseDir(_ context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _S3StorageConfig_isOverridden(ctx context.Context, field graphql.CollectedField, obj *S3StorageConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_S3StorageConfig_isOverridden(ctx, field)
+func (ec *executionContext) _S3StorageConfig_isOverriddenByConfig(ctx context.Context, field graphql.CollectedField, obj *S3StorageConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_S3StorageConfig_isOverriddenByConfig(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4260,7 +4260,7 @@ func (ec *executionContext) _S3StorageConfig_isOverridden(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.IsOverridden, nil
+		return obj.IsOverriddenByConfig, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4277,7 +4277,7 @@ func (ec *executionContext) _S3StorageConfig_isOverridden(ctx context.Context, f
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_S3StorageConfig_isOverridden(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_S3StorageConfig_isOverriddenByConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "S3StorageConfig",
 		Field:      field,
@@ -4675,8 +4675,8 @@ func (ec *executionContext) fieldContext_StorageStatus_fileConfig(_ context.Cont
 				return ec.fieldContext_FileStorageConfig_mkdirPermissions(ctx, field)
 			case "writePermissions":
 				return ec.fieldContext_FileStorageConfig_writePermissions(ctx, field)
-			case "isOverridden":
-				return ec.fieldContext_FileStorageConfig_isOverridden(ctx, field)
+			case "isOverriddenByConfig":
+				return ec.fieldContext_FileStorageConfig_isOverriddenByConfig(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type FileStorageConfig", field.Name)
 		},
@@ -4728,8 +4728,8 @@ func (ec *executionContext) fieldContext_StorageStatus_s3Config(_ context.Contex
 				return ec.fieldContext_S3StorageConfig_endpoint(ctx, field)
 			case "baseDir":
 				return ec.fieldContext_S3StorageConfig_baseDir(ctx, field)
-			case "isOverridden":
-				return ec.fieldContext_S3StorageConfig_isOverridden(ctx, field)
+			case "isOverriddenByConfig":
+				return ec.fieldContext_S3StorageConfig_isOverriddenByConfig(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type S3StorageConfig", field.Name)
 		},
@@ -8247,8 +8247,8 @@ func (ec *executionContext) _FileStorageConfig(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "isOverridden":
-			out.Values[i] = ec._FileStorageConfig_isOverridden(ctx, field, obj)
+		case "isOverriddenByConfig":
+			out.Values[i] = ec._FileStorageConfig_isOverriddenByConfig(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -8698,8 +8698,8 @@ func (ec *executionContext) _S3StorageConfig(ctx context.Context, sel ast.Select
 			out.Values[i] = ec._S3StorageConfig_endpoint(ctx, field, obj)
 		case "baseDir":
 			out.Values[i] = ec._S3StorageConfig_baseDir(ctx, field, obj)
-		case "isOverridden":
-			out.Values[i] = ec._S3StorageConfig_isOverridden(ctx, field, obj)
+		case "isOverriddenByConfig":
+			out.Values[i] = ec._S3StorageConfig_isOverriddenByConfig(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
