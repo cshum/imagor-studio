@@ -11,11 +11,10 @@ import type { StorageStatusQuery } from '@/generated/graphql'
 import { StorageConfigurationWizard } from './storage-configuration-wizard'
 
 interface StorageManagementSectionProps {
-  initialStorageStatus: StorageStatusQuery['storageStatus'] | null
+  storageStatus: StorageStatusQuery['storageStatus'] | null
 }
 
-export function StorageManagementSection({ initialStorageStatus }: StorageManagementSectionProps) {
-  const [storageStatus] = useState<StorageStatusQuery['storageStatus'] | null>(initialStorageStatus)
+export function StorageManagementSection({ storageStatus }: StorageManagementSectionProps) {
   const [showConfigDialog, setShowConfigDialog] = useState(false)
   const router = useRouter()
 
