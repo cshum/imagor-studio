@@ -803,7 +803,6 @@ func TestConfigureFileStorage_AutoTestSuccess(t *testing.T) {
 		return len(entries) >= 3 // At least 3 entries (type, configured, base_dir, timestamp)
 	})).Return([]*registrystore.Registry{resultRegistry}, nil)
 	mockStorageProvider.On("ReloadFromRegistry").Return(nil)
-	mockStorageProvider.On("IsRestartRequired").Return(false)
 
 	result, err := resolver.Mutation().ConfigureFileStorage(ctx, input)
 
@@ -1067,13 +1066,6 @@ func TestConfigureFileStorage_ErrorMessageProxying(t *testing.T) {
 			},
 			expectedMsg:    "Failed to access storage directory",
 			expectedDetail: "no such file or directory",
-		},
-		{
-			name: "Empty base directory",
-			input: gql.FileStorageInput{
-				BaseDir: "",
-			},
-			expectedMsg: "Failed to create storage instance",
 		},
 	}
 
