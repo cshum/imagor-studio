@@ -281,7 +281,6 @@ export type SystemRegistry = {
   isEncrypted: Scalars['Boolean']['output']
   isOverriddenByConfig: Scalars['Boolean']['output']
   key: Scalars['String']['output']
-  ownerID: Scalars['String']['output']
   value: Scalars['String']['output']
 }
 
@@ -320,7 +319,6 @@ export type UserRegistry = {
   __typename?: 'UserRegistry'
   isEncrypted: Scalars['Boolean']['output']
   key: Scalars['String']['output']
-  ownerID: Scalars['String']['output']
   value: Scalars['String']['output']
 }
 
@@ -328,7 +326,6 @@ export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
   key: string
   value: string
-  ownerID: string
   isEncrypted: boolean
 }
 
@@ -336,7 +333,6 @@ export type SystemRegistryInfoFragment = {
   __typename?: 'SystemRegistry'
   key: string
   value: string
-  ownerID: string
   isEncrypted: boolean
   isOverriddenByConfig: boolean
 }
@@ -352,7 +348,6 @@ export type ListUserRegistryQuery = {
     __typename?: 'UserRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
   }>
 }
@@ -369,7 +364,6 @@ export type GetUserRegistryQuery = {
     __typename?: 'UserRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
   }>
 }
@@ -384,7 +378,6 @@ export type ListSystemRegistryQuery = {
     __typename?: 'SystemRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
     isOverriddenByConfig: boolean
   }>
@@ -401,7 +394,6 @@ export type GetSystemRegistryQuery = {
     __typename?: 'SystemRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
     isOverriddenByConfig: boolean
   }>
@@ -419,7 +411,6 @@ export type SetUserRegistryMutation = {
     __typename?: 'UserRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
   }>
 }
@@ -442,7 +433,6 @@ export type SetSystemRegistryMutation = {
     __typename?: 'SystemRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
     isOverriddenByConfig: boolean
   }>
@@ -760,7 +750,6 @@ export const RegistryInfoFragmentDoc = gql`
   fragment RegistryInfo on UserRegistry {
     key
     value
-    ownerID
     isEncrypted
   }
 `
@@ -768,7 +757,6 @@ export const SystemRegistryInfoFragmentDoc = gql`
   fragment SystemRegistryInfo on SystemRegistry {
     key
     value
-    ownerID
     isEncrypted
     isOverriddenByConfig
   }

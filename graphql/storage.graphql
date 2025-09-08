@@ -152,14 +152,12 @@ scalar Upload
 type UserRegistry {
   key: String!
   value: String!
-  ownerID: String!
   isEncrypted: Boolean!
 }
 
 type SystemRegistry {
   key: String!
   value: String!
-  ownerID: String!
   isEncrypted: Boolean!
   isOverriddenByConfig: Boolean!
 }

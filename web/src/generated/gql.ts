@@ -15,8 +15,8 @@ import * as types from './graphql'
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-  '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
-  '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n    isOverriddenByConfig\n  }\n': typeof types.SystemRegistryInfoFragmentDoc
+  '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
+  '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n': typeof types.SystemRegistryInfoFragmentDoc
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.ListUserRegistryDocument
   '\n  query GetUserRegistry($key: String, $keys: [String!], $ownerID: String) {\n    getUserRegistry(key: $key, keys: $keys, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.GetUserRegistryDocument
   '\n  query ListSystemRegistry($prefix: String) {\n    listSystemRegistry(prefix: $prefix) {\n      ...SystemRegistryInfo\n    }\n  }\n': typeof types.ListSystemRegistryDocument
@@ -46,9 +46,9 @@ type Documents = {
   '\n  mutation CreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      ...UserInfo\n    }\n  }\n': typeof types.CreateUserDocument
 }
 const documents: Documents = {
-  '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n  }\n':
+  '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n':
     types.RegistryInfoFragmentDoc,
-  '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n    isOverriddenByConfig\n  }\n':
+  '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n':
     types.SystemRegistryInfoFragmentDoc,
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n':
     types.ListUserRegistryDocument,
@@ -123,14 +123,14 @@ export function gql(source: string): unknown
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n  }\n',
-): (typeof documents)['\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n  }\n']
+  source: '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n',
+): (typeof documents)['\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n    isOverriddenByConfig\n  }\n',
-): (typeof documents)['\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n    isOverriddenByConfig\n  }\n']
+  source: '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n',
+): (typeof documents)['\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
