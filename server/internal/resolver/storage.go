@@ -246,6 +246,15 @@ func (r *queryResolver) getFileStorageConfig(ctx context.Context) *gql.FileStora
 		resultMap[result.Key] = result
 	}
 
+	// Check if any file storage config is overridden
+	isOverridden := false
+	for _, result := range results {
+		if result.IsOverriddenByConfig {
+			isOverridden = true
+			break
+		}
+	}
+
 	// Set defaults and override with registry values if they exist
 	baseDir := "./storage" // Default
 	if result := resultMap["config.file_base_dir"]; result.Exists {
@@ -266,6 +275,7 @@ func (r *queryResolver) getFileStorageConfig(ctx context.Context) *gql.FileStora
 		BaseDir:          baseDir,
 		MkdirPermissions: mkdirPermissions,
 		WritePermissions: writePermissions,
+		IsOverridden:     isOverridden,
 	}
 }
 
@@ -290,8 +300,18 @@ func (r *queryResolver) getS3StorageConfig(ctx context.Context) *gql.S3StorageCo
 		return nil
 	}
 
+	// Check if any S3 storage config is overridden
+	isOverridden := false
+	for _, result := range results {
+		if result.IsOverriddenByConfig {
+			isOverridden = true
+			break
+		}
+	}
+
 	c := &gql.S3StorageConfig{
-		Bucket: bucketResult.Value,
+		Bucket:       bucketResult.Value,
+		IsOverridden: isOverridden,
 	}
 
 	if regionResult := resultMap["config.s3_region"]; regionResult.Exists {
@@ -579,6 +599,13 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 
 // Helper function to set system registry entries
 func (r *mutationResolver) setSystemRegistryEntries(ctx context.Context, entries []gql.RegistryEntryInput) ([]*gql.SystemRegistry, error) {
+	// Check all entries for config conflicts first (same logic as SetSystemRegistry)
+	for _, entry := range entries {
+		if _, exists := r.config.GetByRegistryKey(entry.Key); exists {
+			return nil, fmt.Errorf("cannot set registry key '%s': this configuration is managed by external config", entry.Key)
+		}
+	}
+
 	// Convert []gql.RegistryEntryInput to []*gql.RegistryEntryInput
 	entryPointers := make([]*gql.RegistryEntryInput, len(entries))
 	for i := range entries {

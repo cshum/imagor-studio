@@ -70,6 +70,7 @@ type ComplexityRoot struct {
 
 	FileStorageConfig struct {
 		BaseDir          func(childComplexity int) int
+		IsOverridden     func(childComplexity int) int
 		MkdirPermissions func(childComplexity int) int
 		WritePermissions func(childComplexity int) int
 	}
@@ -105,10 +106,11 @@ type ComplexityRoot struct {
 	}
 
 	S3StorageConfig struct {
-		BaseDir  func(childComplexity int) int
-		Bucket   func(childComplexity int) int
-		Endpoint func(childComplexity int) int
-		Region   func(childComplexity int) int
+		BaseDir      func(childComplexity int) int
+		Bucket       func(childComplexity int) int
+		Endpoint     func(childComplexity int) int
+		IsOverridden func(childComplexity int) int
+		Region       func(childComplexity int) int
 	}
 
 	StorageConfigResult struct {
@@ -322,6 +324,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.FileStorageConfig.BaseDir(childComplexity), true
+
+	case "FileStorageConfig.isOverridden":
+		if e.complexity.FileStorageConfig.IsOverridden == nil {
+			break
+		}
+
+		return e.complexity.FileStorageConfig.IsOverridden(childComplexity), true
 
 	case "FileStorageConfig.mkdirPermissions":
 		if e.complexity.FileStorageConfig.MkdirPermissions == nil {
@@ -635,6 +644,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.S3StorageConfig.Endpoint(childComplexity), true
+
+	case "S3StorageConfig.isOverridden":
+		if e.complexity.S3StorageConfig.IsOverridden == nil {
+			break
+		}
+
+		return e.complexity.S3StorageConfig.IsOverridden(childComplexity), true
 
 	case "S3StorageConfig.region":
 		if e.complexity.S3StorageConfig.Region == nil {
@@ -1173,6 +1189,7 @@ type FileStorageConfig {
   baseDir: String!
   mkdirPermissions: String!
   writePermissions: String!
+  isOverridden: Boolean!
 }
 
 type S3StorageConfig {
@@ -1180,6 +1197,7 @@ type S3StorageConfig {
   region: String
   endpoint: String
   baseDir: String
+  isOverridden: Boolean!
 }
 
 type StorageConfigResult {
@@ -2404,6 +2422,50 @@ func (ec *executionContext) fieldContext_FileStorageConfig_writePermissions(_ co
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FileStorageConfig_isOverridden(ctx context.Context, field graphql.CollectedField, obj *FileStorageConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FileStorageConfig_isOverridden(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsOverridden, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FileStorageConfig_isOverridden(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileStorageConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4184,6 +4246,50 @@ func (ec *executionContext) fieldContext_S3StorageConfig_baseDir(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _S3StorageConfig_isOverridden(ctx context.Context, field graphql.CollectedField, obj *S3StorageConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_S3StorageConfig_isOverridden(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsOverridden, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_S3StorageConfig_isOverridden(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "S3StorageConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _StorageConfigResult_success(ctx context.Context, field graphql.CollectedField, obj *StorageConfigResult) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_StorageConfigResult_success(ctx, field)
 	if err != nil {
@@ -4569,6 +4675,8 @@ func (ec *executionContext) fieldContext_StorageStatus_fileConfig(_ context.Cont
 				return ec.fieldContext_FileStorageConfig_mkdirPermissions(ctx, field)
 			case "writePermissions":
 				return ec.fieldContext_FileStorageConfig_writePermissions(ctx, field)
+			case "isOverridden":
+				return ec.fieldContext_FileStorageConfig_isOverridden(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type FileStorageConfig", field.Name)
 		},
@@ -4620,6 +4728,8 @@ func (ec *executionContext) fieldContext_StorageStatus_s3Config(_ context.Contex
 				return ec.fieldContext_S3StorageConfig_endpoint(ctx, field)
 			case "baseDir":
 				return ec.fieldContext_S3StorageConfig_baseDir(ctx, field)
+			case "isOverridden":
+				return ec.fieldContext_S3StorageConfig_isOverridden(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type S3StorageConfig", field.Name)
 		},
@@ -8137,6 +8247,11 @@ func (ec *executionContext) _FileStorageConfig(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "isOverridden":
+			out.Values[i] = ec._FileStorageConfig_isOverridden(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8583,6 +8698,11 @@ func (ec *executionContext) _S3StorageConfig(ctx context.Context, sel ast.Select
 			out.Values[i] = ec._S3StorageConfig_endpoint(ctx, field, obj)
 		case "baseDir":
 			out.Values[i] = ec._S3StorageConfig_baseDir(ctx, field, obj)
+		case "isOverridden":
+			out.Values[i] = ec._S3StorageConfig_isOverridden(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
