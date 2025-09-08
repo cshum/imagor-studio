@@ -22,7 +22,7 @@ func (r *mutationResolver) UploadFile(ctx context.Context, path string, content 
 	if err := RequireWritePermission(ctx); err != nil {
 		return false, err
 	}
-	r.logger.Info("Uploading file", zap.String("path", path), zap.String("filename", content.Filename))
+	r.logger.Debug("Uploading file", zap.String("path", path), zap.String("filename", content.Filename))
 
 	if err := r.getStorage().Put(ctx, path, content.File); err != nil {
 		r.logger.Error("Failed to upload file", zap.Error(err))
@@ -39,7 +39,7 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, path string) (bool, e
 		return false, err
 	}
 
-	r.logger.Info("Deleting file", zap.String("path", path))
+	r.logger.Debug("Deleting file", zap.String("path", path))
 
 	if err := r.getStorage().Delete(ctx, path); err != nil {
 		r.logger.Error("Failed to delete file", zap.Error(err))
@@ -56,7 +56,7 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool,
 		return false, err
 	}
 
-	r.logger.Info("Creating folder", zap.String("path", path))
+	r.logger.Debug("Creating folder", zap.String("path", path))
 
 	if err := r.getStorage().CreateFolder(ctx, path); err != nil {
 		r.logger.Error("Failed to create folder", zap.Error(err))
@@ -80,7 +80,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int,
 		limitValue = *limit
 	}
 
-	r.logger.Info("Listing files",
+	r.logger.Debug("Listing files",
 		zap.String("path", path),
 		zap.Int("offset", offsetValue),
 		zap.Int("limit", limitValue),
@@ -151,7 +151,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int,
 
 // StatFile is the resolver for the statFile field.
 func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileStat, error) {
-	r.logger.Info("Getting file stats", zap.String("path", path))
+	r.logger.Debug("Getting file stats", zap.String("path", path))
 
 	fileInfo, err := r.getStorage().Stat(ctx, path)
 	if err != nil {
@@ -276,11 +276,37 @@ func (r *mutationResolver) ConfigureFileStorage(ctx context.Context, input gql.F
 		return nil, err
 	}
 
-	r.logger.Info("Configuring file storage", zap.String("baseDir", input.BaseDir))
+	r.logger.Debug("Configuring file storage", zap.String("baseDir", input.BaseDir))
 
 	// Set timestamp
 	timestamp := time.Now().UnixMilli()
 	timestampStr := fmt.Sprintf("%d", timestamp)
+
+	// Validate the configuration before saving
+	testInput := gql.StorageConfigInput{
+		Type:       gql.StorageTypeFile,
+		FileConfig: &input,
+	}
+
+	r.logger.Debug("Validating file storage configuration before saving")
+	validationResult := r.validateStorageConfig(ctx, testInput)
+	if !validationResult.Success {
+		r.logger.Error("File storage configuration validation failed",
+			zap.String("message", validationResult.Message),
+			zap.String("details", func() string {
+				if validationResult.Details != nil {
+					return *validationResult.Details
+				}
+				return ""
+			}()))
+
+		return &gql.StorageConfigResult{
+			Success:         false,
+			RestartRequired: false,
+			Timestamp:       timestampStr,
+			Message:         &validationResult.Message,
+		}, nil
+	}
 
 	// Prepare registry entries
 	entries := []gql.RegistryEntryInput{
@@ -343,11 +369,37 @@ func (r *mutationResolver) ConfigureS3Storage(ctx context.Context, input gql.S3S
 		return nil, err
 	}
 
-	r.logger.Info("Configuring S3 storage", zap.String("bucket", input.Bucket))
+	r.logger.Debug("Configuring S3 storage", zap.String("bucket", input.Bucket))
 
 	// Set timestamp
 	timestamp := time.Now().UnixMilli()
 	timestampStr := fmt.Sprintf("%d", timestamp)
+
+	// Validate the configuration before saving
+	testInput := gql.StorageConfigInput{
+		Type:     gql.StorageTypeS3,
+		S3Config: &input,
+	}
+
+	r.logger.Debug("Validating S3 storage configuration before saving")
+	validationResult := r.validateStorageConfig(ctx, testInput)
+	if !validationResult.Success {
+		r.logger.Error("S3 storage configuration validation failed",
+			zap.String("message", validationResult.Message),
+			zap.String("details", func() string {
+				if validationResult.Details != nil {
+					return *validationResult.Details
+				}
+				return ""
+			}()))
+
+		return &gql.StorageConfigResult{
+			Success:         false,
+			RestartRequired: false,
+			Timestamp:       timestampStr,
+			Message:         &validationResult.Message,
+		}, nil
+	}
 
 	// Prepare registry entries
 	entries := []gql.RegistryEntryInput{
@@ -410,15 +462,8 @@ func (r *mutationResolver) ConfigureS3Storage(ctx context.Context, input gql.S3S
 	}, nil
 }
 
-// TestStorageConfig is the resolver for the testStorageConfig field.
-func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.StorageConfigInput) (*gql.StorageTestResult, error) {
-	// Check admin permissions
-	if err := RequireAdminPermission(ctx); err != nil {
-		return nil, err
-	}
-
-	r.logger.Info("Testing storage configuration", zap.String("type", string(input.Type)))
-
+// validateStorageConfig is a helper function that validates a storage configuration
+func (r *mutationResolver) validateStorageConfig(ctx context.Context, input gql.StorageConfigInput) *gql.StorageTestResult {
 	// Create a temporary config for testing
 	cfg := &config.Config{}
 
@@ -428,7 +473,7 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 			return &gql.StorageTestResult{
 				Success: false,
 				Message: "File configuration is required for file storage type",
-			}, nil
+			}
 		}
 		cfg.StorageType = "file"
 		cfg.FileBaseDir = input.FileConfig.BaseDir
@@ -441,7 +486,7 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 			return &gql.StorageTestResult{
 				Success: false,
 				Message: "S3 configuration is required for S3 storage type",
-			}, nil
+			}
 		}
 		cfg.StorageType = "s3"
 		cfg.S3Bucket = input.S3Config.Bucket
@@ -474,7 +519,7 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 			Success: false,
 			Message: "Failed to create storage instance",
 			Details: &errMsg,
-		}, nil
+		}
 	}
 
 	// Test basic operations - start with List to verify directory exists without creating it
@@ -486,7 +531,7 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 			Success: false,
 			Message: "Failed to access storage directory",
 			Details: &errMsg,
-		}, nil
+		}
 	}
 
 	// Test basic write/read/delete operations
@@ -500,7 +545,7 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 			Success: false,
 			Message: "Failed to write test file",
 			Details: &errMsg,
-		}, nil
+		}
 	}
 
 	// Test read
@@ -511,7 +556,7 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 			Success: false,
 			Message: "Failed to read test file",
 			Details: &errMsg,
-		}, nil
+		}
 	}
 	reader.Close()
 
@@ -522,13 +567,26 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 			Success: false,
 			Message: "Failed to delete test file",
 			Details: &errMsg,
-		}, nil
+		}
 	}
 
 	return &gql.StorageTestResult{
 		Success: true,
 		Message: "Storage configuration test successful",
-	}, nil
+	}
+}
+
+// TestStorageConfig is the resolver for the testStorageConfig field.
+func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.StorageConfigInput) (*gql.StorageTestResult, error) {
+	// Check admin permissions
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+
+	r.logger.Debug("Testing storage configuration", zap.String("type", string(input.Type)))
+
+	result := r.validateStorageConfig(ctx, input)
+	return result, nil
 }
 
 // Helper function to get registry value
