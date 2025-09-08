@@ -6,7 +6,7 @@ export interface EmptyGalleryStateProps {
 }
 
 export function EmptyGalleryState({ width, isRootGallery }: EmptyGalleryStateProps) {
-  const message = isRootGallery ? 'No images in your gallery yet' : 'This folder is empty'
+  const message = isRootGallery ? 'No images in your gallery' : 'This folder is empty'
 
   return (
     <div
@@ -14,7 +14,7 @@ export function EmptyGalleryState({ width, isRootGallery }: EmptyGalleryStatePro
       style={{ width: `${width}px` }}
     >
       <div className='bg-muted mb-4 rounded-full p-6'>
-        <Images className='text-muted-foreground h-12 w-12' />
+        <Images className='text-muted-foreground h-20 w-20' />
       </div>
       <p className='text-muted-foreground text-lg'>{message}</p>
     </div>
