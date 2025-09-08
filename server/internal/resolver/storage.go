@@ -272,10 +272,10 @@ func (r *queryResolver) getFileStorageConfig(ctx context.Context) *gql.FileStora
 	}
 
 	return &gql.FileStorageConfig{
-		BaseDir:          baseDir,
-		MkdirPermissions: mkdirPermissions,
-		WritePermissions: writePermissions,
-		IsOverridden:     isOverridden,
+		BaseDir:              baseDir,
+		MkdirPermissions:     mkdirPermissions,
+		WritePermissions:     writePermissions,
+		IsOverriddenByConfig: isOverridden,
 	}
 }
 
@@ -310,8 +310,8 @@ func (r *queryResolver) getS3StorageConfig(ctx context.Context) *gql.S3StorageCo
 	}
 
 	c := &gql.S3StorageConfig{
-		Bucket:       bucketResult.Value,
-		IsOverridden: isOverridden,
+		Bucket:               bucketResult.Value,
+		IsOverriddenByConfig: isOverridden,
 	}
 
 	if regionResult := resultMap["config.s3_region"]; regionResult.Exists {

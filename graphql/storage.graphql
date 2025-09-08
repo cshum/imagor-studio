@@ -178,7 +178,7 @@ type FileStorageConfig {
   baseDir: String!
   mkdirPermissions: String!
   writePermissions: String!
-  isOverridden: Boolean!
+  isOverriddenByConfig: Boolean!
 }
 
 type S3StorageConfig {
@@ -186,7 +186,7 @@ type S3StorageConfig {
   region: String
   endpoint: String
   baseDir: String
-  isOverridden: Boolean!
+  isOverriddenByConfig: Boolean!
 }
 
 type StorageConfigResult {

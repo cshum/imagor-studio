@@ -45,10 +45,10 @@ type FileStat struct {
 }
 
 type FileStorageConfig struct {
-	BaseDir          string `json:"baseDir"`
-	MkdirPermissions string `json:"mkdirPermissions"`
-	WritePermissions string `json:"writePermissions"`
-	IsOverridden     bool   `json:"isOverridden"`
+	BaseDir              string `json:"baseDir"`
+	MkdirPermissions     string `json:"mkdirPermissions"`
+	WritePermissions     string `json:"writePermissions"`
+	IsOverriddenByConfig bool   `json:"isOverriddenByConfig"`
 }
 
 type FileStorageInput struct {
@@ -70,11 +70,11 @@ type RegistryEntryInput struct {
 }
 
 type S3StorageConfig struct {
-	Bucket       string  `json:"bucket"`
-	Region       *string `json:"region,omitempty"`
-	Endpoint     *string `json:"endpoint,omitempty"`
-	BaseDir      *string `json:"baseDir,omitempty"`
-	IsOverridden bool    `json:"isOverridden"`
+	Bucket               string  `json:"bucket"`
+	Region               *string `json:"region,omitempty"`
+	Endpoint             *string `json:"endpoint,omitempty"`
+	BaseDir              *string `json:"baseDir,omitempty"`
+	IsOverriddenByConfig bool    `json:"isOverriddenByConfig"`
 }
 
 type S3StorageInput struct {
