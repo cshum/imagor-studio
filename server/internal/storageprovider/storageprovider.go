@@ -163,12 +163,12 @@ func (p *Provider) IsRestartRequired() bool {
 	}
 
 	ctx := context.Background()
-	configUpdatedAtStr, exists := p.getRegistryValue(ctx, "config.storage_config_updated_at")
-	if !exists {
+	result := registryutil.GetEffectiveValue(ctx, p.registryStore, p.config, "config.storage_config_updated_at")
+	if !result.Exists {
 		return false
 	}
 
-	configUpdatedAt, err := strconv.ParseInt(configUpdatedAtStr, 10, 64)
+	configUpdatedAt, err := strconv.ParseInt(result.Value, 10, 64)
 	if err != nil {
 		return false
 	}
@@ -248,51 +248,67 @@ func (p *Provider) isStorageConfiguredInRegistry() bool {
 	return result.Exists && result.Value == "true"
 }
 
-// getRegistryValue gets the effective value for a registry key, considering config overrides
-func (p *Provider) getRegistryValue(ctx context.Context, key string) (string, bool) {
-	result := registryutil.GetEffectiveValue(ctx, p.registryStore, p.config, key)
-	return result.Value, result.Exists
-}
-
-// buildConfigFromRegistry builds a config object from registry values
+// buildConfigFromRegistry builds a config object from registry values using batch operations
 func (p *Provider) buildConfigFromRegistry() (*config.Config, error) {
 	ctx := context.Background()
 	cfg := &config.Config{}
 
+	// Get all possible storage configuration keys in one batch call
+	results := registryutil.GetEffectiveValues(ctx, p.registryStore, p.config,
+		"config.storage_type",
+		// File storage keys
+		"config.file_base_dir",
+		"config.file_mkdir_permissions",
+		"config.file_write_permissions",
+		// S3 storage keys
+		"config.s3_bucket",
+		"config.s3_region",
+		"config.s3_endpoint",
+		"config.s3_access_key_id",
+		"config.s3_secret_access_key",
+		"config.s3_session_token",
+		"config.s3_base_dir")
+
+	// Create a map for easy lookup
+	resultMap := make(map[string]registryutil.EffectiveValueResult)
+	for _, result := range results {
+		resultMap[result.Key] = result
+	}
+
 	// Get storage type
-	storageType, exists := p.getRegistryValue(ctx, "config.storage_type")
-	if !exists {
+	storageTypeResult := resultMap["config.storage_type"]
+	if !storageTypeResult.Exists {
 		return nil, fmt.Errorf("storage type not found in registry")
 	}
-	cfg.StorageType = storageType
+	cfg.StorageType = storageTypeResult.Value
 
 	// Load type-specific configuration
-	switch storageType {
+	switch cfg.StorageType {
 	case "file", "filesystem":
-		if err := p.loadFileConfigFromRegistry(ctx, cfg); err != nil {
+		if err := p.loadFileConfigFromResults(resultMap, cfg); err != nil {
 			return nil, err
 		}
 	case "s3":
-		if err := p.loadS3ConfigFromRegistry(ctx, cfg); err != nil {
+		if err := p.loadS3ConfigFromResults(resultMap, cfg); err != nil {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("unsupported storage type: %s", storageType)
+		return nil, fmt.Errorf("unsupported storage type: %s", cfg.StorageType)
 	}
 
 	return cfg, nil
 }
 
-// loadFileConfigFromRegistry loads file storage configuration from registry
-func (p *Provider) loadFileConfigFromRegistry(ctx context.Context, cfg *config.Config) error {
-	if baseDir, exists := p.getRegistryValue(ctx, "config.file_base_dir"); exists {
-		cfg.FileBaseDir = baseDir
+// loadFileConfigFromResults loads file storage configuration from pre-fetched results
+func (p *Provider) loadFileConfigFromResults(resultMap map[string]registryutil.EffectiveValueResult, cfg *config.Config) error {
+	if result := resultMap["config.file_base_dir"]; result.Exists {
+		cfg.FileBaseDir = result.Value
 	} else {
 		cfg.FileBaseDir = "./storage" // Default
 	}
 
-	if mkdirPerm, exists := p.getRegistryValue(ctx, "config.file_mkdir_permissions"); exists {
-		perm, err := strconv.ParseUint(mkdirPerm, 8, 32)
+	if result := resultMap["config.file_mkdir_permissions"]; result.Exists {
+		perm, err := strconv.ParseUint(result.Value, 8, 32)
 		if err != nil {
 			return fmt.Errorf("invalid file mkdir permissions: %w", err)
 		}
@@ -301,8 +317,8 @@ func (p *Provider) loadFileConfigFromRegistry(ctx context.Context, cfg *config.C
 		cfg.FileMkdirPermissions = 0755 // Default
 	}
 
-	if writePerm, exists := p.getRegistryValue(ctx, "config.file_write_permissions"); exists {
-		perm, err := strconv.ParseUint(writePerm, 8, 32)
+	if result := resultMap["config.file_write_permissions"]; result.Exists {
+		perm, err := strconv.ParseUint(result.Value, 8, 32)
 		if err != nil {
 			return fmt.Errorf("invalid file write permissions: %w", err)
 		}
@@ -314,36 +330,36 @@ func (p *Provider) loadFileConfigFromRegistry(ctx context.Context, cfg *config.C
 	return nil
 }
 
-// loadS3ConfigFromRegistry loads S3 storage configuration from registry
-func (p *Provider) loadS3ConfigFromRegistry(ctx context.Context, cfg *config.Config) error {
-	if bucket, exists := p.getRegistryValue(ctx, "config.s3_bucket"); exists {
-		cfg.S3Bucket = bucket
+// loadS3ConfigFromResults loads S3 storage configuration from pre-fetched results
+func (p *Provider) loadS3ConfigFromResults(resultMap map[string]registryutil.EffectiveValueResult, cfg *config.Config) error {
+	if result := resultMap["config.s3_bucket"]; result.Exists {
+		cfg.S3Bucket = result.Value
 	} else {
 		return fmt.Errorf("s3 bucket is required")
 	}
 
-	if region, exists := p.getRegistryValue(ctx, "config.s3_region"); exists {
-		cfg.S3Region = region
+	if result := resultMap["config.s3_region"]; result.Exists {
+		cfg.S3Region = result.Value
 	}
 
-	if endpoint, exists := p.getRegistryValue(ctx, "config.s3_endpoint"); exists {
-		cfg.S3Endpoint = endpoint
+	if result := resultMap["config.s3_endpoint"]; result.Exists {
+		cfg.S3Endpoint = result.Value
 	}
 
-	if accessKey, exists := p.getRegistryValue(ctx, "config.s3_access_key_id"); exists {
-		cfg.S3AccessKeyID = accessKey
+	if result := resultMap["config.s3_access_key_id"]; result.Exists {
+		cfg.S3AccessKeyID = result.Value
 	}
 
-	if secretKey, exists := p.getRegistryValue(ctx, "config.s3_secret_access_key"); exists {
-		cfg.S3SecretAccessKey = secretKey
+	if result := resultMap["config.s3_secret_access_key"]; result.Exists {
+		cfg.S3SecretAccessKey = result.Value
 	}
 
-	if sessionToken, exists := p.getRegistryValue(ctx, "config.s3_session_token"); exists {
-		cfg.S3SessionToken = sessionToken
+	if result := resultMap["config.s3_session_token"]; result.Exists {
+		cfg.S3SessionToken = result.Value
 	}
 
-	if baseDir, exists := p.getRegistryValue(ctx, "config.s3_base_dir"); exists {
-		cfg.S3BaseDir = baseDir
+	if result := resultMap["config.s3_base_dir"]; result.Exists {
+		cfg.S3BaseDir = result.Value
 	}
 
 	return nil
