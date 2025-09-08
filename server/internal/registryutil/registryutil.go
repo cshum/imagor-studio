@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
-	"go.uber.org/zap"
 )
 
 // ConfigProvider interface for configuration methods
@@ -12,45 +11,99 @@ type ConfigProvider interface {
 	GetByRegistryKey(registryKey string) (effectiveValue string, exists bool)
 }
 
-// GetEffectiveValue returns the effective value for a registry key, considering config overrides
-// Priority: 1. Environment/CLI config override, 2. Registry value
-func GetEffectiveValue(registryStore registrystore.Store, cfg ConfigProvider, key string, logger *zap.Logger) (string, bool) {
-	// First check if this key is overridden by environment/CLI config
-	if cfg != nil {
-		if configValue, configExists := cfg.GetByRegistryKey(key); configExists {
-			return configValue, true
-		}
-	}
-
-	// Fall back to registry value if registry store is available
-	if registryStore == nil {
-		if logger != nil {
-			logger.Debug("registryStore is nil in GetEffectiveValue, no registry fallback available")
-		}
-		return "", false
-	}
-
-	ctx := context.Background()
-	entry, err := registryStore.Get(ctx, registrystore.SystemOwnerID, key)
-	if err != nil {
-		if logger != nil {
-			logger.Error("Failed to get registry value", zap.String("key", key), zap.Error(err))
-		}
-		return "", false
-	}
-
-	// Handle case where entry is nil (key not found)
-	if entry == nil {
-		return "", false
-	}
-
-	return entry.Value, true
+// EffectiveValueResult represents the result of a registry value lookup
+type EffectiveValueResult struct {
+	Key                  string
+	Value                string
+	Exists               bool
+	IsOverriddenByConfig bool
 }
 
-// GetEffectiveValueWithDefault returns the effective value or a default if not found
-func GetEffectiveValueWithDefault(registryStore registrystore.Store, cfg ConfigProvider, key string, defaultValue string, logger *zap.Logger) string {
-	if value, exists := GetEffectiveValue(registryStore, cfg, key, logger); exists {
-		return value
+// GetEffectiveValue returns the effective value for a single key
+// This is a convenience function that returns the first result from GetEffectiveValues
+func GetEffectiveValue(ctx context.Context, registryStore registrystore.Store, cfg ConfigProvider, key string) EffectiveValueResult {
+	results := GetEffectiveValues(ctx, registryStore, cfg, key)
+	if len(results) > 0 {
+		return results[0]
 	}
-	return defaultValue
+	// This should never happen since we pass exactly one key, but handle it gracefully
+	return EffectiveValueResult{
+		Key:                  key,
+		Value:                "",
+		Exists:               false,
+		IsOverriddenByConfig: false,
+	}
+}
+
+// GetEffectiveValues returns effective values for multiple keys using batch operations
+// Uses variadic parameters for clean syntax
+func GetEffectiveValues(ctx context.Context, registryStore registrystore.Store, cfg ConfigProvider, keys ...string) []EffectiveValueResult {
+	if len(keys) == 0 {
+		return []EffectiveValueResult{}
+	}
+
+	results := make([]EffectiveValueResult, len(keys))
+
+	// First, check config overrides for all keys
+	configOverrides := make(map[string]string)
+	if cfg != nil {
+		for _, key := range keys {
+			if configValue, configExists := cfg.GetByRegistryKey(key); configExists {
+				configOverrides[key] = configValue
+			}
+		}
+	}
+
+	// Collect keys that need registry lookup (not overridden by config)
+	var registryKeys []string
+	for _, key := range keys {
+		if _, isOverridden := configOverrides[key]; !isOverridden {
+			registryKeys = append(registryKeys, key)
+		}
+	}
+
+	// Batch fetch from registry for non-overridden keys
+	var registryEntries []*registrystore.Registry
+	if registryStore != nil && len(registryKeys) > 0 {
+		var err error
+		registryEntries, err = registryStore.GetMulti(ctx, registrystore.SystemOwnerID, registryKeys)
+		if err != nil {
+			// On error, treat as if no registry entries found
+			registryEntries = []*registrystore.Registry{}
+		}
+	}
+
+	// Create a map for quick registry lookup
+	registryMap := make(map[string]string)
+	for _, entry := range registryEntries {
+		registryMap[entry.Key] = entry.Value
+	}
+
+	// Build results in the same order as input keys
+	for i, key := range keys {
+		if configValue, isOverridden := configOverrides[key]; isOverridden {
+			results[i] = EffectiveValueResult{
+				Key:                  key,
+				Value:                configValue,
+				Exists:               true,
+				IsOverriddenByConfig: true,
+			}
+		} else if registryValue, exists := registryMap[key]; exists {
+			results[i] = EffectiveValueResult{
+				Key:                  key,
+				Value:                registryValue,
+				Exists:               true,
+				IsOverriddenByConfig: false,
+			}
+		} else {
+			results[i] = EffectiveValueResult{
+				Key:                  key,
+				Value:                "",
+				Exists:               false,
+				IsOverriddenByConfig: false,
+			}
+		}
+	}
+
+	return results
 }

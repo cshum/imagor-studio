@@ -1,6 +1,7 @@
 package storageprovider
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -161,7 +162,8 @@ func (p *Provider) IsRestartRequired() bool {
 		return false // No restart needed for first-time setup
 	}
 
-	configUpdatedAtStr, exists := p.getRegistryValue("config.storage_config_updated_at")
+	ctx := context.Background()
+	configUpdatedAtStr, exists := p.getRegistryValue(ctx, "config.storage_config_updated_at")
 	if !exists {
 		return false
 	}
@@ -241,21 +243,24 @@ func (p *Provider) loadStorageFromRegistry() storage.Storage {
 
 // isStorageConfiguredInRegistry checks if storage is configured in the registry
 func (p *Provider) isStorageConfiguredInRegistry() bool {
-	configured, exists := p.getRegistryValue("config.storage_configured")
-	return exists && configured == "true"
+	ctx := context.Background()
+	result := registryutil.GetEffectiveValue(ctx, p.registryStore, p.config, "config.storage_configured")
+	return result.Exists && result.Value == "true"
 }
 
 // getRegistryValue gets the effective value for a registry key, considering config overrides
-func (p *Provider) getRegistryValue(key string) (string, bool) {
-	return registryutil.GetEffectiveValue(p.registryStore, p.config, key, p.logger)
+func (p *Provider) getRegistryValue(ctx context.Context, key string) (string, bool) {
+	result := registryutil.GetEffectiveValue(ctx, p.registryStore, p.config, key)
+	return result.Value, result.Exists
 }
 
 // buildConfigFromRegistry builds a config object from registry values
 func (p *Provider) buildConfigFromRegistry() (*config.Config, error) {
+	ctx := context.Background()
 	cfg := &config.Config{}
 
 	// Get storage type
-	storageType, exists := p.getRegistryValue("config.storage_type")
+	storageType, exists := p.getRegistryValue(ctx, "config.storage_type")
 	if !exists {
 		return nil, fmt.Errorf("storage type not found in registry")
 	}
@@ -264,11 +269,11 @@ func (p *Provider) buildConfigFromRegistry() (*config.Config, error) {
 	// Load type-specific configuration
 	switch storageType {
 	case "file", "filesystem":
-		if err := p.loadFileConfigFromRegistry(cfg); err != nil {
+		if err := p.loadFileConfigFromRegistry(ctx, cfg); err != nil {
 			return nil, err
 		}
 	case "s3":
-		if err := p.loadS3ConfigFromRegistry(cfg); err != nil {
+		if err := p.loadS3ConfigFromRegistry(ctx, cfg); err != nil {
 			return nil, err
 		}
 	default:
@@ -279,14 +284,14 @@ func (p *Provider) buildConfigFromRegistry() (*config.Config, error) {
 }
 
 // loadFileConfigFromRegistry loads file storage configuration from registry
-func (p *Provider) loadFileConfigFromRegistry(cfg *config.Config) error {
-	if baseDir, exists := p.getRegistryValue("config.file_base_dir"); exists {
+func (p *Provider) loadFileConfigFromRegistry(ctx context.Context, cfg *config.Config) error {
+	if baseDir, exists := p.getRegistryValue(ctx, "config.file_base_dir"); exists {
 		cfg.FileBaseDir = baseDir
 	} else {
 		cfg.FileBaseDir = "./storage" // Default
 	}
 
-	if mkdirPerm, exists := p.getRegistryValue("config.file_mkdir_permissions"); exists {
+	if mkdirPerm, exists := p.getRegistryValue(ctx, "config.file_mkdir_permissions"); exists {
 		perm, err := strconv.ParseUint(mkdirPerm, 8, 32)
 		if err != nil {
 			return fmt.Errorf("invalid file mkdir permissions: %w", err)
@@ -296,7 +301,7 @@ func (p *Provider) loadFileConfigFromRegistry(cfg *config.Config) error {
 		cfg.FileMkdirPermissions = 0755 // Default
 	}
 
-	if writePerm, exists := p.getRegistryValue("config.file_write_permissions"); exists {
+	if writePerm, exists := p.getRegistryValue(ctx, "config.file_write_permissions"); exists {
 		perm, err := strconv.ParseUint(writePerm, 8, 32)
 		if err != nil {
 			return fmt.Errorf("invalid file write permissions: %w", err)
@@ -310,34 +315,34 @@ func (p *Provider) loadFileConfigFromRegistry(cfg *config.Config) error {
 }
 
 // loadS3ConfigFromRegistry loads S3 storage configuration from registry
-func (p *Provider) loadS3ConfigFromRegistry(cfg *config.Config) error {
-	if bucket, exists := p.getRegistryValue("config.s3_bucket"); exists {
+func (p *Provider) loadS3ConfigFromRegistry(ctx context.Context, cfg *config.Config) error {
+	if bucket, exists := p.getRegistryValue(ctx, "config.s3_bucket"); exists {
 		cfg.S3Bucket = bucket
 	} else {
 		return fmt.Errorf("s3 bucket is required")
 	}
 
-	if region, exists := p.getRegistryValue("config.s3_region"); exists {
+	if region, exists := p.getRegistryValue(ctx, "config.s3_region"); exists {
 		cfg.S3Region = region
 	}
 
-	if endpoint, exists := p.getRegistryValue("config.s3_endpoint"); exists {
+	if endpoint, exists := p.getRegistryValue(ctx, "config.s3_endpoint"); exists {
 		cfg.S3Endpoint = endpoint
 	}
 
-	if accessKey, exists := p.getRegistryValue("config.s3_access_key_id"); exists {
+	if accessKey, exists := p.getRegistryValue(ctx, "config.s3_access_key_id"); exists {
 		cfg.S3AccessKeyID = accessKey
 	}
 
-	if secretKey, exists := p.getRegistryValue("config.s3_secret_access_key"); exists {
+	if secretKey, exists := p.getRegistryValue(ctx, "config.s3_secret_access_key"); exists {
 		cfg.S3SecretAccessKey = secretKey
 	}
 
-	if sessionToken, exists := p.getRegistryValue("config.s3_session_token"); exists {
+	if sessionToken, exists := p.getRegistryValue(ctx, "config.s3_session_token"); exists {
 		cfg.S3SessionToken = sessionToken
 	}
 
-	if baseDir, exists := p.getRegistryValue("config.s3_base_dir"); exists {
+	if baseDir, exists := p.getRegistryValue(ctx, "config.s3_base_dir"); exists {
 		cfg.S3BaseDir = baseDir
 	}
 

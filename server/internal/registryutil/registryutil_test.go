@@ -1,10 +1,10 @@
 package registryutil
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 // MockConfigProvider implements the ConfigProvider interface for testing
@@ -21,8 +21,6 @@ func (m *MockConfigProvider) GetByRegistryKey(registryKey string) (effectiveValu
 }
 
 func TestGetEffectiveValue_ConfigOverride(t *testing.T) {
-	logger := zap.NewNop()
-
 	// Mock config provider with override
 	mockConfig := &MockConfigProvider{
 		overrides: map[string]string{
@@ -31,43 +29,65 @@ func TestGetEffectiveValue_ConfigOverride(t *testing.T) {
 	}
 
 	// Test that config override takes precedence
-	value, exists := GetEffectiveValue(nil, mockConfig, "config.storage_type", logger)
+	ctx := context.Background()
+	result := GetEffectiveValue(ctx, nil, mockConfig, "config.storage_type")
 
-	assert.True(t, exists)
-	assert.Equal(t, "s3", value)
+	assert.True(t, result.Exists)
+	assert.Equal(t, "s3", result.Value)
+	assert.True(t, result.IsOverriddenByConfig)
+	assert.Equal(t, "config.storage_type", result.Key)
 }
 
 func TestGetEffectiveValue_NoConfigProvider(t *testing.T) {
-	logger := zap.NewNop()
-
 	// Test with nil config provider and nil registry store
-	value, exists := GetEffectiveValue(nil, nil, "config.storage_type", logger)
+	ctx := context.Background()
+	result := GetEffectiveValue(ctx, nil, nil, "config.storage_type")
 
-	assert.False(t, exists)
-	assert.Equal(t, "", value)
+	assert.False(t, result.Exists)
+	assert.Equal(t, "", result.Value)
+	assert.False(t, result.IsOverriddenByConfig)
+	assert.Equal(t, "config.storage_type", result.Key)
 }
 
-func TestGetEffectiveValueWithDefault(t *testing.T) {
-	logger := zap.NewNop()
-
-	// Test with no config or registry - should return default
-	value := GetEffectiveValueWithDefault(nil, nil, "config.storage_type", "file", logger)
-
-	assert.Equal(t, "file", value)
-}
-
-func TestGetEffectiveValueWithDefault_ConfigOverride(t *testing.T) {
-	logger := zap.NewNop()
-
-	// Mock config provider with override
+func TestGetEffectiveValues_MultipleKeys(t *testing.T) {
+	// Mock config provider with some overrides
 	mockConfig := &MockConfigProvider{
 		overrides: map[string]string{
 			"config.storage_type": "s3",
+			"config.s3_bucket":    "my-bucket",
 		},
 	}
 
-	// Test that config override is returned instead of default
-	value := GetEffectiveValueWithDefault(nil, mockConfig, "config.storage_type", "file", logger)
+	// Test multiple keys with variadic syntax
+	ctx := context.Background()
+	results := GetEffectiveValues(ctx, nil, mockConfig,
+		"config.storage_type",
+		"config.s3_bucket",
+		"config.s3_region")
 
-	assert.Equal(t, "s3", value)
+	assert.Len(t, results, 3)
+
+	// First key - overridden by config
+	assert.Equal(t, "config.storage_type", results[0].Key)
+	assert.Equal(t, "s3", results[0].Value)
+	assert.True(t, results[0].Exists)
+	assert.True(t, results[0].IsOverriddenByConfig)
+
+	// Second key - overridden by config
+	assert.Equal(t, "config.s3_bucket", results[1].Key)
+	assert.Equal(t, "my-bucket", results[1].Value)
+	assert.True(t, results[1].Exists)
+	assert.True(t, results[1].IsOverriddenByConfig)
+
+	// Third key - not found
+	assert.Equal(t, "config.s3_region", results[2].Key)
+	assert.Equal(t, "", results[2].Value)
+	assert.False(t, results[2].Exists)
+	assert.False(t, results[2].IsOverriddenByConfig)
+}
+
+func TestGetEffectiveValues_EmptyKeys(t *testing.T) {
+	ctx := context.Background()
+	results := GetEffectiveValues(ctx, nil, nil)
+	assert.Empty(t, results)
 }

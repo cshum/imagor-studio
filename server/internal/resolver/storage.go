@@ -180,24 +180,36 @@ func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileSta
 
 // StorageStatus is the resolver for the storageStatus field.
 func (r *queryResolver) StorageStatus(ctx context.Context) (*gql.StorageStatus, error) {
+	// Use batch operation for better performance
+	results := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
+		"config.storage_configured",
+		"config.storage_type",
+		"config.storage_config_updated_at")
+
+	// Create a map for easy lookup
+	resultMap := make(map[string]registryutil.EffectiveValueResult)
+	for _, result := range results {
+		resultMap[result.Key] = result
+	}
+
 	// Check if storage is configured
-	configured, exists := r.getRegistryValue("config.storage_configured")
-	isConfigured := exists && configured == "true"
+	configuredResult := resultMap["config.storage_configured"]
+	isConfigured := configuredResult.Exists && configuredResult.Value == "true"
 
 	var storageType *string
 	var fileConfig *gql.FileStorageConfig
 	var s3Config *gql.S3StorageConfig
 
 	if isConfigured {
-		if sType, exists := r.getRegistryValue("config.storage_type"); exists {
-			storageType = &sType
+		if typeResult := resultMap["config.storage_type"]; typeResult.Exists {
+			storageType = &typeResult.Value
 
 			// Load type-specific configuration
-			switch sType {
+			switch typeResult.Value {
 			case "file", "filesystem":
-				fileConfig = r.getFileStorageConfig()
+				fileConfig = r.getFileStorageConfig(ctx)
 			case "s3":
-				s3Config = r.getS3StorageConfig()
+				s3Config = r.getS3StorageConfig(ctx)
 			}
 		}
 	}
@@ -206,8 +218,8 @@ func (r *queryResolver) StorageStatus(ctx context.Context) (*gql.StorageStatus, 
 	restartRequired := r.storageProvider.IsRestartRequired()
 
 	var lastUpdated *string
-	if timestamp, exists := r.getRegistryValue("config.storage_config_updated_at"); exists {
-		lastUpdated = &timestamp
+	if timestampResult := resultMap["config.storage_config_updated_at"]; timestampResult.Exists {
+		lastUpdated = &timestampResult.Value
 	}
 
 	return &gql.StorageStatus{
@@ -221,20 +233,33 @@ func (r *queryResolver) StorageStatus(ctx context.Context) (*gql.StorageStatus, 
 }
 
 // Helper function to get file storage configuration
-func (r *queryResolver) getFileStorageConfig() *gql.FileStorageConfig {
+func (r *queryResolver) getFileStorageConfig(ctx context.Context) *gql.FileStorageConfig {
+	// Use batch operation for better performance
+	results := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
+		"config.file_base_dir",
+		"config.file_mkdir_permissions",
+		"config.file_write_permissions")
+
+	// Create a map for easy lookup
+	resultMap := make(map[string]registryutil.EffectiveValueResult)
+	for _, result := range results {
+		resultMap[result.Key] = result
+	}
+
+	// Set defaults and override with registry values if they exist
 	baseDir := "./storage" // Default
-	if dir, exists := r.getRegistryValue("config.file_base_dir"); exists {
-		baseDir = dir
+	if result := resultMap["config.file_base_dir"]; result.Exists {
+		baseDir = result.Value
 	}
 
 	mkdirPermissions := "0755" // Default
-	if perm, exists := r.getRegistryValue("config.file_mkdir_permissions"); exists {
-		mkdirPermissions = perm
+	if result := resultMap["config.file_mkdir_permissions"]; result.Exists {
+		mkdirPermissions = result.Value
 	}
 
 	writePermissions := "0644" // Default
-	if perm, exists := r.getRegistryValue("config.file_write_permissions"); exists {
-		writePermissions = perm
+	if result := resultMap["config.file_write_permissions"]; result.Exists {
+		writePermissions = result.Value
 	}
 
 	return &gql.FileStorageConfig{
@@ -245,26 +270,40 @@ func (r *queryResolver) getFileStorageConfig() *gql.FileStorageConfig {
 }
 
 // Helper function to get S3 storage configuration
-func (r *queryResolver) getS3StorageConfig() *gql.S3StorageConfig {
-	bucket, exists := r.getRegistryValue("config.s3_bucket")
-	if !exists {
+func (r *queryResolver) getS3StorageConfig(ctx context.Context) *gql.S3StorageConfig {
+	// Use batch operation for better performance
+	results := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
+		"config.s3_bucket",
+		"config.s3_region",
+		"config.s3_endpoint",
+		"config.s3_base_dir")
+
+	// Create a map for easy lookup
+	resultMap := make(map[string]registryutil.EffectiveValueResult)
+	for _, result := range results {
+		resultMap[result.Key] = result
+	}
+
+	// Check if bucket exists (required)
+	bucketResult := resultMap["config.s3_bucket"]
+	if !bucketResult.Exists {
 		return nil
 	}
 
 	c := &gql.S3StorageConfig{
-		Bucket: bucket,
+		Bucket: bucketResult.Value,
 	}
 
-	if region, exists := r.getRegistryValue("config.s3_region"); exists {
-		c.Region = &region
+	if regionResult := resultMap["config.s3_region"]; regionResult.Exists {
+		c.Region = &regionResult.Value
 	}
 
-	if endpoint, exists := r.getRegistryValue("config.s3_endpoint"); exists {
-		c.Endpoint = &endpoint
+	if endpointResult := resultMap["config.s3_endpoint"]; endpointResult.Exists {
+		c.Endpoint = &endpointResult.Value
 	}
 
-	if baseDir, exists := r.getRegistryValue("config.s3_base_dir"); exists {
-		c.BaseDir = &baseDir
+	if baseDirResult := resultMap["config.s3_base_dir"]; baseDirResult.Exists {
+		c.BaseDir = &baseDirResult.Value
 	}
 
 	return c
@@ -536,11 +575,6 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 
 	result := r.validateStorageConfig(ctx, input)
 	return result, nil
-}
-
-// Helper function to get registry value with config override support
-func (r *queryResolver) getRegistryValue(key string) (string, bool) {
-	return registryutil.GetEffectiveValue(r.registryStore, r.config, key, r.logger)
 }
 
 // Helper function to set system registry entries
