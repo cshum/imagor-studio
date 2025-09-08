@@ -199,20 +199,24 @@ func (r *queryResolver) StorageStatus(ctx context.Context) (*gql.StorageStatus, 
 	var storageType *string
 	var fileConfig *gql.FileStorageConfig
 	var s3Config *gql.S3StorageConfig
+	var isFileOverridden, isS3Overridden bool
 
 	if isConfigured {
 		if typeResult := resultMap["config.storage_type"]; typeResult.Exists {
 			storageType = &typeResult.Value
 
-			// Load type-specific configuration
+			// Load type-specific configuration with override detection
 			switch typeResult.Value {
 			case "file", "filesystem":
-				fileConfig = r.getFileStorageConfig(ctx)
+				fileConfig, isFileOverridden = r.getFileStorageConfig(ctx)
 			case "s3":
-				s3Config = r.getS3StorageConfig(ctx)
+				s3Config, isS3Overridden = r.getS3StorageConfig(ctx)
 			}
 		}
 	}
+
+	// Top-level override: true if ANY storage config is overridden
+	isConfigOverridden := isFileOverridden || isS3Overridden
 
 	// Check if restart is required
 	restartRequired := r.storageProvider.IsRestartRequired()
@@ -223,17 +227,18 @@ func (r *queryResolver) StorageStatus(ctx context.Context) (*gql.StorageStatus, 
 	}
 
 	return &gql.StorageStatus{
-		Configured:      isConfigured,
-		Type:            storageType,
-		RestartRequired: restartRequired,
-		LastUpdated:     lastUpdated,
-		FileConfig:      fileConfig,
-		S3Config:        s3Config,
+		Configured:           isConfigured,
+		Type:                 storageType,
+		RestartRequired:      restartRequired,
+		LastUpdated:          lastUpdated,
+		IsOverriddenByConfig: isConfigOverridden,
+		FileConfig:           fileConfig,
+		S3Config:             s3Config,
 	}, nil
 }
 
 // Helper function to get file storage configuration
-func (r *queryResolver) getFileStorageConfig(ctx context.Context) *gql.FileStorageConfig {
+func (r *queryResolver) getFileStorageConfig(ctx context.Context) (*gql.FileStorageConfig, bool) {
 	// Use batch operation for better performance
 	results := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
 		"config.file_base_dir",
@@ -272,15 +277,14 @@ func (r *queryResolver) getFileStorageConfig(ctx context.Context) *gql.FileStora
 	}
 
 	return &gql.FileStorageConfig{
-		BaseDir:              baseDir,
-		MkdirPermissions:     mkdirPermissions,
-		WritePermissions:     writePermissions,
-		IsOverriddenByConfig: isOverridden,
-	}
+		BaseDir:          baseDir,
+		MkdirPermissions: mkdirPermissions,
+		WritePermissions: writePermissions,
+	}, isOverridden
 }
 
 // Helper function to get S3 storage configuration
-func (r *queryResolver) getS3StorageConfig(ctx context.Context) *gql.S3StorageConfig {
+func (r *queryResolver) getS3StorageConfig(ctx context.Context) (*gql.S3StorageConfig, bool) {
 	// Use batch operation for better performance
 	results := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
 		"config.s3_bucket",
@@ -297,7 +301,7 @@ func (r *queryResolver) getS3StorageConfig(ctx context.Context) *gql.S3StorageCo
 	// Check if bucket exists (required)
 	bucketResult := resultMap["config.s3_bucket"]
 	if !bucketResult.Exists {
-		return nil
+		return nil, false
 	}
 
 	// Check if any S3 storage config is overridden
@@ -310,8 +314,7 @@ func (r *queryResolver) getS3StorageConfig(ctx context.Context) *gql.S3StorageCo
 	}
 
 	c := &gql.S3StorageConfig{
-		Bucket:               bucketResult.Value,
-		IsOverriddenByConfig: isOverridden,
+		Bucket: bucketResult.Value,
 	}
 
 	if regionResult := resultMap["config.s3_region"]; regionResult.Exists {
@@ -326,7 +329,7 @@ func (r *queryResolver) getS3StorageConfig(ctx context.Context) *gql.S3StorageCo
 		c.BaseDir = &baseDirResult.Value
 	}
 
-	return c
+	return c, isOverridden
 }
 
 // ConfigureFileStorage is the resolver for the configureFileStorage field.

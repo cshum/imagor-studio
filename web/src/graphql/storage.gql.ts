@@ -98,18 +98,17 @@ export const STORAGE_STATUS = gql(`
       type
       restartRequired
       lastUpdated
+      isOverriddenByConfig
       fileConfig {
         baseDir
         mkdirPermissions
         writePermissions
-        isOverriddenByConfig
       }
       s3Config {
         bucket
         region
         endpoint
         baseDir
-        isOverriddenByConfig
       }
     }
   }

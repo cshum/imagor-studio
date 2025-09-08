@@ -64,7 +64,6 @@ export type FileStat = {
 export type FileStorageConfig = {
   __typename?: 'FileStorageConfig'
   baseDir: Scalars['String']['output']
-  isOverriddenByConfig: Scalars['Boolean']['output']
   mkdirPermissions: Scalars['String']['output']
   writePermissions: Scalars['String']['output']
 }
@@ -226,7 +225,6 @@ export type S3StorageConfig = {
   baseDir: Maybe<Scalars['String']['output']>
   bucket: Scalars['String']['output']
   endpoint: Maybe<Scalars['String']['output']>
-  isOverriddenByConfig: Scalars['Boolean']['output']
   region: Maybe<Scalars['String']['output']>
 }
 
@@ -262,6 +260,7 @@ export type StorageStatus = {
   __typename?: 'StorageStatus'
   configured: Scalars['Boolean']['output']
   fileConfig: Maybe<FileStorageConfig>
+  isOverriddenByConfig: Scalars['Boolean']['output']
   lastUpdated: Maybe<Scalars['String']['output']>
   restartRequired: Scalars['Boolean']['output']
   s3Config: Maybe<S3StorageConfig>
@@ -569,12 +568,12 @@ export type StorageStatusQuery = {
     type: string | null
     restartRequired: boolean
     lastUpdated: string | null
+    isOverriddenByConfig: boolean
     fileConfig: {
       __typename?: 'FileStorageConfig'
       baseDir: string
       mkdirPermissions: string
       writePermissions: string
-      isOverriddenByConfig: boolean
     } | null
     s3Config: {
       __typename?: 'S3StorageConfig'
@@ -582,7 +581,6 @@ export type StorageStatusQuery = {
       region: string | null
       endpoint: string | null
       baseDir: string | null
-      isOverriddenByConfig: boolean
     } | null
   }
 }
@@ -1720,6 +1718,7 @@ export const StorageStatusDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'type' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'restartRequired' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'lastUpdated' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'fileConfig' },
@@ -1729,7 +1728,6 @@ export const StorageStatusDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'baseDir' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'mkdirPermissions' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'writePermissions' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
                     ],
                   },
                 },
@@ -1743,7 +1741,6 @@ export const StorageStatusDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'region' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'endpoint' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'baseDir' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
                     ],
                   },
                 },

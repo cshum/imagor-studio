@@ -170,6 +170,7 @@ type StorageStatus {
   type: String
   restartRequired: Boolean!
   lastUpdated: String
+  isOverriddenByConfig: Boolean!
   fileConfig: FileStorageConfig
   s3Config: S3StorageConfig
 }
@@ -178,7 +179,6 @@ type FileStorageConfig {
   baseDir: String!
   mkdirPermissions: String!
   writePermissions: String!
-  isOverriddenByConfig: Boolean!
 }
 
 type S3StorageConfig {
@@ -186,7 +186,6 @@ type S3StorageConfig {
   region: String
   endpoint: String
   baseDir: String
-  isOverriddenByConfig: Boolean!
 }
 
 type StorageConfigResult {

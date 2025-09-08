@@ -32,11 +32,10 @@ interface FileStorageFormProps {
   initialValues?: Partial<FileStorageFormData>
   onSubmit: (data: FileStorageFormData) => void
   disabled?: boolean
-  isOverriddenByConfig?: boolean
 }
 
 export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormProps>(
-  ({ initialValues, onSubmit, disabled, isOverriddenByConfig }, ref) => {
+  ({ initialValues, onSubmit, disabled }, ref) => {
     const form = useForm<FileStorageFormData>({
       resolver: zodResolver(fileStorageSchema),
       defaultValues: {
@@ -55,19 +54,11 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
       onSubmit(data)
     }
 
-    const isFormDisabled = disabled || isOverriddenByConfig
-
     return (
       <div className='space-y-6'>
-        {isOverriddenByConfig && (
-          <span className='mt-1 block text-orange-600 dark:text-orange-400'>
-            File storage configuration is overridden by configuration file or environment variable
-          </span>
-        )}
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-            <div className={cn('space-y-6', isOverriddenByConfig && 'opacity-60')}>
+            <div className={cn('space-y-6', disabled && 'opacity-60')}>
               <FormField
                 control={form.control}
                 name='baseDir'
@@ -75,7 +66,7 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
                   <FormItem>
                     <FormLabel>Base Directory</FormLabel>
                     <FormControl>
-                      <Input placeholder='./storage' {...field} disabled={isFormDisabled} />
+                      <Input placeholder='./storage' {...field} disabled={disabled} />
                     </FormControl>
                     <FormDescription>
                       The directory where images will be stored on the file system
@@ -92,7 +83,7 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
                   <FormItem>
                     <FormLabel>Directory Permissions</FormLabel>
                     <FormControl>
-                      <Input placeholder='0755' {...field} disabled={isFormDisabled} />
+                      <Input placeholder='0755' {...field} disabled={disabled} />
                     </FormControl>
                     <FormDescription>
                       Permissions for creating new directories (octal format, e.g., 0755)
@@ -109,7 +100,7 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
                   <FormItem>
                     <FormLabel>File Permissions</FormLabel>
                     <FormControl>
-                      <Input placeholder='0644' {...field} disabled={isFormDisabled} />
+                      <Input placeholder='0644' {...field} disabled={disabled} />
                     </FormControl>
                     <FormDescription>
                       Permissions for writing new files (octal format, e.g., 0644)

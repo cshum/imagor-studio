@@ -126,14 +126,8 @@ export function StorageConfigurationWizard({
     }
   }
 
-  // Helper function to check if current storage config is overridden
-  const isConfigOverridden = () => {
-    if (storageType === 'file') {
-      return initialConfig?.fileConfig?.isOverriddenByConfig || false
-    } else {
-      return initialConfig?.s3Config?.isOverriddenByConfig || false
-    }
-  }
+  // Check if storage configuration is overridden by external config
+  const isConfigOverridden = initialConfig?.isOverriddenByConfig || false
 
   const handleTestConfiguration = async () => {
     setIsTesting(true)
@@ -202,7 +196,17 @@ export function StorageConfigurationWizard({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className='space-y-6'>
-        <StorageTypeSelector value={storageType} onChange={setStorageType} disabled={isLoading} />
+        {isConfigOverridden && (
+          <span className='mb-4 block text-orange-600 dark:text-orange-400'>
+            Storage configuration is managed by external configuration
+          </span>
+        )}
+
+        <StorageTypeSelector
+          value={storageType}
+          onChange={setStorageType}
+          disabled={isLoading || isConfigOverridden}
+        />
 
         <Separator />
 
@@ -212,9 +216,8 @@ export function StorageConfigurationWizard({
             <FileStorageForm
               ref={fileFormRef}
               onSubmit={handleFileStorageSubmit}
-              disabled={isLoading}
+              disabled={isLoading || isConfigOverridden}
               initialValues={getFileStorageInitialValues()}
-              isOverriddenByConfig={initialConfig?.fileConfig?.isOverriddenByConfig}
             />
           </div>
         )}
@@ -225,14 +228,11 @@ export function StorageConfigurationWizard({
             <S3StorageForm
               ref={s3FormRef}
               onSubmit={handleS3StorageSubmit}
-              disabled={isLoading}
+              disabled={isLoading || isConfigOverridden}
               initialValues={getS3StorageInitialValues()}
-              isOverriddenByConfig={initialConfig?.s3Config?.isOverriddenByConfig}
             />
           </div>
         )}
-
-        <Separator />
 
         <div className='flex flex-col justify-between gap-3 sm:flex-row'>
           <div className='flex gap-3'>
@@ -250,7 +250,7 @@ export function StorageConfigurationWizard({
               type='button'
               variant='outline'
               onClick={handleTestConfiguration}
-              disabled={isLoading || isConfigOverridden()}
+              disabled={isLoading || isConfigOverridden}
               isLoading={isTesting}
             >
               Test Configuration
@@ -258,7 +258,7 @@ export function StorageConfigurationWizard({
           </div>
           <ButtonWithLoading
             type='submit'
-            disabled={isTesting || isConfigOverridden()}
+            disabled={isTesting || isConfigOverridden}
             isLoading={isLoading}
             onClick={() => {
               // Trigger form submission based on storage type
