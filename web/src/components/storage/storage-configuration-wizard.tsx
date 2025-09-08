@@ -1,13 +1,18 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { configureFileStorage, configureS3Storage, testStorageConfig } from '@/api/storage-api'
 import { Button } from '@/components/ui/button'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import type { StorageType as GraphQLStorageType, StorageStatusQuery } from '@/generated/graphql'
 
-import { FileStorageForm, type FileStorageFormData, type FileStorageFormRef } from './file-storage-form'
+import {
+  FileStorageForm,
+  type FileStorageFormData,
+  type FileStorageFormRef,
+} from './file-storage-form'
 import { S3StorageForm, type S3StorageFormData, type S3StorageFormRef } from './s3-storage-form'
 import { StorageTypeSelector, type StorageType } from './storage-type-selector'
 
@@ -230,18 +235,20 @@ export function StorageConfigurationWizard({
                 Cancel
               </Button>
             )}
-            <Button
+            <ButtonWithLoading
               type='button'
               variant='outline'
               onClick={handleTestConfiguration}
-              disabled={isLoading || isTesting}
+              disabled={isLoading}
+              isLoading={isTesting}
             >
-              {isTesting ? 'Testing...' : 'Test Configuration'}
-            </Button>
+              Test Configuration
+            </ButtonWithLoading>
           </div>
-          <Button
+          <ButtonWithLoading
             type='submit'
-            disabled={isLoading || isTesting}
+            disabled={isTesting}
+            isLoading={isLoading}
             onClick={() => {
               // Trigger form submission based on storage type
               const form = document.querySelector('form')
@@ -250,8 +257,8 @@ export function StorageConfigurationWizard({
               }
             }}
           >
-            {isLoading ? 'Configuring...' : 'Configure Storage'}
-          </Button>
+            Configure Storage
+          </ButtonWithLoading>
         </div>
       </CardContent>
     </Card>
