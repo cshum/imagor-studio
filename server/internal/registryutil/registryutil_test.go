@@ -35,6 +35,7 @@ func TestGetEffectiveValue_ConfigOverride(t *testing.T) {
 	assert.True(t, result.Exists)
 	assert.Equal(t, "s3", result.Value)
 	assert.True(t, result.IsOverriddenByConfig)
+	assert.False(t, result.IsEncrypted) // Config overrides are never encrypted
 	assert.Equal(t, "config.storage_type", result.Key)
 }
 
@@ -46,6 +47,7 @@ func TestGetEffectiveValue_NoConfigProvider(t *testing.T) {
 	assert.False(t, result.Exists)
 	assert.Equal(t, "", result.Value)
 	assert.False(t, result.IsOverriddenByConfig)
+	assert.False(t, result.IsEncrypted)
 	assert.Equal(t, "config.storage_type", result.Key)
 }
 
@@ -72,18 +74,21 @@ func TestGetEffectiveValues_MultipleKeys(t *testing.T) {
 	assert.Equal(t, "s3", results[0].Value)
 	assert.True(t, results[0].Exists)
 	assert.True(t, results[0].IsOverriddenByConfig)
+	assert.False(t, results[0].IsEncrypted) // Config overrides are never encrypted
 
 	// Second key - overridden by config
 	assert.Equal(t, "config.s3_bucket", results[1].Key)
 	assert.Equal(t, "my-bucket", results[1].Value)
 	assert.True(t, results[1].Exists)
 	assert.True(t, results[1].IsOverriddenByConfig)
+	assert.False(t, results[1].IsEncrypted) // Config overrides are never encrypted
 
 	// Third key - not found
 	assert.Equal(t, "config.s3_region", results[2].Key)
 	assert.Equal(t, "", results[2].Value)
 	assert.False(t, results[2].Exists)
 	assert.False(t, results[2].IsOverriddenByConfig)
+	assert.False(t, results[2].IsEncrypted)
 }
 
 func TestGetEffectiveValues_EmptyKeys(t *testing.T) {

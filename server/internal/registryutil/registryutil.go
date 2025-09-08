@@ -17,6 +17,7 @@ type EffectiveValueResult struct {
 	Value                string
 	Exists               bool
 	IsOverriddenByConfig bool
+	IsEncrypted          bool
 }
 
 // GetEffectiveValue returns the effective value for a single key
@@ -73,10 +74,17 @@ func GetEffectiveValues(ctx context.Context, registryStore registrystore.Store, 
 		}
 	}
 
-	// Create a map for quick registry lookup
-	registryMap := make(map[string]string)
+	// Create a map for quick registry lookup with encryption info
+	type registryInfo struct {
+		Value       string
+		IsEncrypted bool
+	}
+	registryMap := make(map[string]registryInfo)
 	for _, entry := range registryEntries {
-		registryMap[entry.Key] = entry.Value
+		registryMap[entry.Key] = registryInfo{
+			Value:       entry.Value,
+			IsEncrypted: entry.IsEncrypted,
+		}
 	}
 
 	// Build results in the same order as input keys
@@ -87,13 +95,15 @@ func GetEffectiveValues(ctx context.Context, registryStore registrystore.Store, 
 				Value:                configValue,
 				Exists:               true,
 				IsOverriddenByConfig: true,
+				IsEncrypted:          false, // Config overrides are never encrypted
 			}
-		} else if registryValue, exists := registryMap[key]; exists {
+		} else if registryInfo, exists := registryMap[key]; exists {
 			results[i] = EffectiveValueResult{
 				Key:                  key,
-				Value:                registryValue,
+				Value:                registryInfo.Value,
 				Exists:               true,
 				IsOverriddenByConfig: false,
+				IsEncrypted:          registryInfo.IsEncrypted,
 			}
 		} else {
 			results[i] = EffectiveValueResult{
@@ -101,6 +111,7 @@ func GetEffectiveValues(ctx context.Context, registryStore registrystore.Store, 
 				Value:                "",
 				Exists:               false,
 				IsOverriddenByConfig: false,
+				IsEncrypted:          false,
 			}
 		}
 	}
