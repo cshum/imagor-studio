@@ -230,11 +230,8 @@ interface StorageStepContentProps extends MultiStepFormNavigationProps {
 function StorageStepContent({ onStorageConfigured }: StorageStepContentProps) {
   return (
     <div className='space-y-6'>
-      <div className='space-y-2 text-center'>
-        <p className='text-muted-foreground'>
-          Configure where your images will be stored. You can skip this step and configure storage
-          later.
-        </p>
+      <div className='space-y-2'>
+        <p className='text-muted-foreground'>Configure where your images will be stored</p>
       </div>
       <StorageConfigurationWizard onSuccess={onStorageConfigured} showCancel={false} />
     </div>
