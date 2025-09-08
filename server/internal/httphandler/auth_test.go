@@ -903,7 +903,7 @@ func TestGuestLogin(t *testing.T) {
 		{
 			name: "Guest login enabled",
 			setupMocks: func() {
-				mockRegistryStore.On("Get", mock.Anything, "system", "config.allow_guest_mode").Return(&registrystore.Registry{
+				mockRegistryStore.On("Get", mock.Anything, registrystore.SystemOwnerID, "config.allow_guest_mode").Return(&registrystore.Registry{
 					Key:   "config.allow_guest_mode",
 					Value: "true",
 				}, nil)
@@ -914,7 +914,7 @@ func TestGuestLogin(t *testing.T) {
 		{
 			name: "Guest login disabled",
 			setupMocks: func() {
-				mockRegistryStore.On("Get", mock.Anything, "system", "config.allow_guest_mode").Return(&registrystore.Registry{
+				mockRegistryStore.On("Get", mock.Anything, registrystore.SystemOwnerID, "config.allow_guest_mode").Return(&registrystore.Registry{
 					Key:   "config.allow_guest_mode",
 					Value: "false",
 				}, nil)
@@ -927,9 +927,9 @@ func TestGuestLogin(t *testing.T) {
 			name: "Guest mode setting not found - fallback to old key",
 			setupMocks: func() {
 				// First call for new key returns nil
-				mockRegistryStore.On("Get", mock.Anything, "system", "config.allow_guest_mode").Return(nil, nil)
+				mockRegistryStore.On("Get", mock.Anything, registrystore.SystemOwnerID, "config.allow_guest_mode").Return(nil, nil)
 				// Second call for old key also returns nil
-				mockRegistryStore.On("Get", mock.Anything, "system", "auth.enableGuestMode").Return(nil, nil)
+				mockRegistryStore.On("Get", mock.Anything, registrystore.SystemOwnerID, "auth.enableGuestMode").Return(nil, nil)
 			},
 			expectedStatus: http.StatusForbidden,
 			expectError:    true,
@@ -1051,10 +1051,10 @@ func TestRegisterAdmin(t *testing.T) {
 					IsActive:    true,
 				}, nil)
 				// Mock the registry store calls for setupDefaultGalleryMetadata
-				mockRegistryStore.On("Set", mock.Anything, "system", "gallery.supported_extensions", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
-				mockRegistryStore.On("Set", mock.Anything, "system", "gallery.thumbnail_sizes", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
-				mockRegistryStore.On("Set", mock.Anything, "system", "gallery.config", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
-				mockRegistryStore.On("Set", mock.Anything, "system", "imagor.config", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
+				mockRegistryStore.On("Set", mock.Anything, registrystore.SystemOwnerID, "gallery.supported_extensions", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
+				mockRegistryStore.On("Set", mock.Anything, registrystore.SystemOwnerID, "gallery.thumbnail_sizes", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
+				mockRegistryStore.On("Set", mock.Anything, registrystore.SystemOwnerID, "gallery.config", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
+				mockRegistryStore.On("Set", mock.Anything, registrystore.SystemOwnerID, "imagor.config", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
 			},
 		},
 		{

@@ -92,11 +92,11 @@ func TestLoadWithRegistry(t *testing.T) {
 
 	// Set registry values using new config. prefix format
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
+	_, err := registryStore.Set(ctx, registrystore.SystemOwnerID, "config.storage_type", "s3", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "config.s3_bucket", "registry-bucket", false)
+	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.s3_bucket", "registry-bucket", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "config.imagor_mode", "disabled", false)
+	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "disabled", false)
 	require.NoError(t, err)
 
 	// Load config with registry
@@ -121,7 +121,7 @@ func TestConfigPriority(t *testing.T) {
 
 	// Set registry value
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
+	_, err := registryStore.Set(ctx, registrystore.SystemOwnerID, "config.storage_type", "s3", false)
 	require.NoError(t, err)
 
 	// Set environment variable (should override registry)
@@ -148,7 +148,7 @@ func TestConfigPriorityWithArgs(t *testing.T) {
 
 	// Set registry value
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
+	_, err := registryStore.Set(ctx, registrystore.SystemOwnerID, "config.storage_type", "s3", false)
 	require.NoError(t, err)
 
 	// Set environment variable
@@ -233,13 +233,13 @@ func TestAutoParsingWithConfigPrefix(t *testing.T) {
 
 	// Set registry values using new config. prefix format
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "config.jwt_secret", "registry-jwt-secret", false)
+	_, err := registryStore.Set(ctx, registrystore.SystemOwnerID, "config.jwt_secret", "registry-jwt-secret", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
+	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.storage_type", "s3", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "config.s3_bucket", "auto-parsed-bucket", false)
+	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.s3_bucket", "auto-parsed-bucket", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "config.allow_guest_mode", "true", false)
+	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.allow_guest_mode", "true", false)
 	require.NoError(t, err)
 
 	// Load config with registry
@@ -265,9 +265,9 @@ func TestGuestModeConfig(t *testing.T) {
 
 	// Set registry values including JWT secret and guest mode
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "config.jwt_secret", "test-secret", false)
+	_, err := registryStore.Set(ctx, registrystore.SystemOwnerID, "config.jwt_secret", "test-secret", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "config.allow_guest_mode", "true", false)
+	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.allow_guest_mode", "true", false)
 	require.NoError(t, err)
 
 	// Load config with registry
@@ -533,7 +533,7 @@ func TestGetByRegistryKey_ConfigDetection(t *testing.T) {
 			// Set registry values
 			ctx := context.Background()
 			for key, value := range tt.registryValues {
-				_, err := registryStore.Set(ctx, "system", key, value, false)
+				_, err := registryStore.Set(ctx, registrystore.SystemOwnerID, key, value, false)
 				require.NoError(t, err)
 			}
 
@@ -572,9 +572,9 @@ func TestValueSourceTracking(t *testing.T) {
 
 	// Set registry values
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, "system", "config.storage_type", "s3", false)
+	_, err := registryStore.Set(ctx, registrystore.SystemOwnerID, "config.storage_type", "s3", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, "system", "config.allow_guest_mode", "true", false)
+	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.allow_guest_mode", "true", false)
 	require.NoError(t, err)
 
 	// Set environment variable (should override registry)

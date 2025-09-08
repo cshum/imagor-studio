@@ -528,7 +528,7 @@ func (r *queryResolver) getRegistryValue(key string) (string, bool) {
 		return "", false
 	}
 
-	entry, err := r.registryStore.Get(ctx, registrystore.SystemOwnerID(), key)
+	entry, err := r.registryStore.Get(ctx, registrystore.SystemOwnerID, key)
 	if err != nil {
 		r.logger.Error("Failed to get registry value", zap.String("key", key), zap.Error(err))
 		return "", false

@@ -227,7 +227,7 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entry *gql.Reg
 	}
 
 	// Use SetMulti for better performance
-	registries, err := r.registryStore.SetMulti(ctx, registrystore.SystemOwnerID(), registryEntries)
+	registries, err := r.registryStore.SetMulti(ctx, registrystore.SystemOwnerID, registryEntries)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set system registry: %w", err)
 	}
@@ -252,7 +252,7 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entry *gql.Reg
 		result = append(result, &gql.SystemRegistry{
 			Key:                  registry.Key,
 			Value:                effectiveValue,
-			OwnerID:              registrystore.SystemOwnerID(),
+			OwnerID:              registrystore.SystemOwnerID,
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
 		})
@@ -275,13 +275,13 @@ func (r *mutationResolver) DeleteSystemRegistry(ctx context.Context, key *string
 
 	if key != nil {
 		// Single key operation
-		err := r.registryStore.Delete(ctx, registrystore.SystemOwnerID(), *key)
+		err := r.registryStore.Delete(ctx, registrystore.SystemOwnerID, *key)
 		if err != nil {
 			return false, fmt.Errorf("failed to delete system registry: %w", err)
 		}
 	} else {
 		// Multi key operation
-		err := r.registryStore.DeleteMulti(ctx, registrystore.SystemOwnerID(), keys)
+		err := r.registryStore.DeleteMulti(ctx, registrystore.SystemOwnerID, keys)
 		if err != nil {
 			return false, fmt.Errorf("failed to delete system registries: %w", err)
 		}
@@ -295,7 +295,7 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 	// All authenticated users can read system registry
 	// No additional permission check needed
 
-	registryList, err := r.registryStore.List(ctx, registrystore.SystemOwnerID(), prefix)
+	registryList, err := r.registryStore.List(ctx, registrystore.SystemOwnerID, prefix)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list system registry: %w", err)
 	}
@@ -320,7 +320,7 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 		result[i] = &gql.SystemRegistry{
 			Key:                  registry.Key,
 			Value:                effectiveValue,
-			OwnerID:              registrystore.SystemOwnerID(),
+			OwnerID:              registrystore.SystemOwnerID,
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
 		}
@@ -342,7 +342,7 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 
 	if key != nil {
 		// Single key operation
-		registry, err := r.registryStore.Get(ctx, registrystore.SystemOwnerID(), *key)
+		registry, err := r.registryStore.Get(ctx, registrystore.SystemOwnerID, *key)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get system registry: %w", err)
 		}
@@ -352,7 +352,7 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 	} else {
 		// Multi key operation
 		var err error
-		registries, err = r.registryStore.GetMulti(ctx, registrystore.SystemOwnerID(), keys)
+		registries, err = r.registryStore.GetMulti(ctx, registrystore.SystemOwnerID, keys)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get system registries: %w", err)
 		}
@@ -378,7 +378,7 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 		result = append(result, &gql.SystemRegistry{
 			Key:                  registry.Key,
 			Value:                effectiveValue,
-			OwnerID:              registrystore.SystemOwnerID(),
+			OwnerID:              registrystore.SystemOwnerID,
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
 		})

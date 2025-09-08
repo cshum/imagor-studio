@@ -258,7 +258,7 @@ func (p *Provider) getRegistryValue(key string) (string, bool) {
 	}()
 
 	ctx := context.Background()
-	entry, err := p.registryStore.Get(ctx, registrystore.SystemOwnerID(), key)
+	entry, err := p.registryStore.Get(ctx, registrystore.SystemOwnerID, key)
 	if err != nil {
 		p.logger.Error("Failed to get registry value in storage provider", zap.String("key", key), zap.Error(err))
 		return "", false
