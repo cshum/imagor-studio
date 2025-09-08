@@ -2,9 +2,8 @@ import { useState } from 'react'
 import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
-import { getStorageStatus } from '@/api/storage-api'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { StorageStatusQuery } from '@/generated/graphql'
@@ -16,25 +15,9 @@ interface StorageManagementSectionProps {
 }
 
 export function StorageManagementSection({ initialStorageStatus }: StorageManagementSectionProps) {
-  const [storageStatus, setStorageStatus] = useState<StorageStatusQuery['storageStatus'] | null>(
-    initialStorageStatus,
-  )
-  const [isLoading, setIsLoading] = useState(false)
+  const [storageStatus] = useState<StorageStatusQuery['storageStatus'] | null>(initialStorageStatus)
   const [showConfigDialog, setShowConfigDialog] = useState(false)
   const router = useRouter()
-
-  const loadStorageStatus = async () => {
-    try {
-      setIsLoading(true)
-      const status = await getStorageStatus()
-      setStorageStatus(status)
-    } catch (error) {
-      toast.error('Failed to load storage status')
-      console.error('Storage status error:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const handleStorageConfigured = (restartRequired: boolean) => {
     setShowConfigDialog(false)
@@ -53,7 +36,6 @@ export function StorageManagementSection({ initialStorageStatus }: StorageManage
   }
 
   const getStatusBadge = () => {
-    if (isLoading) return <Badge variant='secondary'>Loading...</Badge>
     if (!storageStatus?.configured) return <Badge variant='destructive'>Not Configured</Badge>
     if (storageStatus.restartRequired) return <Badge variant='outline'>Restart Required</Badge>
     return <Badge variant='default'>Active</Badge>
@@ -72,9 +54,7 @@ export function StorageManagementSection({ initialStorageStatus }: StorageManage
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <div className='space-y-2'>
               <div className='text-muted-foreground text-sm font-medium'>Storage Type</div>
-              <div className='text-base'>
-                {isLoading ? 'Loading...' : getStorageTypeDisplay(storageStatus?.type || null)}
-              </div>
+              <div className='text-base'>{getStorageTypeDisplay(storageStatus?.type || null)}</div>
             </div>
 
             <div className='space-y-2'>
@@ -144,15 +124,6 @@ export function StorageManagementSection({ initialStorageStatus }: StorageManage
             </div>
           )}
 
-          {storageStatus?.lastUpdated && (
-            <div className='space-y-2'>
-              <div className='text-muted-foreground text-sm font-medium'>Last Updated</div>
-              <div className='text-sm'>
-                {new Date(parseInt(storageStatus.lastUpdated)).toLocaleString()}
-              </div>
-            </div>
-          )}
-
           {storageStatus?.restartRequired && (
             <div className='rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-950'>
               <div className='text-sm text-orange-800 dark:text-orange-200'>
@@ -162,14 +133,14 @@ export function StorageManagementSection({ initialStorageStatus }: StorageManage
             </div>
           )}
 
-          <div className='flex gap-3 pt-2'>
-            <Button onClick={() => setShowConfigDialog(true)} disabled={isLoading}>
-              {storageStatus?.configured ? 'Reconfigure Storage' : 'Configure Storage'}
-            </Button>
-
-            <Button variant='outline' onClick={loadStorageStatus} disabled={isLoading}>
-              Refresh Status
-            </Button>
+          <div className='flex justify-end border-t pt-4'>
+            <ButtonWithLoading
+              onClick={() => setShowConfigDialog(true)}
+              isLoading={false}
+              disabled={false}
+            >
+              {storageStatus?.configured ? 'Update Settings' : 'Configure'}
+            </ButtonWithLoading>
           </div>
         </CardContent>
       </Card>
