@@ -282,32 +282,6 @@ func (r *mutationResolver) ConfigureFileStorage(ctx context.Context, input gql.F
 	timestamp := time.Now().UnixMilli()
 	timestampStr := fmt.Sprintf("%d", timestamp)
 
-	// Validate the configuration before saving
-	testInput := gql.StorageConfigInput{
-		Type:       gql.StorageTypeFile,
-		FileConfig: &input,
-	}
-
-	r.logger.Debug("Validating file storage configuration before saving")
-	validationResult := r.validateStorageConfig(ctx, testInput)
-	if !validationResult.Success {
-		r.logger.Error("File storage configuration validation failed",
-			zap.String("message", validationResult.Message),
-			zap.String("details", func() string {
-				if validationResult.Details != nil {
-					return *validationResult.Details
-				}
-				return ""
-			}()))
-
-		return &gql.StorageConfigResult{
-			Success:         false,
-			RestartRequired: false,
-			Timestamp:       timestampStr,
-			Message:         &validationResult.Message,
-		}, nil
-	}
-
 	// Prepare registry entries
 	entries := []gql.RegistryEntryInput{
 		{Key: "config.storage_type", Value: "file", IsEncrypted: false},
