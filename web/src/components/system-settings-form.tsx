@@ -251,7 +251,7 @@ export function SystemSettingsForm({
       {settings.map(renderSetting)}
 
       {!hideUpdateButton && (
-        <div className='flex justify-end border-t pt-4'>
+        <div className='flex justify-end pt-2'>
           <ButtonWithLoading
             onClick={onUpdateSettings}
             isLoading={isUpdating}

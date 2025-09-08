@@ -133,13 +133,13 @@ export function StorageManagementSection({ initialStorageStatus }: StorageManage
             </div>
           )}
 
-          <div className='flex justify-end border-t pt-4'>
+          <div className='flex justify-end pt-2'>
             <ButtonWithLoading
               onClick={() => setShowConfigDialog(true)}
               isLoading={false}
               disabled={false}
             >
-              {storageStatus?.configured ? 'Update Settings' : 'Configure'}
+              Configure Storage
             </ButtonWithLoading>
           </div>
         </CardContent>
