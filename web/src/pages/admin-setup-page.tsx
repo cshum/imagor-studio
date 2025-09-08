@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useEffect, useRef, useState } from 'react'
+import { useForm, type UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Navigate, useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
@@ -10,6 +10,8 @@ import { setSystemRegistryObject } from '@/api/registry-api'
 import { getStorageStatus } from '@/api/storage-api'
 import { StorageConfigurationWizard } from '@/components/storage/storage-configuration-wizard'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
+import { Button } from '@/components/ui/button'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
   Form,
   FormControl,
@@ -19,7 +21,12 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { MultiStepForm, type MultiStepFormStep } from '@/components/ui/multi-step-form'
+import {
+  MultiStepForm,
+  type MultiStepFormNavigationProps,
+  type MultiStepFormRef,
+  type MultiStepFormStep,
+} from '@/components/ui/multi-step-form'
 import type { StorageStatusQuery } from '@/generated/graphql'
 import { initAuth, useAuth } from '@/stores/auth-store'
 
@@ -59,6 +66,183 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
   // },
 ]
 
+// Step Content Components
+interface AccountStepContentProps extends MultiStepFormNavigationProps {
+  form: UseFormReturn<AdminSetupForm>
+  error: string | null
+  isFormValid: boolean
+  onCreateAccount: () => Promise<boolean>
+}
+
+function AccountStepContent({
+  form,
+  error,
+  isFormValid,
+  onCreateAccount,
+  next,
+}: AccountStepContentProps) {
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setIsLoading(true)
+    try {
+      const success = await onCreateAccount()
+      if (success) {
+        await next()
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className='space-y-6'>
+      <Form {...form}>
+        <form onSubmit={handleSubmit}>
+          <div className='space-y-4'>
+            <FormField
+              control={form.control}
+              name='email'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='email'
+                      placeholder='Enter your email address'
+                      {...field}
+                      disabled={form.formState.isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='password'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='password'
+                      placeholder='Enter a secure password (min. 8 characters)'
+                      {...field}
+                      disabled={form.formState.isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {error && (
+              <div className='text-destructive bg-destructive/10 rounded-md p-3 text-sm'>
+                {error}
+              </div>
+            )}
+          </div>
+
+          <div className='mt-6 flex items-center justify-end border-t pt-6'>
+            <ButtonWithLoading
+              type='submit'
+              isLoading={isLoading}
+              disabled={!isFormValid}
+              className='flex items-center gap-2'
+            >
+              Create Account
+            </ButtonWithLoading>
+          </div>
+        </form>
+      </Form>
+    </div>
+  )
+}
+
+interface SystemSettingsStepContentProps extends MultiStepFormNavigationProps {
+  settings: SystemSetting[]
+  onNext: () => Promise<boolean>
+  onSkip: () => boolean
+}
+
+function SystemSettingsStepContent({
+  settings,
+  onNext,
+  onSkip,
+  next,
+  skip,
+}: SystemSettingsStepContentProps) {
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleNext = async () => {
+    setIsLoading(true)
+    try {
+      const success = await onNext()
+      if (success) {
+        await next()
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSkip = () => {
+    onSkip()
+    skip()
+  }
+
+  return (
+    <div className='space-y-6'>
+      <SystemSettingsForm
+        title=''
+        description='These settings can be changed later in the admin panel.'
+        settings={settings}
+        initialValues={{}}
+        systemRegistryList={[]}
+        hideUpdateButton={true}
+        showCard={false}
+      />
+
+      {/* Navigation */}
+      <div className='mt-6 flex items-center justify-end border-t pt-6'>
+        <div className='flex gap-2'>
+          <Button variant='ghost' onClick={handleSkip} disabled={isLoading}>
+            Skip for Now
+          </Button>
+          <ButtonWithLoading
+            onClick={handleNext}
+            isLoading={isLoading}
+            className='flex items-center gap-2'
+          >
+            Next
+          </ButtonWithLoading>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface StorageStepContentProps extends MultiStepFormNavigationProps {
+  onStorageConfigured: (restartRequired: boolean) => void
+}
+
+function StorageStepContent({ onStorageConfigured }: StorageStepContentProps) {
+  return (
+    <div className='space-y-6'>
+      <div className='space-y-2 text-center'>
+        <p className='text-muted-foreground'>
+          Configure where your images will be stored. You can skip this step and configure storage
+          later.
+        </p>
+      </div>
+      <StorageConfigurationWizard onSuccess={onStorageConfigured} showCancel={false} />
+    </div>
+  )
+}
+
 export function AdminSetupPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
@@ -68,6 +252,7 @@ export function AdminSetupPage() {
   )
   const navigate = useNavigate()
   const { authState } = useAuth()
+  const multiStepFormRef = useRef<MultiStepFormRef>(null)
 
   // Fetch storage status to check if it's overridden by external config
   useEffect(() => {
@@ -154,13 +339,8 @@ export function AdminSetupPage() {
     } else {
       toast.success('Storage configured successfully!')
     }
-    navigate({ to: '/' })
-  }
-
-  const handleSkipStorage = () => {
-    toast.success('Welcome to Imagor Studio! You can configure storage later in the admin panel.')
-    navigate({ to: '/' })
-    return true
+    // Use the exposed next method instead of hard navigation
+    multiStepFormRef.current?.next()
   }
 
   if (!authState.isFirstRun) {
@@ -172,110 +352,40 @@ export function AdminSetupPage() {
     {
       id: 'account',
       title: 'Create Admin Account',
-      content: (
-        <div className='space-y-6'>
-          <Form {...form}>
-            <div className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='email'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='email'
-                        placeholder='Enter your email address'
-                        {...field}
-                        disabled={form.formState.isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='password'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='password'
-                        placeholder='Enter a secure password (min. 8 characters)'
-                        {...field}
-                        disabled={form.formState.isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {error && (
-                <div className='text-destructive bg-destructive/10 rounded-md p-3 text-sm'>
-                  {error}
-                </div>
-              )}
-            </div>
-          </Form>
-        </div>
-      ),
-      onNext: handleCreateAccount,
-      isValid: isFormValid,
-      nextLabel: 'Create Account',
-      hideBack: true,
+      content: (navigationProps: MultiStepFormNavigationProps) => {
+        return (
+          <AccountStepContent
+            form={form}
+            error={error}
+            isFormValid={isFormValid}
+            onCreateAccount={handleCreateAccount}
+            {...navigationProps}
+          />
+        )
+      },
     },
     {
       id: 'settings',
       title: 'System Configuration',
-      content: (
-        <div className='space-y-6'>
-          <SystemSettingsForm
-            title=''
-            description='These settings can be changed later in the admin panel.'
+      content: (navigationProps: MultiStepFormNavigationProps) => {
+        return (
+          <SystemSettingsStepContent
             settings={SYSTEM_SETTINGS}
-            initialValues={{}}
-            systemRegistryList={[]}
-            hideUpdateButton={true}
-            showCard={false}
+            onNext={handleSystemSettingsNext}
+            onSkip={handleSkipSettings}
+            {...navigationProps}
           />
-        </div>
-      ),
-      onNext: handleSystemSettingsNext,
-      onSkip: handleSkipSettings,
-      canSkip: true,
-      skipLabel: 'Skip for Now',
-      nextLabel: 'Next',
-      hideBack: true,
+        )
+      },
     },
     {
       id: 'storage',
       title: 'Storage Configuration',
-      content: (
-        <div className='space-y-6'>
-          <div className='space-y-2 text-center'>
-            <p className='text-muted-foreground'>
-              Configure where your images will be stored. You can skip this step and configure
-              storage later.
-            </p>
-          </div>
-          <StorageConfigurationWizard
-            title=''
-            description=''
-            onSuccess={handleStorageConfigured}
-            showCancel={false}
-          />
-        </div>
-      ),
-      onNext: () => true,
-      onSkip: handleSkipStorage,
-      canSkip: true,
-      skipLabel: 'Skip Storage Setup',
-      nextLabel: 'Complete Setup',
-      hideBack: true,
+      content: (navigationProps: MultiStepFormNavigationProps) => {
+        return (
+          <StorageStepContent onStorageConfigured={handleStorageConfigured} {...navigationProps} />
+        )
+      },
     },
   ]
 
@@ -287,6 +397,7 @@ export function AdminSetupPage() {
   return (
     <div className='bg-background flex min-h-screen items-center justify-center p-4'>
       <MultiStepForm
+        ref={multiStepFormRef}
         steps={steps}
         currentStep={currentStep}
         onStepChange={setCurrentStep}
