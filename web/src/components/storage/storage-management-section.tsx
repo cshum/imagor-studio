@@ -21,9 +21,9 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
   const handleStorageConfigured = (restartRequired: boolean) => {
     setShowConfigDialog(false)
     if (restartRequired) {
-      toast.success('Storage configured successfully! Please restart the server to apply changes.')
+      toast.success('Storage configured successfully. Please restart the server to apply changes.')
     } else {
-      toast.success('Storage configured successfully!')
+      toast.success('Storage configured successfully')
     }
     // Invalidate the loader data to get fresh storage status
     router.invalidate()

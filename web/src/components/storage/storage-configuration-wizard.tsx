@@ -86,7 +86,6 @@ export function StorageConfigurationWizard({
       })
 
       if (result.success) {
-        toast.success(result.message || 'File storage configured successfully!')
         onSuccess?.(result.restartRequired)
       } else {
         toast.error(result.message || 'Failed to configure file storage')
