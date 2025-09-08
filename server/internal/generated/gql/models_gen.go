@@ -44,6 +44,18 @@ type FileStat struct {
 	ThumbnailUrls *ThumbnailUrls `json:"thumbnailUrls,omitempty"`
 }
 
+type FileStorageConfig struct {
+	BaseDir          string `json:"baseDir"`
+	MkdirPermissions string `json:"mkdirPermissions"`
+	WritePermissions string `json:"writePermissions"`
+}
+
+type FileStorageInput struct {
+	BaseDir          string  `json:"baseDir"`
+	MkdirPermissions *string `json:"mkdirPermissions,omitempty"`
+	WritePermissions *string `json:"writePermissions,omitempty"`
+}
+
 type Mutation struct {
 }
 
@@ -56,10 +68,55 @@ type RegistryEntryInput struct {
 	IsEncrypted bool   `json:"isEncrypted"`
 }
 
+type S3StorageConfig struct {
+	Bucket   string  `json:"bucket"`
+	Region   *string `json:"region,omitempty"`
+	Endpoint *string `json:"endpoint,omitempty"`
+	BaseDir  *string `json:"baseDir,omitempty"`
+}
+
+type S3StorageInput struct {
+	Bucket          string  `json:"bucket"`
+	Region          *string `json:"region,omitempty"`
+	Endpoint        *string `json:"endpoint,omitempty"`
+	AccessKeyID     *string `json:"accessKeyId,omitempty"`
+	SecretAccessKey *string `json:"secretAccessKey,omitempty"`
+	SessionToken    *string `json:"sessionToken,omitempty"`
+	BaseDir         *string `json:"baseDir,omitempty"`
+}
+
+type StorageConfigInput struct {
+	Type       StorageType       `json:"type"`
+	FileConfig *FileStorageInput `json:"fileConfig,omitempty"`
+	S3Config   *S3StorageInput   `json:"s3Config,omitempty"`
+}
+
+type StorageConfigResult struct {
+	Success         bool    `json:"success"`
+	RestartRequired bool    `json:"restartRequired"`
+	Timestamp       string  `json:"timestamp"`
+	Message         *string `json:"message,omitempty"`
+}
+
+type StorageStatus struct {
+	Configured           bool               `json:"configured"`
+	Type                 *string            `json:"type,omitempty"`
+	RestartRequired      bool               `json:"restartRequired"`
+	LastUpdated          *string            `json:"lastUpdated,omitempty"`
+	IsOverriddenByConfig bool               `json:"isOverriddenByConfig"`
+	FileConfig           *FileStorageConfig `json:"fileConfig,omitempty"`
+	S3Config             *S3StorageConfig   `json:"s3Config,omitempty"`
+}
+
+type StorageTestResult struct {
+	Success bool    `json:"success"`
+	Message string  `json:"message"`
+	Details *string `json:"details,omitempty"`
+}
+
 type SystemRegistry struct {
 	Key                  string `json:"key"`
 	Value                string `json:"value"`
-	OwnerID              string `json:"ownerID"`
 	IsEncrypted          bool   `json:"isEncrypted"`
 	IsOverriddenByConfig bool   `json:"isOverriddenByConfig"`
 }
@@ -95,7 +152,6 @@ type UserList struct {
 type UserRegistry struct {
 	Key         string `json:"key"`
 	Value       string `json:"value"`
-	OwnerID     string `json:"ownerID"`
 	IsEncrypted bool   `json:"isEncrypted"`
 }
 
@@ -206,6 +262,61 @@ func (e *SortOrder) UnmarshalJSON(b []byte) error {
 }
 
 func (e SortOrder) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type StorageType string
+
+const (
+	StorageTypeFile StorageType = "FILE"
+	StorageTypeS3   StorageType = "S3"
+)
+
+var AllStorageType = []StorageType{
+	StorageTypeFile,
+	StorageTypeS3,
+}
+
+func (e StorageType) IsValid() bool {
+	switch e {
+	case StorageTypeFile, StorageTypeS3:
+		return true
+	}
+	return false
+}
+
+func (e StorageType) String() string {
+	return string(e)
+}
+
+func (e *StorageType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = StorageType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid StorageType", str)
+	}
+	return nil
+}
+
+func (e StorageType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *StorageType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e StorageType) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

@@ -15,8 +15,8 @@ import * as types from './graphql'
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-  '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
-  '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n    isOverriddenByConfig\n  }\n': typeof types.SystemRegistryInfoFragmentDoc
+  '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
+  '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n': typeof types.SystemRegistryInfoFragmentDoc
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.ListUserRegistryDocument
   '\n  query GetUserRegistry($key: String, $keys: [String!], $ownerID: String) {\n    getUserRegistry(key: $key, keys: $keys, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.GetUserRegistryDocument
   '\n  query ListSystemRegistry($prefix: String) {\n    listSystemRegistry(prefix: $prefix) {\n      ...SystemRegistryInfo\n    }\n  }\n': typeof types.ListSystemRegistryDocument
@@ -32,6 +32,10 @@ type Documents = {
   '\n  mutation UploadFile($path: String!, $content: Upload!) {\n    uploadFile(path: $path, content: $content)\n  }\n': typeof types.UploadFileDocument
   '\n  mutation DeleteFile($path: String!) {\n    deleteFile(path: $path)\n  }\n': typeof types.DeleteFileDocument
   '\n  mutation CreateFolder($path: String!) {\n    createFolder(path: $path)\n  }\n': typeof types.CreateFolderDocument
+  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        baseDir\n      }\n    }\n  }\n': typeof types.StorageStatusDocument
+  '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureFileStorageDocument
+  '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureS3StorageDocument
+  '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n': typeof types.TestStorageConfigDocument
   '\n  fragment UserInfo on User {\n    id\n    displayName\n    email\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n': typeof types.UserInfoFragmentDoc
   '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n': typeof types.MeDocument
   '\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserInfo\n    }\n  }\n': typeof types.GetUserDocument
@@ -42,9 +46,9 @@ type Documents = {
   '\n  mutation CreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      ...UserInfo\n    }\n  }\n': typeof types.CreateUserDocument
 }
 const documents: Documents = {
-  '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n  }\n':
+  '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n':
     types.RegistryInfoFragmentDoc,
-  '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n    isOverriddenByConfig\n  }\n':
+  '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n':
     types.SystemRegistryInfoFragmentDoc,
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n':
     types.ListUserRegistryDocument,
@@ -76,6 +80,14 @@ const documents: Documents = {
     types.DeleteFileDocument,
   '\n  mutation CreateFolder($path: String!) {\n    createFolder(path: $path)\n  }\n':
     types.CreateFolderDocument,
+  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        baseDir\n      }\n    }\n  }\n':
+    types.StorageStatusDocument,
+  '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n':
+    types.ConfigureFileStorageDocument,
+  '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n':
+    types.ConfigureS3StorageDocument,
+  '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n':
+    types.TestStorageConfigDocument,
   '\n  fragment UserInfo on User {\n    id\n    displayName\n    email\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n':
     types.UserInfoFragmentDoc,
   '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n': types.MeDocument,
@@ -111,14 +123,14 @@ export function gql(source: string): unknown
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n  }\n',
-): (typeof documents)['\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n  }\n']
+  source: '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n',
+): (typeof documents)['\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n    isOverriddenByConfig\n  }\n',
-): (typeof documents)['\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    ownerID\n    isEncrypted\n    isOverriddenByConfig\n  }\n']
+  source: '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n',
+): (typeof documents)['\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -209,6 +221,30 @@ export function gql(
 export function gql(
   source: '\n  mutation CreateFolder($path: String!) {\n    createFolder(path: $path)\n  }\n',
 ): (typeof documents)['\n  mutation CreateFolder($path: String!) {\n    createFolder(path: $path)\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        baseDir\n      }\n    }\n  }\n',
+): (typeof documents)['\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        baseDir\n      }\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n',
+): (typeof documents)['\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n',
+): (typeof documents)['\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n',
+): (typeof documents)['\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

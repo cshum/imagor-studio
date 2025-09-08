@@ -144,3 +144,28 @@ func (m *MockStorage) Stat(ctx context.Context, path string) (storage.FileInfo, 
 	args := m.Called(ctx, path)
 	return args.Get(0).(storage.FileInfo), args.Error(1)
 }
+
+type MockStorageProvider struct {
+	mock.Mock
+	storage storage.Storage
+}
+
+func NewMockStorageProvider(storage storage.Storage) *MockStorageProvider {
+	return &MockStorageProvider{storage: storage}
+}
+
+func (m *MockStorageProvider) GetStorage() storage.Storage {
+	return m.storage
+}
+
+func (m *MockStorageProvider) IsRestartRequired() bool {
+	return false // Default to false for tests
+}
+
+func (m *MockStorageProvider) ReloadFromRegistry() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
+// Ensure MockStorageProvider implements the StorageProvider interface
+var _ StorageProvider = (*MockStorageProvider)(nil)

@@ -1,3 +1,4 @@
+import { StorageManagementSection } from '@/components/storage'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import type { AdminLoaderData } from '@/loaders/account-loader'
 
@@ -27,10 +28,14 @@ export function AdminPage({ loaderData }: AdminPageProps) {
   return (
     <div className='space-y-6'>
       <SystemSettingsForm
+        title='System Settings'
+        description='Configure system-wide settings and user account policies.'
         settings={SYSTEM_SETTINGS}
         initialValues={loaderData?.registry || {}}
         systemRegistryList={loaderData?.systemRegistryList || []}
       />
+
+      <StorageManagementSection storageStatus={loaderData?.storageStatus || null} />
     </div>
   )
 }

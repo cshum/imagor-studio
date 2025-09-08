@@ -62,9 +62,24 @@ export type FileStat = {
   thumbnailUrls: Maybe<ThumbnailUrls>
 }
 
+export type FileStorageConfig = {
+  __typename?: 'FileStorageConfig'
+  baseDir: Scalars['String']['output']
+  mkdirPermissions: Scalars['String']['output']
+  writePermissions: Scalars['String']['output']
+}
+
+export type FileStorageInput = {
+  baseDir: Scalars['String']['input']
+  mkdirPermissions: InputMaybe<Scalars['String']['input']>
+  writePermissions: InputMaybe<Scalars['String']['input']>
+}
+
 export type Mutation = {
   __typename?: 'Mutation'
   changePassword: Scalars['Boolean']['output']
+  configureFileStorage: StorageConfigResult
+  configureS3Storage: StorageConfigResult
   createFolder: Scalars['Boolean']['output']
   createUser: User
   deactivateAccount: Scalars['Boolean']['output']
@@ -73,6 +88,7 @@ export type Mutation = {
   deleteUserRegistry: Scalars['Boolean']['output']
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
+  testStorageConfig: StorageTestResult
   updateProfile: User
   uploadFile: Scalars['Boolean']['output']
 }
@@ -80,6 +96,14 @@ export type Mutation = {
 export type MutationChangePasswordArgs = {
   input: ChangePasswordInput
   userId?: InputMaybe<Scalars['ID']['input']>
+}
+
+export type MutationConfigureFileStorageArgs = {
+  input: FileStorageInput
+}
+
+export type MutationConfigureS3StorageArgs = {
+  input: S3StorageInput
 }
 
 export type MutationCreateFolderArgs = {
@@ -120,6 +144,10 @@ export type MutationSetUserRegistryArgs = {
   ownerID?: InputMaybe<Scalars['String']['input']>
 }
 
+export type MutationTestStorageConfigArgs = {
+  input: StorageConfigInput
+}
+
 export type MutationUpdateProfileArgs = {
   input: UpdateProfileInput
   userId?: InputMaybe<Scalars['ID']['input']>
@@ -139,6 +167,7 @@ export type Query = {
   listUserRegistry: Array<UserRegistry>
   me: Maybe<User>
   statFile: Maybe<FileStat>
+  storageStatus: StorageStatus
   user: Maybe<User>
   users: UserList
 }
@@ -192,16 +221,67 @@ export type RegistryEntryInput = {
   value: Scalars['String']['input']
 }
 
+export type S3StorageConfig = {
+  __typename?: 'S3StorageConfig'
+  baseDir: Maybe<Scalars['String']['output']>
+  bucket: Scalars['String']['output']
+  endpoint: Maybe<Scalars['String']['output']>
+  region: Maybe<Scalars['String']['output']>
+}
+
+export type S3StorageInput = {
+  accessKeyId: InputMaybe<Scalars['String']['input']>
+  baseDir: InputMaybe<Scalars['String']['input']>
+  bucket: Scalars['String']['input']
+  endpoint: InputMaybe<Scalars['String']['input']>
+  region: InputMaybe<Scalars['String']['input']>
+  secretAccessKey: InputMaybe<Scalars['String']['input']>
+  sessionToken: InputMaybe<Scalars['String']['input']>
+}
+
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
 
 export type SortOrder = 'ASC' | 'DESC'
+
+export type StorageConfigInput = {
+  fileConfig: InputMaybe<FileStorageInput>
+  s3Config: InputMaybe<S3StorageInput>
+  type: StorageType
+}
+
+export type StorageConfigResult = {
+  __typename?: 'StorageConfigResult'
+  message: Maybe<Scalars['String']['output']>
+  restartRequired: Scalars['Boolean']['output']
+  success: Scalars['Boolean']['output']
+  timestamp: Scalars['String']['output']
+}
+
+export type StorageStatus = {
+  __typename?: 'StorageStatus'
+  configured: Scalars['Boolean']['output']
+  fileConfig: Maybe<FileStorageConfig>
+  isOverriddenByConfig: Scalars['Boolean']['output']
+  lastUpdated: Maybe<Scalars['String']['output']>
+  restartRequired: Scalars['Boolean']['output']
+  s3Config: Maybe<S3StorageConfig>
+  type: Maybe<Scalars['String']['output']>
+}
+
+export type StorageTestResult = {
+  __typename?: 'StorageTestResult'
+  details: Maybe<Scalars['String']['output']>
+  message: Scalars['String']['output']
+  success: Scalars['Boolean']['output']
+}
+
+export type StorageType = 'FILE' | 'S3'
 
 export type SystemRegistry = {
   __typename?: 'SystemRegistry'
   isEncrypted: Scalars['Boolean']['output']
   isOverriddenByConfig: Scalars['Boolean']['output']
   key: Scalars['String']['output']
-  ownerID: Scalars['String']['output']
   value: Scalars['String']['output']
 }
 
@@ -240,7 +320,6 @@ export type UserRegistry = {
   __typename?: 'UserRegistry'
   isEncrypted: Scalars['Boolean']['output']
   key: Scalars['String']['output']
-  ownerID: Scalars['String']['output']
   value: Scalars['String']['output']
 }
 
@@ -248,7 +327,6 @@ export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
   key: string
   value: string
-  ownerID: string
   isEncrypted: boolean
 }
 
@@ -256,7 +334,6 @@ export type SystemRegistryInfoFragment = {
   __typename?: 'SystemRegistry'
   key: string
   value: string
-  ownerID: string
   isEncrypted: boolean
   isOverriddenByConfig: boolean
 }
@@ -272,7 +349,6 @@ export type ListUserRegistryQuery = {
     __typename?: 'UserRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
   }>
 }
@@ -289,7 +365,6 @@ export type GetUserRegistryQuery = {
     __typename?: 'UserRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
   }>
 }
@@ -304,7 +379,6 @@ export type ListSystemRegistryQuery = {
     __typename?: 'SystemRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
     isOverriddenByConfig: boolean
   }>
@@ -321,7 +395,6 @@ export type GetSystemRegistryQuery = {
     __typename?: 'SystemRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
     isOverriddenByConfig: boolean
   }>
@@ -339,7 +412,6 @@ export type SetUserRegistryMutation = {
     __typename?: 'UserRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
   }>
 }
@@ -362,7 +434,6 @@ export type SetSystemRegistryMutation = {
     __typename?: 'SystemRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
     isOverriddenByConfig: boolean
   }>
@@ -488,6 +559,77 @@ export type CreateFolderMutationVariables = Exact<{
 
 export type CreateFolderMutation = { __typename?: 'Mutation'; createFolder: boolean }
 
+export type StorageStatusQueryVariables = Exact<{ [key: string]: never }>
+
+export type StorageStatusQuery = {
+  __typename?: 'Query'
+  storageStatus: {
+    __typename?: 'StorageStatus'
+    configured: boolean
+    type: string | null
+    restartRequired: boolean
+    lastUpdated: string | null
+    isOverriddenByConfig: boolean
+    fileConfig: {
+      __typename?: 'FileStorageConfig'
+      baseDir: string
+      mkdirPermissions: string
+      writePermissions: string
+    } | null
+    s3Config: {
+      __typename?: 'S3StorageConfig'
+      bucket: string
+      region: string | null
+      endpoint: string | null
+      baseDir: string | null
+    } | null
+  }
+}
+
+export type ConfigureFileStorageMutationVariables = Exact<{
+  input: FileStorageInput
+}>
+
+export type ConfigureFileStorageMutation = {
+  __typename?: 'Mutation'
+  configureFileStorage: {
+    __typename?: 'StorageConfigResult'
+    success: boolean
+    restartRequired: boolean
+    timestamp: string
+    message: string | null
+  }
+}
+
+export type ConfigureS3StorageMutationVariables = Exact<{
+  input: S3StorageInput
+}>
+
+export type ConfigureS3StorageMutation = {
+  __typename?: 'Mutation'
+  configureS3Storage: {
+    __typename?: 'StorageConfigResult'
+    success: boolean
+    restartRequired: boolean
+    timestamp: string
+    message: string | null
+  }
+}
+
+export type TestStorageConfigMutationVariables = Exact<{
+  input: StorageConfigInput
+}>
+
+export type TestStorageConfigMutation = {
+  __typename?: 'Mutation'
+  testStorageConfig: {
+    __typename?: 'StorageTestResult'
+    success: boolean
+    message: string
+    details: string | null
+  }
+}
+
 export type UserInfoFragment = {
   __typename?: 'User'
   id: string
@@ -610,7 +752,6 @@ export const RegistryInfoFragmentDoc = gql`
   fragment RegistryInfo on UserRegistry {
     key
     value
-    ownerID
     isEncrypted
   }
 `
@@ -618,7 +759,6 @@ export const SystemRegistryInfoFragmentDoc = gql`
   fragment SystemRegistryInfo on SystemRegistry {
     key
     value
-    ownerID
     isEncrypted
     isOverriddenByConfig
   }
@@ -776,6 +916,57 @@ export const DeleteFileDocument = gql`
 export const CreateFolderDocument = gql`
   mutation CreateFolder($path: String!) {
     createFolder(path: $path)
+  }
+`
+export const StorageStatusDocument = gql`
+  query StorageStatus {
+    storageStatus {
+      configured
+      type
+      restartRequired
+      lastUpdated
+      isOverriddenByConfig
+      fileConfig {
+        baseDir
+        mkdirPermissions
+        writePermissions
+      }
+      s3Config {
+        bucket
+        region
+        endpoint
+        baseDir
+      }
+    }
+  }
+`
+export const ConfigureFileStorageDocument = gql`
+  mutation ConfigureFileStorage($input: FileStorageInput!) {
+    configureFileStorage(input: $input) {
+      success
+      restartRequired
+      timestamp
+      message
+    }
+  }
+`
+export const ConfigureS3StorageDocument = gql`
+  mutation ConfigureS3Storage($input: S3StorageInput!) {
+    configureS3Storage(input: $input) {
+      success
+      restartRequired
+      timestamp
+      message
+    }
+  }
+`
+export const TestStorageConfigDocument = gql`
+  mutation TestStorageConfig($input: StorageConfigInput!) {
+    testStorageConfig(input: $input) {
+      success
+      message
+      details
+    }
   }
 `
 export const MeDocument = gql`
@@ -1074,6 +1265,78 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'CreateFolder',
+        'mutation',
+        variables,
+      )
+    },
+    StorageStatus(
+      variables?: StorageStatusQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<StorageStatusQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<StorageStatusQuery>({
+            document: StorageStatusDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'StorageStatus',
+        'query',
+        variables,
+      )
+    },
+    ConfigureFileStorage(
+      variables: ConfigureFileStorageMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<ConfigureFileStorageMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<ConfigureFileStorageMutation>({
+            document: ConfigureFileStorageDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'ConfigureFileStorage',
+        'mutation',
+        variables,
+      )
+    },
+    ConfigureS3Storage(
+      variables: ConfigureS3StorageMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<ConfigureS3StorageMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<ConfigureS3StorageMutation>({
+            document: ConfigureS3StorageDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'ConfigureS3Storage',
+        'mutation',
+        variables,
+      )
+    },
+    TestStorageConfig(
+      variables: TestStorageConfigMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<TestStorageConfigMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<TestStorageConfigMutation>({
+            document: TestStorageConfigDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'TestStorageConfig',
         'mutation',
         variables,
       )

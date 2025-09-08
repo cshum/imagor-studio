@@ -246,7 +246,7 @@ func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, ex
 func applyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]string, registryStore registrystore.Store) error {
 	ctx := context.Background()
 	prefix := "config."
-	entries, err := registryStore.List(ctx, "system", &prefix)
+	entries, err := registryStore.List(ctx, registrystore.SystemOwnerID, &prefix)
 	if err != nil {
 		// Registry values are optional, so we can continue without them
 		return nil

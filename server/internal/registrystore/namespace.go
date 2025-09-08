@@ -10,12 +10,9 @@ const (
 	SystemNamespace = "system"
 	// UserNamespace represents user-specific settings
 	UserNamespace = "user"
+	// SystemOwnerID the owner ID for system-wide settings
+	SystemOwnerID = "system:global"
 )
-
-// SystemOwnerID returns the owner ID for system-wide settings
-func SystemOwnerID() string {
-	return "system:global"
-}
 
 // UserOwnerID creates a namespaced owner ID for a user
 func UserOwnerID(userID string) string {
@@ -56,8 +53,7 @@ func ValidateOwnerID(ownerID string) error {
 
 // IsSystemOwnerID checks if the owner ID represents system settings
 func IsSystemOwnerID(ownerID string) bool {
-	namespace, _, err := ParseOwnerID(ownerID)
-	return err == nil && namespace == SystemNamespace
+	return ownerID == SystemOwnerID
 }
 
 // IsUserOwnerID checks if the owner ID represents user settings

@@ -56,11 +56,12 @@ func (m *MockRegistryStore) DeleteMulti(ctx context.Context, ownerID string, key
 
 func TestSetUserRegistry_SelfOperation(t *testing.T) {
 	mockStorage := new(MockStorage)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:preference"
@@ -82,7 +83,6 @@ func TestSetUserRegistry_SelfOperation(t *testing.T) {
 	assert.Len(t, result, 1)
 	assert.Equal(t, key, result[0].Key)
 	assert.Equal(t, value, result[0].Value)
-	assert.Equal(t, "test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -93,7 +93,8 @@ func TestSetUserRegistry_AdminForOtherUser(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	targetOwnerID := "target-user-id"
@@ -116,7 +117,6 @@ func TestSetUserRegistry_AdminForOtherUser(t *testing.T) {
 	assert.Len(t, result, 1)
 	assert.Equal(t, key, result[0].Key)
 	assert.Equal(t, value, result[0].Value)
-	assert.Equal(t, targetOwnerID, result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -127,7 +127,8 @@ func TestSetUserRegistry_RegularUserCannotAccessOthers(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("regular-user-id")
 	targetOwnerID := "other-user-id"
@@ -150,7 +151,8 @@ func TestSetUserRegistry_GuestCannotSet(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createGuestContext("guest-id")
 	key := "test:key"
@@ -172,7 +174,8 @@ func TestGetUserRegistry_SelfOperation(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:preference"
@@ -191,7 +194,6 @@ func TestGetUserRegistry_SelfOperation(t *testing.T) {
 	assert.Len(t, result, 1)
 	assert.Equal(t, key, result[0].Key)
 	assert.Equal(t, "dark_mode", result[0].Value)
-	assert.Equal(t, "user:test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -202,7 +204,8 @@ func TestGetUserRegistry_NotFound(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "non-existent"
@@ -223,7 +226,8 @@ func TestListUserRegistry_SelfOperation(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	prefix := "app:"
@@ -242,7 +246,6 @@ func TestListUserRegistry_SelfOperation(t *testing.T) {
 	assert.Len(t, result, 2)
 	assert.Equal(t, "app:setting1", result[0].Key)
 	assert.Equal(t, "value1", result[0].Value)
-	assert.Equal(t, "test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -253,7 +256,8 @@ func TestDeleteUserRegistry_SelfOperation(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:setting-to-delete"
@@ -274,7 +278,8 @@ func TestSetSystemRegistry_AdminOnly(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -335,7 +340,6 @@ func TestSetSystemRegistry_AdminOnly(t *testing.T) {
 				assert.Len(t, result, 1)
 				assert.Equal(t, "app_version", result[0].Key)
 				assert.Equal(t, "1.0.0", result[0].Value)
-				assert.Equal(t, "system:global", result[0].OwnerID)
 			}
 
 			mockRegistryStore.AssertExpectations(t)
@@ -349,7 +353,8 @@ func TestGetSystemRegistry_OpenRead(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name    string
@@ -395,7 +400,6 @@ func TestGetSystemRegistry_OpenRead(t *testing.T) {
 			assert.Len(t, result, 1)
 			assert.Equal(t, "app_version", result[0].Key)
 			assert.Equal(t, "1.0.0", result[0].Value)
-			assert.Equal(t, "system:global", result[0].OwnerID)
 
 			mockRegistryStore.AssertExpectations(t)
 		})
@@ -408,7 +412,8 @@ func TestListSystemRegistry_OpenRead(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("user-id")
 	prefix := "config:"
@@ -427,7 +432,6 @@ func TestListSystemRegistry_OpenRead(t *testing.T) {
 	assert.Len(t, result, 2)
 	assert.Equal(t, "config:setting1", result[0].Key)
 	assert.Equal(t, "value1", result[0].Value)
-	assert.Equal(t, "system:global", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -438,7 +442,8 @@ func TestDeleteSystemRegistry_AdminOnly(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -495,7 +500,8 @@ func TestUserRegistry_PermissionEdgeCases(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -567,7 +573,8 @@ func TestSetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "api_secret"
@@ -591,7 +598,6 @@ func TestSetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	assert.Equal(t, key, result[0].Key)
 	assert.Equal(t, "", result[0].Value) // Value should be empty for encrypted entries
 	assert.Equal(t, true, result[0].IsEncrypted)
-	assert.Equal(t, "test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -602,7 +608,8 @@ func TestGetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "api_secret"
@@ -623,7 +630,6 @@ func TestGetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	assert.Equal(t, key, result[0].Key)
 	assert.Equal(t, "", result[0].Value) // Value should be empty for encrypted entries
 	assert.Equal(t, true, result[0].IsEncrypted)
-	assert.Equal(t, "user:test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -634,7 +640,8 @@ func TestListUserRegistry_EncryptedValueHidden(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -670,7 +677,8 @@ func TestSetSystemRegistry_EncryptedValueHidden(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	key := "jwt_secret"
@@ -694,7 +702,6 @@ func TestSetSystemRegistry_EncryptedValueHidden(t *testing.T) {
 	assert.Equal(t, key, result[0].Key)
 	assert.Equal(t, "", result[0].Value) // Value should be empty for encrypted entries
 	assert.Equal(t, true, result[0].IsEncrypted)
-	assert.Equal(t, "system:global", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -765,7 +772,8 @@ func TestSetSystemRegistry_OverridePrevention(t *testing.T) {
 				configValue:  tt.configValue,
 			}
 
-			resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, mockConfig, logger)
+			mockStorageProvider := NewMockStorageProvider(mockStorage)
+			resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, logger)
 
 			ctx := createAdminContext("admin-user-id")
 
@@ -863,7 +871,8 @@ func TestGetSystemRegistry_OverrideDetection(t *testing.T) {
 				configValue:  tt.configValue,
 			}
 
-			resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, mockConfig, logger)
+			mockStorageProvider := NewMockStorageProvider(mockStorage)
+			resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, logger)
 
 			ctx := createReadWriteContext("user-id")
 
@@ -882,7 +891,6 @@ func TestGetSystemRegistry_OverrideDetection(t *testing.T) {
 			assert.Equal(t, tt.registryKey, result[0].Key)
 			assert.Equal(t, tt.expectedValue, result[0].Value, "Value mismatch: %s", tt.description)
 			assert.Equal(t, tt.expectedIsOverridden, result[0].IsOverriddenByConfig, "Override detection mismatch: %s", tt.description)
-			assert.Equal(t, "system:global", result[0].OwnerID)
 
 			mockRegistryStore.AssertExpectations(t)
 		})
@@ -904,7 +912,8 @@ func TestListSystemRegistry_OverrideDetection(t *testing.T) {
 		},
 	}
 
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, mockConfig, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, logger)
 
 	ctx := createReadWriteContext("user-id")
 

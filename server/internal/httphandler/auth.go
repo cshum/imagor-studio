@@ -199,7 +199,7 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
 		// Check if guest mode is enabled via system metadata
 		// Try new format first: config.allow_guest_mode
-		guestModeMetadata, err := h.registryStore.Get(r.Context(), "system", "config.allow_guest_mode")
+		guestModeMetadata, err := h.registryStore.Get(r.Context(), registrystore.SystemOwnerID, "config.allow_guest_mode")
 		if err != nil {
 			h.logger.Error("Failed to check guest mode setting", zap.Error(err))
 			return apperror.InternalServerError("Failed to check system configuration")
@@ -207,7 +207,7 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 
 		// If new format not found, try old format: auth.enableGuestMode
 		if guestModeMetadata == nil {
-			guestModeMetadata, err = h.registryStore.Get(r.Context(), "system", "auth.enableGuestMode")
+			guestModeMetadata, err = h.registryStore.Get(r.Context(), registrystore.SystemOwnerID, "auth.enableGuestMode")
 			if err != nil {
 				h.logger.Error("Failed to check legacy guest mode setting", zap.Error(err))
 				return apperror.InternalServerError("Failed to check system configuration")
@@ -425,7 +425,7 @@ func (h *AuthHandler) setupDefaultGalleryMetadata(ctx context.Context) {
 	}
 
 	for _, entry := range metadataEntries {
-		_, err := h.registryStore.Set(ctx, "system", entry.key, entry.value, false)
+		_, err := h.registryStore.Set(ctx, registrystore.SystemOwnerID, entry.key, entry.value, false)
 		if err != nil {
 			h.logger.Warn("Failed to set gallery metadata",
 				zap.String("key", entry.key),

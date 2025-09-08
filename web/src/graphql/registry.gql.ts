@@ -4,7 +4,6 @@ export const RegistryFragment = gql(`
   fragment RegistryInfo on UserRegistry {
     key
     value
-    ownerID
     isEncrypted
   }
 `)
@@ -13,7 +12,6 @@ export const SystemRegistryFragment = gql(`
   fragment SystemRegistryInfo on SystemRegistry {
     key
     value
-    ownerID
     isEncrypted
     isOverriddenByConfig
   }

@@ -61,9 +61,24 @@ export type FileStat = {
   thumbnailUrls: Maybe<ThumbnailUrls>
 }
 
+export type FileStorageConfig = {
+  __typename?: 'FileStorageConfig'
+  baseDir: Scalars['String']['output']
+  mkdirPermissions: Scalars['String']['output']
+  writePermissions: Scalars['String']['output']
+}
+
+export type FileStorageInput = {
+  baseDir: Scalars['String']['input']
+  mkdirPermissions: InputMaybe<Scalars['String']['input']>
+  writePermissions: InputMaybe<Scalars['String']['input']>
+}
+
 export type Mutation = {
   __typename?: 'Mutation'
   changePassword: Scalars['Boolean']['output']
+  configureFileStorage: StorageConfigResult
+  configureS3Storage: StorageConfigResult
   createFolder: Scalars['Boolean']['output']
   createUser: User
   deactivateAccount: Scalars['Boolean']['output']
@@ -72,6 +87,7 @@ export type Mutation = {
   deleteUserRegistry: Scalars['Boolean']['output']
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
+  testStorageConfig: StorageTestResult
   updateProfile: User
   uploadFile: Scalars['Boolean']['output']
 }
@@ -79,6 +95,14 @@ export type Mutation = {
 export type MutationChangePasswordArgs = {
   input: ChangePasswordInput
   userId?: InputMaybe<Scalars['ID']['input']>
+}
+
+export type MutationConfigureFileStorageArgs = {
+  input: FileStorageInput
+}
+
+export type MutationConfigureS3StorageArgs = {
+  input: S3StorageInput
 }
 
 export type MutationCreateFolderArgs = {
@@ -119,6 +143,10 @@ export type MutationSetUserRegistryArgs = {
   ownerID?: InputMaybe<Scalars['String']['input']>
 }
 
+export type MutationTestStorageConfigArgs = {
+  input: StorageConfigInput
+}
+
 export type MutationUpdateProfileArgs = {
   input: UpdateProfileInput
   userId?: InputMaybe<Scalars['ID']['input']>
@@ -138,6 +166,7 @@ export type Query = {
   listUserRegistry: Array<UserRegistry>
   me: Maybe<User>
   statFile: Maybe<FileStat>
+  storageStatus: StorageStatus
   user: Maybe<User>
   users: UserList
 }
@@ -191,16 +220,67 @@ export type RegistryEntryInput = {
   value: Scalars['String']['input']
 }
 
+export type S3StorageConfig = {
+  __typename?: 'S3StorageConfig'
+  baseDir: Maybe<Scalars['String']['output']>
+  bucket: Scalars['String']['output']
+  endpoint: Maybe<Scalars['String']['output']>
+  region: Maybe<Scalars['String']['output']>
+}
+
+export type S3StorageInput = {
+  accessKeyId: InputMaybe<Scalars['String']['input']>
+  baseDir: InputMaybe<Scalars['String']['input']>
+  bucket: Scalars['String']['input']
+  endpoint: InputMaybe<Scalars['String']['input']>
+  region: InputMaybe<Scalars['String']['input']>
+  secretAccessKey: InputMaybe<Scalars['String']['input']>
+  sessionToken: InputMaybe<Scalars['String']['input']>
+}
+
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
 
 export type SortOrder = 'ASC' | 'DESC'
+
+export type StorageConfigInput = {
+  fileConfig: InputMaybe<FileStorageInput>
+  s3Config: InputMaybe<S3StorageInput>
+  type: StorageType
+}
+
+export type StorageConfigResult = {
+  __typename?: 'StorageConfigResult'
+  message: Maybe<Scalars['String']['output']>
+  restartRequired: Scalars['Boolean']['output']
+  success: Scalars['Boolean']['output']
+  timestamp: Scalars['String']['output']
+}
+
+export type StorageStatus = {
+  __typename?: 'StorageStatus'
+  configured: Scalars['Boolean']['output']
+  fileConfig: Maybe<FileStorageConfig>
+  isOverriddenByConfig: Scalars['Boolean']['output']
+  lastUpdated: Maybe<Scalars['String']['output']>
+  restartRequired: Scalars['Boolean']['output']
+  s3Config: Maybe<S3StorageConfig>
+  type: Maybe<Scalars['String']['output']>
+}
+
+export type StorageTestResult = {
+  __typename?: 'StorageTestResult'
+  details: Maybe<Scalars['String']['output']>
+  message: Scalars['String']['output']
+  success: Scalars['Boolean']['output']
+}
+
+export type StorageType = 'FILE' | 'S3'
 
 export type SystemRegistry = {
   __typename?: 'SystemRegistry'
   isEncrypted: Scalars['Boolean']['output']
   isOverriddenByConfig: Scalars['Boolean']['output']
   key: Scalars['String']['output']
-  ownerID: Scalars['String']['output']
   value: Scalars['String']['output']
 }
 
@@ -239,7 +319,6 @@ export type UserRegistry = {
   __typename?: 'UserRegistry'
   isEncrypted: Scalars['Boolean']['output']
   key: Scalars['String']['output']
-  ownerID: Scalars['String']['output']
   value: Scalars['String']['output']
 }
 
@@ -247,7 +326,6 @@ export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
   key: string
   value: string
-  ownerID: string
   isEncrypted: boolean
 }
 
@@ -255,7 +333,6 @@ export type SystemRegistryInfoFragment = {
   __typename?: 'SystemRegistry'
   key: string
   value: string
-  ownerID: string
   isEncrypted: boolean
   isOverriddenByConfig: boolean
 }
@@ -271,7 +348,6 @@ export type ListUserRegistryQuery = {
     __typename?: 'UserRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
   }>
 }
@@ -288,7 +364,6 @@ export type GetUserRegistryQuery = {
     __typename?: 'UserRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
   }>
 }
@@ -303,7 +378,6 @@ export type ListSystemRegistryQuery = {
     __typename?: 'SystemRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
     isOverriddenByConfig: boolean
   }>
@@ -320,7 +394,6 @@ export type GetSystemRegistryQuery = {
     __typename?: 'SystemRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
     isOverriddenByConfig: boolean
   }>
@@ -338,7 +411,6 @@ export type SetUserRegistryMutation = {
     __typename?: 'UserRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
   }>
 }
@@ -361,7 +433,6 @@ export type SetSystemRegistryMutation = {
     __typename?: 'SystemRegistry'
     key: string
     value: string
-    ownerID: string
     isEncrypted: boolean
     isOverriddenByConfig: boolean
   }>
@@ -486,6 +557,77 @@ export type CreateFolderMutationVariables = Exact<{
 }>
 
 export type CreateFolderMutation = { __typename?: 'Mutation'; createFolder: boolean }
+
+export type StorageStatusQueryVariables = Exact<{ [key: string]: never }>
+
+export type StorageStatusQuery = {
+  __typename?: 'Query'
+  storageStatus: {
+    __typename?: 'StorageStatus'
+    configured: boolean
+    type: string | null
+    restartRequired: boolean
+    lastUpdated: string | null
+    isOverriddenByConfig: boolean
+    fileConfig: {
+      __typename?: 'FileStorageConfig'
+      baseDir: string
+      mkdirPermissions: string
+      writePermissions: string
+    } | null
+    s3Config: {
+      __typename?: 'S3StorageConfig'
+      bucket: string
+      region: string | null
+      endpoint: string | null
+      baseDir: string | null
+    } | null
+  }
+}
+
+export type ConfigureFileStorageMutationVariables = Exact<{
+  input: FileStorageInput
+}>
+
+export type ConfigureFileStorageMutation = {
+  __typename?: 'Mutation'
+  configureFileStorage: {
+    __typename?: 'StorageConfigResult'
+    success: boolean
+    restartRequired: boolean
+    timestamp: string
+    message: string | null
+  }
+}
+
+export type ConfigureS3StorageMutationVariables = Exact<{
+  input: S3StorageInput
+}>
+
+export type ConfigureS3StorageMutation = {
+  __typename?: 'Mutation'
+  configureS3Storage: {
+    __typename?: 'StorageConfigResult'
+    success: boolean
+    restartRequired: boolean
+    timestamp: string
+    message: string | null
+  }
+}
+
+export type TestStorageConfigMutationVariables = Exact<{
+  input: StorageConfigInput
+}>
+
+export type TestStorageConfigMutation = {
+  __typename?: 'Mutation'
+  testStorageConfig: {
+    __typename?: 'StorageTestResult'
+    success: boolean
+    message: string
+    details: string | null
+  }
+}
 
 export type UserInfoFragment = {
   __typename?: 'User'
@@ -617,7 +759,6 @@ export const RegistryInfoFragmentDoc = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
         ],
       },
@@ -636,7 +777,6 @@ export const SystemRegistryInfoFragmentDoc = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
         ],
@@ -790,7 +930,6 @@ export const ListUserRegistryDocument = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
         ],
       },
@@ -869,7 +1008,6 @@ export const GetUserRegistryDocument = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
         ],
       },
@@ -922,7 +1060,6 @@ export const ListSystemRegistryDocument = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
         ],
@@ -992,7 +1129,6 @@ export const GetSystemRegistryDocument = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
         ],
@@ -1072,7 +1208,6 @@ export const SetUserRegistryDocument = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
         ],
       },
@@ -1187,7 +1322,6 @@ export const SetSystemRegistryDocument = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'key' } },
           { kind: 'Field', name: { kind: 'Name', value: 'value' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'ownerID' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
         ],
@@ -1564,6 +1698,194 @@ export const CreateFolderDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateFolderMutation, CreateFolderMutationVariables>
+export const StorageStatusDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'StorageStatus' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'storageStatus' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'configured' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'restartRequired' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'lastUpdated' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'fileConfig' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'baseDir' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'mkdirPermissions' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'writePermissions' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 's3Config' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'region' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'endpoint' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'baseDir' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<StorageStatusQuery, StorageStatusQueryVariables>
+export const ConfigureFileStorageDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ConfigureFileStorage' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'FileStorageInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'configureFileStorage' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'success' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'restartRequired' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ConfigureFileStorageMutation, ConfigureFileStorageMutationVariables>
+export const ConfigureS3StorageDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ConfigureS3Storage' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'S3StorageInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'configureS3Storage' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'success' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'restartRequired' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ConfigureS3StorageMutation, ConfigureS3StorageMutationVariables>
+export const TestStorageConfigDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'TestStorageConfig' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'StorageConfigInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'testStorageConfig' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'success' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'details' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TestStorageConfigMutation, TestStorageConfigMutationVariables>
 export const MeDocument = {
   kind: 'Document',
   definitions: [

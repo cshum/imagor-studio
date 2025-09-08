@@ -191,9 +191,11 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                 )}
               />
 
-              <ButtonWithLoading type='submit' isLoading={isUpdatingProfile}>
-                Update Profile
-              </ButtonWithLoading>
+              <div className='flex justify-end pt-2'>
+                <ButtonWithLoading type='submit' isLoading={isUpdatingProfile}>
+                  Update Profile
+                </ButtonWithLoading>
+              </div>
             </form>
           </Form>
         </CardContent>

@@ -89,3 +89,62 @@ export const CreateFolderMutation = gql(`
     createFolder(path: $path)
   }
 `)
+
+// Storage Status Query
+export const STORAGE_STATUS = gql(`
+  query StorageStatus {
+    storageStatus {
+      configured
+      type
+      restartRequired
+      lastUpdated
+      isOverriddenByConfig
+      fileConfig {
+        baseDir
+        mkdirPermissions
+        writePermissions
+      }
+      s3Config {
+        bucket
+        region
+        endpoint
+        baseDir
+      }
+    }
+  }
+`)
+
+// Configure File Storage Mutation
+export const CONFIGURE_FILE_STORAGE = gql(`
+  mutation ConfigureFileStorage($input: FileStorageInput!) {
+    configureFileStorage(input: $input) {
+      success
+      restartRequired
+      timestamp
+      message
+    }
+  }
+`)
+
+// Configure S3 Storage Mutation
+export const CONFIGURE_S3_STORAGE = gql(`
+  mutation ConfigureS3Storage($input: S3StorageInput!) {
+    configureS3Storage(input: $input) {
+      success
+      restartRequired
+      timestamp
+      message
+    }
+  }
+`)
+
+// Test Storage Configuration Mutation
+export const TEST_STORAGE_CONFIG = gql(`
+  mutation TestStorageConfig($input: StorageConfigInput!) {
+    testStorageConfig(input: $input) {
+      success
+      message
+      details
+    }
+  }
+`)

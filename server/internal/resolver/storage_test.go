@@ -9,6 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -21,7 +22,8 @@ func TestUploadFile_RequiresWriteScope(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -89,7 +91,8 @@ func TestDeleteFile_RequiresWriteScope(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -152,7 +155,8 @@ func TestCreateFolder_RequiresWriteScope(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -216,7 +220,8 @@ func TestListFiles_OnlyRequiresReadScope(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name    string
@@ -279,7 +284,8 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadOnlyContext("test-user-id")
 	path := "/test/file1.txt"
@@ -302,6 +308,223 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 	mockStorage.AssertExpectations(t)
 }
 
+func TestTestStorageConfig_RequiresAdminPermission(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+
+	tests := []struct {
+		name        string
+		context     func() context.Context
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "Admin can test storage config",
+			context: func() context.Context {
+				return createAdminContext("admin-user-id")
+			},
+			expectError: false,
+		},
+		{
+			name: "User with write scope cannot test storage config",
+			context: func() context.Context {
+				return createReadWriteContext("test-user-id")
+			},
+			expectError: true,
+			errorMsg:    "insufficient permission: admin access required",
+		},
+		{
+			name: "User with read scope cannot test storage config",
+			context: func() context.Context {
+				return createReadOnlyContext("test-user-id")
+			},
+			expectError: true,
+			errorMsg:    "insufficient permission: admin access required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := tt.context()
+
+			input := gql.StorageConfigInput{
+				Type: gql.StorageTypeFile,
+				FileConfig: &gql.FileStorageInput{
+					BaseDir: "/tmp/test-storage",
+				},
+			}
+
+			result, err := resolver.Mutation().TestStorageConfig(ctx, input)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+				assert.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				// For admin context, we expect it to fail because the directory doesn't exist
+				// but it should not fail due to permission issues
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.False(t, result.Success)
+				assert.Contains(t, result.Message, "Failed to access storage directory")
+			}
+		})
+	}
+}
+
+func TestTestStorageConfig_FileStorage(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+
+	ctx := createAdminContext("admin-user-id")
+
+	tests := []struct {
+		name           string
+		input          gql.StorageConfigInput
+		expectSuccess  bool
+		expectedMsg    string
+		expectedDetail string
+	}{
+		{
+			name: "Missing file config",
+			input: gql.StorageConfigInput{
+				Type: gql.StorageTypeFile,
+			},
+			expectSuccess:  false,
+			expectedMsg:    "File configuration is required for file storage type",
+			expectedDetail: "",
+		},
+		{
+			name: "Non-existent directory",
+			input: gql.StorageConfigInput{
+				Type: gql.StorageTypeFile,
+				FileConfig: &gql.FileStorageInput{
+					BaseDir: "/non/existent/directory",
+				},
+			},
+			expectSuccess:  false,
+			expectedMsg:    "Failed to access storage directory",
+			expectedDetail: "no such file or directory",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := resolver.Mutation().TestStorageConfig(ctx, tt.input)
+
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+			assert.Equal(t, tt.expectSuccess, result.Success)
+			assert.Contains(t, result.Message, tt.expectedMsg)
+			if tt.expectedDetail != "" && result.Details != nil {
+				assert.Contains(t, *result.Details, tt.expectedDetail)
+			}
+		})
+	}
+}
+
+func TestTestStorageConfig_S3Storage(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+
+	ctx := createAdminContext("admin-user-id")
+
+	tests := []struct {
+		name           string
+		input          gql.StorageConfigInput
+		expectSuccess  bool
+		expectedMsg    string
+		expectedDetail string
+	}{
+		{
+			name: "Missing S3 config",
+			input: gql.StorageConfigInput{
+				Type: gql.StorageTypeS3,
+			},
+			expectSuccess:  false,
+			expectedMsg:    "S3 configuration is required for S3 storage type",
+			expectedDetail: "",
+		},
+		{
+			name: "Invalid S3 credentials",
+			input: gql.StorageConfigInput{
+				Type: gql.StorageTypeS3,
+				S3Config: &gql.S3StorageInput{
+					Bucket:          "test-bucket",
+					Region:          stringPtr("us-east-1"),
+					AccessKeyID:     stringPtr("invalid-key"),
+					SecretAccessKey: stringPtr("invalid-secret"),
+				},
+			},
+			expectSuccess:  false,
+			expectedMsg:    "Failed to access storage directory",
+			expectedDetail: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := resolver.Mutation().TestStorageConfig(ctx, tt.input)
+
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+			assert.Equal(t, tt.expectSuccess, result.Success)
+			assert.Contains(t, result.Message, tt.expectedMsg)
+			if tt.expectedDetail != "" && result.Details != nil {
+				assert.Contains(t, *result.Details, tt.expectedDetail)
+			}
+		})
+	}
+}
+
+func TestTestStorageConfig_ListOperationFirst(t *testing.T) {
+	// This test verifies that List operation is called first and fails appropriately
+	// when the directory doesn't exist, without creating directories
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+
+	ctx := createAdminContext("admin-user-id")
+
+	// Create a temporary directory for testing
+	tempDir := t.TempDir()
+
+	t.Run("Valid directory - List operation succeeds", func(t *testing.T) {
+		input := gql.StorageConfigInput{
+			Type: gql.StorageTypeFile,
+			FileConfig: &gql.FileStorageInput{
+				BaseDir: tempDir,
+			},
+		}
+
+		result, err := resolver.Mutation().TestStorageConfig(ctx, input)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.True(t, result.Success)
+		assert.Equal(t, "Storage configuration test successful", result.Message)
+	})
+}
+
 // Test write operations with different scope combinations
 func TestWriteOperations_ScopeValidation(t *testing.T) {
 	mockStorage := new(MockStorage)
@@ -309,7 +532,8 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -428,7 +652,8 @@ func TestStorageOperations_StorageErrors(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -501,7 +726,8 @@ func TestReadOperations_StillWork(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	// Test with read-only context
 	ctx := createReadOnlyContext("test-user-id")
@@ -552,13 +778,322 @@ func TestReadOperations_StillWork(t *testing.T) {
 	})
 }
 
+func TestConfigureFileStorage_AutoTestSuccess(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+
+	ctx := createAdminContext("admin-user-id")
+	tempDir := t.TempDir()
+
+	input := gql.FileStorageInput{
+		BaseDir: tempDir,
+	}
+
+	// Mock registry operations for successful configuration
+	resultRegistry := &registrystore.Registry{
+		Key:   "config.storage_type",
+		Value: "file",
+	}
+	mockRegistryStore.On("SetMulti", ctx, "system:global", mock.MatchedBy(func(entries []*registrystore.Registry) bool {
+		return len(entries) >= 3 // At least 3 entries (type, configured, base_dir, timestamp)
+	})).Return([]*registrystore.Registry{resultRegistry}, nil)
+	mockStorageProvider.On("ReloadFromRegistry").Return(nil)
+
+	result, err := resolver.Mutation().ConfigureFileStorage(ctx, input)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.True(t, result.Success)
+	assert.False(t, result.RestartRequired)
+	assert.Contains(t, *result.Message, "File storage configured successfully")
+
+	mockRegistryStore.AssertExpectations(t)
+	mockStorageProvider.AssertExpectations(t)
+}
+
+func TestConfigureFileStorage_AutoTestFailure(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+
+	ctx := createAdminContext("admin-user-id")
+
+	input := gql.FileStorageInput{
+		BaseDir: "/non/existent/directory",
+	}
+
+	// Should not call registry operations since test fails
+	// mockRegistryStore should not be called
+
+	result, err := resolver.Mutation().ConfigureFileStorage(ctx, input)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.False(t, result.Success)
+	assert.False(t, result.RestartRequired)
+	assert.Contains(t, *result.Message, "Failed to access storage directory")
+
+	// Verify no registry operations were attempted
+	mockRegistryStore.AssertNotCalled(t, "SetMultiple")
+	mockStorageProvider.AssertNotCalled(t, "ReloadFromRegistry")
+}
+
+func TestConfigureS3Storage_AutoTestSuccess(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+
+	ctx := createAdminContext("admin-user-id")
+
+	// Note: This test will fail in practice because we can't create a real S3 connection
+	// but it tests the flow where validation would succeed
+	input := gql.S3StorageInput{
+		Bucket: "test-bucket",
+		Region: stringPtr("us-east-1"),
+	}
+
+	result, err := resolver.Mutation().ConfigureS3Storage(ctx, input)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	// This will be false because S3 test will fail, but we're testing the flow
+	assert.False(t, result.Success)
+	assert.Contains(t, *result.Message, "Failed to access storage directory")
+}
+
+func TestConfigureS3Storage_AutoTestFailure_MissingConfig(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+
+	ctx := createAdminContext("admin-user-id")
+
+	// Test with missing bucket (invalid config)
+	input := gql.S3StorageInput{
+		Bucket: "", // Empty bucket should fail validation
+	}
+
+	result, err := resolver.Mutation().ConfigureS3Storage(ctx, input)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.False(t, result.Success)
+	assert.False(t, result.RestartRequired)
+	// Should fail during storage creation due to empty bucket
+	assert.Contains(t, *result.Message, "Failed to create storage instance")
+
+	// Verify no registry operations were attempted
+	mockRegistryStore.AssertNotCalled(t, "SetMultiple")
+}
+
+func TestConfigureFileStorage_RequiresAdminPermission(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+
+	tests := []struct {
+		name        string
+		context     func() context.Context
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "Admin can configure storage",
+			context: func() context.Context {
+				return createAdminContext("admin-user-id")
+			},
+			expectError: false,
+		},
+		{
+			name: "User with write scope cannot configure storage",
+			context: func() context.Context {
+				return createReadWriteContext("test-user-id")
+			},
+			expectError: true,
+			errorMsg:    "insufficient permission: admin access required",
+		},
+		{
+			name: "User with read scope cannot configure storage",
+			context: func() context.Context {
+				return createReadOnlyContext("test-user-id")
+			},
+			expectError: true,
+			errorMsg:    "insufficient permission: admin access required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := tt.context()
+			tempDir := t.TempDir()
+
+			input := gql.FileStorageInput{
+				BaseDir: tempDir,
+			}
+
+			if !tt.expectError {
+				// Mock successful operations for admin
+				resultRegistry := &registrystore.Registry{
+					Key:   "config.storage_type",
+					Value: "file",
+				}
+				mockRegistryStore.On("SetMulti", ctx, "system:global", mock.MatchedBy(func(entries []*registrystore.Registry) bool {
+					return len(entries) >= 3 // At least 3 entries (type, configured, base_dir, timestamp)
+				})).Return([]*registrystore.Registry{resultRegistry}, nil)
+				mockStorageProvider.On("ReloadFromRegistry").Return(nil)
+				mockStorageProvider.On("IsRestartRequired").Return(false)
+			}
+
+			result, err := resolver.Mutation().ConfigureFileStorage(ctx, input)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+				assert.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.True(t, result.Success)
+			}
+
+			// Reset mocks for next iteration
+			mockRegistryStore.ExpectedCalls = nil
+			mockStorageProvider.ExpectedCalls = nil
+		})
+	}
+}
+
+func TestConfigureS3Storage_RequiresAdminPermission(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+
+	tests := []struct {
+		name        string
+		context     func() context.Context
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "Admin can configure S3 storage",
+			context: func() context.Context {
+				return createAdminContext("admin-user-id")
+			},
+			expectError: false,
+		},
+		{
+			name: "User with write scope cannot configure S3 storage",
+			context: func() context.Context {
+				return createReadWriteContext("test-user-id")
+			},
+			expectError: true,
+			errorMsg:    "insufficient permission: admin access required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := tt.context()
+
+			input := gql.S3StorageInput{
+				Bucket: "test-bucket",
+				Region: stringPtr("us-east-1"),
+			}
+
+			result, err := resolver.Mutation().ConfigureS3Storage(ctx, input)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+				assert.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				// For admin, expect the test to fail (since we can't connect to real S3)
+				// but no permission error
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.False(t, result.Success) // Will fail due to invalid S3 config
+			}
+		})
+	}
+}
+
+func TestConfigureFileStorage_ErrorMessageProxying(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+
+	ctx := createAdminContext("admin-user-id")
+
+	tests := []struct {
+		name           string
+		input          gql.FileStorageInput
+		expectedMsg    string
+		expectedDetail string
+	}{
+		{
+			name: "Non-existent directory",
+			input: gql.FileStorageInput{
+				BaseDir: "/absolutely/non/existent/directory/path",
+			},
+			expectedMsg:    "Failed to access storage directory",
+			expectedDetail: "no such file or directory",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := resolver.Mutation().ConfigureFileStorage(ctx, tt.input)
+
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+			assert.False(t, result.Success)
+			assert.False(t, result.RestartRequired)
+			assert.Contains(t, *result.Message, tt.expectedMsg)
+
+			// Verify no registry operations were attempted
+			mockRegistryStore.AssertNotCalled(t, "SetMultiple")
+			mockStorageProvider.AssertNotCalled(t, "ReloadFromRegistry")
+		})
+	}
+}
+
 func TestListFiles(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	// Create context with owner ID
 	ctx := context.WithValue(context.Background(), UserIDContextKey, "test-owner-id")
@@ -598,7 +1133,8 @@ func TestStatFile(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorage, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := context.WithValue(context.Background(), UserIDContextKey, "test-owner-id")
 	path := "/test/file1.txt"
