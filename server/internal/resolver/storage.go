@@ -10,9 +10,10 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imageservice"
-	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
+	"github.com/cshum/imagor-studio/server/internal/uuid"
 	"go.uber.org/zap"
 )
 
@@ -250,23 +251,23 @@ func (r *queryResolver) getS3StorageConfig() *gql.S3StorageConfig {
 		return nil
 	}
 
-	config := &gql.S3StorageConfig{
+	c := &gql.S3StorageConfig{
 		Bucket: bucket,
 	}
 
 	if region, exists := r.getRegistryValue("config.s3_region"); exists {
-		config.Region = &region
+		c.Region = &region
 	}
 
 	if endpoint, exists := r.getRegistryValue("config.s3_endpoint"); exists {
-		config.Endpoint = &endpoint
+		c.Endpoint = &endpoint
 	}
 
 	if baseDir, exists := r.getRegistryValue("config.s3_base_dir"); exists {
-		config.BaseDir = &baseDir
+		c.BaseDir = &baseDir
 	}
 
-	return config
+	return c
 }
 
 // ConfigureFileStorage is the resolver for the configureFileStorage field.
@@ -348,32 +349,6 @@ func (r *mutationResolver) ConfigureS3Storage(ctx context.Context, input gql.S3S
 	// Set timestamp
 	timestamp := time.Now().UnixMilli()
 	timestampStr := fmt.Sprintf("%d", timestamp)
-
-	// Validate the configuration before saving
-	testInput := gql.StorageConfigInput{
-		Type:     gql.StorageTypeS3,
-		S3Config: &input,
-	}
-
-	r.logger.Debug("Validating S3 storage configuration before saving")
-	validationResult := r.validateStorageConfig(ctx, testInput)
-	if !validationResult.Success {
-		r.logger.Error("S3 storage configuration validation failed",
-			zap.String("message", validationResult.Message),
-			zap.String("details", func() string {
-				if validationResult.Details != nil {
-					return *validationResult.Details
-				}
-				return ""
-			}()))
-
-		return &gql.StorageConfigResult{
-			Success:         false,
-			RestartRequired: false,
-			Timestamp:       timestampStr,
-			Message:         &validationResult.Message,
-		}, nil
-	}
 
 	// Prepare registry entries
 	entries := []gql.RegistryEntryInput{
@@ -485,7 +460,7 @@ func (r *mutationResolver) validateStorageConfig(ctx context.Context, input gql.
 	}
 
 	// Create a temporary storage provider for testing
-	testProvider := storageprovider.New(r.logger, r.registryStore)
+	testProvider := storageprovider.New(r.logger, r.registryStore, nil)
 	testStorage, err := testProvider.NewStorageFromConfig(cfg)
 	if err != nil {
 		errMsg := err.Error()
@@ -509,7 +484,7 @@ func (r *mutationResolver) validateStorageConfig(ctx context.Context, input gql.
 	}
 
 	// Test basic write/read/delete operations
-	testPath := "test-connection"
+	testPath := "test-connection-" + uuid.GenerateUUID()
 	testContent := strings.NewReader("test")
 
 	// Test write
@@ -563,27 +538,9 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 	return result, nil
 }
 
-// Helper function to get registry value
+// Helper function to get registry value with config override support
 func (r *queryResolver) getRegistryValue(key string) (string, bool) {
-	ctx := context.Background()
-
-	if r.registryStore == nil {
-		r.logger.Error("registryStore is nil in getRegistryValue")
-		return "", false
-	}
-
-	entry, err := r.registryStore.Get(ctx, registrystore.SystemOwnerID, key)
-	if err != nil {
-		r.logger.Error("Failed to get registry value", zap.String("key", key), zap.Error(err))
-		return "", false
-	}
-
-	// Handle case where entry is nil (key not found)
-	if entry == nil {
-		return "", false
-	}
-
-	return entry.Value, true
+	return registryutil.GetEffectiveValue(r.registryStore, r.config, key, r.logger)
 }
 
 // Helper function to set system registry entries

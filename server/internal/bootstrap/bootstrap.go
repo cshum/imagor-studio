@@ -67,8 +67,8 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	// Initialize token manager
 	tokenManager := auth.NewTokenManager(enhancedCfg.JWTSecret, enhancedCfg.JWTExpiration)
 
-	// Initialize storage provider with registry store
-	storageProvider := storageprovider.New(logger, registryStore)
+	// Initialize storage provider with registry store and config
+	storageProvider := storageprovider.New(logger, registryStore, enhancedCfg)
 
 	// Initialize storage with config (will use NoOp if not configured)
 	err = storageProvider.InitializeWithConfig(enhancedCfg)

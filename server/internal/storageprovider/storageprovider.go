@@ -1,7 +1,6 @@
 package storageprovider
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storage/filestorage"
 	"github.com/cshum/imagor-studio/server/internal/storage/noopstorage"
@@ -29,6 +29,7 @@ const (
 type Provider struct {
 	logger         *zap.Logger
 	registryStore  registrystore.Store
+	config         *config.Config
 	currentStorage storage.Storage
 	storageState   StorageState
 	configLoadedAt int64 // Unix milliseconds when storage config was loaded
@@ -36,10 +37,11 @@ type Provider struct {
 }
 
 // New creates a new storage provider
-func New(logger *zap.Logger, registryStore registrystore.Store) *Provider {
+func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Config) *Provider {
 	return &Provider{
 		logger:         logger,
 		registryStore:  registryStore,
+		config:         cfg,
 		storageState:   StorageStateNoop,
 		configLoadedAt: time.Now().UnixMilli(),
 		mutex:          sync.RWMutex{},
@@ -243,33 +245,9 @@ func (p *Provider) isStorageConfiguredInRegistry() bool {
 	return exists && configured == "true"
 }
 
-// getRegistryValue gets a value from the registry
+// getRegistryValue gets the effective value for a registry key, considering config overrides
 func (p *Provider) getRegistryValue(key string) (string, bool) {
-	if p.registryStore == nil {
-		p.logger.Error("registryStore is nil in storage provider getRegistryValue")
-		return "", false
-	}
-
-	// Add defensive programming - catch any panics
-	defer func() {
-		if r := recover(); r != nil {
-			p.logger.Error("Panic in getRegistryValue", zap.String("key", key), zap.Any("panic", r))
-		}
-	}()
-
-	ctx := context.Background()
-	entry, err := p.registryStore.Get(ctx, registrystore.SystemOwnerID, key)
-	if err != nil {
-		p.logger.Error("Failed to get registry value in storage provider", zap.String("key", key), zap.Error(err))
-		return "", false
-	}
-
-	// Handle case where entry is nil (key not found)
-	if entry == nil {
-		return "", false
-	}
-
-	return entry.Value, true
+	return registryutil.GetEffectiveValue(p.registryStore, p.config, key, p.logger)
 }
 
 // buildConfigFromRegistry builds a config object from registry values

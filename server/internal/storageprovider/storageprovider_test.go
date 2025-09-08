@@ -11,7 +11,7 @@ import (
 func TestNew(t *testing.T) {
 	logger := zap.NewNop()
 
-	provider := New(logger, nil) // nil registry store for basic test
+	provider := New(logger, nil, nil) // nil registry store and config for basic test
 
 	assert.NotNil(t, provider)
 	assert.Equal(t, logger, provider.logger)
@@ -19,7 +19,7 @@ func TestNew(t *testing.T) {
 
 func TestProvider_NewFileStorage(t *testing.T) {
 	logger := zap.NewNop()
-	provider := New(logger, nil)
+	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
 		FileBaseDir:          "./test-storage",
@@ -35,7 +35,7 @@ func TestProvider_NewFileStorage(t *testing.T) {
 
 func TestProvider_NewS3Storage(t *testing.T) {
 	logger := zap.NewNop()
-	provider := New(logger, nil)
+	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
 		S3Bucket:          "test-bucket",
@@ -52,7 +52,7 @@ func TestProvider_NewS3Storage(t *testing.T) {
 
 func TestProvider_NewS3Storage_MissingBucket(t *testing.T) {
 	logger := zap.NewNop()
-	provider := New(logger, nil)
+	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
 		S3Bucket: "", // Missing bucket
@@ -67,7 +67,7 @@ func TestProvider_NewS3Storage_MissingBucket(t *testing.T) {
 
 func TestProvider_NewStorageFromConfig_File(t *testing.T) {
 	logger := zap.NewNop()
-	provider := New(logger, nil)
+	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
 		StorageType:          "file",
@@ -84,7 +84,7 @@ func TestProvider_NewStorageFromConfig_File(t *testing.T) {
 
 func TestProvider_NewStorageFromConfig_S3(t *testing.T) {
 	logger := zap.NewNop()
-	provider := New(logger, nil)
+	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
 		StorageType:       "s3",
@@ -102,7 +102,7 @@ func TestProvider_NewStorageFromConfig_S3(t *testing.T) {
 
 func TestProvider_NewStorageFromConfig_UnsupportedType(t *testing.T) {
 	logger := zap.NewNop()
-	provider := New(logger, nil)
+	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
 		StorageType: "unsupported",
