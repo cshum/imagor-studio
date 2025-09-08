@@ -477,7 +477,19 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 		}, nil
 	}
 
-	// Test basic operations
+	// Test basic operations - start with List to verify directory exists without creating it
+	// Test list operation first (read-only, won't create directories)
+	_, err = testStorage.List(ctx, "", storage.ListOptions{Limit: 1})
+	if err != nil {
+		errMsg := err.Error()
+		return &gql.StorageTestResult{
+			Success: false,
+			Message: "Failed to access storage directory",
+			Details: &errMsg,
+		}, nil
+	}
+
+	// Test basic write/read/delete operations
 	testPath := "test-connection"
 	testContent := strings.NewReader("test")
 
