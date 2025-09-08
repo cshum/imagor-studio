@@ -1,5 +1,6 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { forwardRef, useImperativeHandle } from 'react'
 import * as z from 'zod'
 
 import {
@@ -21,13 +22,19 @@ const fileStorageSchema = z.object({
 
 export type FileStorageFormData = z.infer<typeof fileStorageSchema>
 
+export interface FileStorageFormRef {
+  getValues: () => FileStorageFormData
+  isValid: () => boolean
+}
+
 interface FileStorageFormProps {
   initialValues?: Partial<FileStorageFormData>
   onSubmit: (data: FileStorageFormData) => void
   disabled?: boolean
 }
 
-export function FileStorageForm({ initialValues, onSubmit, disabled }: FileStorageFormProps) {
+export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormProps>(
+  ({ initialValues, onSubmit, disabled }, ref) => {
   const form = useForm<FileStorageFormData>({
     resolver: zodResolver(fileStorageSchema),
     defaultValues: {
@@ -36,6 +43,11 @@ export function FileStorageForm({ initialValues, onSubmit, disabled }: FileStora
       writePermissions: initialValues?.writePermissions || '0644',
     },
   })
+
+  useImperativeHandle(ref, () => ({
+    getValues: () => form.getValues(),
+    isValid: () => form.formState.isValid,
+  }))
 
   const handleSubmit = (data: FileStorageFormData) => {
     onSubmit(data)
@@ -97,4 +109,4 @@ export function FileStorageForm({ initialValues, onSubmit, disabled }: FileStora
       </form>
     </Form>
   )
-}
+})

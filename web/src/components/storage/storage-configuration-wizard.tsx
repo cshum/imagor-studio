@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { toast } from 'sonner'
 
 import { configureFileStorage, configureS3Storage, testStorageConfig } from '@/api/storage-api'
@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator'
 import type { StorageType as GraphQLStorageType, StorageStatusQuery } from '@/generated/graphql'
 
-import { FileStorageForm, type FileStorageFormData } from './file-storage-form'
-import { S3StorageForm, type S3StorageFormData } from './s3-storage-form'
+import { FileStorageForm, type FileStorageFormData, type FileStorageFormRef } from './file-storage-form'
+import { S3StorageForm, type S3StorageFormData, type S3StorageFormRef } from './s3-storage-form'
 import { StorageTypeSelector, type StorageType } from './storage-type-selector'
 
 interface StorageConfigurationWizardProps {
@@ -31,6 +31,10 @@ export function StorageConfigurationWizard({
   const [storageType, setStorageType] = useState<StorageType>('file')
   const [isLoading, setIsLoading] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
+
+  // Refs to access form data
+  const fileFormRef = useRef<FileStorageFormRef>(null)
+  const s3FormRef = useRef<S3StorageFormRef>(null)
 
   // Initialize form with existing configuration
   useEffect(() => {
@@ -125,29 +129,42 @@ export function StorageConfigurationWizard({
         s3: 'S3',
       }
 
-      // Get form data based on storage type
-      const testInput = {
-        type: storageTypeMap[storageType],
-        fileConfig:
-          storageType === 'file'
-            ? {
-                baseDir: './storage',
-                mkdirPermissions: null,
-                writePermissions: null,
-              }
-            : null,
-        s3Config:
-          storageType === 's3'
-            ? {
-                bucket: 'test-bucket',
-                region: null,
-                endpoint: null,
-                accessKeyId: null,
-                secretAccessKey: null,
-                sessionToken: null,
-                baseDir: null,
-              }
-            : null,
+      // Get actual form data based on storage type
+      let testInput
+      if (storageType === 'file') {
+        const formData = fileFormRef.current?.getValues()
+        if (!formData) {
+          toast.error('Please fill in the file storage configuration first')
+          return
+        }
+        testInput = {
+          type: storageTypeMap[storageType],
+          fileConfig: {
+            baseDir: formData.baseDir,
+            mkdirPermissions: formData.mkdirPermissions || null,
+            writePermissions: formData.writePermissions || null,
+          },
+          s3Config: null,
+        }
+      } else {
+        const formData = s3FormRef.current?.getValues()
+        if (!formData) {
+          toast.error('Please fill in the S3 storage configuration first')
+          return
+        }
+        testInput = {
+          type: storageTypeMap[storageType],
+          fileConfig: null,
+          s3Config: {
+            bucket: formData.bucket,
+            region: formData.region || null,
+            endpoint: formData.endpoint || null,
+            accessKeyId: formData.accessKeyId || null,
+            secretAccessKey: formData.secretAccessKey || null,
+            sessionToken: formData.sessionToken || null,
+            baseDir: formData.baseDir || null,
+          },
+        }
       }
 
       const result = await testStorageConfig({ input: testInput })
@@ -178,8 +195,9 @@ export function StorageConfigurationWizard({
         {storageType === 'file' && (
           <div className='space-y-4'>
             <h3 className='text-lg font-medium'>File Storage Configuration</h3>
-            <FileStorageForm 
-              onSubmit={handleFileStorageSubmit} 
+            <FileStorageForm
+              ref={fileFormRef}
+              onSubmit={handleFileStorageSubmit}
               disabled={isLoading}
               initialValues={getFileStorageInitialValues()}
             />
@@ -189,8 +207,9 @@ export function StorageConfigurationWizard({
         {storageType === 's3' && (
           <div className='space-y-4'>
             <h3 className='text-lg font-medium'>S3 Storage Configuration</h3>
-            <S3StorageForm 
-              onSubmit={handleS3StorageSubmit} 
+            <S3StorageForm
+              ref={s3FormRef}
+              onSubmit={handleS3StorageSubmit}
               disabled={isLoading}
               initialValues={getS3StorageInitialValues()}
             />
