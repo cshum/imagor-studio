@@ -132,11 +132,17 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
             </div>
           )}
 
+          {storageStatus?.isOverriddenByConfig && (
+            <div className='text-sm text-orange-600 dark:text-orange-400'>
+              This setting is overridden by configuration file or environment variable
+            </div>
+          )}
+
           <div className='flex justify-end pt-2'>
             <ButtonWithLoading
               onClick={() => setShowConfigDialog(true)}
               isLoading={false}
-              disabled={false}
+              disabled={storageStatus?.isOverriddenByConfig || false}
             >
               Configure Storage
             </ButtonWithLoading>

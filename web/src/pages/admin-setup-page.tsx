@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Navigate, useNavigate } from '@tanstack/react-router'
@@ -7,6 +7,7 @@ import * as z from 'zod'
 
 import { registerAdmin } from '@/api/auth-api'
 import { setSystemRegistryObject } from '@/api/registry-api'
+import { getStorageStatus } from '@/api/storage-api'
 import { StorageConfigurationWizard } from '@/components/storage/storage-configuration-wizard'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import {
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { MultiStepForm, type MultiStepFormStep } from '@/components/ui/multi-step-form'
+import type { StorageStatusQuery } from '@/generated/graphql'
 import { initAuth, useAuth } from '@/stores/auth-store'
 
 const adminSetupSchema = z.object({
@@ -61,8 +63,24 @@ export function AdminSetupPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [settingsFormValues] = useState<Record<string, string>>({})
+  const [storageStatus, setStorageStatus] = useState<StorageStatusQuery['storageStatus'] | null>(
+    null,
+  )
   const navigate = useNavigate()
   const { authState } = useAuth()
+
+  // Fetch storage status to check if it's overridden by external config
+  useEffect(() => {
+    const fetchStorageStatus = async () => {
+      try {
+        const status = await getStorageStatus()
+        setStorageStatus(status)
+      } catch (error) {
+        console.error('Failed to fetch storage status:', error)
+      }
+    }
+    fetchStorageStatus()
+  }, [])
 
   const form = useForm<AdminSetupForm>({
     resolver: zodResolver(adminSetupSchema),
@@ -149,7 +167,8 @@ export function AdminSetupPage() {
     return <Navigate to='/' replace />
   }
 
-  const steps: MultiStepFormStep[] = [
+  // Build steps array, conditionally excluding storage step if overridden by external config
+  const allSteps: MultiStepFormStep[] = [
     {
       id: 'account',
       title: 'Create Admin Account',
@@ -259,6 +278,11 @@ export function AdminSetupPage() {
       hideBack: true,
     },
   ]
+
+  // Filter out storage step if it's overridden by external config
+  const steps = storageStatus?.isOverriddenByConfig
+    ? allSteps.filter((step) => step.id !== 'storage')
+    : allSteps
 
   return (
     <div className='bg-background flex min-h-screen items-center justify-center p-4'>
