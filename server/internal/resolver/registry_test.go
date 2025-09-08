@@ -83,7 +83,6 @@ func TestSetUserRegistry_SelfOperation(t *testing.T) {
 	assert.Len(t, result, 1)
 	assert.Equal(t, key, result[0].Key)
 	assert.Equal(t, value, result[0].Value)
-	assert.Equal(t, "test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -118,7 +117,6 @@ func TestSetUserRegistry_AdminForOtherUser(t *testing.T) {
 	assert.Len(t, result, 1)
 	assert.Equal(t, key, result[0].Key)
 	assert.Equal(t, value, result[0].Value)
-	assert.Equal(t, targetOwnerID, result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -196,7 +194,6 @@ func TestGetUserRegistry_SelfOperation(t *testing.T) {
 	assert.Len(t, result, 1)
 	assert.Equal(t, key, result[0].Key)
 	assert.Equal(t, "dark_mode", result[0].Value)
-	assert.Equal(t, "user:test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -249,7 +246,6 @@ func TestListUserRegistry_SelfOperation(t *testing.T) {
 	assert.Len(t, result, 2)
 	assert.Equal(t, "app:setting1", result[0].Key)
 	assert.Equal(t, "value1", result[0].Value)
-	assert.Equal(t, "test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -344,7 +340,6 @@ func TestSetSystemRegistry_AdminOnly(t *testing.T) {
 				assert.Len(t, result, 1)
 				assert.Equal(t, "app_version", result[0].Key)
 				assert.Equal(t, "1.0.0", result[0].Value)
-				assert.Equal(t, "system:global", result[0].OwnerID)
 			}
 
 			mockRegistryStore.AssertExpectations(t)
@@ -405,7 +400,6 @@ func TestGetSystemRegistry_OpenRead(t *testing.T) {
 			assert.Len(t, result, 1)
 			assert.Equal(t, "app_version", result[0].Key)
 			assert.Equal(t, "1.0.0", result[0].Value)
-			assert.Equal(t, "system:global", result[0].OwnerID)
 
 			mockRegistryStore.AssertExpectations(t)
 		})
@@ -438,7 +432,6 @@ func TestListSystemRegistry_OpenRead(t *testing.T) {
 	assert.Len(t, result, 2)
 	assert.Equal(t, "config:setting1", result[0].Key)
 	assert.Equal(t, "value1", result[0].Value)
-	assert.Equal(t, "system:global", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -605,7 +598,6 @@ func TestSetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	assert.Equal(t, key, result[0].Key)
 	assert.Equal(t, "", result[0].Value) // Value should be empty for encrypted entries
 	assert.Equal(t, true, result[0].IsEncrypted)
-	assert.Equal(t, "test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -638,7 +630,6 @@ func TestGetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	assert.Equal(t, key, result[0].Key)
 	assert.Equal(t, "", result[0].Value) // Value should be empty for encrypted entries
 	assert.Equal(t, true, result[0].IsEncrypted)
-	assert.Equal(t, "user:test-user-id", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -711,7 +702,6 @@ func TestSetSystemRegistry_EncryptedValueHidden(t *testing.T) {
 	assert.Equal(t, key, result[0].Key)
 	assert.Equal(t, "", result[0].Value) // Value should be empty for encrypted entries
 	assert.Equal(t, true, result[0].IsEncrypted)
-	assert.Equal(t, "system:global", result[0].OwnerID)
 
 	mockRegistryStore.AssertExpectations(t)
 }
@@ -901,7 +891,6 @@ func TestGetSystemRegistry_OverrideDetection(t *testing.T) {
 			assert.Equal(t, tt.registryKey, result[0].Key)
 			assert.Equal(t, tt.expectedValue, result[0].Value, "Value mismatch: %s", tt.description)
 			assert.Equal(t, tt.expectedIsOverridden, result[0].IsOverriddenByConfig, "Override detection mismatch: %s", tt.description)
-			assert.Equal(t, "system:global", result[0].OwnerID)
 
 			mockRegistryStore.AssertExpectations(t)
 		})

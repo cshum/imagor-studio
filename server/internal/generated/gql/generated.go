@@ -137,7 +137,6 @@ type ComplexityRoot struct {
 		IsEncrypted          func(childComplexity int) int
 		IsOverriddenByConfig func(childComplexity int) int
 		Key                  func(childComplexity int) int
-		OwnerID              func(childComplexity int) int
 		Value                func(childComplexity int) int
 	}
 
@@ -167,7 +166,6 @@ type ComplexityRoot struct {
 	UserRegistry struct {
 		IsEncrypted func(childComplexity int) int
 		Key         func(childComplexity int) int
-		OwnerID     func(childComplexity int) int
 		Value       func(childComplexity int) int
 	}
 }
@@ -757,13 +755,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.SystemRegistry.Key(childComplexity), true
 
-	case "SystemRegistry.ownerID":
-		if e.complexity.SystemRegistry.OwnerID == nil {
-			break
-		}
-
-		return e.complexity.SystemRegistry.OwnerID(childComplexity), true
-
 	case "SystemRegistry.value":
 		if e.complexity.SystemRegistry.Value == nil {
 			break
@@ -882,13 +873,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.UserRegistry.Key(childComplexity), true
-
-	case "UserRegistry.ownerID":
-		if e.complexity.UserRegistry.OwnerID == nil {
-			break
-		}
-
-		return e.complexity.UserRegistry.OwnerID(childComplexity), true
 
 	case "UserRegistry.value":
 		if e.complexity.UserRegistry.Value == nil {
@@ -1163,14 +1147,12 @@ scalar Upload
 type UserRegistry {
   key: String!
   value: String!
-  ownerID: String!
   isEncrypted: Boolean!
 }
 
 type SystemRegistry {
   key: String!
   value: String!
-  ownerID: String!
   isEncrypted: Boolean!
   isOverriddenByConfig: Boolean!
 }
@@ -2816,8 +2798,6 @@ func (ec *executionContext) fieldContext_Mutation_setUserRegistry(ctx context.Co
 				return ec.fieldContext_UserRegistry_key(ctx, field)
 			case "value":
 				return ec.fieldContext_UserRegistry_value(ctx, field)
-			case "ownerID":
-				return ec.fieldContext_UserRegistry_ownerID(ctx, field)
 			case "isEncrypted":
 				return ec.fieldContext_UserRegistry_isEncrypted(ctx, field)
 			}
@@ -2936,8 +2916,6 @@ func (ec *executionContext) fieldContext_Mutation_setSystemRegistry(ctx context.
 				return ec.fieldContext_SystemRegistry_key(ctx, field)
 			case "value":
 				return ec.fieldContext_SystemRegistry_value(ctx, field)
-			case "ownerID":
-				return ec.fieldContext_SystemRegistry_ownerID(ctx, field)
 			case "isEncrypted":
 				return ec.fieldContext_SystemRegistry_isEncrypted(ctx, field)
 			case "isOverriddenByConfig":
@@ -3509,8 +3487,6 @@ func (ec *executionContext) fieldContext_Query_listUserRegistry(ctx context.Cont
 				return ec.fieldContext_UserRegistry_key(ctx, field)
 			case "value":
 				return ec.fieldContext_UserRegistry_value(ctx, field)
-			case "ownerID":
-				return ec.fieldContext_UserRegistry_ownerID(ctx, field)
 			case "isEncrypted":
 				return ec.fieldContext_UserRegistry_isEncrypted(ctx, field)
 			}
@@ -3574,8 +3550,6 @@ func (ec *executionContext) fieldContext_Query_getUserRegistry(ctx context.Conte
 				return ec.fieldContext_UserRegistry_key(ctx, field)
 			case "value":
 				return ec.fieldContext_UserRegistry_value(ctx, field)
-			case "ownerID":
-				return ec.fieldContext_UserRegistry_ownerID(ctx, field)
 			case "isEncrypted":
 				return ec.fieldContext_UserRegistry_isEncrypted(ctx, field)
 			}
@@ -3639,8 +3613,6 @@ func (ec *executionContext) fieldContext_Query_listSystemRegistry(ctx context.Co
 				return ec.fieldContext_SystemRegistry_key(ctx, field)
 			case "value":
 				return ec.fieldContext_SystemRegistry_value(ctx, field)
-			case "ownerID":
-				return ec.fieldContext_SystemRegistry_ownerID(ctx, field)
 			case "isEncrypted":
 				return ec.fieldContext_SystemRegistry_isEncrypted(ctx, field)
 			case "isOverriddenByConfig":
@@ -3706,8 +3678,6 @@ func (ec *executionContext) fieldContext_Query_getSystemRegistry(ctx context.Con
 				return ec.fieldContext_SystemRegistry_key(ctx, field)
 			case "value":
 				return ec.fieldContext_SystemRegistry_value(ctx, field)
-			case "ownerID":
-				return ec.fieldContext_SystemRegistry_ownerID(ctx, field)
 			case "isEncrypted":
 				return ec.fieldContext_SystemRegistry_isEncrypted(ctx, field)
 			case "isOverriddenByConfig":
@@ -4874,50 +4844,6 @@ func (ec *executionContext) fieldContext_SystemRegistry_value(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _SystemRegistry_ownerID(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SystemRegistry_ownerID(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.OwnerID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SystemRegistry_ownerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SystemRegistry",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _SystemRegistry_isEncrypted(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SystemRegistry_isEncrypted(ctx, field)
 	if err != nil {
@@ -5699,50 +5625,6 @@ func (ec *executionContext) _UserRegistry_value(ctx context.Context, field graph
 }
 
 func (ec *executionContext) fieldContext_UserRegistry_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserRegistry",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UserRegistry_ownerID(ctx context.Context, field graphql.CollectedField, obj *UserRegistry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UserRegistry_ownerID(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.OwnerID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UserRegistry_ownerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UserRegistry",
 		Field:      field,
@@ -8894,11 +8776,6 @@ func (ec *executionContext) _SystemRegistry(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "ownerID":
-			out.Values[i] = ec._SystemRegistry_ownerID(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "isEncrypted":
 			out.Values[i] = ec._SystemRegistry_isEncrypted(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -9107,11 +8984,6 @@ func (ec *executionContext) _UserRegistry(ctx context.Context, sel ast.Selection
 			}
 		case "value":
 			out.Values[i] = ec._UserRegistry_value(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "ownerID":
-			out.Values[i] = ec._UserRegistry_ownerID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

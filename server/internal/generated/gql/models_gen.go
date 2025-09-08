@@ -116,7 +116,6 @@ type StorageTestResult struct {
 type SystemRegistry struct {
 	Key                  string `json:"key"`
 	Value                string `json:"value"`
-	OwnerID              string `json:"ownerID"`
 	IsEncrypted          bool   `json:"isEncrypted"`
 	IsOverriddenByConfig bool   `json:"isOverriddenByConfig"`
 }
@@ -152,7 +151,6 @@ type UserList struct {
 type UserRegistry struct {
 	Key         string `json:"key"`
 	Value       string `json:"value"`
-	OwnerID     string `json:"ownerID"`
 	IsEncrypted bool   `json:"isEncrypted"`
 }
 

@@ -61,7 +61,6 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entry *gql.Regis
 		result = append(result, &gql.UserRegistry{
 			Key:         registry.Key,
 			Value:       value,
-			OwnerID:     effectiveUserID,
 			IsEncrypted: registry.IsEncrypted,
 		})
 	}
@@ -127,7 +126,6 @@ func (r *queryResolver) ListUserRegistry(ctx context.Context, prefix *string, ow
 		result[i] = &gql.UserRegistry{
 			Key:         registry.Key,
 			Value:       value,
-			OwnerID:     effectiveUserID,
 			IsEncrypted: registry.IsEncrypted,
 		}
 	}
@@ -180,7 +178,6 @@ func (r *queryResolver) GetUserRegistry(ctx context.Context, key *string, keys [
 		result = append(result, &gql.UserRegistry{
 			Key:         registry.Key,
 			Value:       value,
-			OwnerID:     effectiveOwnerID,
 			IsEncrypted: registry.IsEncrypted,
 		})
 	}
@@ -252,7 +249,6 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entry *gql.Reg
 		result = append(result, &gql.SystemRegistry{
 			Key:                  registry.Key,
 			Value:                effectiveValue,
-			OwnerID:              registrystore.SystemOwnerID,
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
 		})
@@ -320,7 +316,6 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 		result[i] = &gql.SystemRegistry{
 			Key:                  registry.Key,
 			Value:                effectiveValue,
-			OwnerID:              registrystore.SystemOwnerID,
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
 		}
@@ -378,7 +373,6 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 		result = append(result, &gql.SystemRegistry{
 			Key:                  registry.Key,
 			Value:                effectiveValue,
-			OwnerID:              registrystore.SystemOwnerID,
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
 		})

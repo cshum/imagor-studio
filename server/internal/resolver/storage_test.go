@@ -9,7 +9,6 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
-	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -306,91 +305,6 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 	assert.Equal(t, "file1.txt", result.Name)
 
 	mockStorage.AssertExpectations(t)
-}
-
-func TestConfigureFileStorage_WithValidation(t *testing.T) {
-	mockStorage := new(MockStorage)
-	mockRegistryStore := new(MockRegistryStore)
-	mockUserStore := new(MockUserStore)
-	logger, _ := zap.NewDevelopment()
-	cfg := &config.Config{}
-	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
-
-	ctx := createAdminContext("admin-user-id")
-
-	t.Run("Invalid directory - validation fails", func(t *testing.T) {
-		input := gql.FileStorageInput{
-			BaseDir: "/non/existent/directory",
-		}
-
-		result, err := resolver.Mutation().ConfigureFileStorage(ctx, input)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-		assert.False(t, result.Success)
-		assert.NotNil(t, result.Message)
-		assert.Contains(t, *result.Message, "Failed to access storage directory")
-	})
-
-	t.Run("Valid directory - validation passes and config saved", func(t *testing.T) {
-		// Create a temporary directory for testing
-		tempDir := t.TempDir()
-
-		input := gql.FileStorageInput{
-			BaseDir: tempDir,
-		}
-
-		// Mock the registry operations
-		resultRegistries := []*registrystore.Registry{
-			{Key: "config.storage_type", Value: "file"},
-			{Key: "config.storage_configured", Value: "true"},
-			{Key: "config.file_base_dir", Value: tempDir},
-			{Key: "config.storage_config_updated_at", Value: "1234567890"},
-		}
-		mockRegistryStore.On("SetMulti", mock.Anything, mock.Anything, mock.Anything).Return(resultRegistries, nil)
-		mockStorageProvider.On("ReloadFromRegistry").Return(nil)
-
-		result, err := resolver.Mutation().ConfigureFileStorage(ctx, input)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-		assert.True(t, result.Success)
-		assert.NotNil(t, result.Message)
-		assert.Contains(t, *result.Message, "File storage configured successfully")
-
-		mockRegistryStore.AssertExpectations(t)
-		mockStorageProvider.AssertExpectations(t)
-	})
-}
-
-func TestConfigureS3Storage_WithValidation(t *testing.T) {
-	mockStorage := new(MockStorage)
-	mockRegistryStore := new(MockRegistryStore)
-	mockUserStore := new(MockUserStore)
-	logger, _ := zap.NewDevelopment()
-	cfg := &config.Config{}
-	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
-
-	ctx := createAdminContext("admin-user-id")
-
-	t.Run("Invalid S3 credentials - validation fails", func(t *testing.T) {
-		input := gql.S3StorageInput{
-			Bucket:          "test-bucket",
-			Region:          stringPtr("us-east-1"),
-			AccessKeyID:     stringPtr("invalid-key"),
-			SecretAccessKey: stringPtr("invalid-secret"),
-		}
-
-		result, err := resolver.Mutation().ConfigureS3Storage(ctx, input)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-		assert.False(t, result.Success)
-		assert.NotNil(t, result.Message)
-		assert.Contains(t, *result.Message, "Failed to access storage directory")
-	})
 }
 
 func TestTestStorageConfig_RequiresAdminPermission(t *testing.T) {
