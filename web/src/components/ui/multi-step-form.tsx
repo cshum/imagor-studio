@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react'
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -46,12 +46,13 @@ export function MultiStepForm({
   showStepper = true,
 }: MultiStepFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   const currentStepData = steps[currentStep - 1]
   const isFirstStep = currentStep === 1
   const isLastStep = currentStep === steps.length
 
-  const handleNext = async () => {
+  const handleNext = useCallback(async () => {
     if (!currentStepData) return
 
     setIsLoading(true)
@@ -72,7 +73,37 @@ export function MultiStepForm({
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [currentStepData, isLastStep, onComplete, onStepChange, currentStep])
+
+  const isNextDisabled = useCallback(() => {
+    if (isLoading) return true
+    if (currentStepData?.isValid !== undefined) return !currentStepData.isValid
+    return false
+  }, [isLoading, currentStepData?.isValid])
+
+  // Handle Enter key press to trigger next step
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.altKey) {
+        // Check if the focus is within the step content
+        const activeElement = document.activeElement
+        if (contentRef.current && contentRef.current.contains(activeElement)) {
+          // Only trigger if it's an input field (not textarea or other elements)
+          if (activeElement instanceof HTMLInputElement) {
+            event.preventDefault()
+            if (!isNextDisabled()) {
+              handleNext()
+            }
+          }
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [handleNext, isNextDisabled])
 
   const handleBack = () => {
     if (isFirstStep) return
@@ -110,12 +141,6 @@ export function MultiStepForm({
     return currentStepData?.skipLabel || 'Skip'
   }
 
-  const isNextDisabled = () => {
-    if (isLoading) return true
-    if (currentStepData?.isValid !== undefined) return !currentStepData.isValid
-    return false
-  }
-
   return (
     <div className={cn('mx-auto w-full max-w-4xl', className)}>
       {/* Header */}
@@ -143,7 +168,7 @@ export function MultiStepForm({
         </CardHeader>
         <CardContent>
           {/* Content with fade transition */}
-          <div key={currentStep} className='animate-in fade-in-50 duration-300'>
+          <div key={currentStep} className='animate-in fade-in-50 duration-300' ref={contentRef}>
             {currentStepData?.content}
           </div>
 

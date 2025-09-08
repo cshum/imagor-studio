@@ -341,6 +341,23 @@ func (r *mutationResolver) ConfigureFileStorage(ctx context.Context, input gql.F
 
 	r.logger.Debug("Configuring file storage", zap.String("baseDir", input.BaseDir))
 
+	// First, test the configuration automatically
+	testInput := gql.StorageConfigInput{
+		Type:       gql.StorageTypeFile,
+		FileConfig: &input,
+	}
+
+	testResult := r.validateStorageConfig(ctx, testInput)
+	if !testResult.Success {
+		// Return the test error directly
+		return &gql.StorageConfigResult{
+			Success:         false,
+			RestartRequired: false,
+			Timestamp:       fmt.Sprintf("%d", time.Now().UnixMilli()),
+			Message:         &testResult.Message,
+		}, nil
+	}
+
 	// Set timestamp
 	timestamp := time.Now().UnixMilli()
 	timestampStr := fmt.Sprintf("%d", timestamp)
@@ -407,6 +424,23 @@ func (r *mutationResolver) ConfigureS3Storage(ctx context.Context, input gql.S3S
 	}
 
 	r.logger.Debug("Configuring S3 storage", zap.String("bucket", input.Bucket))
+
+	// First, test the configuration automatically
+	testInput := gql.StorageConfigInput{
+		Type:     gql.StorageTypeS3,
+		S3Config: &input,
+	}
+
+	testResult := r.validateStorageConfig(ctx, testInput)
+	if !testResult.Success {
+		// Return the test error directly
+		return &gql.StorageConfigResult{
+			Success:         false,
+			RestartRequired: false,
+			Timestamp:       fmt.Sprintf("%d", time.Now().UnixMilli()),
+			Message:         &testResult.Message,
+		}, nil
+	}
 
 	// Set timestamp
 	timestamp := time.Now().UnixMilli()
