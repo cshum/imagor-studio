@@ -31,6 +31,7 @@ import {
   loadHomeTitle,
   loadRootFolders,
 } from '@/stores/folder-tree-store.ts'
+import { initializeLocale } from '@/stores/locale-store.ts'
 import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
 import { initializeSidebar } from '@/stores/sidebar-store.ts'
 import { initializeTheme, themeStore } from '@/stores/theme-store.ts'
@@ -216,6 +217,7 @@ const localThemeStorage = new LocalConfigStorage('theme')
 const localSidebarStorage = new LocalConfigStorage('sidebar_state')
 const userThemeStorage = new UserRegistryConfigStorage('theme', localThemeStorage)
 const userSidebarStorage = new UserRegistryConfigStorage('sidebar_state', localSidebarStorage)
+const userLocaleStorage = new UserRegistryConfigStorage('i18n_locale')
 
 initializeTheme(localThemeStorage, 'class')
 initializeSidebar(localSidebarStorage)
@@ -231,6 +233,7 @@ export function AppRouter() {
       if (authState.state === 'authenticated') {
         initializeTheme(userThemeStorage, 'class')
         initializeSidebar(userSidebarStorage)
+        initializeLocale(userLocaleStorage)
       }
       loadRootFolders()
       loadHomeTitle()

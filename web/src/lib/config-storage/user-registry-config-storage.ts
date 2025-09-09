@@ -4,9 +4,9 @@ import { ConfigStorage } from './config-storage'
 
 export class UserRegistryConfigStorage implements ConfigStorage {
   private readonly registryKey: string
-  private fallbackStorage: ConfigStorage
+  private fallbackStorage?: ConfigStorage
 
-  constructor(registryKey: string, fallbackStorage: ConfigStorage) {
+  constructor(registryKey: string, fallbackStorage?: ConfigStorage) {
     this.registryKey = `config.${registryKey}` // Prefix to avoid conflicts
     this.fallbackStorage = fallbackStorage
   }
@@ -20,50 +20,38 @@ export class UserRegistryConfigStorage implements ConfigStorage {
         return entry.value || null
       }
 
-      // If not in registry, check fallback storage for migration
-      const fallbackValue = await this.fallbackStorage.get()
+      // Check fallback and migrate if found
+      const fallbackValue = await this.fallbackStorage?.get()
       if (fallbackValue) {
         // Migrate to user registry
         await setUserRegistry(this.registryKey, fallbackValue)
         // Clean up fallback storage
-        await this.fallbackStorage.remove()
+        await this.fallbackStorage?.remove()
         return fallbackValue
       }
 
       return null
-    } catch (error) {
-      console.warn(
-        `Failed to get user registry value for ${this.registryKey}, falling back to local storage:`,
-        error,
-      )
-      // Fallback to fallback storage on API errors
-      return this.fallbackStorage.get()
+    } catch {
+      // Silent fallback if fallbackStorage is provided
+      return this.fallbackStorage?.get() ?? null
     }
   }
 
   async set(value: string): Promise<void> {
     try {
       await setUserRegistry(this.registryKey, value)
-    } catch (error) {
-      console.warn(
-        `Failed to set user registry value for ${this.registryKey}, falling back to local storage:`,
-        error,
-      )
-      // Fallback to fallback storage on API errors
-      await this.fallbackStorage.set(value)
+    } catch {
+      // Silent fallback if fallbackStorage is provided
+      await this.fallbackStorage?.set(value)
     }
   }
 
   async remove(): Promise<void> {
     try {
       await deleteUserRegistry(this.registryKey)
-    } catch (error) {
-      console.warn(
-        `Failed to remove user registry value for ${this.registryKey}, falling back to local storage:`,
-        error,
-      )
-      // Fallback to fallback storage on API errors
-      await this.fallbackStorage.remove()
+    } catch {
+      // Silent fallback if fallbackStorage is provided
+      await this.fallbackStorage?.remove()
     }
   }
 }
