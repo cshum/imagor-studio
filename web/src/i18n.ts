@@ -92,6 +92,8 @@ const resources = {
         gallery: {
           title: 'Gallery',
           noImages: 'No images found',
+          noImagesInGallery: 'No images in your gallery',
+          folderEmpty: 'This folder is empty',
         },
         profile: {
           title: 'Profile',
@@ -99,6 +101,25 @@ const resources = {
         admin: {
           title: 'Admin',
           setup: 'Admin Setup',
+          welcome: 'Welcome to Imagor Studio',
+          setupDescription: "Let's get your image gallery set up in just a few steps",
+          createAdminAccount: 'Create Admin Account',
+          systemConfiguration: 'System Configuration',
+          storageConfiguration: 'Storage Configuration',
+          emailAddress: 'Email Address',
+          password: 'Password',
+          createAccount: 'Create Account',
+          skipForNow: 'Skip for Now',
+          next: 'Next',
+          guestMode: 'Guest Mode',
+          guestModeDescription: 'Allow users to browse the gallery without creating an account',
+          systemSettingsDescription: 'These settings can be changed later in the admin panel.',
+          storageDescription: 'Configure where your images will be stored',
+          failedToCreateAccount: 'Failed to create admin account',
+          failedToSaveSettings: 'Failed to save settings',
+          storageConfiguredSuccess: 'Storage configured successfully!',
+          storageConfiguredRestart:
+            'Storage configured successfully! Please restart the server to apply changes.',
         },
       },
 

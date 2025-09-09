@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Images } from 'lucide-react'
 
 export interface EmptyGalleryStateProps {
@@ -6,7 +7,10 @@ export interface EmptyGalleryStateProps {
 }
 
 export function EmptyGalleryState({ width, isRootGallery }: EmptyGalleryStateProps) {
-  const message = isRootGallery ? 'No images in your gallery' : 'This folder is empty'
+  const { t } = useTranslation()
+  const message = isRootGallery
+    ? t('pages.gallery.noImagesInGallery')
+    : t('pages.gallery.folderEmpty')
 
   return (
     <div
