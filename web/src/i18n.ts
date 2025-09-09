@@ -6,6 +6,103 @@ const resources = {
   en: {
     translation: {
       // Common
+      common: {
+        buttons: {
+          save: 'Save',
+          cancel: 'Cancel',
+          delete: 'Delete',
+          edit: 'Edit',
+          create: 'Create',
+          update: 'Update',
+          close: 'Close',
+          more: 'More',
+          switchTheme: 'Switch Theme',
+        },
+        navigation: {
+          home: 'Home',
+          account: 'Account',
+          profile: 'Profile',
+          dashboard: 'Dashboard',
+          users: 'Users',
+          signOut: 'Sign Out',
+          login: 'Login',
+          accountSettings: 'Account Settings',
+        },
+        status: {
+          loading: 'Loading...',
+          error: 'Error',
+          success: 'Success',
+          guest: 'Guest',
+          user: 'User',
+        },
+        labels: {
+          email: 'Email',
+          password: 'Password',
+          name: 'Name',
+          role: 'Role',
+        },
+      },
+
+      // Authentication
+      auth: {
+        login: {
+          title: 'Welcome back',
+          subtitle: 'Enter your credentials to access Imagor Studio',
+          signIn: 'Sign In',
+          loginFailed: 'Login failed',
+        },
+        validation: {
+          emailRequired: 'Please enter a valid email address',
+          passwordRequired: 'Password is required',
+          invalidEmail: 'Please enter a valid email address',
+        },
+      },
+
+      // Forms
+      forms: {
+        placeholders: {
+          enterEmail: 'Enter your email',
+          enterPassword: 'Enter your password',
+          enterName: 'Enter your name',
+        },
+        validation: {
+          required: 'This field is required',
+          invalidEmail: 'Please enter a valid email address',
+          passwordTooShort: 'Password must be at least {{min}} characters',
+          emailInvalid: 'Please enter a valid email address',
+        },
+      },
+
+      // Navigation/Breadcrumbs
+      navigation: {
+        breadcrumbs: {
+          home: 'Home',
+          gallery: 'Gallery',
+          profile: 'Profile',
+          account: 'Account',
+          settings: 'Settings',
+          users: 'Users',
+          admin: 'Admin',
+          adminSetup: 'Admin Setup',
+        },
+      },
+
+      // Pages
+      pages: {
+        gallery: {
+          title: 'Gallery',
+          noImages: 'No images found',
+        },
+        profile: {
+          title: 'Profile',
+        },
+        admin: {
+          title: 'Admin',
+          setup: 'Admin Setup',
+        },
+      },
+
+      // Legacy keys (keeping for backward compatibility)
       home: 'Home',
       posts: 'Posts',
       categories: 'Categories',
@@ -13,36 +110,22 @@ const resources = {
       users: 'Users',
       account: 'Account',
       signOut: 'Sign out',
-
-      // Titles
       allPosts: 'All Posts',
       newPost: 'New Post',
-
-      // User nav
       profile: 'Profile',
       dashboard: 'Dashboard',
-
-      // Footer
       footerText: 'Built on top of {{uiLink}}. The source code is available on {{githubLink}}.',
-
-      // Placeholder
       placeholderImageAttribution: 'Designed by Freepik',
-
-      // Button labels
       switchTheme: 'Switch Theme',
       close: 'Close',
       snooze: 'Snooze',
       replyAll: 'Reply all',
       forward: 'Forward',
       more: 'More',
-
-      // Dropdown menu items
       markAsUnread: 'Mark as unread',
       starThread: 'Star thread',
       addLabel: 'Add label',
       muteThread: 'Mute thread',
-
-      // Image info
       imageInformation: 'Image Information',
       noImageInfo: 'No image information available.',
     },
