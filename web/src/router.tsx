@@ -36,10 +36,19 @@ import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
 import { initializeSidebar } from '@/stores/sidebar-store.ts'
 import { initializeTheme, themeStore } from '@/stores/theme-store.ts'
 
+const localThemeStorage = new LocalConfigStorage('theme')
+const localSidebarStorage = new LocalConfigStorage('sidebar_state')
+const userThemeStorage = new UserRegistryConfigStorage('theme', localThemeStorage)
+const userSidebarStorage = new UserRegistryConfigStorage('sidebar_state', localSidebarStorage)
+const userLocaleStorage = new UserRegistryConfigStorage('i18n_locale')
+
 const rootRoute = createRootRoute({
   beforeLoad: async () => {
     await themeStore.waitFor((state) => state.isLoaded)
-    await authStore.waitFor((state) => state.state !== 'loading')
+    const authState = await authStore.waitFor((state) => state.state !== 'loading')
+    if (authState.state === 'authenticated') {
+      await initializeLocale(userLocaleStorage)
+    }
   },
   component: () => (
     <>
@@ -213,12 +222,6 @@ const routeTree = rootRoute.addChildren([
 
 const createAppRouter = () => createRouter({ routeTree })
 
-const localThemeStorage = new LocalConfigStorage('theme')
-const localSidebarStorage = new LocalConfigStorage('sidebar_state')
-const userThemeStorage = new UserRegistryConfigStorage('theme', localThemeStorage)
-const userSidebarStorage = new UserRegistryConfigStorage('sidebar_state', localSidebarStorage)
-const userLocaleStorage = new UserRegistryConfigStorage('i18n_locale')
-
 initializeTheme(localThemeStorage, 'class')
 initializeSidebar(localSidebarStorage)
 initializeScrollPositions(new SessionConfigStorage('scroll_positions'))
@@ -233,7 +236,6 @@ export function AppRouter() {
       if (authState.state === 'authenticated') {
         initializeTheme(userThemeStorage, 'class')
         initializeSidebar(userSidebarStorage)
-        initializeLocale(userLocaleStorage)
       }
       loadRootFolders()
       loadHomeTitle()
