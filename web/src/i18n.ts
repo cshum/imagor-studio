@@ -158,19 +158,10 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'en', // use English if detected language is not available
+    fallbackLng: 'en',
     detection: {
-      order: [
-        'querystring',
-        'cookie',
-        'localStorage',
-        'sessionStorage',
-        'navigator',
-        'htmlTag',
-        'path',
-        'subdomain',
-      ],
-      caches: ['localStorage', 'cookie'], // cache user language on
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
     },
     interpolation: {
       escapeValue: false, // React already safes from XSS
