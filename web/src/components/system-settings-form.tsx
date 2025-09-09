@@ -138,8 +138,8 @@ export function SystemSettingsForm({
         // If overridden by config, show the effective value from config
         return registryEntry.value
       }
-      // Otherwise, use the form value
-      return formValues[setting.key] || setting.defaultValue.toString()
+      // Otherwise, use the form value (allowing empty strings)
+      return setting.key in formValues ? formValues[setting.key] : setting.defaultValue.toString()
     }
 
     const effectiveValue = getEffectiveValue()
