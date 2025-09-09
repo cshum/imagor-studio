@@ -29,7 +29,11 @@ export interface ImageLoaderData {
  * Real gallery loader using imagor for thumbnail generation
  * Loads images and folders from storage API with imagor-generated thumbnails
  */
-export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderData> => {
+export const galleryLoader = async ({
+  params: { galleryKey },
+}: {
+  params: { galleryKey: string }
+}): Promise<GalleryLoaderData> => {
   // Use galleryKey as the path for storage API
   const path = galleryKey === 'default' ? '' : galleryKey
 
