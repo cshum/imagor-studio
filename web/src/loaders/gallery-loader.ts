@@ -93,13 +93,11 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
   if (!galleryKey || galleryKey === 'default') {
     breadcrumbs.push({
       label: homeTitle,
-      translationKey: 'navigation.breadcrumbs.gallery',
     })
   } else {
     // Always start with custom home title for sub-galleries
     breadcrumbs.push({
       label: homeTitle,
-      translationKey: 'navigation.breadcrumbs.gallery',
       href: '/',
     })
 
