@@ -7,16 +7,16 @@ import { themeStore } from '@/stores/theme-store.ts'
 
 const userLocaleStorage = new UserRegistryConfigStorage('i18n_locale')
 
-export interface RootLoaderData {
-  breadcrumb: BreadcrumbItem
-}
-
 export const rootBeforeLoad = async () => {
   await themeStore.waitFor((state) => state.isLoaded)
   const authState = await authStore.waitFor((state) => state.state !== 'loading')
   if (authState.state === 'authenticated') {
     await initializeLocale(userLocaleStorage)
   }
+}
+
+export interface RootLoaderData {
+  breadcrumb: BreadcrumbItem
 }
 
 export const rootLoader = async (): Promise<RootLoaderData> => {
