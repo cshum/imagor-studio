@@ -5,7 +5,6 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 const resources = {
   en: {
     translation: {
-      // Common
       common: {
         buttons: {
           save: 'Save',
@@ -82,7 +81,7 @@ const resources = {
           account: 'Account',
           settings: 'Settings',
           users: 'Users',
-          admin: 'Admin',
+          admin: 'System',
           adminSetup: 'Admin Setup',
         },
       },

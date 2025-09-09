@@ -90,17 +90,7 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
   const breadcrumbs: BreadcrumbItem[] = []
 
   // For root gallery (empty galleryKey), just show custom home title without href
-  if (!galleryKey || galleryKey === 'default') {
-    breadcrumbs.push({
-      label: homeTitle,
-    })
-  } else {
-    // Always start with custom home title for sub-galleries
-    breadcrumbs.push({
-      label: homeTitle,
-      href: '/',
-    })
-
+  if (galleryKey && galleryKey !== 'default') {
     // Add breadcrumbs for nested paths
     const segments = galleryKey.split('/')
 

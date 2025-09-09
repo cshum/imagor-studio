@@ -1,10 +1,4 @@
-import {
-  forwardRef,
-  ReactNode,
-  useCallback,
-  useImperativeHandle,
-  useRef,
-} from 'react'
+import { forwardRef, ReactNode, useCallback, useImperativeHandle, useRef } from 'react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { RectangleStepper } from '@/components/ui/rectangle-stepper'
