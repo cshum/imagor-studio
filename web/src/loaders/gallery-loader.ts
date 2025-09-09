@@ -35,7 +35,7 @@ export const galleryLoader = async ({
   params: { galleryKey: string }
 }): Promise<GalleryLoaderData> => {
   // Use galleryKey as the path for storage API
-  const path = galleryKey === 'default' ? '' : galleryKey
+  const path = galleryKey
 
   // Fetch files from storage API
   const result = await listFiles({
@@ -85,16 +85,13 @@ export const galleryLoader = async ({
   const homeTitle = folderTreeState.homeTitle
 
   // Use the actual folder name, or custom home title for root
-  const galleryName =
-    galleryKey === 'default' || galleryKey === ''
-      ? homeTitle
-      : galleryKey.split('/').pop() || galleryKey
+  const galleryName = galleryKey === '' ? homeTitle : galleryKey.split('/').pop() || galleryKey
 
   // Generate breadcrumbs based on galleryKey
   const breadcrumbs: BreadcrumbItem[] = []
 
   // For root gallery (empty galleryKey), just show custom home title without href
-  if (galleryKey && galleryKey !== 'default') {
+  if (galleryKey) {
     // Add breadcrumbs for nested paths
     const segments = galleryKey.split('/')
 
@@ -133,7 +130,7 @@ export const imageLoader = async ({
   params: { imageKey: string; galleryKey: string }
 }): Promise<ImageLoaderData> => {
   // Use galleryKey as the path for storage API, then append the image name
-  const basePath = galleryKey === 'default' ? '' : galleryKey
+  const basePath = galleryKey
   const imagePath = basePath ? `${basePath}/${imageKey}` : imageKey
 
   // Fetch single file stats from storage API - much more efficient than listing all files

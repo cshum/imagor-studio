@@ -119,11 +119,6 @@ const galleryRoute = createRoute({
   loader: galleryLoader,
 })
 
-const galleryPage = createRoute({
-  getParentRoute: () => galleryRoute,
-  id: 'gallery-page',
-})
-
 const imagePage = createRoute({
   getParentRoute: () => galleryRoute,
   path: '/$imageKey',
@@ -199,7 +194,7 @@ const routeTree = rootRoute.addChildren([
   adminSetupRoute,
   baseLayoutRoute.addChildren([
     rootPath.addChildren([rootImagePage]),
-    galleryRoute.addChildren([galleryPage, imagePage]),
+    galleryRoute.addChildren([imagePage]),
     accountLayoutRoute.addChildren([
       accountRedirectRoute,
       accountProfileRoute,
