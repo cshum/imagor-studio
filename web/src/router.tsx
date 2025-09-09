@@ -18,6 +18,7 @@ import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-co
 import { adminLoader, profileLoader, usersLoader } from '@/loaders/account-loader.ts'
 import { requireAccountAuth, requireAdminAccountAuth, requireAuth } from '@/loaders/auth-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
+import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
 import { AdminPage } from '@/pages/admin-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
@@ -25,7 +26,7 @@ import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
 import { UsersPage } from '@/pages/users-page'
-import { authStore, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
+import { initAuth, useAuthEffect } from '@/stores/auth-store.ts'
 import {
   initializeFolderTreeCache,
   loadHomeTitle,
@@ -33,13 +34,11 @@ import {
 } from '@/stores/folder-tree-store.ts'
 import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
 import { initializeSidebar } from '@/stores/sidebar-store.ts'
-import { initializeTheme, themeStore } from '@/stores/theme-store.ts'
+import { initializeTheme } from '@/stores/theme-store.ts'
 
 const rootRoute = createRootRoute({
-  beforeLoad: async () => {
-    await themeStore.waitFor((state) => state.isLoaded)
-    await authStore.waitFor((state) => state.state !== 'loading')
-  },
+  beforeLoad: rootBeforeLoad,
+  loader: rootLoader,
   component: () => (
     <>
       <Outlet />
@@ -83,7 +82,7 @@ const rootPath = createRoute({
       </GalleryPage>
     )
   },
-  loader: () => galleryLoader(''),
+  loader: () => galleryLoader({ params: { galleryKey: '' } }),
 })
 
 const rootImagePage = createRoute({
@@ -117,7 +116,7 @@ const galleryRoute = createRoute({
       </GalleryPage>
     )
   },
-  loader: ({ params }) => galleryLoader(params.galleryKey),
+  loader: galleryLoader,
 })
 
 const galleryPage = createRoute({

@@ -1,27 +1,28 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMatches } from '@tanstack/react-router'
 
 export interface BreadcrumbItem {
-  label: string
+  label?: string
+  translationKey?: string
   href?: string
   isActive?: boolean
 }
 
 interface RouteMatch {
-  context: any
-  loaderData?: any
+  context: unknown
+  loaderData?: {
+    breadcrumb?: BreadcrumbItem
+    breadcrumbs?: BreadcrumbItem[]
+    [key: string]: unknown
+  }
   params?: Record<string, string>
   pathname: string
 }
 
 // Type guard functions
 export function isBreadcrumbItem(obj: unknown): obj is BreadcrumbItem {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'label' in obj &&
-    typeof (obj as any).label === 'string'
-  )
+  return typeof obj === 'object' && obj !== null && ('label' in obj || 'translationKey' in obj)
 }
 
 export function isBreadcrumbItems(obj: unknown): obj is BreadcrumbItem[] {
@@ -29,7 +30,9 @@ export function isBreadcrumbItems(obj: unknown): obj is BreadcrumbItem[] {
 }
 
 export function useBreadcrumb(): BreadcrumbItem[] {
+  const { t } = useTranslation()
   const matches = useMatches()
+
   return useMemo(() => {
     const breadcrumbs: BreadcrumbItem[] = []
 
@@ -46,9 +49,16 @@ export function useBreadcrumb(): BreadcrumbItem[] {
         // Handle breadcrumb array from loader data
         loaderData.breadcrumbs.forEach((breadcrumb: BreadcrumbItem, breadcrumbIndex: number) => {
           const isActive =
-            index === matches.length - 1 && breadcrumbIndex === loaderData.breadcrumbs.length - 1
+            index === matches.length - 1 && breadcrumbIndex === loaderData.breadcrumbs!.length - 1
+
+          // Translate label if translationKey exists, otherwise use provided label
+          const translatedLabel = breadcrumb.translationKey
+            ? t(breadcrumb.translationKey)
+            : breadcrumb.label || ''
+
           breadcrumbs.push({
             ...breadcrumb,
+            label: translatedLabel,
             href: isActive ? undefined : breadcrumb.href,
             isActive,
           })
@@ -59,9 +69,17 @@ export function useBreadcrumb(): BreadcrumbItem[] {
       if (isBreadcrumbItem(loaderData?.breadcrumb)) {
         // Handle single breadcrumb from loader data
         const isActive = index === matches.length - 1
+        const breadcrumb = loaderData.breadcrumb
+
+        // Translate label if translationKey exists, otherwise use provided label
+        const translatedLabel = breadcrumb.translationKey
+          ? t(breadcrumb.translationKey)
+          : breadcrumb.label || ''
+
         breadcrumbs.push({
-          ...loaderData.breadcrumb,
-          href: isActive ? undefined : loaderData.breadcrumb.href || typedMatch.pathname,
+          ...breadcrumb,
+          label: translatedLabel,
+          href: isActive ? undefined : breadcrumb.href || typedMatch.pathname,
           isActive,
         })
         return
@@ -69,5 +87,5 @@ export function useBreadcrumb(): BreadcrumbItem[] {
     })
 
     return breadcrumbs
-  }, [matches])
+  }, [matches, t])
 }

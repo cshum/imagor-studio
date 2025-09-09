@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { LogOut, MoreVertical, Settings } from 'lucide-react'
 
@@ -30,6 +31,7 @@ interface HeaderBarProps {
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown = false }) => {
+  const { t } = useTranslation()
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
   const breadcrumbs = useBreadcrumb()
@@ -37,9 +39,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
   // Get user display name
   const getUserDisplayName = () => {
     if (authState.state === 'guest') {
-      return 'Guest'
+      return t('common.status.guest')
     }
-    return authState.profile?.displayName || authState.profile?.email || 'User'
+    return authState.profile?.displayName || authState.profile?.email || t('common.status.user')
   }
 
   // Get user role display (only for authenticated users)
@@ -112,7 +114,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
                 <DropdownMenuTrigger asChild>
                   <Button variant='ghost' size='icon'>
                     <MoreVertical className='h-4 w-4' />
-                    <span className='sr-only'>More</span>
+                    <span className='sr-only'>{t('common.buttons.more')}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align='end' className='w-56'>
@@ -132,7 +134,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
                     // Guest user menu
                     <DropdownMenuItem className='hover:cursor-pointer' onClick={handleLoginClick}>
                       <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
-                      Login
+                      {t('common.navigation.login')}
                     </DropdownMenuItem>
                   ) : (
                     // Authenticated user menu
@@ -142,12 +144,12 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
                         onClick={handleAccountClick}
                       >
                         <Settings className='text-muted-foreground mr-3 h-4 w-4' />
-                        Account Settings
+                        {t('common.navigation.accountSettings')}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className='hover:cursor-pointer' onClick={handleLogout}>
                         <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
-                        Sign Out
+                        {t('common.navigation.signOut')}
                       </DropdownMenuItem>
                     </>
                   )}

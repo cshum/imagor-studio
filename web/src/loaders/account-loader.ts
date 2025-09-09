@@ -42,7 +42,7 @@ export const profileLoader = async (): Promise<ProfileLoaderData> => {
         }
       : null,
     breadcrumb: {
-      label: 'Profile',
+      translationKey: 'navigation.breadcrumbs.profile',
     },
   }
 }
@@ -64,7 +64,7 @@ export const adminLoader = async (): Promise<AdminLoaderData> => {
     systemRegistryList,
     storageStatus,
     breadcrumb: {
-      label: 'Admin',
+      translationKey: 'navigation.breadcrumbs.admin',
     },
   }
 }
@@ -77,7 +77,7 @@ export const usersLoader = async (): Promise<UsersLoaderData> => {
   return {
     users,
     breadcrumb: {
-      label: 'Users',
+      translationKey: 'navigation.breadcrumbs.users',
     },
   }
 }

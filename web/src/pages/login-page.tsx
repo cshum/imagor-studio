@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Navigate } from '@tanstack/react-router'
 import { z } from 'zod'
@@ -17,15 +18,20 @@ import {
 import { Input } from '@/components/ui/input'
 import { initAuth, useAuth } from '@/stores/auth-store'
 
-const loginSchema = z.object({
-  email: z.email('Please enter a valid email address'),
-  password: z.string().min(1, 'Password is required'),
-})
-
-type LoginFormValues = z.infer<typeof loginSchema>
+type LoginFormValues = {
+  email: string
+  password: string
+}
 
 export function LoginPage() {
+  const { t } = useTranslation()
   const { authState } = useAuth()
+
+  // Create translation-aware validation schema
+  const loginSchema = z.object({
+    email: z.email(t('auth.validation.invalidEmail')),
+    password: z.string().min(1, t('auth.validation.passwordRequired')),
+  })
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -51,7 +57,7 @@ export function LoginPage() {
       await initAuth(response.token)
     } catch (err) {
       form.setError('root', {
-        message: err instanceof Error ? err.message : 'Login failed',
+        message: err instanceof Error ? err.message : t('auth.login.loginFailed'),
       })
     }
   }
@@ -60,9 +66,11 @@ export function LoginPage() {
     <div className='flex min-h-screen items-center justify-center'>
       <Card className='w-full max-w-md'>
         <CardHeader className='space-y-1 text-center'>
-          <CardTitle className='text-2xl font-semibold tracking-tight'>Welcome back</CardTitle>
+          <CardTitle className='text-2xl font-semibold tracking-tight'>
+            {t('auth.login.title')}
+          </CardTitle>
           <CardDescription className='text-muted-foreground'>
-            Enter your credentials to access Imagor Studio
+            {t('auth.login.subtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -73,11 +81,11 @@ export function LoginPage() {
                 name='email'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('common.labels.email')}</FormLabel>
                     <FormControl>
                       <Input
                         type='email'
-                        placeholder='Enter your email'
+                        placeholder={t('forms.placeholders.enterEmail')}
                         disabled={form.formState.isSubmitting}
                         {...field}
                       />
@@ -91,11 +99,11 @@ export function LoginPage() {
                 name='password'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{t('common.labels.password')}</FormLabel>
                     <FormControl>
                       <Input
                         type='password'
-                        placeholder='Enter your password'
+                        placeholder={t('forms.placeholders.enterPassword')}
                         disabled={form.formState.isSubmitting}
                         {...field}
                       />
@@ -114,7 +122,7 @@ export function LoginPage() {
                 className='w-full'
                 isLoading={form.formState.isSubmitting}
               >
-                Sign In
+                {t('auth.login.signIn')}
               </ButtonWithLoading>
             </form>
           </Form>

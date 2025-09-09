@@ -26,10 +26,14 @@ export interface ImageLoaderData {
 }
 
 /**
- * Real gallery loader using imagor for thumbnail generation
+ * Gallery loader using imagor for thumbnail generation
  * Loads images and folders from storage API with imagor-generated thumbnails
  */
-export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderData> => {
+export const galleryLoader = async ({
+  params: { galleryKey },
+}: {
+  params: { galleryKey: string }
+}): Promise<GalleryLoaderData> => {
   // Use galleryKey as the path for storage API
   const path = galleryKey === 'default' ? '' : galleryKey
 
@@ -90,12 +94,7 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
   const breadcrumbs: BreadcrumbItem[] = []
 
   // For root gallery (empty galleryKey), just show custom home title without href
-  if (!galleryKey || galleryKey === 'default') {
-    breadcrumbs.push({ label: homeTitle })
-  } else {
-    // Always start with custom home title for sub-galleries
-    breadcrumbs.push({ label: homeTitle, href: '/' })
-
+  if (galleryKey && galleryKey !== 'default') {
     // Add breadcrumbs for nested paths
     const segments = galleryKey.split('/')
 
@@ -125,16 +124,14 @@ export const galleryLoader = async (galleryKey: string): Promise<GalleryLoaderDa
 }
 
 /**
- * Real image loader using imagor for image processing
+ * Image loader using imagor for image processing
  * Loads real image data from storage API and preloads the selected image
  */
 export const imageLoader = async ({
-  params,
+  params: { imageKey, galleryKey },
 }: {
   params: { imageKey: string; galleryKey: string }
 }): Promise<ImageLoaderData> => {
-  const { imageKey, galleryKey } = params
-
   // Use galleryKey as the path for storage API, then append the image name
   const basePath = galleryKey === 'default' ? '' : galleryKey
   const imagePath = basePath ? `${basePath}/${imageKey}` : imageKey

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useForm, type UseFormReturn } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Navigate, useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
@@ -30,40 +31,20 @@ import {
 import type { StorageStatusQuery } from '@/generated/graphql'
 import { initAuth, useAuth } from '@/stores/auth-store'
 
-const adminSetupSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters long')
-    .max(72, 'Password must be less than 72 characters'),
-})
+type AdminSetupForm = {
+  email: string
+  password: string
+}
 
-type AdminSetupForm = z.infer<typeof adminSetupSchema>
-
-// Define system settings for step 2
-const SYSTEM_SETTINGS: SystemSetting[] = [
+// Define system settings for step 2 - will be translated in component
+const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
   {
     key: 'config.allow_guest_mode',
     type: 'boolean',
-    label: 'Guest Mode',
-    description: 'Allow users to browse the gallery without creating an account',
+    label: t('pages.admin.guestMode'),
+    description: t('pages.admin.guestModeDescription'),
     defaultValue: false,
   },
-  // {
-  //   key: 'config.allow_user_registration',
-  //   type: 'boolean',
-  //   label: 'Allow User Registration',
-  //   description: 'Allow new users to register accounts themselves',
-  //   defaultValue: true,
-  // },
-  // {
-  //   key: 'config.default_user_role',
-  //   type: 'select',
-  //   label: 'Default User Role',
-  //   description: 'Default role assigned to new users',
-  //   defaultValue: 'viewer',
-  //   options: ['viewer', 'editor'],
-  // },
 ]
 
 // Step Content Components
@@ -81,6 +62,7 @@ function AccountStepContent({
   onCreateAccount,
   next,
 }: AccountStepContentProps) {
+  const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -106,11 +88,11 @@ function AccountStepContent({
               name='email'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email Address</FormLabel>
+                  <FormLabel>{t('pages.admin.emailAddress')}</FormLabel>
                   <FormControl>
                     <Input
                       type='email'
-                      placeholder='Enter your email address'
+                      placeholder={t('forms.placeholders.enterEmail')}
                       {...field}
                       disabled={form.formState.isSubmitting}
                     />
@@ -125,11 +107,11 @@ function AccountStepContent({
               name='password'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>{t('pages.admin.password')}</FormLabel>
                   <FormControl>
                     <Input
                       type='password'
-                      placeholder='Enter a secure password (min. 8 characters)'
+                      placeholder={t('forms.placeholders.enterPassword')}
                       {...field}
                       disabled={form.formState.isSubmitting}
                     />
@@ -153,7 +135,7 @@ function AccountStepContent({
               disabled={!isFormValid}
               className='flex items-center gap-2'
             >
-              Create Account
+              {t('pages.admin.createAccount')}
             </ButtonWithLoading>
           </div>
         </form>
@@ -175,6 +157,7 @@ function SystemSettingsStepContent({
   next,
   skip,
 }: SystemSettingsStepContentProps) {
+  const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleNext = async () => {
@@ -198,7 +181,7 @@ function SystemSettingsStepContent({
     <div className='space-y-6'>
       <SystemSettingsForm
         title=''
-        description='These settings can be changed later in the admin panel.'
+        description={t('pages.admin.systemSettingsDescription')}
         settings={settings}
         initialValues={{}}
         systemRegistryList={[]}
@@ -209,14 +192,14 @@ function SystemSettingsStepContent({
       {/* Navigation */}
       <div className='mt-6 flex items-center justify-between border-t pt-6'>
         <Button variant='outline' onClick={handleSkip} disabled={isLoading}>
-          Skip for Now
+          {t('pages.admin.skipForNow')}
         </Button>
         <ButtonWithLoading
           onClick={handleNext}
           isLoading={isLoading}
           className='flex items-center gap-2'
         >
-          Next
+          {t('pages.admin.next')}
         </ButtonWithLoading>
       </div>
     </div>
@@ -228,10 +211,11 @@ interface StorageStepContentProps extends MultiStepFormNavigationProps {
 }
 
 function StorageStepContent({ onStorageConfigured }: StorageStepContentProps) {
+  const { t } = useTranslation()
   return (
     <div className='space-y-6'>
       <div className='space-y-2'>
-        <p className='text-muted-foreground'>Configure where your images will be stored</p>
+        <p className='text-muted-foreground'>{t('pages.admin.storageDescription')}</p>
       </div>
       <StorageConfigurationWizard onSuccess={onStorageConfigured} showCancel={false} />
     </div>
@@ -239,6 +223,7 @@ function StorageStepContent({ onStorageConfigured }: StorageStepContentProps) {
 }
 
 export function AdminSetupPage() {
+  const { t } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [settingsFormValues] = useState<Record<string, string>>({})
@@ -248,6 +233,18 @@ export function AdminSetupPage() {
   const navigate = useNavigate()
   const { authState } = useAuth()
   const multiStepFormRef = useRef<MultiStepFormRef>(null)
+
+  // Create translation-aware validation schema
+  const adminSetupSchema = z.object({
+    email: z.string().email(t('auth.validation.invalidEmail')),
+    password: z
+      .string()
+      .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
+      .max(72, 'Password must be less than 72 characters'),
+  })
+
+  // Create translated system settings
+  const SYSTEM_SETTINGS = createSystemSettings(t)
 
   // Fetch storage status to check if it's overridden by external config
   useEffect(() => {
@@ -296,7 +293,7 @@ export function AdminSetupPage() {
       await initAuth(response.token)
       return true
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create admin account')
+      setError(err instanceof Error ? err.message : t('pages.admin.failedToCreateAccount'))
       return false
     }
   }
@@ -346,7 +343,7 @@ export function AdminSetupPage() {
   const allSteps: MultiStepFormStep[] = [
     {
       id: 'account',
-      title: 'Create Admin Account',
+      title: t('pages.admin.createAdminAccount'),
       content: (navigationProps: MultiStepFormNavigationProps) => {
         return (
           <AccountStepContent
@@ -361,7 +358,7 @@ export function AdminSetupPage() {
     },
     {
       id: 'settings',
-      title: 'System Configuration',
+      title: t('pages.admin.systemConfiguration'),
       content: (navigationProps: MultiStepFormNavigationProps) => {
         return (
           <SystemSettingsStepContent
@@ -375,7 +372,7 @@ export function AdminSetupPage() {
     },
     {
       id: 'storage',
-      title: 'Storage Configuration',
+      title: t('pages.admin.storageConfiguration'),
       content: (navigationProps: MultiStepFormNavigationProps) => {
         return (
           <StorageStepContent onStorageConfigured={handleStorageConfigured} {...navigationProps} />
@@ -397,8 +394,8 @@ export function AdminSetupPage() {
         currentStep={currentStep}
         onStepChange={setCurrentStep}
         onComplete={() => navigate({ to: '/' })}
-        title='Welcome to Imagor Studio'
-        description="Let's get your image gallery set up in just a few steps"
+        title={t('pages.admin.welcome')}
+        description={t('pages.admin.setupDescription')}
         className='w-full max-w-2xl'
       />
     </div>
