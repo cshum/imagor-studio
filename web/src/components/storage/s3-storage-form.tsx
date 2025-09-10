@@ -128,24 +128,30 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
               <FormField
                 control={form.control}
                 name='forcePathStyle'
-                render={({ field }) => (
-                  <FormItem className='flex flex-row items-center justify-between space-y-0'>
-                    <div className='space-y-1'>
-                      <FormLabel>Force Path Style</FormLabel>
-                      <FormDescription>
-                        Enable for MinIO and LocalStack. Most other S3-compatible services work
-                        better with this disabled.
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={disabled}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const checkboxId = 'forcePathStyle-checkbox'
+                  return (
+                    <FormItem className='flex flex-row items-center justify-between space-y-0'>
+                      <div className='space-y-1'>
+                        <FormLabel htmlFor={checkboxId} className='cursor-pointer'>
+                          Force Path Style
+                        </FormLabel>
+                        <FormDescription>
+                          Enable for MinIO and LocalStack. Most other S3-compatible services work
+                          better with this disabled.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Checkbox
+                          id={checkboxId}
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={disabled}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )
+                }}
               />
 
               <FormField

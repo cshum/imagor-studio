@@ -583,6 +583,7 @@ export type StorageStatusQuery = {
       bucket: string
       region: string | null
       endpoint: string | null
+      forcePathStyle: boolean | null
       baseDir: string | null
     } | null
   }
@@ -937,6 +938,7 @@ export const StorageStatusDocument = gql`
         bucket
         region
         endpoint
+        forcePathStyle
         baseDir
       }
     }

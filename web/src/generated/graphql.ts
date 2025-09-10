@@ -582,6 +582,7 @@ export type StorageStatusQuery = {
       bucket: string
       region: string | null
       endpoint: string | null
+      forcePathStyle: boolean | null
       baseDir: string | null
     } | null
   }
@@ -1742,6 +1743,7 @@ export const StorageStatusDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'region' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'endpoint' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'forcePathStyle' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'baseDir' } },
                     ],
                   },

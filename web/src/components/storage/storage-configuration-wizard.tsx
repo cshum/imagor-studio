@@ -62,6 +62,7 @@ export function StorageConfigurationWizard({
       bucket: initialConfig.s3Config.bucket,
       region: initialConfig.s3Config.region || undefined,
       endpoint: initialConfig.s3Config.endpoint || undefined,
+      forcePathStyle: initialConfig.s3Config.forcePathStyle || false,
       baseDir: initialConfig.s3Config.baseDir || undefined,
       // Note: We don't pre-populate credentials for security reasons
       accessKeyId: '',
@@ -106,6 +107,7 @@ export function StorageConfigurationWizard({
           bucket: data.bucket,
           region: data.region || null,
           endpoint: data.endpoint || null,
+          forcePathStyle: data.forcePathStyle || null,
           accessKeyId: data.accessKeyId || null,
           secretAccessKey: data.secretAccessKey || null,
           sessionToken: data.sessionToken || null,
@@ -171,6 +173,7 @@ export function StorageConfigurationWizard({
             bucket: formData.bucket,
             region: formData.region || null,
             endpoint: formData.endpoint || null,
+            forcePathStyle: formData.forcePathStyle || null,
             accessKeyId: formData.accessKeyId || null,
             secretAccessKey: formData.secretAccessKey || null,
             sessionToken: formData.sessionToken || null,

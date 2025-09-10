@@ -146,6 +146,7 @@ export function SystemSettingsForm({
 
     if (setting.type === 'boolean') {
       const boolValue = effectiveValue === 'true'
+      const checkboxId = `${setting.key}-checkbox`
 
       return (
         <div
@@ -153,7 +154,9 @@ export function SystemSettingsForm({
           className='flex flex-row items-center justify-between rounded-lg border p-4'
         >
           <div className='space-y-0.5'>
-            <div className='text-base font-medium'>{setting.label}</div>
+            <label htmlFor={checkboxId} className='cursor-pointer text-base font-medium'>
+              {setting.label}
+            </label>
             <div className='text-muted-foreground text-sm'>
               {setting.description}
               {isOverridden && (
@@ -164,6 +167,7 @@ export function SystemSettingsForm({
             </div>
           </div>
           <Checkbox
+            id={checkboxId}
             checked={boolValue}
             onCheckedChange={(checked) => {
               if (!isOverridden) {
