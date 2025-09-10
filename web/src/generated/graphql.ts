@@ -225,6 +225,7 @@ export type S3StorageConfig = {
   baseDir: Maybe<Scalars['String']['output']>
   bucket: Scalars['String']['output']
   endpoint: Maybe<Scalars['String']['output']>
+  forcePathStyle: Maybe<Scalars['Boolean']['output']>
   region: Maybe<Scalars['String']['output']>
 }
 
@@ -233,6 +234,7 @@ export type S3StorageInput = {
   baseDir: InputMaybe<Scalars['String']['input']>
   bucket: Scalars['String']['input']
   endpoint: InputMaybe<Scalars['String']['input']>
+  forcePathStyle: InputMaybe<Scalars['Boolean']['input']>
   region: InputMaybe<Scalars['String']['input']>
   secretAccessKey: InputMaybe<Scalars['String']['input']>
   sessionToken: InputMaybe<Scalars['String']['input']>

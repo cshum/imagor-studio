@@ -3,6 +3,7 @@ package resolver
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -290,6 +291,7 @@ func (r *queryResolver) getS3StorageConfig(ctx context.Context) (*gql.S3StorageC
 		"config.s3_bucket",
 		"config.s3_region",
 		"config.s3_endpoint",
+		"config.s3_force_path_style",
 		"config.s3_base_dir")
 
 	// Create a map for easy lookup
@@ -323,6 +325,12 @@ func (r *queryResolver) getS3StorageConfig(ctx context.Context) (*gql.S3StorageC
 
 	if endpointResult := resultMap["config.s3_endpoint"]; endpointResult.Exists {
 		c.Endpoint = &endpointResult.Value
+	}
+
+	if forcePathStyleResult := resultMap["config.s3_force_path_style"]; forcePathStyleResult.Exists {
+		if forcePathStyle, err := strconv.ParseBool(forcePathStyleResult.Value); err == nil {
+			c.ForcePathStyle = &forcePathStyle
+		}
 	}
 
 	if baseDirResult := resultMap["config.s3_base_dir"]; baseDirResult.Exists {
@@ -480,6 +488,11 @@ func (r *mutationResolver) ConfigureS3Storage(ctx context.Context, input gql.S3S
 			Key: "config.s3_session_token", Value: *input.SessionToken, IsEncrypted: true,
 		})
 	}
+	if input.ForcePathStyle != nil {
+		entries = append(entries, gql.RegistryEntryInput{
+			Key: "config.s3_force_path_style", Value: fmt.Sprintf("%t", *input.ForcePathStyle), IsEncrypted: false,
+		})
+	}
 	if input.BaseDir != nil {
 		entries = append(entries, gql.RegistryEntryInput{
 			Key: "config.s3_base_dir", Value: *input.BaseDir, IsEncrypted: false,
@@ -549,6 +562,9 @@ func (r *mutationResolver) validateStorageConfig(ctx context.Context, input gql.
 		}
 		if input.S3Config.SessionToken != nil {
 			cfg.S3SessionToken = *input.S3Config.SessionToken
+		}
+		if input.S3Config.ForcePathStyle != nil {
+			cfg.S3ForcePathStyle = *input.S3Config.ForcePathStyle
 		}
 		if input.S3Config.BaseDir != nil {
 			cfg.S3BaseDir = *input.S3Config.BaseDir

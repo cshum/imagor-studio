@@ -1329,6 +1329,14 @@
             "deprecationReason": null
           },
           {
+            "name": "forcePathStyle",
+            "description": null,
+            "args": [],
+            "type": { "kind": "SCALAR", "name": "Boolean", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "region",
             "description": null,
             "args": [],
@@ -1381,6 +1389,14 @@
             "name": "endpoint",
             "description": null,
             "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "forcePathStyle",
+            "description": null,
+            "type": { "kind": "SCALAR", "name": "Boolean", "ofType": null },
             "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null

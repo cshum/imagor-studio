@@ -69,16 +69,18 @@ type RegistryEntryInput struct {
 }
 
 type S3StorageConfig struct {
-	Bucket   string  `json:"bucket"`
-	Region   *string `json:"region,omitempty"`
-	Endpoint *string `json:"endpoint,omitempty"`
-	BaseDir  *string `json:"baseDir,omitempty"`
+	Bucket         string  `json:"bucket"`
+	Region         *string `json:"region,omitempty"`
+	Endpoint       *string `json:"endpoint,omitempty"`
+	ForcePathStyle *bool   `json:"forcePathStyle,omitempty"`
+	BaseDir        *string `json:"baseDir,omitempty"`
 }
 
 type S3StorageInput struct {
 	Bucket          string  `json:"bucket"`
 	Region          *string `json:"region,omitempty"`
 	Endpoint        *string `json:"endpoint,omitempty"`
+	ForcePathStyle  *bool   `json:"forcePathStyle,omitempty"`
 	AccessKeyID     *string `json:"accessKeyId,omitempty"`
 	SecretAccessKey *string `json:"secretAccessKey,omitempty"`
 	SessionToken    *string `json:"sessionToken,omitempty"`

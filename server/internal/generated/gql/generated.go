@@ -105,10 +105,11 @@ type ComplexityRoot struct {
 	}
 
 	S3StorageConfig struct {
-		BaseDir  func(childComplexity int) int
-		Bucket   func(childComplexity int) int
-		Endpoint func(childComplexity int) int
-		Region   func(childComplexity int) int
+		BaseDir        func(childComplexity int) int
+		Bucket         func(childComplexity int) int
+		Endpoint       func(childComplexity int) int
+		ForcePathStyle func(childComplexity int) int
+		Region         func(childComplexity int) int
 	}
 
 	StorageConfigResult struct {
@@ -636,6 +637,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.S3StorageConfig.Endpoint(childComplexity), true
+
+	case "S3StorageConfig.forcePathStyle":
+		if e.complexity.S3StorageConfig.ForcePathStyle == nil {
+			break
+		}
+
+		return e.complexity.S3StorageConfig.ForcePathStyle(childComplexity), true
 
 	case "S3StorageConfig.region":
 		if e.complexity.S3StorageConfig.Region == nil {
@@ -1188,6 +1196,7 @@ type S3StorageConfig {
   bucket: String!
   region: String
   endpoint: String
+  forcePathStyle: Boolean
   baseDir: String
 }
 
@@ -1220,6 +1229,7 @@ input S3StorageInput {
   bucket: String!
   region: String
   endpoint: String
+  forcePathStyle: Boolean
   accessKeyId: String
   secretAccessKey: String
   sessionToken: String
@@ -4154,6 +4164,47 @@ func (ec *executionContext) fieldContext_S3StorageConfig_endpoint(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _S3StorageConfig_forcePathStyle(ctx context.Context, field graphql.CollectedField, obj *S3StorageConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_S3StorageConfig_forcePathStyle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ForcePathStyle, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_S3StorageConfig_forcePathStyle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "S3StorageConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _S3StorageConfig_baseDir(ctx context.Context, field graphql.CollectedField, obj *S3StorageConfig) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_S3StorageConfig_baseDir(ctx, field)
 	if err != nil {
@@ -4673,6 +4724,8 @@ func (ec *executionContext) fieldContext_StorageStatus_s3Config(_ context.Contex
 				return ec.fieldContext_S3StorageConfig_region(ctx, field)
 			case "endpoint":
 				return ec.fieldContext_S3StorageConfig_endpoint(ctx, field)
+			case "forcePathStyle":
+				return ec.fieldContext_S3StorageConfig_forcePathStyle(ctx, field)
 			case "baseDir":
 				return ec.fieldContext_S3StorageConfig_baseDir(ctx, field)
 			}
@@ -7858,7 +7911,7 @@ func (ec *executionContext) unmarshalInputS3StorageInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"bucket", "region", "endpoint", "accessKeyId", "secretAccessKey", "sessionToken", "baseDir"}
+	fieldsInOrder := [...]string{"bucket", "region", "endpoint", "forcePathStyle", "accessKeyId", "secretAccessKey", "sessionToken", "baseDir"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7886,6 +7939,13 @@ func (ec *executionContext) unmarshalInputS3StorageInput(ctx context.Context, ob
 				return it, err
 			}
 			it.Endpoint = data
+		case "forcePathStyle":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("forcePathStyle"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ForcePathStyle = data
 		case "accessKeyId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessKeyId"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -8636,6 +8696,8 @@ func (ec *executionContext) _S3StorageConfig(ctx context.Context, sel ast.Select
 			out.Values[i] = ec._S3StorageConfig_region(ctx, field, obj)
 		case "endpoint":
 			out.Values[i] = ec._S3StorageConfig_endpoint(ctx, field, obj)
+		case "forcePathStyle":
+			out.Values[i] = ec._S3StorageConfig_forcePathStyle(ctx, field, obj)
 		case "baseDir":
 			out.Values[i] = ec._S3StorageConfig_baseDir(ctx, field, obj)
 		default:

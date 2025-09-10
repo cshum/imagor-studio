@@ -13,12 +13,14 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 
 const s3StorageSchema = z.object({
   bucket: z.string().min(1, 'Bucket name is required'),
   region: z.string().optional(),
   endpoint: z.string().optional(),
+  forcePathStyle: z.boolean().optional(),
   accessKeyId: z.string().optional(),
   secretAccessKey: z.string().optional(),
   sessionToken: z.string().optional(),
@@ -46,6 +48,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
         bucket: initialValues?.bucket || '',
         region: initialValues?.region || 'us-east-1',
         endpoint: initialValues?.endpoint || '',
+        forcePathStyle: initialValues?.forcePathStyle || false,
         accessKeyId: initialValues?.accessKeyId || '',
         secretAccessKey: initialValues?.secretAccessKey || '',
         sessionToken: initialValues?.sessionToken || '',
@@ -118,6 +121,28 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                       Custom S3 endpoint for S3-compatible services (leave empty for AWS S3)
                     </FormDescription>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='forcePathStyle'
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={disabled}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Force Path Style</FormLabel>
+                      <FormDescription>
+                        Enable for MinIO and LocalStack. Most other S3-compatible services work better with this disabled.
+                      </FormDescription>
+                    </div>
                   </FormItem>
                 )}
               />
