@@ -36,7 +36,7 @@ func New(cfg *config.Config, logger *zap.Logger, args []string) (*Server, error)
 		services.StorageProvider,
 		services.RegistryStore,
 		services.UserStore,
-		services.ImageService,
+		services.ImagorProvider,
 		services.Config, // Use enhanced config from services
 		services.Logger,
 	)

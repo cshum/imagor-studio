@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"sync"
 	"time"
@@ -302,6 +303,41 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 	}
 
 	return imagorConfig, nil
+}
+
+// GenerateURL generates an imagor URL for the given image path and parameters
+func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (string, error) {
+	// Get current imagor configuration
+	config := p.GetConfig()
+	if config == nil || config.Mode == "disabled" {
+		// Return direct file URL without processing when disabled
+		return fmt.Sprintf("/api/file/%s", url.PathEscape(imagePath)), nil
+	}
+
+	// Set the image path in params
+	params.Image = imagePath
+
+	// Generate path using imagorpath
+	var path string
+	if config.Unsafe {
+		path = imagorpath.GenerateUnsafe(params)
+	} else {
+		// Generate signed path
+		if config.Secret == "" {
+			return "", fmt.Errorf("imagor secret is required for signed URLs")
+		}
+		signer := imagorpath.NewDefaultSigner(config.Secret)
+		path = imagorpath.Generate(params, signer)
+	}
+
+	// Combine with base URL
+	if config.BaseURL == "/imagor" {
+		// Embedded mode - relative path
+		return fmt.Sprintf("%s/%s", config.BaseURL, path), nil
+	} else {
+		// External mode - full URL
+		return fmt.Sprintf("%s/%s", config.BaseURL, path), nil
+	}
 }
 
 // createEmbeddedHandler creates an embedded imagor handler

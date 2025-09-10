@@ -8,8 +8,8 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/encryption"
-	"github.com/cshum/imagor-studio/server/internal/imageservice"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -51,7 +51,6 @@ func TestInitialize(t *testing.T) {
 	assert.NotNil(t, services.ImagorProvider)
 	assert.NotNil(t, services.RegistryStore)
 	assert.NotNil(t, services.UserStore)
-	assert.NotNil(t, services.ImageService)
 	assert.NotNil(t, services.Encryption)
 	assert.NotNil(t, services.Logger)
 
@@ -243,7 +242,6 @@ func TestImagorProviderIntegration(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, services)
 	require.NotNil(t, services.ImagorProvider)
-	require.NotNil(t, services.ImageService)
 
 	// Test that imagor provider has correct config
 	imagorConfig := services.ImagorProvider.GetConfig()
@@ -253,8 +251,8 @@ func TestImagorProviderIntegration(t *testing.T) {
 	assert.Equal(t, "test-secret", imagorConfig.Secret)
 	assert.True(t, imagorConfig.Unsafe)
 
-	// Test that image service can generate URLs
-	url, err := services.ImageService.GenerateURL("test/image.jpg", imageservice.URLParams{
+	// Test that imagor provider can generate URLs directly
+	url, err := services.ImagorProvider.GenerateURL("test/image.jpg", imagorpath.Params{
 		Width:  300,
 		Height: 200,
 	})
