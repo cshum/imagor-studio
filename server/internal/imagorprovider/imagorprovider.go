@@ -372,6 +372,11 @@ func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error
 		options = append(options, imagor.WithSigner(signer))
 	}
 
+	// Add modified time check if caching is enabled
+	if cfg.CachePath != "" {
+		options = append(options, imagor.WithModifiedTimeCheck(true))
+	}
+
 	// Configure storage based on current storage provider
 	if storageOptions := p.buildStorageOptions(cfg); len(storageOptions) > 0 {
 		options = append(options, storageOptions...)
