@@ -8,6 +8,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -100,14 +101,16 @@ func TestNew(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{}
+	storageProvider := &storageprovider.Provider{} // Mock storage provider
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 
 	assert.NotNil(t, provider)
 	assert.Equal(t, ImagorStateDisabled, provider.imagorState)
 	assert.NotNil(t, provider.logger)
 	assert.NotNil(t, provider.registryStore)
 	assert.NotNil(t, provider.config)
+	assert.NotNil(t, provider.storageProvider)
 }
 
 func TestInitializeWithConfig_Disabled(t *testing.T) {
@@ -116,8 +119,9 @@ func TestInitializeWithConfig_Disabled(t *testing.T) {
 	cfg := &config.Config{
 		ImagorMode: "disabled",
 	}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 	err := provider.InitializeWithConfig(cfg)
 
 	require.NoError(t, err)
@@ -137,8 +141,9 @@ func TestInitializeWithConfig_External(t *testing.T) {
 		ImagorSecret: "test-secret",
 		ImagorUnsafe: false,
 	}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 	err := provider.InitializeWithConfig(cfg)
 
 	require.NoError(t, err)
@@ -160,9 +165,13 @@ func TestInitializeWithConfig_Embedded(t *testing.T) {
 		ImagorSecret: "test-secret",
 		ImagorUnsafe: true,
 	}
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
 
-	provider := New(logger, registryStore, cfg)
-	err := provider.InitializeWithConfig(cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
+	err = provider.InitializeWithConfig(cfg)
 
 	require.NoError(t, err)
 	assert.Equal(t, ImagorStateConfigured, provider.imagorState)
@@ -183,6 +192,7 @@ func TestInitializeWithConfig_FromRegistry(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{}
+	storageProvider := &storageprovider.Provider{}
 
 	// Set up registry configuration
 	ctx := context.Background()
@@ -192,7 +202,7 @@ func TestInitializeWithConfig_FromRegistry(t *testing.T) {
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "registry-secret", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", "true", false)
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 	err := provider.InitializeWithConfig(cfg)
 
 	require.NoError(t, err)
@@ -212,8 +222,9 @@ func TestGenerateURL_Disabled(t *testing.T) {
 	cfg := &config.Config{
 		ImagorMode: "disabled",
 	}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 	err := provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
@@ -234,8 +245,9 @@ func TestGenerateURL_External_Unsafe(t *testing.T) {
 		ImagorURL:    "http://localhost:8000",
 		ImagorUnsafe: true,
 	}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 	err := provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
@@ -259,8 +271,9 @@ func TestGenerateURL_External_Signed(t *testing.T) {
 		ImagorSecret: "test-secret",
 		ImagorUnsafe: false,
 	}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 	err := provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
@@ -286,8 +299,9 @@ func TestGenerateURL_External_NoSecret(t *testing.T) {
 		ImagorSecret: "",
 		ImagorUnsafe: false,
 	}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 	err := provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
@@ -308,9 +322,13 @@ func TestGenerateURL_Embedded(t *testing.T) {
 		ImagorSecret: "test-secret",
 		ImagorUnsafe: true,
 	}
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
 
-	provider := New(logger, registryStore, cfg)
-	err := provider.InitializeWithConfig(cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
+	err = provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
 	url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
@@ -332,8 +350,9 @@ func TestGenerateURL_WithFilters(t *testing.T) {
 		ImagorURL:    "http://localhost:8000",
 		ImagorUnsafe: true,
 	}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 	err := provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
@@ -360,8 +379,9 @@ func TestIsRestartRequired(t *testing.T) {
 	cfg := &config.Config{
 		ImagorMode: "disabled",
 	}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 	err := provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
@@ -393,8 +413,9 @@ func TestReloadFromRegistry(t *testing.T) {
 	cfg := &config.Config{
 		ImagorMode: "disabled",
 	}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 	err := provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
@@ -426,8 +447,9 @@ func TestReloadFromRegistry_NoConfig(t *testing.T) {
 	cfg := &config.Config{
 		ImagorMode: "disabled",
 	}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 	err := provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
@@ -444,8 +466,9 @@ func TestBuildConfigFromRegistry_MissingMode(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 
 	// Set configured but no mode
 	ctx := context.Background()
@@ -461,8 +484,9 @@ func TestBuildConfigFromRegistry_EmbeddedMode(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 
 	// Set up embedded mode configuration
 	ctx := context.Background()
@@ -479,14 +503,16 @@ func TestBuildConfigFromRegistry_EmbeddedMode(t *testing.T) {
 	assert.Equal(t, "/imagor", config.BaseURL) // Should be set to /imagor for embedded
 	assert.Equal(t, "embedded-secret", config.Secret)
 	assert.False(t, config.Unsafe)
+	assert.Equal(t, ".imagor-cache", config.CachePath) // Should have default cache path
 }
 
 func TestBuildConfigFromRegistry_ExternalModeDefaults(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 
 	// Set up external mode with minimal configuration
 	ctx := context.Background()
@@ -510,8 +536,9 @@ func TestGetHandler_External(t *testing.T) {
 		ImagorMode: "external",
 		ImagorURL:  "http://localhost:8000",
 	}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 	err := provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
@@ -526,8 +553,9 @@ func TestGetHandler_Disabled(t *testing.T) {
 	cfg := &config.Config{
 		ImagorMode: "disabled",
 	}
+	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 	err := provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
@@ -540,8 +568,12 @@ func TestCreateEmbeddedHandler(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{}
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
 
-	provider := New(logger, registryStore, cfg)
+	provider := New(logger, registryStore, cfg, storageProvider)
 
 	// Test with unsafe mode
 	imagorConfig := &ImagorConfig{

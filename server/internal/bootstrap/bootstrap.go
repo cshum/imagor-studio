@@ -82,8 +82,8 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	// Initialize user store
 	userStore := userstore.New(db, logger)
 
-	// Initialize imagor provider with registry store and config
-	imagorProvider := imagorprovider.New(logger, registryStore, enhancedCfg)
+	// Initialize imagor provider with registry store, config, and storage provider
+	imagorProvider := imagorprovider.New(logger, registryStore, enhancedCfg, storageProvider)
 
 	// Initialize imagor with config (will use disabled if not configured)
 	err = imagorProvider.InitializeWithConfig(enhancedCfg)
