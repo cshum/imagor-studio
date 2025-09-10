@@ -308,8 +308,8 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 // GenerateURL generates an imagor URL for the given image path and parameters
 func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (string, error) {
 	// Get current imagor configuration
-	config := p.GetConfig()
-	if config == nil || config.Mode == "disabled" {
+	cfg := p.GetConfig()
+	if cfg == nil || cfg.Mode == "disabled" {
 		// Return direct file URL without processing when disabled
 		return fmt.Sprintf("/api/file/%s", url.PathEscape(imagePath)), nil
 	}
@@ -319,24 +319,24 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 
 	// Generate path using imagorpath
 	var path string
-	if config.Unsafe {
+	if cfg.Unsafe {
 		path = imagorpath.GenerateUnsafe(params)
 	} else {
 		// Generate signed path
-		if config.Secret == "" {
+		if cfg.Secret == "" {
 			return "", fmt.Errorf("imagor secret is required for signed URLs")
 		}
-		signer := imagorpath.NewDefaultSigner(config.Secret)
+		signer := imagorpath.NewDefaultSigner(cfg.Secret)
 		path = imagorpath.Generate(params, signer)
 	}
 
 	// Combine with base URL
-	if config.BaseURL == "/imagor" {
+	if cfg.BaseURL == "/imagor" {
 		// Embedded mode - relative path
-		return fmt.Sprintf("%s/%s", config.BaseURL, path), nil
+		return fmt.Sprintf("%s/%s", cfg.BaseURL, path), nil
 	} else {
 		// External mode - full URL
-		return fmt.Sprintf("%s/%s", config.BaseURL, path), nil
+		return fmt.Sprintf("%s/%s", cfg.BaseURL, path), nil
 	}
 }
 
