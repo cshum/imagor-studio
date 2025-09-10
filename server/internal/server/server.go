@@ -89,6 +89,12 @@ func New(cfg *config.Config, logger *zap.Logger, args []string) (*Server, error)
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)
 	mux.Handle("/query", protectedHandler)
 
+	// Embedded imagor handler (if enabled)
+	if imagorHandler := services.ImagorProvider.GetHandler(); imagorHandler != nil {
+		services.Logger.Info("Embedded imagor handler enabled at /imagor/")
+		mux.Handle("/imagor/", http.StripPrefix("/imagor", imagorHandler))
+	}
+
 	// Static file serving for web frontend
 	staticHandler := createStaticHandler(services.Logger)
 	mux.Handle("/", staticHandler)
@@ -152,7 +158,8 @@ func createStaticHandler(logger *zap.Logger) http.Handler {
 		// Handle API routes - these should not serve static files
 		if strings.HasPrefix(r.URL.Path, "/auth/") ||
 			strings.HasPrefix(r.URL.Path, "/query") ||
-			strings.HasPrefix(r.URL.Path, "/health") {
+			strings.HasPrefix(r.URL.Path, "/health") ||
+			strings.HasPrefix(r.URL.Path, "/imagor/") {
 			http.NotFound(w, r)
 			return
 		}
