@@ -8,6 +8,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/encryption"
+	"github.com/cshum/imagor-studio/server/internal/imageservice"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,6 +47,8 @@ func TestInitialize(t *testing.T) {
 	assert.NotNil(t, services.DB)
 	assert.NotNil(t, services.TokenManager)
 	assert.NotNil(t, services.Storage)
+	assert.NotNil(t, services.StorageProvider)
+	assert.NotNil(t, services.ImagorProvider)
 	assert.NotNil(t, services.RegistryStore)
 	assert.NotNil(t, services.UserStore)
 	assert.NotNil(t, services.ImageService)
@@ -214,33 +217,50 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 	assert.Equal(t, "env-test-bucket", enhancedCfg.S3Bucket)
 }
 
-func TestInitializeImageService(t *testing.T) {
-	tmpDB := "/tmp/test_image_service.db"
+func TestImagorProviderIntegration(t *testing.T) {
+	tmpDB := "/tmp/test_imagor_provider.db"
 	defer os.Remove(tmpDB)
 
 	cfg := &config.Config{
 		DBPath:              tmpDB,
+		JWTSecret:           "test-jwt-secret",
 		ImagorMode:          "external",
 		ImagorURL:           "http://localhost:8000",
 		ImagorSecret:        "test-secret",
-		ImagorUnsafe:        false,
+		ImagorUnsafe:        true, // Use unsafe mode for testing
 		ImagorResultStorage: "same",
 	}
 
-	// Initialize minimal services for test
-	db, err := initializeDatabase(cfg)
-	require.NoError(t, err)
-	defer db.Close()
-
 	logger := zap.NewNop()
-	err = runMigrations(db, logger)
+	args := []string{
+		"--jwt-secret", "test-jwt-secret",
+		"--db-path", tmpDB,
+		"--imagor-secret", "test-secret",
+		"--imagor-unsafe", "true",
+	}
+	services, err := Initialize(cfg, logger, args)
+
 	require.NoError(t, err)
+	require.NotNil(t, services)
+	require.NotNil(t, services.ImagorProvider)
+	require.NotNil(t, services.ImageService)
 
-	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
-	registryStore := registrystore.New(db, logger, encryptionService)
+	// Test that imagor provider has correct config
+	imagorConfig := services.ImagorProvider.GetConfig()
+	require.NotNil(t, imagorConfig)
+	assert.Equal(t, "external", imagorConfig.Mode)
+	assert.Equal(t, "http://localhost:8000", imagorConfig.BaseURL)
+	assert.Equal(t, "test-secret", imagorConfig.Secret)
+	assert.True(t, imagorConfig.Unsafe)
 
-	imageService := initializeImageService(cfg, registryStore)
+	// Test that image service can generate URLs
+	url, err := services.ImageService.GenerateURL("test/image.jpg", imageservice.URLParams{
+		Width:  300,
+		Height: 200,
+	})
+	require.NoError(t, err)
+	assert.NotEmpty(t, url)
 
-	require.NotNil(t, imageService)
-	assert.Equal(t, "external", imageService.GetMode())
+	// Clean up
+	services.DB.Close()
 }
