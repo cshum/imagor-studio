@@ -185,6 +185,7 @@ type S3StorageConfig {
   bucket: String!
   region: String
   endpoint: String
+  forcePathStyle: Boolean
   baseDir: String
 }
 
@@ -217,6 +218,7 @@ input S3StorageInput {
   bucket: String!
   region: String
   endpoint: String
+  forcePathStyle: Boolean
   accessKeyId: String
   secretAccessKey: String
   sessionToken: String

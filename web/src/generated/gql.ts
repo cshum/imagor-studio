@@ -32,7 +32,7 @@ type Documents = {
   '\n  mutation UploadFile($path: String!, $content: Upload!) {\n    uploadFile(path: $path, content: $content)\n  }\n': typeof types.UploadFileDocument
   '\n  mutation DeleteFile($path: String!) {\n    deleteFile(path: $path)\n  }\n': typeof types.DeleteFileDocument
   '\n  mutation CreateFolder($path: String!) {\n    createFolder(path: $path)\n  }\n': typeof types.CreateFolderDocument
-  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        baseDir\n      }\n    }\n  }\n': typeof types.StorageStatusDocument
+  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n': typeof types.StorageStatusDocument
   '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureFileStorageDocument
   '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureS3StorageDocument
   '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n': typeof types.TestStorageConfigDocument
@@ -80,7 +80,7 @@ const documents: Documents = {
     types.DeleteFileDocument,
   '\n  mutation CreateFolder($path: String!) {\n    createFolder(path: $path)\n  }\n':
     types.CreateFolderDocument,
-  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        baseDir\n      }\n    }\n  }\n':
+  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n':
     types.StorageStatusDocument,
   '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n':
     types.ConfigureFileStorageDocument,
@@ -225,8 +225,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        baseDir\n      }\n    }\n  }\n',
-): (typeof documents)['\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        baseDir\n      }\n    }\n  }\n']
+  source: '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n',
+): (typeof documents)['\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -108,6 +108,7 @@ export const STORAGE_STATUS = gql(`
         bucket
         region
         endpoint
+        forcePathStyle
         baseDir
       }
     }

@@ -2,7 +2,7 @@ package resolver
 
 import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
-	"github.com/cshum/imagor-studio/server/internal/imageservice"
+	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -25,17 +25,17 @@ type Resolver struct {
 	storageProvider StorageProvider
 	registryStore   registrystore.Store
 	userStore       userstore.Store
-	imageService    imageservice.Service
+	imagorProvider  *imagorprovider.Provider
 	config          ConfigProvider
 	logger          *zap.Logger
 }
 
-func NewResolver(storageProvider StorageProvider, registryStore registrystore.Store, userStore userstore.Store, imageService imageservice.Service, cfg ConfigProvider, logger *zap.Logger) *Resolver {
+func NewResolver(storageProvider StorageProvider, registryStore registrystore.Store, userStore userstore.Store, imagorProvider *imagorprovider.Provider, cfg ConfigProvider, logger *zap.Logger) *Resolver {
 	return &Resolver{
 		storageProvider: storageProvider,
 		registryStore:   registryStore,
 		userStore:       userStore,
-		imageService:    imageService,
+		imagorProvider:  imagorProvider,
 		config:          cfg,
 		logger:          logger,
 	}

@@ -3,17 +3,18 @@ package resolver
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
-	"github.com/cshum/imagor-studio/server/internal/imageservice"
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor-studio/server/internal/uuid"
+	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
 )
 
@@ -290,6 +291,7 @@ func (r *queryResolver) getS3StorageConfig(ctx context.Context) (*gql.S3StorageC
 		"config.s3_bucket",
 		"config.s3_region",
 		"config.s3_endpoint",
+		"config.s3_force_path_style",
 		"config.s3_base_dir")
 
 	// Create a map for easy lookup
@@ -323,6 +325,12 @@ func (r *queryResolver) getS3StorageConfig(ctx context.Context) (*gql.S3StorageC
 
 	if endpointResult := resultMap["config.s3_endpoint"]; endpointResult.Exists {
 		c.Endpoint = &endpointResult.Value
+	}
+
+	if forcePathStyleResult := resultMap["config.s3_force_path_style"]; forcePathStyleResult.Exists {
+		if forcePathStyle, err := strconv.ParseBool(forcePathStyleResult.Value); err == nil {
+			c.ForcePathStyle = &forcePathStyle
+		}
 	}
 
 	if baseDirResult := resultMap["config.s3_base_dir"]; baseDirResult.Exists {
@@ -480,6 +488,11 @@ func (r *mutationResolver) ConfigureS3Storage(ctx context.Context, input gql.S3S
 			Key: "config.s3_session_token", Value: *input.SessionToken, IsEncrypted: true,
 		})
 	}
+	if input.ForcePathStyle != nil {
+		entries = append(entries, gql.RegistryEntryInput{
+			Key: "config.s3_force_path_style", Value: fmt.Sprintf("%t", *input.ForcePathStyle), IsEncrypted: false,
+		})
+	}
 	if input.BaseDir != nil {
 		entries = append(entries, gql.RegistryEntryInput{
 			Key: "config.s3_base_dir", Value: *input.BaseDir, IsEncrypted: false,
@@ -549,6 +562,9 @@ func (r *mutationResolver) validateStorageConfig(ctx context.Context, input gql.
 		}
 		if input.S3Config.SessionToken != nil {
 			cfg.S3SessionToken = *input.S3Config.SessionToken
+		}
+		if input.S3Config.ForcePathStyle != nil {
+			cfg.S3ForcePathStyle = *input.S3Config.ForcePathStyle
 		}
 		if input.S3Config.BaseDir != nil {
 			cfg.S3BaseDir = *input.S3Config.BaseDir
@@ -653,41 +669,53 @@ func (r *mutationResolver) setSystemRegistryEntries(ctx context.Context, entries
 
 // Helper function to check if a file is an image
 func (r *queryResolver) isImageFile(filename string) bool {
-	return imageservice.IsImageFile(filename)
+	// Simple image file extension check
+	ext := strings.ToLower(filename)
+	return strings.HasSuffix(ext, ".jpg") || strings.HasSuffix(ext, ".jpeg") ||
+		strings.HasSuffix(ext, ".png") || strings.HasSuffix(ext, ".gif") ||
+		strings.HasSuffix(ext, ".webp") || strings.HasSuffix(ext, ".bmp") ||
+		strings.HasSuffix(ext, ".tiff") || strings.HasSuffix(ext, ".tif")
 }
 
-// Helper function to generate thumbnail URLs using the image service
+// Helper function to generate thumbnail URLs using the imagor provider
 func (r *queryResolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUrls {
-	// Generate different sized URLs using the image service
-	gridURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{
-		Width:   300,
-		Height:  225,
-		Quality: 85,
-		// Smart:   true,
-		Format: "webp",
+	// Generate different sized URLs using the imagor provider
+	gridURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
+		Width:  300,
+		Height: 225,
+		Filters: imagorpath.Filters{
+			{Name: "quality", Args: "85"},
+			{Name: "format", Args: "webp"},
+		},
 	})
 
-	previewURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{
-		Width:   1200,
-		Height:  900,
-		Quality: 90,
-		FitIn:   true,
+	previewURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
+		Width:  1200,
+		Height: 900,
+		FitIn:  true,
+		Filters: imagorpath.Filters{
+			{Name: "quality", Args: "90"},
+		},
 	})
 
-	fullURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{
-		Width:   2400,
-		Height:  1800,
-		Quality: 95,
-		FitIn:   true,
+	fullURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
+		Width:  2400,
+		Height: 1800,
+		FitIn:  true,
+		Filters: imagorpath.Filters{
+			{Name: "quality", Args: "95"},
+		},
 	})
 
-	// For original, use direct file access
-	originalURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{
-		Raw: true,
+	// For original, use raw filter
+	originalURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
+		Filters: imagorpath.Filters{
+			{Name: "raw"},
+		},
 	})
 
 	// Generate meta URL for EXIF data
-	metaURL, _ := r.imageService.GenerateURL(imagePath, imageservice.URLParams{
+	metaURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
 		Meta: true,
 	})
 

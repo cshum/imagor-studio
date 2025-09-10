@@ -8,7 +8,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/encryption"
-	"github.com/cshum/imagor-studio/server/internal/imageservice"
+	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/migrations"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
@@ -27,9 +27,9 @@ type Services struct {
 	TokenManager    *auth.TokenManager
 	Storage         storage.Storage
 	StorageProvider *storageprovider.Provider
+	ImagorProvider  *imagorprovider.Provider
 	RegistryStore   registrystore.Store
 	UserStore       userstore.Store
-	ImageService    imageservice.Service
 	Encryption      *encryption.Service
 	Config          *config.Config
 	Logger          *zap.Logger
@@ -82,8 +82,14 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	// Initialize user store
 	userStore := userstore.New(db, logger)
 
-	// Initialize image service
-	imageService := initializeImageService(enhancedCfg, registryStore)
+	// Initialize imagor provider with registry store, config, and storage provider
+	imagorProvider := imagorprovider.New(logger, registryStore, enhancedCfg, storageProvider)
+
+	// Initialize imagor with config (will use disabled if not configured)
+	err = imagorProvider.InitializeWithConfig(enhancedCfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize imagor: %w", err)
+	}
 
 	// Log configuration loaded
 	logger.Info("Configuration loaded",
@@ -98,9 +104,9 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 		TokenManager:    tokenManager,
 		Storage:         stor,
 		StorageProvider: storageProvider,
+		ImagorProvider:  imagorProvider,
 		RegistryStore:   registryStore,
 		UserStore:       userStore,
-		ImageService:    imageService,
 		Encryption:      encryptionService,
 		Config:          enhancedCfg,
 		Logger:          logger,
@@ -139,16 +145,4 @@ func runMigrations(db *bun.DB, logger *zap.Logger) error {
 	}
 
 	return nil
-}
-
-// initializeImageService creates and configures the image service
-func initializeImageService(cfg *config.Config, registryStore registrystore.Store) imageservice.Service {
-	imageServiceConfig := imageservice.Config{
-		Mode:          cfg.ImagorMode,
-		URL:           cfg.ImagorURL,
-		Secret:        cfg.ImagorSecret,
-		Unsafe:        cfg.ImagorUnsafe,
-		ResultStorage: cfg.ImagorResultStorage,
-	}
-	return imageservice.NewService(imageServiceConfig)
 }

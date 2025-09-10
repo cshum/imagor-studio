@@ -1,8 +1,10 @@
 import { forwardRef, useImperativeHandle } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
@@ -19,6 +21,7 @@ const s3StorageSchema = z.object({
   bucket: z.string().min(1, 'Bucket name is required'),
   region: z.string().optional(),
   endpoint: z.string().optional(),
+  forcePathStyle: z.boolean().optional(),
   accessKeyId: z.string().optional(),
   secretAccessKey: z.string().optional(),
   sessionToken: z.string().optional(),
@@ -40,12 +43,15 @@ interface S3StorageFormProps {
 
 export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
   ({ initialValues, onSubmit, disabled }, ref) => {
+    const { t } = useTranslation()
+
     const form = useForm<S3StorageFormData>({
       resolver: zodResolver(s3StorageSchema),
       defaultValues: {
         bucket: initialValues?.bucket || '',
         region: initialValues?.region || 'us-east-1',
         endpoint: initialValues?.endpoint || '',
+        forcePathStyle: initialValues?.forcePathStyle || false,
         accessKeyId: initialValues?.accessKeyId || '',
         secretAccessKey: initialValues?.secretAccessKey || '',
         sessionToken: initialValues?.sessionToken || '',
@@ -72,13 +78,11 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                 name='bucket'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bucket Name *</FormLabel>
+                    <FormLabel>{t('pages.storage.bucketName')} *</FormLabel>
                     <FormControl>
                       <Input placeholder='my-image-bucket' {...field} disabled={disabled} />
                     </FormControl>
-                    <FormDescription>
-                      The name of your S3 bucket where images will be stored
-                    </FormDescription>
+                    <FormDescription>{t('pages.storage.bucketDescription')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -89,13 +93,11 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                 name='region'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Region</FormLabel>
+                    <FormLabel>{t('pages.storage.region')}</FormLabel>
                     <FormControl>
                       <Input placeholder='us-east-1' {...field} disabled={disabled} />
                     </FormControl>
-                    <FormDescription>
-                      AWS region where your bucket is located (e.g., us-east-1, eu-west-1)
-                    </FormDescription>
+                    <FormDescription>{t('pages.storage.regionDescription')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -106,7 +108,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                 name='endpoint'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Custom Endpoint</FormLabel>
+                    <FormLabel>{t('pages.storage.customEndpoint')}</FormLabel>
                     <FormControl>
                       <Input
                         placeholder='https://s3.amazonaws.com'
@@ -115,7 +117,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                       />
                     </FormControl>
                     <FormDescription>
-                      Custom S3 endpoint for S3-compatible services (leave empty for AWS S3)
+                      {t('pages.storage.customEndpointDescription')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -124,16 +126,42 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
 
               <FormField
                 control={form.control}
+                name='forcePathStyle'
+                render={({ field }) => {
+                  const checkboxId = 'forcePathStyle-checkbox'
+                  return (
+                    <FormItem className='flex flex-row items-center justify-between space-y-0'>
+                      <div className='space-y-1'>
+                        <FormLabel htmlFor={checkboxId} className='cursor-pointer'>
+                          {t('pages.storage.forcePathStyle')}
+                        </FormLabel>
+                        <FormDescription>
+                          {t('pages.storage.forcePathStyleDescription')}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Checkbox
+                          id={checkboxId}
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={disabled}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )
+                }}
+              />
+
+              <FormField
+                control={form.control}
                 name='accessKeyId'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Access Key ID</FormLabel>
+                    <FormLabel>{t('pages.storage.accessKeyId')}</FormLabel>
                     <FormControl>
                       <Input placeholder='AKIAIOSFODNN7EXAMPLE' {...field} disabled={disabled} />
                     </FormControl>
-                    <FormDescription>
-                      AWS access key ID (leave empty to use IAM roles or environment variables)
-                    </FormDescription>
+                    <FormDescription>{t('pages.storage.accessKeyIdDescription')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -144,7 +172,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                 name='secretAccessKey'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Secret Access Key</FormLabel>
+                    <FormLabel>{t('pages.storage.secretAccessKey')}</FormLabel>
                     <FormControl>
                       <Input
                         type='password'
@@ -154,7 +182,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                       />
                     </FormControl>
                     <FormDescription>
-                      AWS secret access key (leave empty to use IAM roles or environment variables)
+                      {t('pages.storage.secretAccessKeyDescription')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -166,7 +194,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                 name='sessionToken'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Session Token</FormLabel>
+                    <FormLabel>{t('pages.storage.sessionToken')}</FormLabel>
                     <FormControl>
                       <Input
                         type='password'
@@ -175,9 +203,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                         disabled={disabled}
                       />
                     </FormControl>
-                    <FormDescription>
-                      AWS session token (only required for temporary credentials)
-                    </FormDescription>
+                    <FormDescription>{t('pages.storage.sessionTokenDescription')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -188,13 +214,11 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                 name='baseDir'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Base Directory</FormLabel>
+                    <FormLabel>{t('pages.storage.baseDirectory')}</FormLabel>
                     <FormControl>
                       <Input placeholder='images/' {...field} disabled={disabled} />
                     </FormControl>
-                    <FormDescription>
-                      Optional prefix for all object keys in the bucket (e.g., "images/")
-                    </FormDescription>
+                    <FormDescription>{t('pages.storage.baseDirectoryDescription')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

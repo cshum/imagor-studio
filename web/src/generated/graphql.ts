@@ -225,6 +225,7 @@ export type S3StorageConfig = {
   baseDir: Maybe<Scalars['String']['output']>
   bucket: Scalars['String']['output']
   endpoint: Maybe<Scalars['String']['output']>
+  forcePathStyle: Maybe<Scalars['Boolean']['output']>
   region: Maybe<Scalars['String']['output']>
 }
 
@@ -233,6 +234,7 @@ export type S3StorageInput = {
   baseDir: InputMaybe<Scalars['String']['input']>
   bucket: Scalars['String']['input']
   endpoint: InputMaybe<Scalars['String']['input']>
+  forcePathStyle: InputMaybe<Scalars['Boolean']['input']>
   region: InputMaybe<Scalars['String']['input']>
   secretAccessKey: InputMaybe<Scalars['String']['input']>
   sessionToken: InputMaybe<Scalars['String']['input']>
@@ -580,6 +582,7 @@ export type StorageStatusQuery = {
       bucket: string
       region: string | null
       endpoint: string | null
+      forcePathStyle: boolean | null
       baseDir: string | null
     } | null
   }
@@ -1740,6 +1743,7 @@ export const StorageStatusDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'region' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'endpoint' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'forcePathStyle' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'baseDir' } },
                     ],
                   },

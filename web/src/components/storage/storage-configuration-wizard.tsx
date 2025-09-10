@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { configureFileStorage, configureS3Storage, testStorageConfig } from '@/api/storage-api'
@@ -29,6 +30,7 @@ export function StorageConfigurationWizard({
   showCancel = false,
   initialConfig,
 }: StorageConfigurationWizardProps) {
+  const { t } = useTranslation()
   const [storageType, setStorageType] = useState<StorageType>('file')
   const [isLoading, setIsLoading] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
@@ -62,6 +64,7 @@ export function StorageConfigurationWizard({
       bucket: initialConfig.s3Config.bucket,
       region: initialConfig.s3Config.region || undefined,
       endpoint: initialConfig.s3Config.endpoint || undefined,
+      forcePathStyle: initialConfig.s3Config.forcePathStyle || false,
       baseDir: initialConfig.s3Config.baseDir || undefined,
       // Note: We don't pre-populate credentials for security reasons
       accessKeyId: '',
@@ -106,6 +109,7 @@ export function StorageConfigurationWizard({
           bucket: data.bucket,
           region: data.region || null,
           endpoint: data.endpoint || null,
+          forcePathStyle: data.forcePathStyle || null,
           accessKeyId: data.accessKeyId || null,
           secretAccessKey: data.secretAccessKey || null,
           sessionToken: data.sessionToken || null,
@@ -171,6 +175,7 @@ export function StorageConfigurationWizard({
             bucket: formData.bucket,
             region: formData.region || null,
             endpoint: formData.endpoint || null,
+            forcePathStyle: formData.forcePathStyle || null,
             accessKeyId: formData.accessKeyId || null,
             secretAccessKey: formData.secretAccessKey || null,
             sessionToken: formData.sessionToken || null,
@@ -197,7 +202,7 @@ export function StorageConfigurationWizard({
     <div>
       {isConfigOverridden && (
         <span className='mb-4 block text-orange-600 dark:text-orange-400'>
-          Storage configuration is managed by external configuration
+          {t('pages.storage.configurationOverridden')}
         </span>
       )}
 
@@ -210,7 +215,7 @@ export function StorageConfigurationWizard({
       <div className='mt-6'>
         {storageType === 'file' && (
           <div className='space-y-4'>
-            <h4 className='font-medium'>File Storage Configuration</h4>
+            <h4 className='font-medium'>{t('pages.storage.fileStorage')}</h4>
             <FileStorageForm
               ref={fileFormRef}
               onSubmit={handleFileStorageSubmit}
@@ -222,7 +227,7 @@ export function StorageConfigurationWizard({
 
         {storageType === 's3' && (
           <div className='space-y-4'>
-            <h4 className='font-medium'>S3 Storage Configuration</h4>
+            <h4 className='font-medium'>{t('pages.storage.s3Storage')}</h4>
             <S3StorageForm
               ref={s3FormRef}
               onSubmit={handleS3StorageSubmit}
@@ -242,7 +247,7 @@ export function StorageConfigurationWizard({
               onClick={onCancel}
               disabled={isLoading || isTesting}
             >
-              Cancel
+              {t('common.buttons.cancel')}
             </Button>
           )}
           <ButtonWithLoading
@@ -252,7 +257,7 @@ export function StorageConfigurationWizard({
             disabled={isLoading || isConfigOverridden}
             isLoading={isTesting}
           >
-            Test Configuration
+            {t('pages.storage.testConfiguration')}
           </ButtonWithLoading>
         </div>
         <ButtonWithLoading
@@ -267,7 +272,7 @@ export function StorageConfigurationWizard({
             }
           }}
         >
-          Configure Storage
+          {t('pages.storage.configureStorage')}
         </ButtonWithLoading>
       </div>
     </div>
