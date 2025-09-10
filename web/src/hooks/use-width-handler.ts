@@ -17,7 +17,7 @@ export const useWidthHandler = (
   useEffect(() => {
     updateWidth()
 
-    const transitionDuration = 300 // Adjust as needed
+    const transitionDuration = 200 // sidebar transition duration
     const timeoutId = setTimeout(() => {
       updateWidth() // Recalculate width after sidebar transition
     }, transitionDuration)
