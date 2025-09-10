@@ -129,7 +129,14 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                 control={form.control}
                 name='forcePathStyle'
                 render={({ field }) => (
-                  <FormItem className='flex flex-row items-start space-y-0 space-x-3'>
+                  <FormItem className='flex flex-row items-center justify-between space-y-0'>
+                    <div className='space-y-1'>
+                      <FormLabel>Force Path Style</FormLabel>
+                      <FormDescription>
+                        Enable for MinIO and LocalStack. Most other S3-compatible services work
+                        better with this disabled.
+                      </FormDescription>
+                    </div>
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -137,13 +144,6 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                         disabled={disabled}
                       />
                     </FormControl>
-                    <div className='space-y-1 leading-none'>
-                      <FormLabel>Force Path Style</FormLabel>
-                      <FormDescription>
-                        Enable for MinIO and LocalStack. Most other S3-compatible services work
-                        better with this disabled.
-                      </FormDescription>
-                    </div>
                   </FormItem>
                 )}
               />
