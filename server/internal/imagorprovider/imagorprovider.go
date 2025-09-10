@@ -423,6 +423,7 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 		s3Storage := s3storage.New(*awsConfig, storageConfig.S3Bucket,
 			s3storage.WithBaseDir(storageConfig.S3BaseDir),
 			s3storage.WithEndpoint(storageConfig.S3Endpoint),
+			s3storage.WithForcePathStyle(storageConfig.S3ForcePathStyle),
 		)
 		options = append(options, imagor.WithLoaders(s3Storage))
 
@@ -432,6 +433,7 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 			cacheStorage := s3storage.New(*awsConfig, storageConfig.S3Bucket,
 				s3storage.WithBaseDir(cacheBaseDir),
 				s3storage.WithEndpoint(storageConfig.S3Endpoint),
+				s3storage.WithForcePathStyle(storageConfig.S3ForcePathStyle),
 			)
 			options = append(options, imagor.WithResultStorages(cacheStorage))
 		}
@@ -488,6 +490,7 @@ func (p *Provider) buildStorageConfigFromRegistry() *config.Config {
 		"config.s3_bucket",
 		"config.s3_region",
 		"config.s3_endpoint",
+		"config.s3_force_path_style",
 		"config.s3_access_key_id",
 		"config.s3_secret_access_key",
 		"config.s3_session_token",
@@ -554,6 +557,12 @@ func (p *Provider) loadS3ConfigFromResults(resultMap map[string]registryutil.Eff
 
 	if result := resultMap["config.s3_endpoint"]; result.Exists {
 		cfg.S3Endpoint = result.Value
+	}
+
+	if result := resultMap["config.s3_force_path_style"]; result.Exists {
+		if forcePathStyle, err := strconv.ParseBool(result.Value); err == nil {
+			cfg.S3ForcePathStyle = forcePathStyle
+		}
 	}
 
 	if result := resultMap["config.s3_access_key_id"]; result.Exists {

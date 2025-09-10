@@ -34,6 +34,7 @@ type Config struct {
 	S3Bucket          string
 	S3Region          string
 	S3Endpoint        string
+	S3ForcePathStyle  bool
 	S3AccessKeyID     string
 	S3SecretAccessKey string
 	S3SessionToken    string
@@ -73,6 +74,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		s3Bucket          = fs.String("s3-bucket", "", "S3 bucket name")
 		s3Region          = fs.String("s3-region", "", "S3 region")
 		s3Endpoint        = fs.String("s3-endpoint", "", "S3 endpoint (optional)")
+		s3ForcePathStyle  = fs.Bool("s3-force-path-style", false, "S3 force path style (optional)")
 		s3AccessKeyID     = fs.String("s3-access-key-id", "", "S3 access key ID (optional)")
 		s3SecretAccessKey = fs.String("s3-secret-access-key", "", "S3 secret access key (optional)")
 		s3SessionToken    = fs.String("s3-session-token", "", "S3 session token (optional)")
@@ -166,6 +168,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		S3Bucket:             *s3Bucket,
 		S3Region:             *s3Region,
 		S3Endpoint:           *s3Endpoint,
+		S3ForcePathStyle:     *s3ForcePathStyle,
 		S3AccessKeyID:        *s3AccessKeyID,
 		S3SecretAccessKey:    *s3SecretAccessKey,
 		S3SessionToken:       *s3SessionToken,
