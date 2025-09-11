@@ -21,6 +21,36 @@ type CreateUserInput struct {
 	Role        string `json:"role"`
 }
 
+type EmbeddedImagorConfig struct {
+	HasCustomSecret bool             `json:"hasCustomSecret"`
+	SecretSource    string           `json:"secretSource"`
+	CachePath       string           `json:"cachePath"`
+	SignerType      ImagorSignerType `json:"signerType"`
+	SignerTruncate  int              `json:"signerTruncate"`
+	Unsafe          bool             `json:"unsafe"`
+}
+
+type EmbeddedImagorInput struct {
+	Secret    *string `json:"secret,omitempty"`
+	CachePath *string `json:"cachePath,omitempty"`
+}
+
+type ExternalImagorConfig struct {
+	BaseURL        string           `json:"baseUrl"`
+	HasSecret      bool             `json:"hasSecret"`
+	Unsafe         bool             `json:"unsafe"`
+	SignerType     ImagorSignerType `json:"signerType"`
+	SignerTruncate int              `json:"signerTruncate"`
+}
+
+type ExternalImagorInput struct {
+	BaseURL        string            `json:"baseUrl"`
+	Secret         *string           `json:"secret,omitempty"`
+	Unsafe         *bool             `json:"unsafe,omitempty"`
+	SignerType     *ImagorSignerType `json:"signerType,omitempty"`
+	SignerTruncate *int              `json:"signerTruncate,omitempty"`
+}
+
 type FileItem struct {
 	Name          string         `json:"name"`
 	Path          string         `json:"path"`
@@ -54,6 +84,23 @@ type FileStorageInput struct {
 	BaseDir          string  `json:"baseDir"`
 	MkdirPermissions *string `json:"mkdirPermissions,omitempty"`
 	WritePermissions *string `json:"writePermissions,omitempty"`
+}
+
+type ImagorConfigResult struct {
+	Success         bool    `json:"success"`
+	RestartRequired bool    `json:"restartRequired"`
+	Timestamp       string  `json:"timestamp"`
+	Message         *string `json:"message,omitempty"`
+}
+
+type ImagorStatus struct {
+	Configured           bool                  `json:"configured"`
+	Mode                 *string               `json:"mode,omitempty"`
+	RestartRequired      bool                  `json:"restartRequired"`
+	LastUpdated          *string               `json:"lastUpdated,omitempty"`
+	IsOverriddenByConfig bool                  `json:"isOverriddenByConfig"`
+	EmbeddedConfig       *EmbeddedImagorConfig `json:"embeddedConfig,omitempty"`
+	ExternalConfig       *ExternalImagorConfig `json:"externalConfig,omitempty"`
 }
 
 type Mutation struct {
@@ -155,6 +202,118 @@ type UserRegistry struct {
 	Key         string `json:"key"`
 	Value       string `json:"value"`
 	IsEncrypted bool   `json:"isEncrypted"`
+}
+
+type ImagorMode string
+
+const (
+	ImagorModeEmbedded ImagorMode = "EMBEDDED"
+	ImagorModeExternal ImagorMode = "EXTERNAL"
+)
+
+var AllImagorMode = []ImagorMode{
+	ImagorModeEmbedded,
+	ImagorModeExternal,
+}
+
+func (e ImagorMode) IsValid() bool {
+	switch e {
+	case ImagorModeEmbedded, ImagorModeExternal:
+		return true
+	}
+	return false
+}
+
+func (e ImagorMode) String() string {
+	return string(e)
+}
+
+func (e *ImagorMode) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ImagorMode(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ImagorMode", str)
+	}
+	return nil
+}
+
+func (e ImagorMode) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ImagorMode) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ImagorMode) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ImagorSignerType string
+
+const (
+	ImagorSignerTypeSha1   ImagorSignerType = "SHA1"
+	ImagorSignerTypeSha256 ImagorSignerType = "SHA256"
+	ImagorSignerTypeSha512 ImagorSignerType = "SHA512"
+)
+
+var AllImagorSignerType = []ImagorSignerType{
+	ImagorSignerTypeSha1,
+	ImagorSignerTypeSha256,
+	ImagorSignerTypeSha512,
+}
+
+func (e ImagorSignerType) IsValid() bool {
+	switch e {
+	case ImagorSignerTypeSha1, ImagorSignerTypeSha256, ImagorSignerTypeSha512:
+		return true
+	}
+	return false
+}
+
+func (e ImagorSignerType) String() string {
+	return string(e)
+}
+
+func (e *ImagorSignerType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ImagorSignerType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ImagorSignerType", str)
+	}
+	return nil
+}
+
+func (e ImagorSignerType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ImagorSignerType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ImagorSignerType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 type SortOption string

@@ -14,6 +14,9 @@ type Query {
   # Storage Configuration APIs
   storageStatus: StorageStatus!
 
+  # Imagor Configuration APIs
+  imagorStatus: ImagorStatus!
+
   # Registry APIs
   listUserRegistry(prefix: String, ownerID: String): [UserRegistry!]!
   getUserRegistry(
@@ -61,6 +64,10 @@ type Mutation {
   configureFileStorage(input: FileStorageInput!): StorageConfigResult!
   configureS3Storage(input: S3StorageInput!): StorageConfigResult!
   testStorageConfig(input: StorageConfigInput!): StorageTestResult!
+
+  # Imagor Configuration APIs (admin only)
+  configureEmbeddedImagor(input: EmbeddedImagorInput!): ImagorConfigResult!
+  configureExternalImagor(input: ExternalImagorInput!): ImagorConfigResult!
 
   # admin only operations
   createUser(input: CreateUserInput!): User!
@@ -228,4 +235,65 @@ input S3StorageInput {
 enum StorageType {
   FILE
   S3
+}
+
+# Imagor Configuration Types
+type ImagorStatus {
+  configured: Boolean!
+  mode: String  # "embedded" or "external"
+  restartRequired: Boolean!
+  lastUpdated: String
+  isOverriddenByConfig: Boolean!
+  embeddedConfig: EmbeddedImagorConfig
+  externalConfig: ExternalImagorConfig
+}
+
+type EmbeddedImagorConfig {
+  hasCustomSecret: Boolean!     # Instead of exposing secret value
+  secretSource: String!         # "JWT Secret" or "Custom Secret"
+  cachePath: String!
+  # Fixed values (not configurable)
+  signerType: ImagorSignerType! # Always SHA256
+  signerTruncate: Int!          # Always 28
+  unsafe: Boolean!              # Always false
+}
+
+type ExternalImagorConfig {
+  baseUrl: String!
+  hasSecret: Boolean!           # Instead of exposing secret value
+  unsafe: Boolean!
+  signerType: ImagorSignerType!
+  signerTruncate: Int!
+  # No cachePath for external mode
+}
+
+type ImagorConfigResult {
+  success: Boolean!
+  restartRequired: Boolean!
+  timestamp: String!
+  message: String
+}
+
+input EmbeddedImagorInput {
+  secret: String        # Optional, defaults to JWT secret
+  cachePath: String     # Optional, defaults to ".imagor-cache", empty = no cache
+}
+
+input ExternalImagorInput {
+  baseUrl: String!
+  secret: String
+  unsafe: Boolean
+  signerType: ImagorSignerType  # Optional, defaults to SHA1
+  signerTruncate: Int           # Optional, defaults to 0
+}
+
+enum ImagorSignerType {
+  SHA1
+  SHA256
+  SHA512
+}
+
+enum ImagorMode {
+  EMBEDDED
+  EXTERNAL
 }

@@ -35,6 +35,38 @@ export type CreateUserInput = {
   role: Scalars['String']['input']
 }
 
+export type EmbeddedImagorConfig = {
+  __typename?: 'EmbeddedImagorConfig'
+  cachePath: Scalars['String']['output']
+  hasCustomSecret: Scalars['Boolean']['output']
+  secretSource: Scalars['String']['output']
+  signerTruncate: Scalars['Int']['output']
+  signerType: ImagorSignerType
+  unsafe: Scalars['Boolean']['output']
+}
+
+export type EmbeddedImagorInput = {
+  cachePath: InputMaybe<Scalars['String']['input']>
+  secret: InputMaybe<Scalars['String']['input']>
+}
+
+export type ExternalImagorConfig = {
+  __typename?: 'ExternalImagorConfig'
+  baseUrl: Scalars['String']['output']
+  hasSecret: Scalars['Boolean']['output']
+  signerTruncate: Scalars['Int']['output']
+  signerType: ImagorSignerType
+  unsafe: Scalars['Boolean']['output']
+}
+
+export type ExternalImagorInput = {
+  baseUrl: Scalars['String']['input']
+  secret: InputMaybe<Scalars['String']['input']>
+  signerTruncate: InputMaybe<Scalars['Int']['input']>
+  signerType: InputMaybe<ImagorSignerType>
+  unsafe: InputMaybe<Scalars['Boolean']['input']>
+}
+
 export type FileItem = {
   __typename?: 'FileItem'
   isDirectory: Scalars['Boolean']['output']
@@ -74,9 +106,34 @@ export type FileStorageInput = {
   writePermissions: InputMaybe<Scalars['String']['input']>
 }
 
+export type ImagorConfigResult = {
+  __typename?: 'ImagorConfigResult'
+  message: Maybe<Scalars['String']['output']>
+  restartRequired: Scalars['Boolean']['output']
+  success: Scalars['Boolean']['output']
+  timestamp: Scalars['String']['output']
+}
+
+export type ImagorMode = 'EMBEDDED' | 'EXTERNAL'
+
+export type ImagorSignerType = 'SHA1' | 'SHA256' | 'SHA512'
+
+export type ImagorStatus = {
+  __typename?: 'ImagorStatus'
+  configured: Scalars['Boolean']['output']
+  embeddedConfig: Maybe<EmbeddedImagorConfig>
+  externalConfig: Maybe<ExternalImagorConfig>
+  isOverriddenByConfig: Scalars['Boolean']['output']
+  lastUpdated: Maybe<Scalars['String']['output']>
+  mode: Maybe<Scalars['String']['output']>
+  restartRequired: Scalars['Boolean']['output']
+}
+
 export type Mutation = {
   __typename?: 'Mutation'
   changePassword: Scalars['Boolean']['output']
+  configureEmbeddedImagor: ImagorConfigResult
+  configureExternalImagor: ImagorConfigResult
   configureFileStorage: StorageConfigResult
   configureS3Storage: StorageConfigResult
   createFolder: Scalars['Boolean']['output']
@@ -95,6 +152,14 @@ export type Mutation = {
 export type MutationChangePasswordArgs = {
   input: ChangePasswordInput
   userId?: InputMaybe<Scalars['ID']['input']>
+}
+
+export type MutationConfigureEmbeddedImagorArgs = {
+  input: EmbeddedImagorInput
+}
+
+export type MutationConfigureExternalImagorArgs = {
+  input: ExternalImagorInput
 }
 
 export type MutationConfigureFileStorageArgs = {
@@ -161,6 +226,7 @@ export type Query = {
   __typename?: 'Query'
   getSystemRegistry: Array<SystemRegistry>
   getUserRegistry: Array<UserRegistry>
+  imagorStatus: ImagorStatus
   listFiles: FileList
   listSystemRegistry: Array<SystemRegistry>
   listUserRegistry: Array<UserRegistry>
@@ -322,6 +388,67 @@ export type UserRegistry = {
   isEncrypted: Scalars['Boolean']['output']
   key: Scalars['String']['output']
   value: Scalars['String']['output']
+}
+
+export type ImagorStatusQueryVariables = Exact<{ [key: string]: never }>
+
+export type ImagorStatusQuery = {
+  __typename?: 'Query'
+  imagorStatus: {
+    __typename?: 'ImagorStatus'
+    configured: boolean
+    mode: string | null
+    restartRequired: boolean
+    lastUpdated: string | null
+    isOverriddenByConfig: boolean
+    embeddedConfig: {
+      __typename?: 'EmbeddedImagorConfig'
+      hasCustomSecret: boolean
+      secretSource: string
+      cachePath: string
+      signerType: ImagorSignerType
+      signerTruncate: number
+      unsafe: boolean
+    } | null
+    externalConfig: {
+      __typename?: 'ExternalImagorConfig'
+      baseUrl: string
+      hasSecret: boolean
+      unsafe: boolean
+      signerType: ImagorSignerType
+      signerTruncate: number
+    } | null
+  }
+}
+
+export type ConfigureEmbeddedImagorMutationVariables = Exact<{
+  input: EmbeddedImagorInput
+}>
+
+export type ConfigureEmbeddedImagorMutation = {
+  __typename?: 'Mutation'
+  configureEmbeddedImagor: {
+    __typename?: 'ImagorConfigResult'
+    success: boolean
+    restartRequired: boolean
+    timestamp: string
+    message: string | null
+  }
+}
+
+export type ConfigureExternalImagorMutationVariables = Exact<{
+  input: ExternalImagorInput
+}>
+
+export type ConfigureExternalImagorMutation = {
+  __typename?: 'Mutation'
+  configureExternalImagor: {
+    __typename?: 'ImagorConfigResult'
+    success: boolean
+    restartRequired: boolean
+    timestamp: string
+    message: string | null
+  }
 }
 
 export type RegistryInfoFragment = {
@@ -877,6 +1004,160 @@ export const UserInfoFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<UserInfoFragment, unknown>
+export const ImagorStatusDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ImagorStatus' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'imagorStatus' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'configured' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'mode' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'restartRequired' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'lastUpdated' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'embeddedConfig' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasCustomSecret' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'secretSource' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'cachePath' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'signerType' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'unsafe' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'externalConfig' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'baseUrl' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasSecret' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'unsafe' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'signerType' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ImagorStatusQuery, ImagorStatusQueryVariables>
+export const ConfigureEmbeddedImagorDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ConfigureEmbeddedImagor' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'EmbeddedImagorInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'configureEmbeddedImagor' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'success' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'restartRequired' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  ConfigureEmbeddedImagorMutation,
+  ConfigureEmbeddedImagorMutationVariables
+>
+export const ConfigureExternalImagorDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ConfigureExternalImagor' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ExternalImagorInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'configureExternalImagor' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'success' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'restartRequired' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  ConfigureExternalImagorMutation,
+  ConfigureExternalImagorMutationVariables
+>
 export const ListUserRegistryDocument = {
   kind: 'Document',
   definitions: [

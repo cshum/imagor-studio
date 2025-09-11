@@ -15,6 +15,9 @@ import * as types from './graphql'
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
+  '\n  query ImagorStatus {\n    imagorStatus {\n      configured\n      mode\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      embeddedConfig {\n        hasCustomSecret\n        secretSource\n        cachePath\n        signerType\n        signerTruncate\n        unsafe\n      }\n      externalConfig {\n        baseUrl\n        hasSecret\n        unsafe\n        signerType\n        signerTruncate\n      }\n    }\n  }\n': typeof types.ImagorStatusDocument
+  '\n  mutation ConfigureEmbeddedImagor($input: EmbeddedImagorInput!) {\n    configureEmbeddedImagor(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureEmbeddedImagorDocument
+  '\n  mutation ConfigureExternalImagor($input: ExternalImagorInput!) {\n    configureExternalImagor(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureExternalImagorDocument
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n': typeof types.SystemRegistryInfoFragmentDoc
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.ListUserRegistryDocument
@@ -46,6 +49,12 @@ type Documents = {
   '\n  mutation CreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      ...UserInfo\n    }\n  }\n': typeof types.CreateUserDocument
 }
 const documents: Documents = {
+  '\n  query ImagorStatus {\n    imagorStatus {\n      configured\n      mode\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      embeddedConfig {\n        hasCustomSecret\n        secretSource\n        cachePath\n        signerType\n        signerTruncate\n        unsafe\n      }\n      externalConfig {\n        baseUrl\n        hasSecret\n        unsafe\n        signerType\n        signerTruncate\n      }\n    }\n  }\n':
+    types.ImagorStatusDocument,
+  '\n  mutation ConfigureEmbeddedImagor($input: EmbeddedImagorInput!) {\n    configureEmbeddedImagor(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n':
+    types.ConfigureEmbeddedImagorDocument,
+  '\n  mutation ConfigureExternalImagor($input: ExternalImagorInput!) {\n    configureExternalImagor(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n':
+    types.ConfigureExternalImagorDocument,
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n':
     types.RegistryInfoFragmentDoc,
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n':
@@ -119,6 +128,24 @@ const documents: Documents = {
  */
 export function gql(source: string): unknown
 
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  query ImagorStatus {\n    imagorStatus {\n      configured\n      mode\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      embeddedConfig {\n        hasCustomSecret\n        secretSource\n        cachePath\n        signerType\n        signerTruncate\n        unsafe\n      }\n      externalConfig {\n        baseUrl\n        hasSecret\n        unsafe\n        signerType\n        signerTruncate\n      }\n    }\n  }\n',
+): (typeof documents)['\n  query ImagorStatus {\n    imagorStatus {\n      configured\n      mode\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      embeddedConfig {\n        hasCustomSecret\n        secretSource\n        cachePath\n        signerType\n        signerTruncate\n        unsafe\n      }\n      externalConfig {\n        baseUrl\n        hasSecret\n        unsafe\n        signerType\n        signerTruncate\n      }\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation ConfigureEmbeddedImagor($input: EmbeddedImagorInput!) {\n    configureEmbeddedImagor(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n',
+): (typeof documents)['\n  mutation ConfigureEmbeddedImagor($input: EmbeddedImagorInput!) {\n    configureEmbeddedImagor(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation ConfigureExternalImagor($input: ExternalImagorInput!) {\n    configureExternalImagor(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n',
+): (typeof documents)['\n  mutation ConfigureExternalImagor($input: ExternalImagorInput!) {\n    configureExternalImagor(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
