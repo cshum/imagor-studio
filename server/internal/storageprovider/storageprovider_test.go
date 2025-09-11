@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cshum/imagor-studio/server/internal/config"
+	"github.com/cshum/imagor-studio/server/internal/storage/s3storage"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -48,6 +49,52 @@ func TestProvider_NewS3Storage(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, storage)
+}
+
+func TestProvider_NewS3Storage_WithForcePathStyle(t *testing.T) {
+	logger := zap.NewNop()
+	provider := New(logger, nil, nil)
+
+	cfg := &config.Config{
+		S3Bucket:          "test-bucket",
+		S3Region:          "us-east-1",
+		S3AccessKeyID:     "test-key",
+		S3SecretAccessKey: "test-secret",
+		S3ForcePathStyle:  true,
+	}
+
+	storage, err := provider.NewS3Storage(cfg)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, storage)
+
+	// Cast to S3Storage to verify the type
+	_, ok := storage.(*s3storage.S3Storage)
+	assert.True(t, ok, "storage should be of type *s3storage.S3Storage")
+	// Note: We can't directly access the forcePathStyle field since it's private,
+	// but we can verify the storage was created successfully with the config
+}
+
+func TestProvider_NewS3Storage_WithForcePathStyleFalse(t *testing.T) {
+	logger := zap.NewNop()
+	provider := New(logger, nil, nil)
+
+	cfg := &config.Config{
+		S3Bucket:          "test-bucket",
+		S3Region:          "us-east-1",
+		S3AccessKeyID:     "test-key",
+		S3SecretAccessKey: "test-secret",
+		S3ForcePathStyle:  false,
+	}
+
+	storage, err := provider.NewS3Storage(cfg)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, storage)
+
+	// Cast to S3Storage to verify the type
+	_, ok := storage.(*s3storage.S3Storage)
+	assert.True(t, ok, "storage should be of type *s3storage.S3Storage")
 }
 
 func TestProvider_NewS3Storage_MissingBucket(t *testing.T) {

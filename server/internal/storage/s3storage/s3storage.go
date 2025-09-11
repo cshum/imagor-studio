@@ -24,6 +24,7 @@ type S3Storage struct {
 	secretAccessKey string
 	sessionToken    string
 	baseDir         string
+	forcePathStyle  bool
 }
 
 var folderSuffix = "/"
@@ -53,6 +54,12 @@ func WithCredentials(accessKeyID, secretAccessKey, sessionToken string) Option {
 func WithBaseDir(baseDir string) Option {
 	return func(s *S3Storage) {
 		s.baseDir = strings.Trim(baseDir, "/")
+	}
+}
+
+func WithForcePathStyle(forcePathStyle bool) Option {
+	return func(s *S3Storage) {
+		s.forcePathStyle = forcePathStyle
 	}
 }
 
@@ -92,8 +99,8 @@ func New(bucket string, options ...Option) (*S3Storage, error) {
 		func(o *s3.Options) {
 			if s.endpoint != "" {
 				o.BaseEndpoint = aws.String(s.endpoint)
-				o.UsePathStyle = true
 			}
+			o.UsePathStyle = s.forcePathStyle
 		},
 	}
 
