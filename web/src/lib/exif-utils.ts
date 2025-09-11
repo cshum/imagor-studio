@@ -19,9 +19,7 @@ export const fetchImageMetadata = async (metaUrl: string): Promise<ImagorMetadat
       console.warn(`Failed to fetch metadata from ${metaUrl}: ${response.status}`)
       return null
     }
-
-    const metadata: ImagorMetadata = await response.json()
-    return metadata
+    return await response.json()
   } catch (error) {
     console.warn(`Error fetching metadata from ${metaUrl}:`, error)
     return null

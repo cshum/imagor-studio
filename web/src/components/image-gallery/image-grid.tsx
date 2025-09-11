@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
+import { getFullImageUrl } from '@/lib/image-utils'
 
 export interface ImageGridProps {
   images: GalleryImage[]
@@ -79,7 +80,7 @@ export const ImageGrid = ({
         >
           <div className='h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700'>
             <img
-              src={image.imageSrc}
+              src={getFullImageUrl(image.imageSrc)}
               alt={image.imageName}
               className='h-full w-full object-cover'
             />

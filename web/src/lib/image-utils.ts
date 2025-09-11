@@ -1,3 +1,5 @@
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
+
 // Default supported image extensions
 export const DEFAULT_IMAGE_EXTENSIONS = [
   '.jpg',
@@ -33,4 +35,17 @@ export function filterImageFiles<T extends { name: string }>(
   extensions: string[] = DEFAULT_IMAGE_EXTENSIONS,
 ): T[] {
   return files.filter((file) => isImageFile(file.name, extensions))
+}
+
+// Convert relative imagor URLs to full URLs for cross-origin access
+export function getFullImageUrl(imageUrl: string): string {
+  if (!imageUrl) return imageUrl
+
+  // If it's a relative path (starts with /), prepend server URL
+  if (imageUrl.startsWith('/')) {
+    return `${BASE_URL}${imageUrl}`
+  }
+
+  // Otherwise, return as-is (shouldn't happen, but safe fallback)
+  return imageUrl
 }
