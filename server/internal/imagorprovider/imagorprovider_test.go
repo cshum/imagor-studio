@@ -3,6 +3,7 @@ package imagorprovider
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -595,4 +596,380 @@ func TestCreateEmbeddedHandler(t *testing.T) {
 	handler, err = provider.createEmbeddedHandler(imagorConfig)
 	require.NoError(t, err)
 	assert.NotNil(t, handler)
+}
+
+func TestGetHashAlgorithm(t *testing.T) {
+	tests := []struct {
+		name       string
+		signerType string
+		expected   string
+	}{
+		{"SHA1 default", "sha1", "sha1"},
+		{"SHA1 uppercase", "SHA1", "sha1"},
+		{"SHA256", "sha256", "sha256"},
+		{"SHA256 uppercase", "SHA256", "sha256"},
+		{"SHA512", "sha512", "sha512"},
+		{"SHA512 uppercase", "SHA512", "sha512"},
+		{"Invalid type defaults to SHA1", "invalid", "sha1"},
+		{"Empty string defaults to SHA1", "", "sha1"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hashFunc := getHashAlgorithm(tt.signerType)
+			hash := hashFunc()
+
+			// Check the hash type by writing some data and checking the size
+			hash.Write([]byte("test"))
+			result := hash.Sum(nil)
+
+			switch tt.expected {
+			case "sha1":
+				assert.Equal(t, 20, len(result), "SHA1 should produce 20-byte hash")
+			case "sha256":
+				assert.Equal(t, 32, len(result), "SHA256 should produce 32-byte hash")
+			case "sha512":
+				assert.Equal(t, 64, len(result), "SHA512 should produce 64-byte hash")
+			}
+		})
+	}
+}
+
+func TestBuildConfigFromRegistry_SignerConfiguration(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	cfg := &config.Config{}
+	storageProvider := &storageprovider.Provider{}
+
+	provider := New(logger, registryStore, cfg, storageProvider)
+
+	tests := []struct {
+		name           string
+		signerType     string
+		signerTruncate string
+		expectedType   string
+		expectedTrunc  int
+	}{
+		{"Default values", "", "", "sha1", 0},
+		{"SHA256 with truncation", "sha256", "28", "sha256", 28},
+		{"SHA512 with truncation", "sha512", "32", "sha512", 32},
+		{"SHA1 explicit", "sha1", "0", "sha1", 0},
+		{"Invalid truncate value", "sha256", "invalid", "sha256", 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Clear registry
+			registryStore.data = make(map[string]string)
+
+			// Set up basic configuration
+			ctx := context.Background()
+			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_configured", "true", false)
+			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
+			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://test.example.com", false)
+			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "test-secret", false)
+
+			// Set signer configuration if provided
+			if tt.signerType != "" {
+				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_type", tt.signerType, false)
+			}
+			if tt.signerTruncate != "" {
+				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_truncate", tt.signerTruncate, false)
+			}
+
+			config, err := provider.buildConfigFromRegistry()
+			require.NoError(t, err)
+			require.NotNil(t, config)
+
+			assert.Equal(t, tt.expectedType, config.SignerType)
+			assert.Equal(t, tt.expectedTrunc, config.SignerTruncate)
+		})
+	}
+}
+
+func TestGenerateURL_External_ConfigurableSigner(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	cfg := &config.Config{}
+	storageProvider := &storageprovider.Provider{}
+
+	tests := []struct {
+		name           string
+		signerType     string
+		signerTruncate int
+		secret         string
+		expectError    bool
+	}{
+		{"SHA1 default", "sha1", 0, "test-secret", false},
+		{"SHA1 with truncation", "sha1", 28, "test-secret", false},
+		{"SHA256 default", "sha256", 0, "test-secret", false},
+		{"SHA256 with truncation", "sha256", 28, "test-secret", false},
+		{"SHA512 default", "sha512", 0, "test-secret", false},
+		{"SHA512 with truncation", "sha512", 32, "test-secret", false},
+		{"No secret should error", "sha256", 28, "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider := New(logger, registryStore, cfg, storageProvider)
+
+			// Set up configuration
+			imagorConfig := &ImagorConfig{
+				Mode:           "external",
+				BaseURL:        "http://localhost:8000",
+				Secret:         tt.secret,
+				Unsafe:         false,
+				SignerType:     tt.signerType,
+				SignerTruncate: tt.signerTruncate,
+			}
+
+			provider.currentConfig = imagorConfig
+			provider.imagorState = ImagorStateConfigured
+
+			url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
+				Width:  300,
+				Height: 200,
+			})
+
+			if tt.expectError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Contains(t, url, "http://localhost:8000")
+			assert.Contains(t, url, "300x200")
+			assert.Contains(t, url, "test/image.jpg")
+
+			// Verify URL contains signature (should start with base URL + signature)
+			assert.Regexp(t, `^http://localhost:8000/[a-zA-Z0-9_=/-]+/`, url)
+		})
+	}
+}
+
+func TestGenerateURL_External_SignerTruncation(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	cfg := &config.Config{}
+	storageProvider := &storageprovider.Provider{}
+
+	provider := New(logger, registryStore, cfg, storageProvider)
+
+	// Test that truncation actually affects the signature length
+	params := imagorpath.Params{
+		Width:  300,
+		Height: 200,
+		Image:  "test/image.jpg",
+	}
+
+	// Generate URL with no truncation
+	configNoTrunc := &ImagorConfig{
+		Mode:           "external",
+		BaseURL:        "http://localhost:8000",
+		Secret:         "test-secret",
+		SignerType:     "sha256",
+		SignerTruncate: 0,
+	}
+	provider.currentConfig = configNoTrunc
+	provider.imagorState = ImagorStateConfigured
+
+	urlNoTrunc, err := provider.GenerateURL("test/image.jpg", params)
+	require.NoError(t, err)
+
+	// Generate URL with truncation
+	configTrunc := &ImagorConfig{
+		Mode:           "external",
+		BaseURL:        "http://localhost:8000",
+		Secret:         "test-secret",
+		SignerType:     "sha256",
+		SignerTruncate: 28,
+	}
+	provider.currentConfig = configTrunc
+
+	urlTrunc, err := provider.GenerateURL("test/image.jpg", params)
+	require.NoError(t, err)
+
+	// Extract signatures (part between base URL and path)
+	baseURL := "http://localhost:8000/"
+	sigNoTrunc := urlNoTrunc[len(baseURL) : strings.Index(urlNoTrunc[len(baseURL):], "/")+len(baseURL)]
+	sigTrunc := urlTrunc[len(baseURL) : strings.Index(urlTrunc[len(baseURL):], "/")+len(baseURL)]
+
+	// Truncated signature should be shorter
+	assert.True(t, len(sigTrunc) < len(sigNoTrunc),
+		"Truncated signature (%d chars) should be shorter than non-truncated (%d chars)",
+		len(sigTrunc), len(sigNoTrunc))
+
+	// Truncated signature should be exactly 28 characters (plus padding)
+	assert.True(t, len(sigTrunc) <= 28+4, // Allow for base64 padding
+		"Truncated signature should be around 28 characters, got %d", len(sigTrunc))
+}
+
+func TestGenerateURL_External_DifferentHashAlgorithms(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	cfg := &config.Config{}
+	storageProvider := &storageprovider.Provider{}
+
+	provider := New(logger, registryStore, cfg, storageProvider)
+
+	params := imagorpath.Params{
+		Width:  300,
+		Height: 200,
+		Image:  "test/image.jpg",
+	}
+
+	algorithms := []string{"sha1", "sha256", "sha512"}
+	urls := make(map[string]string)
+
+	// Generate URLs with different algorithms
+	for _, alg := range algorithms {
+		config := &ImagorConfig{
+			Mode:           "external",
+			BaseURL:        "http://localhost:8000",
+			Secret:         "test-secret",
+			SignerType:     alg,
+			SignerTruncate: 0,
+		}
+		provider.currentConfig = config
+		provider.imagorState = ImagorStateConfigured
+
+		url, err := provider.GenerateURL("test/image.jpg", params)
+		require.NoError(t, err)
+		urls[alg] = url
+	}
+
+	// All URLs should be different (different signatures)
+	assert.NotEqual(t, urls["sha1"], urls["sha256"], "SHA1 and SHA256 should produce different signatures")
+	assert.NotEqual(t, urls["sha256"], urls["sha512"], "SHA256 and SHA512 should produce different signatures")
+	assert.NotEqual(t, urls["sha1"], urls["sha512"], "SHA1 and SHA512 should produce different signatures")
+
+	// All should contain the same base URL and parameters
+	for alg, url := range urls {
+		assert.Contains(t, url, "http://localhost:8000", "Algorithm %s URL should contain base URL", alg)
+		assert.Contains(t, url, "300x200", "Algorithm %s URL should contain dimensions", alg)
+		assert.Contains(t, url, "test/image.jpg", "Algorithm %s URL should contain image path", alg)
+	}
+}
+
+func TestInitializeWithConfig_FromRegistry_WithSignerConfig(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	cfg := &config.Config{}
+	storageProvider := &storageprovider.Provider{}
+
+	// Set up registry configuration with signer options
+	ctx := context.Background()
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_configured", "true", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://registry.example.com", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "registry-secret", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", "false", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_type", "sha256", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_truncate", "28", false)
+
+	provider := New(logger, registryStore, cfg, storageProvider)
+	err := provider.InitializeWithConfig(cfg)
+
+	require.NoError(t, err)
+	assert.Equal(t, ImagorStateConfigured, provider.imagorState)
+
+	config := provider.GetConfig()
+	require.NotNil(t, config)
+	assert.Equal(t, "external", config.Mode)
+	assert.Equal(t, "http://registry.example.com", config.BaseURL)
+	assert.Equal(t, "registry-secret", config.Secret)
+	assert.False(t, config.Unsafe)
+	assert.Equal(t, "sha256", config.SignerType)
+	assert.Equal(t, 28, config.SignerTruncate)
+}
+
+func TestReloadFromRegistry_WithSignerConfig(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	cfg := &config.Config{
+		ImagorMode: "disabled",
+	}
+	storageProvider := &storageprovider.Provider{}
+
+	provider := New(logger, registryStore, cfg, storageProvider)
+	err := provider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	// Initially disabled
+	config := provider.GetConfig()
+	assert.Equal(t, "disabled", config.Mode)
+
+	// Set up registry configuration with signer options
+	ctx := context.Background()
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_configured", "true", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://new.example.com", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "new-secret", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_type", "sha512", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_truncate", "32", false)
+
+	// Reload from registry
+	err = provider.ReloadFromRegistry()
+	require.NoError(t, err)
+
+	// Should now be configured from registry with signer options
+	config = provider.GetConfig()
+	assert.Equal(t, "external", config.Mode)
+	assert.Equal(t, "http://new.example.com", config.BaseURL)
+	assert.Equal(t, "new-secret", config.Secret)
+	assert.Equal(t, "sha512", config.SignerType)
+	assert.Equal(t, 32, config.SignerTruncate)
+}
+
+func TestGenerateURL_EmbeddedVsExternal_SignerComparison(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	cfg := &config.Config{
+		JWTSecret: "jwt-secret",
+	}
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	provider := New(logger, registryStore, cfg, storageProvider)
+
+	params := imagorpath.Params{
+		Width:  300,
+		Height: 200,
+		Image:  "test/image.jpg",
+	}
+
+	// Test embedded mode (uses JWT secret with SHA256 + 28-char truncation)
+	embeddedConfig := &ImagorConfig{
+		Mode:    "embedded",
+		BaseURL: "/imagor",
+		Secret:  "different-secret", // Should be ignored in favor of JWT secret
+	}
+	provider.currentConfig = embeddedConfig
+	provider.imagorState = ImagorStateConfigured
+
+	embeddedURL, err := provider.GenerateURL("test/image.jpg", params)
+	require.NoError(t, err)
+
+	// Test external mode with same configuration as embedded (SHA256 + 28-char truncation)
+	externalConfig := &ImagorConfig{
+		Mode:           "external",
+		BaseURL:        "http://localhost:8000",
+		Secret:         "jwt-secret", // Same as JWT secret
+		SignerType:     "sha256",
+		SignerTruncate: 28,
+	}
+	provider.currentConfig = externalConfig
+
+	externalURL, err := provider.GenerateURL("test/image.jpg", params)
+	require.NoError(t, err)
+
+	// Extract signatures
+	embeddedSig := embeddedURL[strings.Index(embeddedURL, "/imagor/")+8 : strings.LastIndex(embeddedURL, "/")]
+	externalSig := externalURL[strings.Index(externalURL, "8000/")+5 : strings.LastIndex(externalURL, "/")]
+
+	// Signatures should be identical when using same secret, algorithm, and truncation
+	assert.Equal(t, embeddedSig, externalSig,
+		"Embedded and external modes should produce identical signatures with same configuration")
 }
