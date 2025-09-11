@@ -107,30 +107,38 @@ func TestNew(t *testing.T) {
 	provider := New(logger, registryStore, cfg, storageProvider)
 
 	assert.NotNil(t, provider)
-	assert.Equal(t, ImagorStateDisabled, provider.imagorState)
+	assert.Equal(t, ImagorStateConfigured, provider.imagorState)
 	assert.NotNil(t, provider.logger)
 	assert.NotNil(t, provider.registryStore)
 	assert.NotNil(t, provider.config)
 	assert.NotNil(t, provider.storageProvider)
 }
 
-func TestInitializeWithConfig_Disabled(t *testing.T) {
+func TestInitializeWithConfig_DefaultToEmbedded(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode: "disabled",
+		JWTSecret: "test-jwt-secret",
 	}
-	storageProvider := &storageprovider.Provider{}
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
 
 	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
+	err = provider.InitializeWithConfig(cfg)
 
 	require.NoError(t, err)
-	assert.Equal(t, ImagorStateDisabled, provider.imagorState)
+	assert.Equal(t, ImagorStateConfigured, provider.imagorState)
 
 	config := provider.GetConfig()
 	require.NotNil(t, config)
-	assert.Equal(t, "disabled", config.Mode)
+	assert.Equal(t, "embedded", config.Mode)
+	assert.Equal(t, "/imagor", config.BaseURL)
+	assert.Equal(t, "test-jwt-secret", config.Secret)
+	assert.False(t, config.Unsafe)
+	assert.Equal(t, "sha256", config.SignerType)
+	assert.Equal(t, 28, config.SignerTruncate)
 }
 
 func TestInitializeWithConfig_External(t *testing.T) {
@@ -216,16 +224,19 @@ func TestInitializeWithConfig_FromRegistry(t *testing.T) {
 	assert.True(t, config.Unsafe)
 }
 
-func TestGenerateURL_Disabled(t *testing.T) {
+func TestGenerateURL_EmbeddedDefault(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode: "disabled",
+		JWTSecret: "test-jwt-secret",
 	}
-	storageProvider := &storageprovider.Provider{}
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
 
 	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
+	err = provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
 	url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
@@ -234,7 +245,9 @@ func TestGenerateURL_Disabled(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, "/api/file/test%2Fimage.jpg", url)
+	assert.Contains(t, url, "/imagor/")
+	assert.Contains(t, url, "300x200")
+	assert.Contains(t, url, "test/image.jpg")
 }
 
 func TestGenerateURL_External_Unsafe(t *testing.T) {
@@ -377,24 +390,27 @@ func TestIsRestartRequired(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode: "disabled",
+		JWTSecret: "test-jwt-secret",
 	}
-	storageProvider := &storageprovider.Provider{}
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
-	// Disabled state should not require restart
+	provider := New(logger, registryStore, cfg, storageProvider)
+	err = provider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	// No timestamp set, should not require restart
 	assert.False(t, provider.IsRestartRequired())
 
-	// Configure imagor
+	// Configure imagor to external mode
 	cfg.ImagorMode = "external"
 	cfg.ImagorURL = "http://localhost:8000"
 	err = provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
-	// No timestamp set, should not require restart
+	// Still no timestamp set, should not require restart
 	assert.False(t, provider.IsRestartRequired())
 
 	// Set a future timestamp
@@ -411,17 +427,20 @@ func TestReloadFromRegistry(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode: "disabled",
+		JWTSecret: "test-jwt-secret",
 	}
-	storageProvider := &storageprovider.Provider{}
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
-	// Initially disabled
+	provider := New(logger, registryStore, cfg, storageProvider)
+	err = provider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	// Initially defaults to embedded
 	config := provider.GetConfig()
-	assert.Equal(t, "disabled", config.Mode)
+	assert.Equal(t, "embedded", config.Mode)
 
 	// Set up registry configuration
 	ctx := context.Background()
@@ -444,21 +463,24 @@ func TestReloadFromRegistry_NoConfig(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode: "disabled",
+		JWTSecret: "test-jwt-secret",
 	}
-	storageProvider := &storageprovider.Provider{}
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
 
 	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
+	err = provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
 	// Reload from registry with no config
 	err = provider.ReloadFromRegistry()
 	require.NoError(t, err)
 
-	// Should remain disabled
+	// Should default to embedded mode
 	config := provider.GetConfig()
-	assert.Equal(t, "disabled", config.Mode)
+	assert.Equal(t, "embedded", config.Mode)
 }
 
 func TestBuildConfigFromRegistry_MissingMode(t *testing.T) {
@@ -541,21 +563,24 @@ func TestGetHandler_External(t *testing.T) {
 	assert.Nil(t, handler)
 }
 
-func TestGetHandler_Disabled(t *testing.T) {
+func TestGetHandler_EmbeddedDefault(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode: "disabled",
+		JWTSecret: "test-jwt-secret",
 	}
-	storageProvider := &storageprovider.Provider{}
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
-	// Disabled mode should not have a handler
+	provider := New(logger, registryStore, cfg, storageProvider)
+	err = provider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	// Embedded mode should have a handler
 	handler := provider.GetHandler()
-	assert.Nil(t, handler)
+	assert.NotNil(t, handler)
 }
 
 func TestCreateEmbeddedHandler(t *testing.T) {
@@ -878,17 +903,20 @@ func TestReloadFromRegistry_WithSignerConfig(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode: "disabled",
+		JWTSecret: "test-jwt-secret",
 	}
-	storageProvider := &storageprovider.Provider{}
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
-	// Initially disabled
+	provider := New(logger, registryStore, cfg, storageProvider)
+	err = provider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	// Initially defaults to embedded
 	config := provider.GetConfig()
-	assert.Equal(t, "disabled", config.Mode)
+	assert.Equal(t, "embedded", config.Mode)
 
 	// Set up registry configuration with signer options
 	ctx := context.Background()
@@ -932,9 +960,11 @@ func TestGenerateURL_EmbeddedVsExternal_SignerComparison(t *testing.T) {
 
 	// Test embedded mode (uses JWT secret with SHA256 + 28-char truncation)
 	embeddedConfig := &ImagorConfig{
-		Mode:    "embedded",
-		BaseURL: "/imagor",
-		Secret:  "different-secret", // Should be ignored in favor of JWT secret
+		Mode:           "embedded",
+		BaseURL:        "/imagor",
+		Secret:         "jwt-secret", // Use same secret as JWT secret
+		SignerType:     "sha256",     // Explicitly set to match external
+		SignerTruncate: 28,           // Explicitly set to match external
 	}
 	provider.currentConfig = embeddedConfig
 	provider.imagorState = ImagorStateConfigured
