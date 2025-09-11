@@ -356,13 +356,7 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 	}
 
 	// Combine with base URL
-	if cfg.BaseURL == "/imagor" {
-		// Embedded mode - relative path
-		return fmt.Sprintf("%s/%s", cfg.BaseURL, path), nil
-	} else {
-		// External mode - full URL
-		return fmt.Sprintf("%s/%s", cfg.BaseURL, path), nil
-	}
+	return fmt.Sprintf("%s/%s", cfg.BaseURL, path), nil
 }
 
 // createEmbeddedHandler creates an embedded imagor handler
