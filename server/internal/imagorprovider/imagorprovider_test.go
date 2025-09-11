@@ -656,23 +656,28 @@ func TestGetHashAlgorithm(t *testing.T) {
 func TestBuildConfigFromRegistry_SignerConfiguration(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
-	cfg := &config.Config{}
+	cfg := &config.Config{JWTSecret: "jwt-secret"}
 	storageProvider := &storageprovider.Provider{}
 
 	provider := New(logger, registryStore, cfg, storageProvider)
 
 	tests := []struct {
 		name           string
+		mode           string
 		signerType     string
 		signerTruncate string
 		expectedType   string
 		expectedTrunc  int
 	}{
-		{"Default values", "", "", "sha1", 0},
-		{"SHA256 with truncation", "sha256", "28", "sha256", 28},
-		{"SHA512 with truncation", "sha512", "32", "sha512", 32},
-		{"SHA1 explicit", "sha1", "0", "sha1", 0},
-		{"Invalid truncate value", "sha256", "invalid", "sha256", 0},
+		// External mode tests (configurable)
+		{"External default values", "external", "", "", "sha1", 0},
+		{"External SHA256 with truncation", "external", "sha256", "28", "sha256", 28},
+		{"External SHA512 with truncation", "external", "sha512", "32", "sha512", 32},
+		{"External SHA1 explicit", "external", "sha1", "0", "sha1", 0},
+		{"External invalid truncate value", "external", "sha256", "invalid", "sha256", 0},
+		// Embedded mode tests (fixed)
+		{"Embedded mode ignores signer config", "embedded", "sha512", "32", "sha256", 28},
+		{"Embedded mode always SHA256+28", "embedded", "", "", "sha256", 28},
 	}
 
 	for _, tt := range tests {
@@ -682,9 +687,12 @@ func TestBuildConfigFromRegistry_SignerConfiguration(t *testing.T) {
 
 			// Set up basic configuration
 			ctx := context.Background()
-			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
-			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://test.example.com", false)
-			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "test-secret", false)
+			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", tt.mode, false)
+
+			if tt.mode == "external" {
+				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://test.example.com", false)
+				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "test-secret", false)
+			}
 
 			// Set signer configuration if provided
 			if tt.signerType != "" {
