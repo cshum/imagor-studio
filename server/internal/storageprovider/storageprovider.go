@@ -110,6 +110,8 @@ func (p *Provider) NewS3Storage(cfg *config.Config) (storage.Storage, error) {
 		options = append(options, s3storage.WithBaseDir(cfg.S3BaseDir))
 	}
 
+	options = append(options, s3storage.WithForcePathStyle(cfg.S3ForcePathStyle))
+
 	return s3storage.New(cfg.S3Bucket, options...)
 }
 
@@ -264,6 +266,7 @@ func (p *Provider) buildConfigFromRegistry() (*config.Config, error) {
 		"config.s3_bucket",
 		"config.s3_region",
 		"config.s3_endpoint",
+		"config.s3_force_path_style",
 		"config.s3_access_key_id",
 		"config.s3_secret_access_key",
 		"config.s3_session_token",
@@ -344,6 +347,14 @@ func (p *Provider) loadS3ConfigFromResults(resultMap map[string]registryutil.Eff
 
 	if result := resultMap["config.s3_endpoint"]; result.Exists {
 		cfg.S3Endpoint = result.Value
+	}
+
+	if result := resultMap["config.s3_force_path_style"]; result.Exists {
+		forcePathStyle, err := strconv.ParseBool(result.Value)
+		if err != nil {
+			return fmt.Errorf("invalid s3 force path style value: %w", err)
+		}
+		cfg.S3ForcePathStyle = forcePathStyle
 	}
 
 	if result := resultMap["config.s3_access_key_id"]; result.Exists {

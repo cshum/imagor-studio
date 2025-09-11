@@ -34,13 +34,50 @@ func setupFakeS3(t *testing.T) *S3Storage {
 
 	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String(ts.URL)
-		o.UsePathStyle = true
+		o.UsePathStyle = true // Fake S3 requires path style
 	})
 
 	s3Storage, err := New("test-bucket",
 		WithRegion("us-east-1"),
 		WithEndpoint(ts.URL),
 		WithCredentials("YOUR-ACCESSKEYID", "YOUR-SECRETKEY", ""),
+		WithForcePathStyle(true), // Default to true for fake S3
+	)
+	require.NoError(t, err)
+
+	s3Storage.client = s3Client
+
+	// Create the test bucket
+	_, err = s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
+		Bucket: aws.String("test-bucket"),
+	})
+	require.NoError(t, err)
+
+	return s3Storage
+}
+
+func setupFakeS3WithPathStyle(t *testing.T, forcePathStyle bool) *S3Storage {
+	folderSuffix = "/."
+	backend := s3mem.New()
+	faker := gofakes3.New(backend)
+	ts := httptest.NewServer(faker.Server())
+
+	cfg, err := config.LoadDefaultConfig(context.Background(),
+		config.WithRegion("us-east-1"),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("YOUR-ACCESSKEYID", "YOUR-SECRETKEY", "")),
+	)
+	require.NoError(t, err)
+
+	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(ts.URL)
+		o.UsePathStyle = true // Fake S3 always requires path style
+	})
+
+	s3Storage, err := New("test-bucket",
+		WithRegion("us-east-1"),
+		WithEndpoint(ts.URL),
+		WithCredentials("YOUR-ACCESSKEYID", "YOUR-SECRETKEY", ""),
+		WithForcePathStyle(forcePathStyle),
 	)
 	require.NoError(t, err)
 
@@ -350,4 +387,63 @@ func TestS3Storage_ListWithBaseDir(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, fullPathResult.Contents, 1)
 	assert.Equal(t, "base/dir/test.txt", *fullPathResult.Contents[0].Key)
+}
+
+func TestS3Storage_ForcePathStyleTrue(t *testing.T) {
+	s3Storage := setupFakeS3WithPathStyle(t, true)
+	ctx := context.Background()
+
+	// Verify that forcePathStyle is set correctly
+	assert.True(t, s3Storage.forcePathStyle)
+
+	// Test basic functionality with path style enabled
+	content := "Hello, Path Style!"
+	err := s3Storage.Put(ctx, "pathstyle_test.txt", bytes.NewReader([]byte(content)))
+	assert.NoError(t, err)
+
+	result, err := s3Storage.Get(ctx, "pathstyle_test.txt")
+	assert.NoError(t, err)
+	defer result.Close()
+
+	data, err := io.ReadAll(result)
+	assert.NoError(t, err)
+	assert.Equal(t, content, string(data))
+}
+
+func TestS3Storage_ForcePathStyleFalse(t *testing.T) {
+	s3Storage := setupFakeS3WithPathStyle(t, false)
+	ctx := context.Background()
+
+	// Verify that forcePathStyle is set correctly
+	assert.False(t, s3Storage.forcePathStyle)
+
+	// Test basic functionality with path style disabled
+	content := "Hello, Virtual Hosted Style!"
+	err := s3Storage.Put(ctx, "virtualhosted_test.txt", bytes.NewReader([]byte(content)))
+	assert.NoError(t, err)
+
+	result, err := s3Storage.Get(ctx, "virtualhosted_test.txt")
+	assert.NoError(t, err)
+	defer result.Close()
+
+	data, err := io.ReadAll(result)
+	assert.NoError(t, err)
+	assert.Equal(t, content, string(data))
+}
+
+func TestS3Storage_WithForcePathStyleOption(t *testing.T) {
+	// Test creating S3Storage with WithForcePathStyle option
+	s3Storage, err := New("test-bucket",
+		WithRegion("us-east-1"),
+		WithForcePathStyle(true),
+	)
+	assert.NoError(t, err)
+	assert.True(t, s3Storage.forcePathStyle)
+
+	s3Storage2, err := New("test-bucket",
+		WithRegion("us-east-1"),
+		WithForcePathStyle(false),
+	)
+	assert.NoError(t, err)
+	assert.False(t, s3Storage2.forcePathStyle)
 }
