@@ -197,7 +197,6 @@ func TestInitializeWithConfig_FromRegistry(t *testing.T) {
 
 	// Set up registry configuration
 	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_configured", "true", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://registry.example.com", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "registry-secret", false)
@@ -426,7 +425,6 @@ func TestReloadFromRegistry(t *testing.T) {
 
 	// Set up registry configuration
 	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_configured", "true", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://new.example.com", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "new-secret", false)
@@ -471,10 +469,7 @@ func TestBuildConfigFromRegistry_MissingMode(t *testing.T) {
 
 	provider := New(logger, registryStore, cfg, storageProvider)
 
-	// Set configured but no mode
-	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_configured", "true", false)
-
+	// No mode set in registry
 	config, err := provider.buildConfigFromRegistry()
 	require.Error(t, err)
 	assert.Nil(t, config)
@@ -491,7 +486,6 @@ func TestBuildConfigFromRegistry_EmbeddedMode(t *testing.T) {
 
 	// Set up embedded mode configuration
 	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_configured", "true", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "embedded", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "embedded-secret", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", "false", false)
@@ -517,7 +511,6 @@ func TestBuildConfigFromRegistry_ExternalModeDefaults(t *testing.T) {
 
 	// Set up external mode with minimal configuration
 	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_configured", "true", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
 
 	config, err := provider.buildConfigFromRegistry()
@@ -664,7 +657,6 @@ func TestBuildConfigFromRegistry_SignerConfiguration(t *testing.T) {
 
 			// Set up basic configuration
 			ctx := context.Background()
-			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_configured", "true", false)
 			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
 			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://test.example.com", false)
 			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "test-secret", false)
@@ -859,7 +851,6 @@ func TestInitializeWithConfig_FromRegistry_WithSignerConfig(t *testing.T) {
 
 	// Set up registry configuration with signer options
 	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_configured", "true", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://registry.example.com", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "registry-secret", false)
@@ -901,7 +892,6 @@ func TestReloadFromRegistry_WithSignerConfig(t *testing.T) {
 
 	// Set up registry configuration with signer options
 	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_configured", "true", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://new.example.com", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "new-secret", false)

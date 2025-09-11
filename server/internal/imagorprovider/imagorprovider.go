@@ -107,35 +107,11 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	// Check if imagor is configured in registry
-	if p.isImagorConfiguredInRegistry() {
-		imagorConfig, err := p.buildConfigFromRegistry()
-		if err != nil {
-			p.logger.Warn("Failed to create imagor config from registry, using disabled state", zap.Error(err))
-			p.currentConfig = &ImagorConfig{Mode: "disabled"}
-			p.imagorState = ImagorStateDisabled
-			return nil
-		}
-
-		// Create embedded handler if needed
-		if imagorConfig.Mode == "embedded" {
-			handler, err := p.createEmbeddedHandler(imagorConfig)
-			if err != nil {
-				p.logger.Warn("Failed to create embedded imagor handler, using disabled state", zap.Error(err))
-				p.currentConfig = &ImagorConfig{Mode: "disabled"}
-				p.imagorState = ImagorStateDisabled
-				return nil
-			}
-			p.imagorHandler = handler
-		}
-
-		p.currentConfig = imagorConfig
-		p.imagorState = ImagorStateConfigured
-		p.configLoadedAt = time.Now().UnixMilli()
-		p.logger.Info("Imagor initialized successfully", zap.String("mode", imagorConfig.Mode))
-	} else {
-		// Use config from startup flags/env
-		imagorConfig := &ImagorConfig{
+	// Try to load from registry first
+	imagorConfig, err := p.buildConfigFromRegistry()
+	if err != nil || imagorConfig.Mode == "" {
+		// No valid registry config, use startup flags/env
+		imagorConfig = &ImagorConfig{
 			Mode:    cfg.ImagorMode,
 			BaseURL: cfg.ImagorURL,
 			Secret:  cfg.ImagorSecret,
@@ -145,24 +121,31 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 		// Adjust base URL for embedded mode
 		if imagorConfig.Mode == "embedded" {
 			imagorConfig.BaseURL = "/imagor"
-			handler, err := p.createEmbeddedHandler(imagorConfig)
-			if err != nil {
-				p.logger.Warn("Failed to create embedded imagor handler, using disabled state", zap.Error(err))
-				imagorConfig.Mode = "disabled"
-			} else {
-				p.imagorHandler = handler
-			}
 		}
 
-		p.currentConfig = imagorConfig
-		if imagorConfig.Mode == "disabled" {
-			p.imagorState = ImagorStateDisabled
-		} else {
-			p.imagorState = ImagorStateConfigured
-		}
-		p.configLoadedAt = time.Now().UnixMilli()
-		p.logger.Info("Imagor initialized from config", zap.String("mode", imagorConfig.Mode))
+		p.logger.Info("Imagor initialized from startup config", zap.String("mode", imagorConfig.Mode))
+	} else {
+		p.logger.Info("Imagor initialized from registry", zap.String("mode", imagorConfig.Mode))
 	}
+
+	// Create embedded handler if needed
+	if imagorConfig.Mode == "embedded" {
+		handler, err := p.createEmbeddedHandler(imagorConfig)
+		if err != nil {
+			p.logger.Warn("Failed to create embedded imagor handler, using disabled state", zap.Error(err))
+			imagorConfig.Mode = "disabled"
+		} else {
+			p.imagorHandler = handler
+		}
+	}
+
+	p.currentConfig = imagorConfig
+	if imagorConfig.Mode == "disabled" {
+		p.imagorState = ImagorStateDisabled
+	} else {
+		p.imagorState = ImagorStateConfigured
+	}
+	p.configLoadedAt = time.Now().UnixMilli()
 
 	return nil
 }
@@ -195,16 +178,11 @@ func (p *Provider) ReloadFromRegistry() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	// Check if imagor is configured in registry
-	if !p.isImagorConfiguredInRegistry() {
-		p.logger.Info("No imagor configuration found in registry, keeping disabled state")
-		return nil
-	}
-
 	// Try to create config from registry configuration
 	imagorConfig, err := p.buildConfigFromRegistry()
-	if err != nil {
-		return fmt.Errorf("failed to build imagor config from registry: %w", err)
+	if err != nil || imagorConfig.Mode == "" {
+		p.logger.Info("No imagor configuration found in registry, keeping disabled state")
+		return nil
 	}
 
 	// Create embedded handler if needed
@@ -235,16 +213,10 @@ func (p *Provider) loadConfigFromRegistry() *ImagorConfig {
 		return p.currentConfig
 	}
 
-	// Check if imagor is now configured in registry
-	if !p.isImagorConfiguredInRegistry() {
-		return p.currentConfig // Still disabled
-	}
-
 	// Try to create config from registry configuration
 	imagorConfig, err := p.buildConfigFromRegistry()
-	if err != nil {
-		p.logger.Error("Failed to build imagor config from registry", zap.Error(err))
-		return p.currentConfig
+	if err != nil || imagorConfig.Mode == "" {
+		return p.currentConfig // Still disabled
 	}
 
 	// Create embedded handler if needed
@@ -263,13 +235,6 @@ func (p *Provider) loadConfigFromRegistry() *ImagorConfig {
 	p.logger.Info("Imagor configured from registry", zap.String("mode", imagorConfig.Mode))
 
 	return p.currentConfig
-}
-
-// isImagorConfiguredInRegistry checks if imagor is configured in the registry
-func (p *Provider) isImagorConfiguredInRegistry() bool {
-	ctx := context.Background()
-	result := registryutil.GetEffectiveValue(ctx, p.registryStore, p.config, "config.imagor_configured")
-	return result.Exists && result.Value == "true"
 }
 
 // buildConfigFromRegistry builds an imagor config object from registry values
