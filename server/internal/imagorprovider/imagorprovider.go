@@ -2,13 +2,17 @@ package imagorprovider
 
 import (
 	"context"
+	"crypto/sha1"
 	"crypto/sha256"
+	"crypto/sha512"
 	"fmt"
+	"hash"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -37,11 +41,13 @@ const (
 
 // ImagorConfig holds imagor configuration
 type ImagorConfig struct {
-	Mode      string // "external", "embedded", "disabled"
-	BaseURL   string // External URL or "/imagor" for embedded
-	Secret    string // Secret key for URL signing
-	Unsafe    bool   // Enable unsafe URLs for development
-	CachePath string // Cache directory path (empty = no caching)
+	Mode           string // "external", "embedded", "disabled"
+	BaseURL        string // External URL or "/imagor" for embedded
+	Secret         string // Secret key for URL signing
+	Unsafe         bool   // Enable unsafe URLs for development
+	CachePath      string // Cache directory path (empty = no caching)
+	SignerType     string // Hash algorithm: "sha1", "sha256", "sha512" (for external mode)
+	SignerTruncate int    // Signature truncation length (for external mode)
 }
 
 // Provider handles imagor configuration with state management
@@ -276,7 +282,9 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 		"config.imagor_base_url",
 		"config.imagor_secret",
 		"config.imagor_unsafe",
-		"config.imagor_cache_path")
+		"config.imagor_cache_path",
+		"config.imagor_signer_type",
+		"config.imagor_signer_truncate")
 
 	// Create a map for easy lookup
 	resultMap := make(map[string]registryutil.EffectiveValueResult)
@@ -322,7 +330,35 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 		}
 	}
 
+	// Get signer type (for external mode)
+	if signerTypeResult := resultMap["config.imagor_signer_type"]; signerTypeResult.Exists {
+		imagorConfig.SignerType = signerTypeResult.Value
+	} else {
+		imagorConfig.SignerType = "sha1" // Default
+	}
+
+	// Get signer truncate (for external mode)
+	if signerTruncateResult := resultMap["config.imagor_signer_truncate"]; signerTruncateResult.Exists {
+		if truncate, err := strconv.Atoi(signerTruncateResult.Value); err == nil {
+			imagorConfig.SignerTruncate = truncate
+		}
+	} else {
+		imagorConfig.SignerTruncate = 0 // Default (no truncation)
+	}
+
 	return imagorConfig, nil
+}
+
+// getHashAlgorithm returns the hash algorithm function based on signer type
+func getHashAlgorithm(signerType string) func() hash.Hash {
+	switch strings.ToLower(signerType) {
+	case "sha256":
+		return sha256.New
+	case "sha512":
+		return sha512.New
+	default:
+		return sha1.New // default
+	}
 }
 
 // GenerateURL generates an imagor URL for the given image path and parameters
@@ -346,8 +382,9 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 		signer = imagorpath.NewHMACSigner(sha256.New, 28, p.config.JWTSecret)
 		path = imagorpath.Generate(params, signer)
 	} else if cfg.Secret != "" {
-		// Use config secret for external mode
-		signer = imagorpath.NewDefaultSigner(cfg.Secret)
+		// Use configurable signer for external mode
+		hashAlg := getHashAlgorithm(cfg.SignerType)
+		signer = imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
 		path = imagorpath.Generate(params, signer)
 	} else if cfg.Unsafe {
 		path = imagorpath.GenerateUnsafe(params)
