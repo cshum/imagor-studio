@@ -21,7 +21,39 @@ import (
 )
 
 func setupFakeS3(t *testing.T) *S3Storage {
-	return setupFakeS3WithPathStyle(t, true)
+	folderSuffix = "/."
+	backend := s3mem.New()
+	faker := gofakes3.New(backend)
+	ts := httptest.NewServer(faker.Server())
+
+	cfg, err := config.LoadDefaultConfig(context.Background(),
+		config.WithRegion("us-east-1"),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("YOUR-ACCESSKEYID", "YOUR-SECRETKEY", "")),
+	)
+	require.NoError(t, err)
+
+	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(ts.URL)
+		o.UsePathStyle = true // Fake S3 requires path style
+	})
+
+	s3Storage, err := New("test-bucket",
+		WithRegion("us-east-1"),
+		WithEndpoint(ts.URL),
+		WithCredentials("YOUR-ACCESSKEYID", "YOUR-SECRETKEY", ""),
+		WithForcePathStyle(true), // Default to true for fake S3
+	)
+	require.NoError(t, err)
+
+	s3Storage.client = s3Client
+
+	// Create the test bucket
+	_, err = s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
+		Bucket: aws.String("test-bucket"),
+	})
+	require.NoError(t, err)
+
+	return s3Storage
 }
 
 func setupFakeS3WithPathStyle(t *testing.T, forcePathStyle bool) *S3Storage {
@@ -38,7 +70,7 @@ func setupFakeS3WithPathStyle(t *testing.T, forcePathStyle bool) *S3Storage {
 
 	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String(ts.URL)
-		o.UsePathStyle = forcePathStyle
+		o.UsePathStyle = true // Fake S3 always requires path style
 	})
 
 	s3Storage, err := New("test-bucket",
