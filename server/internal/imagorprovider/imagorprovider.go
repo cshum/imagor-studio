@@ -339,21 +339,20 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 
 	// Generate path using imagorpath
 	var path string
-	if cfg.Unsafe {
+	// Generate signed path using JWT secret for embedded mode, config secret for external
+	var signer imagorpath.Signer
+	if cfg.Mode == "embedded" && p.config.JWTSecret != "" {
+		// Use JWT secret with SHA256 and 28-char truncation for embedded mode
+		signer = imagorpath.NewHMACSigner(sha256.New, 28, p.config.JWTSecret)
+		path = imagorpath.Generate(params, signer)
+	} else if cfg.Secret != "" {
+		// Use config secret for external mode
+		signer = imagorpath.NewDefaultSigner(cfg.Secret)
+		path = imagorpath.Generate(params, signer)
+	} else if cfg.Unsafe {
 		path = imagorpath.GenerateUnsafe(params)
 	} else {
-		// Generate signed path using JWT secret for embedded mode, config secret for external
-		var signer imagorpath.Signer
-		if cfg.Mode == "embedded" && p.config.JWTSecret != "" {
-			// Use JWT secret with SHA256 and 28-char truncation for embedded mode
-			signer = imagorpath.NewHMACSigner(sha256.New, 28, p.config.JWTSecret)
-		} else if cfg.Secret != "" {
-			// Use config secret for external mode
-			signer = imagorpath.NewDefaultSigner(cfg.Secret)
-		} else {
-			return "", fmt.Errorf("imagor secret is required for signed URLs")
-		}
-		path = imagorpath.Generate(params, signer)
+		return "", fmt.Errorf("imagor secret is required for signed URLs")
 	}
 
 	// Combine with base URL
@@ -368,7 +367,7 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 
 // createEmbeddedHandler creates an embedded imagor handler
 func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error) {
-	options := []imagor.Option{}
+	var options []imagor.Option
 
 	// Add vipsprocessor with default configuration
 	options = append(options, imagor.WithProcessors(
