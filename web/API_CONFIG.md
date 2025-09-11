@@ -18,18 +18,21 @@ Sets the base URL for the backend API server.
 ## Usage
 
 ### Development
+
 ```bash
 # .env
 VITE_API_BASE_URL=http://localhost:8080
 ```
 
 ### Production
+
 ```bash
 # .env.production
 VITE_API_BASE_URL=https://api.yourdomain.com
 ```
 
 ### Staging
+
 ```bash
 # .env.staging
 VITE_API_BASE_URL=https://staging-api.yourdomain.com
