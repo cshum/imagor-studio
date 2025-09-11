@@ -2,7 +2,7 @@ package imagorprovider
 
 import (
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -21,6 +21,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor/imagorpath"
+	"github.com/cshum/imagor/processor/vipsprocessor"
 	"github.com/cshum/imagor/storage/filestorage"
 	"github.com/cshum/imagor/storage/s3storage"
 	"go.uber.org/zap"
@@ -341,11 +342,17 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 	if cfg.Unsafe {
 		path = imagorpath.GenerateUnsafe(params)
 	} else {
-		// Generate signed path
-		if cfg.Secret == "" {
+		// Generate signed path using JWT secret for embedded mode, config secret for external
+		var signer imagorpath.Signer
+		if cfg.Mode == "embedded" && p.config.JWTSecret != "" {
+			// Use JWT secret with SHA256 and 28-char truncation for embedded mode
+			signer = imagorpath.NewHMACSigner(sha256.New, 28, p.config.JWTSecret)
+		} else if cfg.Secret != "" {
+			// Use config secret for external mode
+			signer = imagorpath.NewDefaultSigner(cfg.Secret)
+		} else {
 			return "", fmt.Errorf("imagor secret is required for signed URLs")
 		}
-		signer := imagorpath.NewDefaultSigner(cfg.Secret)
 		path = imagorpath.Generate(params, signer)
 	}
 
@@ -361,14 +368,18 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 
 // createEmbeddedHandler creates an embedded imagor handler
 func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error) {
-	options := []imagor.Option{
-		imagor.WithUnsafe(cfg.Unsafe),
-	}
+	options := []imagor.Option{}
 
-	// Add signer if secret is provided
-	if cfg.Secret != "" {
-		alg := sha1.New // Default to SHA1 like imagor
-		signer := imagorpath.NewHMACSigner(alg, 0, cfg.Secret)
+	// Add vipsprocessor with default configuration
+	options = append(options, imagor.WithProcessors(
+		vipsprocessor.NewProcessor(
+			vipsprocessor.WithLogger(p.logger),
+		),
+	))
+
+	// Use server's JWT secret with SHA256 and 28-char truncation
+	if p.config.JWTSecret != "" {
+		signer := imagorpath.NewHMACSigner(sha256.New, 28, p.config.JWTSecret)
 		options = append(options, imagor.WithSigner(signer))
 	}
 
