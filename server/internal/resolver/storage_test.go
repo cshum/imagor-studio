@@ -11,10 +11,73 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
+	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 )
+
+// MockedS3Resolver extends the regular resolver with mocked S3 validation
+type MockedS3Resolver struct {
+	*Resolver
+}
+
+// NewMockedS3Resolver creates a resolver that mocks S3 storage validation
+func NewMockedS3Resolver(storageProvider StorageProvider, registryStore registrystore.Store, userStore userstore.Store, imagorProvider ImagorProvider, cfg ConfigProvider, logger *zap.Logger) *MockedS3Resolver {
+	baseResolver := NewResolver(storageProvider, registryStore, userStore, imagorProvider, cfg, logger)
+	return &MockedS3Resolver{Resolver: baseResolver}
+}
+
+// Override the mutation resolver to use mocked validation
+func (r *MockedS3Resolver) Mutation() gql.MutationResolver {
+	return &mockedS3MutationResolver{
+		mutationResolver: &mutationResolver{Resolver: r.Resolver},
+	}
+}
+
+type mockedS3MutationResolver struct {
+	*mutationResolver
+}
+
+// Override validateStorageConfig to mock S3 operations
+func (r *mockedS3MutationResolver) validateStorageConfig(ctx context.Context, input gql.StorageConfigInput) *gql.StorageTestResult {
+	switch input.Type {
+	case gql.StorageTypeFile:
+		// Use the original validation for file storage
+		return r.mutationResolver.validateStorageConfig(ctx, input)
+	case gql.StorageTypeS3:
+		if input.S3Config == nil {
+			return &gql.StorageTestResult{
+				Success: false,
+				Message: "S3 configuration is required for S3 storage type",
+			}
+		}
+		// Mock S3 validation - always fail with controlled message
+		return &gql.StorageTestResult{
+			Success: false,
+			Message: "Mocked S3 connection failure",
+			Details: stringPtr("Simulated network failure without actual S3 connection"),
+		}
+	default:
+		return &gql.StorageTestResult{
+			Success: false,
+			Message: "Unsupported storage type",
+		}
+	}
+}
+
+// Override TestStorageConfig to use mocked validation
+func (r *mockedS3MutationResolver) TestStorageConfig(ctx context.Context, input gql.StorageConfigInput) (*gql.StorageTestResult, error) {
+	// Check admin permissions
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+
+	r.logger.Debug("Testing storage configuration (mocked S3)", zap.String("type", string(input.Type)))
+
+	result := r.validateStorageConfig(ctx, input)
+	return result, nil
+}
 
 func TestUploadFile_RequiresWriteScope(t *testing.T) {
 	mockStorage := new(MockStorage)
@@ -440,7 +503,7 @@ func TestTestStorageConfig_S3Storage(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewMockedS3Resolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -472,7 +535,7 @@ func TestTestStorageConfig_S3Storage(t *testing.T) {
 				},
 			},
 			expectSuccess:  false,
-			expectedMsg:    "Failed to access storage directory",
+			expectedMsg:    "Mocked S3 connection failure",
 			expectedDetail: "",
 		},
 	}

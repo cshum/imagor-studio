@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/storage"
@@ -167,6 +168,14 @@ func (m *MockStorageProvider) IsRestartRequired() bool {
 func (m *MockStorageProvider) ReloadFromRegistry() error {
 	args := m.Called()
 	return args.Error(0)
+}
+
+func (m *MockStorageProvider) NewStorageFromConfig(cfg *config.Config) (storage.Storage, error) {
+	args := m.Called(cfg)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(storage.Storage), args.Error(1)
 }
 
 // Ensure MockStorageProvider implements the StorageProvider interface
