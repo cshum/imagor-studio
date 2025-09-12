@@ -1,3 +1,5 @@
+import { Cloudy, Folders } from 'lucide-react'
+
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { cn } from '@/lib/utils'
@@ -16,13 +18,13 @@ export function StorageTypeSelector({ value, onChange, disabled }: StorageTypeSe
       value: 'file' as const,
       label: 'File Storage',
       description: 'Store images on the local file system',
-      icon: '📁',
+      icon: <Folders />,
     },
     {
       value: 's3' as const,
       label: 'S3 Storage',
       description: 'Store images in Amazon S3 or compatible cloud storage',
-      icon: '☁️',
+      icon: <Cloudy />,
     },
   ]
 
@@ -39,7 +41,7 @@ export function StorageTypeSelector({ value, onChange, disabled }: StorageTypeSe
           <div
             key={option.value}
             className={cn(
-              'hover:border-primary/50 cursor-pointer border-2 p-4 transition-all rounded-lg',
+              'hover:border-primary/50 cursor-pointer rounded-lg border-2 p-4 transition-all',
               value === option.value
                 ? 'border-primary bg-primary/5'
                 : 'border-border hover:border-primary/30',

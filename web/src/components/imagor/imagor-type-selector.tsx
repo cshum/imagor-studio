@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { Bolt, Globe } from 'lucide-react'
 
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -20,13 +21,13 @@ export function ImagorTypeSelector({ value, onChange, disabled = false }: Imagor
       value: 'embedded' as const,
       label: t('pages.imagor.embeddedMode'),
       description: t('pages.imagor.embeddedModeDescription'),
-      icon: '🔧',
+      icon: <Bolt />,
     },
     {
       value: 'external' as const,
       label: t('pages.imagor.externalMode'),
       description: t('pages.imagor.externalModeDescription'),
-      icon: '🌐',
+      icon: <Globe />,
     },
   ]
 
@@ -43,7 +44,7 @@ export function ImagorTypeSelector({ value, onChange, disabled = false }: Imagor
           <div
             key={option.value}
             className={cn(
-              'hover:border-primary/50 cursor-pointer border-2 p-4 transition-all rounded-lg',
+              'hover:border-primary/50 cursor-pointer rounded-lg border-2 p-4 transition-all',
               value === option.value
                 ? 'border-primary bg-primary/5'
                 : 'border-border hover:border-primary/30',
