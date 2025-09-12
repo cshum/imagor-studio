@@ -116,7 +116,7 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 	imagorConfig, err := p.buildConfigFromRegistry()
 	if err != nil || imagorConfig.Mode == "" {
 		// No valid registry config, check startup config or default to embedded
-		if cfg.ImagorMode == "" || cfg.ImagorMode == "disabled" {
+		if cfg.ImagorMode == "" {
 			// Default to embedded mode
 			imagorConfig = createDefaultEmbeddedConfig(cfg)
 			p.logger.Info("Imagor defaulted to embedded mode")
@@ -139,7 +139,6 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 	} else {
 		p.logger.Info("Imagor initialized from registry", zap.String("mode", imagorConfig.Mode))
 	}
-
 	// Create embedded handler if needed
 	if imagorConfig.Mode == "embedded" {
 		handler, err := p.createEmbeddedHandler(imagorConfig)
