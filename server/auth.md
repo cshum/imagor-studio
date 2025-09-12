@@ -155,7 +155,7 @@ Authorization: Bearer <your_token_here>
 Example:
 
 ```bash
-curl -X POST http://localhost:8080/query \
+curl -X POST http://localhost:8080/api/query \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..." \
   -d '{"query":"query { listFiles(path:\"/\", offset:0, limit:10) { items { name } } }"}'
@@ -168,12 +168,12 @@ curl -X POST http://localhost:8080/query \
 curl -X POST http://localhost:8080/auth/guest
 
 # 2. Use token for read operations
-curl -X POST http://localhost:8080/query \
+curl -X POST http://localhost:8080/api/query \
   -H "Authorization: Bearer <guest_token>" \
   -d '{"query":"query { me { id displayName role } }"}'
 
 # 3. Guest write operations will fail
-curl -X POST http://localhost:8080/query \
+curl -X POST http://localhost:8080/api/query \
   -H "Authorization: Bearer <guest_token>" \
   -d '{"query":"mutation { createFolder(path:\"test\") }"}'
 ```
@@ -366,7 +366,7 @@ curl -X POST http://localhost:8080/auth/register-admin \
   }'
 
 # 3. Use the returned token for admin operations
-curl -X POST http://localhost:8080/query \
+curl -X POST http://localhost:8080/api/query \
   -H "Authorization: Bearer <admin_token>" \
   -d '{"query":"query { users { items { displayName role } } }"}'
 ```

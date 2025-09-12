@@ -43,7 +43,7 @@ VITE_API_BASE_URL=https://staging-api.yourdomain.com
 The environment variable is used in:
 
 1. **GraphQL Client** (`src/lib/graphql-client.ts`)
-   - Endpoint: `${VITE_API_BASE_URL}/query`
+   - Endpoint: `${VITE_API_BASE_URL}/api/query`
 
 2. **Auth API** (`src/api/auth-api.ts`)
    - Base URL: `${VITE_API_BASE_URL}`

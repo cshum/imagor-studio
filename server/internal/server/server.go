@@ -87,7 +87,7 @@ func New(cfg *config.Config, logger *zap.Logger, args []string) (*Server, error)
 
 	// Protected endpoints
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)
-	mux.Handle("/query", protectedHandler)
+	mux.Handle("/api/query", protectedHandler)
 
 	// Dynamic imagor handler wrapper
 	dynamicHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -162,7 +162,7 @@ func createStaticHandler(logger *zap.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Handle API routes - these should not serve static files
 		if strings.HasPrefix(r.URL.Path, "/auth/") ||
-			strings.HasPrefix(r.URL.Path, "/query") ||
+			strings.HasPrefix(r.URL.Path, "/api/query") ||
 			strings.HasPrefix(r.URL.Path, "/health") ||
 			strings.HasPrefix(r.URL.Path, "/imagor/") {
 			http.NotFound(w, r)
