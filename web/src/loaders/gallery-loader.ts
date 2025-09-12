@@ -3,6 +3,7 @@ import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
+import { getFullImageUrl } from '@/lib/image-utils.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
 import {
   FolderNode,
@@ -132,8 +133,6 @@ export const imageLoader = async ({
   // Use galleryKey as the path for storage API, then append the image name
   const basePath = galleryKey
   const imagePath = basePath ? `${basePath}/${imageKey}` : imageKey
-
-  // Fetch single file stats from storage API - much more efficient than listing all files
   const fileStat = await statFile(imagePath)
 
   if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
@@ -141,7 +140,9 @@ export const imageLoader = async ({
   }
 
   // Use the full-size thumbnail URL for the detail view
-  const fullSizeSrc = fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || ''
+  const fullSizeSrc = getFullImageUrl(
+    fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '',
+  )
 
   const imageElement = await preloadImage(fullSizeSrc)
 
@@ -149,7 +150,7 @@ export const imageLoader = async ({
   let imageInfo = convertMetadataToImageInfo(null, fileStat.name, galleryKey)
   if (fileStat.thumbnailUrls.meta) {
     try {
-      const metadata = await fetchImageMetadata(fileStat.thumbnailUrls.meta)
+      const metadata = await fetchImageMetadata(getFullImageUrl(fileStat.thumbnailUrls.meta))
       imageInfo = convertMetadataToImageInfo(metadata, fileStat.name, galleryKey)
     } catch {
       // Fall back to basic info without EXIF data

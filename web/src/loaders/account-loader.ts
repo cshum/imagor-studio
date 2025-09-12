@@ -1,7 +1,9 @@
+import { getImagorStatus } from '@/api/imagor-api'
 import { getSystemRegistryObject, listSystemRegistry } from '@/api/registry-api'
 import { getStorageStatus } from '@/api/storage-api'
 import { listUsers } from '@/api/user-api'
 import type {
+  ImagorStatusQuery,
   ListSystemRegistryQuery,
   ListUsersQuery,
   StorageStatusQuery,
@@ -21,6 +23,7 @@ export interface AdminLoaderData {
   registry: Record<string, string>
   systemRegistryList: ListSystemRegistryQuery['listSystemRegistry']
   storageStatus: StorageStatusQuery['storageStatus']
+  imagorStatus: ImagorStatusQuery['imagorStatus']
   breadcrumb: BreadcrumbItem
 }
 
@@ -59,10 +62,14 @@ export const adminLoader = async (): Promise<AdminLoaderData> => {
   // Get storage status
   const storageStatus = await getStorageStatus()
 
+  // Get imagor status
+  const imagorStatus = await getImagorStatus()
+
   return {
     registry,
     systemRegistryList,
     storageStatus,
+    imagorStatus,
     breadcrumb: {
       translationKey: 'navigation.breadcrumbs.admin',
     },

@@ -31,8 +31,8 @@ func TestLoadBasic(t *testing.T) {
 	assert.Equal(t, "storage.db", cfg.DBPath)
 	assert.Equal(t, "file", cfg.StorageType)
 	assert.Equal(t, "./storage", cfg.FileBaseDir)
-	assert.Equal(t, "external", cfg.ImagorMode)
-	assert.Equal(t, "http://localhost:8000", cfg.ImagorURL)
+	assert.Equal(t, "embedded", cfg.ImagorMode)
+	assert.Equal(t, "", cfg.ImagorURL)
 	assert.Equal(t, 24*time.Hour, cfg.JWTExpiration)
 }
 

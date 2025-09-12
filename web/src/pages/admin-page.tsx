@@ -1,3 +1,4 @@
+import { ImagorManagementSection } from '@/components/imagor'
 import { StorageManagementSection } from '@/components/storage'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import type { AdminLoaderData } from '@/loaders/account-loader'
@@ -36,6 +37,8 @@ export function AdminPage({ loaderData }: AdminPageProps) {
       />
 
       <StorageManagementSection storageStatus={loaderData?.storageStatus || null} />
+
+      <ImagorManagementSection imagorStatus={loaderData?.imagorStatus || null} />
     </div>
   )
 }

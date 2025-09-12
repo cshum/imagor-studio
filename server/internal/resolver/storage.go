@@ -10,6 +10,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
@@ -675,6 +676,273 @@ func (r *queryResolver) isImageFile(filename string) bool {
 		strings.HasSuffix(ext, ".png") || strings.HasSuffix(ext, ".gif") ||
 		strings.HasSuffix(ext, ".webp") || strings.HasSuffix(ext, ".bmp") ||
 		strings.HasSuffix(ext, ".tiff") || strings.HasSuffix(ext, ".tif")
+}
+
+// ImagorStatus is the resolver for the imagorStatus field.
+func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, error) {
+	// Use batch operation for better performance
+	results := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
+		"config.imagor_mode",
+		"config.imagor_config_updated_at")
+
+	// Create a map for easy lookup
+	resultMap := make(map[string]registryutil.EffectiveValueResult)
+	for _, result := range results {
+		resultMap[result.Key] = result
+	}
+
+	// Get current imagor configuration
+	imagorConfig := r.imagorProvider.GetConfig()
+	if imagorConfig == nil {
+		// Get JWT secret from config
+		jwtSecret := ""
+		if value, exists := r.config.GetByRegistryKey("config.jwt_secret"); exists {
+			jwtSecret = value
+		}
+
+		// Default to embedded mode if no config
+		imagorConfig = &imagorprovider.ImagorConfig{
+			Mode:           "embedded",
+			BaseURL:        "/imagor",
+			Secret:         jwtSecret,
+			Unsafe:         false,
+			SignerType:     "sha256",
+			SignerTruncate: 28,
+		}
+	}
+
+	// Check if restart is required
+	restartRequired := r.imagorProvider.IsRestartRequired()
+
+	var lastUpdated *string
+	if timestampResult := resultMap["config.imagor_config_updated_at"]; timestampResult.Exists {
+		lastUpdated = &timestampResult.Value
+	}
+
+	// Check if any imagor config is overridden
+	isConfigOverridden := r.isImagorConfigOverridden(ctx, imagorConfig.Mode)
+
+	status := &gql.ImagorStatus{
+		Configured:           true, // Always configured (defaults to embedded)
+		Mode:                 &imagorConfig.Mode,
+		RestartRequired:      restartRequired,
+		LastUpdated:          lastUpdated,
+		IsOverriddenByConfig: isConfigOverridden,
+	}
+
+	// Add mode-specific configuration
+	if imagorConfig.Mode == "embedded" {
+		status.EmbeddedConfig = r.getEmbeddedImagorConfig(ctx, imagorConfig)
+	} else if imagorConfig.Mode == "external" {
+		status.ExternalConfig = r.getExternalImagorConfig(ctx, imagorConfig)
+	}
+
+	return status, nil
+}
+
+// Helper function to check if imagor config is overridden
+func (r *queryResolver) isImagorConfigOverridden(ctx context.Context, mode string) bool {
+	var keys []string
+	if mode == "embedded" {
+		keys = []string{
+			"config.imagor_mode",
+			"config.imagor_secret",
+			"config.imagor_cache_path",
+		}
+	} else {
+		keys = []string{
+			"config.imagor_mode",
+			"config.imagor_base_url",
+			"config.imagor_secret",
+			"config.imagor_unsafe",
+			"config.imagor_signer_type",
+			"config.imagor_signer_truncate",
+		}
+	}
+
+	results := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config, keys...)
+	for _, result := range results {
+		if result.IsOverriddenByConfig {
+			return true
+		}
+	}
+	return false
+}
+
+// Helper function to get embedded imagor configuration
+func (r *queryResolver) getEmbeddedImagorConfig(ctx context.Context, imagorConfig *imagorprovider.ImagorConfig) *gql.EmbeddedImagorConfig {
+	return &gql.EmbeddedImagorConfig{
+		CachePath: imagorConfig.CachePath,
+	}
+}
+
+// Helper function to get external imagor configuration
+func (r *queryResolver) getExternalImagorConfig(ctx context.Context, imagorConfig *imagorprovider.ImagorConfig) *gql.ExternalImagorConfig {
+	// Convert signer type to GraphQL enum
+	var signerType gql.ImagorSignerType
+	switch strings.ToLower(imagorConfig.SignerType) {
+	case "sha256":
+		signerType = gql.ImagorSignerTypeSha256
+	case "sha512":
+		signerType = gql.ImagorSignerTypeSha512
+	default:
+		signerType = gql.ImagorSignerTypeSha1
+	}
+
+	return &gql.ExternalImagorConfig{
+		BaseURL:        imagorConfig.BaseURL,
+		HasSecret:      imagorConfig.Secret != "",
+		Unsafe:         imagorConfig.Unsafe,
+		SignerType:     signerType,
+		SignerTruncate: imagorConfig.SignerTruncate,
+	}
+}
+
+// ConfigureEmbeddedImagor is the resolver for the configureEmbeddedImagor field.
+func (r *mutationResolver) ConfigureEmbeddedImagor(ctx context.Context, input gql.EmbeddedImagorInput) (*gql.ImagorConfigResult, error) {
+	// Check admin permissions
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+
+	r.logger.Debug("Configuring embedded imagor")
+
+	// Set timestamp
+	timestamp := time.Now().UnixMilli()
+	timestampStr := fmt.Sprintf("%d", timestamp)
+
+	// Prepare registry entries
+	entries := []gql.RegistryEntryInput{
+		{Key: "config.imagor_mode", Value: "embedded", IsEncrypted: false},
+		{Key: "config.imagor_config_updated_at", Value: timestampStr, IsEncrypted: false},
+	}
+
+	// Remove any custom secret to ensure JWT secret is used
+	r.deleteSystemRegistryKey(ctx, "config.imagor_secret")
+
+	// Add optional cache path
+	if input.CachePath != nil {
+		entries = append(entries, gql.RegistryEntryInput{
+			Key: "config.imagor_cache_path", Value: *input.CachePath, IsEncrypted: false,
+		})
+	}
+
+	// Save to registry
+	_, err := r.setSystemRegistryEntries(ctx, entries)
+	if err != nil {
+		r.logger.Error("Failed to save embedded imagor configuration", zap.Error(err))
+		return &gql.ImagorConfigResult{
+			Success:         false,
+			RestartRequired: false,
+			Timestamp:       timestampStr,
+			Message:         &[]string{"Failed to save configuration"}[0],
+		}, nil
+	}
+
+	// Reload imagor from registry to apply changes immediately
+	if err := r.imagorProvider.ReloadFromRegistry(); err != nil {
+		r.logger.Error("Failed to reload imagor from registry", zap.Error(err))
+		return &gql.ImagorConfigResult{
+			Success:         false,
+			RestartRequired: false,
+			Timestamp:       timestampStr,
+			Message:         &[]string{"Configuration saved but failed to apply"}[0],
+		}, nil
+	}
+
+	// Embedded mode typically doesn't require restart
+	restartRequired := r.imagorProvider.IsRestartRequired()
+
+	return &gql.ImagorConfigResult{
+		Success:         true,
+		RestartRequired: restartRequired,
+		Timestamp:       timestampStr,
+		Message:         &[]string{"Embedded imagor configured successfully"}[0],
+	}, nil
+}
+
+// ConfigureExternalImagor is the resolver for the configureExternalImagor field.
+func (r *mutationResolver) ConfigureExternalImagor(ctx context.Context, input gql.ExternalImagorInput) (*gql.ImagorConfigResult, error) {
+	// Check admin permissions
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+
+	r.logger.Debug("Configuring external imagor", zap.String("baseUrl", input.BaseURL))
+
+	// Set timestamp
+	timestamp := time.Now().UnixMilli()
+	timestampStr := fmt.Sprintf("%d", timestamp)
+
+	// Prepare registry entries
+	entries := []gql.RegistryEntryInput{
+		{Key: "config.imagor_mode", Value: "external", IsEncrypted: false},
+		{Key: "config.imagor_base_url", Value: input.BaseURL, IsEncrypted: false},
+		{Key: "config.imagor_config_updated_at", Value: timestampStr, IsEncrypted: false},
+	}
+
+	// Add optional secret
+	if input.Secret != nil && *input.Secret != "" {
+		entries = append(entries, gql.RegistryEntryInput{
+			Key: "config.imagor_secret", Value: *input.Secret, IsEncrypted: true,
+		})
+	}
+
+	// Add optional unsafe flag
+	if input.Unsafe != nil {
+		entries = append(entries, gql.RegistryEntryInput{
+			Key: "config.imagor_unsafe", Value: fmt.Sprintf("%t", *input.Unsafe), IsEncrypted: false,
+		})
+	}
+
+	// Add optional signer type
+	if input.SignerType != nil {
+		var signerTypeStr string
+		switch *input.SignerType {
+		case gql.ImagorSignerTypeSha256:
+			signerTypeStr = "sha256"
+		case gql.ImagorSignerTypeSha512:
+			signerTypeStr = "sha512"
+		default:
+			signerTypeStr = "sha1"
+		}
+		entries = append(entries, gql.RegistryEntryInput{
+			Key: "config.imagor_signer_type", Value: signerTypeStr, IsEncrypted: false,
+		})
+	}
+
+	// Add optional signer truncate
+	if input.SignerTruncate != nil {
+		entries = append(entries, gql.RegistryEntryInput{
+			Key: "config.imagor_signer_truncate", Value: fmt.Sprintf("%d", *input.SignerTruncate), IsEncrypted: false,
+		})
+	}
+
+	// Save to registry
+	_, err := r.setSystemRegistryEntries(ctx, entries)
+	if err != nil {
+		r.logger.Error("Failed to save external imagor configuration", zap.Error(err))
+		return &gql.ImagorConfigResult{
+			Success:         false,
+			RestartRequired: false,
+			Timestamp:       timestampStr,
+			Message:         &[]string{"Failed to save configuration"}[0],
+		}, nil
+	}
+
+	// External mode configuration doesn't require restart (no embedded handler to recreate)
+	return &gql.ImagorConfigResult{
+		Success:         true,
+		RestartRequired: false,
+		Timestamp:       timestampStr,
+		Message:         &[]string{"External imagor configured successfully"}[0],
+	}, nil
+}
+
+// Helper function to delete a system registry key
+func (r *mutationResolver) deleteSystemRegistryKey(ctx context.Context, key string) error {
+	_, err := r.DeleteSystemRegistry(ctx, &key, nil)
+	return err
 }
 
 // Helper function to generate thumbnail URLs using the imagor provider

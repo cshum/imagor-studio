@@ -45,6 +45,18 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	EmbeddedImagorConfig struct {
+		CachePath func(childComplexity int) int
+	}
+
+	ExternalImagorConfig struct {
+		BaseURL        func(childComplexity int) int
+		HasSecret      func(childComplexity int) int
+		SignerTruncate func(childComplexity int) int
+		SignerType     func(childComplexity int) int
+		Unsafe         func(childComplexity int) int
+	}
+
 	FileItem struct {
 		IsDirectory   func(childComplexity int) int
 		Name          func(childComplexity int) int
@@ -74,26 +86,46 @@ type ComplexityRoot struct {
 		WritePermissions func(childComplexity int) int
 	}
 
+	ImagorConfigResult struct {
+		Message         func(childComplexity int) int
+		RestartRequired func(childComplexity int) int
+		Success         func(childComplexity int) int
+		Timestamp       func(childComplexity int) int
+	}
+
+	ImagorStatus struct {
+		Configured           func(childComplexity int) int
+		EmbeddedConfig       func(childComplexity int) int
+		ExternalConfig       func(childComplexity int) int
+		IsOverriddenByConfig func(childComplexity int) int
+		LastUpdated          func(childComplexity int) int
+		Mode                 func(childComplexity int) int
+		RestartRequired      func(childComplexity int) int
+	}
+
 	Mutation struct {
-		ChangePassword       func(childComplexity int, input ChangePasswordInput, userID *string) int
-		ConfigureFileStorage func(childComplexity int, input FileStorageInput) int
-		ConfigureS3Storage   func(childComplexity int, input S3StorageInput) int
-		CreateFolder         func(childComplexity int, path string) int
-		CreateUser           func(childComplexity int, input CreateUserInput) int
-		DeactivateAccount    func(childComplexity int, userID *string) int
-		DeleteFile           func(childComplexity int, path string) int
-		DeleteSystemRegistry func(childComplexity int, key *string, keys []string) int
-		DeleteUserRegistry   func(childComplexity int, key *string, keys []string, ownerID *string) int
-		SetSystemRegistry    func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
-		SetUserRegistry      func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
-		TestStorageConfig    func(childComplexity int, input StorageConfigInput) int
-		UpdateProfile        func(childComplexity int, input UpdateProfileInput, userID *string) int
-		UploadFile           func(childComplexity int, path string, content graphql.Upload) int
+		ChangePassword          func(childComplexity int, input ChangePasswordInput, userID *string) int
+		ConfigureEmbeddedImagor func(childComplexity int, input EmbeddedImagorInput) int
+		ConfigureExternalImagor func(childComplexity int, input ExternalImagorInput) int
+		ConfigureFileStorage    func(childComplexity int, input FileStorageInput) int
+		ConfigureS3Storage      func(childComplexity int, input S3StorageInput) int
+		CreateFolder            func(childComplexity int, path string) int
+		CreateUser              func(childComplexity int, input CreateUserInput) int
+		DeactivateAccount       func(childComplexity int, userID *string) int
+		DeleteFile              func(childComplexity int, path string) int
+		DeleteSystemRegistry    func(childComplexity int, key *string, keys []string) int
+		DeleteUserRegistry      func(childComplexity int, key *string, keys []string, ownerID *string) int
+		SetSystemRegistry       func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
+		SetUserRegistry         func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
+		TestStorageConfig       func(childComplexity int, input StorageConfigInput) int
+		UpdateProfile           func(childComplexity int, input UpdateProfileInput, userID *string) int
+		UploadFile              func(childComplexity int, path string, content graphql.Upload) int
 	}
 
 	Query struct {
 		GetSystemRegistry  func(childComplexity int, key *string, keys []string) int
 		GetUserRegistry    func(childComplexity int, key *string, keys []string, ownerID *string) int
+		ImagorStatus       func(childComplexity int) int
 		ListFiles          func(childComplexity int, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) int
 		ListSystemRegistry func(childComplexity int, prefix *string) int
 		ListUserRegistry   func(childComplexity int, prefix *string, ownerID *string) int
@@ -186,12 +218,15 @@ type MutationResolver interface {
 	ConfigureFileStorage(ctx context.Context, input FileStorageInput) (*StorageConfigResult, error)
 	ConfigureS3Storage(ctx context.Context, input S3StorageInput) (*StorageConfigResult, error)
 	TestStorageConfig(ctx context.Context, input StorageConfigInput) (*StorageTestResult, error)
+	ConfigureEmbeddedImagor(ctx context.Context, input EmbeddedImagorInput) (*ImagorConfigResult, error)
+	ConfigureExternalImagor(ctx context.Context, input ExternalImagorInput) (*ImagorConfigResult, error)
 	CreateUser(ctx context.Context, input CreateUserInput) (*User, error)
 }
 type QueryResolver interface {
 	ListFiles(ctx context.Context, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error)
 	StatFile(ctx context.Context, path string) (*FileStat, error)
 	StorageStatus(ctx context.Context) (*StorageStatus, error)
+	ImagorStatus(ctx context.Context) (*ImagorStatus, error)
 	ListUserRegistry(ctx context.Context, prefix *string, ownerID *string) ([]*UserRegistry, error)
 	GetUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) ([]*UserRegistry, error)
 	ListSystemRegistry(ctx context.Context, prefix *string) ([]*SystemRegistry, error)
@@ -219,6 +254,48 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "EmbeddedImagorConfig.cachePath":
+		if e.complexity.EmbeddedImagorConfig.CachePath == nil {
+			break
+		}
+
+		return e.complexity.EmbeddedImagorConfig.CachePath(childComplexity), true
+
+	case "ExternalImagorConfig.baseUrl":
+		if e.complexity.ExternalImagorConfig.BaseURL == nil {
+			break
+		}
+
+		return e.complexity.ExternalImagorConfig.BaseURL(childComplexity), true
+
+	case "ExternalImagorConfig.hasSecret":
+		if e.complexity.ExternalImagorConfig.HasSecret == nil {
+			break
+		}
+
+		return e.complexity.ExternalImagorConfig.HasSecret(childComplexity), true
+
+	case "ExternalImagorConfig.signerTruncate":
+		if e.complexity.ExternalImagorConfig.SignerTruncate == nil {
+			break
+		}
+
+		return e.complexity.ExternalImagorConfig.SignerTruncate(childComplexity), true
+
+	case "ExternalImagorConfig.signerType":
+		if e.complexity.ExternalImagorConfig.SignerType == nil {
+			break
+		}
+
+		return e.complexity.ExternalImagorConfig.SignerType(childComplexity), true
+
+	case "ExternalImagorConfig.unsafe":
+		if e.complexity.ExternalImagorConfig.Unsafe == nil {
+			break
+		}
+
+		return e.complexity.ExternalImagorConfig.Unsafe(childComplexity), true
 
 	case "FileItem.isDirectory":
 		if e.complexity.FileItem.IsDirectory == nil {
@@ -339,6 +416,83 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.FileStorageConfig.WritePermissions(childComplexity), true
 
+	case "ImagorConfigResult.message":
+		if e.complexity.ImagorConfigResult.Message == nil {
+			break
+		}
+
+		return e.complexity.ImagorConfigResult.Message(childComplexity), true
+
+	case "ImagorConfigResult.restartRequired":
+		if e.complexity.ImagorConfigResult.RestartRequired == nil {
+			break
+		}
+
+		return e.complexity.ImagorConfigResult.RestartRequired(childComplexity), true
+
+	case "ImagorConfigResult.success":
+		if e.complexity.ImagorConfigResult.Success == nil {
+			break
+		}
+
+		return e.complexity.ImagorConfigResult.Success(childComplexity), true
+
+	case "ImagorConfigResult.timestamp":
+		if e.complexity.ImagorConfigResult.Timestamp == nil {
+			break
+		}
+
+		return e.complexity.ImagorConfigResult.Timestamp(childComplexity), true
+
+	case "ImagorStatus.configured":
+		if e.complexity.ImagorStatus.Configured == nil {
+			break
+		}
+
+		return e.complexity.ImagorStatus.Configured(childComplexity), true
+
+	case "ImagorStatus.embeddedConfig":
+		if e.complexity.ImagorStatus.EmbeddedConfig == nil {
+			break
+		}
+
+		return e.complexity.ImagorStatus.EmbeddedConfig(childComplexity), true
+
+	case "ImagorStatus.externalConfig":
+		if e.complexity.ImagorStatus.ExternalConfig == nil {
+			break
+		}
+
+		return e.complexity.ImagorStatus.ExternalConfig(childComplexity), true
+
+	case "ImagorStatus.isOverriddenByConfig":
+		if e.complexity.ImagorStatus.IsOverriddenByConfig == nil {
+			break
+		}
+
+		return e.complexity.ImagorStatus.IsOverriddenByConfig(childComplexity), true
+
+	case "ImagorStatus.lastUpdated":
+		if e.complexity.ImagorStatus.LastUpdated == nil {
+			break
+		}
+
+		return e.complexity.ImagorStatus.LastUpdated(childComplexity), true
+
+	case "ImagorStatus.mode":
+		if e.complexity.ImagorStatus.Mode == nil {
+			break
+		}
+
+		return e.complexity.ImagorStatus.Mode(childComplexity), true
+
+	case "ImagorStatus.restartRequired":
+		if e.complexity.ImagorStatus.RestartRequired == nil {
+			break
+		}
+
+		return e.complexity.ImagorStatus.RestartRequired(childComplexity), true
+
 	case "Mutation.changePassword":
 		if e.complexity.Mutation.ChangePassword == nil {
 			break
@@ -350,6 +504,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ChangePassword(childComplexity, args["input"].(ChangePasswordInput), args["userId"].(*string)), true
+
+	case "Mutation.configureEmbeddedImagor":
+		if e.complexity.Mutation.ConfigureEmbeddedImagor == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_configureEmbeddedImagor_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ConfigureEmbeddedImagor(childComplexity, args["input"].(EmbeddedImagorInput)), true
+
+	case "Mutation.configureExternalImagor":
+		if e.complexity.Mutation.ConfigureExternalImagor == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_configureExternalImagor_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ConfigureExternalImagor(childComplexity, args["input"].(ExternalImagorInput)), true
 
 	case "Mutation.configureFileStorage":
 		if e.complexity.Mutation.ConfigureFileStorage == nil {
@@ -530,6 +708,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.GetUserRegistry(childComplexity, args["key"].(*string), args["keys"].([]string), args["ownerID"].(*string)), true
+
+	case "Query.imagorStatus":
+		if e.complexity.Query.ImagorStatus == nil {
+			break
+		}
+
+		return e.complexity.Query.ImagorStatus(childComplexity), true
 
 	case "Query.listFiles":
 		if e.complexity.Query.ListFiles == nil {
@@ -907,6 +1092,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputChangePasswordInput,
 		ec.unmarshalInputCreateUserInput,
+		ec.unmarshalInputEmbeddedImagorInput,
+		ec.unmarshalInputExternalImagorInput,
 		ec.unmarshalInputFileStorageInput,
 		ec.unmarshalInputRegistryEntryInput,
 		ec.unmarshalInputS3StorageInput,
@@ -1025,6 +1212,9 @@ var sources = []*ast.Source{
   # Storage Configuration APIs
   storageStatus: StorageStatus!
 
+  # Imagor Configuration APIs
+  imagorStatus: ImagorStatus!
+
   # Registry APIs
   listUserRegistry(prefix: String, ownerID: String): [UserRegistry!]!
   getUserRegistry(
@@ -1072,6 +1262,10 @@ type Mutation {
   configureFileStorage(input: FileStorageInput!): StorageConfigResult!
   configureS3Storage(input: S3StorageInput!): StorageConfigResult!
   testStorageConfig(input: StorageConfigInput!): StorageTestResult!
+
+  # Imagor Configuration APIs (admin only)
+  configureEmbeddedImagor(input: EmbeddedImagorInput!): ImagorConfigResult!
+  configureExternalImagor(input: ExternalImagorInput!): ImagorConfigResult!
 
   # admin only operations
   createUser(input: CreateUserInput!): User!
@@ -1240,6 +1434,60 @@ enum StorageType {
   FILE
   S3
 }
+
+# Imagor Configuration Types
+type ImagorStatus {
+  configured: Boolean!
+  mode: String  # "embedded" or "external"
+  restartRequired: Boolean!
+  lastUpdated: String
+  isOverriddenByConfig: Boolean!
+  embeddedConfig: EmbeddedImagorConfig
+  externalConfig: ExternalImagorConfig
+}
+
+type EmbeddedImagorConfig {
+  cachePath: String!
+}
+
+type ExternalImagorConfig {
+  baseUrl: String!
+  hasSecret: Boolean!           # Instead of exposing secret value
+  unsafe: Boolean!
+  signerType: ImagorSignerType!
+  signerTruncate: Int!
+  # No cachePath for external mode
+}
+
+type ImagorConfigResult {
+  success: Boolean!
+  restartRequired: Boolean!
+  timestamp: String!
+  message: String
+}
+
+input EmbeddedImagorInput {
+  cachePath: String     # Optional, defaults to empty = no cache
+}
+
+input ExternalImagorInput {
+  baseUrl: String!
+  secret: String
+  unsafe: Boolean
+  signerType: ImagorSignerType  # Optional, defaults to SHA1
+  signerTruncate: Int           # Optional, defaults to 0
+}
+
+enum ImagorSignerType {
+  SHA1
+  SHA256
+  SHA512
+}
+
+enum ImagorMode {
+  EMBEDDED
+  EXTERNAL
+}
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1261,6 +1509,28 @@ func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Conte
 		return nil, err
 	}
 	args["userId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_configureEmbeddedImagor_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNEmbeddedImagorInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐEmbeddedImagorInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_configureExternalImagor_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNExternalImagorInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐExternalImagorInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1652,6 +1922,270 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _EmbeddedImagorConfig_cachePath(ctx context.Context, field graphql.CollectedField, obj *EmbeddedImagorConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EmbeddedImagorConfig_cachePath(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CachePath, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EmbeddedImagorConfig_cachePath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EmbeddedImagorConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExternalImagorConfig_baseUrl(ctx context.Context, field graphql.CollectedField, obj *ExternalImagorConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ExternalImagorConfig_baseUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BaseURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ExternalImagorConfig_baseUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExternalImagorConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExternalImagorConfig_hasSecret(ctx context.Context, field graphql.CollectedField, obj *ExternalImagorConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ExternalImagorConfig_hasSecret(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasSecret, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ExternalImagorConfig_hasSecret(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExternalImagorConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExternalImagorConfig_unsafe(ctx context.Context, field graphql.CollectedField, obj *ExternalImagorConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ExternalImagorConfig_unsafe(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Unsafe, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ExternalImagorConfig_unsafe(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExternalImagorConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExternalImagorConfig_signerType(ctx context.Context, field graphql.CollectedField, obj *ExternalImagorConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ExternalImagorConfig_signerType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SignerType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(ImagorSignerType)
+	fc.Result = res
+	return ec.marshalNImagorSignerType2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorSignerType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ExternalImagorConfig_signerType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExternalImagorConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ImagorSignerType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExternalImagorConfig_signerTruncate(ctx context.Context, field graphql.CollectedField, obj *ExternalImagorConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ExternalImagorConfig_signerTruncate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SignerTruncate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ExternalImagorConfig_signerTruncate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExternalImagorConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _FileItem_name(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_FileItem_name(ctx, field)
@@ -2423,6 +2957,491 @@ func (ec *executionContext) fieldContext_FileStorageConfig_writePermissions(_ co
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImagorConfigResult_success(ctx context.Context, field graphql.CollectedField, obj *ImagorConfigResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImagorConfigResult_success(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Success, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImagorConfigResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImagorConfigResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImagorConfigResult_restartRequired(ctx context.Context, field graphql.CollectedField, obj *ImagorConfigResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImagorConfigResult_restartRequired(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RestartRequired, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImagorConfigResult_restartRequired(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImagorConfigResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImagorConfigResult_timestamp(ctx context.Context, field graphql.CollectedField, obj *ImagorConfigResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImagorConfigResult_timestamp(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Timestamp, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImagorConfigResult_timestamp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImagorConfigResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImagorConfigResult_message(ctx context.Context, field graphql.CollectedField, obj *ImagorConfigResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImagorConfigResult_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImagorConfigResult_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImagorConfigResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImagorStatus_configured(ctx context.Context, field graphql.CollectedField, obj *ImagorStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImagorStatus_configured(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Configured, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImagorStatus_configured(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImagorStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImagorStatus_mode(ctx context.Context, field graphql.CollectedField, obj *ImagorStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImagorStatus_mode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Mode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImagorStatus_mode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImagorStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImagorStatus_restartRequired(ctx context.Context, field graphql.CollectedField, obj *ImagorStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImagorStatus_restartRequired(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RestartRequired, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImagorStatus_restartRequired(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImagorStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImagorStatus_lastUpdated(ctx context.Context, field graphql.CollectedField, obj *ImagorStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImagorStatus_lastUpdated(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastUpdated, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImagorStatus_lastUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImagorStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImagorStatus_isOverriddenByConfig(ctx context.Context, field graphql.CollectedField, obj *ImagorStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImagorStatus_isOverriddenByConfig(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsOverriddenByConfig, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImagorStatus_isOverriddenByConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImagorStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImagorStatus_embeddedConfig(ctx context.Context, field graphql.CollectedField, obj *ImagorStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImagorStatus_embeddedConfig(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EmbeddedConfig, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*EmbeddedImagorConfig)
+	fc.Result = res
+	return ec.marshalOEmbeddedImagorConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐEmbeddedImagorConfig(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImagorStatus_embeddedConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImagorStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cachePath":
+				return ec.fieldContext_EmbeddedImagorConfig_cachePath(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EmbeddedImagorConfig", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImagorStatus_externalConfig(ctx context.Context, field graphql.CollectedField, obj *ImagorStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImagorStatus_externalConfig(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExternalConfig, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ExternalImagorConfig)
+	fc.Result = res
+	return ec.marshalOExternalImagorConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐExternalImagorConfig(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImagorStatus_externalConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImagorStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "baseUrl":
+				return ec.fieldContext_ExternalImagorConfig_baseUrl(ctx, field)
+			case "hasSecret":
+				return ec.fieldContext_ExternalImagorConfig_hasSecret(ctx, field)
+			case "unsafe":
+				return ec.fieldContext_ExternalImagorConfig_unsafe(ctx, field)
+			case "signerType":
+				return ec.fieldContext_ExternalImagorConfig_signerType(ctx, field)
+			case "signerTruncate":
+				return ec.fieldContext_ExternalImagorConfig_signerTruncate(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ExternalImagorConfig", field.Name)
 		},
 	}
 	return fc, nil
@@ -3205,6 +4224,136 @@ func (ec *executionContext) fieldContext_Mutation_testStorageConfig(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_configureEmbeddedImagor(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_configureEmbeddedImagor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ConfigureEmbeddedImagor(rctx, fc.Args["input"].(EmbeddedImagorInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ImagorConfigResult)
+	fc.Result = res
+	return ec.marshalNImagorConfigResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorConfigResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_configureEmbeddedImagor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_ImagorConfigResult_success(ctx, field)
+			case "restartRequired":
+				return ec.fieldContext_ImagorConfigResult_restartRequired(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_ImagorConfigResult_timestamp(ctx, field)
+			case "message":
+				return ec.fieldContext_ImagorConfigResult_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ImagorConfigResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_configureEmbeddedImagor_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_configureExternalImagor(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_configureExternalImagor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ConfigureExternalImagor(rctx, fc.Args["input"].(ExternalImagorInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ImagorConfigResult)
+	fc.Result = res
+	return ec.marshalNImagorConfigResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorConfigResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_configureExternalImagor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_ImagorConfigResult_success(ctx, field)
+			case "restartRequired":
+				return ec.fieldContext_ImagorConfigResult_restartRequired(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_ImagorConfigResult_timestamp(ctx, field)
+			case "message":
+				return ec.fieldContext_ImagorConfigResult_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ImagorConfigResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_configureExternalImagor_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createUser(ctx, field)
 	if err != nil {
@@ -3460,6 +4609,66 @@ func (ec *executionContext) fieldContext_Query_storageStatus(_ context.Context, 
 				return ec.fieldContext_StorageStatus_s3Config(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type StorageStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_imagorStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_imagorStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ImagorStatus(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ImagorStatus)
+	fc.Result = res
+	return ec.marshalNImagorStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_imagorStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "configured":
+				return ec.fieldContext_ImagorStatus_configured(ctx, field)
+			case "mode":
+				return ec.fieldContext_ImagorStatus_mode(ctx, field)
+			case "restartRequired":
+				return ec.fieldContext_ImagorStatus_restartRequired(ctx, field)
+			case "lastUpdated":
+				return ec.fieldContext_ImagorStatus_lastUpdated(ctx, field)
+			case "isOverriddenByConfig":
+				return ec.fieldContext_ImagorStatus_isOverriddenByConfig(ctx, field)
+			case "embeddedConfig":
+				return ec.fieldContext_ImagorStatus_embeddedConfig(ctx, field)
+			case "externalConfig":
+				return ec.fieldContext_ImagorStatus_externalConfig(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ImagorStatus", field.Name)
 		},
 	}
 	return fc, nil
@@ -7822,6 +9031,88 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputEmbeddedImagorInput(ctx context.Context, obj any) (EmbeddedImagorInput, error) {
+	var it EmbeddedImagorInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"cachePath"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "cachePath":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cachePath"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CachePath = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputExternalImagorInput(ctx context.Context, obj any) (ExternalImagorInput, error) {
+	var it ExternalImagorInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"baseUrl", "secret", "unsafe", "signerType", "signerTruncate"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "baseUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("baseUrl"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BaseURL = data
+		case "secret":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Secret = data
+		case "unsafe":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unsafe"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Unsafe = data
+		case "signerType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signerType"))
+			data, err := ec.unmarshalOImagorSignerType2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorSignerType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SignerType = data
+		case "signerTruncate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signerTruncate"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SignerTruncate = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputFileStorageInput(ctx context.Context, obj any) (FileStorageInput, error) {
 	var it FileStorageInput
 	asMap := map[string]any{}
@@ -8063,6 +9354,104 @@ func (ec *executionContext) unmarshalInputUpdateProfileInput(ctx context.Context
 
 // region    **************************** object.gotpl ****************************
 
+var embeddedImagorConfigImplementors = []string{"EmbeddedImagorConfig"}
+
+func (ec *executionContext) _EmbeddedImagorConfig(ctx context.Context, sel ast.SelectionSet, obj *EmbeddedImagorConfig) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, embeddedImagorConfigImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EmbeddedImagorConfig")
+		case "cachePath":
+			out.Values[i] = ec._EmbeddedImagorConfig_cachePath(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var externalImagorConfigImplementors = []string{"ExternalImagorConfig"}
+
+func (ec *executionContext) _ExternalImagorConfig(ctx context.Context, sel ast.SelectionSet, obj *ExternalImagorConfig) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, externalImagorConfigImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExternalImagorConfig")
+		case "baseUrl":
+			out.Values[i] = ec._ExternalImagorConfig_baseUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasSecret":
+			out.Values[i] = ec._ExternalImagorConfig_hasSecret(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unsafe":
+			out.Values[i] = ec._ExternalImagorConfig_unsafe(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "signerType":
+			out.Values[i] = ec._ExternalImagorConfig_signerType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "signerTruncate":
+			out.Values[i] = ec._ExternalImagorConfig_signerTruncate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var fileItemImplementors = []string{"FileItem"}
 
 func (ec *executionContext) _FileItem(ctx context.Context, sel ast.SelectionSet, obj *FileItem) graphql.Marshaler {
@@ -8275,6 +9664,114 @@ func (ec *executionContext) _FileStorageConfig(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var imagorConfigResultImplementors = []string{"ImagorConfigResult"}
+
+func (ec *executionContext) _ImagorConfigResult(ctx context.Context, sel ast.SelectionSet, obj *ImagorConfigResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, imagorConfigResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ImagorConfigResult")
+		case "success":
+			out.Values[i] = ec._ImagorConfigResult_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "restartRequired":
+			out.Values[i] = ec._ImagorConfigResult_restartRequired(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "timestamp":
+			out.Values[i] = ec._ImagorConfigResult_timestamp(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._ImagorConfigResult_message(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var imagorStatusImplementors = []string{"ImagorStatus"}
+
+func (ec *executionContext) _ImagorStatus(ctx context.Context, sel ast.SelectionSet, obj *ImagorStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, imagorStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ImagorStatus")
+		case "configured":
+			out.Values[i] = ec._ImagorStatus_configured(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mode":
+			out.Values[i] = ec._ImagorStatus_mode(ctx, field, obj)
+		case "restartRequired":
+			out.Values[i] = ec._ImagorStatus_restartRequired(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lastUpdated":
+			out.Values[i] = ec._ImagorStatus_lastUpdated(ctx, field, obj)
+		case "isOverriddenByConfig":
+			out.Values[i] = ec._ImagorStatus_isOverriddenByConfig(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "embeddedConfig":
+			out.Values[i] = ec._ImagorStatus_embeddedConfig(ctx, field, obj)
+		case "externalConfig":
+			out.Values[i] = ec._ImagorStatus_externalConfig(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -8385,6 +9882,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "configureEmbeddedImagor":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_configureEmbeddedImagor(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "configureExternalImagor":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_configureExternalImagor(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createUser(ctx, field)
@@ -8485,6 +9996,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_storageStatus(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "imagorStatus":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_imagorStatus(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -9498,6 +11031,16 @@ func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋcshumᚋima
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNEmbeddedImagorInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐEmbeddedImagorInput(ctx context.Context, v any) (EmbeddedImagorInput, error) {
+	res, err := ec.unmarshalInputEmbeddedImagorInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNExternalImagorInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐExternalImagorInput(ctx context.Context, v any) (ExternalImagorInput, error) {
+	res, err := ec.unmarshalInputExternalImagorInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*FileItem) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -9585,6 +11128,44 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNImagorConfigResult2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorConfigResult(ctx context.Context, sel ast.SelectionSet, v ImagorConfigResult) graphql.Marshaler {
+	return ec._ImagorConfigResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNImagorConfigResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorConfigResult(ctx context.Context, sel ast.SelectionSet, v *ImagorConfigResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ImagorConfigResult(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNImagorSignerType2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorSignerType(ctx context.Context, v any) (ImagorSignerType, error) {
+	var res ImagorSignerType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNImagorSignerType2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorSignerType(ctx context.Context, sel ast.SelectionSet, v ImagorSignerType) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNImagorStatus2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorStatus(ctx context.Context, sel ast.SelectionSet, v ImagorStatus) graphql.Marshaler {
+	return ec._ImagorStatus(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNImagorStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorStatus(ctx context.Context, sel ast.SelectionSet, v *ImagorStatus) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ImagorStatus(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
@@ -10170,6 +11751,20 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) marshalOEmbeddedImagorConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐEmbeddedImagorConfig(ctx context.Context, sel ast.SelectionSet, v *EmbeddedImagorConfig) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._EmbeddedImagorConfig(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOExternalImagorConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐExternalImagorConfig(ctx context.Context, sel ast.SelectionSet, v *ExternalImagorConfig) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ExternalImagorConfig(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileStat(ctx context.Context, sel ast.SelectionSet, v *FileStat) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -10208,6 +11803,22 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 	_ = ctx
 	res := graphql.MarshalID(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOImagorSignerType2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorSignerType(ctx context.Context, v any) (*ImagorSignerType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(ImagorSignerType)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOImagorSignerType2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorSignerType(ctx context.Context, sel ast.SelectionSet, v *ImagorSignerType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {

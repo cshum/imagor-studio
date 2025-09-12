@@ -3,12 +3,15 @@ package imagorprovider
 import (
 	"context"
 	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"fmt"
+	"hash"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -21,6 +24,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor/imagorpath"
+	"github.com/cshum/imagor/processor/vipsprocessor"
 	"github.com/cshum/imagor/storage/filestorage"
 	"github.com/cshum/imagor/storage/s3storage"
 	"go.uber.org/zap"
@@ -30,17 +34,18 @@ import (
 type ImagorState string
 
 const (
-	ImagorStateDisabled   ImagorState = "disabled"
 	ImagorStateConfigured ImagorState = "configured"
 )
 
 // ImagorConfig holds imagor configuration
 type ImagorConfig struct {
-	Mode      string // "external", "embedded", "disabled"
-	BaseURL   string // External URL or "/imagor" for embedded
-	Secret    string // Secret key for URL signing
-	Unsafe    bool   // Enable unsafe URLs for development
-	CachePath string // Cache directory path (empty = no caching)
+	Mode           string // "external", "embedded", "disabled"
+	BaseURL        string // External URL or "/imagor" for embedded
+	Secret         string // Secret key for URL signing
+	Unsafe         bool   // Enable unsafe URLs for development
+	CachePath      string // Cache directory path (empty = no caching)
+	SignerType     string // Hash algorithm: "sha1", "sha256", "sha512" (for external mode)
+	SignerTruncate int    // Signature truncation length (for external mode)
 }
 
 // Provider handles imagor configuration with state management
@@ -63,23 +68,30 @@ func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Conf
 		registryStore:   registryStore,
 		config:          cfg,
 		storageProvider: storageProvider,
-		imagorState:     ImagorStateDisabled,
+		imagorState:     ImagorStateConfigured, // Always start as configured
 		configLoadedAt:  time.Now().UnixMilli(),
 		mutex:           sync.RWMutex{},
+	}
+}
+
+// createDefaultEmbeddedConfig creates a default embedded mode configuration
+func createDefaultEmbeddedConfig(cfg *config.Config) *ImagorConfig {
+	return &ImagorConfig{
+		Mode:           "embedded",
+		BaseURL:        "/imagor",
+		Secret:         cfg.JWTSecret, // Default to JWT secret (configurable)
+		Unsafe:         false,         // Always false (fixed)
+		CachePath:      "",            // Default (configurable)
+		SignerType:     "sha256",      // Fixed: always SHA256
+		SignerTruncate: 28,            // Fixed: always 28-char truncation
 	}
 }
 
 // GetConfig returns the current imagor configuration
 func (p *Provider) GetConfig() *ImagorConfig {
 	p.mutex.RLock()
-	if p.imagorState == ImagorStateConfigured {
-		defer p.mutex.RUnlock()
-		return p.currentConfig
-	}
-	p.mutex.RUnlock()
-
-	// For disabled state, check registry once and try to configure
-	return p.loadConfigFromRegistry()
+	defer p.mutex.RUnlock()
+	return p.currentConfig
 }
 
 // GetHandler returns the HTTP handler for embedded mode (nil for external/disabled)
@@ -100,62 +112,45 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	// Check if imagor is configured in registry
-	if p.isImagorConfiguredInRegistry() {
-		imagorConfig, err := p.buildConfigFromRegistry()
-		if err != nil {
-			p.logger.Warn("Failed to create imagor config from registry, using disabled state", zap.Error(err))
-			p.currentConfig = &ImagorConfig{Mode: "disabled"}
-			p.imagorState = ImagorStateDisabled
-			return nil
-		}
-
-		// Create embedded handler if needed
-		if imagorConfig.Mode == "embedded" {
-			handler, err := p.createEmbeddedHandler(imagorConfig)
-			if err != nil {
-				p.logger.Warn("Failed to create embedded imagor handler, using disabled state", zap.Error(err))
-				p.currentConfig = &ImagorConfig{Mode: "disabled"}
-				p.imagorState = ImagorStateDisabled
-				return nil
-			}
-			p.imagorHandler = handler
-		}
-
-		p.currentConfig = imagorConfig
-		p.imagorState = ImagorStateConfigured
-		p.configLoadedAt = time.Now().UnixMilli()
-		p.logger.Info("Imagor initialized successfully", zap.String("mode", imagorConfig.Mode))
-	} else {
-		// Use config from startup flags/env
-		imagorConfig := &ImagorConfig{
-			Mode:    cfg.ImagorMode,
-			BaseURL: cfg.ImagorURL,
-			Secret:  cfg.ImagorSecret,
-			Unsafe:  cfg.ImagorUnsafe,
-		}
-
-		// Adjust base URL for embedded mode
-		if imagorConfig.Mode == "embedded" {
-			imagorConfig.BaseURL = "/imagor"
-			handler, err := p.createEmbeddedHandler(imagorConfig)
-			if err != nil {
-				p.logger.Warn("Failed to create embedded imagor handler, using disabled state", zap.Error(err))
-				imagorConfig.Mode = "disabled"
-			} else {
-				p.imagorHandler = handler
-			}
-		}
-
-		p.currentConfig = imagorConfig
-		if imagorConfig.Mode == "disabled" {
-			p.imagorState = ImagorStateDisabled
+	// Try to load from registry first
+	imagorConfig, err := p.buildConfigFromRegistry()
+	if err != nil || imagorConfig.Mode == "" {
+		// No valid registry config, check startup config or default to embedded
+		if cfg.ImagorMode == "" {
+			// Default to embedded mode
+			imagorConfig = createDefaultEmbeddedConfig(cfg)
+			p.logger.Info("Imagor defaulted to embedded mode")
 		} else {
-			p.imagorState = ImagorStateConfigured
+			// Use startup config
+			imagorConfig = &ImagorConfig{
+				Mode:    cfg.ImagorMode,
+				BaseURL: cfg.ImagorURL,
+				Secret:  cfg.ImagorSecret,
+				Unsafe:  cfg.ImagorUnsafe,
+			}
+
+			// Adjust base URL for embedded mode
+			if imagorConfig.Mode == "embedded" {
+				imagorConfig.BaseURL = "/imagor"
+			}
+
+			p.logger.Info("Imagor initialized from startup config", zap.String("mode", imagorConfig.Mode))
 		}
-		p.configLoadedAt = time.Now().UnixMilli()
-		p.logger.Info("Imagor initialized from config", zap.String("mode", imagorConfig.Mode))
+	} else {
+		p.logger.Info("Imagor initialized from registry", zap.String("mode", imagorConfig.Mode))
 	}
+	// Create embedded handler if needed
+	if imagorConfig.Mode == "embedded" {
+		handler, err := p.createEmbeddedHandler(imagorConfig)
+		if err != nil {
+			return fmt.Errorf("failed to create embedded imagor handler: %w", err)
+		}
+		p.imagorHandler = handler
+	}
+
+	p.currentConfig = imagorConfig
+	p.imagorState = ImagorStateConfigured
+	p.configLoadedAt = time.Now().UnixMilli()
 
 	return nil
 }
@@ -164,10 +159,6 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 func (p *Provider) IsRestartRequired() bool {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
-
-	if p.imagorState == ImagorStateDisabled {
-		return false // No restart needed for first-time setup
-	}
 
 	ctx := context.Background()
 	result := registryutil.GetEffectiveValue(ctx, p.registryStore, p.config, "config.imagor_config_updated_at")
@@ -188,16 +179,12 @@ func (p *Provider) ReloadFromRegistry() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	// Check if imagor is configured in registry
-	if !p.isImagorConfiguredInRegistry() {
-		p.logger.Info("No imagor configuration found in registry, keeping disabled state")
-		return nil
-	}
-
 	// Try to create config from registry configuration
 	imagorConfig, err := p.buildConfigFromRegistry()
-	if err != nil {
-		return fmt.Errorf("failed to build imagor config from registry: %w", err)
+	if err != nil || imagorConfig.Mode == "" {
+		// No valid registry config, default to embedded mode
+		imagorConfig = createDefaultEmbeddedConfig(p.config)
+		p.logger.Info("No imagor configuration found in registry, defaulting to embedded mode")
 	}
 
 	// Create embedded handler if needed
@@ -228,16 +215,12 @@ func (p *Provider) loadConfigFromRegistry() *ImagorConfig {
 		return p.currentConfig
 	}
 
-	// Check if imagor is now configured in registry
-	if !p.isImagorConfiguredInRegistry() {
-		return p.currentConfig // Still disabled
-	}
-
 	// Try to create config from registry configuration
 	imagorConfig, err := p.buildConfigFromRegistry()
-	if err != nil {
-		p.logger.Error("Failed to build imagor config from registry", zap.Error(err))
-		return p.currentConfig
+	if err != nil || imagorConfig.Mode == "" {
+		// No valid registry config, default to embedded mode
+		imagorConfig = createDefaultEmbeddedConfig(p.config)
+		p.logger.Info("No imagor configuration found in registry, defaulting to embedded mode")
 	}
 
 	// Create embedded handler if needed
@@ -258,13 +241,6 @@ func (p *Provider) loadConfigFromRegistry() *ImagorConfig {
 	return p.currentConfig
 }
 
-// isImagorConfiguredInRegistry checks if imagor is configured in the registry
-func (p *Provider) isImagorConfiguredInRegistry() bool {
-	ctx := context.Background()
-	result := registryutil.GetEffectiveValue(ctx, p.registryStore, p.config, "config.imagor_configured")
-	return result.Exists && result.Value == "true"
-}
-
 // buildConfigFromRegistry builds an imagor config object from registry values
 func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 	ctx := context.Background()
@@ -275,7 +251,9 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 		"config.imagor_base_url",
 		"config.imagor_secret",
 		"config.imagor_unsafe",
-		"config.imagor_cache_path")
+		"config.imagor_cache_path",
+		"config.imagor_signer_type",
+		"config.imagor_signer_truncate")
 
 	// Create a map for easy lookup
 	resultMap := make(map[string]registryutil.EffectiveValueResult)
@@ -293,44 +271,87 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 		Mode: modeResult.Value,
 	}
 
-	// Set base URL and default cache path based on mode
 	if imagorConfig.Mode == "embedded" {
+		// Embedded mode: Simple configuration with fixed secure defaults
 		imagorConfig.BaseURL = "/imagor"
-		imagorConfig.CachePath = ".imagor-cache" // Default for embedded
-	} else if baseURLResult := resultMap["config.imagor_base_url"]; baseURLResult.Exists {
-		imagorConfig.BaseURL = baseURLResult.Value
-		// No default cache for external mode
-	} else {
-		imagorConfig.BaseURL = "http://localhost:8000" // Default for external
-	}
+		imagorConfig.Unsafe = false        // Fixed: always false
+		imagorConfig.SignerType = "sha256" // Fixed: always SHA256
+		imagorConfig.SignerTruncate = 28   // Fixed: always 28-char truncation
 
-	// Override cache path if explicitly configured
-	if cachePathResult := resultMap["config.imagor_cache_path"]; cachePathResult.Exists {
-		imagorConfig.CachePath = cachePathResult.Value
-	}
-
-	// Get secret
-	if secretResult := resultMap["config.imagor_secret"]; secretResult.Exists {
-		imagorConfig.Secret = secretResult.Value
-	}
-
-	// Get unsafe flag
-	if unsafeResult := resultMap["config.imagor_unsafe"]; unsafeResult.Exists {
-		if unsafe, err := strconv.ParseBool(unsafeResult.Value); err == nil {
-			imagorConfig.Unsafe = unsafe
+		// Configurable: Secret (defaults to JWT secret)
+		if secretResult := resultMap["config.imagor_secret"]; secretResult.Exists {
+			imagorConfig.Secret = secretResult.Value
+		} else {
+			imagorConfig.Secret = p.config.JWTSecret // Default to JWT secret
 		}
+
+		// Configurable: Cache path (defaults to empty = no cache)
+		if cachePathResult := resultMap["config.imagor_cache_path"]; cachePathResult.Exists {
+			imagorConfig.CachePath = cachePathResult.Value // Could be empty string for no cache
+		}
+	} else {
+		// External mode: Fully configurable
+
+		// Base URL
+		if baseURLResult := resultMap["config.imagor_base_url"]; baseURLResult.Exists {
+			imagorConfig.BaseURL = baseURLResult.Value
+		} else {
+			imagorConfig.BaseURL = "http://localhost:8000" // Default for external
+		}
+
+		// Secret
+		if secretResult := resultMap["config.imagor_secret"]; secretResult.Exists {
+			imagorConfig.Secret = secretResult.Value
+		}
+
+		// Unsafe flag
+		if unsafeResult := resultMap["config.imagor_unsafe"]; unsafeResult.Exists {
+			if unsafe, err := strconv.ParseBool(unsafeResult.Value); err == nil {
+				imagorConfig.Unsafe = unsafe
+			}
+		}
+
+		// Signer type (defaults to SHA1 for external)
+		if signerTypeResult := resultMap["config.imagor_signer_type"]; signerTypeResult.Exists {
+			imagorConfig.SignerType = signerTypeResult.Value
+		} else {
+			imagorConfig.SignerType = "sha1" // Default for external
+		}
+
+		// Signer truncate (defaults to 0 for external)
+		if signerTruncateResult := resultMap["config.imagor_signer_truncate"]; signerTruncateResult.Exists {
+			if truncate, err := strconv.Atoi(signerTruncateResult.Value); err == nil {
+				imagorConfig.SignerTruncate = truncate
+			}
+		} else {
+			imagorConfig.SignerTruncate = 0 // Default for external (no truncation)
+		}
+
+		// External mode has no cache path
+		imagorConfig.CachePath = ""
 	}
 
 	return imagorConfig, nil
+}
+
+// getHashAlgorithm returns the hash algorithm function based on signer type
+func getHashAlgorithm(signerType string) func() hash.Hash {
+	switch strings.ToLower(signerType) {
+	case "sha256":
+		return sha256.New
+	case "sha512":
+		return sha512.New
+	default:
+		return sha1.New // default
+	}
 }
 
 // GenerateURL generates an imagor URL for the given image path and parameters
 func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (string, error) {
 	// Get current imagor configuration
 	cfg := p.GetConfig()
-	if cfg == nil || cfg.Mode == "disabled" {
-		// Return direct file URL without processing when disabled
-		return fmt.Sprintf("/api/file/%s", url.PathEscape(imagePath)), nil
+	if cfg == nil {
+		return "", fmt.Errorf("imagor configuration not available")
 	}
 
 	// Set the image path in params
@@ -338,37 +359,50 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 
 	// Generate path using imagorpath
 	var path string
-	if cfg.Unsafe {
+	var signer imagorpath.Signer
+
+	if cfg.Mode == "embedded" {
+		// For embedded mode, use fixed SHA256 + 28-char truncation with configurable secret
+		secret := cfg.Secret
+		if secret == "" {
+			secret = p.config.JWTSecret
+		}
+		if secret != "" {
+			// Use fixed signer for embedded mode: SHA256 + 28-char truncation
+			signer = imagorpath.NewHMACSigner(sha256.New, 28, secret)
+			path = imagorpath.Generate(params, signer)
+		} else {
+			return "", fmt.Errorf("imagor secret is required for embedded mode")
+		}
+	} else if cfg.Secret != "" {
+		// Use configurable signer for external mode
+		hashAlg := getHashAlgorithm(cfg.SignerType)
+		signer = imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
+		path = imagorpath.Generate(params, signer)
+	} else if cfg.Unsafe {
 		path = imagorpath.GenerateUnsafe(params)
 	} else {
-		// Generate signed path
-		if cfg.Secret == "" {
-			return "", fmt.Errorf("imagor secret is required for signed URLs")
-		}
-		signer := imagorpath.NewDefaultSigner(cfg.Secret)
-		path = imagorpath.Generate(params, signer)
+		return "", fmt.Errorf("imagor secret is required for signed URLs")
 	}
 
 	// Combine with base URL
-	if cfg.BaseURL == "/imagor" {
-		// Embedded mode - relative path
-		return fmt.Sprintf("%s/%s", cfg.BaseURL, path), nil
-	} else {
-		// External mode - full URL
-		return fmt.Sprintf("%s/%s", cfg.BaseURL, path), nil
-	}
+	return fmt.Sprintf("%s/%s", cfg.BaseURL, path), nil
 }
 
 // createEmbeddedHandler creates an embedded imagor handler
 func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error) {
-	options := []imagor.Option{
-		imagor.WithUnsafe(cfg.Unsafe),
-	}
+	var options []imagor.Option
 
-	// Add signer if secret is provided
-	if cfg.Secret != "" {
-		alg := sha1.New // Default to SHA1 like imagor
-		signer := imagorpath.NewHMACSigner(alg, 0, cfg.Secret)
+	// Add vipsprocessor with default configuration
+	options = append(options, imagor.WithProcessors(
+		vipsprocessor.NewProcessor(
+			vipsprocessor.WithLogger(p.logger),
+		),
+	))
+
+	// Use server's JWT secret with SHA256 and 28-char truncation
+	if p.config.JWTSecret != "" {
+		signer := imagorpath.NewHMACSigner(sha256.New, 28, p.config.JWTSecret)
 		options = append(options, imagor.WithSigner(signer))
 	}
 
@@ -399,20 +433,35 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 
 	switch storageConfig.StorageType {
 	case "file", "filesystem":
-		// Create imagor file storage as LOADER only
-		fileStorage := filestorage.New(
-			storageConfig.FileBaseDir,
+		// Create imagor file storage as LOADER only with custom SafeChars for Unicode handling
+		fileStorageOptions := []filestorage.Option{
 			filestorage.WithMkdirPermission(storageConfig.FileMkdirPermissions.String()),
 			filestorage.WithWritePermission(storageConfig.FileWritePermissions.String()),
+			filestorage.WithSafeChars("--"),
+		}
+
+		// Use custom SafeChars for embedded mode to handle Unicode characters
+		if cfg.Mode == "embedded" {
+			fileStorageOptions = append(fileStorageOptions,
+				filestorage.WithSafeChars("--"), // Use no-op SafeChars to preserve Unicode
+			)
+		}
+
+		fileStorage := filestorage.New(
+			storageConfig.FileBaseDir,
+			fileStorageOptions...,
 		)
 		options = append(options, imagor.WithLoaders(fileStorage))
 
 		// Add result storage only if cache path is configured
 		if cfg.CachePath != "" {
-			cacheStorage := filestorage.New(
-				filepath.Join(storageConfig.FileBaseDir, cfg.CachePath),
+			cacheStorageOptions := []filestorage.Option{
 				filestorage.WithMkdirPermission(storageConfig.FileMkdirPermissions.String()),
 				filestorage.WithWritePermission(storageConfig.FileWritePermissions.String()),
+			}
+			cacheStorage := filestorage.New(
+				filepath.Join(storageConfig.FileBaseDir, cfg.CachePath),
+				cacheStorageOptions...,
 			)
 			options = append(options, imagor.WithResultStorages(cacheStorage))
 		}
@@ -429,6 +478,7 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 			s3storage.WithBaseDir(storageConfig.S3BaseDir),
 			s3storage.WithEndpoint(storageConfig.S3Endpoint),
 			s3storage.WithForcePathStyle(storageConfig.S3ForcePathStyle),
+			s3storage.WithSafeChars("--"),
 		)
 		options = append(options, imagor.WithLoaders(s3Storage))
 

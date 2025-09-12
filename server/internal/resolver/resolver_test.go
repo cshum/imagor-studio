@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -169,3 +170,37 @@ func (m *MockStorageProvider) ReloadFromRegistry() error {
 
 // Ensure MockStorageProvider implements the StorageProvider interface
 var _ StorageProvider = (*MockStorageProvider)(nil)
+
+// Mock types for imagor tests (only new ones not already in registry_test.go)
+
+type MockImagorProvider struct {
+	mock.Mock
+}
+
+func (m *MockImagorProvider) GetConfig() *imagorprovider.ImagorConfig {
+	args := m.Called()
+	if args.Get(0) == nil {
+		return nil
+	}
+	return args.Get(0).(*imagorprovider.ImagorConfig)
+}
+
+func (m *MockImagorProvider) IsRestartRequired() bool {
+	args := m.Called()
+	return args.Bool(0)
+}
+
+func (m *MockImagorProvider) ReloadFromRegistry() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
+type MockImagorConfig struct {
+	Mode           string
+	BaseURL        string
+	Secret         string
+	Unsafe         bool
+	CachePath      string
+	SignerType     string
+	SignerTruncate int
+}

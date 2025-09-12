@@ -1,37 +1,41 @@
+import { useTranslation } from 'react-i18next'
+
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { cn } from '@/lib/utils'
 
-export type StorageType = 'file' | 's3'
+export type ImagorType = 'embedded' | 'external'
 
-interface StorageTypeSelectorProps {
-  value: StorageType
-  onChange: (type: StorageType) => void
+interface ImagorTypeSelectorProps {
+  value: ImagorType
+  onChange: (type: ImagorType) => void
   disabled?: boolean
 }
 
-export function StorageTypeSelector({ value, onChange, disabled }: StorageTypeSelectorProps) {
+export function ImagorTypeSelector({ value, onChange, disabled = false }: ImagorTypeSelectorProps) {
+  const { t } = useTranslation()
+
   const options = [
     {
-      value: 'file' as const,
-      label: 'File Storage',
-      description: 'Store images on the local file system',
-      icon: '📁',
+      value: 'embedded' as const,
+      label: t('pages.imagor.embeddedMode'),
+      description: t('pages.imagor.embeddedModeDescription'),
+      icon: '🔧',
     },
     {
-      value: 's3' as const,
-      label: 'S3 Storage',
-      description: 'Store images in Amazon S3 or compatible cloud storage',
-      icon: '☁️',
+      value: 'external' as const,
+      label: t('pages.imagor.externalMode'),
+      description: t('pages.imagor.externalModeDescription'),
+      icon: '🌐',
     },
   ]
 
   return (
     <div className='space-y-3'>
-      <Label className='text-base font-medium'>Storage Type</Label>
+      <Label className='text-base font-medium'>{t('pages.imagor.selectMode')}</Label>
       <RadioGroup
         value={value}
-        onValueChange={(newValue) => onChange(newValue as StorageType)}
+        onValueChange={(newValue) => onChange(newValue as ImagorType)}
         disabled={disabled}
         className='grid grid-cols-1 gap-4 md:grid-cols-2'
       >
