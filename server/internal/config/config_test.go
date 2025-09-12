@@ -32,7 +32,7 @@ func TestLoadBasic(t *testing.T) {
 	assert.Equal(t, "file", cfg.StorageType)
 	assert.Equal(t, "./storage", cfg.FileBaseDir)
 	assert.Equal(t, "embedded", cfg.ImagorMode)
-	assert.Equal(t, "/imagor", cfg.ImagorURL)
+	assert.Equal(t, "", cfg.ImagorURL)
 	assert.Equal(t, 24*time.Hour, cfg.JWTExpiration)
 }
 

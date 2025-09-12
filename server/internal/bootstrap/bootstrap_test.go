@@ -246,8 +246,8 @@ func TestImagorProviderIntegration(t *testing.T) {
 	// Test that imagor provider has correct config
 	imagorConfig := services.ImagorProvider.GetConfig()
 	require.NotNil(t, imagorConfig)
-	assert.Equal(t, "external", imagorConfig.Mode)
-	assert.Equal(t, "http://localhost:8000", imagorConfig.BaseURL)
+	assert.Equal(t, "embedded", imagorConfig.Mode)
+	assert.Equal(t, "/imagor", imagorConfig.BaseURL)
 	assert.Equal(t, "test-secret", imagorConfig.Secret)
 	assert.True(t, imagorConfig.Unsafe)
 
