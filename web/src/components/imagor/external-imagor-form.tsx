@@ -102,7 +102,7 @@ export const ExternalImagorForm = forwardRef<ExternalImagorFormRef, ExternalImag
           <div className='space-y-1'>
             <Label
               htmlFor='unsafe'
-              className='text-sm leading-none font-medium cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+              className='cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
             >
               {t('pages.imagor.unsafeMode')}
             </Label>

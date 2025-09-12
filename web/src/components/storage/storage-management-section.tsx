@@ -7,6 +7,7 @@ import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { StorageStatusQuery } from '@/generated/graphql'
+import { loadRootFolders } from '@/stores/folder-tree-store'
 
 import { StorageConfigurationWizard } from './storage-configuration-wizard'
 
@@ -18,12 +19,14 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
   const [showConfigDialog, setShowConfigDialog] = useState(false)
   const router = useRouter()
 
-  const handleStorageConfigured = (restartRequired: boolean) => {
+  const handleStorageConfigured = async (restartRequired: boolean) => {
     setShowConfigDialog(false)
     if (restartRequired) {
       toast.success('Storage configured successfully. Please restart the server to apply changes.')
     } else {
       toast.success('Storage configured successfully')
+      // Load root folders to refresh the folder tree with new storage configuration
+      await loadRootFolders()
     }
     // Invalidate the loader data to get fresh storage status
     router.invalidate()
