@@ -31,7 +31,7 @@ export const EmbeddedImagorForm = forwardRef<EmbeddedImagorFormRef, EmbeddedImag
       formState: { errors },
     } = useForm<EmbeddedImagorFormData>({
       defaultValues: {
-        cachePath: initialValues?.cachePath || '.imagor-cache',
+        cachePath: initialValues?.cachePath || '',
       },
     })
 
@@ -43,12 +43,7 @@ export const EmbeddedImagorForm = forwardRef<EmbeddedImagorFormRef, EmbeddedImag
       <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
         <div className='space-y-2'>
           <Label htmlFor='cachePath'>{t('pages.imagor.cachePath')}</Label>
-          <Input
-            id='cachePath'
-            placeholder='.imagor-cache'
-            disabled={disabled}
-            {...register('cachePath')}
-          />
+          <Input id='cachePath' placeholder='' disabled={disabled} {...register('cachePath')} />
           <p className='text-muted-foreground text-sm'>{t('pages.imagor.cachePathDescription')}</p>
           {errors.cachePath && (
             <p className='text-destructive text-sm'>{errors.cachePath.message}</p>

@@ -1513,7 +1513,7 @@ type ImagorConfigResult {
 }
 
 input EmbeddedImagorInput {
-  cachePath: String     # Optional, defaults to ".imagor-cache", empty = no cache
+  cachePath: String     # Optional, defaults to empty = no cache
 }
 
 input ExternalImagorInput {

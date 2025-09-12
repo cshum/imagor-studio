@@ -706,7 +706,6 @@ func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, er
 			BaseURL:        "/imagor",
 			Secret:         jwtSecret,
 			Unsafe:         false,
-			CachePath:      ".imagor-cache",
 			SignerType:     "sha256",
 			SignerTruncate: 28,
 		}

@@ -79,11 +79,11 @@ func createDefaultEmbeddedConfig(cfg *config.Config) *ImagorConfig {
 	return &ImagorConfig{
 		Mode:           "embedded",
 		BaseURL:        "/imagor",
-		Secret:         cfg.JWTSecret,   // Default to JWT secret (configurable)
-		Unsafe:         false,           // Always false (fixed)
-		CachePath:      ".imagor-cache", // Default (configurable)
-		SignerType:     "sha256",        // Fixed: always SHA256
-		SignerTruncate: 28,              // Fixed: always 28-char truncation
+		Secret:         cfg.JWTSecret, // Default to JWT secret (configurable)
+		Unsafe:         false,         // Always false (fixed)
+		CachePath:      "",            // Default (configurable)
+		SignerType:     "sha256",      // Fixed: always SHA256
+		SignerTruncate: 28,            // Fixed: always 28-char truncation
 	}
 }
 
@@ -285,13 +285,10 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 			imagorConfig.Secret = p.config.JWTSecret // Default to JWT secret
 		}
 
-		// Configurable: Cache path (defaults to ".imagor-cache", empty = no cache)
+		// Configurable: Cache path (defaults to empty = no cache)
 		if cachePathResult := resultMap["config.imagor_cache_path"]; cachePathResult.Exists {
 			imagorConfig.CachePath = cachePathResult.Value // Could be empty string for no cache
-		} else {
-			imagorConfig.CachePath = ".imagor-cache" // Default
 		}
-
 	} else {
 		// External mode: Fully configurable
 
