@@ -965,8 +965,9 @@ func (r *queryResolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUr
 		Width:  300,
 		Height: 225,
 		Filters: imagorpath.Filters{
-			{Name: "quality", Args: "85"},
+			{Name: "quality", Args: "80"},
 			{Name: "format", Args: "webp"},
+			{Name: "max_frames", Args: "1"},
 		},
 	})
 
@@ -976,6 +977,7 @@ func (r *queryResolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUr
 		FitIn:  true,
 		Filters: imagorpath.Filters{
 			{Name: "quality", Args: "90"},
+			{Name: "format", Args: "webp"},
 		},
 	})
 
@@ -985,6 +987,7 @@ func (r *queryResolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUr
 		FitIn:  true,
 		Filters: imagorpath.Filters{
 			{Name: "quality", Args: "95"},
+			{Name: "format", Args: "webp"},
 		},
 	})
 
