@@ -98,17 +98,11 @@ export const ExternalImagorForm = forwardRef<ExternalImagorFormRef, ExternalImag
           {errors.secret && <p className='text-destructive text-sm'>{errors.secret.message}</p>}
         </div>
 
-        <div className='flex items-center space-x-2'>
-          <Checkbox
-            id='unsafe'
-            checked={watchedUnsafe}
-            onCheckedChange={(checked) => setValue('unsafe', checked as boolean)}
-            disabled={disabled}
-          />
-          <div className='grid gap-1.5 leading-none'>
+        <div className='flex flex-row items-center justify-between space-y-0'>
+          <div className='space-y-1'>
             <Label
               htmlFor='unsafe'
-              className='text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+              className='text-sm leading-none font-medium cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
             >
               {t('pages.imagor.unsafeMode')}
             </Label>
@@ -116,6 +110,12 @@ export const ExternalImagorForm = forwardRef<ExternalImagorFormRef, ExternalImag
               {t('pages.imagor.unsafeModeDescription')}
             </p>
           </div>
+          <Checkbox
+            id='unsafe'
+            checked={watchedUnsafe}
+            onCheckedChange={(checked) => setValue('unsafe', checked as boolean)}
+            disabled={disabled}
+          />
         </div>
 
         <div className='space-y-2'>
