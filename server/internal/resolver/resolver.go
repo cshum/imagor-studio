@@ -6,6 +6,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
+	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
 )
 
@@ -21,16 +22,24 @@ type StorageProvider interface {
 	ReloadFromRegistry() error
 }
 
+// ImagorProvider interface for imagor operations
+type ImagorProvider interface {
+	GetConfig() *imagorprovider.ImagorConfig
+	IsRestartRequired() bool
+	ReloadFromRegistry() error
+	GenerateURL(imagePath string, params imagorpath.Params) (string, error)
+}
+
 type Resolver struct {
 	storageProvider StorageProvider
 	registryStore   registrystore.Store
 	userStore       userstore.Store
-	imagorProvider  *imagorprovider.Provider
+	imagorProvider  ImagorProvider
 	config          ConfigProvider
 	logger          *zap.Logger
 }
 
-func NewResolver(storageProvider StorageProvider, registryStore registrystore.Store, userStore userstore.Store, imagorProvider *imagorprovider.Provider, cfg ConfigProvider, logger *zap.Logger) *Resolver {
+func NewResolver(storageProvider StorageProvider, registryStore registrystore.Store, userStore userstore.Store, imagorProvider ImagorProvider, cfg ConfigProvider, logger *zap.Logger) *Resolver {
 	return &Resolver{
 		storageProvider: storageProvider,
 		registryStore:   registryStore,

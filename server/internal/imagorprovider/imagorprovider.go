@@ -161,17 +161,28 @@ func (p *Provider) IsRestartRequired() bool {
 	defer p.mutex.RUnlock()
 
 	ctx := context.Background()
-	result := registryutil.GetEffectiveValue(ctx, p.registryStore, p.config, "config.imagor_config_updated_at")
-	if !result.Exists {
-		return false
+
+	// Check both imagor config changes and storage config changes
+	results := registryutil.GetEffectiveValues(ctx, p.registryStore, p.config,
+		"config.imagor_config_updated_at",
+		"config.storage_config_updated_at")
+
+	for _, result := range results {
+		if !result.Exists {
+			continue
+		}
+
+		configUpdatedAt, err := strconv.ParseInt(result.Value, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		if configUpdatedAt > p.configLoadedAt {
+			return true
+		}
 	}
 
-	configUpdatedAt, err := strconv.ParseInt(result.Value, 10, 64)
-	if err != nil {
-		return false
-	}
-
-	return configUpdatedAt > p.configLoadedAt
+	return false
 }
 
 // ReloadFromRegistry forces a reload of imagor configuration from registry

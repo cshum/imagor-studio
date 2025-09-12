@@ -782,10 +782,11 @@ func TestConfigureFileStorage_AutoTestSuccess(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
+	mockImagorProvider := new(MockImagorProvider)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	tempDir := t.TempDir()
@@ -803,6 +804,7 @@ func TestConfigureFileStorage_AutoTestSuccess(t *testing.T) {
 		return len(entries) >= 3 // At least 3 entries (type, configured, base_dir, timestamp)
 	})).Return([]*registrystore.Registry{resultRegistry}, nil)
 	mockStorageProvider.On("ReloadFromRegistry").Return(nil)
+	mockImagorProvider.On("ReloadFromRegistry").Return(nil)
 
 	result, err := resolver.Mutation().ConfigureFileStorage(ctx, input)
 
@@ -907,10 +909,11 @@ func TestConfigureFileStorage_RequiresAdminPermission(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
+	mockImagorProvider := new(MockImagorProvider)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, logger)
 
 	tests := []struct {
 		name        string
@@ -963,6 +966,7 @@ func TestConfigureFileStorage_RequiresAdminPermission(t *testing.T) {
 				})).Return([]*registrystore.Registry{resultRegistry}, nil)
 				mockStorageProvider.On("ReloadFromRegistry").Return(nil)
 				mockStorageProvider.On("IsRestartRequired").Return(false)
+				mockImagorProvider.On("ReloadFromRegistry").Return(nil)
 			}
 
 			result, err := resolver.Mutation().ConfigureFileStorage(ctx, input)

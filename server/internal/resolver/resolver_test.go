@@ -9,6 +9,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
+	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -193,6 +194,11 @@ func (m *MockImagorProvider) IsRestartRequired() bool {
 func (m *MockImagorProvider) ReloadFromRegistry() error {
 	args := m.Called()
 	return args.Error(0)
+}
+
+func (m *MockImagorProvider) GenerateURL(imagePath string, params imagorpath.Params) (string, error) {
+	args := m.Called(imagePath, params)
+	return args.String(0), args.Error(1)
 }
 
 type MockImagorConfig struct {
