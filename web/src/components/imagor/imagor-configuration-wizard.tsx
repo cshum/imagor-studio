@@ -54,7 +54,6 @@ export function ImagorConfigurationWizard({
   const getEmbeddedInitialValues = (): Partial<EmbeddedImagorFormData> | undefined => {
     if (!initialConfig?.embeddedConfig) return undefined
     return {
-      secret: '', // Don't pre-populate secret for security
       cachePath: initialConfig.embeddedConfig.cachePath,
     }
   }
@@ -76,7 +75,6 @@ export function ImagorConfigurationWizard({
     try {
       const result = await configureEmbeddedImagor({
         input: {
-          secret: data.secret || null,
           cachePath: data.cachePath || null,
         },
       })
