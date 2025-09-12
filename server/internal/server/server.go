@@ -89,11 +89,16 @@ func New(cfg *config.Config, logger *zap.Logger, args []string) (*Server, error)
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)
 	mux.Handle("/query", protectedHandler)
 
-	// Embedded imagor handler (if enabled)
-	if imagorHandler := services.ImagorProvider.GetHandler(); imagorHandler != nil {
-		services.Logger.Info("Embedded imagor handler enabled at /imagor/")
-		mux.Handle("/imagor/", http.StripPrefix("/imagor", imagorHandler))
-	}
+	// Dynamic imagor handler wrapper
+	dynamicHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if currentHandler := services.ImagorProvider.GetHandler(); currentHandler != nil {
+			currentHandler.ServeHTTP(w, r)
+		} else {
+			http.NotFound(w, r)
+		}
+	})
+	mux.Handle("/imagor/", http.StripPrefix("/imagor", dynamicHandler))
+	services.Logger.Info("Dynamic imagor handler registered at /imagor/")
 
 	// Static file serving for web frontend
 	staticHandler := createStaticHandler(services.Logger)

@@ -30,13 +30,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// ImagorState represents the current state of imagor configuration
-type ImagorState string
-
-const (
-	ImagorStateConfigured ImagorState = "configured"
-)
-
 // ImagorConfig holds imagor configuration
 type ImagorConfig struct {
 	Mode           string // "external", "embedded", "disabled"
@@ -56,8 +49,7 @@ type Provider struct {
 	storageProvider *storageprovider.Provider
 	currentConfig   *ImagorConfig
 	imagorHandler   http.Handler // For embedded mode
-	imagorState     ImagorState
-	configLoadedAt  int64 // Unix milliseconds when config was loaded
+	configLoadedAt  int64        // Unix milliseconds when config was loaded
 	mutex           sync.RWMutex
 }
 
@@ -68,7 +60,6 @@ func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Conf
 		registryStore:   registryStore,
 		config:          cfg,
 		storageProvider: storageProvider,
-		imagorState:     ImagorStateConfigured, // Always start as configured
 		configLoadedAt:  time.Now().UnixMilli(),
 		mutex:           sync.RWMutex{},
 	}
@@ -99,9 +90,7 @@ func (p *Provider) GetHandler() http.Handler {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
 
-	if p.imagorState == ImagorStateConfigured &&
-		p.currentConfig != nil &&
-		p.currentConfig.Mode == "embedded" {
+	if p.currentConfig != nil && p.currentConfig.Mode == "embedded" {
 		return p.imagorHandler
 	}
 	return nil
@@ -149,7 +138,6 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 	}
 
 	p.currentConfig = imagorConfig
-	p.imagorState = ImagorStateConfigured
 	p.configLoadedAt = time.Now().UnixMilli()
 
 	return nil
@@ -210,7 +198,6 @@ func (p *Provider) ReloadFromRegistry() error {
 	}
 
 	p.currentConfig = imagorConfig
-	p.imagorState = ImagorStateConfigured
 	p.configLoadedAt = time.Now().UnixMilli()
 	p.logger.Info("Imagor reloaded from registry", zap.String("mode", imagorConfig.Mode))
 
@@ -222,7 +209,7 @@ func (p *Provider) loadConfigFromRegistry() *ImagorConfig {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	if p.imagorState == ImagorStateConfigured {
+	if p.currentConfig != nil {
 		return p.currentConfig
 	}
 
@@ -245,7 +232,6 @@ func (p *Provider) loadConfigFromRegistry() *ImagorConfig {
 	}
 
 	p.currentConfig = imagorConfig
-	p.imagorState = ImagorStateConfigured
 	p.configLoadedAt = time.Now().UnixMilli()
 	p.logger.Info("Imagor configured from registry", zap.String("mode", imagorConfig.Mode))
 
