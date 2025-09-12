@@ -1,5 +1,5 @@
-import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { cn } from '@/lib/utils'
 
 export type StorageType = 'file' | 's3'
@@ -29,12 +29,17 @@ export function StorageTypeSelector({ value, onChange, disabled }: StorageTypeSe
   return (
     <div className='space-y-3'>
       <Label className='text-base font-medium'>Storage Type</Label>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+      <RadioGroup
+        value={value}
+        onValueChange={(newValue) => onChange(newValue as StorageType)}
+        disabled={disabled}
+        className='grid grid-cols-1 gap-4 md:grid-cols-2'
+      >
         {options.map((option) => (
-          <Card
+          <div
             key={option.value}
             className={cn(
-              'hover:border-primary/50 cursor-pointer border-2 p-4 transition-all',
+              'hover:border-primary/50 cursor-pointer border-2 p-4 transition-all rounded-lg',
               value === option.value
                 ? 'border-primary bg-primary/5'
                 : 'border-border hover:border-primary/30',
@@ -58,14 +63,17 @@ export function StorageTypeSelector({ value, onChange, disabled }: StorageTypeSe
                       <div className='bg-primary-foreground h-2 w-2 rounded-full' />
                     )}
                   </div>
-                  <h3 className='font-medium'>{option.label}</h3>
+                  <Label htmlFor={option.value} className='font-medium'>
+                    {option.label}
+                  </Label>
                 </div>
                 <p className='text-muted-foreground mt-1 text-sm'>{option.description}</p>
               </div>
             </div>
-          </Card>
+            <RadioGroupItem value={option.value} id={option.value} className='sr-only' />
+          </div>
         ))}
-      </div>
+      </RadioGroup>
     </div>
   )
 }
