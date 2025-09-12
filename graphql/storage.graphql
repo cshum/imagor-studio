@@ -249,13 +249,7 @@ type ImagorStatus {
 }
 
 type EmbeddedImagorConfig {
-  hasCustomSecret: Boolean!     # Instead of exposing secret value
-  secretSource: String!         # "JWT Secret" or "Custom Secret"
   cachePath: String!
-  # Fixed values (not configurable)
-  signerType: ImagorSignerType! # Always SHA256
-  signerTruncate: Int!          # Always 28
-  unsafe: Boolean!              # Always false
 }
 
 type ExternalImagorConfig {

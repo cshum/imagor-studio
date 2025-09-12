@@ -39,11 +39,6 @@ export type CreateUserInput = {
 export type EmbeddedImagorConfig = {
   __typename?: 'EmbeddedImagorConfig'
   cachePath: Scalars['String']['output']
-  hasCustomSecret: Scalars['Boolean']['output']
-  secretSource: Scalars['String']['output']
-  signerTruncate: Scalars['Int']['output']
-  signerType: ImagorSignerType
-  unsafe: Scalars['Boolean']['output']
 }
 
 export type EmbeddedImagorInput = {
@@ -401,15 +396,7 @@ export type ImagorStatusQuery = {
     restartRequired: boolean
     lastUpdated: string | null
     isOverriddenByConfig: boolean
-    embeddedConfig: {
-      __typename?: 'EmbeddedImagorConfig'
-      hasCustomSecret: boolean
-      secretSource: string
-      cachePath: string
-      signerType: ImagorSignerType
-      signerTruncate: number
-      unsafe: boolean
-    } | null
+    embeddedConfig: { __typename?: 'EmbeddedImagorConfig'; cachePath: string } | null
     externalConfig: {
       __typename?: 'ExternalImagorConfig'
       baseUrl: string
@@ -944,12 +931,7 @@ export const ImagorStatusDocument = gql`
       lastUpdated
       isOverriddenByConfig
       embeddedConfig {
-        hasCustomSecret
-        secretSource
         cachePath
-        signerType
-        signerTruncate
-        unsafe
       }
       externalConfig {
         baseUrl

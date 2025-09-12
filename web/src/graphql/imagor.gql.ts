@@ -10,12 +10,7 @@ export const IMAGOR_STATUS_QUERY = gql(`
       lastUpdated
       isOverriddenByConfig
       embeddedConfig {
-        hasCustomSecret
-        secretSource
         cachePath
-        signerType
-        signerTruncate
-        unsafe
       }
       externalConfig {
         baseUrl

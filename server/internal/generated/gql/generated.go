@@ -46,12 +46,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	EmbeddedImagorConfig struct {
-		CachePath       func(childComplexity int) int
-		HasCustomSecret func(childComplexity int) int
-		SecretSource    func(childComplexity int) int
-		SignerTruncate  func(childComplexity int) int
-		SignerType      func(childComplexity int) int
-		Unsafe          func(childComplexity int) int
+		CachePath func(childComplexity int) int
 	}
 
 	ExternalImagorConfig struct {
@@ -266,41 +261,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.EmbeddedImagorConfig.CachePath(childComplexity), true
-
-	case "EmbeddedImagorConfig.hasCustomSecret":
-		if e.complexity.EmbeddedImagorConfig.HasCustomSecret == nil {
-			break
-		}
-
-		return e.complexity.EmbeddedImagorConfig.HasCustomSecret(childComplexity), true
-
-	case "EmbeddedImagorConfig.secretSource":
-		if e.complexity.EmbeddedImagorConfig.SecretSource == nil {
-			break
-		}
-
-		return e.complexity.EmbeddedImagorConfig.SecretSource(childComplexity), true
-
-	case "EmbeddedImagorConfig.signerTruncate":
-		if e.complexity.EmbeddedImagorConfig.SignerTruncate == nil {
-			break
-		}
-
-		return e.complexity.EmbeddedImagorConfig.SignerTruncate(childComplexity), true
-
-	case "EmbeddedImagorConfig.signerType":
-		if e.complexity.EmbeddedImagorConfig.SignerType == nil {
-			break
-		}
-
-		return e.complexity.EmbeddedImagorConfig.SignerType(childComplexity), true
-
-	case "EmbeddedImagorConfig.unsafe":
-		if e.complexity.EmbeddedImagorConfig.Unsafe == nil {
-			break
-		}
-
-		return e.complexity.EmbeddedImagorConfig.Unsafe(childComplexity), true
 
 	case "ExternalImagorConfig.baseUrl":
 		if e.complexity.ExternalImagorConfig.BaseURL == nil {
@@ -1487,13 +1447,7 @@ type ImagorStatus {
 }
 
 type EmbeddedImagorConfig {
-  hasCustomSecret: Boolean!     # Instead of exposing secret value
-  secretSource: String!         # "JWT Secret" or "Custom Secret"
   cachePath: String!
-  # Fixed values (not configurable)
-  signerType: ImagorSignerType! # Always SHA256
-  signerTruncate: Int!          # Always 28
-  unsafe: Boolean!              # Always false
 }
 
 type ExternalImagorConfig {
@@ -1969,94 +1923,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _EmbeddedImagorConfig_hasCustomSecret(ctx context.Context, field graphql.CollectedField, obj *EmbeddedImagorConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EmbeddedImagorConfig_hasCustomSecret(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.HasCustomSecret, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_EmbeddedImagorConfig_hasCustomSecret(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "EmbeddedImagorConfig",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _EmbeddedImagorConfig_secretSource(ctx context.Context, field graphql.CollectedField, obj *EmbeddedImagorConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EmbeddedImagorConfig_secretSource(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SecretSource, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_EmbeddedImagorConfig_secretSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "EmbeddedImagorConfig",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _EmbeddedImagorConfig_cachePath(ctx context.Context, field graphql.CollectedField, obj *EmbeddedImagorConfig) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_EmbeddedImagorConfig_cachePath(ctx, field)
 	if err != nil {
@@ -2096,138 +1962,6 @@ func (ec *executionContext) fieldContext_EmbeddedImagorConfig_cachePath(_ contex
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _EmbeddedImagorConfig_signerType(ctx context.Context, field graphql.CollectedField, obj *EmbeddedImagorConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EmbeddedImagorConfig_signerType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SignerType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(ImagorSignerType)
-	fc.Result = res
-	return ec.marshalNImagorSignerType2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorSignerType(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_EmbeddedImagorConfig_signerType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "EmbeddedImagorConfig",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ImagorSignerType does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _EmbeddedImagorConfig_signerTruncate(ctx context.Context, field graphql.CollectedField, obj *EmbeddedImagorConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EmbeddedImagorConfig_signerTruncate(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SignerTruncate, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_EmbeddedImagorConfig_signerTruncate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "EmbeddedImagorConfig",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _EmbeddedImagorConfig_unsafe(ctx context.Context, field graphql.CollectedField, obj *EmbeddedImagorConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EmbeddedImagorConfig_unsafe(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Unsafe, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_EmbeddedImagorConfig_unsafe(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "EmbeddedImagorConfig",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3651,18 +3385,8 @@ func (ec *executionContext) fieldContext_ImagorStatus_embeddedConfig(_ context.C
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "hasCustomSecret":
-				return ec.fieldContext_EmbeddedImagorConfig_hasCustomSecret(ctx, field)
-			case "secretSource":
-				return ec.fieldContext_EmbeddedImagorConfig_secretSource(ctx, field)
 			case "cachePath":
 				return ec.fieldContext_EmbeddedImagorConfig_cachePath(ctx, field)
-			case "signerType":
-				return ec.fieldContext_EmbeddedImagorConfig_signerType(ctx, field)
-			case "signerTruncate":
-				return ec.fieldContext_EmbeddedImagorConfig_signerTruncate(ctx, field)
-			case "unsafe":
-				return ec.fieldContext_EmbeddedImagorConfig_unsafe(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type EmbeddedImagorConfig", field.Name)
 		},
@@ -9641,33 +9365,8 @@ func (ec *executionContext) _EmbeddedImagorConfig(ctx context.Context, sel ast.S
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("EmbeddedImagorConfig")
-		case "hasCustomSecret":
-			out.Values[i] = ec._EmbeddedImagorConfig_hasCustomSecret(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "secretSource":
-			out.Values[i] = ec._EmbeddedImagorConfig_secretSource(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "cachePath":
 			out.Values[i] = ec._EmbeddedImagorConfig_cachePath(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "signerType":
-			out.Values[i] = ec._EmbeddedImagorConfig_signerType(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "signerTruncate":
-			out.Values[i] = ec._EmbeddedImagorConfig_signerTruncate(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "unsafe":
-			out.Values[i] = ec._EmbeddedImagorConfig_unsafe(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

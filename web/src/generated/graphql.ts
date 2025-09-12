@@ -38,11 +38,6 @@ export type CreateUserInput = {
 export type EmbeddedImagorConfig = {
   __typename?: 'EmbeddedImagorConfig'
   cachePath: Scalars['String']['output']
-  hasCustomSecret: Scalars['Boolean']['output']
-  secretSource: Scalars['String']['output']
-  signerTruncate: Scalars['Int']['output']
-  signerType: ImagorSignerType
-  unsafe: Scalars['Boolean']['output']
 }
 
 export type EmbeddedImagorInput = {
@@ -400,15 +395,7 @@ export type ImagorStatusQuery = {
     restartRequired: boolean
     lastUpdated: string | null
     isOverriddenByConfig: boolean
-    embeddedConfig: {
-      __typename?: 'EmbeddedImagorConfig'
-      hasCustomSecret: boolean
-      secretSource: string
-      cachePath: string
-      signerType: ImagorSignerType
-      signerTruncate: number
-      unsafe: boolean
-    } | null
+    embeddedConfig: { __typename?: 'EmbeddedImagorConfig'; cachePath: string } | null
     externalConfig: {
       __typename?: 'ExternalImagorConfig'
       baseUrl: string
@@ -1029,14 +1016,7 @@ export const ImagorStatusDocument = {
                   name: { kind: 'Name', value: 'embeddedConfig' },
                   selectionSet: {
                     kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'hasCustomSecret' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'secretSource' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'cachePath' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'signerType' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'unsafe' } },
-                    ],
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'cachePath' } }],
                   },
                 },
                 {

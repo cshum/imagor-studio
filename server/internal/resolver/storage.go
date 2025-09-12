@@ -771,26 +771,8 @@ func (r *queryResolver) isImagorConfigOverridden(ctx context.Context, mode strin
 
 // Helper function to get embedded imagor configuration
 func (r *queryResolver) getEmbeddedImagorConfig(ctx context.Context, imagorConfig *imagorprovider.ImagorConfig) *gql.EmbeddedImagorConfig {
-	// Get JWT secret from config
-	jwtSecret := ""
-	if value, exists := r.config.GetByRegistryKey("config.jwt_secret"); exists {
-		jwtSecret = value
-	}
-
-	// Check if using custom secret
-	hasCustomSecret := imagorConfig.Secret != "" && imagorConfig.Secret != jwtSecret
-	secretSource := "JWT Secret"
-	if hasCustomSecret {
-		secretSource = "Custom Secret"
-	}
-
 	return &gql.EmbeddedImagorConfig{
-		HasCustomSecret: hasCustomSecret,
-		SecretSource:    secretSource,
-		CachePath:       imagorConfig.CachePath,
-		SignerType:      gql.ImagorSignerTypeSha256, // Always SHA256 for embedded
-		SignerTruncate:  28,                         // Always 28 for embedded
-		Unsafe:          false,                      // Always false for embedded
+		CachePath: imagorConfig.CachePath,
 	}
 }
 

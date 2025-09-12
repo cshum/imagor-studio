@@ -22,12 +22,7 @@ type CreateUserInput struct {
 }
 
 type EmbeddedImagorConfig struct {
-	HasCustomSecret bool             `json:"hasCustomSecret"`
-	SecretSource    string           `json:"secretSource"`
-	CachePath       string           `json:"cachePath"`
-	SignerType      ImagorSignerType `json:"signerType"`
-	SignerTruncate  int              `json:"signerTruncate"`
-	Unsafe          bool             `json:"unsafe"`
+	CachePath string `json:"cachePath"`
 }
 
 type EmbeddedImagorInput struct {
