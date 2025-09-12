@@ -10,6 +10,7 @@ import {
 
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
+import { useTitle } from '@/hooks/use-title'
 import { AccountLayout } from '@/layouts/account-layout'
 import { BasePanelLayout } from '@/layouts/base-panel-layout'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
@@ -39,12 +40,15 @@ import { initializeTheme } from '@/stores/theme-store.ts'
 const rootRoute = createRootRoute({
   beforeLoad: rootBeforeLoad,
   loader: rootLoader,
-  component: () => (
-    <>
-      <Outlet />
-      <Toaster />
-    </>
-  ),
+  component: () => {
+    useTitle()
+    return (
+      <>
+        <Outlet />
+        <Toaster />
+      </>
+    )
+  },
   errorComponent: ErrorPage,
 })
 
