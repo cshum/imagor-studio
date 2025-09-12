@@ -81,7 +81,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		s3BaseDir         = fs.String("s3-base-dir", "", "S3 base directory (optional)")
 
 		imagorMode          = fs.String("imagor-mode", "embedded", "imagor mode: embedded, external")
-		imagorURL           = fs.String("imagor-url", "http://localhost:8000", "external imagor service URL")
+		imagorURL           = fs.String("imagor-url", "", "external imagor service URL")
 		imagorUnsafe        = fs.Bool("imagor-unsafe", false, "enable unsafe imagor URLs for development")
 		imagorResultStorage = fs.String("imagor-result-storage", "same", "imagor result storage: same or separate")
 	)
