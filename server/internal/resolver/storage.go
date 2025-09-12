@@ -414,6 +414,12 @@ func (r *mutationResolver) ConfigureFileStorage(ctx context.Context, input gql.F
 		}, nil
 	}
 
+	// Reload imagor from registry to ensure it uses the same storage configuration
+	if err := r.imagorProvider.ReloadFromRegistry(); err != nil {
+		r.logger.Error("Failed to reload imagor from registry after storage change", zap.Error(err))
+		// Don't fail the operation, but log the warning
+	}
+
 	// Check if restart is required (should be false for file storage)
 	restartRequired := r.storageProvider.IsRestartRequired()
 
@@ -510,6 +516,13 @@ func (r *mutationResolver) ConfigureS3Storage(ctx context.Context, input gql.S3S
 			Timestamp:       timestampStr,
 			Message:         &[]string{"Failed to save configuration"}[0],
 		}, nil
+	}
+
+	// Reload imagor from registry to ensure it uses the same storage configuration
+	// Note: For S3, this will prepare imagor for the new config, but server restart is still required
+	if err := r.imagorProvider.ReloadFromRegistry(); err != nil {
+		r.logger.Error("Failed to reload imagor from registry after S3 storage change", zap.Error(err))
+		// Don't fail the operation, but log the warning
 	}
 
 	// S3 configuration always requires restart
