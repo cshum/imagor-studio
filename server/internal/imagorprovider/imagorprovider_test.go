@@ -107,7 +107,6 @@ func TestNew(t *testing.T) {
 	provider := New(logger, registryStore, cfg, storageProvider)
 
 	assert.NotNil(t, provider)
-	assert.Equal(t, ImagorStateConfigured, provider.imagorState)
 	assert.NotNil(t, provider.logger)
 	assert.NotNil(t, provider.registryStore)
 	assert.NotNil(t, provider.config)
@@ -129,7 +128,6 @@ func TestInitializeWithConfig_DefaultToEmbedded(t *testing.T) {
 	err = provider.InitializeWithConfig(cfg)
 
 	require.NoError(t, err)
-	assert.Equal(t, ImagorStateConfigured, provider.imagorState)
 
 	config := provider.GetConfig()
 	require.NotNil(t, config)
@@ -156,7 +154,6 @@ func TestInitializeWithConfig_External(t *testing.T) {
 	err := provider.InitializeWithConfig(cfg)
 
 	require.NoError(t, err)
-	assert.Equal(t, ImagorStateConfigured, provider.imagorState)
 
 	config := provider.GetConfig()
 	require.NotNil(t, config)
@@ -183,7 +180,6 @@ func TestInitializeWithConfig_Embedded(t *testing.T) {
 	err = provider.InitializeWithConfig(cfg)
 
 	require.NoError(t, err)
-	assert.Equal(t, ImagorStateConfigured, provider.imagorState)
 
 	config := provider.GetConfig()
 	require.NotNil(t, config)
@@ -214,7 +210,6 @@ func TestInitializeWithConfig_FromRegistry(t *testing.T) {
 	err := provider.InitializeWithConfig(cfg)
 
 	require.NoError(t, err)
-	assert.Equal(t, ImagorStateConfigured, provider.imagorState)
 
 	config := provider.GetConfig()
 	require.NotNil(t, config)
@@ -749,7 +744,6 @@ func TestGenerateURL_External_ConfigurableSigner(t *testing.T) {
 			}
 
 			provider.currentConfig = imagorConfig
-			provider.imagorState = ImagorStateConfigured
 
 			url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
 				Width:  300,
@@ -796,7 +790,6 @@ func TestGenerateURL_External_SignerTruncation(t *testing.T) {
 		SignerTruncate: 0,
 	}
 	provider.currentConfig = configNoTrunc
-	provider.imagorState = ImagorStateConfigured
 
 	urlNoTrunc, err := provider.GenerateURL("test/image.jpg", params)
 	require.NoError(t, err)
@@ -856,7 +849,6 @@ func TestGenerateURL_External_DifferentHashAlgorithms(t *testing.T) {
 			SignerTruncate: 0,
 		}
 		provider.currentConfig = config
-		provider.imagorState = ImagorStateConfigured
 
 		url, err := provider.GenerateURL("test/image.jpg", params)
 		require.NoError(t, err)
@@ -895,7 +887,6 @@ func TestInitializeWithConfig_FromRegistry_WithSignerConfig(t *testing.T) {
 	err := provider.InitializeWithConfig(cfg)
 
 	require.NoError(t, err)
-	assert.Equal(t, ImagorStateConfigured, provider.imagorState)
 
 	config := provider.GetConfig()
 	require.NotNil(t, config)
@@ -975,7 +966,6 @@ func TestGenerateURL_EmbeddedVsExternal_SignerComparison(t *testing.T) {
 		SignerTruncate: 28,           // Explicitly set to match external
 	}
 	provider.currentConfig = embeddedConfig
-	provider.imagorState = ImagorStateConfigured
 
 	embeddedURL, err := provider.GenerateURL("test/image.jpg", params)
 	require.NoError(t, err)

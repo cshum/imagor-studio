@@ -30,13 +30,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// ImagorState represents the current state of imagor configuration
-type ImagorState string
-
-const (
-	ImagorStateConfigured ImagorState = "configured"
-)
-
 // ImagorConfig holds imagor configuration
 type ImagorConfig struct {
 	Mode           string // "external", "embedded", "disabled"
@@ -56,8 +49,7 @@ type Provider struct {
 	storageProvider *storageprovider.Provider
 	currentConfig   *ImagorConfig
 	imagorHandler   http.Handler // For embedded mode
-	imagorState     ImagorState
-	configLoadedAt  int64 // Unix milliseconds when config was loaded
+	configLoadedAt  int64        // Unix milliseconds when config was loaded
 	mutex           sync.RWMutex
 }
 
@@ -68,7 +60,6 @@ func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Conf
 		registryStore:   registryStore,
 		config:          cfg,
 		storageProvider: storageProvider,
-		imagorState:     ImagorStateConfigured, // Always start as configured
 		configLoadedAt:  time.Now().UnixMilli(),
 		mutex:           sync.RWMutex{},
 	}
@@ -99,9 +90,7 @@ func (p *Provider) GetHandler() http.Handler {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
 
-	if p.imagorState == ImagorStateConfigured &&
-		p.currentConfig != nil &&
-		p.currentConfig.Mode == "embedded" {
+	if p.currentConfig != nil && p.currentConfig.Mode == "embedded" {
 		return p.imagorHandler
 	}
 	return nil
@@ -149,7 +138,6 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 	}
 
 	p.currentConfig = imagorConfig
-	p.imagorState = ImagorStateConfigured
 	p.configLoadedAt = time.Now().UnixMilli()
 
 	return nil
@@ -210,7 +198,6 @@ func (p *Provider) ReloadFromRegistry() error {
 	}
 
 	p.currentConfig = imagorConfig
-	p.imagorState = ImagorStateConfigured
 	p.configLoadedAt = time.Now().UnixMilli()
 	p.logger.Info("Imagor reloaded from registry", zap.String("mode", imagorConfig.Mode))
 
@@ -222,7 +209,7 @@ func (p *Provider) loadConfigFromRegistry() *ImagorConfig {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	if p.imagorState == ImagorStateConfigured {
+	if p.currentConfig != nil {
 		return p.currentConfig
 	}
 
@@ -245,7 +232,6 @@ func (p *Provider) loadConfigFromRegistry() *ImagorConfig {
 	}
 
 	p.currentConfig = imagorConfig
-	p.imagorState = ImagorStateConfigured
 	p.configLoadedAt = time.Now().UnixMilli()
 	p.logger.Info("Imagor configured from registry", zap.String("mode", imagorConfig.Mode))
 
@@ -512,36 +498,21 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 	return options
 }
 
-// getStorageConfig gets the current storage configuration from storage provider
+// getStorageConfig gets the current storage configuration directly from registry
 func (p *Provider) getStorageConfig() *config.Config {
-	if p.storageProvider == nil {
-		return nil
-	}
-
-	// Get current storage from provider
-	storage := p.storageProvider.GetStorage()
-	if storage == nil {
-		return nil
-	}
-
-	// We need to extract the configuration from the storage provider
-	// For now, we'll use a simple approach by checking the storage provider's internal config
-	// This is a bit of a hack, but it works for our use case
-
-	// Try to get storage configuration by checking if storage is configured
-	ctx := context.Background()
-	storageConfigured := registryutil.GetEffectiveValue(ctx, p.registryStore, p.config, "config.storage_configured")
-	if !storageConfigured.Exists || storageConfigured.Value != "true" {
-		// Fall back to using the original config
+	// Try to build from registry first
+	cfg, err := p.buildStorageConfigFromRegistry()
+	if err != nil || cfg.StorageType == "" {
+		// Fall back to original config if no valid storage type found
+		p.logger.Debug("No valid storage configuration found in registry, using original config", zap.Error(err))
 		return p.config
 	}
 
-	// Build storage config from registry (similar to storage provider's logic)
-	return p.buildStorageConfigFromRegistry()
+	return cfg
 }
 
 // buildStorageConfigFromRegistry builds storage configuration from registry
-func (p *Provider) buildStorageConfigFromRegistry() *config.Config {
+func (p *Provider) buildStorageConfigFromRegistry() (*config.Config, error) {
 	ctx := context.Background()
 	cfg := &config.Config{}
 
@@ -571,7 +542,7 @@ func (p *Provider) buildStorageConfigFromRegistry() *config.Config {
 	// Get storage type
 	storageTypeResult := resultMap["config.storage_type"]
 	if !storageTypeResult.Exists {
-		return p.config // Fall back to original config
+		return p.config, nil // Fall back to original config
 	}
 	cfg.StorageType = storageTypeResult.Value
 
@@ -583,7 +554,7 @@ func (p *Provider) buildStorageConfigFromRegistry() *config.Config {
 		p.loadS3ConfigFromResults(resultMap, cfg)
 	}
 
-	return cfg
+	return cfg, nil
 }
 
 // loadFileConfigFromResults loads file storage configuration from pre-fetched results
