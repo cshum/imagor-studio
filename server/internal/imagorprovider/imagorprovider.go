@@ -512,36 +512,21 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 	return options
 }
 
-// getStorageConfig gets the current storage configuration from storage provider
+// getStorageConfig gets the current storage configuration directly from registry
 func (p *Provider) getStorageConfig() *config.Config {
-	if p.storageProvider == nil {
-		return nil
-	}
-
-	// Get current storage from provider
-	storage := p.storageProvider.GetStorage()
-	if storage == nil {
-		return nil
-	}
-
-	// We need to extract the configuration from the storage provider
-	// For now, we'll use a simple approach by checking the storage provider's internal config
-	// This is a bit of a hack, but it works for our use case
-
-	// Try to get storage configuration by checking if storage is configured
-	ctx := context.Background()
-	storageConfigured := registryutil.GetEffectiveValue(ctx, p.registryStore, p.config, "config.storage_configured")
-	if !storageConfigured.Exists || storageConfigured.Value != "true" {
-		// Fall back to using the original config
+	// Try to build from registry first
+	cfg, err := p.buildStorageConfigFromRegistry()
+	if err != nil || cfg.StorageType == "" {
+		// Fall back to original config if no valid storage type found
+		p.logger.Debug("No valid storage configuration found in registry, using original config", zap.Error(err))
 		return p.config
 	}
 
-	// Build storage config from registry (similar to storage provider's logic)
-	return p.buildStorageConfigFromRegistry()
+	return cfg
 }
 
 // buildStorageConfigFromRegistry builds storage configuration from registry
-func (p *Provider) buildStorageConfigFromRegistry() *config.Config {
+func (p *Provider) buildStorageConfigFromRegistry() (*config.Config, error) {
 	ctx := context.Background()
 	cfg := &config.Config{}
 
@@ -571,7 +556,7 @@ func (p *Provider) buildStorageConfigFromRegistry() *config.Config {
 	// Get storage type
 	storageTypeResult := resultMap["config.storage_type"]
 	if !storageTypeResult.Exists {
-		return p.config // Fall back to original config
+		return p.config, nil // Fall back to original config
 	}
 	cfg.StorageType = storageTypeResult.Value
 
@@ -583,7 +568,7 @@ func (p *Provider) buildStorageConfigFromRegistry() *config.Config {
 		p.loadS3ConfigFromResults(resultMap, cfg)
 	}
 
-	return cfg
+	return cfg, nil
 }
 
 // loadFileConfigFromResults loads file storage configuration from pre-fetched results
