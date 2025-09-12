@@ -1513,7 +1513,6 @@ type ImagorConfigResult {
 }
 
 input EmbeddedImagorInput {
-  secret: String        # Optional, defaults to JWT secret
   cachePath: String     # Optional, defaults to ".imagor-cache", empty = no cache
 }
 
@@ -9315,20 +9314,13 @@ func (ec *executionContext) unmarshalInputEmbeddedImagorInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"secret", "cachePath"}
+	fieldsInOrder := [...]string{"cachePath"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "secret":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Secret = data
 		case "cachePath":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cachePath"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)

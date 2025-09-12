@@ -48,7 +48,6 @@ export type EmbeddedImagorConfig = {
 
 export type EmbeddedImagorInput = {
   cachePath: InputMaybe<Scalars['String']['input']>
-  secret: InputMaybe<Scalars['String']['input']>
 }
 
 export type ExternalImagorConfig = {

@@ -76,28 +76,12 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
               <div className='text-sm font-medium'>{t('pages.imagor.configurationDetails')}</div>
 
               {imagorStatus.embeddedConfig && imagorStatus.mode?.toLowerCase() === 'embedded' && (
-                <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
-                  <div className='space-y-1'>
-                    <div className='text-muted-foreground text-xs font-medium'>
-                      {t('pages.imagor.secretSource')}
-                    </div>
-                    <div className='font-mono text-sm'>
-                      {imagorStatus.embeddedConfig.secretSource}
-                    </div>
-                  </div>
+                <div className='grid grid-cols-1 gap-3 md:grid-cols-1'>
                   <div className='space-y-1'>
                     <div className='text-muted-foreground text-xs font-medium'>
                       {t('pages.imagor.cachePath')}
                     </div>
                     <div className='font-mono text-sm'>{imagorStatus.embeddedConfig.cachePath}</div>
-                  </div>
-                  <div className='space-y-1'>
-                    <div className='text-muted-foreground text-xs font-medium'>
-                      {t('pages.imagor.signerType')}
-                    </div>
-                    <div className='font-mono text-sm'>
-                      {imagorStatus.embeddedConfig.signerType}
-                    </div>
                   </div>
                 </div>
               )}

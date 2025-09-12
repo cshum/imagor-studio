@@ -836,15 +836,8 @@ func (r *mutationResolver) ConfigureEmbeddedImagor(ctx context.Context, input gq
 		{Key: "config.imagor_config_updated_at", Value: timestampStr, IsEncrypted: false},
 	}
 
-	// Add optional secret
-	if input.Secret != nil && *input.Secret != "" {
-		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.imagor_secret", Value: *input.Secret, IsEncrypted: true,
-		})
-	} else {
-		// Remove custom secret to use JWT secret
-		r.deleteSystemRegistryKey(ctx, "config.imagor_secret")
-	}
+	// Remove any custom secret to ensure JWT secret is used
+	r.deleteSystemRegistryKey(ctx, "config.imagor_secret")
 
 	// Add optional cache path
 	if input.CachePath != nil {

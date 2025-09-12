@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 export interface EmbeddedImagorFormData {
-  secret: string
   cachePath: string
 }
 
@@ -32,7 +31,6 @@ export const EmbeddedImagorForm = forwardRef<EmbeddedImagorFormRef, EmbeddedImag
       formState: { errors },
     } = useForm<EmbeddedImagorFormData>({
       defaultValues: {
-        secret: initialValues?.secret || '',
         cachePath: initialValues?.cachePath || '.imagor-cache',
       },
     })
@@ -43,19 +41,6 @@ export const EmbeddedImagorForm = forwardRef<EmbeddedImagorFormRef, EmbeddedImag
 
     return (
       <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='secret'>{t('pages.imagor.secret')}</Label>
-          <Input
-            id='secret'
-            type='password'
-            placeholder={t('pages.imagor.secretPlaceholder')}
-            disabled={disabled}
-            {...register('secret')}
-          />
-          <p className='text-muted-foreground text-sm'>{t('pages.imagor.secretDescription')}</p>
-          {errors.secret && <p className='text-destructive text-sm'>{errors.secret.message}</p>}
-        </div>
-
         <div className='space-y-2'>
           <Label htmlFor='cachePath'>{t('pages.imagor.cachePath')}</Label>
           <Input

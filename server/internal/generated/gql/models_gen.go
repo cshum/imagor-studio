@@ -31,7 +31,6 @@ type EmbeddedImagorConfig struct {
 }
 
 type EmbeddedImagorInput struct {
-	Secret    *string `json:"secret,omitempty"`
 	CachePath *string `json:"cachePath,omitempty"`
 }
 
