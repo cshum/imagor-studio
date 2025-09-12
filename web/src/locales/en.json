@@ -144,9 +144,9 @@
       "imagorConfigurationDescription": "Configure image processing settings. Imagor handles image transformations and optimizations.",
       "selectMode": "Select Imagor Mode",
       "selectModeDescription": "Choose how Imagor will process your images",
-      "embeddedMode": "Embedded Mode",
+      "embeddedMode": "Embedded",
       "embeddedModeDescription": "Run Imagor as part of this application (recommended for most users)",
-      "externalMode": "External Mode",
+      "externalMode": "External",
       "externalModeDescription": "Connect to an external Imagor service (advanced configuration)",
       "embeddedConfiguration": "Embedded Imagor Configuration",
       "externalConfiguration": "External Imagor Configuration",
@@ -183,7 +183,8 @@
       "secretSource": "Secret Source",
       "hasSecret": "Has Secret",
       "serverRestartRequired": "Server restart required",
-      "serverRestartDescription": "Imagor configuration changes will take effect after restarting the server."
+      "serverRestartDescription": "Imagor configuration changes will take effect after restarting the server.",
+      "noCache": "No Cache"
     }
   },
   "home": "Home",

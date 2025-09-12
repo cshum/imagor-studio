@@ -77,12 +77,14 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
 
               {imagorStatus.embeddedConfig && imagorStatus.mode?.toLowerCase() === 'embedded' && (
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-1'>
-                  <div className='space-y-1'>
-                    <div className='text-muted-foreground text-xs font-medium'>
-                      {t('pages.imagor.cachePath')}
+                    <div className='space-y-1'>
+                      <div className='text-muted-foreground text-xs font-medium'>
+                        {t('pages.imagor.cachePath')}
+                      </div>
+                      <div className='font-mono text-sm'>
+                        {imagorStatus.embeddedConfig.cachePath || t('pages.imagor.noCache')}
+                      </div>
                     </div>
-                    <div className='font-mono text-sm'>{imagorStatus.embeddedConfig.cachePath}</div>
-                  </div>
                 </div>
               )}
 

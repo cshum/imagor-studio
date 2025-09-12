@@ -254,7 +254,7 @@ type EmbeddedImagorConfig {
 
 type ExternalImagorConfig {
   baseUrl: String!
-  hasSecret: Boolean!           # Instead of exposing secret value
+  hasSecret: Boolean!
   unsafe: Boolean!
   signerType: ImagorSignerType!
   signerTruncate: Int!
