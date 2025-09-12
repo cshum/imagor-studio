@@ -437,20 +437,35 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 
 	switch storageConfig.StorageType {
 	case "file", "filesystem":
-		// Create imagor file storage as LOADER only
-		fileStorage := filestorage.New(
-			storageConfig.FileBaseDir,
+		// Create imagor file storage as LOADER only with custom SafeChars for Unicode handling
+		fileStorageOptions := []filestorage.Option{
 			filestorage.WithMkdirPermission(storageConfig.FileMkdirPermissions.String()),
 			filestorage.WithWritePermission(storageConfig.FileWritePermissions.String()),
+			filestorage.WithSafeChars("--"),
+		}
+
+		// Use custom SafeChars for embedded mode to handle Unicode characters
+		if cfg.Mode == "embedded" {
+			fileStorageOptions = append(fileStorageOptions,
+				filestorage.WithSafeChars("--"), // Use no-op SafeChars to preserve Unicode
+			)
+		}
+
+		fileStorage := filestorage.New(
+			storageConfig.FileBaseDir,
+			fileStorageOptions...,
 		)
 		options = append(options, imagor.WithLoaders(fileStorage))
 
 		// Add result storage only if cache path is configured
 		if cfg.CachePath != "" {
-			cacheStorage := filestorage.New(
-				filepath.Join(storageConfig.FileBaseDir, cfg.CachePath),
+			cacheStorageOptions := []filestorage.Option{
 				filestorage.WithMkdirPermission(storageConfig.FileMkdirPermissions.String()),
 				filestorage.WithWritePermission(storageConfig.FileWritePermissions.String()),
+			}
+			cacheStorage := filestorage.New(
+				filepath.Join(storageConfig.FileBaseDir, cfg.CachePath),
+				cacheStorageOptions...,
 			)
 			options = append(options, imagor.WithResultStorages(cacheStorage))
 		}
@@ -467,6 +482,7 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 			s3storage.WithBaseDir(storageConfig.S3BaseDir),
 			s3storage.WithEndpoint(storageConfig.S3Endpoint),
 			s3storage.WithForcePathStyle(storageConfig.S3ForcePathStyle),
+			s3storage.WithSafeChars("--"),
 		)
 		options = append(options, imagor.WithLoaders(s3Storage))
 
