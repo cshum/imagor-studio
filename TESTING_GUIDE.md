@@ -276,7 +276,7 @@ EOF
 
 ```bash
 # Test API endpoints directly
-curl -X POST http://localhost:8080/auth/guest
+curl -X POST http://localhost:8080/api/auth/guest
 curl -H "Authorization: Bearer <token>" http://localhost:8080/graphql \
   -d '{"query": "{ listFiles(path: \"/\") { name type } }"}'
 ```

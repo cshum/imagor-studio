@@ -296,7 +296,7 @@ func TestRegister(t *testing.T) {
 				}
 			}
 
-			req := httptest.NewRequest(tt.method, "/auth/register", bytes.NewReader(body))
+			req := httptest.NewRequest(tt.method, "/api/auth/register", bytes.NewReader(body))
 			rr := httptest.NewRecorder()
 
 			handler.Register()(rr, req)
@@ -489,7 +489,7 @@ func TestLogin(t *testing.T) {
 				}
 			}
 
-			req := httptest.NewRequest(tt.method, "/auth/login", bytes.NewReader(body))
+			req := httptest.NewRequest(tt.method, "/api/auth/login", bytes.NewReader(body))
 			rr := httptest.NewRecorder()
 
 			handler.Login()(rr, req)
@@ -623,7 +623,7 @@ func TestRefreshToken(t *testing.T) {
 				}
 			}
 
-			req := httptest.NewRequest(tt.method, "/auth/refresh", bytes.NewReader(body))
+			req := httptest.NewRequest(tt.method, "/api/auth/refresh", bytes.NewReader(body))
 			rr := httptest.NewRecorder()
 
 			handler.RefreshToken()(rr, req)
@@ -793,7 +793,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
 
-			req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader(body))
+			req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(body))
 			rr := httptest.NewRecorder()
 
 			handler.Register()(rr, req)
@@ -866,7 +866,7 @@ func TestLogin_InputNormalization(t *testing.T) {
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
 
-			req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewReader(body))
+			req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewReader(body))
 			rr := httptest.NewRecorder()
 
 			handler.Login()(rr, req)
@@ -944,7 +944,7 @@ func TestGuestLogin(t *testing.T) {
 
 			handler := NewAuthHandler(tokenManager, mockUserStore, mockRegistryStore, logger)
 
-			req := httptest.NewRequest(http.MethodPost, "/auth/guest", nil)
+			req := httptest.NewRequest(http.MethodPost, "/api/auth/guest", nil)
 			rr := httptest.NewRecorder()
 
 			handler.GuestLogin()(rr, req)
@@ -999,7 +999,7 @@ func TestCheckFirstRun(t *testing.T) {
 			mockUserStore.ExpectedCalls = nil
 			mockUserStore.On("List", mock.Anything, 0, 1).Return([]*userstore.User{}, tt.userCount, nil)
 
-			req := httptest.NewRequest(http.MethodGet, "/auth/first-run", nil)
+			req := httptest.NewRequest(http.MethodGet, "/api/auth/first-run", nil)
 			rr := httptest.NewRecorder()
 
 			handler.CheckFirstRun()(rr, req)
@@ -1085,7 +1085,7 @@ func TestRegisterAdmin(t *testing.T) {
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
 
-			req := httptest.NewRequest(http.MethodPost, "/auth/register-admin", bytes.NewReader(body))
+			req := httptest.NewRequest(http.MethodPost, "/api/auth/register-admin", bytes.NewReader(body))
 			rr := httptest.NewRecorder()
 
 			handler.RegisterAdmin()(rr, req)

@@ -76,29 +76,27 @@ func New(cfg *config.Config, logger *zap.Logger, args []string) (*Server, error)
 	})
 
 	// Auth endpoints (no auth required)
-	mux.HandleFunc("/auth/register", authHandler.Register())
-	mux.HandleFunc("/auth/login", authHandler.Login())
-	mux.HandleFunc("/auth/refresh", authHandler.RefreshToken())
-	mux.HandleFunc("/auth/guest", authHandler.GuestLogin())
+	mux.HandleFunc("/api/auth/register", authHandler.Register())
+	mux.HandleFunc("/api/auth/login", authHandler.Login())
+	mux.HandleFunc("/api/auth/refresh", authHandler.RefreshToken())
+	mux.HandleFunc("/api/auth/guest", authHandler.GuestLogin())
 
 	// Add the new endpoints
-	mux.HandleFunc("/auth/first-run", authHandler.CheckFirstRun())
-	mux.HandleFunc("/auth/register-admin", authHandler.RegisterAdmin())
+	mux.HandleFunc("/api/auth/first-run", authHandler.CheckFirstRun())
+	mux.HandleFunc("/api/auth/register-admin", authHandler.RegisterAdmin())
 
 	// Protected endpoints
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)
 	mux.Handle("/api/query", protectedHandler)
 
 	// Dynamic imagor handler wrapper
-	dynamicHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/imagor/", http.StripPrefix("/imagor", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if currentHandler := services.ImagorProvider.GetHandler(); currentHandler != nil {
 			currentHandler.ServeHTTP(w, r)
 		} else {
 			http.NotFound(w, r)
 		}
-	})
-	mux.Handle("/imagor/", http.StripPrefix("/imagor", dynamicHandler))
-	services.Logger.Info("Dynamic imagor handler registered at /imagor/")
+	})))
 
 	// Static file serving for web frontend
 	staticHandler := createStaticHandler(services.Logger)
@@ -161,7 +159,7 @@ func createStaticHandler(logger *zap.Logger) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Handle API routes - these should not serve static files
-		if strings.HasPrefix(r.URL.Path, "/auth/") ||
+		if strings.HasPrefix(r.URL.Path, "/api/auth/") ||
 			strings.HasPrefix(r.URL.Path, "/api/query") ||
 			strings.HasPrefix(r.URL.Path, "/health") ||
 			strings.HasPrefix(r.URL.Path, "/imagor/") {

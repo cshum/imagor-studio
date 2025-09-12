@@ -20,7 +20,7 @@ JWT_EXPIRATION=24h
 Register a new user account.
 
 ```
-POST /auth/register
+POST /api/auth/register
 ```
 
 Request body:
@@ -53,7 +53,7 @@ Response:
 Login with existing user credentials.
 
 ```
-POST /auth/login
+POST /api/auth/login
 ```
 
 Request body:
@@ -85,7 +85,7 @@ Response:
 Get a temporary guest session with read-only access. No request body required.
 
 ```
-POST /auth/guest
+POST /api/auth/guest
 ```
 
 Request body: None
@@ -118,7 +118,7 @@ Response:
 Refresh an existing token to extend its expiration.
 
 ```
-POST /auth/refresh
+POST /api/auth/refresh
 ```
 
 Request body:
@@ -165,7 +165,7 @@ curl -X POST http://localhost:8080/api/query \
 
 ```bash
 # 1. Get guest token (no body required)
-curl -X POST http://localhost:8080/auth/guest
+curl -X POST http://localhost:8080/api/auth/guest
 
 # 2. Use token for read operations
 curl -X POST http://localhost:8080/api/query \
@@ -293,7 +293,7 @@ Instead of automatic admin creation, the system provides API endpoints to check 
 Check if the system needs initial admin setup.
 
 ```
-GET /auth/first-run
+GET /api/auth/first-run
 ```
 
 Response:
@@ -311,7 +311,7 @@ Response:
 Create the initial admin user (only available when no users exist).
 
 ```
-POST /auth/register-admin
+POST /api/auth/register-admin
 ```
 
 Request body:
@@ -342,8 +342,8 @@ Response:
 ### First Run Setup Flow
 
 1. **Start the server** - No automatic admin creation occurs
-2. **Check first run status** using `GET /auth/first-run`
-3. **If `isFirstRun: true`**, use `/auth/register-admin` to create admin
+2. **Check first run status** using `GET /api/auth/first-run`
+3. **If `isFirstRun: true`**, use `/api/auth/register-admin` to create admin
 4. **If `isFirstRun: false`**, users already exist - use regular login
 
 ### API Examples
@@ -352,12 +352,12 @@ Response:
 
 ```bash
 # 1. Check if this is the first run
-curl http://localhost:8080/auth/first-run
+curl http://localhost:8080/api/auth/first-run
 
 # Response: {"isFirstRun": true, "userCount": 0, "timestamp": 1704067200000}
 
 # 2. Register the first admin user
-curl -X POST http://localhost:8080/auth/register-admin \
+curl -X POST http://localhost:8080/api/auth/register-admin \
   -H "Content-Type: application/json" \
   -d '{
     "displayName": "admin",
@@ -375,12 +375,12 @@ curl -X POST http://localhost:8080/api/query \
 
 ```bash
 # 1. Check first run status
-curl http://localhost:8080/auth/first-run
+curl http://localhost:8080/api/auth/first-run
 
 # Response: {"isFirstRun": false, "userCount": 3, "timestamp": 1704067200000}
 
 # 2. Regular login instead
-curl -X POST http://localhost:8080/auth/login \
+curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@yourdomain.com",
@@ -393,7 +393,7 @@ curl -X POST http://localhost:8080/auth/login \
 #### Trying to Register Admin When Users Exist
 
 ```bash
-curl -X POST http://localhost:8080/auth/register-admin \
+curl -X POST http://localhost:8080/api/auth/register-admin \
   -H "Content-Type: application/json" \
   -d '{"displayName":"admin","email":"admin@example.com","password":"password123"}'
 ```
@@ -416,7 +416,7 @@ Response:
 #### Invalid Admin Registration Data
 
 ```bash
-curl -X POST http://localhost:8080/auth/register-admin \
+curl -X POST http://localhost:8080/api/auth/register-admin \
   -H "Content-Type: application/json" \
   -d '{"displayName":"ad","email":"invalid-email","password":"short"}'
 ```
@@ -475,14 +475,14 @@ For frontend applications, implement this flow:
 ```javascript
 // 1. Check if first run is needed
 const checkFirstRun = async () => {
-  const response = await fetch("/auth/first-run");
+  const response = await fetch("/api/auth/first-run");
   const data = await response.json();
   return data.isFirstRun;
 };
 
 // 2. Show admin setup form if first run
 const setupAdmin = async (adminData) => {
-  const response = await fetch("/auth/register-admin", {
+  const response = await fetch("/api/auth/register-admin", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(adminData),
