@@ -1,8 +1,9 @@
 import { GraphQLClient } from 'graphql-request'
 
+import { getBaseUrl } from '@/lib/api-utils'
 import { getAuth } from '@/stores/auth-store.ts'
 
-const endpoint = `${import.meta.env.VITE_API_BASE_URL}/api/query`
+const endpoint = `${getBaseUrl()}/api/query`
 
 export const createGraphQLClient = (token?: string) => {
   const headers: Record<string, string> = {

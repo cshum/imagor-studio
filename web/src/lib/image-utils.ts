@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL
+import { getBaseUrl } from '@/lib/api-utils'
 
 // Default supported image extensions
 export const DEFAULT_IMAGE_EXTENSIONS = [
@@ -43,7 +43,7 @@ export function getFullImageUrl(imageUrl: string): string {
 
   // If it's a relative path (starts with /), prepend server URL
   if (imageUrl.startsWith('/')) {
-    return `${BASE_URL}${imageUrl}`
+    return `${getBaseUrl()}${imageUrl}`
   }
 
   // Otherwise, return as-is (shouldn't happen, but safe fallback)

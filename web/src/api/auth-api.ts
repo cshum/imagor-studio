@@ -35,7 +35,9 @@ export interface RefreshTokenRequest {
   token: string
 }
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL
+import { getBaseUrl } from '@/lib/api-utils'
+
+const BASE_URL = getBaseUrl()
 
 /**
  * Check if this is the first run (no admin exists)
