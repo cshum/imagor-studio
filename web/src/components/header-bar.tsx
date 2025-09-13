@@ -73,7 +73,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
   return (
     <TooltipProvider>
       <header
-        className={`top-0 z-10 w-full px-2 ${isScrolledDown ? `bg-card/75 dark:shadow-secondary fixed shadow backdrop-blur ${sidebar && sidebar.open ? 'md:left-[var(--sidebar-width)] md:w-[calc(100%-var(--sidebar-width))] md:peer-data-[state=collapsed]:left-[var(--sidebar-width-icon)] md:peer-data-[state=collapsed]:w-[calc(100%-var(--sidebar-width-icon))]' : ''} md:left-0 md:peer-data-[collapsible=offcanvas]:w-full` : ''}`}
+        className={`top-0 z-9 w-full px-2 ${isScrolledDown ? `bg-card/75 dark:shadow-secondary fixed shadow backdrop-blur ${sidebar && sidebar.open ? 'md:left-[var(--sidebar-width)] md:w-[calc(100%-var(--sidebar-width))]' : ''} md:left-0` : ''}`}
       >
         <div className='mx-auto'>
           <div
