@@ -25,6 +25,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useBreadcrumb } from '@/hooks/use-breadcrumb'
 import { useAuth } from '@/stores/auth-store'
+import { useSidebar } from '@/stores/sidebar-store'
 
 interface HeaderBarProps {
   isScrolled?: boolean
@@ -35,6 +36,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
   const breadcrumbs = useBreadcrumb()
+  const sidebar = useSidebar()
 
   // Get user display name
   const getUserDisplayName = () => {
@@ -71,7 +73,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
   return (
     <TooltipProvider>
       <header
-        className={`top-0 z-10 w-full px-2 ${isScrolledDown ? 'bg-card/75 dark:shadow-secondary sticky shadow backdrop-blur md:-mx-6 md:w-[calc(100%+48px)]' : ''}`}
+        className={`top-0 z-10 w-full px-2 ${isScrolledDown ? `bg-card/75 dark:shadow-secondary fixed shadow backdrop-blur ${sidebar && sidebar.open ? 'md:left-[var(--sidebar-width)] md:w-[calc(100%-var(--sidebar-width))] md:peer-data-[state=collapsed]:left-[var(--sidebar-width-icon)] md:peer-data-[state=collapsed]:w-[calc(100%-var(--sidebar-width-icon))]' : ''} md:peer-data-[collapsible=offcanvas]:left-0 md:peer-data-[collapsible=offcanvas]:w-full` : ''}`}
       >
         <div className='mx-auto'>
           <div

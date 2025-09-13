@@ -74,8 +74,7 @@
     @apply border-border;
   }
 
-  html,
-  body {
+  html {
     @apply bg-background text-foreground;
     font-family:
       Geist Variable,
@@ -95,6 +94,17 @@
     padding: 0;
     box-sizing: border-box;
     height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: inherit;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    min-height: 100%;
     width: 100%;
     overflow-x: hidden;
   }

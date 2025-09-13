@@ -57,9 +57,12 @@ export const ImageGrid = ({
       const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (onImageClick) {
           const rect = e.currentTarget.getBoundingClientRect()
+          // Add scroll offset to get absolute position for document scrolling
+          const scrollY = window.pageYOffset || document.documentElement.scrollTop
+          const scrollX = window.pageXOffset || document.documentElement.scrollLeft
           onImageClick(image, {
-            top: Math.round(rect.top),
-            left: Math.round(rect.left),
+            top: Math.round(rect.top + scrollY),
+            left: Math.round(rect.left + scrollX),
             width: Math.round(rect.width),
             height: Math.round(rect.height),
           })
