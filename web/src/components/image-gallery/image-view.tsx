@@ -229,8 +229,8 @@ export function ImageView({
                     {initialPosition ? (
                       <motion.div
                         initial={{
-                          top: initialPosition.top,
-                          left: initialPosition.left,
+                          top: initialPosition.top - window.scrollY,
+                          left: initialPosition.left - window.scrollX,
                           width: initialPosition.width,
                           height: initialPosition.height,
                         }}
@@ -241,8 +241,8 @@ export function ImageView({
                           height: '100%',
                         }}
                         exit={{
-                          top: initialPosition.top,
-                          left: initialPosition.left,
+                          top: initialPosition.top - window.scrollY,
+                          left: initialPosition.left - window.scrollX,
                           width: initialPosition.width,
                           height: initialPosition.height,
                         }}
