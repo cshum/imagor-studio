@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/multi-step-form'
 import type { AdminSetupLoaderData } from '@/loaders/admin-setup-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
+import { setHomeTitle } from '@/stores/folder-tree-store'
 
 type AdminSetupForm = {
   email: string
@@ -311,6 +312,11 @@ export function AdminSetupPage() {
 
       if (Object.keys(changedValues).length > 0) {
         await setSystemRegistryObject(changedValues)
+
+        // Update the store immediately if home title was changed
+        if (changedValues['config.home_title']) {
+          setHomeTitle(changedValues['config.home_title'])
+        }
       }
 
       return true
