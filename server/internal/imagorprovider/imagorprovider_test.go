@@ -496,7 +496,9 @@ func TestBuildConfigFromRegistry_MissingMode(t *testing.T) {
 func TestBuildConfigFromRegistry_EmbeddedMode(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
-	cfg := &config.Config{}
+	cfg := &config.Config{
+		JWTSecret: "jwt-secret",
+	}
 	storageProvider := &storageprovider.Provider{}
 
 	provider := New(logger, registryStore, cfg, storageProvider)
@@ -512,10 +514,11 @@ func TestBuildConfigFromRegistry_EmbeddedMode(t *testing.T) {
 	require.NotNil(t, config)
 
 	assert.Equal(t, "embedded", config.Mode)
-	assert.Equal(t, "/imagor", config.BaseURL) // Should be set to /imagor for embedded
-	assert.Equal(t, "embedded-secret", config.Secret)
+	assert.Equal(t, "/imagor", config.BaseURL)   // Should be set to /imagor for embedded
+	assert.Equal(t, "jwt-secret", config.Secret) // Should always use JWT secret, ignoring registry value
 	assert.False(t, config.Unsafe)
-	// CachePath has been removed - no cache configuration needed
+	assert.Equal(t, "sha256", config.SignerType)
+	assert.Equal(t, 28, config.SignerTruncate)
 }
 
 func TestBuildConfigFromRegistry_ExternalModeDefaults(t *testing.T) {

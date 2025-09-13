@@ -68,7 +68,7 @@ func createDefaultEmbeddedConfig(cfg *config.Config) *ImagorConfig {
 	return &ImagorConfig{
 		Mode:           "embedded",
 		BaseURL:        "/imagor",
-		Secret:         cfg.JWTSecret, // Default to JWT secret (configurable)
+		Secret:         cfg.JWTSecret, // Always use JWT secret (no override)
 		Unsafe:         false,         // Always false (fixed)
 		SignerType:     "sha256",      // Fixed: always SHA256
 		SignerTruncate: 28,            // Fixed: always 28-char truncation
@@ -267,16 +267,10 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 	if imagorConfig.Mode == "embedded" {
 		// Embedded mode: Simple configuration with fixed secure defaults
 		imagorConfig.BaseURL = "/imagor"
-		imagorConfig.Unsafe = false        // Fixed: always false
-		imagorConfig.SignerType = "sha256" // Fixed: always SHA256
-		imagorConfig.SignerTruncate = 28   // Fixed: always 28-char truncation
-
-		// Configurable: Secret (defaults to JWT secret)
-		if secretResult := resultMap["config.imagor_secret"]; secretResult.Exists {
-			imagorConfig.Secret = secretResult.Value
-		} else {
-			imagorConfig.Secret = p.config.JWTSecret // Default to JWT secret
-		}
+		imagorConfig.Unsafe = false              // Fixed: always false
+		imagorConfig.SignerType = "sha256"       // Fixed: always SHA256
+		imagorConfig.SignerTruncate = 28         // Fixed: always 28-char truncation
+		imagorConfig.Secret = p.config.JWTSecret // Always use JWT secret (no override)
 	} else {
 		// External mode: Fully configurable
 
@@ -347,18 +341,9 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 	var signer imagorpath.Signer
 
 	if cfg.Mode == "embedded" {
-		// For embedded mode, use fixed SHA256 + 28-char truncation with configurable secret
-		secret := cfg.Secret
-		if secret == "" {
-			secret = p.config.JWTSecret
-		}
-		if secret != "" {
-			// Use fixed signer for embedded mode: SHA256 + 28-char truncation
-			signer = imagorpath.NewHMACSigner(sha256.New, 28, secret)
-			path = imagorpath.Generate(params, signer)
-		} else {
-			return "", fmt.Errorf("imagor secret is required for embedded mode")
-		}
+		// For embedded mode, use the configured secret (which is always JWT secret)
+		signer = imagorpath.NewHMACSigner(sha256.New, 28, cfg.Secret)
+		path = imagorpath.Generate(params, signer)
 	} else if cfg.Secret != "" {
 		// Use configurable signer for external mode
 		hashAlg := getHashAlgorithm(cfg.SignerType)
