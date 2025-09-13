@@ -75,7 +75,6 @@ export const useScrollHandler = (
           clearTimeout(saveTimeoutRef.current)
         }
         saveTimeoutRef.current = window.setTimeout(() => {
-          console.log(optionsRef.current.scrollKey, currentScrollPosition)
           setPosition(optionsRef.current.scrollKey, currentScrollPosition)
         }, 150)
 
