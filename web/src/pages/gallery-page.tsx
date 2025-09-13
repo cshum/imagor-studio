@@ -34,10 +34,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const maxItemWidth = 250
 
   // Use document scrolling
-  const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
-    galleryKey,
-    0, // No debounce
-  )
+  const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(galleryKey)
   const { contentWidth, updateWidth } = useWidthHandler(
     contentRef,
     sidebar.open,
