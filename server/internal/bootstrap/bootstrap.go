@@ -2,6 +2,8 @@ package bootstrap
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
@@ -53,10 +55,20 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	// Initialize registry store
 	registryStore := registrystore.New(db, logger, encryptionService)
 
+	// Resolve JWT secret (from CLI/env, registry, or generate new)
+	if err := resolveJWTSecret(cfg, registryStore); err != nil {
+		return nil, fmt.Errorf("failed to resolve JWT secret: %w", err)
+	}
+
 	// Load enhanced config with registry values using the original args
 	enhancedCfg, err := config.Load(args, registryStore)
 	if err != nil {
 		return nil, fmt.Errorf("failed to apply registry values to config: %w", err)
+	}
+
+	// Ensure JWT secret is set in enhanced config
+	if enhancedCfg.JWTSecret == "" {
+		enhancedCfg.JWTSecret = cfg.JWTSecret
 	}
 
 	// Update encryption service with final JWT secret
@@ -137,4 +149,61 @@ func runMigrations(db *bun.DB, logger *zap.Logger) error {
 	}
 
 	return nil
+}
+
+// resolveJWTSecret handles JWT secret resolution: CLI/env -> registry -> generate new
+func resolveJWTSecret(cfg *config.Config, registryStore registrystore.Store) error {
+	// If JWT secret already provided via CLI/env, use it
+	if cfg.JWTSecret != "" {
+		return nil
+	}
+
+	// Try to get from registry
+	ctx := context.Background()
+	entry, err := registryStore.Get(ctx, registrystore.SystemOwnerID, "config.jwt_secret")
+	if err == nil && entry != nil && entry.Value != "" {
+		// Found existing JWT secret in registry
+		cfg.JWTSecret = entry.Value
+		return nil
+	}
+
+	// Generate and store new JWT secret
+	generatedSecret, err := generateAndStoreJWTSecret(registryStore)
+	if err != nil {
+		return fmt.Errorf("failed to generate JWT secret: %w", err)
+	}
+
+	cfg.JWTSecret = generatedSecret
+	return nil
+}
+
+// generateAndStoreJWTSecret creates a new secure JWT secret and stores it in the registry
+func generateAndStoreJWTSecret(registryStore registrystore.Store) (string, error) {
+	// Generate secure JWT secret
+	secret, err := generateSecureJWTSecret()
+	if err != nil {
+		return "", fmt.Errorf("failed to generate secure JWT secret: %w", err)
+	}
+
+	// Store encrypted in registry (JWT secrets must always be encrypted)
+	ctx := context.Background()
+	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.jwt_secret", secret, true)
+	if err != nil {
+		return "", fmt.Errorf("failed to store JWT secret in registry: %w", err)
+	}
+
+	return secret, nil
+}
+
+// generateSecureJWTSecret generates a cryptographically secure JWT secret
+func generateSecureJWTSecret() (string, error) {
+	// Generate 48 bytes (384 bits) of cryptographically secure random data
+	// This provides excellent entropy for JWT signing
+	bytes := make([]byte, 48)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate random bytes: %w", err)
+	}
+
+	// Encode as base64 for safe storage and transmission
+	return base64.StdEncoding.EncodeToString(bytes), nil
 }

@@ -2,8 +2,6 @@ package config
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"flag"
 	"fmt"
 	"os"
@@ -127,27 +125,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		}
 	}
 
-	// Handle JWT secret: get from registry or generate if not provided
-	if *jwtSecret == "" && registryStore != nil {
-		ctx := context.Background()
-		entry, err := registryStore.Get(ctx, registrystore.SystemOwnerID, "config.jwt_secret")
-		if err == nil && entry != nil && entry.Value != "" {
-			// Found existing JWT secret in registry
-			*jwtSecret = entry.Value
-		} else {
-			// Generate and store new JWT secret
-			generatedSecret, err := generateAndStoreJWTSecret(registryStore)
-			if err != nil {
-				return nil, fmt.Errorf("failed to generate JWT secret: %w", err)
-			}
-			*jwtSecret = generatedSecret
-		}
-	}
-
-	// If still no JWT secret (no registry available), fail with helpful message
-	if *jwtSecret == "" {
-		return nil, fmt.Errorf("jwt-secret is required (provide via --jwt-secret or ensure database is available for auto-generation)")
-	}
+	// JWT secret validation is now handled in bootstrap phase
 
 	// Parse port
 	portInt, err := strconv.Atoi(*port)
@@ -291,35 +269,4 @@ func applyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]strin
 	}
 
 	return nil
-}
-
-// generateAndStoreJWTSecret creates a new secure JWT secret and stores it in the registry
-func generateAndStoreJWTSecret(registryStore registrystore.Store) (string, error) {
-	// Generate secure JWT secret
-	secret, err := generateSecureJWTSecret()
-	if err != nil {
-		return "", fmt.Errorf("failed to generate secure JWT secret: %w", err)
-	}
-
-	// Store encrypted in registry (JWT secrets must always be encrypted)
-	ctx := context.Background()
-	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.jwt_secret", secret, true)
-	if err != nil {
-		return "", fmt.Errorf("failed to store JWT secret in registry: %w", err)
-	}
-
-	return secret, nil
-}
-
-// generateSecureJWTSecret generates a cryptographically secure JWT secret
-func generateSecureJWTSecret() (string, error) {
-	// Generate 48 bytes (384 bits) of cryptographically secure random data
-	// This provides excellent entropy for JWT signing
-	bytes := make([]byte, 48)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", fmt.Errorf("failed to generate random bytes: %w", err)
-	}
-
-	// Encode as base64 for safe storage and transmission
-	return base64.StdEncoding.EncodeToString(bytes), nil
 }
