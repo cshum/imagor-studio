@@ -10,9 +10,10 @@ export const useScrollHandler = (
 ) => {
   const [scrollPosition, setScrollPosition] = useState<number>(0) // Use state for scroll position
   const [isScrolling, setIsScrolling] = useState<boolean>(false) // Track scrolling state
-  const scrollTimeoutRef = useRef<number | null>(null)
+  const saveTimeoutRef = useRef<number | null>(null) // For delayed saving of scroll position
+  const scrollingTimeoutRef = useRef<number | null>(null) // For tracking when scrolling stops
   const debounceTimeoutRef = useRef<number | null>(null)
-  
+
   // Store options in ref to avoid stale closures
   const optionsRef = useRef({
     scrollKey,
@@ -30,21 +31,19 @@ export const useScrollHandler = (
     }
   }, [scrollKey, debounceDelay, useDocumentScroll, containerRef])
 
-  const saveScrollPosition = useCallback(
-    (currentScrollPosition: number) => {
-      setScrollPosition(currentScrollPosition) // Update the state
+  const saveScrollPosition = useCallback((currentScrollPosition: number) => {
+    setScrollPosition(currentScrollPosition) // Update the state
 
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current)
-      }
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
 
-      // Save scroll position after a short delay
-      scrollTimeoutRef.current = window.setTimeout(() => {
-        setPosition(optionsRef.current.scrollKey, currentScrollPosition) // Save scroll position using store
-      }, 150)
-    },
-    [],
-  )
+    // Save scroll position after a short delay
+    saveTimeoutRef.current = window.setTimeout(() => {
+      console.log(optionsRef.current.scrollKey, currentScrollPosition)
+      setPosition(optionsRef.current.scrollKey, currentScrollPosition) // Save scroll position using store
+    }, 150)
+  }, [])
 
   const restoreScrollPosition = useCallback(() => {
     const savedPosition = getPosition(optionsRef.current.scrollKey) // Get scroll position using store
@@ -94,11 +93,10 @@ export const useScrollHandler = (
     }
   }, [])
 
-  // Following the exact pattern from useInfiniteScroll
   useEffect(() => {
     const handleScroll = () => {
       const { debounceDelay, useDocumentScroll, containerRef } = optionsRef.current
-      
+
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current)
       }
@@ -118,10 +116,10 @@ export const useScrollHandler = (
         saveScrollPosition(currentScrollPosition)
 
         // Set scrolling to false after a delay (scrolling has stopped)
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current)
+        if (scrollingTimeoutRef.current) {
+          clearTimeout(scrollingTimeoutRef.current)
         }
-        scrollTimeoutRef.current = window.setTimeout(() => {
+        scrollingTimeoutRef.current = window.setTimeout(() => {
           setIsScrolling(false)
         }, 150)
       }
@@ -141,8 +139,11 @@ export const useScrollHandler = (
       window.addEventListener('scroll', handleScroll, { passive: true })
       return () => {
         window.removeEventListener('scroll', handleScroll)
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current)
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current)
+        }
+        if (scrollingTimeoutRef.current) {
+          clearTimeout(scrollingTimeoutRef.current)
         }
         if (debounceTimeoutRef.current) {
           clearTimeout(debounceTimeoutRef.current)
@@ -153,8 +154,11 @@ export const useScrollHandler = (
       container.addEventListener('scroll', handleScroll, { passive: true })
       return () => {
         container.removeEventListener('scroll', handleScroll)
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current)
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current)
+        }
+        if (scrollingTimeoutRef.current) {
+          clearTimeout(scrollingTimeoutRef.current)
         }
         if (debounceTimeoutRef.current) {
           clearTimeout(debounceTimeoutRef.current)
