@@ -54,14 +54,13 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
 
   // Handle login navigation for guests
   const handleLoginClick = async () => {
-    // First logout to clear guest state, then navigate to login
     navigate({ to: '/login' })
   }
 
   // Handle logout for authenticated users
   const handleLogout = async () => {
     await logout()
-    navigate({ to: '/login' })
+    navigate({ to: '/' })
   }
 
   // Handle account settings navigation
