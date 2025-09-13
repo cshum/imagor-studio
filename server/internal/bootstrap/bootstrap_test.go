@@ -30,7 +30,7 @@ func TestInitialize(t *testing.T) {
 		FileMkdirPermissions: 0755,
 		FileWritePermissions: 0644,
 		ImagorMode:           "external",
-		ImagorURL:            "http://localhost:8000",
+		ImagorBaseURL:        "http://localhost:8000",
 		ImagorSecret:         "",
 		ImagorUnsafe:         false,
 		ImagorResultStorage:  "same",
@@ -224,7 +224,7 @@ func TestImagorProviderIntegration(t *testing.T) {
 		DatabaseURL:         "sqlite:" + tmpDB,
 		JWTSecret:           "test-jwt-secret",
 		ImagorMode:          "external",
-		ImagorURL:           "http://localhost:8000",
+		ImagorBaseURL:       "http://localhost:8000",
 		ImagorSecret:        "test-secret",
 		ImagorUnsafe:        true, // Use unsafe mode for testing
 		ImagorResultStorage: "same",

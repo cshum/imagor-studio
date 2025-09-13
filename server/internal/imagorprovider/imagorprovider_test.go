@@ -143,10 +143,10 @@ func TestInitializeWithConfig_External(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode:   "external",
-		ImagorURL:    "http://localhost:8000",
-		ImagorSecret: "test-secret",
-		ImagorUnsafe: false,
+		ImagorMode:    "external",
+		ImagorBaseURL: "http://localhost:8000",
+		ImagorSecret:  "test-secret",
+		ImagorUnsafe:  false,
 	}
 	storageProvider := &storageprovider.Provider{}
 
@@ -249,9 +249,9 @@ func TestGenerateURL_External_Unsafe(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode:   "external",
-		ImagorURL:    "http://localhost:8000",
-		ImagorUnsafe: true,
+		ImagorMode:    "external",
+		ImagorBaseURL: "http://localhost:8000",
+		ImagorUnsafe:  true,
 	}
 	storageProvider := &storageprovider.Provider{}
 
@@ -274,10 +274,10 @@ func TestGenerateURL_External_Signed(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode:   "external",
-		ImagorURL:    "http://localhost:8000",
-		ImagorSecret: "test-secret",
-		ImagorUnsafe: false,
+		ImagorMode:    "external",
+		ImagorBaseURL: "http://localhost:8000",
+		ImagorSecret:  "test-secret",
+		ImagorUnsafe:  false,
 	}
 	storageProvider := &storageprovider.Provider{}
 
@@ -302,10 +302,10 @@ func TestGenerateURL_External_NoSecret(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode:   "external",
-		ImagorURL:    "http://localhost:8000",
-		ImagorSecret: "",
-		ImagorUnsafe: false,
+		ImagorMode:    "external",
+		ImagorBaseURL: "http://localhost:8000",
+		ImagorSecret:  "",
+		ImagorUnsafe:  false,
 	}
 	storageProvider := &storageprovider.Provider{}
 
@@ -354,9 +354,9 @@ func TestGenerateURL_WithFilters(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode:   "external",
-		ImagorURL:    "http://localhost:8000",
-		ImagorUnsafe: true,
+		ImagorMode:    "external",
+		ImagorBaseURL: "http://localhost:8000",
+		ImagorUnsafe:  true,
 	}
 	storageProvider := &storageprovider.Provider{}
 
@@ -401,7 +401,7 @@ func TestIsRestartRequired(t *testing.T) {
 
 	// Configure imagor to external mode
 	cfg.ImagorMode = "external"
-	cfg.ImagorURL = "http://localhost:8000"
+	cfg.ImagorBaseURL = "http://localhost:8000"
 	err = provider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
@@ -544,8 +544,8 @@ func TestGetHandler_External(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode: "external",
-		ImagorURL:  "http://localhost:8000",
+		ImagorMode:    "external",
+		ImagorBaseURL: "http://localhost:8000",
 	}
 	storageProvider := &storageprovider.Provider{}
 

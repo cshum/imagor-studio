@@ -41,11 +41,16 @@ type Config struct {
 	S3BaseDir         string
 
 	// Imagor Configuration
-	ImagorMode          string // "external", "embedded", "disabled"
-	ImagorURL           string // External imagor service URL
-	ImagorSecret        string // Imagor secret key
-	ImagorUnsafe        bool   // For development
-	ImagorResultStorage string // "same", "separate"
+	ImagorMode           string // "external", "embedded", "disabled"
+	ImagorBaseURL        string // External imagor service URL
+	ImagorSecret         string // Imagor secret key
+	ImagorUnsafe         bool   // For development
+	ImagorResultStorage  string // "same", "separate"
+	ImagorSignerType     string // Signer algorithm: "sha1", "sha256", "sha512"
+	ImagorSignerTruncate int    // Signer truncation length
+
+	// Application Configuration
+	HomeTitle string // Custom home page title
 
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
@@ -62,7 +67,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		databaseURL   = fs.String("database-url", "sqlite:./imagor-studio.db", "database URL (sqlite:./path.db, postgres://user:pass@host:port/db, mysql://user:pass@host:port/db)")
 		storageType   = fs.String("storage-type", "file", "storage type: file or s3")
 		jwtSecret     = fs.String("jwt-secret", "", "secret key for JWT signing")
-		imagorSecret  = fs.String("imagor-secret", "", "secret key for imagor")
 		jwtExpiration = fs.String("jwt-expiration", "24h", "JWT token expiration duration")
 
 		allowGuestMode = fs.Bool("allow-guest-mode", false, "allow guest mode access")
@@ -80,10 +84,15 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		s3SessionToken    = fs.String("s3-session-token", "", "S3 session token (optional)")
 		s3BaseDir         = fs.String("s3-base-dir", "", "S3 base directory (optional)")
 
-		imagorMode          = fs.String("imagor-mode", "embedded", "imagor mode: embedded, external")
-		imagorURL           = fs.String("imagor-url", "", "external imagor service URL")
-		imagorUnsafe        = fs.Bool("imagor-unsafe", false, "enable unsafe imagor URLs for development")
-		imagorResultStorage = fs.String("imagor-result-storage", "same", "imagor result storage: same or separate")
+		imagorMode           = fs.String("imagor-mode", "embedded", "imagor mode: embedded, external")
+		imagorSecret         = fs.String("imagor-secret", "", "secret key for imagor")
+		imagorBaseURL        = fs.String("imagor-base-url", "", "external imagor service URL")
+		imagorUnsafe         = fs.Bool("imagor-unsafe", false, "enable unsafe imagor URLs for development")
+		imagorResultStorage  = fs.String("imagor-result-storage", "same", "imagor result storage: same or separate")
+		imagorSignerType     = fs.String("imagor-signer-type", "", "imagor signer algorithm: sha1, sha256, sha512")
+		imagorSignerTruncate = fs.String("imagor-signer-truncate", "0", "imagor signer truncation length")
+
+		homeTitle = fs.String("home-title", "", "custom home page title")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -150,6 +159,12 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		return nil, fmt.Errorf("invalid file-write-permissions: %w", err)
 	}
 
+	// Parse imagor signer truncate
+	imagorSignerTruncateInt, err := strconv.Atoi(*imagorSignerTruncate)
+	if err != nil {
+		return nil, fmt.Errorf("invalid imagor-signer-truncate: %w", err)
+	}
+
 	cfg := &Config{
 		Port:                 portInt,
 		DatabaseURL:          *databaseURL,
@@ -169,10 +184,13 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		S3SessionToken:       *s3SessionToken,
 		S3BaseDir:            *s3BaseDir,
 		ImagorMode:           *imagorMode,
-		ImagorURL:            *imagorURL,
+		ImagorBaseURL:        *imagorBaseURL,
 		ImagorSecret:         *imagorSecret,
 		ImagorUnsafe:         *imagorUnsafe,
 		ImagorResultStorage:  *imagorResultStorage,
+		ImagorSignerType:     *imagorSignerType,
+		ImagorSignerTruncate: imagorSignerTruncateInt,
+		HomeTitle:            *homeTitle,
 		overriddenFlags:      overriddenFlags,
 	}
 

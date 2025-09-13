@@ -110,7 +110,7 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 			// Use startup config
 			imagorConfig = &ImagorConfig{
 				Mode:    cfg.ImagorMode,
-				BaseURL: cfg.ImagorURL,
+				BaseURL: cfg.ImagorBaseURL,
 				Secret:  cfg.ImagorSecret,
 				Unsafe:  cfg.ImagorUnsafe,
 			}
