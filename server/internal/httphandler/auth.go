@@ -2,7 +2,6 @@ package httphandler
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -118,9 +117,6 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 		if err != nil {
 			return err
 		}
-
-		// Set default gallery configuration metadata
-		h.setupDefaultGalleryMetadata(r.Context())
 
 		h.logger.Info("First admin user created via API",
 			zap.String("userID", response.User.ID),
@@ -365,74 +361,4 @@ func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest) error {
 	}
 
 	return nil
-}
-
-func (h *AuthHandler) setupDefaultGalleryMetadata(ctx context.Context) {
-	// Default supported image extensions
-	supportedExtensions := []string{".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff", ".tif", ".svg"}
-	extensionsJSON, err := json.Marshal(supportedExtensions)
-	if err != nil {
-		h.logger.Warn("Failed to marshal supported extensions", zap.Error(err))
-		return
-	}
-
-	// Default thumbnail sizes
-	thumbnailSizes := map[string]string{
-		"grid":    "300x225",
-		"preview": "800x600",
-		"full":    "1200x900",
-	}
-	sizesJSON, err := json.Marshal(thumbnailSizes)
-	if err != nil {
-		h.logger.Warn("Failed to marshal thumbnail sizes", zap.Error(err))
-		return
-	}
-
-	// Gallery configuration metadata
-	galleryConfig := map[string]interface{}{
-		"enabled":            true,
-		"default_sort":       "name",
-		"default_sort_order": "asc",
-		"items_per_page":     50,
-	}
-	configJSON, err := json.Marshal(galleryConfig)
-	if err != nil {
-		h.logger.Warn("Failed to marshal gallery config", zap.Error(err))
-		return
-	}
-
-	// Imagor configuration metadata
-	imagorConfig := map[string]interface{}{
-		"mode":         "external",
-		"external_url": "http://localhost:8000",
-		"unsafe":       true,
-	}
-	imagorConfigJSON, err := json.Marshal(imagorConfig)
-	if err != nil {
-		h.logger.Warn("Failed to marshal imagor config", zap.Error(err))
-		return
-	}
-
-	// Insert metadata entries
-	metadataEntries := []struct {
-		key   string
-		value string
-	}{
-		{"gallery.supported_extensions", string(extensionsJSON)},
-		{"gallery.thumbnail_sizes", string(sizesJSON)},
-		{"gallery.config", string(configJSON)},
-		{"imagor.config", string(imagorConfigJSON)},
-	}
-
-	for _, entry := range metadataEntries {
-		_, err := h.registryStore.Set(ctx, registrystore.SystemOwnerID, entry.key, entry.value, false)
-		if err != nil {
-			h.logger.Warn("Failed to set gallery metadata",
-				zap.String("key", entry.key),
-				zap.Error(err))
-		} else {
-			h.logger.Info("Gallery metadata configured",
-				zap.String("key", entry.key))
-		}
-	}
 }

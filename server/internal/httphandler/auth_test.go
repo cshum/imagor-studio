@@ -1050,11 +1050,6 @@ func TestRegisterAdmin(t *testing.T) {
 					Role:        "admin",
 					IsActive:    true,
 				}, nil)
-				// Mock the registry store calls for setupDefaultGalleryMetadata
-				mockRegistryStore.On("Set", mock.Anything, registrystore.SystemOwnerID, "gallery.supported_extensions", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
-				mockRegistryStore.On("Set", mock.Anything, registrystore.SystemOwnerID, "gallery.thumbnail_sizes", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
-				mockRegistryStore.On("Set", mock.Anything, registrystore.SystemOwnerID, "gallery.config", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
-				mockRegistryStore.On("Set", mock.Anything, registrystore.SystemOwnerID, "imagor.config", mock.AnythingOfType("string"), false).Return(&registrystore.Registry{}, nil)
 			},
 		},
 		{
