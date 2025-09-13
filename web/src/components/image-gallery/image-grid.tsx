@@ -57,7 +57,6 @@ export const ImageGrid = ({
       const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (onImageClick) {
           const rect = e.currentTarget.getBoundingClientRect()
-          // Store viewport-relative coordinates (no scroll offset)
           onImageClick(image, {
             top: Math.round(rect.top),
             left: Math.round(rect.left),
