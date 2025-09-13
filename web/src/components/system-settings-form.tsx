@@ -38,6 +38,7 @@ export interface SystemSettingsFormProps {
     isOverriddenByConfig: boolean
   }>
   onSuccess?: () => void
+  onFormChange?: (values: Record<string, string>) => void
   showCard?: boolean
   hideUpdateButton?: boolean
 }
@@ -49,6 +50,7 @@ export function SystemSettingsForm({
   initialValues = {},
   systemRegistryList = [],
   onSuccess,
+  onFormChange,
   showCard = true,
   hideUpdateButton = false,
 }: SystemSettingsFormProps) {
@@ -85,7 +87,13 @@ export function SystemSettingsForm({
   }, [formValues, initialValues, settings])
 
   const updateSetting = (key: string, value: string) => {
-    setFormValues((prev) => ({ ...prev, [key]: value }))
+    const newValues = { ...formValues, [key]: value }
+    setFormValues(newValues)
+
+    // Call the onFormChange callback if provided
+    if (onFormChange) {
+      onFormChange(newValues)
+    }
   }
 
   const onUpdateSettings = async () => {

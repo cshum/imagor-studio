@@ -39,6 +39,13 @@ type AdminSetupForm = {
 // Define system settings for step 2 - will be translated in component
 const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
   {
+    key: 'config.home_title',
+    type: 'text',
+    label: t('pages.admin.homeTitle'),
+    description: t('pages.admin.homeTitleDescription'),
+    defaultValue: 'Home',
+  },
+  {
     key: 'config.allow_guest_mode',
     type: 'boolean',
     label: t('pages.admin.guestMode'),
@@ -146,12 +153,16 @@ function AccountStepContent({
 
 interface SystemSettingsStepContentProps extends MultiStepFormNavigationProps {
   settings: SystemSetting[]
+  formValues: Record<string, string>
+  onFormValuesChange: (values: Record<string, string>) => void
   onNext: () => Promise<boolean>
   onSkip: () => boolean
 }
 
 function SystemSettingsStepContent({
   settings,
+  formValues,
+  onFormValuesChange,
   onNext,
   onSkip,
   next,
@@ -183,8 +194,9 @@ function SystemSettingsStepContent({
         title=''
         description={t('pages.admin.systemSettingsDescription')}
         settings={settings}
-        initialValues={{}}
+        initialValues={formValues}
         systemRegistryList={[]}
+        onFormChange={onFormValuesChange}
         hideUpdateButton={true}
         showCard={false}
       />
@@ -226,7 +238,7 @@ export function AdminSetupPage() {
   const { t } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
-  const [settingsFormValues] = useState<Record<string, string>>({})
+  const [settingsFormValues, setSettingsFormValues] = useState<Record<string, string>>({})
   const [storageStatus, setStorageStatus] = useState<StorageStatusQuery['storageStatus'] | null>(
     null,
   )
@@ -372,6 +384,8 @@ export function AdminSetupPage() {
         return (
           <SystemSettingsStepContent
             settings={SYSTEM_SETTINGS}
+            formValues={settingsFormValues}
+            onFormValuesChange={setSettingsFormValues}
             onNext={handleSystemSettingsNext}
             onSkip={handleSkipSettings}
             {...navigationProps}
