@@ -249,7 +249,9 @@ type ImagorStatus {
 }
 
 type EmbeddedImagorConfig {
-  cachePath: String!
+  # Embedded mode configuration - simplified without cache path
+  # This field exists to satisfy GraphQL requirements for non-empty types
+  _placeholder: String
 }
 
 type ExternalImagorConfig {
@@ -269,7 +271,8 @@ type ImagorConfigResult {
 }
 
 input EmbeddedImagorInput {
-  cachePath: String     # Optional, defaults to empty = no cache
+  # Currently no configurable options for embedded mode
+  _placeholder: String  # GraphQL requires at least one field
 }
 
 input ExternalImagorInput {

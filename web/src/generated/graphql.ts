@@ -37,11 +37,11 @@ export type CreateUserInput = {
 
 export type EmbeddedImagorConfig = {
   __typename?: 'EmbeddedImagorConfig'
-  cachePath: Scalars['String']['output']
+  _placeholder: Maybe<Scalars['String']['output']>
 }
 
 export type EmbeddedImagorInput = {
-  cachePath: InputMaybe<Scalars['String']['input']>
+  _placeholder: InputMaybe<Scalars['String']['input']>
 }
 
 export type ExternalImagorConfig = {
@@ -395,7 +395,7 @@ export type ImagorStatusQuery = {
     restartRequired: boolean
     lastUpdated: string | null
     isOverriddenByConfig: boolean
-    embeddedConfig: { __typename?: 'EmbeddedImagorConfig'; cachePath: string } | null
+    embeddedConfig: { __typename?: 'EmbeddedImagorConfig'; _placeholder: string | null } | null
     externalConfig: {
       __typename?: 'ExternalImagorConfig'
       baseUrl: string
@@ -1016,7 +1016,7 @@ export const ImagorStatusDocument = {
                   name: { kind: 'Name', value: 'embeddedConfig' },
                   selectionSet: {
                     kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'cachePath' } }],
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: '_placeholder' } }],
                   },
                 },
                 {

@@ -46,7 +46,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	EmbeddedImagorConfig struct {
-		CachePath func(childComplexity int) int
+		Placeholder func(childComplexity int) int
 	}
 
 	ExternalImagorConfig struct {
@@ -255,12 +255,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
-	case "EmbeddedImagorConfig.cachePath":
-		if e.complexity.EmbeddedImagorConfig.CachePath == nil {
+	case "EmbeddedImagorConfig._placeholder":
+		if e.complexity.EmbeddedImagorConfig.Placeholder == nil {
 			break
 		}
 
-		return e.complexity.EmbeddedImagorConfig.CachePath(childComplexity), true
+		return e.complexity.EmbeddedImagorConfig.Placeholder(childComplexity), true
 
 	case "ExternalImagorConfig.baseUrl":
 		if e.complexity.ExternalImagorConfig.BaseURL == nil {
@@ -1447,12 +1447,14 @@ type ImagorStatus {
 }
 
 type EmbeddedImagorConfig {
-  cachePath: String!
+  # Embedded mode configuration - simplified without cache path
+  # This field exists to satisfy GraphQL requirements for non-empty types
+  _placeholder: String
 }
 
 type ExternalImagorConfig {
   baseUrl: String!
-  hasSecret: Boolean!           # Instead of exposing secret value
+  hasSecret: Boolean!
   unsafe: Boolean!
   signerType: ImagorSignerType!
   signerTruncate: Int!
@@ -1467,7 +1469,8 @@ type ImagorConfigResult {
 }
 
 input EmbeddedImagorInput {
-  cachePath: String     # Optional, defaults to empty = no cache
+  # Currently no configurable options for embedded mode
+  _placeholder: String  # GraphQL requires at least one field
 }
 
 input ExternalImagorInput {
@@ -1923,8 +1926,8 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _EmbeddedImagorConfig_cachePath(ctx context.Context, field graphql.CollectedField, obj *EmbeddedImagorConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EmbeddedImagorConfig_cachePath(ctx, field)
+func (ec *executionContext) _EmbeddedImagorConfig__placeholder(ctx context.Context, field graphql.CollectedField, obj *EmbeddedImagorConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EmbeddedImagorConfig__placeholder(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1937,24 +1940,21 @@ func (ec *executionContext) _EmbeddedImagorConfig_cachePath(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CachePath, nil
+		return obj.Placeholder, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EmbeddedImagorConfig_cachePath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EmbeddedImagorConfig__placeholder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EmbeddedImagorConfig",
 		Field:      field,
@@ -3385,8 +3385,8 @@ func (ec *executionContext) fieldContext_ImagorStatus_embeddedConfig(_ context.C
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "cachePath":
-				return ec.fieldContext_EmbeddedImagorConfig_cachePath(ctx, field)
+			case "_placeholder":
+				return ec.fieldContext_EmbeddedImagorConfig__placeholder(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type EmbeddedImagorConfig", field.Name)
 		},
@@ -9038,20 +9038,20 @@ func (ec *executionContext) unmarshalInputEmbeddedImagorInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"cachePath"}
+	fieldsInOrder := [...]string{"_placeholder"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "cachePath":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cachePath"))
+		case "_placeholder":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_placeholder"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.CachePath = data
+			it.Placeholder = data
 		}
 	}
 
@@ -9365,11 +9365,8 @@ func (ec *executionContext) _EmbeddedImagorConfig(ctx context.Context, sel ast.S
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("EmbeddedImagorConfig")
-		case "cachePath":
-			out.Values[i] = ec._EmbeddedImagorConfig_cachePath(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
+		case "_placeholder":
+			out.Values[i] = ec._EmbeddedImagorConfig__placeholder(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

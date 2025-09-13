@@ -760,7 +760,6 @@ func (r *queryResolver) isImagorConfigOverridden(ctx context.Context, mode strin
 		keys = []string{
 			"config.imagor_mode",
 			"config.imagor_secret",
-			"config.imagor_cache_path",
 		}
 	} else {
 		keys = []string{
@@ -785,7 +784,7 @@ func (r *queryResolver) isImagorConfigOverridden(ctx context.Context, mode strin
 // Helper function to get embedded imagor configuration
 func (r *queryResolver) getEmbeddedImagorConfig(ctx context.Context, imagorConfig *imagorprovider.ImagorConfig) *gql.EmbeddedImagorConfig {
 	return &gql.EmbeddedImagorConfig{
-		CachePath: imagorConfig.CachePath,
+		Placeholder: nil, // No actual configuration needed for embedded mode
 	}
 }
 
@@ -828,13 +827,6 @@ func (r *mutationResolver) ConfigureEmbeddedImagor(ctx context.Context, input gq
 	entries := []gql.RegistryEntryInput{
 		{Key: "config.imagor_mode", Value: "embedded", IsEncrypted: false},
 		{Key: "config.imagor_config_updated_at", Value: timestampStr, IsEncrypted: false},
-	}
-
-	// Add optional cache path
-	if input.CachePath != nil {
-		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.imagor_cache_path", Value: *input.CachePath, IsEncrypted: false,
-		})
 	}
 
 	// Save to registry

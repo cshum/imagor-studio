@@ -10,7 +10,7 @@ export const IMAGOR_STATUS_QUERY = gql(`
       lastUpdated
       isOverriddenByConfig
       embeddedConfig {
-        cachePath
+        _placeholder
       }
       externalConfig {
         baseUrl

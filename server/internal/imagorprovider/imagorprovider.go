@@ -9,7 +9,6 @@ import (
 	"hash"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -36,7 +35,6 @@ type ImagorConfig struct {
 	BaseURL        string // External URL or "/imagor" for embedded
 	Secret         string // Secret key for URL signing
 	Unsafe         bool   // Enable unsafe URLs for development
-	CachePath      string // Cache directory path (empty = no caching)
 	SignerType     string // Hash algorithm: "sha1", "sha256", "sha512" (for external mode)
 	SignerTruncate int    // Signature truncation length (for external mode)
 }
@@ -72,7 +70,6 @@ func createDefaultEmbeddedConfig(cfg *config.Config) *ImagorConfig {
 		BaseURL:        "/imagor",
 		Secret:         cfg.JWTSecret, // Default to JWT secret (configurable)
 		Unsafe:         false,         // Always false (fixed)
-		CachePath:      "",            // Default (configurable)
 		SignerType:     "sha256",      // Fixed: always SHA256
 		SignerTruncate: 28,            // Fixed: always 28-char truncation
 	}
@@ -248,7 +245,6 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 		"config.imagor_base_url",
 		"config.imagor_secret",
 		"config.imagor_unsafe",
-		"config.imagor_cache_path",
 		"config.imagor_signer_type",
 		"config.imagor_signer_truncate")
 
@@ -280,11 +276,6 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 			imagorConfig.Secret = secretResult.Value
 		} else {
 			imagorConfig.Secret = p.config.JWTSecret // Default to JWT secret
-		}
-
-		// Configurable: Cache path (defaults to empty = no cache)
-		if cachePathResult := resultMap["config.imagor_cache_path"]; cachePathResult.Exists {
-			imagorConfig.CachePath = cachePathResult.Value // Could be empty string for no cache
 		}
 	} else {
 		// External mode: Fully configurable
@@ -323,9 +314,6 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 		} else {
 			imagorConfig.SignerTruncate = 0 // Default for external (no truncation)
 		}
-
-		// External mode has no cache path
-		imagorConfig.CachePath = ""
 	}
 
 	return imagorConfig, nil
@@ -403,11 +391,6 @@ func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error
 		options = append(options, imagor.WithSigner(signer))
 	}
 
-	// Add modified time check if caching is enabled
-	if cfg.CachePath != "" {
-		options = append(options, imagor.WithModifiedTimeCheck(true))
-	}
-
 	// Configure storage based on current storage provider
 	if storageOptions := p.buildStorageOptions(cfg); len(storageOptions) > 0 {
 		options = append(options, storageOptions...)
@@ -450,19 +433,6 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 		)
 		options = append(options, imagor.WithLoaders(fileStorage))
 
-		// Add result storage only if cache path is configured
-		if cfg.CachePath != "" {
-			cacheStorageOptions := []filestorage.Option{
-				filestorage.WithMkdirPermission(storageConfig.FileMkdirPermissions.String()),
-				filestorage.WithWritePermission(storageConfig.FileWritePermissions.String()),
-			}
-			cacheStorage := filestorage.New(
-				filepath.Join(storageConfig.FileBaseDir, cfg.CachePath),
-				cacheStorageOptions...,
-			)
-			options = append(options, imagor.WithResultStorages(cacheStorage))
-		}
-
 	case "s3":
 		// Create imagor S3 storage as LOADER only
 		awsConfig := p.buildAWSConfig(storageConfig)
@@ -478,17 +448,6 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 			s3storage.WithSafeChars("--"),
 		)
 		options = append(options, imagor.WithLoaders(s3Storage))
-
-		// Add result storage only if cache path is configured
-		if cfg.CachePath != "" {
-			cacheBaseDir := filepath.Join(storageConfig.S3BaseDir, cfg.CachePath)
-			cacheStorage := s3storage.New(*awsConfig, storageConfig.S3Bucket,
-				s3storage.WithBaseDir(cacheBaseDir),
-				s3storage.WithEndpoint(storageConfig.S3Endpoint),
-				s3storage.WithForcePathStyle(storageConfig.S3ForcePathStyle),
-			)
-			options = append(options, imagor.WithResultStorages(cacheStorage))
-		}
 
 	default:
 		p.logger.Warn("Unsupported storage type for imagor", zap.String("type", storageConfig.StorageType))

@@ -22,11 +22,11 @@ type CreateUserInput struct {
 }
 
 type EmbeddedImagorConfig struct {
-	CachePath string `json:"cachePath"`
+	Placeholder *string `json:"_placeholder,omitempty"`
 }
 
 type EmbeddedImagorInput struct {
-	CachePath *string `json:"cachePath,omitempty"`
+	Placeholder *string `json:"_placeholder,omitempty"`
 }
 
 type ExternalImagorConfig struct {

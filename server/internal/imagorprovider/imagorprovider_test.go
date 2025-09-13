@@ -515,7 +515,7 @@ func TestBuildConfigFromRegistry_EmbeddedMode(t *testing.T) {
 	assert.Equal(t, "/imagor", config.BaseURL) // Should be set to /imagor for embedded
 	assert.Equal(t, "embedded-secret", config.Secret)
 	assert.False(t, config.Unsafe)
-	assert.Equal(t, "", config.CachePath) // Should default no cache
+	// CachePath has been removed - no cache configuration needed
 }
 
 func TestBuildConfigFromRegistry_ExternalModeDefaults(t *testing.T) {

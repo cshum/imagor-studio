@@ -54,7 +54,7 @@ export function ImagorConfigurationWizard({
   const getEmbeddedInitialValues = (): Partial<EmbeddedImagorFormData> | undefined => {
     if (!initialConfig?.embeddedConfig) return undefined
     return {
-      cachePath: initialConfig.embeddedConfig.cachePath,
+      // No cachePath needed for embedded mode
     }
   }
 
@@ -70,12 +70,12 @@ export function ImagorConfigurationWizard({
     }
   }
 
-  const handleEmbeddedSubmit = async (data: EmbeddedImagorFormData) => {
+  const handleEmbeddedSubmit = async () => {
     setIsLoading(true)
     try {
       const result = await configureEmbeddedImagor({
         input: {
-          cachePath: data.cachePath || null,
+          _placeholder: null, // No configuration needed for embedded mode
         },
       })
 
