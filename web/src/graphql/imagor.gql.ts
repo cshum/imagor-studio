@@ -10,7 +10,7 @@ export const IMAGOR_STATUS_QUERY = gql(`
       lastUpdated
       isOverriddenByConfig
       embeddedConfig {
-        _placeholder
+        enabled
       }
       externalConfig {
         baseUrl
@@ -25,8 +25,8 @@ export const IMAGOR_STATUS_QUERY = gql(`
 
 // Mutation to configure embedded imagor
 export const CONFIGURE_EMBEDDED_IMAGOR_MUTATION = gql(`
-  mutation ConfigureEmbeddedImagor($input: EmbeddedImagorInput!) {
-    configureEmbeddedImagor(input: $input) {
+  mutation ConfigureEmbeddedImagor {
+    configureEmbeddedImagor {
       success
       restartRequired
       timestamp

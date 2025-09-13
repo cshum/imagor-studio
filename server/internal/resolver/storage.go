@@ -784,7 +784,7 @@ func (r *queryResolver) isImagorConfigOverridden(ctx context.Context, mode strin
 // Helper function to get embedded imagor configuration
 func (r *queryResolver) getEmbeddedImagorConfig(ctx context.Context, imagorConfig *imagorprovider.ImagorConfig) *gql.EmbeddedImagorConfig {
 	return &gql.EmbeddedImagorConfig{
-		Placeholder: nil, // No actual configuration needed for embedded mode
+		Enabled: true, // Embedded mode is enabled when configured
 	}
 }
 
@@ -811,7 +811,7 @@ func (r *queryResolver) getExternalImagorConfig(ctx context.Context, imagorConfi
 }
 
 // ConfigureEmbeddedImagor is the resolver for the configureEmbeddedImagor field.
-func (r *mutationResolver) ConfigureEmbeddedImagor(ctx context.Context, input gql.EmbeddedImagorInput) (*gql.ImagorConfigResult, error) {
+func (r *mutationResolver) ConfigureEmbeddedImagor(ctx context.Context) (*gql.ImagorConfigResult, error) {
 	// Check admin permissions
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err

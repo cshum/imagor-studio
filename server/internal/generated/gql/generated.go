@@ -46,7 +46,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	EmbeddedImagorConfig struct {
-		Placeholder func(childComplexity int) int
+		Enabled func(childComplexity int) int
 	}
 
 	ExternalImagorConfig struct {
@@ -105,7 +105,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		ChangePassword          func(childComplexity int, input ChangePasswordInput, userID *string) int
-		ConfigureEmbeddedImagor func(childComplexity int, input EmbeddedImagorInput) int
+		ConfigureEmbeddedImagor func(childComplexity int) int
 		ConfigureExternalImagor func(childComplexity int, input ExternalImagorInput) int
 		ConfigureFileStorage    func(childComplexity int, input FileStorageInput) int
 		ConfigureS3Storage      func(childComplexity int, input S3StorageInput) int
@@ -218,7 +218,7 @@ type MutationResolver interface {
 	ConfigureFileStorage(ctx context.Context, input FileStorageInput) (*StorageConfigResult, error)
 	ConfigureS3Storage(ctx context.Context, input S3StorageInput) (*StorageConfigResult, error)
 	TestStorageConfig(ctx context.Context, input StorageConfigInput) (*StorageTestResult, error)
-	ConfigureEmbeddedImagor(ctx context.Context, input EmbeddedImagorInput) (*ImagorConfigResult, error)
+	ConfigureEmbeddedImagor(ctx context.Context) (*ImagorConfigResult, error)
 	ConfigureExternalImagor(ctx context.Context, input ExternalImagorInput) (*ImagorConfigResult, error)
 	CreateUser(ctx context.Context, input CreateUserInput) (*User, error)
 }
@@ -255,12 +255,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
-	case "EmbeddedImagorConfig._placeholder":
-		if e.complexity.EmbeddedImagorConfig.Placeholder == nil {
+	case "EmbeddedImagorConfig.enabled":
+		if e.complexity.EmbeddedImagorConfig.Enabled == nil {
 			break
 		}
 
-		return e.complexity.EmbeddedImagorConfig.Placeholder(childComplexity), true
+		return e.complexity.EmbeddedImagorConfig.Enabled(childComplexity), true
 
 	case "ExternalImagorConfig.baseUrl":
 		if e.complexity.ExternalImagorConfig.BaseURL == nil {
@@ -510,12 +510,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			break
 		}
 
-		args, err := ec.field_Mutation_configureEmbeddedImagor_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ConfigureEmbeddedImagor(childComplexity, args["input"].(EmbeddedImagorInput)), true
+		return e.complexity.Mutation.ConfigureEmbeddedImagor(childComplexity), true
 
 	case "Mutation.configureExternalImagor":
 		if e.complexity.Mutation.ConfigureExternalImagor == nil {
@@ -1092,7 +1087,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputChangePasswordInput,
 		ec.unmarshalInputCreateUserInput,
-		ec.unmarshalInputEmbeddedImagorInput,
 		ec.unmarshalInputExternalImagorInput,
 		ec.unmarshalInputFileStorageInput,
 		ec.unmarshalInputRegistryEntryInput,
@@ -1264,7 +1258,7 @@ type Mutation {
   testStorageConfig(input: StorageConfigInput!): StorageTestResult!
 
   # Imagor Configuration APIs (admin only)
-  configureEmbeddedImagor(input: EmbeddedImagorInput!): ImagorConfigResult!
+  configureEmbeddedImagor: ImagorConfigResult!
   configureExternalImagor(input: ExternalImagorInput!): ImagorConfigResult!
 
   # admin only operations
@@ -1447,9 +1441,8 @@ type ImagorStatus {
 }
 
 type EmbeddedImagorConfig {
-  # Embedded mode configuration - simplified without cache path
-  # This field exists to satisfy GraphQL requirements for non-empty types
-  _placeholder: String
+  # Embedded mode uses optimized defaults - no configuration needed
+  enabled: Boolean!
 }
 
 type ExternalImagorConfig {
@@ -1458,7 +1451,6 @@ type ExternalImagorConfig {
   unsafe: Boolean!
   signerType: ImagorSignerType!
   signerTruncate: Int!
-  # No cachePath for external mode
 }
 
 type ImagorConfigResult {
@@ -1466,11 +1458,6 @@ type ImagorConfigResult {
   restartRequired: Boolean!
   timestamp: String!
   message: String
-}
-
-input EmbeddedImagorInput {
-  # Currently no configurable options for embedded mode
-  _placeholder: String  # GraphQL requires at least one field
 }
 
 input ExternalImagorInput {
@@ -1512,17 +1499,6 @@ func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Conte
 		return nil, err
 	}
 	args["userId"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_configureEmbeddedImagor_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNEmbeddedImagorInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐEmbeddedImagorInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
 	return args, nil
 }
 
@@ -1926,8 +1902,8 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _EmbeddedImagorConfig__placeholder(ctx context.Context, field graphql.CollectedField, obj *EmbeddedImagorConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EmbeddedImagorConfig__placeholder(ctx, field)
+func (ec *executionContext) _EmbeddedImagorConfig_enabled(ctx context.Context, field graphql.CollectedField, obj *EmbeddedImagorConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EmbeddedImagorConfig_enabled(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1940,28 +1916,31 @@ func (ec *executionContext) _EmbeddedImagorConfig__placeholder(ctx context.Conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Placeholder, nil
+		return obj.Enabled, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EmbeddedImagorConfig__placeholder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EmbeddedImagorConfig_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EmbeddedImagorConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3385,8 +3364,8 @@ func (ec *executionContext) fieldContext_ImagorStatus_embeddedConfig(_ context.C
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "_placeholder":
-				return ec.fieldContext_EmbeddedImagorConfig__placeholder(ctx, field)
+			case "enabled":
+				return ec.fieldContext_EmbeddedImagorConfig_enabled(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type EmbeddedImagorConfig", field.Name)
 		},
@@ -4238,7 +4217,7 @@ func (ec *executionContext) _Mutation_configureEmbeddedImagor(ctx context.Contex
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ConfigureEmbeddedImagor(rctx, fc.Args["input"].(EmbeddedImagorInput))
+		return ec.resolvers.Mutation().ConfigureEmbeddedImagor(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4255,7 +4234,7 @@ func (ec *executionContext) _Mutation_configureEmbeddedImagor(ctx context.Contex
 	return ec.marshalNImagorConfigResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorConfigResult(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_configureEmbeddedImagor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_configureEmbeddedImagor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -4274,17 +4253,6 @@ func (ec *executionContext) fieldContext_Mutation_configureEmbeddedImagor(ctx co
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ImagorConfigResult", field.Name)
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_configureEmbeddedImagor_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -9031,33 +8999,6 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputEmbeddedImagorInput(ctx context.Context, obj any) (EmbeddedImagorInput, error) {
-	var it EmbeddedImagorInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"_placeholder"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "_placeholder":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_placeholder"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Placeholder = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputExternalImagorInput(ctx context.Context, obj any) (ExternalImagorInput, error) {
 	var it ExternalImagorInput
 	asMap := map[string]any{}
@@ -9365,8 +9306,11 @@ func (ec *executionContext) _EmbeddedImagorConfig(ctx context.Context, sel ast.S
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("EmbeddedImagorConfig")
-		case "_placeholder":
-			out.Values[i] = ec._EmbeddedImagorConfig__placeholder(ctx, field, obj)
+		case "enabled":
+			out.Values[i] = ec._EmbeddedImagorConfig_enabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11025,11 +10969,6 @@ func (ec *executionContext) unmarshalNChangePasswordInput2githubᚗcomᚋcshum�
 
 func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐCreateUserInput(ctx context.Context, v any) (CreateUserInput, error) {
 	res, err := ec.unmarshalInputCreateUserInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNEmbeddedImagorInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐEmbeddedImagorInput(ctx context.Context, v any) (EmbeddedImagorInput, error) {
-	res, err := ec.unmarshalInputEmbeddedImagorInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

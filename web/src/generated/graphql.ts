@@ -37,11 +37,7 @@ export type CreateUserInput = {
 
 export type EmbeddedImagorConfig = {
   __typename?: 'EmbeddedImagorConfig'
-  _placeholder: Maybe<Scalars['String']['output']>
-}
-
-export type EmbeddedImagorInput = {
-  _placeholder: InputMaybe<Scalars['String']['input']>
+  enabled: Scalars['Boolean']['output']
 }
 
 export type ExternalImagorConfig = {
@@ -146,10 +142,6 @@ export type Mutation = {
 export type MutationChangePasswordArgs = {
   input: ChangePasswordInput
   userId?: InputMaybe<Scalars['ID']['input']>
-}
-
-export type MutationConfigureEmbeddedImagorArgs = {
-  input: EmbeddedImagorInput
 }
 
 export type MutationConfigureExternalImagorArgs = {
@@ -395,7 +387,7 @@ export type ImagorStatusQuery = {
     restartRequired: boolean
     lastUpdated: string | null
     isOverriddenByConfig: boolean
-    embeddedConfig: { __typename?: 'EmbeddedImagorConfig'; _placeholder: string | null } | null
+    embeddedConfig: { __typename?: 'EmbeddedImagorConfig'; enabled: boolean } | null
     externalConfig: {
       __typename?: 'ExternalImagorConfig'
       baseUrl: string
@@ -407,9 +399,7 @@ export type ImagorStatusQuery = {
   }
 }
 
-export type ConfigureEmbeddedImagorMutationVariables = Exact<{
-  input: EmbeddedImagorInput
-}>
+export type ConfigureEmbeddedImagorMutationVariables = Exact<{ [key: string]: never }>
 
 export type ConfigureEmbeddedImagorMutation = {
   __typename?: 'Mutation'
@@ -1016,7 +1006,7 @@ export const ImagorStatusDocument = {
                   name: { kind: 'Name', value: 'embeddedConfig' },
                   selectionSet: {
                     kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: '_placeholder' } }],
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'enabled' } }],
                   },
                 },
                 {
@@ -1048,29 +1038,12 @@ export const ConfigureEmbeddedImagorDocument = {
       kind: 'OperationDefinition',
       operation: 'mutation',
       name: { kind: 'Name', value: 'ConfigureEmbeddedImagor' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'EmbeddedImagorInput' } },
-          },
-        },
-      ],
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'configureEmbeddedImagor' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'input' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
-              },
-            ],
             selectionSet: {
               kind: 'SelectionSet',
               selections: [

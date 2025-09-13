@@ -22,11 +22,7 @@ type CreateUserInput struct {
 }
 
 type EmbeddedImagorConfig struct {
-	Placeholder *string `json:"_placeholder,omitempty"`
-}
-
-type EmbeddedImagorInput struct {
-	Placeholder *string `json:"_placeholder,omitempty"`
+	Enabled bool `json:"enabled"`
 }
 
 type ExternalImagorConfig struct {

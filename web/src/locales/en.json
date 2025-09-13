@@ -155,6 +155,7 @@
       "secretDescription": "Optional secret key for signing image URLs. Leave empty to use the JWT secret.",
       "externalSecretDescription": "Secret key used by the external Imagor service for URL signing.",
       "embeddedModeSimplified": "Embedded mode uses optimized defaults with no additional configuration required.",
+      "enableEmbeddedMode": "Enable Embedded Mode",
       "baseUrl": "Base URL",
       "baseUrlRequired": "Base URL is required",
       "baseUrlInvalid": "Please enter a valid URL starting with http:// or https://",

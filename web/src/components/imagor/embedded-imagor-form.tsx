@@ -1,19 +1,15 @@
 import { forwardRef, useImperativeHandle } from 'react'
-import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
-import { Button } from '@/components/ui/button'
-
-export interface EmbeddedImagorFormData {
-  // No configurable options for embedded mode after CachePath removal
-}
+// Empty interface for consistency with external form
+export interface EmbeddedImagorFormData {}
 
 export interface EmbeddedImagorFormRef {
-  getValues: () => EmbeddedImagorFormData
+  submit: () => void
 }
 
 interface EmbeddedImagorFormProps {
-  onSubmit: (data: EmbeddedImagorFormData) => void
+  onSubmit: () => void
   disabled?: boolean
   initialValues?: Partial<EmbeddedImagorFormData>
 }
@@ -22,27 +18,18 @@ export const EmbeddedImagorForm = forwardRef<EmbeddedImagorFormRef, EmbeddedImag
   ({ onSubmit }, ref) => {
     const { t } = useTranslation()
 
-    const {
-      handleSubmit,
-      getValues,
-    } = useForm<EmbeddedImagorFormData>({
-      defaultValues: {},
-    })
-
     useImperativeHandle(ref, () => ({
-      getValues,
+      submit: onSubmit,
     }))
 
     return (
-      <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+      <div className='space-y-4'>
         <div className='text-muted-foreground text-sm'>
           {t('pages.imagor.embeddedModeSimplified')}
         </div>
-
-        <Button type='submit' className='hidden' />
-      </form>
+      </div>
     )
-  },
+  }
 )
 
 EmbeddedImagorForm.displayName = 'EmbeddedImagorForm'

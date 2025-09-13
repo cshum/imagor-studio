@@ -66,7 +66,7 @@ type Mutation {
   testStorageConfig(input: StorageConfigInput!): StorageTestResult!
 
   # Imagor Configuration APIs (admin only)
-  configureEmbeddedImagor(input: EmbeddedImagorInput!): ImagorConfigResult!
+  configureEmbeddedImagor: ImagorConfigResult!
   configureExternalImagor(input: ExternalImagorInput!): ImagorConfigResult!
 
   # admin only operations
@@ -249,9 +249,8 @@ type ImagorStatus {
 }
 
 type EmbeddedImagorConfig {
-  # Embedded mode configuration - simplified without cache path
-  # This field exists to satisfy GraphQL requirements for non-empty types
-  _placeholder: String
+  # Embedded mode uses optimized defaults - no configuration needed
+  enabled: Boolean!
 }
 
 type ExternalImagorConfig {
@@ -260,7 +259,6 @@ type ExternalImagorConfig {
   unsafe: Boolean!
   signerType: ImagorSignerType!
   signerTruncate: Int!
-  # No cachePath for external mode
 }
 
 type ImagorConfigResult {
@@ -268,11 +266,6 @@ type ImagorConfigResult {
   restartRequired: Boolean!
   timestamp: String!
   message: String
-}
-
-input EmbeddedImagorInput {
-  # Currently no configurable options for embedded mode
-  _placeholder: String  # GraphQL requires at least one field
 }
 
 input ExternalImagorInput {

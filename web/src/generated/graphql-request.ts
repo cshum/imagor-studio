@@ -38,11 +38,7 @@ export type CreateUserInput = {
 
 export type EmbeddedImagorConfig = {
   __typename?: 'EmbeddedImagorConfig'
-  _placeholder: Maybe<Scalars['String']['output']>
-}
-
-export type EmbeddedImagorInput = {
-  _placeholder: InputMaybe<Scalars['String']['input']>
+  enabled: Scalars['Boolean']['output']
 }
 
 export type ExternalImagorConfig = {
@@ -147,10 +143,6 @@ export type Mutation = {
 export type MutationChangePasswordArgs = {
   input: ChangePasswordInput
   userId?: InputMaybe<Scalars['ID']['input']>
-}
-
-export type MutationConfigureEmbeddedImagorArgs = {
-  input: EmbeddedImagorInput
 }
 
 export type MutationConfigureExternalImagorArgs = {
@@ -396,7 +388,7 @@ export type ImagorStatusQuery = {
     restartRequired: boolean
     lastUpdated: string | null
     isOverriddenByConfig: boolean
-    embeddedConfig: { __typename?: 'EmbeddedImagorConfig'; _placeholder: string | null } | null
+    embeddedConfig: { __typename?: 'EmbeddedImagorConfig'; enabled: boolean } | null
     externalConfig: {
       __typename?: 'ExternalImagorConfig'
       baseUrl: string
@@ -408,9 +400,7 @@ export type ImagorStatusQuery = {
   }
 }
 
-export type ConfigureEmbeddedImagorMutationVariables = Exact<{
-  input: EmbeddedImagorInput
-}>
+export type ConfigureEmbeddedImagorMutationVariables = Exact<{ [key: string]: never }>
 
 export type ConfigureEmbeddedImagorMutation = {
   __typename?: 'Mutation'
@@ -931,7 +921,7 @@ export const ImagorStatusDocument = gql`
       lastUpdated
       isOverriddenByConfig
       embeddedConfig {
-        _placeholder
+        enabled
       }
       externalConfig {
         baseUrl
@@ -944,8 +934,8 @@ export const ImagorStatusDocument = gql`
   }
 `
 export const ConfigureEmbeddedImagorDocument = gql`
-  mutation ConfigureEmbeddedImagor($input: EmbeddedImagorInput!) {
-    configureEmbeddedImagor(input: $input) {
+  mutation ConfigureEmbeddedImagor {
+    configureEmbeddedImagor {
       success
       restartRequired
       timestamp
@@ -1212,7 +1202,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
       )
     },
     ConfigureEmbeddedImagor(
-      variables: ConfigureEmbeddedImagorMutationVariables,
+      variables?: ConfigureEmbeddedImagorMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
     ): Promise<ConfigureEmbeddedImagorMutation> {
