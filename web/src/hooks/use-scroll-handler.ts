@@ -28,7 +28,6 @@ export const useScrollHandler = (
   const restoreScrollPosition = useCallback(() => {
     const savedPosition = getPosition(optionsRef.current.scrollKey) // Get scroll position using store
     if (savedPosition > 0) {
-      // Use document scrolling
       const scrollHeight = Math.max(
         document.body.scrollHeight,
         document.body.offsetHeight,
@@ -64,7 +63,6 @@ export const useScrollHandler = (
       setIsScrolling(true) // Set scrolling to true when scrolling starts
 
       const executeScrollHandling = () => {
-        // Use document scrolling
         const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop
 
         // Update scroll position state

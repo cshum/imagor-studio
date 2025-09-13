@@ -33,7 +33,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const isDesktop = useBreakpoint('md')
   const maxItemWidth = 250
 
-  // Use document scrolling
   const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(galleryKey)
   const { contentWidth, updateWidth } = useWidthHandler(
     contentRef,
