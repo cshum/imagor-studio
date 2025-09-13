@@ -36,15 +36,6 @@ export type CreateUserInput = {
   role: Scalars['String']['input']
 }
 
-export type EmbeddedImagorConfig = {
-  __typename?: 'EmbeddedImagorConfig'
-  cachePath: Scalars['String']['output']
-}
-
-export type EmbeddedImagorInput = {
-  cachePath: InputMaybe<Scalars['String']['input']>
-}
-
 export type ExternalImagorConfig = {
   __typename?: 'ExternalImagorConfig'
   baseUrl: Scalars['String']['output']
@@ -116,7 +107,6 @@ export type ImagorSignerType = 'SHA1' | 'SHA256' | 'SHA512'
 export type ImagorStatus = {
   __typename?: 'ImagorStatus'
   configured: Scalars['Boolean']['output']
-  embeddedConfig: Maybe<EmbeddedImagorConfig>
   externalConfig: Maybe<ExternalImagorConfig>
   isOverriddenByConfig: Scalars['Boolean']['output']
   lastUpdated: Maybe<Scalars['String']['output']>
@@ -147,10 +137,6 @@ export type Mutation = {
 export type MutationChangePasswordArgs = {
   input: ChangePasswordInput
   userId?: InputMaybe<Scalars['ID']['input']>
-}
-
-export type MutationConfigureEmbeddedImagorArgs = {
-  input: EmbeddedImagorInput
 }
 
 export type MutationConfigureExternalImagorArgs = {
@@ -396,7 +382,6 @@ export type ImagorStatusQuery = {
     restartRequired: boolean
     lastUpdated: string | null
     isOverriddenByConfig: boolean
-    embeddedConfig: { __typename?: 'EmbeddedImagorConfig'; cachePath: string } | null
     externalConfig: {
       __typename?: 'ExternalImagorConfig'
       baseUrl: string
@@ -408,9 +393,7 @@ export type ImagorStatusQuery = {
   }
 }
 
-export type ConfigureEmbeddedImagorMutationVariables = Exact<{
-  input: EmbeddedImagorInput
-}>
+export type ConfigureEmbeddedImagorMutationVariables = Exact<{ [key: string]: never }>
 
 export type ConfigureEmbeddedImagorMutation = {
   __typename?: 'Mutation'
@@ -930,9 +913,6 @@ export const ImagorStatusDocument = gql`
       restartRequired
       lastUpdated
       isOverriddenByConfig
-      embeddedConfig {
-        cachePath
-      }
       externalConfig {
         baseUrl
         hasSecret
@@ -944,8 +924,8 @@ export const ImagorStatusDocument = gql`
   }
 `
 export const ConfigureEmbeddedImagorDocument = gql`
-  mutation ConfigureEmbeddedImagor($input: EmbeddedImagorInput!) {
-    configureEmbeddedImagor(input: $input) {
+  mutation ConfigureEmbeddedImagor {
+    configureEmbeddedImagor {
       success
       restartRequired
       timestamp
@@ -1212,7 +1192,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
       )
     },
     ConfigureEmbeddedImagor(
-      variables: ConfigureEmbeddedImagorMutationVariables,
+      variables?: ConfigureEmbeddedImagorMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
     ): Promise<ConfigureEmbeddedImagorMutation> {

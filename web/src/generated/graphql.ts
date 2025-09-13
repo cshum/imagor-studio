@@ -35,15 +35,6 @@ export type CreateUserInput = {
   role: Scalars['String']['input']
 }
 
-export type EmbeddedImagorConfig = {
-  __typename?: 'EmbeddedImagorConfig'
-  cachePath: Scalars['String']['output']
-}
-
-export type EmbeddedImagorInput = {
-  cachePath: InputMaybe<Scalars['String']['input']>
-}
-
 export type ExternalImagorConfig = {
   __typename?: 'ExternalImagorConfig'
   baseUrl: Scalars['String']['output']
@@ -115,7 +106,6 @@ export type ImagorSignerType = 'SHA1' | 'SHA256' | 'SHA512'
 export type ImagorStatus = {
   __typename?: 'ImagorStatus'
   configured: Scalars['Boolean']['output']
-  embeddedConfig: Maybe<EmbeddedImagorConfig>
   externalConfig: Maybe<ExternalImagorConfig>
   isOverriddenByConfig: Scalars['Boolean']['output']
   lastUpdated: Maybe<Scalars['String']['output']>
@@ -146,10 +136,6 @@ export type Mutation = {
 export type MutationChangePasswordArgs = {
   input: ChangePasswordInput
   userId?: InputMaybe<Scalars['ID']['input']>
-}
-
-export type MutationConfigureEmbeddedImagorArgs = {
-  input: EmbeddedImagorInput
 }
 
 export type MutationConfigureExternalImagorArgs = {
@@ -395,7 +381,6 @@ export type ImagorStatusQuery = {
     restartRequired: boolean
     lastUpdated: string | null
     isOverriddenByConfig: boolean
-    embeddedConfig: { __typename?: 'EmbeddedImagorConfig'; cachePath: string } | null
     externalConfig: {
       __typename?: 'ExternalImagorConfig'
       baseUrl: string
@@ -407,9 +392,7 @@ export type ImagorStatusQuery = {
   }
 }
 
-export type ConfigureEmbeddedImagorMutationVariables = Exact<{
-  input: EmbeddedImagorInput
-}>
+export type ConfigureEmbeddedImagorMutationVariables = Exact<{ [key: string]: never }>
 
 export type ConfigureEmbeddedImagorMutation = {
   __typename?: 'Mutation'
@@ -1013,14 +996,6 @@ export const ImagorStatusDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'embeddedConfig' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'cachePath' } }],
-                  },
-                },
-                {
-                  kind: 'Field',
                   name: { kind: 'Name', value: 'externalConfig' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -1048,29 +1023,12 @@ export const ConfigureEmbeddedImagorDocument = {
       kind: 'OperationDefinition',
       operation: 'mutation',
       name: { kind: 'Name', value: 'ConfigureEmbeddedImagor' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'EmbeddedImagorInput' } },
-          },
-        },
-      ],
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'configureEmbeddedImagor' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'input' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
-              },
-            ],
             selectionSet: {
               kind: 'SelectionSet',
               selections: [

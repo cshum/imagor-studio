@@ -357,6 +357,15 @@ export function AdminSetupPage() {
       },
     },
     {
+      id: 'storage',
+      title: t('pages.admin.storageConfiguration'),
+      content: (navigationProps: MultiStepFormNavigationProps) => {
+        return (
+          <StorageStepContent onStorageConfigured={handleStorageConfigured} {...navigationProps} />
+        )
+      },
+    },
+    {
       id: 'settings',
       title: t('pages.admin.systemConfiguration'),
       content: (navigationProps: MultiStepFormNavigationProps) => {
@@ -367,15 +376,6 @@ export function AdminSetupPage() {
             onSkip={handleSkipSettings}
             {...navigationProps}
           />
-        )
-      },
-    },
-    {
-      id: 'storage',
-      title: t('pages.admin.storageConfiguration'),
-      content: (navigationProps: MultiStepFormNavigationProps) => {
-        return (
-          <StorageStepContent onStorageConfigured={handleStorageConfigured} {...navigationProps} />
         )
       },
     },

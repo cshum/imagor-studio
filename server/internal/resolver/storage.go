@@ -744,9 +744,7 @@ func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, er
 	}
 
 	// Add mode-specific configuration
-	if imagorConfig.Mode == "embedded" {
-		status.EmbeddedConfig = r.getEmbeddedImagorConfig(ctx, imagorConfig)
-	} else if imagorConfig.Mode == "external" {
+	if imagorConfig.Mode == "external" {
 		status.ExternalConfig = r.getExternalImagorConfig(ctx, imagorConfig)
 	}
 
@@ -760,7 +758,6 @@ func (r *queryResolver) isImagorConfigOverridden(ctx context.Context, mode strin
 		keys = []string{
 			"config.imagor_mode",
 			"config.imagor_secret",
-			"config.imagor_cache_path",
 		}
 	} else {
 		keys = []string{
@@ -780,13 +777,6 @@ func (r *queryResolver) isImagorConfigOverridden(ctx context.Context, mode strin
 		}
 	}
 	return false
-}
-
-// Helper function to get embedded imagor configuration
-func (r *queryResolver) getEmbeddedImagorConfig(ctx context.Context, imagorConfig *imagorprovider.ImagorConfig) *gql.EmbeddedImagorConfig {
-	return &gql.EmbeddedImagorConfig{
-		CachePath: imagorConfig.CachePath,
-	}
 }
 
 // Helper function to get external imagor configuration
@@ -812,7 +802,7 @@ func (r *queryResolver) getExternalImagorConfig(ctx context.Context, imagorConfi
 }
 
 // ConfigureEmbeddedImagor is the resolver for the configureEmbeddedImagor field.
-func (r *mutationResolver) ConfigureEmbeddedImagor(ctx context.Context, input gql.EmbeddedImagorInput) (*gql.ImagorConfigResult, error) {
+func (r *mutationResolver) ConfigureEmbeddedImagor(ctx context.Context) (*gql.ImagorConfigResult, error) {
 	// Check admin permissions
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
@@ -828,13 +818,6 @@ func (r *mutationResolver) ConfigureEmbeddedImagor(ctx context.Context, input gq
 	entries := []gql.RegistryEntryInput{
 		{Key: "config.imagor_mode", Value: "embedded", IsEncrypted: false},
 		{Key: "config.imagor_config_updated_at", Value: timestampStr, IsEncrypted: false},
-	}
-
-	// Add optional cache path
-	if input.CachePath != nil {
-		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.imagor_cache_path", Value: *input.CachePath, IsEncrypted: false,
-		})
 	}
 
 	// Save to registry

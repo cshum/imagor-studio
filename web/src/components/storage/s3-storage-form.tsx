@@ -1,10 +1,13 @@
-import { forwardRef, useImperativeHandle } from 'react'
+import { forwardRef, useImperativeHandle, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import * as z from 'zod'
 
+import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Form,
   FormControl,
@@ -44,6 +47,7 @@ interface S3StorageFormProps {
 export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
   ({ initialValues, onSubmit, disabled }, ref) => {
     const { t } = useTranslation()
+    const [showAdvanced, setShowAdvanced] = useState(false)
 
     const form = useForm<S3StorageFormData>({
       resolver: zodResolver(s3StorageSchema),
@@ -105,55 +109,6 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
 
               <FormField
                 control={form.control}
-                name='endpoint'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('pages.storage.customEndpoint')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='https://s3.amazonaws.com'
-                        {...field}
-                        disabled={disabled}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t('pages.storage.customEndpointDescription')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='forcePathStyle'
-                render={({ field }) => {
-                  const checkboxId = 'forcePathStyle-checkbox'
-                  return (
-                    <FormItem className='flex flex-row items-center justify-between space-y-0'>
-                      <div className='space-y-1'>
-                        <FormLabel htmlFor={checkboxId} className='cursor-pointer'>
-                          {t('pages.storage.forcePathStyle')}
-                        </FormLabel>
-                        <FormDescription>
-                          {t('pages.storage.forcePathStyleDescription')}
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Checkbox
-                          id={checkboxId}
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          disabled={disabled}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )
-                }}
-              />
-
-              <FormField
-                control={form.control}
                 name='accessKeyId'
                 render={({ field }) => (
                   <FormItem>
@@ -189,40 +144,113 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name='sessionToken'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('pages.storage.sessionToken')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='password'
-                        placeholder='Optional session token'
-                        {...field}
-                        disabled={disabled}
-                      />
-                    </FormControl>
-                    <FormDescription>{t('pages.storage.sessionTokenDescription')}</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    type='button'
+                    className='gap-2'
+                    disabled={disabled}
+                  >
+                    {showAdvanced ? (
+                      <ChevronDown className='text-muted-foreground h-4 w-4' />
+                    ) : (
+                      <ChevronRight className='text-muted-foreground h-4 w-4' />
+                    )}
+                    Advanced Settings
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className='space-y-6 pt-4'>
+                  <FormField
+                    control={form.control}
+                    name='endpoint'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('pages.storage.customEndpoint')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder='https://s3.amazonaws.com'
+                            {...field}
+                            disabled={disabled}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t('pages.storage.customEndpointDescription')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name='baseDir'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('pages.storage.baseDirectory')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder='images/' {...field} disabled={disabled} />
-                    </FormControl>
-                    <FormDescription>{t('pages.storage.baseDirectoryDescription')}</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name='forcePathStyle'
+                    render={({ field }) => {
+                      const checkboxId = 'forcePathStyle-checkbox'
+                      return (
+                        <FormItem className='flex flex-row items-center justify-between space-y-0'>
+                          <div className='space-y-1'>
+                            <FormLabel htmlFor={checkboxId} className='cursor-pointer'>
+                              {t('pages.storage.forcePathStyle')}
+                            </FormLabel>
+                            <FormDescription>
+                              {t('pages.storage.forcePathStyleDescription')}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Checkbox
+                              id={checkboxId}
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={disabled}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )
+                    }}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='baseDir'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('pages.storage.baseDirectory')}</FormLabel>
+                        <FormControl>
+                          <Input placeholder='images/' {...field} disabled={disabled} />
+                        </FormControl>
+                        <FormDescription>
+                          {t('pages.storage.baseDirectoryDescription')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='sessionToken'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('pages.storage.sessionToken')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type='password'
+                            placeholder='Optional session token'
+                            {...field}
+                            disabled={disabled}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t('pages.storage.sessionTokenDescription')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </form>
         </Form>

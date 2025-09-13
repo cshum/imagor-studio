@@ -1,6 +1,5 @@
 import type {
   ConfigureEmbeddedImagorMutation,
-  ConfigureEmbeddedImagorMutationVariables,
   ConfigureExternalImagorMutation,
   ConfigureExternalImagorMutationVariables,
   ImagorStatusQuery,
@@ -20,11 +19,11 @@ export async function getImagorStatus(): Promise<ImagorStatusQuery['imagorStatus
 /**
  * Configure embedded Imagor
  */
-export async function configureEmbeddedImagor(
-  variables: ConfigureEmbeddedImagorMutationVariables,
-): Promise<ConfigureEmbeddedImagorMutation['configureEmbeddedImagor']> {
+export async function configureEmbeddedImagor(): Promise<
+  ConfigureEmbeddedImagorMutation['configureEmbeddedImagor']
+> {
   const sdk = getSdk(getGraphQLClient())
-  const result = await sdk.ConfigureEmbeddedImagor(variables)
+  const result = await sdk.ConfigureEmbeddedImagor()
   return result.configureEmbeddedImagor
 }
 

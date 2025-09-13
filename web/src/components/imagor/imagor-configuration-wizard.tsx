@@ -52,10 +52,8 @@ export function ImagorConfigurationWizard({
 
   // Get initial values for embedded form
   const getEmbeddedInitialValues = (): Partial<EmbeddedImagorFormData> | undefined => {
-    if (!initialConfig?.embeddedConfig) return undefined
-    return {
-      cachePath: initialConfig.embeddedConfig.cachePath,
-    }
+    // Embedded mode has no configuration - return empty object
+    return {}
   }
 
   // Get initial values for external form
@@ -70,14 +68,10 @@ export function ImagorConfigurationWizard({
     }
   }
 
-  const handleEmbeddedSubmit = async (data: EmbeddedImagorFormData) => {
+  const handleEmbeddedSubmit = async () => {
     setIsLoading(true)
     try {
-      const result = await configureEmbeddedImagor({
-        input: {
-          cachePath: data.cachePath || null,
-        },
-      })
+      const result = await configureEmbeddedImagor()
 
       if (result.success) {
         toast.success(result.message || t('pages.imagor.configurationSuccess'))
@@ -185,9 +179,13 @@ export function ImagorConfigurationWizard({
           isLoading={isLoading}
           onClick={() => {
             // Trigger form submission based on imagor type
-            const form = document.querySelector('form')
-            if (form) {
-              form.requestSubmit()
+            if (imagorType === 'embedded') {
+              embeddedFormRef.current?.submit()
+            } else {
+              const form = document.querySelector('form')
+              if (form) {
+                form.requestSubmit()
+              }
             }
           }}
         >

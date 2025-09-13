@@ -66,7 +66,7 @@ type Mutation {
   testStorageConfig(input: StorageConfigInput!): StorageTestResult!
 
   # Imagor Configuration APIs (admin only)
-  configureEmbeddedImagor(input: EmbeddedImagorInput!): ImagorConfigResult!
+  configureEmbeddedImagor: ImagorConfigResult!
   configureExternalImagor(input: ExternalImagorInput!): ImagorConfigResult!
 
   # admin only operations
@@ -244,12 +244,7 @@ type ImagorStatus {
   restartRequired: Boolean!
   lastUpdated: String
   isOverriddenByConfig: Boolean!
-  embeddedConfig: EmbeddedImagorConfig
   externalConfig: ExternalImagorConfig
-}
-
-type EmbeddedImagorConfig {
-  cachePath: String!
 }
 
 type ExternalImagorConfig {
@@ -258,7 +253,6 @@ type ExternalImagorConfig {
   unsafe: Boolean!
   signerType: ImagorSignerType!
   signerTruncate: Int!
-  # No cachePath for external mode
 }
 
 type ImagorConfigResult {
@@ -266,10 +260,6 @@ type ImagorConfigResult {
   restartRequired: Boolean!
   timestamp: String!
   message: String
-}
-
-input EmbeddedImagorInput {
-  cachePath: String     # Optional, defaults to empty = no cache
 }
 
 input ExternalImagorInput {
