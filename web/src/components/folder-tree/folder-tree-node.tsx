@@ -63,7 +63,10 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
     return (
       <SidebarMenuItem>
         <SidebarMenuButton onClick={handleFolderClick} isActive={isActive}>
-          <Folder className='ml-6 h-4 w-4' />
+          <span className='-m-2 p-3 md:p-2'>
+            <div className='size-4' />
+          </span>
+          <Folder className='h-4 w-4' />
           <span className='truncate'>{folder.name || 'Root'}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
