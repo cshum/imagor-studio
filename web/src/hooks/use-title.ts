@@ -15,13 +15,12 @@ export function useTitle(): void {
     }
     // Find the last breadcrumb in the chain)
     const activeBreadcrumb = breadcrumbs[breadcrumbs.length - 1]
+    const homeTitle = breadcrumbs[0].label
 
-    if (activeBreadcrumb?.label) {
-      // Format as "Current Page | Imagor Studio"
-      document.title = `${activeBreadcrumb.label} | Imagor Studio`
+    if (activeBreadcrumb?.label && activeBreadcrumb?.label !== homeTitle) {
+      document.title = `${activeBreadcrumb.label} · ${homeTitle} | Imagor Studio`
     } else {
-      // Fallback to just "Imagor Studio" if no active breadcrumb
-      document.title = 'Imagor Studio'
+      document.title = `${homeTitle} | Imagor Studio`
     }
   }, [breadcrumbs])
 }

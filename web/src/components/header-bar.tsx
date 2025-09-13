@@ -67,7 +67,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
 
   // Handle account settings navigation
   const handleAccountClick = () => {
-    navigate({ to: '/account' })
+    navigate({ to: '/account/profile' })
   }
 
   return (
