@@ -35,6 +35,7 @@ export function StorageConfigurationWizard({
   const [storageType, setStorageType] = useState<StorageType>('file')
   const [isLoading, setIsLoading] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Refs to access form data
   const fileFormRef = useRef<FileStorageFormRef>(null)
@@ -47,6 +48,11 @@ export function StorageConfigurationWizard({
       setStorageType(type)
     }
   }, [initialConfig])
+
+  // Clear error when storage type changes
+  useEffect(() => {
+    setError(null)
+  }, [storageType])
 
   // Get initial values for file storage form
   const getFileStorageInitialValues = (): Partial<FileStorageFormData> | undefined => {
@@ -76,6 +82,7 @@ export function StorageConfigurationWizard({
 
   const handleFileStorageSubmit = async (data: FileStorageFormData) => {
     setIsLoading(true)
+    setError(null) // Clear any previous errors
     try {
       const result = await configureFileStorage({
         input: {
@@ -93,13 +100,13 @@ export function StorageConfigurationWizard({
         onSuccess?.(result.restartRequired)
       } else {
         const errorMessage = result.message || 'Failed to configure file storage'
-        toast.error(errorMessage)
+        setError(errorMessage)
         onError?.(errorMessage)
       }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to configure file storage'
-      toast.error(errorMessage)
+      setError(errorMessage)
       onError?.(errorMessage)
     } finally {
       setIsLoading(false)
@@ -108,6 +115,7 @@ export function StorageConfigurationWizard({
 
   const handleS3StorageSubmit = async (data: S3StorageFormData) => {
     setIsLoading(true)
+    setError(null) // Clear any previous errors
     try {
       const result = await configureS3Storage({
         input: {
@@ -131,12 +139,12 @@ export function StorageConfigurationWizard({
         onSuccess?.(result.restartRequired)
       } else {
         const errorMessage = result.message || 'Failed to configure S3 storage'
-        toast.error(errorMessage)
+        setError(errorMessage)
         onError?.(errorMessage)
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to configure S3 storage'
-      toast.error(errorMessage)
+      setError(errorMessage)
       onError?.(errorMessage)
     } finally {
       setIsLoading(false)
@@ -148,6 +156,7 @@ export function StorageConfigurationWizard({
 
   const handleTestConfiguration = async () => {
     setIsTesting(true)
+    setError(null) // Clear any previous errors
     try {
       const storageTypeMap: Record<StorageType, GraphQLStorageType> = {
         file: 'FILE',
@@ -159,7 +168,8 @@ export function StorageConfigurationWizard({
       if (storageType === 'file') {
         const formData = fileFormRef.current?.getValues()
         if (!formData) {
-          toast.error('Please fill in the file storage configuration first')
+          const errorMessage = 'Please fill in the file storage configuration first'
+          setError(errorMessage)
           return
         }
         testInput = {
@@ -174,7 +184,8 @@ export function StorageConfigurationWizard({
       } else {
         const formData = s3FormRef.current?.getValues()
         if (!formData) {
-          toast.error('Please fill in the S3 storage configuration first')
+          const errorMessage = 'Please fill in the S3 storage configuration first'
+          setError(errorMessage)
           return
         }
         testInput = {
@@ -198,10 +209,13 @@ export function StorageConfigurationWizard({
       if (result.success) {
         toast.success('Storage configuration test passed!')
       } else {
-        toast.error(result.message || 'Storage configuration test failed')
+        const errorMessage = result.message || 'Storage configuration test failed'
+        setError(errorMessage)
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to test storage configuration')
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to test storage configuration'
+      setError(errorMessage)
     } finally {
       setIsTesting(false)
     }
@@ -246,6 +260,12 @@ export function StorageConfigurationWizard({
           </div>
         )}
       </div>
+
+      {error && (
+        <div className='text-destructive bg-destructive/10 mt-6 rounded-md p-3 text-sm'>
+          {error}
+        </div>
+      )}
 
       <div className='mt-6 flex flex-col justify-between gap-3 sm:flex-row'>
         <div className='flex gap-3'>
