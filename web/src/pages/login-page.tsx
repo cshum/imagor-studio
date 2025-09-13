@@ -63,7 +63,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className='flex min-h-screen items-center justify-center'>
+    <div className='flex min-h-screen items-start justify-center pt-8 md:items-center md:pt-0'>
       <Card className='w-full max-w-md'>
         <CardHeader className='space-y-1 text-center'>
           <CardTitle className='text-2xl font-semibold tracking-tight'>
