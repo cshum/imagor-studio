@@ -1,3 +1,5 @@
+import { getBaseUrl } from '@/lib/api-utils'
+
 export interface LoginRequest {
   email: string
   password: string
@@ -34,8 +36,6 @@ export interface FirstRunResponse {
 export interface RefreshTokenRequest {
   token: string
 }
-
-import { getBaseUrl } from '@/lib/api-utils'
 
 const BASE_URL = getBaseUrl()
 
