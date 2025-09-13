@@ -116,7 +116,7 @@ func TestJWTSecretFromRegistry(t *testing.T) {
 	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
-	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DatabaseURL)
+	encryptionService := encryption.NewService(cfg.DatabaseURL)
 	// Set a JWT key for encryption to work
 	encryptionService.SetJWTKey("test-jwt-key")
 	registryStore := registrystore.New(db, logger, encryptionService)
@@ -152,7 +152,7 @@ func TestConfigEnhancement(t *testing.T) {
 	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
-	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DatabaseURL)
+	encryptionService := encryption.NewService(cfg.DatabaseURL)
 	registryStore := registrystore.New(db, logger, encryptionService)
 
 	// Test that config enhancement works with registry values
@@ -191,7 +191,7 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
-	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DatabaseURL)
+	encryptionService := encryption.NewService(cfg.DatabaseURL)
 	registryStore := registrystore.New(db, logger, encryptionService)
 
 	// Set environment variables (s3 requires bucket)

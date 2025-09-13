@@ -50,7 +50,7 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	}
 
 	// Initialize encryption service
-	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DatabaseURL)
+	encryptionService := encryption.NewService(cfg.DatabaseURL)
 
 	// Initialize registry store
 	registryStore := registrystore.New(db, logger, encryptionService)

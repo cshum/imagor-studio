@@ -18,24 +18,24 @@ type Service struct {
 	jwtKey    []byte
 }
 
-// NewService creates a new encryption service with master key derived from database path
-func NewService(dbPath string, jwtSecret string) *Service {
+// NewService creates encryption service with only master key (for JWT secret bootstrap)
+func NewService(dbPath string) *Service {
+	masterKey := deriveMasterKey(dbPath)
+
+	return &Service{
+		masterKey: masterKey,
+		jwtKey:    nil,
+	}
+}
+
+// NewServiceWithJwtLey creates a new encryption service with master key derived from database path
+func NewServiceWithJwtLey(dbPath string, jwtSecret string) *Service {
 	masterKey := deriveMasterKey(dbPath)
 	jwtKey := deriveJWTKey(jwtSecret)
 
 	return &Service{
 		masterKey: masterKey,
 		jwtKey:    jwtKey,
-	}
-}
-
-// NewServiceWithMasterKeyOnly creates encryption service with only master key (for JWT secret bootstrap)
-func NewServiceWithMasterKeyOnly(dbPath string) *Service {
-	masterKey := deriveMasterKey(dbPath)
-
-	return &Service{
-		masterKey: masterKey,
-		jwtKey:    nil,
 	}
 }
 

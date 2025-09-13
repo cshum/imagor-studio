@@ -40,7 +40,7 @@ func TestNewService(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service := NewService(tt.dbPath, tt.jwtKey)
+			service := NewServiceWithJwtLey(tt.dbPath, tt.jwtKey)
 
 			assert.NotNil(t, service)
 			assert.NotNil(t, service.masterKey)
@@ -53,32 +53,32 @@ func TestNewService(t *testing.T) {
 
 func TestMasterKeyDerivation(t *testing.T) {
 	// Test that same database path produces same master key
-	service1 := NewService("/test/path", "jwt-key")
-	service2 := NewService("/test/path", "jwt-key")
+	service1 := NewServiceWithJwtLey("/test/path", "jwt-key")
+	service2 := NewServiceWithJwtLey("/test/path", "jwt-key")
 
 	assert.Equal(t, service1.masterKey, service2.masterKey, "Same database path should produce same master key")
 
 	// Test that different database paths produce different master keys
-	service3 := NewService("/different/path", "jwt-key")
+	service3 := NewServiceWithJwtLey("/different/path", "jwt-key")
 
 	assert.NotEqual(t, service1.masterKey, service3.masterKey, "Different database paths should produce different master keys")
 }
 
 func TestJWTKeyDerivation(t *testing.T) {
 	// Test that same JWT key produces same derived key
-	service1 := NewService("/test/path", "same-jwt-key")
-	service2 := NewService("/test/path", "same-jwt-key")
+	service1 := NewServiceWithJwtLey("/test/path", "same-jwt-key")
+	service2 := NewServiceWithJwtLey("/test/path", "same-jwt-key")
 
 	assert.Equal(t, service1.jwtKey, service2.jwtKey, "Same JWT key should produce same derived key")
 
 	// Test that different JWT keys produce different derived keys
-	service3 := NewService("/test/path", "different-jwt-key")
+	service3 := NewServiceWithJwtLey("/test/path", "different-jwt-key")
 
 	assert.NotEqual(t, service1.jwtKey, service3.jwtKey, "Different JWT keys should produce different derived keys")
 }
 
 func TestEncryptDecryptWithMaster(t *testing.T) {
-	service := NewService("/test/path", "jwt-key")
+	service := NewServiceWithJwtLey("/test/path", "jwt-key")
 
 	tests := []struct {
 		name      string
@@ -134,7 +134,7 @@ func TestEncryptDecryptWithMaster(t *testing.T) {
 }
 
 func TestEncryptDecryptWithJWT(t *testing.T) {
-	service := NewService("/test/path", "jwt-key")
+	service := NewServiceWithJwtLey("/test/path", "jwt-key")
 
 	tests := []struct {
 		name      string
@@ -182,7 +182,7 @@ func TestEncryptDecryptWithJWT(t *testing.T) {
 }
 
 func TestEncryptionUniqueness(t *testing.T) {
-	service := NewService("/test/path", "jwt-key")
+	service := NewServiceWithJwtLey("/test/path", "jwt-key")
 
 	plaintext := "test message"
 
@@ -216,7 +216,7 @@ func TestEncryptionUniqueness(t *testing.T) {
 }
 
 func TestDecryptionErrors(t *testing.T) {
-	service := NewService("/test/path", "jwt-key")
+	service := NewServiceWithJwtLey("/test/path", "jwt-key")
 
 	tests := []struct {
 		name        string
@@ -303,7 +303,7 @@ func TestDecryptionErrors(t *testing.T) {
 }
 
 func TestCrossKeyDecryption(t *testing.T) {
-	service := NewService("/test/path", "jwt-key")
+	service := NewServiceWithJwtLey("/test/path", "jwt-key")
 
 	plaintext := "test message"
 
@@ -326,8 +326,8 @@ func TestCrossKeyDecryption(t *testing.T) {
 
 func TestServiceIsolation(t *testing.T) {
 	// Create two services with different parameters
-	service1 := NewService("/path1", "jwt-key1")
-	service2 := NewService("/path2", "jwt-key2")
+	service1 := NewServiceWithJwtLey("/path1", "jwt-key1")
+	service2 := NewServiceWithJwtLey("/path2", "jwt-key2")
 
 	plaintext := "test message"
 
@@ -348,7 +348,7 @@ func TestServiceIsolation(t *testing.T) {
 }
 
 func TestLargeDataEncryption(t *testing.T) {
-	service := NewService("/test/path", "jwt-key")
+	service := NewServiceWithJwtLey("/test/path", "jwt-key")
 
 	// Test with large data (1MB)
 	largeData := make([]byte, 1024*1024)
@@ -369,7 +369,7 @@ func TestLargeDataEncryption(t *testing.T) {
 }
 
 func TestConcurrentEncryption(t *testing.T) {
-	service := NewService("/test/path", "jwt-key")
+	service := NewServiceWithJwtLey("/test/path", "jwt-key")
 
 	const numGoroutines = 100
 	const numOperations = 10
@@ -422,7 +422,7 @@ func TestKeyDerivationConsistency(t *testing.T) {
 
 	// Create multiple services with same parameters
 	for i := 0; i < 10; i++ {
-		service := NewService(dbPath, jwtKey)
+		service := NewServiceWithJwtLey(dbPath, jwtKey)
 
 		masterKeys = append(masterKeys, service.masterKey)
 		jwtKeys = append(jwtKeys, service.jwtKey)
@@ -440,7 +440,7 @@ func TestKeyDerivationConsistency(t *testing.T) {
 }
 
 func BenchmarkEncryptWithMaster(b *testing.B) {
-	service := NewService("/test/path", "jwt-key")
+	service := NewServiceWithJwtLey("/test/path", "jwt-key")
 
 	plaintext := "This is a test message for benchmarking encryption performance"
 
@@ -454,7 +454,7 @@ func BenchmarkEncryptWithMaster(b *testing.B) {
 }
 
 func BenchmarkDecryptWithMaster(b *testing.B) {
-	service := NewService("/test/path", "jwt-key")
+	service := NewServiceWithJwtLey("/test/path", "jwt-key")
 
 	plaintext := "This is a test message for benchmarking decryption performance"
 	encrypted, err := service.EncryptWithMaster(plaintext)
@@ -470,7 +470,7 @@ func BenchmarkDecryptWithMaster(b *testing.B) {
 }
 
 func BenchmarkEncryptWithJWT(b *testing.B) {
-	service := NewService("/test/path", "jwt-key")
+	service := NewServiceWithJwtLey("/test/path", "jwt-key")
 
 	plaintext := "This is a test JWT secret for benchmarking"
 
@@ -484,7 +484,7 @@ func BenchmarkEncryptWithJWT(b *testing.B) {
 }
 
 func BenchmarkDecryptWithJWT(b *testing.B) {
-	service := NewService("/test/path", "jwt-key")
+	service := NewServiceWithJwtLey("/test/path", "jwt-key")
 
 	plaintext := "This is a test JWT secret for benchmarking"
 	encrypted, err := service.EncryptWithJWT(plaintext)

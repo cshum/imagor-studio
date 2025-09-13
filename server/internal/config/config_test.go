@@ -691,7 +691,7 @@ func setupTestRegistry(t *testing.T, dbPath string) (*bun.DB, registrystore.Stor
 	require.NoError(t, err)
 
 	// Initialize encryption and registry store
-	encryptionService := encryption.NewServiceWithMasterKeyOnly(dbPath)
+	encryptionService := encryption.NewService(dbPath)
 	registryStore := registrystore.New(db, zap.NewNop(), encryptionService)
 
 	return db, registryStore
