@@ -1,14 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useForm, type UseFormReturn } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Navigate, useNavigate } from '@tanstack/react-router'
+import { Navigate, useLoaderData, useNavigate, useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { registerAdmin } from '@/api/auth-api'
 import { setSystemRegistryObject } from '@/api/registry-api'
-import { getStorageStatus } from '@/api/storage-api'
 import { StorageConfigurationWizard } from '@/components/storage/storage-configuration-wizard'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { Button } from '@/components/ui/button'
@@ -28,7 +27,7 @@ import {
   type MultiStepFormRef,
   type MultiStepFormStep,
 } from '@/components/ui/multi-step-form'
-import type { StorageStatusQuery } from '@/generated/graphql'
+import type { AdminSetupLoaderData } from '@/loaders/admin-setup-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
 
 type AdminSetupForm = {
@@ -239,16 +238,14 @@ export function AdminSetupPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [settingsFormValues, setSettingsFormValues] = useState<Record<string, string>>({})
-  const [storageStatus, setStorageStatus] = useState<StorageStatusQuery['storageStatus'] | null>(
-    null,
-  )
   const navigate = useNavigate()
+  const router = useRouter()
   const { authState } = useAuth()
   const multiStepFormRef = useRef<MultiStepFormRef>(null)
 
   // Create translation-aware validation schema
   const adminSetupSchema = z.object({
-    email: z.string().email(t('auth.validation.invalidEmail')),
+    email: z.email(t('auth.validation.invalidEmail')),
     password: z
       .string()
       .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
@@ -258,18 +255,7 @@ export function AdminSetupPage() {
   // Create translated system settings
   const SYSTEM_SETTINGS = createSystemSettings(t)
 
-  // Fetch storage status to check if it's overridden by external config
-  useEffect(() => {
-    const fetchStorageStatus = async () => {
-      try {
-        const status = await getStorageStatus()
-        setStorageStatus(status)
-      } catch (error) {
-        console.error('Failed to fetch storage status:', error)
-      }
-    }
-    fetchStorageStatus()
-  }, [])
+  const { storageStatus } = useLoaderData({ from: '/admin-setup' }) as AdminSetupLoaderData
 
   const form = useForm<AdminSetupForm>({
     resolver: zodResolver(adminSetupSchema),
@@ -303,6 +289,7 @@ export function AdminSetupPage() {
 
       // Initialize auth with the new token
       await initAuth(response.token)
+      await router.invalidate()
       return true
     } catch (err) {
       setError(err instanceof Error ? err.message : t('pages.admin.failedToCreateAccount'))

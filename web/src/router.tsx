@@ -17,6 +17,7 @@ import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
 import { adminLoader, profileLoader, usersLoader } from '@/loaders/account-loader.ts'
+import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
 import { requireAccountAuth, requireAdminAccountAuth, requireAuth } from '@/loaders/auth-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
@@ -61,6 +62,7 @@ const loginRoute = createRoute({
 const adminSetupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin-setup',
+  loader: adminSetupLoader,
   component: AdminSetupPage,
 })
 
