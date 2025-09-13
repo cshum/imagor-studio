@@ -71,7 +71,7 @@ func createDefaultEmbeddedConfig(cfg *config.Config) *ImagorConfig {
 		Secret:         cfg.JWTSecret, // Always use JWT secret (no override)
 		Unsafe:         false,         // Always false (fixed)
 		SignerType:     "sha256",      // Fixed: always SHA256
-		SignerTruncate: 28,            // Fixed: always 28-char truncation
+		SignerTruncate: 32,            // Fixed: always 32-char truncation
 	}
 }
 
@@ -269,7 +269,7 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 		imagorConfig.BaseURL = "/imagor"
 		imagorConfig.Unsafe = false              // Fixed: always false
 		imagorConfig.SignerType = "sha256"       // Fixed: always SHA256
-		imagorConfig.SignerTruncate = 28         // Fixed: always 28-char truncation
+		imagorConfig.SignerTruncate = 32         // Fixed: always 32-char truncation
 		imagorConfig.Secret = p.config.JWTSecret // Always use JWT secret (no override)
 	} else {
 		// External mode: Fully configurable
@@ -342,7 +342,7 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 
 	if cfg.Mode == "embedded" {
 		// For embedded mode, use the configured secret (which is always JWT secret)
-		signer = imagorpath.NewHMACSigner(sha256.New, 28, cfg.Secret)
+		signer = imagorpath.NewHMACSigner(sha256.New, 32, p.config.JWTSecret)
 		path = imagorpath.Generate(params, signer)
 	} else if cfg.Secret != "" {
 		// Use configurable signer for external mode
@@ -370,9 +370,9 @@ func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error
 		),
 	))
 
-	// Use server's JWT secret with SHA256 and 28-char truncation
+	// Use server's JWT secret with SHA256 and 32-char truncation
 	if p.config.JWTSecret != "" {
-		signer := imagorpath.NewHMACSigner(sha256.New, 28, p.config.JWTSecret)
+		signer := imagorpath.NewHMACSigner(sha256.New, 32, p.config.JWTSecret)
 		options = append(options, imagor.WithSigner(signer))
 	}
 

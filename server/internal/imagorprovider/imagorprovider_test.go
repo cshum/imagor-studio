@@ -136,7 +136,7 @@ func TestInitializeWithConfig_DefaultToEmbedded(t *testing.T) {
 	assert.Equal(t, "test-jwt-secret", config.Secret)
 	assert.False(t, config.Unsafe)
 	assert.Equal(t, "sha256", config.SignerType)
-	assert.Equal(t, 28, config.SignerTruncate)
+	assert.Equal(t, 32, config.SignerTruncate)
 }
 
 func TestInitializeWithConfig_External(t *testing.T) {
@@ -518,7 +518,7 @@ func TestBuildConfigFromRegistry_EmbeddedMode(t *testing.T) {
 	assert.Equal(t, "jwt-secret", config.Secret) // Should always use JWT secret, ignoring registry value
 	assert.False(t, config.Unsafe)
 	assert.Equal(t, "sha256", config.SignerType)
-	assert.Equal(t, 28, config.SignerTruncate)
+	assert.Equal(t, 32, config.SignerTruncate)
 }
 
 func TestBuildConfigFromRegistry_ExternalModeDefaults(t *testing.T) {
@@ -674,8 +674,8 @@ func TestBuildConfigFromRegistry_SignerConfiguration(t *testing.T) {
 		{"External SHA1 explicit", "external", "sha1", "0", "sha1", 0},
 		{"External invalid truncate value", "external", "sha256", "invalid", "sha256", 0},
 		// Embedded mode tests (fixed)
-		{"Embedded mode ignores signer config", "embedded", "sha512", "32", "sha256", 28},
-		{"Embedded mode always SHA256+28", "embedded", "", "", "sha256", 28},
+		{"Embedded mode ignores signer config", "embedded", "sha512", "32", "sha256", 32},
+		{"Embedded mode always SHA256+32", "embedded", "", "", "sha256", 32},
 	}
 
 	for _, tt := range tests {
@@ -960,26 +960,26 @@ func TestGenerateURL_EmbeddedVsExternal_SignerComparison(t *testing.T) {
 		Image:  "test/image.jpg",
 	}
 
-	// Test embedded mode (uses JWT secret with SHA256 + 28-char truncation)
+	// Test embedded mode (uses JWT secret with SHA256 + 32-char truncation)
 	embeddedConfig := &ImagorConfig{
 		Mode:           "embedded",
 		BaseURL:        "/imagor",
 		Secret:         "jwt-secret", // Use same secret as JWT secret
 		SignerType:     "sha256",     // Explicitly set to match external
-		SignerTruncate: 28,           // Explicitly set to match external
+		SignerTruncate: 32,           // Explicitly set to match external
 	}
 	provider.currentConfig = embeddedConfig
 
 	embeddedURL, err := provider.GenerateURL("test/image.jpg", params)
 	require.NoError(t, err)
 
-	// Test external mode with same configuration as embedded (SHA256 + 28-char truncation)
+	// Test external mode with same configuration as embedded (SHA256 + 32-char truncation)
 	externalConfig := &ImagorConfig{
 		Mode:           "external",
 		BaseURL:        "http://localhost:8000",
 		Secret:         "jwt-secret", // Same as JWT secret
 		SignerType:     "sha256",
-		SignerTruncate: 28,
+		SignerTruncate: 32,
 	}
 	provider.currentConfig = externalConfig
 
