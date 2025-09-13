@@ -75,7 +75,7 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
             <div className='bg-muted/50 space-y-4 rounded-lg border p-4'>
               <div className='text-sm font-medium'>{t('pages.imagor.configurationDetails')}</div>
 
-              {imagorStatus.embeddedConfig && imagorStatus.mode?.toLowerCase() === 'embedded' && (
+              {imagorStatus.mode?.toLowerCase() === 'embedded' && (
                 <div className='text-muted-foreground text-sm'>
                   {t('pages.imagor.embeddedModeSimplified')}
                 </div>

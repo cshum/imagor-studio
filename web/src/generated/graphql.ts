@@ -35,11 +35,6 @@ export type CreateUserInput = {
   role: Scalars['String']['input']
 }
 
-export type EmbeddedImagorConfig = {
-  __typename?: 'EmbeddedImagorConfig'
-  enabled: Scalars['Boolean']['output']
-}
-
 export type ExternalImagorConfig = {
   __typename?: 'ExternalImagorConfig'
   baseUrl: Scalars['String']['output']
@@ -111,7 +106,6 @@ export type ImagorSignerType = 'SHA1' | 'SHA256' | 'SHA512'
 export type ImagorStatus = {
   __typename?: 'ImagorStatus'
   configured: Scalars['Boolean']['output']
-  embeddedConfig: Maybe<EmbeddedImagorConfig>
   externalConfig: Maybe<ExternalImagorConfig>
   isOverriddenByConfig: Scalars['Boolean']['output']
   lastUpdated: Maybe<Scalars['String']['output']>
@@ -387,7 +381,6 @@ export type ImagorStatusQuery = {
     restartRequired: boolean
     lastUpdated: string | null
     isOverriddenByConfig: boolean
-    embeddedConfig: { __typename?: 'EmbeddedImagorConfig'; enabled: boolean } | null
     externalConfig: {
       __typename?: 'ExternalImagorConfig'
       baseUrl: string
@@ -1001,14 +994,6 @@ export const ImagorStatusDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'restartRequired' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'lastUpdated' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'embeddedConfig' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'enabled' } }],
-                  },
-                },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'externalConfig' },

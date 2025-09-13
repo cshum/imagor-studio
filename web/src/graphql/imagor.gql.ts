@@ -9,9 +9,6 @@ export const IMAGOR_STATUS_QUERY = gql(`
       restartRequired
       lastUpdated
       isOverriddenByConfig
-      embeddedConfig {
-        enabled
-      }
       externalConfig {
         baseUrl
         hasSecret

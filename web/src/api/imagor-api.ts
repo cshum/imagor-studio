@@ -19,7 +19,9 @@ export async function getImagorStatus(): Promise<ImagorStatusQuery['imagorStatus
 /**
  * Configure embedded Imagor
  */
-export async function configureEmbeddedImagor(): Promise<ConfigureEmbeddedImagorMutation['configureEmbeddedImagor']> {
+export async function configureEmbeddedImagor(): Promise<
+  ConfigureEmbeddedImagorMutation['configureEmbeddedImagor']
+> {
   const sdk = getSdk(getGraphQLClient())
   const result = await sdk.ConfigureEmbeddedImagor()
   return result.configureEmbeddedImagor

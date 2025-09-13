@@ -45,10 +45,6 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	EmbeddedImagorConfig struct {
-		Enabled func(childComplexity int) int
-	}
-
 	ExternalImagorConfig struct {
 		BaseURL        func(childComplexity int) int
 		HasSecret      func(childComplexity int) int
@@ -95,7 +91,6 @@ type ComplexityRoot struct {
 
 	ImagorStatus struct {
 		Configured           func(childComplexity int) int
-		EmbeddedConfig       func(childComplexity int) int
 		ExternalConfig       func(childComplexity int) int
 		IsOverriddenByConfig func(childComplexity int) int
 		LastUpdated          func(childComplexity int) int
@@ -254,13 +249,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
-
-	case "EmbeddedImagorConfig.enabled":
-		if e.complexity.EmbeddedImagorConfig.Enabled == nil {
-			break
-		}
-
-		return e.complexity.EmbeddedImagorConfig.Enabled(childComplexity), true
 
 	case "ExternalImagorConfig.baseUrl":
 		if e.complexity.ExternalImagorConfig.BaseURL == nil {
@@ -450,13 +438,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ImagorStatus.Configured(childComplexity), true
-
-	case "ImagorStatus.embeddedConfig":
-		if e.complexity.ImagorStatus.EmbeddedConfig == nil {
-			break
-		}
-
-		return e.complexity.ImagorStatus.EmbeddedConfig(childComplexity), true
 
 	case "ImagorStatus.externalConfig":
 		if e.complexity.ImagorStatus.ExternalConfig == nil {
@@ -1436,13 +1417,7 @@ type ImagorStatus {
   restartRequired: Boolean!
   lastUpdated: String
   isOverriddenByConfig: Boolean!
-  embeddedConfig: EmbeddedImagorConfig
   externalConfig: ExternalImagorConfig
-}
-
-type EmbeddedImagorConfig {
-  # Embedded mode uses optimized defaults - no configuration needed
-  enabled: Boolean!
 }
 
 type ExternalImagorConfig {
@@ -1901,50 +1876,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
-
-func (ec *executionContext) _EmbeddedImagorConfig_enabled(ctx context.Context, field graphql.CollectedField, obj *EmbeddedImagorConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EmbeddedImagorConfig_enabled(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Enabled, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_EmbeddedImagorConfig_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "EmbeddedImagorConfig",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
 
 func (ec *executionContext) _ExternalImagorConfig_baseUrl(ctx context.Context, field graphql.CollectedField, obj *ExternalImagorConfig) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ExternalImagorConfig_baseUrl(ctx, field)
@@ -3328,51 +3259,6 @@ func (ec *executionContext) fieldContext_ImagorStatus_isOverriddenByConfig(_ con
 	return fc, nil
 }
 
-func (ec *executionContext) _ImagorStatus_embeddedConfig(ctx context.Context, field graphql.CollectedField, obj *ImagorStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ImagorStatus_embeddedConfig(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.EmbeddedConfig, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*EmbeddedImagorConfig)
-	fc.Result = res
-	return ec.marshalOEmbeddedImagorConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐEmbeddedImagorConfig(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ImagorStatus_embeddedConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ImagorStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "enabled":
-				return ec.fieldContext_EmbeddedImagorConfig_enabled(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type EmbeddedImagorConfig", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ImagorStatus_externalConfig(ctx context.Context, field graphql.CollectedField, obj *ImagorStatus) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ImagorStatus_externalConfig(ctx, field)
 	if err != nil {
@@ -4631,8 +4517,6 @@ func (ec *executionContext) fieldContext_Query_imagorStatus(_ context.Context, f
 				return ec.fieldContext_ImagorStatus_lastUpdated(ctx, field)
 			case "isOverriddenByConfig":
 				return ec.fieldContext_ImagorStatus_isOverriddenByConfig(ctx, field)
-			case "embeddedConfig":
-				return ec.fieldContext_ImagorStatus_embeddedConfig(ctx, field)
 			case "externalConfig":
 				return ec.fieldContext_ImagorStatus_externalConfig(ctx, field)
 			}
@@ -9295,45 +9179,6 @@ func (ec *executionContext) unmarshalInputUpdateProfileInput(ctx context.Context
 
 // region    **************************** object.gotpl ****************************
 
-var embeddedImagorConfigImplementors = []string{"EmbeddedImagorConfig"}
-
-func (ec *executionContext) _EmbeddedImagorConfig(ctx context.Context, sel ast.SelectionSet, obj *EmbeddedImagorConfig) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, embeddedImagorConfigImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("EmbeddedImagorConfig")
-		case "enabled":
-			out.Values[i] = ec._EmbeddedImagorConfig_enabled(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var externalImagorConfigImplementors = []string{"ExternalImagorConfig"}
 
 func (ec *executionContext) _ExternalImagorConfig(ctx context.Context, sel ast.SelectionSet, obj *ExternalImagorConfig) graphql.Marshaler {
@@ -9686,8 +9531,6 @@ func (ec *executionContext) _ImagorStatus(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "embeddedConfig":
-			out.Values[i] = ec._ImagorStatus_embeddedConfig(ctx, field, obj)
 		case "externalConfig":
 			out.Values[i] = ec._ImagorStatus_externalConfig(ctx, field, obj)
 		default:
@@ -11685,13 +11528,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
 	return res
-}
-
-func (ec *executionContext) marshalOEmbeddedImagorConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐEmbeddedImagorConfig(ctx context.Context, sel ast.SelectionSet, v *EmbeddedImagorConfig) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._EmbeddedImagorConfig(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOExternalImagorConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐExternalImagorConfig(ctx context.Context, sel ast.SelectionSet, v *ExternalImagorConfig) graphql.Marshaler {

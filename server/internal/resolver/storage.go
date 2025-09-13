@@ -744,9 +744,7 @@ func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, er
 	}
 
 	// Add mode-specific configuration
-	if imagorConfig.Mode == "embedded" {
-		status.EmbeddedConfig = r.getEmbeddedImagorConfig(ctx, imagorConfig)
-	} else if imagorConfig.Mode == "external" {
+	if imagorConfig.Mode == "external" {
 		status.ExternalConfig = r.getExternalImagorConfig(ctx, imagorConfig)
 	}
 
@@ -779,13 +777,6 @@ func (r *queryResolver) isImagorConfigOverridden(ctx context.Context, mode strin
 		}
 	}
 	return false
-}
-
-// Helper function to get embedded imagor configuration
-func (r *queryResolver) getEmbeddedImagorConfig(ctx context.Context, imagorConfig *imagorprovider.ImagorConfig) *gql.EmbeddedImagorConfig {
-	return &gql.EmbeddedImagorConfig{
-		Enabled: true, // Embedded mode is enabled when configured
-	}
 }
 
 // Helper function to get external imagor configuration

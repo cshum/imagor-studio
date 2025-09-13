@@ -21,10 +21,6 @@ type CreateUserInput struct {
 	Role        string `json:"role"`
 }
 
-type EmbeddedImagorConfig struct {
-	Enabled bool `json:"enabled"`
-}
-
 type ExternalImagorConfig struct {
 	BaseURL        string           `json:"baseUrl"`
 	HasSecret      bool             `json:"hasSecret"`
@@ -89,7 +85,6 @@ type ImagorStatus struct {
 	RestartRequired      bool                  `json:"restartRequired"`
 	LastUpdated          *string               `json:"lastUpdated,omitempty"`
 	IsOverriddenByConfig bool                  `json:"isOverriddenByConfig"`
-	EmbeddedConfig       *EmbeddedImagorConfig `json:"embeddedConfig,omitempty"`
 	ExternalConfig       *ExternalImagorConfig `json:"externalConfig,omitempty"`
 }
 

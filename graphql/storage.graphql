@@ -244,13 +244,7 @@ type ImagorStatus {
   restartRequired: Boolean!
   lastUpdated: String
   isOverriddenByConfig: Boolean!
-  embeddedConfig: EmbeddedImagorConfig
   externalConfig: ExternalImagorConfig
-}
-
-type EmbeddedImagorConfig {
-  # Embedded mode uses optimized defaults - no configuration needed
-  enabled: Boolean!
 }
 
 type ExternalImagorConfig {

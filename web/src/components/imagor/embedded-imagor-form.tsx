@@ -2,7 +2,7 @@ import { forwardRef, useImperativeHandle } from 'react'
 import { useTranslation } from 'react-i18next'
 
 // Empty interface for consistency with external form
-export interface EmbeddedImagorFormData {}
+export type EmbeddedImagorFormData = object
 
 export interface EmbeddedImagorFormRef {
   submit: () => void
@@ -29,7 +29,7 @@ export const EmbeddedImagorForm = forwardRef<EmbeddedImagorFormRef, EmbeddedImag
         </div>
       </div>
     )
-  }
+  },
 )
 
 EmbeddedImagorForm.displayName = 'EmbeddedImagorForm'

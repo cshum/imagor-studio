@@ -52,10 +52,8 @@ export function ImagorConfigurationWizard({
 
   // Get initial values for embedded form
   const getEmbeddedInitialValues = (): Partial<EmbeddedImagorFormData> | undefined => {
-    if (!initialConfig?.embeddedConfig) return undefined
-    return {
-      // No cachePath needed for embedded mode
-    }
+    // Embedded mode has no configuration - return empty object
+    return {}
   }
 
   // Get initial values for external form
