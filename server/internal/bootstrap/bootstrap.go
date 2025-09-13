@@ -2,11 +2,11 @@ package bootstrap
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/config"
+	"github.com/cshum/imagor-studio/server/internal/database"
 	"github.com/cshum/imagor-studio/server/internal/encryption"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/migrations"
@@ -15,8 +15,6 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/sqlitedialect"
-	"github.com/uptrace/bun/driver/sqliteshim"
 	"github.com/uptrace/bun/migrate"
 	"go.uber.org/zap"
 )
@@ -50,7 +48,7 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	}
 
 	// Initialize encryption service
-	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
+	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DatabaseURL)
 
 	// Initialize registry store
 	registryStore := registrystore.New(db, logger, encryptionService)
@@ -94,7 +92,7 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	// Log configuration loaded
 	logger.Info("Configuration loaded",
 		zap.Int("port", enhancedCfg.Port),
-		zap.String("dbPath", enhancedCfg.DBPath),
+		zap.String("databaseURL", enhancedCfg.DatabaseURL),
 		zap.Duration("jwtExpiration", enhancedCfg.JWTExpiration),
 		zap.String("storageType", enhancedCfg.StorageType),
 	)
@@ -115,13 +113,7 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 
 // initializeDatabase opens and configures the database connection
 func initializeDatabase(cfg *config.Config) (*bun.DB, error) {
-	sqldb, err := sql.Open(sqliteshim.ShimName, cfg.DBPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
-
-	db := bun.NewDB(sqldb, sqlitedialect.New())
-	return db, nil
+	return database.Connect(cfg.DatabaseURL)
 }
 
 // runMigrations executes database migrations

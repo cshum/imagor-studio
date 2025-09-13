@@ -9,13 +9,17 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.18.8
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.2
 	github.com/cshum/imagor v1.5.15
+	github.com/go-sql-driver/mysql v1.8.1
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
 	github.com/johannesboyne/gofakes3 v0.0.0-20250825084532-6555d310c473
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/stretchr/testify v1.11.1
 	github.com/uptrace/bun v1.2.15
+	github.com/uptrace/bun/dialect/mysqldialect v1.2.15
+	github.com/uptrace/bun/dialect/pgdialect v1.2.15
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.15
+	github.com/uptrace/bun/driver/pgdriver v1.2.15
 	github.com/uptrace/bun/driver/sqliteshim v1.2.15
 	github.com/vektah/gqlparser/v2 v2.5.30
 	go.uber.org/zap v1.27.0
@@ -23,6 +27,7 @@ require (
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.1 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.5 // indirect
@@ -61,6 +66,8 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342 // indirect
+	go.opentelemetry.io/otel v1.37.0 // indirect
+	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.shabbyrobe.org/gocovmerge v0.0.0-20230507111327-fa4f82cfbf4d // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b // indirect
@@ -71,6 +78,7 @@ require (
 	golang.org/x/text v0.28.0 // indirect
 	golang.org/x/tools v0.36.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	mellium.im/sasl v0.3.2 // indirect
 	modernc.org/libc v1.66.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect

@@ -15,7 +15,7 @@ import (
 
 type Config struct {
 	Port        int
-	DBPath      string
+	DatabaseURL string
 	StorageType string
 
 	// JWT Configuration
@@ -59,7 +59,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 
 	var (
 		port          = fs.String("port", "8080", "port to listen on")
-		dbPath        = fs.String("db-path", "storage.db", "path to SQLite database file")
+		databaseURL   = fs.String("database-url", "sqlite:./imagor-studio.db", "database URL (sqlite:./path.db, postgres://user:pass@host:port/db, mysql://user:pass@host:port/db)")
 		storageType   = fs.String("storage-type", "file", "storage type: file or s3")
 		jwtSecret     = fs.String("jwt-secret", "", "secret key for JWT signing")
 		imagorSecret  = fs.String("imagor-secret", "", "secret key for imagor")
@@ -157,7 +157,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 
 	cfg := &Config{
 		Port:                 portInt,
-		DBPath:               *dbPath,
+		DatabaseURL:          *databaseURL,
 		JWTSecret:            *jwtSecret,
 		JWTExpiration:        jwtExp,
 		AllowGuestMode:       *allowGuestMode,
