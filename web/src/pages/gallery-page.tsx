@@ -24,7 +24,6 @@ export interface GalleryPageProps extends React.PropsWithChildren {
 
 export function GalleryPage({ galleryLoaderData, galleryKey, children }: GalleryPageProps) {
   const navigate = useNavigate()
-  const containerRef = useRef<HTMLDivElement | null>(null)
   const contentRef = useRef<HTMLDivElement | null>(null)
   const { isLoading, pendingMatches } = useRouterState()
 
@@ -34,10 +33,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const isDesktop = useBreakpoint('md')
   const maxItemWidth = 250
 
-  const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(
-    containerRef,
-    galleryKey,
-  )
+  const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(galleryKey)
   const { contentWidth, updateWidth } = useWidthHandler(
     contentRef,
     sidebar.open,
@@ -48,7 +44,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const [gridRendered, setGridRendered] = useState(false)
 
   useEffect(() => {
-    if (containerRef.current && gridRendered) {
+    if (gridRendered) {
       restoreScrollPosition()
     }
   }, [gridRendered, restoreScrollPosition])
@@ -90,45 +86,43 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   return (
     <>
       {isNavigateToImage && <LoadingBar isLoading={isLoading} />}
-      <div ref={containerRef} style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
-        <ContentLayout title={galleryName}>
-          <div className='mx-4 my-2 grid'>
-            <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
-          </div>
-          <HeaderBar isScrolled={isScrolledDown} />
-          <Card className='rounded-lg border-none'>
-            <CardContent className='p-2 md:p-4' ref={contentRef}>
-              {contentWidth > 0 && (
-                <>
-                  {isEmpty ? (
-                    <EmptyGalleryState width={contentWidth} isRootGallery={isRootGallery} />
-                  ) : (
-                    <>
-                      <FolderGrid
-                        folders={folders}
-                        onFolderClick={handleFolderClick}
-                        width={contentWidth}
-                        maxFolderWidth={maxItemWidth}
-                      />
-                      <ImageGrid
-                        images={images}
-                        aspectRatio={4 / 3}
-                        width={contentWidth}
-                        scrollTop={scrollPosition}
-                        maxImageWidth={maxItemWidth}
-                        isScrolling={isScrolling}
-                        onRendered={() => setGridRendered(true)}
-                        onImageClick={handleImageClick}
-                      />
-                    </>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </ContentLayout>
-        {children}
-      </div>
+      <ContentLayout title={galleryName}>
+        <div className='mx-4 my-2 grid'>
+          <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
+        </div>
+        <HeaderBar isScrolled={isScrolledDown} />
+        <Card className='rounded-lg border-none'>
+          <CardContent className='p-2 md:p-4' ref={contentRef}>
+            {contentWidth > 0 && (
+              <>
+                {isEmpty ? (
+                  <EmptyGalleryState width={contentWidth} isRootGallery={isRootGallery} />
+                ) : (
+                  <>
+                    <FolderGrid
+                      folders={folders}
+                      onFolderClick={handleFolderClick}
+                      width={contentWidth}
+                      maxFolderWidth={maxItemWidth}
+                    />
+                    <ImageGrid
+                      images={images}
+                      aspectRatio={4 / 3}
+                      width={contentWidth}
+                      scrollTop={scrollPosition}
+                      maxImageWidth={maxItemWidth}
+                      isScrolling={isScrolling}
+                      onRendered={() => setGridRendered(true)}
+                      onImageClick={handleImageClick}
+                    />
+                  </>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </ContentLayout>
+      {children}
     </>
   )
 }
