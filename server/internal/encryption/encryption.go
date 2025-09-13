@@ -150,5 +150,5 @@ func (s *Service) decrypt(encodedCiphertext string, key []byte) (string, error) 
 
 // IsJWTSecret checks if a key should be encrypted with master key (JWT secret only)
 func IsJWTSecret(key string) bool {
-	return key == "jwt_secret"
+	return key == "config.jwt_secret"
 }

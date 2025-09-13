@@ -681,7 +681,7 @@ func TestSetSystemRegistry_EncryptedValueHidden(t *testing.T) {
 	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
 
 	ctx := createAdminContext("admin-user-id")
-	key := "jwt_secret"
+	key := "config.jwt_secret"
 	value := "super-secret-jwt-key"
 
 	resultRegistry := &registrystore.Registry{

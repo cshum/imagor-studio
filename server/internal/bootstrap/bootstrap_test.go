@@ -22,7 +22,7 @@ func TestInitialize(t *testing.T) {
 
 	cfg := &config.Config{
 		Port:                 8080,
-		DBPath:               tmpDB,
+		DatabaseURL:          "sqlite:" + tmpDB,
 		JWTSecret:            "test-jwt-secret",
 		JWTExpiration:        24 * time.Hour,
 		StorageType:          "file",
@@ -37,7 +37,7 @@ func TestInitialize(t *testing.T) {
 	}
 
 	logger := zap.NewNop()
-	args := []string{"--jwt-secret", "test-jwt-secret", "--db-path", tmpDB}
+	args := []string{"--jwt-secret", "test-jwt-secret", "--database-url", "sqlite:" + tmpDB}
 	services, err := Initialize(cfg, logger, args)
 
 	require.NoError(t, err)
@@ -66,7 +66,7 @@ func TestInitializeDatabase(t *testing.T) {
 	defer os.Remove(tmpDB)
 
 	cfg := &config.Config{
-		DBPath: tmpDB,
+		DatabaseURL: "sqlite:" + tmpDB,
 	}
 
 	db, err := initializeDatabase(cfg)
@@ -92,7 +92,7 @@ func TestJWTSecretFromEnv(t *testing.T) {
 	defer os.Remove(tmpDB)
 
 	// Test the config loading directly to verify environment variable priority
-	cfg, err := config.Load([]string{"--db-path", tmpDB}, nil)
+	cfg, err := config.Load([]string{"--database-url", "sqlite:" + tmpDB}, nil)
 	require.NoError(t, err)
 
 	// Verify JWT secret from environment was used
@@ -105,7 +105,7 @@ func TestJWTSecretFromRegistry(t *testing.T) {
 
 	// Initialize database and registry store first
 	cfg := &config.Config{
-		DBPath: tmpDB,
+		DatabaseURL: "sqlite:" + tmpDB,
 	}
 
 	db, err := initializeDatabase(cfg)
@@ -116,7 +116,7 @@ func TestJWTSecretFromRegistry(t *testing.T) {
 	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
-	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
+	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DatabaseURL)
 	// Set a JWT key for encryption to work
 	encryptionService.SetJWTKey("test-jwt-key")
 	registryStore := registrystore.New(db, logger, encryptionService)
@@ -128,7 +128,7 @@ func TestJWTSecretFromRegistry(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test config loading with registry enhancement
-	enhancedCfg, err := config.Load([]string{"--db-path", tmpDB}, registryStore)
+	enhancedCfg, err := config.Load([]string{"--database-url", "sqlite:" + tmpDB}, registryStore)
 	require.NoError(t, err)
 
 	// Verify JWT secret from registry was used
@@ -140,7 +140,7 @@ func TestConfigEnhancement(t *testing.T) {
 	defer os.Remove(tmpDB)
 
 	cfg := &config.Config{
-		DBPath: tmpDB,
+		DatabaseURL: "sqlite:" + tmpDB,
 	}
 
 	// Initialize minimal services for test
@@ -152,7 +152,7 @@ func TestConfigEnhancement(t *testing.T) {
 	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
-	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
+	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DatabaseURL)
 	registryStore := registrystore.New(db, logger, encryptionService)
 
 	// Test that config enhancement works with registry values
@@ -179,7 +179,7 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 	defer os.Remove(tmpDB)
 
 	cfg := &config.Config{
-		DBPath: tmpDB,
+		DatabaseURL: "sqlite:" + tmpDB,
 	}
 
 	// Initialize minimal services for test
@@ -191,7 +191,7 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 	err = runMigrations(db, logger)
 	require.NoError(t, err)
 
-	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DBPath)
+	encryptionService := encryption.NewServiceWithMasterKeyOnly(cfg.DatabaseURL)
 	registryStore := registrystore.New(db, logger, encryptionService)
 
 	// Set environment variables (s3 requires bucket)
@@ -221,7 +221,7 @@ func TestImagorProviderIntegration(t *testing.T) {
 	defer os.Remove(tmpDB)
 
 	cfg := &config.Config{
-		DBPath:              tmpDB,
+		DatabaseURL:         "sqlite:" + tmpDB,
 		JWTSecret:           "test-jwt-secret",
 		ImagorMode:          "external",
 		ImagorURL:           "http://localhost:8000",
@@ -233,7 +233,7 @@ func TestImagorProviderIntegration(t *testing.T) {
 	logger := zap.NewNop()
 	args := []string{
 		"--jwt-secret", "test-jwt-secret",
-		"--db-path", tmpDB,
+		"--database-url", "sqlite:" + tmpDB,
 		"--imagor-secret", "test-secret",
 		"--imagor-unsafe", "true",
 	}

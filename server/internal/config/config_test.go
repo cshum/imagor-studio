@@ -28,7 +28,7 @@ func TestLoadBasic(t *testing.T) {
 
 	// Verify default values
 	assert.Equal(t, 8080, cfg.Port)
-	assert.Equal(t, "storage.db", cfg.DBPath)
+	assert.Equal(t, "sqlite:./imagor-studio.db", cfg.DatabaseURL)
 	assert.Equal(t, "file", cfg.StorageType)
 	assert.Equal(t, "./storage", cfg.FileBaseDir)
 	assert.Equal(t, "embedded", cfg.ImagorMode)
@@ -233,7 +233,7 @@ func TestAutoParsingWithConfigPrefix(t *testing.T) {
 
 	// Set registry values using new config. prefix format
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, registrystore.SystemOwnerID, "config.jwt_secret", "registry-jwt-secret", false)
+	_, err := registryStore.Set(ctx, registrystore.SystemOwnerID, "config.jwt_secret", "registry-jwt-secret", true)
 	require.NoError(t, err)
 	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.storage_type", "s3", false)
 	require.NoError(t, err)
@@ -265,7 +265,7 @@ func TestGuestModeConfig(t *testing.T) {
 
 	// Set registry values including JWT secret and guest mode
 	ctx := context.Background()
-	_, err := registryStore.Set(ctx, registrystore.SystemOwnerID, "config.jwt_secret", "test-secret", false)
+	_, err := registryStore.Set(ctx, registrystore.SystemOwnerID, "config.jwt_secret", "test-secret", true)
 	require.NoError(t, err)
 	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.allow_guest_mode", "true", false)
 	require.NoError(t, err)
@@ -334,22 +334,8 @@ func TestConfigWithJWTSecret(t *testing.T) {
 	assert.Equal(t, "test-jwt-secret", cfg.JWTSecret)
 }
 
-func TestConfigWithImagorSecret(t *testing.T) {
-	// Test that imagor secret is used as JWT secret when JWT secret is not provided
-	args := []string{
-		"--imagor-secret", "test-imagor-secret",
-	}
-
-	cfg, err := Load(args, nil)
-	require.NoError(t, err)
-	require.NotNil(t, cfg)
-
-	assert.Equal(t, "test-imagor-secret", cfg.JWTSecret)
-	assert.Equal(t, "test-imagor-secret", cfg.ImagorSecret)
-}
-
 func TestConfigRequiresJWTSecret(t *testing.T) {
-	// Test that config loading fails when no JWT or Imagor secret is provided
+	// Test that config loading fails when no JWT secret is provided and no registry is available
 	args := []string{
 		"--port", "8080",
 	}
@@ -357,6 +343,103 @@ func TestConfigRequiresJWTSecret(t *testing.T) {
 	_, err := Load(args, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "jwt-secret is required")
+}
+
+func TestConfigWithImagorSecret(t *testing.T) {
+	// Test that imagor secret is independent of JWT secret
+	args := []string{
+		"--jwt-secret", "test-jwt-secret",
+		"--imagor-secret", "test-imagor-secret",
+	}
+
+	cfg, err := Load(args, nil)
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	assert.Equal(t, "test-jwt-secret", cfg.JWTSecret)
+	assert.Equal(t, "test-imagor-secret", cfg.ImagorSecret)
+}
+
+func TestJWTSecretAutoGeneration(t *testing.T) {
+	// Test JWT secret auto-generation when no secret is provided but registry is available
+	tmpDB := "/tmp/test_jwt_auto_generation.db"
+	defer os.Remove(tmpDB)
+
+	// Initialize database and registry store
+	db, registryStore := setupTestRegistry(t, tmpDB)
+	defer db.Close()
+
+	// Load config without JWT secret but with registry available
+	cfg, err := Load([]string{"--port", "8080"}, registryStore)
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	// Verify JWT secret was auto-generated
+	assert.NotEmpty(t, cfg.JWTSecret)
+	assert.Greater(t, len(cfg.JWTSecret), 32) // Should be a substantial length
+
+	// Verify the secret was stored in registry
+	ctx := context.Background()
+	entry, err := registryStore.Get(ctx, registrystore.SystemOwnerID, "config.jwt_secret")
+	require.NoError(t, err)
+	require.NotNil(t, entry)
+	assert.Equal(t, cfg.JWTSecret, entry.Value)
+	assert.True(t, entry.IsEncrypted) // Should be encrypted
+}
+
+func TestJWTSecretPersistence(t *testing.T) {
+	// Test that auto-generated JWT secret persists across config loads
+	tmpDB := "/tmp/test_jwt_persistence.db"
+	defer os.Remove(tmpDB)
+
+	// Initialize database and registry store
+	db, registryStore := setupTestRegistry(t, tmpDB)
+	defer db.Close()
+
+	// First load - should auto-generate JWT secret
+	cfg1, err := Load([]string{"--port", "8080"}, registryStore)
+	require.NoError(t, err)
+	require.NotNil(t, cfg1)
+	assert.NotEmpty(t, cfg1.JWTSecret)
+
+	// Second load - should use the same JWT secret
+	cfg2, err := Load([]string{"--port", "9090"}, registryStore)
+	require.NoError(t, err)
+	require.NotNil(t, cfg2)
+
+	// Verify the same JWT secret is used
+	assert.Equal(t, cfg1.JWTSecret, cfg2.JWTSecret)
+}
+
+func TestJWTSecretOverridesPersisted(t *testing.T) {
+	// Test that CLI/env JWT secret overrides persisted auto-generated secret
+	tmpDB := "/tmp/test_jwt_override.db"
+	defer os.Remove(tmpDB)
+
+	// Initialize database and registry store
+	db, registryStore := setupTestRegistry(t, tmpDB)
+	defer db.Close()
+
+	// First load - auto-generate JWT secret
+	cfg1, err := Load([]string{"--port", "8080"}, registryStore)
+	require.NoError(t, err)
+	require.NotNil(t, cfg1)
+	autoGeneratedSecret := cfg1.JWTSecret
+
+	// Second load with explicit JWT secret - should override
+	cfg2, err := Load([]string{"--jwt-secret", "explicit-secret"}, registryStore)
+	require.NoError(t, err)
+	require.NotNil(t, cfg2)
+
+	assert.Equal(t, "explicit-secret", cfg2.JWTSecret)
+	assert.NotEqual(t, autoGeneratedSecret, cfg2.JWTSecret)
+
+	// Third load without explicit secret - should go back to auto-generated
+	cfg3, err := Load([]string{"--port", "8080"}, registryStore)
+	require.NoError(t, err)
+	require.NotNil(t, cfg3)
+
+	assert.Equal(t, autoGeneratedSecret, cfg3.JWTSecret)
 }
 
 func TestConfigFilePermissions(t *testing.T) {
