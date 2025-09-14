@@ -2,11 +2,8 @@ package server
 
 import (
 	"fmt"
-	"io"
 	"io/fs"
 	"net/http"
-	"path/filepath"
-	"strings"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -105,30 +102,7 @@ func New(cfg *config.Config, logger *zap.Logger, args []string) (*Server, error)
 	if err != nil {
 		return nil, err
 	}
-	fileServer := http.FileServer(http.FS(staticFS))
-	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path := strings.TrimPrefix(r.URL.Path, "/")
-		if path == "" {
-			path = "index.html"
-		}
-		// Try to open the file
-		if _, err := staticFS.Open(path); err != nil {
-			// File doesn't exist, check if it's a SPA route (no extension)
-			if !strings.Contains(filepath.Base(r.URL.Path), ".") {
-				// Serve index.html directly instead of redirecting
-				indexFile, err := staticFS.Open("index.html")
-				if err != nil {
-					http.NotFound(w, r)
-					return
-				}
-				defer indexFile.Close()
-				w.Header().Set("Content-Type", "text/html; charset=utf-8")
-				io.Copy(w, indexFile)
-				return
-			}
-		}
-		fileServer.ServeHTTP(w, r)
-	}))
+	mux.Handle("/", httphandler.SPAHandler(staticFS, services.Logger))
 
 	// Configure CORS
 	corsConfig := middleware.DefaultCORSConfig()
