@@ -69,7 +69,7 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool,
 }
 
 // ListFiles is the resolver for the listFiles field.
-func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
+func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
 	// Handle optional offset parameter - default to 0 if not provided
 	offsetValue := 0
 	if offset != nil {
@@ -95,6 +95,8 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int,
 		Limit:       limitValue,
 		OnlyFiles:   onlyFiles != nil && *onlyFiles,
 		OnlyFolders: onlyFolders != nil && *onlyFolders,
+		Extensions:  parseExtensions(extensions),
+		ShowHidden:  showHidden != nil && *showHidden,
 	}
 
 	if sortBy != nil {
@@ -137,7 +139,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int,
 		}
 
 		// Generate thumbnail URLs for image files
-		if !item.IsDir && r.isImageFile(item.Name) {
+		if !item.IsDir {
 			thumbnailUrls := r.generateThumbnailUrls(item.Path)
 			fileItem.ThumbnailUrls = thumbnailUrls
 		}
@@ -171,7 +173,7 @@ func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileSta
 	}
 
 	// Generate thumbnail URLs for image files
-	if !fileInfo.IsDir && r.isImageFile(fileInfo.Name) {
+	if !fileInfo.IsDir {
 		thumbnailUrls := r.generateThumbnailUrls(fileInfo.Path)
 		fileStat.ThumbnailUrls = thumbnailUrls
 	}
@@ -644,16 +646,6 @@ func (r *mutationResolver) setSystemRegistryEntries(ctx context.Context, entries
 	return r.SetSystemRegistry(ctx, nil, entryPointers)
 }
 
-// Helper function to check if a file is an image
-func (r *queryResolver) isImageFile(filename string) bool {
-	// Simple image file extension check
-	ext := strings.ToLower(filename)
-	return strings.HasSuffix(ext, ".jpg") || strings.HasSuffix(ext, ".jpeg") ||
-		strings.HasSuffix(ext, ".png") || strings.HasSuffix(ext, ".gif") ||
-		strings.HasSuffix(ext, ".webp") || strings.HasSuffix(ext, ".bmp") ||
-		strings.HasSuffix(ext, ".tiff") || strings.HasSuffix(ext, ".tif")
-}
-
 // ImagorStatus is the resolver for the imagorStatus field.
 func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, error) {
 	// Use batch operation for better performance
@@ -901,8 +893,28 @@ func (r *mutationResolver) deleteSystemRegistryKey(ctx context.Context, key stri
 	return err
 }
 
+// parseExtensions parses a comma-separated string of extensions into a slice
+func parseExtensions(extensionsStr *string) []string {
+	if extensionsStr == nil || *extensionsStr == "" {
+		return nil
+	}
+
+	parts := strings.Split(*extensionsStr, ",")
+	extensions := make([]string, 0, len(parts))
+	for _, part := range parts {
+		ext := strings.TrimSpace(part)
+		if ext != "" {
+			extensions = append(extensions, ext)
+		}
+	}
+	return extensions
+}
+
 // Helper function to generate thumbnail URLs using the imagor provider
 func (r *queryResolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUrls {
+	if r.imagorProvider == nil {
+		return nil
+	}
 	// Generate different sized URLs using the imagor provider
 	gridURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
 		Width:  300,

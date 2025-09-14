@@ -230,11 +230,13 @@ export type QueryGetUserRegistryArgs = {
 }
 
 export type QueryListFilesArgs = {
+  extensions?: InputMaybe<Scalars['String']['input']>
   limit?: InputMaybe<Scalars['Int']['input']>
   offset?: InputMaybe<Scalars['Int']['input']>
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
   onlyFolders?: InputMaybe<Scalars['Boolean']['input']>
   path: Scalars['String']['input']
+  showHidden?: InputMaybe<Scalars['Boolean']['input']>
   sortBy?: InputMaybe<SortOption>
   sortOrder?: InputMaybe<SortOrder>
 }
@@ -586,6 +588,8 @@ export type ListFilesQueryVariables = Exact<{
   limit?: InputMaybe<Scalars['Int']['input']>
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
   onlyFolders?: InputMaybe<Scalars['Boolean']['input']>
+  extensions?: InputMaybe<Scalars['String']['input']>
+  showHidden?: InputMaybe<Scalars['Boolean']['input']>
   sortBy?: InputMaybe<SortOption>
   sortOrder?: InputMaybe<SortOrder>
 }>
@@ -1012,6 +1016,8 @@ export const ListFilesDocument = gql`
     $limit: Int
     $onlyFiles: Boolean
     $onlyFolders: Boolean
+    $extensions: String
+    $showHidden: Boolean
     $sortBy: SortOption
     $sortOrder: SortOrder
   ) {
@@ -1021,6 +1027,8 @@ export const ListFilesDocument = gql`
       limit: $limit
       onlyFiles: $onlyFiles
       onlyFolders: $onlyFolders
+      extensions: $extensions
+      showHidden: $showHidden
       sortBy: $sortBy
       sortOrder: $sortOrder
     ) {

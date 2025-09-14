@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 
 	"github.com/cshum/imagor-studio/server/internal/storage"
 )
@@ -55,7 +54,7 @@ func (fs *FileStorage) List(ctx context.Context, path string, options storage.Li
 
 	var filteredEntries []os.DirEntry
 	for _, entry := range entries {
-		if (options.OnlyFiles && entry.IsDir()) || (options.OnlyFolders && !entry.IsDir()) {
+		if !storage.ShouldIncludeFile(entry.Name(), entry.IsDir(), options) {
 			continue
 		}
 		filteredEntries = append(filteredEntries, entry)
@@ -63,52 +62,15 @@ func (fs *FileStorage) List(ctx context.Context, path string, options storage.Li
 
 	totalCount := len(filteredEntries)
 
-	// Sort the entries
-	sort.Slice(filteredEntries, func(i, j int) bool {
-		infoI, _ := filteredEntries[i].Info()
-		infoJ, _ := filteredEntries[j].Info()
-		switch options.SortBy {
-		case storage.SortByName:
-			if options.SortOrder == storage.SortOrderDesc {
-				return filteredEntries[i].Name() > filteredEntries[j].Name()
-			}
-			return filteredEntries[i].Name() < filteredEntries[j].Name()
-		case storage.SortBySize:
-			if options.SortOrder == storage.SortOrderDesc {
-				return infoI.Size() > infoJ.Size()
-			}
-			return infoI.Size() < infoJ.Size()
-		case storage.SortByModifiedTime:
-			if options.SortOrder == storage.SortOrderDesc {
-				return infoI.ModTime().After(infoJ.ModTime())
-			}
-			return infoI.ModTime().Before(infoJ.ModTime())
-		default:
-			return filteredEntries[i].Name() < filteredEntries[j].Name()
-		}
-	})
-
-	// Handle pagination
-	start := options.Offset
-	if start > len(filteredEntries) {
-		start = len(filteredEntries)
-	}
-	end := len(filteredEntries)
-	if options.Limit > 0 {
-		end = start + options.Limit
-		if end > len(filteredEntries) {
-			end = len(filteredEntries)
-		}
-	}
-
-	var items []storage.FileInfo
-	for _, entry := range filteredEntries[start:end] {
+	// Convert filtered entries to FileInfo for sorting
+	var allItems []storage.FileInfo
+	for _, entry := range filteredEntries {
 		info, err := entry.Info()
 		if err != nil {
 			return storage.ListResult{}, err
 		}
 
-		items = append(items, storage.FileInfo{
+		allItems = append(allItems, storage.FileInfo{
 			Name:         entry.Name(),
 			Path:         filepath.Join(path, entry.Name()),
 			Size:         info.Size(),
@@ -116,6 +78,24 @@ func (fs *FileStorage) List(ctx context.Context, path string, options storage.Li
 			ModifiedTime: info.ModTime(),
 		})
 	}
+
+	// Sort the items using common sorting function
+	storage.SortFileInfos(allItems, options.SortBy, options.SortOrder)
+
+	// Handle pagination
+	start := options.Offset
+	if start > len(allItems) {
+		start = len(allItems)
+	}
+	end := len(allItems)
+	if options.Limit > 0 {
+		end = start + options.Limit
+		if end > len(allItems) {
+			end = len(allItems)
+		}
+	}
+
+	items := allItems[start:end]
 
 	return storage.ListResult{
 		Items:      items,

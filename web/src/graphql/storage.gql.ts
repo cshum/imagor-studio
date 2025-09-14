@@ -43,6 +43,8 @@ export const ListFilesQuery = gql(`
     $limit: Int
     $onlyFiles: Boolean
     $onlyFolders: Boolean
+    $extensions: String
+    $showHidden: Boolean
     $sortBy: SortOption
     $sortOrder: SortOrder
   ) {
@@ -52,6 +54,8 @@ export const ListFilesQuery = gql(`
       limit: $limit
       onlyFiles: $onlyFiles
       onlyFolders: $onlyFolders
+      extensions: $extensions
+      showHidden: $showHidden
       sortBy: $sortBy
       sortOrder: $sortOrder
     ) {

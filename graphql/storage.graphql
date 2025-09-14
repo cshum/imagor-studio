@@ -5,6 +5,8 @@ type Query {
     limit: Int
     onlyFiles: Boolean
     onlyFolders: Boolean
+    extensions: String
+    showHidden: Boolean
     sortBy: SortOption
     sortOrder: SortOrder
   ): FileList!

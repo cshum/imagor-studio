@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"path"
-	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -147,11 +146,18 @@ func (s *S3Storage) List(ctx context.Context, key string, options storage.ListOp
 		// Process CommonPrefixes (folders)
 		if !options.OnlyFiles {
 			for _, commonPrefix := range page.CommonPrefixes {
+				relativePath := s.relativePath(*commonPrefix.Prefix)
+				folderName := strings.TrimSuffix(relativePath, "/")
+				folderBaseName := path.Base(folderName)
+
+				// Apply filtering
+				if !storage.ShouldIncludeFile(folderBaseName, true, options) {
+					continue
+				}
+
 				if currentOffset >= options.Offset && (options.Limit <= 0 || len(items) < options.Limit) {
-					relativePath := s.relativePath(*commonPrefix.Prefix)
-					folderName := strings.TrimSuffix(relativePath, "/")
 					items = append(items, storage.FileInfo{
-						Name:  path.Base(folderName),
+						Name:  folderBaseName,
 						Path:  relativePath,
 						IsDir: true,
 					})
@@ -167,10 +173,18 @@ func (s *S3Storage) List(ctx context.Context, key string, options storage.ListOp
 				if strings.HasSuffix(*object.Key, folderSuffix) {
 					continue // Skip directory placeholders
 				}
+
+				relativePath := s.relativePath(*object.Key)
+				fileName := path.Base(relativePath)
+
+				// Apply filtering
+				if !storage.ShouldIncludeFile(fileName, false, options) {
+					continue
+				}
+
 				if currentOffset >= options.Offset && (options.Limit <= 0 || len(items) < options.Limit) {
-					relativePath := s.relativePath(*object.Key)
 					items = append(items, storage.FileInfo{
-						Name:         path.Base(relativePath),
+						Name:         fileName,
 						Path:         relativePath,
 						Size:         *object.Size,
 						IsDir:        false,
@@ -189,39 +203,12 @@ func (s *S3Storage) List(ctx context.Context, key string, options storage.ListOp
 		}
 	}
 
-	s.sortItems(items, options.SortBy, options.SortOrder)
+	storage.SortFileInfos(items, options.SortBy, options.SortOrder)
 
 	return storage.ListResult{
 		Items:      items,
 		TotalCount: totalCount,
 	}, nil
-}
-
-func (s *S3Storage) sortItems(items []storage.FileInfo, sortBy storage.SortOption, sortOrder storage.SortOrder) {
-	if sortBy == "" && sortOrder == "" {
-		return
-	}
-	sort.Slice(items, func(i, j int) bool {
-		switch sortBy {
-		case storage.SortByName:
-			if sortOrder == storage.SortOrderDesc {
-				return items[i].Name > items[j].Name
-			}
-			return items[i].Name < items[j].Name
-		case storage.SortBySize:
-			if sortOrder == storage.SortOrderDesc {
-				return items[i].Size > items[j].Size
-			}
-			return items[i].Size < items[j].Size
-		case storage.SortByModifiedTime:
-			if sortOrder == storage.SortOrderDesc {
-				return items[i].ModifiedTime.After(items[j].ModifiedTime)
-			}
-			return items[i].ModifiedTime.Before(items[j].ModifiedTime)
-		default:
-			return items[i].Name < items[j].Name
-		}
-	})
 }
 
 func (s *S3Storage) Get(ctx context.Context, key string) (io.ReadCloser, error) {

@@ -229,11 +229,13 @@ export type QueryGetUserRegistryArgs = {
 }
 
 export type QueryListFilesArgs = {
+  extensions?: InputMaybe<Scalars['String']['input']>
   limit?: InputMaybe<Scalars['Int']['input']>
   offset?: InputMaybe<Scalars['Int']['input']>
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
   onlyFolders?: InputMaybe<Scalars['Boolean']['input']>
   path: Scalars['String']['input']
+  showHidden?: InputMaybe<Scalars['Boolean']['input']>
   sortBy?: InputMaybe<SortOption>
   sortOrder?: InputMaybe<SortOrder>
 }
@@ -585,6 +587,8 @@ export type ListFilesQueryVariables = Exact<{
   limit?: InputMaybe<Scalars['Int']['input']>
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
   onlyFolders?: InputMaybe<Scalars['Boolean']['input']>
+  extensions?: InputMaybe<Scalars['String']['input']>
+  showHidden?: InputMaybe<Scalars['Boolean']['input']>
   sortBy?: InputMaybe<SortOption>
   sortOrder?: InputMaybe<SortOrder>
 }>
@@ -1624,6 +1628,16 @@ export const ListFilesDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'extensions' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'showHidden' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'sortBy' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'SortOption' } },
         },
@@ -1664,6 +1678,16 @@ export const ListFilesDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'onlyFolders' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'onlyFolders' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'extensions' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'extensions' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'showHidden' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'showHidden' } },
               },
               {
                 kind: 'Argument',
