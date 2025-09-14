@@ -103,6 +103,9 @@ RUN DEBIAN_FRONTEND=noninteractive \
 # Copy the server binary
 COPY --from=server-builder /go/bin/imagor-studio /usr/local/bin/imagor-studio
 
+# Copy server directory structure (needed for migrations)
+COPY --from=server-builder /app/server /app/server
+
 # Set environment variables (similar to imagor)
 ENV VIPS_WARNING=0
 ENV MALLOC_ARENA_MAX=2
@@ -114,8 +117,8 @@ ENV STORAGE_PATH=/app/data/storage
 # Create data directory structure
 RUN mkdir -p /app/data/storage
 
-# Set working directory
-WORKDIR /app
+# Set working directory to where migrations expect to run
+WORKDIR /app/server
 
 # Use unprivileged user
 USER nobody
