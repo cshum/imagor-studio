@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { LogOut, MoreVertical, Settings } from 'lucide-react'
@@ -38,17 +38,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
   const breadcrumbs = useBreadcrumb()
   const sidebar = useSidebar()
 
-  // Header height measurement for spacer
-  const headerRef = useRef<HTMLElement>(null)
-  const [headerHeight, setHeaderHeight] = useState(0)
-
-  // Measure header height when component mounts or when relevant state changes
-  useLayoutEffect(() => {
-    if (headerRef.current) {
-      setHeaderHeight(headerRef.current.offsetHeight)
-    }
-  }, [isScrolledDown, sidebar?.open, breadcrumbs.length])
-
   // Get user display name
   const getUserDisplayName = () => {
     if (authState.state === 'guest') {
@@ -84,13 +73,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
   return (
     <TooltipProvider>
       {/* Spacer - preserves layout when header becomes fixed */}
-      {isScrolledDown && headerHeight > 0 && (
-        <div style={{ height: headerHeight }} className='w-full' aria-hidden='true' />
-      )}
+      {isScrolledDown && <div className='h-[48px] w-full' aria-hidden='true' />}
 
       {/* Actual header */}
       <header
-        ref={headerRef}
         className={`top-0 z-10 w-full px-2 ${isScrolledDown ? `bg-card/75 dark:shadow-secondary fixed shadow backdrop-blur transition-[left] duration-200 ease-linear ${sidebar && sidebar.open ? 'md:left-[var(--sidebar-width)] md:pr-[calc(var(--sidebar-width)+0.5rem)]' : ''} md:left-0` : ''}`}
       >
         <div className='mx-auto'>
