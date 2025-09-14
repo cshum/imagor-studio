@@ -30,7 +30,7 @@ func TestLoadBasic(t *testing.T) {
 	assert.Equal(t, 8080, cfg.Port)
 	assert.Equal(t, "sqlite:./imagor-studio.db", cfg.DatabaseURL)
 	assert.Equal(t, "file", cfg.StorageType)
-	assert.Equal(t, "./storage", cfg.FileBaseDir)
+	assert.Equal(t, "/app/data/storage", cfg.FileBaseDir)
 	assert.Equal(t, "embedded", cfg.ImagorMode)
 	assert.Equal(t, "", cfg.ImagorBaseURL)
 	assert.Equal(t, 24*time.Hour, cfg.JWTExpiration)

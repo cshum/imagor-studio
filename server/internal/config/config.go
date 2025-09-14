@@ -73,7 +73,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 
 		allowGuestMode = fs.Bool("allow-guest-mode", false, "allow guest mode access")
 
-		fileBaseDir          = fs.String("file-base-dir", "./storage", "base directory for file storage")
+		fileBaseDir          = fs.String("file-base-dir", "/app/data/storage", "base directory for file storage")
 		fileMkdirPermissions = fs.String("file-mkdir-permissions", "0755", "directory creation permissions")
 		fileWritePermissions = fs.String("file-write-permissions", "0644", "file write permissions")
 

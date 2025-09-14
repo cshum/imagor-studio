@@ -506,7 +506,7 @@ func (p *Provider) loadFileConfigFromResults(resultMap map[string]registryutil.E
 	if result := resultMap["config.file_base_dir"]; result.Exists {
 		cfg.FileBaseDir = result.Value
 	} else {
-		cfg.FileBaseDir = "./storage" // Default
+		cfg.FileBaseDir = "/app/data/storage" // Default
 	}
 
 	if result := resultMap["config.file_mkdir_permissions"]; result.Exists {

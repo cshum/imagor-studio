@@ -175,14 +175,24 @@ docker-build: ## Build Docker image
 	@echo "$(YELLOW)To run: make docker-run$(NC)"
 
 .PHONY: docker-run
-docker-run: ## Run Docker container
+docker-run: ## Run Docker container with persistent data
 	@echo "$(GREEN)Running Docker container...$(NC)"
-	docker run --rm -p 8000:8000 $(DOCKER_IMAGE):$(DOCKER_TAG)
+	@echo "$(YELLOW)Data directory: ./imagor-studio-data$(NC)"
+	@mkdir -p ./imagor-studio-data
+	docker run --rm -p 8000:8000 \
+		-v "$(PWD)/imagor-studio-data":/app/data \
+		-e DATABASE_URL="sqlite:///app/data/imagor-studio.db" \
+		$(DOCKER_IMAGE):$(DOCKER_TAG)
 
 .PHONY: docker-run-detached
-docker-run-detached: ## Run Docker container in background
+docker-run-detached: ## Run Docker container in background with persistent data
 	@echo "$(GREEN)Running Docker container in background...$(NC)"
-	docker run -d --name $(PROJECT_NAME) -p 8000:8000 $(DOCKER_IMAGE):$(DOCKER_TAG)
+	@echo "$(YELLOW)Data directory: ./imagor-studio-data$(NC)"
+	@mkdir -p ./imagor-studio-data
+	docker run -d --name $(PROJECT_NAME) -p 8000:8000 \
+		-v "$(PWD)/imagor-studio-data":/app/data \
+		-e DATABASE_URL="sqlite:///app/data/imagor-studio.db" \
+		$(DOCKER_IMAGE):$(DOCKER_TAG)
 
 .PHONY: docker-stop
 docker-stop: ## Stop Docker container

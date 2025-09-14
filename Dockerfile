@@ -109,6 +109,13 @@ ENV MALLOC_ARENA_MAX=2
 ENV LD_PRELOAD=/usr/local/lib/libjemalloc.so
 
 ENV PORT=8000
+ENV STORAGE_PATH=/app/data/storage
+
+# Create data directory structure
+RUN mkdir -p /app/data/storage
+
+# Set working directory
+WORKDIR /app
 
 # Use unprivileged user
 USER nobody
