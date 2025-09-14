@@ -95,7 +95,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		imagorSignerTruncate = fs.String("imagor-signer-truncate", "0", "imagor signer truncation length")
 
 		appHomeTitle      = fs.String("app-home-title", "", "custom home page title")
-		appFileExtensions = fs.String("app-file-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif", "comma-separated list of file extensions to show in application")
+		appFileExtensions = fs.String("app-file-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heic,.heif", "comma-separated list of file extensions to show in application")
 		appShowHidden     = fs.Bool("app-show-hidden", false, "show hidden files and folders starting with dot")
 	)
 
