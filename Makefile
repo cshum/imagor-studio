@@ -169,7 +169,10 @@ server-reset-db: ## Reset server database
 .PHONY: docker-build
 docker-build: ## Build Docker image
 	@echo "$(GREEN)Building Docker image...$(NC)"
-	./docker-build.sh $(DOCKER_TAG)
+	@echo "$(YELLOW)Image: $(DOCKER_IMAGE):$(DOCKER_TAG)$(NC)"
+	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
+	@echo "$(GREEN)✓ Docker image built successfully!$(NC)"
+	@echo "$(YELLOW)To run: make docker-run$(NC)"
 
 .PHONY: docker-run
 docker-run: ## Run Docker container

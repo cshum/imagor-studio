@@ -12,14 +12,33 @@ The Dockerfile creates a multi-stage build that:
 
 ## Quick Start
 
-### Using the build script
+### Using the Makefile (Recommended)
 
 ```bash
 # Build the image
-./docker-build.sh
+make docker-build
 
-# Build with a specific tag
-./docker-build.sh v1.0.0
+# Run the container
+make docker-run
+
+# Or run in background
+make docker-run-detached
+
+# Stop the container
+make docker-stop
+```
+
+### Using Docker Compose
+
+```bash
+# Build and run
+make docker-compose-up
+
+# Run in background
+make docker-compose-up-detached
+
+# Stop
+make docker-compose-down
 ```
 
 ### Using Docker directly
@@ -30,19 +49,6 @@ docker build -t imagor-studio .
 
 # Run the container
 docker run -p 8000:8000 imagor-studio
-```
-
-### Using Docker Compose
-
-```bash
-# Build and run
-docker-compose up --build
-
-# Run in background
-docker-compose up -d --build
-
-# Stop
-docker-compose down
 ```
 
 ## Configuration
