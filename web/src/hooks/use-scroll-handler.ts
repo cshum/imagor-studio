@@ -4,12 +4,10 @@ import { getPosition, setPosition } from '@/stores/scroll-position-store'
 
 export const useScrollHandler = (
   scrollKey: string, // Unique identifier for this scroll context
-  debounceDelay: number = 0, // Default debounce delay is 0, meaning no debounce
+  debounceDelay: number = 10,
 ) => {
   const [scrollPosition, setScrollPosition] = useState<number>(0) // Use state for scroll position
   const [isScrolling, setIsScrolling] = useState<boolean>(false) // Track scrolling state
-  const saveTimeoutRef = useRef<number | null>(null) // For delayed saving of scroll position
-  const scrollingTimeoutRef = useRef<number | null>(null) // For tracking when scrolling stops
   const debounceTimeoutRef = useRef<number | null>(null)
 
   // Store options in ref to avoid stale closures
@@ -64,25 +62,9 @@ export const useScrollHandler = (
 
       const executeScrollHandling = () => {
         const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop
-
-        // Update scroll position state
         setScrollPosition(currentScrollPosition)
-
-        // Save scroll position after a short delay
-        if (saveTimeoutRef.current) {
-          clearTimeout(saveTimeoutRef.current)
-        }
-        saveTimeoutRef.current = window.setTimeout(() => {
-          setPosition(optionsRef.current.scrollKey, currentScrollPosition)
-        }, 150)
-
-        // Set scrolling to false after a delay (scrolling has stopped)
-        if (scrollingTimeoutRef.current) {
-          clearTimeout(scrollingTimeoutRef.current)
-        }
-        scrollingTimeoutRef.current = window.setTimeout(() => {
-          setIsScrolling(false)
-        }, 150)
+        setPosition(optionsRef.current.scrollKey, currentScrollPosition)
+        setIsScrolling(false)
       }
 
       if (debounceDelay > 0) {
@@ -99,12 +81,6 @@ export const useScrollHandler = (
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => {
       window.removeEventListener('scroll', handleScroll)
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
-      if (scrollingTimeoutRef.current) {
-        clearTimeout(scrollingTimeoutRef.current)
-      }
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current)
       }
