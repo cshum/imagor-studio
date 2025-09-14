@@ -121,7 +121,7 @@ type ComplexityRoot struct {
 		GetSystemRegistry  func(childComplexity int, key *string, keys []string) int
 		GetUserRegistry    func(childComplexity int, key *string, keys []string, ownerID *string) int
 		ImagorStatus       func(childComplexity int) int
-		ListFiles          func(childComplexity int, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) int
+		ListFiles          func(childComplexity int, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *SortOption, sortOrder *SortOrder) int
 		ListSystemRegistry func(childComplexity int, prefix *string) int
 		ListUserRegistry   func(childComplexity int, prefix *string, ownerID *string) int
 		Me                 func(childComplexity int) int
@@ -218,7 +218,7 @@ type MutationResolver interface {
 	CreateUser(ctx context.Context, input CreateUserInput) (*User, error)
 }
 type QueryResolver interface {
-	ListFiles(ctx context.Context, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error)
+	ListFiles(ctx context.Context, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error)
 	StatFile(ctx context.Context, path string) (*FileStat, error)
 	StorageStatus(ctx context.Context) (*StorageStatus, error)
 	ImagorStatus(ctx context.Context) (*ImagorStatus, error)
@@ -702,7 +702,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.ListFiles(childComplexity, args["path"].(string), args["offset"].(*int), args["limit"].(*int), args["onlyFiles"].(*bool), args["onlyFolders"].(*bool), args["sortBy"].(*SortOption), args["sortOrder"].(*SortOrder)), true
+		return e.complexity.Query.ListFiles(childComplexity, args["path"].(string), args["offset"].(*int), args["limit"].(*int), args["onlyFiles"].(*bool), args["onlyFolders"].(*bool), args["extensions"].(*string), args["showHidden"].(*bool), args["sortBy"].(*SortOption), args["sortOrder"].(*SortOrder)), true
 
 	case "Query.listSystemRegistry":
 		if e.complexity.Query.ListSystemRegistry == nil {
@@ -1178,6 +1178,8 @@ var sources = []*ast.Source{
     limit: Int
     onlyFiles: Boolean
     onlyFolders: Boolean
+    extensions: String
+    showHidden: Boolean
     sortBy: SortOption
     sortOrder: SortOrder
   ): FileList!
@@ -1747,16 +1749,26 @@ func (ec *executionContext) field_Query_listFiles_args(ctx context.Context, rawA
 		return nil, err
 	}
 	args["onlyFolders"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOption)
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "extensions", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["sortBy"] = arg5
-	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOrder)
+	args["extensions"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "showHidden", ec.unmarshalOBoolean2ᚖbool)
 	if err != nil {
 		return nil, err
 	}
-	args["sortOrder"] = arg6
+	args["showHidden"] = arg6
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOption)
+	if err != nil {
+		return nil, err
+	}
+	args["sortBy"] = arg7
+	arg8, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOrder)
+	if err != nil {
+		return nil, err
+	}
+	args["sortOrder"] = arg8
 	return args, nil
 }
 
@@ -4293,7 +4305,7 @@ func (ec *executionContext) _Query_listFiles(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ListFiles(rctx, fc.Args["path"].(string), fc.Args["offset"].(*int), fc.Args["limit"].(*int), fc.Args["onlyFiles"].(*bool), fc.Args["onlyFolders"].(*bool), fc.Args["sortBy"].(*SortOption), fc.Args["sortOrder"].(*SortOrder))
+		return ec.resolvers.Query().ListFiles(rctx, fc.Args["path"].(string), fc.Args["offset"].(*int), fc.Args["limit"].(*int), fc.Args["onlyFiles"].(*bool), fc.Args["onlyFolders"].(*bool), fc.Args["extensions"].(*string), fc.Args["showHidden"].(*bool), fc.Args["sortBy"].(*SortOption), fc.Args["sortOrder"].(*SortOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

@@ -69,7 +69,7 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool,
 }
 
 // ListFiles is the resolver for the listFiles field.
-func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
+func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
 	// Handle optional offset parameter - default to 0 if not provided
 	offsetValue := 0
 	if offset != nil {
@@ -95,6 +95,8 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int,
 		Limit:       limitValue,
 		OnlyFiles:   onlyFiles != nil && *onlyFiles,
 		OnlyFolders: onlyFolders != nil && *onlyFolders,
+		Extensions:  parseExtensions(extensions),
+		ShowHidden:  showHidden != nil && *showHidden,
 	}
 
 	if sortBy != nil {
@@ -899,6 +901,23 @@ func (r *mutationResolver) ConfigureExternalImagor(ctx context.Context, input gq
 func (r *mutationResolver) deleteSystemRegistryKey(ctx context.Context, key string) error {
 	_, err := r.DeleteSystemRegistry(ctx, &key, nil)
 	return err
+}
+
+// parseExtensions parses a comma-separated string of extensions into a slice
+func parseExtensions(extensionsStr *string) []string {
+	if extensionsStr == nil || *extensionsStr == "" {
+		return nil
+	}
+
+	parts := strings.Split(*extensionsStr, ",")
+	extensions := make([]string, 0, len(parts))
+	for _, part := range parts {
+		ext := strings.TrimSpace(part)
+		if ext != "" {
+			extensions = append(extensions, ext)
+		}
+	}
+	return extensions
 }
 
 // Helper function to generate thumbnail URLs using the imagor provider

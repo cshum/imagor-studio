@@ -147,11 +147,18 @@ func (s *S3Storage) List(ctx context.Context, key string, options storage.ListOp
 		// Process CommonPrefixes (folders)
 		if !options.OnlyFiles {
 			for _, commonPrefix := range page.CommonPrefixes {
+				relativePath := s.relativePath(*commonPrefix.Prefix)
+				folderName := strings.TrimSuffix(relativePath, "/")
+				folderBaseName := path.Base(folderName)
+
+				// Apply filtering
+				if !storage.ShouldIncludeFile(folderBaseName, true, options) {
+					continue
+				}
+
 				if currentOffset >= options.Offset && (options.Limit <= 0 || len(items) < options.Limit) {
-					relativePath := s.relativePath(*commonPrefix.Prefix)
-					folderName := strings.TrimSuffix(relativePath, "/")
 					items = append(items, storage.FileInfo{
-						Name:  path.Base(folderName),
+						Name:  folderBaseName,
 						Path:  relativePath,
 						IsDir: true,
 					})
@@ -167,10 +174,18 @@ func (s *S3Storage) List(ctx context.Context, key string, options storage.ListOp
 				if strings.HasSuffix(*object.Key, folderSuffix) {
 					continue // Skip directory placeholders
 				}
+
+				relativePath := s.relativePath(*object.Key)
+				fileName := path.Base(relativePath)
+
+				// Apply filtering
+				if !storage.ShouldIncludeFile(fileName, false, options) {
+					continue
+				}
+
 				if currentOffset >= options.Offset && (options.Limit <= 0 || len(items) < options.Limit) {
-					relativePath := s.relativePath(*object.Key)
 					items = append(items, storage.FileInfo{
-						Name:         path.Base(relativePath),
+						Name:         fileName,
 						Path:         relativePath,
 						Size:         *object.Size,
 						IsDir:        false,

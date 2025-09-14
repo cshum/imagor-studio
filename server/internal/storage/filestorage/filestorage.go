@@ -55,7 +55,7 @@ func (fs *FileStorage) List(ctx context.Context, path string, options storage.Li
 
 	var filteredEntries []os.DirEntry
 	for _, entry := range entries {
-		if (options.OnlyFiles && entry.IsDir()) || (options.OnlyFolders && !entry.IsDir()) {
+		if !storage.ShouldIncludeFile(entry.Name(), entry.IsDir(), options) {
 			continue
 		}
 		filteredEntries = append(filteredEntries, entry)
