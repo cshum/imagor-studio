@@ -14,7 +14,6 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
-	"github.com/cshum/imagor-studio/server/internal/uuid"
 	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
 )
@@ -605,42 +604,6 @@ func (r *mutationResolver) validateStorageConfig(ctx context.Context, input gql.
 		return &gql.StorageTestResult{
 			Success: false,
 			Message: "Failed to access storage directory",
-			Details: &errMsg,
-		}
-	}
-
-	// Test basic write/read/delete operations
-	testPath := "test-connection-" + uuid.GenerateUUID()
-	testContent := strings.NewReader("test")
-
-	// Test write
-	if err := testStorage.Put(ctx, testPath, testContent); err != nil {
-		errMsg := err.Error()
-		return &gql.StorageTestResult{
-			Success: false,
-			Message: "Failed to write test file",
-			Details: &errMsg,
-		}
-	}
-
-	// Test read
-	reader, err := testStorage.Get(ctx, testPath)
-	if err != nil {
-		errMsg := err.Error()
-		return &gql.StorageTestResult{
-			Success: false,
-			Message: "Failed to read test file",
-			Details: &errMsg,
-		}
-	}
-	reader.Close()
-
-	// Test delete
-	if err := testStorage.Delete(ctx, testPath); err != nil {
-		errMsg := err.Error()
-		return &gql.StorageTestResult{
-			Success: false,
-			Message: "Failed to delete test file",
 			Details: &errMsg,
 		}
 	}
