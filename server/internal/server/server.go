@@ -2,14 +2,13 @@ package server
 
 import (
 	"fmt"
+	"io/fs"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	tools "github.com/cshum/imagor-studio/server"
 	"github.com/cshum/imagor-studio/server/internal/bootstrap"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
@@ -98,9 +97,12 @@ func New(cfg *config.Config, logger *zap.Logger, args []string) (*Server, error)
 		}
 	})))
 
-	// Static file serving for web frontend
-	staticHandler := createStaticHandler(services.Logger)
-	mux.Handle("/", staticHandler)
+	// Static file serving for web frontend using embedded assets
+	staticFS, err := fs.Sub(tools.EmbedFS, "static")
+	if err != nil {
+		return nil, err
+	}
+	mux.Handle("/", http.FileServer(http.FS(staticFS)))
 
 	// Configure CORS
 	corsConfig := middleware.DefaultCORSConfig()
@@ -131,51 +133,4 @@ func (s *Server) Run() error {
 
 func (s *Server) Close() error {
 	return s.services.DB.Close()
-}
-
-// createStaticHandler creates a handler for serving static files with SPA fallback
-func createStaticHandler(logger *zap.Logger) http.Handler {
-	// Try to find the web/dist directory
-	webDistDir := "./web/dist"
-
-	// Check if we're running from Docker (web assets copied to ./web/dist)
-	if _, err := os.Stat(webDistDir); os.IsNotExist(err) {
-		// Fallback to development mode or other locations
-		possiblePaths := []string{
-			"../web/dist",
-			"../../web/dist",
-			"./dist",
-		}
-
-		for _, path := range possiblePaths {
-			if _, err := os.Stat(path); err == nil {
-				webDistDir = path
-				break
-			}
-		}
-	}
-
-	logger.Info("Static file handler configured", zap.String("webDistDir", webDistDir))
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Handle API routes - these should not serve static files
-		if strings.HasPrefix(r.URL.Path, "/api/auth/") ||
-			strings.HasPrefix(r.URL.Path, "/api/query") ||
-			strings.HasPrefix(r.URL.Path, "/health") ||
-			strings.HasPrefix(r.URL.Path, "/imagor/") {
-			http.NotFound(w, r)
-			return
-		}
-
-		// If path contains no file extension (no dot), serve index.html for SPA routing
-		if !strings.Contains(filepath.Base(r.URL.Path), ".") {
-			indexPath := filepath.Join(webDistDir, "index.html")
-			http.ServeFile(w, r, indexPath)
-			return
-		}
-
-		// For paths with extensions, serve the actual file
-		filePath := filepath.Join(webDistDir, r.URL.Path)
-		http.ServeFile(w, r, filePath)
-	})
 }

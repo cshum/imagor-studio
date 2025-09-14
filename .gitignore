@@ -22,6 +22,7 @@ dist/
 dist-ssr/
 build/
 web/dist/
+server/static/
 
 # Database files
 storage.db
