@@ -12,7 +12,7 @@ import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
 import { AccountLayout } from '@/layouts/account-layout'
-import { BasePanelLayout } from '@/layouts/base-panel-layout'
+import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
@@ -38,18 +38,20 @@ import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
 import { initializeSidebar } from '@/stores/sidebar-store.ts'
 import { initializeTheme } from '@/stores/theme-store.ts'
 
+const RootComponent = () => {
+  useTitle()
+  return (
+    <>
+      <Outlet />
+      <Toaster />
+    </>
+  )
+}
+
 const rootRoute = createRootRoute({
   beforeLoad: rootBeforeLoad,
   loader: rootLoader,
-  component: () => {
-    useTitle()
-    return (
-      <>
-        <Outlet />
-        <Toaster />
-      </>
-    )
-  },
+  component: RootComponent,
   errorComponent: ErrorPage,
 })
 
@@ -71,9 +73,9 @@ const baseLayoutRoute = createRoute({
   id: 'gallery-layout',
   beforeLoad: requireAuth,
   component: () => (
-    <BasePanelLayout>
+    <SidebarLayout>
       <Outlet />
-    </BasePanelLayout>
+    </SidebarLayout>
   ),
 })
 

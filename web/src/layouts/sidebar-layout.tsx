@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 
 type BasePanelLayoutProps = PropsWithChildren
 
-export function BasePanelLayout({ children }: BasePanelLayoutProps) {
+export function SidebarLayout({ children }: BasePanelLayoutProps) {
   return (
     <SidebarWrapper>
       <FolderTreeSidebar />
