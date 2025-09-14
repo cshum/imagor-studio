@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+TESTING_GUIDE.md
+*.md
+
+# Development files
+.env
+.env.local
+.env.development
+.env.test
+
+# Node modules (will be installed in container)
+web/node_modules
+web/.next
+web/dist
+
+# Go build artifacts
+server/bin
+server/dist
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+*_test.go
+test-data
+
+# Logs
+*.log
+logs
+
+# Temporary files
+tmp
+temp
