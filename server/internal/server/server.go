@@ -8,7 +8,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
-	tools "github.com/cshum/imagor-studio/server"
 	"github.com/cshum/imagor-studio/server/internal/bootstrap"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
@@ -23,7 +22,7 @@ type Server struct {
 	services *bootstrap.Services
 }
 
-func New(cfg *config.Config, logger *zap.Logger, args []string) (*Server, error) {
+func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (*Server, error) {
 	// Initialize all services using bootstrap package
 	services, err := bootstrap.Initialize(cfg, logger, args)
 	if err != nil {
@@ -98,7 +97,7 @@ func New(cfg *config.Config, logger *zap.Logger, args []string) (*Server, error)
 	})))
 
 	// Static file serving for web frontend using embedded assets
-	staticFS, err := fs.Sub(tools.EmbedFS, "static")
+	staticFS, err := fs.Sub(embedFS, "static")
 	if err != nil {
 		return nil, err
 	}

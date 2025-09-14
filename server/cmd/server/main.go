@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	tools "github.com/cshum/imagor-studio/server"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/server"
 	"go.uber.org/zap"
@@ -29,7 +30,7 @@ func main() {
 
 	// Create and start server with logger and args
 	// The bootstrap process will handle JWT secret auto-generation
-	srv, err := server.New(cfg, logger, args)
+	srv, err := server.New(cfg, tools.EmbedFS, logger, args)
 	if err != nil {
 		logger.Fatal("Failed to create server", zap.Error(err))
 	}
