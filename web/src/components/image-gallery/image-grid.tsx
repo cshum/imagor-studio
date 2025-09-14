@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback } from 'react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
 import { getFullImageUrl } from '@/lib/image-utils'
@@ -10,7 +10,6 @@ export interface ImageGridProps {
   scrollTop: number
   maxImageWidth: number
   isScrolling: boolean
-  onRendered?: () => void
   onImageClick?: (image: GalleryImage, position: Position) => void
 }
 
@@ -21,7 +20,6 @@ export const ImageGrid = ({
   scrollTop,
   maxImageWidth,
   isScrolling,
-  onRendered,
   onImageClick,
 }: ImageGridProps) => {
   // Dynamically calculate the number of columns based on maxImageWidth prop
@@ -35,15 +33,6 @@ export const ImageGrid = ({
   const visibleRowsCount = Math.ceil(window.innerHeight / rowHeight)
   const overscanCount = visibleRowsCount
   const totalRenderedRows = visibleRowsCount + 2 * overscanCount
-
-  const onRenderedRef = useRef<() => void | null>(onRendered || null)
-
-  // Notify that the grid has been rendered
-  useEffect(() => {
-    if (onRenderedRef.current) {
-      onRenderedRef.current() // Callback to notify when the grid has rendered
-    }
-  }, [])
 
   // Render individual images with correct positioning
   const renderImage = useCallback(

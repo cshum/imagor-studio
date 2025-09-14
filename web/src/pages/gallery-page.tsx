@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 
 import { HeaderBar } from '@/components/header-bar'
@@ -41,13 +41,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   )
   useResizeHandler(updateWidth)
 
-  const [gridRendered, setGridRendered] = useState(false)
-
   useEffect(() => {
-    if (gridRendered) {
-      restoreScrollPosition()
-    }
-  }, [gridRendered, restoreScrollPosition])
+    requestAnimationFrame(restoreScrollPosition)
+  }, [restoreScrollPosition])
 
   const handleImageClick = ({ imageKey }: GalleryImage, position: ImagePosition | null) => {
     if (position) {
@@ -112,7 +108,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                       scrollTop={scrollPosition}
                       maxImageWidth={maxItemWidth}
                       isScrolling={isScrolling}
-                      onRendered={() => setGridRendered(true)}
                       onImageClick={handleImageClick}
                     />
                   </>
