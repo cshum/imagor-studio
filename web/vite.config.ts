@@ -14,5 +14,6 @@ export default defineConfig({
   envPrefix: 'VITE_',
   build: {
     outDir: '../server/static',
+    emptyOutDir: true,
   },
 })
