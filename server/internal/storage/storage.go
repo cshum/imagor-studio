@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -99,4 +100,33 @@ func ShouldIncludeFile(name string, isDir bool, options ListOptions) bool {
 	}
 
 	return true
+}
+
+// SortFileInfos sorts a slice of FileInfo based on the provided sort options
+func SortFileInfos(items []FileInfo, sortBy SortOption, sortOrder SortOrder) {
+	if sortBy == "" && sortOrder == "" {
+		return
+	}
+
+	sort.Slice(items, func(i, j int) bool {
+		switch sortBy {
+		case SortByName:
+			if sortOrder == SortOrderDesc {
+				return items[i].Name > items[j].Name
+			}
+			return items[i].Name < items[j].Name
+		case SortBySize:
+			if sortOrder == SortOrderDesc {
+				return items[i].Size > items[j].Size
+			}
+			return items[i].Size < items[j].Size
+		case SortByModifiedTime:
+			if sortOrder == SortOrderDesc {
+				return items[i].ModifiedTime.After(items[j].ModifiedTime)
+			}
+			return items[i].ModifiedTime.Before(items[j].ModifiedTime)
+		default:
+			return items[i].Name < items[j].Name
+		}
+	})
 }

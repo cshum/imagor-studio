@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"path"
-	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -204,39 +203,12 @@ func (s *S3Storage) List(ctx context.Context, key string, options storage.ListOp
 		}
 	}
 
-	s.sortItems(items, options.SortBy, options.SortOrder)
+	storage.SortFileInfos(items, options.SortBy, options.SortOrder)
 
 	return storage.ListResult{
 		Items:      items,
 		TotalCount: totalCount,
 	}, nil
-}
-
-func (s *S3Storage) sortItems(items []storage.FileInfo, sortBy storage.SortOption, sortOrder storage.SortOrder) {
-	if sortBy == "" && sortOrder == "" {
-		return
-	}
-	sort.Slice(items, func(i, j int) bool {
-		switch sortBy {
-		case storage.SortByName:
-			if sortOrder == storage.SortOrderDesc {
-				return items[i].Name > items[j].Name
-			}
-			return items[i].Name < items[j].Name
-		case storage.SortBySize:
-			if sortOrder == storage.SortOrderDesc {
-				return items[i].Size > items[j].Size
-			}
-			return items[i].Size < items[j].Size
-		case storage.SortByModifiedTime:
-			if sortOrder == storage.SortOrderDesc {
-				return items[i].ModifiedTime.After(items[j].ModifiedTime)
-			}
-			return items[i].ModifiedTime.Before(items[j].ModifiedTime)
-		default:
-			return items[i].Name < items[j].Name
-		}
-	})
 }
 
 func (s *S3Storage) Get(ctx context.Context, key string) (io.ReadCloser, error) {

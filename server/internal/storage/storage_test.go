@@ -2,6 +2,7 @@ package storage
 
 import (
 	"testing"
+	"time"
 )
 
 func TestMatchesExtensions(t *testing.T) {
@@ -60,6 +61,88 @@ func TestMatchesExtensions(t *testing.T) {
 			result := MatchesExtensions(tt.filename, tt.extensions)
 			if result != tt.expected {
 				t.Errorf("MatchesExtensions(%q, %v) = %v, want %v", tt.filename, tt.extensions, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSortFileInfos(t *testing.T) {
+	// Create test data
+	items := []FileInfo{
+		{Name: "zebra.txt", Size: 100, ModifiedTime: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)},
+		{Name: "alpha.txt", Size: 300, ModifiedTime: time.Date(2023, 3, 1, 0, 0, 0, 0, time.UTC)},
+		{Name: "beta.txt", Size: 200, ModifiedTime: time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC)},
+	}
+
+	tests := []struct {
+		name      string
+		sortBy    SortOption
+		sortOrder SortOrder
+		expected  []string // expected order of names
+	}{
+		{
+			name:      "sort by name ascending",
+			sortBy:    SortByName,
+			sortOrder: SortOrderAsc,
+			expected:  []string{"alpha.txt", "beta.txt", "zebra.txt"},
+		},
+		{
+			name:      "sort by name descending",
+			sortBy:    SortByName,
+			sortOrder: SortOrderDesc,
+			expected:  []string{"zebra.txt", "beta.txt", "alpha.txt"},
+		},
+		{
+			name:      "sort by size ascending",
+			sortBy:    SortBySize,
+			sortOrder: SortOrderAsc,
+			expected:  []string{"zebra.txt", "beta.txt", "alpha.txt"},
+		},
+		{
+			name:      "sort by size descending",
+			sortBy:    SortBySize,
+			sortOrder: SortOrderDesc,
+			expected:  []string{"alpha.txt", "beta.txt", "zebra.txt"},
+		},
+		{
+			name:      "sort by modified time ascending",
+			sortBy:    SortByModifiedTime,
+			sortOrder: SortOrderAsc,
+			expected:  []string{"zebra.txt", "beta.txt", "alpha.txt"},
+		},
+		{
+			name:      "sort by modified time descending",
+			sortBy:    SortByModifiedTime,
+			sortOrder: SortOrderDesc,
+			expected:  []string{"alpha.txt", "beta.txt", "zebra.txt"},
+		},
+		{
+			name:      "no sorting specified",
+			sortBy:    "",
+			sortOrder: "",
+			expected:  []string{"zebra.txt", "alpha.txt", "beta.txt"}, // original order
+		},
+		{
+			name:      "default to name sorting",
+			sortBy:    "INVALID",
+			sortOrder: SortOrderAsc,
+			expected:  []string{"alpha.txt", "beta.txt", "zebra.txt"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Make a copy of items to avoid modifying the original
+			testItems := make([]FileInfo, len(items))
+			copy(testItems, items)
+
+			SortFileInfos(testItems, tt.sortBy, tt.sortOrder)
+
+			// Check the order
+			for i, expectedName := range tt.expected {
+				if testItems[i].Name != expectedName {
+					t.Errorf("Expected item %d to be %s, got %s", i, expectedName, testItems[i].Name)
+				}
 			}
 		})
 	}
