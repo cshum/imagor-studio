@@ -84,18 +84,14 @@ export const ImageGrid = ({
     Math.floor(scrollTop / rowHeight - overscanCount) * columnCount,
   )
   const endImageIndex = Math.min(images.length, startImageIndex + totalRenderedRows * columnCount)
-
-  const visibleImages = useCallback(() => {
-    const imagesToRender = []
-    for (let i = startImageIndex; i < endImageIndex; i++) {
-      imagesToRender.push(renderImage(i))
-    }
-    return imagesToRender
-  }, [startImageIndex, endImageIndex, renderImage])
+  const visibleImages = []
+  for (let i = startImageIndex; i < endImageIndex; i++) {
+    visibleImages.push(renderImage(i))
+  }
 
   return (
     <div className={`group relative w-full overflow-hidden`} style={{ height: `${totalHeight}px` }}>
-      {visibleImages()}
+      {visibleImages}
     </div>
   )
 }
