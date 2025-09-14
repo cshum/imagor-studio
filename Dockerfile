@@ -3,7 +3,7 @@ ARG NODE_VERSION=20
 ARG VIPS_VERSION=8.17.1
 
 # Stage 1: Build web frontend
-FROM node:${NODE_VERSION}-alpine as web-builder
+FROM node:${NODE_VERSION}-alpine AS web-builder
 
 WORKDIR /app/web
 
@@ -20,7 +20,7 @@ COPY web/ ./
 RUN npm run build
 
 # Stage 2: Build server with libvips + ImageMagick
-FROM golang:${GOLANG_VERSION}-trixie as server-builder
+FROM golang:${GOLANG_VERSION}-trixie AS server-builder
 
 ARG VIPS_VERSION
 ARG TARGETARCH
@@ -78,7 +78,7 @@ COPY graphql/ ./graphql/
 RUN cd server && go build -o /go/bin/imagor-studio ./cmd/server/main.go
 
 # Stage 3: Runtime image
-FROM debian:trixie-slim as runtime
+FROM debian:trixie-slim AS runtime
 LABEL maintainer="imagor-studio"
 
 COPY --from=server-builder /usr/local/lib /usr/local/lib
@@ -108,7 +108,7 @@ ENV VIPS_WARNING=0
 ENV MALLOC_ARENA_MAX=2
 ENV LD_PRELOAD=/usr/local/lib/libjemalloc.so
 
-ENV PORT 8000
+ENV PORT=8000
 
 # Use unprivileged user
 USER nobody
