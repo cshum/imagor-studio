@@ -44,7 +44,7 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
     const form = useForm<FileStorageFormData>({
       resolver: zodResolver(fileStorageSchema),
       defaultValues: {
-        baseDir: initialValues?.baseDir || './storage',
+        baseDir: initialValues?.baseDir || '/app/data/storage',
         mkdirPermissions: initialValues?.mkdirPermissions || '0755',
         writePermissions: initialValues?.writePermissions || '0644',
       },
@@ -71,7 +71,7 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
                   <FormItem>
                     <FormLabel>Base Directory</FormLabel>
                     <FormControl>
-                      <Input placeholder='./storage' {...field} disabled={disabled} />
+                      <Input placeholder='/app/data/storage' {...field} disabled={disabled} />
                     </FormControl>
                     <FormDescription>
                       The directory where images will be stored on the file system
