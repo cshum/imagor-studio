@@ -27,7 +27,7 @@ export interface ImageLoaderData {
   galleryKey: string
 }
 
-const DEFAULT_EXTENSIONS = '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif'
+const DEFAULT_EXTENSIONS = '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heif'
 
 /**
  * Gallery loader using imagor for thumbnail generation

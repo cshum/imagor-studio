@@ -1061,7 +1061,7 @@ func TestRegisterAdmin(t *testing.T) {
 					hiddenFound := false
 					for _, entry := range entries {
 						if entry.Key == "config.gallery_file_extensions" &&
-							entry.Value == ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif" &&
+							entry.Value == ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heif" &&
 							!entry.IsEncrypted {
 							extensionsFound = true
 						}
@@ -1073,7 +1073,7 @@ func TestRegisterAdmin(t *testing.T) {
 					}
 					return extensionsFound && hiddenFound
 				})).Return([]*registrystore.Registry{
-					{Key: "config.gallery_file_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif", IsEncrypted: false},
+					{Key: "config.gallery_file_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heif", IsEncrypted: false},
 					{Key: "config.gallery_show_hidden", Value: "false", IsEncrypted: false},
 				}, nil)
 			},
