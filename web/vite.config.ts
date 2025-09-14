@@ -12,4 +12,8 @@ export default defineConfig({
   // Configure environment file loading
   envDir: './',
   envPrefix: 'VITE_',
+  build: {
+    outDir: '../server/static',
+    emptyOutDir: true,
+  },
 })
