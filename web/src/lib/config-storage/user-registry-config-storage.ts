@@ -6,12 +6,37 @@ export class UserRegistryConfigStorage implements ConfigStorage {
   private readonly registryKey: string
   private fallbackStorage?: ConfigStorage
 
+  private static cache = new Map<string, string | null>()
+
   constructor(registryKey: string, fallbackStorage?: ConfigStorage) {
     this.registryKey = `config.${registryKey}` // Prefix to avoid conflicts
     this.fallbackStorage = fallbackStorage
   }
 
+  /**
+   * Clear all cached entries (useful for testing or manual cache management)
+   */
+  static clearCache(): void {
+    UserRegistryConfigStorage.cache.clear()
+  }
+
+  /**
+   * Clear cache entry for a specific key
+   */
+  static clearCacheEntry(registryKey: string): void {
+    UserRegistryConfigStorage.cache.delete(`config.${registryKey}`)
+  }
+
   async get(): Promise<string | null> {
+    if (UserRegistryConfigStorage.cache.has(this.registryKey)) {
+      return UserRegistryConfigStorage.cache.get(this.registryKey) ?? null
+    }
+    const value = await this.fetchFromAPI()
+    UserRegistryConfigStorage.cache.set(this.registryKey, value)
+    return value
+  }
+
+  private async fetchFromAPI(): Promise<string | null> {
     try {
       // First check user registry
       const registryEntries = await getUserRegistry(this.registryKey)
@@ -40,6 +65,7 @@ export class UserRegistryConfigStorage implements ConfigStorage {
   async set(value: string): Promise<void> {
     try {
       await setUserRegistry(this.registryKey, value)
+      UserRegistryConfigStorage.cache.set(this.registryKey, value)
     } catch {
       // Silent fallback if fallbackStorage is provided
       await this.fallbackStorage?.set(value)
@@ -49,6 +75,7 @@ export class UserRegistryConfigStorage implements ConfigStorage {
   async remove(): Promise<void> {
     try {
       await deleteUserRegistry(this.registryKey)
+      UserRegistryConfigStorage.cache.set(this.registryKey, null)
     } catch {
       // Silent fallback if fallbackStorage is provided
       await this.fallbackStorage?.remove()
