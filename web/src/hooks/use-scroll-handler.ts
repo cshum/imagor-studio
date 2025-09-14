@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { getPosition, setPosition } from '@/stores/scroll-position-store'
 
@@ -22,33 +22,6 @@ export const useScrollHandler = (
       debounceDelay,
     }
   }, [scrollKey, debounceDelay])
-
-  const restoreScrollPosition = useCallback(() => {
-    const savedPosition = getPosition(optionsRef.current.scrollKey) // Get scroll position using store
-    if (savedPosition > 0) {
-      const scrollHeight = Math.max(
-        document.body.scrollHeight,
-        document.body.offsetHeight,
-        document.documentElement.clientHeight,
-        document.documentElement.scrollHeight,
-        document.documentElement.offsetHeight,
-      )
-      const clientHeight = window.innerHeight
-      const maxScrollPosition = scrollHeight - clientHeight
-
-      // Only restore if the saved position is valid for current content
-      const positionToRestore = Math.min(savedPosition, Math.max(0, maxScrollPosition))
-
-      if (positionToRestore > 0) {
-        window.scrollTo({ top: positionToRestore, behavior: 'instant' })
-        setScrollPosition(positionToRestore) // Restore scroll position in state
-      } else {
-        // Content is too short for saved position, reset to top
-        window.scrollTo({ top: 0, behavior: 'instant' })
-        setScrollPosition(0)
-      }
-    }
-  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -88,8 +61,32 @@ export const useScrollHandler = (
   }, [])
 
   return {
-    restoreScrollPosition,
     scrollPosition,
     isScrolling,
+  }
+}
+
+export const restoreScrollPosition = (scrollKey: string) => {
+  const savedPosition = getPosition(scrollKey)
+  if (savedPosition > 0) {
+    const scrollHeight = Math.max(
+      document.body.scrollHeight,
+      document.body.offsetHeight,
+      document.documentElement.clientHeight,
+      document.documentElement.scrollHeight,
+      document.documentElement.offsetHeight,
+    )
+    const clientHeight = window.innerHeight
+    const maxScrollPosition = scrollHeight - clientHeight
+
+    // Only restore if the saved position is valid for current content
+    const positionToRestore = Math.min(savedPosition, Math.max(0, maxScrollPosition))
+
+    if (positionToRestore > 0) {
+      window.scrollTo({ top: positionToRestore, behavior: 'instant' })
+    } else {
+      // Content is too short for saved position, reset to top
+      window.scrollTo({ top: 0, behavior: 'instant' })
+    }
   }
 }

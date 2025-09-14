@@ -10,7 +10,7 @@ import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Card, CardContent } from '@/components/ui/card'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
-import { useScrollHandler } from '@/hooks/use-scroll-handler'
+import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
@@ -33,7 +33,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const isDesktop = useBreakpoint('md')
   const maxItemWidth = 250
 
-  const { restoreScrollPosition, scrollPosition } = useScrollHandler(galleryKey)
+  const { scrollPosition } = useScrollHandler(galleryKey)
   const { contentWidth, updateWidth } = useWidthHandler(
     contentRef,
     sidebar.open,
@@ -42,8 +42,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   useResizeHandler(updateWidth)
 
   useEffect(() => {
-    requestAnimationFrame(restoreScrollPosition)
-  }, [restoreScrollPosition])
+    requestAnimationFrame(() => restoreScrollPosition(galleryKey))
+  }, [galleryKey])
 
   const handleImageClick = ({ imageKey }: GalleryImage, position: ImagePosition | null) => {
     if (position) {
