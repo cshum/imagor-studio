@@ -1,7 +1,59 @@
-import { useCallback } from 'react'
+import React from 'react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
 import { getFullImageUrl } from '@/lib/api-utils'
+
+interface ImageCellProps {
+  image: GalleryImage
+  columnWidth: number
+  rowHeight: number
+  rowIndex: number
+  columnIndex: number
+  onImageClick?: (image: GalleryImage, position: Position) => void
+}
+
+const ImageCell = ({
+  image,
+  columnWidth,
+  rowHeight,
+  rowIndex,
+  columnIndex,
+  onImageClick,
+}: ImageCellProps) => {
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (onImageClick) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      onImageClick(image, {
+        top: Math.round(rect.top),
+        left: Math.round(rect.left),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      })
+    }
+  }
+
+  return (
+    <div
+      key={image.imageKey}
+      className='absolute box-border cursor-pointer p-1 md:p-1.5'
+      style={{
+        width: `${columnWidth}px`,
+        height: `${rowHeight}px`,
+        transform: `translate3d(${columnIndex * columnWidth}px, ${rowIndex * rowHeight}px, 0)`,
+        willChange: 'transform',
+      }}
+      onClick={handleClick}
+    >
+      <div className='h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700'>
+        <img
+          src={getFullImageUrl(image.imageSrc)}
+          alt={image.imageName}
+          className='h-full w-full object-cover'
+        />
+      </div>
+    </div>
+  )
+}
 
 export interface ImageGridProps {
   images: GalleryImage[]
@@ -32,52 +84,6 @@ export const ImageGrid = ({
   const overscanCount = visibleRowsCount
   const totalRenderedRows = visibleRowsCount + 2 * overscanCount
 
-  // Render individual images with correct positioning
-  const renderImage = useCallback(
-    (imageIndex: number) => {
-      const rowIndex = Math.floor(imageIndex / columnCount)
-      const columnIndex = imageIndex % columnCount
-
-      const image = images[imageIndex]
-      if (!image) return null
-
-      const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (onImageClick) {
-          const rect = e.currentTarget.getBoundingClientRect()
-          onImageClick(image, {
-            top: Math.round(rect.top),
-            left: Math.round(rect.left),
-            width: Math.round(rect.width),
-            height: Math.round(rect.height),
-          })
-        }
-      }
-
-      return (
-        <div
-          key={image.imageKey}
-          className='absolute box-border cursor-pointer p-1 md:p-1.5'
-          style={{
-            width: `${columnWidth}px`,
-            height: `${rowHeight}px`,
-            transform: `translate3d(${columnIndex * columnWidth}px, ${rowIndex * rowHeight}px, 0)`,
-            willChange: 'transform',
-          }}
-          onClick={handleClick}
-        >
-          <div className='h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700'>
-            <img
-              src={getFullImageUrl(image.imageSrc)}
-              alt={image.imageName}
-              className='h-full w-full object-cover'
-            />
-          </div>
-        </div>
-      )
-    },
-    [images, columnCount, columnWidth, rowHeight, onImageClick],
-  )
-
   // Determine which images should be rendered based on scroll position
   const startImageIndex = Math.max(
     0,
@@ -86,7 +92,23 @@ export const ImageGrid = ({
   const endImageIndex = Math.min(images.length, startImageIndex + totalRenderedRows * columnCount)
   const visibleImages = []
   for (let i = startImageIndex; i < endImageIndex; i++) {
-    visibleImages.push(renderImage(i))
+    const rowIndex = Math.floor(i / columnCount)
+    const columnIndex = i % columnCount
+    const image = images[i]
+
+    if (image) {
+      visibleImages.push(
+        <ImageCell
+          key={image.imageKey}
+          image={image}
+          columnWidth={columnWidth}
+          rowHeight={rowHeight}
+          rowIndex={rowIndex}
+          columnIndex={columnIndex}
+          onImageClick={onImageClick}
+        />,
+      )
+    }
   }
 
   return (
