@@ -41,6 +41,7 @@ web/.env.local
 server/storage/
 data/
 test-data/
+imagor-studio-data/
 
 # Temporary files
 *.tmp
