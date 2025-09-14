@@ -1056,16 +1056,16 @@ func TestRegisterAdmin(t *testing.T) {
 					if len(entries) != 2 {
 						return false
 					}
-					// Verify gallery extensions entry
+					// Verify app extensions entry
 					extensionsFound := false
 					hiddenFound := false
 					for _, entry := range entries {
-						if entry.Key == "config.gallery_file_extensions" &&
+						if entry.Key == "config.app_file_extensions" &&
 							entry.Value == ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heif" &&
 							!entry.IsEncrypted {
 							extensionsFound = true
 						}
-						if entry.Key == "config.gallery_show_hidden" &&
+						if entry.Key == "config.app_show_hidden" &&
 							entry.Value == "false" &&
 							!entry.IsEncrypted {
 							hiddenFound = true
@@ -1073,8 +1073,8 @@ func TestRegisterAdmin(t *testing.T) {
 					}
 					return extensionsFound && hiddenFound
 				})).Return([]*registrystore.Registry{
-					{Key: "config.gallery_file_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heif", IsEncrypted: false},
-					{Key: "config.gallery_show_hidden", Value: "false", IsEncrypted: false},
+					{Key: "config.app_file_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heif", IsEncrypted: false},
+					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
 				}, nil)
 			},
 		},

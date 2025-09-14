@@ -46,13 +46,13 @@ export const galleryLoader = async ({
   let showHidden: boolean
   try {
     const registryResult = await getSystemRegistryMultiple([
-      'config.gallery_file_extensions',
-      'config.gallery_show_hidden',
+      'config.app_file_extensions',
+      'config.app_show_hidden',
     ])
-    const extensionsEntry = registryResult.find((r) => r.key === 'config.gallery_file_extensions')
+    const extensionsEntry = registryResult.find((r) => r.key === 'config.app_file_extensions')
     extensionsString = extensionsEntry?.value || DEFAULT_EXTENSIONS
 
-    const showHiddenEntry = registryResult.find((r) => r.key === 'config.gallery_show_hidden')
+    const showHiddenEntry = registryResult.find((r) => r.key === 'config.app_show_hidden')
     showHidden = showHiddenEntry?.value === 'true'
   } catch {
     // If registry fetch fails, use defaults
