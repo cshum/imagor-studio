@@ -118,15 +118,15 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 			return err
 		}
 
-		// Populate default gallery settings for first admin
+		// Populate default app settings for first admin
 		defaultEntries := []*registrystore.Registry{
 			{
-				Key:         "config.gallery_file_extensions",
+				Key:         "config.app_file_extensions",
 				Value:       ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heif",
 				IsEncrypted: false,
 			},
 			{
-				Key:         "config.gallery_show_hidden",
+				Key:         "config.app_show_hidden",
 				Value:       "false",
 				IsEncrypted: false,
 			},

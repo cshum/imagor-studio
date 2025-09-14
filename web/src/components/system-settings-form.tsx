@@ -114,8 +114,8 @@ export function SystemSettingsForm({
         await setSystemRegistryObject(changedValues)
 
         // Update the store immediately if home title was changed
-        if (changedValues['config.home_title']) {
-          setHomeTitle(changedValues['config.home_title'])
+        if (changedValues['config.app_home_title']) {
+          setHomeTitle(changedValues['config.app_home_title'])
         }
 
         toast.success('Settings updated successfully!')

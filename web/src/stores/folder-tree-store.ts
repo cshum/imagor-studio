@@ -1,4 +1,4 @@
-import { getSystemRegistryObject } from '@/api/registry-api'
+import { getSystemRegistry } from '@/api/registry-api'
 import { listFiles } from '@/api/storage-api'
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
 import { createStore } from '@/lib/create-store'
@@ -349,8 +349,8 @@ export const loadFolderChildren = async (path: string) => {
 
 export const loadHomeTitle = async () => {
   try {
-    const registry = await getSystemRegistryObject('config.')
-    const customTitle = registry['config.home_title']
+    const registry = await getSystemRegistry('config.app_home_title')
+    const customTitle = registry[0]?.value
 
     if (customTitle && customTitle.trim()) {
       folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title: customTitle.trim() })

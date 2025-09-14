@@ -34,8 +34,8 @@ func TestLoadBasic(t *testing.T) {
 	assert.Equal(t, "embedded", cfg.ImagorMode)
 	assert.Equal(t, "", cfg.ImagorBaseURL)
 	assert.Equal(t, 24*time.Hour, cfg.JWTExpiration)
-	assert.Equal(t, ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif", cfg.GalleryFileExtensions)
-	assert.Equal(t, false, cfg.GalleryShowHidden)
+	assert.Equal(t, ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif", cfg.AppFileExtensions)
+	assert.Equal(t, false, cfg.AppShowHidden)
 }
 
 func TestLoadWithArgs(t *testing.T) {
