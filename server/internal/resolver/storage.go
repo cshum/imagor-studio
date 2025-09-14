@@ -912,6 +912,9 @@ func parseExtensions(extensionsStr *string) []string {
 
 // Helper function to generate thumbnail URLs using the imagor provider
 func (r *queryResolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUrls {
+	if r.imagorProvider == nil {
+		return nil
+	}
 	// Generate different sized URLs using the imagor provider
 	gridURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
 		Width:  300,

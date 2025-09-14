@@ -26,16 +26,15 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
   {
     key: 'config.gallery_file_extensions',
     type: 'text',
-    label: 'Gallery File Extensions',
-    description:
-      'Comma-separated list of file extensions to show in gallery (e.g., .jpg,.png,.gif)',
+    label: 'File Extensions',
+    description: 'Comma-separated list of file extensions to show (e.g., .jpg,.png,.gif)',
     defaultValue: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif',
   },
   {
     key: 'config.gallery_show_hidden',
     type: 'boolean',
     label: 'Show Hidden Files',
-    description: 'Show files and folders that start with a dot (.) in the gallery',
+    description: 'Show files and folders that start with a dot (.)',
     defaultValue: false,
   },
 ]
