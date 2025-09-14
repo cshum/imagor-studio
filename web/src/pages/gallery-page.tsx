@@ -33,7 +33,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const isDesktop = useBreakpoint('md')
   const maxItemWidth = 250
 
-  const { restoreScrollPosition, scrollPosition, isScrolling } = useScrollHandler(galleryKey)
+  const { restoreScrollPosition, scrollPosition } = useScrollHandler(galleryKey)
   const { contentWidth, updateWidth } = useWidthHandler(
     contentRef,
     sidebar.open,
@@ -107,7 +107,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                       width={contentWidth}
                       scrollTop={scrollPosition}
                       maxImageWidth={maxItemWidth}
-                      isScrolling={isScrolling}
                       onImageClick={handleImageClick}
                     />
                   </>

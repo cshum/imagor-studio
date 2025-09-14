@@ -9,7 +9,6 @@ export interface ImageGridProps {
   width: number
   scrollTop: number
   maxImageWidth: number
-  isScrolling: boolean
   onImageClick?: (image: GalleryImage, position: Position) => void
 }
 
@@ -19,7 +18,6 @@ export const ImageGrid = ({
   width,
   scrollTop,
   maxImageWidth,
-  isScrolling,
   onImageClick,
 }: ImageGridProps) => {
   // Dynamically calculate the number of columns based on maxImageWidth prop
@@ -96,10 +94,7 @@ export const ImageGrid = ({
   }, [startImageIndex, endImageIndex, renderImage])
 
   return (
-    <div
-      className={`relative w-full overflow-hidden ${isScrolling ? '' : 'not-scrolling'} group`}
-      style={{ height: `${totalHeight}px` }}
-    >
+    <div className={`group relative w-full overflow-hidden`} style={{ height: `${totalHeight}px` }}>
       {visibleImages()}
     </div>
   )
