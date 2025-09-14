@@ -1,9 +1,10 @@
+import { getSystemRegistryMultiple } from '@/api/registry-api.ts'
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
+import { getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
-import { getFullImageUrl } from '@/lib/image-utils.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
 import {
   FolderNode,
@@ -26,6 +27,8 @@ export interface ImageLoaderData {
   galleryKey: string
 }
 
+const DEFAULT_EXTENSIONS = '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif'
+
 /**
  * Gallery loader using imagor for thumbnail generation
  * Loads images and folders from storage API with imagor-generated thumbnails
@@ -38,9 +41,30 @@ export const galleryLoader = async ({
   // Use galleryKey as the path for storage API
   const path = galleryKey
 
-  // Fetch files from storage API
+  // Fetch registry settings for gallery filtering
+  let extensionsString: string | undefined
+  let showHidden: boolean
+  try {
+    const registryResult = await getSystemRegistryMultiple([
+      'config.gallery_file_extensions',
+      'config.gallery_show_hidden',
+    ])
+    const extensionsEntry = registryResult.find((r) => r.key === 'config.gallery_file_extensions')
+    extensionsString = extensionsEntry?.value || DEFAULT_EXTENSIONS
+
+    const showHiddenEntry = registryResult.find((r) => r.key === 'config.gallery_show_hidden')
+    showHidden = showHiddenEntry?.value === 'true'
+  } catch {
+    // If registry fetch fails, use defaults
+    extensionsString = DEFAULT_EXTENSIONS
+    showHidden = false
+  }
+
+  // Fetch files from storage API with registry settings
   const result = await listFiles({
     path,
+    extensions: extensionsString,
+    showHidden,
     sortBy: 'MODIFIED_TIME',
     sortOrder: 'DESC',
   })

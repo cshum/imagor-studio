@@ -1033,7 +1033,7 @@ func TestRegisterAdmin(t *testing.T) {
 		setupMocks     func()
 	}{
 		{
-			name: "Valid admin registration on first run",
+			name: "Valid admin registration with registry population",
 			body: RegisterRequest{
 				DisplayName: "admin",
 				Email:       "admin@example.com",
@@ -1043,13 +1043,62 @@ func TestRegisterAdmin(t *testing.T) {
 			expectedStatus: http.StatusCreated,
 			expectError:    false,
 			setupMocks: func() {
-				mockUserStore.On("Create", mock.Anything, "admin", mock.AnythingOfType("string"), mock.AnythingOfType("string"), "admin").Return(&userstore.User{
+				mockUserStore.On("Create", mock.Anything, "admin", "admin@example.com", mock.AnythingOfType("string"), "admin").Return(&userstore.User{
 					ID:          "admin-123",
 					DisplayName: "admin",
 					Email:       "admin@example.com",
 					Role:        "admin",
 					IsActive:    true,
 				}, nil)
+
+				// Expect registry population with correct values
+				mockRegistryStore.On("SetMulti", mock.Anything, registrystore.SystemOwnerID, mock.MatchedBy(func(entries []*registrystore.Registry) bool {
+					if len(entries) != 2 {
+						return false
+					}
+					// Verify gallery extensions entry
+					extensionsFound := false
+					hiddenFound := false
+					for _, entry := range entries {
+						if entry.Key == "config.gallery_file_extensions" &&
+							entry.Value == ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif" &&
+							!entry.IsEncrypted {
+							extensionsFound = true
+						}
+						if entry.Key == "config.gallery_show_hidden" &&
+							entry.Value == "false" &&
+							!entry.IsEncrypted {
+							hiddenFound = true
+						}
+					}
+					return extensionsFound && hiddenFound
+				})).Return([]*registrystore.Registry{
+					{Key: "config.gallery_file_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif", IsEncrypted: false},
+					{Key: "config.gallery_show_hidden", Value: "false", IsEncrypted: false},
+				}, nil)
+			},
+		},
+		{
+			name: "Admin registration succeeds even if registry population fails",
+			body: RegisterRequest{
+				DisplayName: "admin",
+				Email:       "admin@example.com",
+				Password:    "securepassword123",
+			},
+			existingUsers:  0,
+			expectedStatus: http.StatusCreated,
+			expectError:    false,
+			setupMocks: func() {
+				mockUserStore.On("Create", mock.Anything, "admin", "admin@example.com", mock.AnythingOfType("string"), "admin").Return(&userstore.User{
+					ID:          "admin-123",
+					DisplayName: "admin",
+					Email:       "admin@example.com",
+					Role:        "admin",
+					IsActive:    true,
+				}, nil)
+
+				// Registry population fails but doesn't affect registration
+				mockRegistryStore.On("SetMulti", mock.Anything, registrystore.SystemOwnerID, mock.Anything).Return(nil, fmt.Errorf("registry error"))
 			},
 		},
 		{

@@ -118,6 +118,24 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 			return err
 		}
 
+		// Populate default gallery settings for first admin
+		defaultEntries := []*registrystore.Registry{
+			{
+				Key:         "config.gallery_file_extensions",
+				Value:       ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif",
+				IsEncrypted: false,
+			},
+			{
+				Key:         "config.gallery_show_hidden",
+				Value:       "false",
+				IsEncrypted: false,
+			},
+		}
+
+		if _, err := h.registryStore.SetMulti(r.Context(), registrystore.SystemOwnerID, defaultEntries); err != nil {
+			h.logger.Warn("Failed to populate default gallery settings", zap.Error(err))
+		}
+
 		h.logger.Info("First admin user created via API",
 			zap.String("userID", response.User.ID),
 			zap.String("displayName", response.User.DisplayName),

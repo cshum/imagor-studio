@@ -9,3 +9,18 @@ export const getBaseUrl = (): string => {
   // Fallback to current origin (works for both dev and production)
   return typeof window !== 'undefined' ? window.location.origin : ''
 }
+
+/**
+ * Convert relative imagor URLs to full URLs for cross-origin access
+ */
+export function getFullImageUrl(imageUrl: string): string {
+  if (!imageUrl) return imageUrl
+
+  // If it's a relative path (starts with /), prepend server URL
+  if (imageUrl.startsWith('/')) {
+    return `${getBaseUrl()}${imageUrl}`
+  }
+
+  // Otherwise, return as-is (shouldn't happen, but safe fallback)
+  return imageUrl
+}

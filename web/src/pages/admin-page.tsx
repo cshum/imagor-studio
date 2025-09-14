@@ -23,6 +23,21 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     description: 'Allow users to browse the gallery without creating an account',
     defaultValue: false,
   },
+  {
+    key: 'config.gallery_file_extensions',
+    type: 'text',
+    label: 'Gallery File Extensions',
+    description:
+      'Comma-separated list of file extensions to show in gallery (e.g., .jpg,.png,.gif)',
+    defaultValue: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif',
+  },
+  {
+    key: 'config.gallery_show_hidden',
+    type: 'boolean',
+    label: 'Show Hidden Files',
+    description: 'Show files and folders that start with a dot (.) in the gallery',
+    defaultValue: false,
+  },
 ]
 
 export function AdminPage({ loaderData }: AdminPageProps) {

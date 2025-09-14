@@ -139,7 +139,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int,
 		}
 
 		// Generate thumbnail URLs for image files
-		if !item.IsDir && r.isImageFile(item.Name) {
+		if !item.IsDir {
 			thumbnailUrls := r.generateThumbnailUrls(item.Path)
 			fileItem.ThumbnailUrls = thumbnailUrls
 		}
@@ -173,7 +173,7 @@ func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileSta
 	}
 
 	// Generate thumbnail URLs for image files
-	if !fileInfo.IsDir && r.isImageFile(fileInfo.Name) {
+	if !fileInfo.IsDir {
 		thumbnailUrls := r.generateThumbnailUrls(fileInfo.Path)
 		fileStat.ThumbnailUrls = thumbnailUrls
 	}
@@ -644,16 +644,6 @@ func (r *mutationResolver) setSystemRegistryEntries(ctx context.Context, entries
 		entryPointers[i] = &entries[i]
 	}
 	return r.SetSystemRegistry(ctx, nil, entryPointers)
-}
-
-// Helper function to check if a file is an image
-func (r *queryResolver) isImageFile(filename string) bool {
-	// Simple image file extension check
-	ext := strings.ToLower(filename)
-	return strings.HasSuffix(ext, ".jpg") || strings.HasSuffix(ext, ".jpeg") ||
-		strings.HasSuffix(ext, ".png") || strings.HasSuffix(ext, ".gif") ||
-		strings.HasSuffix(ext, ".webp") || strings.HasSuffix(ext, ".bmp") ||
-		strings.HasSuffix(ext, ".tiff") || strings.HasSuffix(ext, ".tif")
 }
 
 // ImagorStatus is the resolver for the imagorStatus field.

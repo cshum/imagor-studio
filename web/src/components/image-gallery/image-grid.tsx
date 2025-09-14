@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
-import { getFullImageUrl } from '@/lib/image-utils'
+import { getFullImageUrl } from '@/lib/api-utils'
 
 export interface ImageGridProps {
   images: GalleryImage[]
