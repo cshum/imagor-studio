@@ -39,7 +39,7 @@ type AdminSetupForm = {
 // Define system settings for step 2 - will be translated in component
 const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
   {
-    key: 'config.home_title',
+    key: 'config.app_home_title',
     type: 'text',
     label: t('pages.admin.homeTitle'),
     description: t('pages.admin.homeTitleDescription'),
@@ -314,8 +314,8 @@ export function AdminSetupPage() {
         await setSystemRegistryObject(changedValues)
 
         // Update the store immediately if home title was changed
-        if (changedValues['config.home_title']) {
-          setHomeTitle(changedValues['config.home_title'])
+        if (changedValues['config.app_home_title']) {
+          setHomeTitle(changedValues['config.app_home_title'])
         }
       }
 

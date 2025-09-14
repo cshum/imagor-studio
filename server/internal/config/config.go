@@ -50,7 +50,9 @@ type Config struct {
 	ImagorSignerTruncate int    // Signer truncation length
 
 	// Application Configuration
-	HomeTitle string // Custom home page title
+	AppHomeTitle      string // Custom home page title
+	AppFileExtensions string // Comma-separated list of file extensions
+	AppShowHidden     bool   // Show hidden files starting with dot
 
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
@@ -92,7 +94,9 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		imagorSignerType     = fs.String("imagor-signer-type", "", "imagor signer algorithm: sha1, sha256, sha512")
 		imagorSignerTruncate = fs.String("imagor-signer-truncate", "0", "imagor signer truncation length")
 
-		homeTitle = fs.String("home-title", "", "custom home page title")
+		appHomeTitle      = fs.String("app-home-title", "", "custom home page title")
+		appFileExtensions = fs.String("app-file-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif", "comma-separated list of file extensions to show in application")
+		appShowHidden     = fs.Bool("app-show-hidden", false, "show hidden files and folders starting with dot")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -190,7 +194,9 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		ImagorResultStorage:  *imagorResultStorage,
 		ImagorSignerType:     *imagorSignerType,
 		ImagorSignerTruncate: imagorSignerTruncateInt,
-		HomeTitle:            *homeTitle,
+		AppHomeTitle:         *appHomeTitle,
+		AppFileExtensions:    *appFileExtensions,
+		AppShowHidden:        *appShowHidden,
 		overriddenFlags:      overriddenFlags,
 	}
 

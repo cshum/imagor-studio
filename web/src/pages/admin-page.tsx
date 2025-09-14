@@ -10,7 +10,7 @@ interface AdminPageProps {
 // Define system settings configuration
 const SYSTEM_SETTINGS: SystemSetting[] = [
   {
-    key: 'config.home_title',
+    key: 'config.app_home_title',
     type: 'text',
     label: 'Home Title',
     description: 'Customize the title shown for the home page in navigation and breadcrumbs',
@@ -24,14 +24,14 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     defaultValue: false,
   },
   {
-    key: 'config.gallery_file_extensions',
+    key: 'config.app_file_extensions',
     type: 'text',
     label: 'File Extensions',
     description: 'Comma-separated list of file extensions to show (e.g., .jpg,.png,.gif)',
     defaultValue: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heif',
   },
   {
-    key: 'config.gallery_show_hidden',
+    key: 'config.app_show_hidden',
     type: 'boolean',
     label: 'Show Hidden Files',
     description: 'Show files and folders that start with a dot (.)',
