@@ -52,6 +52,10 @@ type Config struct {
 	// Application Configuration
 	HomeTitle string // Custom home page title
 
+	// Gallery Configuration
+	GalleryFileExtensions string // Comma-separated list of file extensions
+	GalleryShowHidden     bool   // Show hidden files starting with dot
+
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
 }
@@ -93,6 +97,9 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		imagorSignerTruncate = fs.String("imagor-signer-truncate", "0", "imagor signer truncation length")
 
 		homeTitle = fs.String("home-title", "", "custom home page title")
+
+		galleryFileExtensions = fs.String("gallery-file-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heif", "comma-separated list of file extensions to show in gallery")
+		galleryShowHidden     = fs.Bool("gallery-show-hidden", false, "show hidden files and folders starting with dot")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -166,32 +173,34 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 	}
 
 	cfg := &Config{
-		Port:                 portInt,
-		DatabaseURL:          *databaseURL,
-		JWTSecret:            *jwtSecret,
-		JWTExpiration:        jwtExp,
-		AllowGuestMode:       *allowGuestMode,
-		StorageType:          *storageType,
-		FileBaseDir:          *fileBaseDir,
-		FileMkdirPermissions: os.FileMode(mkdirPerm),
-		FileWritePermissions: os.FileMode(writePerm),
-		S3Bucket:             *s3Bucket,
-		S3Region:             *s3Region,
-		S3Endpoint:           *s3Endpoint,
-		S3ForcePathStyle:     *s3ForcePathStyle,
-		S3AccessKeyID:        *s3AccessKeyID,
-		S3SecretAccessKey:    *s3SecretAccessKey,
-		S3SessionToken:       *s3SessionToken,
-		S3BaseDir:            *s3BaseDir,
-		ImagorMode:           *imagorMode,
-		ImagorBaseURL:        *imagorBaseURL,
-		ImagorSecret:         *imagorSecret,
-		ImagorUnsafe:         *imagorUnsafe,
-		ImagorResultStorage:  *imagorResultStorage,
-		ImagorSignerType:     *imagorSignerType,
-		ImagorSignerTruncate: imagorSignerTruncateInt,
-		HomeTitle:            *homeTitle,
-		overriddenFlags:      overriddenFlags,
+		Port:                  portInt,
+		DatabaseURL:           *databaseURL,
+		JWTSecret:             *jwtSecret,
+		JWTExpiration:         jwtExp,
+		AllowGuestMode:        *allowGuestMode,
+		StorageType:           *storageType,
+		FileBaseDir:           *fileBaseDir,
+		FileMkdirPermissions:  os.FileMode(mkdirPerm),
+		FileWritePermissions:  os.FileMode(writePerm),
+		S3Bucket:              *s3Bucket,
+		S3Region:              *s3Region,
+		S3Endpoint:            *s3Endpoint,
+		S3ForcePathStyle:      *s3ForcePathStyle,
+		S3AccessKeyID:         *s3AccessKeyID,
+		S3SecretAccessKey:     *s3SecretAccessKey,
+		S3SessionToken:        *s3SessionToken,
+		S3BaseDir:             *s3BaseDir,
+		ImagorMode:            *imagorMode,
+		ImagorBaseURL:         *imagorBaseURL,
+		ImagorSecret:          *imagorSecret,
+		ImagorUnsafe:          *imagorUnsafe,
+		ImagorResultStorage:   *imagorResultStorage,
+		ImagorSignerType:      *imagorSignerType,
+		ImagorSignerTruncate:  imagorSignerTruncateInt,
+		HomeTitle:             *homeTitle,
+		GalleryFileExtensions: *galleryFileExtensions,
+		GalleryShowHidden:     *galleryShowHidden,
+		overriddenFlags:       overriddenFlags,
 	}
 
 	// Validate storage configuration
