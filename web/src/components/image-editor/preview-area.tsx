@@ -3,6 +3,7 @@ import { AlertCircle, Download, ZoomIn, ZoomOut } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
 
 interface PreviewAreaProps {
@@ -27,6 +28,7 @@ export function PreviewArea({
     null,
   )
   const [zoom, setZoom] = useState(1)
+  const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
 
   const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
 
@@ -131,25 +133,29 @@ export function PreviewArea({
 
       {/* Preview Controls */}
       <div className='bg-background flex items-center justify-between border-t p-4'>
-        <div className='text-muted-foreground flex items-center gap-4 text-sm'>
-          <span>Editing: {imagePath}</span>
-          {imageDimensions && (
-            <>
-              <span>•</span>
-              <span>
-                {imageDimensions.width} × {imageDimensions.height}
-              </span>
-            </>
-          )}
-          {zoom !== 1 && (
-            <>
-              <span>•</span>
-              <span>Zoom: {Math.round(zoom * 100)}%</span>
-            </>
-          )}
-        </div>
+        {/* Left side info - hidden on mobile */}
+        {!isMobile && (
+          <div className='text-muted-foreground flex items-center gap-4 text-sm'>
+            <span>Editing: {imagePath}</span>
+            {imageDimensions && (
+              <>
+                <span>•</span>
+                <span>
+                  {imageDimensions.width} × {imageDimensions.height}
+                </span>
+              </>
+            )}
+            {zoom !== 1 && (
+              <>
+                <span>•</span>
+                <span>Zoom: {Math.round(zoom * 100)}%</span>
+              </>
+            )}
+          </div>
+        )}
 
-        <div className='flex items-center gap-2'>
+        {/* Controls - full width on mobile */}
+        <div className={`flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}>
           {/* Zoom Controls */}
           <div className='mr-2 flex items-center gap-1'>
             <Button

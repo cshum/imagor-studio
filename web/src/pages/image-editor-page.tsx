@@ -82,10 +82,16 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
         <div className='flex items-center gap-2 border-b p-4'>
           <Button variant='ghost' size='sm' onClick={handleBack}>
             <ChevronLeft className='mr-1 h-4 w-4' />
-            Back to Gallery
+            Back
           </Button>
-          <Separator orientation='vertical' className='h-4' />
-          <span className='text-muted-foreground text-sm'>Editing: {imagePath}</span>
+
+          {/* Only show title on desktop */}
+          {!isMobile && (
+            <>
+              <Separator orientation='vertical' className='h-4' />
+              <span className='text-muted-foreground text-sm'>Editing: {imagePath}</span>
+            </>
+          )}
 
           {/* Mobile Controls Trigger */}
           {isMobile && (
