@@ -273,8 +273,8 @@ status: ## Show project status
 info: ## Show project information
 	@echo "$(GREEN)Imagor Studio Project$(NC)"
 	@echo "$(YELLOW)Web Frontend:$(NC) React + Vite + TypeScript"
-	@echo "$(YELLOW)Server Backend:$(NC) Go + GraphQL + libvips"
-	@echo "$(YELLOW)Docker:$(NC) Multi-stage build with ImageMagick"
+	@echo "$(YELLOW)Server Backend:$(NC) Go + GraphQL + imagor + libvips"
+	@echo "$(YELLOW)Docker:$(NC) Multi-stage build for server, web and runtime"
 	@echo ""
 	@echo "$(YELLOW)Development URLs:$(NC)"
 	@echo "  Web:    http://localhost:5173"
