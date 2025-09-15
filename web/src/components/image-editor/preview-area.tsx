@@ -115,7 +115,13 @@ export function PreviewArea({
               onLoad={handleImageLoad}
               onError={handleImageError}
               className='max-h-full max-w-full rounded-lg object-contain shadow-lg'
-              style={{ display: imageLoaded ? 'block' : 'none' }}
+              style={{ 
+                display: imageLoaded ? 'block' : 'none',
+                maxHeight: isMobile ? '70vh' : '80vh',
+                maxWidth: '100%',
+                width: 'auto',
+                height: 'auto'
+              }}
             />
             {!imageLoaded && <Skeleton className='h-64 w-96 rounded-lg' />}
           </div>

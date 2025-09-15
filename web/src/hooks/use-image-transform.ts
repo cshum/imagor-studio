@@ -163,23 +163,34 @@ export function useImageTransform({
 
   // Reset all parameters
   const resetParams = useCallback(() => {
-    setParams({})
-    setPreviewUrl('')
-    // Generate URL for original image (no transforms)
-    generateUrlMutation.mutate({} as ImagorParamsInput)
-  }, [generateUrlMutation])
+    const resetState = {
+      fitIn: true, // Use fit mode to prevent layout breaking
+      width: undefined,
+      height: undefined,
+    }
+    setParams(resetState)
+    // Generate URL with fit mode
+    debouncedGenerateUrl(resetState)
+  }, [debouncedGenerateUrl])
 
   // Set original image dimensions (called when image loads)
   const setOriginalDimensions = useCallback((width: number, height: number) => {
     const aspectRatio = width / height
     setOriginalAspectRatio(aspectRatio)
 
-    // Set initial dimensions if not already set
-    setParams((prev) => ({
-      ...prev,
-      width: prev.width ?? width,
-      height: prev.height ?? height,
-    }))
+    // Don't set original dimensions as initial params to avoid layout breaking
+    // Instead, let the image display with fit mode by default
+    setParams((prev) => {
+      // Only set dimensions if they were explicitly set by user
+      if (prev.width || prev.height) {
+        return prev
+      }
+      // For initial load, use fit mode instead of original dimensions
+      return {
+        ...prev,
+        fitIn: true,
+      }
+    })
   }, [])
 
   // Toggle aspect ratio lock
