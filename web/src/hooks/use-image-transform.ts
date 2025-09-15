@@ -48,6 +48,10 @@ export function useImageTransform({
   const [previewUrl, setPreviewUrl] = useState<string>('')
   const [aspectLocked, setAspectLocked] = useState(true)
   const [originalAspectRatio, setOriginalAspectRatio] = useState<number | null>(null)
+  const [originalDimensions, setOriginalDimensionsState] = useState<{
+    width: number
+    height: number
+  } | null>(null)
 
   // Mutation for generating Imagor URLs
   const generateUrlMutation = useMutation({
@@ -163,20 +167,39 @@ export function useImageTransform({
 
   // Reset all parameters
   const resetParams = useCallback(() => {
-    const resetState = {
-      fitIn: true, // Use fit mode to prevent layout breaking
-      width: undefined,
-      height: undefined,
+    const resetState: ImageTransformState = {
+      // Reset to original dimensions if available
+      width: originalDimensions?.width,
+      height: originalDimensions?.height,
+      // Clear all other transforms
+      cropLeft: undefined,
+      cropTop: undefined,
+      cropRight: undefined,
+      cropBottom: undefined,
+      fitIn: undefined,
+      stretch: undefined,
+      hAlign: undefined,
+      vAlign: undefined,
+      brightness: undefined,
+      contrast: undefined,
+      saturation: undefined,
+      grayscale: undefined,
     }
     setParams(resetState)
-    // Generate URL with fit mode
+    // Generate URL with original dimensions
     debouncedGenerateUrl(resetState)
-  }, [debouncedGenerateUrl])
+  }, [originalDimensions, debouncedGenerateUrl])
 
   // Set original image dimensions (called when image loads)
   const setOriginalDimensions = useCallback((width: number, height: number) => {
     const aspectRatio = width / height
     setOriginalAspectRatio(aspectRatio)
+
+    // Store original dimensions for reset functionality
+    setOriginalDimensionsState({
+      width,
+      height,
+    })
 
     // Don't set original dimensions as initial params to avoid layout breaking
     // Instead, let the image display with fit mode by default
