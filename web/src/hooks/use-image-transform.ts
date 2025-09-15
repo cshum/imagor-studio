@@ -191,40 +191,47 @@ export function useImageTransform({
   }, [originalDimensions, debouncedGenerateUrl])
 
   // Set original image dimensions (called when image loads)
-  const setOriginalDimensions = useCallback((width: number, height: number) => {
-    const aspectRatio = width / height
-    setOriginalAspectRatio(aspectRatio)
+  const setOriginalDimensions = useCallback(
+    (width: number, height: number) => {
+      const aspectRatio = width / height
+      setOriginalAspectRatio(aspectRatio)
 
-    // Store original dimensions for reset functionality
-    setOriginalDimensionsState({
-      width,
-      height,
-    })
+      // Store original dimensions for reset functionality
+      setOriginalDimensionsState({
+        width,
+        height,
+      })
 
-    // Don't set original dimensions as initial params to avoid layout breaking
-    // Instead, let the image display with fit mode by default
-    setParams((prev) => {
-      // Only set dimensions if they were explicitly set by user
-      if (prev.width || prev.height) {
-        return prev
-      }
-      // For initial load, use fit mode instead of original dimensions
-      return {
-        ...prev,
-        fitIn: true,
-      }
-    })
-  }, [])
+      // Set original dimensions as initial params when image loads
+      setParams((prev) => {
+        // Only set dimensions if they haven't been explicitly set by user
+        if (prev.width || prev.height) {
+          return prev
+        }
+        // For initial load, use original dimensions
+        const initialState = {
+          ...prev,
+          width,
+          height,
+          fitIn: undefined, // Remove fit mode
+        }
+        // Generate URL with original dimensions
+        debouncedGenerateUrl(initialState)
+        return initialState
+      })
+    },
+    [debouncedGenerateUrl],
+  )
 
   // Toggle aspect ratio lock
   const toggleAspectLock = useCallback(() => {
     setAspectLocked((prev) => !prev)
   }, [])
 
-  // Generate initial preview URL on mount with fit mode
+  // Generate initial preview URL on mount - will be updated when original dimensions are known
   useMemo(() => {
     if (Object.keys(params).length === 0) {
-      // Call reset logic on initial load to ensure image shows with fit mode
+      // Start with fit mode, will be updated to original dimensions when image loads
       const initialState = {
         fitIn: true,
         width: undefined,
