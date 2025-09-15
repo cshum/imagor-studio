@@ -459,6 +459,14 @@ export type ConfigureExternalImagorMutation = {
   }
 }
 
+export type GenerateImagorUrlMutationVariables = Exact<{
+  galleryKey: Scalars['String']['input']
+  imageKey: Scalars['String']['input']
+  params: ImagorParamsInput
+}>
+
+export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImagorUrl: string }
+
 export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
   key: string
@@ -983,6 +991,15 @@ export const ConfigureExternalImagorDocument = gql`
     }
   }
 `
+export const GenerateImagorUrlDocument = gql`
+  mutation GenerateImagorUrl(
+    $galleryKey: String!
+    $imageKey: String!
+    $params: ImagorParamsInput!
+  ) {
+    generateImagorUrl(galleryKey: $galleryKey, imageKey: $imageKey, params: $params)
+  }
+`
 export const ListUserRegistryDocument = gql`
   query ListUserRegistry($prefix: String, $ownerID: String) {
     listUserRegistry(prefix: $prefix, ownerID: $ownerID) {
@@ -1267,6 +1284,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'ConfigureExternalImagor',
+        'mutation',
+        variables,
+      )
+    },
+    GenerateImagorUrl(
+      variables: GenerateImagorUrlMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<GenerateImagorUrlMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<GenerateImagorUrlMutation>({
+            document: GenerateImagorUrlDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'GenerateImagorUrl',
         'mutation',
         variables,
       )

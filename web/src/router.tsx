@@ -24,6 +24,7 @@ import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
 import { AdminPage } from '@/pages/admin-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
+import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
@@ -112,6 +113,16 @@ const rootImagePage = createRoute({
   },
 })
 
+const rootImageEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/$imageKey/editor',
+  beforeLoad: requireAuth,
+  component: () => {
+    const { imageKey } = rootImageEditorRoute.useParams()
+    return <ImageEditorPage galleryKey='' imageKey={imageKey} />
+  },
+})
+
 const galleryRoute = createRoute({
   getParentRoute: () => baseLayoutRoute,
   path: '/gallery/$galleryKey',
@@ -143,6 +154,16 @@ const imagePage = createRoute({
         imageKey={imageKey}
       />
     )
+  },
+})
+
+const galleryImageEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/gallery/$galleryKey/$imageKey/editor',
+  beforeLoad: requireAuth,
+  component: () => {
+    const { galleryKey, imageKey } = galleryImageEditorRoute.useParams()
+    return <ImageEditorPage galleryKey={galleryKey} imageKey={imageKey} />
   },
 })
 
@@ -200,6 +221,8 @@ const accountUsersRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   loginRoute,
   adminSetupRoute,
+  rootImageEditorRoute,
+  galleryImageEditorRoute,
   baseLayoutRoute.addChildren([
     rootPath.addChildren([rootImagePage]),
     galleryRoute.addChildren([imagePage]),

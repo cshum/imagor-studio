@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
+import { useNavigate } from '@tanstack/react-router'
 import { AnimatePresence, motion, PanInfo } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Info, X, ZoomIn, ZoomOut } from 'lucide-react'
 
@@ -29,6 +30,8 @@ export interface FullScreenImageProps {
   onPrevImage?: () => void
   onNextImage?: () => void
   initialPosition?: Position
+  galleryKey?: string
+  imageKey: string
 }
 
 export interface ImageDimensions {
@@ -47,7 +50,10 @@ export function ImageView({
   onPrevImage,
   onNextImage,
   initialPosition,
+  galleryKey = '',
+  imageKey,
 }: FullScreenImageProps) {
+  const navigate = useNavigate()
   const duration = 0.2
   const [scale, setScale] = useState(1)
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
@@ -172,6 +178,21 @@ export function ImageView({
     // Only handle click if we weren't dragging
     if (!isDragging) {
       handleCloseFullView()
+    }
+  }
+
+  const handleImagorClick = () => {
+    // Navigate to image editor
+    if (galleryKey) {
+      navigate({
+        to: '/gallery/$galleryKey/$imageKey/editor',
+        params: { galleryKey, imageKey },
+      })
+    } else {
+      navigate({
+        to: '/$imageKey/editor',
+        params: { imageKey },
+      })
     }
   }
 
@@ -346,7 +367,10 @@ export function ImageView({
             )}
 
             <div className='absolute top-4 right-8 z-60 flex space-x-2'>
-              <button className='rounded-full bg-black/50 px-4 py-2 text-white transition-colors hover:bg-black/75'>
+              <button
+                onClick={handleImagorClick}
+                className='rounded-full bg-black/50 px-4 py-2 text-white transition-colors hover:bg-black/75'
+              >
                 imagor
               </button>
               <button
