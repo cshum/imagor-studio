@@ -19,122 +19,6 @@ interface ImageEditorPageProps {
   imageKey: string
 }
 
-interface TransformControlsProps {
-  params: any
-  aspectLocked: boolean
-  originalAspectRatio: number | null
-  updateParam: (key: string, value: any) => void
-  resetParams: () => void
-  toggleAspectLock: () => void
-  handleCopyUrl: () => void
-  handleApplyAndReturn: () => void
-  previewUrl: string
-  isLoading: boolean
-}
-
-function TransformControls({
-  params,
-  aspectLocked,
-  originalAspectRatio,
-  updateParam,
-  resetParams,
-  toggleAspectLock,
-  handleCopyUrl,
-  handleApplyAndReturn,
-  previewUrl,
-  isLoading,
-}: TransformControlsProps) {
-  return (
-    <div className='flex h-full flex-col'>
-      {/* Reset Button */}
-      <div className='mb-4 flex justify-end'>
-        <Button variant='ghost' size='sm' onClick={resetParams}>
-          <RotateCcw className='mr-1 h-4 w-4' />
-          Reset All
-        </Button>
-      </div>
-
-      {/* Controls */}
-      <div className='flex-1 space-y-4 overflow-y-auto'>
-        {/* Dimensions & Resize */}
-        <Card className='p-4'>
-          <Collapsible defaultOpen>
-            <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
-              <div className='flex items-center gap-2'>
-                <span>📐</span>
-                <span className='font-medium'>Dimensions & Resize</span>
-              </div>
-              <ChevronDown className='h-4 w-4' />
-            </CollapsibleTrigger>
-            <CollapsibleContent className='mt-4'>
-              <DimensionControls
-                params={params}
-                aspectLocked={aspectLocked}
-                originalAspectRatio={originalAspectRatio}
-                onUpdateParam={updateParam}
-                onToggleAspectLock={toggleAspectLock}
-              />
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-
-        {/* Crop & Trim */}
-        <Card className='p-4'>
-          <Collapsible>
-            <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
-              <div className='flex items-center gap-2'>
-                <span>✂️</span>
-                <span className='font-medium'>Crop & Trim</span>
-              </div>
-              <ChevronDown className='h-4 w-4' />
-            </CollapsibleTrigger>
-            <CollapsibleContent className='mt-4'>
-              <CropControls params={params} onUpdateParam={updateParam} />
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-
-        {/* Color & Effects - Placeholder for Phase 4 */}
-        <Card className='p-4'>
-          <Collapsible>
-            <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
-              <div className='flex items-center gap-2'>
-                <span>🎨</span>
-                <span className='font-medium'>Color & Effects</span>
-              </div>
-              <ChevronDown className='h-4 w-4' />
-            </CollapsibleTrigger>
-            <CollapsibleContent className='mt-4'>
-              <div className='text-muted-foreground bg-muted/50 rounded p-2 text-sm'>
-                Color and effects controls will be available in Phase 4.
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-      </div>
-
-      {/* Action Buttons */}
-      <div className='mt-4 space-y-2 border-t pt-4'>
-        <div className='flex gap-2'>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={handleCopyUrl}
-            disabled={!previewUrl}
-            className='flex-1'
-          >
-            <Copy className='mr-1 h-4 w-4' />
-            Copy URL
-          </Button>
-        </div>
-        <Button onClick={handleApplyAndReturn} disabled={isLoading} className='w-full'>
-          Apply & Return
-        </Button>
-      </div>
-    </div>
-  )
-}
-
 export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) {
   const navigate = useNavigate()
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
@@ -213,23 +97,95 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                     Controls
                   </Button>
                 </SheetTrigger>
-                <SheetContent side='bottom' className='h-[80vh]'>
+                <SheetContent side='right' className='flex w-80 flex-col sm:w-96'>
                   <SheetHeader>
                     <SheetTitle>Transform Controls</SheetTitle>
                   </SheetHeader>
-                  <div className='mt-4'>
-                    <TransformControls
-                      params={params}
-                      aspectLocked={aspectLocked}
-                      originalAspectRatio={originalAspectRatio}
-                      updateParam={updateParam as (key: string, value: any) => void}
-                      resetParams={resetParams}
-                      toggleAspectLock={toggleAspectLock}
-                      handleCopyUrl={handleCopyUrl}
-                      handleApplyAndReturn={handleApplyAndReturn}
-                      previewUrl={previewUrl}
-                      isLoading={isLoading}
-                    />
+
+                  {/* Reset Button */}
+                  <div className='flex justify-end border-b pb-4'>
+                    <Button variant='ghost' size='sm' onClick={resetParams}>
+                      <RotateCcw className='mr-1 h-4 w-4' />
+                      Reset All
+                    </Button>
+                  </div>
+
+                  {/* Scrollable Controls */}
+                  <div className='flex-1 space-y-4 overflow-y-auto p-4'>
+                    {/* Dimensions & Resize */}
+                    <Card className='p-4'>
+                      <Collapsible defaultOpen>
+                        <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
+                          <div className='flex items-center gap-2'>
+                            <span>📐</span>
+                            <span className='font-medium'>Dimensions & Resize</span>
+                          </div>
+                          <ChevronDown className='h-4 w-4' />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className='mt-4'>
+                          <DimensionControls
+                            params={params}
+                            aspectLocked={aspectLocked}
+                            originalAspectRatio={originalAspectRatio}
+                            onUpdateParam={updateParam}
+                            onToggleAspectLock={toggleAspectLock}
+                          />
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </Card>
+
+                    {/* Crop & Trim */}
+                    <Card className='p-4'>
+                      <Collapsible>
+                        <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
+                          <div className='flex items-center gap-2'>
+                            <span>✂️</span>
+                            <span className='font-medium'>Crop & Trim</span>
+                          </div>
+                          <ChevronDown className='h-4 w-4' />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className='mt-4'>
+                          <CropControls params={params} onUpdateParam={updateParam} />
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </Card>
+
+                    {/* Color & Effects - Placeholder for Phase 4 */}
+                    <Card className='p-4'>
+                      <Collapsible>
+                        <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
+                          <div className='flex items-center gap-2'>
+                            <span>🎨</span>
+                            <span className='font-medium'>Color & Effects</span>
+                          </div>
+                          <ChevronDown className='h-4 w-4' />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className='mt-4'>
+                          <div className='text-muted-foreground bg-muted/50 rounded p-2 text-sm'>
+                            Color and effects controls will be available in Phase 4.
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </Card>
+                  </div>
+
+                  {/* Action Buttons - Fixed at bottom */}
+                  <div className='space-y-2 border-t p-4'>
+                    <div className='flex gap-2'>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={handleCopyUrl}
+                        disabled={!previewUrl}
+                        className='flex-1'
+                      >
+                        <Copy className='mr-1 h-4 w-4' />
+                        Copy URL
+                      </Button>
+                    </div>
+                    <Button onClick={handleApplyAndReturn} disabled={isLoading} className='w-full'>
+                      Apply & Return
+                    </Button>
                   </div>
                 </SheetContent>
               </Sheet>
