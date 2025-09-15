@@ -162,12 +162,6 @@ export function DimensionControls({
               Stretch
             </Label>
           </div>
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='exact' id='exact' />
-            <Label htmlFor='exact' className='text-sm'>
-              Exact
-            </Label>
-          </div>
         </RadioGroup>
 
         <div className='text-muted-foreground space-y-1 text-xs'>

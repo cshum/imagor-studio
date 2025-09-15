@@ -46,7 +46,7 @@ export function useImageTransform({
 }: UseImageTransformProps) {
   const [params, setParams] = useState<ImageTransformState>({})
   const [previewUrl, setPreviewUrl] = useState<string>('')
-  const [aspectLocked, setAspectLocked] = useState(true)
+  const [aspectLocked, setAspectLocked] = useState(false)
   const [originalAspectRatio, setOriginalAspectRatio] = useState<number | null>(null)
   const [originalDimensions, setOriginalDimensionsState] = useState<{
     width: number
