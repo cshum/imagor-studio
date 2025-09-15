@@ -20,8 +20,14 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build test image
-        run: |
-          docker build --target server-builder -t imagor-studio-test .
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: server-builder
+          tags: imagor-studio-test
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Run web tests in Docker
         run: |
@@ -70,8 +76,13 @@ jobs:
             sh -c "cd server && test -z \"\$(go fmt ./...)\""
 
       - name: Build full Docker image (verification)
-        run: |
-          docker build -t imagor-studio-full .
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          tags: imagor-studio-full
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Test Docker image functionality
         run: |
