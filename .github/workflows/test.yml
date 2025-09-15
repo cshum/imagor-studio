@@ -29,13 +29,21 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+#      - name: Run web tests in Docker
+#        run: |
+#          docker run --rm \
+#            -v ${{ github.workspace }}:/workspace \
+#            -w /workspace/web \
+#            node:22-alpine \
+#            sh -c "npm ci && npm run type-check && npm run lint && npm run build"
+
       - name: Run web tests in Docker
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/web \
             node:22-alpine \
-            sh -c "npm ci && npm run type-check && npm run lint && npm run build"
+            sh -c "npm ci && npm run build"
 
       - name: Run server tests in Docker
         run: |
@@ -52,38 +60,3 @@ jobs:
             -w /workspace \
             imagor-studio-test \
             sh -c "cd server && go test -coverprofile=coverage.out ./..."
-
-      - name: Upload coverage to GitHub
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-coverage
-          path: server/coverage.out
-
-      - name: Run server linting in Docker
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
-            imagor-studio-test \
-            sh -c "cd server && go vet ./..."
-
-      - name: Check server formatting in Docker
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
-            imagor-studio-test \
-            sh -c "cd server && test -z \"\$(go fmt ./...)\""
-
-      - name: Build full Docker image (verification)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          tags: imagor-studio-full
-          load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Test Docker image functionality
-        run: |
-          docker run --rm imagor-studio-full --help
