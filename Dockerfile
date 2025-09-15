@@ -1,6 +1,6 @@
-ARG GOLANG_VERSION=1.25.0
-ARG NODE_VERSION=20
-ARG VIPS_VERSION=8.17.1
+ARG GOLANG_VERSION=1.25.1
+ARG NODE_VERSION=22.19.0
+ARG VIPS_VERSION=8.17.2
 
 # Stage 1: Build web frontend
 FROM node:${NODE_VERSION}-alpine AS web-builder
@@ -19,7 +19,7 @@ COPY web/ ./
 # Build the frontend (outputs to ../server/static)
 RUN npm run build
 
-# Stage 2: Build server with libvips + ImageMagick
+# Stage 2: Build server with libvips
 FROM golang:${GOLANG_VERSION}-trixie AS server-builder
 
 ARG VIPS_VERSION
@@ -27,7 +27,7 @@ ARG TARGETARCH
 
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
-# Install libvips + required libraries + ImageMagick (always enabled)
+# Install libvips + required libraries
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
   apt-get install --no-install-recommends -y \
@@ -84,7 +84,7 @@ LABEL maintainer="imagor-studio"
 COPY --from=server-builder /usr/local/lib /usr/local/lib
 COPY --from=server-builder /etc/ssl/certs /etc/ssl/certs
 
-# Install runtime dependencies including ImageMagick
+# Install runtime dependencies
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
   apt-get install --no-install-recommends -y \
@@ -103,10 +103,6 @@ RUN DEBIAN_FRONTEND=noninteractive \
 # Copy the server binary
 COPY --from=server-builder /go/bin/imagor-studio /usr/local/bin/imagor-studio
 
-# Copy server directory structure (needed for migrations)
-COPY --from=server-builder /app/server /app/server
-
-# Set environment variables (similar to imagor)
 ENV VIPS_WARNING=0
 ENV MALLOC_ARENA_MAX=2
 ENV LD_PRELOAD=/usr/local/lib/libjemalloc.so
@@ -117,8 +113,8 @@ ENV STORAGE_PATH=/app/data/storage
 # Create data directory structure
 RUN mkdir -p /app/data/storage
 
-# Set working directory to where migrations expect to run
-WORKDIR /app/server
+# Set working directory
+WORKDIR /app
 
 # Use unprivileged user
 USER nobody
