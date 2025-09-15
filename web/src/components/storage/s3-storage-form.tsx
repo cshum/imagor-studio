@@ -53,7 +53,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
       resolver: zodResolver(s3StorageSchema),
       defaultValues: {
         bucket: initialValues?.bucket || '',
-        region: initialValues?.region || 'us-east-1',
+        region: initialValues?.region || '',
         endpoint: initialValues?.endpoint || '',
         forcePathStyle: initialValues?.forcePathStyle || false,
         accessKeyId: initialValues?.accessKeyId || '',
@@ -84,7 +84,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                   <FormItem>
                     <FormLabel>{t('pages.storage.bucketName')} *</FormLabel>
                     <FormControl>
-                      <Input placeholder='my-image-bucket' {...field} disabled={disabled} />
+                      <Input {...field} disabled={disabled} />
                     </FormControl>
                     <FormDescription>{t('pages.storage.bucketDescription')}</FormDescription>
                     <FormMessage />
@@ -99,7 +99,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                   <FormItem>
                     <FormLabel>{t('pages.storage.region')}</FormLabel>
                     <FormControl>
-                      <Input placeholder='us-east-1' {...field} disabled={disabled} />
+                      <Input {...field} disabled={disabled} />
                     </FormControl>
                     <FormDescription>{t('pages.storage.regionDescription')}</FormDescription>
                     <FormMessage />
@@ -114,7 +114,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                   <FormItem>
                     <FormLabel>{t('pages.storage.accessKeyId')}</FormLabel>
                     <FormControl>
-                      <Input placeholder='AKIAIOSFODNN7EXAMPLE' {...field} disabled={disabled} />
+                      <Input {...field} disabled={disabled} />
                     </FormControl>
                     <FormDescription>{t('pages.storage.accessKeyIdDescription')}</FormDescription>
                     <FormMessage />
@@ -129,12 +129,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                   <FormItem>
                     <FormLabel>{t('pages.storage.secretAccessKey')}</FormLabel>
                     <FormControl>
-                      <Input
-                        type='password'
-                        placeholder='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
-                        {...field}
-                        disabled={disabled}
-                      />
+                      <Input type='password' {...field} disabled={disabled} />
                     </FormControl>
                     <FormDescription>
                       {t('pages.storage.secretAccessKeyDescription')}

@@ -279,6 +279,8 @@ export function StorageConfigurationWizard({
               {t('common.buttons.cancel')}
             </Button>
           )}
+        </div>
+        <div className='flex gap-3'>
           <ButtonWithLoading
             type='button'
             variant='outline'
@@ -288,21 +290,21 @@ export function StorageConfigurationWizard({
           >
             {t('pages.storage.testConfiguration')}
           </ButtonWithLoading>
+          <ButtonWithLoading
+            type='submit'
+            disabled={isTesting || isConfigOverridden}
+            isLoading={isLoading}
+            onClick={() => {
+              // Trigger form submission based on storage type
+              const form = document.querySelector('form')
+              if (form) {
+                form.requestSubmit()
+              }
+            }}
+          >
+            {t('pages.storage.configureStorage')}
+          </ButtonWithLoading>
         </div>
-        <ButtonWithLoading
-          type='submit'
-          disabled={isTesting || isConfigOverridden}
-          isLoading={isLoading}
-          onClick={() => {
-            // Trigger form submission based on storage type
-            const form = document.querySelector('form')
-            if (form) {
-              form.requestSubmit()
-            }
-          }}
-        >
-          {t('pages.storage.configureStorage')}
-        </ButtonWithLoading>
       </div>
     </div>
   )

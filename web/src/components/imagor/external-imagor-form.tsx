@@ -67,6 +67,15 @@ export const ExternalImagorForm = forwardRef<ExternalImagorFormRef, ExternalImag
 
     return (
       <div className='space-y-6'>
+        <div className='rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950'>
+          <div className='text-sm text-blue-800 dark:text-blue-200'>
+            <div className='font-medium mb-2'>{t('pages.imagor.externalRequirements')}</div>
+            <ul className='list-disc list-inside space-y-1'>
+              <li>{t('pages.imagor.externalRequirement1')}</li>
+              <li>{t('pages.imagor.externalRequirement2')}</li>
+            </ul>
+          </div>
+        </div>
         <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
           <div className={cn('space-y-6', disabled && 'opacity-60')}>
             <div className='space-y-2'>

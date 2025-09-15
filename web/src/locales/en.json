@@ -153,10 +153,10 @@
       "embeddedConfiguration": "Embedded Imagor Configuration",
       "externalConfiguration": "External Imagor Configuration",
       "secret": "Secret Key",
-      "secretPlaceholder": "Enter imagor secret",
+      "secretPlaceholder": "",
       "secretDescription": "Optional secret key for signing image URLs. Leave empty to use the JWT secret.",
       "externalSecretDescription": "Secret key used by the external Imagor service for URL signing.",
-      "embeddedModeSimplified": "Embedded mode uses simple configuration with fixed secure defaults. No additional configuration required.",
+      "embeddedModeSimplified": "Embedded mode uses fixed configuration with secure defaults. No additional configuration required.",
       "enableEmbeddedMode": "Enable Embedded Mode",
       "baseUrl": "Base URL",
       "baseUrlRequired": "Base URL is required",
@@ -186,7 +186,10 @@
       "hasSecret": "Has Secret",
       "serverRestartRequired": "Server restart required",
       "serverRestartDescription": "Imagor configuration changes will take effect after restarting the server.",
-      "noCache": "No Cache"
+      "noCache": "No Cache",
+      "externalRequirements": "Requirements for external mode:",
+      "externalRequirement1": "External imagor loader/storage must align with Imagor Studio storage settings",
+      "externalRequirement2": "CORS must be enabled for metadata/EXIF access"
     }
   },
   "home": "Home",
