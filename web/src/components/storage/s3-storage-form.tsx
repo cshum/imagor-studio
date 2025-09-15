@@ -164,11 +164,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                       <FormItem>
                         <FormLabel>{t('pages.storage.customEndpoint')}</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder='https://s3.amazonaws.com'
-                            {...field}
-                            disabled={disabled}
-                          />
+                          <Input {...field} disabled={disabled} />
                         </FormControl>
                         <FormDescription>
                           {t('pages.storage.customEndpointDescription')}
@@ -213,7 +209,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                       <FormItem>
                         <FormLabel>{t('pages.storage.baseDirectory')}</FormLabel>
                         <FormControl>
-                          <Input placeholder='images/' {...field} disabled={disabled} />
+                          <Input {...field} disabled={disabled} />
                         </FormControl>
                         <FormDescription>
                           {t('pages.storage.baseDirectoryDescription')}
@@ -230,12 +226,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
                       <FormItem>
                         <FormLabel>{t('pages.storage.sessionToken')}</FormLabel>
                         <FormControl>
-                          <Input
-                            type='password'
-                            placeholder='Optional session token'
-                            {...field}
-                            disabled={disabled}
-                          />
+                          <Input type='password' {...field} disabled={disabled} />
                         </FormControl>
                         <FormDescription>
                           {t('pages.storage.sessionTokenDescription')}
