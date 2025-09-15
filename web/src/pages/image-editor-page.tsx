@@ -97,7 +97,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                     Controls
                   </Button>
                 </SheetTrigger>
-                <SheetContent side='right' className='flex w-80 flex-col sm:w-96'>
+                <SheetContent side='right' className='flex w-full flex-col sm:w-96'>
                   <SheetHeader>
                     <SheetTitle>Transform Controls</SheetTitle>
                   </SheetHeader>
