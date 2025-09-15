@@ -241,6 +241,82 @@ func TestImagorParamsConversion(t *testing.T) {
 	})
 }
 
+func TestGenerateThumbnailUrls(t *testing.T) {
+	// Setup test resolver with mocked imagor provider
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockImagorProvider := new(MockImagorProvider)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, logger)
+
+	t.Run("GeneratesThumbnailUrls", func(t *testing.T) {
+		imagePath := "test/image.jpg"
+
+		// Mock all the expected calls for thumbnail generation
+		mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+			Width:  300,
+			Height: 225,
+			Filters: imagorpath.Filters{
+				{Name: "quality", Args: "80"},
+				{Name: "format", Args: "webp"},
+				{Name: "max_frames", Args: "1"},
+			},
+		}).Return("/imagor/300x225/filters:quality(80):format(webp):max_frames(1)/test/image.jpg", nil)
+
+		mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+			Width:  1200,
+			Height: 900,
+			FitIn:  true,
+			Filters: imagorpath.Filters{
+				{Name: "quality", Args: "90"},
+				{Name: "format", Args: "webp"},
+			},
+		}).Return("/imagor/fit-in/1200x900/filters:quality(90):format(webp)/test/image.jpg", nil)
+
+		mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+			Width:  2400,
+			Height: 1800,
+			FitIn:  true,
+			Filters: imagorpath.Filters{
+				{Name: "quality", Args: "95"},
+				{Name: "format", Args: "webp"},
+			},
+		}).Return("/imagor/fit-in/2400x1800/filters:quality(95):format(webp)/test/image.jpg", nil)
+
+		mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+			Filters: imagorpath.Filters{
+				{Name: "raw"},
+			},
+		}).Return("/imagor/filters:raw()/test/image.jpg", nil)
+
+		mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+			Meta: true,
+		}).Return("/imagor/meta/test/image.jpg", nil)
+
+		result := resolver.generateThumbnailUrls(imagePath)
+
+		require.NotNil(t, result)
+		assert.NotNil(t, result.Grid)
+		assert.NotNil(t, result.Preview)
+		assert.NotNil(t, result.Full)
+		assert.NotNil(t, result.Original)
+		assert.NotNil(t, result.Meta)
+
+		mockImagorProvider.AssertExpectations(t)
+	})
+
+	t.Run("NilImagorProvider", func(t *testing.T) {
+		// Create resolver without imagor provider
+		resolverWithoutImagor := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+
+		result := resolverWithoutImagor.generateThumbnailUrls("test/image.jpg")
+		assert.Nil(t, result)
+	})
+}
+
 // Helper function for creating float pointers (intPtr and stringPtr already exist in resolver_test.go)
 func floatPtr(f float64) *float64 {
 	return &f
