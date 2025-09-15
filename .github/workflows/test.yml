@@ -1,0 +1,78 @@
+name: test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Docker Test
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build test image
+        run: |
+          docker build --target server-builder -t imagor-studio-test .
+
+      - name: Run web tests in Docker
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace/web \
+            node:22-alpine \
+            sh -c "npm ci && npm run type-check && npm run lint && npm run build"
+
+      - name: Run server tests in Docker
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            imagor-studio-test \
+            sh -c "cd server && go test ./... -v"
+
+      - name: Run server tests with coverage in Docker
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            imagor-studio-test \
+            sh -c "cd server && go test -coverprofile=coverage.out ./..."
+
+      - name: Upload coverage to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-coverage
+          path: server/coverage.out
+
+      - name: Run server linting in Docker
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            imagor-studio-test \
+            sh -c "cd server && go vet ./..."
+
+      - name: Check server formatting in Docker
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            imagor-studio-test \
+            sh -c "cd server && test -z \"\$(go fmt ./...)\""
+
+      - name: Build full Docker image (verification)
+        run: |
+          docker build -t imagor-studio-full .
+
+      - name: Test Docker image functionality
+        run: |
+          docker run --rm imagor-studio-full --help
