@@ -196,10 +196,12 @@ export function useImageTransform({
       const aspectRatio = width / height
       setOriginalAspectRatio(aspectRatio)
 
-      // Store original dimensions for reset functionality
-      setOriginalDimensionsState({
-        width,
-        height,
+      // Only store original dimensions on first call (don't overwrite)
+      setOriginalDimensionsState((prev) => {
+        if (prev) {
+          return prev
+        }
+        return { width, height }
       })
 
       // Set original dimensions as initial params when image loads
