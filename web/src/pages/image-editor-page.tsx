@@ -1,13 +1,14 @@
-import { useState } from 'react'
-import { ChevronDown, ChevronLeft, Copy, Download, RotateCcw } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
+import { ChevronDown, ChevronLeft, Copy, RotateCcw } from 'lucide-react'
 
+import { CropControls } from '@/components/image-editor/controls/crop-controls'
+import { DimensionControls } from '@/components/image-editor/controls/dimension-controls'
+import { PreviewArea } from '@/components/image-editor/preview-area'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Slider } from '@/components/ui/slider'
-import { Toggle } from '@/components/ui/toggle'
+import { useImageTransform } from '@/hooks/use-image-transform'
 
 interface ImageEditorPageProps {
   galleryKey: string
@@ -15,32 +16,54 @@ interface ImageEditorPageProps {
 }
 
 export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) {
-  const [isLoading] = useState(false)
+  const navigate = useNavigate()
 
-  // Mock transform state - will be replaced with real state management
-  const [transforms, setTransforms] = useState({
-    width: 800,
-    height: 600,
-    brightness: 0,
-    contrast: 0,
-    saturation: 0,
-    grayscale: false,
+  const {
+    params,
+    previewUrl,
+    aspectLocked,
+    originalAspectRatio,
+    isLoading,
+    error,
+    updateParam,
+    resetParams,
+    setOriginalDimensions,
+    toggleAspectLock,
+  } = useImageTransform({
+    galleryKey,
+    imageKey,
+    onPreviewUpdate: (url) => {
+      console.log('Preview updated:', url)
+    },
+    onError: (error) => {
+      console.error('Transform error:', error)
+    },
   })
 
   const handleBack = () => {
-    // Navigate back to gallery/image view
-    window.history.back()
+    if (galleryKey) {
+      navigate({
+        to: '/gallery/$galleryKey/$imageKey',
+        params: { galleryKey, imageKey },
+      })
+    } else {
+      navigate({
+        to: '/$imageKey',
+        params: { imageKey },
+      })
+    }
   }
 
-  const handleReset = () => {
-    setTransforms({
-      width: 800,
-      height: 600,
-      brightness: 0,
-      contrast: 0,
-      saturation: 0,
-      grayscale: false,
-    })
+  const handleCopyUrl = () => {
+    if (previewUrl) {
+      navigator.clipboard.writeText(previewUrl)
+      // TODO: Add toast notification
+    }
+  }
+
+  const handleApplyAndReturn = () => {
+    // TODO: Save transform settings and return to gallery
+    handleBack()
   }
 
   const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
@@ -60,48 +83,14 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
         </div>
 
         {/* Preview Content */}
-        <div className='bg-muted/20 flex flex-1 items-center justify-center p-4'>
-          {isLoading ? (
-            <div className='space-y-4'>
-              <Skeleton className='h-64 w-96' />
-              <div className='text-muted-foreground text-center text-sm'>Generating preview...</div>
-            </div>
-          ) : (
-            <div className='relative'>
-              {/* Placeholder for actual image preview */}
-              <div className='bg-muted border-muted-foreground/25 flex h-64 w-96 items-center justify-center rounded-lg border-2 border-dashed'>
-                <div className='text-muted-foreground text-center'>
-                  <div className='text-lg font-medium'>Image Preview</div>
-                  <div className='text-sm'>
-                    {transforms.width} × {transforms.height}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Preview Controls */}
-        <div className='bg-background flex items-center justify-between border-t p-4'>
-          <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-            <span>Original: 1920×1080</span>
-            <span>→</span>
-            <span>
-              Preview: {transforms.width}×{transforms.height}
-            </span>
-          </div>
-          <div className='flex items-center gap-2'>
-            <Button variant='outline' size='sm'>
-              <Copy className='mr-1 h-4 w-4' />
-              Copy URL
-            </Button>
-            <Button variant='outline' size='sm'>
-              <Download className='mr-1 h-4 w-4' />
-              Download
-            </Button>
-            <Button size='sm'>Apply & Return</Button>
-          </div>
-        </div>
+        <PreviewArea
+          previewUrl={previewUrl}
+          isLoading={isLoading}
+          error={error}
+          galleryKey={galleryKey}
+          imageKey={imageKey}
+          onImageLoad={setOriginalDimensions}
+        />
       </div>
 
       {/* Transform Panel - 30% */}
@@ -110,7 +99,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
         <div className='border-b p-4'>
           <div className='flex items-center justify-between'>
             <h2 className='font-semibold'>Transform Controls</h2>
-            <Button variant='ghost' size='sm' onClick={handleReset}>
+            <Button variant='ghost' size='sm' onClick={resetParams}>
               <RotateCcw className='mr-1 h-4 w-4' />
               Reset All
             </Button>
@@ -129,127 +118,14 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                 </div>
                 <ChevronDown className='h-4 w-4' />
               </CollapsibleTrigger>
-              <CollapsibleContent className='mt-4 space-y-4'>
-                <div className='grid grid-cols-2 gap-2'>
-                  <div>
-                    <label className='text-sm font-medium'>Width</label>
-                    <input
-                      type='number'
-                      value={transforms.width}
-                      onChange={(e) =>
-                        setTransforms((prev) => ({ ...prev, width: parseInt(e.target.value) || 0 }))
-                      }
-                      className='w-full rounded border px-2 py-1 text-sm'
-                    />
-                  </div>
-                  <div>
-                    <label className='text-sm font-medium'>Height</label>
-                    <input
-                      type='number'
-                      value={transforms.height}
-                      onChange={(e) =>
-                        setTransforms((prev) => ({
-                          ...prev,
-                          height: parseInt(e.target.value) || 0,
-                        }))
-                      }
-                      className='w-full rounded border px-2 py-1 text-sm'
-                    />
-                  </div>
-                </div>
-                <div className='space-y-2'>
-                  <label className='text-sm font-medium'>Fit Mode</label>
-                  <div className='flex gap-2'>
-                    <Button variant='outline' size='sm'>
-                      Fit In
-                    </Button>
-                    <Button variant='outline' size='sm'>
-                      Fill
-                    </Button>
-                    <Button variant='outline' size='sm'>
-                      Stretch
-                    </Button>
-                  </div>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </Card>
-
-          {/* Color & Effects */}
-          <Card className='p-4'>
-            <Collapsible>
-              <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
-                <div className='flex items-center gap-2'>
-                  <span>🎨</span>
-                  <span className='font-medium'>Color & Effects</span>
-                </div>
-                <ChevronDown className='h-4 w-4' />
-              </CollapsibleTrigger>
-              <CollapsibleContent className='mt-4 space-y-4'>
-                <div className='space-y-3'>
-                  <div>
-                    <div className='mb-2 flex items-center justify-between'>
-                      <label className='text-sm font-medium'>Brightness</label>
-                      <span className='text-muted-foreground text-xs'>{transforms.brightness}</span>
-                    </div>
-                    <Slider
-                      value={[transforms.brightness]}
-                      onValueChange={([value]) =>
-                        setTransforms((prev) => ({ ...prev, brightness: value }))
-                      }
-                      min={-100}
-                      max={100}
-                      step={1}
-                      className='w-full'
-                    />
-                  </div>
-
-                  <div>
-                    <div className='mb-2 flex items-center justify-between'>
-                      <label className='text-sm font-medium'>Contrast</label>
-                      <span className='text-muted-foreground text-xs'>{transforms.contrast}</span>
-                    </div>
-                    <Slider
-                      value={[transforms.contrast]}
-                      onValueChange={([value]) =>
-                        setTransforms((prev) => ({ ...prev, contrast: value }))
-                      }
-                      min={-100}
-                      max={100}
-                      step={1}
-                      className='w-full'
-                    />
-                  </div>
-
-                  <div>
-                    <div className='mb-2 flex items-center justify-between'>
-                      <label className='text-sm font-medium'>Saturation</label>
-                      <span className='text-muted-foreground text-xs'>{transforms.saturation}</span>
-                    </div>
-                    <Slider
-                      value={[transforms.saturation]}
-                      onValueChange={([value]) =>
-                        setTransforms((prev) => ({ ...prev, saturation: value }))
-                      }
-                      min={-100}
-                      max={100}
-                      step={1}
-                      className='w-full'
-                    />
-                  </div>
-
-                  <div className='flex items-center justify-between'>
-                    <label className='text-sm font-medium'>Grayscale</label>
-                    <Toggle
-                      pressed={transforms.grayscale}
-                      onPressedChange={(pressed) =>
-                        setTransforms((prev) => ({ ...prev, grayscale: pressed }))
-                      }
-                    >
-                      {transforms.grayscale ? 'On' : 'Off'}
-                    </Toggle>
-                  </div>
-                </div>
+              <CollapsibleContent className='mt-4'>
+                <DimensionControls
+                  params={params}
+                  aspectLocked={aspectLocked}
+                  originalAspectRatio={originalAspectRatio}
+                  onUpdateParam={updateParam}
+                  onToggleAspectLock={toggleAspectLock}
+                />
               </CollapsibleContent>
             </Collapsible>
           </Card>
@@ -265,12 +141,49 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                 <ChevronDown className='h-4 w-4' />
               </CollapsibleTrigger>
               <CollapsibleContent className='mt-4'>
-                <div className='text-muted-foreground text-sm'>
-                  Crop controls will be implemented in Phase 3
+                <CropControls params={params} onUpdateParam={updateParam} />
+              </CollapsibleContent>
+            </Collapsible>
+          </Card>
+
+          {/* Color & Effects - Placeholder for Phase 4 */}
+          <Card className='p-4'>
+            <Collapsible>
+              <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
+                <div className='flex items-center gap-2'>
+                  <span>🎨</span>
+                  <span className='font-medium'>Color & Effects</span>
+                </div>
+                <ChevronDown className='h-4 w-4' />
+              </CollapsibleTrigger>
+              <CollapsibleContent className='mt-4'>
+                <div className='text-muted-foreground bg-muted/50 rounded p-2 text-sm'>
+                  Color and effects controls will be available in Phase 4.
                 </div>
               </CollapsibleContent>
             </Collapsible>
           </Card>
+        </div>
+
+        {/* Action Buttons */}
+        <div className='bg-background border-t p-4'>
+          <div className='space-y-2'>
+            <div className='flex gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={handleCopyUrl}
+                disabled={!previewUrl}
+                className='flex-1'
+              >
+                <Copy className='mr-1 h-4 w-4' />
+                Copy URL
+              </Button>
+            </div>
+            <Button onClick={handleApplyAndReturn} disabled={isLoading} className='w-full'>
+              Apply & Return
+            </Button>
+          </div>
         </div>
       </div>
     </div>
