@@ -71,6 +71,13 @@ type Mutation {
   configureEmbeddedImagor: ImagorConfigResult!
   configureExternalImagor(input: ExternalImagorInput!): ImagorConfigResult!
 
+  # Imagor URL Generation API
+  generateImagorUrl(
+    galleryKey: String!
+    imageKey: String!
+    params: ImagorParamsInput!
+  ): String!
+
   # admin only operations
   createUser(input: CreateUserInput!): User!
 }
@@ -111,6 +118,53 @@ input RegistryEntryInput {
   key: String!
   value: String!
   isEncrypted: Boolean!
+}
+
+# Imagor URL Generation Input Types
+input ImagorParamsInput {
+  # Dimensions
+  width: Int
+  height: Int
+
+  # Cropping
+  cropLeft: Float
+  cropTop: Float
+  cropRight: Float
+  cropBottom: Float
+
+  # Fitting
+  fitIn: Boolean
+  stretch: Boolean
+
+  # Padding
+  paddingLeft: Int
+  paddingTop: Int
+  paddingRight: Int
+  paddingBottom: Int
+
+  # Flipping
+  hFlip: Boolean
+  vFlip: Boolean
+
+  # Alignment
+  hAlign: String  # "left", "right"
+  vAlign: String  # "top", "bottom"
+
+  # Smart crop
+  smart: Boolean
+
+  # Trimming
+  trim: Boolean
+  trimBy: String  # "top-left", "bottom-right"
+  trimTolerance: Int
+
+  # Filters
+  filters: [ImagorFilterInput!]
+}
+
+input ImagorFilterInput {
+  name: String!   # "quality", "brightness", etc.
+  args: String!   # "80", "10", etc.
 }
 
 # Existing types...

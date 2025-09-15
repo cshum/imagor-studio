@@ -79,6 +79,35 @@ type ImagorConfigResult struct {
 	Message         *string `json:"message,omitempty"`
 }
 
+type ImagorFilterInput struct {
+	Name string `json:"name"`
+	Args string `json:"args"`
+}
+
+type ImagorParamsInput struct {
+	Width         *int                 `json:"width,omitempty"`
+	Height        *int                 `json:"height,omitempty"`
+	CropLeft      *float64             `json:"cropLeft,omitempty"`
+	CropTop       *float64             `json:"cropTop,omitempty"`
+	CropRight     *float64             `json:"cropRight,omitempty"`
+	CropBottom    *float64             `json:"cropBottom,omitempty"`
+	FitIn         *bool                `json:"fitIn,omitempty"`
+	Stretch       *bool                `json:"stretch,omitempty"`
+	PaddingLeft   *int                 `json:"paddingLeft,omitempty"`
+	PaddingTop    *int                 `json:"paddingTop,omitempty"`
+	PaddingRight  *int                 `json:"paddingRight,omitempty"`
+	PaddingBottom *int                 `json:"paddingBottom,omitempty"`
+	HFlip         *bool                `json:"hFlip,omitempty"`
+	VFlip         *bool                `json:"vFlip,omitempty"`
+	HAlign        *string              `json:"hAlign,omitempty"`
+	VAlign        *string              `json:"vAlign,omitempty"`
+	Smart         *bool                `json:"smart,omitempty"`
+	Trim          *bool                `json:"trim,omitempty"`
+	TrimBy        *string              `json:"trimBy,omitempty"`
+	TrimTolerance *int                 `json:"trimTolerance,omitempty"`
+	Filters       []*ImagorFilterInput `json:"filters,omitempty"`
+}
+
 type ImagorStatus struct {
 	Configured           bool                  `json:"configured"`
 	Mode                 *string               `json:"mode,omitempty"`
