@@ -198,13 +198,19 @@ export function useImageTransform({
     setAspectLocked((prev) => !prev)
   }, [])
 
-  // Generate initial preview URL on mount
+  // Generate initial preview URL on mount with fit mode
   useMemo(() => {
     if (Object.keys(params).length === 0) {
-      // Generate URL for original image
-      generateUrlMutation.mutate({} as ImagorParamsInput)
+      // Call reset logic on initial load to ensure image shows with fit mode
+      const initialState = {
+        fitIn: true,
+        width: undefined,
+        height: undefined,
+      }
+      setParams(initialState)
+      debouncedGenerateUrl(initialState)
     }
-  }, []) // Only run on mount
+  }, [debouncedGenerateUrl, params]) // Only run on mount
 
   return {
     // State
