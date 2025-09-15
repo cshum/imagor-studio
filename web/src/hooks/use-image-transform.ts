@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { debounce } from 'lodash-es'
 
 import { generateImagorUrl } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
+import { debounce } from '@/lib/utils'
 
 export interface ImageTransformState {
   // Dimensions
