@@ -100,7 +100,36 @@ export type ImagorConfigResult = {
   timestamp: Scalars['String']['output']
 }
 
+export type ImagorFilterInput = {
+  args: Scalars['String']['input']
+  name: Scalars['String']['input']
+}
+
 export type ImagorMode = 'EMBEDDED' | 'EXTERNAL'
+
+export type ImagorParamsInput = {
+  cropBottom: InputMaybe<Scalars['Float']['input']>
+  cropLeft: InputMaybe<Scalars['Float']['input']>
+  cropRight: InputMaybe<Scalars['Float']['input']>
+  cropTop: InputMaybe<Scalars['Float']['input']>
+  filters: InputMaybe<Array<ImagorFilterInput>>
+  fitIn: InputMaybe<Scalars['Boolean']['input']>
+  hAlign: InputMaybe<Scalars['String']['input']>
+  hFlip: InputMaybe<Scalars['Boolean']['input']>
+  height: InputMaybe<Scalars['Int']['input']>
+  paddingBottom: InputMaybe<Scalars['Int']['input']>
+  paddingLeft: InputMaybe<Scalars['Int']['input']>
+  paddingRight: InputMaybe<Scalars['Int']['input']>
+  paddingTop: InputMaybe<Scalars['Int']['input']>
+  smart: InputMaybe<Scalars['Boolean']['input']>
+  stretch: InputMaybe<Scalars['Boolean']['input']>
+  trim: InputMaybe<Scalars['Boolean']['input']>
+  trimBy: InputMaybe<Scalars['String']['input']>
+  trimTolerance: InputMaybe<Scalars['Int']['input']>
+  vAlign: InputMaybe<Scalars['String']['input']>
+  vFlip: InputMaybe<Scalars['Boolean']['input']>
+  width: InputMaybe<Scalars['Int']['input']>
+}
 
 export type ImagorSignerType = 'SHA1' | 'SHA256' | 'SHA512'
 
@@ -127,6 +156,7 @@ export type Mutation = {
   deleteFile: Scalars['Boolean']['output']
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
+  generateImagorUrl: Scalars['String']['output']
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
@@ -176,6 +206,12 @@ export type MutationDeleteUserRegistryArgs = {
   key?: InputMaybe<Scalars['String']['input']>
   keys?: InputMaybe<Array<Scalars['String']['input']>>
   ownerID?: InputMaybe<Scalars['String']['input']>
+}
+
+export type MutationGenerateImagorUrlArgs = {
+  galleryKey: Scalars['String']['input']
+  imageKey: Scalars['String']['input']
+  params: ImagorParamsInput
 }
 
 export type MutationSetSystemRegistryArgs = {
