@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Separator } from '@/components/ui/separator'
 import { useImageTransform } from '@/hooks/use-image-transform'
+import { getFullImageUrl } from '@/lib/api-utils'
 
 interface ImageEditorPageProps {
   galleryKey: string
@@ -56,7 +57,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
 
   const handleCopyUrl = () => {
     if (previewUrl) {
-      navigator.clipboard.writeText(previewUrl)
+      navigator.clipboard.writeText(getFullImageUrl(previewUrl))
       // TODO: Add toast notification
     }
   }

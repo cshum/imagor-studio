@@ -3,6 +3,7 @@ import { AlertCircle, Download, ZoomIn, ZoomOut } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { getFullImageUrl } from '@/lib/api-utils'
 
 interface PreviewAreaProps {
   previewUrl: string
@@ -60,7 +61,7 @@ export function PreviewArea({
   const handleDownload = () => {
     if (previewUrl) {
       const link = document.createElement('a')
-      link.href = previewUrl
+      link.href = getFullImageUrl(previewUrl)
       link.download = `${imageKey}_transformed`
       document.body.appendChild(link)
       link.click()
@@ -107,7 +108,7 @@ export function PreviewArea({
             style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
           >
             <img
-              src={previewUrl}
+              src={getFullImageUrl(previewUrl)}
               alt={`Preview of ${imagePath}`}
               onLoad={handleImageLoad}
               onError={handleImageError}
