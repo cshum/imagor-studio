@@ -1,7 +1,6 @@
 package resolver
 
 import (
-	"context"
 	"testing"
 
 	"github.com/cshum/imagor-studio/server/internal/config"
@@ -23,7 +22,8 @@ func TestGenerateImagorURL(t *testing.T) {
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, logger)
 
-	ctx := context.Background()
+	// Use authenticated context with write permissions
+	ctx := createReadWriteContext("test-user")
 
 	t.Run("ValidParameters", func(t *testing.T) {
 		params := gql.ImagorParamsInput{
