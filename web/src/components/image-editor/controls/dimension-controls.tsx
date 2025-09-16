@@ -33,16 +33,32 @@ export function DimensionControls({
   onToggleAspectLock,
 }: DimensionControlsProps) {
   const handleWidthChange = (value: string) => {
-    const width = parseInt(value) || 0
-    if (width > 0) {
-      onUpdateParams({ width }, { respectAspectLock: true })
-    }
+    // Allow any input during typing - no validation
+    const width = parseInt(value) || undefined
+    onUpdateParams({ width }, { respectAspectLock: true })
   }
 
   const handleHeightChange = (value: string) => {
+    // Allow any input during typing - no validation
+    const height = parseInt(value) || undefined
+    onUpdateParams({ height }, { respectAspectLock: true })
+  }
+
+  const handleWidthBlur = (value: string) => {
+    // Validate only when user finishes editing
+    const width = parseInt(value) || 0
+    if (width <= 0) {
+      // Reset to undefined (auto) if invalid
+      onUpdateParams({ width: undefined })
+    }
+  }
+
+  const handleHeightBlur = (value: string) => {
+    // Validate only when user finishes editing
     const height = parseInt(value) || 0
-    if (height > 0) {
-      onUpdateParams({ height }, { respectAspectLock: true })
+    if (height <= 0) {
+      // Reset to undefined (auto) if invalid
+      onUpdateParams({ height: undefined })
     }
   }
 
@@ -105,6 +121,7 @@ export function DimensionControls({
               type='number'
               value={params.width || ''}
               onChange={(e) => handleWidthChange(e.target.value)}
+              onBlur={(e) => handleWidthBlur(e.target.value)}
               placeholder='Auto'
               min='1'
               max='10000'
@@ -133,6 +150,7 @@ export function DimensionControls({
               type='number'
               value={params.height || ''}
               onChange={(e) => handleHeightChange(e.target.value)}
+              onBlur={(e) => handleHeightBlur(e.target.value)}
               placeholder='Auto'
               min='1'
               max='10000'
