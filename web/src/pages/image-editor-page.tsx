@@ -107,19 +107,9 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                     Controls
                   </Button>
                 </SheetTrigger>
-                <SheetContent side='right' className='flex w-full flex-col sm:w-96'>
+                <SheetContent side='right' className='flex w-full flex-col pr-0 sm:w-96'>
                   <SheetHeader>
-                    <div className='flex items-center gap-2'>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => setMobileSheetOpen(false)}
-                        className='h-8 w-8 p-0'
-                      >
-                        <ChevronLeft className='h-4 w-4' />
-                      </Button>
-                      <SheetTitle>Transform Controls</SheetTitle>
-                    </div>
+                    <SheetTitle>Transform Controls</SheetTitle>
                   </SheetHeader>
 
                   {/* Reset Button */}
@@ -131,7 +121,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                   </div>
 
                   {/* Scrollable Controls */}
-                  <div className='flex-1 overflow-y-auto p-4'>
+                  <div className='flex-1 overflow-y-auto pr-6'>
                     <TransformControlsContent
                       params={params}
                       aspectLocked={aspectLocked}
