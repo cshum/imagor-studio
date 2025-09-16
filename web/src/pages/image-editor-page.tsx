@@ -32,7 +32,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     isLoading,
     isLoadingBarVisible,
     error,
-    updateParam,
+    updateParams,
     resetParams,
     setOriginalDimensions,
     toggleAspectLock,
@@ -130,7 +130,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                       params={params}
                       aspectLocked={aspectLocked}
                       originalAspectRatio={originalAspectRatio}
-                      onUpdateParam={updateParam}
+                      onUpdateParams={updateParams}
                       onToggleAspectLock={toggleAspectLock}
                     />
                   </div>
@@ -173,7 +173,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               params={params}
               aspectLocked={aspectLocked}
               originalAspectRatio={originalAspectRatio}
-              onUpdateParam={updateParam}
+              onUpdateParams={updateParams}
               onToggleAspectLock={toggleAspectLock}
             />
           </div>

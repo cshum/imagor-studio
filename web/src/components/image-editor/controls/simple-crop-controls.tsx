@@ -7,23 +7,23 @@ import type { ImageTransformState } from '@/hooks/use-image-transform'
 
 interface SimpleCropControlsProps {
   params: ImageTransformState
-  onUpdateParam: <K extends keyof ImageTransformState>(
-    key: K,
-    value: ImageTransformState[K],
+  onUpdateParams: (
+    updates: Partial<ImageTransformState>,
+    options?: { respectAspectLock?: boolean },
   ) => void
 }
 
-export function SimpleCropControls({ params, onUpdateParam }: SimpleCropControlsProps) {
+export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControlsProps) {
   const handleCropChange = (
     side: 'cropLeft' | 'cropTop' | 'cropRight' | 'cropBottom',
     value: string,
   ) => {
     const numValue = parseInt(value, 10)
-    onUpdateParam(side, isNaN(numValue) || numValue < 0 ? undefined : numValue)
+    onUpdateParams({ [side]: isNaN(numValue) || numValue < 0 ? undefined : numValue })
   }
 
   const handleAutoTrimChange = (checked: boolean) => {
-    onUpdateParam('autoTrim', checked)
+    onUpdateParams({ autoTrim: checked })
   }
 
   return (

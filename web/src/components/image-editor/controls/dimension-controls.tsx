@@ -18,7 +18,10 @@ interface DimensionControlsProps {
   params: ImageTransformState
   aspectLocked: boolean
   originalAspectRatio: number | null
-  onUpdateParam: (key: keyof ImageTransformState, value: any) => void
+  onUpdateParams: (
+    updates: Partial<ImageTransformState>,
+    options?: { respectAspectLock?: boolean },
+  ) => void
   onToggleAspectLock: () => void
 }
 
@@ -26,38 +29,40 @@ export function DimensionControls({
   params,
   aspectLocked,
   originalAspectRatio,
-  onUpdateParam,
+  onUpdateParams,
   onToggleAspectLock,
 }: DimensionControlsProps) {
   const handleWidthChange = (value: string) => {
     const width = parseInt(value) || 0
     if (width > 0) {
-      onUpdateParam('width', width)
+      onUpdateParams({ width }, { respectAspectLock: true })
     }
   }
 
   const handleHeightChange = (value: string) => {
     const height = parseInt(value) || 0
     if (height > 0) {
-      onUpdateParam('height', height)
+      onUpdateParams({ height }, { respectAspectLock: true })
     }
   }
 
   const handleFitModeChange = (value: string) => {
-    // Reset fitting options first
-    onUpdateParam('fitIn', false)
-    onUpdateParam('stretch', false)
-    onUpdateParam('smart', false)
+    // Reset fitting options first and set the new one
+    const updates: Partial<ImageTransformState> = {
+      fitIn: false,
+      stretch: false,
+      smart: false,
+    }
 
     switch (value) {
       case 'fit-in':
-        onUpdateParam('fitIn', true)
+        updates.fitIn = true
         break
       case 'stretch':
-        onUpdateParam('stretch', true)
+        updates.stretch = true
         break
       case 'smart':
-        onUpdateParam('smart', true)
+        updates.smart = true
         break
       case 'fill':
         // Default behavior - no special flags
@@ -66,6 +71,8 @@ export function DimensionControls({
         // Exact dimensions - no fitting
         break
     }
+
+    onUpdateParams(updates)
   }
 
   const getCurrentFitMode = () => {
@@ -77,9 +84,9 @@ export function DimensionControls({
 
   const handleAlignmentChange = (type: 'horizontal' | 'vertical', value: string) => {
     if (type === 'horizontal') {
-      onUpdateParam('hAlign', value === 'center' ? undefined : value)
+      onUpdateParams({ hAlign: value === 'center' ? undefined : value })
     } else {
-      onUpdateParam('vAlign', value === 'middle' ? undefined : value)
+      onUpdateParams({ vAlign: value === 'middle' ? undefined : value })
     }
   }
 
@@ -245,8 +252,10 @@ export function DimensionControls({
             variant='outline'
             size='sm'
             onClick={() => {
-              onUpdateParam('width', 1920)
-              onUpdateParam('height', 1080)
+              if (aspectLocked) {
+                onToggleAspectLock()
+              }
+              onUpdateParams({ width: 1920, height: 1080 })
             }}
             className='h-8 text-xs'
           >
@@ -256,8 +265,10 @@ export function DimensionControls({
             variant='outline'
             size='sm'
             onClick={() => {
-              onUpdateParam('width', 1280)
-              onUpdateParam('height', 720)
+              if (aspectLocked) {
+                onToggleAspectLock()
+              }
+              onUpdateParams({ width: 1280, height: 720 })
             }}
             className='h-8 text-xs'
           >
@@ -267,8 +278,10 @@ export function DimensionControls({
             variant='outline'
             size='sm'
             onClick={() => {
-              onUpdateParam('width', 800)
-              onUpdateParam('height', 600)
+              if (aspectLocked) {
+                onToggleAspectLock()
+              }
+              onUpdateParams({ width: 800, height: 600 })
             }}
             className='h-8 text-xs'
           >
@@ -278,8 +291,10 @@ export function DimensionControls({
             variant='outline'
             size='sm'
             onClick={() => {
-              onUpdateParam('width', 400)
-              onUpdateParam('height', 400)
+              if (aspectLocked) {
+                onToggleAspectLock()
+              }
+              onUpdateParams({ width: 400, height: 400 })
             }}
             className='h-8 text-xs'
           >

@@ -12,9 +12,9 @@ interface TransformControlsContentProps {
   params: ImageTransformState
   aspectLocked: boolean
   originalAspectRatio: number | null
-  onUpdateParam: <K extends keyof ImageTransformState>(
-    key: K,
-    value: ImageTransformState[K],
+  onUpdateParams: (
+    updates: Partial<ImageTransformState>,
+    options?: { respectAspectLock?: boolean },
   ) => void
   onToggleAspectLock: () => void
 }
@@ -23,7 +23,7 @@ export function TransformControlsContent({
   params,
   aspectLocked,
   originalAspectRatio,
-  onUpdateParam,
+  onUpdateParams,
   onToggleAspectLock,
 }: TransformControlsContentProps) {
   const [openSections, setOpenSections] = useState({
@@ -55,7 +55,7 @@ export function TransformControlsContent({
               params={params}
               aspectLocked={aspectLocked}
               originalAspectRatio={originalAspectRatio}
-              onUpdateParam={onUpdateParam}
+              onUpdateParams={onUpdateParams}
               onToggleAspectLock={onToggleAspectLock}
             />
           </CollapsibleContent>
@@ -76,7 +76,7 @@ export function TransformControlsContent({
             <CollapsibleIcon isOpen={openSections.output} />
           </CollapsibleTrigger>
           <CollapsibleContent className='mt-4'>
-            <OutputControls params={params} onUpdateParam={onUpdateParam} />
+            <OutputControls params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
@@ -95,7 +95,7 @@ export function TransformControlsContent({
             <CollapsibleIcon isOpen={openSections.crop} />
           </CollapsibleTrigger>
           <CollapsibleContent className='mt-4'>
-            <SimpleCropControls params={params} onUpdateParam={onUpdateParam} />
+            <SimpleCropControls params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
