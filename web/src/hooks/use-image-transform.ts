@@ -35,6 +35,11 @@ export interface ImageTransformState {
   sharpen?: number
   grayscale?: boolean
 
+  // Transform (for Phase 5)
+  hFlip?: boolean
+  vFlip?: boolean
+  rotation?: number // 0, 90, 180, 270
+
   // Output format and quality
   format?: string // e.g., 'webp', 'jpeg', 'png', undefined (original)
   quality?: number // e.g., 80, 90, 95, undefined (default)
@@ -121,6 +126,10 @@ export function useImageTransform({
       if (state.hAlign) graphqlParams.hAlign = state.hAlign
       if (state.vAlign) graphqlParams.vAlign = state.vAlign
 
+      // Transform (for Phase 5)
+      if (state.hFlip !== undefined) graphqlParams.hFlip = state.hFlip
+      if (state.vFlip !== undefined) graphqlParams.vFlip = state.vFlip
+
       // Filters (for Phase 4)
       const filters: Array<{ name: string; args: string }> = []
 
@@ -144,6 +153,9 @@ export function useImageTransform({
       }
       if (state.grayscale) {
         filters.push({ name: 'grayscale', args: '' })
+      }
+      if (state.rotation !== undefined && state.rotation !== 0) {
+        filters.push({ name: 'rotate', args: state.rotation.toString() })
       }
 
       // Auto trim handling
@@ -282,6 +294,9 @@ export function useImageTransform({
       blur: undefined,
       sharpen: undefined,
       grayscale: undefined,
+      hFlip: undefined,
+      vFlip: undefined,
+      rotation: undefined,
       format: undefined,
       quality: undefined,
       maxBytes: undefined,
