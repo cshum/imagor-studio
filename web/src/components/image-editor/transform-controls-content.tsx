@@ -1,17 +1,21 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, FileImage, Move, Scissors } from 'lucide-react'
 
+import { setUserRegistry } from '@/api/registry-api'
 import { DimensionControls } from '@/components/image-editor/controls/dimension-controls'
 import { OutputControls } from '@/components/image-editor/controls/output-controls'
 import { SimpleCropControls } from '@/components/image-editor/controls/simple-crop-controls'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { ImageTransformState } from '@/hooks/use-image-transform'
+import { debounce } from '@/lib/utils'
+import type { EditorOpenSections } from '@/loaders/image-editor-loader'
 
 interface TransformControlsContentProps {
   params: ImageTransformState
   aspectLocked: boolean
   originalAspectRatio: number | null
+  initialOpenSections: EditorOpenSections
   onUpdateParams: (
     updates: Partial<ImageTransformState>,
     options?: { respectAspectLock?: boolean },
@@ -23,14 +27,28 @@ export function TransformControlsContent({
   params,
   aspectLocked,
   originalAspectRatio,
+  initialOpenSections,
   onUpdateParams,
   onToggleAspectLock,
 }: TransformControlsContentProps) {
-  const [openSections, setOpenSections] = useState({
-    dimensions: true, // defaultOpen
-    output: false,
-    crop: false,
-  })
+  const [openSections, setOpenSections] = useState<EditorOpenSections>(initialOpenSections)
+
+  const debouncedSaveOpenSections = useMemo(
+    () =>
+      debounce(async (sections: EditorOpenSections) => {
+        await setUserRegistry('config.editor_open_sections', JSON.stringify(sections))
+      }, 300),
+    [],
+  )
+
+  const handleSectionToggle = useCallback(
+    (section: keyof EditorOpenSections, open: boolean) => {
+      const newSections = { ...openSections, [section]: open }
+      setOpenSections(newSections)
+      debouncedSaveOpenSections(newSections)
+    },
+    [openSections, debouncedSaveOpenSections],
+  )
 
   const CollapsibleIcon = ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <ChevronUp className='h-4 w-4' /> : <ChevronDown className='h-4 w-4' />
@@ -41,7 +59,7 @@ export function TransformControlsContent({
       <Card className='p-4'>
         <Collapsible
           open={openSections.dimensions}
-          onOpenChange={(open) => setOpenSections((prev) => ({ ...prev, dimensions: open }))}
+          onOpenChange={(open) => handleSectionToggle('dimensions', open)}
         >
           <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
             <div className='flex items-center gap-2'>
@@ -66,7 +84,7 @@ export function TransformControlsContent({
       <Card className='p-4'>
         <Collapsible
           open={openSections.output}
-          onOpenChange={(open) => setOpenSections((prev) => ({ ...prev, output: open }))}
+          onOpenChange={(open) => handleSectionToggle('output', open)}
         >
           <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
             <div className='flex items-center gap-2'>
@@ -85,7 +103,7 @@ export function TransformControlsContent({
       <Card className='p-4'>
         <Collapsible
           open={openSections.crop}
-          onOpenChange={(open) => setOpenSections((prev) => ({ ...prev, crop: open }))}
+          onOpenChange={(open) => handleSectionToggle('crop', open)}
         >
           <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
             <div className='flex items-center gap-2'>

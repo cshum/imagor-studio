@@ -1,8 +1,15 @@
 import { generateImagorUrl } from '@/api/imagor-api'
+import { getUserRegistry } from '@/api/registry-api'
 import { statFile } from '@/api/storage-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
 import { getFullImageUrl } from '@/lib/api-utils'
 import { preloadImage } from '@/lib/preload-image'
+
+export interface EditorOpenSections {
+  dimensions: boolean
+  output: boolean
+  crop: boolean
+}
 
 export interface ImageEditorLoaderData {
   imageElement: HTMLImageElement
@@ -14,6 +21,7 @@ export interface ImageEditorLoaderData {
   }
   galleryKey: string
   imageKey: string
+  editorOpenSections: EditorOpenSections
 }
 
 /**
@@ -31,6 +39,24 @@ export const imageEditorLoader = async ({
 
   if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
     throw new Error('Image not found')
+  }
+
+  // Load user preferences for editor open sections
+  const defaultOpenSections: EditorOpenSections = {
+    dimensions: true,
+    output: false,
+    crop: false,
+  }
+
+  let editorOpenSections = defaultOpenSections
+  try {
+    const registryEntries = await getUserRegistry('config.editor_open_sections')
+    if (registryEntries && registryEntries.length > 0) {
+      const savedSections = JSON.parse(registryEntries[0].value) as EditorOpenSections
+      editorOpenSections = { ...defaultOpenSections, ...savedSections }
+    }
+  } catch {
+    // Silently fall back to defaults if registry loading fails
   }
 
   // Get full-size image URL
@@ -60,5 +86,6 @@ export const imageEditorLoader = async ({
     },
     galleryKey,
     imageKey,
+    editorOpenSections,
   }
 }

@@ -81,9 +81,17 @@ export function useImageTransform({
   // Use 500ms debounce instead of useDeferredValue
   const debouncedParams = useDebounce(params, 500)
   const [aspectLocked, setAspectLocked] = useState(true)
+  const [lockedAspectRatio, setLockedAspectRatio] = useState<number | null>(null)
   const originalAspectRatio =
     loaderData.originalDimensions.width / loaderData.originalDimensions.height
   const originalDimensions = loaderData.originalDimensions
+
+  // Initialize locked aspect ratio when component loads (since aspectLocked starts as true)
+  useEffect(() => {
+    if (aspectLocked && !lockedAspectRatio && params.width && params.height) {
+      setLockedAspectRatio(params.width / params.height)
+    }
+  }, [aspectLocked, lockedAspectRatio, params.width, params.height])
 
   // Convert our state to GraphQL input format
   const convertToGraphQLParams = useCallback(
@@ -215,26 +223,26 @@ export function useImageTransform({
   const updateParams = useCallback(
     (updates: Partial<ImageTransformState>, options?: { respectAspectLock?: boolean }) => {
       setParams((prev) => {
-        let newParams = { ...prev, ...updates }
+        const newParams = { ...prev, ...updates }
 
         // Apply aspect ratio logic if enabled and we're updating dimensions
         if (
           options?.respectAspectLock &&
           aspectLocked &&
-          originalAspectRatio &&
+          lockedAspectRatio &&
           (updates.width !== undefined || updates.height !== undefined)
         ) {
-          if (updates.width !== undefined && typeof updates.width === 'number') {
-            newParams.height = Math.round(updates.width / originalAspectRatio)
-          } else if (updates.height !== undefined && typeof updates.height === 'number') {
-            newParams.width = Math.round(updates.height * originalAspectRatio)
+          if (updates.width !== undefined) {
+            newParams.height = Math.round(updates.width / lockedAspectRatio)
+          } else if (updates.height !== undefined) {
+            newParams.width = Math.round(updates.height * lockedAspectRatio)
           }
         }
 
         return newParams
       })
     },
-    [aspectLocked, originalAspectRatio],
+    [aspectLocked, lockedAspectRatio],
   )
 
   // Reset all parameters
@@ -273,8 +281,20 @@ export function useImageTransform({
 
   // Toggle aspect ratio lock
   const toggleAspectLock = useCallback(() => {
-    setAspectLocked((prev) => !prev)
-  }, [])
+    setAspectLocked((prev) => {
+      const newLocked = !prev
+
+      // When locking is enabled, capture the current aspect ratio
+      if (newLocked && params.width && params.height) {
+        setLockedAspectRatio(params.width / params.height)
+      } else if (!newLocked) {
+        // When unlocking, clear the locked aspect ratio
+        setLockedAspectRatio(null)
+      }
+
+      return newLocked
+    })
+  }, [params.width, params.height])
 
   // Generate copy URL with user-selected format (not WebP)
   const generateCopyUrl = useCallback(() => {
