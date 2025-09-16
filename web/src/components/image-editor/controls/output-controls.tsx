@@ -21,7 +21,11 @@ export function OutputControls({ params, onUpdateParam }: OutputControlsProps) {
     { value: 'webp', label: 'WebP' },
     { value: 'jpeg', label: 'JPEG' },
     { value: 'png', label: 'PNG' },
+    { value: 'gif', label: 'GIF' },
     { value: 'avif', label: 'AVIF' },
+    { value: 'jxl', label: 'JPEG XL' },
+    { value: 'tiff', label: 'TIFF' },
+    { value: 'jp2', label: 'JPEG 2000' },
   ]
 
   const sizePresets = [
@@ -50,15 +54,27 @@ export function OutputControls({ params, onUpdateParam }: OutputControlsProps) {
 
   const handleQualityChange = (value: number[]) => {
     onUpdateParam('quality', value[0])
+    // Clear max_bytes when quality is set manually
+    if (params.maxBytes) {
+      onUpdateParam('maxBytes', undefined)
+    }
   }
 
   const handleMaxBytesChange = (value: string) => {
     const numValue = parseInt(value, 10)
     onUpdateParam('maxBytes', isNaN(numValue) || numValue <= 0 ? undefined : numValue)
+    // Clear quality when max_bytes is set
+    if (!isNaN(numValue) && numValue > 0 && params.quality) {
+      onUpdateParam('quality', undefined)
+    }
   }
 
   const handlePresetClick = (bytes: number) => {
     onUpdateParam('maxBytes', bytes)
+    // Clear quality when max_bytes preset is selected
+    if (params.quality) {
+      onUpdateParam('quality', undefined)
+    }
   }
 
   const clearMaxBytes = () => {
@@ -87,8 +103,8 @@ export function OutputControls({ params, onUpdateParam }: OutputControlsProps) {
         </p>
       </div>
 
-      {/* Quality Slider - Only show when format is selected or max_bytes is set */}
-      {(formatValue !== 'original' || params.maxBytes) && (
+      {/* Quality Slider - Only show when format is selected AND max_bytes is NOT set */}
+      {formatValue !== 'original' && !params.maxBytes && (
         <div className='space-y-3'>
           <div className='flex items-center justify-between'>
             <Label className='text-sm font-medium'>Quality</Label>
@@ -170,8 +186,8 @@ export function OutputControls({ params, onUpdateParam }: OutputControlsProps) {
             <p className='font-medium'>How it works:</p>
             <ul className='text-muted-foreground space-y-0.5'>
               <li>• Format: Choose output format or keep original</li>
-              <li>• Quality: Manual quality control (1-100%)</li>
-              <li>• Max Size: Automatic quality reduction to meet size limit</li>
+              <li>• Quality: Manual quality control (mutually exclusive with max size)</li>
+              <li>• Max Size: Automatic quality optimization (mutually exclusive with quality)</li>
             </ul>
           </div>
         </div>
