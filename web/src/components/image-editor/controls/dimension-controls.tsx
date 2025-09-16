@@ -254,30 +254,6 @@ export function DimensionControls({
             </Label>
           </div>
         </RadioGroup>
-
-        {/* Info Section */}
-        <div className='bg-muted/50 rounded-lg p-4'>
-          <div className='space-y-1 text-xs'>
-            <ul className='text-muted-foreground space-y-0.5'>
-              <li>
-                • <strong>{t('imageEditor.dimensions.modes.fitIn')}:</strong>{' '}
-                {t('imageEditor.dimensions.modeDescriptions.fitIn')}
-              </li>
-              <li>
-                • <strong>{t('imageEditor.dimensions.modes.fill')}:</strong>{' '}
-                {t('imageEditor.dimensions.modeDescriptions.fill')}
-              </li>
-              <li>
-                • <strong>{t('imageEditor.dimensions.modes.stretch')}:</strong>{' '}
-                {t('imageEditor.dimensions.modeDescriptions.stretch')}
-              </li>
-              <li>
-                • <strong>{t('imageEditor.dimensions.modes.smart')}:</strong>{' '}
-                {t('imageEditor.dimensions.modeDescriptions.smart')}
-              </li>
-            </ul>
-          </div>
-        </div>
       </div>
 
       {/* Alignment - Only show when Fill mode is selected */}
@@ -371,6 +347,30 @@ export function DimensionControls({
             </div>
           </div>
         )}
+      </div>
+
+      {/* How it works section - at the bottom of resize block */}
+      <div className='bg-muted/50 space-y-3 rounded-lg p-3'>
+        <div className='space-y-1 text-xs'>
+          <ul className='text-muted-foreground space-y-0.5'>
+            <li>
+              • <strong>{t('imageEditor.dimensions.modes.fitIn')}:</strong>{' '}
+              {t('imageEditor.dimensions.modeDescriptions.fitIn')}
+            </li>
+            <li>
+              • <strong>{t('imageEditor.dimensions.modes.fill')}:</strong>{' '}
+              {t('imageEditor.dimensions.modeDescriptions.fill')}
+            </li>
+            <li>
+              • <strong>{t('imageEditor.dimensions.modes.stretch')}:</strong>{' '}
+              {t('imageEditor.dimensions.modeDescriptions.stretch')}
+            </li>
+            <li>
+              • <strong>{t('imageEditor.dimensions.modes.smart')}:</strong>{' '}
+              {t('imageEditor.dimensions.modeDescriptions.smart')}
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   )
