@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { FileImage } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -22,16 +23,18 @@ interface OutputControlsProps {
 }
 
 export function OutputControls({ params, onUpdateParams }: OutputControlsProps) {
+  const { t } = useTranslation()
+
   const formatOptions = [
-    { value: 'original', label: 'Original Format' },
-    { value: 'jpeg', label: 'JPEG' },
-    { value: 'png', label: 'PNG' },
-    { value: 'gif', label: 'GIF' },
-    { value: 'webp', label: 'WebP' },
-    { value: 'avif', label: 'AVIF' },
-    { value: 'jxl', label: 'JPEG XL' },
-    { value: 'tiff', label: 'TIFF' },
-    { value: 'jp2', label: 'JPEG 2000' },
+    { value: 'original', label: t('imageEditor.output.formatOptions.original') },
+    { value: 'jpeg', label: t('imageEditor.output.formatOptions.jpeg') },
+    { value: 'png', label: t('imageEditor.output.formatOptions.png') },
+    { value: 'gif', label: t('imageEditor.output.formatOptions.gif') },
+    { value: 'webp', label: t('imageEditor.output.formatOptions.webp') },
+    { value: 'avif', label: t('imageEditor.output.formatOptions.avif') },
+    { value: 'jxl', label: t('imageEditor.output.formatOptions.jxl') },
+    { value: 'tiff', label: t('imageEditor.output.formatOptions.tiff') },
+    { value: 'jp2', label: t('imageEditor.output.formatOptions.jp2') },
   ]
 
   const sizePresets = [
@@ -72,6 +75,10 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
     const updates: Partial<ImageTransformState> = {
       maxBytes: isNaN(numValue) || numValue <= 0 ? undefined : numValue,
     }
+    // Auto-set JPEG format when maxBytes is set for optimal compression
+    if (!isNaN(numValue) && numValue > 0) {
+      updates.format = 'jpeg'
+    }
     // Clear quality when max_bytes is set
     if (!isNaN(numValue) && numValue > 0 && params.quality) {
       updates.quality = undefined
@@ -80,7 +87,10 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
   }
 
   const handlePresetClick = (bytes: number) => {
-    const updates: Partial<ImageTransformState> = { maxBytes: bytes }
+    const updates: Partial<ImageTransformState> = {
+      maxBytes: bytes,
+      format: 'jpeg', // Auto-set JPEG format for optimal compression
+    }
     // Clear quality when max_bytes preset is selected
     if (params.quality) {
       updates.quality = undefined
@@ -96,7 +106,7 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
     <div className='space-y-6'>
       {/* Format Selection */}
       <div className='space-y-2'>
-        <Label className='text-sm font-medium'>Output Format</Label>
+        <Label className='text-sm font-medium'>{t('imageEditor.output.outputFormat')}</Label>
         <Select value={formatValue} onValueChange={handleFormatChange}>
           <SelectTrigger>
             <SelectValue placeholder='Select format' />
@@ -109,13 +119,13 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
             ))}
           </SelectContent>
         </Select>
-        <p className='text-muted-foreground text-xs'>Choose output format or keep original</p>
+        <p className='text-muted-foreground text-xs'>{t('imageEditor.output.formatDescription')}</p>
       </div>
 
       {/* Quality Slider - Always show when format is selected */}
       <div className='space-y-3'>
         <div className='flex items-center justify-between'>
-          <Label className='text-sm font-medium'>Quality</Label>
+          <Label className='text-sm font-medium'>{t('imageEditor.output.quality')}</Label>
           <span className='text-muted-foreground text-sm'>{qualityValue}%</span>
         </div>
         <Slider
@@ -129,14 +139,14 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
         />
         <p className='text-muted-foreground text-xs'>
           {params.maxBytes
-            ? 'Quality will be automatically optimized to meet size limit'
-            : 'Higher quality = larger file size'}
+            ? t('imageEditor.output.qualityAutoOptimized')
+            : t('imageEditor.output.qualityDescription')}
         </p>
       </div>
 
       {/* Max File Size */}
       <div className='space-y-3'>
-        <Label className='text-sm font-medium'>Max File Size</Label>
+        <Label className='text-sm font-medium'>{t('imageEditor.output.maxFileSize')}</Label>
 
         {/* Size Presets */}
         <div className='flex flex-wrap gap-2'>
@@ -153,7 +163,7 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
           ))}
           {maxBytesValue > 0 && (
             <Button variant='ghost' size='sm' onClick={clearMaxBytes} className='h-7 text-xs'>
-              Clear
+              {t('imageEditor.output.clear')}
             </Button>
           )}
         </div>
@@ -162,24 +172,23 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
         <div className='flex items-center gap-2'>
           <Input
             type='number'
-            placeholder='Custom size in bytes'
+            placeholder={t('imageEditor.output.customSizeInBytes')}
             value={maxBytesValue > 0 ? maxBytesValue.toString() : ''}
             onChange={(e) => handleMaxBytesChange(e.target.value)}
             className='flex-1'
           />
-          <span className='text-muted-foreground text-sm'>bytes</span>
+          <span className='text-muted-foreground text-sm'>{t('imageEditor.output.bytes')}</span>
         </div>
 
         {maxBytesValue > 0 && (
           <p className='text-muted-foreground text-xs'>
-            Target: {formatBytes(maxBytesValue)} - Quality will be automatically reduced to meet
-            this limit
+            {t('imageEditor.output.targetSize', { size: formatBytes(maxBytesValue) })}
           </p>
         )}
 
         {!maxBytesValue && (
           <p className='text-muted-foreground text-xs'>
-            Automatically reduces quality to meet file size limit
+            {t('imageEditor.output.autoReduceQuality')}
           </p>
         )}
       </div>
@@ -189,11 +198,11 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
         <div className='flex items-start gap-2'>
           <FileImage className='text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0' />
           <div className='space-y-1 text-xs'>
-            <p className='font-medium'>How it works:</p>
+            <p className='font-medium'>{t('imageEditor.output.howItWorks')}</p>
             <ul className='text-muted-foreground space-y-0.5'>
-              <li>• Format: Choose output format or keep original</li>
-              <li>• Quality: Manual quality control (mutually exclusive with max size)</li>
-              <li>• Max Size: Automatic quality optimization (mutually exclusive with quality)</li>
+              <li>• {t('imageEditor.output.howItWorksItems.format')}</li>
+              <li>• {t('imageEditor.output.howItWorksItems.quality')}</li>
+              <li>• {t('imageEditor.output.howItWorksItems.maxSize')}</li>
             </ul>
           </div>
         </div>

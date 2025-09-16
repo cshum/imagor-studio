@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Link2, Link2Off } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -32,6 +33,7 @@ export function DimensionControls({
   onUpdateParams,
   onToggleAspectLock,
 }: DimensionControlsProps) {
+  const { t } = useTranslation()
   const handleWidthChange = (value: string) => {
     // Allow any input during typing - no validation
     const width = parseInt(value) || undefined
@@ -110,11 +112,11 @@ export function DimensionControls({
     <div className='space-y-4'>
       {/* Dimensions */}
       <div className='space-y-3'>
-        <Label className='text-sm font-medium'>Dimensions</Label>
+        <Label className='text-sm font-medium'>{t('imageEditor.dimensions.title')}</Label>
         <div className='flex items-center gap-2'>
           <div className='flex-1'>
             <Label htmlFor='width' className='text-muted-foreground text-xs'>
-              Width
+              {t('imageEditor.dimensions.width')}
             </Label>
             <Input
               id='width'
@@ -122,7 +124,7 @@ export function DimensionControls({
               value={params.width || ''}
               onChange={(e) => handleWidthChange(e.target.value)}
               onBlur={(e) => handleWidthBlur(e.target.value)}
-              placeholder='Auto'
+              placeholder={t('imageEditor.dimensions.auto')}
               min='1'
               max='10000'
               className='h-8'
@@ -143,7 +145,7 @@ export function DimensionControls({
 
           <div className='flex-1'>
             <Label htmlFor='height' className='text-muted-foreground text-xs'>
-              Height
+              {t('imageEditor.dimensions.height')}
             </Label>
             <Input
               id='height'
@@ -151,7 +153,7 @@ export function DimensionControls({
               value={params.height || ''}
               onChange={(e) => handleHeightChange(e.target.value)}
               onBlur={(e) => handleHeightBlur(e.target.value)}
-              placeholder='Auto'
+              placeholder={t('imageEditor.dimensions.auto')}
               min='1'
               max='10000'
               className='h-8'
@@ -161,14 +163,14 @@ export function DimensionControls({
 
         {originalAspectRatio && (
           <div className='text-muted-foreground text-xs'>
-            Original ratio: {originalAspectRatio.toFixed(2)}:1
+            {t('imageEditor.dimensions.originalRatio', { ratio: originalAspectRatio.toFixed(2) })}
           </div>
         )}
       </div>
 
       {/* Resize Mode */}
       <div className='space-y-3'>
-        <Label className='text-sm font-medium'>Resize Mode</Label>
+        <Label className='text-sm font-medium'>{t('imageEditor.dimensions.resizeMode')}</Label>
         <RadioGroup
           value={getCurrentFitMode()}
           onValueChange={handleFitModeChange}
@@ -177,41 +179,45 @@ export function DimensionControls({
           <div className='flex items-center space-x-2'>
             <RadioGroupItem value='fit-in' id='fit-in' />
             <Label htmlFor='fit-in' className='text-sm'>
-              Fit In
+              {t('imageEditor.dimensions.modes.fitIn')}
             </Label>
           </div>
           <div className='flex items-center space-x-2'>
             <RadioGroupItem value='fill' id='fill' />
             <Label htmlFor='fill' className='text-sm'>
-              Fill
+              {t('imageEditor.dimensions.modes.fill')}
             </Label>
           </div>
           <div className='flex items-center space-x-2'>
             <RadioGroupItem value='stretch' id='stretch' />
             <Label htmlFor='stretch' className='text-sm'>
-              Stretch
+              {t('imageEditor.dimensions.modes.stretch')}
             </Label>
           </div>
           <div className='flex items-center space-x-2'>
             <RadioGroupItem value='smart' id='smart' />
             <Label htmlFor='smart' className='text-sm'>
-              Smart
+              {t('imageEditor.dimensions.modes.smart')}
             </Label>
           </div>
         </RadioGroup>
 
         <div className='text-muted-foreground space-y-1 text-xs'>
           <div>
-            <strong>Fit In:</strong> Scale to fit within dimensions
+            <strong>{t('imageEditor.dimensions.modes.fitIn')}:</strong>{' '}
+            {t('imageEditor.dimensions.modeDescriptions.fitIn')}
           </div>
           <div>
-            <strong>Fill:</strong> Scale to fill dimensions with crop
+            <strong>{t('imageEditor.dimensions.modes.fill')}:</strong>{' '}
+            {t('imageEditor.dimensions.modeDescriptions.fill')}
           </div>
           <div>
-            <strong>Stretch:</strong> Stretch to exact dimensions
+            <strong>{t('imageEditor.dimensions.modes.stretch')}:</strong>{' '}
+            {t('imageEditor.dimensions.modeDescriptions.stretch')}
           </div>
           <div>
-            <strong>Smart:</strong> Content-aware crop preserving important areas
+            <strong>{t('imageEditor.dimensions.modes.smart')}:</strong>{' '}
+            {t('imageEditor.dimensions.modeDescriptions.smart')}
           </div>
         </div>
       </div>
@@ -219,11 +225,11 @@ export function DimensionControls({
       {/* Alignment - Only show when Fill mode is selected */}
       {getCurrentFitMode() === 'fill' && (
         <div className='space-y-3'>
-          <Label className='text-sm font-medium'>Alignment</Label>
+          <Label className='text-sm font-medium'>{t('imageEditor.dimensions.alignment')}</Label>
           <div className='grid grid-cols-2 gap-3'>
             <div>
               <Label htmlFor='h-align' className='text-muted-foreground text-xs'>
-                Horizontal
+                {t('imageEditor.dimensions.horizontal')}
               </Label>
               <Select
                 value={params.hAlign || 'center'}
@@ -233,16 +239,22 @@ export function DimensionControls({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='left'>Left</SelectItem>
-                  <SelectItem value='center'>Center</SelectItem>
-                  <SelectItem value='right'>Right</SelectItem>
+                  <SelectItem value='left'>
+                    {t('imageEditor.dimensions.alignments.left')}
+                  </SelectItem>
+                  <SelectItem value='center'>
+                    {t('imageEditor.dimensions.alignments.center')}
+                  </SelectItem>
+                  <SelectItem value='right'>
+                    {t('imageEditor.dimensions.alignments.right')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
               <Label htmlFor='v-align' className='text-muted-foreground text-xs'>
-                Vertical
+                {t('imageEditor.dimensions.vertical')}
               </Label>
               <Select
                 value={params.vAlign || 'middle'}
@@ -252,9 +264,13 @@ export function DimensionControls({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='top'>Top</SelectItem>
-                  <SelectItem value='middle'>Middle</SelectItem>
-                  <SelectItem value='bottom'>Bottom</SelectItem>
+                  <SelectItem value='top'>{t('imageEditor.dimensions.alignments.top')}</SelectItem>
+                  <SelectItem value='middle'>
+                    {t('imageEditor.dimensions.alignments.middle')}
+                  </SelectItem>
+                  <SelectItem value='bottom'>
+                    {t('imageEditor.dimensions.alignments.bottom')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -264,7 +280,7 @@ export function DimensionControls({
 
       {/* Quick Presets */}
       <div className='space-y-3'>
-        <Label className='text-sm font-medium'>Quick Presets</Label>
+        <Label className='text-sm font-medium'>{t('imageEditor.dimensions.quickPresets')}</Label>
         <div className='grid grid-cols-2 gap-2'>
           <Button
             variant='outline'

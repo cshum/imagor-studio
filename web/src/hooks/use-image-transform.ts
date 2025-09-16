@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { generateImagorUrl } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
+import { getFullImageUrl } from '@/lib/api-utils'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 
 export interface ImageTransformState {
@@ -178,7 +179,7 @@ export function useImageTransform({
 
   // Use React Query for automatic request management
   const {
-    data: previewUrl = '',
+    data: previewUrl = loaderData.initialPreviewUrl,
     isLoading,
     isFetching,
     error,
@@ -193,6 +194,7 @@ export function useImageTransform({
     enabled: Object.keys(debouncedParams).length > 0, // Only run when we have debounced params
     staleTime: 0, // Always fetch fresh data
     refetchOnWindowFocus: false,
+    initialData: loaderData.initialPreviewUrl, // Use loader's preview URL as initial data
   })
 
   // Notify parent when preview URL changes
@@ -319,6 +321,29 @@ export function useImageTransform({
     return downloadMutation.mutateAsync(downloadParams as ImagorParamsInput)
   }, [params, convertToGraphQLParams, downloadMutation])
 
+  // Get copy URL for dialog display
+  const getCopyUrl = useCallback(async (): Promise<string> => {
+    const copyUrl = await generateCopyUrl()
+    return getFullImageUrl(copyUrl)
+  }, [generateCopyUrl])
+
+  // Simplified download function using location.href
+  const handleDownload = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const downloadUrl = await generateDownloadUrl()
+      const fullUrl = getFullImageUrl(downloadUrl)
+
+      // Use location.href for reliable downloads across all browsers
+      window.location.href = fullUrl
+      return { success: true }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to download image',
+      }
+    }
+  }, [generateDownloadUrl])
+
   return {
     // State
     params,
@@ -338,5 +363,9 @@ export function useImageTransform({
     toggleAspectLock,
     generateCopyUrl,
     generateDownloadUrl,
+
+    // New simplified actions
+    getCopyUrl,
+    handleDownload,
   }
 }

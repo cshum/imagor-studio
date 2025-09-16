@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
 import { toast } from 'sonner'
@@ -7,10 +8,11 @@ import { PreviewArea } from '@/components/image-editor/preview-area'
 import { TransformControlsContent } from '@/components/image-editor/transform-controls-content'
 import { LoadingBar } from '@/components/loading-bar'
 import { Button } from '@/components/ui/button'
+import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useImageTransform } from '@/hooks/use-image-transform'
-import { getFullImageUrl } from '@/lib/api-utils'
+import { cn } from '@/lib/utils.ts'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 
 interface ImageEditorPageProps {
@@ -20,8 +22,11 @@ interface ImageEditorPageProps {
 }
 
 export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
+  const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
+  const [copyUrl, setCopyUrl] = useState('')
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
 
   const {
@@ -36,8 +41,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     resetParams,
     setOriginalDimensions,
     toggleAspectLock,
-    generateCopyUrl,
-    generateDownloadUrl,
+    getCopyUrl,
+    handleDownload,
   } = useImageTransform({
     galleryKey,
     imageKey,
@@ -64,18 +69,28 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     }
   }
 
-  const handleCopyUrl = async () => {
-    try {
-      const copyUrl = await generateCopyUrl()
-      await navigator.clipboard.writeText(getFullImageUrl(copyUrl))
-      toast.success('URL copied to clipboard')
-    } catch {
-      toast.error('Failed to copy URL')
+  const handleCopyUrlClick = async () => {
+    const url = await getCopyUrl()
+    setCopyUrl(url)
+    setCopyUrlDialogOpen(true)
+  }
+
+  const handleDownloadClick = async () => {
+    const result = await handleDownload()
+    if (!result.success) {
+      toast.error(result.error || t('imageEditor.page.failedToDownload'))
     }
+    // No success toast for download as it's obvious when it works
   }
 
   return (
-    <div className='bg-background min-h-screen-safe flex overflow-hidden'>
+    <div
+      className={cn(
+        'bg-background flex overflow-hidden',
+        isMobile && 'min-h-screen-safe',
+        !isMobile && 'h-screen',
+      )}
+    >
       {/* Loading Bar */}
       <LoadingBar isLoading={isLoadingBarVisible} />
 
@@ -85,12 +100,12 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         <div className='flex items-center gap-2 border-b p-4'>
           <Button variant='ghost' size='sm' onClick={handleBack}>
             <ChevronLeft className='mr-1 h-4 w-4' />
-            Back
+            {t('imageEditor.page.back')}
           </Button>
 
           {/* Centered title */}
           <div className='flex flex-1 justify-center'>
-            <h1 className='text-foreground text-lg font-semibold'>Imagor Edit</h1>
+            <h1 className='text-foreground text-lg font-semibold'>{t('imageEditor.page.title')}</h1>
           </div>
 
           {/* Mobile Controls Trigger */}
@@ -100,7 +115,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                 <SheetTrigger asChild>
                   <Button variant='outline' size='sm'>
                     <Settings className='mr-1 h-4 w-4' />
-                    Controls
+                    {t('imageEditor.page.controls')}
                   </Button>
                 </SheetTrigger>
                 <SheetContent
@@ -112,14 +127,14 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                     <div className='flex items-center justify-between'>
                       <Button variant='ghost' size='sm' onClick={() => setMobileSheetOpen(false)}>
                         <ChevronLeft className='mr-1 h-4 w-4' />
-                        Back
+                        {t('imageEditor.page.back')}
                       </Button>
 
-                      <SheetTitle>Controls</SheetTitle>
+                      <SheetTitle>{t('imageEditor.page.controls')}</SheetTitle>
 
                       <Button variant='ghost' size='sm' onClick={resetParams}>
                         <RotateCcw className='mr-1 h-4 w-4' />
-                        Reset All
+                        {t('imageEditor.page.resetAll')}
                       </Button>
                     </div>
                   </SheetHeader>
@@ -149,8 +164,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           galleryKey={galleryKey}
           imageKey={imageKey}
           onImageLoad={setOriginalDimensions}
-          generateDownloadUrl={generateDownloadUrl}
-          onCopyUrl={handleCopyUrl}
+          onCopyUrl={handleCopyUrlClick}
+          onDownload={handleDownloadClick}
         />
       </div>
 
@@ -160,10 +175,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           {/* Panel Header */}
           <div className='border-b p-4'>
             <div className='flex items-center justify-between'>
-              <h2 className='font-semibold'>Controls</h2>
+              <h2 className='font-semibold'>{t('imageEditor.page.controls')}</h2>
               <Button variant='ghost' size='sm' onClick={resetParams}>
                 <RotateCcw className='mr-1 h-4 w-4' />
-                Reset All
+                {t('imageEditor.page.resetAll')}
               </Button>
             </div>
           </div>
@@ -186,30 +201,35 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               <Button
                 variant='outline'
                 size='sm'
-                onClick={async () => {
-                  const downloadUrl = await generateDownloadUrl()
-                  window.open(getFullImageUrl(downloadUrl), '_blank')
-                }}
+                onClick={handleDownloadClick}
                 disabled={!previewUrl || isLoading}
                 className='flex-1'
               >
                 <Download className='mr-1 h-4 w-4' />
-                Download
+                {t('imageEditor.page.download')}
               </Button>
               <Button
                 variant='outline'
                 size='sm'
-                onClick={handleCopyUrl}
+                onClick={handleCopyUrlClick}
                 disabled={!previewUrl}
                 className='flex-1'
               >
                 <Copy className='mr-1 h-4 w-4' />
-                Copy URL
+                {t('imageEditor.page.copyUrl')}
               </Button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Copy URL Dialog */}
+      <CopyUrlDialog
+        open={copyUrlDialogOpen}
+        onOpenChange={setCopyUrlDialogOpen}
+        url={copyUrl}
+        title={t('imageEditor.page.copyImageUrl')}
+      />
     </div>
   )
 }

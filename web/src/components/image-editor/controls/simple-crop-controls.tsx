@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Scissors } from 'lucide-react'
 
 import { Checkbox } from '@/components/ui/checkbox'
@@ -14,6 +15,8 @@ interface SimpleCropControlsProps {
 }
 
 export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControlsProps) {
+  const { t } = useTranslation()
+
   const handleCropChange = (
     side: 'cropLeft' | 'cropTop' | 'cropRight' | 'cropBottom',
     value: string,
@@ -30,11 +33,11 @@ export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControl
     <div className='space-y-6'>
       {/* Manual Crop */}
       <div className='space-y-4'>
-        <Label className='text-sm font-medium'>Manual Crop</Label>
+        <Label className='text-sm font-medium'>{t('imageEditor.crop.manualCrop')}</Label>
 
         <div className='grid grid-cols-2 gap-3'>
           <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>Left (px)</Label>
+            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.left')}</Label>
             <Input
               type='number'
               placeholder='0'
@@ -45,7 +48,7 @@ export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControl
           </div>
 
           <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>Top (px)</Label>
+            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.top')}</Label>
             <Input
               type='number'
               placeholder='0'
@@ -56,7 +59,7 @@ export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControl
           </div>
 
           <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>Right (px)</Label>
+            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.right')}</Label>
             <Input
               type='number'
               placeholder='0'
@@ -67,7 +70,7 @@ export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControl
           </div>
 
           <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>Bottom (px)</Label>
+            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.bottom')}</Label>
             <Input
               type='number'
               placeholder='0'
@@ -78,7 +81,7 @@ export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControl
           </div>
         </div>
 
-        <p className='text-muted-foreground text-xs'>Crop pixels from each edge of the image</p>
+        <p className='text-muted-foreground text-xs'>{t('imageEditor.crop.cropDescription')}</p>
       </div>
 
       {/* Auto Trim */}
@@ -90,13 +93,11 @@ export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControl
             onCheckedChange={handleAutoTrimChange}
           />
           <Label htmlFor='auto-trim' className='text-sm font-medium'>
-            Auto Trim
+            {t('imageEditor.crop.autoTrim')}
           </Label>
         </div>
 
-        <p className='text-muted-foreground text-xs'>
-          Automatically remove whitespace and transparent edges
-        </p>
+        <p className='text-muted-foreground text-xs'>{t('imageEditor.crop.autoTrimDescription')}</p>
       </div>
 
       {/* Info Section */}
@@ -104,10 +105,10 @@ export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControl
         <div className='flex items-start gap-2'>
           <Scissors className='text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0' />
           <div className='space-y-1 text-xs'>
-            <p className='font-medium'>How it works:</p>
+            <p className='font-medium'>{t('imageEditor.crop.howItWorks')}</p>
             <ul className='text-muted-foreground space-y-0.5'>
-              <li>• Manual Crop: Remove specific pixels from each edge</li>
-              <li>• Auto Trim: Automatically detect and remove empty space</li>
+              <li>• {t('imageEditor.crop.howItWorksItems.manualCrop')}</li>
+              <li>• {t('imageEditor.crop.howItWorksItems.autoTrim')}</li>
             </ul>
           </div>
         </div>

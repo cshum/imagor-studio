@@ -394,7 +394,7 @@ export function AdminSetupPage() {
     : allSteps
 
   return (
-    <div className='bg-background flex min-h-screen items-center justify-center p-4'>
+    <div className='bg-background min-h-screen-safe flex items-center justify-center p-4'>
       <MultiStepForm
         ref={multiStepFormRef}
         steps={steps}

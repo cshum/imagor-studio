@@ -117,7 +117,7 @@ const rootImagePage = createRoute({
 const rootImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/$imageKey/editor',
-  beforeLoad: requireAuth,
+  beforeLoad: requireAccountAuth,
   loader: ({ params }) => imageEditorLoader({ params: { ...params, galleryKey: '' } }),
   component: () => {
     const loaderData = rootImageEditorRoute.useLoaderData()
@@ -163,7 +163,7 @@ const imagePage = createRoute({
 const galleryImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/gallery/$galleryKey/$imageKey/editor',
-  beforeLoad: requireAuth,
+  beforeLoad: requireAccountAuth,
   loader: ({ params }) => imageEditorLoader({ params }),
   component: () => {
     const loaderData = galleryImageEditorRoute.useLoaderData()
