@@ -8,6 +8,7 @@ import { ImageInfo, ImageViewInfo } from '@/components/image-gallery/image-view-
 import { Sheet } from '@/components/ui/sheet'
 import { FileInfoFragment } from '@/generated/graphql'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
+import { useAuth } from '@/stores/auth-store'
 
 export interface GalleryImage extends Omit<FileInfoFragment, 'path' | 'size' | 'isDirectory'> {
   imageSrc: string
@@ -54,6 +55,7 @@ export function ImageView({
   imageKey,
 }: FullScreenImageProps) {
   const navigate = useNavigate()
+  const { authState } = useAuth()
   const duration = 0.2
   const [scale, setScale] = useState(1)
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
@@ -361,12 +363,14 @@ export function ImageView({
             )}
 
             <div className='absolute top-4 right-8 z-60 flex space-x-2'>
-              <button
-                onClick={handleImagorClick}
-                className='rounded-full bg-black/50 px-4 py-2 text-white transition-colors hover:bg-black/75'
-              >
-                imagor
-              </button>
+              {authState.state === 'authenticated' && (
+                <button
+                  onClick={handleImagorClick}
+                  className='rounded-full bg-black/50 px-4 py-2 text-white transition-colors hover:bg-black/75'
+                >
+                  imagor
+                </button>
+              )}
               <button
                 onClick={toggleInfo}
                 className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
