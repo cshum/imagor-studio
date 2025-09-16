@@ -1,4 +1,5 @@
-import { ChevronDown, FileImage, Move, Scissors } from 'lucide-react'
+import { useState } from 'react'
+import { ChevronDown, ChevronUp, FileImage, Move, Scissors } from 'lucide-react'
 
 import { DimensionControls } from '@/components/image-editor/controls/dimension-controls'
 import { OutputControls } from '@/components/image-editor/controls/output-controls'
@@ -25,17 +26,29 @@ export function TransformControlsContent({
   onUpdateParam,
   onToggleAspectLock,
 }: TransformControlsContentProps) {
+  const [openSections, setOpenSections] = useState({
+    dimensions: true,  // defaultOpen
+    output: false,
+    crop: false
+  })
+
+  const CollapsibleIcon = ({ isOpen }: { isOpen: boolean }) => 
+    isOpen ? <ChevronUp className='h-4 w-4' /> : <ChevronDown className='h-4 w-4' />
+
   return (
     <div className='space-y-4'>
       {/* Dimensions & Resize */}
       <Card className='p-4'>
-        <Collapsible defaultOpen>
+        <Collapsible 
+          open={openSections.dimensions}
+          onOpenChange={(open) => setOpenSections(prev => ({...prev, dimensions: open}))}
+        >
           <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
             <div className='flex items-center gap-2'>
               <Move className='h-4 w-4' />
               <span className='font-medium'>Dimensions & Resize</span>
             </div>
-            <ChevronDown className='h-4 w-4' />
+            <CollapsibleIcon isOpen={openSections.dimensions} />
           </CollapsibleTrigger>
           <CollapsibleContent className='mt-4'>
             <DimensionControls
@@ -51,13 +64,16 @@ export function TransformControlsContent({
 
       {/* Output & Compression */}
       <Card className='p-4'>
-        <Collapsible>
+        <Collapsible 
+          open={openSections.output}
+          onOpenChange={(open) => setOpenSections(prev => ({...prev, output: open}))}
+        >
           <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
             <div className='flex items-center gap-2'>
               <FileImage className='h-4 w-4' />
               <span className='font-medium'>Output & Compression</span>
             </div>
-            <ChevronDown className='h-4 w-4' />
+            <CollapsibleIcon isOpen={openSections.output} />
           </CollapsibleTrigger>
           <CollapsibleContent className='mt-4'>
             <OutputControls params={params} onUpdateParam={onUpdateParam} />
@@ -67,13 +83,16 @@ export function TransformControlsContent({
 
       {/* Crop & Trim */}
       <Card className='p-4'>
-        <Collapsible>
+        <Collapsible 
+          open={openSections.crop}
+          onOpenChange={(open) => setOpenSections(prev => ({...prev, crop: open}))}
+        >
           <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
             <div className='flex items-center gap-2'>
               <Scissors className='h-4 w-4' />
               <span className='font-medium'>Crop & Trim</span>
             </div>
-            <ChevronDown className='h-4 w-4' />
+            <CollapsibleIcon isOpen={openSections.crop} />
           </CollapsibleTrigger>
           <CollapsibleContent className='mt-4'>
             <SimpleCropControls params={params} onUpdateParam={onUpdateParam} />
