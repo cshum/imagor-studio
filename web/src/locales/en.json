@@ -232,7 +232,31 @@
     "controls": {
       "dimensionsResize": "Dimensions & Resize",
       "outputCompression": "Output & Compression",
+      "colorEffects": "Color & Effects",
+      "transformRotate": "Transform & Rotate",
       "cropTrim": "Crop & Trim"
+    },
+    "transform": {
+      "flipControls": "Flip Controls",
+      "horizontalFlip": "Horizontal Flip",
+      "verticalFlip": "Vertical Flip",
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "normal": "Normal",
+      "flipped": "Flipped",
+      "rotationControls": "Rotation Controls",
+      "currentRotation": "Current Rotation"
+    },
+    "effects": {
+      "colorAdjustments": "Color Adjustments",
+      "brightness": "Brightness",
+      "contrast": "Contrast",
+      "saturation": "Saturation",
+      "hue": "Hue",
+      "effects": "Effects",
+      "blur": "Blur",
+      "sharpen": "Sharpen",
+      "grayscale": "Grayscale"
     },
     "dimensions": {
       "title": "Dimensions",

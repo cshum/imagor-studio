@@ -30,7 +30,15 @@ export interface ImageTransformState {
   brightness?: number
   contrast?: number
   saturation?: number
+  hue?: number
+  blur?: number
+  sharpen?: number
   grayscale?: boolean
+
+  // Transform (for Phase 5)
+  hFlip?: boolean
+  vFlip?: boolean
+  rotation?: number // 0, 90, 180, 270
 
   // Output format and quality
   format?: string // e.g., 'webp', 'jpeg', 'png', undefined (original)
@@ -118,6 +126,10 @@ export function useImageTransform({
       if (state.hAlign) graphqlParams.hAlign = state.hAlign
       if (state.vAlign) graphqlParams.vAlign = state.vAlign
 
+      // Transform (for Phase 5)
+      if (state.hFlip !== undefined) graphqlParams.hFlip = state.hFlip
+      if (state.vFlip !== undefined) graphqlParams.vFlip = state.vFlip
+
       // Filters (for Phase 4)
       const filters: Array<{ name: string; args: string }> = []
 
@@ -130,8 +142,20 @@ export function useImageTransform({
       if (state.saturation !== undefined && state.saturation !== 0) {
         filters.push({ name: 'saturation', args: state.saturation.toString() })
       }
+      if (state.hue !== undefined && state.hue !== 0) {
+        filters.push({ name: 'hue', args: state.hue.toString() })
+      }
+      if (state.blur !== undefined && state.blur !== 0) {
+        filters.push({ name: 'blur', args: state.blur.toString() })
+      }
+      if (state.sharpen !== undefined && state.sharpen !== 0) {
+        filters.push({ name: 'sharpen', args: state.sharpen.toString() })
+      }
       if (state.grayscale) {
         filters.push({ name: 'grayscale', args: '' })
+      }
+      if (state.rotation !== undefined && state.rotation !== 0) {
+        filters.push({ name: 'rotate', args: state.rotation.toString() })
       }
 
       // Auto trim handling
@@ -266,7 +290,13 @@ export function useImageTransform({
       brightness: undefined,
       contrast: undefined,
       saturation: undefined,
+      hue: undefined,
+      blur: undefined,
+      sharpen: undefined,
       grayscale: undefined,
+      hFlip: undefined,
+      vFlip: undefined,
+      rotation: undefined,
       format: undefined,
       quality: undefined,
       maxBytes: undefined,
