@@ -3,7 +3,13 @@ import { FileImage } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import type { ImageTransformState } from '@/hooks/use-image-transform'
 
@@ -11,7 +17,7 @@ interface OutputControlsProps {
   params: ImageTransformState
   onUpdateParam: <K extends keyof ImageTransformState>(
     key: K,
-    value: ImageTransformState[K]
+    value: ImageTransformState[K],
   ) => void
 }
 
@@ -98,36 +104,35 @@ export function OutputControls({ params, onUpdateParam }: OutputControlsProps) {
             ))}
           </SelectContent>
         </Select>
-        <p className='text-muted-foreground text-xs'>
-          Choose output format or keep original
-        </p>
+        <p className='text-muted-foreground text-xs'>Choose output format or keep original</p>
       </div>
 
-      {/* Quality Slider - Only show when format is selected AND max_bytes is NOT set */}
-      {formatValue !== 'original' && !params.maxBytes && (
-        <div className='space-y-3'>
-          <div className='flex items-center justify-between'>
-            <Label className='text-sm font-medium'>Quality</Label>
-            <span className='text-muted-foreground text-sm'>{qualityValue}%</span>
-          </div>
-          <Slider
-            value={[qualityValue]}
-            onValueChange={handleQualityChange}
-            min={1}
-            max={100}
-            step={1}
-            className='w-full'
-          />
-          <p className='text-muted-foreground text-xs'>
-            Higher quality = larger file size
-          </p>
+      {/* Quality Slider - Always show when format is selected */}
+      <div className='space-y-3'>
+        <div className='flex items-center justify-between'>
+          <Label className='text-sm font-medium'>Quality</Label>
+          <span className='text-muted-foreground text-sm'>{qualityValue}%</span>
         </div>
-      )}
+        <Slider
+          value={[qualityValue]}
+          onValueChange={handleQualityChange}
+          disabled={!!params.maxBytes}
+          min={1}
+          max={100}
+          step={1}
+          className={`w-full ${params.maxBytes ? 'opacity-50' : ''}`}
+        />
+        <p className='text-muted-foreground text-xs'>
+          {params.maxBytes
+            ? 'Quality will be automatically optimized to meet size limit'
+            : 'Higher quality = larger file size'}
+        </p>
+      </div>
 
       {/* Max File Size */}
       <div className='space-y-3'>
         <Label className='text-sm font-medium'>Max File Size</Label>
-        
+
         {/* Size Presets */}
         <div className='flex flex-wrap gap-2'>
           {sizePresets.map((preset) => (
@@ -142,12 +147,7 @@ export function OutputControls({ params, onUpdateParam }: OutputControlsProps) {
             </Button>
           ))}
           {maxBytesValue > 0 && (
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={clearMaxBytes}
-              className='h-7 text-xs'
-            >
+            <Button variant='ghost' size='sm' onClick={clearMaxBytes} className='h-7 text-xs'>
               Clear
             </Button>
           )}
@@ -167,7 +167,8 @@ export function OutputControls({ params, onUpdateParam }: OutputControlsProps) {
 
         {maxBytesValue > 0 && (
           <p className='text-muted-foreground text-xs'>
-            Target: {formatBytes(maxBytesValue)} - Quality will be automatically reduced to meet this limit
+            Target: {formatBytes(maxBytesValue)} - Quality will be automatically reduced to meet
+            this limit
           </p>
         )}
 
@@ -182,7 +183,7 @@ export function OutputControls({ params, onUpdateParam }: OutputControlsProps) {
       <div className='bg-muted/50 rounded-lg p-3'>
         <div className='flex items-start gap-2'>
           <FileImage className='text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0' />
-          <div className='text-xs space-y-1'>
+          <div className='space-y-1 text-xs'>
             <p className='font-medium'>How it works:</p>
             <ul className='text-muted-foreground space-y-0.5'>
               <li>• Format: Choose output format or keep original</li>
