@@ -124,10 +124,10 @@ export function PreviewArea({
               onLoad={handleCurrentImageLoad}
               onError={handleImageError}
               className={cn(
-                'rounded-lg object-contain w-auto h-auto',
+                'h-auto w-auto rounded-lg object-contain',
                 'max-h-[calc(100vh-200px)]',
                 isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
-                imageLoaded ? 'block' : 'hidden'
+                imageLoaded ? 'block' : 'hidden',
               )}
             />
 

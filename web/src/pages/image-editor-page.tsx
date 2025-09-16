@@ -7,7 +7,6 @@ import { PreviewArea } from '@/components/image-editor/preview-area'
 import { TransformControlsContent } from '@/components/image-editor/transform-controls-content'
 import { LoadingBar } from '@/components/loading-bar'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useImageTransform } from '@/hooks/use-image-transform'
@@ -72,8 +71,6 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
     }
   }
 
-  const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
-
   return (
     <div className='bg-background flex h-screen overflow-hidden'>
       {/* Loading Bar */}
@@ -88,13 +85,10 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
             Back
           </Button>
 
-          {/* Only show title on desktop */}
-          {!isMobile && (
-            <>
-              <Separator orientation='vertical' className='h-4' />
-              <span className='text-muted-foreground text-sm'>Editing: {imagePath}</span>
-            </>
-          )}
+          {/* Centered title */}
+          <div className='flex flex-1 justify-center'>
+            <h1 className='text-foreground text-lg font-semibold'>Imagor Edit</h1>
+          </div>
 
           {/* Mobile Controls Trigger */}
           {isMobile && (
