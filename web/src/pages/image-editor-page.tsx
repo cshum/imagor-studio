@@ -66,9 +66,8 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
     try {
       const copyUrl = await generateCopyUrl()
       navigator.clipboard.writeText(getFullImageUrl(copyUrl))
-      toast.success('URL copied to clipboard!')
-    } catch (error) {
-      console.error('Failed to generate copy URL:', error)
+      toast.success('URL copied to clipboard')
+    } catch {
       toast.error('Failed to copy URL')
     }
   }
