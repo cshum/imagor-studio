@@ -33,6 +33,7 @@ export interface ImageTransformState {
   // Output format and quality
   format?: string  // e.g., 'webp', 'jpeg', 'png', undefined (original)
   quality?: number // e.g., 80, 90, 95, undefined (default)
+  maxBytes?: number // e.g., 100000 (100KB), undefined (no limit)
 }
 
 export interface UseImageTransformProps {
@@ -110,6 +111,11 @@ export function useImageTransform({
       // Quality handling (only if format is specified)
       if (state.quality && (forPreview || state.format)) {
         filters.push({ name: 'quality', args: state.quality.toString() })
+      }
+
+      // Max bytes handling (automatic quality degradation)
+      if (state.maxBytes && (forPreview || state.format || state.quality)) {
+        filters.push({ name: 'max_bytes', args: state.maxBytes.toString() })
       }
 
       if (filters.length > 0) {
@@ -222,6 +228,7 @@ export function useImageTransform({
       grayscale: undefined,
       format: undefined,
       quality: undefined,
+      maxBytes: undefined,
     }
     setParams(resetState)
   }, [originalDimensions])
