@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, FileImage, Move, Scissors } from 'lucide-react'
 
 import { setUserRegistry } from '@/api/registry-api'
@@ -31,6 +32,7 @@ export function TransformControlsContent({
   onUpdateParams,
   onToggleAspectLock,
 }: TransformControlsContentProps) {
+  const { t } = useTranslation()
   const [openSections, setOpenSections] = useState<EditorOpenSections>(initialOpenSections)
 
   const debouncedSaveOpenSections = useMemo(
@@ -64,7 +66,7 @@ export function TransformControlsContent({
           <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
             <div className='flex items-center gap-2'>
               <Move className='h-4 w-4' />
-              <span className='font-medium'>Dimensions & Resize</span>
+              <span className='font-medium'>{t('imageEditor.controls.dimensionsResize')}</span>
             </div>
             <CollapsibleIcon isOpen={openSections.dimensions} />
           </CollapsibleTrigger>
@@ -89,7 +91,7 @@ export function TransformControlsContent({
           <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
             <div className='flex items-center gap-2'>
               <FileImage className='h-4 w-4' />
-              <span className='font-medium'>Output & Compression</span>
+              <span className='font-medium'>{t('imageEditor.controls.outputCompression')}</span>
             </div>
             <CollapsibleIcon isOpen={openSections.output} />
           </CollapsibleTrigger>
@@ -108,7 +110,7 @@ export function TransformControlsContent({
           <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
             <div className='flex items-center gap-2'>
               <Scissors className='h-4 w-4' />
-              <span className='font-medium'>Crop & Trim</span>
+              <span className='font-medium'>{t('imageEditor.controls.cropTrim')}</span>
             </div>
             <CollapsibleIcon isOpen={openSections.crop} />
           </CollapsibleTrigger>

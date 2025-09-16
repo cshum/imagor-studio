@@ -216,5 +216,108 @@
   "addLabel": "Add label",
   "muteThread": "Mute thread",
   "imageInformation": "Image Information",
-  "noImageInfo": "No image information available."
+  "noImageInfo": "No image information available.",
+  "imageEditor": {
+    "page": {
+      "title": "Imagor Edit",
+      "back": "Back",
+      "controls": "Controls",
+      "resetAll": "Reset All",
+      "download": "Download",
+      "copyUrl": "Copy URL",
+      "copyImageUrl": "Copy Image URL",
+      "retry": "Retry",
+      "failedToDownload": "Failed to download image"
+    },
+    "controls": {
+      "dimensionsResize": "Dimensions & Resize",
+      "outputCompression": "Output & Compression",
+      "cropTrim": "Crop & Trim"
+    },
+    "dimensions": {
+      "title": "Dimensions",
+      "width": "Width",
+      "height": "Height",
+      "auto": "Auto",
+      "originalRatio": "Original ratio: {{ratio}}:1",
+      "resizeMode": "Resize Mode",
+      "modes": {
+        "fitIn": "Fit In",
+        "fill": "Fill",
+        "stretch": "Stretch",
+        "smart": "Smart"
+      },
+      "modeDescriptions": {
+        "fitIn": "Scale to fit within dimensions",
+        "fill": "Scale to fill dimensions with crop",
+        "stretch": "Stretch to exact dimensions",
+        "smart": "Content-aware crop preserving important areas"
+      },
+      "alignment": "Alignment",
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "alignments": {
+        "left": "Left",
+        "center": "Center",
+        "right": "Right",
+        "top": "Top",
+        "middle": "Middle",
+        "bottom": "Bottom"
+      },
+      "quickPresets": "Quick Presets"
+    },
+    "output": {
+      "outputFormat": "Output Format",
+      "formatOptions": {
+        "original": "Original Format",
+        "jpeg": "JPEG",
+        "png": "PNG",
+        "gif": "GIF",
+        "webp": "WebP",
+        "avif": "AVIF",
+        "jxl": "JPEG XL",
+        "tiff": "TIFF",
+        "jp2": "JPEG 2000"
+      },
+      "formatDescription": "Choose output format or keep original",
+      "quality": "Quality",
+      "qualityDescription": "Higher quality = larger file size",
+      "qualityAutoOptimized": "Quality will be automatically optimized to meet size limit",
+      "maxFileSize": "Max File Size",
+      "customSizeInBytes": "Custom size in bytes",
+      "bytes": "bytes",
+      "clear": "Clear",
+      "targetSize": "Target: {{size}} - Quality will be automatically reduced to meet this limit",
+      "autoReduceQuality": "Automatically reduces quality to meet file size limit",
+      "howItWorks": "How it works:",
+      "howItWorksItems": {
+        "format": "Format: Choose output format or keep original",
+        "quality": "Quality: Manual quality control (mutually exclusive with max size)",
+        "maxSize": "Max Size: Automatically sets JPEG format and optimizes quality for best compression"
+      }
+    },
+    "crop": {
+      "manualCrop": "Manual Crop",
+      "left": "Left (px)",
+      "top": "Top (px)",
+      "right": "Right (px)",
+      "bottom": "Bottom (px)",
+      "cropDescription": "Crop pixels from each edge of the image",
+      "autoTrim": "Auto Trim",
+      "autoTrimDescription": "Automatically remove whitespace and transparent edges",
+      "howItWorks": "How it works:",
+      "howItWorksItems": {
+        "manualCrop": "Manual Crop: Remove specific pixels from each edge",
+        "autoTrim": "Auto Trim: Automatically detect and remove empty space"
+      }
+    },
+    "preview": {
+      "previewError": "Preview Error",
+      "failedToGenerate": "Failed to generate preview",
+      "generatingPreview": "Generating preview...",
+      "applyingTransformations": "Applying transformations to {{imagePath}}",
+      "noPreview": "No Preview",
+      "adjustParameters": "Adjust parameters to generate preview"
+    }
+  }
 }
