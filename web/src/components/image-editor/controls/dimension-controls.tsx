@@ -255,22 +255,27 @@ export function DimensionControls({
           </div>
         </RadioGroup>
 
-        <div className='text-muted-foreground space-y-1 text-xs'>
-          <div>
-            <strong>{t('imageEditor.dimensions.modes.fitIn')}:</strong>{' '}
-            {t('imageEditor.dimensions.modeDescriptions.fitIn')}
-          </div>
-          <div>
-            <strong>{t('imageEditor.dimensions.modes.fill')}:</strong>{' '}
-            {t('imageEditor.dimensions.modeDescriptions.fill')}
-          </div>
-          <div>
-            <strong>{t('imageEditor.dimensions.modes.stretch')}:</strong>{' '}
-            {t('imageEditor.dimensions.modeDescriptions.stretch')}
-          </div>
-          <div>
-            <strong>{t('imageEditor.dimensions.modes.smart')}:</strong>{' '}
-            {t('imageEditor.dimensions.modeDescriptions.smart')}
+        {/* Info Section */}
+        <div className='bg-muted/50 rounded-lg p-4'>
+          <div className='space-y-1 text-xs'>
+            <ul className='text-muted-foreground space-y-0.5'>
+              <li>
+                • <strong>{t('imageEditor.dimensions.modes.fitIn')}:</strong>{' '}
+                {t('imageEditor.dimensions.modeDescriptions.fitIn')}
+              </li>
+              <li>
+                • <strong>{t('imageEditor.dimensions.modes.fill')}:</strong>{' '}
+                {t('imageEditor.dimensions.modeDescriptions.fill')}
+              </li>
+              <li>
+                • <strong>{t('imageEditor.dimensions.modes.stretch')}:</strong>{' '}
+                {t('imageEditor.dimensions.modeDescriptions.stretch')}
+              </li>
+              <li>
+                • <strong>{t('imageEditor.dimensions.modes.smart')}:</strong>{' '}
+                {t('imageEditor.dimensions.modeDescriptions.smart')}
+              </li>
+            </ul>
           </div>
         </div>
       </div>

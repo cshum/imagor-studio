@@ -267,7 +267,7 @@
       "quickPresets": "Quick Presets"
     },
     "output": {
-      "outputFormat": "Output Format",
+      "outputFormat": "Format",
       "formatOptions": {
         "original": "Original Format",
         "jpeg": "JPEG",
@@ -283,17 +283,16 @@
       "quality": "Quality",
       "qualityDescription": "Higher quality = larger file size",
       "qualityAutoOptimized": "Quality will be automatically optimized to meet size limit",
-      "maxFileSize": "Max File Size",
+      "maxFileSize": "Max Size",
       "customSizeInBytes": "Custom size in bytes",
       "bytes": "bytes",
       "clear": "Clear",
       "targetSize": "Target: {{size}} - Quality will be automatically reduced to meet this limit",
       "autoReduceQuality": "Automatically reduces quality to meet file size limit",
-      "howItWorks": "How it works:",
       "howItWorksItems": {
         "format": "Format: Choose output format or keep original",
-        "quality": "Quality: Manual quality control (mutually exclusive with max size)",
-        "maxSize": "Max Size: Automatically sets JPEG format and optimizes quality for best compression"
+        "quality": "Quality: Manual quality control",
+        "maxSize": "Max Size: Automatically adjusts quality to fit under the target file size"
       }
     },
     "crop": {

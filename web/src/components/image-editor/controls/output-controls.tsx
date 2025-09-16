@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next'
-import { FileImage } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -194,17 +193,13 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
       </div>
 
       {/* Info Section */}
-      <div className='bg-muted/50 rounded-lg p-3'>
-        <div className='flex items-start gap-2'>
-          <FileImage className='text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0' />
-          <div className='space-y-1 text-xs'>
-            <p className='font-medium'>{t('imageEditor.output.howItWorks')}</p>
-            <ul className='text-muted-foreground space-y-0.5'>
-              <li>• {t('imageEditor.output.howItWorksItems.format')}</li>
-              <li>• {t('imageEditor.output.howItWorksItems.quality')}</li>
-              <li>• {t('imageEditor.output.howItWorksItems.maxSize')}</li>
-            </ul>
-          </div>
+      <div className='bg-muted/50 rounded-lg p-4'>
+        <div className='space-y-1 text-xs'>
+          <ul className='text-muted-foreground space-y-0.5'>
+            <li>• {t('imageEditor.output.howItWorksItems.format')}</li>
+            <li>• {t('imageEditor.output.howItWorksItems.quality')}</li>
+            <li>• {t('imageEditor.output.howItWorksItems.maxSize')}</li>
+          </ul>
         </div>
       </div>
     </div>
