@@ -24,10 +24,10 @@ interface OutputControlsProps {
 export function OutputControls({ params, onUpdateParam }: OutputControlsProps) {
   const formatOptions = [
     { value: 'original', label: 'Original Format' },
-    { value: 'webp', label: 'WebP' },
     { value: 'jpeg', label: 'JPEG' },
     { value: 'png', label: 'PNG' },
     { value: 'gif', label: 'GIF' },
+    { value: 'webp', label: 'WebP' },
     { value: 'avif', label: 'AVIF' },
     { value: 'jxl', label: 'JPEG XL' },
     { value: 'tiff', label: 'TIFF' },
