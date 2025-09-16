@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, FileImage, Move, Scissors } from 'lucide-react'
 
 import { setUserRegistry } from '@/api/registry-api'
@@ -8,6 +8,7 @@ import { SimpleCropControls } from '@/components/image-editor/controls/simple-cr
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { ImageTransformState } from '@/hooks/use-image-transform'
+import { debounce } from '@/lib/utils'
 import type { EditorOpenSections } from '@/loaders/image-editor-loader'
 
 interface TransformControlsContentProps {
@@ -32,25 +33,21 @@ export function TransformControlsContent({
 }: TransformControlsContentProps) {
   const [openSections, setOpenSections] = useState<EditorOpenSections>(initialOpenSections)
 
-  // Debounced save function to avoid excessive API calls
-  const saveOpenSections = useCallback(async (sections: EditorOpenSections) => {
-    await setUserRegistry('config.editor_open_sections', JSON.stringify(sections))
-  }, [])
+  const debouncedSaveOpenSections = useMemo(
+    () =>
+      debounce(async (sections: EditorOpenSections) => {
+        await setUserRegistry('config.editor_open_sections', JSON.stringify(sections))
+      }, 300),
+    [],
+  )
 
   const handleSectionToggle = useCallback(
     (section: keyof EditorOpenSections, open: boolean) => {
       const newSections = { ...openSections, [section]: open }
       setOpenSections(newSections)
-
-      // Debounce the save operation
-      const timeoutId = setTimeout(() => {
-        saveOpenSections(newSections)
-      }, 500)
-
-      // Store timeout ID for potential cleanup
-      return () => clearTimeout(timeoutId)
+      debouncedSaveOpenSections(newSections)
     },
-    [openSections, saveOpenSections],
+    [openSections, debouncedSaveOpenSections],
   )
 
   const CollapsibleIcon = ({ isOpen }: { isOpen: boolean }) =>
