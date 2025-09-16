@@ -122,11 +122,11 @@ export function PreviewArea({
               alt={`Preview of ${imagePath}`}
               onLoad={handleCurrentImageLoad}
               onError={handleImageError}
-              className='max-h-full max-w-full rounded-lg object-contain'
+              className='rounded-lg object-contain'
               style={{
                 display: imageLoaded ? 'block' : 'none',
-                maxHeight: '100%',
-                maxWidth: '100%',
+                maxHeight: 'calc(100vh - 200px)',
+                maxWidth: isMobile ? 'calc(100vw - 32px)' : 'calc(100vw - 432px)',
                 width: 'auto',
                 height: 'auto',
               }}
