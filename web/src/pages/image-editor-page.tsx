@@ -31,6 +31,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
     aspectLocked,
     originalAspectRatio,
     isLoading,
+    isLoadingBarVisible,
     error,
     updateParam,
     resetParams,
@@ -79,7 +80,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
   return (
     <div className='bg-background flex h-screen'>
       {/* Loading Bar */}
-      <LoadingBar isLoading={isLoading} />
+      <LoadingBar isLoading={isLoadingBarVisible} />
 
       {/* Preview Area - 70% */}
       <div className='flex flex-1 flex-col'>

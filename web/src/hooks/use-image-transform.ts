@@ -52,6 +52,7 @@ export function useImageTransform({
     width: number
     height: number
   } | null>(null)
+  const [isPendingChange, setIsPendingChange] = useState(false)
 
   // Mutation for generating Imagor URLs
   const generateUrlMutation = useMutation({
@@ -123,6 +124,7 @@ export function useImageTransform({
   const debouncedGenerateUrl = useMemo(
     () =>
       debounce((state: ImageTransformState) => {
+        setIsPendingChange(false) // Clear pending state when debounced function executes
         const graphqlParams = convertToGraphQLParams(state)
         generateUrlMutation.mutate(graphqlParams as ImagorParamsInput)
       }, 500),
@@ -132,6 +134,7 @@ export function useImageTransform({
   // Update a single parameter
   const updateParam = useCallback(
     (key: keyof ImageTransformState, value: any) => {
+      setIsPendingChange(true) // Set pending state immediately
       setParams((prev) => {
         const newParams = { ...prev, [key]: value }
 
@@ -156,6 +159,7 @@ export function useImageTransform({
   // Update multiple parameters at once
   const updateParams = useCallback(
     (updates: Partial<ImageTransformState>) => {
+      setIsPendingChange(true) // Set pending state immediately
       setParams((prev) => {
         const newParams = { ...prev, ...updates }
         debouncedGenerateUrl(newParams)
@@ -167,6 +171,7 @@ export function useImageTransform({
 
   // Reset all parameters
   const resetParams = useCallback(() => {
+    setIsPendingChange(true) // Set pending state immediately
     const resetState: ImageTransformState = {
       // Reset to original dimensions if available
       width: originalDimensions?.width,
@@ -265,7 +270,8 @@ export function useImageTransform({
     originalAspectRatio,
 
     // Loading states
-    isLoading: generateUrlMutation.isPending,
+    isLoading: generateUrlMutation.isPending, // Keep original for image logic
+    isLoadingBarVisible: generateUrlMutation.isPending || isPendingChange, // New state for LoadingBar
     error: generateUrlMutation.error,
 
     // Actions
