@@ -112,13 +112,6 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                     <SheetTitle>Transform Controls</SheetTitle>
                   </SheetHeader>
 
-                  {/* Reset Button */}
-                  <div className='flex justify-end border-b pb-4'>
-                    <Button variant='ghost' size='sm' onClick={resetParams}>
-                      <RotateCcw className='mr-1 h-4 w-4' />
-                      Reset All
-                    </Button>
-                  </div>
 
                   {/* Scrollable Controls */}
                   <div className='flex-1 overflow-y-auto pr-6'>
@@ -129,6 +122,27 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                       onUpdateParam={updateParam}
                       onToggleAspectLock={toggleAspectLock}
                     />
+                  </div>
+
+                  {/* Bottom Action Bar */}
+                  <div className='border-t p-4 pr-6 flex items-center justify-between'>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => setMobileSheetOpen(false)}
+                    >
+                      <ChevronLeft className='mr-1 h-4 w-4' />
+                      Back
+                    </Button>
+                    
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={resetParams}
+                    >
+                      <RotateCcw className='mr-1 h-4 w-4' />
+                      Reset All
+                    </Button>
                   </div>
                 </SheetContent>
               </Sheet>
