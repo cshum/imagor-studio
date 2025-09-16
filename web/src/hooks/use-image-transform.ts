@@ -31,9 +31,12 @@ export interface ImageTransformState {
   grayscale?: boolean
 
   // Output format and quality
-  format?: string  // e.g., 'webp', 'jpeg', 'png', undefined (original)
+  format?: string // e.g., 'webp', 'jpeg', 'png', undefined (original)
   quality?: number // e.g., 80, 90, 95, undefined (default)
   maxBytes?: number // e.g., 100000 (100KB), undefined (no limit)
+
+  // Auto trim
+  autoTrim?: boolean // Remove whitespace/transparent edges
 }
 
 export interface UseImageTransformProps {
@@ -96,6 +99,11 @@ export function useImageTransform({
       }
       if (state.grayscale) {
         filters.push({ name: 'grayscale', args: '' })
+      }
+
+      // Auto trim handling
+      if (state.autoTrim) {
+        filters.push({ name: 'trim', args: '' })
       }
 
       // Format handling
@@ -229,6 +237,7 @@ export function useImageTransform({
       format: undefined,
       quality: undefined,
       maxBytes: undefined,
+      autoTrim: undefined,
     }
     setParams(resetState)
   }, [originalDimensions])
