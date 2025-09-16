@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { ChevronDown, ChevronLeft, Copy, RotateCcw, Settings } from 'lucide-react'
+import { ChevronDown, ChevronLeft, RotateCcw, Settings } from 'lucide-react'
 
 import { CropControls } from '@/components/image-editor/controls/crop-controls'
 import { DimensionControls } from '@/components/image-editor/controls/dimension-controls'
@@ -70,11 +70,6 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
     }
   }
 
-  const handleApplyAndReturn = () => {
-    // TODO: Save transform settings and return to gallery
-    handleBack()
-  }
-
   const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
 
   return (
@@ -111,7 +106,17 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                 </SheetTrigger>
                 <SheetContent side='right' className='flex w-full flex-col sm:w-96'>
                   <SheetHeader>
-                    <SheetTitle>Transform Controls</SheetTitle>
+                    <div className='flex items-center gap-2'>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => setMobileSheetOpen(false)}
+                        className='h-8 w-8 p-0'
+                      >
+                        <ChevronLeft className='h-4 w-4' />
+                      </Button>
+                      <SheetTitle>Transform Controls</SheetTitle>
+                    </div>
                   </SheetHeader>
 
                   {/* Reset Button */}
@@ -180,25 +185,6 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                       </Collapsible>
                     </Card>
                   </div>
-
-                  {/* Action Buttons - Fixed at bottom */}
-                  <div className='space-y-2 border-t p-4'>
-                    <div className='flex gap-2'>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={handleCopyUrl}
-                        disabled={!previewUrl}
-                        className='flex-1'
-                      >
-                        <Copy className='mr-1 h-4 w-4' />
-                        Copy URL
-                      </Button>
-                    </div>
-                    <Button onClick={handleApplyAndReturn} disabled={isLoading} className='w-full'>
-                      Apply & Return
-                    </Button>
-                  </div>
                 </SheetContent>
               </Sheet>
             </div>
@@ -214,6 +200,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
           imageKey={imageKey}
           onImageLoad={setOriginalDimensions}
           generateDownloadUrl={generateDownloadUrl}
+          onCopyUrl={handleCopyUrl}
         />
       </div>
 
@@ -288,27 +275,6 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                 </CollapsibleContent>
               </Collapsible>
             </Card>
-          </div>
-
-          {/* Action Buttons */}
-          <div className='bg-background border-t p-4'>
-            <div className='space-y-2'>
-              <div className='flex gap-2'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={handleCopyUrl}
-                  disabled={!previewUrl}
-                  className='flex-1'
-                >
-                  <Copy className='mr-1 h-4 w-4' />
-                  Copy URL
-                </Button>
-              </div>
-              <Button onClick={handleApplyAndReturn} disabled={isLoading} className='w-full'>
-                Apply & Return
-              </Button>
-            </div>
           </div>
         </div>
       )}

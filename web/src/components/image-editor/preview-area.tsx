@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AlertCircle, Download, ZoomIn, ZoomOut } from 'lucide-react'
+import { AlertCircle, Copy, Download } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -14,6 +14,7 @@ interface PreviewAreaProps {
   imageKey: string
   onImageLoad?: (width: number, height: number) => void
   generateDownloadUrl: () => Promise<string>
+  onCopyUrl: () => void
 }
 
 export function PreviewArea({
@@ -24,6 +25,7 @@ export function PreviewArea({
   imageKey,
   onImageLoad,
   generateDownloadUrl,
+  onCopyUrl,
 }: PreviewAreaProps) {
   const [currentImageSrc, setCurrentImageSrc] = useState<string>('')
   const [nextImageSrc, setNextImageSrc] = useState<string>('')
@@ -31,7 +33,6 @@ export function PreviewArea({
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(
     null,
   )
-  const [zoom, setZoom] = useState(1)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
 
   const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
@@ -65,18 +66,6 @@ export function PreviewArea({
     setImageDimensions(null)
   }
 
-  const handleZoomIn = () => {
-    setZoom((prev) => Math.min(prev * 1.2, 5))
-  }
-
-  const handleZoomOut = () => {
-    setZoom((prev) => Math.max(prev / 1.2, 0.1))
-  }
-
-  const handleZoomReset = () => {
-    setZoom(1)
-  }
-
   const handleDownload = async () => {
     const downloadUrl = await generateDownloadUrl()
     window.open(getFullImageUrl(downloadUrl), '_blank')
@@ -96,7 +85,6 @@ export function PreviewArea({
         setNextImageSrc(fullUrl)
       }
     }
-    setZoom(1)
   }, [previewUrl, currentImageSrc])
 
   return (
@@ -127,17 +115,14 @@ export function PreviewArea({
             </div>
           </div>
         ) : currentImageSrc ? (
-          <div
-            className='relative max-h-full max-w-full overflow-auto'
-            style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
-          >
+          <div className='relative max-h-full max-w-full overflow-auto'>
             {/* Current visible image */}
             <img
               src={currentImageSrc}
               alt={`Preview of ${imagePath}`}
               onLoad={handleCurrentImageLoad}
               onError={handleImageError}
-              className='max-h-full max-w-full rounded-lg object-contain shadow-lg'
+              className='max-h-full max-w-full rounded-lg object-contain'
               style={{
                 display: imageLoaded ? 'block' : 'none',
                 maxHeight: isMobile ? '70vh' : '80vh',
@@ -186,49 +171,21 @@ export function PreviewArea({
                 </span>
               </>
             )}
-            {zoom !== 1 && (
-              <>
-                <span>•</span>
-                <span>Zoom: {Math.round(zoom * 100)}%</span>
-              </>
-            )}
           </div>
         )}
 
-        {/* Controls - full width on mobile */}
+        {/* Action Buttons */}
         <div className={`flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}>
-          {/* Zoom Controls */}
-          <div className='mr-2 flex items-center gap-1'>
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={handleZoomOut}
-              disabled={zoom <= 0.1}
-              className='h-8 w-8 p-0'
-            >
-              <ZoomOut className='h-4 w-4' />
-            </Button>
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={handleZoomReset}
-              disabled={zoom === 1}
-              className='h-8 px-2 text-xs'
-            >
-              {Math.round(zoom * 100)}%
-            </Button>
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={handleZoomIn}
-              disabled={zoom >= 5}
-              className='h-8 w-8 p-0'
-            >
-              <ZoomIn className='h-4 w-4' />
-            </Button>
-          </div>
-
-          {/* Download Button */}
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={onCopyUrl}
+            disabled={!previewUrl}
+            className='h-8'
+          >
+            <Copy className='mr-1 h-4 w-4' />
+            Copy URL
+          </Button>
           <Button
             variant='outline'
             size='sm'
