@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link2, Link2Off } from 'lucide-react'
 
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Slider } from '@/components/ui/slider'
 import { Toggle } from '@/components/ui/toggle'
 import type { ImageTransformState } from '@/hooks/use-image-transform'
 
@@ -26,6 +28,14 @@ interface DimensionControlsProps {
   onToggleAspectLock: () => void
 }
 
+// Define aspect ratio presets
+const ASPECT_RATIO_PRESETS = [
+  { key: 'square', label: '1:1', width: 1080, height: 1080, ratio: 1 },
+  { key: 'portrait', label: '4:5', width: 1080, height: 1350, ratio: 4 / 5 },
+  { key: 'landscape', label: '16:9', width: 1920, height: 1080, ratio: 16 / 9 },
+  { key: 'photo', label: '3:2', width: 1500, height: 1000, ratio: 3 / 2 },
+]
+
 export function DimensionControls({
   params,
   aspectLocked,
@@ -34,6 +44,23 @@ export function DimensionControls({
   onToggleAspectLock,
 }: DimensionControlsProps) {
   const { t } = useTranslation()
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null)
+  const [sizeScale, setSizeScale] = useState([1])
+
+  // Reset preset when dimensions are manually changed
+  useEffect(() => {
+    if (params.width && params.height && selectedPreset) {
+      const preset = ASPECT_RATIO_PRESETS.find((p) => p.key === selectedPreset)
+      if (preset) {
+        const currentRatio = params.width / params.height
+        const presetRatio = preset.ratio
+        // If the ratio doesn't match the preset (with some tolerance), reset
+        if (Math.abs(currentRatio - presetRatio) > 0.01) {
+          setSelectedPreset(null)
+        }
+      }
+    }
+  }, [params.width, params.height, selectedPreset])
   const handleWidthChange = (value: string) => {
     // Allow any input during typing - no validation
     const width = parseInt(value) || undefined
@@ -105,6 +132,32 @@ export function DimensionControls({
       onUpdateParams({ hAlign: value === 'center' ? undefined : value })
     } else {
       onUpdateParams({ vAlign: value === 'middle' ? undefined : value })
+    }
+  }
+
+  const handlePresetClick = (preset: (typeof ASPECT_RATIO_PRESETS)[0]) => {
+    if (aspectLocked) {
+      onToggleAspectLock()
+    }
+    setSelectedPreset(preset.key)
+    setSizeScale([1])
+    onUpdateParams({
+      width: Math.round(preset.width),
+      height: Math.round(preset.height),
+    })
+  }
+
+  const handleSizeScaleChange = (value: number[]) => {
+    setSizeScale(value)
+    if (selectedPreset) {
+      const preset = ASPECT_RATIO_PRESETS.find((p) => p.key === selectedPreset)
+      if (preset) {
+        const scale = value[0]
+        onUpdateParams({
+          width: Math.round(preset.width * scale),
+          height: Math.round(preset.height * scale),
+        })
+      }
     }
   }
 
@@ -202,22 +255,27 @@ export function DimensionControls({
           </div>
         </RadioGroup>
 
-        <div className='text-muted-foreground space-y-1 text-xs'>
-          <div>
-            <strong>{t('imageEditor.dimensions.modes.fitIn')}:</strong>{' '}
-            {t('imageEditor.dimensions.modeDescriptions.fitIn')}
-          </div>
-          <div>
-            <strong>{t('imageEditor.dimensions.modes.fill')}:</strong>{' '}
-            {t('imageEditor.dimensions.modeDescriptions.fill')}
-          </div>
-          <div>
-            <strong>{t('imageEditor.dimensions.modes.stretch')}:</strong>{' '}
-            {t('imageEditor.dimensions.modeDescriptions.stretch')}
-          </div>
-          <div>
-            <strong>{t('imageEditor.dimensions.modes.smart')}:</strong>{' '}
-            {t('imageEditor.dimensions.modeDescriptions.smart')}
+        {/* Info Section */}
+        <div className='bg-muted/50 rounded-lg p-4'>
+          <div className='space-y-1 text-xs'>
+            <ul className='text-muted-foreground space-y-0.5'>
+              <li>
+                • <strong>{t('imageEditor.dimensions.modes.fitIn')}:</strong>{' '}
+                {t('imageEditor.dimensions.modeDescriptions.fitIn')}
+              </li>
+              <li>
+                • <strong>{t('imageEditor.dimensions.modes.fill')}:</strong>{' '}
+                {t('imageEditor.dimensions.modeDescriptions.fill')}
+              </li>
+              <li>
+                • <strong>{t('imageEditor.dimensions.modes.stretch')}:</strong>{' '}
+                {t('imageEditor.dimensions.modeDescriptions.stretch')}
+              </li>
+              <li>
+                • <strong>{t('imageEditor.dimensions.modes.smart')}:</strong>{' '}
+                {t('imageEditor.dimensions.modeDescriptions.smart')}
+              </li>
+            </ul>
           </div>
         </div>
       </div>
@@ -278,63 +336,41 @@ export function DimensionControls({
         </div>
       )}
 
-      {/* Quick Presets */}
+      {/* Aspect Ratio Presets */}
       <div className='space-y-3'>
         <Label className='text-sm font-medium'>{t('imageEditor.dimensions.quickPresets')}</Label>
         <div className='grid grid-cols-2 gap-2'>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => {
-              if (aspectLocked) {
-                onToggleAspectLock()
-              }
-              onUpdateParams({ width: 1920, height: 1080 })
-            }}
-            className='h-8 text-xs'
-          >
-            1920×1080
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => {
-              if (aspectLocked) {
-                onToggleAspectLock()
-              }
-              onUpdateParams({ width: 1280, height: 720 })
-            }}
-            className='h-8 text-xs'
-          >
-            1280×720
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => {
-              if (aspectLocked) {
-                onToggleAspectLock()
-              }
-              onUpdateParams({ width: 800, height: 600 })
-            }}
-            className='h-8 text-xs'
-          >
-            800×600
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => {
-              if (aspectLocked) {
-                onToggleAspectLock()
-              }
-              onUpdateParams({ width: 400, height: 400 })
-            }}
-            className='h-8 text-xs'
-          >
-            400×400
-          </Button>
+          {ASPECT_RATIO_PRESETS.map((preset) => (
+            <Button
+              key={preset.key}
+              variant={selectedPreset === preset.key ? 'default' : 'outline'}
+              size='sm'
+              onClick={() => handlePresetClick(preset)}
+              className='h-8 text-xs'
+            >
+              {preset.label}
+            </Button>
+          ))}
         </div>
+
+        {/* Size Slider - Only show when a preset is selected */}
+        {selectedPreset && (
+          <div className='space-y-2'>
+            <Label className='text-muted-foreground text-xs'>Size</Label>
+            <Slider
+              value={sizeScale}
+              onValueChange={handleSizeScaleChange}
+              min={0.25}
+              max={2.5}
+              step={0.25}
+              className='w-full'
+            />
+            <div className='text-muted-foreground flex justify-between text-xs'>
+              <span>Small</span>
+              <span>Large</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next'
-import { Scissors } from 'lucide-react'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -98,20 +97,6 @@ export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControl
         </div>
 
         <p className='text-muted-foreground text-xs'>{t('imageEditor.crop.autoTrimDescription')}</p>
-      </div>
-
-      {/* Info Section */}
-      <div className='bg-muted/50 rounded-lg p-3'>
-        <div className='flex items-start gap-2'>
-          <Scissors className='text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0' />
-          <div className='space-y-1 text-xs'>
-            <p className='font-medium'>{t('imageEditor.crop.howItWorks')}</p>
-            <ul className='text-muted-foreground space-y-0.5'>
-              <li>• {t('imageEditor.crop.howItWorksItems.manualCrop')}</li>
-              <li>• {t('imageEditor.crop.howItWorksItems.autoTrim')}</li>
-            </ul>
-          </div>
-        </div>
       </div>
     </div>
   )
