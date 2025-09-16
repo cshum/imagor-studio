@@ -107,11 +107,14 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                     Controls
                   </Button>
                 </SheetTrigger>
-                <SheetContent side='right' className='flex w-full flex-col pr-0 pb-0 sm:w-96'>
+                <SheetContent
+                  side='right'
+                  hideClose={true}
+                  className='flex w-full flex-col pr-0 pb-0 sm:w-96'
+                >
                   <SheetHeader>
                     <SheetTitle>Transform Controls</SheetTitle>
                   </SheetHeader>
-
 
                   {/* Scrollable Controls */}
                   <div className='flex-1 overflow-y-auto pr-6'>
@@ -125,21 +128,13 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                   </div>
 
                   {/* Bottom Action Bar */}
-                  <div className='border-t p-4 pr-6 flex items-center justify-between'>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => setMobileSheetOpen(false)}
-                    >
+                  <div className='flex items-center justify-between border-t p-4 pr-6'>
+                    <Button variant='ghost' size='sm' onClick={() => setMobileSheetOpen(false)}>
                       <ChevronLeft className='mr-1 h-4 w-4' />
                       Back
                     </Button>
-                    
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={resetParams}
-                    >
+
+                    <Button variant='ghost' size='sm' onClick={resetParams}>
                       <RotateCcw className='mr-1 h-4 w-4' />
                       Reset All
                     </Button>
