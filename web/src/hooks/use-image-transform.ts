@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, useDeferredValue } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { generateImagorUrl } from '@/api/imagor-api'
@@ -44,6 +44,7 @@ export function useImageTransform({
   onError,
 }: UseImageTransformProps) {
   const [params, setParams] = useState<ImageTransformState>({})
+  const deferredParams = useDeferredValue(params)
   const [aspectLocked, setAspectLocked] = useState(false)
   const [originalAspectRatio, setOriginalAspectRatio] = useState<number | null>(null)
   const [originalDimensions, setOriginalDimensionsState] = useState<{
@@ -101,9 +102,12 @@ export function useImageTransform({
 
   // Convert our state to GraphQL input format for query key
   const graphqlParams = useMemo(
-    () => convertToGraphQLParams(params),
-    [params, convertToGraphQLParams],
+    () => convertToGraphQLParams(deferredParams),
+    [deferredParams, convertToGraphQLParams],
   )
+
+  // Detect when params are changing (before deferred update)
+  const isParamsChanging = JSON.stringify(params) !== JSON.stringify(deferredParams)
 
   // Use React Query for automatic request management
   const {
@@ -119,7 +123,7 @@ export function useImageTransform({
         imageKey,
         params: graphqlParams as ImagorParamsInput,
       }),
-    enabled: Object.keys(params).length > 0, // Only run when we have params
+    enabled: Object.keys(deferredParams).length > 0, // Only run when we have deferred params
     staleTime: 0, // Always fetch fresh data
     refetchOnWindowFocus: false,
   })
@@ -266,8 +270,8 @@ export function useImageTransform({
     originalAspectRatio,
 
     // Loading states
-    isLoading, // First request loading state
-    isLoadingBarVisible: isFetching, // Any request loading state (including subsequent ones)
+    isLoading, // First request loading state (for image display logic)
+    isLoadingBarVisible: isFetching || isParamsChanging, // Show loading during debounce + fetch
     error,
 
     // Actions
