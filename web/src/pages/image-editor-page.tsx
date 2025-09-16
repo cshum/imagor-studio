@@ -11,13 +11,15 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useImageTransform } from '@/hooks/use-image-transform'
 import { getFullImageUrl } from '@/lib/api-utils'
+import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 
 interface ImageEditorPageProps {
   galleryKey: string
   imageKey: string
+  loaderData: ImageEditorLoaderData
 }
 
-export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) {
+export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
   const navigate = useNavigate()
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -39,6 +41,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
   } = useImageTransform({
     galleryKey,
     imageKey,
+    loaderData: loaderData!, // Assert non-null since loader always provides data
     onPreviewUpdate: (url) => {
       console.log('Preview updated:', url)
     },

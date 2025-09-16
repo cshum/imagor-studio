@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { generateImagorUrl } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
+import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 
 export interface ImageTransformState {
   // Dimensions
@@ -42,6 +43,7 @@ export interface ImageTransformState {
 export interface UseImageTransformProps {
   galleryKey: string
   imageKey: string
+  loaderData: ImageEditorLoaderData
   onPreviewUpdate?: (url: string) => void
   onError?: (error: Error) => void
 }
@@ -49,17 +51,20 @@ export interface UseImageTransformProps {
 export function useImageTransform({
   galleryKey,
   imageKey,
+  loaderData,
   onPreviewUpdate,
   onError,
 }: UseImageTransformProps) {
-  const [params, setParams] = useState<ImageTransformState>({})
+  // Initialize params directly with loader data
+  const [params, setParams] = useState<ImageTransformState>(() => ({
+    width: loaderData.originalDimensions.width,
+    height: loaderData.originalDimensions.height,
+  }))
+  
   const deferredParams = useDeferredValue(params)
   const [aspectLocked, setAspectLocked] = useState(false)
-  const [originalAspectRatio, setOriginalAspectRatio] = useState<number | null>(null)
-  const [originalDimensions, setOriginalDimensionsState] = useState<{
-    width: number
-    height: number
-  } | null>(null)
+  const originalAspectRatio = loaderData.originalDimensions.width / loaderData.originalDimensions.height
+  const originalDimensions = loaderData.originalDimensions
 
   // Convert our state to GraphQL input format
   const convertToGraphQLParams = useCallback(
@@ -242,33 +247,10 @@ export function useImageTransform({
     setParams(resetState)
   }, [originalDimensions])
 
-  // Set original image dimensions (called when image loads)
-  const setOriginalDimensions = useCallback((width: number, height: number) => {
-    const aspectRatio = width / height
-    setOriginalAspectRatio(aspectRatio)
-
-    // Only store original dimensions on first call (don't overwrite)
-    setOriginalDimensionsState((prev) => {
-      if (prev) {
-        return prev
-      }
-      return { width, height }
-    })
-
-    // Set original dimensions as initial params when image loads
-    setParams((prev) => {
-      // Only set dimensions if they haven't been explicitly set by user
-      if (prev.width || prev.height) {
-        return prev
-      }
-      // For initial load, use original dimensions
-      return {
-        ...prev,
-        width,
-        height,
-        fitIn: undefined, // Remove fit mode
-      }
-    })
+  // No longer needed - dimensions are pre-loaded from loader data
+  const setOriginalDimensions = useCallback(() => {
+    // This is kept for backward compatibility with PreviewArea
+    // but does nothing since dimensions are already set from loader data
   }, [])
 
   // Toggle aspect ratio lock
@@ -299,18 +281,6 @@ export function useImageTransform({
     return downloadMutation.mutateAsync(downloadParams as ImagorParamsInput)
   }, [params, convertToGraphQLParams, downloadMutation])
 
-  // Generate initial preview URL on mount - will be updated when original dimensions are known
-  useMemo(() => {
-    if (Object.keys(params).length === 0) {
-      // Start with fit mode, will be updated to original dimensions when image loads
-      const initialState = {
-        fitIn: true,
-        width: undefined,
-        height: undefined,
-      }
-      setParams(initialState)
-    }
-  }, [params]) // Only run on mount
 
   return {
     // State

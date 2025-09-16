@@ -20,6 +20,7 @@ import { adminLoader, profileLoader, usersLoader } from '@/loaders/account-loade
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
 import { requireAccountAuth, requireAdminAccountAuth, requireAuth } from '@/loaders/auth-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
+import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
 import { AdminPage } from '@/pages/admin-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
@@ -117,9 +118,11 @@ const rootImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/$imageKey/editor',
   beforeLoad: requireAuth,
+  loader: ({ params }) => imageEditorLoader({ params: { ...params, galleryKey: '' } }),
   component: () => {
+    const loaderData = rootImageEditorRoute.useLoaderData()
     const { imageKey } = rootImageEditorRoute.useParams()
-    return <ImageEditorPage galleryKey='' imageKey={imageKey} />
+    return <ImageEditorPage galleryKey='' imageKey={imageKey} loaderData={loaderData} />
   },
 })
 
@@ -161,9 +164,11 @@ const galleryImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/gallery/$galleryKey/$imageKey/editor',
   beforeLoad: requireAuth,
+  loader: ({ params }) => imageEditorLoader({ params }),
   component: () => {
+    const loaderData = galleryImageEditorRoute.useLoaderData()
     const { galleryKey, imageKey } = galleryImageEditorRoute.useParams()
-    return <ImageEditorPage galleryKey={galleryKey} imageKey={imageKey} />
+    return <ImageEditorPage galleryKey={galleryKey} imageKey={imageKey} loaderData={loaderData} />
   },
 })
 
