@@ -159,13 +159,7 @@ export function ImageView({
         return
       }
     }
-    // Handle vertical swipes for info or closing (only when not zoomed)
-    if (scale <= 1 && verticalSwipePower < -SWIPE_CONFIDENCE_THRESHOLD) {
-      toggleInfo()
-      setTimeout(() => setIsDragging(false), 100)
-      return
-    }
-    if (scale <= 1 && verticalSwipePower > SWIPE_CONFIDENCE_THRESHOLD) {
+    if (scale <= 1 && Math.abs(verticalSwipePower) > SWIPE_CONFIDENCE_THRESHOLD) {
       handleCloseFullView()
       setTimeout(() => setIsDragging(false), 100)
       return
