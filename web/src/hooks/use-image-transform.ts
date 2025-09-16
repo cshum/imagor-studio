@@ -80,7 +80,7 @@ export function useImageTransform({
 
   // Use 500ms debounce instead of useDeferredValue
   const debouncedParams = useDebounce(params, 500)
-  const [aspectLocked, setAspectLocked] = useState(false)
+  const [aspectLocked, setAspectLocked] = useState(true)
   const originalAspectRatio =
     loaderData.originalDimensions.width / loaderData.originalDimensions.height
   const originalDimensions = loaderData.originalDimensions
@@ -211,18 +211,23 @@ export function useImageTransform({
       }),
   })
 
-  // Update a single parameter
-  const updateParam = useCallback(
-    (key: keyof ImageTransformState, value: any) => {
+  // Update parameters with optional aspect ratio locking
+  const updateParams = useCallback(
+    (updates: Partial<ImageTransformState>, options?: { respectAspectLock?: boolean }) => {
       setParams((prev) => {
-        const newParams = { ...prev, [key]: value }
+        let newParams = { ...prev, ...updates }
 
-        // Handle aspect ratio locking for dimensions
-        if (aspectLocked && originalAspectRatio && (key === 'width' || key === 'height')) {
-          if (key === 'width' && typeof value === 'number') {
-            newParams.height = Math.round(value / originalAspectRatio)
-          } else if (key === 'height' && typeof value === 'number') {
-            newParams.width = Math.round(value * originalAspectRatio)
+        // Apply aspect ratio logic if enabled and we're updating dimensions
+        if (
+          options?.respectAspectLock &&
+          aspectLocked &&
+          originalAspectRatio &&
+          (updates.width !== undefined || updates.height !== undefined)
+        ) {
+          if (updates.width !== undefined && typeof updates.width === 'number') {
+            newParams.height = Math.round(updates.width / originalAspectRatio)
+          } else if (updates.height !== undefined && typeof updates.height === 'number') {
+            newParams.width = Math.round(updates.height * originalAspectRatio)
           }
         }
 
@@ -231,11 +236,6 @@ export function useImageTransform({
     },
     [aspectLocked, originalAspectRatio],
   )
-
-  // Update multiple parameters at once
-  const updateParams = useCallback((updates: Partial<ImageTransformState>) => {
-    setParams((prev) => ({ ...prev, ...updates }))
-  }, [])
 
   // Reset all parameters
   const resetParams = useCallback(() => {
@@ -312,7 +312,6 @@ export function useImageTransform({
     error,
 
     // Actions
-    updateParam,
     updateParams,
     resetParams,
     setOriginalDimensions,

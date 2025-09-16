@@ -15,13 +15,13 @@ import type { ImageTransformState } from '@/hooks/use-image-transform'
 
 interface OutputControlsProps {
   params: ImageTransformState
-  onUpdateParam: <K extends keyof ImageTransformState>(
-    key: K,
-    value: ImageTransformState[K],
+  onUpdateParams: (
+    updates: Partial<ImageTransformState>,
+    options?: { respectAspectLock?: boolean },
   ) => void
 }
 
-export function OutputControls({ params, onUpdateParam }: OutputControlsProps) {
+export function OutputControls({ params, onUpdateParams }: OutputControlsProps) {
   const formatOptions = [
     { value: 'original', label: 'Original Format' },
     { value: 'jpeg', label: 'JPEG' },
@@ -55,36 +55,41 @@ export function OutputControls({ params, onUpdateParam }: OutputControlsProps) {
   }
 
   const handleFormatChange = (value: string) => {
-    onUpdateParam('format', value === 'original' ? undefined : value)
+    onUpdateParams({ format: value === 'original' ? undefined : value })
   }
 
   const handleQualityChange = (value: number[]) => {
-    onUpdateParam('quality', value[0])
+    const updates: Partial<ImageTransformState> = { quality: value[0] }
     // Clear max_bytes when quality is set manually
     if (params.maxBytes) {
-      onUpdateParam('maxBytes', undefined)
+      updates.maxBytes = undefined
     }
+    onUpdateParams(updates)
   }
 
   const handleMaxBytesChange = (value: string) => {
     const numValue = parseInt(value, 10)
-    onUpdateParam('maxBytes', isNaN(numValue) || numValue <= 0 ? undefined : numValue)
+    const updates: Partial<ImageTransformState> = {
+      maxBytes: isNaN(numValue) || numValue <= 0 ? undefined : numValue,
+    }
     // Clear quality when max_bytes is set
     if (!isNaN(numValue) && numValue > 0 && params.quality) {
-      onUpdateParam('quality', undefined)
+      updates.quality = undefined
     }
+    onUpdateParams(updates)
   }
 
   const handlePresetClick = (bytes: number) => {
-    onUpdateParam('maxBytes', bytes)
+    const updates: Partial<ImageTransformState> = { maxBytes: bytes }
     // Clear quality when max_bytes preset is selected
     if (params.quality) {
-      onUpdateParam('quality', undefined)
+      updates.quality = undefined
     }
+    onUpdateParams(updates)
   }
 
   const clearMaxBytes = () => {
-    onUpdateParam('maxBytes', undefined)
+    onUpdateParams({ maxBytes: undefined })
   }
 
   return (
