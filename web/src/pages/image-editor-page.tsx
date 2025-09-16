@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { ChevronDown, ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
+import { ChevronDown, ChevronLeft, Copy, Download, Move, Palette, RotateCcw, Scissors, Settings } from 'lucide-react'
 
 import { CropControls } from '@/components/image-editor/controls/crop-controls'
 import { DimensionControls } from '@/components/image-editor/controls/dimension-controls'
@@ -134,7 +134,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                       <Collapsible defaultOpen>
                         <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
                           <div className='flex items-center gap-2'>
-                            <span>📐</span>
+                            <Move className='h-4 w-4' />
                             <span className='font-medium'>Dimensions & Resize</span>
                           </div>
                           <ChevronDown className='h-4 w-4' />
@@ -156,7 +156,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                       <Collapsible>
                         <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
                           <div className='flex items-center gap-2'>
-                            <span>✂️</span>
+                            <Scissors className='h-4 w-4' />
                             <span className='font-medium'>Crop & Trim</span>
                           </div>
                           <ChevronDown className='h-4 w-4' />
@@ -172,7 +172,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                       <Collapsible>
                         <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
                           <div className='flex items-center gap-2'>
-                            <span>🎨</span>
+                            <Palette className='h-4 w-4' />
                             <span className='font-medium'>Color & Effects</span>
                           </div>
                           <ChevronDown className='h-4 w-4' />
@@ -225,7 +225,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
               <Collapsible defaultOpen>
                 <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
                   <div className='flex items-center gap-2'>
-                    <span>📐</span>
+                    <Move className='h-4 w-4' />
                     <span className='font-medium'>Dimensions & Resize</span>
                   </div>
                   <ChevronDown className='h-4 w-4' />
@@ -247,7 +247,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
               <Collapsible>
                 <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
                   <div className='flex items-center gap-2'>
-                    <span>✂️</span>
+                    <Scissors className='h-4 w-4' />
                     <span className='font-medium'>Crop & Trim</span>
                   </div>
                   <ChevronDown className='h-4 w-4' />
@@ -263,7 +263,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
               <Collapsible>
                 <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
                   <div className='flex items-center gap-2'>
-                    <span>🎨</span>
+                    <Palette className='h-4 w-4' />
                     <span className='font-medium'>Color & Effects</span>
                   </div>
                   <ChevronDown className='h-4 w-4' />
@@ -283,16 +283,6 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
               <Button
                 variant='outline'
                 size='sm'
-                onClick={handleCopyUrl}
-                disabled={!previewUrl}
-                className='flex-1'
-              >
-                <Copy className='mr-1 h-4 w-4' />
-                Copy URL
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
                 onClick={async () => {
                   const downloadUrl = await generateDownloadUrl()
                   window.open(getFullImageUrl(downloadUrl), '_blank')
@@ -302,6 +292,16 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
               >
                 <Download className='mr-1 h-4 w-4' />
                 Download
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={handleCopyUrl}
+                disabled={!previewUrl}
+                className='flex-1'
+              >
+                <Copy className='mr-1 h-4 w-4' />
+                Copy URL
               </Button>
             </div>
           </div>
