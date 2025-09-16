@@ -35,6 +35,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
     resetParams,
     setOriginalDimensions,
     toggleAspectLock,
+    generateDownloadUrl,
   } = useImageTransform({
     galleryKey,
     imageKey,
@@ -207,6 +208,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
           galleryKey={galleryKey}
           imageKey={imageKey}
           onImageLoad={setOriginalDimensions}
+          generateDownloadUrl={generateDownloadUrl}
         />
       </div>
 

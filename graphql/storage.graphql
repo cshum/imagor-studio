@@ -147,15 +147,14 @@ input ImagorParamsInput {
   vFlip: Boolean
 
   # Alignment
-  hAlign: String  # "left", "right"
-  vAlign: String  # "top", "bottom"
-
+  hAlign: String # "left", "right"
+  vAlign: String # "top", "bottom"
   # Smart crop
   smart: Boolean
 
   # Trimming
   trim: Boolean
-  trimBy: String  # "top-left", "bottom-right"
+  trimBy: String # "top-left", "bottom-right"
   trimTolerance: Int
 
   # Filters
@@ -163,8 +162,8 @@ input ImagorParamsInput {
 }
 
 input ImagorFilterInput {
-  name: String!   # "quality", "brightness", etc.
-  args: String!   # "80", "10", etc.
+  name: String! # "quality", "brightness", etc.
+  args: String! # "80", "10", etc.
 }
 
 # Existing types...
@@ -296,7 +295,7 @@ enum StorageType {
 # Imagor Configuration Types
 type ImagorStatus {
   configured: Boolean!
-  mode: String  # "embedded" or "external"
+  mode: String # "embedded" or "external"
   restartRequired: Boolean!
   lastUpdated: String
   isOverriddenByConfig: Boolean!
@@ -322,8 +321,8 @@ input ExternalImagorInput {
   baseUrl: String!
   secret: String
   unsafe: Boolean
-  signerType: ImagorSignerType  # Optional, defaults to SHA1
-  signerTruncate: Int           # Optional, defaults to 0
+  signerType: ImagorSignerType # Optional, defaults to SHA1
+  signerTruncate: Int # Optional, defaults to 0
 }
 
 enum ImagorSignerType {

@@ -230,6 +230,19 @@ export function useImageTransform({
     setAspectLocked((prev) => !prev)
   }, [])
 
+  // Generate download URL with attachment filter
+  const generateDownloadUrl = useCallback(() => {
+    const downloadParams = {
+      ...convertToGraphQLParams(params),
+      filters: [
+        ...(convertToGraphQLParams(params).filters || []),
+        { name: 'attachment', args: '' }, // Empty args for default filename
+      ],
+    }
+
+    return generateUrlMutation.mutateAsync(downloadParams as ImagorParamsInput)
+  }, [params, convertToGraphQLParams, generateUrlMutation])
+
   // Generate initial preview URL on mount - will be updated when original dimensions are known
   useMemo(() => {
     if (Object.keys(params).length === 0) {
@@ -261,5 +274,6 @@ export function useImageTransform({
     resetParams,
     setOriginalDimensions,
     toggleAspectLock,
+    generateDownloadUrl,
   }
 }

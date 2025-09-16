@@ -24,65 +24,65 @@ Run `make help` to see all available commands with descriptions.
 
 ### Development Workflow
 
-| Command | Description |
-|---------|-------------|
-| `make install` | Install all dependencies (web + server) |
-| `make dev` | Start both web and server in development mode |
-| `make build` | Build both web and server |
-| `make test` | Run all tests |
-| `make lint` | Lint all code |
-| `make format` | Format all code |
-| `make clean` | Clean all build artifacts |
+| Command        | Description                                   |
+| -------------- | --------------------------------------------- |
+| `make install` | Install all dependencies (web + server)       |
+| `make dev`     | Start both web and server in development mode |
+| `make build`   | Build both web and server                     |
+| `make test`    | Run all tests                                 |
+| `make lint`    | Lint all code                                 |
+| `make format`  | Format all code                               |
+| `make clean`   | Clean all build artifacts                     |
 
 ### Web Frontend Commands
 
-| Command | Description |
-|---------|-------------|
-| `make web-install` | Install web dependencies |
-| `make web-dev` | Start web development server |
-| `make web-build` | Build web frontend |
-| `make web-test` | Run web tests (type checking) |
-| `make web-lint` | Lint web code |
-| `make web-format` | Format web code |
-| `make web-codegen` | Generate GraphQL code |
+| Command            | Description                   |
+| ------------------ | ----------------------------- |
+| `make web-install` | Install web dependencies      |
+| `make web-dev`     | Start web development server  |
+| `make web-build`   | Build web frontend            |
+| `make web-test`    | Run web tests (type checking) |
+| `make web-lint`    | Lint web code                 |
+| `make web-format`  | Format web code               |
+| `make web-codegen` | Generate GraphQL code         |
 
 ### Server Backend Commands
 
-| Command | Description |
-|---------|-------------|
-| `make server-deps` | Download server dependencies |
-| `make server-dev` | Start server in development mode |
-| `make server-build` | Build server binary |
-| `make server-test` | Run server tests |
-| `make server-lint` | Lint server code |
-| `make server-format` | Format server code |
-| `make server-gqlgen` | Generate GraphQL server code |
+| Command              | Description                      |
+| -------------------- | -------------------------------- |
+| `make server-deps`   | Download server dependencies     |
+| `make server-dev`    | Start server in development mode |
+| `make server-build`  | Build server binary              |
+| `make server-test`   | Run server tests                 |
+| `make server-lint`   | Lint server code                 |
+| `make server-format` | Format server code               |
+| `make server-gqlgen` | Generate GraphQL server code     |
 
 ### Docker Commands
 
-| Command | Description |
-|---------|-------------|
-| `make docker-build` | Build Docker image |
-| `make docker-run` | Run Docker container |
-| `make docker-compose-up` | Start with docker-compose |
-| `make docker-compose-down` | Stop docker-compose services |
-| `make docker-clean` | Clean Docker images and containers |
+| Command                    | Description                        |
+| -------------------------- | ---------------------------------- |
+| `make docker-build`        | Build Docker image                 |
+| `make docker-run`          | Run Docker container               |
+| `make docker-compose-up`   | Start with docker-compose          |
+| `make docker-compose-down` | Stop docker-compose services       |
+| `make docker-clean`        | Clean Docker images and containers |
 
 ### Production Commands
 
-| Command | Description |
-|---------|-------------|
-| `make prod-build` | Full production build |
-| `make prod-docker` | Build production Docker image |
-| `make release` | Full release build (local + Docker) |
+| Command            | Description                         |
+| ------------------ | ----------------------------------- |
+| `make prod-build`  | Full production build               |
+| `make prod-docker` | Build production Docker image       |
+| `make release`     | Full release build (local + Docker) |
 
 ### Utility Commands
 
-| Command | Description |
-|---------|-------------|
+| Command           | Description                           |
+| ----------------- | ------------------------------------- |
 | `make check-deps` | Check if required tools are installed |
-| `make status` | Show project status |
-| `make info` | Show project information |
+| `make status`     | Show project status                   |
+| `make info`       | Show project information              |
 
 ## Development Setup
 
@@ -94,6 +94,7 @@ Run `make help` to see all available commands with descriptions.
 - npm
 
 Check if all dependencies are installed:
+
 ```bash
 make check-deps
 ```
@@ -111,6 +112,7 @@ make check-deps
    ```
 
 This will start:
+
 - Web frontend at http://localhost:5173
 - Server backend at http://localhost:8000
 
@@ -147,6 +149,7 @@ make release
 ```
 
 This will:
+
 1. Clean all artifacts
 2. Install fresh dependencies
 3. Build web and server

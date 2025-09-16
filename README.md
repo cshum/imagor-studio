@@ -29,6 +29,7 @@ make docker-build
 ```
 
 **Access the Application:**
+
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:8000
 
@@ -56,6 +57,7 @@ imagor-studio/
 - npm
 
 Check if all dependencies are installed:
+
 ```bash
 make check-deps
 ```
@@ -135,16 +137,19 @@ Built with libvips and ImageMagick for high-performance image processing.
 ## Storage Options
 
 ### File Storage (Default)
+
 - Images stored in `server/storage/`
 - Suitable for development and single-server deployments
 
 ### S3 Storage
+
 - Compatible with AWS S3 and S3-compatible services
 - Configure using environment variables
 
 ## API
 
 GraphQL API with operations for:
+
 - **Authentication**: JWT-based login and registration
 - **Storage**: File listing and metadata
 - **Gallery**: Folder navigation and image browsing

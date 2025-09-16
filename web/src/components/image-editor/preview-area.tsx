@@ -13,6 +13,7 @@ interface PreviewAreaProps {
   galleryKey: string
   imageKey: string
   onImageLoad?: (width: number, height: number) => void
+  generateDownloadUrl: () => Promise<string>
 }
 
 export function PreviewArea({
@@ -22,6 +23,7 @@ export function PreviewArea({
   galleryKey,
   imageKey,
   onImageLoad,
+  generateDownloadUrl,
 }: PreviewAreaProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(
@@ -60,15 +62,9 @@ export function PreviewArea({
     setZoom(1)
   }
 
-  const handleDownload = () => {
-    if (previewUrl) {
-      const link = document.createElement('a')
-      link.href = getFullImageUrl(previewUrl)
-      link.download = `${imageKey}_transformed`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    }
+  const handleDownload = async () => {
+    const downloadUrl = await generateDownloadUrl()
+    window.open(getFullImageUrl(downloadUrl), '_blank')
   }
 
   // Reset zoom when preview URL changes
@@ -115,12 +111,12 @@ export function PreviewArea({
               onLoad={handleImageLoad}
               onError={handleImageError}
               className='max-h-full max-w-full rounded-lg object-contain shadow-lg'
-              style={{ 
+              style={{
                 display: imageLoaded ? 'block' : 'none',
                 maxHeight: isMobile ? '70vh' : '80vh',
                 maxWidth: '100%',
                 width: 'auto',
-                height: 'auto'
+                height: 'auto',
               }}
             />
             {!imageLoaded && <Skeleton className='h-64 w-96 rounded-lg' />}

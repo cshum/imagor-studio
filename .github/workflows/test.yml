@@ -39,13 +39,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-#      - name: Run web tests in Docker
-#        run: |
-#          docker run --rm \
-#            -v ${{ github.workspace }}:/workspace \
-#            -w /workspace/web \
-#            imagor-studio-web-test \
-#            sh -c "npm ci && npm run type-check && npm run lint && npm run build"
+      #      - name: Run web tests in Docker
+      #        run: |
+      #          docker run --rm \
+      #            -v ${{ github.workspace }}:/workspace \
+      #            -w /workspace/web \
+      #            imagor-studio-web-test \
+      #            sh -c "npm ci && npm run type-check && npm run lint && npm run build"
 
       - name: Run web tests in Docker
         run: |
