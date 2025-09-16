@@ -136,9 +136,9 @@ export function DimensionControls({
         )}
       </div>
 
-      {/* Fit Mode */}
+      {/* Resize Mode */}
       <div className='space-y-3'>
-        <Label className='text-sm font-medium'>Fit Mode</Label>
+        <Label className='text-sm font-medium'>Resize Mode</Label>
         <RadioGroup
           value={getCurrentFitMode()}
           onValueChange={handleFitModeChange}
@@ -169,13 +169,10 @@ export function DimensionControls({
             <strong>Fit In:</strong> Scale to fit within dimensions
           </div>
           <div>
-            <strong>Fill:</strong> Scale to fill dimensions (may crop)
+            <strong>Fill:</strong> Scale to fill dimensions with crop
           </div>
           <div>
             <strong>Stretch:</strong> Stretch to exact dimensions
-          </div>
-          <div>
-            <strong>Exact:</strong> Use exact dimensions
           </div>
         </div>
       </div>
