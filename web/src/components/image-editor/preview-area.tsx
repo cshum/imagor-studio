@@ -90,7 +90,7 @@ export function PreviewArea({
   return (
     <div className='relative flex h-full flex-col'>
       {/* Preview Content */}
-      <div className='bg-muted/20 flex flex-1 items-center justify-center overflow-hidden p-4'>
+      <div className='bg-muted/20 flex min-h-0 flex-1 items-center justify-center overflow-hidden p-4'>
         {error ? (
           <div className='flex flex-col items-center gap-4 text-center'>
             <AlertCircle className='text-destructive h-12 w-12' />
@@ -115,7 +115,7 @@ export function PreviewArea({
             </div>
           </div>
         ) : currentImageSrc ? (
-          <div className='relative max-h-full max-w-full overflow-auto'>
+          <div className='relative flex max-h-full max-w-full items-center justify-center'>
             {/* Current visible image */}
             <img
               src={currentImageSrc}
@@ -125,7 +125,7 @@ export function PreviewArea({
               className='max-h-full max-w-full rounded-lg object-contain'
               style={{
                 display: imageLoaded ? 'block' : 'none',
-                maxHeight: isMobile ? '70vh' : '80vh',
+                maxHeight: '100%',
                 maxWidth: '100%',
                 width: 'auto',
                 height: 'auto',
