@@ -80,7 +80,7 @@ export function useImageTransform({
 
   // Use 500ms debounce instead of useDeferredValue
   const debouncedParams = useDebounce(params, 500)
-  const [aspectLocked, setAspectLocked] = useState(false)
+  const [aspectLocked, setAspectLocked] = useState(true)
   const originalAspectRatio =
     loaderData.originalDimensions.width / loaderData.originalDimensions.height
   const originalDimensions = loaderData.originalDimensions
