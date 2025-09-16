@@ -30,6 +30,9 @@ export interface ImageTransformState {
   brightness?: number
   contrast?: number
   saturation?: number
+  hue?: number
+  blur?: number
+  sharpen?: number
   grayscale?: boolean
 
   // Output format and quality
@@ -129,6 +132,15 @@ export function useImageTransform({
       }
       if (state.saturation !== undefined && state.saturation !== 0) {
         filters.push({ name: 'saturation', args: state.saturation.toString() })
+      }
+      if (state.hue !== undefined && state.hue !== 0) {
+        filters.push({ name: 'hue', args: state.hue.toString() })
+      }
+      if (state.blur !== undefined && state.blur !== 0) {
+        filters.push({ name: 'blur', args: state.blur.toString() })
+      }
+      if (state.sharpen !== undefined && state.sharpen !== 0) {
+        filters.push({ name: 'sharpen', args: state.sharpen.toString() })
       }
       if (state.grayscale) {
         filters.push({ name: 'grayscale', args: '' })
@@ -266,6 +278,9 @@ export function useImageTransform({
       brightness: undefined,
       contrast: undefined,
       saturation: undefined,
+      hue: undefined,
+      blur: undefined,
+      sharpen: undefined,
       grayscale: undefined,
       format: undefined,
       quality: undefined,

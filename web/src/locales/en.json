@@ -232,7 +232,19 @@
     "controls": {
       "dimensionsResize": "Dimensions & Resize",
       "outputCompression": "Output & Compression",
+      "colorEffects": "Color & Effects",
       "cropTrim": "Crop & Trim"
+    },
+    "effects": {
+      "colorAdjustments": "Color Adjustments",
+      "brightness": "Brightness",
+      "contrast": "Contrast",
+      "saturation": "Saturation",
+      "hue": "Hue",
+      "effects": "Effects",
+      "blur": "Blur",
+      "sharpen": "Sharpen",
+      "grayscale": "Grayscale"
     },
     "dimensions": {
       "title": "Dimensions",

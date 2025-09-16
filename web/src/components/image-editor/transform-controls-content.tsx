@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronUp, FileImage, Move, Scissors } from 'lucide-react'
+import { ChevronDown, ChevronUp, FileImage, Move, Palette, Scissors } from 'lucide-react'
 
 import { setUserRegistry } from '@/api/registry-api'
+import { ColorControls } from '@/components/image-editor/controls/color-controls'
 import { DimensionControls } from '@/components/image-editor/controls/dimension-controls'
 import { OutputControls } from '@/components/image-editor/controls/output-controls'
 import { SimpleCropControls } from '@/components/image-editor/controls/simple-crop-controls'
@@ -97,6 +98,25 @@ export function TransformControlsContent({
           </CollapsibleTrigger>
           <CollapsibleContent className='mt-4'>
             <OutputControls params={params} onUpdateParams={onUpdateParams} />
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+
+      {/* Color & Effects */}
+      <Card className='p-4'>
+        <Collapsible
+          open={openSections.effects}
+          onOpenChange={(open) => handleSectionToggle('effects', open)}
+        >
+          <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
+            <div className='flex items-center gap-2'>
+              <Palette className='h-4 w-4' />
+              <span className='font-medium'>{t('imageEditor.controls.colorEffects')}</span>
+            </div>
+            <CollapsibleIcon isOpen={openSections.effects} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className='mt-4'>
+            <ColorControls params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>

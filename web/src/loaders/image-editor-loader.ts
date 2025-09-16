@@ -9,6 +9,7 @@ export interface EditorOpenSections {
   dimensions: boolean
   output: boolean
   crop: boolean
+  effects: boolean
 }
 
 export interface ImageEditorLoaderData {
@@ -46,6 +47,7 @@ export const imageEditorLoader = async ({
     dimensions: true,
     output: false,
     crop: false,
+    effects: false,
   }
 
   let editorOpenSections = defaultOpenSections
