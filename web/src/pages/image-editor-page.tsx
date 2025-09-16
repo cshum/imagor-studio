@@ -119,7 +119,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                         Back
                       </Button>
 
-                      <SheetTitle>Transform Controls</SheetTitle>
+                      <SheetTitle>Controls</SheetTitle>
 
                       <Button variant='ghost' size='sm' onClick={resetParams}>
                         <RotateCcw className='mr-1 h-4 w-4' />
@@ -163,7 +163,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
           {/* Panel Header */}
           <div className='border-b p-4'>
             <div className='flex items-center justify-between'>
-              <h2 className='font-semibold'>Transform Controls</h2>
+              <h2 className='font-semibold'>Controls</h2>
               <Button variant='ghost' size='sm' onClick={resetParams}>
                 <RotateCcw className='mr-1 h-4 w-4' />
                 Reset All
