@@ -90,7 +90,7 @@ export const ImageGrid = ({
     Math.floor(scrollTop / rowHeight - overscanCount) * columnCount,
   )
   const endImageIndex = Math.min(images.length, startImageIndex + totalRenderedRows * columnCount)
-  const visibleImages = []
+  const visibleImages: React.ReactElement[] = []
   for (let i = startImageIndex; i < endImageIndex; i++) {
     const rowIndex = Math.floor(i / columnCount)
     const columnIndex = i % columnCount

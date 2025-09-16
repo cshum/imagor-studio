@@ -20,10 +20,12 @@ import { adminLoader, profileLoader, usersLoader } from '@/loaders/account-loade
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
 import { requireAccountAuth, requireAdminAccountAuth, requireAuth } from '@/loaders/auth-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
+import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
 import { AdminPage } from '@/pages/admin-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
+import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
@@ -112,6 +114,18 @@ const rootImagePage = createRoute({
   },
 })
 
+const rootImageEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/$imageKey/editor',
+  beforeLoad: requireAuth,
+  loader: ({ params }) => imageEditorLoader({ params: { ...params, galleryKey: '' } }),
+  component: () => {
+    const loaderData = rootImageEditorRoute.useLoaderData()
+    const { imageKey } = rootImageEditorRoute.useParams()
+    return <ImageEditorPage galleryKey='' imageKey={imageKey} loaderData={loaderData} />
+  },
+})
+
 const galleryRoute = createRoute({
   getParentRoute: () => baseLayoutRoute,
   path: '/gallery/$galleryKey',
@@ -143,6 +157,18 @@ const imagePage = createRoute({
         imageKey={imageKey}
       />
     )
+  },
+})
+
+const galleryImageEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/gallery/$galleryKey/$imageKey/editor',
+  beforeLoad: requireAuth,
+  loader: ({ params }) => imageEditorLoader({ params }),
+  component: () => {
+    const loaderData = galleryImageEditorRoute.useLoaderData()
+    const { galleryKey, imageKey } = galleryImageEditorRoute.useParams()
+    return <ImageEditorPage galleryKey={galleryKey} imageKey={imageKey} loaderData={loaderData} />
   },
 })
 
@@ -200,6 +226,8 @@ const accountUsersRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   loginRoute,
   adminSetupRoute,
+  rootImageEditorRoute,
+  galleryImageEditorRoute,
   baseLayoutRoute.addChildren([
     rootPath.addChildren([rootImagePage]),
     galleryRoute.addChildren([imagePage]),

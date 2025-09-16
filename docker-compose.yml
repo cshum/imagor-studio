@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   imagor-studio:
@@ -15,7 +15,7 @@ services:
       # Optional: Mount local storage for development
       # - ./data:/data
     restart: unless-stopped
-    
+
   # Optional: Add a database service
   # db:
   #   image: postgres:15
@@ -38,6 +38,5 @@ services:
   #     - PORT=8080
   #     - IMAGOR_UNSAFE=1  # Only for development
   #   restart: unless-stopped
-
 # volumes:
 #   postgres_data:

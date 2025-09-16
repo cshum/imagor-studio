@@ -2,6 +2,8 @@ import type {
   ConfigureEmbeddedImagorMutation,
   ConfigureExternalImagorMutation,
   ConfigureExternalImagorMutationVariables,
+  GenerateImagorUrlMutation,
+  GenerateImagorUrlMutationVariables,
   ImagorStatusQuery,
 } from '@/generated/graphql'
 import { getSdk } from '@/generated/graphql-request'
@@ -36,4 +38,15 @@ export async function configureExternalImagor(
   const sdk = getSdk(getGraphQLClient())
   const result = await sdk.ConfigureExternalImagor(variables)
   return result.configureExternalImagor
+}
+
+/**
+ * Generate Imagor URL for image transformations
+ */
+export async function generateImagorUrl(
+  variables: GenerateImagorUrlMutationVariables,
+): Promise<GenerateImagorUrlMutation['generateImagorUrl']> {
+  const sdk = getSdk(getGraphQLClient())
+  const result = await sdk.GenerateImagorUrl(variables)
+  return result.generateImagorUrl
 }

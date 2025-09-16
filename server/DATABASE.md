@@ -33,6 +33,7 @@ DATABASE_URL=sqlite::memory:
 ```
 
 **Advantages:**
+
 - No external dependencies
 - Zero configuration
 - Perfect for development and small deployments
@@ -47,6 +48,7 @@ DATABASE_URL=postgres://username:password@hostname:port/database_name?sslmode=di
 ```
 
 **Examples:**
+
 ```bash
 # Local PostgreSQL
 DATABASE_URL=postgres://imagor:password@localhost:5432/imagor_studio?sslmode=disable
@@ -59,6 +61,7 @@ DATABASE_URL=postgres://user:pass@localhost/imagor_studio
 ```
 
 **Setup Requirements:**
+
 1. Install PostgreSQL server
 2. Create database: `CREATE DATABASE imagor_studio;`
 3. Create user with appropriate permissions
@@ -73,6 +76,7 @@ DATABASE_URL=mysql://username:password@hostname:port/database_name
 ```
 
 **Examples:**
+
 ```bash
 # Local MySQL
 DATABASE_URL=mysql://imagor:password@localhost:3306/imagor_studio
@@ -85,6 +89,7 @@ DATABASE_URL=mysql://user:pass@localhost/imagor_studio
 ```
 
 **Setup Requirements:**
+
 1. Install MySQL server
 2. Create database: `CREATE DATABASE imagor_studio;`
 3. Create user with appropriate permissions
@@ -105,6 +110,7 @@ You can add query parameters to the PostgreSQL URL:
 - `application_name`: Application name for connection tracking
 
 Example:
+
 ```bash
 DATABASE_URL=postgres://user:pass@localhost/db?sslmode=require&connect_timeout=10&application_name=imagor-studio
 ```
@@ -116,18 +122,21 @@ MySQL connections automatically include `parseTime=true` for proper time handlin
 ## Environment Examples
 
 ### Development
+
 ```bash
 # .env.development
 DATABASE_URL=sqlite:./dev.db
 ```
 
 ### Testing
+
 ```bash
 # .env.test
 DATABASE_URL=sqlite::memory:
 ```
 
 ### Production
+
 ```bash
 # .env.production
 DATABASE_URL=postgres://imagor_user:secure_password@db.production.com:5432/imagor_studio?sslmode=require
@@ -169,16 +178,19 @@ Sensitive information (passwords) are masked in logs.
 ## Performance Considerations
 
 ### SQLite
+
 - Single writer limitation
 - Good for read-heavy workloads
 - File locking on concurrent writes
 
 ### PostgreSQL
+
 - Excellent concurrent performance
 - Advanced features (JSON, full-text search)
 - Better for high-traffic production use
 
 ### MySQL
+
 - Good concurrent performance
 - Wide ecosystem support
 - Familiar to many developers
@@ -194,6 +206,7 @@ Sensitive information (passwords) are masked in logs.
 ## Backup and Recovery
 
 ### SQLite
+
 ```bash
 # Backup
 cp imagor-studio.db imagor-studio.db.backup
@@ -203,6 +216,7 @@ cp imagor-studio.db.backup imagor-studio.db
 ```
 
 ### PostgreSQL
+
 ```bash
 # Backup
 pg_dump imagor_studio > backup.sql
@@ -212,9 +226,11 @@ psql imagor_studio < backup.sql
 ```
 
 ### MySQL
+
 ```bash
 # Backup
 mysqldump imagor_studio > backup.sql
 
 # Restore
 mysql imagor_studio < backup.sql
+```

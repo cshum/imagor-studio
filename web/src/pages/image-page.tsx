@@ -75,6 +75,8 @@ export function ImagePage({
         onPrevImage={handlePrevImage}
         onNextImage={handleNextImage}
         initialPosition={getPosition(galleryKey, imageKey) || undefined}
+        galleryKey={galleryKey}
+        imageKey={imageKey}
       />
     </>
   )

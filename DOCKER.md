@@ -119,7 +119,7 @@ docker build \
 
 ```yaml
 # docker-compose.prod.yml
-version: '3.8'
+version: "3.8"
 services:
   imagor-studio:
     image: imagor-studio:latest
