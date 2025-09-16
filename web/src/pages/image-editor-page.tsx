@@ -64,7 +64,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
   const handleCopyUrl = async () => {
     try {
       const copyUrl = await generateCopyUrl()
-      navigator.clipboard.writeText(getFullImageUrl(copyUrl))
+      await navigator.clipboard.writeText(getFullImageUrl(copyUrl))
       toast.success('URL copied to clipboard')
     } catch {
       toast.error('Failed to copy URL')
@@ -105,7 +105,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                   hideClose={true}
                   className='flex w-full flex-col p-0 sm:w-96'
                 >
-                  <SheetHeader className='p-4 pb-0'>
+                  <SheetHeader className='border-b p-4'>
                     <div className='flex items-center justify-between'>
                       <Button variant='ghost' size='sm' onClick={() => setMobileSheetOpen(false)}>
                         <ChevronLeft className='mr-1 h-4 w-4' />
@@ -122,7 +122,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                   </SheetHeader>
 
                   {/* Scrollable Controls */}
-                  <div className='flex-1 overflow-y-auto p-4 pt-0'>
+                  <div className='flex-1 overflow-y-auto p-4'>
                     <TransformControlsContent
                       params={params}
                       aspectLocked={aspectLocked}
