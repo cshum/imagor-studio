@@ -18,6 +18,7 @@ export interface ImageTransformState {
   // Fitting
   fitIn?: boolean
   stretch?: boolean
+  smart?: boolean
 
   // Alignment
   hAlign?: string
@@ -70,6 +71,7 @@ export function useImageTransform({
       // Fitting
       if (state.fitIn !== undefined) graphqlParams.fitIn = state.fitIn
       if (state.stretch !== undefined) graphqlParams.stretch = state.stretch
+      if (state.smart !== undefined) graphqlParams.smart = state.smart
 
       // Alignment
       if (state.hAlign) graphqlParams.hAlign = state.hAlign
@@ -197,6 +199,7 @@ export function useImageTransform({
       cropBottom: undefined,
       fitIn: undefined,
       stretch: undefined,
+      smart: undefined,
       hAlign: undefined,
       vAlign: undefined,
       brightness: undefined,

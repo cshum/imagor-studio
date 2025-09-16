@@ -47,6 +47,7 @@ export function DimensionControls({
     // Reset fitting options first
     onUpdateParam('fitIn', false)
     onUpdateParam('stretch', false)
+    onUpdateParam('smart', false)
 
     switch (value) {
       case 'fit-in':
@@ -54,6 +55,9 @@ export function DimensionControls({
         break
       case 'stretch':
         onUpdateParam('stretch', true)
+        break
+      case 'smart':
+        onUpdateParam('smart', true)
         break
       case 'fill':
         // Default behavior - no special flags
@@ -67,6 +71,7 @@ export function DimensionControls({
   const getCurrentFitMode = () => {
     if (params.fitIn) return 'fit-in'
     if (params.stretch) return 'stretch'
+    if (params.smart) return 'smart'
     return 'fill' // Default
   }
 
@@ -162,6 +167,12 @@ export function DimensionControls({
               Stretch
             </Label>
           </div>
+          <div className='flex items-center space-x-2'>
+            <RadioGroupItem value='smart' id='smart' />
+            <Label htmlFor='smart' className='text-sm'>
+              Smart
+            </Label>
+          </div>
         </RadioGroup>
 
         <div className='text-muted-foreground space-y-1 text-xs'>
@@ -173,6 +184,9 @@ export function DimensionControls({
           </div>
           <div>
             <strong>Stretch:</strong> Stretch to exact dimensions
+          </div>
+          <div>
+            <strong>Smart:</strong> Content-aware crop preserving important areas
           </div>
         </div>
       </div>
