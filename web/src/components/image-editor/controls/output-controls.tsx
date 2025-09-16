@@ -72,6 +72,10 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
     const updates: Partial<ImageTransformState> = {
       maxBytes: isNaN(numValue) || numValue <= 0 ? undefined : numValue,
     }
+    // Auto-set JPEG format when maxBytes is set for optimal compression
+    if (!isNaN(numValue) && numValue > 0) {
+      updates.format = 'jpeg'
+    }
     // Clear quality when max_bytes is set
     if (!isNaN(numValue) && numValue > 0 && params.quality) {
       updates.quality = undefined
@@ -80,7 +84,10 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
   }
 
   const handlePresetClick = (bytes: number) => {
-    const updates: Partial<ImageTransformState> = { maxBytes: bytes }
+    const updates: Partial<ImageTransformState> = { 
+      maxBytes: bytes,
+      format: 'jpeg' // Auto-set JPEG format for optimal compression
+    }
     // Clear quality when max_bytes preset is selected
     if (params.quality) {
       updates.quality = undefined
@@ -193,7 +200,7 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
             <ul className='text-muted-foreground space-y-0.5'>
               <li>• Format: Choose output format or keep original</li>
               <li>• Quality: Manual quality control (mutually exclusive with max size)</li>
-              <li>• Max Size: Automatic quality optimization (mutually exclusive with quality)</li>
+              <li>• Max Size: Automatically sets JPEG format and optimizes quality for best compression</li>
             </ul>
           </div>
         </div>
