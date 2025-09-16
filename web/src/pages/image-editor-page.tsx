@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { ChevronDown, ChevronLeft, RotateCcw, Settings } from 'lucide-react'
+import { ChevronDown, ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
 
 import { CropControls } from '@/components/image-editor/controls/crop-controls'
 import { DimensionControls } from '@/components/image-editor/controls/dimension-controls'
@@ -275,6 +275,35 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                 </CollapsibleContent>
               </Collapsible>
             </Card>
+          </div>
+
+          {/* Action Buttons */}
+          <div className='bg-background border-t p-4'>
+            <div className='flex gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={handleCopyUrl}
+                disabled={!previewUrl}
+                className='flex-1'
+              >
+                <Copy className='mr-1 h-4 w-4' />
+                Copy URL
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={async () => {
+                  const downloadUrl = await generateDownloadUrl()
+                  window.open(getFullImageUrl(downloadUrl), '_blank')
+                }}
+                disabled={!previewUrl || isLoading}
+                className='flex-1'
+              >
+                <Download className='mr-1 h-4 w-4' />
+                Download
+              </Button>
+            </div>
           </div>
         </div>
       )}

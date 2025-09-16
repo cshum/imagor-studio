@@ -158,9 +158,33 @@ export function PreviewArea({
       </div>
 
       {/* Preview Controls */}
-      <div className='bg-background flex items-center justify-between border-t p-4'>
-        {/* Left side info - hidden on mobile */}
-        {!isMobile && (
+      <div className='bg-background border-t p-4'>
+        {isMobile ? (
+          /* Mobile: Only buttons spanning full width */
+          <div className='flex items-center gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={onCopyUrl}
+              disabled={!previewUrl}
+              className='h-8 flex-1'
+            >
+              <Copy className='mr-1 h-4 w-4' />
+              Copy URL
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={handleDownload}
+              disabled={!previewUrl || isLoading}
+              className='h-8 flex-1'
+            >
+              <Download className='mr-1 h-4 w-4' />
+              Download
+            </Button>
+          </div>
+        ) : (
+          /* Desktop: Only info display */
           <div className='text-muted-foreground flex items-center gap-4 text-sm'>
             <span>Editing: {imagePath}</span>
             {imageDimensions && (
@@ -173,30 +197,6 @@ export function PreviewArea({
             )}
           </div>
         )}
-
-        {/* Action Buttons */}
-        <div className={`flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={onCopyUrl}
-            disabled={!previewUrl}
-            className='h-8'
-          >
-            <Copy className='mr-1 h-4 w-4' />
-            Copy URL
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={handleDownload}
-            disabled={!previewUrl || isLoading}
-            className='h-8'
-          >
-            <Download className='mr-1 h-4 w-4' />
-            Download
-          </Button>
-        </div>
       </div>
     </div>
   )
