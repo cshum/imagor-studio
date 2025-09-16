@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { generateImagorUrl } from '@/api/imagor-api'
@@ -48,6 +48,23 @@ export interface UseImageTransformProps {
   onError?: (error: Error) => void
 }
 
+// Custom debounce hook for 500ms delay
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value)
+  
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+    
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, delay])
+  
+  return debouncedValue
+}
+
 export function useImageTransform({
   galleryKey,
   imageKey,
@@ -61,7 +78,8 @@ export function useImageTransform({
     height: loaderData.originalDimensions.height,
   }))
   
-  const deferredParams = useDeferredValue(params)
+  // Use 500ms debounce instead of useDeferredValue
+  const debouncedParams = useDebounce(params, 500)
   const [aspectLocked, setAspectLocked] = useState(false)
   const originalAspectRatio = loaderData.originalDimensions.width / loaderData.originalDimensions.height
   const originalDimensions = loaderData.originalDimensions
@@ -142,12 +160,12 @@ export function useImageTransform({
 
   // Convert our state to GraphQL input format for query key (with WebP for preview)
   const graphqlParams = useMemo(
-    () => convertToGraphQLParams(deferredParams, true),
-    [deferredParams, convertToGraphQLParams],
+    () => convertToGraphQLParams(debouncedParams, true),
+    [debouncedParams, convertToGraphQLParams],
   )
 
-  // Detect when params are changing (before deferred update)
-  const isParamsChanging = JSON.stringify(params) !== JSON.stringify(deferredParams)
+  // Detect when params are changing (before debounced update)
+  const isParamsChanging = JSON.stringify(params) !== JSON.stringify(debouncedParams)
 
   // Use React Query for automatic request management
   const {
@@ -163,7 +181,7 @@ export function useImageTransform({
         imageKey,
         params: graphqlParams as ImagorParamsInput,
       }),
-    enabled: Object.keys(deferredParams).length > 0, // Only run when we have deferred params
+    enabled: Object.keys(debouncedParams).length > 0, // Only run when we have debounced params
     staleTime: 0, // Always fetch fresh data
     refetchOnWindowFocus: false,
   })
