@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
+import { cn } from '@/lib/utils'
 
 interface PreviewAreaProps {
   previewUrl: string
@@ -122,14 +123,12 @@ export function PreviewArea({
               alt={`Preview of ${imagePath}`}
               onLoad={handleCurrentImageLoad}
               onError={handleImageError}
-              className='rounded-lg object-contain'
-              style={{
-                display: imageLoaded ? 'block' : 'none',
-                maxHeight: 'calc(100vh - 200px)',
-                maxWidth: isMobile ? 'calc(100vw - 32px)' : 'calc(100vw - 432px)',
-                width: 'auto',
-                height: 'auto',
-              }}
+              className={cn(
+                'rounded-lg object-contain w-auto h-auto',
+                'max-h-[calc(100vh-200px)]',
+                isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
+                imageLoaded ? 'block' : 'hidden'
+              )}
             />
 
             {/* Hidden preloading image */}
