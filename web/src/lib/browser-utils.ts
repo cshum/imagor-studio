@@ -1,28 +1,6 @@
 /**
- * Browser detection and compatibility utilities
+ * Clipboard utilities for cross-browser compatibility
  */
-
-/**
- * Detect if the current browser is iOS Safari
- */
-export function isIOSSafari(): boolean {
-  if (typeof window === 'undefined') return false
-
-  const userAgent = window.navigator.userAgent
-  const isIOS = /iPad|iPhone|iPod/.test(userAgent)
-  const isSafari = /Safari/.test(userAgent) && !/Chrome|CriOS|FxiOS/.test(userAgent)
-
-  return isIOS && isSafari
-}
-
-/**
- * Detect if the current browser is any iOS browser
- */
-export function isIOS(): boolean {
-  if (typeof window === 'undefined') return false
-
-  return /iPad|iPhone|iPod/.test(window.navigator.userAgent)
-}
 
 /**
  * Check if the Clipboard API is available and functional
@@ -38,7 +16,7 @@ export function isClipboardAPIAvailable(): boolean {
 
 /**
  * Fallback clipboard copy using the legacy execCommand method
- * This is more reliable on older iOS Safari versions
+ * This is more reliable on older browsers and iOS Safari
  */
 export async function fallbackCopyToClipboard(text: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -74,41 +52,43 @@ export async function fallbackCopyToClipboard(text: string): Promise<void> {
 }
 
 /**
- * Copy text to clipboard with iOS Safari fallback
+ * Silent clipboard copy that doesn't throw errors
+ * Used for background clipboard attempts in dialogs
  */
-export async function copyToClipboard(text: string): Promise<void> {
-  // Try modern Clipboard API first
-  if (isClipboardAPIAvailable()) {
-    try {
-      await navigator.clipboard.writeText(text)
-      return
-    } catch {
-      // clipboard api failed
+export function silentCopyToClipboard(text: string): void {
+  try {
+    if (isClipboardAPIAvailable()) {
+      navigator.clipboard.writeText(text).catch(() => {
+        // Silent fail - try execCommand fallback
+        try {
+          const textArea = document.createElement('textarea')
+          textArea.value = text
+          textArea.style.position = 'fixed'
+          textArea.style.left = '-999999px'
+          textArea.style.top = '-999999px'
+          document.body.appendChild(textArea)
+          textArea.focus()
+          textArea.select()
+          document.execCommand('copy')
+          document.body.removeChild(textArea)
+        } catch {
+          // Silent fail
+        }
+      })
+    } else {
+      // Try execCommand directly
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      textArea.style.top = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
     }
-  }
-
-  // Fallback to execCommand for iOS Safari and other browsers
-  await fallbackCopyToClipboard(text)
-}
-
-/**
- * Download a file using various methods with iOS Safari compatibility
- */
-export function downloadFile(url: string, filename?: string): void {
-  if (isIOS()) {
-    // On iOS, we can't force downloads, so open in new tab
-    // The server should send appropriate headers for download
-    window.open(url, '_blank')
-  } else {
-    // For other browsers, use the download attribute
-    const link = document.createElement('a')
-    link.href = url
-    if (filename) {
-      link.download = filename
-    }
-    link.style.display = 'none'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  } catch {
+    // Silent fail - do nothing
   }
 }

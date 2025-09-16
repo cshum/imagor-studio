@@ -7,6 +7,7 @@ import { PreviewArea } from '@/components/image-editor/preview-area'
 import { TransformControlsContent } from '@/components/image-editor/transform-controls-content'
 import { LoadingBar } from '@/components/loading-bar'
 import { Button } from '@/components/ui/button'
+import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useImageTransform } from '@/hooks/use-image-transform'
@@ -21,6 +22,8 @@ interface ImageEditorPageProps {
 export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
   const navigate = useNavigate()
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
+  const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
+  const [copyUrl, setCopyUrl] = useState('')
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
 
   const {
@@ -35,7 +38,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     resetParams,
     setOriginalDimensions,
     toggleAspectLock,
-    handleCopyUrl,
+    getCopyUrl,
     handleDownload,
   } = useImageTransform({
     galleryKey,
@@ -64,11 +67,12 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }
 
   const handleCopyUrlClick = async () => {
-    const result = await handleCopyUrl()
-    if (result.success) {
-      toast.success('URL copied to clipboard')
-    } else {
-      toast.error(result.error || 'Failed to copy URL')
+    try {
+      const url = await getCopyUrl()
+      setCopyUrl(url)
+      setCopyUrlDialogOpen(true)
+    } catch (error) {
+      toast.error('Failed to generate copy URL')
     }
   }
 
@@ -213,6 +217,14 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           </div>
         </div>
       )}
+
+      {/* Copy URL Dialog */}
+      <CopyUrlDialog
+        open={copyUrlDialogOpen}
+        onOpenChange={setCopyUrlDialogOpen}
+        url={copyUrl}
+        title='Copy Image URL'
+      />
     </div>
   )
 }

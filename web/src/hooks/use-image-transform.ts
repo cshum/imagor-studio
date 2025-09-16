@@ -4,7 +4,6 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { generateImagorUrl } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
 import { getFullImageUrl } from '@/lib/api-utils'
-import { copyToClipboard, downloadFile } from '@/lib/browser-utils'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 
 export interface ImageTransformState {
@@ -321,31 +320,20 @@ export function useImageTransform({
     return downloadMutation.mutateAsync(downloadParams as ImagorParamsInput)
   }, [params, convertToGraphQLParams, downloadMutation])
 
-  // iOS Safari-compatible copy URL function
-  const handleCopyUrl = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const copyUrl = await generateCopyUrl()
-      const fullUrl = getFullImageUrl(copyUrl)
-      await copyToClipboard(fullUrl)
-      return { success: true }
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to copy URL',
-      }
-    }
+  // Get copy URL for dialog display
+  const getCopyUrl = useCallback(async (): Promise<string> => {
+    const copyUrl = await generateCopyUrl()
+    return getFullImageUrl(copyUrl)
   }, [generateCopyUrl])
 
-  // iOS Safari-compatible download function
+  // Simplified download function using location.href
   const handleDownload = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
     try {
       const downloadUrl = await generateDownloadUrl()
       const fullUrl = getFullImageUrl(downloadUrl)
 
-      // Extract filename from imageKey for better UX
-      const filename = imageKey.split('/').pop() || 'image'
-
-      downloadFile(fullUrl, filename)
+      // Use location.href for reliable downloads across all browsers
+      window.location.href = fullUrl
       return { success: true }
     } catch (error) {
       return {
@@ -353,7 +341,7 @@ export function useImageTransform({
         error: error instanceof Error ? error.message : 'Failed to download image',
       }
     }
-  }, [generateDownloadUrl, imageKey])
+  }, [generateDownloadUrl])
 
   return {
     // State
@@ -375,8 +363,8 @@ export function useImageTransform({
     generateCopyUrl,
     generateDownloadUrl,
 
-    // iOS Safari-compatible actions
-    handleCopyUrl,
+    // New simplified actions
+    getCopyUrl,
     handleDownload,
   }
 }
