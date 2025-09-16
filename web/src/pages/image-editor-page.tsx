@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useImageTransform } from '@/hooks/use-image-transform'
-import { getFullImageUrl } from '@/lib/api-utils'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 
 interface ImageEditorPageProps {
@@ -36,8 +35,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     resetParams,
     setOriginalDimensions,
     toggleAspectLock,
-    generateCopyUrl,
-    generateDownloadUrl,
+    handleCopyUrl,
+    handleDownload,
   } = useImageTransform({
     galleryKey,
     imageKey,
@@ -64,14 +63,21 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     }
   }
 
-  const handleCopyUrl = async () => {
-    try {
-      const copyUrl = await generateCopyUrl()
-      await navigator.clipboard.writeText(getFullImageUrl(copyUrl))
+  const handleCopyUrlClick = async () => {
+    const result = await handleCopyUrl()
+    if (result.success) {
       toast.success('URL copied to clipboard')
-    } catch {
-      toast.error('Failed to copy URL')
+    } else {
+      toast.error(result.error || 'Failed to copy URL')
     }
+  }
+
+  const handleDownloadClick = async () => {
+    const result = await handleDownload()
+    if (!result.success) {
+      toast.error(result.error || 'Failed to download image')
+    }
+    // No success toast for download as it's obvious when it works
   }
 
   return (
@@ -149,8 +155,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           galleryKey={galleryKey}
           imageKey={imageKey}
           onImageLoad={setOriginalDimensions}
-          generateDownloadUrl={generateDownloadUrl}
-          onCopyUrl={handleCopyUrl}
+          onCopyUrl={handleCopyUrlClick}
+          onDownload={handleDownloadClick}
         />
       </div>
 
@@ -186,10 +192,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               <Button
                 variant='outline'
                 size='sm'
-                onClick={async () => {
-                  const downloadUrl = await generateDownloadUrl()
-                  window.open(getFullImageUrl(downloadUrl), '_blank')
-                }}
+                onClick={handleDownloadClick}
                 disabled={!previewUrl || isLoading}
                 className='flex-1'
               >
@@ -199,7 +202,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               <Button
                 variant='outline'
                 size='sm'
-                onClick={handleCopyUrl}
+                onClick={handleCopyUrlClick}
                 disabled={!previewUrl}
                 className='flex-1'
               >

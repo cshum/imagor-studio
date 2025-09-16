@@ -3,6 +3,8 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { generateImagorUrl } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
+import { getFullImageUrl } from '@/lib/api-utils'
+import { copyToClipboard, downloadFile } from '@/lib/browser-utils'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 
 export interface ImageTransformState {
@@ -319,6 +321,40 @@ export function useImageTransform({
     return downloadMutation.mutateAsync(downloadParams as ImagorParamsInput)
   }, [params, convertToGraphQLParams, downloadMutation])
 
+  // iOS Safari-compatible copy URL function
+  const handleCopyUrl = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const copyUrl = await generateCopyUrl()
+      const fullUrl = getFullImageUrl(copyUrl)
+      await copyToClipboard(fullUrl)
+      return { success: true }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to copy URL',
+      }
+    }
+  }, [generateCopyUrl])
+
+  // iOS Safari-compatible download function
+  const handleDownload = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const downloadUrl = await generateDownloadUrl()
+      const fullUrl = getFullImageUrl(downloadUrl)
+
+      // Extract filename from imageKey for better UX
+      const filename = imageKey.split('/').pop() || 'image'
+
+      downloadFile(fullUrl, filename)
+      return { success: true }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to download image',
+      }
+    }
+  }, [generateDownloadUrl, imageKey])
+
   return {
     // State
     params,
@@ -338,5 +374,9 @@ export function useImageTransform({
     toggleAspectLock,
     generateCopyUrl,
     generateDownloadUrl,
+
+    // iOS Safari-compatible actions
+    handleCopyUrl,
+    handleDownload,
   }
 }

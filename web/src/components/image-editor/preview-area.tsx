@@ -14,8 +14,8 @@ interface PreviewAreaProps {
   galleryKey: string
   imageKey: string
   onImageLoad?: (width: number, height: number) => void
-  generateDownloadUrl: () => Promise<string>
   onCopyUrl: () => void
+  onDownload: () => void
 }
 
 export function PreviewArea({
@@ -25,8 +25,8 @@ export function PreviewArea({
   galleryKey,
   imageKey,
   onImageLoad,
-  generateDownloadUrl,
   onCopyUrl,
+  onDownload,
 }: PreviewAreaProps) {
   const [currentImageSrc, setCurrentImageSrc] = useState<string>('')
   const [nextImageSrc, setNextImageSrc] = useState<string>('')
@@ -58,11 +58,6 @@ export function PreviewArea({
 
   const handleImageError = () => {
     setImageLoaded(false)
-  }
-
-  const handleDownload = async () => {
-    const downloadUrl = await generateDownloadUrl()
-    window.open(getFullImageUrl(downloadUrl), '_blank')
   }
 
   // Handle preloading when preview URL changes
@@ -167,7 +162,7 @@ export function PreviewArea({
             <Button
               variant='outline'
               size='sm'
-              onClick={handleDownload}
+              onClick={onDownload}
               disabled={!previewUrl || isLoading}
               className='h-8 flex-1'
             >
