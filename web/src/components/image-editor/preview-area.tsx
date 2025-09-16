@@ -112,7 +112,7 @@ export function PreviewArea({
               onLoad={handleCurrentImageLoad}
               onError={handleImageError}
               className={cn(
-                'h-auto w-auto rounded-lg object-contain',
+                'h-auto w-auto object-contain',
                 'max-h-[calc(100vh-200px)]',
                 isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
                 imageLoaded ? 'block' : 'hidden',
