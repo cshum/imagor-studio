@@ -76,7 +76,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
   const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
 
   return (
-    <div className='bg-background flex h-screen'>
+    <div className='bg-background flex h-screen overflow-hidden'>
       {/* Loading Bar */}
       <LoadingBar isLoading={isLoadingBarVisible} />
 
@@ -112,7 +112,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                   hideClose={true}
                   className='flex w-full flex-col p-0 sm:w-96'
                 >
-                  <SheetHeader className='p-4'>
+                  <SheetHeader className='p-4 pb-0'>
                     <div className='flex items-center justify-between'>
                       <Button variant='ghost' size='sm' onClick={() => setMobileSheetOpen(false)}>
                         <ChevronLeft className='mr-1 h-4 w-4' />
@@ -129,7 +129,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
                   </SheetHeader>
 
                   {/* Scrollable Controls */}
-                  <div className='flex-1 overflow-y-auto p-4'>
+                  <div className='flex-1 overflow-y-auto p-4 pt-0'>
                     <TransformControlsContent
                       params={params}
                       aspectLocked={aspectLocked}
