@@ -31,9 +31,6 @@ export function PreviewArea({
   const [currentImageSrc, setCurrentImageSrc] = useState<string>('')
   const [nextImageSrc, setNextImageSrc] = useState<string>('')
   const [imageLoaded, setImageLoaded] = useState(false)
-  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(
-    null,
-  )
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
 
   const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
@@ -41,8 +38,6 @@ export function PreviewArea({
   const handleCurrentImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const img = event.currentTarget
     const { naturalWidth, naturalHeight } = img
-
-    setImageDimensions({ width: naturalWidth, height: naturalHeight })
     setImageLoaded(true)
 
     // Notify parent component of image dimensions
@@ -55,7 +50,6 @@ export function PreviewArea({
 
     // Swap the images - next becomes current
     setCurrentImageSrc(nextImageSrc)
-    setImageDimensions({ width: naturalWidth, height: naturalHeight })
     setImageLoaded(true)
 
     // Notify parent component of image dimensions
@@ -64,7 +58,6 @@ export function PreviewArea({
 
   const handleImageError = () => {
     setImageLoaded(false)
-    setImageDimensions(null)
   }
 
   const handleDownload = async () => {
@@ -185,15 +178,7 @@ export function PreviewArea({
         ) : (
           /* Desktop: Only info display - match transform controls height */
           <div className='text-muted-foreground flex items-center gap-4 p-2 text-sm'>
-            <span>Editing: {imagePath}</span>
-            {imageDimensions && (
-              <>
-                <span>•</span>
-                <span>
-                  {imageDimensions.width} × {imageDimensions.height}
-                </span>
-              </>
-            )}
+            <span>{imagePath}</span>
           </div>
         )}
       </div>
