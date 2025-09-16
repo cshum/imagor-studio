@@ -45,7 +45,7 @@ export const imageEditorLoader = async ({
   const initialPreviewUrl = await generateImagorUrl({
     galleryKey,
     imageKey,
-    params: { 
+    params: {
       fitIn: true,
     } as ImagorParamsInput,
   })

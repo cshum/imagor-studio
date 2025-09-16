@@ -27,21 +27,21 @@ export function TransformControlsContent({
   onToggleAspectLock,
 }: TransformControlsContentProps) {
   const [openSections, setOpenSections] = useState({
-    dimensions: true,  // defaultOpen
+    dimensions: true, // defaultOpen
     output: false,
-    crop: false
+    crop: false,
   })
 
-  const CollapsibleIcon = ({ isOpen }: { isOpen: boolean }) => 
+  const CollapsibleIcon = ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <ChevronUp className='h-4 w-4' /> : <ChevronDown className='h-4 w-4' />
 
   return (
     <div className='space-y-4'>
       {/* Dimensions & Resize */}
       <Card className='p-4'>
-        <Collapsible 
+        <Collapsible
           open={openSections.dimensions}
-          onOpenChange={(open) => setOpenSections(prev => ({...prev, dimensions: open}))}
+          onOpenChange={(open) => setOpenSections((prev) => ({ ...prev, dimensions: open }))}
         >
           <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
             <div className='flex items-center gap-2'>
@@ -64,9 +64,9 @@ export function TransformControlsContent({
 
       {/* Output & Compression */}
       <Card className='p-4'>
-        <Collapsible 
+        <Collapsible
           open={openSections.output}
-          onOpenChange={(open) => setOpenSections(prev => ({...prev, output: open}))}
+          onOpenChange={(open) => setOpenSections((prev) => ({ ...prev, output: open }))}
         >
           <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
             <div className='flex items-center gap-2'>
@@ -83,9 +83,9 @@ export function TransformControlsContent({
 
       {/* Crop & Trim */}
       <Card className='p-4'>
-        <Collapsible 
+        <Collapsible
           open={openSections.crop}
-          onOpenChange={(open) => setOpenSections(prev => ({...prev, crop: open}))}
+          onOpenChange={(open) => setOpenSections((prev) => ({ ...prev, crop: open }))}
         >
           <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
             <div className='flex items-center gap-2'>

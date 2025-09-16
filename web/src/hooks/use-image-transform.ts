@@ -51,17 +51,17 @@ export interface UseImageTransformProps {
 // Custom debounce hook for 500ms delay
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value)
-  
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedValue(value)
     }, delay)
-    
+
     return () => {
       clearTimeout(handler)
     }
   }, [value, delay])
-  
+
   return debouncedValue
 }
 
@@ -77,11 +77,12 @@ export function useImageTransform({
     width: loaderData.originalDimensions.width,
     height: loaderData.originalDimensions.height,
   }))
-  
+
   // Use 500ms debounce instead of useDeferredValue
-  const debouncedParams = useDebounce(params, 500)
+  const debouncedParams = useDebounce(params, 300)
   const [aspectLocked, setAspectLocked] = useState(false)
-  const originalAspectRatio = loaderData.originalDimensions.width / loaderData.originalDimensions.height
+  const originalAspectRatio =
+    loaderData.originalDimensions.width / loaderData.originalDimensions.height
   const originalDimensions = loaderData.originalDimensions
 
   // Convert our state to GraphQL input format
@@ -196,7 +197,6 @@ export function useImageTransform({
   // Handle errors
   useMemo(() => {
     if (error) {
-      console.error('Failed to generate preview URL:', error)
       onError?.(error as Error)
     }
   }, [error, onError])
@@ -298,7 +298,6 @@ export function useImageTransform({
 
     return downloadMutation.mutateAsync(downloadParams as ImagorParamsInput)
   }, [params, convertToGraphQLParams, downloadMutation])
-
 
   return {
     // State
