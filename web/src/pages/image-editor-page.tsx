@@ -5,6 +5,7 @@ import { ChevronDown, ChevronLeft, Copy, RotateCcw, Settings } from 'lucide-reac
 import { CropControls } from '@/components/image-editor/controls/crop-controls'
 import { DimensionControls } from '@/components/image-editor/controls/dimension-controls'
 import { PreviewArea } from '@/components/image-editor/preview-area'
+import { LoadingBar } from '@/components/loading-bar'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -77,6 +78,9 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
 
   return (
     <div className='bg-background flex h-screen'>
+      {/* Loading Bar */}
+      <LoadingBar isLoading={isLoading} />
+
       {/* Preview Area - 70% */}
       <div className='flex flex-1 flex-col'>
         {/* Header */}

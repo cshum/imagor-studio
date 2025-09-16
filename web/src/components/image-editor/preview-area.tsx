@@ -25,6 +25,8 @@ export function PreviewArea({
   onImageLoad,
   generateDownloadUrl,
 }: PreviewAreaProps) {
+  const [currentImageSrc, setCurrentImageSrc] = useState<string>('')
+  const [nextImageSrc, setNextImageSrc] = useState<string>('')
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(
     null,
@@ -34,10 +36,23 @@ export function PreviewArea({
 
   const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
 
-  const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
+  const handleCurrentImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const img = event.currentTarget
     const { naturalWidth, naturalHeight } = img
 
+    setImageDimensions({ width: naturalWidth, height: naturalHeight })
+    setImageLoaded(true)
+
+    // Notify parent component of image dimensions
+    onImageLoad?.(naturalWidth, naturalHeight)
+  }
+
+  const handleNextImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = event.currentTarget
+    const { naturalWidth, naturalHeight } = img
+
+    // Swap the images - next becomes current
+    setCurrentImageSrc(nextImageSrc)
     setImageDimensions({ width: naturalWidth, height: naturalHeight })
     setImageLoaded(true)
 
@@ -67,11 +82,22 @@ export function PreviewArea({
     window.open(getFullImageUrl(downloadUrl), '_blank')
   }
 
-  // Reset zoom when preview URL changes
+  // Handle preloading when preview URL changes
   useEffect(() => {
+    if (previewUrl) {
+      const fullUrl = getFullImageUrl(previewUrl)
+
+      // If this is the first image or no current image, set it directly
+      if (!currentImageSrc) {
+        setCurrentImageSrc(fullUrl)
+        setImageLoaded(false)
+      } else {
+        // Start preloading the next image
+        setNextImageSrc(fullUrl)
+      }
+    }
     setZoom(1)
-    setImageLoaded(false)
-  }, [previewUrl])
+  }, [previewUrl, currentImageSrc])
 
   return (
     <div className='relative flex h-full flex-col'>
@@ -100,15 +126,16 @@ export function PreviewArea({
               </div>
             </div>
           </div>
-        ) : previewUrl ? (
+        ) : currentImageSrc ? (
           <div
             className='relative max-h-full max-w-full overflow-auto'
             style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
           >
+            {/* Current visible image */}
             <img
-              src={getFullImageUrl(previewUrl)}
+              src={currentImageSrc}
               alt={`Preview of ${imagePath}`}
-              onLoad={handleImageLoad}
+              onLoad={handleCurrentImageLoad}
               onError={handleImageError}
               className='max-h-full max-w-full rounded-lg object-contain shadow-lg'
               style={{
@@ -119,6 +146,18 @@ export function PreviewArea({
                 height: 'auto',
               }}
             />
+
+            {/* Hidden preloading image */}
+            {nextImageSrc && nextImageSrc !== currentImageSrc && (
+              <img
+                src={nextImageSrc}
+                alt={`Preloading ${imagePath}`}
+                onLoad={handleNextImageLoad}
+                onError={handleImageError}
+                style={{ display: 'none' }}
+              />
+            )}
+
             {!imageLoaded && <Skeleton className='h-64 w-96 rounded-lg' />}
           </div>
         ) : (
