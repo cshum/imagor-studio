@@ -1,9 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { generateImagorUrl } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
-import { debounce } from '@/lib/utils'
 
 export interface ImageTransformState {
   // Dimensions
@@ -45,32 +44,12 @@ export function useImageTransform({
   onError,
 }: UseImageTransformProps) {
   const [params, setParams] = useState<ImageTransformState>({})
-  const [previewUrl, setPreviewUrl] = useState<string>('')
   const [aspectLocked, setAspectLocked] = useState(false)
   const [originalAspectRatio, setOriginalAspectRatio] = useState<number | null>(null)
   const [originalDimensions, setOriginalDimensionsState] = useState<{
     width: number
     height: number
   } | null>(null)
-  const [isPendingChange, setIsPendingChange] = useState(false)
-
-  // Mutation for generating Imagor URLs
-  const generateUrlMutation = useMutation({
-    mutationFn: (transformParams: ImagorParamsInput) =>
-      generateImagorUrl({
-        galleryKey,
-        imageKey,
-        params: transformParams,
-      }),
-    onSuccess: (url) => {
-      setPreviewUrl(url)
-      onPreviewUpdate?.(url)
-    },
-    onError: (error) => {
-      console.error('Failed to generate preview URL:', error)
-      onError?.(error as Error)
-    },
-  })
 
   // Convert our state to GraphQL input format
   const convertToGraphQLParams = useCallback(
@@ -120,21 +99,59 @@ export function useImageTransform({
     [],
   )
 
-  // Debounced URL generation
-  const debouncedGenerateUrl = useMemo(
-    () =>
-      debounce((state: ImageTransformState) => {
-        setIsPendingChange(false) // Clear pending state when debounced function executes
-        const graphqlParams = convertToGraphQLParams(state)
-        generateUrlMutation.mutate(graphqlParams as ImagorParamsInput)
-      }, 500),
-    [convertToGraphQLParams, generateUrlMutation],
+  // Convert our state to GraphQL input format for query key
+  const graphqlParams = useMemo(
+    () => convertToGraphQLParams(params),
+    [params, convertToGraphQLParams],
   )
+
+  // Use React Query for automatic request management
+  const {
+    data: previewUrl = '',
+    isLoading,
+    isFetching,
+    error,
+  } = useQuery({
+    queryKey: ['imagor-preview', galleryKey, imageKey, graphqlParams],
+    queryFn: () =>
+      generateImagorUrl({
+        galleryKey,
+        imageKey,
+        params: graphqlParams as ImagorParamsInput,
+      }),
+    enabled: Object.keys(params).length > 0, // Only run when we have params
+    staleTime: 0, // Always fetch fresh data
+    refetchOnWindowFocus: false,
+  })
+
+  // Notify parent when preview URL changes
+  useMemo(() => {
+    if (previewUrl) {
+      onPreviewUpdate?.(previewUrl)
+    }
+  }, [previewUrl, onPreviewUpdate])
+
+  // Handle errors
+  useMemo(() => {
+    if (error) {
+      console.error('Failed to generate preview URL:', error)
+      onError?.(error as Error)
+    }
+  }, [error, onError])
+
+  // Mutation for download URL generation (separate from preview)
+  const downloadMutation = useMutation({
+    mutationFn: (transformParams: ImagorParamsInput) =>
+      generateImagorUrl({
+        galleryKey,
+        imageKey,
+        params: transformParams,
+      }),
+  })
 
   // Update a single parameter
   const updateParam = useCallback(
     (key: keyof ImageTransformState, value: any) => {
-      setIsPendingChange(true) // Set pending state immediately
       setParams((prev) => {
         const newParams = { ...prev, [key]: value }
 
@@ -147,31 +164,19 @@ export function useImageTransform({
           }
         }
 
-        // Trigger debounced URL generation
-        debouncedGenerateUrl(newParams)
-
         return newParams
       })
     },
-    [aspectLocked, originalAspectRatio, debouncedGenerateUrl],
+    [aspectLocked, originalAspectRatio],
   )
 
   // Update multiple parameters at once
-  const updateParams = useCallback(
-    (updates: Partial<ImageTransformState>) => {
-      setIsPendingChange(true) // Set pending state immediately
-      setParams((prev) => {
-        const newParams = { ...prev, ...updates }
-        debouncedGenerateUrl(newParams)
-        return newParams
-      })
-    },
-    [debouncedGenerateUrl],
-  )
+  const updateParams = useCallback((updates: Partial<ImageTransformState>) => {
+    setParams((prev) => ({ ...prev, ...updates }))
+  }, [])
 
   // Reset all parameters
   const resetParams = useCallback(() => {
-    setIsPendingChange(true) // Set pending state immediately
     const resetState: ImageTransformState = {
       // Reset to original dimensions if available
       width: originalDimensions?.width,
@@ -191,44 +196,36 @@ export function useImageTransform({
       grayscale: undefined,
     }
     setParams(resetState)
-    // Generate URL with original dimensions
-    debouncedGenerateUrl(resetState)
-  }, [originalDimensions, debouncedGenerateUrl])
+  }, [originalDimensions])
 
   // Set original image dimensions (called when image loads)
-  const setOriginalDimensions = useCallback(
-    (width: number, height: number) => {
-      const aspectRatio = width / height
-      setOriginalAspectRatio(aspectRatio)
+  const setOriginalDimensions = useCallback((width: number, height: number) => {
+    const aspectRatio = width / height
+    setOriginalAspectRatio(aspectRatio)
 
-      // Only store original dimensions on first call (don't overwrite)
-      setOriginalDimensionsState((prev) => {
-        if (prev) {
-          return prev
-        }
-        return { width, height }
-      })
+    // Only store original dimensions on first call (don't overwrite)
+    setOriginalDimensionsState((prev) => {
+      if (prev) {
+        return prev
+      }
+      return { width, height }
+    })
 
-      // Set original dimensions as initial params when image loads
-      setParams((prev) => {
-        // Only set dimensions if they haven't been explicitly set by user
-        if (prev.width || prev.height) {
-          return prev
-        }
-        // For initial load, use original dimensions
-        const initialState = {
-          ...prev,
-          width,
-          height,
-          fitIn: undefined, // Remove fit mode
-        }
-        // Generate URL with original dimensions
-        debouncedGenerateUrl(initialState)
-        return initialState
-      })
-    },
-    [debouncedGenerateUrl],
-  )
+    // Set original dimensions as initial params when image loads
+    setParams((prev) => {
+      // Only set dimensions if they haven't been explicitly set by user
+      if (prev.width || prev.height) {
+        return prev
+      }
+      // For initial load, use original dimensions
+      return {
+        ...prev,
+        width,
+        height,
+        fitIn: undefined, // Remove fit mode
+      }
+    })
+  }, [])
 
   // Toggle aspect ratio lock
   const toggleAspectLock = useCallback(() => {
@@ -245,8 +242,8 @@ export function useImageTransform({
       ],
     }
 
-    return generateUrlMutation.mutateAsync(downloadParams as ImagorParamsInput)
-  }, [params, convertToGraphQLParams, generateUrlMutation])
+    return downloadMutation.mutateAsync(downloadParams as ImagorParamsInput)
+  }, [params, convertToGraphQLParams, downloadMutation])
 
   // Generate initial preview URL on mount - will be updated when original dimensions are known
   useMemo(() => {
@@ -258,9 +255,8 @@ export function useImageTransform({
         height: undefined,
       }
       setParams(initialState)
-      debouncedGenerateUrl(initialState)
     }
-  }, [debouncedGenerateUrl, params]) // Only run on mount
+  }, [params]) // Only run on mount
 
   return {
     // State
@@ -270,9 +266,9 @@ export function useImageTransform({
     originalAspectRatio,
 
     // Loading states
-    isLoading: generateUrlMutation.isPending, // Keep original for image logic
-    isLoadingBarVisible: generateUrlMutation.isPending || isPendingChange, // New state for LoadingBar
-    error: generateUrlMutation.error,
+    isLoading, // First request loading state
+    isLoadingBarVisible: isFetching, // Any request loading state (including subsequent ones)
+    error,
 
     // Actions
     updateParam,
