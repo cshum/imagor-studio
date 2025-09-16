@@ -67,12 +67,15 @@ export const imageEditorLoader = async ({
   // Preload the actual image element
   const imageElement = await preloadImage(fullSizeSrc)
 
-  // Generate initial fit-in preview URL
+  // Generate initial preview URL that matches what the hook will generate
+  // Use actual dimensions + WebP format to match the hook's initial state
   const initialPreviewUrl = await generateImagorUrl({
     galleryKey,
     imageKey,
     params: {
-      fitIn: true,
+      width: imageElement.naturalWidth,
+      height: imageElement.naturalHeight,
+      filters: [{ name: 'format', args: 'webp' }],
     } as ImagorParamsInput,
   })
 

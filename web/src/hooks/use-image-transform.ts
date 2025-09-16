@@ -179,7 +179,7 @@ export function useImageTransform({
 
   // Use React Query for automatic request management
   const {
-    data: previewUrl = '',
+    data: previewUrl = loaderData.initialPreviewUrl,
     isLoading,
     isFetching,
     error,
@@ -194,6 +194,7 @@ export function useImageTransform({
     enabled: Object.keys(debouncedParams).length > 0, // Only run when we have debounced params
     staleTime: 0, // Always fetch fresh data
     refetchOnWindowFocus: false,
+    initialData: loaderData.initialPreviewUrl, // Use loader's preview URL as initial data
   })
 
   // Notify parent when preview URL changes
