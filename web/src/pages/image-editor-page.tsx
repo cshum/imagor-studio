@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
+import { toast, Toaster } from 'sonner'
 
 import { PreviewArea } from '@/components/image-editor/preview-area'
 import { TransformControlsContent } from '@/components/image-editor/transform-controls-content'
@@ -63,7 +64,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
   const handleCopyUrl = () => {
     if (previewUrl) {
       navigator.clipboard.writeText(getFullImageUrl(previewUrl))
-      // TODO: Add toast notification
+      toast.success('URL copied to clipboard!')
     }
   }
 
@@ -71,6 +72,9 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
 
   return (
     <div className='bg-background flex h-screen'>
+      {/* Toast Notifications */}
+      <Toaster />
+
       {/* Loading Bar */}
       <LoadingBar isLoading={isLoadingBarVisible} />
 

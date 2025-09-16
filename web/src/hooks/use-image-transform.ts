@@ -54,7 +54,7 @@ export function useImageTransform({
 
   // Convert our state to GraphQL input format
   const convertToGraphQLParams = useCallback(
-    (state: ImageTransformState): Partial<ImagorParamsInput> => {
+    (state: ImageTransformState, forPreview = false): Partial<ImagorParamsInput> => {
       const graphqlParams: Partial<ImagorParamsInput> = {}
 
       // Dimensions
@@ -91,6 +91,11 @@ export function useImageTransform({
         filters.push({ name: 'grayscale', args: '' })
       }
 
+      // Always add WebP format for preview URLs to ensure browser compatibility
+      if (forPreview) {
+        filters.push({ name: 'format', args: 'webp' })
+      }
+
       if (filters.length > 0) {
         graphqlParams.filters = filters
       }
@@ -100,9 +105,9 @@ export function useImageTransform({
     [],
   )
 
-  // Convert our state to GraphQL input format for query key
+  // Convert our state to GraphQL input format for query key (with WebP for preview)
   const graphqlParams = useMemo(
-    () => convertToGraphQLParams(deferredParams),
+    () => convertToGraphQLParams(deferredParams, true),
     [deferredParams, convertToGraphQLParams],
   )
 
