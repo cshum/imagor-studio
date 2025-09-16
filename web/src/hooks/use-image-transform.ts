@@ -29,6 +29,10 @@ export interface ImageTransformState {
   contrast?: number
   saturation?: number
   grayscale?: boolean
+
+  // Output format and quality
+  format?: string  // e.g., 'webp', 'jpeg', 'png', undefined (original)
+  quality?: number // e.g., 80, 90, 95, undefined (default)
 }
 
 export interface UseImageTransformProps {
@@ -93,9 +97,19 @@ export function useImageTransform({
         filters.push({ name: 'grayscale', args: '' })
       }
 
-      // Always add WebP format for preview URLs to ensure browser compatibility
+      // Format handling
       if (forPreview) {
+        // Always WebP for preview (browser compatibility)
         filters.push({ name: 'format', args: 'webp' })
+      } else if (state.format) {
+        // Use user-selected format for Copy URL / Download
+        filters.push({ name: 'format', args: state.format })
+      }
+      // If no format specified, Imagor uses original format
+
+      // Quality handling (only if format is specified)
+      if (state.quality && (forPreview || state.format)) {
+        filters.push({ name: 'quality', args: state.quality.toString() })
       }
 
       if (filters.length > 0) {
@@ -206,6 +220,8 @@ export function useImageTransform({
       contrast: undefined,
       saturation: undefined,
       grayscale: undefined,
+      format: undefined,
+      quality: undefined,
     }
     setParams(resetState)
   }, [originalDimensions])
@@ -244,12 +260,22 @@ export function useImageTransform({
     setAspectLocked((prev) => !prev)
   }, [])
 
+  // Generate copy URL with user-selected format (not WebP)
+  const generateCopyUrl = useCallback(() => {
+    const copyParams = convertToGraphQLParams(params, false) // false = no WebP override
+    return generateImagorUrl({
+      galleryKey,
+      imageKey,
+      params: copyParams as ImagorParamsInput,
+    })
+  }, [params, convertToGraphQLParams, galleryKey, imageKey])
+
   // Generate download URL with attachment filter
   const generateDownloadUrl = useCallback(() => {
     const downloadParams = {
-      ...convertToGraphQLParams(params),
+      ...convertToGraphQLParams(params, false), // false = no WebP override
       filters: [
-        ...(convertToGraphQLParams(params).filters || []),
+        ...(convertToGraphQLParams(params, false).filters || []),
         { name: 'attachment', args: '' }, // Empty args for default filename
       ],
     }
@@ -288,6 +314,7 @@ export function useImageTransform({
     resetParams,
     setOriginalDimensions,
     toggleAspectLock,
+    generateCopyUrl,
     generateDownloadUrl,
   }
 }

@@ -35,6 +35,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
     resetParams,
     setOriginalDimensions,
     toggleAspectLock,
+    generateCopyUrl,
     generateDownloadUrl,
   } = useImageTransform({
     galleryKey,
@@ -61,10 +62,14 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
     }
   }
 
-  const handleCopyUrl = () => {
-    if (previewUrl) {
-      navigator.clipboard.writeText(getFullImageUrl(previewUrl))
+  const handleCopyUrl = async () => {
+    try {
+      const copyUrl = await generateCopyUrl()
+      navigator.clipboard.writeText(getFullImageUrl(copyUrl))
       toast.success('URL copied to clipboard!')
+    } catch (error) {
+      console.error('Failed to generate copy URL:', error)
+      toast.error('Failed to copy URL')
     }
   }
 
