@@ -164,3 +164,45 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Safe area utilities for iOS devices */
+@layer utilities {
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-inset-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-area-inset-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* iOS Safari bottom navigation bar fix */
+  .ios-bottom-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
+  }
+
+  /* Ensure minimum padding even without safe area support */
+  .mobile-bottom-safe {
+    padding-bottom: 16px;
+  }
+
+  /* Support for iOS Safari's dynamic viewport */
+  @supports (height: 100dvh) {
+    .min-h-screen-safe {
+      min-height: 100dvh;
+    }
+  }
+
+  @supports not (height: 100dvh) {
+    .min-h-screen-safe {
+      min-height: 100vh;
+    }
+  }
+}

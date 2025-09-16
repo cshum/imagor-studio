@@ -150,7 +150,7 @@ export function PreviewArea({
       </div>
 
       {/* Preview Controls */}
-      <div className='bg-background border-t p-4'>
+      <div className={cn('bg-background border-t p-4', isMobile && 'ios-bottom-safe')}>
         {isMobile ? (
           /* Mobile: Only buttons spanning full width */
           <div className='flex items-center gap-2'>

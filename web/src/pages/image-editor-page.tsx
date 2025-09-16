@@ -75,7 +75,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }
 
   return (
-    <div className='bg-background flex h-screen overflow-hidden'>
+    <div className='bg-background min-h-screen-safe flex overflow-hidden'>
       {/* Loading Bar */}
       <LoadingBar isLoading={isLoadingBarVisible} />
 
