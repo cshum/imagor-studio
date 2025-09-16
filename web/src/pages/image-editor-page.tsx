@@ -11,6 +11,7 @@ import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useImageTransform } from '@/hooks/use-image-transform'
+import { cn } from '@/lib/utils.ts'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 
 interface ImageEditorPageProps {
@@ -67,13 +68,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }
 
   const handleCopyUrlClick = async () => {
-    try {
-      const url = await getCopyUrl()
-      setCopyUrl(url)
-      setCopyUrlDialogOpen(true)
-    } catch (error) {
-      toast.error('Failed to generate copy URL')
-    }
+    const url = await getCopyUrl()
+    setCopyUrl(url)
+    setCopyUrlDialogOpen(true)
   }
 
   const handleDownloadClick = async () => {
@@ -85,7 +82,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }
 
   return (
-    <div className='bg-background min-h-screen-safe flex overflow-hidden'>
+    <div
+      className={cn(
+        'bg-background flex overflow-hidden',
+        isMobile && 'min-h-screen-safe',
+        !isMobile && 'h-screen',
+      )}
+    >
       {/* Loading Bar */}
       <LoadingBar isLoading={isLoadingBarVisible} />
 
