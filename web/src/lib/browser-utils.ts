@@ -82,7 +82,9 @@ export async function copyToClipboard(text: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(text)
       return
-    } catch {}
+    } catch {
+      // clipboard api failed
+    }
   }
 
   // Fallback to execCommand for iOS Safari and other browsers
