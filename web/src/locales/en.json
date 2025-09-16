@@ -304,12 +304,7 @@
       "bottom": "Bottom (px)",
       "cropDescription": "Crop pixels from each edge of the image",
       "autoTrim": "Auto Trim",
-      "autoTrimDescription": "Automatically remove whitespace and transparent edges",
-      "howItWorks": "How it works:",
-      "howItWorksItems": {
-        "manualCrop": "Manual Crop: Remove specific pixels from each edge",
-        "autoTrim": "Auto Trim: Automatically detect and remove empty space"
-      }
+      "autoTrimDescription": "Automatically remove whitespace and transparent edges"
     },
     "preview": {
       "previewError": "Preview Error",
