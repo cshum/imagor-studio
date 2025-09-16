@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertCircle, Copy, Download } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -28,6 +29,7 @@ export function PreviewArea({
   onCopyUrl,
   onDownload,
 }: PreviewAreaProps) {
+  const { t } = useTranslation()
   const [currentImageSrc, setCurrentImageSrc] = useState<string>('')
   const [nextImageSrc, setNextImageSrc] = useState<string>('')
   const [imageLoaded, setImageLoaded] = useState(false)
@@ -84,22 +86,26 @@ export function PreviewArea({
           <div className='flex flex-col items-center gap-4 text-center'>
             <AlertCircle className='text-destructive h-12 w-12' />
             <div>
-              <h3 className='text-destructive font-medium'>Preview Error</h3>
+              <h3 className='text-destructive font-medium'>
+                {t('imageEditor.preview.previewError')}
+              </h3>
               <p className='text-muted-foreground mt-1 text-sm'>
-                {error.message || 'Failed to generate preview'}
+                {error.message || t('imageEditor.preview.failedToGenerate')}
               </p>
             </div>
             <Button variant='outline' size='sm' onClick={() => window.location.reload()}>
-              Retry
+              {t('imageEditor.page.retry')}
             </Button>
           </div>
         ) : isLoading ? (
           <div className='flex flex-col items-center gap-4'>
             <Skeleton className='h-64 w-96 rounded-lg' />
             <div className='text-center'>
-              <div className='text-muted-foreground text-sm'>Generating preview...</div>
+              <div className='text-muted-foreground text-sm'>
+                {t('imageEditor.preview.generatingPreview')}
+              </div>
               <div className='text-muted-foreground mt-1 text-xs'>
-                Applying transformations to {imagePath}
+                {t('imageEditor.preview.applyingTransformations', { imagePath })}
               </div>
             </div>
           </div>
@@ -136,8 +142,8 @@ export function PreviewArea({
           <div className='flex flex-col items-center gap-4 text-center'>
             <div className='bg-muted border-muted-foreground/25 flex h-64 w-96 items-center justify-center rounded-lg border-2 border-dashed'>
               <div className='text-muted-foreground'>
-                <div className='text-lg font-medium'>No Preview</div>
-                <div className='text-sm'>Adjust parameters to generate preview</div>
+                <div className='text-lg font-medium'>{t('imageEditor.preview.noPreview')}</div>
+                <div className='text-sm'>{t('imageEditor.preview.adjustParameters')}</div>
               </div>
             </div>
           </div>
@@ -157,7 +163,7 @@ export function PreviewArea({
               className='h-8 flex-1'
             >
               <Copy className='mr-1 h-4 w-4' />
-              Copy URL
+              {t('imageEditor.page.copyUrl')}
             </Button>
             <Button
               variant='outline'
@@ -167,7 +173,7 @@ export function PreviewArea({
               className='h-8 flex-1'
             >
               <Download className='mr-1 h-4 w-4' />
-              Download
+              {t('imageEditor.page.download')}
             </Button>
           </div>
         ) : (
