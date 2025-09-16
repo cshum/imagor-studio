@@ -125,7 +125,7 @@ export function useImageTransform({
       debounce((state: ImageTransformState) => {
         const graphqlParams = convertToGraphQLParams(state)
         generateUrlMutation.mutate(graphqlParams as ImagorParamsInput)
-      }, 300),
+      }, 500),
     [convertToGraphQLParams, generateUrlMutation],
   )
 
