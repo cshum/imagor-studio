@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useDeferredValue } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { generateImagorUrl } from '@/api/imagor-api'

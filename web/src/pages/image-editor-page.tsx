@@ -77,7 +77,7 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
       {/* Loading Bar */}
       <LoadingBar isLoading={isLoadingBarVisible} />
 
-      {/* Preview Area - 70% */}
+      {/* Preview Area  */}
       <div className='flex flex-1 flex-col'>
         {/* Header */}
         <div className='flex items-center gap-2 border-b p-4'>
@@ -204,9 +204,9 @@ export function ImageEditorPage({ galleryKey, imageKey }: ImageEditorPageProps) 
         />
       </div>
 
-      {/* Transform Panel - 30% (Hidden on mobile) */}
+      {/* Transform Panel (Hidden on mobile) */}
       {!isMobile && (
-        <div className='bg-background flex w-80 flex-col border-l'>
+        <div className='bg-background flex w-100 flex-col border-l'>
           {/* Panel Header */}
           <div className='border-b p-4'>
             <div className='flex items-center justify-between'>

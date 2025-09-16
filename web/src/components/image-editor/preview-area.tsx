@@ -184,8 +184,8 @@ export function PreviewArea({
             </Button>
           </div>
         ) : (
-          /* Desktop: Only info display */
-          <div className='text-muted-foreground flex items-center gap-4 text-sm'>
+          /* Desktop: Only info display - match transform controls height */
+          <div className='text-muted-foreground flex items-center gap-4 p-2 text-sm'>
             <span>Editing: {imagePath}</span>
             {imageDimensions && (
               <>
