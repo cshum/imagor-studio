@@ -191,49 +191,51 @@ export function DimensionControls({
         </div>
       </div>
 
-      {/* Alignment */}
-      <div className='space-y-3'>
-        <Label className='text-sm font-medium'>Alignment</Label>
-        <div className='grid grid-cols-2 gap-3'>
-          <div>
-            <Label htmlFor='h-align' className='text-muted-foreground text-xs'>
-              Horizontal
-            </Label>
-            <Select
-              value={params.hAlign || 'center'}
-              onValueChange={(value) => handleAlignmentChange('horizontal', value)}
-            >
-              <SelectTrigger id='h-align' className='h-8'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='left'>Left</SelectItem>
-                <SelectItem value='center'>Center</SelectItem>
-                <SelectItem value='right'>Right</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      {/* Alignment - Only show when Fill mode is selected */}
+      {getCurrentFitMode() === 'fill' && (
+        <div className='space-y-3'>
+          <Label className='text-sm font-medium'>Alignment</Label>
+          <div className='grid grid-cols-2 gap-3'>
+            <div>
+              <Label htmlFor='h-align' className='text-muted-foreground text-xs'>
+                Horizontal
+              </Label>
+              <Select
+                value={params.hAlign || 'center'}
+                onValueChange={(value) => handleAlignmentChange('horizontal', value)}
+              >
+                <SelectTrigger id='h-align' className='h-8'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='left'>Left</SelectItem>
+                  <SelectItem value='center'>Center</SelectItem>
+                  <SelectItem value='right'>Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div>
-            <Label htmlFor='v-align' className='text-muted-foreground text-xs'>
-              Vertical
-            </Label>
-            <Select
-              value={params.vAlign || 'middle'}
-              onValueChange={(value) => handleAlignmentChange('vertical', value)}
-            >
-              <SelectTrigger id='v-align' className='h-8'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='top'>Top</SelectItem>
-                <SelectItem value='middle'>Middle</SelectItem>
-                <SelectItem value='bottom'>Bottom</SelectItem>
-              </SelectContent>
-            </Select>
+            <div>
+              <Label htmlFor='v-align' className='text-muted-foreground text-xs'>
+                Vertical
+              </Label>
+              <Select
+                value={params.vAlign || 'middle'}
+                onValueChange={(value) => handleAlignmentChange('vertical', value)}
+              >
+                <SelectTrigger id='v-align' className='h-8'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='top'>Top</SelectItem>
+                  <SelectItem value='middle'>Middle</SelectItem>
+                  <SelectItem value='bottom'>Bottom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Quick Presets */}
       <div className='space-y-3'>
