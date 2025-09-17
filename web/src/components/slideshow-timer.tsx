@@ -9,16 +9,16 @@ interface SlideshowTimerProps {
 
 const themeClassesMap = {
   light: {
-    background: 'bg-gray-100/80',
-    bar: 'bg-blue-600',
+    background: 'bg-gray-100',
+    bar: 'bg-gray-900',
   },
   dark: {
-    background: 'bg-gray-900/80',
-    bar: 'bg-blue-400',
+    background: 'bg-gray-800',
+    bar: 'bg-gray-50',
   },
   auto: {
-    background: 'bg-background/80',
-    bar: 'bg-blue-500',
+    background: 'bg-secondary',
+    bar: 'bg-primary',
   },
 }
 
