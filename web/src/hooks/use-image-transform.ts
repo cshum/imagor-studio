@@ -91,6 +91,7 @@ export function useImageTransform({
   const debouncedParams = useDebounce(params, 500)
   const [aspectLocked, setAspectLocked] = useState(true)
   const [lockedAspectRatio, setLockedAspectRatio] = useState<number | null>(null)
+  const [imageLoaded, setImageLoaded] = useState(false)
   const originalAspectRatio =
     loaderData.originalDimensions.width / loaderData.originalDimensions.height
   const originalDimensions = loaderData.originalDimensions
@@ -200,6 +201,16 @@ export function useImageTransform({
 
   // Detect when params are changing (before debounced update)
   const isParamsChanging = JSON.stringify(params) !== JSON.stringify(debouncedParams)
+
+  // Reset image loaded state when params change
+  useEffect(() => {
+    setImageLoaded(false)
+  }, [debouncedParams])
+
+  // Callback for when image is loaded in PreviewArea
+  const onImageLoaded = useCallback(() => {
+    setImageLoaded(true)
+  }, [])
 
   // Use React Query for automatic request management
   const {
@@ -383,7 +394,7 @@ export function useImageTransform({
 
     // Loading states
     isLoading, // First request loading state (for image display logic)
-    isLoadingBarVisible: isFetching || isParamsChanging, // Show loading during debounce + fetch
+    isLoadingBarVisible: isFetching || isParamsChanging || !imageLoaded, // Show loading during debounce + fetch + image loading
     error,
 
     // Actions
@@ -397,5 +408,6 @@ export function useImageTransform({
     // New simplified actions
     getCopyUrl,
     handleDownload,
+    onImageLoaded, // Callback for PreviewArea to notify when image is loaded
   }
 }

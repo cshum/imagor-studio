@@ -43,6 +43,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     toggleAspectLock,
     getCopyUrl,
     handleDownload,
+    onImageLoaded,
   } = useImageTransform({
     galleryKey,
     imageKey,
@@ -159,11 +160,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         {/* Preview Content */}
         <PreviewArea
           previewUrl={previewUrl}
-          isLoading={isLoading}
           error={error}
           galleryKey={galleryKey}
           imageKey={imageKey}
           onImageLoad={setOriginalDimensions}
+          onLoaded={onImageLoaded}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}
         />
@@ -202,7 +203,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                 variant='outline'
                 size='sm'
                 onClick={handleDownloadClick}
-                disabled={!previewUrl || isLoading}
+                disabled={!previewUrl}
                 className='flex-1'
               >
                 <Download className='mr-1 h-4 w-4' />

@@ -10,22 +10,22 @@ import { cn } from '@/lib/utils'
 
 interface PreviewAreaProps {
   previewUrl: string
-  isLoading: boolean
   error: Error | null
   galleryKey: string
   imageKey: string
   onImageLoad?: (width: number, height: number) => void
+  onLoaded?: () => void
   onCopyUrl: () => void
   onDownload: () => void
 }
 
 export function PreviewArea({
   previewUrl,
-  isLoading,
   error,
   galleryKey,
   imageKey,
   onImageLoad,
+  onLoaded,
   onCopyUrl,
   onDownload,
 }: PreviewAreaProps) {
@@ -44,6 +44,9 @@ export function PreviewArea({
 
     // Notify parent component of image dimensions
     onImageLoad?.(naturalWidth, naturalHeight)
+    
+    // Notify parent that image is loaded
+    onLoaded?.()
   }
 
   const handleNextImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
@@ -56,6 +59,9 @@ export function PreviewArea({
 
     // Notify parent component of image dimensions
     onImageLoad?.(naturalWidth, naturalHeight)
+    
+    // Notify parent that image is loaded
+    onLoaded?.()
   }
 
   const handleImageError = () => {
@@ -96,18 +102,6 @@ export function PreviewArea({
             <Button variant='outline' size='sm' onClick={() => window.location.reload()}>
               {t('imageEditor.page.retry')}
             </Button>
-          </div>
-        ) : isLoading ? (
-          <div className='flex flex-col items-center gap-4'>
-            <Skeleton className='h-64 w-96 rounded-lg' />
-            <div className='text-center'>
-              <div className='text-muted-foreground text-sm'>
-                {t('imageEditor.preview.generatingPreview')}
-              </div>
-              <div className='text-muted-foreground mt-1 text-xs'>
-                {t('imageEditor.preview.applyingTransformations', { imagePath })}
-              </div>
-            </div>
           </div>
         ) : currentImageSrc ? (
           <div className='relative flex max-h-full max-w-full items-center justify-center'>
@@ -169,7 +163,7 @@ export function PreviewArea({
               variant='outline'
               size='sm'
               onClick={onDownload}
-              disabled={!previewUrl || isLoading}
+              disabled={!previewUrl}
               className='h-8 flex-1'
             >
               <Download className='mr-1 h-4 w-4' />
