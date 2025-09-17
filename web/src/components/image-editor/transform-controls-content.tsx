@@ -16,7 +16,6 @@ interface TransformControlsContentProps {
   params: ImageTransformState
   aspectLocked: boolean
   originalAspectRatio: number | null
-  originalDimensions: { width: number; height: number }
   openSections: EditorOpenSections
   onOpenSectionsChange: (sections: EditorOpenSections) => void
   onUpdateParams: (
@@ -30,7 +29,6 @@ export function TransformControlsContent({
   params,
   aspectLocked,
   originalAspectRatio,
-  originalDimensions,
   openSections,
   onOpenSectionsChange,
   onUpdateParams,
@@ -147,11 +145,7 @@ export function TransformControlsContent({
             <CollapsibleIcon isOpen={openSections.crop} />
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
-            <SimpleCropControls
-              params={params}
-              originalDimensions={originalDimensions}
-              onUpdateParams={onUpdateParams}
-            />
+            <SimpleCropControls params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
