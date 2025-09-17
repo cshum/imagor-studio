@@ -19,6 +19,12 @@ export function TransformControls({ params, onUpdateParams }: TransformControlsP
     onUpdateParams({ rotation: newRotation === 0 ? undefined : newRotation })
   }
 
+  const handleRotationToggle = (targetAngle: number) => {
+    const currentRotation = params.rotation || 0
+    const newRotation = currentRotation === targetAngle ? 0 : targetAngle
+    onUpdateParams({ rotation: newRotation === 0 ? undefined : newRotation })
+  }
+
   return (
     <div className='space-y-4'>
       {/* Flip Controls */}
@@ -76,7 +82,7 @@ export function TransformControls({ params, onUpdateParams }: TransformControlsP
           <Button
             variant='outline'
             size='sm'
-            onClick={() => onUpdateParams({ rotation: 90 })}
+            onClick={() => handleRotationToggle(90)}
             className={params.rotation === 90 ? 'bg-primary text-primary-foreground' : ''}
           >
             90°
@@ -84,7 +90,7 @@ export function TransformControls({ params, onUpdateParams }: TransformControlsP
           <Button
             variant='outline'
             size='sm'
-            onClick={() => onUpdateParams({ rotation: 180 })}
+            onClick={() => handleRotationToggle(180)}
             className={params.rotation === 180 ? 'bg-primary text-primary-foreground' : ''}
           >
             180°
@@ -92,7 +98,7 @@ export function TransformControls({ params, onUpdateParams }: TransformControlsP
           <Button
             variant='outline'
             size='sm'
-            onClick={() => onUpdateParams({ rotation: 270 })}
+            onClick={() => handleRotationToggle(270)}
             className={params.rotation === 270 ? 'bg-primary text-primary-foreground' : ''}
           >
             270°
