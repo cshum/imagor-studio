@@ -402,32 +402,28 @@ export function ImageView({
                       </motion.div>
                     )}
                   </TransformComponent>
-                  <div className='absolute right-8 bottom-4 z-10 flex space-x-4'>
-                    {scale > 1 && (
+                  {!isSlideshow && (
+                    <div className='absolute right-8 bottom-4 z-10 flex space-x-4'>
+                      {scale > 1 && (
+                        <button
+                          onClick={() => resetTransform()}
+                          className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
+                        >
+                          <ZoomOut size={24} />
+                        </button>
+                      )}
                       <button
-                        onClick={() => {
-                          pauseSlideshow()
-                          resetTransform()
-                        }}
+                        onClick={() => zoomIn()}
                         className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
                       >
-                        <ZoomOut size={24} />
+                        <ZoomIn size={24} />
                       </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        pauseSlideshow()
-                        zoomIn()
-                      }}
-                      className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
-                    >
-                      <ZoomIn size={24} />
-                    </button>
-                  </div>
+                    </div>
+                  )}
                 </>
               )}
             </TransformWrapper>
-            {onPrevImage && scale <= 1 && (
+            {onPrevImage && scale <= 1 && !isSlideshow && (
               <div
                 className={`absolute z-10 ${isDesktop ? 'top-1/2 left-4 -translate-y-1/2' : 'bottom-4 left-8'}`}
               >
@@ -439,7 +435,7 @@ export function ImageView({
                 </button>
               </div>
             )}
-            {onNextImage && scale <= 1 && (
+            {onNextImage && scale <= 1 && !isSlideshow && (
               <div
                 className={`absolute z-10 ${isDesktop ? 'top-1/2 right-4 -translate-y-1/2' : 'bottom-4 left-20'}`}
               >
