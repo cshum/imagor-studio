@@ -26,8 +26,8 @@ export const requireAuth = async (context?: {
     if (!currentAuth.isFirstRun) {
       // Capture current location for redirect after login
       const currentLocation = context?.location
-        ? `${context.location.pathname}${context.location.search}`
-        : window.location.pathname + window.location.search
+        ? context.location.pathname
+        : window.location.pathname
 
       throw createLoginRedirect(currentLocation)
     } else {
@@ -51,8 +51,8 @@ export const requireAccountAuth = async (context?: {
     if (!currentAuth.isFirstRun) {
       // Capture current location for redirect after login
       const currentLocation = context?.location
-        ? `${context.location.pathname}${context.location.search}`
-        : window.location.pathname + window.location.search
+        ? context.location.pathname
+        : window.location.pathname
 
       throw createLoginRedirect(currentLocation)
     } else {

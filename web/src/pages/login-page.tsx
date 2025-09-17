@@ -71,7 +71,7 @@ export function LoginPage() {
     try {
       const response = await login(values)
       await initAuth(response.token)
-      
+
       // Handle redirect after successful login
       const redirectParam = search.redirect as string | undefined
       if (redirectParam) {
@@ -81,7 +81,7 @@ export function LoginPage() {
           return
         }
       }
-      
+
       // Default redirect to home if no valid redirect parameter
       navigate({ to: '/' })
     } catch (err) {
