@@ -109,7 +109,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       <LoadingBar isLoading={isLoadingBarVisible} />
 
       {/* Preview Area  */}
-      <div className='flex flex-1 flex-col'>
+      <div className='ios-preview-container-fix flex flex-1 flex-col'>
         {/* Header */}
         <div className='flex items-center gap-2 border-b p-4'>
           <Button variant='ghost' size='sm' onClick={handleBack}>
