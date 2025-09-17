@@ -216,4 +216,11 @@
   .ios-no-image-drag {
     -webkit-user-drag: none;
   }
+
+  /* iOS Safari preview container width fix */
+  .ios-preview-container-fix {
+    max-width: 100vw;
+    overflow-x: hidden;
+    width: 100%;
+  }
 }
