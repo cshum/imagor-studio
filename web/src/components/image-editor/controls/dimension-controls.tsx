@@ -30,10 +30,10 @@ interface DimensionControlsProps {
 
 // Define aspect ratio presets
 const ASPECT_RATIO_PRESETS = [
-  { key: 'square', label: '1:1', width: 1080, height: 1080, ratio: 1 },
-  { key: 'portrait', label: '4:5', width: 1080, height: 1350, ratio: 4 / 5 },
-  { key: 'landscape', label: '16:9', width: 1920, height: 1080, ratio: 16 / 9 },
-  { key: 'photo', label: '3:2', width: 1500, height: 1000, ratio: 3 / 2 },
+  { key: 'square', label: '1:1', ratio: 1 },
+  { key: 'portrait', label: '4:5', ratio: 4 / 5 },
+  { key: 'landscape', label: '16:9', ratio: 16 / 9 },
+  { key: 'photo', label: '3:2', ratio: 3 / 2 },
 ]
 
 export function DimensionControls({
@@ -46,6 +46,14 @@ export function DimensionControls({
   const { t } = useTranslation()
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null)
   const [sizeScale, setSizeScale] = useState([1])
+  const [baseDimensions, setBaseDimensions] = useState<{ width: number; height: number } | null>(null)
+
+  // Initialize base dimensions when component loads
+  useEffect(() => {
+    if (params.width && params.height && !baseDimensions) {
+      setBaseDimensions({ width: params.width, height: params.height })
+    }
+  }, [params.width, params.height, baseDimensions])
 
   // Reset preset when dimensions are manually changed
   useEffect(() => {
@@ -64,13 +72,27 @@ export function DimensionControls({
   const handleWidthChange = (value: string) => {
     // Allow any input during typing - no validation
     const width = parseInt(value) || undefined
+    // Reset size slider when manually changing dimensions
+    setSizeScale([1])
     onUpdateParams({ width }, { respectAspectLock: true })
+    
+    // Update base dimensions after the change
+    if (width && params.height) {
+      setBaseDimensions({ width, height: params.height })
+    }
   }
 
   const handleHeightChange = (value: string) => {
     // Allow any input during typing - no validation
     const height = parseInt(value) || undefined
+    // Reset size slider when manually changing dimensions
+    setSizeScale([1])
     onUpdateParams({ height }, { respectAspectLock: true })
+    
+    // Update base dimensions after the change
+    if (height && params.width) {
+      setBaseDimensions({ width: params.width, height })
+    }
   }
 
   const handleWidthBlur = (value: string) => {
@@ -136,28 +158,49 @@ export function DimensionControls({
   }
 
   const handlePresetClick = (preset: (typeof ASPECT_RATIO_PRESETS)[0]) => {
-    if (aspectLocked) {
+    if (!aspectLocked) {
       onToggleAspectLock()
     }
     setSelectedPreset(preset.key)
     setSizeScale([1])
-    onUpdateParams({
-      width: Math.round(preset.width),
-      height: Math.round(preset.height),
-    })
+    
+    // Calculate dimensions based on aspect ratio and current size
+    const currentWidth = params.width || 1080
+    const currentHeight = params.height || 1080
+    const currentSize = Math.max(currentWidth, currentHeight)
+    
+    let newWidth: number
+    let newHeight: number
+    
+    if (preset.ratio >= 1) {
+      // Landscape or square - width is the larger dimension
+      newWidth = currentSize
+      newHeight = Math.round(currentSize / preset.ratio)
+    } else {
+      // Portrait - height is the larger dimension
+      newHeight = currentSize
+      newWidth = Math.round(currentSize * preset.ratio)
+    }
+    
+    setBaseDimensions({ width: newWidth, height: newHeight })
+    onUpdateParams({ width: newWidth, height: newHeight })
   }
 
   const handleSizeScaleChange = (value: number[]) => {
     setSizeScale(value)
-    if (selectedPreset) {
-      const preset = ASPECT_RATIO_PRESETS.find((p) => p.key === selectedPreset)
-      if (preset) {
-        const scale = value[0]
-        onUpdateParams({
-          width: Math.round(preset.width * scale),
-          height: Math.round(preset.height * scale),
-        })
-      }
+    const scale = value[0]
+    
+    if (baseDimensions) {
+      onUpdateParams({
+        width: Math.round(baseDimensions.width * scale),
+        height: Math.round(baseDimensions.height * scale),
+      })
+    } else if (params.width && params.height) {
+      // Fallback to current dimensions if no base dimensions set
+      onUpdateParams({
+        width: Math.round(params.width * scale),
+        height: Math.round(params.height * scale),
+      })
     }
   }
 
@@ -329,24 +372,25 @@ export function DimensionControls({
           ))}
         </div>
 
-        {/* Size Slider - Only show when a preset is selected */}
-        {selectedPreset && (
-          <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>Size</Label>
-            <Slider
-              value={sizeScale}
-              onValueChange={handleSizeScaleChange}
-              min={0.25}
-              max={2.5}
-              step={0.25}
-              className='w-full'
-            />
-            <div className='text-muted-foreground flex justify-between text-xs'>
-              <span>Small</span>
-              <span>Large</span>
-            </div>
+      </div>
+
+      {/* Size Slider - Always available */}
+      <div className='space-y-3'>
+        <Label className='text-sm font-medium'>Size</Label>
+        <div className='space-y-2'>
+          <Slider
+            value={sizeScale}
+            onValueChange={handleSizeScaleChange}
+            min={0.25}
+            max={2.5}
+            step={0.25}
+            className='w-full'
+          />
+          <div className='text-muted-foreground flex justify-between text-xs'>
+            <span>Small (25%)</span>
+            <span>Large (250%)</span>
           </div>
-        )}
+        </div>
       </div>
 
       {/* How it works section - at the bottom of resize block */}
