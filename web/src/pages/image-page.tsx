@@ -1,7 +1,9 @@
-import { useNavigate, useRouterState } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 
 import { GalleryImage, ImageView } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
+import { SlideshowTimer } from '@/components/slideshow-timer.tsx'
 import { GalleryLoaderData, ImageLoaderData } from '@/loaders/gallery-loader.ts'
 import { clearPosition, getPosition } from '@/stores/image-position-store.ts'
 
@@ -19,10 +21,14 @@ export function ImagePage({
   imageKey,
 }: ImagePageProps) {
   const navigate = useNavigate()
+  const router = useRouter()
   const { isLoading } = useRouterState()
   const { images } = galleryLoaderData
   const { image, imageElement } = imageLoaderData
   const imageIndex = images.findIndex((img) => img.imageKey === imageKey)
+
+  // Slideshow state management
+  const [isSlideshow, setIsSlideshow] = useState(false)
 
   const handlePrevImage =
     images && imageIndex > 0 ? () => handleImageClick(images[imageIndex - 1]) : undefined
@@ -65,9 +71,52 @@ export function ImagePage({
     }
   }
 
+  // Slideshow callback for ImageView
+  const handleSlideshowChange = (slideshow: boolean) => {
+    setIsSlideshow(slideshow)
+  }
+
+  // Slideshow timer logic
+  useEffect(() => {
+    if (isSlideshow) {
+      const currentIndex = images.findIndex((img) => img.imageKey === imageKey)
+      const nextIndex = (currentIndex + 1) % images.length
+      const nextImage = images[nextIndex]
+
+      // Preload next route immediately when timer starts
+      try {
+        router.preloadRoute({
+          to: galleryKey ? '/gallery/$galleryKey/$imageKey' : '/$imageKey',
+          params: { galleryKey, imageKey: nextImage.imageKey },
+        })
+      } catch {
+        // Silent fail
+      }
+
+      // Set timer for navigation only
+      const timer = setTimeout(() => {
+        clearPosition(galleryKey, nextImage.imageKey)
+        if (galleryKey === '') {
+          navigate({
+            to: '/$imageKey',
+            params: { imageKey: nextImage.imageKey },
+          })
+        } else {
+          navigate({
+            to: '/gallery/$galleryKey/$imageKey',
+            params: { galleryKey, imageKey: nextImage.imageKey },
+          })
+        }
+      }, 5000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [imageKey, isSlideshow, images, router, galleryKey, navigate])
+
   return (
     <>
-      <LoadingBar isLoading={isLoading} theme='dark' />
+      <LoadingBar isLoading={isLoading && !isSlideshow} theme='dark' />
+      <SlideshowTimer isActive={isSlideshow} duration={5000} theme='dark' resetKey={imageKey} />
       <ImageView
         image={image}
         imageElement={imageElement}
@@ -77,6 +126,8 @@ export function ImagePage({
         initialPosition={getPosition(galleryKey, imageKey) || undefined}
         galleryKey={galleryKey}
         imageKey={imageKey}
+        isSlideshow={isSlideshow}
+        onSlideshowChange={handleSlideshowChange}
       />
     </>
   )

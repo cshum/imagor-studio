@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
 import { useNavigate } from '@tanstack/react-router'
 import { AnimatePresence, motion, PanInfo } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Info, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Info, Pause, Play, X, ZoomIn, ZoomOut } from 'lucide-react'
 
 import { ImageInfo, ImageViewInfo } from '@/components/image-gallery/image-view-info.tsx'
 import { Sheet } from '@/components/ui/sheet'
@@ -33,6 +33,8 @@ export interface FullScreenImageProps {
   initialPosition?: Position
   galleryKey?: string
   imageKey: string
+  isSlideshow?: boolean
+  onSlideshowChange?: (isSlideshow: boolean) => void
 }
 
 export interface ImageDimensions {
@@ -53,6 +55,8 @@ export function ImageView({
   initialPosition,
   galleryKey = '',
   imageKey,
+  isSlideshow = false,
+  onSlideshowChange,
 }: FullScreenImageProps) {
   const navigate = useNavigate()
   const { authState } = useAuth()
@@ -192,6 +196,18 @@ export function ImageView({
     }
   }
 
+  // Simplified slideshow functions
+  const toggleSlideshow = () => {
+    setDirection(1)
+    transformComponentRef.current?.resetTransform()
+    onSlideshowChange?.(!isSlideshow)
+  }
+
+  // Enhanced handlers that pause slideshow
+  const handleInfoClick = () => {
+    toggleInfo()
+  }
+
   const slideVariants = {
     enter: (direction: number) => ({
       x: direction > 0 ? 20 : -20,
@@ -318,26 +334,28 @@ export function ImageView({
                       </motion.div>
                     )}
                   </TransformComponent>
-                  <div className='absolute right-8 bottom-4 z-10 flex space-x-4'>
-                    {scale > 1 && (
+                  {!isSlideshow && (
+                    <div className='absolute right-8 bottom-4 z-10 flex space-x-4'>
+                      {scale > 1 && (
+                        <button
+                          onClick={() => resetTransform()}
+                          className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
+                        >
+                          <ZoomOut size={24} />
+                        </button>
+                      )}
                       <button
-                        onClick={() => resetTransform()}
+                        onClick={() => zoomIn()}
                         className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
                       >
-                        <ZoomOut size={24} />
+                        <ZoomIn size={24} />
                       </button>
-                    )}
-                    <button
-                      onClick={() => zoomIn()}
-                      className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
-                    >
-                      <ZoomIn size={24} />
-                    </button>
-                  </div>
+                    </div>
+                  )}
                 </>
               )}
             </TransformWrapper>
-            {onPrevImage && scale <= 1 && (
+            {onPrevImage && scale <= 1 && !isSlideshow && (
               <div
                 className={`absolute z-10 ${isDesktop ? 'top-1/2 left-4 -translate-y-1/2' : 'bottom-4 left-8'}`}
               >
@@ -349,7 +367,7 @@ export function ImageView({
                 </button>
               </div>
             )}
-            {onNextImage && scale <= 1 && (
+            {onNextImage && scale <= 1 && !isSlideshow && (
               <div
                 className={`absolute z-10 ${isDesktop ? 'top-1/2 right-4 -translate-y-1/2' : 'bottom-4 left-20'}`}
               >
@@ -371,8 +389,16 @@ export function ImageView({
                   imagor
                 </button>
               )}
+              {(onPrevImage || onNextImage) && (
+                <button
+                  onClick={toggleSlideshow}
+                  className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
+                >
+                  {isSlideshow ? <Pause size={24} /> : <Play size={24} />}
+                </button>
+              )}
               <button
-                onClick={toggleInfo}
+                onClick={handleInfoClick}
                 className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
               >
                 <Info size={24} />
