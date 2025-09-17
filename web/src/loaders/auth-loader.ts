@@ -17,7 +17,7 @@ const createLoginRedirect = (currentLocation: string) => {
  * Redirects to login if unauthenticated, or admin-setup if first run
  */
 export const requireAuth = async (context?: {
-  location?: { pathname: string; search: any }
+  location?: { pathname: string; search: Record<string, unknown> }
 }) => {
   const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
 
@@ -42,7 +42,7 @@ export const requireAuth = async (context?: {
  * Requires full authentication (not guest)
  */
 export const requireAccountAuth = async (context?: {
-  location?: { pathname: string; search: any }
+  location?: { pathname: string; search: Record<string, unknown> }
 }) => {
   const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
 
@@ -67,7 +67,7 @@ export const requireAccountAuth = async (context?: {
  * First ensures authentication, then checks admin role
  */
 export const requireAdminAccountAuth = async (context?: {
-  location?: { pathname: string; search: any }
+  location?: { pathname: string; search: Record<string, unknown> }
 }) => {
   // First ensure user is authenticated
   await requireAccountAuth(context)
