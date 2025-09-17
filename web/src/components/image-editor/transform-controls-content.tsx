@@ -157,10 +157,10 @@ export function TransformControlsContent({
             <CollapsibleIcon isOpen={openSections.crop} />
           </CollapsibleTrigger>
           <CollapsibleContent className='mt-4'>
-            <SimpleCropControls 
-              params={params} 
+            <SimpleCropControls
+              params={params}
               originalDimensions={originalDimensions}
-              onUpdateParams={onUpdateParams} 
+              onUpdateParams={onUpdateParams}
             />
           </CollapsibleContent>
         </Collapsible>

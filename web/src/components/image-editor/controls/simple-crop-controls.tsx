@@ -14,14 +14,18 @@ interface SimpleCropControlsProps {
   ) => void
 }
 
-export function SimpleCropControls({ params, originalDimensions, onUpdateParams }: SimpleCropControlsProps) {
+export function SimpleCropControls({
+  params,
+  originalDimensions,
+  onUpdateParams,
+}: SimpleCropControlsProps) {
   const { t } = useTranslation()
 
   // Convert absolute coordinates to offset values for display
   const getDisplayValue = (side: 'cropLeft' | 'cropTop' | 'cropRight' | 'cropBottom'): string => {
     const value = params[side]
     if (value === undefined) return ''
-    
+
     if (side === 'cropRight') {
       // Convert absolute coordinate to offset from right edge
       return (originalDimensions.width - value).toString()
@@ -29,7 +33,7 @@ export function SimpleCropControls({ params, originalDimensions, onUpdateParams 
       // Convert absolute coordinate to offset from bottom edge
       return (originalDimensions.height - value).toString()
     }
-    
+
     // Left and top are already offsets
     return value.toString()
   }
@@ -39,26 +43,26 @@ export function SimpleCropControls({ params, originalDimensions, onUpdateParams 
     value: string,
   ) => {
     const numValue = parseInt(value, 10)
-    
+
     if (isNaN(numValue) || numValue < 0) {
       onUpdateParams({ [side]: undefined })
       return
     }
 
     let actualValue = numValue
-    
+
     // Convert offset values to absolute coordinates for right and bottom
     if (side === 'cropRight') {
       actualValue = originalDimensions.width - numValue
     } else if (side === 'cropBottom') {
       actualValue = originalDimensions.height - numValue
     }
-    
+
     // Ensure the value is within valid bounds
     if (actualValue < 0) {
       actualValue = 0
     }
-    
+
     onUpdateParams({ [side]: actualValue })
   }
 
