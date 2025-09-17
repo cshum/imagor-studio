@@ -150,7 +150,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
         {/* Preview Content */}
         <PreviewArea
-          previewUrl={previewUrl}
+          previewUrl={previewUrl || ''}
           error={error}
           galleryKey={galleryKey}
           imageKey={imageKey}
