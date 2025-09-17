@@ -1,8 +1,7 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, FileImage, Move, Palette, RotateCw, Scissors } from 'lucide-react'
 
-import { setUserRegistry } from '@/api/registry-api'
 import { ColorControls } from '@/components/image-editor/controls/color-controls'
 import { DimensionControls } from '@/components/image-editor/controls/dimension-controls'
 import { OutputControls } from '@/components/image-editor/controls/output-controls'
@@ -11,7 +10,6 @@ import { TransformControls } from '@/components/image-editor/controls/transform-
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { ImageTransformState } from '@/hooks/use-image-transform'
-import { debounce } from '@/lib/utils'
 import type { EditorOpenSections } from '@/loaders/image-editor-loader'
 
 interface TransformControlsContentProps {
@@ -19,7 +17,8 @@ interface TransformControlsContentProps {
   aspectLocked: boolean
   originalAspectRatio: number | null
   originalDimensions: { width: number; height: number }
-  initialOpenSections: EditorOpenSections
+  openSections: EditorOpenSections
+  onOpenSectionsChange: (sections: EditorOpenSections) => void
   onUpdateParams: (
     updates: Partial<ImageTransformState>,
     options?: { respectAspectLock?: boolean },
@@ -32,28 +31,19 @@ export function TransformControlsContent({
   aspectLocked,
   originalAspectRatio,
   originalDimensions,
-  initialOpenSections,
+  openSections,
+  onOpenSectionsChange,
   onUpdateParams,
   onToggleAspectLock,
 }: TransformControlsContentProps) {
   const { t } = useTranslation()
-  const [openSections, setOpenSections] = useState<EditorOpenSections>(initialOpenSections)
-
-  const debouncedSaveOpenSections = useMemo(
-    () =>
-      debounce(async (sections: EditorOpenSections) => {
-        await setUserRegistry('config.editor_open_sections', JSON.stringify(sections))
-      }, 300),
-    [],
-  )
 
   const handleSectionToggle = useCallback(
     (section: keyof EditorOpenSections, open: boolean) => {
       const newSections = { ...openSections, [section]: open }
-      setOpenSections(newSections)
-      debouncedSaveOpenSections(newSections)
+      onOpenSectionsChange(newSections)
     },
-    [openSections, debouncedSaveOpenSections],
+    [openSections, onOpenSectionsChange],
   )
 
   const CollapsibleIcon = ({ isOpen }: { isOpen: boolean }) =>

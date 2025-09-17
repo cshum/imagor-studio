@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { setUserRegistry } from '@/api/registry-api'
 import { PreviewArea } from '@/components/image-editor/preview-area'
 import { TransformControlsContent } from '@/components/image-editor/transform-controls-content'
 import { LoadingBar } from '@/components/loading-bar'
@@ -12,8 +13,8 @@ import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useImageTransform } from '@/hooks/use-image-transform'
-import { cn } from '@/lib/utils.ts'
-import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
+import { cn, debounce } from '@/lib/utils.ts'
+import type { EditorOpenSections, ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 
 interface ImageEditorPageProps {
   galleryKey: string
@@ -27,7 +28,28 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
   const [copyUrl, setCopyUrl] = useState('')
+  const [editorOpenSections, setEditorOpenSections] = useState<EditorOpenSections>(
+    loaderData.editorOpenSections,
+  )
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
+
+  // Debounced save function for editor open sections
+  const debouncedSaveOpenSections = useMemo(
+    () =>
+      debounce(async (sections: EditorOpenSections) => {
+        await setUserRegistry('config.editor_open_sections', JSON.stringify(sections))
+      }, 300),
+    [],
+  )
+
+  // Handler that updates state immediately and saves with debounce
+  const handleOpenSectionsChange = useCallback(
+    (sections: EditorOpenSections) => {
+      setEditorOpenSections(sections) // Immediate UI update
+      debouncedSaveOpenSections(sections) // Debounced persistence
+    },
+    [debouncedSaveOpenSections],
+  )
 
   const {
     params,
@@ -138,7 +160,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                       aspectLocked={aspectLocked}
                       originalAspectRatio={originalAspectRatio}
                       originalDimensions={loaderData.originalDimensions}
-                      initialOpenSections={loaderData.editorOpenSections}
+                      openSections={editorOpenSections}
+                      onOpenSectionsChange={handleOpenSectionsChange}
                       onUpdateParams={updateParams}
                       onToggleAspectLock={toggleAspectLock}
                     />
@@ -181,7 +204,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               aspectLocked={aspectLocked}
               originalAspectRatio={originalAspectRatio}
               originalDimensions={loaderData.originalDimensions}
-              initialOpenSections={loaderData.editorOpenSections}
+              openSections={editorOpenSections}
+              onOpenSectionsChange={handleOpenSectionsChange}
               onUpdateParams={updateParams}
               onToggleAspectLock={toggleAspectLock}
             />
