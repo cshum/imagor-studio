@@ -52,19 +52,19 @@ export function TransformControlsContent({
   return (
     <div className='space-y-4'>
       {/* Dimensions & Resize */}
-      <Card className='p-4'>
+      <Card>
         <Collapsible
           open={openSections.dimensions}
           onOpenChange={(open) => handleSectionToggle('dimensions', open)}
         >
-          <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
+          <CollapsibleTrigger className='flex w-full items-center justify-between text-left p-4'>
             <div className='flex items-center gap-2'>
               <Move className='h-4 w-4' />
               <span className='font-medium'>{t('imageEditor.controls.dimensionsResize')}</span>
             </div>
             <CollapsibleIcon isOpen={openSections.dimensions} />
           </CollapsibleTrigger>
-          <CollapsibleContent className='mt-4'>
+          <CollapsibleContent className='px-4 pb-4'>
             <DimensionControls
               params={params}
               aspectLocked={aspectLocked}
@@ -77,76 +77,76 @@ export function TransformControlsContent({
       </Card>
 
       {/* Output & Compression */}
-      <Card className='p-4'>
+      <Card>
         <Collapsible
           open={openSections.output}
           onOpenChange={(open) => handleSectionToggle('output', open)}
         >
-          <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
+          <CollapsibleTrigger className='flex w-full items-center justify-between text-left p-4'>
             <div className='flex items-center gap-2'>
               <FileImage className='h-4 w-4' />
               <span className='font-medium'>{t('imageEditor.controls.outputCompression')}</span>
             </div>
             <CollapsibleIcon isOpen={openSections.output} />
           </CollapsibleTrigger>
-          <CollapsibleContent className='mt-4'>
+          <CollapsibleContent className='px-4 pb-4'>
             <OutputControls params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
 
       {/* Color & Effects */}
-      <Card className='p-4'>
+      <Card>
         <Collapsible
           open={openSections.effects}
           onOpenChange={(open) => handleSectionToggle('effects', open)}
         >
-          <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
+          <CollapsibleTrigger className='flex w-full items-center justify-between text-left p-4'>
             <div className='flex items-center gap-2'>
               <Palette className='h-4 w-4' />
               <span className='font-medium'>{t('imageEditor.controls.colorEffects')}</span>
             </div>
             <CollapsibleIcon isOpen={openSections.effects} />
           </CollapsibleTrigger>
-          <CollapsibleContent className='mt-4'>
+          <CollapsibleContent className='px-4 pb-4'>
             <ColorControls params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
 
       {/* Transform & Rotate */}
-      <Card className='p-4'>
+      <Card>
         <Collapsible
           open={openSections.transform}
           onOpenChange={(open) => handleSectionToggle('transform', open)}
         >
-          <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
+          <CollapsibleTrigger className='flex w-full items-center justify-between text-left p-4'>
             <div className='flex items-center gap-2'>
               <RotateCw className='h-4 w-4' />
               <span className='font-medium'>{t('imageEditor.controls.transformRotate')}</span>
             </div>
             <CollapsibleIcon isOpen={openSections.transform} />
           </CollapsibleTrigger>
-          <CollapsibleContent className='mt-4'>
+          <CollapsibleContent className='px-4 pb-4'>
             <TransformControls params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
 
       {/* Crop & Trim */}
-      <Card className='p-4'>
+      <Card>
         <Collapsible
           open={openSections.crop}
           onOpenChange={(open) => handleSectionToggle('crop', open)}
         >
-          <CollapsibleTrigger className='flex w-full items-center justify-between text-left'>
+          <CollapsibleTrigger className='flex w-full items-center justify-between text-left p-4'>
             <div className='flex items-center gap-2'>
               <Scissors className='h-4 w-4' />
               <span className='font-medium'>{t('imageEditor.controls.cropTrim')}</span>
             </div>
             <CollapsibleIcon isOpen={openSections.crop} />
           </CollapsibleTrigger>
-          <CollapsibleContent className='mt-4'>
+          <CollapsibleContent className='px-4 pb-4'>
             <SimpleCropControls
               params={params}
               originalDimensions={originalDimensions}
