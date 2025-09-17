@@ -13,7 +13,6 @@ interface PreviewAreaProps {
   error: Error | null
   galleryKey: string
   imageKey: string
-  onImageLoad?: (width: number, height: number) => void
   onCopyUrl: () => void
   onDownload: () => void
 }
@@ -23,7 +22,6 @@ export function PreviewArea({
   error,
   galleryKey,
   imageKey,
-  onImageLoad,
   onCopyUrl,
   onDownload,
 }: PreviewAreaProps) {
@@ -68,9 +66,6 @@ export function PreviewArea({
               'max-h-[calc(100vh-200px)]',
               isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
             )}
-            onLoad={(width, height) => {
-              onImageLoad?.(width, height)
-            }}
           />
         ) : (
           <div className='flex flex-col items-center gap-4 text-center'>

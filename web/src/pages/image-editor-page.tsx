@@ -38,7 +38,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     error,
     updateParams,
     resetParams,
-    setOriginalDimensions,
     toggleAspectLock,
     getCopyUrl,
     handleDownload,
@@ -155,7 +154,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           error={error}
           galleryKey={galleryKey}
           imageKey={imageKey}
-          onImageLoad={setOriginalDimensions}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}
         />

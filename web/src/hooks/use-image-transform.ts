@@ -306,11 +306,6 @@ export function useImageTransform({
     setParams(resetState)
   }, [originalDimensions])
 
-  // No longer needed - dimensions are pre-loaded from loader data
-  const setOriginalDimensions = useCallback(() => {
-    // This is kept for backward compatibility with PreviewArea
-    // but does nothing since dimensions are already set from loader data
-  }, [])
 
   // Toggle aspect ratio lock
   const toggleAspectLock = useCallback(() => {
@@ -388,7 +383,6 @@ export function useImageTransform({
     // Actions
     updateParams,
     resetParams,
-    setOriginalDimensions,
     toggleAspectLock,
     generateCopyUrl,
     generateDownloadUrl,
