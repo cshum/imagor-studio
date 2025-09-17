@@ -312,7 +312,6 @@
       "bytes": "bytes",
       "clear": "Clear",
       "targetSize": "Target: {{size}} - Quality will be automatically reduced to meet this limit",
-      "autoReduceQuality": "Automatically reduces quality to meet file size limit",
       "howItWorksItems": {
         "format": "Format: Choose output format or keep original",
         "quality": "Quality: Manual quality control",

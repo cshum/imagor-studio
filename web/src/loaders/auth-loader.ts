@@ -6,10 +6,14 @@ import { authStore } from '@/stores/auth-store'
  * Helper function to create login redirect with current location
  */
 const createLoginRedirect = (currentLocation: string) => {
-  return redirect({
-    to: '/login',
-    search: { redirect: currentLocation },
-  })
+  if (currentLocation && currentLocation !== '/') {
+    return redirect({
+      to: '/login',
+      search: { redirect: currentLocation },
+    })
+  } else {
+    return redirect({ to: '/login' })
+  }
 }
 
 /**

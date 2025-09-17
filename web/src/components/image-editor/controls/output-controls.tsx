@@ -184,12 +184,6 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
             {t('imageEditor.output.targetSize', { size: formatBytes(maxBytesValue) })}
           </p>
         )}
-
-        {!maxBytesValue && (
-          <p className='text-muted-foreground text-xs'>
-            {t('imageEditor.output.autoReduceQuality')}
-          </p>
-        )}
       </div>
 
       {/* Info Section */}
