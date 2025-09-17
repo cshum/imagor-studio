@@ -219,9 +219,6 @@ export function useImageTransform({
     refetchOnWindowFocus: false,
   })
 
-  // Use initial preview URL only when no transformed URL is available
-  const effectivePreviewUrl = previewUrl || loaderData.initialPreviewUrl
-
   // Notify parent when preview URL changes
   useMemo(() => {
     if (previewUrl) {
@@ -306,7 +303,6 @@ export function useImageTransform({
     setParams(resetState)
   }, [originalDimensions])
 
-
   // Toggle aspect ratio lock
   const toggleAspectLock = useCallback(() => {
     setAspectLocked((prev) => {
@@ -372,7 +368,7 @@ export function useImageTransform({
   return {
     // State
     params,
-    previewUrl: effectivePreviewUrl,
+    previewUrl,
     aspectLocked,
     originalAspectRatio,
 
