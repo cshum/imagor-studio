@@ -79,20 +79,22 @@ export function ImagePage({
   // Slideshow timer logic
   useEffect(() => {
     if (isSlideshow) {
-      const timer = setTimeout(() => {
-        const currentIndex = images.findIndex((img) => img.imageKey === imageKey)
-        const nextIndex = (currentIndex + 1) % images.length
-        const nextImage = images[nextIndex]
+      const currentIndex = images.findIndex((img) => img.imageKey === imageKey)
+      const nextIndex = (currentIndex + 1) % images.length
+      const nextImage = images[nextIndex]
 
-        // Preload next route
-        try {
-          router.preloadRoute({
-            to: galleryKey ? '/gallery/$galleryKey/$imageKey' : '/$imageKey',
-            params: { galleryKey, imageKey: nextImage.imageKey },
-          })
-        } catch {
-          // Silent fail
-        }
+      // Preload next route immediately when timer starts
+      try {
+        router.preloadRoute({
+          to: galleryKey ? '/gallery/$galleryKey/$imageKey' : '/$imageKey',
+          params: { galleryKey, imageKey: nextImage.imageKey },
+        })
+      } catch {
+        // Silent fail
+      }
+
+      // Set timer for navigation only
+      const timer = setTimeout(() => {
         clearPosition(galleryKey, nextImage.imageKey)
         if (galleryKey === '') {
           navigate({
