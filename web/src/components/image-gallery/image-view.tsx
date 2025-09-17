@@ -199,6 +199,7 @@ export function ImageView({
   // Simplified slideshow functions
   const toggleSlideshow = () => {
     setDirection(1)
+    transformComponentRef.current?.resetTransform()
     onSlideshowChange?.(!isSlideshow)
   }
 
