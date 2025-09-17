@@ -77,6 +77,8 @@ export function ImagePage({
         initialPosition={getPosition(galleryKey, imageKey) || undefined}
         galleryKey={galleryKey}
         imageKey={imageKey}
+        images={images}
+        onSlideshowNavigate={handleImageClick}
       />
     </>
   )
