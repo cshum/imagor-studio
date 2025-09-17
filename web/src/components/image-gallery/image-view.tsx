@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { AnimatePresence, motion, PanInfo } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Info, Pause, Play, X, ZoomIn, ZoomOut } from 'lucide-react'
 
@@ -33,8 +33,8 @@ export interface FullScreenImageProps {
   initialPosition?: Position
   galleryKey?: string
   imageKey: string
-  images?: GalleryImage[]
-  onSlideshowNavigate?: (image: GalleryImage) => void
+  isSlideshow?: boolean
+  onSetSlideshow?: (isSlideshow: boolean) => void
 }
 
 export interface ImageDimensions {
@@ -55,11 +55,10 @@ export function ImageView({
   initialPosition,
   galleryKey = '',
   imageKey,
-  images = [],
-  onSlideshowNavigate,
+  isSlideshow = false,
+  onSetSlideshow,
 }: FullScreenImageProps) {
   const navigate = useNavigate()
-  const router = useRouter()
   const { authState } = useAuth()
   const duration = 0.2
   const [scale, setScale] = useState(1)
@@ -77,10 +76,6 @@ export function ImageView({
   const [direction, setDirection] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
-
-  // Slideshow state
-  const [isSlideshow, setIsSlideshow] = useState(false)
-  const [slideshowTimer, setSlideshowTimer] = useState<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const overlay = overlayRef.current
@@ -201,80 +196,18 @@ export function ImageView({
     }
   }
 
-  // Slideshow functions
-  const handleSlideshowNext = () => {
-    if (!images.length || !onSlideshowNavigate) return
-
-    const currentIndex = images.findIndex((img) => img.imageKey === imageKey)
-    const nextIndex = (currentIndex + 1) % images.length // Loop back to 0 when at end
-    const nextImage = images[nextIndex]
-
-    // Preload next route
-    try {
-      router.preloadRoute({
-        to: galleryKey ? '/gallery/$galleryKey/$imageKey' : '/$imageKey',
-        params: { galleryKey, imageKey: nextImage.imageKey },
-      })
-    } catch (error) {
-      // Preloading failed, but continue with navigation
-      console.warn('Failed to preload route:', error)
-    }
-
-    onSlideshowNavigate(nextImage)
-  }
-
-  const stopSlideshow = () => {
-    setIsSlideshow(false)
-    if (slideshowTimer) {
-      clearTimeout(slideshowTimer)
-      setSlideshowTimer(null)
-    }
-  }
-
-  const startSlideshow = () => {
-    setIsSlideshow(true)
-  }
-
+  // Simplified slideshow functions
   const toggleSlideshow = () => {
-    if (isSlideshow) {
-      stopSlideshow()
-    } else {
-      startSlideshow()
-    }
-  }
-
-  const pauseSlideshow = () => {
-    if (isSlideshow) {
-      stopSlideshow()
-    }
+    onSetSlideshow?.(!isSlideshow)
   }
 
   // Enhanced handlers that pause slideshow
   const handleInfoClick = () => {
-    pauseSlideshow()
+    if (isSlideshow) {
+      onSetSlideshow?.(false) // Pause slideshow when opening info
+    }
     toggleInfo()
   }
-
-  // Slideshow timer effect
-  useEffect(() => {
-    if (isSlideshow) {
-      const timer = setTimeout(() => {
-        handleSlideshowNext()
-      }, 5000)
-      setSlideshowTimer(timer)
-
-      return () => clearTimeout(timer)
-    }
-  }, [imageKey, isSlideshow, images, onSlideshowNavigate])
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (slideshowTimer) {
-        clearTimeout(slideshowTimer)
-      }
-    }
-  }, [])
 
   const slideVariants = {
     enter: (direction: number) => ({
@@ -457,7 +390,7 @@ export function ImageView({
                   imagor
                 </button>
               )}
-              {images.length > 1 && onSlideshowNavigate && (
+              {(onPrevImage || onNextImage) && (
                 <button
                   onClick={toggleSlideshow}
                   className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
