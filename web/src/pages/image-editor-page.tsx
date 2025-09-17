@@ -34,25 +34,17 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     previewUrl,
     aspectLocked,
     originalAspectRatio,
-    isLoading,
     isLoadingBarVisible,
     error,
     updateParams,
     resetParams,
-    setOriginalDimensions,
     toggleAspectLock,
     getCopyUrl,
     handleDownload,
   } = useImageTransform({
     galleryKey,
     imageKey,
-    loaderData: loaderData!, // Assert non-null since loader always provides data
-    onPreviewUpdate: (url) => {
-      console.log('Preview updated:', url)
-    },
-    onError: (error) => {
-      console.error('Transform error:', error)
-    },
+    loaderData,
   })
 
   const handleBack = () => {
@@ -159,11 +151,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         {/* Preview Content */}
         <PreviewArea
           previewUrl={previewUrl}
-          isLoading={isLoading}
           error={error}
           galleryKey={galleryKey}
           imageKey={imageKey}
-          onImageLoad={setOriginalDimensions}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}
         />
@@ -202,7 +192,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                 variant='outline'
                 size='sm'
                 onClick={handleDownloadClick}
-                disabled={!previewUrl || isLoading}
+                disabled={!previewUrl}
                 className='flex-1'
               >
                 <Download className='mr-1 h-4 w-4' />

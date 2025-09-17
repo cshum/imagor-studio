@@ -203,8 +203,7 @@ export function useImageTransform({
 
   // Use React Query for automatic request management
   const {
-    data: previewUrl = loaderData.initialPreviewUrl,
-    isLoading,
+    data: previewUrl,
     isFetching,
     error,
   } = useQuery({
@@ -218,7 +217,6 @@ export function useImageTransform({
     enabled: Object.keys(debouncedParams).length > 0, // Only run when we have debounced params
     staleTime: 0, // Always fetch fresh data
     refetchOnWindowFocus: false,
-    initialData: loaderData.initialPreviewUrl, // Use loader's preview URL as initial data
   })
 
   // Notify parent when preview URL changes
@@ -305,12 +303,6 @@ export function useImageTransform({
     setParams(resetState)
   }, [originalDimensions])
 
-  // No longer needed - dimensions are pre-loaded from loader data
-  const setOriginalDimensions = useCallback(() => {
-    // This is kept for backward compatibility with PreviewArea
-    // but does nothing since dimensions are already set from loader data
-  }, [])
-
   // Toggle aspect ratio lock
   const toggleAspectLock = useCallback(() => {
     setAspectLocked((prev) => {
@@ -361,10 +353,9 @@ export function useImageTransform({
   const handleDownload = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
     try {
       const downloadUrl = await generateDownloadUrl()
-      const fullUrl = getFullImageUrl(downloadUrl)
 
       // Use location.href for reliable downloads across all browsers
-      window.location.href = fullUrl
+      window.location.href = getFullImageUrl(downloadUrl)
       return { success: true }
     } catch (error) {
       return {
@@ -381,15 +372,13 @@ export function useImageTransform({
     aspectLocked,
     originalAspectRatio,
 
-    // Loading states
-    isLoading, // First request loading state (for image display logic)
-    isLoadingBarVisible: isFetching || isParamsChanging, // Show loading during debounce + fetch
+    // Loading states - simplified since PreloadImage handles image loading
+    isLoadingBarVisible: isFetching || isParamsChanging, // Show loading during debounce + fetch only
     error,
 
     // Actions
     updateParams,
     resetParams,
-    setOriginalDimensions,
     toggleAspectLock,
     generateCopyUrl,
     generateDownloadUrl,
