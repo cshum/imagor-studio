@@ -46,13 +46,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   } = useImageTransform({
     galleryKey,
     imageKey,
-    loaderData: loaderData!, // Assert non-null since loader always provides data
-    onPreviewUpdate: (url) => {
-      console.log('Preview updated:', url)
-    },
-    onError: (error) => {
-      console.error('Transform error:', error)
-    },
+    loaderData,
   })
 
   const handleBack = () => {
