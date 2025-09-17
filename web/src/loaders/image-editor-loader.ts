@@ -2,6 +2,7 @@ import { generateImagorUrl } from '@/api/imagor-api'
 import { getUserRegistry } from '@/api/registry-api'
 import { statFile } from '@/api/storage-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
+import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { getFullImageUrl } from '@/lib/api-utils'
 import { preloadImage } from '@/lib/preload-image'
 
@@ -24,6 +25,7 @@ export interface ImageEditorLoaderData {
   galleryKey: string
   imageKey: string
   editorOpenSections: EditorOpenSections
+  breadcrumb: BreadcrumbItem
 }
 
 /**
@@ -94,5 +96,6 @@ export const imageEditorLoader = async ({
     galleryKey,
     imageKey,
     editorOpenSections,
+    breadcrumb: { label: 'Imagor Studio' },
   }
 }
