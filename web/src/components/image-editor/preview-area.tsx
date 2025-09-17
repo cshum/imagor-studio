@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { AlertCircle, Copy, Download } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { PreloadImage } from '@/components/ui/preload-image'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
-import { preloadImage } from '@/lib/preload-image'
 import { cn } from '@/lib/utils'
 
 interface PreviewAreaProps {
@@ -35,29 +35,12 @@ export function PreviewArea({
 
   const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
 
-  // Handle preloading when preview URL changes
+  // Simple URL update - PreloadImage handles all the complexity
   useEffect(() => {
     if (previewUrl) {
-      const fullUrl = getFullImageUrl(previewUrl)
-
-      // If this is the first image or no current image, set it directly
-      if (!currentImageSrc) {
-        setCurrentImageSrc(fullUrl)
-      } else {
-        // Preload new image in background - user keeps seeing current image
-        preloadImage(fullUrl).then((img) => {
-          // Image is fully loaded, now swap seamlessly
-          setCurrentImageSrc(fullUrl)
-
-          // Notify parent component of image dimensions
-          onImageLoad?.(img.naturalWidth, img.naturalHeight)
-
-          // Notify parent that image is loaded
-          onLoaded?.()
-        })
-      }
+      setCurrentImageSrc(getFullImageUrl(previewUrl))
     }
-  }, [previewUrl, currentImageSrc, onImageLoad, onLoaded])
+  }, [previewUrl])
 
   return (
     <div className='relative flex h-full flex-col'>
@@ -79,17 +62,19 @@ export function PreviewArea({
             </Button>
           </div>
         ) : currentImageSrc ? (
-          <div className='relative flex max-h-full max-w-full items-center justify-center'>
-            <img
-              src={currentImageSrc}
-              alt={`Preview of ${imagePath}`}
-              className={cn(
-                'h-auto w-auto object-contain',
-                'max-h-[calc(100vh-200px)]',
-                isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
-              )}
-            />
-          </div>
+          <PreloadImage
+            src={currentImageSrc}
+            alt={`Preview of ${imagePath}`}
+            className={cn(
+              'h-auto w-auto object-contain',
+              'max-h-[calc(100vh-200px)]',
+              isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
+            )}
+            onLoad={(width, height) => {
+              onImageLoad?.(width, height)
+              onLoaded?.()
+            }}
+          />
         ) : (
           <div className='flex flex-col items-center gap-4 text-center'>
             <div className='bg-muted border-muted-foreground/25 flex h-64 w-96 items-center justify-center rounded-lg border-2 border-dashed'>
