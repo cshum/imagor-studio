@@ -112,7 +112,7 @@ export function ImagePage({
 
   return (
     <>
-      {!isSlideshow && <LoadingBar isLoading={isLoading} theme='dark' />}
+      <LoadingBar isLoading={isLoading && !isSlideshow} theme='dark' />
       <ImageView
         image={image}
         imageElement={imageElement}
