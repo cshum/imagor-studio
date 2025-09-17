@@ -48,12 +48,15 @@ export function PreloadImage({ src, alt, className, onLoad, onError }: PreloadIm
     const img = event.currentTarget
     const { naturalWidth, naturalHeight } = img
 
+    // Check if this is the latest image before updating state
+    const isLatestImage = imageStack.length > 0 && imageStack[imageStack.length - 1].id === imageId
+
     setImageStack((prev) => {
       const updated = prev.map((item) => (item.id === imageId ? { ...item, loaded: true } : item))
 
       // Find the index of the image that just loaded
       const loadedImageIndex = updated.findIndex((item) => item.id === imageId)
-
+      
       // Find the latest (most recent) image in the stack
       const latestImageIndex = updated.length - 1
 
@@ -61,9 +64,6 @@ export function PreloadImage({ src, alt, className, onLoad, onError }: PreloadIm
       if (loadedImageIndex !== latestImageIndex) {
         return updated.filter((item) => item.id !== imageId)
       }
-
-      // If it IS the latest image, notify parent and clean up old loaded images
-      onLoad?.(naturalWidth, naturalHeight)
 
       // Remove any older loaded images (keep only current visible + any still loading)
       return updated.filter((item, index) => {
@@ -75,6 +75,11 @@ export function PreloadImage({ src, alt, className, onLoad, onError }: PreloadIm
         return false
       })
     })
+
+    // Notify parent only if this was the latest image
+    if (isLatestImage) {
+      onLoad?.(naturalWidth, naturalHeight)
+    }
   }
 
   // Handle image error events
@@ -109,7 +114,11 @@ export function PreloadImage({ src, alt, className, onLoad, onError }: PreloadIm
           key={image.id}
           src={image.src}
           alt={alt}
-          className={cn(className, index === visibleIndex ? 'block' : 'hidden')}
+          className={cn(
+            className, // inherit upstream styling
+            index === visibleIndex ? '!block' : '!hidden', // CSS visibility control with !important
+            index > 0 && 'absolute inset-0' // stack positioning for non-first images
+          )}
           onLoad={(e) => handleImageLoad(image.id, e)}
           onError={() => handleImageError(image.id)}
         />
