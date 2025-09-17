@@ -5,6 +5,7 @@ import type { ImagorParamsInput } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { getFullImageUrl } from '@/lib/api-utils'
 import { preloadImage } from '@/lib/preload-image'
+import { clearPosition } from '@/stores/image-position-store.ts'
 
 export interface EditorOpenSections {
   dimensions: boolean
@@ -84,6 +85,9 @@ export const imageEditorLoader = async ({
       filters: [{ name: 'format', args: 'webp' }],
     } as ImagorParamsInput,
   })
+
+  // clear image position for better transition
+  clearPosition(galleryKey, imageKey)
 
   return {
     imageElement,
