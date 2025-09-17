@@ -80,26 +80,26 @@ export function TransformControls({ params, onUpdateParams }: TransformControlsP
             <RotateCcw className='h-4 w-4' />
           </Button>
           <Button
-            variant='outline'
+            variant={params.rotation === 90 ? 'default' : 'outline'}
             size='sm'
             onClick={() => handleRotationToggle(90)}
-            className={params.rotation === 90 ? 'bg-primary text-primary-foreground' : ''}
+            className='justify-center'
           >
             90°
           </Button>
           <Button
-            variant='outline'
+            variant={params.rotation === 180 ? 'default' : 'outline'}
             size='sm'
             onClick={() => handleRotationToggle(180)}
-            className={params.rotation === 180 ? 'bg-primary text-primary-foreground' : ''}
+            className='justify-center'
           >
             180°
           </Button>
           <Button
-            variant='outline'
+            variant={params.rotation === 270 ? 'default' : 'outline'}
             size='sm'
             onClick={() => handleRotationToggle(270)}
-            className={params.rotation === 270 ? 'bg-primary text-primary-foreground' : ''}
+            className='justify-center'
           >
             270°
           </Button>
