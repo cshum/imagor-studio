@@ -327,7 +327,9 @@
       "bottom": "Bottom (px)",
       "cropDescription": "Crop pixels offset from each edge of the image",
       "autoTrim": "Auto Trim",
-      "autoTrimDescription": "Automatically remove whitespace and transparent edges"
+      "autoTrimDescription": "Automatically remove whitespace and transparent edges",
+      "trimTolerance": "Trim Tolerance",
+      "trimToleranceDescription": "Edge detection sensitivity (1-50, higher = more aggressive)"
     },
     "preview": {
       "previewError": "Preview Error",

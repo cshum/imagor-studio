@@ -47,6 +47,7 @@ export interface ImageTransformState {
 
   // Auto trim
   autoTrim?: boolean // Remove whitespace/transparent edges
+  trimTolerance?: number // Edge detection sensitivity (1-50, default 1)
 }
 
 export interface UseImageTransformProps {
@@ -160,7 +161,11 @@ export function useImageTransform({
 
       // Auto trim handling
       if (state.autoTrim) {
-        filters.push({ name: 'trim', args: '' })
+        const trimArgs: string[] = []
+        if (state.trimTolerance && state.trimTolerance !== 1) {
+          trimArgs.push(state.trimTolerance.toString())
+        }
+        filters.push({ name: 'trim', args: trimArgs.join(',') })
       }
 
       // Format handling
@@ -299,6 +304,7 @@ export function useImageTransform({
       quality: undefined,
       maxBytes: undefined,
       autoTrim: undefined,
+      trimTolerance: undefined,
     }
     setParams(resetState)
   }, [originalDimensions])

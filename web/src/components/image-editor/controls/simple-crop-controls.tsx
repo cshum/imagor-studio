@@ -70,6 +70,19 @@ export function SimpleCropControls({
     onUpdateParams({ autoTrim: checked })
   }
 
+  const handleTrimToleranceChange = (value: string) => {
+    const numValue = parseInt(value, 10)
+
+    if (isNaN(numValue) || numValue < 1) {
+      onUpdateParams({ trimTolerance: undefined })
+      return
+    }
+
+    // Clamp value between 1 and 50
+    const clampedValue = Math.min(Math.max(numValue, 1), 50)
+    onUpdateParams({ trimTolerance: clampedValue })
+  }
+
   return (
     <div className='space-y-6'>
       {/* Manual Crop */}
@@ -139,6 +152,25 @@ export function SimpleCropControls({
         </div>
 
         <p className='text-muted-foreground text-xs'>{t('imageEditor.crop.autoTrimDescription')}</p>
+
+        {/* Trim Tolerance */}
+        <div className='space-y-2'>
+          <Label className='text-muted-foreground text-xs'>
+            {t('imageEditor.crop.trimTolerance')}
+          </Label>
+          <Input
+            type='number'
+            placeholder='1'
+            value={params.trimTolerance?.toString() || ''}
+            onChange={(e) => handleTrimToleranceChange(e.target.value)}
+            min='1'
+            max='50'
+            className='w-20'
+          />
+          <p className='text-muted-foreground text-xs'>
+            {t('imageEditor.crop.trimToleranceDescription')}
+          </p>
+        </div>
       </div>
     </div>
   )
