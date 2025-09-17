@@ -56,7 +56,7 @@ export function PreloadImage({ src, alt, className, onLoad, onError }: PreloadIm
 
       // Find the index of the image that just loaded
       const loadedImageIndex = updated.findIndex((item) => item.id === imageId)
-      
+
       // Find the latest (most recent) image in the stack
       const latestImageIndex = updated.length - 1
 
@@ -114,11 +114,7 @@ export function PreloadImage({ src, alt, className, onLoad, onError }: PreloadIm
           key={image.id}
           src={image.src}
           alt={alt}
-          className={cn(
-            className, // inherit upstream styling
-            index === visibleIndex ? '!block' : '!hidden', // CSS visibility control with !important
-            index > 0 && 'absolute inset-0' // stack positioning for non-first images
-          )}
+          className={cn(className, index === visibleIndex ? '!block' : '!hidden')}
           onLoad={(e) => handleImageLoad(image.id, e)}
           onError={() => handleImageError(image.id)}
         />
