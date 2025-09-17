@@ -215,7 +215,6 @@ export function useImageTransform({
   // Use React Query for automatic request management
   const {
     data: previewUrl = loaderData.initialPreviewUrl,
-    isLoading,
     isFetching,
     error,
   } = useQuery({
@@ -393,7 +392,6 @@ export function useImageTransform({
     originalAspectRatio,
 
     // Loading states
-    isLoading, // First request loading state (for image display logic)
     isLoadingBarVisible: isFetching || isParamsChanging || !imageLoaded, // Show loading during debounce + fetch + image loading
     error,
 

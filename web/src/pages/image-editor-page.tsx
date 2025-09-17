@@ -34,7 +34,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     previewUrl,
     aspectLocked,
     originalAspectRatio,
-    isLoading,
     isLoadingBarVisible,
     error,
     updateParams,
