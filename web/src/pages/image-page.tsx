@@ -71,7 +71,7 @@ export function ImagePage({
   }
 
   // Slideshow callback for ImageView
-  const handleSetSlideshow = (slideshow: boolean) => {
+  const handleSlideshowChange = (slideshow: boolean) => {
     setIsSlideshow(slideshow)
   }
 
@@ -123,7 +123,7 @@ export function ImagePage({
         galleryKey={galleryKey}
         imageKey={imageKey}
         isSlideshow={isSlideshow}
-        onSetSlideshow={handleSetSlideshow}
+        onSlideshowChange={handleSlideshowChange}
       />
     </>
   )

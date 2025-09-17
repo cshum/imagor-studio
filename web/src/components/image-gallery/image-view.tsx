@@ -34,7 +34,7 @@ export interface FullScreenImageProps {
   galleryKey?: string
   imageKey: string
   isSlideshow?: boolean
-  onSetSlideshow?: (isSlideshow: boolean) => void
+  onSlideshowChange?: (isSlideshow: boolean) => void
 }
 
 export interface ImageDimensions {
@@ -56,7 +56,7 @@ export function ImageView({
   galleryKey = '',
   imageKey,
   isSlideshow = false,
-  onSetSlideshow,
+  onSlideshowChange,
 }: FullScreenImageProps) {
   const navigate = useNavigate()
   const { authState } = useAuth()
@@ -198,14 +198,12 @@ export function ImageView({
 
   // Simplified slideshow functions
   const toggleSlideshow = () => {
-    onSetSlideshow?.(!isSlideshow)
+    setDirection(1)
+    onSlideshowChange?.(!isSlideshow)
   }
 
   // Enhanced handlers that pause slideshow
   const handleInfoClick = () => {
-    if (isSlideshow) {
-      onSetSlideshow?.(false) // Pause slideshow when opening info
-    }
     toggleInfo()
   }
 
