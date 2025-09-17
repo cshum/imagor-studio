@@ -46,7 +46,9 @@ export function DimensionControls({
   const { t } = useTranslation()
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null)
   const [sizeScale, setSizeScale] = useState([1])
-  const [baseDimensions, setBaseDimensions] = useState<{ width: number; height: number } | null>(null)
+  const [baseDimensions, setBaseDimensions] = useState<{ width: number; height: number } | null>(
+    null,
+  )
 
   // Initialize base dimensions when component loads
   useEffect(() => {
@@ -75,7 +77,7 @@ export function DimensionControls({
     // Reset size slider when manually changing dimensions
     setSizeScale([1])
     onUpdateParams({ width }, { respectAspectLock: true })
-    
+
     // Update base dimensions after the change
     if (width && params.height) {
       setBaseDimensions({ width, height: params.height })
@@ -88,7 +90,7 @@ export function DimensionControls({
     // Reset size slider when manually changing dimensions
     setSizeScale([1])
     onUpdateParams({ height }, { respectAspectLock: true })
-    
+
     // Update base dimensions after the change
     if (height && params.width) {
       setBaseDimensions({ width: params.width, height })
@@ -163,15 +165,15 @@ export function DimensionControls({
     }
     setSelectedPreset(preset.key)
     setSizeScale([1])
-    
+
     // Calculate dimensions based on aspect ratio and current size
     const currentWidth = params.width || 1080
     const currentHeight = params.height || 1080
     const currentSize = Math.max(currentWidth, currentHeight)
-    
+
     let newWidth: number
     let newHeight: number
-    
+
     if (preset.ratio >= 1) {
       // Landscape or square - width is the larger dimension
       newWidth = currentSize
@@ -181,7 +183,7 @@ export function DimensionControls({
       newHeight = currentSize
       newWidth = Math.round(currentSize * preset.ratio)
     }
-    
+
     setBaseDimensions({ width: newWidth, height: newHeight })
     onUpdateParams({ width: newWidth, height: newHeight })
   }
@@ -189,7 +191,7 @@ export function DimensionControls({
   const handleSizeScaleChange = (value: number[]) => {
     setSizeScale(value)
     const scale = value[0]
-    
+
     if (baseDimensions) {
       onUpdateParams({
         width: Math.round(baseDimensions.width * scale),
@@ -357,7 +359,7 @@ export function DimensionControls({
 
       {/* Aspect Ratio Presets */}
       <div className='space-y-3'>
-        <Label className='text-sm font-medium'>{t('imageEditor.dimensions.quickPresets')}</Label>
+        <Label className='text-sm font-medium'>{t('imageEditor.dimensions.aspectRatios')}</Label>
         <div className='grid grid-cols-2 gap-2'>
           {ASPECT_RATIO_PRESETS.map((preset) => (
             <Button
@@ -371,7 +373,6 @@ export function DimensionControls({
             </Button>
           ))}
         </div>
-
       </div>
 
       {/* Size Slider - Always available */}
@@ -381,14 +382,14 @@ export function DimensionControls({
           <Slider
             value={sizeScale}
             onValueChange={handleSizeScaleChange}
-            min={0.25}
-            max={2.5}
-            step={0.25}
+            min={0.1}
+            max={2}
+            step={0.1}
             className='w-full'
           />
           <div className='text-muted-foreground flex justify-between text-xs'>
-            <span>Small (25%)</span>
-            <span>Large (250%)</span>
+            <span>0.1x</span>
+            <span>2x</span>
           </div>
         </div>
       </div>

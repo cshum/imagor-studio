@@ -288,7 +288,7 @@
         "middle": "Middle",
         "bottom": "Bottom"
       },
-      "quickPresets": "Quick Presets"
+      "aspectRatios": "Aspect Ratios"
     },
     "output": {
       "outputFormat": "Format",
