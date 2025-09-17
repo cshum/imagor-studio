@@ -7,21 +7,59 @@ import type { ImageTransformState } from '@/hooks/use-image-transform'
 
 interface SimpleCropControlsProps {
   params: ImageTransformState
+  originalDimensions: { width: number; height: number }
   onUpdateParams: (
     updates: Partial<ImageTransformState>,
     options?: { respectAspectLock?: boolean },
   ) => void
 }
 
-export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControlsProps) {
+export function SimpleCropControls({ params, originalDimensions, onUpdateParams }: SimpleCropControlsProps) {
   const { t } = useTranslation()
+
+  // Convert absolute coordinates to offset values for display
+  const getDisplayValue = (side: 'cropLeft' | 'cropTop' | 'cropRight' | 'cropBottom'): string => {
+    const value = params[side]
+    if (value === undefined) return ''
+    
+    if (side === 'cropRight') {
+      // Convert absolute coordinate to offset from right edge
+      return (originalDimensions.width - value).toString()
+    } else if (side === 'cropBottom') {
+      // Convert absolute coordinate to offset from bottom edge
+      return (originalDimensions.height - value).toString()
+    }
+    
+    // Left and top are already offsets
+    return value.toString()
+  }
 
   const handleCropChange = (
     side: 'cropLeft' | 'cropTop' | 'cropRight' | 'cropBottom',
     value: string,
   ) => {
     const numValue = parseInt(value, 10)
-    onUpdateParams({ [side]: isNaN(numValue) || numValue < 0 ? undefined : numValue })
+    
+    if (isNaN(numValue) || numValue < 0) {
+      onUpdateParams({ [side]: undefined })
+      return
+    }
+
+    let actualValue = numValue
+    
+    // Convert offset values to absolute coordinates for right and bottom
+    if (side === 'cropRight') {
+      actualValue = originalDimensions.width - numValue
+    } else if (side === 'cropBottom') {
+      actualValue = originalDimensions.height - numValue
+    }
+    
+    // Ensure the value is within valid bounds
+    if (actualValue < 0) {
+      actualValue = 0
+    }
+    
+    onUpdateParams({ [side]: actualValue })
   }
 
   const handleAutoTrimChange = (checked: boolean) => {
@@ -40,7 +78,7 @@ export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControl
             <Input
               type='number'
               placeholder='0'
-              value={params.cropLeft?.toString() || ''}
+              value={getDisplayValue('cropLeft')}
               onChange={(e) => handleCropChange('cropLeft', e.target.value)}
               min='0'
             />
@@ -51,7 +89,7 @@ export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControl
             <Input
               type='number'
               placeholder='0'
-              value={params.cropTop?.toString() || ''}
+              value={getDisplayValue('cropTop')}
               onChange={(e) => handleCropChange('cropTop', e.target.value)}
               min='0'
             />
@@ -62,7 +100,7 @@ export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControl
             <Input
               type='number'
               placeholder='0'
-              value={params.cropRight?.toString() || ''}
+              value={getDisplayValue('cropRight')}
               onChange={(e) => handleCropChange('cropRight', e.target.value)}
               min='0'
             />
@@ -73,7 +111,7 @@ export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControl
             <Input
               type='number'
               placeholder='0'
-              value={params.cropBottom?.toString() || ''}
+              value={getDisplayValue('cropBottom')}
               onChange={(e) => handleCropChange('cropBottom', e.target.value)}
               min='0'
             />

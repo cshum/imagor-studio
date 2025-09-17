@@ -321,11 +321,11 @@
     },
     "crop": {
       "manualCrop": "Manual Crop",
-      "left": "Left (px)",
-      "top": "Top (px)",
-      "right": "Right (px)",
-      "bottom": "Bottom (px)",
-      "cropDescription": "Crop pixels from each edge of the image",
+      "left": "Left Offset (px)",
+      "top": "Top Offset (px)",
+      "right": "Right Offset (px)",
+      "bottom": "Bottom Offset (px)",
+      "cropDescription": "Crop pixels offset from each edge of the image",
       "autoTrim": "Auto Trim",
       "autoTrimDescription": "Automatically remove whitespace and transparent edges"
     },
