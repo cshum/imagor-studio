@@ -74,7 +74,7 @@ export function SlideshowTimer({
   const themeClasses = themeClassesMap[theme] || themeClassesMap.dark
 
   return (
-    <div className={`fixed top-0 left-0 h-1 w-full ${themeClasses.background} z-[100]`}>
+    <div className={`fixed top-0 left-0 h-1 w-full ${themeClasses.background} z-[200]`}>
       <div
         className={`h-full ${themeClasses.bar} transition-none`}
         style={{ width: `${progress}%` }}
