@@ -42,7 +42,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     toggleAspectLock,
     getCopyUrl,
     handleDownload,
-    onImageLoaded,
   } = useImageTransform({
     galleryKey,
     imageKey,
@@ -157,7 +156,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           galleryKey={galleryKey}
           imageKey={imageKey}
           onImageLoad={setOriginalDimensions}
-          onLoaded={onImageLoaded}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}
         />

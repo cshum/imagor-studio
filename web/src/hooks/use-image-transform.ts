@@ -91,7 +91,6 @@ export function useImageTransform({
   const debouncedParams = useDebounce(params, 500)
   const [aspectLocked, setAspectLocked] = useState(true)
   const [lockedAspectRatio, setLockedAspectRatio] = useState<number | null>(null)
-  const [imageLoaded, setImageLoaded] = useState(false)
   const originalAspectRatio =
     loaderData.originalDimensions.width / loaderData.originalDimensions.height
   const originalDimensions = loaderData.originalDimensions
@@ -202,19 +201,9 @@ export function useImageTransform({
   // Detect when params are changing (before debounced update)
   const isParamsChanging = JSON.stringify(params) !== JSON.stringify(debouncedParams)
 
-  // Reset image loaded state when params change
-  useEffect(() => {
-    setImageLoaded(false)
-  }, [debouncedParams])
-
-  // Callback for when image is loaded in PreviewArea
-  const onImageLoaded = useCallback(() => {
-    setImageLoaded(true)
-  }, [])
-
   // Use React Query for automatic request management
   const {
-    data: previewUrl = loaderData.initialPreviewUrl,
+    data: previewUrl,
     isFetching,
     error,
   } = useQuery({
@@ -228,8 +217,10 @@ export function useImageTransform({
     enabled: Object.keys(debouncedParams).length > 0, // Only run when we have debounced params
     staleTime: 0, // Always fetch fresh data
     refetchOnWindowFocus: false,
-    initialData: loaderData.initialPreviewUrl, // Use loader's preview URL as initial data
   })
+
+  // Use initial preview URL only when no transformed URL is available
+  const effectivePreviewUrl = previewUrl || loaderData.initialPreviewUrl
 
   // Notify parent when preview URL changes
   useMemo(() => {
@@ -371,10 +362,9 @@ export function useImageTransform({
   const handleDownload = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
     try {
       const downloadUrl = await generateDownloadUrl()
-      const fullUrl = getFullImageUrl(downloadUrl)
 
       // Use location.href for reliable downloads across all browsers
-      window.location.href = fullUrl
+      window.location.href = getFullImageUrl(downloadUrl)
       return { success: true }
     } catch (error) {
       return {
@@ -387,12 +377,12 @@ export function useImageTransform({
   return {
     // State
     params,
-    previewUrl,
+    previewUrl: effectivePreviewUrl,
     aspectLocked,
     originalAspectRatio,
 
-    // Loading states
-    isLoadingBarVisible: isFetching || isParamsChanging || !imageLoaded, // Show loading during debounce + fetch + image loading
+    // Loading states - simplified since PreloadImage handles image loading
+    isLoadingBarVisible: isFetching || isParamsChanging, // Show loading during debounce + fetch only
     error,
 
     // Actions
@@ -406,6 +396,5 @@ export function useImageTransform({
     // New simplified actions
     getCopyUrl,
     handleDownload,
-    onImageLoaded, // Callback for PreviewArea to notify when image is loaded
   }
 }

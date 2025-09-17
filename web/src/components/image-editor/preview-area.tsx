@@ -14,7 +14,6 @@ interface PreviewAreaProps {
   galleryKey: string
   imageKey: string
   onImageLoad?: (width: number, height: number) => void
-  onLoaded?: () => void
   onCopyUrl: () => void
   onDownload: () => void
 }
@@ -25,7 +24,6 @@ export function PreviewArea({
   galleryKey,
   imageKey,
   onImageLoad,
-  onLoaded,
   onCopyUrl,
   onDownload,
 }: PreviewAreaProps) {
@@ -72,7 +70,6 @@ export function PreviewArea({
             )}
             onLoad={(width, height) => {
               onImageLoad?.(width, height)
-              onLoaded?.()
             }}
           />
         ) : (
