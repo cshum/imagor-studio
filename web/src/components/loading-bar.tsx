@@ -52,7 +52,7 @@ export function LoadingBar({ isLoading, theme = 'auto' }: LoadingBarProps) {
   const themeClasses = themeClassesMap[theme] || themeClassesMap.auto
 
   return (
-    <div className={`fixed top-0 left-0 h-1 w-full ${themeClasses.background} z-[100]`}>
+    <div className={`fixed top-0 left-0 h-0.5 w-full ${themeClasses.background} z-[100]`}>
       <div
         className={`h-full ${themeClasses.bar} transition-all duration-200 ease-out`}
         style={{ width: `${progress}%` }}
