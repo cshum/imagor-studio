@@ -53,11 +53,8 @@ export function LoginPage() {
   // If already authenticated, redirect to intended destination or gallery
   if (authState.state === 'authenticated') {
     const redirectParam = search.redirect as string | undefined
-    if (redirectParam) {
-      const decodedRedirect = decodeURIComponent(redirectParam)
-      if (isValidRedirectUrl(decodedRedirect)) {
-        return <Navigate to={decodedRedirect} replace />
-      }
+    if (redirectParam && isValidRedirectUrl(redirectParam)) {
+      return <Navigate to={redirectParam} replace />
     }
     return <Navigate to='/' replace />
   }
@@ -74,12 +71,9 @@ export function LoginPage() {
 
       // Handle redirect after successful login
       const redirectParam = search.redirect as string | undefined
-      if (redirectParam) {
-        const decodedRedirect = decodeURIComponent(redirectParam)
-        if (isValidRedirectUrl(decodedRedirect)) {
-          navigate({ to: decodedRedirect })
-          return
-        }
+      if (redirectParam && isValidRedirectUrl(redirectParam)) {
+        navigate({ to: redirectParam })
+        return
       }
 
       // Default redirect to home if no valid redirect parameter
