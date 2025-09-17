@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Navigate } from '@tanstack/react-router'
+import { Navigate, useNavigate, useSearch } from '@tanstack/react-router'
 import { z } from 'zod'
 
 import { login } from '@/api/auth-api'
@@ -26,6 +26,15 @@ type LoginFormValues = {
 export function LoginPage() {
   const { t } = useTranslation()
   const { authState } = useAuth()
+  const navigate = useNavigate()
+  const search = useSearch({ from: '/login' })
+
+  // Helper function to validate redirect URL for security
+  const isValidRedirectUrl = (url: string): boolean => {
+    // Only allow relative URLs that start with /
+    // This prevents open redirect vulnerabilities
+    return url.startsWith('/') && !url.startsWith('//')
+  }
 
   // Create translation-aware validation schema
   const loginSchema = z.object({
@@ -41,8 +50,15 @@ export function LoginPage() {
     },
   })
 
-  // If already authenticated, redirect to gallery
+  // If already authenticated, redirect to intended destination or gallery
   if (authState.state === 'authenticated') {
+    const redirectParam = search.redirect as string | undefined
+    if (redirectParam) {
+      const decodedRedirect = decodeURIComponent(redirectParam)
+      if (isValidRedirectUrl(decodedRedirect)) {
+        return <Navigate to={decodedRedirect} replace />
+      }
+    }
     return <Navigate to='/' replace />
   }
 
@@ -55,6 +71,19 @@ export function LoginPage() {
     try {
       const response = await login(values)
       await initAuth(response.token)
+      
+      // Handle redirect after successful login
+      const redirectParam = search.redirect as string | undefined
+      if (redirectParam) {
+        const decodedRedirect = decodeURIComponent(redirectParam)
+        if (isValidRedirectUrl(decodedRedirect)) {
+          navigate({ to: decodedRedirect })
+          return
+        }
+      }
+      
+      // Default redirect to home if no valid redirect parameter
+      navigate({ to: '/' })
     } catch (err) {
       form.setError('root', {
         message: err instanceof Error ? err.message : t('auth.login.loginFailed'),
