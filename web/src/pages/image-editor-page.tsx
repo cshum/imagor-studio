@@ -137,6 +137,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                       params={params}
                       aspectLocked={aspectLocked}
                       originalAspectRatio={originalAspectRatio}
+                      originalDimensions={loaderData.originalDimensions}
                       initialOpenSections={loaderData.editorOpenSections}
                       onUpdateParams={updateParams}
                       onToggleAspectLock={toggleAspectLock}
@@ -179,6 +180,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               params={params}
               aspectLocked={aspectLocked}
               originalAspectRatio={originalAspectRatio}
+              originalDimensions={loaderData.originalDimensions}
               initialOpenSections={loaderData.editorOpenSections}
               onUpdateParams={updateParams}
               onToggleAspectLock={toggleAspectLock}

@@ -288,7 +288,7 @@
         "middle": "Middle",
         "bottom": "Bottom"
       },
-      "quickPresets": "Quick Presets"
+      "aspectRatios": "Aspect Ratios"
     },
     "output": {
       "outputFormat": "Format",
@@ -325,9 +325,11 @@
       "top": "Top (px)",
       "right": "Right (px)",
       "bottom": "Bottom (px)",
-      "cropDescription": "Crop pixels from each edge of the image",
+      "cropDescription": "Crop pixels offset from each edge of the image",
       "autoTrim": "Auto Trim",
-      "autoTrimDescription": "Automatically remove whitespace and transparent edges"
+      "autoTrimDescription": "Automatically remove whitespace and transparent edges",
+      "trimTolerance": "Trim Tolerance",
+      "trimToleranceDescription": "Edge detection sensitivity (1-50, higher = more aggressive)"
     },
     "preview": {
       "previewError": "Preview Error",
