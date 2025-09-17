@@ -41,7 +41,7 @@ export function PreviewArea({
   return (
     <div className='relative flex h-full flex-col'>
       {/* Preview Content */}
-      <div className='bg-muted/20 flex min-h-0 flex-1 items-center justify-center overflow-hidden p-4'>
+      <div className='bg-muted/20 flex min-h-0 flex-1 touch-none items-center justify-center overflow-hidden p-4'>
         {error ? (
           <div className='flex flex-col items-center gap-4 text-center'>
             <AlertCircle className='text-destructive h-12 w-12' />
@@ -53,7 +53,12 @@ export function PreviewArea({
                 {error.message || t('imageEditor.preview.failedToGenerate')}
               </p>
             </div>
-            <Button variant='outline' size='sm' onClick={() => window.location.reload()}>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => window.location.reload()}
+              className='touch-manipulation'
+            >
               {t('imageEditor.page.retry')}
             </Button>
           </div>
@@ -89,7 +94,7 @@ export function PreviewArea({
               size='sm'
               onClick={onCopyUrl}
               disabled={!previewUrl}
-              className='h-8 flex-1'
+              className='h-8 flex-1 touch-manipulation'
             >
               <Copy className='mr-1 h-4 w-4' />
               {t('imageEditor.page.copyUrl')}
@@ -99,7 +104,7 @@ export function PreviewArea({
               size='sm'
               onClick={onDownload}
               disabled={!previewUrl}
-              className='h-8 flex-1'
+              className='h-8 flex-1 touch-manipulation'
             >
               <Download className='mr-1 h-4 w-4' />
               {t('imageEditor.page.download')}

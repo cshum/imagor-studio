@@ -78,7 +78,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   return (
     <div
       className={cn(
-        'bg-background flex overflow-hidden',
+        'bg-background ios-no-drag flex overflow-hidden select-none',
         isMobile && 'min-h-screen-safe',
         !isMobile && 'h-screen',
       )}
@@ -132,7 +132,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   </SheetHeader>
 
                   {/* Scrollable Controls */}
-                  <div className='flex-1 overflow-y-auto p-4'>
+                  <div className='flex-1 touch-pan-y overflow-y-auto p-4 select-text'>
                     <TransformControlsContent
                       params={params}
                       aspectLocked={aspectLocked}
@@ -175,7 +175,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           </div>
 
           {/* Controls */}
-          <div className='flex-1 overflow-y-auto p-4'>
+          <div className='flex-1 touch-pan-y overflow-y-auto p-4 select-text'>
             <TransformControlsContent
               params={params}
               aspectLocked={aspectLocked}

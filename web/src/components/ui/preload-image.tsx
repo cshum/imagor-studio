@@ -114,7 +114,12 @@ export function PreloadImage({ src, alt, className, onLoad, onError }: PreloadIm
           key={image.id}
           src={image.src}
           alt={alt}
-          className={cn(className, index === visibleIndex ? '!block' : '!hidden')}
+          className={cn(
+            className,
+            index === visibleIndex ? '!block' : '!hidden',
+            'ios-no-image-drag pointer-events-none',
+          )}
+          draggable='false'
           onLoad={(e) => handleImageLoad(image.id, e)}
           onError={() => handleImageError(image.id)}
         />

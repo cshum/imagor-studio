@@ -205,4 +205,15 @@
       min-height: 100vh;
     }
   }
+
+  /* iOS Safari drag prevention utilities */
+  .ios-no-drag {
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    overscroll-behavior: none;
+  }
+
+  .ios-no-image-drag {
+    -webkit-user-drag: none;
+  }
 }
