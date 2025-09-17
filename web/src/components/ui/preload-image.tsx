@@ -51,27 +51,29 @@ export function PreloadImage({ src, alt, className, onLoad, onError }: PreloadIm
     setImageStack((prev) => {
       const updated = prev.map((item) => (item.id === imageId ? { ...item, loaded: true } : item))
 
-      // Find the latest loaded image
-      let latestLoadedIndex = -1
-      for (let i = updated.length - 1; i >= 0; i--) {
-        if (updated[i].loaded) {
-          latestLoadedIndex = i
-          break
-        }
+      // Find the index of the image that just loaded
+      const loadedImageIndex = updated.findIndex((item) => item.id === imageId)
+
+      // Find the latest (most recent) image in the stack
+      const latestImageIndex = updated.length - 1
+
+      // If the loaded image is NOT the latest one, remove it immediately
+      if (loadedImageIndex !== latestImageIndex) {
+        return updated.filter((item) => item.id !== imageId)
       }
 
-      if (latestLoadedIndex >= 0) {
-        const latestLoaded = updated[latestLoadedIndex]
+      // If it IS the latest image, notify parent and clean up old loaded images
+      onLoad?.(naturalWidth, naturalHeight)
 
-        // Notify parent only for the latest loaded image
-        if (latestLoaded.id === imageId) {
-          onLoad?.(naturalWidth, naturalHeight)
-        }
-        // Keep only the latest 2 images (current + previous for smooth transition)
-        return updated.slice(Math.max(0, latestLoadedIndex - 1))
-      }
-
-      return updated
+      // Remove any older loaded images (keep only current visible + any still loading)
+      return updated.filter((item, index) => {
+        // Keep the latest image (just loaded)
+        if (index === latestImageIndex) return true
+        // Keep any images that are still loading (might become visible)
+        if (!item.loaded) return true
+        // Remove older loaded images
+        return false
+      })
     })
   }
 
