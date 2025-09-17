@@ -3,6 +3,7 @@ import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 
 import { GalleryImage, ImageView } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
+import { SlideshowTimer } from '@/components/slideshow-timer.tsx'
 import { GalleryLoaderData, ImageLoaderData } from '@/loaders/gallery-loader.ts'
 import { clearPosition, getPosition } from '@/stores/image-position-store.ts'
 
@@ -113,6 +114,7 @@ export function ImagePage({
   return (
     <>
       <LoadingBar isLoading={isLoading && !isSlideshow} theme='dark' />
+      <SlideshowTimer isActive={isSlideshow} duration={5000} theme='dark' resetKey={imageKey} />
       <ImageView
         image={image}
         imageElement={imageElement}
