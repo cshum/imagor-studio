@@ -57,7 +57,7 @@ export function TransformControlsContent({
           open={openSections.dimensions}
           onOpenChange={(open) => handleSectionToggle('dimensions', open)}
         >
-          <CollapsibleTrigger className='flex w-full items-center justify-between text-left p-4'>
+          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
             <div className='flex items-center gap-2'>
               <Move className='h-4 w-4' />
               <span className='font-medium'>{t('imageEditor.controls.dimensionsResize')}</span>
@@ -82,7 +82,7 @@ export function TransformControlsContent({
           open={openSections.output}
           onOpenChange={(open) => handleSectionToggle('output', open)}
         >
-          <CollapsibleTrigger className='flex w-full items-center justify-between text-left p-4'>
+          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
             <div className='flex items-center gap-2'>
               <FileImage className='h-4 w-4' />
               <span className='font-medium'>{t('imageEditor.controls.outputCompression')}</span>
@@ -101,7 +101,7 @@ export function TransformControlsContent({
           open={openSections.effects}
           onOpenChange={(open) => handleSectionToggle('effects', open)}
         >
-          <CollapsibleTrigger className='flex w-full items-center justify-between text-left p-4'>
+          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
             <div className='flex items-center gap-2'>
               <Palette className='h-4 w-4' />
               <span className='font-medium'>{t('imageEditor.controls.colorEffects')}</span>
@@ -120,7 +120,7 @@ export function TransformControlsContent({
           open={openSections.transform}
           onOpenChange={(open) => handleSectionToggle('transform', open)}
         >
-          <CollapsibleTrigger className='flex w-full items-center justify-between text-left p-4'>
+          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
             <div className='flex items-center gap-2'>
               <RotateCw className='h-4 w-4' />
               <span className='font-medium'>{t('imageEditor.controls.transformRotate')}</span>
@@ -139,7 +139,7 @@ export function TransformControlsContent({
           open={openSections.crop}
           onOpenChange={(open) => handleSectionToggle('crop', open)}
         >
-          <CollapsibleTrigger className='flex w-full items-center justify-between text-left p-4'>
+          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
             <div className='flex items-center gap-2'>
               <Scissors className='h-4 w-4' />
               <span className='font-medium'>{t('imageEditor.controls.cropTrim')}</span>
