@@ -113,7 +113,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                 <SheetContent
                   side='right'
                   hideClose={true}
-                  className='flex w-full flex-col p-0 sm:w-96'
+                  className='flex w-full flex-col gap-0 p-0 sm:w-96'
                 >
                   <SheetHeader className='border-b p-4'>
                     <div className='flex items-center justify-between'>
