@@ -307,7 +307,7 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil)
 			},
 			expectError: true,
-			errorMsg:    "username can only contain alphanumeric characters, underscores, and hyphens",
+			errorMsg:    "username must start with an alphanumeric character and can only contain alphanumeric characters, underscores, and hyphens",
 		},
 		{
 			name: "Username too short",
