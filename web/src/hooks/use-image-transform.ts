@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { generateImagorUrl } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
@@ -206,23 +205,45 @@ export function useImageTransform({
   // Detect when params are changing (before debounced update)
   const isParamsChanging = JSON.stringify(params) !== JSON.stringify(debouncedParams)
 
-  // Use React Query for automatic request management
-  const {
-    data: previewUrl,
-    isFetching,
-    error,
-  } = useQuery({
-    queryKey: ['imagor-preview', galleryKey, imageKey, graphqlParams],
-    queryFn: () =>
-      generateImagorUrl({
-        galleryKey,
-        imageKey,
-        params: graphqlParams as ImagorParamsInput,
-      }),
-    enabled: Object.keys(debouncedParams).length > 0, // Only run when we have debounced params
-    staleTime: 0, // Always fetch fresh data
-    refetchOnWindowFocus: false,
-  })
+  // Manual state management to replace React Query
+  const [previewUrl, setPreviewUrl] = useState<string>()
+  const [isFetching, setIsFetching] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+
+  // Effect to handle preview URL generation
+  useEffect(() => {
+    const abortController = new AbortController()
+
+    const fetchPreview = async () => {
+      setIsFetching(true)
+      setError(null)
+      try {
+        const url = await generateImagorUrl({
+          galleryKey,
+          imageKey,
+          params: graphqlParams as ImagorParamsInput,
+        })
+        if (!abortController.signal.aborted) {
+          setPreviewUrl(url)
+        }
+      } catch (err) {
+        if (!abortController.signal.aborted) {
+          setError(err as Error)
+        }
+      } finally {
+        if (!abortController.signal.aborted) {
+          setIsFetching(false)
+        }
+      }
+    }
+
+    // Only run when we have debounced params
+    if (Object.keys(debouncedParams).length > 0) {
+      fetchPreview()
+    }
+
+    return () => abortController.abort()
+  }, [galleryKey, imageKey, graphqlParams])
 
   // Notify parent when preview URL changes
   useMemo(() => {
@@ -238,15 +259,6 @@ export function useImageTransform({
     }
   }, [error, onError])
 
-  // Mutation for download URL generation (separate from preview)
-  const downloadMutation = useMutation({
-    mutationFn: (transformParams: ImagorParamsInput) =>
-      generateImagorUrl({
-        galleryKey,
-        imageKey,
-        params: transformParams,
-      }),
-  })
 
   // Update parameters with optional aspect ratio locking
   const updateParams = useCallback(
@@ -337,7 +349,7 @@ export function useImageTransform({
   }, [params, convertToGraphQLParams, galleryKey, imageKey])
 
   // Generate download URL with attachment filter
-  const generateDownloadUrl = useCallback(() => {
+  const generateDownloadUrl = useCallback(async () => {
     const downloadParams = {
       ...convertToGraphQLParams(params, false), // false = no WebP override
       filters: [
@@ -346,8 +358,13 @@ export function useImageTransform({
       ],
     }
 
-    return downloadMutation.mutateAsync(downloadParams as ImagorParamsInput)
-  }, [params, convertToGraphQLParams, downloadMutation])
+    const url = await generateImagorUrl({
+      galleryKey,
+      imageKey,
+      params: downloadParams as ImagorParamsInput,
+    })
+    return url
+  }, [params, convertToGraphQLParams, galleryKey, imageKey])
 
   // Get copy URL for dialog display
   const getCopyUrl = useCallback(async (): Promise<string> => {
