@@ -2,6 +2,7 @@ import { getUserRegistry } from '@/api/registry-api'
 import { statFile } from '@/api/storage-api'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { getFullImageUrl } from '@/lib/api-utils'
+import { fetchImageMetadata } from '@/lib/exif-utils'
 import { preloadImage } from '@/lib/preload-image'
 import { clearPosition } from '@/stores/image-position-store.ts'
 
@@ -71,16 +72,33 @@ export const imageEditorLoader = async ({
   // Preload the actual image element
   const imageElement = await preloadImage(fullSizeSrc)
 
+  // Fetch original dimensions from metadata if available
+  let originalDimensions = {
+    width: imageElement.naturalWidth,
+    height: imageElement.naturalHeight,
+  }
+
+  if (fileStat.thumbnailUrls?.meta) {
+    try {
+      const metadata = await fetchImageMetadata(getFullImageUrl(fileStat.thumbnailUrls.meta))
+      if (metadata?.width && metadata?.height) {
+        originalDimensions = {
+          width: metadata.width,
+          height: metadata.height,
+        }
+      }
+    } catch {
+      // Fall back to image element dimensions
+    }
+  }
+
   // clear image position for better transition
   clearPosition(galleryKey, imageKey)
 
   return {
     imageElement,
     fullSizeSrc,
-    originalDimensions: {
-      width: imageElement.naturalWidth,
-      height: imageElement.naturalHeight,
-    },
+    originalDimensions,
     galleryKey,
     imageKey,
     editorOpenSections,
