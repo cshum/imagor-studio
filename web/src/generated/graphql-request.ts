@@ -138,7 +138,7 @@ export type ImagorStatus = {
   externalConfig: Maybe<ExternalImagorConfig>
   isOverriddenByConfig: Scalars['Boolean']['output']
   lastUpdated: Maybe<Scalars['String']['output']>
-  mode: Maybe<Scalars['String']['output']>
+  mode: Maybe<ImagorMode>
   restartRequired: Scalars['Boolean']['output']
 }
 
@@ -415,7 +415,7 @@ export type ImagorStatusQuery = {
   imagorStatus: {
     __typename?: 'ImagorStatus'
     configured: boolean
-    mode: string | null
+    mode: ImagorMode | null
     restartRequired: boolean
     lastUpdated: string | null
     isOverriddenByConfig: boolean

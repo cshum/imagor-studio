@@ -1172,7 +1172,7 @@ input ImagorFilterInput {
 # Imagor Configuration Types
 type ImagorStatus {
   configured: Boolean!
-  mode: String # "embedded" or "external"
+  mode: ImagorMode
   restartRequired: Boolean!
   lastUpdated: String
   isOverriddenByConfig: Boolean!
@@ -2679,7 +2679,7 @@ func (ec *executionContext) _ImagorStatus_mode(ctx context.Context, field graphq
 		ec.fieldContext_ImagorStatus_mode,
 		func(ctx context.Context) (any, error) { return obj.Mode, nil },
 		nil,
-		ec.marshalOString2ᚖstring,
+		ec.marshalOImagorMode2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorMode,
 		true,
 		false,
 	)
@@ -2692,7 +2692,7 @@ func (ec *executionContext) fieldContext_ImagorStatus_mode(_ context.Context, fi
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ImagorMode does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9817,6 +9817,22 @@ func (ec *executionContext) unmarshalOImagorFilterInput2ᚕᚖgithubᚗcomᚋcsh
 		}
 	}
 	return res, nil
+}
+
+func (ec *executionContext) unmarshalOImagorMode2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorMode(ctx context.Context, v any) (*ImagorMode, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(ImagorMode)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOImagorMode2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorMode(ctx context.Context, sel ast.SelectionSet, v *ImagorMode) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOImagorSignerType2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorSignerType(ctx context.Context, v any) (*ImagorSignerType, error) {

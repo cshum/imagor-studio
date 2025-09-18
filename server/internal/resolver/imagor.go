@@ -250,9 +250,18 @@ func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, er
 	// Check if any imagor config is overridden
 	isConfigOverridden := r.isImagorConfigOverridden(ctx, imagorConfig.Mode)
 
+	// Convert string mode to enum
+	var mode *gql.ImagorMode
+	switch imagorConfig.Mode {
+	case "embedded":
+		mode = &[]gql.ImagorMode{gql.ImagorModeEmbedded}[0]
+	case "external":
+		mode = &[]gql.ImagorMode{gql.ImagorModeExternal}[0]
+	}
+
 	status := &gql.ImagorStatus{
 		Configured:           true, // Always configured (defaults to embedded)
-		Mode:                 &imagorConfig.Mode,
+		Mode:                 mode,
 		RestartRequired:      restartRequired,
 		LastUpdated:          lastUpdated,
 		IsOverriddenByConfig: isConfigOverridden,

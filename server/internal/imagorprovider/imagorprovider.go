@@ -31,7 +31,7 @@ import (
 
 // ImagorConfig holds imagor configuration
 type ImagorConfig struct {
-	Mode           string // "external", "embedded", "disabled"
+	Mode           string // "external", "embedded"
 	BaseURL        string // External URL or "/imagor" for embedded
 	Secret         string // Secret key for URL signing
 	Unsafe         bool   // Enable unsafe URLs for development
@@ -109,7 +109,7 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 		} else {
 			// Use startup config
 			imagorConfig = &ImagorConfig{
-				Mode:    cfg.ImagorMode,
+				Mode:    strings.ToLower(cfg.ImagorMode), // Normalize to lowercase
 				BaseURL: cfg.ImagorBaseURL,
 				Secret:  cfg.ImagorSecret,
 				Unsafe:  cfg.ImagorUnsafe,

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/config"
+	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor/imagorpath"
@@ -143,7 +144,7 @@ func TestInitializeWithConfig_External(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode:    "external",
+		ImagorMode:    string(gql.ImagorModeExternal),
 		ImagorBaseURL: "http://localhost:8000",
 		ImagorSecret:  "test-secret",
 		ImagorUnsafe:  false,
@@ -167,7 +168,7 @@ func TestInitializeWithConfig_Embedded(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode:   "embedded",
+		ImagorMode:   string(gql.ImagorModeEmbedded),
 		ImagorSecret: "test-secret",
 		ImagorUnsafe: true,
 	}
@@ -547,7 +548,7 @@ func TestGetHandler_External(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{
-		ImagorMode:    "external",
+		ImagorMode:    string(gql.ImagorModeExternal),
 		ImagorBaseURL: "http://localhost:8000",
 	}
 	storageProvider := &storageprovider.Provider{}

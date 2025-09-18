@@ -33,7 +33,7 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
 
   const getModeDisplay = (mode: string | null) => {
     if (!mode) return t('pages.imagor.notConfigured')
-    return mode.toLowerCase() === 'embedded'
+    return mode === 'EMBEDDED'
       ? t('pages.imagor.embeddedMode')
       : t('pages.imagor.externalMode')
   }
@@ -75,13 +75,13 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
             <div className='bg-muted/50 space-y-4 rounded-lg border p-4'>
               <div className='text-sm font-medium'>{t('pages.imagor.configurationDetails')}</div>
 
-              {imagorStatus.mode?.toLowerCase() === 'embedded' && (
+              {imagorStatus.mode === 'EMBEDDED' && (
                 <div className='text-muted-foreground text-sm'>
                   {t('pages.imagor.embeddedModeSimplified')}
                 </div>
               )}
 
-              {imagorStatus.externalConfig && imagorStatus.mode?.toLowerCase() === 'external' && (
+              {imagorStatus.externalConfig && imagorStatus.mode === 'EXTERNAL' && (
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
                   <div className='space-y-1'>
                     <div className='text-muted-foreground text-xs font-medium'>
