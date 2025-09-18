@@ -34,6 +34,7 @@ import { setHomeTitle } from '@/stores/folder-tree-store'
 type AdminSetupForm = {
   username: string
   password: string
+  confirmPassword: string
 }
 
 // Define system settings for step 2 - will be translated in component
@@ -118,6 +119,25 @@ function AccountStepContent({
                     <Input
                       type='password'
                       placeholder={t('forms.placeholders.enterPassword')}
+                      {...field}
+                      disabled={form.formState.isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='confirmPassword'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.admin.confirmPassword')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='password'
+                      placeholder={t('forms.placeholders.confirmPassword')}
                       {...field}
                       disabled={form.formState.isSubmitting}
                     />
@@ -257,6 +277,13 @@ export function AdminSetupPage() {
       .string()
       .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
       .max(72, 'Password must be less than 72 characters'),
+    confirmPassword: z
+      .string()
+      .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
+      .max(72, 'Password must be less than 72 characters'),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: t('forms.validation.passwordsDoNotMatch'),
+    path: ['confirmPassword'],
   })
 
   // Create translated system settings
@@ -269,6 +296,7 @@ export function AdminSetupPage() {
     defaultValues: {
       username: '',
       password: '',
+      confirmPassword: '',
     },
   })
 

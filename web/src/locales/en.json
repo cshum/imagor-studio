@@ -58,6 +58,7 @@
     "placeholders": {
       "enterUsername": "Enter your username",
       "enterPassword": "Enter your password",
+      "confirmPassword": "Confirm your password",
       "enterName": "Enter your name"
     },
     "validation": {
@@ -134,6 +135,7 @@
       "storageConfiguration": "Storage Configuration",
       "username": "Username",
       "password": "Password",
+      "confirmPassword": "Confirm Password",
       "createAccount": "Create Account",
       "skipForNow": "Skip for Now",
       "next": "Next",
