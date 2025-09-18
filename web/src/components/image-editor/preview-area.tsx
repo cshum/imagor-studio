@@ -13,6 +13,10 @@ interface PreviewAreaProps {
   error: Error | null
   galleryKey: string
   imageKey: string
+  originalDimensions: {
+    width: number
+    height: number
+  }
   onLoad?: (width: number, height: number) => void
   onCopyUrl: () => void
   onDownload: () => void
@@ -23,6 +27,7 @@ export function PreviewArea({
   error,
   galleryKey,
   imageKey,
+  originalDimensions,
   onLoad,
   onCopyUrl,
   onDownload,
@@ -114,9 +119,18 @@ export function PreviewArea({
             </Button>
           </div>
         ) : (
-          /* Desktop: Only info display - match transform controls height */
-          <div className='text-muted-foreground flex items-center gap-4 p-2 text-sm'>
-            <span>{imagePath}</span>
+          /* Desktop: Centered image name and dimensions */
+          <div className='flex items-center justify-center gap-2 p-2 text-sm'>
+            <span
+              className='max-w-50 truncate font-medium lg:max-w-80 xl:max-w-130'
+              title={imagePath}
+            >
+              {imagePath}
+            </span>
+            <span className='text-muted-foreground'>•</span>
+            <span className='text-muted-foreground'>
+              {originalDimensions.width} × {originalDimensions.height}
+            </span>
           </div>
         )}
       </div>

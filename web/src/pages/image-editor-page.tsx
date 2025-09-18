@@ -234,8 +234,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           previewUrl={previewUrl || loaderData.imageElement.src}
           error={error}
           galleryKey={galleryKey}
-          onLoad={() => setIsLoading(false)}
           imageKey={imageKey}
+          originalDimensions={loaderData.originalDimensions}
+          onLoad={() => setIsLoading(false)}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}
         />
