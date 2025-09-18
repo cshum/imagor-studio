@@ -958,17 +958,6 @@
         "possibleTypes": null
       },
       {
-        "kind": "SCALAR",
-        "name": "JSON",
-        "description": null,
-        "isOneOf": null,
-        "fields": null,
-        "inputFields": null,
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
         "kind": "OBJECT",
         "name": "Mutation",
         "description": null,

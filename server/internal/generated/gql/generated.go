@@ -1248,8 +1248,6 @@ input RegistryEntryInput {
   isEncrypted: Boolean!
 }
 
-scalar JSON
-
 type UserRegistry {
   key: String!
   value: String!

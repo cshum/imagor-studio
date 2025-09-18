@@ -20,7 +20,6 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean }
   Int: { input: number; output: number }
   Float: { input: number; output: number }
-  JSON: { input: Record<string, any>; output: Record<string, any> }
   Upload: { input: File; output: File }
 }
 
