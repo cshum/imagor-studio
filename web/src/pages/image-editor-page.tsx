@@ -146,7 +146,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
                       <SheetTitle>{t('imageEditor.page.controls')}</SheetTitle>
 
-                      <Button variant='ghost' size='sm' onClick={resetParams}>
+                      <Button variant='outline' size='sm' onClick={resetParams}>
                         <RotateCcw className='mr-1 h-4 w-4' />
                         {t('imageEditor.page.resetAll')}
                       </Button>
@@ -189,7 +189,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <div className='border-b p-4'>
             <div className='flex items-center justify-between'>
               <h2 className='font-semibold'>{t('imageEditor.page.controls')}</h2>
-              <Button variant='ghost' size='sm' onClick={resetParams}>
+              <Button variant='outline' size='sm' onClick={resetParams}>
                 <RotateCcw className='mr-1 h-4 w-4' />
                 {t('imageEditor.page.resetAll')}
               </Button>
