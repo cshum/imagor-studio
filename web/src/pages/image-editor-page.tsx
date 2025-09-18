@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
@@ -28,6 +28,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
   const [copyUrl, setCopyUrl] = useState('')
+  const [isLoading, setIsLoading] = useState<boolean>(false)
   const [editorOpenSections, setEditorOpenSections] = useState<EditorOpenSections>(
     loaderData.editorOpenSections,
   )
@@ -56,7 +57,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     previewUrl,
     aspectLocked,
     originalAspectRatio,
-    isLoadingBarVisible,
+    isParamsLoading,
     error,
     updateParams,
     resetParams,
@@ -68,6 +69,12 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     imageKey,
     loaderData,
   })
+
+  useEffect(() => {
+    if (isParamsLoading) {
+      setIsLoading(true)
+    }
+  }, [isParamsLoading])
 
   const handleBack = () => {
     if (galleryKey) {
@@ -106,7 +113,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       )}
     >
       {/* Loading Bar */}
-      <LoadingBar isLoading={isLoadingBarVisible} />
+      <LoadingBar isLoading={isLoading} />
 
       {/* Preview Area  */}
       <div className='ios-preview-container-fix flex flex-1 flex-col'>
@@ -173,9 +180,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
         {/* Preview Content */}
         <PreviewArea
-          previewUrl={previewUrl || ''}
+          previewUrl={previewUrl || loaderData.imageElement.src}
           error={error}
           galleryKey={galleryKey}
+          onLoad={() => setIsLoading(false)}
           imageKey={imageKey}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}

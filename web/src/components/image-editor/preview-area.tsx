@@ -13,6 +13,7 @@ interface PreviewAreaProps {
   error: Error | null
   galleryKey: string
   imageKey: string
+  onLoad?: (width: number, height: number) => void
   onCopyUrl: () => void
   onDownload: () => void
 }
@@ -22,6 +23,7 @@ export function PreviewArea({
   error,
   galleryKey,
   imageKey,
+  onLoad,
   onCopyUrl,
   onDownload,
 }: PreviewAreaProps) {
@@ -66,6 +68,7 @@ export function PreviewArea({
           <PreloadImage
             src={currentImageSrc}
             alt={`Preview of ${imagePath}`}
+            onLoad={onLoad}
             className={cn(
               'h-auto w-auto object-contain',
               'max-h-[calc(100vh-200px)]',

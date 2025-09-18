@@ -33,9 +33,7 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
 
   const getModeDisplay = (mode: string | null) => {
     if (!mode) return t('pages.imagor.notConfigured')
-    return mode === 'EMBEDDED'
-      ? t('pages.imagor.embeddedMode')
-      : t('pages.imagor.externalMode')
+    return mode === 'EMBEDDED' ? t('pages.imagor.embeddedMode') : t('pages.imagor.externalMode')
   }
 
   const getStatusBadge = () => {

@@ -243,7 +243,7 @@ export function useImageTransform({
     }
 
     return () => abortController.abort()
-  }, [galleryKey, imageKey, graphqlParams])
+  }, [galleryKey, imageKey, graphqlParams, debouncedParams])
 
   // Notify parent when preview URL changes
   useMemo(() => {
@@ -394,7 +394,7 @@ export function useImageTransform({
     originalAspectRatio,
 
     // Loading states - simplified since PreloadImage handles image loading
-    isLoadingBarVisible: isFetching || isParamsChanging, // Show loading during debounce + fetch only
+    isParamsLoading: isFetching || isParamsChanging, // Show loading during debounce + fetch only
     error,
 
     // Actions
