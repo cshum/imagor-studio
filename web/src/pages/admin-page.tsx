@@ -1,5 +1,5 @@
-import { ImagorManagementSection } from '@/components/imagor'
-import { StorageManagementSection } from '@/components/storage'
+import { ImagorManagementSection } from '@/components/imagor/imagor-management-section.tsx'
+import { StorageManagementSection } from '@/components/storage/storage-management-section.tsx'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import type { AdminLoaderData } from '@/loaders/account-loader'
 
