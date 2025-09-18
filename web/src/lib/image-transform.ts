@@ -53,7 +53,6 @@ export interface ImageTransformConfig {
     width: number
     height: number
   }
-  debounceMs?: number
 }
 
 export interface ImageTransformCallbacks {
@@ -77,7 +76,7 @@ export class ImageTransform {
   private lockedAspectRatio: number | null = null
 
   constructor(config: ImageTransformConfig, callbacks: ImageTransformCallbacks = {}) {
-    this.config = { debounceMs: 500, ...config }
+    this.config = config
     this.callbacks = callbacks
 
     // Initialize state with original dimensions
@@ -247,7 +246,7 @@ export class ImageTransform {
     this.debounceTimer = window.setTimeout(() => {
       this.debounceTimer = null
       this.generatePreview()
-    }, this.config.debounceMs)
+    }, 500)
   }
 
   /**
