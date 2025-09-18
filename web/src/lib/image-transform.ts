@@ -73,7 +73,6 @@ export class ImageTransform {
   private callbacks: ImageTransformCallbacks
   private debounceTimer: number | null = null
   private abortController: AbortController | null = null
-  private isLoading = false
   private aspectLocked = true
   private lockedAspectRatio: number | null = null
 
@@ -101,31 +100,10 @@ export class ImageTransform {
   }
 
   /**
-   * Get original aspect ratio
-   */
-  getOriginalAspectRatio(): number {
-    return this.config.originalDimensions.width / this.config.originalDimensions.height
-  }
-
-  /**
-   * Get original dimensions
-   */
-  getOriginalDimensions(): { width: number; height: number } {
-    return { ...this.config.originalDimensions }
-  }
-
-  /**
    * Check if aspect ratio is locked
    */
   isAspectLocked(): boolean {
     return this.aspectLocked
-  }
-
-  /**
-   * Check if parameters are currently loading/processing
-   */
-  isParamsLoading(): boolean {
-    return this.isLoading || this.debounceTimer !== null
   }
 
   /**
@@ -261,7 +239,6 @@ export class ImageTransform {
    * Set loading state and notify callbacks
    */
   private setLoading(loading: boolean): void {
-    this.isLoading = loading
     this.callbacks.onLoadingChange?.(loading)
   }
 
@@ -384,7 +361,6 @@ export class ImageTransform {
         { name: 'attachment', args: '' }, // Empty args for default filename
       ],
     }
-
     return await generateImagorUrl({
       galleryKey: this.config.galleryKey,
       imageKey: this.config.imageKey,
