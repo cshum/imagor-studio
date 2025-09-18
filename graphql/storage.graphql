@@ -15,25 +15,6 @@ type Query {
 
   # Storage Configuration APIs
   storageStatus: StorageStatus!
-
-  # Imagor Configuration APIs
-  imagorStatus: ImagorStatus!
-
-  # Registry APIs
-  listUserRegistry(prefix: String, ownerID: String): [UserRegistry!]!
-  getUserRegistry(
-    key: String
-    keys: [String!]
-    ownerID: String
-  ): [UserRegistry!]!
-  listSystemRegistry(prefix: String): [SystemRegistry!]!
-  getSystemRegistry(key: String, keys: [String!]): [SystemRegistry!]!
-
-  me: User
-
-  # admin only operations
-  user(id: ID!): User
-  users(offset: Int = 0, limit: Int = 20): UserList!
 }
 
 type Mutation {
@@ -42,131 +23,12 @@ type Mutation {
   deleteFile(path: String!): Boolean!
   createFolder(path: String!): Boolean!
 
-  # self operations, or admin scope with userId
-  updateProfile(input: UpdateProfileInput!, userId: ID): User!
-  changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
-  deactivateAccount(userId: ID): Boolean!
-
-  # User Registry APIs
-  setUserRegistry(
-    entry: RegistryEntryInput
-    entries: [RegistryEntryInput!]
-    ownerID: String
-  ): [UserRegistry!]!
-  deleteUserRegistry(key: String, keys: [String!], ownerID: String): Boolean!
-
-  # System Registry APIs (admin only for write)
-  setSystemRegistry(
-    entry: RegistryEntryInput
-    entries: [RegistryEntryInput!]
-  ): [SystemRegistry!]!
-  deleteSystemRegistry(key: String, keys: [String!]): Boolean!
-
   # Storage Configuration APIs (admin only)
   configureFileStorage(input: FileStorageInput!): StorageConfigResult!
   configureS3Storage(input: S3StorageInput!): StorageConfigResult!
   testStorageConfig(input: StorageConfigInput!): StorageTestResult!
-
-  # Imagor Configuration APIs (admin only)
-  configureEmbeddedImagor: ImagorConfigResult!
-  configureExternalImagor(input: ExternalImagorInput!): ImagorConfigResult!
-
-  # Imagor URL Generation API
-  generateImagorUrl(
-    galleryKey: String!
-    imageKey: String!
-    params: ImagorParamsInput!
-  ): String!
-
-  # admin only operations
-  createUser(input: CreateUserInput!): User!
 }
 
-type User {
-  id: ID!
-  displayName: String!
-  username: String!
-  role: String!
-  isActive: Boolean!
-  createdAt: String!
-  updatedAt: String!
-}
-
-type UserList {
-  items: [User!]!
-  totalCount: Int!
-}
-
-input UpdateProfileInput {
-  displayName: String
-  username: String
-}
-
-input ChangePasswordInput {
-  currentPassword: String # Optional when admin is changing another user's password
-  newPassword: String!
-}
-
-input CreateUserInput {
-  displayName: String!
-  username: String!
-  password: String!
-  role: String!
-}
-
-input RegistryEntryInput {
-  key: String!
-  value: String!
-  isEncrypted: Boolean!
-}
-
-# Imagor URL Generation Input Types
-input ImagorParamsInput {
-  # Dimensions
-  width: Int
-  height: Int
-
-  # Cropping
-  cropLeft: Float
-  cropTop: Float
-  cropRight: Float
-  cropBottom: Float
-
-  # Fitting
-  fitIn: Boolean
-  stretch: Boolean
-
-  # Padding
-  paddingLeft: Int
-  paddingTop: Int
-  paddingRight: Int
-  paddingBottom: Int
-
-  # Flipping
-  hFlip: Boolean
-  vFlip: Boolean
-
-  # Alignment
-  hAlign: String # "left", "right"
-  vAlign: String # "top", "bottom"
-  # Smart crop
-  smart: Boolean
-
-  # Trimming
-  trim: Boolean
-  trimBy: String # "top-left", "bottom-right"
-  trimTolerance: Int
-
-  # Filters
-  filters: [ImagorFilterInput!]
-}
-
-input ImagorFilterInput {
-  name: String! # "quality", "brightness", etc.
-  args: String! # "80", "10", etc.
-}
-
-# Existing types...
 type FileList {
   items: [FileItem!]!
   totalCount: Int!
@@ -210,21 +72,6 @@ enum SortOrder {
 }
 
 scalar Upload
-
-type UserRegistry {
-  key: String!
-  value: String!
-  isEncrypted: Boolean!
-}
-
-type SystemRegistry {
-  key: String!
-  value: String!
-  isEncrypted: Boolean!
-  isOverriddenByConfig: Boolean!
-}
-
-scalar JSON
 
 # Storage Configuration Types
 type StorageStatus {
@@ -290,48 +137,4 @@ input S3StorageInput {
 enum StorageType {
   FILE
   S3
-}
-
-# Imagor Configuration Types
-type ImagorStatus {
-  configured: Boolean!
-  mode: String # "embedded" or "external"
-  restartRequired: Boolean!
-  lastUpdated: String
-  isOverriddenByConfig: Boolean!
-  externalConfig: ExternalImagorConfig
-}
-
-type ExternalImagorConfig {
-  baseUrl: String!
-  hasSecret: Boolean!
-  unsafe: Boolean!
-  signerType: ImagorSignerType!
-  signerTruncate: Int!
-}
-
-type ImagorConfigResult {
-  success: Boolean!
-  restartRequired: Boolean!
-  timestamp: String!
-  message: String
-}
-
-input ExternalImagorInput {
-  baseUrl: String!
-  secret: String
-  unsafe: Boolean
-  signerType: ImagorSignerType # Optional, defaults to SHA1
-  signerTruncate: Int # Optional, defaults to 0
-}
-
-enum ImagorSignerType {
-  SHA1
-  SHA256
-  SHA512
-}
-
-enum ImagorMode {
-  EMBEDDED
-  EXTERNAL
 }

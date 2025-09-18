@@ -1,0 +1,49 @@
+extend type Query {
+  me: User
+
+  # admin only operations
+  user(id: ID!): User
+  users(offset: Int = 0, limit: Int = 20): UserList!
+}
+
+extend type Mutation {
+  # self operations, or admin scope with userId
+  updateProfile(input: UpdateProfileInput!, userId: ID): User!
+  changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
+  deactivateAccount(userId: ID): Boolean!
+
+  # admin only operations
+  createUser(input: CreateUserInput!): User!
+}
+
+type User {
+  id: ID!
+  displayName: String!
+  username: String!
+  role: String!
+  isActive: Boolean!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type UserList {
+  items: [User!]!
+  totalCount: Int!
+}
+
+input UpdateProfileInput {
+  displayName: String
+  username: String
+}
+
+input ChangePasswordInput {
+  currentPassword: String # Optional when admin is changing another user's password
+  newPassword: String!
+}
+
+input CreateUserInput {
+  displayName: String!
+  username: String!
+  password: String!
+  role: String!
+}

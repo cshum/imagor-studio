@@ -1,0 +1,107 @@
+extend type Query {
+  # Imagor Configuration APIs
+  imagorStatus: ImagorStatus!
+}
+
+extend type Mutation {
+  # Imagor Configuration APIs (admin only)
+  configureEmbeddedImagor: ImagorConfigResult!
+  configureExternalImagor(input: ExternalImagorInput!): ImagorConfigResult!
+
+  # Imagor URL Generation API
+  generateImagorUrl(
+    galleryKey: String!
+    imageKey: String!
+    params: ImagorParamsInput!
+  ): String!
+}
+
+# Imagor URL Generation Input Types
+input ImagorParamsInput {
+  # Dimensions
+  width: Int
+  height: Int
+
+  # Cropping
+  cropLeft: Float
+  cropTop: Float
+  cropRight: Float
+  cropBottom: Float
+
+  # Fitting
+  fitIn: Boolean
+  stretch: Boolean
+
+  # Padding
+  paddingLeft: Int
+  paddingTop: Int
+  paddingRight: Int
+  paddingBottom: Int
+
+  # Flipping
+  hFlip: Boolean
+  vFlip: Boolean
+
+  # Alignment
+  hAlign: String # "left", "right"
+  vAlign: String # "top", "bottom"
+  # Smart crop
+  smart: Boolean
+
+  # Trimming
+  trim: Boolean
+  trimBy: String # "top-left", "bottom-right"
+  trimTolerance: Int
+
+  # Filters
+  filters: [ImagorFilterInput!]
+}
+
+input ImagorFilterInput {
+  name: String! # "quality", "brightness", etc.
+  args: String! # "80", "10", etc.
+}
+
+# Imagor Configuration Types
+type ImagorStatus {
+  configured: Boolean!
+  mode: String # "embedded" or "external"
+  restartRequired: Boolean!
+  lastUpdated: String
+  isOverriddenByConfig: Boolean!
+  externalConfig: ExternalImagorConfig
+}
+
+type ExternalImagorConfig {
+  baseUrl: String!
+  hasSecret: Boolean!
+  unsafe: Boolean!
+  signerType: ImagorSignerType!
+  signerTruncate: Int!
+}
+
+type ImagorConfigResult {
+  success: Boolean!
+  restartRequired: Boolean!
+  timestamp: String!
+  message: String
+}
+
+input ExternalImagorInput {
+  baseUrl: String!
+  secret: String
+  unsafe: Boolean
+  signerType: ImagorSignerType # Optional, defaults to SHA1
+  signerTruncate: Int # Optional, defaults to 0
+}
+
+enum ImagorSignerType {
+  SHA1
+  SHA256
+  SHA512
+}
+
+enum ImagorMode {
+  EMBEDDED
+  EXTERNAL
+}

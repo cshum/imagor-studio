@@ -1,0 +1,49 @@
+extend type Query {
+  # Registry APIs
+  listUserRegistry(prefix: String, ownerID: String): [UserRegistry!]!
+  getUserRegistry(
+    key: String
+    keys: [String!]
+    ownerID: String
+  ): [UserRegistry!]!
+  listSystemRegistry(prefix: String): [SystemRegistry!]!
+  getSystemRegistry(key: String, keys: [String!]): [SystemRegistry!]!
+}
+
+extend type Mutation {
+  # User Registry APIs
+  setUserRegistry(
+    entry: RegistryEntryInput
+    entries: [RegistryEntryInput!]
+    ownerID: String
+  ): [UserRegistry!]!
+  deleteUserRegistry(key: String, keys: [String!], ownerID: String): Boolean!
+
+  # System Registry APIs (admin only for write)
+  setSystemRegistry(
+    entry: RegistryEntryInput
+    entries: [RegistryEntryInput!]
+  ): [SystemRegistry!]!
+  deleteSystemRegistry(key: String, keys: [String!]): Boolean!
+}
+
+input RegistryEntryInput {
+  key: String!
+  value: String!
+  isEncrypted: Boolean!
+}
+
+scalar JSON
+
+type UserRegistry {
+  key: String!
+  value: String!
+  isEncrypted: Boolean!
+}
+
+type SystemRegistry {
+  key: String!
+  value: String!
+  isEncrypted: Boolean!
+  isOverriddenByConfig: Boolean!
+}
