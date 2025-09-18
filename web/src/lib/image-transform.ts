@@ -230,23 +230,16 @@ export class ImageTransform {
       }
     } finally {
       if (!this.abortController.signal.aborted) {
-        this.setLoading(false)
+        this.callbacks.onLoadingChange?.(false)
       }
     }
-  }
-
-  /**
-   * Set loading state and notify callbacks
-   */
-  private setLoading(loading: boolean): void {
-    this.callbacks.onLoadingChange?.(loading)
   }
 
   /**
    * Debounced preview generation
    */
   private schedulePreviewUpdate(): void {
-    this.setLoading(true)
+    this.callbacks.onLoadingChange?.(true)
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer)
     }
