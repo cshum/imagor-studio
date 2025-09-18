@@ -51,7 +51,10 @@ const createUserSchema = z.object({
     .string()
     .min(3, 'Username must be at least 3 characters')
     .max(30, 'Username must be at most 30 characters')
-    .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores, and hyphens'),
+    .regex(
+      /^[a-zA-Z0-9_-]+$/,
+      'Username can only contain letters, numbers, underscores, and hyphens',
+    ),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters long')
@@ -68,7 +71,10 @@ const editUserSchema = z.object({
     .string()
     .min(3, 'Username must be at least 3 characters')
     .max(30, 'Username must be at most 30 characters')
-    .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores, and hyphens'),
+    .regex(
+      /^[a-zA-Z0-9_-]+$/,
+      'Username can only contain letters, numbers, underscores, and hyphens',
+    ),
   role: z.enum(['user', 'admin']),
 })
 
@@ -144,7 +150,10 @@ export function UsersPage({ loaderData }: UsersPageProps) {
 
     setIsUpdating(true)
     try {
-      await updateProfile({ displayName: values.displayName, username: values.username }, selectedUser.id)
+      await updateProfile(
+        { displayName: values.displayName, username: values.username },
+        selectedUser.id,
+      )
       toast.success('User updated successfully!')
       setIsEditDialogOpen(false)
       setSelectedUser(null)
@@ -254,11 +263,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                         <FormItem>
                           <FormLabel>Username</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder='Enter username'
-                              {...field}
-                              disabled={isCreating}
-                            />
+                            <Input placeholder='Enter username' {...field} disabled={isCreating} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -519,11 +524,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                   <FormItem>
                     <FormLabel>Username</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder='Enter username'
-                        {...field}
-                        disabled={isUpdating}
-                      />
+                      <Input placeholder='Enter username' {...field} disabled={isUpdating} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

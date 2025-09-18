@@ -139,7 +139,9 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
 
       // Check if it's a validation error that should highlight a field
       if (errorMessage.toLowerCase().includes('current password')) {
-        passwordForm.setError('currentPassword', { message: t('pages.profile.currentPasswordIncorrect') })
+        passwordForm.setError('currentPassword', {
+          message: t('pages.profile.currentPasswordIncorrect'),
+        })
       } else if (errorMessage.toLowerCase().includes('password')) {
         passwordForm.setError('newPassword', { message: errorMessage })
       } else {
@@ -216,7 +218,9 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
           <div className='flex items-center justify-between rounded-lg border p-4'>
             <div className='space-y-0.5'>
               <div className='text-base font-medium'>{t('pages.profile.password')}</div>
-              <div className='text-muted-foreground text-sm'>{t('pages.profile.passwordDescription')}</div>
+              <div className='text-muted-foreground text-sm'>
+                {t('pages.profile.passwordDescription')}
+              </div>
             </div>
             <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
               <DialogTrigger asChild>

@@ -38,7 +38,10 @@ export function LoginPage() {
 
   // Create translation-aware validation schema
   const loginSchema = z.object({
-    username: z.string().min(3, t('auth.validation.usernameMinLength')).max(30, t('auth.validation.usernameMaxLength')),
+    username: z
+      .string()
+      .min(3, t('auth.validation.usernameMinLength'))
+      .max(30, t('auth.validation.usernameMaxLength')),
     password: z.string().min(1, t('auth.validation.passwordRequired')),
   })
 
