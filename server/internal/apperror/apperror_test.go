@@ -14,11 +14,11 @@ import (
 func TestWriteErrorResponse(t *testing.T) {
 	w := httptest.NewRecorder()
 	details := map[string]interface{}{
-		"field": "email",
+		"field": "username",
 		"error": "invalid format",
 	}
 
-	WriteErrorResponse(w, http.StatusBadRequest, ErrInvalidInput, "Invalid email format", details)
+	WriteErrorResponse(w, http.StatusBadRequest, ErrInvalidInput, "Invalid username format", details)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
@@ -28,8 +28,8 @@ func TestWriteErrorResponse(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, ErrInvalidInput, response.Error.Code)
-	assert.Equal(t, "Invalid email format", response.Error.Message)
-	assert.Equal(t, "email", response.Error.Details["field"])
+	assert.Equal(t, "Invalid username format", response.Error.Message)
+	assert.Equal(t, "username", response.Error.Details["field"])
 	assert.Equal(t, "invalid format", response.Error.Details["error"])
 	assert.NotZero(t, response.Timestamp)
 }
@@ -38,9 +38,9 @@ func TestWriteValidationErrorResponse(t *testing.T) {
 	w := httptest.NewRecorder()
 	validationErrors := []ValidationError{
 		{
-			Field:   "email",
-			Message: "Invalid email format",
-			Code:    "EMAIL_INVALID",
+			Field:   "username",
+			Message: "Invalid username format",
+			Code:    "USERNAME_INVALID",
 		},
 		{
 			Field:   "password",
@@ -62,9 +62,9 @@ func TestWriteValidationErrorResponse(t *testing.T) {
 	assert.Equal(t, "Validation failed", response.Error.Message)
 	assert.Len(t, response.Error.ValidationErrors, 2)
 
-	assert.Equal(t, "email", response.Error.ValidationErrors[0].Field)
-	assert.Equal(t, "Invalid email format", response.Error.ValidationErrors[0].Message)
-	assert.Equal(t, "EMAIL_INVALID", response.Error.ValidationErrors[0].Code)
+	assert.Equal(t, "username", response.Error.ValidationErrors[0].Field)
+	assert.Equal(t, "Invalid username format", response.Error.ValidationErrors[0].Message)
+	assert.Equal(t, "USERNAME_INVALID", response.Error.ValidationErrors[0].Code)
 
 	assert.Equal(t, "password", response.Error.ValidationErrors[1].Field)
 	assert.Equal(t, "Password must be at least 8 characters", response.Error.ValidationErrors[1].Message)
@@ -160,11 +160,11 @@ func TestErrorResponseJSON(t *testing.T) {
 			Code:    ErrInvalidInput,
 			Message: "Invalid input",
 			Details: map[string]interface{}{
-				"field": "email",
+				"field": "username",
 			},
 			ValidationErrors: []ValidationError{
 				{
-					Field:   "email",
+					Field:   "username",
 					Message: "Invalid format",
 					Code:    "INVALID_FORMAT",
 				},

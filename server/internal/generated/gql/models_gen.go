@@ -16,7 +16,7 @@ type ChangePasswordInput struct {
 
 type CreateUserInput struct {
 	DisplayName string `json:"displayName"`
-	Email       string `json:"email"`
+	Username    string `json:"username"`
 	Password    string `json:"password"`
 	Role        string `json:"role"`
 }
@@ -194,13 +194,13 @@ type ThumbnailUrls struct {
 
 type UpdateProfileInput struct {
 	DisplayName *string `json:"displayName,omitempty"`
-	Email       *string `json:"email,omitempty"`
+	Username    *string `json:"username,omitempty"`
 }
 
 type User struct {
 	ID          string `json:"id"`
 	DisplayName string `json:"displayName"`
-	Email       string `json:"email"`
+	Username    string `json:"username"`
 	Role        string `json:"role"`
 	IsActive    bool   `json:"isActive"`
 	CreatedAt   string `json:"createdAt"`

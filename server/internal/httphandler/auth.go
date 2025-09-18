@@ -2,7 +2,6 @@ package httphandler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -34,18 +33,18 @@ func NewAuthHandler(tokenManager *auth.TokenManager, userStore userstore.Store, 
 
 type RegisterRequest struct {
 	DisplayName string `json:"displayName"`
-	Email       string `json:"email"`
+	Username    string `json:"username"`
 	Password    string `json:"password"`
 }
 
 type RegisterAdminRequest struct {
 	DisplayName string `json:"displayName"`
-	Email       string `json:"email"`
+	Username    string `json:"username"`
 	Password    string `json:"password"`
 }
 
 type LoginRequest struct {
-	Email    string `json:"email"`
+	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
@@ -58,7 +57,7 @@ type LoginResponse struct {
 type UserResponse struct {
 	ID          string `json:"id"`
 	DisplayName string `json:"displayName"`
-	Email       string `json:"email"`
+	Username    string `json:"username"`
 	Role        string `json:"role"`
 }
 
@@ -109,7 +108,7 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 		// Convert to RegisterRequest for user creation
 		userReq := RegisterRequest{
 			DisplayName: req.DisplayName,
-			Email:       req.Email,
+			Username:    req.Username,
 			Password:    req.Password,
 		}
 
@@ -139,7 +138,7 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 		h.logger.Info("First admin user created via API",
 			zap.String("userID", response.User.ID),
 			zap.String("displayName", response.User.DisplayName),
-			zap.String("email", response.User.Email))
+			zap.String("username", response.User.Username))
 
 		return WriteCreated(w, response)
 	})
@@ -169,16 +168,16 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 		}
 
 		// Validate input
-		if strings.TrimSpace(req.Email) == "" || strings.TrimSpace(req.Password) == "" {
+		if strings.TrimSpace(req.Username) == "" || strings.TrimSpace(req.Password) == "" {
 			return apperror.NewAppError(http.StatusBadRequest, apperror.ErrInvalidInput,
-				"Email and password are required", nil)
+				"Username and password are required", nil)
 		}
 
-		// Normalize email
-		email := validation.NormalizeEmail(req.Email)
+		// Normalize username
+		username := validation.NormalizeUsername(req.Username)
 
-		// Get user by email
-		user, err := h.userStore.GetByEmail(r.Context(), email)
+		// Get user by username
+		user, err := h.userStore.GetByUsername(r.Context(), username)
 		if err != nil {
 			h.logger.Error("Failed to get user", zap.Error(err))
 			return apperror.InternalServerError("Login failed")
@@ -200,7 +199,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			h.logger.Warn("Failed to update last login", zap.Error(err), zap.String("userID", user.ID))
 		}
 
-		response, err := h.generateAuthResponse(user.ID, user.DisplayName, user.Email, user.Role)
+		response, err := h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role)
 		if err != nil {
 			return err
 		}
@@ -248,7 +247,7 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 			User: UserResponse{
 				ID:          guestID,
 				DisplayName: "guest",
-				Email:       "guest@temporary.local",
+				Username:    "guest",
 				Role:        "guest",
 			},
 		}
@@ -297,7 +296,7 @@ func (h *AuthHandler) RefreshToken() http.HandlerFunc {
 			User: UserResponse{
 				ID:          user.ID,
 				DisplayName: user.DisplayName,
-				Email:       user.Email,
+				Username:    user.Username,
 				Role:        user.Role,
 			},
 		}
@@ -313,7 +312,7 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	}
 
 	// Normalize inputs
-	normalizedEmail := validation.NormalizeEmail(req.Email)
+	normalizedUsername := validation.NormalizeUsername(req.Username)
 	normalizedDisplayName := validation.NormalizeDisplayName(req.DisplayName)
 
 	// Hash password
@@ -324,7 +323,7 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	}
 
 	// Create user
-	user, err := h.userStore.Create(ctx, normalizedDisplayName, normalizedEmail, hashedPassword, role)
+	user, err := h.userStore.Create(ctx, normalizedDisplayName, normalizedUsername, hashedPassword, role)
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			return nil, apperror.NewAppError(http.StatusConflict, apperror.ErrAlreadyExists, err.Error(), nil)
@@ -333,10 +332,10 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 		return nil, apperror.InternalServerError("Failed to create user")
 	}
 
-	return h.generateAuthResponse(user.ID, user.DisplayName, user.Email, user.Role)
+	return h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role)
 }
 
-func (h *AuthHandler) generateAuthResponse(userID, displayName, email, role string) (*LoginResponse, error) {
+func (h *AuthHandler) generateAuthResponse(userID, displayName, username, role string) (*LoginResponse, error) {
 	// Determine scopes based on role
 	scopes := []string{"read", "write"}
 	if role == "admin" {
@@ -356,7 +355,7 @@ func (h *AuthHandler) generateAuthResponse(userID, displayName, email, role stri
 		User: UserResponse{
 			ID:          userID,
 			DisplayName: displayName,
-			Email:       email,
+			Username:    username,
 			Role:        role,
 		},
 	}, nil
@@ -368,9 +367,9 @@ func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest) error {
 		return err
 	}
 
-	// Validate email
-	if !validation.IsValidEmailRequired(req.Email) {
-		return fmt.Errorf("valid email is required")
+	// Validate username
+	if err := validation.ValidateUsername(req.Username); err != nil {
+		return err
 	}
 
 	// Validate password

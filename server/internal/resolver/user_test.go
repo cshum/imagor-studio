@@ -32,7 +32,7 @@ func TestMe(t *testing.T) {
 	mockUser := &userstore.User{
 		ID:          "test-user-id",
 		DisplayName: "testuser",
-		Email:       "test@example.com",
+		Username:    "testuser",
 		Role:        "user",
 		IsActive:    true,
 		CreatedAt:   now,
@@ -47,7 +47,7 @@ func TestMe(t *testing.T) {
 	assert.NotNil(t, result)
 	assert.Equal(t, "test-user-id", result.ID)
 	assert.Equal(t, "testuser", result.DisplayName)
-	assert.Equal(t, "test@example.com", result.Email)
+	assert.Equal(t, "testuser", result.Username)
 	assert.Equal(t, "user", result.Role)
 	assert.True(t, result.IsActive)
 
@@ -94,7 +94,7 @@ func TestUser_AdminOnly(t *testing.T) {
 				targetUser := &userstore.User{
 					ID:          "target-user-id",
 					DisplayName: "targetuser",
-					Email:       "target@example.com",
+					Username:    "targetuser",
 					Role:        "user",
 					IsActive:    true,
 					CreatedAt:   now,
@@ -135,7 +135,7 @@ func TestUpdateProfile_SelfOperation(t *testing.T) {
 	currentUser := &userstore.User{
 		ID:          "test-user-id",
 		DisplayName: "oldDisplayName",
-		Email:       "old@example.com",
+		Username:    "oldusername",
 		Role:        "user",
 		IsActive:    true,
 		CreatedAt:   now,
@@ -145,7 +145,7 @@ func TestUpdateProfile_SelfOperation(t *testing.T) {
 	updatedUser := &userstore.User{
 		ID:          "test-user-id",
 		DisplayName: "newDisplayName",
-		Email:       "new@example.com",
+		Username:    "newusername",
 		Role:        "user",
 		IsActive:    true,
 		CreatedAt:   now,
@@ -153,16 +153,16 @@ func TestUpdateProfile_SelfOperation(t *testing.T) {
 	}
 
 	newDisplayName := "newDisplayName"
-	newEmail := "new@example.com"
+	newUsername := "newusername"
 
 	mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
 	mockUserStore.On("UpdateDisplayName", ctx, "test-user-id", "newDisplayName").Return(nil)
-	mockUserStore.On("UpdateEmail", ctx, "test-user-id", "new@example.com").Return(nil)
+	mockUserStore.On("UpdateUsername", ctx, "test-user-id", "newusername").Return(nil)
 	mockUserStore.On("GetByID", ctx, "test-user-id").Return(updatedUser, nil).Once()
 
 	input := gql.UpdateProfileInput{
 		DisplayName: &newDisplayName,
-		Email:       &newEmail,
+		Username:    &newUsername,
 	}
 
 	result, err := resolver.Mutation().UpdateProfile(ctx, input, nil) // nil userID means self-operation
@@ -170,7 +170,7 @@ func TestUpdateProfile_SelfOperation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "newDisplayName", result.DisplayName)
-	assert.Equal(t, "new@example.com", result.Email)
+	assert.Equal(t, "newusername", result.Username)
 
 	mockUserStore.AssertExpectations(t)
 }
@@ -190,7 +190,7 @@ func TestUpdateProfile_AdminOperation(t *testing.T) {
 	targetUser := &userstore.User{
 		ID:          "target-user-id",
 		DisplayName: "oldDisplayName",
-		Email:       "old@example.com",
+		Username:    "oldusername",
 		Role:        "user",
 		IsActive:    true,
 		CreatedAt:   now,
@@ -200,7 +200,7 @@ func TestUpdateProfile_AdminOperation(t *testing.T) {
 	updatedUser := &userstore.User{
 		ID:          "target-user-id",
 		DisplayName: "newDisplayName",
-		Email:       "new@example.com",
+		Username:    "newusername",
 		Role:        "user",
 		IsActive:    true,
 		CreatedAt:   now,
@@ -209,16 +209,16 @@ func TestUpdateProfile_AdminOperation(t *testing.T) {
 
 	targetUserID := "target-user-id"
 	newDisplayName := "newDisplayName"
-	newEmail := "new@example.com"
+	newUsername := "newusername"
 
 	mockUserStore.On("GetByID", ctx, "target-user-id").Return(targetUser, nil).Once()
 	mockUserStore.On("UpdateDisplayName", ctx, "target-user-id", "newDisplayName").Return(nil)
-	mockUserStore.On("UpdateEmail", ctx, "target-user-id", "new@example.com").Return(nil)
+	mockUserStore.On("UpdateUsername", ctx, "target-user-id", "newusername").Return(nil)
 	mockUserStore.On("GetByID", ctx, "target-user-id").Return(updatedUser, nil).Once()
 
 	input := gql.UpdateProfileInput{
 		DisplayName: &newDisplayName,
-		Email:       &newEmail,
+		Username:    &newUsername,
 	}
 
 	result, err := resolver.Mutation().UpdateProfile(ctx, input, &targetUserID)
@@ -226,7 +226,7 @@ func TestUpdateProfile_AdminOperation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "newDisplayName", result.DisplayName)
-	assert.Equal(t, "new@example.com", result.Email)
+	assert.Equal(t, "newusername", result.Username)
 
 	mockUserStore.AssertExpectations(t)
 }
@@ -273,7 +273,7 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 	currentUser := &userstore.User{
 		ID:          "test-user-id",
 		DisplayName: "currentuser",
-		Email:       "current@example.com",
+		Username:    "currentuser",
 		Role:        "user",
 		IsActive:    true,
 		CreatedAt:   now,
@@ -299,26 +299,26 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 			errorMsg:    "display name must be at most 100 characters long",
 		},
 		{
-			name: "Invalid email format",
+			name: "Invalid username format",
 			input: gql.UpdateProfileInput{
-				Email: stringPtr("invalid-email"),
+				Username: stringPtr("invalid-username!"),
 			},
 			setupMocks: func() {
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil)
 			},
 			expectError: true,
-			errorMsg:    "invalid email format",
+			errorMsg:    "username must start with an alphanumeric character and can only contain alphanumeric characters, underscores, and hyphens",
 		},
 		{
-			name: "Invalid email - no TLD",
+			name: "Username too short",
 			input: gql.UpdateProfileInput{
-				Email: stringPtr("test@localhost"),
+				Username: stringPtr("ab"),
 			},
 			setupMocks: func() {
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil)
 			},
 			expectError: true,
-			errorMsg:    "invalid email format",
+			errorMsg:    "username must be at least 3 characters long",
 		},
 		{
 			name: "Empty displayName after trimming - should ignore",
@@ -332,9 +332,9 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 			expectError: false, // Empty after trimming should be ignored
 		},
 		{
-			name: "Empty email after trimming - should ignore",
+			name: "Empty username after trimming - should ignore",
 			input: gql.UpdateProfileInput{
-				Email: stringPtr("   "),
+				Username: stringPtr("   "),
 			},
 			setupMocks: func() {
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
@@ -353,7 +353,7 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(&userstore.User{
 					ID:          "test-user-id",
 					DisplayName: "ValidUser",
-					Email:       "current@example.com",
+					Username:    "currentuser",
 					Role:        "user",
 					IsActive:    true,
 					CreatedAt:   now,
@@ -363,17 +363,17 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "Valid email normalization",
+			name: "Valid username normalization",
 			input: gql.UpdateProfileInput{
-				Email: stringPtr("  TEST@EXAMPLE.COM  "),
+				Username: stringPtr("  TESTUSER  "),
 			},
 			setupMocks: func() {
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
-				mockUserStore.On("UpdateEmail", ctx, "test-user-id", "test@example.com").Return(nil)
+				mockUserStore.On("UpdateUsername", ctx, "test-user-id", "testuser").Return(nil)
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(&userstore.User{
 					ID:          "test-user-id",
 					DisplayName: "currentuser",
-					Email:       "test@example.com",
+					Username:    "testuser",
 					Role:        "user",
 					IsActive:    true,
 					CreatedAt:   now,
@@ -425,7 +425,7 @@ func TestChangePassword_SelfOperation(t *testing.T) {
 	currentUser := &model.User{
 		ID:             "test-user-id",
 		DisplayName:    "testuser",
-		Email:          "test@example.com",
+		Username:       "testuser",
 		HashedPassword: hashedCurrentPassword,
 		Role:           "user",
 		IsActive:       true,
@@ -461,7 +461,7 @@ func TestChangePassword_AdminOperation(t *testing.T) {
 	targetUser := &model.User{
 		ID:             "target-user-id",
 		DisplayName:    "targetuser",
-		Email:          "target@example.com",
+		Username:       "targetuser",
 		HashedPassword: "old-hashed-password",
 		Role:           "user",
 		IsActive:       true,
@@ -502,7 +502,7 @@ func TestChangePassword_ValidationErrors(t *testing.T) {
 	currentUser := &model.User{
 		ID:             "test-user-id",
 		DisplayName:    "testuser",
-		Email:          "test@example.com",
+		Username:       "testuser",
 		HashedPassword: hashedCurrentPassword,
 		Role:           "user",
 		IsActive:       true,
@@ -607,7 +607,7 @@ func TestDeactivateAccount_SelfOperation(t *testing.T) {
 	targetUser := &userstore.User{
 		ID:          "test-user-id",
 		DisplayName: "testuser",
-		Email:       "test@example.com",
+		Username:    "testuser",
 		Role:        "user",
 		IsActive:    true,
 		CreatedAt:   now,
@@ -640,7 +640,7 @@ func TestDeactivateAccount_AdminOperation(t *testing.T) {
 	targetUser := &userstore.User{
 		ID:          "target-user-id",
 		DisplayName: "targetuser",
-		Email:       "target@example.com",
+		Username:    "targetuser",
 		Role:        "user",
 		IsActive:    true,
 		CreatedAt:   now,
@@ -759,7 +759,7 @@ func TestUsers_AdminOnly(t *testing.T) {
 					{
 						ID:          "user1",
 						DisplayName: "user1",
-						Email:       "user1@example.com",
+						Username:    "user1",
 						Role:        "user",
 						IsActive:    true,
 						CreatedAt:   now,

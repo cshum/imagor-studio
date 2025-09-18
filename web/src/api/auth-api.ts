@@ -1,19 +1,19 @@
 import { getBaseUrl } from '@/lib/api-utils'
 
 export interface LoginRequest {
-  email: string
+  username: string
   password: string
 }
 
 export interface RegisterRequest {
   displayName: string
-  email: string
+  username: string
   password: string
 }
 
 export interface RegisterAdminRequest {
   displayName: string
-  email: string
+  username: string
   password: string
 }
 
@@ -23,7 +23,7 @@ export interface LoginResponse {
   user: {
     id: string
     displayName: string
-    email: string
+    username: string
     role: string
   }
 }
@@ -88,7 +88,7 @@ export async function register(credentials: RegisterRequest): Promise<LoginRespo
 }
 
 /**
- * Login with email and password
+ * Login with username and password
  */
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
   const response = await fetch(`${BASE_URL}/api/auth/login`, {

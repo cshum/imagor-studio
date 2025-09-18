@@ -26,8 +26,8 @@ type MockUserStore struct {
 	mock.Mock
 }
 
-func (m *MockUserStore) Create(ctx context.Context, displayName, email, hashedPassword, role string) (*userstore.User, error) {
-	args := m.Called(ctx, displayName, email, hashedPassword, role)
+func (m *MockUserStore) Create(ctx context.Context, displayName, username, hashedPassword, role string) (*userstore.User, error) {
+	args := m.Called(ctx, displayName, username, hashedPassword, role)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -42,8 +42,8 @@ func (m *MockUserStore) GetByID(ctx context.Context, id string) (*userstore.User
 	return args.Get(0).(*userstore.User), args.Error(1)
 }
 
-func (m *MockUserStore) GetByEmail(ctx context.Context, email string) (*model.User, error) {
-	args := m.Called(ctx, email)
+func (m *MockUserStore) GetByUsername(ctx context.Context, username string) (*model.User, error) {
+	args := m.Called(ctx, username)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -65,8 +65,8 @@ func (m *MockUserStore) UpdateDisplayName(ctx context.Context, id string, displa
 	return args.Error(0)
 }
 
-func (m *MockUserStore) UpdateEmail(ctx context.Context, id string, email string) error {
-	args := m.Called(ctx, id, email)
+func (m *MockUserStore) UpdateUsername(ctx context.Context, id string, username string) error {
+	args := m.Called(ctx, id, username)
 	return args.Error(0)
 }
 
@@ -162,14 +162,14 @@ func TestRegister(t *testing.T) {
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Email:       "test@example.com",
+				Username:    "testuser",
 				Password:    "password123",
 			},
 			setupMocks: func() {
-				mockUserStore.On("Create", mock.Anything, "testuser", "test@example.com", mock.AnythingOfType("string"), "user").Return(&userstore.User{
+				mockUserStore.On("Create", mock.Anything, "testuser", "testuser", mock.AnythingOfType("string"), "user").Return(&userstore.User{
 					ID:          "user-123",
 					DisplayName: "testuser",
-					Email:       "test@example.com",
+					Username:    "testuser",
 					Role:        "user",
 					IsActive:    true,
 				}, nil)
@@ -182,11 +182,11 @@ func TestRegister(t *testing.T) {
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "existinguser",
-				Email:       "new@example.com",
+				Username:    "existinguser",
 				Password:    "password123",
 			},
 			setupMocks: func() {
-				mockUserStore.On("Create", mock.Anything, "existinguser", "new@example.com", mock.AnythingOfType("string"), "user").Return(nil, fmt.Errorf("displayName already exists"))
+				mockUserStore.On("Create", mock.Anything, "existinguser", "existinguser", mock.AnythingOfType("string"), "user").Return(nil, fmt.Errorf("displayName already exists"))
 			},
 			expectedStatus: http.StatusConflict,
 			expectError:    true,
@@ -197,11 +197,11 @@ func TestRegister(t *testing.T) {
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "newuser",
-				Email:       "existing@example.com",
+				Username:    "existinguser",
 				Password:    "password123",
 			},
 			setupMocks: func() {
-				mockUserStore.On("Create", mock.Anything, "newuser", "existing@example.com", mock.AnythingOfType("string"), "user").Return(nil, fmt.Errorf("email already exists"))
+				mockUserStore.On("Create", mock.Anything, "newuser", "existinguser", mock.AnythingOfType("string"), "user").Return(nil, fmt.Errorf("username already exists"))
 			},
 			expectedStatus: http.StatusConflict,
 			expectError:    true,
@@ -212,7 +212,7 @@ func TestRegister(t *testing.T) {
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Email:       "test@example.com",
+				Username:    "testuser",
 				Password:    "short",
 			},
 			setupMocks:     func() {},
@@ -225,7 +225,7 @@ func TestRegister(t *testing.T) {
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "",
-				Email:       "test@example.com",
+				Username:    "testuser",
 				Password:    "password123",
 			},
 			setupMocks:     func() {},
@@ -234,11 +234,11 @@ func TestRegister(t *testing.T) {
 			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
-			name:   "Missing email",
+			name:   "Missing username",
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Email:       "",
+				Username:    "",
 				Password:    "password123",
 			},
 			setupMocks:     func() {},
@@ -247,11 +247,11 @@ func TestRegister(t *testing.T) {
 			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
-			name:   "Invalid email format",
+			name:   "Invalid username format",
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Email:       "invalid-email",
+				Username:    "invalid-username!",
 				Password:    "password123",
 			},
 			setupMocks:     func() {},
@@ -315,7 +315,7 @@ func TestRegister(t *testing.T) {
 				assert.NotEmpty(t, loginResp.Token)
 				assert.Greater(t, loginResp.ExpiresIn, int64(0))
 				assert.Equal(t, "testuser", loginResp.User.DisplayName)
-				assert.Equal(t, "test@example.com", loginResp.User.Email)
+				assert.Equal(t, "testuser", loginResp.User.Username)
 				assert.Equal(t, "user", loginResp.User.Role)
 
 				// Verify the token is valid
@@ -352,17 +352,17 @@ func TestLogin(t *testing.T) {
 		errorCode      apperror.ErrorCode
 	}{
 		{
-			name:   "Valid login with email",
+			name:   "Valid login with username",
 			method: http.MethodPost,
 			body: LoginRequest{
-				Email:    "test@example.com",
+				Username: "testuser",
 				Password: "password123",
 			},
 			setupMocks: func() {
-				mockUserStore.On("GetByEmail", mock.Anything, "test@example.com").Return(&model.User{
+				mockUserStore.On("GetByUsername", mock.Anything, "testuser").Return(&model.User{
 					ID:             "user-123",
 					DisplayName:    "testuser",
-					Email:          "test@example.com",
+					Username:       "testuser",
 					HashedPassword: hashedPassword,
 					Role:           "user",
 					IsActive:       true,
@@ -376,14 +376,14 @@ func TestLogin(t *testing.T) {
 			name:   "Valid login with admin role",
 			method: http.MethodPost,
 			body: LoginRequest{
-				Email:    "admin@example.com",
+				Username: "admin",
 				Password: "password123",
 			},
 			setupMocks: func() {
-				mockUserStore.On("GetByEmail", mock.Anything, "admin@example.com").Return(&model.User{
+				mockUserStore.On("GetByUsername", mock.Anything, "admin").Return(&model.User{
 					ID:             "admin-123",
 					DisplayName:    "admin",
-					Email:          "admin@example.com",
+					Username:       "admin",
 					HashedPassword: hashedPassword,
 					Role:           "admin",
 					IsActive:       true,
@@ -397,14 +397,14 @@ func TestLogin(t *testing.T) {
 			name:   "Invalid password",
 			method: http.MethodPost,
 			body: LoginRequest{
-				Email:    "test@example.com",
+				Username: "testuser",
 				Password: "wrongpassword",
 			},
 			setupMocks: func() {
-				mockUserStore.On("GetByEmail", mock.Anything, "test@example.com").Return(&model.User{
+				mockUserStore.On("GetByUsername", mock.Anything, "testuser").Return(&model.User{
 					ID:             "user-123",
 					DisplayName:    "testuser",
-					Email:          "test@example.com",
+					Username:       "testuser",
 					HashedPassword: hashedPassword,
 					Role:           "user",
 					IsActive:       true,
@@ -418,21 +418,21 @@ func TestLogin(t *testing.T) {
 			name:   "User not found",
 			method: http.MethodPost,
 			body: LoginRequest{
-				Email:    "nonexistent@example.com",
+				Username: "nonexistent",
 				Password: "password123",
 			},
 			setupMocks: func() {
-				mockUserStore.On("GetByEmail", mock.Anything, "nonexistent@example.com").Return(nil, nil)
+				mockUserStore.On("GetByUsername", mock.Anything, "nonexistent").Return(nil, nil)
 			},
 			expectedStatus: http.StatusUnauthorized,
 			expectError:    true,
 			errorCode:      apperror.ErrInvalidCredentials,
 		},
 		{
-			name:   "Empty email",
+			name:   "Empty username",
 			method: http.MethodPost,
 			body: LoginRequest{
-				Email:    "",
+				Username: "",
 				Password: "password123",
 			},
 			setupMocks:     func() {},
@@ -444,7 +444,7 @@ func TestLogin(t *testing.T) {
 			name:   "Empty password",
 			method: http.MethodPost,
 			body: LoginRequest{
-				Email:    "testuser@example.com",
+				Username: "testuser",
 				Password: "",
 			},
 			setupMocks:     func() {},
@@ -554,7 +554,7 @@ func TestRefreshToken(t *testing.T) {
 				mockUserStore.On("GetByID", mock.Anything, "user1").Return(&userstore.User{
 					ID:          "user1",
 					DisplayName: "testuser",
-					Email:       "test@example.com",
+					Username:    "testuser",
 					Role:        "user",
 					IsActive:    true,
 				}, nil)
@@ -672,7 +672,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			name: "DisplayName too long",
 			body: RegisterRequest{
 				DisplayName: strings.Repeat("a", 101),
-				Email:       "test@example.com",
+				Username:    "testuser",
 				Password:    "password123",
 			},
 			setupMocks:     func() {},
@@ -681,34 +681,34 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			errorMessage:   "display name must be at most 100 characters long",
 		},
 		{
-			name: "Invalid email format",
+			name: "Invalid username format",
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Email:       "invalid-email",
+				Username:    "invalid-username!",
 				Password:    "password123",
 			},
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			errorCode:      apperror.ErrInvalidInput,
-			errorMessage:   "valid email is required",
+			errorMessage:   "username must start with an alphanumeric character and can only contain alphanumeric characters, underscores, and hyphens",
 		},
 		{
-			name: "Email without TLD",
+			name: "Username too short",
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Email:       "test@localhost",
+				Username:    "ab",
 				Password:    "password123",
 			},
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			errorCode:      apperror.ErrInvalidInput,
-			errorMessage:   "valid email is required",
+			errorMessage:   "username must be at least 3 characters long",
 		},
 		{
 			name: "Password too short",
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Email:       "test@example.com",
+				Username:    "testuser",
 				Password:    "1234567",
 			},
 			setupMocks:     func() {},
@@ -720,7 +720,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			name: "Password too long",
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Email:       "test@example.com",
+				Username:    "testuser",
 				Password:    strings.Repeat("a", 73),
 			},
 			setupMocks:     func() {},
@@ -732,14 +732,14 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			name: "Valid registration with normalization",
 			body: RegisterRequest{
 				DisplayName: "  TestUser  ",
-				Email:       "  TEST@EXAMPLE.COM  ",
+				Username:    "  testuser  ",
 				Password:    "password123",
 			},
 			setupMocks: func() {
-				mockUserStore.On("Create", mock.Anything, "TestUser", "test@example.com", mock.AnythingOfType("string"), "user").Return(&userstore.User{
+				mockUserStore.On("Create", mock.Anything, "TestUser", "testuser", mock.AnythingOfType("string"), "user").Return(&userstore.User{
 					ID:          "user-123",
 					DisplayName: "TestUser",
-					Email:       "test@example.com",
+					Username:    "testuser",
 					Role:        "user",
 					IsActive:    true,
 				}, nil)
@@ -751,7 +751,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			name: "Empty display name after trimming",
 			body: RegisterRequest{
 				DisplayName: "   ",
-				Email:       "test@example.com",
+				Username:    "testuser",
 				Password:    "password123",
 			},
 			setupMocks:     func() {},
@@ -760,22 +760,22 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			errorMessage:   "display name is required",
 		},
 		{
-			name: "Empty email",
+			name: "Empty username",
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Email:       "",
+				Username:    "",
 				Password:    "password123",
 			},
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			errorCode:      apperror.ErrInvalidInput,
-			errorMessage:   "valid email is required",
+			errorMessage:   "username is required",
 		},
 		{
 			name: "Empty password",
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Email:       "test@example.com",
+				Username:    "testuser",
 				Password:    "",
 			},
 			setupMocks:     func() {},
@@ -837,16 +837,16 @@ func TestLogin_InputNormalization(t *testing.T) {
 		description    string
 	}{
 		{
-			name: "Login with email (normalized to lowercase)",
+			name: "Login with username (normalized to lowercase)",
 			body: LoginRequest{
-				Email:    "  TEST@EXAMPLE.COM  ",
+				Username: "  TESTUSER  ",
 				Password: "password123",
 			},
 			setupMocks: func() {
-				mockUserStore.On("GetByEmail", mock.Anything, "test@example.com").Return(&model.User{
+				mockUserStore.On("GetByUsername", mock.Anything, "testuser").Return(&model.User{
 					ID:             "user-123",
 					DisplayName:    "TestUser",
-					Email:          "test@example.com",
+					Username:       "testuser",
 					HashedPassword: hashedPassword,
 					Role:           "user",
 					IsActive:       true,
@@ -854,7 +854,7 @@ func TestLogin_InputNormalization(t *testing.T) {
 				mockUserStore.On("UpdateLastLogin", mock.Anything, "user-123").Return(nil)
 			},
 			expectedStatus: http.StatusOK,
-			description:    "Should normalize email to lowercase",
+			description:    "Should normalize username to lowercase",
 		},
 	}
 
@@ -879,7 +879,7 @@ func TestLogin_InputNormalization(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotEmpty(t, loginResp.Token)
 				assert.Equal(t, "TestUser", loginResp.User.DisplayName)
-				assert.Equal(t, "test@example.com", loginResp.User.Email)
+				assert.Equal(t, "testuser", loginResp.User.Username)
 			}
 
 			mockUserStore.AssertExpectations(t)
@@ -963,7 +963,7 @@ func TestGuestLogin(t *testing.T) {
 				assert.NotEmpty(t, loginResp.Token)
 				assert.Equal(t, "guest", loginResp.User.Role)
 				assert.Equal(t, "guest", loginResp.User.DisplayName)
-				assert.Equal(t, "guest@temporary.local", loginResp.User.Email)
+				assert.Equal(t, "guest", loginResp.User.Username)
 
 				// Verify the token is valid
 				claims, err := tokenManager.ValidateToken(loginResp.Token)
@@ -1035,18 +1035,18 @@ func TestRegisterAdmin(t *testing.T) {
 		{
 			name: "Valid admin registration with registry population",
 			body: RegisterRequest{
-				DisplayName: "admin",
-				Email:       "admin@example.com",
+				DisplayName: "administrator",
+				Username:    "administrator",
 				Password:    "securepassword123",
 			},
 			existingUsers:  0,
 			expectedStatus: http.StatusCreated,
 			expectError:    false,
 			setupMocks: func() {
-				mockUserStore.On("Create", mock.Anything, "admin", "admin@example.com", mock.AnythingOfType("string"), "admin").Return(&userstore.User{
+				mockUserStore.On("Create", mock.Anything, "administrator", "administrator", mock.AnythingOfType("string"), "admin").Return(&userstore.User{
 					ID:          "admin-123",
-					DisplayName: "admin",
-					Email:       "admin@example.com",
+					DisplayName: "administrator",
+					Username:    "administrator",
 					Role:        "admin",
 					IsActive:    true,
 				}, nil)
@@ -1081,18 +1081,18 @@ func TestRegisterAdmin(t *testing.T) {
 		{
 			name: "Admin registration succeeds even if registry population fails",
 			body: RegisterRequest{
-				DisplayName: "admin",
-				Email:       "admin@example.com",
+				DisplayName: "administrator",
+				Username:    "administrator",
 				Password:    "securepassword123",
 			},
 			existingUsers:  0,
 			expectedStatus: http.StatusCreated,
 			expectError:    false,
 			setupMocks: func() {
-				mockUserStore.On("Create", mock.Anything, "admin", "admin@example.com", mock.AnythingOfType("string"), "admin").Return(&userstore.User{
+				mockUserStore.On("Create", mock.Anything, "administrator", "administrator", mock.AnythingOfType("string"), "admin").Return(&userstore.User{
 					ID:          "admin-123",
-					DisplayName: "admin",
-					Email:       "admin@example.com",
+					DisplayName: "administrator",
+					Username:    "administrator",
 					Role:        "admin",
 					IsActive:    true,
 				}, nil)
@@ -1104,8 +1104,8 @@ func TestRegisterAdmin(t *testing.T) {
 		{
 			name: "Admin registration when users already exist",
 			body: RegisterRequest{
-				DisplayName: "admin",
-				Email:       "admin@example.com",
+				DisplayName: "administrator",
+				Username:    "administrator",
 				Password:    "securepassword123",
 			},
 			existingUsers:  1,

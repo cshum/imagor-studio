@@ -33,7 +33,7 @@
       "disabled": "Disabled"
     },
     "labels": {
-      "email": "Email",
+      "username": "Username",
       "password": "Password",
       "name": "Name",
       "role": "Role"
@@ -47,22 +47,34 @@
       "loginFailed": "Login failed"
     },
     "validation": {
-      "emailRequired": "Please enter a valid email address",
+      "usernameRequired": "Please enter a valid username",
+      "usernameMinLength": "Username must be at least 3 characters",
+      "usernameMaxLength": "Username must be at most 30 characters",
       "passwordRequired": "Password is required",
-      "invalidEmail": "Please enter a valid email address"
+      "invalidUsername": "Please enter a valid username"
     }
   },
   "forms": {
     "placeholders": {
-      "enterEmail": "Enter your email",
+      "enterUsername": "Enter your username",
       "enterPassword": "Enter your password",
+      "confirmPassword": "Confirm your password",
       "enterName": "Enter your name"
     },
     "validation": {
       "required": "This field is required",
-      "invalidEmail": "Please enter a valid email address",
+      "invalidUsername": "Please enter a valid username",
       "passwordTooShort": "Password must be at least {{min}} characters",
-      "emailInvalid": "Please enter a valid email address"
+      "usernameInvalid": "Please enter a valid username",
+      "displayNameMinLength": "Display name must be at least 3 characters long",
+      "displayNameMaxLength": "Display name must be less than 100 characters",
+      "usernameMinLength": "Username must be at least 3 characters",
+      "usernameMaxLength": "Username must be at most 30 characters",
+      "usernamePattern": "Username can only contain letters, numbers, underscores, and hyphens",
+      "currentPasswordRequired": "Current password is required",
+      "passwordMinLength": "Password must be at least 8 characters long",
+      "passwordMaxLength": "Password must be less than 72 characters",
+      "passwordsDoNotMatch": "Passwords don't match"
     }
   },
   "navigation": {
@@ -85,7 +97,33 @@
       "folderEmpty": "This folder is empty"
     },
     "profile": {
-      "title": "Profile"
+      "title": "Profile",
+      "profileInformation": "Profile Information",
+      "profileInformationDescription": "Update your account profile information.",
+      "displayName": "Display Name",
+      "displayNamePlaceholder": "Enter your display name",
+      "usernamePlaceholder": "Enter your username",
+      "updateProfile": "Update Profile",
+      "securitySettings": "Security Settings",
+      "securitySettingsDescription": "Manage your account security and password.",
+      "password": "Password",
+      "passwordDescription": "Change your account password",
+      "changePassword": "Change Password",
+      "changePasswordTitle": "Change Password",
+      "changePasswordDescription": "Enter your current password and choose a new one.",
+      "currentPassword": "Current Password",
+      "currentPasswordPlaceholder": "Enter your current password",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "Enter your new password",
+      "confirmPassword": "Confirm New Password",
+      "confirmPasswordPlaceholder": "Confirm your new password",
+      "updatePassword": "Update Password",
+      "profileUpdatedSuccess": "Profile updated successfully!",
+      "passwordUpdatedSuccess": "Password updated successfully!",
+      "updateProfileFailed": "Failed to update profile",
+      "updatePasswordFailed": "Failed to update password",
+      "usernameAlreadyInUse": "This username is already in use",
+      "currentPasswordIncorrect": "Current password is incorrect"
     },
     "admin": {
       "title": "Admin",
@@ -95,8 +133,9 @@
       "createAdminAccount": "Create Admin Account",
       "systemConfiguration": "System Configuration",
       "storageConfiguration": "Storage Configuration",
-      "emailAddress": "Email Address",
+      "username": "Username",
       "password": "Password",
+      "confirmPassword": "Confirm Password",
       "createAccount": "Create Account",
       "skipForNow": "Skip for Now",
       "next": "Next",

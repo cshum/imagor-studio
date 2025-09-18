@@ -47,7 +47,14 @@ const createUserSchema = z.object({
     .string()
     .min(3, 'Display name must be at least 3 characters long')
     .max(100, 'Display name must be less than 100 characters'),
-  email: z.string().email('Please enter a valid email address'),
+  username: z
+    .string()
+    .min(3, 'Username must be at least 3 characters')
+    .max(30, 'Username must be at most 30 characters')
+    .regex(
+      /^[a-zA-Z0-9_-]+$/,
+      'Username can only contain letters, numbers, underscores, and hyphens',
+    ),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters long')
@@ -60,7 +67,14 @@ const editUserSchema = z.object({
     .string()
     .min(3, 'Display name must be at least 3 characters long')
     .max(100, 'Display name must be less than 100 characters'),
-  email: z.string().email('Please enter a valid email address'),
+  username: z
+    .string()
+    .min(3, 'Username must be at least 3 characters')
+    .max(30, 'Username must be at most 30 characters')
+    .regex(
+      /^[a-zA-Z0-9_-]+$/,
+      'Username can only contain letters, numbers, underscores, and hyphens',
+    ),
   role: z.enum(['user', 'admin']),
 })
 
@@ -86,7 +100,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       displayName: '',
-      email: '',
+      username: '',
       password: '',
       role: 'user',
     },
@@ -96,7 +110,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
     resolver: zodResolver(editUserSchema),
     defaultValues: {
       displayName: '',
-      email: '',
+      username: '',
       role: 'user',
     },
   })
@@ -114,12 +128,12 @@ export function UsersPage({ loaderData }: UsersPageProps) {
 
       // Check if it's a validation error that should highlight a field
       if (
-        errorMessage.toLowerCase().includes('email') &&
+        errorMessage.toLowerCase().includes('username') &&
         errorMessage.toLowerCase().includes('already')
       ) {
-        createForm.setError('email', { message: 'This email is already in use' })
-      } else if (errorMessage.toLowerCase().includes('email')) {
-        createForm.setError('email', { message: errorMessage })
+        createForm.setError('username', { message: 'This username is already in use' })
+      } else if (errorMessage.toLowerCase().includes('username')) {
+        createForm.setError('username', { message: errorMessage })
       } else if (errorMessage.toLowerCase().includes('display name')) {
         createForm.setError('displayName', { message: errorMessage })
       } else {
@@ -136,7 +150,10 @@ export function UsersPage({ loaderData }: UsersPageProps) {
 
     setIsUpdating(true)
     try {
-      await updateProfile({ displayName: values.displayName, email: values.email }, selectedUser.id)
+      await updateProfile(
+        { displayName: values.displayName, username: values.username },
+        selectedUser.id,
+      )
       toast.success('User updated successfully!')
       setIsEditDialogOpen(false)
       setSelectedUser(null)
@@ -146,12 +163,12 @@ export function UsersPage({ loaderData }: UsersPageProps) {
 
       // Check if it's a validation error that should highlight a field
       if (
-        errorMessage.toLowerCase().includes('email') &&
+        errorMessage.toLowerCase().includes('username') &&
         errorMessage.toLowerCase().includes('already')
       ) {
-        editForm.setError('email', { message: 'This email is already in use' })
-      } else if (errorMessage.toLowerCase().includes('email')) {
-        editForm.setError('email', { message: errorMessage })
+        editForm.setError('username', { message: 'This username is already in use' })
+      } else if (errorMessage.toLowerCase().includes('username')) {
+        editForm.setError('username', { message: errorMessage })
       } else if (errorMessage.toLowerCase().includes('display name')) {
         editForm.setError('displayName', { message: errorMessage })
       } else {
@@ -184,7 +201,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       setSelectedUser(user)
       editForm.reset({
         displayName: user.displayName,
-        email: user.email,
+        username: user.username,
         ...(user.role === 'user' && { role: 'user' }),
         ...(user.role === 'admin' && { role: 'admin' }),
       })
@@ -195,7 +212,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
   const filteredUsers = users.filter(
     (user) =>
       user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
+      user.username.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   return (
@@ -241,17 +258,12 @@ export function UsersPage({ loaderData }: UsersPageProps) {
 
                     <FormField
                       control={createForm.control}
-                      name='email'
+                      name='username'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>Username</FormLabel>
                           <FormControl>
-                            <Input
-                              type='email'
-                              placeholder='Enter email address'
-                              {...field}
-                              disabled={isCreating}
-                            />
+                            <Input placeholder='Enter username' {...field} disabled={isCreating} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -323,7 +335,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
             <div className='relative'>
               <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
               <Input
-                placeholder='Search users by name or email...'
+                placeholder='Search users by name or username...'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className='pl-10'
@@ -334,7 +346,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
             <div className='hidden rounded-lg border md:block'>
               <div className='bg-muted/50 grid grid-cols-5 gap-4 border-b p-4 font-medium'>
                 <div>Name</div>
-                <div>Email</div>
+                <div>Username</div>
                 <div>Role</div>
                 <div>Status</div>
                 <div>Actions</div>
@@ -356,7 +368,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                 filteredUsers.map((user) => (
                   <div key={user.id} className='grid grid-cols-5 items-center gap-4 border-b p-4'>
                     <div className='font-medium'>{user.displayName}</div>
-                    <div className='text-muted-foreground'>{user.email}</div>
+                    <div className='text-muted-foreground'>{user.username}</div>
                     <div>
                       <span
                         className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
@@ -439,8 +451,8 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                       </span>
                     </div>
 
-                    {/* Email */}
-                    <div className='text-muted-foreground'>{user.email}</div>
+                    {/* Username */}
+                    <div className='text-muted-foreground'>{user.username}</div>
 
                     {/* Role and Actions */}
                     <div className='flex items-center justify-between pt-2'>
@@ -507,17 +519,12 @@ export function UsersPage({ loaderData }: UsersPageProps) {
 
               <FormField
                 control={editForm.control}
-                name='email'
+                name='username'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Username</FormLabel>
                     <FormControl>
-                      <Input
-                        type='email'
-                        placeholder='Enter email address'
-                        {...field}
-                        disabled={isUpdating}
-                      />
+                      <Input placeholder='Enter username' {...field} disabled={isUpdating} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

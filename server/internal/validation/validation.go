@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -33,27 +34,37 @@ func ValidatePassword(password string) error {
 	if len(password) > 72 { // bcrypt limit
 		return fmt.Errorf("password must be at most 72 characters long")
 	}
+	return nil
+}
 
-	// Optional: Add complexity requirements
-	// hasUpper, hasLower, hasDigit, hasSpecial := false, false, false, false
-	// for _, r := range password {
-	// 	switch {
-	// 	case unicode.IsUpper(r):
-	// 		hasUpper = true
-	// 	case unicode.IsLower(r):
-	// 		hasLower = true
-	// 	case unicode.IsDigit(r):
-	// 		hasDigit = true
-	// 	case unicode.IsPunct(r) || unicode.IsSymbol(r):
-	// 		hasSpecial = true
-	// 	}
-	// }
-	//
-	// if !hasUpper || !hasLower || !hasDigit {
-	// 	return fmt.Errorf("password must contain at least one uppercase letter, one lowercase letter, and one digit")
-	// }
+var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]*$`)
+
+// ValidateUsername validates a username according to common rules
+func ValidateUsername(username string) error {
+	username = strings.TrimSpace(username)
+
+	if username == "" {
+		return fmt.Errorf("username is required")
+	}
+
+	if len(username) < 3 {
+		return fmt.Errorf("username must be at least 3 characters long")
+	}
+
+	if len(username) > 30 {
+		return fmt.Errorf("username must be at most 30 characters long")
+	}
+
+	if !usernameRegex.MatchString(username) {
+		return fmt.Errorf("username must start with an alphanumeric character and can only contain alphanumeric characters, underscores, and hyphens")
+	}
 
 	return nil
+}
+
+// NormalizeUsername normalizes a username
+func NormalizeUsername(username string) string {
+	return strings.ToLower(strings.TrimSpace(username))
 }
 
 // NormalizeDisplayName normalizes a displayName

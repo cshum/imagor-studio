@@ -33,8 +33,8 @@ func setupTestDB(t *testing.T) (*bun.DB, func()) {
 	_, err = db.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS users (
 			id TEXT PRIMARY KEY,
-			display_name TEXT NOT NULL UNIQUE,
-			email TEXT NOT NULL UNIQUE,
+			display_name TEXT NOT NULL,
+			username TEXT NOT NULL UNIQUE,
 			hashed_password TEXT NOT NULL,
 			role TEXT NOT NULL DEFAULT 'user',
 			is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -45,8 +45,8 @@ func setupTestDB(t *testing.T) (*bun.DB, func()) {
 	require.NoError(t, err)
 
 	_, err = db.ExecContext(ctx, `
-		CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email 
-		ON users (email)
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username 
+		ON users (username)
 	`)
 	require.NoError(t, err)
 
@@ -69,7 +69,7 @@ func TestUserStore_Create(t *testing.T) {
 	tests := []struct {
 		name           string
 		displayName    string
-		email          string
+		username       string
 		hashedPassword string
 		role           string
 		expectError    bool
@@ -78,7 +78,7 @@ func TestUserStore_Create(t *testing.T) {
 		{
 			name:           "Valid user creation",
 			displayName:    "testuser",
-			email:          "test@example.com",
+			username:       "testuser",
 			hashedPassword: "hashedpassword123",
 			role:           "user",
 			expectError:    false,
@@ -86,24 +86,24 @@ func TestUserStore_Create(t *testing.T) {
 		{
 			name:           "Admin role",
 			displayName:    "adminuser",
-			email:          "admin@example.com",
+			username:       "adminuser",
 			hashedPassword: "hashedpassword123",
 			role:           "admin",
 			expectError:    false,
 		},
 		{
-			name:           "Duplicate email",
+			name:           "Duplicate username",
 			displayName:    "differentuser",
-			email:          "test@example.com", // Same as first test
+			username:       "testuser", // Same as first test
 			hashedPassword: "hashedpassword123",
 			role:           "user",
 			expectError:    true,
-			errorContains:  "email already exists",
+			errorContains:  "username already exists",
 		},
 		{
 			name:           "Empty displayName",
 			displayName:    "",
-			email:          "empty@example.com",
+			username:       "emptyname",
 			hashedPassword: "hashedpassword123",
 			role:           "user",
 			expectError:    true,
@@ -112,34 +112,34 @@ func TestUserStore_Create(t *testing.T) {
 		{
 			name:           "Whitespace only displayName",
 			displayName:    "   ",
-			email:          "whitespace@example.com",
+			username:       "whitespace",
 			hashedPassword: "hashedpassword123",
 			role:           "user",
 			expectError:    true,
 			errorContains:  "displayName cannot be empty",
 		},
 		{
-			name:           "Empty email",
-			displayName:    "emptyemail",
-			email:          "",
+			name:           "Empty username",
+			displayName:    "emptyusername",
+			username:       "",
 			hashedPassword: "hashedpassword123",
 			role:           "user",
 			expectError:    true,
-			errorContains:  "email cannot be empty",
+			errorContains:  "username cannot be empty",
 		},
 		{
-			name:           "Whitespace only email",
-			displayName:    "whitespacemail",
-			email:          "   ",
+			name:           "Whitespace only username",
+			displayName:    "whitespaceuser",
+			username:       "   ",
 			hashedPassword: "hashedpassword123",
 			role:           "user",
 			expectError:    true,
-			errorContains:  "email cannot be empty",
+			errorContains:  "username cannot be empty",
 		},
 		{
 			name:           "Empty password",
 			displayName:    "emptypass",
-			email:          "emptypass@example.com",
+			username:       "emptypass",
 			hashedPassword: "",
 			role:           "user",
 			expectError:    true,
@@ -148,7 +148,7 @@ func TestUserStore_Create(t *testing.T) {
 		{
 			name:           "Empty role",
 			displayName:    "emptyrole",
-			email:          "emptyrole@example.com",
+			username:       "emptyrole",
 			hashedPassword: "hashedpassword123",
 			role:           "",
 			expectError:    true,
@@ -158,7 +158,7 @@ func TestUserStore_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			user, err := store.Create(ctx, tt.displayName, tt.email, tt.hashedPassword, tt.role)
+			user, err := store.Create(ctx, tt.displayName, tt.username, tt.hashedPassword, tt.role)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -170,7 +170,7 @@ func TestUserStore_Create(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, user)
 				assert.Equal(t, strings.TrimSpace(tt.displayName), user.DisplayName)
-				assert.Equal(t, strings.TrimSpace(tt.email), user.Email)
+				assert.Equal(t, strings.TrimSpace(tt.username), user.Username)
 				assert.Equal(t, strings.TrimSpace(tt.role), user.Role)
 				assert.True(t, user.IsActive)
 				assert.NotEmpty(t, user.ID)
@@ -181,7 +181,7 @@ func TestUserStore_Create(t *testing.T) {
 	}
 }
 
-func TestUserStore_GetByEmail(t *testing.T) {
+func TestUserStore_GetByUsername(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
@@ -190,36 +190,36 @@ func TestUserStore_GetByEmail(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test user
-	user, err := store.Create(ctx, "testuser", "test@example.com", "hashedpass", "user")
+	user, err := store.Create(ctx, "testuser", "testuser", "hashedpass", "user")
 	require.NoError(t, err)
 
 	tests := []struct {
 		name                string
-		email               string
+		username            string
 		expectFound         bool
 		expectedDisplayName string
 	}{
 		{
-			name:                "Find by email",
-			email:               "test@example.com",
+			name:                "Find by username",
+			username:            "testuser",
 			expectFound:         true,
 			expectedDisplayName: "testuser",
 		},
 		{
-			name:        "Non-existent email",
-			email:       "nonexistent@example.com",
+			name:        "Non-existent username",
+			username:    "nonexistent",
 			expectFound: false,
 		},
 		{
 			name:        "Empty string",
-			email:       "",
+			username:    "",
 			expectFound: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			foundUser, err := store.GetByEmail(ctx, tt.email)
+			foundUser, err := store.GetByUsername(ctx, tt.username)
 
 			assert.NoError(t, err)
 			if tt.expectFound {
@@ -242,7 +242,7 @@ func TestUserStore_GetByID(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test user
-	createdUser, err := store.Create(ctx, "testuser", "test@example.com", "hashedpass", "user")
+	createdUser, err := store.Create(ctx, "testuser", "testuser", "hashedpass", "user")
 	require.NoError(t, err)
 
 	// Test getting by ID
@@ -251,7 +251,7 @@ func TestUserStore_GetByID(t *testing.T) {
 	assert.NotNil(t, foundUser)
 	assert.Equal(t, createdUser.ID, foundUser.ID)
 	assert.Equal(t, createdUser.DisplayName, foundUser.DisplayName)
-	assert.Equal(t, createdUser.Email, foundUser.Email)
+	assert.Equal(t, createdUser.Username, foundUser.Username)
 	assert.Equal(t, createdUser.Role, foundUser.Role)
 
 	// Test getting non-existent user
@@ -277,7 +277,7 @@ func TestUserStore_UpdateLastLogin(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test user
-	user, err := store.Create(ctx, "testuser", "test@example.com", "hashedpass", "user")
+	user, err := store.Create(ctx, "testuser", "testuser", "hashedpass", "user")
 	require.NoError(t, err)
 
 	originalUpdatedAt := user.UpdatedAt
@@ -309,7 +309,7 @@ func TestUserStore_UpdatePassword(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test user
-	user, err := store.Create(ctx, "testuser", "test@example.com", "oldhashedpass", "user")
+	user, err := store.Create(ctx, "testuser", "testuser", "oldhashedpass", "user")
 	require.NoError(t, err)
 
 	newHashedPassword := "newhashedpassword123"
@@ -319,7 +319,7 @@ func TestUserStore_UpdatePassword(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify password was updated
-	foundUser, err := store.GetByEmail(ctx, "test@example.com")
+	foundUser, err := store.GetByUsername(ctx, "testuser")
 	assert.NoError(t, err)
 	assert.Equal(t, newHashedPassword, foundUser.HashedPassword)
 
@@ -337,7 +337,7 @@ func TestUserStore_SetActive(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test user
-	user, err := store.Create(ctx, "testuser", "test@example.com", "hashedpass", "user")
+	user, err := store.Create(ctx, "testuser", "testuser", "hashedpass", "user")
 	require.NoError(t, err)
 	assert.True(t, user.IsActive)
 
@@ -350,8 +350,8 @@ func TestUserStore_SetActive(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Nil(t, inactiveUser)
 
-	// Verify user is not found by GetByEmail (only returns active users)
-	inactiveUser2, err := store.GetByEmail(ctx, "testuser")
+	// Verify user is not found by GetByUsername (only returns active users)
+	inactiveUser2, err := store.GetByUsername(ctx, "testuser")
 	assert.NoError(t, err)
 	assert.Nil(t, inactiveUser2)
 
@@ -379,10 +379,10 @@ func TestUserStore_IsolationAndSecurity(t *testing.T) {
 	ctx := context.Background()
 
 	// Create multiple users
-	user1, err := store.Create(ctx, "user1", "user1@example.com", "hash1", "user")
+	user1, err := store.Create(ctx, "user1", "user1", "hash1", "user")
 	require.NoError(t, err)
 
-	user2, err := store.Create(ctx, "user2", "user2@example.com", "hash2", "admin")
+	user2, err := store.Create(ctx, "user2", "user2", "hash2", "admin")
 	require.NoError(t, err)
 
 	// Verify isolation - each user should only get their own data
@@ -396,7 +396,7 @@ func TestUserStore_IsolationAndSecurity(t *testing.T) {
 
 	// Verify users can't access each other's data by accident
 	assert.NotEqual(t, user1.ID, user2.ID)
-	assert.NotEqual(t, user1.Email, user2.Email)
+	assert.NotEqual(t, user1.Username, user2.Username)
 	assert.NotEqual(t, user1.DisplayName, user2.DisplayName)
 }
 
@@ -411,40 +411,40 @@ func TestUserStore_SpecialCharacters(t *testing.T) {
 	tests := []struct {
 		name        string
 		displayName string
-		email       string
+		username    string
 	}{
 		{
 			name:        "Unicode displayName",
 			displayName: "пользователь123",
-			email:       "unicode@example.com",
+			username:    "unicode_user",
 		},
 		{
 			name:        "Special chars in displayName",
 			displayName: "user-with_special.chars",
-			email:       "special@example.com",
+			username:    "special_user",
 		},
 		{
-			name:        "Email with plus",
-			displayName: "emailtest",
-			email:       "test+tag@example.com",
+			name:        "Username with underscore",
+			displayName: "usernametest",
+			username:    "test_user",
 		},
 		{
 			name:        "Long displayName",
 			displayName: strings.Repeat("a", 50),
-			email:       "long@example.com",
+			username:    "long_user",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			user, err := store.Create(ctx, tt.displayName, tt.email, "hashedpass", "user")
+			user, err := store.Create(ctx, tt.displayName, tt.username, "hashedpass", "user")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.displayName, user.DisplayName)
-			assert.Equal(t, tt.email, user.Email)
+			assert.Equal(t, tt.username, user.Username)
 
-			foundUser2, err := store.GetByEmail(ctx, tt.email)
+			foundUser2, err := store.GetByUsername(ctx, tt.username)
 			assert.NoError(t, err)
-			assert.Equal(t, tt.email, foundUser2.Email)
+			assert.Equal(t, tt.username, foundUser2.Username)
 		})
 	}
 }
@@ -458,7 +458,7 @@ func TestUserStore_ConcurrentAccess(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a user
-	user, err := store.Create(ctx, "concurrent", "concurrent@example.com", "hash", "user")
+	user, err := store.Create(ctx, "concurrent", "concurrent", "hash", "user")
 	require.NoError(t, err)
 
 	// Test sequential operations to verify functionality
@@ -487,15 +487,15 @@ func BenchmarkUserStore_Create(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		displayName := fmt.Sprintf("user%d", i)
-		email := fmt.Sprintf("user%d@example.com", i)
-		_, err := store.Create(ctx, displayName, email, "hashedpass", "user")
+		username := fmt.Sprintf("user%d", i)
+		_, err := store.Create(ctx, displayName, username, "hashedpass", "user")
 		if err != nil {
 			b.Fatal(err)
 		}
 	}
 }
 
-func BenchmarkUserStore_GetByEmail(b *testing.B) {
+func BenchmarkUserStore_GetByUsername(b *testing.B) {
 	db, cleanup := setupTestDB(&testing.T{})
 	defer cleanup()
 
@@ -504,14 +504,14 @@ func BenchmarkUserStore_GetByEmail(b *testing.B) {
 	ctx := context.Background()
 
 	// Setup data
-	_, err := store.Create(ctx, "benchuser", "bench@example.com", "hashedpass", "user")
+	_, err := store.Create(ctx, "benchuser", "benchuser", "hashedpass", "user")
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := store.GetByEmail(ctx, "benchuser")
+		_, err := store.GetByUsername(ctx, "benchuser")
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -528,7 +528,7 @@ func TestUserStore_GetByIDWithPassword(t *testing.T) {
 
 	// Create test user
 	hashedPassword := "hashed-password-123"
-	createdUser, err := store.Create(ctx, "testuser", "test@example.com", hashedPassword, "user")
+	createdUser, err := store.Create(ctx, "testuser", "testuser", hashedPassword, "user")
 	require.NoError(t, err)
 
 	// Test getting by ID with password
@@ -537,7 +537,7 @@ func TestUserStore_GetByIDWithPassword(t *testing.T) {
 	assert.NotNil(t, foundUser)
 	assert.Equal(t, createdUser.ID, foundUser.ID)
 	assert.Equal(t, "testuser", foundUser.DisplayName)
-	assert.Equal(t, "test@example.com", foundUser.Email)
+	assert.Equal(t, "testuser", foundUser.Username)
 	assert.Equal(t, hashedPassword, foundUser.HashedPassword)
 	assert.Equal(t, "user", foundUser.Role)
 
@@ -566,7 +566,7 @@ func TestUserStore_InputValidation(t *testing.T) {
 	tests := []struct {
 		name           string
 		displayName    string
-		email          string
+		username       string
 		hashedPassword string
 		role           string
 		expectError    bool
@@ -575,15 +575,15 @@ func TestUserStore_InputValidation(t *testing.T) {
 		{
 			name:           "DisplayName with leading/trailing spaces",
 			displayName:    "  spaceuser  ",
-			email:          "space@example.com",
+			username:       "spaceuser",
 			hashedPassword: "hashedpass",
 			role:           "user",
 			expectError:    false,
 		},
 		{
-			name:           "Email with leading/trailing spaces",
-			displayName:    "emailspace",
-			email:          "  emailspace@example.com  ",
+			name:           "Username with leading/trailing spaces",
+			displayName:    "usernamespace",
+			username:       "  usernamespace  ",
 			hashedPassword: "hashedpass",
 			role:           "user",
 			expectError:    false,
@@ -591,7 +591,7 @@ func TestUserStore_InputValidation(t *testing.T) {
 		{
 			name:           "Role with leading/trailing spaces",
 			displayName:    "rolespace",
-			email:          "rolespace@example.com",
+			username:       "rolespace",
 			hashedPassword: "hashedpass",
 			role:           "  admin  ",
 			expectError:    false,
@@ -599,7 +599,7 @@ func TestUserStore_InputValidation(t *testing.T) {
 		{
 			name:           "All fields with spaces should be trimmed",
 			displayName:    "  trimtest  ",
-			email:          "  trimtest@example.com  ",
+			username:       "  trimtest  ",
 			hashedPassword: "hashedpass",
 			role:           "  user  ",
 			expectError:    false,
@@ -608,7 +608,7 @@ func TestUserStore_InputValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			user, err := store.Create(ctx, tt.displayName, tt.email, tt.hashedPassword, tt.role)
+			user, err := store.Create(ctx, tt.displayName, tt.username, tt.hashedPassword, tt.role)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -622,14 +622,14 @@ func TestUserStore_InputValidation(t *testing.T) {
 
 				// Verify trimming
 				assert.Equal(t, strings.TrimSpace(tt.displayName), user.DisplayName)
-				assert.Equal(t, strings.TrimSpace(tt.email), user.Email)
+				assert.Equal(t, strings.TrimSpace(tt.username), user.Username)
 				assert.Equal(t, strings.TrimSpace(tt.role), user.Role)
 
 				// Should not contain leading/trailing spaces
 				assert.False(t, strings.HasPrefix(user.DisplayName, " "))
 				assert.False(t, strings.HasSuffix(user.DisplayName, " "))
-				assert.False(t, strings.HasPrefix(user.Email, " "))
-				assert.False(t, strings.HasSuffix(user.Email, " "))
+				assert.False(t, strings.HasPrefix(user.Username, " "))
+				assert.False(t, strings.HasSuffix(user.Username, " "))
 				assert.False(t, strings.HasPrefix(user.Role, " "))
 				assert.False(t, strings.HasSuffix(user.Role, " "))
 			}

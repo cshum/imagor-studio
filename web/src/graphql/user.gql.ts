@@ -4,7 +4,7 @@ export const UserFragment = gql(`
   fragment UserInfo on User {
     id
     displayName
-    email
+    username
     role
     isActive
     createdAt

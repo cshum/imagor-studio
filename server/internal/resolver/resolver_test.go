@@ -52,8 +52,8 @@ type MockUserStore struct {
 	mock.Mock
 }
 
-func (m *MockUserStore) Create(ctx context.Context, displayName, email, hashedPassword, role string) (*userstore.User, error) {
-	args := m.Called(ctx, displayName, email, hashedPassword, role)
+func (m *MockUserStore) Create(ctx context.Context, displayName, username, hashedPassword, role string) (*userstore.User, error) {
+	args := m.Called(ctx, displayName, username, hashedPassword, role)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -68,8 +68,8 @@ func (m *MockUserStore) GetByID(ctx context.Context, id string) (*userstore.User
 	return args.Get(0).(*userstore.User), args.Error(1)
 }
 
-func (m *MockUserStore) GetByEmail(ctx context.Context, email string) (*model.User, error) {
-	args := m.Called(ctx, email)
+func (m *MockUserStore) GetByUsername(ctx context.Context, username string) (*model.User, error) {
+	args := m.Called(ctx, username)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -91,8 +91,8 @@ func (m *MockUserStore) UpdateDisplayName(ctx context.Context, id string, displa
 	return args.Error(0)
 }
 
-func (m *MockUserStore) UpdateEmail(ctx context.Context, id string, email string) error {
-	args := m.Called(ctx, id, email)
+func (m *MockUserStore) UpdateUsername(ctx context.Context, id string, username string) error {
+	args := m.Called(ctx, id, username)
 	return args.Error(0)
 }
 

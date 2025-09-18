@@ -32,8 +32,9 @@ import { initAuth, useAuth } from '@/stores/auth-store'
 import { setHomeTitle } from '@/stores/folder-tree-store'
 
 type AdminSetupForm = {
-  email: string
+  username: string
   password: string
+  confirmPassword: string
 }
 
 // Define system settings for step 2 - will be translated in component
@@ -92,14 +93,13 @@ function AccountStepContent({
           <div className='space-y-4'>
             <FormField
               control={form.control}
-              name='email'
+              name='username'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('pages.admin.emailAddress')}</FormLabel>
+                  <FormLabel>{t('pages.admin.username')}</FormLabel>
                   <FormControl>
                     <Input
-                      type='email'
-                      placeholder={t('forms.placeholders.enterEmail')}
+                      placeholder={t('forms.placeholders.enterUsername')}
                       {...field}
                       disabled={form.formState.isSubmitting}
                     />
@@ -119,6 +119,25 @@ function AccountStepContent({
                     <Input
                       type='password'
                       placeholder={t('forms.placeholders.enterPassword')}
+                      {...field}
+                      disabled={form.formState.isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='confirmPassword'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.admin.confirmPassword')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='password'
+                      placeholder={t('forms.placeholders.confirmPassword')}
                       {...field}
                       disabled={form.formState.isSubmitting}
                     />
@@ -246,11 +265,25 @@ export function AdminSetupPage() {
 
   // Create translation-aware validation schema
   const adminSetupSchema = z.object({
-    email: z.email(t('auth.validation.invalidEmail')),
+    username: z
+      .string()
+      .min(3, 'Username must be at least 3 characters')
+      .max(30, 'Username must be at most 30 characters')
+      .regex(
+        /^[a-zA-Z0-9_-]+$/,
+        'Username can only contain letters, numbers, underscores, and hyphens',
+      ),
     password: z
       .string()
       .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
       .max(72, 'Password must be less than 72 characters'),
+    confirmPassword: z
+      .string()
+      .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
+      .max(72, 'Password must be less than 72 characters'),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: t('forms.validation.passwordsDoNotMatch'),
+    path: ['confirmPassword'],
   })
 
   // Create translated system settings
@@ -261,8 +294,9 @@ export function AdminSetupPage() {
   const form = useForm<AdminSetupForm>({
     resolver: zodResolver(adminSetupSchema),
     defaultValues: {
-      email: '',
+      username: '',
       password: '',
+      confirmPassword: '',
     },
   })
 
@@ -279,12 +313,12 @@ export function AdminSetupPage() {
     }
 
     try {
-      // Auto-generate display name from email (part before @)
-      const displayName = values.email.split('@')[0]
+      // Use username as display name initially
+      const displayName = values.username
 
       const response = await registerAdmin({
         displayName,
-        email: values.email,
+        username: values.username,
         password: values.password,
       })
 

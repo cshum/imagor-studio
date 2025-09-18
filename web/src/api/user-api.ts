@@ -50,14 +50,14 @@ export async function listUsers(offset?: number, limit?: number): Promise<ListUs
  * Update user profile (self or admin)
  */
 export async function updateProfile(
-  { displayName, email }: { displayName?: string; email?: string },
+  { displayName, username }: { displayName?: string; username?: string },
   userId?: string,
 ): Promise<UpdateProfileMutation['updateProfile']> {
   const sdk = getSdk(getGraphQLClient())
   const variables: UpdateProfileMutationVariables = {
     input: {
       displayName: displayName ?? null,
-      email: email ?? null,
+      username: username ?? null,
     },
     userId: userId ?? null,
   }
@@ -104,7 +104,7 @@ export async function deactivateAccount(
  */
 export async function createUser(input: {
   displayName: string
-  email: string
+  username: string
   password: string
   role: string
 }): Promise<CreateUserMutation['createUser']> {

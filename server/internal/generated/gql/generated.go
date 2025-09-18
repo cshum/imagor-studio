@@ -181,11 +181,11 @@ type ComplexityRoot struct {
 	User struct {
 		CreatedAt   func(childComplexity int) int
 		DisplayName func(childComplexity int) int
-		Email       func(childComplexity int) int
 		ID          func(childComplexity int) int
 		IsActive    func(childComplexity int) int
 		Role        func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
+		Username    func(childComplexity int) int
 	}
 
 	UserList struct {
@@ -927,12 +927,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.DisplayName(childComplexity), true
-	case "User.email":
-		if e.complexity.User.Email == nil {
-			break
-		}
-
-		return e.complexity.User.Email(childComplexity), true
 	case "User.id":
 		if e.complexity.User.ID == nil {
 			break
@@ -957,6 +951,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.UpdatedAt(childComplexity), true
+	case "User.username":
+		if e.complexity.User.Username == nil {
+			break
+		}
+
+		return e.complexity.User.Username(childComplexity), true
 
 	case "UserList.items":
 		if e.complexity.UserList.Items == nil {
@@ -1192,7 +1192,7 @@ type Mutation {
 type User {
   id: ID!
   displayName: String!
-  email: String!
+  username: String!
   role: String!
   isActive: Boolean!
   createdAt: String!
@@ -1206,7 +1206,7 @@ type UserList {
 
 input UpdateProfileInput {
   displayName: String
-  email: String
+  username: String
 }
 
 input ChangePasswordInput {
@@ -1216,7 +1216,7 @@ input ChangePasswordInput {
 
 input CreateUserInput {
   displayName: String!
-  email: String!
+  username: String!
   password: String!
   role: String!
 }
@@ -1254,15 +1254,14 @@ input ImagorParamsInput {
   vFlip: Boolean
 
   # Alignment
-  hAlign: String  # "left", "right"
-  vAlign: String  # "top", "bottom"
-
+  hAlign: String # "left", "right"
+  vAlign: String # "top", "bottom"
   # Smart crop
   smart: Boolean
 
   # Trimming
   trim: Boolean
-  trimBy: String  # "top-left", "bottom-right"
+  trimBy: String # "top-left", "bottom-right"
   trimTolerance: Int
 
   # Filters
@@ -1270,8 +1269,8 @@ input ImagorParamsInput {
 }
 
 input ImagorFilterInput {
-  name: String!   # "quality", "brightness", etc.
-  args: String!   # "80", "10", etc.
+  name: String! # "quality", "brightness", etc.
+  args: String! # "80", "10", etc.
 }
 
 # Existing types...
@@ -1403,7 +1402,7 @@ enum StorageType {
 # Imagor Configuration Types
 type ImagorStatus {
   configured: Boolean!
-  mode: String  # "embedded" or "external"
+  mode: String # "embedded" or "external"
   restartRequired: Boolean!
   lastUpdated: String
   isOverriddenByConfig: Boolean!
@@ -1429,8 +1428,8 @@ input ExternalImagorInput {
   baseUrl: String!
   secret: String
   unsafe: Boolean
-  signerType: ImagorSignerType  # Optional, defaults to SHA1
-  signerTruncate: Int           # Optional, defaults to 0
+  signerType: ImagorSignerType # Optional, defaults to SHA1
+  signerTruncate: Int # Optional, defaults to 0
 }
 
 enum ImagorSignerType {
@@ -2962,8 +2961,8 @@ func (ec *executionContext) fieldContext_Mutation_updateProfile(ctx context.Cont
 				return ec.fieldContext_User_id(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
 			case "role":
 				return ec.fieldContext_User_role(ctx, field)
 			case "isActive":
@@ -3565,8 +3564,8 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 				return ec.fieldContext_User_id(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
 			case "role":
 				return ec.fieldContext_User_role(ctx, field)
 			case "isActive":
@@ -4013,8 +4012,8 @@ func (ec *executionContext) fieldContext_Query_me(_ context.Context, field graph
 				return ec.fieldContext_User_id(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
 			case "role":
 				return ec.fieldContext_User_role(ctx, field)
 			case "isActive":
@@ -4059,8 +4058,8 @@ func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field g
 				return ec.fieldContext_User_id(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
 			case "role":
 				return ec.fieldContext_User_role(ctx, field)
 			case "isActive":
@@ -5072,13 +5071,13 @@ func (ec *executionContext) fieldContext_User_displayName(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _User_email(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_username(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_User_email,
-		func(ctx context.Context) (any, error) { return obj.Email, nil },
+		ec.fieldContext_User_username,
+		func(ctx context.Context) (any, error) { return obj.Username, nil },
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -5086,7 +5085,7 @@ func (ec *executionContext) _User_email(ctx context.Context, field graphql.Colle
 	)
 }
 
-func (ec *executionContext) fieldContext_User_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -5233,8 +5232,8 @@ func (ec *executionContext) fieldContext_UserList_items(_ context.Context, field
 				return ec.fieldContext_User_id(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
 			case "role":
 				return ec.fieldContext_User_role(ctx, field)
 			case "isActive":
@@ -6823,7 +6822,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"displayName", "email", "password", "role"}
+	fieldsInOrder := [...]string{"displayName", "username", "password", "role"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -6837,13 +6836,13 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.DisplayName = data
-		case "email":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+		case "username":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Email = data
+			it.Username = data
 		case "password":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -7326,7 +7325,7 @@ func (ec *executionContext) unmarshalInputUpdateProfileInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"displayName", "email"}
+	fieldsInOrder := [...]string{"displayName", "username"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7340,13 +7339,13 @@ func (ec *executionContext) unmarshalInputUpdateProfileInput(ctx context.Context
 				return it, err
 			}
 			it.DisplayName = data
-		case "email":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+		case "username":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Email = data
+			it.Username = data
 		}
 	}
 
@@ -8502,8 +8501,8 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "email":
-			out.Values[i] = ec._User_email(ctx, field, obj)
+		case "username":
+			out.Values[i] = ec._User_username(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
