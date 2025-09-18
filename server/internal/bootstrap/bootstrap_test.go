@@ -25,7 +25,7 @@ func TestInitialize(t *testing.T) {
 		Port:                 8080,
 		DatabaseURL:          "sqlite:" + tmpDB,
 		JWTSecret:            "test-jwt-secret",
-		JWTExpiration:        24 * time.Hour,
+		JWTExpiration:        168 * time.Hour,
 		StorageType:          "file",
 		FileBaseDir:          "/tmp/test-storage",
 		FileMkdirPermissions: 0755,
@@ -34,7 +34,6 @@ func TestInitialize(t *testing.T) {
 		ImagorBaseURL:        "http://localhost:8000",
 		ImagorSecret:         "",
 		ImagorUnsafe:         false,
-		ImagorResultStorage:  "same",
 	}
 
 	logger := zap.NewNop()
@@ -222,13 +221,12 @@ func TestImagorProviderIntegration(t *testing.T) {
 	defer os.Remove(tmpDB)
 
 	cfg := &config.Config{
-		DatabaseURL:         "sqlite:" + tmpDB,
-		JWTSecret:           "test-jwt-secret",
-		ImagorMode:          "external",
-		ImagorBaseURL:       "http://localhost:8000",
-		ImagorSecret:        "test-secret",
-		ImagorUnsafe:        true, // Use unsafe mode for testing
-		ImagorResultStorage: "same",
+		DatabaseURL:   "sqlite:" + tmpDB,
+		JWTSecret:     "test-jwt-secret",
+		ImagorMode:    "external",
+		ImagorBaseURL: "http://localhost:8000",
+		ImagorSecret:  "test-secret",
+		ImagorUnsafe:  true, // Use unsafe mode for testing
 	}
 
 	logger := zap.NewNop()

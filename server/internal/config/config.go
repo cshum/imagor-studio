@@ -41,11 +41,10 @@ type Config struct {
 	S3BaseDir         string
 
 	// Imagor Configuration
-	ImagorMode           string // "external", "embedded", "disabled"
+	ImagorMode           string // "external", "embedded"
 	ImagorBaseURL        string // External imagor service URL
 	ImagorSecret         string // Imagor secret key
 	ImagorUnsafe         bool   // For development
-	ImagorResultStorage  string // "same", "separate"
 	ImagorSignerType     string // Signer algorithm: "sha1", "sha256", "sha512"
 	ImagorSignerTruncate int    // Signer truncation length
 
@@ -69,7 +68,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		databaseURL   = fs.String("database-url", "sqlite:./imagor-studio.db", "database URL (sqlite:./path.db, postgres://user:pass@host:port/db, mysql://user:pass@host:port/db)")
 		storageType   = fs.String("storage-type", "file", "storage type: file or s3")
 		jwtSecret     = fs.String("jwt-secret", "", "secret key for JWT signing")
-		jwtExpiration = fs.String("jwt-expiration", "24h", "JWT token expiration duration")
+		jwtExpiration = fs.String("jwt-expiration", "168h", "JWT token expiration duration")
 
 		allowGuestMode = fs.Bool("allow-guest-mode", false, "allow guest mode access")
 
@@ -90,7 +89,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		imagorSecret         = fs.String("imagor-secret", "", "secret key for imagor")
 		imagorBaseURL        = fs.String("imagor-base-url", "", "external imagor service URL")
 		imagorUnsafe         = fs.Bool("imagor-unsafe", false, "enable unsafe imagor URLs for development")
-		imagorResultStorage  = fs.String("imagor-result-storage", "same", "imagor result storage: same or separate")
 		imagorSignerType     = fs.String("imagor-signer-type", "", "imagor signer algorithm: sha1, sha256, sha512")
 		imagorSignerTruncate = fs.String("imagor-signer-truncate", "0", "imagor signer truncation length")
 
@@ -191,7 +189,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		ImagorBaseURL:        *imagorBaseURL,
 		ImagorSecret:         *imagorSecret,
 		ImagorUnsafe:         *imagorUnsafe,
-		ImagorResultStorage:  *imagorResultStorage,
 		ImagorSignerType:     *imagorSignerType,
 		ImagorSignerTruncate: imagorSignerTruncateInt,
 		AppHomeTitle:         *appHomeTitle,
