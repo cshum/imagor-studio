@@ -425,7 +425,7 @@ func TestUserStore_SpecialCharacters(t *testing.T) {
 		},
 		{
 			name:        "Username with underscore",
-			displayName: "emailtest",
+			displayName: "usernametest",
 			username:    "test_user",
 		},
 		{

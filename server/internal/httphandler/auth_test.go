@@ -234,7 +234,7 @@ func TestRegister(t *testing.T) {
 			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
-			name:   "Missing email",
+			name:   "Missing username",
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "testuser",
@@ -247,7 +247,7 @@ func TestRegister(t *testing.T) {
 			errorCode:      apperror.ErrInvalidInput,
 		},
 		{
-			name:   "Invalid email format",
+			name:   "Invalid username format",
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "testuser",
@@ -352,7 +352,7 @@ func TestLogin(t *testing.T) {
 		errorCode      apperror.ErrorCode
 	}{
 		{
-			name:   "Valid login with email",
+			name:   "Valid login with username",
 			method: http.MethodPost,
 			body: LoginRequest{
 				Username: "testuser",
@@ -429,7 +429,7 @@ func TestLogin(t *testing.T) {
 			errorCode:      apperror.ErrInvalidCredentials,
 		},
 		{
-			name:   "Empty email",
+			name:   "Empty username",
 			method: http.MethodPost,
 			body: LoginRequest{
 				Username: "",
