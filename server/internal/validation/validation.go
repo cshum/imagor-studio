@@ -56,6 +56,54 @@ func ValidatePassword(password string) error {
 	return nil
 }
 
+// ValidateUsername validates a username according to common rules
+func ValidateUsername(username string) error {
+	username = strings.TrimSpace(username)
+
+	if username == "" {
+		return fmt.Errorf("username is required")
+	}
+
+	if len(username) < 3 {
+		return fmt.Errorf("username must be at least 3 characters long")
+	}
+
+	if len(username) > 30 {
+		return fmt.Errorf("username must be at most 30 characters long")
+	}
+
+	// Check for valid characters (alphanumeric, underscore, hyphen)
+	for i, r := range username {
+		if i == 0 {
+			// First character must be alphanumeric
+			if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9')) {
+				return fmt.Errorf("username must start with an alphanumeric character")
+			}
+		} else {
+			// Other characters can be alphanumeric, underscore, or hyphen
+			if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' || r == '-') {
+				return fmt.Errorf("username can only contain alphanumeric characters, underscores, and hyphens")
+			}
+		}
+	}
+
+	// Check for reserved usernames
+	reservedUsernames := []string{"admin", "root", "user", "guest", "system", "api", "www", "mail", "ftp"}
+	lowerUsername := strings.ToLower(username)
+	for _, reserved := range reservedUsernames {
+		if lowerUsername == reserved {
+			return fmt.Errorf("username '%s' is reserved", username)
+		}
+	}
+
+	return nil
+}
+
+// NormalizeUsername normalizes a username
+func NormalizeUsername(username string) string {
+	return strings.ToLower(strings.TrimSpace(username))
+}
+
 // NormalizeDisplayName normalizes a displayName
 func NormalizeDisplayName(displayName string) string {
 	return strings.TrimSpace(displayName)

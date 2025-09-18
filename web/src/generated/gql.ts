@@ -40,7 +40,7 @@ type Documents = {
   '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureFileStorageDocument
   '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureS3StorageDocument
   '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n': typeof types.TestStorageConfigDocument
-  '\n  fragment UserInfo on User {\n    id\n    displayName\n    email\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n': typeof types.UserInfoFragmentDoc
+  '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n': typeof types.UserInfoFragmentDoc
   '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n': typeof types.MeDocument
   '\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserInfo\n    }\n  }\n': typeof types.GetUserDocument
   '\n  query ListUsers($offset: Int = 0, $limit: Int = 20) {\n    users(offset: $offset, limit: $limit) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n': typeof types.ListUsersDocument
@@ -100,7 +100,7 @@ const documents: Documents = {
     types.ConfigureS3StorageDocument,
   '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n':
     types.TestStorageConfigDocument,
-  '\n  fragment UserInfo on User {\n    id\n    displayName\n    email\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n':
+  '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n':
     types.UserInfoFragmentDoc,
   '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n': types.MeDocument,
   '\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserInfo\n    }\n  }\n':
@@ -285,8 +285,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  fragment UserInfo on User {\n    id\n    displayName\n    email\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n',
-): (typeof documents)['\n  fragment UserInfo on User {\n    id\n    displayName\n    email\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n']
+  source: '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n',
+): (typeof documents)['\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

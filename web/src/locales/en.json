@@ -34,6 +34,7 @@
     },
     "labels": {
       "email": "Email",
+      "username": "Username",
       "password": "Password",
       "name": "Name",
       "role": "Role"
@@ -48,6 +49,8 @@
     },
     "validation": {
       "emailRequired": "Please enter a valid email address",
+      "usernameMinLength": "Username must be at least 3 characters",
+      "usernameMaxLength": "Username must be at most 30 characters",
       "passwordRequired": "Password is required",
       "invalidEmail": "Please enter a valid email address"
     }
@@ -55,6 +58,7 @@
   "forms": {
     "placeholders": {
       "enterEmail": "Enter your email",
+      "enterUsername": "Enter your username",
       "enterPassword": "Enter your password",
       "enterName": "Enter your name"
     },

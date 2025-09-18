@@ -31,9 +31,9 @@ export type ChangePasswordInput = {
 
 export type CreateUserInput = {
   displayName: Scalars['String']['input']
-  email: Scalars['String']['input']
   password: Scalars['String']['input']
   role: Scalars['String']['input']
+  username: Scalars['String']['input']
 }
 
 export type ExternalImagorConfig = {
@@ -382,18 +382,18 @@ export type ThumbnailUrls = {
 
 export type UpdateProfileInput = {
   displayName: InputMaybe<Scalars['String']['input']>
-  email: InputMaybe<Scalars['String']['input']>
+  username: InputMaybe<Scalars['String']['input']>
 }
 
 export type User = {
   __typename?: 'User'
   createdAt: Scalars['String']['output']
   displayName: Scalars['String']['output']
-  email: Scalars['String']['output']
   id: Scalars['ID']['output']
   isActive: Scalars['Boolean']['output']
   role: Scalars['String']['output']
   updatedAt: Scalars['String']['output']
+  username: Scalars['String']['output']
 }
 
 export type UserList = {
@@ -781,7 +781,7 @@ export type UserInfoFragment = {
   __typename?: 'User'
   id: string
   displayName: string
-  email: string
+  username: string
   role: string
   isActive: boolean
   createdAt: string
@@ -796,7 +796,7 @@ export type MeQuery = {
     __typename?: 'User'
     id: string
     displayName: string
-    email: string
+    username: string
     role: string
     isActive: boolean
     createdAt: string
@@ -814,7 +814,7 @@ export type GetUserQuery = {
     __typename?: 'User'
     id: string
     displayName: string
-    email: string
+    username: string
     role: string
     isActive: boolean
     createdAt: string
@@ -836,7 +836,7 @@ export type ListUsersQuery = {
       __typename?: 'User'
       id: string
       displayName: string
-      email: string
+      username: string
       role: string
       isActive: boolean
       createdAt: string
@@ -856,7 +856,7 @@ export type UpdateProfileMutation = {
     __typename?: 'User'
     id: string
     displayName: string
-    email: string
+    username: string
     role: string
     isActive: boolean
     createdAt: string
@@ -887,7 +887,7 @@ export type CreateUserMutation = {
     __typename?: 'User'
     id: string
     displayName: string
-    email: string
+    username: string
     role: string
     isActive: boolean
     createdAt: string
@@ -946,7 +946,7 @@ export const UserInfoFragmentDoc = gql`
   fragment UserInfo on User {
     id
     displayName
-    email
+    username
     role
     isActive
     createdAt

@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input'
 import { initAuth, useAuth } from '@/stores/auth-store'
 
 type LoginFormValues = {
-  email: string
+  username: string
   password: string
 }
 
@@ -38,14 +38,14 @@ export function LoginPage() {
 
   // Create translation-aware validation schema
   const loginSchema = z.object({
-    email: z.email(t('auth.validation.invalidEmail')),
+    username: z.string().min(3, t('auth.validation.usernameMinLength')).max(30, t('auth.validation.usernameMaxLength')),
     password: z.string().min(1, t('auth.validation.passwordRequired')),
   })
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      username: '',
       password: '',
     },
   })
@@ -101,14 +101,14 @@ export function LoginPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
               <FormField
                 control={form.control}
-                name='email'
+                name='username'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('common.labels.email')}</FormLabel>
+                    <FormLabel>{t('common.labels.username')}</FormLabel>
                     <FormControl>
                       <Input
-                        type='email'
-                        placeholder={t('forms.placeholders.enterEmail')}
+                        type='text'
+                        placeholder={t('forms.placeholders.enterUsername')}
                         disabled={form.formState.isSubmitting}
                         {...field}
                       />

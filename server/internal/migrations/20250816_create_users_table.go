@@ -18,19 +18,19 @@ func init() {
 			return err
 		}
 
-		// Create unique constraint on email
+		// Create unique constraint on username
 		_, err = db.NewCreateIndex().
 			Model((*User)(nil)).
-			Index("idx_users_email").
+			Index("idx_users_username").
 			Unique().
-			Column("email").
+			Column("username").
 			Exec(ctx)
 		return err
 	}, func(ctx context.Context, db *bun.DB) error {
 		// Drop the indices
 		_, err := db.NewDropIndex().
 			Model((*User)(nil)).
-			Index("idx_users_email").
+			Index("idx_users_username").
 			IfExists().
 			Exec(ctx)
 		if err != nil {
@@ -51,7 +51,7 @@ type User struct {
 
 	ID             string    `bun:"id,pk,type:text"`
 	DisplayName    string    `bun:"display_name,notnull"`
-	Email          string    `bun:"email,notnull,unique"`
+	Username       string    `bun:"username,notnull,unique"`
 	HashedPassword string    `bun:"hashed_password,notnull"`
 	Role           string    `bun:"role,notnull,default:'user'"`
 	IsActive       bool      `bun:"is_active,notnull,default:true"`
