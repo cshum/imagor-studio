@@ -230,7 +230,7 @@ func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, er
 
 		// Default to embedded mode if no config
 		imagorConfig = &imagorprovider.ImagorConfig{
-			Mode:           "embedded",
+			Mode:           imagorprovider.ImagorModeEmbedded,
 			BaseURL:        "/imagor",
 			Secret:         jwtSecret,
 			Unsafe:         false,
@@ -248,14 +248,14 @@ func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, er
 	}
 
 	// Check if any imagor config is overridden
-	isConfigOverridden := r.isImagorConfigOverridden(ctx, imagorConfig.Mode)
+	isConfigOverridden := r.isImagorConfigOverridden(ctx, imagorConfig.Mode.String())
 
 	// Convert string mode to enum
 	var mode *gql.ImagorMode
 	switch imagorConfig.Mode {
-	case "embedded":
+	case imagorprovider.ImagorModeEmbedded:
 		mode = &[]gql.ImagorMode{gql.ImagorModeEmbedded}[0]
-	case "external":
+	case imagorprovider.ImagorModeExternal:
 		mode = &[]gql.ImagorMode{gql.ImagorModeExternal}[0]
 	}
 
@@ -268,7 +268,7 @@ func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, er
 	}
 
 	// Add mode-specific configuration
-	if imagorConfig.Mode == "external" {
+	if imagorConfig.Mode == imagorprovider.ImagorModeExternal {
 		status.ExternalConfig = r.getExternalImagorConfig(ctx, imagorConfig)
 	}
 

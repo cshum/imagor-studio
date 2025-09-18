@@ -132,7 +132,7 @@ func TestInitializeWithConfig_DefaultToEmbedded(t *testing.T) {
 
 	config := provider.GetConfig()
 	require.NotNil(t, config)
-	assert.Equal(t, "embedded", config.Mode)
+	assert.Equal(t, ImagorModeEmbedded, config.Mode)
 	assert.Equal(t, "/imagor", config.BaseURL)
 	assert.Equal(t, "test-jwt-secret", config.Secret)
 	assert.False(t, config.Unsafe)
@@ -158,7 +158,7 @@ func TestInitializeWithConfig_External(t *testing.T) {
 
 	config := provider.GetConfig()
 	require.NotNil(t, config)
-	assert.Equal(t, "external", config.Mode)
+	assert.Equal(t, ImagorModeExternal, config.Mode)
 	assert.Equal(t, "http://localhost:8000", config.BaseURL)
 	assert.Equal(t, "test-secret", config.Secret)
 	assert.False(t, config.Unsafe)
@@ -184,7 +184,7 @@ func TestInitializeWithConfig_Embedded(t *testing.T) {
 
 	config := provider.GetConfig()
 	require.NotNil(t, config)
-	assert.Equal(t, "embedded", config.Mode)
+	assert.Equal(t, ImagorModeEmbedded, config.Mode)
 	assert.Equal(t, "/imagor", config.BaseURL)
 	assert.Equal(t, "test-secret", config.Secret)
 	assert.True(t, config.Unsafe)
@@ -214,7 +214,7 @@ func TestInitializeWithConfig_FromRegistry(t *testing.T) {
 
 	config := provider.GetConfig()
 	require.NotNil(t, config)
-	assert.Equal(t, "external", config.Mode)
+	assert.Equal(t, ImagorModeExternal, config.Mode)
 	assert.Equal(t, "http://registry.example.com", config.BaseURL)
 	assert.Equal(t, "registry-secret", config.Secret)
 	assert.True(t, config.Unsafe)
@@ -436,7 +436,7 @@ func TestReloadFromRegistry(t *testing.T) {
 
 	// Initially defaults to embedded
 	config := provider.GetConfig()
-	assert.Equal(t, "embedded", config.Mode)
+	assert.Equal(t, ImagorModeEmbedded, config.Mode)
 
 	// Set up registry configuration
 	ctx := context.Background()
@@ -450,7 +450,7 @@ func TestReloadFromRegistry(t *testing.T) {
 
 	// Should now be configured from registry
 	config = provider.GetConfig()
-	assert.Equal(t, "external", config.Mode)
+	assert.Equal(t, ImagorModeExternal, config.Mode)
 	assert.Equal(t, "http://new.example.com", config.BaseURL)
 	assert.Equal(t, "new-secret", config.Secret)
 }
@@ -476,7 +476,7 @@ func TestReloadFromRegistry_NoConfig(t *testing.T) {
 
 	// Should default to embedded mode
 	config := provider.GetConfig()
-	assert.Equal(t, "embedded", config.Mode)
+	assert.Equal(t, ImagorModeEmbedded, config.Mode)
 }
 
 func TestBuildConfigFromRegistry_MissingMode(t *testing.T) {
@@ -514,7 +514,7 @@ func TestBuildConfigFromRegistry_EmbeddedMode(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, config)
 
-	assert.Equal(t, "embedded", config.Mode)
+	assert.Equal(t, ImagorModeEmbedded, config.Mode)
 	assert.Equal(t, "/imagor", config.BaseURL)   // Should be set to /imagor for embedded
 	assert.Equal(t, "jwt-secret", config.Secret) // Should always use JWT secret, ignoring registry value
 	assert.False(t, config.Unsafe)
@@ -538,7 +538,7 @@ func TestBuildConfigFromRegistry_ExternalModeDefaults(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, config)
 
-	assert.Equal(t, "external", config.Mode)
+	assert.Equal(t, ImagorModeExternal, config.Mode)
 	assert.Equal(t, "http://localhost:8000", config.BaseURL) // Default for external
 	assert.Equal(t, "", config.Secret)                       // Not set
 	assert.False(t, config.Unsafe)                           // Default
@@ -894,7 +894,7 @@ func TestInitializeWithConfig_FromRegistry_WithSignerConfig(t *testing.T) {
 
 	config := provider.GetConfig()
 	require.NotNil(t, config)
-	assert.Equal(t, "external", config.Mode)
+	assert.Equal(t, ImagorModeExternal, config.Mode)
 	assert.Equal(t, "http://registry.example.com", config.BaseURL)
 	assert.Equal(t, "registry-secret", config.Secret)
 	assert.False(t, config.Unsafe)
@@ -919,7 +919,7 @@ func TestReloadFromRegistry_WithSignerConfig(t *testing.T) {
 
 	// Initially defaults to embedded
 	config := provider.GetConfig()
-	assert.Equal(t, "embedded", config.Mode)
+	assert.Equal(t, ImagorModeEmbedded, config.Mode)
 
 	// Set up registry configuration with signer options
 	ctx := context.Background()
@@ -935,7 +935,7 @@ func TestReloadFromRegistry_WithSignerConfig(t *testing.T) {
 
 	// Should now be configured from registry with signer options
 	config = provider.GetConfig()
-	assert.Equal(t, "external", config.Mode)
+	assert.Equal(t, ImagorModeExternal, config.Mode)
 	assert.Equal(t, "http://new.example.com", config.BaseURL)
 	assert.Equal(t, "new-secret", config.Secret)
 	assert.Equal(t, "sha512", config.SignerType)

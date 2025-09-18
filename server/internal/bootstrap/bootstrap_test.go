@@ -8,6 +8,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/encryption"
+	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/assert"
@@ -246,7 +247,7 @@ func TestImagorProviderIntegration(t *testing.T) {
 	// Test that imagor provider has correct config
 	imagorConfig := services.ImagorProvider.GetConfig()
 	require.NotNil(t, imagorConfig)
-	assert.Equal(t, "embedded", imagorConfig.Mode)
+	assert.Equal(t, imagorprovider.ImagorModeEmbedded, imagorConfig.Mode)
 	assert.Equal(t, "/imagor", imagorConfig.BaseURL)
 	assert.Equal(t, "test-secret", imagorConfig.Secret)
 	assert.True(t, imagorConfig.Unsafe)
