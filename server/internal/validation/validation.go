@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]*$`)
+
 // ValidateDisplayName validates a displayName according to common rules
 func ValidateDisplayName(displayName string) error {
 	displayName = strings.TrimSpace(displayName)
@@ -75,7 +77,6 @@ func ValidateUsername(username string) error {
 
 	// Use regex to validate username format
 	// Must start with alphanumeric, followed by alphanumeric, underscore, or hyphen
-	usernameRegex := regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]*$`)
 	if !usernameRegex.MatchString(username) {
 		return fmt.Errorf("username must start with an alphanumeric character and can only contain alphanumeric characters, underscores, and hyphens")
 	}

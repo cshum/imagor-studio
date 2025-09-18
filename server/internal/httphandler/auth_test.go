@@ -690,7 +690,7 @@ func TestRegister_ValidationEdgeCases(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			errorCode:      apperror.ErrInvalidInput,
-			errorMessage:   "username can only contain alphanumeric characters, underscores, and hyphens",
+			errorMessage:   "username must start with an alphanumeric character and can only contain alphanumeric characters, underscores, and hyphens",
 		},
 		{
 			name: "Username too short",
