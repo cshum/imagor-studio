@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
-import { useImageTransform } from '@/hooks/use-image-transform'
+import { ImageTransform, type ImageTransformState } from '@/lib/image-transform'
 import { cn, debounce } from '@/lib/utils.ts'
 import type { EditorOpenSections, ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 
@@ -52,29 +52,80 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     [debouncedSaveOpenSections],
   )
 
-  const {
-    params,
-    previewUrl,
-    aspectLocked,
-    originalAspectRatio,
-    isParamsLoading,
-    error,
-    updateParams,
-    resetParams,
-    toggleAspectLock,
-    getCopyUrl,
-    handleDownload,
-  } = useImageTransform({
-    galleryKey,
-    imageKey,
-    loaderData,
-  })
+  // Image transform state
+  const [params, setParams] = useState<ImageTransformState>(() => ({
+    width: loaderData.originalDimensions.width,
+    height: loaderData.originalDimensions.height,
+  }))
+  const [previewUrl, setPreviewUrl] = useState<string>()
+  const [aspectLocked, setAspectLocked] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const transformRef = useRef<ImageTransform | undefined>(undefined)
 
   useEffect(() => {
-    if (isParamsLoading) {
-      setIsLoading(true)
+    const transform = new ImageTransform(
+      {
+        galleryKey,
+        imageKey,
+        originalDimensions: loaderData.originalDimensions,
+      },
+      {
+        onPreviewUpdate: (url) => {
+          setPreviewUrl(url)
+        },
+        onError: (err) => {
+          setError(err)
+        },
+        onStateChange: (state) => {
+          setParams(state)
+        },
+        onLoadingChange: (loading) => {
+          if (loading) {
+            setIsLoading(true)
+          }
+        },
+      },
+    )
+
+    transformRef.current = transform
+
+    return () => {
+      transform.destroy()
     }
-  }, [isParamsLoading])
+  }, [galleryKey, imageKey, loaderData.originalDimensions])
+
+  const originalAspectRatio =
+    loaderData.originalDimensions.width / loaderData.originalDimensions.height
+
+  const updateParams = useCallback(
+    (updates: Partial<ImageTransformState>, options?: { respectAspectLock?: boolean }) => {
+      transformRef.current?.updateParams(updates, options)
+    },
+    [],
+  )
+
+  const resetParams = useCallback(() => {
+    transformRef.current?.resetParams()
+  }, [])
+
+  const toggleAspectLock = useCallback(() => {
+    transformRef.current?.toggleAspectLock()
+    setAspectLocked(transformRef.current?.isAspectLocked() ?? true)
+  }, [])
+
+  const getCopyUrl = useCallback(async () => {
+    return transformRef.current?.getCopyUrl() ?? ''
+  }, [])
+
+  const handleDownload = useCallback(async () => {
+    return (
+      transformRef.current?.handleDownload() ?? {
+        success: false,
+        error: 'Transform not initialized',
+      }
+    )
+  }, [])
 
   const handleBack = () => {
     if (galleryKey) {
@@ -183,8 +234,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           previewUrl={previewUrl || loaderData.imageElement.src}
           error={error}
           galleryKey={galleryKey}
-          onLoad={() => setIsLoading(false)}
           imageKey={imageKey}
+          originalDimensions={loaderData.originalDimensions}
+          onLoad={() => setIsLoading(false)}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}
         />

@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
-import type { ImageTransformState } from '@/hooks/use-image-transform'
+import type { ImageTransformState } from '@/lib/image-transform'
 
 interface OutputControlsProps {
   params: ImageTransformState

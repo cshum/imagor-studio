@@ -243,9 +243,9 @@ export function ImageView({
           >
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 75 }}
-              exit={{ opacity: 75 }}
-              className='absolute top-0 right-0 bottom-0 left-0 bg-black/75'
+              animate={{ opacity: 80 }}
+              exit={{ opacity: 80 }}
+              className='absolute top-0 right-0 bottom-0 left-0 bg-black/80'
             ></motion.div>
             <TransformWrapper
               initialScale={1}
