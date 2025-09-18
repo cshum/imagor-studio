@@ -33,7 +33,6 @@
       "disabled": "Disabled"
     },
     "labels": {
-      "email": "Email",
       "username": "Username",
       "password": "Password",
       "name": "Name",
@@ -48,25 +47,25 @@
       "loginFailed": "Login failed"
     },
     "validation": {
-      "emailRequired": "Please enter a valid email address",
+      "usernameRequired": "Please enter a valid username",
       "usernameMinLength": "Username must be at least 3 characters",
       "usernameMaxLength": "Username must be at most 30 characters",
       "passwordRequired": "Password is required",
-      "invalidEmail": "Please enter a valid email address"
+      "invalidUsername": "Please enter a valid username"
     }
   },
   "forms": {
     "placeholders": {
-      "enterEmail": "Enter your email",
+      "enterUsername": "Enter your username",
       "enterUsername": "Enter your username",
       "enterPassword": "Enter your password",
       "enterName": "Enter your name"
     },
     "validation": {
       "required": "This field is required",
-      "invalidEmail": "Please enter a valid email address",
+      "invalidUsername": "Please enter a valid username",
       "passwordTooShort": "Password must be at least {{min}} characters",
-      "emailInvalid": "Please enter a valid email address"
+      "usernameInvalid": "Please enter a valid username"
     }
   },
   "navigation": {
@@ -99,7 +98,7 @@
       "createAdminAccount": "Create Admin Account",
       "systemConfiguration": "System Configuration",
       "storageConfiguration": "Storage Configuration",
-      "emailAddress": "Email Address",
+      "username": "Username",
       "password": "Password",
       "createAccount": "Create Account",
       "skipForNow": "Skip for Now",

@@ -14,7 +14,7 @@ import { getAuth } from '@/stores/auth-store'
 export interface ProfileLoaderData {
   profile: {
     displayName: string
-    email: string
+    username: string
   } | null
   breadcrumb: BreadcrumbItem
 }
@@ -41,7 +41,7 @@ export const profileLoader = async (): Promise<ProfileLoaderData> => {
     profile: auth.profile
       ? {
           displayName: auth.profile.displayName || '',
-          email: auth.profile.email || '',
+          username: auth.profile.username || '',
         }
       : null,
     breadcrumb: {

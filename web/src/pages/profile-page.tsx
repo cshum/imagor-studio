@@ -34,7 +34,11 @@ const profileSchema = z.object({
     .string()
     .min(3, 'Display name must be at least 3 characters long')
     .max(100, 'Display name must be less than 100 characters'),
-  email: z.string().email('Please enter a valid email address'),
+  username: z
+    .string()
+    .min(3, 'Username must be at least 3 characters')
+    .max(30, 'Username must be at most 30 characters')
+    .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores, and hyphens'),
 })
 
 const passwordSchema = z
@@ -67,14 +71,14 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   // Use loader data if available, fallback to auth state
   const profileData = loaderData?.profile || {
     displayName: authState.profile?.displayName || '',
-    email: authState.profile?.email || '',
+    username: authState.profile?.username || '',
   }
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       displayName: profileData.displayName,
-      email: profileData.email,
+      username: profileData.username,
     },
   })
 
@@ -93,7 +97,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
     try {
       await updateProfile({
         displayName: values.displayName,
-        email: values.email,
+        username: values.username,
       })
       await initAuth()
       toast.success('Profile updated successfully!')
@@ -102,12 +106,12 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
 
       // Check if it's a validation error that should highlight a field
       if (
-        errorMessage.toLowerCase().includes('email') &&
+        errorMessage.toLowerCase().includes('username') &&
         errorMessage.toLowerCase().includes('already')
       ) {
-        profileForm.setError('email', { message: 'This email is already in use' })
-      } else if (errorMessage.toLowerCase().includes('email')) {
-        profileForm.setError('email', { message: errorMessage })
+        profileForm.setError('username', { message: 'This username is already in use' })
+      } else if (errorMessage.toLowerCase().includes('username')) {
+        profileForm.setError('username', { message: errorMessage })
       } else if (errorMessage.toLowerCase().includes('display name')) {
         profileForm.setError('displayName', { message: errorMessage })
       } else {
@@ -174,14 +178,13 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
 
               <FormField
                 control={profileForm.control}
-                name='email'
+                name='username'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Username</FormLabel>
                     <FormControl>
                       <Input
-                        type='email'
-                        placeholder='Enter your email address'
+                        placeholder='Enter your username'
                         {...field}
                         disabled={isUpdatingProfile}
                       />

@@ -43,7 +43,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
     if (authState.state === 'guest') {
       return t('common.status.guest')
     }
-    return authState.profile?.displayName || authState.profile?.email || t('common.status.user')
+    return authState.profile?.displayName || authState.profile?.username || t('common.status.user')
   }
 
   // Get user role display (only for authenticated users)
