@@ -259,7 +259,6 @@ export function useImageTransform({
     }
   }, [error, onError])
 
-
   // Update parameters with optional aspect ratio locking
   const updateParams = useCallback(
     (updates: Partial<ImageTransformState>, options?: { respectAspectLock?: boolean }) => {
@@ -358,12 +357,11 @@ export function useImageTransform({
       ],
     }
 
-    const url = await generateImagorUrl({
+    return await generateImagorUrl({
       galleryKey,
       imageKey,
       params: downloadParams as ImagorParamsInput,
     })
-    return url
   }, [params, convertToGraphQLParams, galleryKey, imageKey])
 
   // Get copy URL for dialog display
