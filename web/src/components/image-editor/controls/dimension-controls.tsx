@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { Toggle } from '@/components/ui/toggle'
-import type { ImageTransformState } from '@/hooks/use-image-transform'
+import type { ImageTransformState } from '@/lib/image-transform'
 
 interface DimensionControlsProps {
   params: ImageTransformState

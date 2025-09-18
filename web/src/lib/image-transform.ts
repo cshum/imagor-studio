@@ -234,7 +234,6 @@ export class ImageTransform {
     }
 
     this.abortController = new AbortController()
-    this.setLoading(true)
 
     try {
       const graphqlParams = this.convertToGraphQLParams(this.state, true)
@@ -270,6 +269,7 @@ export class ImageTransform {
    * Debounced preview generation
    */
   private schedulePreviewUpdate(): void {
+    this.setLoading(true)
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer)
     }
@@ -312,7 +312,7 @@ export class ImageTransform {
    * Reset all parameters to original state
    */
   resetParams(): void {
-    const resetState: ImageTransformState = {
+    this.state = {
       // Reset to original dimensions if available
       width: this.config.originalDimensions?.width,
       height: this.config.originalDimensions?.height,
@@ -342,8 +342,6 @@ export class ImageTransform {
       autoTrim: undefined,
       trimTolerance: undefined,
     }
-
-    this.state = resetState
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
   }

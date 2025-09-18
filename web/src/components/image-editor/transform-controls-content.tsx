@@ -9,7 +9,7 @@ import { SimpleCropControls } from '@/components/image-editor/controls/simple-cr
 import { TransformControls } from '@/components/image-editor/controls/transform-controls'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import type { ImageTransformState } from '@/hooks/use-image-transform'
+import type { ImageTransformState } from '@/lib/image-transform'
 import type { EditorOpenSections } from '@/loaders/image-editor-loader'
 
 interface TransformControlsContentProps {

@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import type { ImageTransformState } from '@/hooks/use-image-transform'
+import type { ImageTransformState } from '@/lib/image-transform'
 
 interface CropControlsProps {
   params: ImageTransformState

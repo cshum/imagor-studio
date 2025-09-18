@@ -3,7 +3,7 @@ import { FlipHorizontal, FlipVertical, RotateCcw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import type { ImageTransformState } from '@/hooks/use-image-transform'
+import type { ImageTransformState } from '@/lib/image-transform'
 
 interface TransformControlsProps {
   params: ImageTransformState
