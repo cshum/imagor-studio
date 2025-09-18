@@ -45,7 +45,7 @@ export function ImagorConfigurationWizard({
   // Initialize form with existing configuration
   useEffect(() => {
     if (initialConfig?.configured && initialConfig.mode) {
-      const type = initialConfig.mode.toLowerCase() === 'embedded' ? 'embedded' : 'external'
+      const type = initialConfig.mode === 'EMBEDDED' ? 'embedded' : 'external'
       setImagorType(type)
     }
   }, [initialConfig])

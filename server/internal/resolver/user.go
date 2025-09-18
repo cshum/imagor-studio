@@ -95,7 +95,7 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) (*gq
 		offsetVal = *offset
 	}
 
-	limitVal := 20
+	limitVal := 0
 	if limit != nil {
 		limitVal = *limit
 	}
@@ -104,8 +104,8 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) (*gq
 	if offsetVal < 0 {
 		offsetVal = 0
 	}
-	if limitVal <= 0 || limitVal > 100 {
-		limitVal = 20
+	if limitVal < 0 || limitVal > 100 {
+		limitVal = 0 // 0 means no limit
 	}
 
 	users, totalCount, err := r.userStore.List(ctx, offsetVal, limitVal)

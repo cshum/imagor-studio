@@ -110,7 +110,7 @@ type ImagorParamsInput struct {
 
 type ImagorStatus struct {
 	Configured           bool                  `json:"configured"`
-	Mode                 *string               `json:"mode,omitempty"`
+	Mode                 *ImagorMode           `json:"mode,omitempty"`
 	RestartRequired      bool                  `json:"restartRequired"`
 	LastUpdated          *string               `json:"lastUpdated,omitempty"`
 	IsOverriddenByConfig bool                  `json:"isOverriddenByConfig"`

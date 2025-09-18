@@ -738,6 +738,14 @@ func TestUsers_AdminOnly(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name:        "Admin user can access with limit=0 (no limit)",
+			userRole:    "admin",
+			userScopes:  []string{"read", "write", "admin"},
+			offset:      intPtr(0),
+			limit:       intPtr(0),
+			expectError: false,
+		},
+		{
 			name:        "Regular user cannot access",
 			userRole:    "user",
 			userScopes:  []string{"read", "write"},
@@ -771,7 +779,7 @@ func TestUsers_AdminOnly(t *testing.T) {
 				if tt.offset != nil {
 					expectedOffset = *tt.offset
 				}
-				expectedLimit := 20
+				expectedLimit := 0 // Default is now 0
 				if tt.limit != nil {
 					expectedLimit = *tt.limit
 				}
@@ -791,6 +799,98 @@ func TestUsers_AdminOnly(t *testing.T) {
 				assert.Len(t, result.Items, 1)
 				assert.Equal(t, 1, result.TotalCount)
 			}
+
+			mockUserStore.AssertExpectations(t)
+		})
+	}
+}
+
+func TestUsers_LimitValidation(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+
+	ctx := createAdminContext("admin-user-id")
+
+	now := time.Now()
+	users := []*userstore.User{
+		{
+			ID:          "user1",
+			DisplayName: "user1",
+			Username:    "user1",
+			Role:        "user",
+			IsActive:    true,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		},
+	}
+
+	tests := []struct {
+		name           string
+		offset         *int
+		limit          *int
+		expectedOffset int
+		expectedLimit  int
+	}{
+		{
+			name:           "Negative offset becomes 0",
+			offset:         intPtr(-5),
+			limit:          intPtr(10),
+			expectedOffset: 0,
+			expectedLimit:  10,
+		},
+		{
+			name:           "Negative limit becomes 0 (no limit)",
+			offset:         intPtr(0),
+			limit:          intPtr(-1),
+			expectedOffset: 0,
+			expectedLimit:  0,
+		},
+		{
+			name:           "Limit over 100 becomes 0 (no limit)",
+			offset:         intPtr(0),
+			limit:          intPtr(150),
+			expectedOffset: 0,
+			expectedLimit:  0,
+		},
+		{
+			name:           "Valid limit within range",
+			offset:         intPtr(5),
+			limit:          intPtr(50),
+			expectedOffset: 5,
+			expectedLimit:  50,
+		},
+		{
+			name:           "Limit exactly 100 is allowed",
+			offset:         intPtr(0),
+			limit:          intPtr(100),
+			expectedOffset: 0,
+			expectedLimit:  100,
+		},
+		{
+			name:           "Limit 0 means no limit",
+			offset:         intPtr(0),
+			limit:          intPtr(0),
+			expectedOffset: 0,
+			expectedLimit:  0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockUserStore.ExpectedCalls = nil
+			mockUserStore.On("List", ctx, tt.expectedOffset, tt.expectedLimit).Return(users, 1, nil)
+
+			result, err := resolver.Query().Users(ctx, tt.offset, tt.limit)
+
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+			assert.Len(t, result.Items, 1)
+			assert.Equal(t, 1, result.TotalCount)
 
 			mockUserStore.AssertExpectations(t)
 		})

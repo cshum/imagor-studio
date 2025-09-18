@@ -19,7 +19,6 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean }
   Int: { input: number; output: number }
   Float: { input: number; output: number }
-  JSON: { input: Record<string, any>; output: Record<string, any> }
   Upload: { input: File; output: File }
 }
 
@@ -138,7 +137,7 @@ export type ImagorStatus = {
   externalConfig: Maybe<ExternalImagorConfig>
   isOverriddenByConfig: Scalars['Boolean']['output']
   lastUpdated: Maybe<Scalars['String']['output']>
-  mode: Maybe<Scalars['String']['output']>
+  mode: Maybe<ImagorMode>
   restartRequired: Scalars['Boolean']['output']
 }
 
@@ -415,7 +414,7 @@ export type ImagorStatusQuery = {
   imagorStatus: {
     __typename?: 'ImagorStatus'
     configured: boolean
-    mode: string | null
+    mode: ImagorMode | null
     restartRequired: boolean
     lastUpdated: string | null
     isOverriddenByConfig: boolean
@@ -2353,7 +2352,7 @@ export const ListUsersDocument = {
           kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
-          defaultValue: { kind: 'IntValue', value: '20' },
+          defaultValue: { kind: 'IntValue', value: '0' },
         },
       ],
       selectionSet: {

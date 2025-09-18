@@ -204,19 +204,19 @@ type MutationResolver interface {
 	UploadFile(ctx context.Context, path string, content graphql.Upload) (bool, error)
 	DeleteFile(ctx context.Context, path string) (bool, error)
 	CreateFolder(ctx context.Context, path string) (bool, error)
-	UpdateProfile(ctx context.Context, input UpdateProfileInput, userID *string) (*User, error)
-	ChangePassword(ctx context.Context, input ChangePasswordInput, userID *string) (bool, error)
-	DeactivateAccount(ctx context.Context, userID *string) (bool, error)
-	SetUserRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) ([]*UserRegistry, error)
-	DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error)
-	SetSystemRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput) ([]*SystemRegistry, error)
-	DeleteSystemRegistry(ctx context.Context, key *string, keys []string) (bool, error)
 	ConfigureFileStorage(ctx context.Context, input FileStorageInput) (*StorageConfigResult, error)
 	ConfigureS3Storage(ctx context.Context, input S3StorageInput) (*StorageConfigResult, error)
 	TestStorageConfig(ctx context.Context, input StorageConfigInput) (*StorageTestResult, error)
 	ConfigureEmbeddedImagor(ctx context.Context) (*ImagorConfigResult, error)
 	ConfigureExternalImagor(ctx context.Context, input ExternalImagorInput) (*ImagorConfigResult, error)
 	GenerateImagorURL(ctx context.Context, galleryKey string, imageKey string, params ImagorParamsInput) (string, error)
+	SetUserRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) ([]*UserRegistry, error)
+	DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error)
+	SetSystemRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput) ([]*SystemRegistry, error)
+	DeleteSystemRegistry(ctx context.Context, key *string, keys []string) (bool, error)
+	UpdateProfile(ctx context.Context, input UpdateProfileInput, userID *string) (*User, error)
+	ChangePassword(ctx context.Context, input ChangePasswordInput, userID *string) (bool, error)
+	DeactivateAccount(ctx context.Context, userID *string) (bool, error)
 	CreateUser(ctx context.Context, input CreateUserInput) (*User, error)
 }
 type QueryResolver interface {
@@ -1105,75 +1105,12 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../../../../graphql/storage.graphql", Input: `type Query {
-  listFiles(
-    path: String!
-    offset: Int
-    limit: Int
-    onlyFiles: Boolean
-    onlyFolders: Boolean
-    extensions: String
-    showHidden: Boolean
-    sortBy: SortOption
-    sortOrder: SortOrder
-  ): FileList!
-
-  statFile(path: String!): FileStat
-
-  # Storage Configuration APIs
-  storageStatus: StorageStatus!
-
+	{Name: "../../../../graphql/imagor.graphql", Input: `extend type Query {
   # Imagor Configuration APIs
   imagorStatus: ImagorStatus!
-
-  # Registry APIs
-  listUserRegistry(prefix: String, ownerID: String): [UserRegistry!]!
-  getUserRegistry(
-    key: String
-    keys: [String!]
-    ownerID: String
-  ): [UserRegistry!]!
-  listSystemRegistry(prefix: String): [SystemRegistry!]!
-  getSystemRegistry(key: String, keys: [String!]): [SystemRegistry!]!
-
-  me: User
-
-  # admin only operations
-  user(id: ID!): User
-  users(offset: Int = 0, limit: Int = 20): UserList!
 }
 
-type Mutation {
-  # write scope required
-  uploadFile(path: String!, content: Upload!): Boolean!
-  deleteFile(path: String!): Boolean!
-  createFolder(path: String!): Boolean!
-
-  # self operations, or admin scope with userId
-  updateProfile(input: UpdateProfileInput!, userId: ID): User!
-  changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
-  deactivateAccount(userId: ID): Boolean!
-
-  # User Registry APIs
-  setUserRegistry(
-    entry: RegistryEntryInput
-    entries: [RegistryEntryInput!]
-    ownerID: String
-  ): [UserRegistry!]!
-  deleteUserRegistry(key: String, keys: [String!], ownerID: String): Boolean!
-
-  # System Registry APIs (admin only for write)
-  setSystemRegistry(
-    entry: RegistryEntryInput
-    entries: [RegistryEntryInput!]
-  ): [SystemRegistry!]!
-  deleteSystemRegistry(key: String, keys: [String!]): Boolean!
-
-  # Storage Configuration APIs (admin only)
-  configureFileStorage(input: FileStorageInput!): StorageConfigResult!
-  configureS3Storage(input: S3StorageInput!): StorageConfigResult!
-  testStorageConfig(input: StorageConfigInput!): StorageTestResult!
-
+extend type Mutation {
   # Imagor Configuration APIs (admin only)
   configureEmbeddedImagor: ImagorConfigResult!
   configureExternalImagor(input: ExternalImagorInput!): ImagorConfigResult!
@@ -1184,47 +1121,6 @@ type Mutation {
     imageKey: String!
     params: ImagorParamsInput!
   ): String!
-
-  # admin only operations
-  createUser(input: CreateUserInput!): User!
-}
-
-type User {
-  id: ID!
-  displayName: String!
-  username: String!
-  role: String!
-  isActive: Boolean!
-  createdAt: String!
-  updatedAt: String!
-}
-
-type UserList {
-  items: [User!]!
-  totalCount: Int!
-}
-
-input UpdateProfileInput {
-  displayName: String
-  username: String
-}
-
-input ChangePasswordInput {
-  currentPassword: String # Optional when admin is changing another user's password
-  newPassword: String!
-}
-
-input CreateUserInput {
-  displayName: String!
-  username: String!
-  password: String!
-  role: String!
-}
-
-input RegistryEntryInput {
-  key: String!
-  value: String!
-  isEncrypted: Boolean!
 }
 
 # Imagor URL Generation Input Types
@@ -1273,7 +1169,129 @@ input ImagorFilterInput {
   args: String! # "80", "10", etc.
 }
 
-# Existing types...
+# Imagor Configuration Types
+type ImagorStatus {
+  configured: Boolean!
+  mode: ImagorMode
+  restartRequired: Boolean!
+  lastUpdated: String
+  isOverriddenByConfig: Boolean!
+  externalConfig: ExternalImagorConfig
+}
+
+type ExternalImagorConfig {
+  baseUrl: String!
+  hasSecret: Boolean!
+  unsafe: Boolean!
+  signerType: ImagorSignerType!
+  signerTruncate: Int!
+}
+
+type ImagorConfigResult {
+  success: Boolean!
+  restartRequired: Boolean!
+  timestamp: String!
+  message: String
+}
+
+input ExternalImagorInput {
+  baseUrl: String!
+  secret: String
+  unsafe: Boolean
+  signerType: ImagorSignerType # Optional, defaults to SHA1
+  signerTruncate: Int # Optional, defaults to 0
+}
+
+enum ImagorSignerType {
+  SHA1
+  SHA256
+  SHA512
+}
+
+enum ImagorMode {
+  EMBEDDED
+  EXTERNAL
+}
+`, BuiltIn: false},
+	{Name: "../../../../graphql/registry.graphql", Input: `extend type Query {
+  # Registry APIs
+  listUserRegistry(prefix: String, ownerID: String): [UserRegistry!]!
+  getUserRegistry(
+    key: String
+    keys: [String!]
+    ownerID: String
+  ): [UserRegistry!]!
+  listSystemRegistry(prefix: String): [SystemRegistry!]!
+  getSystemRegistry(key: String, keys: [String!]): [SystemRegistry!]!
+}
+
+extend type Mutation {
+  # User Registry APIs
+  setUserRegistry(
+    entry: RegistryEntryInput
+    entries: [RegistryEntryInput!]
+    ownerID: String
+  ): [UserRegistry!]!
+  deleteUserRegistry(key: String, keys: [String!], ownerID: String): Boolean!
+
+  # System Registry APIs (admin only for write)
+  setSystemRegistry(
+    entry: RegistryEntryInput
+    entries: [RegistryEntryInput!]
+  ): [SystemRegistry!]!
+  deleteSystemRegistry(key: String, keys: [String!]): Boolean!
+}
+
+input RegistryEntryInput {
+  key: String!
+  value: String!
+  isEncrypted: Boolean!
+}
+
+type UserRegistry {
+  key: String!
+  value: String!
+  isEncrypted: Boolean!
+}
+
+type SystemRegistry {
+  key: String!
+  value: String!
+  isEncrypted: Boolean!
+  isOverriddenByConfig: Boolean!
+}
+`, BuiltIn: false},
+	{Name: "../../../../graphql/storage.graphql", Input: `type Query {
+  listFiles(
+    path: String!
+    offset: Int
+    limit: Int
+    onlyFiles: Boolean
+    onlyFolders: Boolean
+    extensions: String
+    showHidden: Boolean
+    sortBy: SortOption
+    sortOrder: SortOrder
+  ): FileList!
+
+  statFile(path: String!): FileStat
+
+  # Storage Configuration APIs
+  storageStatus: StorageStatus!
+}
+
+type Mutation {
+  # write scope required
+  uploadFile(path: String!, content: Upload!): Boolean!
+  deleteFile(path: String!): Boolean!
+  createFolder(path: String!): Boolean!
+
+  # Storage Configuration APIs (admin only)
+  configureFileStorage(input: FileStorageInput!): StorageConfigResult!
+  configureS3Storage(input: S3StorageInput!): StorageConfigResult!
+  testStorageConfig(input: StorageConfigInput!): StorageTestResult!
+}
+
 type FileList {
   items: [FileItem!]!
   totalCount: Int!
@@ -1317,21 +1335,6 @@ enum SortOrder {
 }
 
 scalar Upload
-
-type UserRegistry {
-  key: String!
-  value: String!
-  isEncrypted: Boolean!
-}
-
-type SystemRegistry {
-  key: String!
-  value: String!
-  isEncrypted: Boolean!
-  isOverriddenByConfig: Boolean!
-}
-
-scalar JSON
 
 # Storage Configuration Types
 type StorageStatus {
@@ -1398,49 +1401,55 @@ enum StorageType {
   FILE
   S3
 }
+`, BuiltIn: false},
+	{Name: "../../../../graphql/user.graphql", Input: `extend type Query {
+  me: User
 
-# Imagor Configuration Types
-type ImagorStatus {
-  configured: Boolean!
-  mode: String # "embedded" or "external"
-  restartRequired: Boolean!
-  lastUpdated: String
-  isOverriddenByConfig: Boolean!
-  externalConfig: ExternalImagorConfig
+  # admin only operations
+  user(id: ID!): User
+  users(offset: Int = 0, limit: Int = 0): UserList!
 }
 
-type ExternalImagorConfig {
-  baseUrl: String!
-  hasSecret: Boolean!
-  unsafe: Boolean!
-  signerType: ImagorSignerType!
-  signerTruncate: Int!
+extend type Mutation {
+  # self operations, or admin scope with userId
+  updateProfile(input: UpdateProfileInput!, userId: ID): User!
+  changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
+  deactivateAccount(userId: ID): Boolean!
+
+  # admin only operations
+  createUser(input: CreateUserInput!): User!
 }
 
-type ImagorConfigResult {
-  success: Boolean!
-  restartRequired: Boolean!
-  timestamp: String!
-  message: String
+type User {
+  id: ID!
+  displayName: String!
+  username: String!
+  role: String!
+  isActive: Boolean!
+  createdAt: String!
+  updatedAt: String!
 }
 
-input ExternalImagorInput {
-  baseUrl: String!
-  secret: String
-  unsafe: Boolean
-  signerType: ImagorSignerType # Optional, defaults to SHA1
-  signerTruncate: Int # Optional, defaults to 0
+type UserList {
+  items: [User!]!
+  totalCount: Int!
 }
 
-enum ImagorSignerType {
-  SHA1
-  SHA256
-  SHA512
+input UpdateProfileInput {
+  displayName: String
+  username: String
 }
 
-enum ImagorMode {
-  EMBEDDED
-  EXTERNAL
+input ChangePasswordInput {
+  currentPassword: String # Optional when admin is changing another user's password
+  newPassword: String!
+}
+
+input CreateUserInput {
+  displayName: String!
+  username: String!
+  password: String!
+  role: String!
 }
 `, BuiltIn: false},
 }
@@ -2670,7 +2679,7 @@ func (ec *executionContext) _ImagorStatus_mode(ctx context.Context, field graphq
 		ec.fieldContext_ImagorStatus_mode,
 		func(ctx context.Context) (any, error) { return obj.Mode, nil },
 		nil,
-		ec.marshalOString2ᚖstring,
+		ec.marshalOImagorMode2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorMode,
 		true,
 		false,
 	)
@@ -2683,7 +2692,7 @@ func (ec *executionContext) fieldContext_ImagorStatus_mode(_ context.Context, fi
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ImagorMode does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2926,327 +2935,6 @@ func (ec *executionContext) fieldContext_Mutation_createFolder(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createFolder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_updateProfile,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateProfile(ctx, fc.Args["input"].(UpdateProfileInput), fc.Args["userId"].(*string))
-		},
-		nil,
-		ec.marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateProfile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "displayName":
-				return ec.fieldContext_User_displayName(ctx, field)
-			case "username":
-				return ec.fieldContext_User_username(ctx, field)
-			case "role":
-				return ec.fieldContext_User_role(ctx, field)
-			case "isActive":
-				return ec.fieldContext_User_isActive(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_User_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_User_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateProfile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_changePassword,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().ChangePassword(ctx, fc.Args["input"].(ChangePasswordInput), fc.Args["userId"].(*string))
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_changePassword(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_changePassword_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deactivateAccount(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_deactivateAccount,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeactivateAccount(ctx, fc.Args["userId"].(*string))
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deactivateAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deactivateAccount_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_setUserRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_setUserRegistry,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().SetUserRegistry(ctx, fc.Args["entry"].(*RegistryEntryInput), fc.Args["entries"].([]*RegistryEntryInput), fc.Args["ownerID"].(*string))
-		},
-		nil,
-		ec.marshalNUserRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistryᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_setUserRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "key":
-				return ec.fieldContext_UserRegistry_key(ctx, field)
-			case "value":
-				return ec.fieldContext_UserRegistry_value(ctx, field)
-			case "isEncrypted":
-				return ec.fieldContext_UserRegistry_isEncrypted(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type UserRegistry", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_setUserRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteUserRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_deleteUserRegistry,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteUserRegistry(ctx, fc.Args["key"].(*string), fc.Args["keys"].([]string), fc.Args["ownerID"].(*string))
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteUserRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteUserRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_setSystemRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_setSystemRegistry,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().SetSystemRegistry(ctx, fc.Args["entry"].(*RegistryEntryInput), fc.Args["entries"].([]*RegistryEntryInput))
-		},
-		nil,
-		ec.marshalNSystemRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistryᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_setSystemRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "key":
-				return ec.fieldContext_SystemRegistry_key(ctx, field)
-			case "value":
-				return ec.fieldContext_SystemRegistry_value(ctx, field)
-			case "isEncrypted":
-				return ec.fieldContext_SystemRegistry_isEncrypted(ctx, field)
-			case "isOverriddenByConfig":
-				return ec.fieldContext_SystemRegistry_isOverriddenByConfig(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SystemRegistry", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_setSystemRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteSystemRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_deleteSystemRegistry,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteSystemRegistry(ctx, fc.Args["key"].(*string), fc.Args["keys"].([]string))
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteSystemRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteSystemRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3529,6 +3217,327 @@ func (ec *executionContext) fieldContext_Mutation_generateImagorUrl(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_generateImagorUrl_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_setUserRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_setUserRegistry,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().SetUserRegistry(ctx, fc.Args["entry"].(*RegistryEntryInput), fc.Args["entries"].([]*RegistryEntryInput), fc.Args["ownerID"].(*string))
+		},
+		nil,
+		ec.marshalNUserRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistryᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_setUserRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_UserRegistry_key(ctx, field)
+			case "value":
+				return ec.fieldContext_UserRegistry_value(ctx, field)
+			case "isEncrypted":
+				return ec.fieldContext_UserRegistry_isEncrypted(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserRegistry", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setUserRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteUserRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteUserRegistry,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteUserRegistry(ctx, fc.Args["key"].(*string), fc.Args["keys"].([]string), fc.Args["ownerID"].(*string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteUserRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteUserRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_setSystemRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_setSystemRegistry,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().SetSystemRegistry(ctx, fc.Args["entry"].(*RegistryEntryInput), fc.Args["entries"].([]*RegistryEntryInput))
+		},
+		nil,
+		ec.marshalNSystemRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistryᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_setSystemRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_SystemRegistry_key(ctx, field)
+			case "value":
+				return ec.fieldContext_SystemRegistry_value(ctx, field)
+			case "isEncrypted":
+				return ec.fieldContext_SystemRegistry_isEncrypted(ctx, field)
+			case "isOverriddenByConfig":
+				return ec.fieldContext_SystemRegistry_isOverriddenByConfig(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SystemRegistry", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setSystemRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteSystemRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteSystemRegistry,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteSystemRegistry(ctx, fc.Args["key"].(*string), fc.Args["keys"].([]string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteSystemRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteSystemRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateProfile,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateProfile(ctx, fc.Args["input"].(UpdateProfileInput), fc.Args["userId"].(*string))
+		},
+		nil,
+		ec.marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateProfile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
+			case "isActive":
+				return ec.fieldContext_User_isActive(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateProfile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_changePassword,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().ChangePassword(ctx, fc.Args["input"].(ChangePasswordInput), fc.Args["userId"].(*string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_changePassword(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_changePassword_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deactivateAccount(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deactivateAccount,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeactivateAccount(ctx, fc.Args["userId"].(*string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deactivateAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deactivateAccount_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7777,55 +7786,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updateProfile":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateProfile(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "changePassword":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_changePassword(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deactivateAccount":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deactivateAccount(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "setUserRegistry":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_setUserRegistry(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deleteUserRegistry":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteUserRegistry(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "setSystemRegistry":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_setSystemRegistry(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deleteSystemRegistry":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteSystemRegistry(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "configureFileStorage":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_configureFileStorage(ctx, field)
@@ -7864,6 +7824,55 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "generateImagorUrl":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_generateImagorUrl(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setUserRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setUserRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteUserRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteUserRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setSystemRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setSystemRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteSystemRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteSystemRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateProfile":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateProfile(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "changePassword":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_changePassword(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deactivateAccount":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deactivateAccount(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -9808,6 +9817,22 @@ func (ec *executionContext) unmarshalOImagorFilterInput2ᚕᚖgithubᚗcomᚋcsh
 		}
 	}
 	return res, nil
+}
+
+func (ec *executionContext) unmarshalOImagorMode2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorMode(ctx context.Context, v any) (*ImagorMode, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(ImagorMode)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOImagorMode2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorMode(ctx context.Context, sel ast.SelectionSet, v *ImagorMode) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOImagorSignerType2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorSignerType(ctx context.Context, v any) (*ImagorSignerType, error) {

@@ -250,13 +250,26 @@ func (s *store) List(ctx context.Context, offset, limit int) ([]*User, int, erro
 	}
 
 	// Get paginated results
-	err = s.db.NewSelect().
+	query := s.db.NewSelect().
 		Model(&users).
 		Where("is_active = true").
-		OrderExpr("created_at DESC").
-		Offset(offset).
-		Limit(limit).
-		Scan(ctx)
+		OrderExpr("created_at DESC")
+
+	// Apply offset and limit
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	// Only apply limit if it's greater than 0 (0 means no limit)
+	// Note: SQLite requires LIMIT when using OFFSET, so we use a large number when limit=0 and offset>0
+	if limit > 0 {
+		query = query.Limit(limit)
+	} else if offset > 0 {
+		// Use a very large limit when we have offset but no limit
+		query = query.Limit(1000000)
+	}
+
+	err = query.Scan(ctx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("error listing users: %w", err)
 	}

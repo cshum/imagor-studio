@@ -65,7 +65,7 @@ input ImagorFilterInput {
 # Imagor Configuration Types
 type ImagorStatus {
   configured: Boolean!
-  mode: String # "embedded" or "external"
+  mode: ImagorMode
   restartRequired: Boolean!
   lastUpdated: String
   isOverriddenByConfig: Boolean!
