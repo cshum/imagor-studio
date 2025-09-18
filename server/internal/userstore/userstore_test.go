@@ -555,6 +555,116 @@ func TestUserStore_GetByIDWithPassword(t *testing.T) {
 	assert.Nil(t, inactiveUser) // Should not return inactive users
 }
 
+func TestUserStore_List(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	store := New(db, logger)
+	ctx := context.Background()
+
+	// Create test users
+	user1, err := store.Create(ctx, "user1", "user1", "hash1", "user")
+	require.NoError(t, err)
+
+	user2, err := store.Create(ctx, "user2", "user2", "hash2", "admin")
+	require.NoError(t, err)
+
+	user3, err := store.Create(ctx, "user3", "user3", "hash3", "user")
+	require.NoError(t, err)
+
+	// Deactivate one user
+	err = store.SetActive(ctx, user3.ID, false)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name            string
+		offset          int
+		limit           int
+		expectedCount   int
+		expectedTotal   int
+		expectedUserIDs []string
+	}{
+		{
+			name:            "List all users (limit=0)",
+			offset:          0,
+			limit:           0,
+			expectedCount:   2, // Only active users
+			expectedTotal:   2,
+			expectedUserIDs: []string{user2.ID, user1.ID}, // Ordered by created_at DESC
+		},
+		{
+			name:            "List with limit=1",
+			offset:          0,
+			limit:           1,
+			expectedCount:   1,
+			expectedTotal:   2,
+			expectedUserIDs: []string{user2.ID}, // Most recent first
+		},
+		{
+			name:            "List with offset=1, limit=1",
+			offset:          1,
+			limit:           1,
+			expectedCount:   1,
+			expectedTotal:   2,
+			expectedUserIDs: []string{user1.ID}, // Second user
+		},
+		{
+			name:            "List with offset=1, limit=0 (no limit)",
+			offset:          1,
+			limit:           0,
+			expectedCount:   1,
+			expectedTotal:   2,
+			expectedUserIDs: []string{user1.ID}, // All users from offset 1
+		},
+		{
+			name:            "List with high offset",
+			offset:          10,
+			limit:           5,
+			expectedCount:   0,
+			expectedTotal:   2,
+			expectedUserIDs: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			users, totalCount, err := store.List(ctx, tt.offset, tt.limit)
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedCount, len(users))
+			assert.Equal(t, tt.expectedTotal, totalCount)
+
+			// Check user IDs match expected order
+			actualUserIDs := make([]string, len(users))
+			for i, user := range users {
+				actualUserIDs[i] = user.ID
+			}
+			assert.Equal(t, tt.expectedUserIDs, actualUserIDs)
+
+			// Verify all returned users are active
+			for _, user := range users {
+				assert.True(t, user.IsActive)
+			}
+		})
+	}
+}
+
+func TestUserStore_List_EmptyDatabase(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	store := New(db, logger)
+	ctx := context.Background()
+
+	users, totalCount, err := store.List(ctx, 0, 0)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(users))
+	assert.Equal(t, 0, totalCount)
+}
+
 func TestUserStore_InputValidation(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()

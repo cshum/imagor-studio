@@ -43,7 +43,7 @@ type Documents = {
   '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n': typeof types.UserInfoFragmentDoc
   '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n': typeof types.MeDocument
   '\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserInfo\n    }\n  }\n': typeof types.GetUserDocument
-  '\n  query ListUsers($offset: Int = 0, $limit: Int = 20) {\n    users(offset: $offset, limit: $limit) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n': typeof types.ListUsersDocument
+  '\n  query ListUsers($offset: Int = 0, $limit: Int = 0) {\n    users(offset: $offset, limit: $limit) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n': typeof types.ListUsersDocument
   '\n  mutation UpdateProfile($input: UpdateProfileInput!, $userId: ID) {\n    updateProfile(input: $input, userId: $userId) {\n      ...UserInfo\n    }\n  }\n': typeof types.UpdateProfileDocument
   '\n  mutation ChangePassword($input: ChangePasswordInput!, $userId: ID) {\n    changePassword(input: $input, userId: $userId)\n  }\n': typeof types.ChangePasswordDocument
   '\n  mutation DeactivateAccount($userId: ID) {\n    deactivateAccount(userId: $userId)\n  }\n': typeof types.DeactivateAccountDocument
@@ -105,7 +105,7 @@ const documents: Documents = {
   '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n': types.MeDocument,
   '\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserInfo\n    }\n  }\n':
     types.GetUserDocument,
-  '\n  query ListUsers($offset: Int = 0, $limit: Int = 20) {\n    users(offset: $offset, limit: $limit) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n':
+  '\n  query ListUsers($offset: Int = 0, $limit: Int = 0) {\n    users(offset: $offset, limit: $limit) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n':
     types.ListUsersDocument,
   '\n  mutation UpdateProfile($input: UpdateProfileInput!, $userId: ID) {\n    updateProfile(input: $input, userId: $userId) {\n      ...UserInfo\n    }\n  }\n':
     types.UpdateProfileDocument,
@@ -303,8 +303,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query ListUsers($offset: Int = 0, $limit: Int = 20) {\n    users(offset: $offset, limit: $limit) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n',
-): (typeof documents)['\n  query ListUsers($offset: Int = 0, $limit: Int = 20) {\n    users(offset: $offset, limit: $limit) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n']
+  source: '\n  query ListUsers($offset: Int = 0, $limit: Int = 0) {\n    users(offset: $offset, limit: $limit) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n',
+): (typeof documents)['\n  query ListUsers($offset: Int = 0, $limit: Int = 0) {\n    users(offset: $offset, limit: $limit) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

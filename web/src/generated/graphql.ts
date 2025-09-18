@@ -2353,7 +2353,7 @@ export const ListUsersDocument = {
           kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
-          defaultValue: { kind: 'IntValue', value: '20' },
+          defaultValue: { kind: 'IntValue', value: '0' },
         },
       ],
       selectionSet: {

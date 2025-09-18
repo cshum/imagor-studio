@@ -3,7 +3,7 @@ extend type Query {
 
   # admin only operations
   user(id: ID!): User
-  users(offset: Int = 0, limit: Int = 20): UserList!
+  users(offset: Int = 0, limit: Int = 0): UserList!
 }
 
 extend type Mutation {

@@ -1877,7 +1877,7 @@
                 "name": "limit",
                 "description": null,
                 "type": { "kind": "SCALAR", "name": "Int", "ofType": null },
-                "defaultValue": "20",
+                "defaultValue": "0",
                 "isDeprecated": false,
                 "deprecationReason": null
               },

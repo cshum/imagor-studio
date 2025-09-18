@@ -1185,7 +1185,7 @@ export const GetUserDocument = gql`
   ${UserInfoFragmentDoc}
 `
 export const ListUsersDocument = gql`
-  query ListUsers($offset: Int = 0, $limit: Int = 20) {
+  query ListUsers($offset: Int = 0, $limit: Int = 0) {
     users(offset: $offset, limit: $limit) {
       items {
         ...UserInfo

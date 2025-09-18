@@ -30,7 +30,7 @@ export const GetUserQuery = gql(`
 `)
 
 export const ListUsersQuery = gql(`
-  query ListUsers($offset: Int = 0, $limit: Int = 20) {
+  query ListUsers($offset: Int = 0, $limit: Int = 0) {
     users(offset: $offset, limit: $limit) {
       items {
         ...UserInfo
