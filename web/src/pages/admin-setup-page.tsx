@@ -264,27 +264,29 @@ export function AdminSetupPage() {
   const multiStepFormRef = useRef<MultiStepFormRef>(null)
 
   // Create translation-aware validation schema
-  const adminSetupSchema = z.object({
-    username: z
-      .string()
-      .min(3, 'Username must be at least 3 characters')
-      .max(30, 'Username must be at most 30 characters')
-      .regex(
-        /^[a-zA-Z0-9_-]+$/,
-        'Username can only contain letters, numbers, underscores, and hyphens',
-      ),
-    password: z
-      .string()
-      .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
-      .max(72, 'Password must be less than 72 characters'),
-    confirmPassword: z
-      .string()
-      .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
-      .max(72, 'Password must be less than 72 characters'),
-  }).refine((data) => data.password === data.confirmPassword, {
-    message: t('forms.validation.passwordsDoNotMatch'),
-    path: ['confirmPassword'],
-  })
+  const adminSetupSchema = z
+    .object({
+      username: z
+        .string()
+        .min(3, 'Username must be at least 3 characters')
+        .max(30, 'Username must be at most 30 characters')
+        .regex(
+          /^[a-zA-Z0-9_-]+$/,
+          'Username can only contain letters, numbers, underscores, and hyphens',
+        ),
+      password: z
+        .string()
+        .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
+        .max(72, 'Password must be less than 72 characters'),
+      confirmPassword: z
+        .string()
+        .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
+        .max(72, 'Password must be less than 72 characters'),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('forms.validation.passwordsDoNotMatch'),
+      path: ['confirmPassword'],
+    })
 
   // Create translated system settings
   const SYSTEM_SETTINGS = createSystemSettings(t)
