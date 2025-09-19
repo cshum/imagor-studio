@@ -3,14 +3,14 @@ import { FlipHorizontal, FlipVertical, RotateCcw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import type { ImageTransformState } from '@/lib/image-transform'
+import type { ImageEditorState } from '@/lib/image-editor.ts'
 
-interface FlipRotateControlsProps {
-  params: ImageTransformState
-  onUpdateParams: (updates: Partial<ImageTransformState>) => void
+interface TransformControlProps {
+  params: ImageEditorState
+  onUpdateParams: (updates: Partial<ImageEditorState>) => void
 }
 
-export function FlipRotateControls({ params, onUpdateParams }: FlipRotateControlsProps) {
+export function TransformControl({ params, onUpdateParams }: TransformControlProps) {
   const { t } = useTranslation()
 
   const handleRotation = (angle: number) => {

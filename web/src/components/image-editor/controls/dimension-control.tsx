@@ -15,14 +15,14 @@ import {
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { Toggle } from '@/components/ui/toggle'
-import type { ImageTransformState } from '@/lib/image-transform'
+import type { ImageEditorState } from '@/lib/image-editor.ts'
 
-interface DimensionControlsProps {
-  params: ImageTransformState
+interface DimensionControlProps {
+  params: ImageEditorState
   aspectLocked: boolean
   originalAspectRatio: number | null
   onUpdateParams: (
-    updates: Partial<ImageTransformState>,
+    updates: Partial<ImageEditorState>,
     options?: { respectAspectLock?: boolean },
   ) => void
   onToggleAspectLock: () => void
@@ -36,13 +36,13 @@ const ASPECT_RATIO_PRESETS = [
   { key: 'photo', label: '3:2', ratio: 3 / 2 },
 ]
 
-export function DimensionControls({
+export function DimensionControl({
   params,
   aspectLocked,
   originalAspectRatio,
   onUpdateParams,
   onToggleAspectLock,
-}: DimensionControlsProps) {
+}: DimensionControlProps) {
   const { t } = useTranslation()
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null)
   const [sizeScale, setSizeScale] = useState([1])
@@ -117,7 +117,7 @@ export function DimensionControls({
 
   const handleFitModeChange = (value: string) => {
     // Reset fitting options first and set the new one
-    const updates: Partial<ImageTransformState> = {
+    const updates: Partial<ImageEditorState> = {
       fitIn: false,
       stretch: false,
       smart: false,

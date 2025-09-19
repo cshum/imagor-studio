@@ -3,14 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
-import type { ImageTransformState } from '@/lib/image-transform'
+import type { ImageEditorState } from '@/lib/image-editor.ts'
 
-interface ColorControlsProps {
-  params: ImageTransformState
-  onUpdateParams: (updates: Partial<ImageTransformState>) => void
+interface ColorControlProps {
+  params: ImageEditorState
+  onUpdateParams: (updates: Partial<ImageEditorState>) => void
 }
 
-export function ColorControls({ params, onUpdateParams }: ColorControlsProps) {
+export function ColorControl({ params, onUpdateParams }: ColorControlProps) {
   const { t } = useTranslation()
 
   return (

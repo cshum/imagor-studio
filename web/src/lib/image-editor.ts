@@ -2,7 +2,7 @@ import { generateImagorUrl } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
 import { getFullImageUrl } from '@/lib/api-utils'
 
-export interface ImageTransformState {
+export interface ImageEditorState {
   // Dimensions
   width?: number
   height?: number
@@ -22,7 +22,7 @@ export interface ImageTransformState {
   hAlign?: string
   vAlign?: string
 
-  // Filters (for Phase 4)
+  // Filters
   brightness?: number
   contrast?: number
   saturation?: number
@@ -31,7 +31,7 @@ export interface ImageTransformState {
   sharpen?: number
   grayscale?: boolean
 
-  // Transform (for Phase 5)
+  // Transform
   hFlip?: boolean
   vFlip?: boolean
   rotation?: number // 0, 90, 180, 270
@@ -46,7 +46,7 @@ export interface ImageTransformState {
   trimTolerance?: number // Edge detection sensitivity (1-50, default 1)
 }
 
-export interface ImageTransformConfig {
+export interface ImageEditorConfig {
   galleryKey: string
   imageKey: string
   originalDimensions: {
@@ -55,10 +55,10 @@ export interface ImageTransformConfig {
   }
 }
 
-export interface ImageTransformCallbacks {
+export interface ImageEditorCallbacks {
   onPreviewUpdate?: (url: string) => void
   onError?: (error: Error) => void
-  onStateChange?: (state: ImageTransformState) => void
+  onStateChange?: (state: ImageEditorState) => void
   onLoadingChange?: (isLoading: boolean) => void
 }
 
@@ -66,16 +66,16 @@ export interface ImageTransformCallbacks {
  * Portable image transformation manager that handles state, URL generation,
  * and parameter conversion without React dependencies.
  */
-export class ImageTransform {
-  private state: ImageTransformState
-  private config: ImageTransformConfig
-  private callbacks: ImageTransformCallbacks
+export class ImageEditor {
+  private state: ImageEditorState
+  private config: ImageEditorConfig
+  private callbacks: ImageEditorCallbacks
   private debounceTimer: number | null = null
   private abortController: AbortController | null = null
   private aspectLocked = true
   private lockedAspectRatio: number | null = null
 
-  constructor(config: ImageTransformConfig, callbacks: ImageTransformCallbacks = {}) {
+  constructor(config: ImageEditorConfig, callbacks: ImageEditorCallbacks = {}) {
     this.config = config
     this.callbacks = callbacks
 
@@ -94,7 +94,7 @@ export class ImageTransform {
   /**
    * Get current transformation state
    */
-  getState(): ImageTransformState {
+  getState(): ImageEditorState {
     return { ...this.state }
   }
 
@@ -109,7 +109,7 @@ export class ImageTransform {
    * Convert state to GraphQL input format
    */
   private convertToGraphQLParams(
-    state: ImageTransformState,
+    state: ImageEditorState,
     forPreview = false,
   ): Partial<ImagorParamsInput> {
     const graphqlParams: Partial<ImagorParamsInput> = {}
@@ -253,7 +253,7 @@ export class ImageTransform {
    * Update transformation parameters
    */
   updateParams(
-    updates: Partial<ImageTransformState>,
+    updates: Partial<ImageEditorState>,
     options?: { respectAspectLock?: boolean },
   ): void {
     const newState = { ...this.state, ...updates }

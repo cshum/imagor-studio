@@ -2,17 +2,17 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import type { ImageTransformState } from '@/lib/image-transform'
+import type { ImageEditorState } from '@/lib/image-editor.ts'
 
-interface CropControlsProps {
-  params: ImageTransformState
-  onUpdateParam: (key: keyof ImageTransformState, value: any) => void
+interface CropControlProps {
+  params: ImageEditorState
+  onUpdateParam: (key: keyof ImageEditorState, value: any) => void
 }
 
-export function CropControls({ params, onUpdateParam }: CropControlsProps) {
+export function CropControl({ params, onUpdateParam }: CropControlProps) {
   const handleCropChange = (side: 'left' | 'top' | 'right' | 'bottom', value: string) => {
     const numValue = parseFloat(value) || 0
-    const key = `crop${side.charAt(0).toUpperCase() + side.slice(1)}` as keyof ImageTransformState
+    const key = `crop${side.charAt(0).toUpperCase() + side.slice(1)}` as keyof ImageEditorState
     onUpdateParam(key, numValue > 0 ? numValue : undefined)
   }
 

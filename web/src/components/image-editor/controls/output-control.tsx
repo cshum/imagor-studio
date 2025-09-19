@@ -11,17 +11,17 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
-import type { ImageTransformState } from '@/lib/image-transform'
+import type { ImageEditorState } from '@/lib/image-editor.ts'
 
-interface OutputControlsProps {
-  params: ImageTransformState
+interface OutputControlProps {
+  params: ImageEditorState
   onUpdateParams: (
-    updates: Partial<ImageTransformState>,
+    updates: Partial<ImageEditorState>,
     options?: { respectAspectLock?: boolean },
   ) => void
 }
 
-export function OutputControls({ params, onUpdateParams }: OutputControlsProps) {
+export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
   const { t } = useTranslation()
 
   const formatOptions = [
@@ -61,7 +61,7 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
   }
 
   const handleQualityChange = (value: number[]) => {
-    const updates: Partial<ImageTransformState> = { quality: value[0] }
+    const updates: Partial<ImageEditorState> = { quality: value[0] }
     // Clear max_bytes when quality is set manually
     if (params.maxBytes) {
       updates.maxBytes = undefined
@@ -71,7 +71,7 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
 
   const handleMaxBytesChange = (value: string) => {
     const numValue = parseInt(value, 10)
-    const updates: Partial<ImageTransformState> = {
+    const updates: Partial<ImageEditorState> = {
       maxBytes: isNaN(numValue) || numValue <= 0 ? undefined : numValue,
     }
     // Auto-set JPEG format when maxBytes is set for optimal compression
@@ -86,7 +86,7 @@ export function OutputControls({ params, onUpdateParams }: OutputControlsProps) 
   }
 
   const handlePresetClick = (bytes: number) => {
-    const updates: Partial<ImageTransformState> = {
+    const updates: Partial<ImageEditorState> = {
       maxBytes: bytes,
       format: 'jpeg', // Auto-set JPEG format for optimal compression
     }

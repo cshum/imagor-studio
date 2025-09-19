@@ -3,17 +3,17 @@ import { useTranslation } from 'react-i18next'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import type { ImageTransformState } from '@/lib/image-transform'
+import type { ImageEditorState } from '@/lib/image-editor.ts'
 
-interface SimpleCropControlsProps {
-  params: ImageTransformState
+interface SimpleCropControlProps {
+  params: ImageEditorState
   onUpdateParams: (
-    updates: Partial<ImageTransformState>,
+    updates: Partial<ImageEditorState>,
     options?: { respectAspectLock?: boolean },
   ) => void
 }
 
-export function SimpleCropControls({ params, onUpdateParams }: SimpleCropControlsProps) {
+export function SimpleCropControl({ params, onUpdateParams }: SimpleCropControlProps) {
   const { t } = useTranslation()
 
   // Display coordinate values directly

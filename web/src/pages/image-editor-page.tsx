@@ -5,14 +5,14 @@ import { ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { setUserRegistry } from '@/api/registry-api'
+import { ImageEditorControls } from '@/components/image-editor/imagor-editor-controls.tsx'
 import { PreviewArea } from '@/components/image-editor/preview-area'
-import { TransformControls } from '@/components/image-editor/transform-controls-content'
 import { LoadingBar } from '@/components/loading-bar'
 import { Button } from '@/components/ui/button'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
-import { ImageTransform, type ImageTransformState } from '@/lib/image-transform'
+import { ImageEditor, type ImageEditorState } from '@/lib/image-editor.ts'
 import { cn, debounce } from '@/lib/utils.ts'
 import type { EditorOpenSections, ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 
@@ -53,7 +53,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   )
 
   // Image transform state
-  const [params, setParams] = useState<ImageTransformState>(() => ({
+  const [params, setParams] = useState<ImageEditorState>(() => ({
     width: loaderData.originalDimensions.width,
     height: loaderData.originalDimensions.height,
   }))
@@ -61,10 +61,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [aspectLocked, setAspectLocked] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  const transformRef = useRef<ImageTransform | undefined>(undefined)
+  const transformRef = useRef<ImageEditor | undefined>(undefined)
 
   useEffect(() => {
-    const transform = new ImageTransform(
+    const transform = new ImageEditor(
       {
         galleryKey,
         imageKey,
@@ -91,7 +91,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     loaderData.originalDimensions.width / loaderData.originalDimensions.height
 
   const updateParams = (
-    updates: Partial<ImageTransformState>,
+    updates: Partial<ImageEditorState>,
     options?: { respectAspectLock?: boolean },
   ) => {
     transformRef.current?.updateParams(updates, options)
@@ -205,7 +205,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
                   {/* Scrollable Controls */}
                   <div className='flex-1 touch-pan-y overflow-y-auto p-4 select-text'>
-                    <TransformControls
+                    <ImageEditorControls
                       params={params}
                       aspectLocked={aspectLocked}
                       originalAspectRatio={originalAspectRatio}
@@ -250,7 +250,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
           {/* Controls */}
           <div className='flex-1 touch-pan-y overflow-y-auto p-4 select-text'>
-            <TransformControls
+            <ImageEditorControls
               params={params}
               aspectLocked={aspectLocked}
               originalAspectRatio={originalAspectRatio}

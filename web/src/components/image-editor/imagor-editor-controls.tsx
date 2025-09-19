@@ -2,30 +2,30 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, FileImage, Move, Palette, RotateCw, Scissors } from 'lucide-react'
 
-import { ColorControls } from '@/components/image-editor/controls/color-controls'
-import { DimensionControls } from '@/components/image-editor/controls/dimension-controls'
-import { FlipRotateControls } from '@/components/image-editor/controls/flip-rotate-controls.tsx'
-import { OutputControls } from '@/components/image-editor/controls/output-controls'
-import { SimpleCropControls } from '@/components/image-editor/controls/simple-crop-controls'
+import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
+import { DimensionControl } from '@/components/image-editor/controls/dimension-control.tsx'
+import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
+import { SimpleCropControl } from '@/components/image-editor/controls/simple-crop-control.tsx'
+import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import type { ImageTransformState } from '@/lib/image-transform'
+import type { ImageEditorState } from '@/lib/image-editor.ts'
 import type { EditorOpenSections } from '@/loaders/image-editor-loader'
 
-interface TransformControlsProps {
-  params: ImageTransformState
+interface ImageEditorControlsProps {
+  params: ImageEditorState
   aspectLocked: boolean
   originalAspectRatio: number | null
   openSections: EditorOpenSections
   onOpenSectionsChange: (sections: EditorOpenSections) => void
   onUpdateParams: (
-    updates: Partial<ImageTransformState>,
+    updates: Partial<ImageEditorState>,
     options?: { respectAspectLock?: boolean },
   ) => void
   onToggleAspectLock: () => void
 }
 
-export function TransformControls({
+export function ImageEditorControls({
   params,
   aspectLocked,
   originalAspectRatio,
@@ -33,7 +33,7 @@ export function TransformControls({
   onOpenSectionsChange,
   onUpdateParams,
   onToggleAspectLock,
-}: TransformControlsProps) {
+}: ImageEditorControlsProps) {
   const { t } = useTranslation()
 
   const handleSectionToggle = useCallback(
@@ -63,7 +63,7 @@ export function TransformControls({
             <CollapsibleIcon isOpen={openSections.dimensions} />
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
-            <DimensionControls
+            <DimensionControl
               params={params}
               aspectLocked={aspectLocked}
               originalAspectRatio={originalAspectRatio}
@@ -88,7 +88,7 @@ export function TransformControls({
             <CollapsibleIcon isOpen={openSections.output} />
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
-            <OutputControls params={params} onUpdateParams={onUpdateParams} />
+            <OutputControl params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
@@ -107,7 +107,7 @@ export function TransformControls({
             <CollapsibleIcon isOpen={openSections.effects} />
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
-            <ColorControls params={params} onUpdateParams={onUpdateParams} />
+            <ColorControl params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
@@ -126,7 +126,7 @@ export function TransformControls({
             <CollapsibleIcon isOpen={openSections.transform} />
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
-            <FlipRotateControls params={params} onUpdateParams={onUpdateParams} />
+            <TransformControl params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
@@ -145,7 +145,7 @@ export function TransformControls({
             <CollapsibleIcon isOpen={openSections.crop} />
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
-            <SimpleCropControls params={params} onUpdateParams={onUpdateParams} />
+            <SimpleCropControl params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
