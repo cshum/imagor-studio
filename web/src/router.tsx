@@ -140,7 +140,6 @@ const galleryRoute = createRoute({
     )
   },
   loader: galleryLoader,
-  shouldReload: false,
 })
 
 const imagePage = createRoute({
