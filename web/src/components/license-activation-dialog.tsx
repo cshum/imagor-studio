@@ -1,5 +1,9 @@
 import React, { useState } from 'react'
-import { Button } from './ui/button'
+import { Heart, Loader2 } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import { useLicense } from '@/stores/license-store'
+
 import {
   Dialog,
   DialogContent,
@@ -10,8 +14,6 @@ import {
 } from './ui/dialog'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
-import { useLicense } from '../stores/license-store'
-import { Heart, Loader2 } from 'lucide-react'
 
 interface LicenseActivationDialogProps {
   open: boolean
@@ -53,10 +55,10 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className='sm:max-w-md'>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Heart className="w-5 h-5 text-blue-600" />
+          <DialogTitle className='flex items-center gap-2'>
+            <Heart className='h-5 w-5 text-blue-600' />
             Support Imagor Studio Development
           </DialogTitle>
           <DialogDescription>
@@ -64,12 +66,12 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="license-key">License Key</Label>
+        <div className='space-y-4'>
+          <div className='space-y-2'>
+            <Label htmlFor='license-key'>License Key</Label>
             <Input
-              id="license-key"
-              placeholder="IMGR-xxxx-xxxx-xxxx-xxxx"
+              id='license-key'
+              placeholder='IMGR-xxxx-xxxx-xxxx-xxxx'
               value={licenseKey}
               onChange={(e) => setLicenseKey(e.target.value)}
               disabled={isLoading}
@@ -77,20 +79,22 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
           </div>
 
           {message && (
-            <div className={`text-sm p-3 rounded-md ${
-              message.includes('success') || message.includes('activated')
-                ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                : 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-            }`}>
+            <div
+              className={`rounded-md p-3 text-sm ${
+                message.includes('success') || message.includes('activated')
+                  ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                  : 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+              }`}
+            >
               {message}
             </div>
           )}
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md">
-            <h4 className="font-medium text-blue-900 dark:text-blue-400 mb-2">
+          <div className='rounded-md bg-blue-50 p-4 dark:bg-blue-900/20'>
+            <h4 className='mb-2 font-medium text-blue-900 dark:text-blue-400'>
               Why support development?
             </h4>
-            <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+            <ul className='space-y-1 text-sm text-blue-800 dark:text-blue-300'>
               <li>• Ongoing feature development and improvements</li>
               <li>• Bug fixes and security updates</li>
               <li>• Community support and documentation</li>
@@ -98,13 +102,11 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
             </ul>
           </div>
 
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-2">
-              Don't have a license yet?
-            </p>
+          <div className='text-center'>
+            <p className='text-muted-foreground mb-2 text-sm'>Don't have a license yet?</p>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={() => {
                 // TODO: Open purchase page
                 window.open('https://buy.imagor-studio.com', '_blank')
@@ -116,11 +118,11 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
+          <Button variant='outline' onClick={handleClose} disabled={isLoading}>
             Maybe Later
           </Button>
           <Button onClick={handleActivate} disabled={isLoading || !licenseKey.trim()}>
-            {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             Activate License
           </Button>
         </DialogFooter>

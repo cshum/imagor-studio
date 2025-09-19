@@ -1,3 +1,4 @@
+import { activateLicense as activateLicenseAPI, getLicenseStatus } from '@/api/license-api'
 import { createStore } from '@/lib/create-store'
 
 export interface LicenseState {
@@ -11,10 +12,22 @@ export interface LicenseState {
 }
 
 export type LicenseAction =
-  | { type: 'SET_LICENSE_STATUS'; payload: { isLicensed: boolean; licenseType?: string; email?: string; message: string; supportMessage?: string } }
+  | {
+      type: 'SET_LICENSE_STATUS'
+      payload: {
+        isLicensed: boolean
+        licenseType?: string
+        email?: string
+        message: string
+        supportMessage?: string
+      }
+    }
   | { type: 'SET_LOADING'; payload: { isLoading: boolean } }
   | { type: 'SET_SHOW_DIALOG'; payload: { showDialog: boolean } }
-  | { type: 'ACTIVATE_LICENSE_SUCCESS'; payload: { licenseType: string; email: string; message: string } }
+  | {
+      type: 'ACTIVATE_LICENSE_SUCCESS'
+      payload: { licenseType: string; email: string; message: string }
+    }
   | { type: 'ACTIVATE_LICENSE_ERROR'; payload: { message: string } }
 
 const initialState: LicenseState = {
@@ -82,19 +95,22 @@ export const licenseStore = createStore(initialState, reducer)
  */
 export const checkLicense = async () => {
   licenseStore.dispatch({ type: 'SET_LOADING', payload: { isLoading: true } })
-  
+
   try {
-    // TODO: Implement GraphQL query when resolvers are ready
-    // For now, return unlicensed state
+    const response = await getLicenseStatus()
+
     licenseStore.dispatch({
       type: 'SET_LICENSE_STATUS',
       payload: {
-        isLicensed: false,
-        message: 'No license found',
-        supportMessage: 'Support ongoing development with a license',
+        isLicensed: response.isLicensed,
+        licenseType: response.licenseType || undefined,
+        email: response.email || undefined,
+        message: response.message,
+        supportMessage: response.supportMessage || undefined,
       },
     })
   } catch (error) {
+    console.error('Failed to check license status:', error)
     licenseStore.dispatch({
       type: 'SET_LICENSE_STATUS',
       payload: {
@@ -110,50 +126,55 @@ export const checkLicense = async () => {
 /**
  * Activate license with key
  */
-export const activateLicense = async (key: string): Promise<{ success: boolean; message: string }> => {
+export const activateLicense = async (
+  key: string,
+): Promise<{ success: boolean; message: string }> => {
   licenseStore.dispatch({ type: 'SET_LOADING', payload: { isLoading: true } })
-  
+
   try {
-    // TODO: Implement GraphQL mutation when resolvers are ready
-    // For now, simulate activation
-    if (key.startsWith('IMGR-')) {
+    const response = await activateLicenseAPI(key)
+
+    if (response.isLicensed) {
       licenseStore.dispatch({
         type: 'ACTIVATE_LICENSE_SUCCESS',
         payload: {
-          licenseType: 'personal',
-          email: 'user@example.com',
-          message: 'License activated successfully! Thank you for supporting development.',
+          licenseType: response.licenseType || 'personal',
+          email: response.email || '',
+          message: response.message,
         },
       })
-      
+
       return {
         success: true,
-        message: 'License activated successfully! Thank you for supporting development.',
+        message: response.message,
       }
     } else {
       licenseStore.dispatch({
         type: 'ACTIVATE_LICENSE_ERROR',
         payload: {
-          message: 'Invalid license key format',
+          message: response.message,
         },
       })
-      
+
       return {
         success: false,
-        message: 'Invalid license key format',
+        message: response.message,
       }
     }
   } catch (error) {
+    console.error('Failed to activate license:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to activate license'
+
     licenseStore.dispatch({
       type: 'ACTIVATE_LICENSE_ERROR',
       payload: {
-        message: 'Failed to activate license',
+        message: errorMessage,
       },
     })
-    
+
     return {
       success: false,
-      message: 'Failed to activate license',
+      message: errorMessage,
     }
   }
 }

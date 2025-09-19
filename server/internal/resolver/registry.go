@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 )
 
@@ -66,6 +67,46 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entry *gql.Regis
 	}
 
 	return result, nil
+}
+
+// LicenseStatus returns the current license status
+func (r *queryResolver) LicenseStatus(ctx context.Context) (*gql.LicenseStatus, error) {
+	// Create license service
+	licenseService := license.NewService(r.registryStore)
+
+	// Get license status
+	status, err := licenseService.GetLicenseStatus(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get license status: %w", err)
+	}
+
+	return &gql.LicenseStatus{
+		IsLicensed:     status.IsLicensed,
+		LicenseType:    status.LicenseType,
+		Email:          status.Email,
+		Message:        status.Message,
+		SupportMessage: status.SupportMessage,
+	}, nil
+}
+
+// ActivateLicense activates a license with the provided key
+func (r *mutationResolver) ActivateLicense(ctx context.Context, key string) (*gql.LicenseStatus, error) {
+	// Create license service
+	licenseService := license.NewService(r.registryStore)
+
+	// Activate license
+	status, err := licenseService.ActivateLicense(ctx, key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to activate license: %w", err)
+	}
+
+	return &gql.LicenseStatus{
+		IsLicensed:     status.IsLicensed,
+		LicenseType:    status.LicenseType,
+		Email:          status.Email,
+		Message:        status.Message,
+		SupportMessage: status.SupportMessage,
+	}, nil
 }
 
 // DeleteUserRegistry deletes user-specific registry (unified flexible API)

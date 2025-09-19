@@ -481,6 +481,36 @@ export type GenerateImagorUrlMutationVariables = Exact<{
 
 export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImagorUrl: string }
 
+export type GetLicenseStatusQueryVariables = Exact<{ [key: string]: never }>
+
+export type GetLicenseStatusQuery = {
+  __typename?: 'Query'
+  licenseStatus: {
+    __typename?: 'LicenseStatus'
+    isLicensed: boolean
+    licenseType: string | null
+    email: string | null
+    message: string
+    supportMessage: string | null
+  }
+}
+
+export type ActivateLicenseMutationVariables = Exact<{
+  key: Scalars['String']['input']
+}>
+
+export type ActivateLicenseMutation = {
+  __typename?: 'Mutation'
+  activateLicense: {
+    __typename?: 'LicenseStatus'
+    isLicensed: boolean
+    licenseType: string | null
+    email: string | null
+    message: string
+    supportMessage: string | null
+  }
+}
+
 export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
   key: string
@@ -1014,6 +1044,28 @@ export const GenerateImagorUrlDocument = gql`
     generateImagorUrl(galleryKey: $galleryKey, imageKey: $imageKey, params: $params)
   }
 `
+export const GetLicenseStatusDocument = gql`
+  query GetLicenseStatus {
+    licenseStatus {
+      isLicensed
+      licenseType
+      email
+      message
+      supportMessage
+    }
+  }
+`
+export const ActivateLicenseDocument = gql`
+  mutation ActivateLicense($key: String!) {
+    activateLicense(key: $key) {
+      isLicensed
+      licenseType
+      email
+      message
+      supportMessage
+    }
+  }
+`
 export const ListUserRegistryDocument = gql`
   query ListUserRegistry($prefix: String, $ownerID: String) {
     listUserRegistry(prefix: $prefix, ownerID: $ownerID) {
@@ -1316,6 +1368,42 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'GenerateImagorUrl',
+        'mutation',
+        variables,
+      )
+    },
+    GetLicenseStatus(
+      variables?: GetLicenseStatusQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<GetLicenseStatusQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<GetLicenseStatusQuery>({
+            document: GetLicenseStatusDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'GetLicenseStatus',
+        'query',
+        variables,
+      )
+    },
+    ActivateLicense(
+      variables: ActivateLicenseMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<ActivateLicenseMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<ActivateLicenseMutation>({
+            document: ActivateLicenseDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'ActivateLicense',
         'mutation',
         variables,
       )

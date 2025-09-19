@@ -8,11 +8,10 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
+import { FloatingLicenseBadge } from '@/components/floating-license-badge'
+import { LicenseActivationDialog } from '@/components/license-activation-dialog'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
-import { LicenseActivationDialog } from '@/components/license-activation-dialog'
-import { FloatingLicenseBadge } from '@/components/floating-license-badge'
-import { useLicense } from '@/stores/license-store'
 import { useTitle } from '@/hooks/use-title'
 import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
@@ -39,6 +38,7 @@ import {
   loadHomeTitle,
   loadRootFolders,
 } from '@/stores/folder-tree-store.ts'
+import { useLicense } from '@/stores/license-store'
 import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
 import { initializeSidebar } from '@/stores/sidebar-store.ts'
 import { initializeTheme } from '@/stores/theme-store.ts'
@@ -46,16 +46,13 @@ import { initializeTheme } from '@/stores/theme-store.ts'
 const RootComponent = () => {
   useTitle()
   const { showDialog, setShowDialog } = useLicense()
-  
+
   return (
     <>
       <Outlet />
       <FloatingLicenseBadge />
       <Toaster />
-      <LicenseActivationDialog 
-        open={showDialog} 
-        onOpenChange={setShowDialog} 
-      />
+      <LicenseActivationDialog open={showDialog} onOpenChange={setShowDialog} />
     </>
   )
 }
