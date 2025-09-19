@@ -98,7 +98,16 @@ type ComplexityRoot struct {
 		RestartRequired      func(childComplexity int) int
 	}
 
+	LicenseStatus struct {
+		Email          func(childComplexity int) int
+		IsLicensed     func(childComplexity int) int
+		LicenseType    func(childComplexity int) int
+		Message        func(childComplexity int) int
+		SupportMessage func(childComplexity int) int
+	}
+
 	Mutation struct {
+		ActivateLicense         func(childComplexity int, key string) int
 		ChangePassword          func(childComplexity int, input ChangePasswordInput, userID *string) int
 		ConfigureEmbeddedImagor func(childComplexity int) int
 		ConfigureExternalImagor func(childComplexity int, input ExternalImagorInput) int
@@ -122,6 +131,7 @@ type ComplexityRoot struct {
 		GetSystemRegistry  func(childComplexity int, key *string, keys []string) int
 		GetUserRegistry    func(childComplexity int, key *string, keys []string, ownerID *string) int
 		ImagorStatus       func(childComplexity int) int
+		LicenseStatus      func(childComplexity int) int
 		ListFiles          func(childComplexity int, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *SortOption, sortOrder *SortOrder) int
 		ListSystemRegistry func(childComplexity int, prefix *string) int
 		ListUserRegistry   func(childComplexity int, prefix *string, ownerID *string) int
@@ -214,6 +224,7 @@ type MutationResolver interface {
 	DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error)
 	SetSystemRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput) ([]*SystemRegistry, error)
 	DeleteSystemRegistry(ctx context.Context, key *string, keys []string) (bool, error)
+	ActivateLicense(ctx context.Context, key string) (*LicenseStatus, error)
 	UpdateProfile(ctx context.Context, input UpdateProfileInput, userID *string) (*User, error)
 	ChangePassword(ctx context.Context, input ChangePasswordInput, userID *string) (bool, error)
 	DeactivateAccount(ctx context.Context, userID *string) (bool, error)
@@ -228,6 +239,7 @@ type QueryResolver interface {
 	GetUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) ([]*UserRegistry, error)
 	ListSystemRegistry(ctx context.Context, prefix *string) ([]*SystemRegistry, error)
 	GetSystemRegistry(ctx context.Context, key *string, keys []string) ([]*SystemRegistry, error)
+	LicenseStatus(ctx context.Context) (*LicenseStatus, error)
 	Me(ctx context.Context) (*User, error)
 	User(ctx context.Context, id string) (*User, error)
 	Users(ctx context.Context, offset *int, limit *int) (*UserList, error)
@@ -451,6 +463,48 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ImagorStatus.RestartRequired(childComplexity), true
 
+	case "LicenseStatus.email":
+		if e.complexity.LicenseStatus.Email == nil {
+			break
+		}
+
+		return e.complexity.LicenseStatus.Email(childComplexity), true
+	case "LicenseStatus.isLicensed":
+		if e.complexity.LicenseStatus.IsLicensed == nil {
+			break
+		}
+
+		return e.complexity.LicenseStatus.IsLicensed(childComplexity), true
+	case "LicenseStatus.licenseType":
+		if e.complexity.LicenseStatus.LicenseType == nil {
+			break
+		}
+
+		return e.complexity.LicenseStatus.LicenseType(childComplexity), true
+	case "LicenseStatus.message":
+		if e.complexity.LicenseStatus.Message == nil {
+			break
+		}
+
+		return e.complexity.LicenseStatus.Message(childComplexity), true
+	case "LicenseStatus.supportMessage":
+		if e.complexity.LicenseStatus.SupportMessage == nil {
+			break
+		}
+
+		return e.complexity.LicenseStatus.SupportMessage(childComplexity), true
+
+	case "Mutation.activateLicense":
+		if e.complexity.Mutation.ActivateLicense == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_activateLicense_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ActivateLicense(childComplexity, args["key"].(string)), true
 	case "Mutation.changePassword":
 		if e.complexity.Mutation.ChangePassword == nil {
 			break
@@ -662,6 +716,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.ImagorStatus(childComplexity), true
+	case "Query.licenseStatus":
+		if e.complexity.Query.LicenseStatus == nil {
+			break
+		}
+
+		return e.complexity.Query.LicenseStatus(childComplexity), true
 	case "Query.listFiles":
 		if e.complexity.Query.ListFiles == nil {
 			break
@@ -1223,6 +1283,9 @@ enum ImagorMode {
   ): [UserRegistry!]!
   listSystemRegistry(prefix: String): [SystemRegistry!]!
   getSystemRegistry(key: String, keys: [String!]): [SystemRegistry!]!
+
+  # License APIs
+  licenseStatus: LicenseStatus!
 }
 
 extend type Mutation {
@@ -1240,6 +1303,9 @@ extend type Mutation {
     entries: [RegistryEntryInput!]
   ): [SystemRegistry!]!
   deleteSystemRegistry(key: String, keys: [String!]): Boolean!
+
+  # License APIs
+  activateLicense(key: String!): LicenseStatus!
 }
 
 input RegistryEntryInput {
@@ -1259,6 +1325,14 @@ type SystemRegistry {
   value: String!
   isEncrypted: Boolean!
   isOverriddenByConfig: Boolean!
+}
+
+type LicenseStatus {
+  isLicensed: Boolean!
+  licenseType: String
+  email: String
+  message: String!
+  supportMessage: String
 }
 `, BuiltIn: false},
 	{Name: "../../../../graphql/storage.graphql", Input: `type Query {
@@ -1458,6 +1532,17 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_activateLicense_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["key"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -2818,6 +2903,141 @@ func (ec *executionContext) fieldContext_ImagorStatus_externalConfig(_ context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _LicenseStatus_isLicensed(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LicenseStatus_isLicensed,
+		func(ctx context.Context) (any, error) { return obj.IsLicensed, nil },
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LicenseStatus_isLicensed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LicenseStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LicenseStatus_licenseType(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LicenseStatus_licenseType,
+		func(ctx context.Context) (any, error) { return obj.LicenseType, nil },
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_LicenseStatus_licenseType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LicenseStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LicenseStatus_email(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LicenseStatus_email,
+		func(ctx context.Context) (any, error) { return obj.Email, nil },
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_LicenseStatus_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LicenseStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LicenseStatus_message(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LicenseStatus_message,
+		func(ctx context.Context) (any, error) { return obj.Message, nil },
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LicenseStatus_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LicenseStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LicenseStatus_supportMessage(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LicenseStatus_supportMessage,
+		func(ctx context.Context) (any, error) { return obj.SupportMessage, nil },
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_LicenseStatus_supportMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LicenseStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_uploadFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3399,6 +3619,59 @@ func (ec *executionContext) fieldContext_Mutation_deleteSystemRegistry(ctx conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteSystemRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_activateLicense(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_activateLicense,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().ActivateLicense(ctx, fc.Args["key"].(string))
+		},
+		nil,
+		ec.marshalNLicenseStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐLicenseStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_activateLicense(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "isLicensed":
+				return ec.fieldContext_LicenseStatus_isLicensed(ctx, field)
+			case "licenseType":
+				return ec.fieldContext_LicenseStatus_licenseType(ctx, field)
+			case "email":
+				return ec.fieldContext_LicenseStatus_email(ctx, field)
+			case "message":
+				return ec.fieldContext_LicenseStatus_message(ctx, field)
+			case "supportMessage":
+				return ec.fieldContext_LicenseStatus_supportMessage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LicenseStatus", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_activateLicense_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3989,6 +4262,47 @@ func (ec *executionContext) fieldContext_Query_getSystemRegistry(ctx context.Con
 	if fc.Args, err = ec.field_Query_getSystemRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_licenseStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_licenseStatus,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().LicenseStatus(ctx)
+		},
+		nil,
+		ec.marshalNLicenseStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐLicenseStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_licenseStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "isLicensed":
+				return ec.fieldContext_LicenseStatus_isLicensed(ctx, field)
+			case "licenseType":
+				return ec.fieldContext_LicenseStatus_licenseType(ctx, field)
+			case "email":
+				return ec.fieldContext_LicenseStatus_email(ctx, field)
+			case "message":
+				return ec.fieldContext_LicenseStatus_message(ctx, field)
+			case "supportMessage":
+				return ec.fieldContext_LicenseStatus_supportMessage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LicenseStatus", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -7746,6 +8060,56 @@ func (ec *executionContext) _ImagorStatus(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var licenseStatusImplementors = []string{"LicenseStatus"}
+
+func (ec *executionContext) _LicenseStatus(ctx context.Context, sel ast.SelectionSet, obj *LicenseStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, licenseStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LicenseStatus")
+		case "isLicensed":
+			out.Values[i] = ec._LicenseStatus_isLicensed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "licenseType":
+			out.Values[i] = ec._LicenseStatus_licenseType(ctx, field, obj)
+		case "email":
+			out.Values[i] = ec._LicenseStatus_email(ctx, field, obj)
+		case "message":
+			out.Values[i] = ec._LicenseStatus_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "supportMessage":
+			out.Values[i] = ec._LicenseStatus_supportMessage(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -7852,6 +8216,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteSystemRegistry":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteSystemRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "activateLicense":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_activateLicense(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -8087,6 +8458,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getSystemRegistry(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "licenseStatus":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_licenseStatus(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -9168,6 +9561,20 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNLicenseStatus2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐLicenseStatus(ctx context.Context, sel ast.SelectionSet, v LicenseStatus) graphql.Marshaler {
+	return ec._LicenseStatus(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLicenseStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐLicenseStatus(ctx context.Context, sel ast.SelectionSet, v *LicenseStatus) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._LicenseStatus(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNRegistryEntryInput2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryEntryInput(ctx context.Context, v any) (*RegistryEntryInput, error) {

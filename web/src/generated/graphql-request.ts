@@ -142,8 +142,18 @@ export type ImagorStatus = {
   restartRequired: Scalars['Boolean']['output']
 }
 
+export type LicenseStatus = {
+  __typename?: 'LicenseStatus'
+  email: Maybe<Scalars['String']['output']>
+  isLicensed: Scalars['Boolean']['output']
+  licenseType: Maybe<Scalars['String']['output']>
+  message: Scalars['String']['output']
+  supportMessage: Maybe<Scalars['String']['output']>
+}
+
 export type Mutation = {
   __typename?: 'Mutation'
+  activateLicense: LicenseStatus
   changePassword: Scalars['Boolean']['output']
   configureEmbeddedImagor: ImagorConfigResult
   configureExternalImagor: ImagorConfigResult
@@ -161,6 +171,10 @@ export type Mutation = {
   testStorageConfig: StorageTestResult
   updateProfile: User
   uploadFile: Scalars['Boolean']['output']
+}
+
+export type MutationActivateLicenseArgs = {
+  key: Scalars['String']['input']
 }
 
 export type MutationChangePasswordArgs = {
@@ -243,6 +257,7 @@ export type Query = {
   getSystemRegistry: Array<SystemRegistry>
   getUserRegistry: Array<UserRegistry>
   imagorStatus: ImagorStatus
+  licenseStatus: LicenseStatus
   listFiles: FileList
   listSystemRegistry: Array<SystemRegistry>
   listUserRegistry: Array<UserRegistry>
