@@ -62,7 +62,7 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
 
     try {
       const result = await activateLicense(data.licenseKey)
-      
+
       if (result.isLicensed) {
         toast.success(t('pages.license.activationSuccess'))
         handleClose()
@@ -88,23 +88,25 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>Support Imagor Studio Development</DialogTitle>
-          <DialogDescription>
-            Enter your license key to support ongoing development and remove this reminder.
-          </DialogDescription>
+          <DialogTitle>{t('pages.license.registerForLicense')}</DialogTitle>
+          <DialogDescription>{t('pages.license.registerDescription')}</DialogDescription>
         </DialogHeader>
 
         <div className='space-y-6'>
-          {/* Why Support Section */}
-          <div className='bg-blue-50 dark:bg-blue-900/20 rounded-lg border p-4'>
+          {/* From the Creator Section */}
+          <div className='rounded-lg border bg-blue-50 p-4 dark:bg-blue-900/20'>
             <h4 className='mb-2 text-sm font-medium text-blue-900 dark:text-blue-400'>
-              Why support development?
+              {t('pages.license.supportTitle')}
             </h4>
+            <p className='mb-3 text-sm text-blue-800 dark:text-blue-300'>
+              {t('pages.license.creatorStory')}
+            </p>
             <ul className='space-y-1 text-sm text-blue-800 dark:text-blue-300'>
-              <li>• Ongoing feature development and improvements</li>
-              <li>• Bug fixes and security updates</li>
-              <li>• Community support and documentation</li>
-              <li>• Keeping the project alive and thriving</li>
+              <li>• {t('pages.license.features.highPerformance')}</li>
+              <li>• {t('pages.license.features.realTimeEditing')}</li>
+              <li>• {t('pages.license.features.zeroConfiguration')}</li>
+              <li>• {t('pages.license.features.flexibleStorage')}</li>
+              <li>• {t('pages.license.features.nonDestructive')}</li>
             </ul>
           </div>
 
@@ -117,7 +119,7 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
                   name='licenseKey'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>License Key</FormLabel>
+                      <FormLabel>{t('pages.license.licenseKeyLabel')}</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder='IMGR-...'
@@ -127,9 +129,7 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
                           {...field}
                         />
                       </FormControl>
-                      <FormDescription>
-                        Paste your complete license key here to activate Imagor Studio.
-                      </FormDescription>
+                      <FormDescription>{t('pages.license.licenseKeyDescription')}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -147,6 +147,9 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
         </div>
 
         <DialogFooter className='flex justify-between'>
+          <Button type='button' variant='outline' onClick={handleClose} disabled={isLoading}>
+            {t('pages.license.maybeLater')}
+          </Button>
           <div className='flex gap-3'>
             <Button
               type='button'
@@ -155,17 +158,7 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
                 window.open('https://buy.imagor-studio.com', '_blank')
               }}
             >
-              {t('pages.license.purchaseLicense')}
-            </Button>
-          </div>
-          <div className='flex gap-3'>
-            <Button 
-              type='button' 
-              variant='outline' 
-              onClick={handleClose} 
-              disabled={isLoading}
-            >
-              Maybe Later
+              {t('pages.license.getEarlyBirdLicense')}
             </Button>
             <ButtonWithLoading
               type='submit'

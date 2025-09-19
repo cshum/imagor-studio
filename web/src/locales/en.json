@@ -248,6 +248,21 @@
       "supportDevelopment": "Support Development",
       "activationSuccess": "Thank you for your support! License activated successfully.",
       "updateSuccess": "License updated successfully! Thank you for your continued support.",
+      "registerForLicense": "Register for License",
+      "registerDescription": "Enter your license key to activate Imagor Studio.",
+      "supportTitle": "Support Imagor Studio - from the creator of imagor",
+      "creatorStory": "From vipsgen to imagor, I've built the entire image processing pipeline from the ground up. Imagor Studio is a self-hosted image gallery and live editing web application that brings together years of development.",
+      "features": {
+        "highPerformance": "High-performance interface with smooth virtual scrolling",
+        "realTimeEditing": "Real-time image editing with instant URL generation via imagor",
+        "zeroConfiguration": "Zero-configuration setup - no database indexing or file synchronization",
+        "flexibleStorage": "Flexible storage options supporting local file systems and S3-compatible services",
+        "nonDestructive": "Non-destructive workflow - transform images while preserving original files"
+      },
+      "getEarlyBirdLicense": "Get Early Bird License ($39)",
+      "maybeLater": "Maybe Later",
+      "licenseKeyLabel": "License Key",
+      "licenseKeyDescription": "Paste your complete license key here to activate Imagor Studio.",
       "licenseTypes": {
         "early_bird": "Early Bird",
         "personal": "Personal",
