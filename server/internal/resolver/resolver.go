@@ -3,6 +3,7 @@ package resolver
 import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
+	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -36,16 +37,18 @@ type Resolver struct {
 	userStore       userstore.Store
 	imagorProvider  ImagorProvider
 	config          ConfigProvider
+	licenseService  *license.Service
 	logger          *zap.Logger
 }
 
-func NewResolver(storageProvider StorageProvider, registryStore registrystore.Store, userStore userstore.Store, imagorProvider ImagorProvider, cfg ConfigProvider, logger *zap.Logger) *Resolver {
+func NewResolver(storageProvider StorageProvider, registryStore registrystore.Store, userStore userstore.Store, imagorProvider ImagorProvider, cfg ConfigProvider, licenseService *license.Service, logger *zap.Logger) *Resolver {
 	return &Resolver{
 		storageProvider: storageProvider,
 		registryStore:   registryStore,
 		userStore:       userStore,
 		imagorProvider:  imagorProvider,
 		config:          cfg,
+		licenseService:  licenseService,
 		logger:          logger,
 	}
 }

@@ -127,12 +127,14 @@ func VerifySignedLicense(publicKey ed25519.PublicKey, licenseKey string) (*Licen
 // getFeatures returns the features available for a given license type
 func getFeatures(licenseType string) []string {
 	switch licenseType {
+	case "early_bird":
+		return []string{"full_access"}
 	case "commercial":
-		return []string{"batch_export", "api_access", "white_label", "priority_support"}
+		return []string{"full_access"}
 	case "enterprise":
-		return []string{"batch_export", "api_access", "white_label", "priority_support", "custom_branding", "sso"}
-	default: // personal
-		return []string{"batch_export", "api_access"}
+		return []string{"full_access"}
+	default: // fallback
+		return []string{"full_access"}
 	}
 }
 

@@ -68,6 +68,29 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entry *gql.Regis
 	return result, nil
 }
 
+// LicenseInfo gets detailed license information for admin users
+func (r *queryResolver) LicenseInfo(ctx context.Context) (*gql.LicenseInfo, error) {
+	// Only admins can access detailed license information
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, fmt.Errorf("admin permission required for license information: %w", err)
+	}
+
+	// Get license info from license service
+	licenseInfo, err := r.licenseService.GetLicenseInfo(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get license info: %w", err)
+	}
+
+	return &gql.LicenseInfo{
+		IsLicensed:       licenseInfo.IsLicensed,
+		LicenseType:      licenseInfo.LicenseType,
+		Email:            licenseInfo.Email,
+		MaskedLicenseKey: licenseInfo.MaskedLicenseKey,
+		ActivatedAt:      licenseInfo.ActivatedAt,
+		Message:          licenseInfo.Message,
+	}, nil
+}
+
 
 // DeleteUserRegistry deletes user-specific registry (unified flexible API)
 func (r *mutationResolver) DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error) {

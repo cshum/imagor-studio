@@ -176,6 +176,8 @@ func (s *Service) GetPublicLicenseStatus(ctx context.Context) (*PublicLicenseSta
 // getFeaturesByType returns the features available for a license type
 func getFeaturesByType(licenseType string) []string {
 	switch licenseType {
+	case "early_bird":
+		return []string{"full_access"}
 	case "personal":
 		return []string{"batch_export", "api_access"}
 	case "commercial":
@@ -185,6 +187,75 @@ func getFeaturesByType(licenseType string) []string {
 	default:
 		return []string{}
 	}
+}
+
+// GetLicenseInfo retrieves detailed license information for admin users
+func (s *Service) GetLicenseInfo(ctx context.Context) (*LicenseInfo, error) {
+	// Get license key from registry
+	entry, err := s.registry.Get(ctx, registrystore.SystemOwnerID, "license.key")
+	if err != nil {
+		return &LicenseInfo{
+			IsLicensed: false,
+			Message:    "Error checking license",
+		}, err
+	}
+
+	if entry == nil {
+		return &LicenseInfo{
+			IsLicensed: false,
+			Message:    "No license activated",
+		}, nil
+	}
+
+	// Verify the license key
+	payload, err := s.verifyLicense(entry.Value)
+	if err != nil {
+		return &LicenseInfo{
+			IsLicensed: false,
+			Message:    fmt.Sprintf("Invalid license: %v", err),
+		}, nil
+	}
+
+	// Format license type for display
+	displayType := formatLicenseTypeForDisplay(payload.Type)
+	
+	// Mask the license key for security
+	maskedKey := maskLicenseKey(entry.Value)
+	
+	// Format activation date
+	activatedAt := time.Unix(payload.IssuedAt, 0).Format("January 2, 2006")
+
+	return &LicenseInfo{
+		IsLicensed:       true,
+		LicenseType:      &displayType,
+		Email:            &payload.Email,
+		MaskedLicenseKey: &maskedKey,
+		ActivatedAt:      &activatedAt,
+		Message:          "Licensed",
+	}, nil
+}
+
+// formatLicenseTypeForDisplay converts license type to display-friendly format
+func formatLicenseTypeForDisplay(licenseType string) string {
+	switch licenseType {
+	case "early_bird":
+		return "Early Bird Licensed"
+	case "commercial":
+		return "Commercial Licensed"
+	case "enterprise":
+		return "Enterprise Licensed"
+	default:
+		return "Licensed"
+	}
+}
+
+// maskLicenseKey masks a license key for display (shows first 8 and last 4 characters)
+func maskLicenseKey(licenseKey string) string {
+	if len(licenseKey) <= 12 {
+		return licenseKey // Too short to mask meaningfully
+	}
+	
+	return licenseKey[:8] + "..." + licenseKey[len(licenseKey)-4:]
 }
 
 func stringPtr(s string) *string {

@@ -1,5 +1,8 @@
 import { activateLicense as activateLicenseAPI } from '@/api/registry-api'
+import { getBaseUrl } from '@/lib/api-utils.ts'
 import { createStore } from '@/lib/create-store'
+
+const BASE_URL = getBaseUrl()
 
 export interface LicenseState {
   isLicensed: boolean
@@ -97,7 +100,7 @@ export const checkPublicLicense = async () => {
   licenseStore.dispatch({ type: 'SET_LOADING', payload: { isLoading: true } })
 
   try {
-    const response = await fetch('/api/public/license-status')
+    const response = await fetch(`${BASE_URL}/api/public/license-status`)
     const data = await response.json()
 
     licenseStore.dispatch({

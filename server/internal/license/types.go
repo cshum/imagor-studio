@@ -24,3 +24,13 @@ type PublicLicenseStatus struct {
 	SupportMessage *string  `json:"supportMessage,omitempty"`
 	Features       []string `json:"features"`
 }
+
+// LicenseInfo represents detailed license information for admin users
+type LicenseInfo struct {
+	IsLicensed       bool    `json:"isLicensed"`
+	LicenseType      *string `json:"licenseType,omitempty"`
+	Email            *string `json:"email,omitempty"`
+	MaskedLicenseKey *string `json:"maskedLicenseKey,omitempty"`
+	ActivatedAt      *string `json:"activatedAt,omitempty"`
+	Message          string  `json:"message"`
+}

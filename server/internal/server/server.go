@@ -36,6 +36,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		services.UserStore,
 		services.ImagorProvider,
 		services.Config, // Use enhanced config from services
+		services.LicenseService,
 		services.Logger,
 	)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
