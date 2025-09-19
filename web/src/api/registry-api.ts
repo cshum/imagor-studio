@@ -1,13 +1,10 @@
 import { getGraphQLClient } from '@/lib/graphql-client'
 
 import type {
-  ActivateLicenseMutation,
-  ActivateLicenseMutationVariables,
   DeleteSystemRegistryMutation,
   DeleteSystemRegistryMutationVariables,
   DeleteUserRegistryMutation,
   DeleteUserRegistryMutationVariables,
-  GetLicenseStatusQuery,
   GetSystemRegistryQuery,
   GetSystemRegistryQueryVariables,
   GetUserRegistryQuery,
@@ -314,26 +311,26 @@ export async function setSystemRegistryObject(
 }
 
 /**
- * Get current license status
+ * Activate license with the provided key (REST API)
  */
-export async function getLicenseStatus(): Promise<GetLicenseStatusQuery['licenseStatus']> {
-  const sdk = getSdk(getGraphQLClient())
-  const result = await sdk.GetLicenseStatus()
-  return result.licenseStatus
-}
+export async function activateLicense(key: string): Promise<{
+  isLicensed: boolean
+  licenseType?: string
+  email?: string
+  message: string
+  supportMessage?: string
+}> {
+  const response = await fetch('/api/public/activate-license', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ key }),
+  })
 
-/**
- * Activate license with the provided key
- */
-export async function activateLicense(
-  key: string,
-): Promise<ActivateLicenseMutation['activateLicense']> {
-  const sdk = getSdk(getGraphQLClient())
-
-  const variables: ActivateLicenseMutationVariables = {
-    key,
+  if (!response.ok) {
+    throw new Error(`Failed to activate license: ${response.statusText}`)
   }
 
-  const result = await sdk.ActivateLicense(variables)
-  return result.activateLicense
+  return response.json()
 }

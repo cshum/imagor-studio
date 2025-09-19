@@ -142,18 +142,8 @@ export type ImagorStatus = {
   restartRequired: Scalars['Boolean']['output']
 }
 
-export type LicenseStatus = {
-  __typename?: 'LicenseStatus'
-  email: Maybe<Scalars['String']['output']>
-  isLicensed: Scalars['Boolean']['output']
-  licenseType: Maybe<Scalars['String']['output']>
-  message: Scalars['String']['output']
-  supportMessage: Maybe<Scalars['String']['output']>
-}
-
 export type Mutation = {
   __typename?: 'Mutation'
-  activateLicense: LicenseStatus
   changePassword: Scalars['Boolean']['output']
   configureEmbeddedImagor: ImagorConfigResult
   configureExternalImagor: ImagorConfigResult
@@ -171,10 +161,6 @@ export type Mutation = {
   testStorageConfig: StorageTestResult
   updateProfile: User
   uploadFile: Scalars['Boolean']['output']
-}
-
-export type MutationActivateLicenseArgs = {
-  key: Scalars['String']['input']
 }
 
 export type MutationChangePasswordArgs = {
@@ -257,7 +243,6 @@ export type Query = {
   getSystemRegistry: Array<SystemRegistry>
   getUserRegistry: Array<UserRegistry>
   imagorStatus: ImagorStatus
-  licenseStatus: LicenseStatus
   listFiles: FileList
   listSystemRegistry: Array<SystemRegistry>
   listUserRegistry: Array<UserRegistry>
@@ -480,36 +465,6 @@ export type GenerateImagorUrlMutationVariables = Exact<{
 }>
 
 export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImagorUrl: string }
-
-export type GetLicenseStatusQueryVariables = Exact<{ [key: string]: never }>
-
-export type GetLicenseStatusQuery = {
-  __typename?: 'Query'
-  licenseStatus: {
-    __typename?: 'LicenseStatus'
-    isLicensed: boolean
-    licenseType: string | null
-    email: string | null
-    message: string
-    supportMessage: string | null
-  }
-}
-
-export type ActivateLicenseMutationVariables = Exact<{
-  key: Scalars['String']['input']
-}>
-
-export type ActivateLicenseMutation = {
-  __typename?: 'Mutation'
-  activateLicense: {
-    __typename?: 'LicenseStatus'
-    isLicensed: boolean
-    licenseType: string | null
-    email: string | null
-    message: string
-    supportMessage: string | null
-  }
-}
 
 export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
@@ -1044,28 +999,6 @@ export const GenerateImagorUrlDocument = gql`
     generateImagorUrl(galleryKey: $galleryKey, imageKey: $imageKey, params: $params)
   }
 `
-export const GetLicenseStatusDocument = gql`
-  query GetLicenseStatus {
-    licenseStatus {
-      isLicensed
-      licenseType
-      email
-      message
-      supportMessage
-    }
-  }
-`
-export const ActivateLicenseDocument = gql`
-  mutation ActivateLicense($key: String!) {
-    activateLicense(key: $key) {
-      isLicensed
-      licenseType
-      email
-      message
-      supportMessage
-    }
-  }
-`
 export const ListUserRegistryDocument = gql`
   query ListUserRegistry($prefix: String, $ownerID: String) {
     listUserRegistry(prefix: $prefix, ownerID: $ownerID) {
@@ -1368,42 +1301,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'GenerateImagorUrl',
-        'mutation',
-        variables,
-      )
-    },
-    GetLicenseStatus(
-      variables?: GetLicenseStatusQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal'],
-    ): Promise<GetLicenseStatusQuery> {
-      return withWrapper(
-        (wrappedRequestHeaders) =>
-          client.request<GetLicenseStatusQuery>({
-            document: GetLicenseStatusDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'GetLicenseStatus',
-        'query',
-        variables,
-      )
-    },
-    ActivateLicense(
-      variables: ActivateLicenseMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal'],
-    ): Promise<ActivateLicenseMutation> {
-      return withWrapper(
-        (wrappedRequestHeaders) =>
-          client.request<ActivateLicenseMutation>({
-            document: ActivateLicenseDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'ActivateLicense',
         'mutation',
         variables,
       )

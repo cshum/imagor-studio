@@ -117,14 +117,6 @@ type ImagorStatus struct {
 	ExternalConfig       *ExternalImagorConfig `json:"externalConfig,omitempty"`
 }
 
-type LicenseStatus struct {
-	IsLicensed     bool    `json:"isLicensed"`
-	LicenseType    *string `json:"licenseType,omitempty"`
-	Email          *string `json:"email,omitempty"`
-	Message        string  `json:"message"`
-	SupportMessage *string `json:"supportMessage,omitempty"`
-}
-
 type Mutation struct {
 }
 

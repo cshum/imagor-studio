@@ -86,6 +86,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	// License endpoints (public - no auth required)
 	licenseHandler := httphandler.NewLicenseHandler(services.LicenseService, services.Logger)
 	mux.HandleFunc("/api/public/license-status", licenseHandler.GetPublicStatus())
+	mux.HandleFunc("/api/public/activate-license", licenseHandler.ActivateLicense())
 
 	// Protected endpoints
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)

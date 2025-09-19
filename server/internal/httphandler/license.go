@@ -1,6 +1,7 @@
 package httphandler
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/cshum/imagor-studio/server/internal/license"
@@ -34,6 +35,40 @@ func (h *LicenseHandler) GetPublicStatus() http.HandlerFunc {
 			}
 		}
 		return WriteSuccess(w, status)
+	})
+}
+
+// ActivateLicense activates a license with the provided key (no authentication required)
+func (h *LicenseHandler) ActivateLicense() http.HandlerFunc {
+	return Handle("POST", func(w http.ResponseWriter, r *http.Request) error {
+		var request struct {
+			Key string `json:"key"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			return WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+		}
+
+		if request.Key == "" {
+			return WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "License key is required"})
+		}
+
+		status, err := h.licenseService.ActivateLicense(r.Context(), request.Key)
+		if err != nil {
+			h.logger.Error("Failed to activate license", zap.Error(err))
+			return WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "Failed to activate license: " + err.Error()})
+		}
+
+		// Convert to public response format
+		response := &license.PublicLicenseStatus{
+			IsLicensed:     status.IsLicensed,
+			LicenseType:    status.LicenseType,
+			Message:        status.Message,
+			SupportMessage: status.SupportMessage,
+			Features:       []string{}, // Initialize empty features for now
+		}
+
+		return WriteSuccess(w, response)
 	})
 }
 
