@@ -8,6 +8,9 @@ extend type Query {
   ): [UserRegistry!]!
   listSystemRegistry(prefix: String): [SystemRegistry!]!
   getSystemRegistry(key: String, keys: [String!]): [SystemRegistry!]!
+
+  # License APIs
+  licenseStatus: LicenseStatus!
 }
 
 extend type Mutation {
@@ -25,6 +28,9 @@ extend type Mutation {
     entries: [RegistryEntryInput!]
   ): [SystemRegistry!]!
   deleteSystemRegistry(key: String, keys: [String!]): Boolean!
+
+  # License APIs
+  activateLicense(key: String!): LicenseStatus!
 }
 
 input RegistryEntryInput {
@@ -44,4 +50,12 @@ type SystemRegistry {
   value: String!
   isEncrypted: Boolean!
   isOverriddenByConfig: Boolean!
+}
+
+type LicenseStatus {
+  isLicensed: Boolean!
+  licenseType: String
+  email: String
+  message: String!
+  supportMessage: String
 }

@@ -4,6 +4,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { LogOut, MoreVertical, Settings } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
+import { LicenseBadge } from '@/components/license-badge.tsx'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -113,10 +114,12 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
               </Breadcrumb>
             </div>
 
-            <div className='flex items-center space-x-1'>
-              <ModeToggle />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+            <div className='flex items-center space-x-3'>
+              <LicenseBadge />
+              <div className='flex items-center space-x-1'>
+                <ModeToggle />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
                   <Button variant='ghost' size='icon'>
                     <MoreVertical className='h-4 w-4' />
                     <span className='sr-only'>{t('common.buttons.more')}</span>
@@ -159,7 +162,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
                     </>
                   )}
                 </DropdownMenuContent>
-              </DropdownMenu>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </div>

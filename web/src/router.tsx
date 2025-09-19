@@ -10,6 +10,8 @@ import {
 
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
+import { LicenseActivationDialog } from '@/components/license-activation-dialog'
+import { useLicense } from '@/stores/license-store'
 import { useTitle } from '@/hooks/use-title'
 import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
@@ -42,10 +44,16 @@ import { initializeTheme } from '@/stores/theme-store.ts'
 
 const RootComponent = () => {
   useTitle()
+  const { showDialog, setShowDialog } = useLicense()
+  
   return (
     <>
       <Outlet />
       <Toaster />
+      <LicenseActivationDialog 
+        open={showDialog} 
+        onOpenChange={setShowDialog} 
+      />
     </>
   )
 }
