@@ -82,8 +82,8 @@ func formatLicenseTypeForDisplay(licenseType string) string {
 	}
 }
 
-// LicenseInfo gets detailed license information for admin users
-func (r *queryResolver) LicenseInfo(ctx context.Context) (*gql.LicenseInfo, error) {
+// LicenseStatus gets license status information for admin users
+func (r *queryResolver) LicenseStatus(ctx context.Context) (*gql.LicenseStatus, error) {
 	// Only admins can access detailed license information
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, fmt.Errorf("admin permission required for license information: %w", err)
@@ -95,25 +95,16 @@ func (r *queryResolver) LicenseInfo(ctx context.Context) (*gql.LicenseInfo, erro
 		return nil, fmt.Errorf("failed to get license info: %w", err)
 	}
 
-	// Convert to old format for backward compatibility
-	var licenseType *string
-	if status.LicenseType != "" {
-		displayType := formatLicenseTypeForDisplay(status.LicenseType)
-		licenseType = &displayType
-	}
-	
-	var email *string
-	if status.Email != "" {
-		email = &status.Email
-	}
-
-	return &gql.LicenseInfo{
-		IsLicensed:       status.IsLicensed,
-		LicenseType:      licenseType,
-		Email:            email,
-		MaskedLicenseKey: status.MaskedLicenseKey,
-		ActivatedAt:      status.ActivatedAt,
-		Message:          status.Message,
+	return &gql.LicenseStatus{
+		IsLicensed:           status.IsLicensed,
+		LicenseType:          status.LicenseType,
+		Features:             status.Features,
+		Email:                status.Email,
+		Message:              status.Message,
+		IsOverriddenByConfig: status.IsOverriddenByConfig,
+		SupportMessage:       status.SupportMessage,
+		MaskedLicenseKey:     status.MaskedLicenseKey,
+		ActivatedAt:          status.ActivatedAt,
 	}, nil
 }
 

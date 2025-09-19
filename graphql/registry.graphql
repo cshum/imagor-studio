@@ -10,7 +10,7 @@ extend type Query {
   getSystemRegistry(key: String, keys: [String!]): [SystemRegistry!]!
 
   # License APIs
-  licenseInfo: LicenseInfo!
+  licenseStatus: LicenseStatus!
 }
 
 extend type Mutation {
@@ -49,11 +49,14 @@ type SystemRegistry {
   isOverriddenByConfig: Boolean!
 }
 
-type LicenseInfo {
+type LicenseStatus {
   isLicensed: Boolean!
-  licenseType: String
-  email: String
+  licenseType: String!
+  features: [String!]!
+  email: String!
+  message: String!
+  isOverriddenByConfig: Boolean!
+  supportMessage: String
   maskedLicenseKey: String
   activatedAt: String
-  message: String!
 }

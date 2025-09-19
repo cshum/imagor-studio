@@ -316,6 +316,7 @@ export async function setSystemRegistryObject(
 export async function activateLicense(key: string): Promise<{
   isLicensed: boolean
   licenseType?: string
+  features?: string[]
   email?: string
   message: string
   supportMessage?: string

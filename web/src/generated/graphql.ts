@@ -141,6 +141,19 @@ export type ImagorStatus = {
   restartRequired: Scalars['Boolean']['output']
 }
 
+export type LicenseStatus = {
+  __typename?: 'LicenseStatus'
+  activatedAt: Maybe<Scalars['String']['output']>
+  email: Scalars['String']['output']
+  features: Array<Scalars['String']['output']>
+  isLicensed: Scalars['Boolean']['output']
+  isOverriddenByConfig: Scalars['Boolean']['output']
+  licenseType: Scalars['String']['output']
+  maskedLicenseKey: Maybe<Scalars['String']['output']>
+  message: Scalars['String']['output']
+  supportMessage: Maybe<Scalars['String']['output']>
+}
+
 export type Mutation = {
   __typename?: 'Mutation'
   changePassword: Scalars['Boolean']['output']
@@ -242,6 +255,7 @@ export type Query = {
   getSystemRegistry: Array<SystemRegistry>
   getUserRegistry: Array<UserRegistry>
   imagorStatus: ImagorStatus
+  licenseStatus: LicenseStatus
   listFiles: FileList
   listSystemRegistry: Array<SystemRegistry>
   listUserRegistry: Array<UserRegistry>
@@ -588,6 +602,24 @@ export type DeleteSystemRegistryMutationVariables = Exact<{
 export type DeleteSystemRegistryMutation = {
   __typename?: 'Mutation'
   deleteSystemRegistry: boolean
+}
+
+export type LicenseStatusQueryVariables = Exact<{ [key: string]: never }>
+
+export type LicenseStatusQuery = {
+  __typename?: 'Query'
+  licenseStatus: {
+    __typename?: 'LicenseStatus'
+    isLicensed: boolean
+    licenseType: string
+    features: Array<string>
+    email: string
+    message: string
+    isOverriddenByConfig: boolean
+    supportMessage: string | null
+    maskedLicenseKey: string | null
+    activatedAt: string | null
+  }
 }
 
 export type FileInfoFragment = {
@@ -1695,6 +1727,39 @@ export const DeleteSystemRegistryDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteSystemRegistryMutation, DeleteSystemRegistryMutationVariables>
+export const LicenseStatusDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'LicenseStatus' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'licenseStatus' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'isLicensed' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'licenseType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'features' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supportMessage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'maskedLicenseKey' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'activatedAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<LicenseStatusQuery, LicenseStatusQueryVariables>
 export const ListFilesDocument = {
   kind: 'Document',
   definitions: [

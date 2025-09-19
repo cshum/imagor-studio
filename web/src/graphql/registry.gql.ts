@@ -80,3 +80,20 @@ export const DeleteSystemRegistryMutation = gql(`
     deleteSystemRegistry(key: $key)
   }
 `)
+
+// License Status Query
+export const LicenseStatusQuery = gql(`
+  query LicenseStatus {
+    licenseStatus {
+      isLicensed
+      licenseType
+      features
+      email
+      message
+      isOverriddenByConfig
+      supportMessage
+      maskedLicenseKey
+      activatedAt
+    }
+  }
+`)

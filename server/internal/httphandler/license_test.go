@@ -16,9 +16,8 @@ import (
 
 // LicenseServiceInterface defines the interface for license service
 type LicenseServiceInterface interface {
-	GetPublicLicenseStatus(ctx context.Context) (*license.PublicLicenseStatus, error)
+	GetLicenseStatus(ctx context.Context, includeDetails bool) (*license.LicenseStatus, error)
 	ActivateLicense(ctx context.Context, key string) (*license.LicenseStatus, error)
-	GetLicenseStatus(ctx context.Context) (*license.LicenseStatus, error)
 }
 
 // MockLicenseService is a mock implementation of the license service
@@ -26,18 +25,13 @@ type MockLicenseService struct {
 	mock.Mock
 }
 
-func (m *MockLicenseService) GetPublicLicenseStatus(ctx context.Context) (*license.PublicLicenseStatus, error) {
-	args := m.Called(ctx)
-	return args.Get(0).(*license.PublicLicenseStatus), args.Error(1)
+func (m *MockLicenseService) GetLicenseStatus(ctx context.Context, includeDetails bool) (*license.LicenseStatus, error) {
+	args := m.Called(ctx, includeDetails)
+	return args.Get(0).(*license.LicenseStatus), args.Error(1)
 }
 
 func (m *MockLicenseService) ActivateLicense(ctx context.Context, key string) (*license.LicenseStatus, error) {
 	args := m.Called(ctx, key)
-	return args.Get(0).(*license.LicenseStatus), args.Error(1)
-}
-
-func (m *MockLicenseService) GetLicenseStatus(ctx context.Context) (*license.LicenseStatus, error) {
-	args := m.Called(ctx)
 	return args.Get(0).(*license.LicenseStatus), args.Error(1)
 }
 
@@ -56,18 +50,34 @@ func NewTestLicenseHandler(service LicenseServiceInterface, logger *zap.Logger) 
 
 func (h *TestLicenseHandler) GetPublicStatus() http.HandlerFunc {
 	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
-		status, err := h.service.GetPublicLicenseStatus(r.Context())
+		status, err := h.service.GetLicenseStatus(r.Context(), false) // false for public access
 		if err != nil {
 			h.logger.Error("Failed to get public license status", zap.Error(err))
 			// Return a safe default status instead of exposing the error
-			status = &license.PublicLicenseStatus{
+			status = &license.LicenseStatus{
 				IsLicensed:     false,
 				Message:        "Support ongoing development",
 				SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
 				Features:       []string{},
 			}
 		}
-		return WriteSuccess(w, status)
+
+		// Convert to public response format (hide sensitive fields)
+		response := map[string]interface{}{
+			"isLicensed": status.IsLicensed,
+			"message":    status.Message,
+			"features":   status.Features,
+		}
+
+		if status.LicenseType != "" {
+			response["licenseType"] = status.LicenseType
+		}
+
+		if status.SupportMessage != nil {
+			response["supportMessage"] = *status.SupportMessage
+		}
+
+		return WriteSuccess(w, response)
 	})
 }
 
@@ -92,16 +102,14 @@ func (h *TestLicenseHandler) ActivateLicense() http.HandlerFunc {
 		}
 
 		// Convert to public response format
-		var licenseTypePtr *string
-		if status.LicenseType != "" {
-			licenseTypePtr = &status.LicenseType
+		response := map[string]interface{}{
+			"isLicensed": status.IsLicensed,
+			"message":    status.Message,
+			"features":   status.Features,
 		}
-		
-		response := &license.PublicLicenseStatus{
-			IsLicensed:  status.IsLicensed,
-			LicenseType: licenseTypePtr,
-			Message:     status.Message,
-			Features:    status.Features,
+
+		if status.LicenseType != "" {
+			response["licenseType"] = status.LicenseType
 		}
 
 		return WriteSuccess(w, response)
@@ -112,7 +120,7 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 	tests := []struct {
 		name           string
 		method         string
-		mockStatus     *license.PublicLicenseStatus
+		mockStatus     *license.LicenseStatus
 		mockError      error
 		expectedStatus int
 		expectedBody   map[string]interface{}
@@ -120,7 +128,7 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 		{
 			name:   "successful unlicensed status",
 			method: "GET",
-			mockStatus: &license.PublicLicenseStatus{
+			mockStatus: &license.LicenseStatus{
 				IsLicensed:     false,
 				Message:        "Support ongoing development",
 				SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
@@ -138,9 +146,9 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 		{
 			name:   "successful licensed status",
 			method: "GET",
-			mockStatus: &license.PublicLicenseStatus{
+			mockStatus: &license.LicenseStatus{
 				IsLicensed:  true,
-				LicenseType: stringPtr("personal"),
+				LicenseType: "personal",
 				Message:     "Licensed",
 				Features:    []string{"batch_export", "api_access"},
 			},
@@ -184,9 +192,9 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 
 			// Setup mock expectations
 			if tt.method == "GET" && tt.mockStatus != nil {
-				mockService.On("GetPublicLicenseStatus", mock.Anything).Return(tt.mockStatus, tt.mockError)
+				mockService.On("GetLicenseStatus", mock.Anything, false).Return(tt.mockStatus, tt.mockError)
 			} else if tt.method == "GET" && tt.mockError != nil {
-				mockService.On("GetPublicLicenseStatus", mock.Anything).Return((*license.PublicLicenseStatus)(nil), tt.mockError)
+				mockService.On("GetLicenseStatus", mock.Anything, false).Return((*license.LicenseStatus)(nil), tt.mockError)
 			}
 
 			// Create request
@@ -363,7 +371,7 @@ func TestLicenseHandler_Integration(t *testing.T) {
 	handler := NewTestLicenseHandler(mockService, logger)
 
 	// Test 1: Check unlicensed status
-	mockService.On("GetPublicLicenseStatus", mock.Anything).Return(&license.PublicLicenseStatus{
+	mockService.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{
 		IsLicensed:     false,
 		Message:        "Support ongoing development",
 		SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
@@ -402,9 +410,9 @@ func TestLicenseHandler_Integration(t *testing.T) {
 	assert.Equal(t, "personal", response["licenseType"])
 
 	// Test 3: Check licensed status
-	mockService.On("GetPublicLicenseStatus", mock.Anything).Return(&license.PublicLicenseStatus{
+	mockService.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{
 		IsLicensed:  true,
-		LicenseType: stringPtr("personal"),
+		LicenseType: "personal",
 		Message:     "Licensed",
 		Features:    []string{"batch_export", "api_access"},
 	}, nil).Once()

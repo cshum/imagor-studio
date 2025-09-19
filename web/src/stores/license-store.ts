@@ -6,11 +6,14 @@ const BASE_URL = getBaseUrl()
 
 export interface LicenseState {
   isLicensed: boolean
-  licenseType: string | null
-  email: string | null
+  licenseType: string
+  features: string[]
+  email: string
   message: string
-  supportMessage: string | null
   isOverriddenByConfig: boolean
+  supportMessage: string | null
+  maskedLicenseKey: string | null
+  activatedAt: string | null
   isLoading: boolean
   showDialog: boolean
 }
@@ -21,27 +24,38 @@ export type LicenseAction =
       payload: {
         isLicensed: boolean
         licenseType?: string
+        features?: string[]
         email?: string
         message: string
-        supportMessage?: string
         isOverriddenByConfig?: boolean
+        supportMessage?: string
+        maskedLicenseKey?: string
+        activatedAt?: string
       }
     }
   | { type: 'SET_LOADING'; payload: { isLoading: boolean } }
   | { type: 'SET_SHOW_DIALOG'; payload: { showDialog: boolean } }
   | {
       type: 'ACTIVATE_LICENSE_SUCCESS'
-      payload: { licenseType: string; email: string; message: string }
+      payload: {
+        licenseType: string
+        features: string[]
+        email: string
+        message: string
+      }
     }
   | { type: 'ACTIVATE_LICENSE_ERROR'; payload: { message: string } }
 
 const initialState: LicenseState = {
   isLicensed: false,
-  licenseType: null,
-  email: null,
+  licenseType: '',
+  features: [],
+  email: '',
   message: '',
-  supportMessage: null,
   isOverriddenByConfig: false,
+  supportMessage: null,
+  maskedLicenseKey: null,
+  activatedAt: null,
   isLoading: false,
   showDialog: false,
 }
@@ -52,11 +66,14 @@ const reducer = (state: LicenseState, action: LicenseAction): LicenseState => {
       return {
         ...state,
         isLicensed: action.payload.isLicensed,
-        licenseType: action.payload.licenseType || null,
-        email: action.payload.email || null,
+        licenseType: action.payload.licenseType || '',
+        features: action.payload.features || [],
+        email: action.payload.email || '',
         message: action.payload.message,
-        supportMessage: action.payload.supportMessage || null,
         isOverriddenByConfig: action.payload.isOverriddenByConfig || false,
+        supportMessage: action.payload.supportMessage || null,
+        maskedLicenseKey: action.payload.maskedLicenseKey || null,
+        activatedAt: action.payload.activatedAt || null,
       }
 
     case 'SET_LOADING':
@@ -76,6 +93,7 @@ const reducer = (state: LicenseState, action: LicenseAction): LicenseState => {
         ...state,
         isLicensed: true,
         licenseType: action.payload.licenseType,
+        features: action.payload.features,
         email: action.payload.email,
         message: action.payload.message,
         supportMessage: null,
@@ -158,6 +176,7 @@ export const activateLicense = async (
         type: 'ACTIVATE_LICENSE_SUCCESS',
         payload: {
           licenseType: response.licenseType || 'personal',
+          features: response.features || [],
           email: response.email || '',
           message: response.message,
         },
