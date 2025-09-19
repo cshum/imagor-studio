@@ -260,7 +260,6 @@
         "nonDestructive": "Non-destructive workflow - transform images while preserving original files"
       },
       "getEarlyBirdLicense": "Get Early Bird License ($39)",
-      "maybeLater": "Maybe Later",
       "licenseKeyLabel": "License Key",
       "licenseKeyDescription": "Paste your complete license key here to activate Imagor Studio.",
       "licenseTypes": {

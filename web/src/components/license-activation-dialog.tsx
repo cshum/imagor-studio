@@ -146,29 +146,24 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
           </Form>
         </div>
 
-        <DialogFooter className='flex justify-between'>
-          <Button type='button' variant='outline' onClick={handleClose} disabled={isLoading}>
-            {t('pages.license.maybeLater')}
+        <DialogFooter className='flex justify-end gap-3'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => {
+              window.open('https://buy.imagor-studio.com', '_blank')
+            }}
+          >
+            {t('pages.license.getEarlyBirdLicense')}
           </Button>
-          <div className='flex gap-3'>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => {
-                window.open('https://buy.imagor-studio.com', '_blank')
-              }}
-            >
-              {t('pages.license.getEarlyBirdLicense')}
-            </Button>
-            <ButtonWithLoading
-              type='submit'
-              onClick={form.handleSubmit(handleSubmit)}
-              disabled={!form.formState.isValid}
-              isLoading={isLoading}
-            >
-              {t('pages.license.activateLicense')}
-            </ButtonWithLoading>
-          </div>
+          <ButtonWithLoading
+            type='submit'
+            onClick={form.handleSubmit(handleSubmit)}
+            disabled={!form.formState.isValid}
+            isLoading={isLoading}
+          >
+            {t('pages.license.activateLicense')}
+          </ButtonWithLoading>
         </DialogFooter>
       </DialogContent>
     </Dialog>
