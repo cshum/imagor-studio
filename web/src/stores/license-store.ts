@@ -112,7 +112,7 @@ export const licenseStore = createStore(initialState, reducer)
 /**
  * Check license status using public endpoint (no auth required)
  */
-export const checkPublicLicense = async () => {
+export const checkLicense = async () => {
   licenseStore.dispatch({ type: 'SET_LOADING', payload: { isLoading: true } })
 
   try {
@@ -129,8 +129,7 @@ export const checkPublicLicense = async () => {
         supportMessage: data.supportMessage || undefined,
       },
     })
-  } catch (error) {
-    console.error('Failed to check public license status:', error)
+  } catch {
     // Fallback for public access
     licenseStore.dispatch({
       type: 'SET_LICENSE_STATUS',
@@ -143,15 +142,6 @@ export const checkPublicLicense = async () => {
   } finally {
     licenseStore.dispatch({ type: 'SET_LOADING', payload: { isLoading: false } })
   }
-}
-
-/**
- * Check license status (auth-aware)
- */
-export const checkLicense = async () => {
-  // For now, always use public endpoint
-  // TODO: Add auth-aware logic when GraphQL cleanup is complete
-  return checkPublicLicense()
 }
 
 /**
@@ -227,7 +217,7 @@ export const setShowDialog = (show: boolean) => {
 /**
  * Get current license state
  */
-export const getLicenseState = (): LicenseState => {
+export const getLicense = (): LicenseState => {
   return licenseStore.getState()
 }
 
