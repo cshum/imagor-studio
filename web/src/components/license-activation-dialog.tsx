@@ -1,9 +1,13 @@
 import React, { useState } from 'react'
-import { Heart, Loader2 } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
+import * as z from 'zod'
 
+import { activateLicense } from '@/api/license-api'
 import { Button } from '@/components/ui/button'
-import { useLicense } from '@/stores/license-store'
-
+import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
   Dialog,
   DialogContent,
@@ -11,92 +15,89 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from './ui/dialog'
-import { Label } from './ui/label'
-import { Textarea } from './ui/textarea'
+} from '@/components/ui/dialog'
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
+
+const licenseKeySchema = z.object({
+  licenseKey: z.string().min(1, 'License key is required').trim(),
+})
+
+type LicenseKeyFormData = z.infer<typeof licenseKeySchema>
 
 interface LicenseActivationDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }
 
 export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = ({
   open,
   onOpenChange,
+  onSuccess,
 }) => {
-  const [licenseKey, setLicenseKey] = useState('')
-  const [message, setMessage] = useState('')
-  const { activateLicense, isLoading } = useLicense()
+  const { t } = useTranslation()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleActivate = async () => {
-    if (!licenseKey.trim()) {
-      setMessage('Please enter a license key')
-      return
-    }
+  const form = useForm<LicenseKeyFormData>({
+    resolver: zodResolver(licenseKeySchema),
+    defaultValues: {
+      licenseKey: '',
+    },
+  })
 
-    const result = await activateLicense(licenseKey.trim())
-    setMessage(result.message)
+  const handleSubmit = async (data: LicenseKeyFormData) => {
+    setIsLoading(true)
+    setError(null)
 
-    if (result.success) {
-      // Close dialog after successful activation
-      setTimeout(() => {
-        onOpenChange(false)
-        setLicenseKey('')
-        setMessage('')
-      }, 2000)
+    try {
+      const result = await activateLicense(data.licenseKey)
+      
+      if (result.isLicensed) {
+        toast.success(t('pages.license.activationSuccess'))
+        handleClose()
+        onSuccess?.()
+      } else {
+        setError(result.message)
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to activate license'
+      setError(errorMessage)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleClose = () => {
     onOpenChange(false)
-    setLicenseKey('')
-    setMessage('')
+    form.reset()
+    setError(null)
   }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className='sm:max-w-md'>
+      <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle className='flex items-center gap-2'>
-            <Heart className='h-5 w-5 text-blue-600' />
-            Support Imagor Studio Development
-          </DialogTitle>
+          <DialogTitle>Support Imagor Studio Development</DialogTitle>
           <DialogDescription>
             Enter your license key to support ongoing development and remove this reminder.
           </DialogDescription>
         </DialogHeader>
 
-        <div className='space-y-4'>
-          <div className='space-y-2'>
-            <Label htmlFor='license-key'>License Key</Label>
-            <Textarea
-              id='license-key'
-              placeholder='IMGR-...'
-              value={licenseKey}
-              onChange={(e) => setLicenseKey(e.target.value)}
-              disabled={isLoading}
-              className='min-h-[120px] resize-none font-mono text-sm'
-              rows={5}
-            />
-            <p className='text-muted-foreground text-xs'>
-              Paste your complete license key here. Long keys are supported.
-            </p>
-          </div>
-
-          {message && (
-            <div
-              className={`rounded-md p-3 text-sm ${
-                message.includes('success') || message.includes('activated')
-                  ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                  : 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-              }`}
-            >
-              {message}
-            </div>
-          )}
-
-          <div className='rounded-md bg-blue-50 p-4 dark:bg-blue-900/20'>
-            <h4 className='mb-2 font-medium text-blue-900 dark:text-blue-400'>
+        <div className='space-y-6'>
+          {/* Why Support Section */}
+          <div className='bg-blue-50 dark:bg-blue-900/20 rounded-lg border p-4'>
+            <h4 className='mb-2 text-sm font-medium text-blue-900 dark:text-blue-400'>
               Why support development?
             </h4>
             <ul className='space-y-1 text-sm text-blue-800 dark:text-blue-300'>
@@ -107,29 +108,74 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
             </ul>
           </div>
 
-          <div className='text-center'>
-            <p className='text-muted-foreground mb-2 text-sm'>Don't have a license yet?</p>
+          {/* License Key Form */}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+              <div className={cn('space-y-6', isLoading && 'opacity-60')}>
+                <FormField
+                  control={form.control}
+                  name='licenseKey'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>License Key</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder='IMGR-...'
+                          className='min-h-[120px] resize-none font-mono text-sm'
+                          rows={5}
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Paste your complete license key here to activate Imagor Studio.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className='bg-destructive/10 text-destructive rounded-md p-3 text-sm'>
+                  {error}
+                </div>
+              )}
+            </form>
+          </Form>
+        </div>
+
+        <DialogFooter className='flex justify-between'>
+          <div className='flex gap-3'>
             <Button
+              type='button'
               variant='outline'
-              size='sm'
               onClick={() => {
-                // TODO: Open purchase page
                 window.open('https://buy.imagor-studio.com', '_blank')
               }}
             >
-              Get License ($39)
+              {t('pages.license.purchaseLicense')}
             </Button>
           </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant='outline' onClick={handleClose} disabled={isLoading}>
-            Maybe Later
-          </Button>
-          <Button onClick={handleActivate} disabled={isLoading || !licenseKey.trim()}>
-            {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-            Activate License
-          </Button>
+          <div className='flex gap-3'>
+            <Button 
+              type='button' 
+              variant='outline' 
+              onClick={handleClose} 
+              disabled={isLoading}
+            >
+              Maybe Later
+            </Button>
+            <ButtonWithLoading
+              type='submit'
+              onClick={form.handleSubmit(handleSubmit)}
+              disabled={!form.formState.isValid}
+              isLoading={isLoading}
+            >
+              {t('pages.license.activateLicense')}
+            </ButtonWithLoading>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
