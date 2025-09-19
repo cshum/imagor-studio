@@ -73,7 +73,7 @@ const adminSetupRoute = createRoute({
 
 const baseLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
-  id: 'gallery-layout',
+  id: 'base-layout',
   beforeLoad: requireAuth,
   component: () => (
     <SidebarLayout>
@@ -140,6 +140,7 @@ const galleryRoute = createRoute({
     )
   },
   loader: galleryLoader,
+  shouldReload: false,
 })
 
 const imagePage = createRoute({
