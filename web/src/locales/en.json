@@ -246,6 +246,8 @@
       "configurationOverridden": "License configuration is managed by external configuration",
       "purchaseLicense": "Purchase License",
       "supportDevelopment": "Support Development",
+      "activationSuccess": "Thank you for your support! License activated successfully.",
+      "updateSuccess": "License updated successfully! Thank you for your continued support.",
       "licenseTypes": {
         "early_bird": "Early Bird",
         "personal": "Personal",

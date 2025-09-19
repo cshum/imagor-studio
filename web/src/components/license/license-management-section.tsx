@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from '@tanstack/react-router'
 
+import type { LicenseStatus } from '@/api/license-api'
 import { Badge } from '@/components/ui/badge'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import type { LicenseStatus } from '@/api/license-api'
 
 import { LicenseUpdateDialog } from './license-update-dialog'
 
@@ -26,7 +26,7 @@ export function LicenseManagementSection({ licenseStatus }: LicenseManagementSec
 
   const getLicenseTypeDisplay = (licenseType: string | undefined) => {
     if (!licenseType) return t('pages.license.notLicensed')
-    
+
     const typeKey = `pages.license.licenseTypes.${licenseType}` as const
     return t(typeKey, { defaultValue: licenseType.charAt(0).toUpperCase() + licenseType.slice(1) })
   }
