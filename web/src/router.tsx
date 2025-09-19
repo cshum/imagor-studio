@@ -55,6 +55,7 @@ const rootRoute = createRootRoute({
   loader: rootLoader,
   component: RootComponent,
   errorComponent: ErrorPage,
+  shouldReload: false,
 })
 
 const loginRoute = createRoute({
@@ -72,7 +73,7 @@ const adminSetupRoute = createRoute({
 
 const baseLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
-  id: 'gallery-layout',
+  id: 'base-layout',
   beforeLoad: requireAuth,
   component: () => (
     <SidebarLayout>
