@@ -11,6 +11,7 @@ import {
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { LicenseActivationDialog } from '@/components/license-activation-dialog'
+import { FloatingLicenseBadge } from '@/components/floating-license-badge'
 import { useLicense } from '@/stores/license-store'
 import { useTitle } from '@/hooks/use-title'
 import { AccountLayout } from '@/layouts/account-layout'
@@ -49,6 +50,7 @@ const RootComponent = () => {
   return (
     <>
       <Outlet />
+      <FloatingLicenseBadge />
       <Toaster />
       <LicenseActivationDialog 
         open={showDialog} 
