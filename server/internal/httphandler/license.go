@@ -60,12 +60,16 @@ func (h *LicenseHandler) ActivateLicense() http.HandlerFunc {
 		}
 
 		// Convert to public response format
+		var licenseTypePtr *string
+		if status.LicenseType != "" {
+			licenseTypePtr = &status.LicenseType
+		}
+		
 		response := &license.PublicLicenseStatus{
-			IsLicensed:     status.IsLicensed,
-			LicenseType:    status.LicenseType,
-			Message:        status.Message,
-			SupportMessage: status.SupportMessage,
-			Features:       []string{}, // Initialize empty features for now
+			IsLicensed:  status.IsLicensed,
+			LicenseType: licenseTypePtr,
+			Message:     status.Message,
+			Features:    status.Features,
 		}
 
 		return WriteSuccess(w, response)

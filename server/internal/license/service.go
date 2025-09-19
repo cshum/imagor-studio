@@ -10,58 +10,66 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/internal/registryutil"
 )
 
 type Service struct {
 	registry  registrystore.Store
+	config    registryutil.ConfigProvider
 	publicKey ed25519.PublicKey
 }
 
-func NewService(registry registrystore.Store) *Service {
+func NewService(registry registrystore.Store, config registryutil.ConfigProvider) *Service {
 	return &Service{
 		registry:  registry,
+		config:    config,
 		publicKey: LicensePublicKey,
 	}
 }
 
 func (s *Service) GetLicenseStatus(ctx context.Context) (*LicenseStatus, error) {
-	// Get license key from registry
-	entry, err := s.registry.Get(ctx, registrystore.SystemOwnerID, "license.key")
-	if err != nil {
+	// Use registryutil to get effective value with config override support
+	result := registryutil.GetEffectiveValue(ctx, s.registry, s.config, "config.license_key")
+	
+	if !result.Exists || result.Value == "" {
 		return &LicenseStatus{
-			IsLicensed: false,
-			Message:    "Error checking license",
-		}, err
-	}
-
-	if entry == nil {
-		return &LicenseStatus{
-			IsLicensed:     false,
-			Message:        "No license found",
-			SupportMessage: stringPtr("Support ongoing development with a license"),
+			IsLicensed:           false,
+			Message:              "No license key found",
+			IsOverriddenByConfig: result.IsOverriddenByConfig,
 		}, nil
 	}
-
-	// Use real cryptographic verification
-	payload, err := s.verifyLicense(entry.Value)
+	
+	// Verify the license key
+	payload, err := s.verifyLicense(result.Value)
 	if err != nil {
 		return &LicenseStatus{
-			IsLicensed:     false,
-			Message:        fmt.Sprintf("Invalid license: %v", err),
-			SupportMessage: stringPtr("Please check your license key"),
+			IsLicensed:           false,
+			Message:              fmt.Sprintf("Invalid license: %v", err),
+			IsOverriddenByConfig: result.IsOverriddenByConfig,
 		}, nil
 	}
-
+	
 	return &LicenseStatus{
-		IsLicensed:  true,
-		LicenseType: &payload.Type,
-		Email:       &payload.Email,
-		Message:     "Licensed",
+		IsLicensed:           true,
+		LicenseType:          payload.Type,
+		Features:             payload.Features,
+		Email:                payload.Email,
+		Message:              "Licensed",
+		IsOverriddenByConfig: result.IsOverriddenByConfig,
 	}, nil
 }
 
 func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*LicenseStatus, error) {
-	// Use real cryptographic verification
+	// Check if license key is overridden by config (CLI/env)
+	_, configExists := s.config.GetByRegistryKey("config.license_key")
+	if configExists {
+		return &LicenseStatus{
+			IsLicensed: false,
+			Message:    "Cannot set license key: this configuration is managed by external config",
+		}, nil
+	}
+	
+	// Verify the license key first
 	payload, err := s.verifyLicense(licenseKey)
 	if err != nil {
 		return &LicenseStatus{
@@ -69,21 +77,22 @@ func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*Lice
 			Message:    fmt.Sprintf("Invalid license key: %v", err),
 		}, nil
 	}
-
-	// Store in registry
-	_, err = s.registry.Set(ctx, registrystore.SystemOwnerID, "license.key", licenseKey, true)
+	
+	// Store in registry as config.license_key (encrypted)
+	_, err = s.registry.Set(ctx, registrystore.SystemOwnerID, "config.license_key", licenseKey, true)
 	if err != nil {
 		return &LicenseStatus{
 			IsLicensed: false,
 			Message:    "Failed to save license key",
 		}, err
 	}
-
+	
 	return &LicenseStatus{
 		IsLicensed:  true,
-		LicenseType: &payload.Type,
-		Email:       &payload.Email,
-		Message:     "License activated successfully! Thank you for supporting development.",
+		LicenseType: payload.Type,
+		Features:    payload.Features,
+		Email:       payload.Email,
+		Message:     "License activated successfully",
 	}, nil
 }
 

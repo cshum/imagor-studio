@@ -22,6 +22,9 @@ type Config struct {
 	JWTSecret     string
 	JWTExpiration time.Duration
 
+	// License Configuration
+	LicenseKey string
+
 	// Authentication Configuration
 	AllowGuestMode bool // Allow guest mode access
 
@@ -69,6 +72,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		storageType   = fs.String("storage-type", "file", "storage type: file or s3")
 		jwtSecret     = fs.String("jwt-secret", "", "secret key for JWT signing")
 		jwtExpiration = fs.String("jwt-expiration", "168h", "JWT token expiration duration")
+		licenseKey    = fs.String("license-key", "", "license key for activation")
 
 		allowGuestMode = fs.Bool("allow-guest-mode", false, "allow guest mode access")
 
@@ -172,6 +176,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		DatabaseURL:          *databaseURL,
 		JWTSecret:            *jwtSecret,
 		JWTExpiration:        jwtExp,
+		LicenseKey:           *licenseKey,
 		AllowGuestMode:       *allowGuestMode,
 		StorageType:          *storageType,
 		FileBaseDir:          *fileBaseDir,

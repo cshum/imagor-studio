@@ -94,11 +94,39 @@ func (m *mockRegistryStore) DeleteMulti(ctx context.Context, ownerID string, key
 	return nil
 }
 
+// Mock config provider for testing
+type mockConfigProvider struct {
+	configValue  string
+	configExists bool
+}
+
+func newMockConfigProvider() *mockConfigProvider {
+	return &mockConfigProvider{
+		configExists: false,
+	}
+}
+
+func (m *mockConfigProvider) GetByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
+	return m.configValue, m.configExists
+}
+
+func (m *mockConfigProvider) setConfigOverride(key, value string) {
+	if key == "config.license_key" {
+		m.configValue = value
+		m.configExists = true
+	}
+}
+
+func (m *mockConfigProvider) clearConfigOverride() {
+	m.configExists = false
+	m.configValue = ""
+}
 
 func TestLicenseService_GetLicenseStatus_Unlicensed(t *testing.T) {
 	ctx := context.Background()
 	store := newMockRegistryStore()
-	service := NewService(store)
+	config := newMockConfigProvider()
+	service := NewService(store, config)
 
 	status, err := service.GetLicenseStatus(ctx)
 	require.NoError(t, err)
@@ -106,8 +134,43 @@ func TestLicenseService_GetLicenseStatus_Unlicensed(t *testing.T) {
 	assert.False(t, status.IsLicensed)
 	assert.Empty(t, status.LicenseType)
 	assert.Empty(t, status.Email)
-	assert.Equal(t, "No license found", status.Message)
-	assert.Equal(t, "Support ongoing development with a license", *status.SupportMessage)
+	assert.Equal(t, "No license key found", status.Message)
+	assert.False(t, status.IsOverriddenByConfig)
+}
+
+func TestLicenseService_GetLicenseStatus_ConfigOverride(t *testing.T) {
+	ctx := context.Background()
+	store := newMockRegistryStore()
+	config := newMockConfigProvider()
+
+	// Set config override
+	config.setConfigOverride("config.license_key", "IMGR-from-env")
+
+	service := NewService(store, config)
+
+	status, err := service.GetLicenseStatus(ctx)
+	require.NoError(t, err)
+
+	assert.False(t, status.IsLicensed) // Invalid license key
+	assert.True(t, status.IsOverriddenByConfig)
+	assert.Contains(t, status.Message, "Invalid license")
+}
+
+func TestLicenseService_ActivateLicense_ConfigOverride(t *testing.T) {
+	ctx := context.Background()
+	store := newMockRegistryStore()
+	config := newMockConfigProvider()
+
+	// Set config override
+	config.setConfigOverride("config.license_key", "IMGR-from-env")
+
+	service := NewService(store, config)
+
+	status, err := service.ActivateLicense(ctx, "IMGR-new-key")
+	require.NoError(t, err)
+
+	assert.False(t, status.IsLicensed)
+	assert.Equal(t, "Cannot set license key: this configuration is managed by external config", status.Message)
 }
 
 func TestGenerateSignedLicense(t *testing.T) {
@@ -219,7 +282,8 @@ func TestVerifySignedLicense_InvalidCases(t *testing.T) {
 func TestLicenseService_RealCryptography(t *testing.T) {
 	ctx := context.Background()
 	store := newMockRegistryStore()
-	service := NewService(store)
+	config := newMockConfigProvider()
+	service := NewService(store, config)
 
 	// Generate a test key pair
 	publicKey, privateKey, err := GenerateKeyPair()
@@ -237,8 +301,8 @@ func TestLicenseService_RealCryptography(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, status.IsLicensed)
-	assert.Equal(t, "commercial", *status.LicenseType)
-	assert.Equal(t, "business@company.com", *status.Email)
+	assert.Equal(t, "commercial", status.LicenseType)
+	assert.Equal(t, "business@company.com", status.Email)
 	assert.Contains(t, status.Message, "activated successfully")
 
 	// Test getting status after activation
@@ -246,15 +310,17 @@ func TestLicenseService_RealCryptography(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, status.IsLicensed)
-	assert.Equal(t, "commercial", *status.LicenseType)
-	assert.Equal(t, "business@company.com", *status.Email)
+	assert.Equal(t, "commercial", status.LicenseType)
+	assert.Equal(t, "business@company.com", status.Email)
 	assert.Equal(t, "Licensed", status.Message)
+	assert.False(t, status.IsOverriddenByConfig)
 }
 
 func TestLicenseService_InvalidSignedLicense(t *testing.T) {
 	ctx := context.Background()
 	store := newMockRegistryStore()
-	service := NewService(store)
+	config := newMockConfigProvider()
+	service := NewService(store, config)
 
 	// Test with invalid license key
 	status, err := service.ActivateLicense(ctx, "IMGR-invalid.license")
@@ -267,7 +333,8 @@ func TestLicenseService_InvalidSignedLicense(t *testing.T) {
 func TestLicenseService_ActivateLicense_Success(t *testing.T) {
 	ctx := context.Background()
 	store := newMockRegistryStore()
-	service := NewService(store)
+	config := newMockConfigProvider()
+	service := NewService(store, config)
 
 	// Generate a test key pair
 	publicKey, privateKey, err := GenerateKeyPair()
@@ -284,13 +351,12 @@ func TestLicenseService_ActivateLicense_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, status.IsLicensed)
-	assert.Equal(t, "personal", *status.LicenseType)
-	assert.Equal(t, "test@example.com", *status.Email)
-	assert.Equal(t, "License activated successfully! Thank you for supporting development.", status.Message)
-	assert.Empty(t, status.SupportMessage)
+	assert.Equal(t, "personal", status.LicenseType)
+	assert.Equal(t, "test@example.com", status.Email)
+	assert.Equal(t, "License activated successfully", status.Message)
 
-	// Verify license is stored in registry
-	storedLicense, err := store.Get(ctx, registrystore.SystemOwnerID, "license.key")
+	// Verify license is stored in registry with new key format
+	storedLicense, err := store.Get(ctx, registrystore.SystemOwnerID, "config.license_key")
 	require.NoError(t, err)
 	require.NotNil(t, storedLicense)
 	assert.Equal(t, licenseKey, storedLicense.Value)
@@ -300,7 +366,8 @@ func TestLicenseService_ActivateLicense_Success(t *testing.T) {
 func TestLicenseService_ActivateLicense_InvalidKey(t *testing.T) {
 	ctx := context.Background()
 	store := newMockRegistryStore()
-	service := NewService(store)
+	config := newMockConfigProvider()
+	service := NewService(store, config)
 
 	status, err := service.ActivateLicense(ctx, "INVALID-KEY")
 	require.NoError(t, err)
@@ -309,13 +376,13 @@ func TestLicenseService_ActivateLicense_InvalidKey(t *testing.T) {
 	assert.Empty(t, status.LicenseType)
 	assert.Empty(t, status.Email)
 	assert.Contains(t, status.Message, "Invalid license key")
-	assert.Empty(t, status.SupportMessage)
 }
 
 func TestLicenseService_GetLicenseStatus_Licensed(t *testing.T) {
 	ctx := context.Background()
 	store := newMockRegistryStore()
-	service := NewService(store)
+	config := newMockConfigProvider()
+	service := NewService(store, config)
 
 	// Generate a test key pair
 	publicKey, privateKey, err := GenerateKeyPair()
@@ -327,7 +394,7 @@ func TestLicenseService_GetLicenseStatus_Licensed(t *testing.T) {
 	// First activate a license
 	licenseKey, err := GenerateSignedLicense(privateKey, "commercial", "business@company.com")
 	require.NoError(t, err)
-	
+
 	_, err = service.ActivateLicense(ctx, licenseKey)
 	require.NoError(t, err)
 
@@ -336,16 +403,17 @@ func TestLicenseService_GetLicenseStatus_Licensed(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, status.IsLicensed)
-	assert.Equal(t, "commercial", *status.LicenseType)
-	assert.Equal(t, "business@company.com", *status.Email)
+	assert.Equal(t, "commercial", status.LicenseType)
+	assert.Equal(t, "business@company.com", status.Email)
 	assert.Equal(t, "Licensed", status.Message)
-	assert.Empty(t, status.SupportMessage)
+	assert.False(t, status.IsOverriddenByConfig)
 }
 
 func TestLicenseService_ActivateLicense_OverwriteExisting(t *testing.T) {
 	ctx := context.Background()
 	store := newMockRegistryStore()
-	service := NewService(store)
+	config := newMockConfigProvider()
+	service := NewService(store, config)
 
 	// Generate a test key pair
 	publicKey, privateKey, err := GenerateKeyPair()
@@ -367,11 +435,11 @@ func TestLicenseService_ActivateLicense_OverwriteExisting(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, status.IsLicensed)
-	assert.Equal(t, "commercial", *status.LicenseType)
-	assert.Equal(t, "second@example.com", *status.Email)
+	assert.Equal(t, "commercial", status.LicenseType)
+	assert.Equal(t, "second@example.com", status.Email)
 
 	// Verify the stored license is the second one
-	storedLicense, err := store.Get(ctx, registrystore.SystemOwnerID, "license.key")
+	storedLicense, err := store.Get(ctx, registrystore.SystemOwnerID, "config.license_key")
 	require.NoError(t, err)
 	require.NotNil(t, storedLicense)
 	assert.Equal(t, secondKey, storedLicense.Value)

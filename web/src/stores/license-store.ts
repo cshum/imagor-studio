@@ -10,6 +10,7 @@ export interface LicenseState {
   email: string | null
   message: string
   supportMessage: string | null
+  isOverriddenByConfig: boolean
   isLoading: boolean
   showDialog: boolean
 }
@@ -23,6 +24,7 @@ export type LicenseAction =
         email?: string
         message: string
         supportMessage?: string
+        isOverriddenByConfig?: boolean
       }
     }
   | { type: 'SET_LOADING'; payload: { isLoading: boolean } }
@@ -39,6 +41,7 @@ const initialState: LicenseState = {
   email: null,
   message: '',
   supportMessage: null,
+  isOverriddenByConfig: false,
   isLoading: false,
   showDialog: false,
 }
@@ -53,6 +56,7 @@ const reducer = (state: LicenseState, action: LicenseAction): LicenseState => {
         email: action.payload.email || null,
         message: action.payload.message,
         supportMessage: action.payload.supportMessage || null,
+        isOverriddenByConfig: action.payload.isOverriddenByConfig || false,
       }
 
     case 'SET_LOADING':

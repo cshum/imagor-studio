@@ -103,8 +103,8 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 		return nil, fmt.Errorf("failed to initialize imagor: %w", err)
 	}
 
-	// Initialize license service
-	licenseService := license.NewService(registryStore)
+	// Initialize license service with config provider
+	licenseService := license.NewService(registryStore, enhancedCfg)
 
 	// Log configuration loaded
 	logger.Info("Configuration loaded",

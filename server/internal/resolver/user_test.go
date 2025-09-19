@@ -24,7 +24,7 @@ func TestMe(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -61,7 +61,7 @@ func TestUser_AdminOnly(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -127,7 +127,7 @@ func TestUpdateProfile_SelfOperation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -182,7 +182,7 @@ func TestUpdateProfile_AdminOperation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -238,7 +238,7 @@ func TestUpdateProfile_NonAdminCannotUpdateOthers(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("regular-user-id")
 
@@ -265,7 +265,7 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -414,7 +414,7 @@ func TestChangePassword_SelfOperation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -454,7 +454,7 @@ func TestChangePassword_AdminOperation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -492,7 +492,7 @@ func TestChangePassword_ValidationErrors(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -598,7 +598,7 @@ func TestDeactivateAccount_SelfOperation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -632,7 +632,7 @@ func TestDeactivateAccount_AdminOperation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -667,7 +667,7 @@ func TestDeactivateAccount_AdminCannotDeactivateSelfViaAdminOperation(t *testing
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -689,7 +689,7 @@ func TestDeactivateAccount_NonAdminCannotDeactivateOthers(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("regular-user-id")
 
@@ -711,7 +711,7 @@ func TestUsers_AdminOnly(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -812,7 +812,7 @@ func TestUsers_LimitValidation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -904,7 +904,7 @@ func TestUserOperations_UserNotFound(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name      string

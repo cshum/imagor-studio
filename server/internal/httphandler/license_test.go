@@ -92,12 +92,16 @@ func (h *TestLicenseHandler) ActivateLicense() http.HandlerFunc {
 		}
 
 		// Convert to public response format
+		var licenseTypePtr *string
+		if status.LicenseType != "" {
+			licenseTypePtr = &status.LicenseType
+		}
+		
 		response := &license.PublicLicenseStatus{
-			IsLicensed:     status.IsLicensed,
-			LicenseType:    status.LicenseType,
-			Message:        status.Message,
-			SupportMessage: status.SupportMessage,
-			Features:       []string{}, // Initialize empty features for now
+			IsLicensed:  status.IsLicensed,
+			LicenseType: licenseTypePtr,
+			Message:     status.Message,
+			Features:    status.Features,
 		}
 
 		return WriteSuccess(w, response)
@@ -224,19 +228,19 @@ func TestLicenseHandler_ActivateLicense(t *testing.T) {
 				"key": "IMGR-valid-license-key",
 			},
 			mockStatus: &license.LicenseStatus{
-				IsLicensed:     true,
-				LicenseType:    stringPtr("personal"),
-				Email:          stringPtr("test@example.com"),
-				Message:        "License activated successfully! Thank you for supporting development.",
-				SupportMessage: nil,
+				IsLicensed:  true,
+				LicenseType: "personal",
+				Email:       "test@example.com",
+				Features:    []string{"batch_export", "api_access"},
+				Message:     "License activated successfully",
 			},
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
 			expectedBody: map[string]interface{}{
 				"isLicensed":  true,
 				"licenseType": "personal",
-				"message":     "License activated successfully! Thank you for supporting development.",
-				"features":    []interface{}{},
+				"message":     "License activated successfully",
+				"features":    []interface{}{"batch_export", "api_access"},
 			},
 		},
 		{
@@ -379,8 +383,9 @@ func TestLicenseHandler_Integration(t *testing.T) {
 	// Test 2: Activate license
 	mockService.On("ActivateLicense", mock.Anything, "valid-key").Return(&license.LicenseStatus{
 		IsLicensed:  true,
-		LicenseType: stringPtr("personal"),
-		Message:     "License activated successfully! Thank you for supporting development.",
+		LicenseType: "personal",
+		Features:    []string{"batch_export", "api_access"},
+		Message:     "License activated successfully",
 	}, nil).Once()
 
 	requestBody := map[string]string{"key": "valid-key"}
