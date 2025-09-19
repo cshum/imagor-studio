@@ -51,11 +51,11 @@ export function AdminPage({ loaderData }: AdminPageProps) {
         systemRegistryList={loaderData?.systemRegistryList || []}
       />
 
-      <LicenseManagementSection licenseStatus={loaderData?.licenseStatus || null} />
-
       <StorageManagementSection storageStatus={loaderData?.storageStatus || null} />
 
       <ImagorManagementSection imagorStatus={loaderData?.imagorStatus || null} />
+
+      <LicenseManagementSection licenseStatus={loaderData?.licenseStatus || null} />
     </div>
   )
 }
