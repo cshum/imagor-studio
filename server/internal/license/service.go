@@ -47,7 +47,6 @@ func (s *Service) GetLicenseStatus(ctx context.Context, includeDetails bool) (*L
 				IsLicensed:           false,
 				Message:              fmt.Sprintf("Invalid license: %v", err),
 				IsOverriddenByConfig: result.IsOverriddenByConfig,
-				Features:             []string{},
 			}, nil
 		} else {
 			// For public access, don't expose verification errors
@@ -58,7 +57,6 @@ func (s *Service) GetLicenseStatus(ctx context.Context, includeDetails bool) (*L
 	status := &LicenseStatus{
 		IsLicensed:           true,
 		LicenseType:          payload.Type,
-		Features:             getFeaturesByType(payload.Type),
 		Message:              "Licensed",
 		IsOverriddenByConfig: result.IsOverriddenByConfig,
 	}
@@ -86,7 +84,6 @@ func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*Lice
 		return &LicenseStatus{
 			IsLicensed: false,
 			Message:    "Cannot set license key: this configuration is managed by external config",
-			Features:   []string{},
 		}, nil
 	}
 
@@ -96,7 +93,6 @@ func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*Lice
 		return &LicenseStatus{
 			IsLicensed: false,
 			Message:    err.Error(),
-			Features:   []string{},
 		}, nil
 	}
 
@@ -106,14 +102,12 @@ func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*Lice
 		return &LicenseStatus{
 			IsLicensed: false,
 			Message:    "Failed to save license key",
-			Features:   []string{},
 		}, err
 	}
 
 	return &LicenseStatus{
 		IsLicensed:  true,
 		LicenseType: payload.Type,
-		Features:    getFeaturesByType(payload.Type),
 		Email:       payload.Email,
 		Message:     "License activated successfully",
 	}, nil
@@ -123,12 +117,12 @@ func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*Lice
 
 func (s *Service) verifyLicense(licenseKey string) (*LicensePayload, error) {
 	if !strings.HasPrefix(licenseKey, "IMGR-") {
-		return nil, fmt.Errorf("please check your license key format")
+		return nil, fmt.Errorf("invalid license key")
 	}
 
 	parts := strings.Split(licenseKey[5:], ".")
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("license key format is incorrect")
+		return nil, fmt.Errorf("invalid license key")
 	}
 
 	// Add padding back for base64 decoding
@@ -138,23 +132,23 @@ func (s *Service) verifyLicense(licenseKey string) (*LicensePayload, error) {
 	// Decode payload and signature
 	payloadBytes, err := base64.URLEncoding.DecodeString(payloadB64)
 	if err != nil {
-		return nil, fmt.Errorf("unable to validate license key")
+		return nil, fmt.Errorf("invalid license key")
 	}
 
 	signature, err := base64.URLEncoding.DecodeString(signatureB64)
 	if err != nil {
-		return nil, fmt.Errorf("unable to validate license key")
+		return nil, fmt.Errorf("invalid license key")
 	}
 
 	// Verify signature
 	if !ed25519.Verify(s.publicKey, payloadBytes, signature) {
-		return nil, fmt.Errorf("license key is not valid")
+		return nil, fmt.Errorf("invalid license key")
 	}
 
 	// Parse payload
 	var payload LicensePayload
 	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
-		return nil, fmt.Errorf("unable to validate license key")
+		return nil, fmt.Errorf("invalid license key")
 	}
 
 	// Check expiry (if set)
@@ -170,7 +164,6 @@ func (s *Service) buildUnlicensedStatus(includeDetails bool, isOverriddenByConfi
 		IsLicensed:           false,
 		Message:              "Support ongoing development",
 		IsOverriddenByConfig: isOverriddenByConfig,
-		Features:             []string{},
 	}
 
 	if !includeDetails {
@@ -186,36 +179,6 @@ func (s *Service) buildUnlicensedStatus(includeDetails bool, isOverriddenByConfi
 	}
 
 	return status
-}
-
-// getFeaturesByType returns the features available for a license type
-func getFeaturesByType(licenseType string) []string {
-	switch licenseType {
-	case "early_bird":
-		return []string{"full_access"}
-	case "personal":
-		return []string{"batch_export", "api_access"}
-	case "commercial":
-		return []string{"batch_export", "api_access", "white_label", "priority_support"}
-	case "enterprise":
-		return []string{"batch_export", "api_access", "white_label", "priority_support", "custom_branding", "sso"}
-	default:
-		return []string{}
-	}
-}
-
-// formatLicenseTypeForDisplay converts license type to display-friendly format
-func formatLicenseTypeForDisplay(licenseType string) string {
-	switch licenseType {
-	case "early_bird":
-		return "Early Bird Licensed"
-	case "commercial":
-		return "Commercial Licensed"
-	case "enterprise":
-		return "Enterprise Licensed"
-	default:
-		return "Licensed"
-	}
 }
 
 // maskLicenseKey masks a license key for display (shows first 8 and last 4 characters)

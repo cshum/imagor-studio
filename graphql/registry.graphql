@@ -52,7 +52,6 @@ type SystemRegistry {
 type LicenseStatus {
   isLicensed: Boolean!
   licenseType: String!
-  features: [String!]!
   email: String!
   message: String!
   isOverriddenByConfig: Boolean!

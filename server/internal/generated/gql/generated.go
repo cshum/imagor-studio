@@ -101,7 +101,6 @@ type ComplexityRoot struct {
 	LicenseStatus struct {
 		ActivatedAt          func(childComplexity int) int
 		Email                func(childComplexity int) int
-		Features             func(childComplexity int) int
 		IsLicensed           func(childComplexity int) int
 		IsOverriddenByConfig func(childComplexity int) int
 		LicenseType          func(childComplexity int) int
@@ -477,12 +476,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.LicenseStatus.Email(childComplexity), true
-	case "LicenseStatus.features":
-		if e.complexity.LicenseStatus.Features == nil {
-			break
-		}
-
-		return e.complexity.LicenseStatus.Features(childComplexity), true
 	case "LicenseStatus.isLicensed":
 		if e.complexity.LicenseStatus.IsLicensed == nil {
 			break
@@ -1342,7 +1335,6 @@ type SystemRegistry {
 type LicenseStatus {
   isLicensed: Boolean!
   licenseType: String!
-  features: [String!]!
   email: String!
   message: String!
   isOverriddenByConfig: Boolean!
@@ -2962,33 +2954,6 @@ func (ec *executionContext) fieldContext_LicenseStatus_licenseType(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _LicenseStatus_features(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_LicenseStatus_features,
-		func(ctx context.Context) (any, error) { return obj.Features, nil },
-		nil,
-		ec.marshalNString2ᚕstringᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_LicenseStatus_features(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "LicenseStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _LicenseStatus_email(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4354,8 +4319,6 @@ func (ec *executionContext) fieldContext_Query_licenseStatus(_ context.Context, 
 				return ec.fieldContext_LicenseStatus_isLicensed(ctx, field)
 			case "licenseType":
 				return ec.fieldContext_LicenseStatus_licenseType(ctx, field)
-			case "features":
-				return ec.fieldContext_LicenseStatus_features(ctx, field)
 			case "email":
 				return ec.fieldContext_LicenseStatus_email(ctx, field)
 			case "message":
@@ -8149,11 +8112,6 @@ func (ec *executionContext) _LicenseStatus(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "features":
-			out.Values[i] = ec._LicenseStatus_features(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "email":
 			out.Values[i] = ec._LicenseStatus_email(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -9739,36 +9697,6 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
-	var vSlice []any
-	vSlice = graphql.CoerceList(v)
-	var err error
-	res := make([]string, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) marshalNSystemRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistryᚄ(ctx context.Context, sel ast.SelectionSet, v []*SystemRegistry) graphql.Marshaler {

@@ -98,7 +98,6 @@ func (r *queryResolver) LicenseStatus(ctx context.Context) (*gql.LicenseStatus, 
 	return &gql.LicenseStatus{
 		IsLicensed:           status.IsLicensed,
 		LicenseType:          status.LicenseType,
-		Features:             status.Features,
 		Email:                status.Email,
 		Message:              status.Message,
 		IsOverriddenByConfig: status.IsOverriddenByConfig,
@@ -107,7 +106,6 @@ func (r *queryResolver) LicenseStatus(ctx context.Context) (*gql.LicenseStatus, 
 		ActivatedAt:          status.ActivatedAt,
 	}, nil
 }
-
 
 // DeleteUserRegistry deletes user-specific registry (unified flexible API)
 func (r *mutationResolver) DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error) {

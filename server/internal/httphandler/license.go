@@ -32,10 +32,9 @@ func (h *LicenseHandler) GetPublicStatus() http.HandlerFunc {
 				IsLicensed:     false,
 				Message:        "Support ongoing development",
 				SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
-				Features:       []string{},
 			}
 		}
-		
+
 		return WriteSuccess(w, status)
 	})
 }
@@ -74,7 +73,7 @@ func (h *LicenseHandler) GetAdminStatus() http.HandlerFunc {
 			h.logger.Error("Failed to get admin license status", zap.Error(err))
 			return WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to get license status"})
 		}
-		
+
 		return WriteSuccess(w, status)
 	})
 }

@@ -118,15 +118,14 @@ type ImagorStatus struct {
 }
 
 type LicenseStatus struct {
-	IsLicensed           bool     `json:"isLicensed"`
-	LicenseType          string   `json:"licenseType"`
-	Features             []string `json:"features"`
-	Email                string   `json:"email"`
-	Message              string   `json:"message"`
-	IsOverriddenByConfig bool     `json:"isOverriddenByConfig"`
-	SupportMessage       *string  `json:"supportMessage,omitempty"`
-	MaskedLicenseKey     *string  `json:"maskedLicenseKey,omitempty"`
-	ActivatedAt          *string  `json:"activatedAt,omitempty"`
+	IsLicensed           bool    `json:"isLicensed"`
+	LicenseType          string  `json:"licenseType"`
+	Email                string  `json:"email"`
+	Message              string  `json:"message"`
+	IsOverriddenByConfig bool    `json:"isOverriddenByConfig"`
+	SupportMessage       *string `json:"supportMessage,omitempty"`
+	MaskedLicenseKey     *string `json:"maskedLicenseKey,omitempty"`
+	ActivatedAt          *string `json:"activatedAt,omitempty"`
 }
 
 type Mutation struct {

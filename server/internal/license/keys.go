@@ -34,7 +34,6 @@ func GenerateKeyPair() (ed25519.PublicKey, ed25519.PrivateKey, error) {
 	return publicKey, privateKey, nil
 }
 
-
 // GenerateSignedLicense creates a cryptographically signed license key using Ed25519
 // This is the production function that should be used for real license generation
 func GenerateSignedLicense(privateKey ed25519.PrivateKey, licenseType, email string) (string, error) {
@@ -46,7 +45,6 @@ func GenerateSignedLicense(privateKey ed25519.PrivateKey, licenseType, email str
 	payload := LicensePayload{
 		Type:     licenseType,
 		Email:    email,
-		Features: getFeatures(licenseType),
 		IssuedAt: time.Now().Unix(),
 		// ExpiresAt can be set for time-limited licenses
 	}
@@ -122,20 +120,6 @@ func VerifySignedLicense(publicKey ed25519.PublicKey, licenseKey string) (*Licen
 	}
 
 	return &payload, nil
-}
-
-// getFeatures returns the features available for a given license type
-func getFeatures(licenseType string) []string {
-	switch licenseType {
-	case "early_bird":
-		return []string{"full_access"}
-	case "commercial":
-		return []string{"full_access"}
-	case "enterprise":
-		return []string{"full_access"}
-	default: // fallback
-		return []string{"full_access"}
-	}
 }
 
 // addBase64Padding adds padding to base64 strings for proper decoding

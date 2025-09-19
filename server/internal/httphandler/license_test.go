@@ -58,7 +58,6 @@ func (h *TestLicenseHandler) GetPublicStatus() http.HandlerFunc {
 				IsLicensed:     false,
 				Message:        "Support ongoing development",
 				SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
-				Features:       []string{},
 			}
 		}
 
@@ -66,7 +65,6 @@ func (h *TestLicenseHandler) GetPublicStatus() http.HandlerFunc {
 		response := map[string]interface{}{
 			"isLicensed": status.IsLicensed,
 			"message":    status.Message,
-			"features":   status.Features,
 		}
 
 		if status.LicenseType != "" {
@@ -105,7 +103,6 @@ func (h *TestLicenseHandler) ActivateLicense() http.HandlerFunc {
 		response := map[string]interface{}{
 			"isLicensed": status.IsLicensed,
 			"message":    status.Message,
-			"features":   status.Features,
 		}
 
 		if status.LicenseType != "" {
@@ -132,7 +129,6 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 				IsLicensed:     false,
 				Message:        "Support ongoing development",
 				SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
-				Features:       []string{},
 			},
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
@@ -140,7 +136,6 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 				"isLicensed":     false,
 				"message":        "Support ongoing development",
 				"supportMessage": "From the creator of imagor & vipsgen",
-				"features":       []interface{}{},
 			},
 		},
 		{
@@ -150,7 +145,6 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 				IsLicensed:  true,
 				LicenseType: "personal",
 				Message:     "Licensed",
-				Features:    []string{"batch_export", "api_access"},
 			},
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
@@ -158,7 +152,6 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 				"isLicensed":  true,
 				"licenseType": "personal",
 				"message":     "Licensed",
-				"features":    []interface{}{"batch_export", "api_access"},
 			},
 		},
 		{
@@ -171,7 +164,6 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 				"isLicensed":     false,
 				"message":        "Support ongoing development",
 				"supportMessage": "From the creator of imagor & vipsgen",
-				"features":       []interface{}{},
 			},
 		},
 		{
@@ -239,7 +231,6 @@ func TestLicenseHandler_ActivateLicense(t *testing.T) {
 				IsLicensed:  true,
 				LicenseType: "personal",
 				Email:       "test@example.com",
-				Features:    []string{"batch_export", "api_access"},
 				Message:     "License activated successfully",
 			},
 			mockError:      nil,
@@ -248,7 +239,6 @@ func TestLicenseHandler_ActivateLicense(t *testing.T) {
 				"isLicensed":  true,
 				"licenseType": "personal",
 				"message":     "License activated successfully",
-				"features":    []interface{}{"batch_export", "api_access"},
 			},
 		},
 		{
@@ -375,7 +365,6 @@ func TestLicenseHandler_Integration(t *testing.T) {
 		IsLicensed:     false,
 		Message:        "Support ongoing development",
 		SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
-		Features:       []string{},
 	}, nil).Once()
 
 	req := httptest.NewRequest("GET", "/api/public/license-status", nil)
@@ -392,7 +381,6 @@ func TestLicenseHandler_Integration(t *testing.T) {
 	mockService.On("ActivateLicense", mock.Anything, "valid-key").Return(&license.LicenseStatus{
 		IsLicensed:  true,
 		LicenseType: "personal",
-		Features:    []string{"batch_export", "api_access"},
 		Message:     "License activated successfully",
 	}, nil).Once()
 
@@ -414,7 +402,6 @@ func TestLicenseHandler_Integration(t *testing.T) {
 		IsLicensed:  true,
 		LicenseType: "personal",
 		Message:     "Licensed",
-		Features:    []string{"batch_export", "api_access"},
 	}, nil).Once()
 
 	req = httptest.NewRequest("GET", "/api/public/license-status", nil)
