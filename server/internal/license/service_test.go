@@ -327,7 +327,7 @@ func TestLicenseService_InvalidSignedLicense(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.False(t, status.IsLicensed)
-	assert.Contains(t, status.Message, "Invalid license key")
+	assert.Contains(t, status.Message, "license key is not valid")
 }
 
 func TestLicenseService_ActivateLicense_Success(t *testing.T) {
@@ -375,7 +375,7 @@ func TestLicenseService_ActivateLicense_InvalidKey(t *testing.T) {
 	assert.False(t, status.IsLicensed)
 	assert.Empty(t, status.LicenseType)
 	assert.Empty(t, status.Email)
-	assert.Contains(t, status.Message, "Invalid license key")
+	assert.Contains(t, status.Message, "please check your license key format")
 }
 
 func TestLicenseService_GetLicenseStatus_Licensed(t *testing.T) {

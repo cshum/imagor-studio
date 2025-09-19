@@ -33,11 +33,11 @@ func NewService(registry registrystore.Store, config registryutil.ConfigProvider
 func (s *Service) GetLicenseStatus(ctx context.Context, includeDetails bool) (*LicenseStatus, error) {
 	// Use registryutil to get effective value with config override support
 	result := registryutil.GetEffectiveValue(ctx, s.registry, s.config, "config.license_key")
-	
+
 	if !result.Exists || result.Value == "" {
 		return s.buildUnlicensedStatus(includeDetails, result.IsOverriddenByConfig), nil
 	}
-	
+
 	// Verify the license key
 	payload, err := s.verifyLicense(result.Value)
 	if err != nil {
@@ -54,7 +54,7 @@ func (s *Service) GetLicenseStatus(ctx context.Context, includeDetails bool) (*L
 			return s.buildUnlicensedStatus(false, result.IsOverriddenByConfig), nil
 		}
 	}
-	
+
 	status := &LicenseStatus{
 		IsLicensed:           true,
 		LicenseType:          payload.Type,
@@ -62,7 +62,7 @@ func (s *Service) GetLicenseStatus(ctx context.Context, includeDetails bool) (*L
 		Message:              "Licensed",
 		IsOverriddenByConfig: result.IsOverriddenByConfig,
 	}
-	
+
 	if includeDetails {
 		// Add detailed information for authenticated users
 		status.Email = payload.Email
@@ -74,7 +74,7 @@ func (s *Service) GetLicenseStatus(ctx context.Context, includeDetails bool) (*L
 		// For public access, don't include sensitive information
 		status.Email = ""
 	}
-	
+
 	return status, nil
 }
 
@@ -89,17 +89,17 @@ func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*Lice
 			Features:   []string{},
 		}, nil
 	}
-	
+
 	// Verify the license key first
 	payload, err := s.verifyLicense(licenseKey)
 	if err != nil {
 		return &LicenseStatus{
 			IsLicensed: false,
-			Message:    fmt.Sprintf("Invalid license key: %v", err),
+			Message:    err.Error(),
 			Features:   []string{},
 		}, nil
 	}
-	
+
 	// Store in registry as config.license_key (encrypted)
 	_, err = s.registry.Set(ctx, registrystore.SystemOwnerID, "config.license_key", licenseKey, true)
 	if err != nil {
@@ -109,7 +109,7 @@ func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*Lice
 			Features:   []string{},
 		}, err
 	}
-	
+
 	return &LicenseStatus{
 		IsLicensed:  true,
 		LicenseType: payload.Type,
@@ -119,17 +119,16 @@ func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*Lice
 	}, nil
 }
 
-
 // PRIVATE HELPER METHODS
 
 func (s *Service) verifyLicense(licenseKey string) (*LicensePayload, error) {
 	if !strings.HasPrefix(licenseKey, "IMGR-") {
-		return nil, fmt.Errorf("invalid license key format")
+		return nil, fmt.Errorf("please check your license key format")
 	}
 
 	parts := strings.Split(licenseKey[5:], ".")
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid license key structure")
+		return nil, fmt.Errorf("license key format is incorrect")
 	}
 
 	// Add padding back for base64 decoding
@@ -139,28 +138,28 @@ func (s *Service) verifyLicense(licenseKey string) (*LicensePayload, error) {
 	// Decode payload and signature
 	payloadBytes, err := base64.URLEncoding.DecodeString(payloadB64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid payload encoding: %w", err)
+		return nil, fmt.Errorf("unable to validate license key")
 	}
 
 	signature, err := base64.URLEncoding.DecodeString(signatureB64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid signature encoding: %w", err)
+		return nil, fmt.Errorf("unable to validate license key")
 	}
 
 	// Verify signature
 	if !ed25519.Verify(s.publicKey, payloadBytes, signature) {
-		return nil, fmt.Errorf("invalid license signature")
+		return nil, fmt.Errorf("license key is not valid")
 	}
 
 	// Parse payload
 	var payload LicensePayload
 	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
-		return nil, fmt.Errorf("invalid payload format: %w", err)
+		return nil, fmt.Errorf("unable to validate license key")
 	}
 
 	// Check expiry (if set)
 	if payload.ExpiresAt != nil && time.Now().Unix() > *payload.ExpiresAt {
-		return nil, fmt.Errorf("license expired")
+		return nil, fmt.Errorf("license has expired")
 	}
 
 	return &payload, nil
@@ -173,7 +172,7 @@ func (s *Service) buildUnlicensedStatus(includeDetails bool, isOverriddenByConfi
 		IsOverriddenByConfig: isOverriddenByConfig,
 		Features:             []string{},
 	}
-	
+
 	if !includeDetails {
 		// For public access, add support message
 		status.SupportMessage = stringPtr("From the creator of imagor & vipsgen")
@@ -185,7 +184,7 @@ func (s *Service) buildUnlicensedStatus(includeDetails bool, isOverriddenByConfi
 			status.Message = "No license key found"
 		}
 	}
-	
+
 	return status
 }
 
@@ -224,7 +223,7 @@ func maskLicenseKey(licenseKey string) string {
 	if len(licenseKey) <= 12 {
 		return licenseKey // Too short to mask meaningfully
 	}
-	
+
 	return licenseKey[:8] + "..." + licenseKey[len(licenseKey)-4:]
 }
 
