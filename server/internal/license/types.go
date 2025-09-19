@@ -10,8 +10,17 @@ type LicensePayload struct {
 
 type LicenseStatus struct {
 	IsLicensed     bool    `json:"isLicensed"`
-	LicenseType    *string `json:"licenseType"`
-	Email          *string `json:"email"`
+	LicenseType    *string `json:"licenseType,omitempty"`
+	Email          *string `json:"email,omitempty"`
 	Message        string  `json:"message"`
-	SupportMessage *string `json:"supportMessage"`
+	SupportMessage *string `json:"supportMessage,omitempty"`
+}
+
+// PublicLicenseStatus represents license status information safe for public access
+type PublicLicenseStatus struct {
+	IsLicensed     bool     `json:"isLicensed"`
+	LicenseType    *string  `json:"licenseType,omitempty"`
+	Message        string   `json:"message"`
+	SupportMessage *string  `json:"supportMessage,omitempty"`
+	Features       []string `json:"features"`
 }

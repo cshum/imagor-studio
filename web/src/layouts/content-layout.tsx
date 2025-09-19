@@ -18,7 +18,7 @@ export function ContentLayout({
       <div
         className={`${className || ''} ${isBounded ? 'container' : ''} relative px-0 pt-4 pb-8 sm:px-6 sm:pt-6`}
       >
-        <LicenseBadge variant='absolute' />
+        <LicenseBadge />
         {children}
       </div>
     </div>

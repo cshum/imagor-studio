@@ -1,10 +1,16 @@
+import { useEffect } from 'react'
 import { Key } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { useLicense } from '@/stores/license-store'
 
 export const LicenseBadge = () => {
-  const { isLicensed, showSupportDialog } = useLicense()
+  const { isLicensed, showSupportDialog, checkLicense } = useLicense()
+
+  // Auto-check license on mount
+  useEffect(() => {
+    checkLicense()
+  }, [checkLicense])
 
   if (isLicensed) {
     return null

@@ -1,4 +1,4 @@
-import { activateLicense as activateLicenseAPI, getLicenseStatus } from '@/api/registry-api'
+import { activateLicense as activateLicenseAPI } from '@/api/registry-api'
 import { createStore } from '@/lib/create-store'
 
 export interface LicenseState {
@@ -91,36 +91,48 @@ const reducer = (state: LicenseState, action: LicenseAction): LicenseState => {
 export const licenseStore = createStore(initialState, reducer)
 
 /**
- * Check license status
+ * Check license status using public endpoint (no auth required)
  */
-export const checkLicense = async () => {
+export const checkPublicLicense = async () => {
   licenseStore.dispatch({ type: 'SET_LOADING', payload: { isLoading: true } })
 
   try {
-    const response = await getLicenseStatus()
+    const response = await fetch('/api/public/license-status')
+    const data = await response.json()
 
     licenseStore.dispatch({
       type: 'SET_LICENSE_STATUS',
       payload: {
-        isLicensed: response.isLicensed,
-        licenseType: response.licenseType || undefined,
-        email: response.email || undefined,
-        message: response.message,
-        supportMessage: response.supportMessage || undefined,
+        isLicensed: data.isLicensed,
+        licenseType: data.licenseType || undefined,
+        email: undefined, // Public endpoint doesn't expose email
+        message: data.message,
+        supportMessage: data.supportMessage || undefined,
       },
     })
   } catch (error) {
-    console.error('Failed to check license status:', error)
+    console.error('Failed to check public license status:', error)
+    // Fallback for public access
     licenseStore.dispatch({
       type: 'SET_LICENSE_STATUS',
       payload: {
         isLicensed: false,
-        message: 'Error checking license',
+        message: 'Support ongoing development',
+        supportMessage: 'From the creator of imagor & vipsgen',
       },
     })
   } finally {
     licenseStore.dispatch({ type: 'SET_LOADING', payload: { isLoading: false } })
   }
+}
+
+/**
+ * Check license status (auth-aware)
+ */
+export const checkLicense = async () => {
+  // For now, always use public endpoint
+  // TODO: Add auth-aware logic when GraphQL cleanup is complete
+  return checkPublicLicense()
 }
 
 /**

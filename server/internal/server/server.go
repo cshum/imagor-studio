@@ -83,6 +83,10 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	mux.HandleFunc("/api/auth/first-run", authHandler.CheckFirstRun())
 	mux.HandleFunc("/api/auth/register-admin", authHandler.RegisterAdmin())
 
+	// License endpoints (public - no auth required)
+	licenseHandler := httphandler.NewLicenseHandler(services.LicenseService, services.Logger)
+	mux.HandleFunc("/api/public/license-status", licenseHandler.GetPublicStatus())
+
 	// Protected endpoints
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)
 	mux.Handle("/api/query", protectedHandler)

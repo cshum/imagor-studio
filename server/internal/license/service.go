@@ -131,6 +131,62 @@ func (s *Service) verifyLicense(licenseKey string) (*LicensePayload, error) {
 	return &payload, nil
 }
 
+// GetPublicLicenseStatus retrieves license status without sensitive information
+// This method is safe to call without authentication
+func (s *Service) GetPublicLicenseStatus(ctx context.Context) (*PublicLicenseStatus, error) {
+	// Get license key from registry
+	entry, err := s.registry.Get(ctx, registrystore.SystemOwnerID, "license.key")
+	if err != nil {
+		// Don't expose internal errors publicly
+		return &PublicLicenseStatus{
+			IsLicensed:     false,
+			Message:        "Support ongoing development",
+			SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
+		}, nil
+	}
+
+	if entry == nil {
+		return &PublicLicenseStatus{
+			IsLicensed:     false,
+			Message:        "Support ongoing development",
+			SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
+		}, nil
+	}
+
+	// Verify the license key
+	payload, err := s.verifyLicense(entry.Value)
+	if err != nil {
+		// Don't expose verification errors publicly
+		return &PublicLicenseStatus{
+			IsLicensed:     false,
+			Message:        "Support ongoing development",
+			SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
+		}, nil
+	}
+
+	// Return public-safe information
+	return &PublicLicenseStatus{
+		IsLicensed:  true,
+		LicenseType: &payload.Type,
+		Message:     "Licensed",
+		Features:    getFeaturesByType(payload.Type),
+	}, nil
+}
+
+// getFeaturesByType returns the features available for a license type
+func getFeaturesByType(licenseType string) []string {
+	switch licenseType {
+	case "personal":
+		return []string{"batch_export", "api_access"}
+	case "commercial":
+		return []string{"batch_export", "api_access", "white_label", "priority_support"}
+	case "enterprise":
+		return []string{"batch_export", "api_access", "white_label", "priority_support", "custom_branding", "sso"}
+	default:
+		return []string{}
+	}
+}
+
 func stringPtr(s string) *string {
 	return &s
 }

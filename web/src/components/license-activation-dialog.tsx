@@ -12,8 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from './ui/dialog'
-import { Input } from './ui/input'
 import { Label } from './ui/label'
+import { Textarea } from './ui/textarea'
 
 interface LicenseActivationDialogProps {
   open: boolean
@@ -69,13 +69,18 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
         <div className='space-y-4'>
           <div className='space-y-2'>
             <Label htmlFor='license-key'>License Key</Label>
-            <Input
+            <Textarea
               id='license-key'
-              placeholder='IMGR-xxxx-xxxx-xxxx-xxxx'
+              placeholder='IMGR-...'
               value={licenseKey}
               onChange={(e) => setLicenseKey(e.target.value)}
               disabled={isLoading}
+              className='min-h-[120px] resize-none font-mono text-sm'
+              rows={5}
             />
+            <p className='text-muted-foreground text-xs'>
+              Paste your complete license key here. Long keys are supported.
+            </p>
           </div>
 
           {message && (
