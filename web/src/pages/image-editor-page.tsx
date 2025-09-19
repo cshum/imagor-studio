@@ -71,15 +71,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         originalDimensions: loaderData.originalDimensions,
       },
       {
-        onPreviewUpdate: (url) => {
-          setPreviewUrl(url)
-        },
-        onError: (err) => {
-          setError(err)
-        },
-        onStateChange: (state) => {
-          setParams(state)
-        },
+        onPreviewUpdate: setPreviewUrl,
+        onError: setError,
+        onStateChange: setParams,
         onLoadingChange: (loading) => {
           if (loading) {
             setIsLoading(true)
@@ -87,9 +81,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         },
       },
     )
-
     transformRef.current = transform
-
     return () => {
       transform.destroy()
     }
@@ -98,34 +90,34 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const originalAspectRatio =
     loaderData.originalDimensions.width / loaderData.originalDimensions.height
 
-  const updateParams = useCallback(
-    (updates: Partial<ImageTransformState>, options?: { respectAspectLock?: boolean }) => {
-      transformRef.current?.updateParams(updates, options)
-    },
-    [],
-  )
+  const updateParams = (
+    updates: Partial<ImageTransformState>,
+    options?: { respectAspectLock?: boolean },
+  ) => {
+    transformRef.current?.updateParams(updates, options)
+  }
 
-  const resetParams = useCallback(() => {
+  const resetParams = () => {
     transformRef.current?.resetParams()
-  }, [])
+  }
 
-  const toggleAspectLock = useCallback(() => {
+  const toggleAspectLock = () => {
     transformRef.current?.toggleAspectLock()
     setAspectLocked(transformRef.current?.isAspectLocked() ?? true)
-  }, [])
+  }
 
-  const getCopyUrl = useCallback(async () => {
+  const getCopyUrl = async () => {
     return transformRef.current?.getCopyUrl() ?? ''
-  }, [])
+  }
 
-  const handleDownload = useCallback(async () => {
+  const handleDownload = async () => {
     return (
       transformRef.current?.handleDownload() ?? {
         success: false,
         error: 'Transform not initialized',
       }
     )
-  }, [])
+  }
 
   const handleBack = () => {
     if (galleryKey) {
