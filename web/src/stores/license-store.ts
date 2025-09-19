@@ -1,4 +1,4 @@
-import { activateLicense as activateLicenseAPI } from '@/api/registry-api'
+import { activateLicense as activateLicenseAPI } from '@/api/license-api'
 import { getBaseUrl } from '@/lib/api-utils.ts'
 import { createStore } from '@/lib/create-store'
 

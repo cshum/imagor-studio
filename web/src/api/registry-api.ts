@@ -309,29 +309,3 @@ export async function setSystemRegistryObject(
   })
   return result.setSystemRegistry
 }
-
-/**
- * Activate license with the provided key (REST API)
- */
-export async function activateLicense(key: string): Promise<{
-  isLicensed: boolean
-  licenseType?: string
-  features?: string[]
-  email?: string
-  message: string
-  supportMessage?: string
-}> {
-  const response = await fetch('/api/public/activate-license', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ key }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Failed to activate license: ${response.statusText}`)
-  }
-
-  return response.json()
-}
