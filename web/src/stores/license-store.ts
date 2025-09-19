@@ -1,4 +1,4 @@
-import { activateLicense as activateLicenseAPI, getLicenseStatus } from '@/api/license-api'
+import { activateLicense as activateLicenseAPI, getLicenseStatus } from '@/api/registry-api'
 import { createStore } from '@/lib/create-store'
 
 export interface LicenseState {

@@ -25,17 +25,8 @@ func NewService(registry registrystore.Store) *Service {
 }
 
 func (s *Service) GetLicenseStatus(ctx context.Context) (*LicenseStatus, error) {
-	// Check if public key is configured
-	if !HasValidPublicKey() {
-		return &LicenseStatus{
-			IsLicensed:     false,
-			Message:        "License system not configured",
-			SupportMessage: stringPtr("Support ongoing development with a license"),
-		}, nil
-	}
-
 	// Get license key from registry
-	entry, err := s.registry.Get(ctx, "system", "license_key")
+	entry, err := s.registry.Get(ctx, registrystore.SystemOwnerID, "license.key")
 	if err != nil {
 		return &LicenseStatus{
 			IsLicensed: false,
@@ -51,44 +42,36 @@ func (s *Service) GetLicenseStatus(ctx context.Context) (*LicenseStatus, error) 
 		}, nil
 	}
 
-	// Verify license key
-	payload, err := s.verifyLicense(entry.Value)
-	if err != nil {
+	// Validate license key using simple validation for testing
+	isValid, licenseType, email := ValidateLicenseKey(entry.Value)
+	if !isValid {
 		return &LicenseStatus{
 			IsLicensed:     false,
-			Message:        fmt.Sprintf("Invalid license: %v", err),
+			Message:        "Invalid license key",
 			SupportMessage: stringPtr("Please check your license key"),
 		}, nil
 	}
 
 	return &LicenseStatus{
 		IsLicensed:  true,
-		LicenseType: &payload.Type,
-		Email:       &payload.Email,
-		Message:     "Licensed - Thank you for supporting development!",
+		LicenseType: &licenseType,
+		Email:       &email,
+		Message:     "Licensed",
 	}, nil
 }
 
 func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*LicenseStatus, error) {
-	// Check if public key is configured
-	if !HasValidPublicKey() {
+	// Validate license key using simple validation for testing
+	isValid, licenseType, email := ValidateLicenseKey(licenseKey)
+	if !isValid {
 		return &LicenseStatus{
 			IsLicensed: false,
-			Message:    "License system not configured",
-		}, nil
-	}
-
-	// Verify the license key first
-	payload, err := s.verifyLicense(licenseKey)
-	if err != nil {
-		return &LicenseStatus{
-			IsLicensed: false,
-			Message:    fmt.Sprintf("Invalid license key: %v", err),
+			Message:    "Invalid license key",
 		}, nil
 	}
 
 	// Store in registry
-	_, err = s.registry.Set(ctx, "system", "license_key", licenseKey, false)
+	_, err := s.registry.Set(ctx, registrystore.SystemOwnerID, "license.key", licenseKey, true)
 	if err != nil {
 		return &LicenseStatus{
 			IsLicensed: false,
@@ -98,8 +81,8 @@ func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*Lice
 
 	return &LicenseStatus{
 		IsLicensed:  true,
-		LicenseType: &payload.Type,
-		Email:       &payload.Email,
+		LicenseType: &licenseType,
+		Email:       &email,
 		Message:     "License activated successfully! Thank you for supporting development.",
 	}, nil
 }
