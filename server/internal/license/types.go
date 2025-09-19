@@ -8,6 +8,7 @@ type LicensePayload struct {
 	ExpiresAt *int64   `json:"exp,omitempty"`
 }
 
+// LicenseStatus represents license status information with optional detailed fields
 type LicenseStatus struct {
 	IsLicensed           bool     `json:"isLicensed"`
 	LicenseType          string   `json:"licenseType"`
@@ -15,23 +16,9 @@ type LicenseStatus struct {
 	Email                string   `json:"email"`
 	Message              string   `json:"message"`
 	IsOverriddenByConfig bool     `json:"isOverriddenByConfig"`
-}
-
-// PublicLicenseStatus represents license status information safe for public access
-type PublicLicenseStatus struct {
-	IsLicensed     bool     `json:"isLicensed"`
-	LicenseType    *string  `json:"licenseType,omitempty"`
-	Message        string   `json:"message"`
-	SupportMessage *string  `json:"supportMessage,omitempty"`
-	Features       []string `json:"features"`
-}
-
-// LicenseInfo represents detailed license information for admin users
-type LicenseInfo struct {
-	IsLicensed       bool    `json:"isLicensed"`
-	LicenseType      *string `json:"licenseType,omitempty"`
-	Email            *string `json:"email,omitempty"`
+	
+	// Optional detailed fields (only populated when includeDetails=true)
+	SupportMessage   *string `json:"supportMessage,omitempty"`
 	MaskedLicenseKey *string `json:"maskedLicenseKey,omitempty"`
 	ActivatedAt      *string `json:"activatedAt,omitempty"`
-	Message          string  `json:"message"`
 }

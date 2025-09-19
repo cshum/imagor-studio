@@ -23,17 +23,19 @@ func NewLicenseHandler(licenseService *license.Service, logger *zap.Logger) *Lic
 // GetPublicStatus returns the public license status (no authentication required)
 func (h *LicenseHandler) GetPublicStatus() http.HandlerFunc {
 	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
-		status, err := h.licenseService.GetPublicLicenseStatus(r.Context())
+		// Use the unified method with includeDetails=false for public access
+		status, err := h.licenseService.GetLicenseStatus(r.Context(), false)
 		if err != nil {
 			h.logger.Error("Failed to get public license status", zap.Error(err))
 			// Return a safe default status instead of exposing the error
-			status = &license.PublicLicenseStatus{
+			status = &license.LicenseStatus{
 				IsLicensed:     false,
 				Message:        "Support ongoing development",
 				SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
 				Features:       []string{},
 			}
 		}
+		
 		return WriteSuccess(w, status)
 	})
 }
@@ -59,20 +61,21 @@ func (h *LicenseHandler) ActivateLicense() http.HandlerFunc {
 			return WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "Failed to activate license: " + err.Error()})
 		}
 
-		// Convert to public response format
-		var licenseTypePtr *string
-		if status.LicenseType != "" {
-			licenseTypePtr = &status.LicenseType
+		return WriteSuccess(w, status)
+	})
+}
+
+// GetAdminStatus returns detailed license status for authenticated admin users
+func (h *LicenseHandler) GetAdminStatus() http.HandlerFunc {
+	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
+		// Use the unified method with includeDetails=true for admin access
+		status, err := h.licenseService.GetLicenseStatus(r.Context(), true)
+		if err != nil {
+			h.logger.Error("Failed to get admin license status", zap.Error(err))
+			return WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to get license status"})
 		}
 		
-		response := &license.PublicLicenseStatus{
-			IsLicensed:  status.IsLicensed,
-			LicenseType: licenseTypePtr,
-			Message:     status.Message,
-			Features:    status.Features,
-		}
-
-		return WriteSuccess(w, response)
+		return WriteSuccess(w, status)
 	})
 }
 

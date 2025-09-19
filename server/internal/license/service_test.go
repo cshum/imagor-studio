@@ -128,7 +128,7 @@ func TestLicenseService_GetLicenseStatus_Unlicensed(t *testing.T) {
 	config := newMockConfigProvider()
 	service := NewService(store, config)
 
-	status, err := service.GetLicenseStatus(ctx)
+	status, err := service.GetLicenseStatus(ctx, true)
 	require.NoError(t, err)
 
 	assert.False(t, status.IsLicensed)
@@ -148,7 +148,7 @@ func TestLicenseService_GetLicenseStatus_ConfigOverride(t *testing.T) {
 
 	service := NewService(store, config)
 
-	status, err := service.GetLicenseStatus(ctx)
+	status, err := service.GetLicenseStatus(ctx, true)
 	require.NoError(t, err)
 
 	assert.False(t, status.IsLicensed) // Invalid license key
@@ -306,7 +306,7 @@ func TestLicenseService_RealCryptography(t *testing.T) {
 	assert.Contains(t, status.Message, "activated successfully")
 
 	// Test getting status after activation
-	status, err = service.GetLicenseStatus(ctx)
+	status, err = service.GetLicenseStatus(ctx, true)
 	require.NoError(t, err)
 
 	assert.True(t, status.IsLicensed)
@@ -399,7 +399,7 @@ func TestLicenseService_GetLicenseStatus_Licensed(t *testing.T) {
 	require.NoError(t, err)
 
 	// Then check status
-	status, err := service.GetLicenseStatus(ctx)
+	status, err := service.GetLicenseStatus(ctx, true)
 	require.NoError(t, err)
 
 	assert.True(t, status.IsLicensed)

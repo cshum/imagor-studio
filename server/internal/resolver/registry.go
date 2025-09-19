@@ -68,6 +68,20 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entry *gql.Regis
 	return result, nil
 }
 
+// formatLicenseTypeForDisplay converts license type to display-friendly format
+func formatLicenseTypeForDisplay(licenseType string) string {
+	switch licenseType {
+	case "early_bird":
+		return "Early Bird Licensed"
+	case "commercial":
+		return "Commercial Licensed"
+	case "enterprise":
+		return "Enterprise Licensed"
+	default:
+		return "Licensed"
+	}
+}
+
 // LicenseInfo gets detailed license information for admin users
 func (r *queryResolver) LicenseInfo(ctx context.Context) (*gql.LicenseInfo, error) {
 	// Only admins can access detailed license information
@@ -75,19 +89,31 @@ func (r *queryResolver) LicenseInfo(ctx context.Context) (*gql.LicenseInfo, erro
 		return nil, fmt.Errorf("admin permission required for license information: %w", err)
 	}
 
-	// Get license info from license service
-	licenseInfo, err := r.licenseService.GetLicenseInfo(ctx)
+	// Use the unified method with includeDetails=true for admin access
+	status, err := r.licenseService.GetLicenseStatus(ctx, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get license info: %w", err)
 	}
 
+	// Convert to old format for backward compatibility
+	var licenseType *string
+	if status.LicenseType != "" {
+		displayType := formatLicenseTypeForDisplay(status.LicenseType)
+		licenseType = &displayType
+	}
+	
+	var email *string
+	if status.Email != "" {
+		email = &status.Email
+	}
+
 	return &gql.LicenseInfo{
-		IsLicensed:       licenseInfo.IsLicensed,
-		LicenseType:      licenseInfo.LicenseType,
-		Email:            licenseInfo.Email,
-		MaskedLicenseKey: licenseInfo.MaskedLicenseKey,
-		ActivatedAt:      licenseInfo.ActivatedAt,
-		Message:          licenseInfo.Message,
+		IsLicensed:       status.IsLicensed,
+		LicenseType:      licenseType,
+		Email:            email,
+		MaskedLicenseKey: status.MaskedLicenseKey,
+		ActivatedAt:      status.ActivatedAt,
+		Message:          status.Message,
 	}, nil
 }
 

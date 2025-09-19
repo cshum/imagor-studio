@@ -27,38 +27,58 @@ func NewService(registry registrystore.Store, config registryutil.ConfigProvider
 	}
 }
 
-func (s *Service) GetLicenseStatus(ctx context.Context) (*LicenseStatus, error) {
+// GetLicenseStatus retrieves license status with optional detailed information
+// includeDetails=false: Safe for public/unauthenticated access (no sensitive info)
+// includeDetails=true: Full details for authenticated/admin users
+func (s *Service) GetLicenseStatus(ctx context.Context, includeDetails bool) (*LicenseStatus, error) {
 	// Use registryutil to get effective value with config override support
 	result := registryutil.GetEffectiveValue(ctx, s.registry, s.config, "config.license_key")
 	
 	if !result.Exists || result.Value == "" {
-		return &LicenseStatus{
-			IsLicensed:           false,
-			Message:              "No license key found",
-			IsOverriddenByConfig: result.IsOverriddenByConfig,
-		}, nil
+		return s.buildUnlicensedStatus(includeDetails, result.IsOverriddenByConfig), nil
 	}
 	
 	// Verify the license key
 	payload, err := s.verifyLicense(result.Value)
 	if err != nil {
-		return &LicenseStatus{
-			IsLicensed:           false,
-			Message:              fmt.Sprintf("Invalid license: %v", err),
-			IsOverriddenByConfig: result.IsOverriddenByConfig,
-		}, nil
+		if includeDetails {
+			// For authenticated users, show the actual error
+			return &LicenseStatus{
+				IsLicensed:           false,
+				Message:              fmt.Sprintf("Invalid license: %v", err),
+				IsOverriddenByConfig: result.IsOverriddenByConfig,
+				Features:             []string{},
+			}, nil
+		} else {
+			// For public access, don't expose verification errors
+			return s.buildUnlicensedStatus(false, result.IsOverriddenByConfig), nil
+		}
 	}
 	
-	return &LicenseStatus{
+	status := &LicenseStatus{
 		IsLicensed:           true,
 		LicenseType:          payload.Type,
-		Features:             payload.Features,
-		Email:                payload.Email,
+		Features:             getFeaturesByType(payload.Type),
 		Message:              "Licensed",
 		IsOverriddenByConfig: result.IsOverriddenByConfig,
-	}, nil
+	}
+	
+	if includeDetails {
+		// Add detailed information for authenticated users
+		status.Email = payload.Email
+		maskedKey := maskLicenseKey(result.Value)
+		status.MaskedLicenseKey = &maskedKey
+		activatedAt := time.Unix(payload.IssuedAt, 0).Format("January 2, 2006")
+		status.ActivatedAt = &activatedAt
+	} else {
+		// For public access, don't include sensitive information
+		status.Email = ""
+	}
+	
+	return status, nil
 }
 
+// ActivateLicense validates and stores a new license key
 func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*LicenseStatus, error) {
 	// Check if license key is overridden by config (CLI/env)
 	_, configExists := s.config.GetByRegistryKey("config.license_key")
@@ -66,6 +86,7 @@ func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*Lice
 		return &LicenseStatus{
 			IsLicensed: false,
 			Message:    "Cannot set license key: this configuration is managed by external config",
+			Features:   []string{},
 		}, nil
 	}
 	
@@ -75,6 +96,7 @@ func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*Lice
 		return &LicenseStatus{
 			IsLicensed: false,
 			Message:    fmt.Sprintf("Invalid license key: %v", err),
+			Features:   []string{},
 		}, nil
 	}
 	
@@ -84,17 +106,21 @@ func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*Lice
 		return &LicenseStatus{
 			IsLicensed: false,
 			Message:    "Failed to save license key",
+			Features:   []string{},
 		}, err
 	}
 	
 	return &LicenseStatus{
 		IsLicensed:  true,
 		LicenseType: payload.Type,
-		Features:    payload.Features,
+		Features:    getFeaturesByType(payload.Type),
 		Email:       payload.Email,
 		Message:     "License activated successfully",
 	}, nil
 }
+
+
+// PRIVATE HELPER METHODS
 
 func (s *Service) verifyLicense(licenseKey string) (*LicensePayload, error) {
 	if !strings.HasPrefix(licenseKey, "IMGR-") {
@@ -140,46 +166,27 @@ func (s *Service) verifyLicense(licenseKey string) (*LicensePayload, error) {
 	return &payload, nil
 }
 
-// GetPublicLicenseStatus retrieves license status without sensitive information
-// This method is safe to call without authentication
-func (s *Service) GetPublicLicenseStatus(ctx context.Context) (*PublicLicenseStatus, error) {
-	// Get license key from registry
-	entry, err := s.registry.Get(ctx, registrystore.SystemOwnerID, "license.key")
-	if err != nil {
-		// Don't expose internal errors publicly
-		return &PublicLicenseStatus{
-			IsLicensed:     false,
-			Message:        "Support ongoing development",
-			SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
-		}, nil
+func (s *Service) buildUnlicensedStatus(includeDetails bool, isOverriddenByConfig bool) *LicenseStatus {
+	status := &LicenseStatus{
+		IsLicensed:           false,
+		Message:              "Support ongoing development",
+		IsOverriddenByConfig: isOverriddenByConfig,
+		Features:             []string{},
 	}
-
-	if entry == nil {
-		return &PublicLicenseStatus{
-			IsLicensed:     false,
-			Message:        "Support ongoing development",
-			SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
-		}, nil
+	
+	if !includeDetails {
+		// For public access, add support message
+		status.SupportMessage = stringPtr("From the creator of imagor & vipsgen")
+	} else {
+		// For authenticated users, show more specific message
+		if isOverriddenByConfig {
+			status.Message = "No license key found (configuration managed externally)"
+		} else {
+			status.Message = "No license key found"
+		}
 	}
-
-	// Verify the license key
-	payload, err := s.verifyLicense(entry.Value)
-	if err != nil {
-		// Don't expose verification errors publicly
-		return &PublicLicenseStatus{
-			IsLicensed:     false,
-			Message:        "Support ongoing development",
-			SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
-		}, nil
-	}
-
-	// Return public-safe information
-	return &PublicLicenseStatus{
-		IsLicensed:  true,
-		LicenseType: &payload.Type,
-		Message:     "Licensed",
-		Features:    getFeaturesByType(payload.Type),
-	}, nil
+	
+	return status
 }
 
 // getFeaturesByType returns the features available for a license type
@@ -196,52 +203,6 @@ func getFeaturesByType(licenseType string) []string {
 	default:
 		return []string{}
 	}
-}
-
-// GetLicenseInfo retrieves detailed license information for admin users
-func (s *Service) GetLicenseInfo(ctx context.Context) (*LicenseInfo, error) {
-	// Get license key from registry
-	entry, err := s.registry.Get(ctx, registrystore.SystemOwnerID, "license.key")
-	if err != nil {
-		return &LicenseInfo{
-			IsLicensed: false,
-			Message:    "Error checking license",
-		}, err
-	}
-
-	if entry == nil {
-		return &LicenseInfo{
-			IsLicensed: false,
-			Message:    "No license activated",
-		}, nil
-	}
-
-	// Verify the license key
-	payload, err := s.verifyLicense(entry.Value)
-	if err != nil {
-		return &LicenseInfo{
-			IsLicensed: false,
-			Message:    fmt.Sprintf("Invalid license: %v", err),
-		}, nil
-	}
-
-	// Format license type for display
-	displayType := formatLicenseTypeForDisplay(payload.Type)
-	
-	// Mask the license key for security
-	maskedKey := maskLicenseKey(entry.Value)
-	
-	// Format activation date
-	activatedAt := time.Unix(payload.IssuedAt, 0).Format("January 2, 2006")
-
-	return &LicenseInfo{
-		IsLicensed:       true,
-		LicenseType:      &displayType,
-		Email:            &payload.Email,
-		MaskedLicenseKey: &maskedKey,
-		ActivatedAt:      &activatedAt,
-		Message:          "Licensed",
-	}, nil
 }
 
 // formatLicenseTypeForDisplay converts license type to display-friendly format
