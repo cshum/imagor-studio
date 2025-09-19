@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
@@ -27,6 +28,7 @@ import {
 } from '@/components/ui/form'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { checkLicense } from '@/stores/license-store'
 
 const licenseKeySchema = z.object({
   licenseKey: z.string().min(1, 'License key is required').trim(),
@@ -46,6 +48,7 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
   onSuccess,
 }) => {
   const { t } = useTranslation()
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -65,6 +68,10 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
 
       if (result.isLicensed) {
         toast.success(t('pages.license.activationSuccess'))
+        // Refresh license store to update UI immediately
+        await checkLicense()
+        // Invalidate router to refresh loader data
+        await router.invalidate()
         handleClose()
         onSuccess?.()
       } else {
