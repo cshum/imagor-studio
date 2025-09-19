@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import type { ImageTransformState } from '@/lib/image-transform'
 
-interface TransformControlsProps {
+interface FlipRotateControlsProps {
   params: ImageTransformState
   onUpdateParams: (updates: Partial<ImageTransformState>) => void
 }
 
-export function TransformControls({ params, onUpdateParams }: TransformControlsProps) {
+export function FlipRotateControls({ params, onUpdateParams }: FlipRotateControlsProps) {
   const { t } = useTranslation()
 
   const handleRotation = (angle: number) => {

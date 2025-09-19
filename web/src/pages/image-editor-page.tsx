@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 
 import { setUserRegistry } from '@/api/registry-api'
 import { PreviewArea } from '@/components/image-editor/preview-area'
-import { TransformControlsContent } from '@/components/image-editor/transform-controls-content'
+import { TransformControls } from '@/components/image-editor/transform-controls-content'
 import { LoadingBar } from '@/components/loading-bar'
 import { Button } from '@/components/ui/button'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
@@ -205,7 +205,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
                   {/* Scrollable Controls */}
                   <div className='flex-1 touch-pan-y overflow-y-auto p-4 select-text'>
-                    <TransformControlsContent
+                    <TransformControls
                       params={params}
                       aspectLocked={aspectLocked}
                       originalAspectRatio={originalAspectRatio}
@@ -250,7 +250,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
           {/* Controls */}
           <div className='flex-1 touch-pan-y overflow-y-auto p-4 select-text'>
-            <TransformControlsContent
+            <TransformControls
               params={params}
               aspectLocked={aspectLocked}
               originalAspectRatio={originalAspectRatio}

@@ -4,15 +4,15 @@ import { ChevronDown, ChevronUp, FileImage, Move, Palette, RotateCw, Scissors } 
 
 import { ColorControls } from '@/components/image-editor/controls/color-controls'
 import { DimensionControls } from '@/components/image-editor/controls/dimension-controls'
+import { FlipRotateControls } from '@/components/image-editor/controls/flip-rotate-controls.tsx'
 import { OutputControls } from '@/components/image-editor/controls/output-controls'
 import { SimpleCropControls } from '@/components/image-editor/controls/simple-crop-controls'
-import { TransformControls } from '@/components/image-editor/controls/transform-controls'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { ImageTransformState } from '@/lib/image-transform'
 import type { EditorOpenSections } from '@/loaders/image-editor-loader'
 
-interface TransformControlsContentProps {
+interface TransformControlsProps {
   params: ImageTransformState
   aspectLocked: boolean
   originalAspectRatio: number | null
@@ -25,7 +25,7 @@ interface TransformControlsContentProps {
   onToggleAspectLock: () => void
 }
 
-export function TransformControlsContent({
+export function TransformControls({
   params,
   aspectLocked,
   originalAspectRatio,
@@ -33,7 +33,7 @@ export function TransformControlsContent({
   onOpenSectionsChange,
   onUpdateParams,
   onToggleAspectLock,
-}: TransformControlsContentProps) {
+}: TransformControlsProps) {
   const { t } = useTranslation()
 
   const handleSectionToggle = useCallback(
@@ -112,7 +112,7 @@ export function TransformControlsContent({
         </Collapsible>
       </Card>
 
-      {/* Transform & Rotate */}
+      {/* Flip & Rotate */}
       <Card>
         <Collapsible
           open={openSections.transform}
@@ -126,7 +126,7 @@ export function TransformControlsContent({
             <CollapsibleIcon isOpen={openSections.transform} />
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
-            <TransformControls params={params} onUpdateParams={onUpdateParams} />
+            <FlipRotateControls params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
