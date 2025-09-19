@@ -2,6 +2,7 @@ package license
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
@@ -197,13 +198,175 @@ func TestLicenseService_GetLicenseStatus_Unlicensed(t *testing.T) {
 	assert.Equal(t, "Support ongoing development with a license", *status.SupportMessage)
 }
 
+func TestGenerateSignedLicense(t *testing.T) {
+	// Generate a test key pair
+	publicKey, privateKey, err := GenerateKeyPair()
+	require.NoError(t, err)
+
+	tests := []struct {
+		name        string
+		licenseType string
+		email       string
+	}{
+		{
+			name:        "Personal license",
+			licenseType: "personal",
+			email:       "user@example.com",
+		},
+		{
+			name:        "Commercial license",
+			licenseType: "commercial",
+			email:       "business@company.com",
+		},
+		{
+			name:        "Enterprise license",
+			licenseType: "enterprise",
+			email:       "admin@enterprise.com",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Generate signed license
+			licenseKey, err := GenerateSignedLicense(privateKey, tt.licenseType, tt.email)
+			require.NoError(t, err)
+			assert.NotEmpty(t, licenseKey)
+			assert.True(t, strings.HasPrefix(licenseKey, "IMGR-"))
+			assert.Contains(t, licenseKey, ".")
+
+			// Verify the license
+			payload, err := VerifySignedLicense(publicKey, licenseKey)
+			require.NoError(t, err)
+			assert.Equal(t, tt.licenseType, payload.Type)
+			assert.Equal(t, tt.email, payload.Email)
+			assert.NotEmpty(t, payload.Features)
+			assert.Greater(t, payload.IssuedAt, int64(0))
+		})
+	}
+}
+
+func TestVerifySignedLicense_InvalidCases(t *testing.T) {
+	publicKey, privateKey, err := GenerateKeyPair()
+	require.NoError(t, err)
+
+	// Generate a valid license for comparison
+	validLicense, err := GenerateSignedLicense(privateKey, "personal", "test@example.com")
+	require.NoError(t, err)
+
+	tests := []struct {
+		name        string
+		licenseKey  string
+		expectError bool
+	}{
+		{
+			name:        "Valid license",
+			licenseKey:  validLicense,
+			expectError: false,
+		},
+		{
+			name:        "Invalid format - no IMGR prefix",
+			licenseKey:  "INVALID-key",
+			expectError: true,
+		},
+		{
+			name:        "Invalid format - no dot separator",
+			licenseKey:  "IMGR-invalidkey",
+			expectError: true,
+		},
+		{
+			name:        "Invalid base64 payload",
+			licenseKey:  "IMGR-invalid!@#.validSignature",
+			expectError: true,
+		},
+		{
+			name:        "Invalid signature",
+			licenseKey:  "IMGR-" + strings.Split(validLicense[5:], ".")[0] + ".invalidSignature",
+			expectError: true,
+		},
+		{
+			name:        "Empty license key",
+			licenseKey:  "",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			payload, err := VerifySignedLicense(publicKey, tt.licenseKey)
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.Nil(t, payload)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, payload)
+			}
+		})
+	}
+}
+
+func TestLicenseService_RealCryptography(t *testing.T) {
+	ctx := context.Background()
+	store := newMockRegistryStore()
+	service := NewService(store)
+
+	// Generate a test key pair
+	publicKey, privateKey, err := GenerateKeyPair()
+	require.NoError(t, err)
+
+	// Temporarily replace the service's public key for testing
+	service.publicKey = publicKey
+
+	// Generate a valid signed license
+	licenseKey, err := GenerateSignedLicense(privateKey, "commercial", "business@company.com")
+	require.NoError(t, err)
+
+	// Test activation
+	status, err := service.ActivateLicense(ctx, licenseKey)
+	require.NoError(t, err)
+
+	assert.True(t, status.IsLicensed)
+	assert.Equal(t, "commercial", *status.LicenseType)
+	assert.Equal(t, "business@company.com", *status.Email)
+	assert.Contains(t, status.Message, "activated successfully")
+
+	// Test getting status after activation
+	status, err = service.GetLicenseStatus(ctx)
+	require.NoError(t, err)
+
+	assert.True(t, status.IsLicensed)
+	assert.Equal(t, "commercial", *status.LicenseType)
+	assert.Equal(t, "business@company.com", *status.Email)
+	assert.Equal(t, "Licensed", status.Message)
+}
+
+func TestLicenseService_InvalidSignedLicense(t *testing.T) {
+	ctx := context.Background()
+	store := newMockRegistryStore()
+	service := NewService(store)
+
+	// Test with invalid license key
+	status, err := service.ActivateLicense(ctx, "IMGR-invalid.license")
+	require.NoError(t, err)
+
+	assert.False(t, status.IsLicensed)
+	assert.Contains(t, status.Message, "Invalid license key")
+}
+
 func TestLicenseService_ActivateLicense_Success(t *testing.T) {
 	ctx := context.Background()
 	store := newMockRegistryStore()
 	service := NewService(store)
 
-	// Generate a valid license key
-	licenseKey := GenerateLicenseKey("personal", "test@example.com")
+	// Generate a test key pair
+	publicKey, privateKey, err := GenerateKeyPair()
+	require.NoError(t, err)
+
+	// Temporarily replace the service's public key for testing
+	service.publicKey = publicKey
+
+	// Generate a valid signed license key
+	licenseKey, err := GenerateSignedLicense(privateKey, "personal", "test@example.com")
+	require.NoError(t, err)
 
 	status, err := service.ActivateLicense(ctx, licenseKey)
 	require.NoError(t, err)
@@ -233,7 +396,7 @@ func TestLicenseService_ActivateLicense_InvalidKey(t *testing.T) {
 	assert.False(t, status.IsLicensed)
 	assert.Empty(t, status.LicenseType)
 	assert.Empty(t, status.Email)
-	assert.Equal(t, "Invalid license key", status.Message)
+	assert.Contains(t, status.Message, "Invalid license key")
 	assert.Empty(t, status.SupportMessage)
 }
 
@@ -242,9 +405,18 @@ func TestLicenseService_GetLicenseStatus_Licensed(t *testing.T) {
 	store := newMockRegistryStore()
 	service := NewService(store)
 
+	// Generate a test key pair
+	publicKey, privateKey, err := GenerateKeyPair()
+	require.NoError(t, err)
+
+	// Temporarily replace the service's public key for testing
+	service.publicKey = publicKey
+
 	// First activate a license
-	licenseKey := GenerateLicenseKey("commercial", "business@company.com")
-	_, err := service.ActivateLicense(ctx, licenseKey)
+	licenseKey, err := GenerateSignedLicense(privateKey, "commercial", "business@company.com")
+	require.NoError(t, err)
+	
+	_, err = service.ActivateLicense(ctx, licenseKey)
 	require.NoError(t, err)
 
 	// Then check status
@@ -263,13 +435,22 @@ func TestLicenseService_ActivateLicense_OverwriteExisting(t *testing.T) {
 	store := newMockRegistryStore()
 	service := NewService(store)
 
+	// Generate a test key pair
+	publicKey, privateKey, err := GenerateKeyPair()
+	require.NoError(t, err)
+
+	// Temporarily replace the service's public key for testing
+	service.publicKey = publicKey
+
 	// Activate first license
-	firstKey := GenerateLicenseKey("personal", "first@example.com")
-	_, err := service.ActivateLicense(ctx, firstKey)
+	firstKey, err := GenerateSignedLicense(privateKey, "personal", "first@example.com")
+	require.NoError(t, err)
+	_, err = service.ActivateLicense(ctx, firstKey)
 	require.NoError(t, err)
 
 	// Activate second license (should overwrite)
-	secondKey := GenerateLicenseKey("commercial", "second@example.com")
+	secondKey, err := GenerateSignedLicense(privateKey, "commercial", "second@example.com")
+	require.NoError(t, err)
 	status, err := service.ActivateLicense(ctx, secondKey)
 	require.NoError(t, err)
 

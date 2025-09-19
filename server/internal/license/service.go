@@ -42,36 +42,36 @@ func (s *Service) GetLicenseStatus(ctx context.Context) (*LicenseStatus, error) 
 		}, nil
 	}
 
-	// Validate license key using simple validation for testing
-	isValid, licenseType, email := ValidateLicenseKey(entry.Value)
-	if !isValid {
+	// Use real cryptographic verification
+	payload, err := s.verifyLicense(entry.Value)
+	if err != nil {
 		return &LicenseStatus{
 			IsLicensed:     false,
-			Message:        "Invalid license key",
+			Message:        fmt.Sprintf("Invalid license: %v", err),
 			SupportMessage: stringPtr("Please check your license key"),
 		}, nil
 	}
 
 	return &LicenseStatus{
 		IsLicensed:  true,
-		LicenseType: &licenseType,
-		Email:       &email,
+		LicenseType: &payload.Type,
+		Email:       &payload.Email,
 		Message:     "Licensed",
 	}, nil
 }
 
 func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*LicenseStatus, error) {
-	// Validate license key using simple validation for testing
-	isValid, licenseType, email := ValidateLicenseKey(licenseKey)
-	if !isValid {
+	// Use real cryptographic verification
+	payload, err := s.verifyLicense(licenseKey)
+	if err != nil {
 		return &LicenseStatus{
 			IsLicensed: false,
-			Message:    "Invalid license key",
+			Message:    fmt.Sprintf("Invalid license key: %v", err),
 		}, nil
 	}
 
 	// Store in registry
-	_, err := s.registry.Set(ctx, registrystore.SystemOwnerID, "license.key", licenseKey, true)
+	_, err = s.registry.Set(ctx, registrystore.SystemOwnerID, "license.key", licenseKey, true)
 	if err != nil {
 		return &LicenseStatus{
 			IsLicensed: false,
@@ -81,8 +81,8 @@ func (s *Service) ActivateLicense(ctx context.Context, licenseKey string) (*Lice
 
 	return &LicenseStatus{
 		IsLicensed:  true,
-		LicenseType: &licenseType,
-		Email:       &email,
+		LicenseType: &payload.Type,
+		Email:       &payload.Email,
 		Message:     "License activated successfully! Thank you for supporting development.",
 	}, nil
 }
@@ -97,15 +97,19 @@ func (s *Service) verifyLicense(licenseKey string) (*LicensePayload, error) {
 		return nil, fmt.Errorf("invalid license key structure")
 	}
 
+	// Add padding back for base64 decoding
+	payloadB64 := addBase64Padding(parts[0])
+	signatureB64 := addBase64Padding(parts[1])
+
 	// Decode payload and signature
-	payloadBytes, err := base64.URLEncoding.DecodeString(parts[0])
+	payloadBytes, err := base64.URLEncoding.DecodeString(payloadB64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid payload encoding")
+		return nil, fmt.Errorf("invalid payload encoding: %w", err)
 	}
 
-	signature, err := base64.URLEncoding.DecodeString(parts[1])
+	signature, err := base64.URLEncoding.DecodeString(signatureB64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid signature encoding")
+		return nil, fmt.Errorf("invalid signature encoding: %w", err)
 	}
 
 	// Verify signature
@@ -116,7 +120,7 @@ func (s *Service) verifyLicense(licenseKey string) (*LicensePayload, error) {
 	// Parse payload
 	var payload LicensePayload
 	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
-		return nil, fmt.Errorf("invalid payload format")
+		return nil, fmt.Errorf("invalid payload format: %w", err)
 	}
 
 	// Check expiry (if set)

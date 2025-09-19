@@ -5,13 +5,20 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // Public key for license verification (safe to commit to repository)
-// This will be populated with your actual public key after key generation
-var LicensePublicKey = ed25519.PublicKey{}
+// Generated Ed25519 public key for production use
+var LicensePublicKey = ed25519.PublicKey{
+	0xbf, 0x92, 0x13, 0xf9, 0xfb, 0xd9, 0x3d, 0x43,
+	0x99, 0x22, 0x4a, 0x69, 0xd1, 0xf7, 0x3e, 0x7d,
+	0xe8, 0x4f, 0x9c, 0xca, 0xa3, 0xde, 0x5d, 0x00,
+	0x0f, 0x9e, 0xa2, 0xb2, 0xff, 0x2e, 0x07, 0xf7,
+}
 
 // HasValidPublicKey returns true if a real public key has been configured
 func HasValidPublicKey() bool {
@@ -42,6 +49,119 @@ func GenerateLicenseKey(licenseType, email string) string {
 	// Format as IMGR-XXXX-XXXX-XXXX-XXXX
 	key := "IMGR-" + encoded[:4] + "-" + encoded[4:8] + "-" + encoded[8:12] + "-" + encoded[12:16]
 	return strings.ToUpper(key)
+}
+
+// GenerateSignedLicense creates a cryptographically signed license key using Ed25519
+// This is the production function that should be used for real license generation
+func GenerateSignedLicense(privateKey ed25519.PrivateKey, licenseType, email string) (string, error) {
+	if len(privateKey) != ed25519.PrivateKeySize {
+		return "", fmt.Errorf("invalid private key size")
+	}
+
+	// Create license payload with proper structure
+	payload := LicensePayload{
+		Type:     licenseType,
+		Email:    email,
+		Features: getFeatures(licenseType),
+		IssuedAt: time.Now().Unix(),
+		// ExpiresAt can be set for time-limited licenses
+	}
+
+	// JSON encode the payload
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
+	// Sign the payload with Ed25519
+	signature := ed25519.Sign(privateKey, payloadBytes)
+
+	// Base64URL encode both payload and signature
+	payloadB64 := base64.URLEncoding.EncodeToString(payloadBytes)
+	signatureB64 := base64.URLEncoding.EncodeToString(signature)
+
+	// Remove padding for cleaner URLs
+	payloadB64 = strings.TrimRight(payloadB64, "=")
+	signatureB64 = strings.TrimRight(signatureB64, "=")
+
+	// Format as IMGR-{payload}.{signature}
+	return fmt.Sprintf("IMGR-%s.%s", payloadB64, signatureB64), nil
+}
+
+// VerifySignedLicense verifies a cryptographically signed license key
+// This is the production function that should be used for real license verification
+func VerifySignedLicense(publicKey ed25519.PublicKey, licenseKey string) (*LicensePayload, error) {
+	if len(publicKey) != ed25519.PublicKeySize {
+		return nil, fmt.Errorf("invalid public key size")
+	}
+
+	// Check format
+	if !strings.HasPrefix(licenseKey, "IMGR-") {
+		return nil, fmt.Errorf("invalid license key format")
+	}
+
+	// Split into payload and signature
+	parts := strings.Split(licenseKey[5:], ".")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid license key structure")
+	}
+
+	// Add padding back for base64 decoding
+	payloadB64 := addBase64Padding(parts[0])
+	signatureB64 := addBase64Padding(parts[1])
+
+	// Decode payload and signature
+	payloadBytes, err := base64.URLEncoding.DecodeString(payloadB64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid payload encoding: %w", err)
+	}
+
+	signature, err := base64.URLEncoding.DecodeString(signatureB64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid signature encoding: %w", err)
+	}
+
+	// Verify the signature
+	if !ed25519.Verify(publicKey, payloadBytes, signature) {
+		return nil, fmt.Errorf("invalid license signature")
+	}
+
+	// Parse the payload
+	var payload LicensePayload
+	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
+		return nil, fmt.Errorf("invalid payload format: %w", err)
+	}
+
+	// Check expiry if set
+	if payload.ExpiresAt != nil && time.Now().Unix() > *payload.ExpiresAt {
+		return nil, fmt.Errorf("license expired")
+	}
+
+	return &payload, nil
+}
+
+// getFeatures returns the features available for a given license type
+func getFeatures(licenseType string) []string {
+	switch licenseType {
+	case "commercial":
+		return []string{"batch_export", "api_access", "white_label", "priority_support"}
+	case "enterprise":
+		return []string{"batch_export", "api_access", "white_label", "priority_support", "custom_branding", "sso"}
+	default: // personal
+		return []string{"batch_export", "api_access"}
+	}
+}
+
+// addBase64Padding adds padding to base64 strings for proper decoding
+func addBase64Padding(s string) string {
+	switch len(s) % 4 {
+	case 2:
+		return s + "=="
+	case 3:
+		return s + "="
+	default:
+		return s
+	}
 }
 
 // ValidateLicenseKey validates a license key and extracts the license type and email
