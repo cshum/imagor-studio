@@ -91,7 +91,7 @@ export function LoginPage() {
 
   return (
     <div className='min-h-screen-safe flex items-start justify-center pt-8 md:items-center md:pt-0'>
-      <LicenseBadge variant="absolute" />
+      <LicenseBadge />
       <Card className='w-full max-w-md'>
         <CardHeader className='space-y-1 text-center'>
           <CardTitle className='text-2xl font-semibold tracking-tight'>

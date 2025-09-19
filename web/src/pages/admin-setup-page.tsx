@@ -432,7 +432,7 @@ export function AdminSetupPage() {
 
   return (
     <div className='bg-background min-h-screen-safe flex items-center justify-center p-4'>
-      <LicenseBadge variant="absolute" />
+      <LicenseBadge />
       <MultiStepForm
         ref={multiStepFormRef}
         steps={steps}
