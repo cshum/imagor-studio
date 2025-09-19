@@ -55,7 +55,7 @@ func NewTestLicenseHandler(service LicenseServiceInterface, logger *zap.Logger) 
 }
 
 func (h *TestLicenseHandler) GetPublicStatus() http.HandlerFunc {
-	return Handle("GET", func(w http.ResponseWriter, r *http.Request) error {
+	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
 		status, err := h.service.GetPublicLicenseStatus(r.Context())
 		if err != nil {
 			h.logger.Error("Failed to get public license status", zap.Error(err))
@@ -72,7 +72,7 @@ func (h *TestLicenseHandler) GetPublicStatus() http.HandlerFunc {
 }
 
 func (h *TestLicenseHandler) ActivateLicense() http.HandlerFunc {
-	return Handle("POST", func(w http.ResponseWriter, r *http.Request) error {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
 		var request struct {
 			Key string `json:"key"`
 		}

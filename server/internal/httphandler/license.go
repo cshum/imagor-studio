@@ -22,7 +22,7 @@ func NewLicenseHandler(licenseService *license.Service, logger *zap.Logger) *Lic
 
 // GetPublicStatus returns the public license status (no authentication required)
 func (h *LicenseHandler) GetPublicStatus() http.HandlerFunc {
-	return Handle("GET", func(w http.ResponseWriter, r *http.Request) error {
+	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
 		status, err := h.licenseService.GetPublicLicenseStatus(r.Context())
 		if err != nil {
 			h.logger.Error("Failed to get public license status", zap.Error(err))
@@ -40,7 +40,7 @@ func (h *LicenseHandler) GetPublicStatus() http.HandlerFunc {
 
 // ActivateLicense activates a license with the provided key (no authentication required)
 func (h *LicenseHandler) ActivateLicense() http.HandlerFunc {
-	return Handle("POST", func(w http.ResponseWriter, r *http.Request) error {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
 		var request struct {
 			Key string `json:"key"`
 		}
