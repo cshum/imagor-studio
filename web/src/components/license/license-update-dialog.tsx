@@ -171,35 +171,28 @@ export const LicenseUpdateDialog: React.FC<LicenseUpdateDialogProps> = ({
           </Form>
         </div>
 
-        <DialogFooter className='flex justify-between'>
-          <div className='flex gap-3'>
-            {!isCurrentlyLicensed && (
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() => {
-                  window.open('https://buy.imagor-studio.com', '_blank')
-                }}
-              >
-                {t('pages.license.purchaseLicense')}
-              </Button>
-            )}
-          </div>
-          <div className='flex gap-3'>
-            <Button type='button' variant='outline' onClick={handleClose} disabled={isLoading}>
-              {t('common.buttons.cancel')}
-            </Button>
-            <ButtonWithLoading
-              type='submit'
-              onClick={form.handleSubmit(handleSubmit)}
-              disabled={!form.formState.isValid}
-              isLoading={isLoading}
+        <DialogFooter className='flex justify-end gap-3'>
+          {!isCurrentlyLicensed && (
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => {
+                window.open('https://buy.imagor-studio.com', '_blank')
+              }}
             >
-              {isCurrentlyLicensed
-                ? t('pages.license.updateLicense')
-                : t('pages.license.activateLicense')}
-            </ButtonWithLoading>
-          </div>
+              {t('pages.license.purchaseLicense')}
+            </Button>
+          )}
+          <ButtonWithLoading
+            type='submit'
+            onClick={form.handleSubmit(handleSubmit)}
+            disabled={!form.formState.isValid}
+            isLoading={isLoading}
+          >
+            {isCurrentlyLicensed
+              ? t('pages.license.updateLicense')
+              : t('pages.license.activateLicense')}
+          </ButtonWithLoading>
         </DialogFooter>
       </DialogContent>
     </Dialog>
