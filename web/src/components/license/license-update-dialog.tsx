@@ -117,25 +117,6 @@ export const LicenseUpdateDialog: React.FC<LicenseUpdateDialogProps> = ({
         </DialogHeader>
 
         <div className='space-y-6'>
-          {/* Current License Info */}
-          {isCurrentlyLicensed && (
-            <div className='bg-muted/50 rounded-lg border p-4'>
-              <h4 className='mb-2 text-sm font-medium'>Current License</h4>
-              <div className='space-y-1'>
-                <div className='text-sm'>
-                  <span className='text-muted-foreground'>Type: </span>
-                  <span>
-                    {currentLicenseType!.charAt(0).toUpperCase() + currentLicenseType!.slice(1)}
-                  </span>
-                </div>
-                <div className='text-sm'>
-                  <span className='text-muted-foreground'>Key: </span>
-                  <span className='font-mono'>{currentMaskedKey}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* License Key Form */}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
