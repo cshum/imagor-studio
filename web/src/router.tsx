@@ -9,7 +9,6 @@ import {
 } from '@tanstack/react-router'
 
 import { LicenseActivationDialog } from '@/components/license-activation-dialog'
-import { LicenseBadge } from '@/components/license-badge.tsx'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
@@ -50,7 +49,6 @@ const RootComponent = () => {
   return (
     <>
       <Outlet />
-      <LicenseBadge />
       <Toaster />
       <LicenseActivationDialog open={showDialog} onOpenChange={setShowDialog} />
     </>

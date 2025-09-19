@@ -8,6 +8,7 @@ import * as z from 'zod'
 
 import { registerAdmin } from '@/api/auth-api'
 import { setSystemRegistryObject } from '@/api/registry-api'
+import { LicenseBadge } from '@/components/license-badge'
 import { StorageConfigurationWizard } from '@/components/storage/storage-configuration-wizard'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { Button } from '@/components/ui/button'
@@ -431,6 +432,7 @@ export function AdminSetupPage() {
 
   return (
     <div className='bg-background min-h-screen-safe flex items-center justify-center p-4'>
+      <LicenseBadge variant="absolute" />
       <MultiStepForm
         ref={multiStepFormRef}
         steps={steps}

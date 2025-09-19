@@ -5,6 +5,7 @@ import { Navigate, useNavigate, useSearch } from '@tanstack/react-router'
 import { z } from 'zod'
 
 import { login } from '@/api/auth-api'
+import { LicenseBadge } from '@/components/license-badge'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -90,6 +91,7 @@ export function LoginPage() {
 
   return (
     <div className='min-h-screen-safe flex items-start justify-center pt-8 md:items-center md:pt-0'>
+      <LicenseBadge variant="absolute" />
       <Card className='w-full max-w-md'>
         <CardHeader className='space-y-1 text-center'>
           <CardTitle className='text-2xl font-semibold tracking-tight'>
