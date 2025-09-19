@@ -55,6 +55,7 @@ const rootRoute = createRootRoute({
   loader: rootLoader,
   component: RootComponent,
   errorComponent: ErrorPage,
+  shouldReload: false,
 })
 
 const loginRoute = createRoute({
