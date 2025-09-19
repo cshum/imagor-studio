@@ -145,7 +145,6 @@ export type LicenseStatus = {
   __typename?: 'LicenseStatus'
   activatedAt: Maybe<Scalars['String']['output']>
   email: Scalars['String']['output']
-  features: Array<Scalars['String']['output']>
   isLicensed: Scalars['Boolean']['output']
   isOverriddenByConfig: Scalars['Boolean']['output']
   licenseType: Scalars['String']['output']
@@ -612,7 +611,6 @@ export type LicenseStatusQuery = {
     __typename?: 'LicenseStatus'
     isLicensed: boolean
     licenseType: string
-    features: Array<string>
     email: string
     message: string
     isOverriddenByConfig: boolean
@@ -1745,7 +1743,6 @@ export const LicenseStatusDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'isLicensed' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'licenseType' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'features' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'email' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'message' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },

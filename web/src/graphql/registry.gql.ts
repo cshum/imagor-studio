@@ -87,7 +87,6 @@ export const LicenseStatusQuery = gql(`
     licenseStatus {
       isLicensed
       licenseType
-      features
       email
       message
       isOverriddenByConfig

@@ -7,7 +7,6 @@ const BASE_URL = getBaseUrl()
 export interface LicenseState {
   isLicensed: boolean
   licenseType: string
-  features: string[]
   email: string
   message: string
   isOverriddenByConfig: boolean
@@ -24,7 +23,6 @@ export type LicenseAction =
       payload: {
         isLicensed: boolean
         licenseType?: string
-        features?: string[]
         email?: string
         message: string
         isOverriddenByConfig?: boolean
@@ -39,7 +37,6 @@ export type LicenseAction =
       type: 'ACTIVATE_LICENSE_SUCCESS'
       payload: {
         licenseType: string
-        features: string[]
         email: string
         message: string
       }
@@ -49,7 +46,6 @@ export type LicenseAction =
 const initialState: LicenseState = {
   isLicensed: false,
   licenseType: '',
-  features: [],
   email: '',
   message: '',
   isOverriddenByConfig: false,
@@ -67,7 +63,6 @@ const reducer = (state: LicenseState, action: LicenseAction): LicenseState => {
         ...state,
         isLicensed: action.payload.isLicensed,
         licenseType: action.payload.licenseType || '',
-        features: action.payload.features || [],
         email: action.payload.email || '',
         message: action.payload.message,
         isOverriddenByConfig: action.payload.isOverriddenByConfig || false,
@@ -93,7 +88,6 @@ const reducer = (state: LicenseState, action: LicenseAction): LicenseState => {
         ...state,
         isLicensed: true,
         licenseType: action.payload.licenseType,
-        features: action.payload.features,
         email: action.payload.email,
         message: action.payload.message,
         supportMessage: null,
@@ -176,7 +170,6 @@ export const activateLicense = async (
         type: 'ACTIVATE_LICENSE_SUCCESS',
         payload: {
           licenseType: response.licenseType || 'personal',
-          features: response.features || [],
           email: response.email || '',
           message: response.message,
         },

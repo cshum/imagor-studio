@@ -7,7 +7,6 @@ const BASE_URL = getBaseUrl()
 export interface LicenseStatus {
   isLicensed: boolean
   licenseType?: string
-  features: string[]
   email?: string
   message: string
   isOverriddenByConfig: boolean
@@ -22,11 +21,10 @@ export interface LicenseStatus {
 export const getLicenseStatus = async (): Promise<LicenseStatus> => {
   const sdk = getSdk(getGraphQLClient())
   const result = await sdk.LicenseStatus()
-  
+
   return {
     isLicensed: result.licenseStatus.isLicensed,
     licenseType: result.licenseStatus.licenseType || undefined,
-    features: result.licenseStatus.features,
     email: result.licenseStatus.email || undefined,
     message: result.licenseStatus.message,
     isOverriddenByConfig: result.licenseStatus.isOverriddenByConfig,

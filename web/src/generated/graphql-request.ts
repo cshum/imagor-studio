@@ -146,7 +146,6 @@ export type LicenseStatus = {
   __typename?: 'LicenseStatus'
   activatedAt: Maybe<Scalars['String']['output']>
   email: Scalars['String']['output']
-  features: Array<Scalars['String']['output']>
   isLicensed: Scalars['Boolean']['output']
   isOverriddenByConfig: Scalars['Boolean']['output']
   licenseType: Scalars['String']['output']
@@ -613,7 +612,6 @@ export type LicenseStatusQuery = {
     __typename?: 'LicenseStatus'
     isLicensed: boolean
     licenseType: string
-    features: Array<string>
     email: string
     message: string
     isOverriddenByConfig: boolean
@@ -1098,7 +1096,6 @@ export const LicenseStatusDocument = gql`
     licenseStatus {
       isLicensed
       licenseType
-      features
       email
       message
       isOverriddenByConfig
