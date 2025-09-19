@@ -403,9 +403,9 @@ export function ImageView({
               {(onPrevImage || onNextImage) && (
                 <button
                   onClick={toggleSlideshow}
-                  className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
+                  className='rounded-full bg-black/50 px-2.5 py-2 text-white transition-colors hover:bg-black/75'
                 >
-                  {isSlideshow ? <Pause size={24} /> : <Play size={24} />}
+                  {isSlideshow ? <Pause size={20} fill='white' /> : <Play size={20} fill='white' />}
                 </button>
               )}
               <button
