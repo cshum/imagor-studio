@@ -37,7 +37,7 @@ import {
   loadHomeTitle,
   loadRootFolders,
 } from '@/stores/folder-tree-store.ts'
-import { useLicense } from '@/stores/license-store'
+import { checkLicense, useLicense } from '@/stores/license-store'
 import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
 import { initializeSidebar } from '@/stores/sidebar-store.ts'
 import { initializeTheme } from '@/stores/theme-store.ts'
@@ -258,6 +258,7 @@ initializeSidebar(localSidebarStorage)
 initializeScrollPositions(new SessionConfigStorage('scroll_positions'))
 initializeFolderTreeCache(new SessionConfigStorage('folder_tree'))
 initAuth()
+checkLicense()
 
 export function AppRouter() {
   const router = useMemo(() => createAppRouter(), [])

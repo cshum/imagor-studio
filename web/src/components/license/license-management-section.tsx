@@ -81,7 +81,8 @@ export function LicenseManagementSection({ licenseStatus }: LicenseManagementSec
             <div className='bg-muted/50 space-y-4 rounded-lg border p-4'>
               <div className='text-sm font-medium'>{t('pages.license.configurationDetails')}</div>
 
-              <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
+              {/* 3-Column License Details */}
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
                 {licenseStatus.email && (
                   <div className='space-y-1'>
                     <div className='text-muted-foreground text-xs font-medium'>
@@ -99,7 +100,7 @@ export function LicenseManagementSection({ licenseStatus }: LicenseManagementSec
                   </div>
                 )}
                 {licenseStatus.maskedLicenseKey && (
-                  <div className='space-y-1 md:col-span-2'>
+                  <div className='space-y-1'>
                     <div className='text-muted-foreground text-xs font-medium'>
                       {t('pages.license.licenseKey')}
                     </div>
