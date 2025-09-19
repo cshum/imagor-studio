@@ -61,7 +61,7 @@ func TestSetUserRegistry_SelfOperation(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:preference"
@@ -94,7 +94,7 @@ func TestSetUserRegistry_AdminForOtherUser(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	targetOwnerID := "target-user-id"
@@ -128,7 +128,7 @@ func TestSetUserRegistry_RegularUserCannotAccessOthers(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("regular-user-id")
 	targetOwnerID := "other-user-id"
@@ -152,7 +152,7 @@ func TestSetUserRegistry_GuestCannotSet(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createGuestContext("guest-id")
 	key := "test:key"
@@ -175,7 +175,7 @@ func TestGetUserRegistry_SelfOperation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:preference"
@@ -205,7 +205,7 @@ func TestGetUserRegistry_NotFound(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "non-existent"
@@ -227,7 +227,7 @@ func TestListUserRegistry_SelfOperation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	prefix := "app:"
@@ -257,7 +257,7 @@ func TestDeleteUserRegistry_SelfOperation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:setting-to-delete"
@@ -279,7 +279,7 @@ func TestSetSystemRegistry_AdminOnly(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -354,7 +354,7 @@ func TestGetSystemRegistry_OpenRead(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name    string
@@ -413,7 +413,7 @@ func TestListSystemRegistry_OpenRead(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("user-id")
 	prefix := "config:"
@@ -443,7 +443,7 @@ func TestDeleteSystemRegistry_AdminOnly(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -501,7 +501,7 @@ func TestUserRegistry_PermissionEdgeCases(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -574,7 +574,7 @@ func TestSetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "api_secret"
@@ -609,7 +609,7 @@ func TestGetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "api_secret"
@@ -641,7 +641,7 @@ func TestListUserRegistry_EncryptedValueHidden(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -678,7 +678,7 @@ func TestSetSystemRegistry_EncryptedValueHidden(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	key := "config.jwt_secret"
@@ -773,7 +773,7 @@ func TestSetSystemRegistry_OverridePrevention(t *testing.T) {
 			}
 
 			mockStorageProvider := NewMockStorageProvider(mockStorage)
-			resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, logger)
+			resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, nil, logger)
 
 			ctx := createAdminContext("admin-user-id")
 
@@ -872,7 +872,7 @@ func TestGetSystemRegistry_OverrideDetection(t *testing.T) {
 			}
 
 			mockStorageProvider := NewMockStorageProvider(mockStorage)
-			resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, logger)
+			resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, nil, logger)
 
 			ctx := createReadWriteContext("user-id")
 
@@ -913,7 +913,7 @@ func TestListSystemRegistry_OverrideDetection(t *testing.T) {
 	}
 
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, nil, logger)
 
 	ctx := createReadWriteContext("user-id")
 

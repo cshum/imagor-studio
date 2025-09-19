@@ -36,6 +36,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		services.UserStore,
 		services.ImagorProvider,
 		services.Config, // Use enhanced config from services
+		services.LicenseService,
 		services.Logger,
 	)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
@@ -82,6 +83,11 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	// Add the new endpoints
 	mux.HandleFunc("/api/auth/first-run", authHandler.CheckFirstRun())
 	mux.HandleFunc("/api/auth/register-admin", authHandler.RegisterAdmin())
+
+	// License endpoints (public - no auth required)
+	licenseHandler := httphandler.NewLicenseHandler(services.LicenseService, services.Logger)
+	mux.HandleFunc("/api/public/license-status", licenseHandler.GetPublicStatus())
+	mux.HandleFunc("/api/public/activate-license", licenseHandler.ActivateLicense())
 
 	// Protected endpoints
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)

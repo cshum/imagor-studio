@@ -1,4 +1,5 @@
 import { ImagorManagementSection } from '@/components/imagor/imagor-management-section.tsx'
+import { LicenseManagementSection } from '@/components/license/license-management-section'
 import { StorageManagementSection } from '@/components/storage/storage-management-section.tsx'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import type { AdminLoaderData } from '@/loaders/account-loader'
@@ -53,6 +54,8 @@ export function AdminPage({ loaderData }: AdminPageProps) {
       <StorageManagementSection storageStatus={loaderData?.storageStatus || null} />
 
       <ImagorManagementSection imagorStatus={loaderData?.imagorStatus || null} />
+
+      <LicenseManagementSection licenseStatus={loaderData?.licenseStatus || null} />
     </div>
   )
 }

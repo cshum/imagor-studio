@@ -20,7 +20,7 @@ func TestGenerateImagorURL(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
 
 	// Use authenticated context with write permissions
 	ctx := createReadWriteContext("test-user")
@@ -250,7 +250,7 @@ func TestGenerateThumbnailUrls(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
 
 	t.Run("GeneratesThumbnailUrls", func(t *testing.T) {
 		imagePath := "test/image.jpg"
@@ -310,7 +310,7 @@ func TestGenerateThumbnailUrls(t *testing.T) {
 
 	t.Run("NilImagorProvider", func(t *testing.T) {
 		// Create resolver without imagor provider
-		resolverWithoutImagor := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, logger)
+		resolverWithoutImagor := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 		result := resolverWithoutImagor.generateThumbnailUrls("test/image.jpg")
 		assert.Nil(t, result)

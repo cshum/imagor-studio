@@ -68,6 +68,45 @@ func (r *mutationResolver) SetUserRegistry(ctx context.Context, entry *gql.Regis
 	return result, nil
 }
 
+// formatLicenseTypeForDisplay converts license type to display-friendly format
+func formatLicenseTypeForDisplay(licenseType string) string {
+	switch licenseType {
+	case "early_bird":
+		return "Early Bird Licensed"
+	case "commercial":
+		return "Commercial Licensed"
+	case "enterprise":
+		return "Enterprise Licensed"
+	default:
+		return "Licensed"
+	}
+}
+
+// LicenseStatus gets license status information for admin users
+func (r *queryResolver) LicenseStatus(ctx context.Context) (*gql.LicenseStatus, error) {
+	// Only admins can access detailed license information
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, fmt.Errorf("admin permission required for license information: %w", err)
+	}
+
+	// Use the unified method with includeDetails=true for admin access
+	status, err := r.licenseService.GetLicenseStatus(ctx, true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get license info: %w", err)
+	}
+
+	return &gql.LicenseStatus{
+		IsLicensed:           status.IsLicensed,
+		LicenseType:          status.LicenseType,
+		Email:                status.Email,
+		Message:              status.Message,
+		IsOverriddenByConfig: status.IsOverriddenByConfig,
+		SupportMessage:       status.SupportMessage,
+		MaskedLicenseKey:     status.MaskedLicenseKey,
+		ActivatedAt:          status.ActivatedAt,
+	}, nil
+}
+
 // DeleteUserRegistry deletes user-specific registry (unified flexible API)
 func (r *mutationResolver) DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error) {
 	// Validate input: exactly one of key or keys must be provided

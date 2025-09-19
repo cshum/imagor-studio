@@ -229,6 +229,45 @@
       "externalRequirements": "Requirements for external mode:",
       "externalRequirement1": "External imagor loader/storage must align with Imagor Studio storage settings",
       "externalRequirement2": "CORS must be enabled for metadata/EXIF access"
+    },
+    "license": {
+      "licenseManagement": "License Management",
+      "licenseManagementDescription": "Manage your Imagor Studio license and view license information.",
+      "licenseType": "License Type",
+      "status": "Status",
+      "notLicensed": "Not Licensed",
+      "licensed": "Licensed",
+      "configurationDetails": "License Details",
+      "licensedTo": "Licensed To",
+      "activatedOn": "Activated On",
+      "licenseKey": "License Key",
+      "updateLicense": "Update License",
+      "activateLicense": "Activate License",
+      "configurationOverridden": "License configuration is managed by external configuration",
+      "purchaseLicense": "Purchase License",
+      "supportDevelopment": "Support Development",
+      "activationSuccess": "Thank you for your support! License activated successfully.",
+      "updateSuccess": "License updated successfully! Thank you for your continued support.",
+      "registerForLicense": "Register for License",
+      "registerDescription": "Enter your license key to activate Imagor Studio.",
+      "supportTitle": "Support Imagor Studio - from the creator of imagor",
+      "creatorStory": "From vipsgen to imagor, I've built the entire image processing pipeline from the ground up. Imagor Studio is a self-hosted image gallery and live editing web application that brings together years of development.",
+      "features": {
+        "highPerformance": "High-performance interface with smooth virtual scrolling",
+        "realTimeEditing": "Live image editing with instant URL generation via imagor",
+        "zeroConfiguration": "Zero-configuration setup - no database indexing or file synchronization",
+        "flexibleStorage": "Flexible storage options supporting local file systems and S3-compatible services",
+        "nonDestructive": "Non-destructive workflow - transform images while preserving original files"
+      },
+      "getEarlyBirdLicense": "Get Early Bird License ($39)",
+      "licenseKeyLabel": "License Key",
+      "licenseKeyDescription": "Paste your complete license key here to activate Imagor Studio.",
+      "licenseTypes": {
+        "early_bird": "Early Bird",
+        "personal": "Personal",
+        "commercial": "Commercial",
+        "enterprise": "Enterprise"
+      }
     }
   },
   "home": "Home",

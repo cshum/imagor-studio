@@ -13,7 +13,7 @@ export function SidebarLayout({ children }: BasePanelLayoutProps) {
       <SidebarInset>
         <main
           className={cn(
-            'min-h-[calc(100vh_-_56px)] bg-zinc-50 transition-[margin-left] duration-300 ease-in-out dark:bg-zinc-900',
+            'relative min-h-[calc(100vh_-_56px)] bg-zinc-50 transition-[margin-left] duration-300 ease-in-out dark:bg-zinc-900',
           )}
         >
           {children}

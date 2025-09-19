@@ -142,6 +142,18 @@ export type ImagorStatus = {
   restartRequired: Scalars['Boolean']['output']
 }
 
+export type LicenseStatus = {
+  __typename?: 'LicenseStatus'
+  activatedAt: Maybe<Scalars['String']['output']>
+  email: Scalars['String']['output']
+  isLicensed: Scalars['Boolean']['output']
+  isOverriddenByConfig: Scalars['Boolean']['output']
+  licenseType: Scalars['String']['output']
+  maskedLicenseKey: Maybe<Scalars['String']['output']>
+  message: Scalars['String']['output']
+  supportMessage: Maybe<Scalars['String']['output']>
+}
+
 export type Mutation = {
   __typename?: 'Mutation'
   changePassword: Scalars['Boolean']['output']
@@ -243,6 +255,7 @@ export type Query = {
   getSystemRegistry: Array<SystemRegistry>
   getUserRegistry: Array<UserRegistry>
   imagorStatus: ImagorStatus
+  licenseStatus: LicenseStatus
   listFiles: FileList
   listSystemRegistry: Array<SystemRegistry>
   listUserRegistry: Array<UserRegistry>
@@ -589,6 +602,23 @@ export type DeleteSystemRegistryMutationVariables = Exact<{
 export type DeleteSystemRegistryMutation = {
   __typename?: 'Mutation'
   deleteSystemRegistry: boolean
+}
+
+export type LicenseStatusQueryVariables = Exact<{ [key: string]: never }>
+
+export type LicenseStatusQuery = {
+  __typename?: 'Query'
+  licenseStatus: {
+    __typename?: 'LicenseStatus'
+    isLicensed: boolean
+    licenseType: string
+    email: string
+    message: string
+    isOverriddenByConfig: boolean
+    supportMessage: string | null
+    maskedLicenseKey: string | null
+    activatedAt: string | null
+  }
 }
 
 export type FileInfoFragment = {
@@ -1061,6 +1091,20 @@ export const DeleteSystemRegistryDocument = gql`
     deleteSystemRegistry(key: $key)
   }
 `
+export const LicenseStatusDocument = gql`
+  query LicenseStatus {
+    licenseStatus {
+      isLicensed
+      licenseType
+      email
+      message
+      isOverriddenByConfig
+      supportMessage
+      maskedLicenseKey
+      activatedAt
+    }
+  }
+`
 export const ListFilesDocument = gql`
   query ListFiles(
     $path: String!
@@ -1446,6 +1490,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
           }),
         'DeleteSystemRegistry',
         'mutation',
+        variables,
+      )
+    },
+    LicenseStatus(
+      variables?: LicenseStatusQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<LicenseStatusQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<LicenseStatusQuery>({
+            document: LicenseStatusDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'LicenseStatus',
+        'query',
         variables,
       )
     },

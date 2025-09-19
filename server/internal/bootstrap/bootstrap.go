@@ -11,6 +11,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/database"
 	"github.com/cshum/imagor-studio/server/internal/encryption"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
+	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/migrations"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
@@ -30,6 +31,7 @@ type Services struct {
 	ImagorProvider  *imagorprovider.Provider
 	RegistryStore   registrystore.Store
 	UserStore       userstore.Store
+	LicenseService  *license.Service
 	Encryption      *encryption.Service
 	Config          *config.Config
 	Logger          *zap.Logger
@@ -101,6 +103,9 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 		return nil, fmt.Errorf("failed to initialize imagor: %w", err)
 	}
 
+	// Initialize license service with config provider
+	licenseService := license.NewService(registryStore, enhancedCfg)
+
 	// Log configuration loaded
 	logger.Info("Configuration loaded",
 		zap.Int("port", enhancedCfg.Port),
@@ -117,6 +122,7 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 		ImagorProvider:  imagorProvider,
 		RegistryStore:   registryStore,
 		UserStore:       userStore,
+		LicenseService:  licenseService,
 		Encryption:      encryptionService,
 		Config:          enhancedCfg,
 		Logger:          logger,

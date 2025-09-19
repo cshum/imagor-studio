@@ -8,6 +8,7 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
+import { LicenseActivationDialog } from '@/components/license-activation-dialog'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
@@ -36,16 +37,20 @@ import {
   loadHomeTitle,
   loadRootFolders,
 } from '@/stores/folder-tree-store.ts'
+import { useLicense } from '@/stores/license-store'
 import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
 import { initializeSidebar } from '@/stores/sidebar-store.ts'
 import { initializeTheme } from '@/stores/theme-store.ts'
 
 const RootComponent = () => {
   useTitle()
+  const { showDialog, setShowDialog } = useLicense()
+
   return (
     <>
       <Outlet />
       <Toaster />
+      <LicenseActivationDialog open={showDialog} onOpenChange={setShowDialog} />
     </>
   )
 }
