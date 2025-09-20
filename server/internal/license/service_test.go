@@ -2,6 +2,9 @@ package license
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -9,6 +12,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// GenerateKeyPair generates a new Ed25519 key pair for license signing
+// This should only be used during testing
+func GenerateKeyPair() (ed25519.PublicKey, ed25519.PrivateKey, error) {
+	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate key pair: %w", err)
+	}
+	return publicKey, privateKey, nil
+}
 
 // Mock registry store for testing
 type mockRegistryStore struct {

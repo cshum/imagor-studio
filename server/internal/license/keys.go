@@ -2,7 +2,6 @@ package license
 
 import (
 	"crypto/ed25519"
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -16,21 +15,6 @@ var LicensePublicKey = ed25519.PublicKey{
 	0x99, 0x22, 0x4a, 0x69, 0xd1, 0xf7, 0x3e, 0x7d,
 	0xe8, 0x4f, 0x9c, 0xca, 0xa3, 0xde, 0x5d, 0x00,
 	0x0f, 0x9e, 0xa2, 0xb2, 0xff, 0x2e, 0x07, 0xf7,
-}
-
-// HasValidPublicKey returns true if a real public key has been configured
-func HasValidPublicKey() bool {
-	return len(LicensePublicKey) == 32
-}
-
-// GenerateKeyPair generates a new Ed25519 key pair for license signing
-// This should only be used during development/setup
-func GenerateKeyPair() (ed25519.PublicKey, ed25519.PrivateKey, error) {
-	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate key pair: %w", err)
-	}
-	return publicKey, privateKey, nil
 }
 
 // GenerateSignedLicense creates a cryptographically signed license key using Ed25519
