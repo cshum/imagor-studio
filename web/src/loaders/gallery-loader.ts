@@ -61,10 +61,10 @@ export const galleryLoader = async ({
     showHidden = showHiddenEntry?.value === 'true'
 
     const sortByEntry = registryResult.find((r) => r.key === 'config.app_default_sort_by')
-    sortBy = (sortByEntry?.value as SortOption) || 'MODIFIED_TIME'
+    sortBy = (sortByEntry?.value as SortOption) || 'NAME'
 
     const sortOrderEntry = registryResult.find((r) => r.key === 'config.app_default_sort_order')
-    sortOrder = (sortOrderEntry?.value as SortOrder) || 'DESC'
+    sortOrder = (sortOrderEntry?.value as SortOrder) || 'ASC'
   } catch {
     // If registry fetch fails, use defaults
     extensionsString = DEFAULT_EXTENSIONS
