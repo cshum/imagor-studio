@@ -103,7 +103,6 @@ export function PreviewArea({
               variant='outline'
               size='sm'
               onClick={onCopyUrl}
-              disabled={!previewUrl}
               className='h-8 flex-1 touch-manipulation'
             >
               <Copy className='mr-1 h-4 w-4' />
@@ -113,7 +112,6 @@ export function PreviewArea({
               variant='outline'
               size='sm'
               onClick={onDownload}
-              disabled={!previewUrl}
               className='h-8 flex-1 touch-manipulation'
             >
               <Download className='mr-1 h-4 w-4' />
