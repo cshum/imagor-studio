@@ -264,23 +264,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           {/* Action Buttons */}
           <div className='bg-background border-t p-4'>
             <div className='flex gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={handleDownloadClick}
-                disabled={!previewUrl}
-                className='flex-1'
-              >
+              <Button variant='outline' size='sm' onClick={handleDownloadClick} className='flex-1'>
                 <Download className='mr-1 h-4 w-4' />
                 {t('imageEditor.page.download')}
               </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={handleCopyUrlClick}
-                disabled={!previewUrl}
-                className='flex-1'
-              >
+              <Button variant='outline' size='sm' onClick={handleCopyUrlClick} className='flex-1'>
                 <Copy className='mr-1 h-4 w-4' />
                 {t('imageEditor.page.copyUrl')}
               </Button>

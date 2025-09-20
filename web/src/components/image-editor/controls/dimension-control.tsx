@@ -384,7 +384,7 @@ export function DimensionControl({
             onValueChange={handleSizeScaleChange}
             min={0.1}
             max={2}
-            step={0.1}
+            step={0.01}
             className='w-full'
           />
           <div className='text-muted-foreground flex justify-between text-xs'>

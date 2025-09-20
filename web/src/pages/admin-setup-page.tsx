@@ -8,7 +8,6 @@ import * as z from 'zod'
 
 import { registerAdmin } from '@/api/auth-api'
 import { setSystemRegistryObject } from '@/api/registry-api'
-import { LicenseBadge } from '@/components/license-badge'
 import { StorageConfigurationWizard } from '@/components/storage/storage-configuration-wizard'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { Button } from '@/components/ui/button'
@@ -60,17 +59,10 @@ const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
 interface AccountStepContentProps extends MultiStepFormNavigationProps {
   form: UseFormReturn<AdminSetupForm>
   error: string | null
-  isFormValid: boolean
   onCreateAccount: () => Promise<boolean>
 }
 
-function AccountStepContent({
-  form,
-  error,
-  isFormValid,
-  onCreateAccount,
-  next,
-}: AccountStepContentProps) {
+function AccountStepContent({ form, error, onCreateAccount, next }: AccountStepContentProps) {
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -159,7 +151,7 @@ function AccountStepContent({
             <ButtonWithLoading
               type='submit'
               isLoading={isLoading}
-              disabled={!isFormValid}
+              disabled={isLoading}
               className='flex items-center gap-2'
             >
               {t('pages.admin.createAccount')}
@@ -296,14 +288,13 @@ export function AdminSetupPage() {
 
   const form = useForm<AdminSetupForm>({
     resolver: zodResolver(adminSetupSchema),
+    mode: 'onBlur',
     defaultValues: {
       username: '',
       password: '',
       confirmPassword: '',
     },
   })
-
-  const isFormValid = form.formState.isValid && !form.formState.isSubmitting
 
   const handleCreateAccount = async (): Promise<boolean> => {
     setError(null)
@@ -391,7 +382,6 @@ export function AdminSetupPage() {
           <AccountStepContent
             form={form}
             error={error}
-            isFormValid={isFormValid}
             onCreateAccount={handleCreateAccount}
             {...navigationProps}
           />
@@ -432,7 +422,6 @@ export function AdminSetupPage() {
 
   return (
     <div className='bg-background min-h-screen-safe flex items-center justify-center p-4'>
-      <LicenseBadge />
       <MultiStepForm
         ref={multiStepFormRef}
         steps={steps}

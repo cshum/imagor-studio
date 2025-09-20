@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, Copy, Download } from 'lucide-react'
 
+import { LicenseBadge } from '@/components/license-badge.tsx'
 import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
@@ -47,6 +48,7 @@ export function PreviewArea({
 
   return (
     <div className='relative flex h-full flex-col'>
+      <LicenseBadge />
       {/* Preview Content */}
       <div className='bg-muted/20 flex min-h-0 flex-1 touch-none items-center justify-center overflow-hidden p-4'>
         {error ? (
@@ -101,7 +103,6 @@ export function PreviewArea({
               variant='outline'
               size='sm'
               onClick={onCopyUrl}
-              disabled={!previewUrl}
               className='h-8 flex-1 touch-manipulation'
             >
               <Copy className='mr-1 h-4 w-4' />
@@ -111,7 +112,6 @@ export function PreviewArea({
               variant='outline'
               size='sm'
               onClick={onDownload}
-              disabled={!previewUrl}
               className='h-8 flex-1 touch-manipulation'
             >
               <Download className='mr-1 h-4 w-4' />
