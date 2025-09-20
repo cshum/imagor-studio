@@ -242,7 +242,7 @@ export function ImageView({
           <div
             className={`relative flex h-full w-full transition-[padding-left] duration-500 ease-in-out ${isInfoOpen && isDesktop ? 'pl-[300px]' : 'pl-0'} `}
           >
-            <LicenseBadge side='left' />
+            <LicenseBadge side='left' theme='dark' />
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 80 }}
