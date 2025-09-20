@@ -25,13 +25,6 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     defaultValue: false,
   },
   {
-    key: 'config.app_file_extensions',
-    type: 'text',
-    label: 'File Extensions',
-    description: 'Comma-separated list of file extensions to show (e.g., .jpg,.png,.gif)',
-    defaultValue: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif',
-  },
-  {
     key: 'config.app_default_sort_by',
     type: 'dual-select',
     label: 'File Sorting',
@@ -50,6 +43,13 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
       ASC: 'Ascending',
       DESC: 'Descending',
     },
+  },
+  {
+    key: 'config.app_file_extensions',
+    type: 'text',
+    label: 'File Extensions',
+    description: 'Comma-separated list of file extensions to show (e.g., .jpg,.png,.gif)',
+    defaultValue: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif',
   },
   {
     key: 'config.app_show_hidden',
