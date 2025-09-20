@@ -5,6 +5,7 @@ import { AnimatePresence, motion, PanInfo } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Info, Pause, Play, X, ZoomIn, ZoomOut } from 'lucide-react'
 
 import { ImageInfo, ImageViewInfo } from '@/components/image-gallery/image-view-info.tsx'
+import { LicenseBadge } from '@/components/license-badge.tsx'
 import { Sheet } from '@/components/ui/sheet'
 import { FileInfoFragment } from '@/generated/graphql'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
@@ -241,6 +242,7 @@ export function ImageView({
           <div
             className={`relative flex h-full w-full transition-[padding-left] duration-500 ease-in-out ${isInfoOpen && isDesktop ? 'pl-[300px]' : 'pl-0'} `}
           >
+            <LicenseBadge side='left' />
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 80 }}
