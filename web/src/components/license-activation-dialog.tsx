@@ -115,6 +115,9 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
               <li>• {t('pages.license.features.flexibleStorage')}</li>
               <li>• {t('pages.license.features.nonDestructive')}</li>
             </ul>
+            <p className='mt-3 text-sm text-blue-800 dark:text-blue-300'>
+              {t('pages.license.supportOngoingDevelopment')}
+            </p>
           </div>
 
           {/* License Key Form */}
@@ -153,7 +156,7 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
           </Form>
         </div>
 
-        <DialogFooter className='flex justify-end gap-3'>
+        <DialogFooter className='flex justify-end gap-2'>
           <Button
             type='button'
             variant='outline'
