@@ -59,17 +59,10 @@ const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
 interface AccountStepContentProps extends MultiStepFormNavigationProps {
   form: UseFormReturn<AdminSetupForm>
   error: string | null
-  isFormValid: boolean
   onCreateAccount: () => Promise<boolean>
 }
 
-function AccountStepContent({
-  form,
-  error,
-  isFormValid,
-  onCreateAccount,
-  next,
-}: AccountStepContentProps) {
+function AccountStepContent({ form, error, onCreateAccount, next }: AccountStepContentProps) {
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -158,7 +151,7 @@ function AccountStepContent({
             <ButtonWithLoading
               type='submit'
               isLoading={isLoading}
-              disabled={!isFormValid}
+              disabled={isLoading}
               className='flex items-center gap-2'
             >
               {t('pages.admin.createAccount')}
@@ -295,14 +288,13 @@ export function AdminSetupPage() {
 
   const form = useForm<AdminSetupForm>({
     resolver: zodResolver(adminSetupSchema),
+    mode: 'onBlur',
     defaultValues: {
       username: '',
       password: '',
       confirmPassword: '',
     },
   })
-
-  const isFormValid = form.formState.isValid && !form.formState.isSubmitting
 
   const handleCreateAccount = async (): Promise<boolean> => {
     setError(null)
@@ -390,7 +382,6 @@ export function AdminSetupPage() {
           <AccountStepContent
             form={form}
             error={error}
-            isFormValid={isFormValid}
             onCreateAccount={handleCreateAccount}
             {...navigationProps}
           />
