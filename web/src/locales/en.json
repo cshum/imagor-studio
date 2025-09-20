@@ -251,7 +251,7 @@
       "registerForLicense": "Register Imagor Studio",
       "registerDescription": "Enter your license key to activate Imagor Studio.",
       "supportTitle": "Support Imagor Studio - from the creator of imagor",
-      "creatorStory": "From vipsgen to imagor, I've built the complete image processing ecosystem. Imagor Studio is a self-hosted image gallery and live editing web application that brings together years of ongoing development.",
+      "creatorStory": "From vipsgen to imagor, I've built the entire image processing pipeline from the ground up. Imagor Studio is a self-hosted image gallery and live editing web application that brings together years of ongoing development.",
       "features": {
         "highPerformance": "High-performance interface with smooth virtual scrolling",
         "realTimeEditing": "Live image editing with instant URL generation via imagor",
