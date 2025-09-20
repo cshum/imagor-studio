@@ -348,7 +348,7 @@ export function ImageView({
                     )}
                   </TransformComponent>
                   {!isSlideshow && (
-                    <div className='absolute right-8 bottom-4 z-10 flex space-x-4'>
+                    <div className='absolute right-6 bottom-4 z-10 flex space-x-4'>
                       {scale > 1 && (
                         <button
                           onClick={() => resetTransform()}
@@ -393,7 +393,7 @@ export function ImageView({
               </div>
             )}
 
-            <div className='absolute top-4 right-8 z-60 flex space-x-2'>
+            <div className='absolute top-4 right-6 z-60 flex space-x-2'>
               {authState.state === 'authenticated' && (
                 <button
                   onClick={handleImagorClick}
