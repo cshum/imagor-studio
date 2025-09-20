@@ -32,6 +32,26 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     defaultValue: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif',
   },
   {
+    key: 'config.app_default_sort_by',
+    type: 'dual-select',
+    label: 'File Sorting',
+    description: 'Choose how files and folders are sorted',
+    defaultValue: 'MODIFIED_TIME',
+    options: ['MODIFIED_TIME', 'NAME', 'SIZE'],
+    optionLabels: {
+      MODIFIED_TIME: 'Date Modified',
+      NAME: 'Name',
+      SIZE: 'File Size',
+    },
+    secondaryKey: 'config.app_default_sort_order',
+    secondaryDefaultValue: 'DESC',
+    secondaryOptions: ['DESC', 'ASC'],
+    secondaryOptionLabels: {
+      DESC: 'Descending',
+      ASC: 'Ascending',
+    },
+  },
+  {
     key: 'config.app_show_hidden',
     type: 'boolean',
     label: 'Show Hidden Files',
@@ -45,7 +65,7 @@ export function AdminPage({ loaderData }: AdminPageProps) {
     <div className='space-y-6'>
       <SystemSettingsForm
         title='System Settings'
-        description='Configure system-wide settings and user account policies.'
+        description='Configure system-wide settings. These options are only available to administrators.'
         settings={SYSTEM_SETTINGS}
         initialValues={loaderData?.registry || {}}
         systemRegistryList={loaderData?.systemRegistryList || []}

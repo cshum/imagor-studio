@@ -180,6 +180,9 @@
       "configurationError": "Failed to configure {{storageType}} storage",
       "configurationOverridden": "Storage configuration is managed by external configuration"
     },
+    "systemSettings": {
+      "settingOverridden": "This setting is overridden by configuration file or environment variable"
+    },
     "imagor": {
       "imagorConfiguration": "Imagor Configuration",
       "imagorConfigurationDescription": "Configure image processing settings. Imagor handles image transformations and optimizations.",

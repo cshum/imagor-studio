@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
@@ -20,11 +21,16 @@ import { setHomeTitle } from '@/stores/folder-tree-store'
 
 export interface SystemSetting {
   key: string
-  type: 'boolean' | 'text' | 'select'
+  type: 'boolean' | 'text' | 'select' | 'dual-select'
   label: string
   description: string
   defaultValue: string | boolean
   options?: string[] // For select type
+  optionLabels?: Record<string, string> // For custom option labels
+  secondaryKey?: string // For dual-select type
+  secondaryDefaultValue?: string | boolean // For dual-select type
+  secondaryOptions?: string[] // For dual-select type
+  secondaryOptionLabels?: Record<string, string> // For custom secondary option labels
 }
 
 export interface SystemSettingsFormProps {
@@ -55,6 +61,7 @@ export function SystemSettingsForm({
   hideUpdateButton = false,
 }: SystemSettingsFormProps) {
   const router = useRouter()
+  const { t } = useTranslation()
   const [isUpdating, setIsUpdating] = useState(false)
 
   // Current form state - map of registry keys to string values
@@ -67,6 +74,14 @@ export function SystemSettingsForm({
         typeof setting.defaultValue === 'boolean'
           ? setting.defaultValue.toString()
           : setting.defaultValue
+
+      // Initialize secondary key for dual-select
+      if (setting.type === 'dual-select' && setting.secondaryKey) {
+        initial[setting.secondaryKey] =
+          typeof setting.secondaryDefaultValue === 'boolean'
+            ? setting.secondaryDefaultValue.toString()
+            : setting.secondaryDefaultValue || ''
+      }
     })
 
     // Override with initial values
@@ -82,7 +97,20 @@ export function SystemSettingsForm({
     return settings.some((setting) => {
       const currentValue = formValues[setting.key]
       const originalValue = initialValues[setting.key]
-      return currentValue !== originalValue
+      if (currentValue !== originalValue) {
+        return true
+      }
+
+      // Check secondary key for dual-select
+      if (setting.type === 'dual-select' && setting.secondaryKey) {
+        const currentSecondaryValue = formValues[setting.secondaryKey]
+        const originalSecondaryValue = initialValues[setting.secondaryKey]
+        if (currentSecondaryValue !== originalSecondaryValue) {
+          return true
+        }
+      }
+
+      return false
     })
   }, [formValues, initialValues, settings])
 
@@ -107,6 +135,15 @@ export function SystemSettingsForm({
         const originalValue = initialValues[setting.key]
         if (currentValue !== originalValue) {
           changedValues[setting.key] = currentValue
+        }
+
+        // Check secondary key for dual-select
+        if (setting.type === 'dual-select' && setting.secondaryKey) {
+          const currentSecondaryValue = formValues[setting.secondaryKey]
+          const originalSecondaryValue = initialValues[setting.secondaryKey]
+          if (currentSecondaryValue !== originalSecondaryValue) {
+            changedValues[setting.secondaryKey] = currentSecondaryValue
+          }
         }
       })
 
@@ -169,7 +206,7 @@ export function SystemSettingsForm({
               {setting.description}
               {isOverridden && (
                 <span className='mt-1 block text-orange-600 dark:text-orange-400'>
-                  This setting is overridden by configuration file or environment variable
+                  {t('pages.systemSettings.settingOverridden')}
                 </span>
               )}
             </div>
@@ -198,7 +235,7 @@ export function SystemSettingsForm({
             {setting.description}
             {isOverridden && (
               <span className='mt-1 block text-orange-600 dark:text-orange-400'>
-                This setting is overridden by configuration file or environment variable
+                {t('pages.systemSettings.settingOverridden')}
               </span>
             )}
           </div>
@@ -227,7 +264,7 @@ export function SystemSettingsForm({
             {setting.description}
             {isOverridden && (
               <span className='mt-1 block text-orange-600 dark:text-orange-400'>
-                This setting is overridden by configuration file or environment variable
+                {t('pages.systemSettings.settingOverridden')}
               </span>
             )}
           </div>
@@ -246,11 +283,116 @@ export function SystemSettingsForm({
             <SelectContent>
               {setting.options?.map((option) => (
                 <SelectItem key={option} value={option}>
-                  {option.charAt(0).toUpperCase() + option.slice(1)}
+                  {setting.optionLabels?.[option] ||
+                    option.charAt(0).toUpperCase() + option.slice(1)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+        </div>
+      )
+    }
+
+    if (setting.type === 'dual-select' && setting.secondaryKey) {
+      // Get secondary setting values
+      const secondaryRegistryEntry = systemRegistryList.find(
+        (item) => item.key === setting.secondaryKey,
+      )
+      const isSecondaryOverridden = secondaryRegistryEntry?.isOverriddenByConfig || false
+
+      const getSecondaryEffectiveValue = () => {
+        if (isSecondaryOverridden && secondaryRegistryEntry) {
+          return secondaryRegistryEntry.value
+        }
+        return setting.secondaryKey! in formValues
+          ? formValues[setting.secondaryKey!]
+          : setting.secondaryDefaultValue?.toString() || ''
+      }
+
+      const secondaryEffectiveValue = getSecondaryEffectiveValue()
+
+      // Helper function to get option label from settings or fallback
+      const getOptionLabel = (option: string, isSecondary: boolean = false) => {
+        if (isSecondary && setting.secondaryOptionLabels) {
+          return (
+            setting.secondaryOptionLabels[option] ||
+            option.charAt(0).toUpperCase() + option.slice(1)
+          )
+        } else if (!isSecondary && setting.optionLabels) {
+          return setting.optionLabels[option] || option.charAt(0).toUpperCase() + option.slice(1)
+        }
+        return option.charAt(0).toUpperCase() + option.slice(1)
+      }
+
+      return (
+        <div key={setting.key} className='space-y-2 rounded-lg border p-4'>
+          <Label className='text-base font-medium'>{setting.label}</Label>
+          <div className='text-muted-foreground text-sm'>
+            {setting.description}
+            {(isOverridden || isSecondaryOverridden) && (
+              <span className='mt-1 block text-orange-600 dark:text-orange-400'>
+                {t('pages.systemSettings.settingOverridden')}
+              </span>
+            )}
+          </div>
+          <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+            <div>
+              <Label
+                htmlFor={setting.key}
+                className='text-muted-foreground pb-1 text-sm font-medium'
+              >
+                Sort By
+              </Label>
+              <Select
+                value={effectiveValue}
+                onValueChange={(value: string) => {
+                  if (!isOverridden) {
+                    updateSetting(setting.key, value)
+                  }
+                }}
+                disabled={isUpdating || isOverridden}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Select sort by' />
+                </SelectTrigger>
+                <SelectContent>
+                  {setting.options?.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {getOptionLabel(option)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label
+                htmlFor={setting.secondaryKey}
+                className='text-muted-foreground pb-1 text-sm font-medium'
+              >
+                Order
+              </Label>
+              <Select
+                value={secondaryEffectiveValue}
+                onValueChange={(value: string) => {
+                  if (!isSecondaryOverridden) {
+                    updateSetting(setting.secondaryKey!, value)
+                  }
+                }}
+                disabled={isUpdating || isSecondaryOverridden}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Select order' />
+                </SelectTrigger>
+                <SelectContent>
+                  {setting.secondaryOptions?.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {getOptionLabel(option, true)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
       )
     }

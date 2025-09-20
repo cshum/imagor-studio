@@ -2,6 +2,7 @@ import { getSystemRegistryMultiple } from '@/api/registry-api.ts'
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
+import { SortOption, SortOrder } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
@@ -41,23 +42,35 @@ export const galleryLoader = async ({
   // Use galleryKey as the path for storage API
   const path = galleryKey
 
-  // Fetch registry settings for gallery filtering
+  // Fetch registry settings for gallery filtering and sorting
   let extensionsString: string | undefined
   let showHidden: boolean
+  let sortBy: SortOption
+  let sortOrder: SortOrder
   try {
     const registryResult = await getSystemRegistryMultiple([
       'config.app_file_extensions',
       'config.app_show_hidden',
+      'config.app_default_sort_by',
+      'config.app_default_sort_order',
     ])
     const extensionsEntry = registryResult.find((r) => r.key === 'config.app_file_extensions')
     extensionsString = extensionsEntry?.value || DEFAULT_EXTENSIONS
 
     const showHiddenEntry = registryResult.find((r) => r.key === 'config.app_show_hidden')
     showHidden = showHiddenEntry?.value === 'true'
+
+    const sortByEntry = registryResult.find((r) => r.key === 'config.app_default_sort_by')
+    sortBy = (sortByEntry?.value as SortOption) || 'MODIFIED_TIME'
+
+    const sortOrderEntry = registryResult.find((r) => r.key === 'config.app_default_sort_order')
+    sortOrder = (sortOrderEntry?.value as SortOrder) || 'DESC'
   } catch {
     // If registry fetch fails, use defaults
     extensionsString = DEFAULT_EXTENSIONS
     showHidden = false
+    sortBy = 'MODIFIED_TIME'
+    sortOrder = 'DESC'
   }
 
   // Fetch files from storage API with registry settings
@@ -65,8 +78,8 @@ export const galleryLoader = async ({
     path,
     extensions: extensionsString,
     showHidden,
-    sortBy: 'MODIFIED_TIME',
-    sortOrder: 'DESC',
+    sortBy,
+    sortOrder,
   })
 
   // Separate files and folders
