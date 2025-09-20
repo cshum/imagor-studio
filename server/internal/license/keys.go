@@ -34,7 +34,6 @@ func GenerateKeyPair() (ed25519.PublicKey, ed25519.PrivateKey, error) {
 }
 
 // GenerateSignedLicense creates a cryptographically signed license key using Ed25519
-// This is the production function that should be used for real license generation
 func GenerateSignedLicense(privateKey ed25519.PrivateKey, licenseType, email string) (string, error) {
 	if len(privateKey) != ed25519.PrivateKeySize {
 		return "", fmt.Errorf("invalid private key size")
@@ -70,7 +69,6 @@ func GenerateSignedLicense(privateKey ed25519.PrivateKey, licenseType, email str
 }
 
 // VerifySignedLicense verifies a cryptographically signed license key
-// This is the production function that should be used for real license verification
 func VerifySignedLicense(publicKey ed25519.PublicKey, licenseKey string) (*LicensePayload, error) {
 	if len(publicKey) != ed25519.PublicKeySize {
 		return nil, fmt.Errorf("invalid public key size")
