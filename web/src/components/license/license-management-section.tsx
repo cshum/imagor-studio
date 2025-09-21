@@ -135,7 +135,7 @@ export function LicenseManagementSection({ licenseStatus }: LicenseManagementSec
                 <ButtonWithLoading
                   variant='outline'
                   onClick={() => {
-                    window.open('https://buy.imagor-studio.com', '_blank')
+                    window.open('https://imagor.net/buy/early-bird/', '_blank')
                   }}
                   isLoading={false}
                 >

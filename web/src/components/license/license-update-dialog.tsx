@@ -165,7 +165,7 @@ export const LicenseUpdateDialog: React.FC<LicenseUpdateDialogProps> = ({
               type='button'
               variant='outline'
               onClick={() => {
-                window.open('https://buy.imagor-studio.com', '_blank')
+                window.open('https://imagor.net/buy/early-bird/', '_blank')
               }}
             >
               {t('pages.license.purchaseLicense')}
