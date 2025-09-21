@@ -17,15 +17,6 @@ docker-compose up -d
 open http://localhost:8000
 ```
 
-### Development Setup
-
-```bash
-make install
-make dev
-# Frontend: http://localhost:5173
-# Backend: http://localhost:8000
-```
-
 ## Project Structure
 
 ```
@@ -33,7 +24,7 @@ imagor-studio/
 ├── web/                     # React frontend (Vite + TypeScript + Tailwind)
 │   ├── src/components/      # UI components with shadcn/ui
 │   ├── src/pages/          # Application pages
-│   ├── src/stores/         # State management (Zustand)
+│   ├── src/stores/         # Custom state management stores
 │   └── src/api/            # GraphQL API client
 ├── server/                  # Go backend (GraphQL + libvips)
 │   ├── cmd/                # CLI tools and server
@@ -42,51 +33,6 @@ imagor-studio/
 ├── graphql/                # GraphQL schemas
 ```
 
-## Development
-
-### Prerequisites
-
-- **Node.js** 20+
-- **Go** 1.21+
-- **Docker** (recommended)
-- **libvips** (for image processing)
-
-### Commands
-
-```bash
-make check-deps    # Check dependencies
-make install       # Install all dependencies
-make dev          # Start development environment
-make test         # Run tests
-make build        # Build for production
-```
-
-## Configuration
-
-### Environment Variables
-
-```bash
-# Server
-PORT=8000
-HOST=0.0.0.0
-
-# Storage
-STORAGE_TYPE=filesystem  # or s3
-STORAGE_PATH=./storage
-
-# Authentication
-JWT_SECRET=your-secret-key
-ADMIN_EMAIL=admin@example.com
-
-# Image Processing
-IMAGOR_ENDPOINT=http://localhost:8080
-```
-
-### Storage Options
-
-- **File System**: Local storage in `./storage` (default)
-- **S3**: Configure with `S3_BUCKET`, `S3_REGION` environment variables
-
 ## Architecture
 
 ### Backend (Go)
@@ -94,28 +40,15 @@ IMAGOR_ENDPOINT=http://localhost:8080
 - **Image Processing** via [imagor](https://github.com/cshum/imagor) and libvips
 - **Authentication** with JWT
 - **Storage** abstraction (filesystem/S3)
+- **Configuration Management** - Registry-based system with environment/CLI override support
+- **Encryption** - AES-256-GCM encryption for sensitive configuration data
 
 ### Frontend (React)
 - **Vite** + TypeScript + Tailwind CSS
+- **TanStack Router** for type-safe routing with loaders
 - **shadcn/ui** component library
-- **Zustand** for state management
+- **Custom Store** implementation with React integration
 - **GraphQL** client with code generation
-
-## Deployment
-
-### Docker
-
-```bash
-make docker-build
-docker-compose up -d
-```
-
-### Manual
-
-```bash
-make release
-./server/bin/server
-```
 
 ## Documentation
 
