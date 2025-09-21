@@ -1,6 +1,6 @@
 # Build Guide for Imagor Studio
 
-This document provides comprehensive build instructions for the Imagor Studio project.
+This document provides build instructions for the Imagor Studio project.
 
 ## Quick Start
 
