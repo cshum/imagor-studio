@@ -7,11 +7,7 @@ Self-hosted image gallery and live editing web application, for creators and pro
 * Advanced image editing with real-time preview, color adjustments, effects, cropping, and instant URL generation for transformed images.
 * Touch-optimized interface that works seamlessly on mobile while maintaining desktop power and full functionality.
 
-<div align="center">
-  <img src="assets/gallery.jpg" alt="Gallery" width="32%" />
-  <img src="assets/editor.jpg" alt="Editor" width="32%" />
-  <img src="assets/mobile.jpg" alt="Mobile" width="32%" />
-</div>
+![Screenshots](assets/screenshots.jpg)
 
 ## Quick Start
 
