@@ -20,7 +20,7 @@ open http://localhost:8000
 
 ## Architecture
 
-### Backend (Go)
+### Server (Go)
 - **GraphQL API** with gqlgen
 - **Image Processing** via [imagor](https://github.com/cshum/imagor) and libvips
 - **Authentication** with JWT
@@ -28,7 +28,7 @@ open http://localhost:8000
 - **Configuration Management** - Registry-based system with environment/CLI override support
 - **Encryption** - AES-256-GCM encryption for sensitive configuration data
 
-### Frontend (React)
+### Web (React)
 - **Vite** + TypeScript + Tailwind CSS
 - **TanStack Router** for type-safe routing with loaders
 - **shadcn/ui** component library
