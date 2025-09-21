@@ -17,22 +17,6 @@ docker-compose up -d
 open http://localhost:8000
 ```
 
-## Project Structure
-
-```
-imagor-studio/
-├── web/                     # React frontend (Vite + TypeScript + Tailwind)
-│   ├── src/components/      # UI components with shadcn/ui
-│   ├── src/pages/          # Application pages
-│   ├── src/stores/         # Custom state management stores
-│   └── src/api/            # GraphQL API client
-├── server/                  # Go backend (GraphQL + libvips)
-│   ├── cmd/                # CLI tools and server
-│   ├── internal/           # Core application logic
-│   └── static/             # Embedded static assets
-├── graphql/                # GraphQL schemas
-```
-
 ## Architecture
 
 ### Backend (Go)
