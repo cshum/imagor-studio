@@ -127,6 +127,22 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
 
     return authStore.dispatch({ type: 'LOGOUT' })
   } catch (error) {
+    // Token validation failed - check if this is a first run scenario
+    // This handles the case where user has an old token but backend is fresh
+    try {
+      const firstRunResponse = await checkFirstRun()
+      if (firstRunResponse.isFirstRun) {
+        // Clear invalid token and set first run state
+        removeToken()
+        authStore.dispatch({
+          type: 'SET_FIRST_RUN',
+          payload: { isFirstRun: true },
+        })
+        return authStore.dispatch({ type: 'LOGOUT' })
+      }
+    } catch {
+      // If first run check also fails, proceed with normal error handling
+    }
     const errorMessage = error instanceof Error ? error.message : 'Authentication failed'
     authStore.dispatch({ type: 'SET_ERROR', payload: { error: errorMessage } })
     return authStore.dispatch({ type: 'LOGOUT' })
