@@ -108,10 +108,10 @@ ENV MALLOC_ARENA_MAX=2
 ENV LD_PRELOAD=/usr/local/lib/libjemalloc.so
 
 ENV PORT=8000
-ENV STORAGE_PATH=/app/data/storage
+ENV STORAGE_PATH=/app/gallery
 
 # Create data directory structure
-RUN mkdir -p /app/data/storage
+RUN mkdir -p /app/gallery
 
 # Set working directory
 WORKDIR /app

@@ -72,6 +72,7 @@ func (p *Provider) NewFileStorage(cfg *config.Config) (storage.Storage, error) {
 	return filestorage.New(cfg.FileBaseDir,
 		filestorage.WithMkdirPermission(cfg.FileMkdirPermissions),
 		filestorage.WithWritePermission(cfg.FileWritePermissions),
+		filestorage.WithLogger(p.logger),
 	)
 }
 
@@ -307,7 +308,7 @@ func (p *Provider) loadFileConfigFromResults(resultMap map[string]registryutil.E
 	if result := resultMap["config.file_base_dir"]; result.Exists {
 		cfg.FileBaseDir = result.Value
 	} else {
-		cfg.FileBaseDir = "/app/data/storage" // Default
+		cfg.FileBaseDir = "/app/gallery" // Default
 	}
 
 	if result := resultMap["config.file_mkdir_permissions"]; result.Exists {
