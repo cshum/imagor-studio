@@ -33,12 +33,6 @@ http://localhost:8000
 - Creates persistent storage for the app database (SQLite)
 - Redirects to admin setup process on first launch
 
-### Admin Setup
-
-1. **Create Admin Account**: Set up your administrator credentials
-2. **Storage Configuration**: Use `/app/gallery` for access
-3. **System Settings**: Configure app preferences (optional)
-
 ## Configuration
 
 For detailed server configuration options including database setup, environment variables, CLI arguments, and system registry settings, see [CONFIGURATION.md](CONFIGURATION.md).
