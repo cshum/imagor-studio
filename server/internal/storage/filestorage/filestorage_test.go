@@ -12,6 +12,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zaptest"
 )
 
 func setupTestFileStorage(t *testing.T) (*FileStorage, string) {
@@ -305,4 +306,140 @@ func TestFileStorage_ListWithBaseDir(t *testing.T) {
 	// Verify the full path of the file
 	fullPath := filepath.Join(tempDir, "base", "dir", "test.txt")
 	assert.FileExists(t, fullPath)
+}
+
+func TestFileStorage_ListWithPermissionErrors(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "filestorage_permission_test")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	// Create a logger for testing
+	logger := zaptest.NewLogger(t)
+
+	fs, err := New(tempDir, WithLogger(logger))
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	// Create some accessible files
+	accessibleFiles := []string{"file1.txt", "file2.txt"}
+	for _, file := range accessibleFiles {
+		err := fs.Put(ctx, file, bytes.NewReader([]byte("content")))
+		require.NoError(t, err)
+	}
+
+	// Create a directory with restricted permissions (simulate inaccessible directory)
+	restrictedDir := filepath.Join(tempDir, "restricted")
+	err = os.Mkdir(restrictedDir, 0000) // No permissions
+	require.NoError(t, err)
+
+	// On some systems, we might still be able to access it as root/owner
+	// So let's test the behavior regardless
+	result, err := fs.List(ctx, "", storage.ListOptions{})
+
+	// The list operation should succeed (not fail completely)
+	assert.NoError(t, err)
+
+	// We should get at least the accessible files
+	assert.GreaterOrEqual(t, result.TotalCount, len(accessibleFiles))
+	assert.GreaterOrEqual(t, len(result.Items), len(accessibleFiles))
+
+	// Verify accessible files are included
+	names := make([]string, len(result.Items))
+	for i, item := range result.Items {
+		names[i] = item.Name
+	}
+
+	for _, expectedFile := range accessibleFiles {
+		assert.Contains(t, names, expectedFile)
+	}
+
+	// Restore permissions for cleanup
+	os.Chmod(restrictedDir, 0755)
+}
+
+func TestFileStorage_ListDirectoryNotAccessible(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "filestorage_dir_test")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	logger := zaptest.NewLogger(t)
+	fs, err := New(tempDir, WithLogger(logger))
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	// Try to list a non-existent directory - should fail fast
+	_, err = fs.List(ctx, "non_existent_directory", storage.ListOptions{})
+	assert.Error(t, err)
+}
+
+func TestFileStorage_ListWithLogger(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "filestorage_logger_test")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	// Create a logger for testing
+	logger := zaptest.NewLogger(t)
+
+	fs, err := New(tempDir, WithLogger(logger))
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	// Create some files
+	files := []string{"file1.txt", "file2.txt"}
+	for _, file := range files {
+		err := fs.Put(ctx, file, bytes.NewReader([]byte("content")))
+		require.NoError(t, err)
+	}
+
+	// List files - should work normally with logger
+	result, err := fs.List(ctx, "", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, len(files), result.TotalCount)
+	assert.Len(t, result.Items, len(files))
+}
+
+func TestFileStorage_ListWithoutLogger(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "filestorage_no_logger_test")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	// Create file storage without logger (nil logger)
+	fs, err := New(tempDir)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	// Create some files
+	files := []string{"file1.txt", "file2.txt"}
+	for _, file := range files {
+		err := fs.Put(ctx, file, bytes.NewReader([]byte("content")))
+		require.NoError(t, err)
+	}
+
+	// List files - should work normally even without logger
+	result, err := fs.List(ctx, "", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, len(files), result.TotalCount)
+	assert.Len(t, result.Items, len(files))
+}
+
+func TestFileStorage_ListEmptyDirectoryWithLogger(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "filestorage_empty_logger_test")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	logger := zaptest.NewLogger(t)
+	fs, err := New(tempDir, WithLogger(logger))
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	// List empty directory - should work and return empty result
+	result, err := fs.List(ctx, "", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 0, result.TotalCount)
+	assert.Len(t, result.Items, 0)
 }

@@ -72,6 +72,7 @@ func (p *Provider) NewFileStorage(cfg *config.Config) (storage.Storage, error) {
 	return filestorage.New(cfg.FileBaseDir,
 		filestorage.WithMkdirPermission(cfg.FileMkdirPermissions),
 		filestorage.WithWritePermission(cfg.FileWritePermissions),
+		filestorage.WithLogger(p.logger),
 	)
 }
 
