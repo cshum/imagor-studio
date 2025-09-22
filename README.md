@@ -18,6 +18,10 @@ docker-compose up -d
 open http://localhost:8000
 ```
 
+## Configuration
+
+For detailed server configuration options including database setup, environment variables, CLI arguments, and system registry settings, see [CONFIGURATION.md](CONFIGURATION.md).
+
 ## Architecture
 
 ### Server (Go)
