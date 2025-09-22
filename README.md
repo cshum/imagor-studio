@@ -39,8 +39,6 @@ http://localhost:8000
 2. **Storage Configuration**: Use `/app/gallery` for access
 3. **System Settings**: Configure app preferences (optional)
 
-The storage system now gracefully handles inaccessible files and directories, making it safe to mount directories with mixed permissions.
-
 ## Configuration
 
 For detailed server configuration options including database setup, environment variables, CLI arguments, and system registry settings, see [CONFIGURATION.md](CONFIGURATION.md).
