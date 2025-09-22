@@ -262,7 +262,7 @@ func (r *queryResolver) getFileStorageConfig(ctx context.Context) (*gql.FileStor
 	}
 
 	// Set defaults and override with registry values if they exist
-	baseDir := "/app/data/storage" // Default
+	baseDir := "/app/gallery" // Default
 	if result := resultMap["config.file_base_dir"]; result.Exists {
 		baseDir = result.Value
 	}

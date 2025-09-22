@@ -135,7 +135,7 @@ DATABASE_URL=mysql://user:password@localhost/imagor_studio
 
 | Flag | Environment Variable | Default | Type | Encrypted | Description |
 |------|---------------------|---------|------|-----------|-------------|
-| `--file-base-dir` | `FILE_BASE_DIR` | `/app/data/storage` | string | No | Base directory for file storage |
+| `--file-base-dir` | `FILE_BASE_DIR` | `/app/gallery` | string | No | Base directory for file storage |
 | `--file-mkdir-permissions` | `FILE_MKDIR_PERMISSIONS` | `0755` | octal | No | Directory creation permissions |
 | `--file-write-permissions` | `FILE_WRITE_PERMISSIONS` | `0644` | octal | No | File write permissions |
 
