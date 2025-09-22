@@ -2,7 +2,6 @@ import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
 import { authStore, getAuth } from '@/stores/auth-store.ts'
 import { folderTreeStore } from '@/stores/folder-tree-store.ts'
-import { checkLicense } from '@/stores/license-store.ts'
 import { initializeLocale } from '@/stores/locale-store.ts'
 import { themeStore } from '@/stores/theme-store.ts'
 
@@ -23,8 +22,6 @@ export const rootLoader = async (): Promise<RootLoaderData> => {
   }
   if (getAuth().state === 'authenticated') {
     await initializeLocale(userLocaleStorage)
-    // Check license status when authenticated
-    checkLicense()
   }
   // Get home title from the folder tree store
   const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
