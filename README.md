@@ -19,7 +19,7 @@ docker run -p 8000:8000 --rm \
   -v $(pwd)/imagor-studio-data:/app/data \
   -v ~/Pictures:/app/gallery:ro \
   -e DATABASE_URL="sqlite:///app/data/imagor-studio.db" \
-  imagor-studio
+  shumc/imagor-studio
 ```
 
 Open in browser 
