@@ -35,13 +35,9 @@ open http://localhost:8000
 - **Custom Store** implementation with React integration
 - **GraphQL** client with code generation
 
-## Documentation
-
-- **[BUILD.md](BUILD.md)** - Build instructions
-- **[DOCKER.md](DOCKER.md)** - Docker deployment
-
 ## Ecosystem
 
-Part of the imagor image processing ecosystem:
+Part of the imagor ecosystem:
 - **[imagor](https://github.com/cshum/imagor)** - Fast, secure image processing server and Go library, using libvips
 - **[vipsgen](https://github.com/cshum/vipsgen)** - Type-safe, comprehensive Go binding generator for libvips
+- **[imagorvideo](https://github.com/cshum/imagorvideo)** - imagor video thumbnail server in Go and ffmpeg C bindings
