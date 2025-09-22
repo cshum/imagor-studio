@@ -1,5 +1,7 @@
 # Imagor Studio
 
+[![Test Status](https://github.com/cshum/imagor-studio/workflows/test/badge.svg)](https://github.com/cshum/imagor-studio/actions/workflows/test.yml)
+
 Self-hosted image gallery and live editing web application, for creators and professionals
 
 * High-performance image gallery with virtual scrolling and live editing capabilities powered by imagor.
