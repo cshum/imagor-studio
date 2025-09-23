@@ -26,6 +26,7 @@ import (
 	"github.com/cshum/imagor/processor/vipsprocessor"
 	"github.com/cshum/imagor/storage/filestorage"
 	"github.com/cshum/imagor/storage/s3storage"
+	"github.com/cshum/imagorvideo"
 	"go.uber.org/zap"
 )
 
@@ -376,8 +377,12 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error) {
 	var options []imagor.Option
 
-	// Add vipsprocessor with default configuration
+	// Add processors in order: video processor first, then vips processor
+	// The video processor will handle video/audio files and forward others to vips
 	options = append(options, imagor.WithProcessors(
+		imagorvideo.NewProcessor(
+			imagorvideo.WithLogger(p.logger),
+		),
 		vipsprocessor.NewProcessor(
 			vipsprocessor.WithLogger(p.logger),
 		),
