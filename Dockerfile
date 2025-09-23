@@ -6,39 +6,32 @@ FROM node:${NODE_VERSION}-alpine AS web-builder
 
 WORKDIR /app/web
 
-# Copy package files
 COPY web/package*.json ./
 
-# Install dependencies
 RUN npm ci
 
-# Copy web source code
 COPY web/ ./
 
 # Build the frontend (outputs to ../server/static)
 RUN npm run build
 
-# Stage 2: Build server using builder image with libvips + FFmpeg
+# Stage 2: Build server using builder image with go + libvips + FFmpeg
 FROM ghcr.io/cshum/imagor-studio-builder:${BUILDER_IMAGE_TAG} AS server-builder
 
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
 WORKDIR /app
 
-# Copy Go module files
 COPY server/go.mod server/go.sum ./server/
 
-# Download Go dependencies
 RUN cd server && go mod download
 
 # Copy static files from web build
 COPY --from=web-builder /app/server/static ./server/static
 
-# Copy server source code
 COPY server/ ./server/
 COPY graphql/ ./graphql/
 
-# Build the server binary
 RUN cd server && go build -o /go/bin/imagor-studio ./cmd/server/main.go
 
 # Stage 3: Runtime image
@@ -48,7 +41,6 @@ LABEL maintainer="imagor-studio"
 COPY --from=server-builder /usr/local/lib /usr/local/lib
 COPY --from=server-builder /etc/ssl/certs /etc/ssl/certs
 
-# Install runtime dependencies including video processing libraries
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
   apt-get install --no-install-recommends -y \
@@ -65,7 +57,6 @@ RUN DEBIAN_FRONTEND=noninteractive \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Copy the server binary
 COPY --from=server-builder /go/bin/imagor-studio /usr/local/bin/imagor-studio
 
 ENV VIPS_WARNING=0
@@ -76,7 +67,6 @@ ENV PORT=8000
 
 RUN mkdir -p /app/gallery && mkdir -p /app/data
 
-# Set working directory
 WORKDIR /app
 
 # Use unprivileged user
