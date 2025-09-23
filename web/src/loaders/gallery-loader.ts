@@ -192,7 +192,19 @@ export const imageLoader = async ({
     throw new Error('Image not found')
   }
 
-  // Use the full-size thumbnail URL for the detail view
+  // Fetch video extensions from registry to match galleryLoader behavior
+  let videoExtensions: string
+  try {
+    const registryResult = await getSystemRegistryMultiple(['config.app_video_extensions'])
+    const videoExtensionsEntry = registryResult.find((r) => r.key === 'config.app_video_extensions')
+    videoExtensions = videoExtensionsEntry?.value || DEFAULT_VIDEO_EXTENSIONS
+  } catch {
+    videoExtensions = DEFAULT_VIDEO_EXTENSIONS
+  }
+
+  const isVideo = isVideoFile(fileStat.name, videoExtensions)
+
+  // Use the full-size thumbnail URL for the detail view (same for both images and videos)
   const fullSizeSrc = getFullImageUrl(
     fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '',
   )
@@ -201,7 +213,7 @@ export const imageLoader = async ({
 
   // Fetch real EXIF data from imagor meta API
   let imageInfo = convertMetadataToImageInfo(null, fileStat.name, galleryKey)
-  if (fileStat.thumbnailUrls.meta) {
+  if (fileStat.thumbnailUrls.meta && !isVideo) {
     try {
       const metadata = await fetchImageMetadata(getFullImageUrl(fileStat.thumbnailUrls.meta))
       imageInfo = convertMetadataToImageInfo(metadata, fileStat.name, galleryKey)
@@ -215,7 +227,9 @@ export const imageLoader = async ({
     thumbnailUrls: fileStat.thumbnailUrls,
     imageKey: fileStat.name,
     imageSrc: fullSizeSrc,
+    originalSrc: getFullImageUrl(fileStat.thumbnailUrls.original || ''),
     imageName: fileStat.name,
+    isVideo,
     imageInfo,
   }
 

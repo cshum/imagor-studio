@@ -16,6 +16,7 @@ export interface GalleryImage extends Omit<FileInfoFragment, 'path' | 'size' | '
   imageName: string
   imageKey: string
   isVideo?: boolean
+  originalSrc?: string
   imageInfo?: ImageInfo
 }
 
@@ -251,6 +252,7 @@ export function ImageView({
               className='absolute top-0 right-0 bottom-0 left-0 bg-black/80'
             ></motion.div>
             <TransformWrapper
+              disabled={image.isVideo}
               initialScale={1}
               minScale={1}
               centerOnInit={true}
@@ -330,25 +332,38 @@ export function ImageView({
                         }}
                         className='absolute z-10 flex h-full w-full items-center justify-center'
                       >
-                        <motion.img
-                          src={image.imageSrc}
-                          alt={image.imageName}
-                          initial={false}
-                          animate={{
-                            width: dimensions.width,
-                            height: dimensions.height,
-                            transition: { duration: 0 },
-                          }}
-                          exit={{
-                            scale: 0.5,
-                            transition: { duration: duration },
-                          }}
-                          className='max-h-full max-w-full object-contain'
-                        />
+                        {image.isVideo ? (
+                          <video
+                            src={image.originalSrc}
+                            poster={image.imageSrc}
+                            controls
+                            className='max-h-full max-w-full object-contain'
+                            style={{
+                              width: dimensions.width,
+                              height: dimensions.height,
+                            }}
+                          />
+                        ) : (
+                          <motion.img
+                            src={image.imageSrc}
+                            alt={image.imageName}
+                            initial={false}
+                            animate={{
+                              width: dimensions.width,
+                              height: dimensions.height,
+                              transition: { duration: 0 },
+                            }}
+                            exit={{
+                              scale: 0.5,
+                              transition: { duration: duration },
+                            }}
+                            className='max-h-full max-w-full object-contain'
+                          />
+                        )}
                       </motion.div>
                     )}
                   </TransformComponent>
-                  {!isSlideshow && (
+                  {!isSlideshow && !image.isVideo && (
                     <div className='absolute right-6 bottom-4 z-10 flex space-x-4'>
                       {scale > 1 && (
                         <button
@@ -395,7 +410,7 @@ export function ImageView({
             )}
 
             <div className='absolute top-4 right-6 z-60 flex space-x-2'>
-              {authState.state === 'authenticated' && (
+              {authState.state === 'authenticated' && !image.isVideo && (
                 <button
                   onClick={handleImagorClick}
                   className='rounded-full bg-black/50 px-4 py-2 text-white transition-colors hover:bg-black/75'
