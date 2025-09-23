@@ -223,7 +223,7 @@ export const imageLoader = async ({
 
   // Fetch real EXIF data from imagor meta API
   let imageInfo = convertMetadataToImageInfo(null, fileStat.name, galleryKey)
-  if (fileStat.thumbnailUrls.meta && !isVideo) {
+  if (fileStat.thumbnailUrls.meta) {
     try {
       const metadata = await fetchImageMetadata(getFullImageUrl(fileStat.thumbnailUrls.meta))
       imageInfo = convertMetadataToImageInfo(metadata, fileStat.name, galleryKey)
