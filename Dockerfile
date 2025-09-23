@@ -1,6 +1,5 @@
-ARG GOLANG_VERSION=1.25.1
 ARG NODE_VERSION=22.19.0
-ARG VIPS_VERSION=8.17.2
+ARG BASE_IMAGE_TAG=ffmpeg-7.1.1-vips-8.17.2-go-1.25.1
 
 # Stage 1: Build web frontend
 FROM node:${NODE_VERSION}-alpine AS web-builder
@@ -20,7 +19,7 @@ COPY web/ ./
 RUN npm run build
 
 # Stage 2: Build server using base image with libvips + FFmpeg
-FROM ghcr.io/cshum/imagor-studio-base:latest AS server-builder
+FROM ghcr.io/cshum/imagor-studio-base:${BASE_IMAGE_TAG} AS server-builder
 
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
