@@ -6,7 +6,6 @@ import { SortOption, SortOrder } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
-import { isVideoFile } from '@/lib/file-utils'
 import { preloadImage } from '@/lib/preload-image.ts'
 import {
   FolderNode,
@@ -33,6 +32,17 @@ export interface ImageLoaderData {
 const DEFAULT_IMAGE_EXTENSIONS =
   '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif'
 const DEFAULT_VIDEO_EXTENSIONS = '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg'
+
+/**
+ * Check if a file is a video file based on its extension
+ * @param filename - The filename to check
+ * @param videoExtensions - Comma-separated list of video extensions
+ * @returns true if the file is a video file
+ */
+const isVideoFile = (filename: string, videoExtensions: string): boolean => {
+  const ext = '.' + filename.split('.').pop()?.toLowerCase()
+  return videoExtensions.toLowerCase().includes(ext)
+}
 
 /**
  * Gallery loader using imagor for thumbnail generation
