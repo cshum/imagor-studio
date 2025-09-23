@@ -377,21 +377,15 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error) {
 	var options []imagor.Option
 
-	// Add video processor first (for video/audio files)
-	videoProcessor := imagorvideo.NewProcessor(
-		imagorvideo.WithLogger(p.logger),
-	)
-
-	// Add vipsprocessor for image processing
-	vipsProcessor := vipsprocessor.NewProcessor(
-		vipsprocessor.WithLogger(p.logger),
-	)
-
 	// Add processors in order: video processor first, then vips processor
 	// The video processor will handle video/audio files and forward others to vips
 	options = append(options, imagor.WithProcessors(
-		videoProcessor,
-		vipsProcessor,
+		imagorvideo.NewProcessor(
+			imagorvideo.WithLogger(p.logger),
+		),
+		vipsprocessor.NewProcessor(
+			vipsprocessor.WithLogger(p.logger),
+		),
 	))
 
 	// Use server's JWT secret with SHA256 and 32-char truncation
