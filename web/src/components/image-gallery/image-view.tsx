@@ -298,14 +298,25 @@ export function ImageView({
                         className='absolute flex items-center justify-center'
                       >
                         {image.isVideo ? (
-                          <video
+                          <motion.video
                             src={image.originalSrc}
                             poster={image.imageSrc}
                             controls
                             className='max-h-full max-w-full object-contain'
-                            style={{
+                            initial={{
+                              width: initialPosition.width,
+                              height: initialPosition.height,
+                              objectFit: 'cover',
+                            }}
+                            animate={{
                               width: dimensions.width,
                               height: dimensions.height,
+                              objectFit: 'cover',
+                            }}
+                            exit={{
+                              width: initialPosition.width,
+                              height: initialPosition.height,
+                              objectFit: 'cover',
                             }}
                           />
                         ) : (
