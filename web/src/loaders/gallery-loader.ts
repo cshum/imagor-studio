@@ -34,14 +34,14 @@ const DEFAULT_IMAGE_EXTENSIONS =
 const DEFAULT_VIDEO_EXTENSIONS = '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg'
 
 /**
- * Check if a file is a video file based on its extension
+ * Check if a file extension matches any in a comma-separated list of extensions
  * @param filename - The filename to check
- * @param videoExtensions - Comma-separated list of video extensions
- * @returns true if the file is a video file
+ * @param extensions - Comma-separated list of extensions (e.g., '.mp4,.webm,.avi')
+ * @returns true if the file extension is in the extensions list
  */
-const isVideoFile = (filename: string, videoExtensions: string): boolean => {
+const hasExtension = (filename: string, extensions: string): boolean => {
   const ext = '.' + filename.split('.').pop()?.toLowerCase()
-  return videoExtensions.toLowerCase().includes(ext)
+  return extensions.toLowerCase().includes(ext)
 }
 
 /**
@@ -140,7 +140,7 @@ export const galleryLoader = async ({
       imageKey: item.name,
       imageSrc: item.thumbnailUrls?.grid || '',
       imageName: item.name,
-      isVideo: isVideoFile(item.name, videoExtensions),
+      isVideo: hasExtension(item.name, videoExtensions),
     }))
 
   // Get home title from the folder tree store
@@ -212,7 +212,7 @@ export const imageLoader = async ({
     videoExtensions = DEFAULT_VIDEO_EXTENSIONS
   }
 
-  const isVideo = isVideoFile(fileStat.name, videoExtensions)
+  const isVideo = hasExtension(fileStat.name, videoExtensions)
 
   // Use the full-size thumbnail URL for the detail view (same for both images and videos)
   const fullSizeSrc = getFullImageUrl(
