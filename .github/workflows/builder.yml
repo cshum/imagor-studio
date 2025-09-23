@@ -1,20 +1,20 @@
-name: Build and Push Base Image
+name: Build and Push Builder Image
 
 on:
   push:
     paths:
-      - 'Dockerfile.base'
-      - '.github/workflows/base.yml'
+      - 'Dockerfile.builder'
+      - '.github/workflows/builder.yml'
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}-base
+  IMAGE_NAME: ${{ github.repository }}-builder
   GOLANG_VERSION: '1.25.1'
   FFMPEG_VERSION: '7.1.1'
   VIPS_VERSION: '8.17.2'
 
 jobs:
-  build-base:
+  build-builder:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -55,11 +55,11 @@ jobs:
             type=raw,value=${{ steps.args.outputs.version_tag }}
             type=sha,prefix={{branch}}-
 
-      - name: Build and push base image
+      - name: Build and push builder image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.base
+          file: ./Dockerfile.builder
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
