@@ -53,6 +53,26 @@ const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
     description: t('pages.admin.guestModeDescription'),
     defaultValue: false,
   },
+  {
+    key: 'config.app_default_sort_by',
+    type: 'dual-select',
+    label: 'File Sorting',
+    description: 'Choose how files and folders are sorted',
+    defaultValue: 'NAME',
+    options: ['NAME', 'MODIFIED_TIME', 'SIZE'],
+    optionLabels: {
+      NAME: 'Name',
+      MODIFIED_TIME: 'Date Modified',
+      SIZE: 'File Size',
+    },
+    secondaryKey: 'config.app_default_sort_order',
+    secondaryDefaultValue: 'ASC',
+    secondaryOptions: ['ASC', 'DESC'],
+    secondaryOptionLabels: {
+      ASC: 'Ascending',
+      DESC: 'Descending',
+    },
+  },
 ]
 
 // Step Content Components
@@ -335,6 +355,15 @@ export function AdminSetupPage() {
         const defaultValue = setting.defaultValue.toString()
         if (currentValue && currentValue !== defaultValue) {
           changedValues[setting.key] = currentValue
+        }
+
+        // Check secondary key for dual-select
+        if (setting.type === 'dual-select' && setting.secondaryKey) {
+          const currentSecondaryValue = settingsFormValues[setting.secondaryKey]
+          const secondaryDefaultValue = setting.secondaryDefaultValue?.toString() || ''
+          if (currentSecondaryValue && currentSecondaryValue !== secondaryDefaultValue) {
+            changedValues[setting.secondaryKey] = currentSecondaryValue
+          }
         }
       })
 
