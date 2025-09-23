@@ -297,26 +297,39 @@ export function ImageView({
                         }}
                         className='absolute flex items-center justify-center'
                       >
-                        <motion.img
-                          src={image.imageSrc}
-                          alt={image.imageName}
-                          initial={{
-                            width: initialPosition.width,
-                            height: initialPosition.height,
-                            objectFit: 'cover',
-                          }}
-                          animate={{
-                            width: dimensions.width,
-                            height: dimensions.height,
-                            objectFit: 'cover',
-                          }}
-                          exit={{
-                            width: initialPosition.width,
-                            height: initialPosition.height,
-                            objectFit: 'cover',
-                          }}
-                          className='max-h-full max-w-full'
-                        />
+                        {image.isVideo ? (
+                          <video
+                            src={image.originalSrc}
+                            poster={image.imageSrc}
+                            controls
+                            className='max-h-full max-w-full object-contain'
+                            style={{
+                              width: dimensions.width,
+                              height: dimensions.height,
+                            }}
+                          />
+                        ) : (
+                          <motion.img
+                            src={image.imageSrc}
+                            alt={image.imageName}
+                            initial={{
+                              width: initialPosition.width,
+                              height: initialPosition.height,
+                              objectFit: 'cover',
+                            }}
+                            animate={{
+                              width: dimensions.width,
+                              height: dimensions.height,
+                              objectFit: 'cover',
+                            }}
+                            exit={{
+                              width: initialPosition.width,
+                              height: initialPosition.height,
+                              objectFit: 'cover',
+                            }}
+                            className='max-h-full max-w-full'
+                          />
+                        )}
                       </motion.div>
                     ) : (
                       <motion.div
@@ -440,7 +453,7 @@ export function ImageView({
               </button>
             </div>
 
-            {scale <= 1 && (
+            {scale <= 1 && !image.isVideo && (
               <motion.div
                 className='absolute top-0 right-0 bottom-0 left-0 z-1'
                 onClick={handleOverlayClick}
