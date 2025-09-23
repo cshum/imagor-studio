@@ -26,6 +26,7 @@ import (
 	"github.com/cshum/imagor/processor/vipsprocessor"
 	"github.com/cshum/imagor/storage/filestorage"
 	"github.com/cshum/imagor/storage/s3storage"
+	"github.com/cshum/imagorvideo"
 	"go.uber.org/zap"
 )
 
@@ -376,11 +377,21 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error) {
 	var options []imagor.Option
 
-	// Add vipsprocessor with default configuration
+	// Add video processor first (for video/audio files)
+	videoProcessor := imagorvideo.NewProcessor(
+		imagorvideo.WithLogger(p.logger),
+	)
+
+	// Add vipsprocessor for image processing
+	vipsProcessor := vipsprocessor.NewProcessor(
+		vipsprocessor.WithLogger(p.logger),
+	)
+
+	// Add processors in order: video processor first, then vips processor
+	// The video processor will handle video/audio files and forward others to vips
 	options = append(options, imagor.WithProcessors(
-		vipsprocessor.NewProcessor(
-			vipsprocessor.WithLogger(p.logger),
-		),
+		videoProcessor,
+		vipsProcessor,
 	))
 
 	// Use server's JWT secret with SHA256 and 32-char truncation
