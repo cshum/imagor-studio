@@ -5,7 +5,7 @@
 
 Self-hosted image gallery and live editing web application, for creators and professionals
 
-* High-performance image gallery with virtual scrolling and live editing capabilities powered by imagor.
+* High-performance image and video gallery with virtual scrolling and live editing capabilities powered by imagor.
 * Zero-configuration setup with universal storage support and non-destructive workflow.
 * Advanced image editing with real-time preview, color adjustments, effects, cropping, and instant URL generation for transformed images.
 * Touch-optimized interface that works seamlessly on mobile while maintaining desktop power and full functionality.
