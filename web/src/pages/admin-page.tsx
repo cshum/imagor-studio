@@ -45,11 +45,18 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     },
   },
   {
-    key: 'config.app_file_extensions',
+    key: 'config.app_image_extensions',
     type: 'text',
-    label: 'File Extensions',
-    description: 'Comma-separated list of file extensions to show (e.g., .jpg,.png,.gif)',
+    label: 'Image File Extensions',
+    description: 'Comma-separated list of image file extensions to show (e.g., .jpg,.png,.gif)',
     defaultValue: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif',
+  },
+  {
+    key: 'config.app_video_extensions',
+    type: 'text',
+    label: 'Video File Extensions',
+    description: 'Comma-separated list of video file extensions to show (e.g., .mp4,.webm,.avi)',
+    defaultValue: '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg',
   },
   {
     key: 'config.app_show_hidden',

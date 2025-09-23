@@ -1060,9 +1060,11 @@ func TestRegisterAdmin(t *testing.T) {
 					extensionsFound := false
 					hiddenFound := false
 					for _, entry := range entries {
-						if entry.Key == "config.app_file_extensions" &&
-							entry.Value == ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif" &&
-							!entry.IsEncrypted {
+						if (entry.Key == "config.app_image_extensions" &&
+							entry.Value == ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif") ||
+							(entry.Key == "config.app_video_extensions" &&
+								entry.Value == ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg") &&
+								!entry.IsEncrypted {
 							extensionsFound = true
 						}
 						if entry.Key == "config.app_show_hidden" &&
