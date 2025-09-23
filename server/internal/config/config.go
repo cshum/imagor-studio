@@ -52,9 +52,10 @@ type Config struct {
 	ImagorSignerTruncate int    // Signer truncation length
 
 	// Application Configuration
-	AppHomeTitle      string // Custom home page title
-	AppFileExtensions string // Comma-separated list of file extensions
-	AppShowHidden     bool   // Show hidden files starting with dot
+	AppHomeTitle       string // Custom home page title
+	AppImageExtensions string // Comma-separated list of image file extensions
+	AppVideoExtensions string // Comma-separated list of video file extensions
+	AppShowHidden      bool   // Show hidden files starting with dot
 
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
@@ -96,9 +97,10 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		imagorSignerType     = fs.String("imagor-signer-type", "", "imagor signer algorithm: sha1, sha256, sha512")
 		imagorSignerTruncate = fs.String("imagor-signer-truncate", "0", "imagor signer truncation length")
 
-		appHomeTitle      = fs.String("app-home-title", "", "custom home page title")
-		appFileExtensions = fs.String("app-file-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heic,.heif", "comma-separated list of file extensions to show in application")
-		appShowHidden     = fs.Bool("app-show-hidden", false, "show hidden files and folders starting with dot")
+		appHomeTitle       = fs.String("app-home-title", "", "custom home page title")
+		appImageExtensions = fs.String("app-image-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif", "comma-separated list of image file extensions to show in application")
+		appVideoExtensions = fs.String("app-video-extensions", ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", "comma-separated list of video file extensions to show in application")
+		appShowHidden      = fs.Bool("app-show-hidden", false, "show hidden files and folders starting with dot")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -197,7 +199,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		ImagorSignerType:     *imagorSignerType,
 		ImagorSignerTruncate: imagorSignerTruncateInt,
 		AppHomeTitle:         *appHomeTitle,
-		AppFileExtensions:    *appFileExtensions,
+		AppImageExtensions:   *appImageExtensions,
+		AppVideoExtensions:   *appVideoExtensions,
 		AppShowHidden:        *appShowHidden,
 		overriddenFlags:      overriddenFlags,
 	}

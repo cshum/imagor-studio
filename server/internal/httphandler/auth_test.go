@@ -1053,19 +1053,23 @@ func TestRegisterAdmin(t *testing.T) {
 
 				// Expect registry population with correct values
 				mockRegistryStore.On("SetMulti", mock.Anything, registrystore.SystemOwnerID, mock.MatchedBy(func(entries []*registrystore.Registry) bool {
-					if len(entries) != 2 {
+					if len(entries) != 3 {
 						return false
 					}
-					// Verify app extensions entry
-					extensionsFound := false
+					// Verify all three entries
+					imageExtensionsFound := false
+					videoExtensionsFound := false
 					hiddenFound := false
 					for _, entry := range entries {
-						if (entry.Key == "config.app_image_extensions" &&
-							entry.Value == ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif") ||
-							(entry.Key == "config.app_video_extensions" &&
-								entry.Value == ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg") &&
-								!entry.IsEncrypted {
-							extensionsFound = true
+						if entry.Key == "config.app_image_extensions" &&
+							entry.Value == ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif" &&
+							!entry.IsEncrypted {
+							imageExtensionsFound = true
+						}
+						if entry.Key == "config.app_video_extensions" &&
+							entry.Value == ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg" &&
+							!entry.IsEncrypted {
+							videoExtensionsFound = true
 						}
 						if entry.Key == "config.app_show_hidden" &&
 							entry.Value == "false" &&
@@ -1073,9 +1077,10 @@ func TestRegisterAdmin(t *testing.T) {
 							hiddenFound = true
 						}
 					}
-					return extensionsFound && hiddenFound
+					return imageExtensionsFound && videoExtensionsFound && hiddenFound
 				})).Return([]*registrystore.Registry{
-					{Key: "config.app_file_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif", IsEncrypted: false},
+					{Key: "config.app_image_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif", IsEncrypted: false},
+					{Key: "config.app_video_extensions", Value: ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", IsEncrypted: false},
 					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
 				}, nil)
 			},
