@@ -19,8 +19,8 @@ COPY web/ ./
 # Build the frontend (outputs to ../server/static)
 RUN npm run build
 
-# Stage 2: Build server using cache image with libvips + FFmpeg
-FROM ghcr.io/cshum/imagor-studio-cache:latest AS server-builder
+# Stage 2: Build server using base image with libvips + FFmpeg
+FROM ghcr.io/cshum/imagor-studio-base:latest AS server-builder
 
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 

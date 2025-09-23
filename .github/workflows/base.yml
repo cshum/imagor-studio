@@ -1,20 +1,20 @@
-name: Build and Push Cache Image
+name: Build and Push Base Image
 
 on:
   push:
     paths:
-      - 'Dockerfile.cache'
-      - '.github/workflows/cache.yml'
+      - 'Dockerfile.base'
+      - '.github/workflows/base.yml'
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}-cache
+  IMAGE_NAME: ${{ github.repository }}-base
   GOLANG_VERSION: '1.25.1'
   FFMPEG_VERSION: '7.1.1'
   VIPS_VERSION: '8.17.2'
 
 jobs:
-  build-cache:
+  build-base:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -55,11 +55,11 @@ jobs:
             type=raw,value=${{ steps.args.outputs.version_tag }}
             type=sha,prefix={{branch}}-
 
-      - name: Build and push cache image
+      - name: Build and push base image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.cache
+          file: ./Dockerfile.base
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
