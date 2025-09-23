@@ -168,8 +168,31 @@ DATABASE_URL=mysql://user:password@localhost/imagor_studio
 | Flag | Environment Variable | Default | Type | Encrypted | Description |
 |------|---------------------|---------|------|-----------|-------------|
 | `--app-home-title` | `APP_HOME_TITLE` | `""` | string | No | Custom home page title |
-| `--app-file-extensions` | `APP_FILE_EXTENSIONS` | `.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.psd,.heic,.heif` | string | No | Comma-separated list of file extensions |
+| `--app-image-extensions` | `APP_IMAGE_EXTENSIONS` | `.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif` | string | No | Comma-separated list of image file extensions |
+| `--app-video-extensions` | `APP_VIDEO_EXTENSIONS` | `.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg` | string | No | Comma-separated list of video file extensions |
 | `--app-show-hidden` | `APP_SHOW_HIDDEN` | `false` | bool | No | Show hidden files starting with dot |
+
+### Video Thumbnail Support
+
+Imagor Studio supports video thumbnail through FFmpeg integration:
+
+- **Image Extensions**: Traditional image formats processed by libvips
+- **Video Extensions**: Video formats processed by FFmpeg for thumbnail generation
+- **Combined Gallery**: Both file types appear together in the gallery interface
+- **Visual Distinction**: Video files display with play icon overlays
+
+#### Example Configuration
+
+```bash
+# Separate image and video extensions
+APP_IMAGE_EXTENSIONS=".jpg,.png,.gif,.webp,.heic"
+APP_VIDEO_EXTENSIONS=".mp4,.webm,.avi,.mov,.mkv"
+
+# Or via command line
+./imagor-studio \
+  --app-image-extensions=".jpg,.png,.gif" \
+  --app-video-extensions=".mp4,.webm,.avi"
+```
 
 ## Security & Encryption
 

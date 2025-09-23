@@ -15,6 +15,8 @@ export interface GalleryImage extends Omit<FileInfoFragment, 'path' | 'size' | '
   imageSrc: string
   imageName: string
   imageKey: string
+  isVideo?: boolean
+  originalSrc?: string
   imageInfo?: ImageInfo
 }
 
@@ -235,6 +237,24 @@ export function ImageView({
     }),
   }
 
+  const overlayHandler = (
+    <motion.div
+      className='absolute top-0 right-0 bottom-0 left-0 z-1'
+      onClick={handleOverlayClick}
+      drag={onPrevImage || onNextImage ? true : 'y'}
+      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+      dragElastic={0.2}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      style={{
+        cursor: 'grab',
+      }}
+      whileDrag={{
+        cursor: 'grabbing',
+      }}
+    />
+  )
+
   return (
     <AnimatePresence onExitComplete={onClose}>
       {isVisible && image && (
@@ -250,6 +270,7 @@ export function ImageView({
               className='absolute top-0 right-0 bottom-0 left-0 bg-black/80'
             ></motion.div>
             <TransformWrapper
+              disabled={image.isVideo}
               initialScale={1}
               minScale={1}
               centerOnInit={true}
@@ -294,26 +315,53 @@ export function ImageView({
                         }}
                         className='absolute flex items-center justify-center'
                       >
-                        <motion.img
-                          src={image.imageSrc}
-                          alt={image.imageName}
-                          initial={{
-                            width: initialPosition.width,
-                            height: initialPosition.height,
-                            objectFit: 'cover',
-                          }}
-                          animate={{
-                            width: dimensions.width,
-                            height: dimensions.height,
-                            objectFit: 'cover',
-                          }}
-                          exit={{
-                            width: initialPosition.width,
-                            height: initialPosition.height,
-                            objectFit: 'cover',
-                          }}
-                          className='max-h-full max-w-full'
-                        />
+                        {image.isVideo ? (
+                          <>
+                            {overlayHandler}
+                            <motion.video
+                              src={image.originalSrc}
+                              poster={image.imageSrc}
+                              controls
+                              className='absolute z-2 max-h-full max-w-full object-contain'
+                              initial={{
+                                width: initialPosition.width,
+                                height: initialPosition.height,
+                                objectFit: 'cover',
+                              }}
+                              animate={{
+                                width: dimensions.width,
+                                height: dimensions.height,
+                                objectFit: 'cover',
+                              }}
+                              exit={{
+                                width: initialPosition.width,
+                                height: initialPosition.height,
+                                objectFit: 'cover',
+                              }}
+                            />
+                          </>
+                        ) : (
+                          <motion.img
+                            src={image.imageSrc}
+                            alt={image.imageName}
+                            initial={{
+                              width: initialPosition.width,
+                              height: initialPosition.height,
+                              objectFit: 'cover',
+                            }}
+                            animate={{
+                              width: dimensions.width,
+                              height: dimensions.height,
+                              objectFit: 'cover',
+                            }}
+                            exit={{
+                              width: initialPosition.width,
+                              height: initialPosition.height,
+                              objectFit: 'cover',
+                            }}
+                            className='max-h-full max-w-full'
+                          />
+                        )}
                       </motion.div>
                     ) : (
                       <motion.div
@@ -329,25 +377,47 @@ export function ImageView({
                         }}
                         className='absolute z-10 flex h-full w-full items-center justify-center'
                       >
-                        <motion.img
-                          src={image.imageSrc}
-                          alt={image.imageName}
-                          initial={false}
-                          animate={{
-                            width: dimensions.width,
-                            height: dimensions.height,
-                            transition: { duration: 0 },
-                          }}
-                          exit={{
-                            scale: 0.5,
-                            transition: { duration: duration },
-                          }}
-                          className='max-h-full max-w-full object-contain'
-                        />
+                        {image.isVideo ? (
+                          <>
+                            {overlayHandler}
+                            <motion.video
+                              src={image.originalSrc}
+                              poster={image.imageSrc}
+                              controls
+                              initial={false}
+                              animate={{
+                                width: dimensions.width,
+                                height: dimensions.height,
+                                transition: { duration: 0 },
+                              }}
+                              exit={{
+                                scale: 0.5,
+                                transition: { duration: duration },
+                              }}
+                              className='absolute z-2 max-h-full max-w-full object-contain'
+                            />
+                          </>
+                        ) : (
+                          <motion.img
+                            src={image.imageSrc}
+                            alt={image.imageName}
+                            initial={false}
+                            animate={{
+                              width: dimensions.width,
+                              height: dimensions.height,
+                              transition: { duration: 0 },
+                            }}
+                            exit={{
+                              scale: 0.5,
+                              transition: { duration: duration },
+                            }}
+                            className='max-h-full max-w-full object-contain'
+                          />
+                        )}
                       </motion.div>
                     )}
                   </TransformComponent>
-                  {!isSlideshow && (
+                  {!isSlideshow && !image.isVideo && (
                     <div className='absolute right-6 bottom-4 z-10 flex space-x-4'>
                       {scale > 1 && (
                         <button
@@ -394,7 +464,7 @@ export function ImageView({
             )}
 
             <div className='absolute top-4 right-6 z-60 flex space-x-2'>
-              {authState.state === 'authenticated' && (
+              {authState.state === 'authenticated' && !image.isVideo && (
                 <button
                   onClick={handleImagorClick}
                   className='rounded-full bg-black/50 px-4 py-2 text-white transition-colors hover:bg-black/75'
@@ -424,23 +494,7 @@ export function ImageView({
               </button>
             </div>
 
-            {scale <= 1 && (
-              <motion.div
-                className='absolute top-0 right-0 bottom-0 left-0 z-1'
-                onClick={handleOverlayClick}
-                drag={onPrevImage || onNextImage ? true : 'y'}
-                dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                dragElastic={0.2}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                style={{
-                  cursor: 'grab',
-                }}
-                whileDrag={{
-                  cursor: 'grabbing',
-                }}
-              />
-            )}
+            {scale <= 1 && !image.isVideo && overlayHandler}
 
             <Sheet open={isInfoOpen} onOpenChange={setIsInfoOpen}>
               <ImageViewInfo imageInfo={image.imageInfo} />

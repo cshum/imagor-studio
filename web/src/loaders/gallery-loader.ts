@@ -20,6 +20,7 @@ export interface GalleryLoaderData {
   images: GalleryImage[]
   folders: Gallery[]
   breadcrumbs: BreadcrumbItem[]
+  videoExtensions: string
 }
 
 export interface ImageLoaderData {
@@ -28,7 +29,20 @@ export interface ImageLoaderData {
   galleryKey: string
 }
 
-const DEFAULT_EXTENSIONS = '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif'
+const DEFAULT_IMAGE_EXTENSIONS =
+  '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif'
+const DEFAULT_VIDEO_EXTENSIONS = '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg'
+
+/**
+ * Check if a file extension matches any in a comma-separated list of extensions
+ * @param filename - The filename to check
+ * @param extensions - Comma-separated list of extensions (e.g., '.mp4,.webm,.avi')
+ * @returns true if the file extension is in the extensions list
+ */
+const hasExtension = (filename: string, extensions: string): boolean => {
+  const ext = '.' + filename.split('.').pop()?.toLowerCase()
+  return extensions.toLowerCase().includes(ext)
+}
 
 /**
  * Gallery loader using imagor for thumbnail generation
@@ -44,18 +58,27 @@ export const galleryLoader = async ({
 
   // Fetch registry settings for gallery filtering and sorting
   let extensionsString: string | undefined
+  let videoExtensions: string
   let showHidden: boolean
   let sortBy: SortOption
   let sortOrder: SortOrder
   try {
     const registryResult = await getSystemRegistryMultiple([
-      'config.app_file_extensions',
+      'config.app_image_extensions',
+      'config.app_video_extensions',
       'config.app_show_hidden',
       'config.app_default_sort_by',
       'config.app_default_sort_order',
     ])
-    const extensionsEntry = registryResult.find((r) => r.key === 'config.app_file_extensions')
-    extensionsString = extensionsEntry?.value || DEFAULT_EXTENSIONS
+
+    const imageExtensionsEntry = registryResult.find((r) => r.key === 'config.app_image_extensions')
+    const videoExtensionsEntry = registryResult.find((r) => r.key === 'config.app_video_extensions')
+
+    const imageExtensions = imageExtensionsEntry?.value || DEFAULT_IMAGE_EXTENSIONS
+    videoExtensions = videoExtensionsEntry?.value || DEFAULT_VIDEO_EXTENSIONS
+
+    // Combine image and video extensions
+    extensionsString = `${imageExtensions},${videoExtensions}`
 
     const showHiddenEntry = registryResult.find((r) => r.key === 'config.app_show_hidden')
     showHidden = showHiddenEntry?.value === 'true'
@@ -67,7 +90,8 @@ export const galleryLoader = async ({
     sortOrder = (sortOrderEntry?.value as SortOrder) || 'ASC'
   } catch {
     // If registry fetch fails, use defaults
-    extensionsString = DEFAULT_EXTENSIONS
+    extensionsString = `${DEFAULT_IMAGE_EXTENSIONS},${DEFAULT_VIDEO_EXTENSIONS}`
+    videoExtensions = DEFAULT_VIDEO_EXTENSIONS
     showHidden = false
     sortBy = 'MODIFIED_TIME'
     sortOrder = 'DESC'
@@ -116,6 +140,7 @@ export const galleryLoader = async ({
       imageKey: item.name,
       imageSrc: item.thumbnailUrls?.grid || '',
       imageName: item.name,
+      isVideo: hasExtension(item.name, videoExtensions),
     }))
 
   // Get home title from the folder tree store
@@ -155,6 +180,7 @@ export const galleryLoader = async ({
     folders,
     galleryKey,
     breadcrumbs,
+    videoExtensions,
   }
 }
 
@@ -176,21 +202,32 @@ export const imageLoader = async ({
     throw new Error('Image not found')
   }
 
-  // Use the full-size thumbnail URL for the detail view
+  let videoExtensions: string
+  try {
+    const registryResult = await getSystemRegistryMultiple(['config.app_video_extensions'])
+    const videoExtensionsEntry = registryResult.find((r) => r.key === 'config.app_video_extensions')
+    videoExtensions = videoExtensionsEntry?.value || DEFAULT_VIDEO_EXTENSIONS
+  } catch {
+    videoExtensions = DEFAULT_VIDEO_EXTENSIONS
+  }
+
+  const isVideo = hasExtension(fileStat.name, videoExtensions)
+
+  // Use the full-size thumbnail URL for the detail view (same for both images and videos)
   const fullSizeSrc = getFullImageUrl(
     fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '',
   )
 
   const imageElement = await preloadImage(fullSizeSrc)
 
-  // Fetch real EXIF data from imagor meta API
+  // Fetch real metadata from imagor meta API (works for both images and videos)
   let imageInfo = convertMetadataToImageInfo(null, fileStat.name, galleryKey)
   if (fileStat.thumbnailUrls.meta) {
     try {
       const metadata = await fetchImageMetadata(getFullImageUrl(fileStat.thumbnailUrls.meta))
       imageInfo = convertMetadataToImageInfo(metadata, fileStat.name, galleryKey)
     } catch {
-      // Fall back to basic info without EXIF data
+      // Fall back to basic info without metadata
     }
   }
 
@@ -199,7 +236,9 @@ export const imageLoader = async ({
     thumbnailUrls: fileStat.thumbnailUrls,
     imageKey: fileStat.name,
     imageSrc: fullSizeSrc,
+    originalSrc: getFullImageUrl(fileStat.thumbnailUrls.original || ''),
     imageName: fileStat.name,
+    isVideo,
     imageInfo,
   }
 

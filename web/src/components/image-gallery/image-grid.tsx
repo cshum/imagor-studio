@@ -1,4 +1,5 @@
 import React from 'react'
+import { Play } from 'lucide-react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
 import { getFullImageUrl } from '@/lib/api-utils'
@@ -44,12 +45,17 @@ const ImageCell = ({
       }}
       onClick={handleClick}
     >
-      <div className='h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700'>
+      <div className='relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700'>
         <img
           src={getFullImageUrl(image.imageSrc)}
           alt={image.imageName}
           className='h-full w-full object-cover'
         />
+        {image.isVideo && (
+          <div className='absolute right-3 bottom-2 rounded-full bg-black/60 p-1 p-2 transition-opacity group-hover:bg-black/75'>
+            <Play className='h-4 w-4 fill-white text-white' />
+          </div>
+        )}
       </div>
     </div>
   )
