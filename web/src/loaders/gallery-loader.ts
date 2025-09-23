@@ -202,7 +202,6 @@ export const imageLoader = async ({
     throw new Error('Image not found')
   }
 
-  // Fetch video extensions from registry to match galleryLoader behavior
   let videoExtensions: string
   try {
     const registryResult = await getSystemRegistryMultiple(['config.app_video_extensions'])
