@@ -114,10 +114,8 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 
 	// Apply global middleware to the entire mux
 	h := middleware.CORSMiddleware(corsConfig)(
-		middleware.LoggingMiddleware(services.Logger)(
-			middleware.ErrorMiddleware(services.Logger)(
-				mux,
-			),
+		middleware.ErrorMiddleware(services.Logger)(
+			mux,
 		),
 	)
 
