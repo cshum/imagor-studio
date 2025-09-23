@@ -222,9 +222,11 @@ function SystemSettingsStepContent({
 
   return (
     <div className='space-y-6'>
+      <p className='text-muted-foreground text-sm'>{t('pages.admin.systemSettingsDescription')}</p>
+
       <SystemSettingsForm
         title=''
-        description={t('pages.admin.systemSettingsDescription')}
+        description=''
         settings={settings}
         initialValues={formValues}
         systemRegistryList={[]}

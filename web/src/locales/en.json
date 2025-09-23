@@ -143,7 +143,7 @@
       "guestModeDescription": "Allow users to browse the gallery without creating an account",
       "homeTitle": "Home Title",
       "homeTitleDescription": "Customize the title displayed for the home/root folder in the gallery",
-      "systemSettingsDescription": "These settings can be changed later in the admin panel.",
+      "systemSettingsDescription": "These settings can be changed later in admin panel",
       "storageDescription": "Configure where your images will be stored",
       "failedToCreateAccount": "Failed to create admin account",
       "failedToSaveSettings": "Failed to save settings",
