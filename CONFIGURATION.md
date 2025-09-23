@@ -172,9 +172,9 @@ DATABASE_URL=mysql://user:password@localhost/imagor_studio
 | `--app-video-extensions` | `APP_VIDEO_EXTENSIONS` | `.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg` | string | No | Comma-separated list of video file extensions |
 | `--app-show-hidden` | `APP_SHOW_HIDDEN` | `false` | bool | No | Show hidden files starting with dot |
 
-### Video Processing Support
+### Video Thumbnail Support
 
-Imagor Studio supports video file processing through FFmpeg integration:
+Imagor Studio supports video thumbnail through FFmpeg integration:
 
 - **Image Extensions**: Traditional image formats processed by libvips
 - **Video Extensions**: Video formats processed by FFmpeg for thumbnail generation
