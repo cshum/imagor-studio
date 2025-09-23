@@ -6,6 +6,7 @@ import { SortOption, SortOrder } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
+import { isVideoFile } from '@/lib/file-utils'
 import { preloadImage } from '@/lib/preload-image.ts'
 import {
   FolderNode,
@@ -129,6 +130,7 @@ export const galleryLoader = async ({
       imageKey: item.name,
       imageSrc: item.thumbnailUrls?.grid || '',
       imageName: item.name,
+      isVideo: isVideoFile(item.name, videoExtensions),
     }))
 
   // Get home title from the folder tree store

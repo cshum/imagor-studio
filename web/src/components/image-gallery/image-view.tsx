@@ -15,6 +15,7 @@ export interface GalleryImage extends Omit<FileInfoFragment, 'path' | 'size' | '
   imageSrc: string
   imageName: string
   imageKey: string
+  isVideo?: boolean
   imageInfo?: ImageInfo
 }
 
