@@ -9,6 +9,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/encryption"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
+	"github.com/cshum/imagor-studio/server/internal/migrator"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/assert"
@@ -113,7 +114,9 @@ func TestJWTSecretFromRegistry(t *testing.T) {
 	defer db.Close()
 
 	logger := zap.NewNop()
-	err = runMigrations(db, logger)
+	service := migrator.NewService(db, logger)
+	cfg.MigrateCommand = "up"
+	err = service.Execute(cfg)
 	require.NoError(t, err)
 
 	encryptionService := encryption.NewService(cfg.DatabaseURL)
@@ -149,7 +152,9 @@ func TestConfigEnhancement(t *testing.T) {
 	defer db.Close()
 
 	logger := zap.NewNop()
-	err = runMigrations(db, logger)
+	service := migrator.NewService(db, logger)
+	cfg.MigrateCommand = "up"
+	err = service.Execute(cfg)
 	require.NoError(t, err)
 
 	encryptionService := encryption.NewService(cfg.DatabaseURL)
@@ -188,7 +193,9 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 	defer db.Close()
 
 	logger := zap.NewNop()
-	err = runMigrations(db, logger)
+	service := migrator.NewService(db, logger)
+	cfg.MigrateCommand = "up"
+	err = service.Execute(cfg)
 	require.NoError(t, err)
 
 	encryptionService := encryption.NewService(cfg.DatabaseURL)

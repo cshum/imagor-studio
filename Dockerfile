@@ -32,7 +32,8 @@ COPY --from=web-builder /app/server/static ./server/static
 COPY server/ ./server/
 COPY graphql/ ./graphql/
 
-RUN cd server && go build -o /go/bin/imagor-studio ./cmd/server/main.go
+RUN cd server && go build -o /go/bin/imagor-studio ./cmd/imagor-studio/main.go
+RUN cd server && go build -o /go/bin/imagor-studio-migrate ./cmd/imagor-studio-migrate/main.go
 
 # Stage 3: Runtime image
 FROM debian:trixie-slim AS runtime
@@ -58,6 +59,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY --from=server-builder /go/bin/imagor-studio /usr/local/bin/imagor-studio
+COPY --from=server-builder /go/bin/imagor-studio-migrate /usr/local/bin/imagor-studio-migrate
 
 ENV VIPS_WARNING=0
 ENV MALLOC_ARENA_MAX=2
