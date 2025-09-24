@@ -22,6 +22,8 @@ export interface GalleryLoaderData {
   folders: Gallery[]
   breadcrumbs: BreadcrumbItem[]
   videoExtensions: string
+  currentSortBy: SortOption
+  currentSortOrder: SortOrder
 }
 
 export interface ImageLoaderData {
@@ -222,6 +224,8 @@ export const galleryLoader = async ({
     galleryKey,
     breadcrumbs,
     videoExtensions,
+    currentSortBy: sortBy,
+    currentSortOrder: sortOrder,
   }
 }
 
