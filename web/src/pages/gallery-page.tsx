@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 import { Check, Clock, FileText, HardDrive, SortAsc, SortDesc } from 'lucide-react'
 
@@ -32,6 +33,7 @@ export interface GalleryPageProps extends React.PropsWithChildren {
 }
 
 export function GalleryPage({ galleryLoaderData, galleryKey, children }: GalleryPageProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const router = useRouter()
   const contentRef = useRef<HTMLDivElement | null>(null)
@@ -113,7 +115,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const sortingMenuItems =
     authState.state === 'authenticated' ? (
       <>
-        <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('pages.gallery.sorting.sortBy')}</DropdownMenuLabel>
         <DropdownMenuItem
           className='hover:cursor-pointer'
           onSelect={(event) => {
@@ -122,7 +124,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           }}
         >
           <FileText className='text-muted-foreground mr-3 h-4 w-4' />
-          Name
+          {t('pages.gallery.sorting.name')}
           {currentSortBy === 'NAME' && <Check className='ml-auto h-4 w-4' />}
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -133,7 +135,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           }}
         >
           <Clock className='text-muted-foreground mr-3 h-4 w-4' />
-          Modified Time
+          {t('pages.gallery.sorting.modifiedTime')}
           {currentSortBy === 'MODIFIED_TIME' && <Check className='ml-auto h-4 w-4' />}
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -144,11 +146,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           }}
         >
           <HardDrive className='text-muted-foreground mr-3 h-4 w-4' />
-          Size
+          {t('pages.gallery.sorting.size')}
           {currentSortBy === 'SIZE' && <Check className='ml-auto h-4 w-4' />}
         </DropdownMenuItem>
 
-        <DropdownMenuLabel>Sort order</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('pages.gallery.sorting.sortOrder')}</DropdownMenuLabel>
         <DropdownMenuItem
           className='hover:cursor-pointer'
           onSelect={(event) => {
@@ -157,7 +159,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           }}
         >
           <SortAsc className='text-muted-foreground mr-3 h-4 w-4' />
-          Ascending
+          {t('pages.gallery.sorting.ascending')}
           {currentSortOrder === 'ASC' && <Check className='ml-auto h-4 w-4' />}
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -168,7 +170,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           }}
         >
           <SortDesc className='text-muted-foreground mr-3 h-4 w-4' />
-          Descending
+          {t('pages.gallery.sorting.descending')}
           {currentSortOrder === 'DESC' && <Check className='ml-auto h-4 w-4' />}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
