@@ -29,7 +29,7 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     type: 'dual-select',
     label: 'Default File Sorting',
     description: 'Choose how files and folders are sorted by default',
-    defaultValue: 'NAME',
+    defaultValue: 'MODIFIED_TIME',
     options: ['NAME', 'MODIFIED_TIME', 'SIZE'],
     optionLabels: {
       NAME: 'Name',
@@ -38,7 +38,7 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     },
     primaryLabel: 'Sort By',
     secondaryKey: 'config.app_default_sort_order',
-    secondaryDefaultValue: 'ASC',
+    secondaryDefaultValue: 'DESC',
     secondaryOptions: ['ASC', 'DESC'],
     secondaryOptionLabels: {
       ASC: 'Ascending',
