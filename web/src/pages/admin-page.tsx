@@ -27,22 +27,24 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
   {
     key: 'config.app_default_sort_by',
     type: 'dual-select',
-    label: 'File Sorting',
-    description: 'Choose how files and folders are sorted',
-    defaultValue: 'NAME',
+    label: 'Default File Sorting',
+    description: 'Choose how files and folders are sorted by default',
+    defaultValue: 'MODIFIED_TIME',
     options: ['NAME', 'MODIFIED_TIME', 'SIZE'],
     optionLabels: {
       NAME: 'Name',
       MODIFIED_TIME: 'Date Modified',
       SIZE: 'File Size',
     },
+    primaryLabel: 'Sort By',
     secondaryKey: 'config.app_default_sort_order',
-    secondaryDefaultValue: 'ASC',
+    secondaryDefaultValue: 'DESC',
     secondaryOptions: ['ASC', 'DESC'],
     secondaryOptionLabels: {
       ASC: 'Ascending',
       DESC: 'Descending',
     },
+    secondaryLabel: 'Order',
   },
   {
     key: 'config.app_image_extensions',

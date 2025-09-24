@@ -29,9 +29,13 @@ import { useSidebar } from '@/stores/sidebar-store'
 
 interface HeaderBarProps {
   isScrolled?: boolean
+  customMenuItems?: React.ReactNode
 }
 
-export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown = false }) => {
+export const HeaderBar: React.FC<HeaderBarProps> = ({
+  isScrolled: isScrolledDown = false,
+  customMenuItems,
+}) => {
   const { t } = useTranslation()
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
@@ -123,6 +127,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align='end' className='w-56'>
+                  {/* Custom menu items slot - for page-specific functionality */}
+                  {customMenuItems}
+
                   <DropdownMenuLabel className='font-normal'>
                     <div className='flex flex-col space-y-1'>
                       <p className='text-sm leading-none font-medium'>{getUserDisplayName()}</p>

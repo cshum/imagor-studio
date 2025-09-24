@@ -94,7 +94,16 @@
       "title": "Gallery",
       "noImages": "No images found",
       "noImagesInGallery": "No images in your gallery",
-      "folderEmpty": "This folder is empty"
+      "folderEmpty": "This folder is empty",
+      "sorting": {
+        "sortBy": "Sort by",
+        "sortOrder": "Sort order",
+        "name": "Name",
+        "modifiedTime": "Modified Time",
+        "size": "Size",
+        "ascending": "Ascending",
+        "descending": "Descending"
+      }
     },
     "profile": {
       "title": "Profile",

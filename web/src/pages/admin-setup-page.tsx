@@ -53,26 +53,6 @@ const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
     description: t('pages.admin.guestModeDescription'),
     defaultValue: false,
   },
-  {
-    key: 'config.app_default_sort_by',
-    type: 'dual-select',
-    label: 'File Sorting',
-    description: 'Choose how files and folders are sorted',
-    defaultValue: 'NAME',
-    options: ['NAME', 'MODIFIED_TIME', 'SIZE'],
-    optionLabels: {
-      NAME: 'Name',
-      MODIFIED_TIME: 'Date Modified',
-      SIZE: 'File Size',
-    },
-    secondaryKey: 'config.app_default_sort_order',
-    secondaryDefaultValue: 'ASC',
-    secondaryOptions: ['ASC', 'DESC'],
-    secondaryOptionLabels: {
-      ASC: 'Ascending',
-      DESC: 'Descending',
-    },
-  },
 ]
 
 // Step Content Components
