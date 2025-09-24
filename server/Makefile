@@ -73,16 +73,16 @@ migrate-build:
 	$(GOBUILD) $(LDFLAGS) -o $(MIGRATE_BINARY) ./cmd/migrate
 
 migrate-up: migrate-build
-	./$(MIGRATE_BINARY) --command=up
+	./$(MIGRATE_BINARY) --migrate-command=up
 
 migrate-down: migrate-build
-	./$(MIGRATE_BINARY) --command=down
+	./$(MIGRATE_BINARY) --migrate-command=down
 
 migrate-status: migrate-build
-	./$(MIGRATE_BINARY) --command=status
+	./$(MIGRATE_BINARY) --migrate-command=status
 
 migrate-reset: migrate-build
-	./$(MIGRATE_BINARY) --command=reset
+	./$(MIGRATE_BINARY) --migrate-command=reset
 
 migrate-clean:
 	rm -f $(MIGRATE_BINARY)

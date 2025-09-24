@@ -105,7 +105,7 @@ FORCE_AUTO_MIGRATE=true
 
 1. **Pre-deployment**: Run migrations before starting application instances
    ```bash
-   ./imagor-studio-migrate --database-url="$DATABASE_URL" --command=up
+   ./imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=up
    ```
 
 2. **Start application**: Auto-migration will be skipped for PostgreSQL/MySQL
@@ -124,7 +124,7 @@ For development with SQLite (default):
 For development with PostgreSQL/MySQL:
 ```bash
 # Option 1: Use migration command
-./imagor-studio-migrate --database-url="$DATABASE_URL" --command=up
+./imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=up
 ./imagor-studio-server --database-url="$DATABASE_URL"
 
 # Option 2: Force auto-migration
@@ -144,13 +144,13 @@ For development with PostgreSQL/MySQL:
 
 ```bash
 # Check current status
-./imagor-studio-migrate --command=status
+./imagor-studio-migrate --migrate-command=status
 
 # Rollback last migration
-./imagor-studio-migrate --command=down
+./imagor-studio-migrate --migrate-command=down
 
 # Verify rollback
-./imagor-studio-migrate --command=status
+./imagor-studio-migrate --migrate-command=status
 ```
 
 ## Database-Specific Behavior
@@ -167,7 +167,7 @@ For development with PostgreSQL/MySQL:
 
 1. Check database connectivity:
    ```bash
-   ./imagor-studio-migrate --database-url="$DATABASE_URL" --command=status
+   ./imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=status
    ```
 
 2. Verify database permissions (CREATE, ALTER, DROP tables)
@@ -180,7 +180,7 @@ If server fails to start due to missing migrations:
 
 1. Run migrations manually:
    ```bash
-   ./imagor-studio-migrate --database-url="$DATABASE_URL" --command=up
+   ./imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=up
    ```
 
 2. Or enable force auto-migration temporarily:
@@ -202,7 +202,7 @@ If you encounter migration conflicts in multi-instance environments:
 
 ```dockerfile
 # Run migrations in init container
-RUN ./imagor-studio-migrate --database-url="$DATABASE_URL" --command=up
+RUN ./imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=up
 
 # Start main application
 CMD ["./imagor-studio-server"]
