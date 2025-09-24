@@ -14,10 +14,9 @@ func main() {
 	// Create logger
 	logger, err := zap.NewProduction()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to initialize logger: %v\n", err)
+		fmt.Printf("Failed to initialize logger: %v\n", err)
 		os.Exit(1)
 	}
-	defer logger.Sync()
 
 	// Load configuration using the existing config system
 	// This supports CLI args, environment variables, and .env files
