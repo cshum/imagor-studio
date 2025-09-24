@@ -69,14 +69,10 @@ func (s *Service) Execute(cfg *config.Config) error {
 		return fmt.Errorf("invalid migration command: %s (valid: up, down, status, reset)", cfg.MigrateCommand)
 	}
 
-	// Check database type and warn if using SQLite
-	dbType, err := database.GetDatabaseType(cfg.DatabaseURL)
+	// Check database type
+	_, err := database.GetDatabaseType(cfg.DatabaseURL)
 	if err != nil {
 		return fmt.Errorf("failed to determine database type: %w", err)
-	}
-
-	if dbType == "sqlite" {
-		s.logger.Warn("SQLite detected - auto-migration is usually sufficient for SQLite databases")
 	}
 
 	// Create migrator
