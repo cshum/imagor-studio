@@ -36,9 +36,10 @@ http://localhost:8000
 - Creates persistent storage for the app database (SQLite)
 - Redirects to admin setup process on first launch
 
-## Configuration
+## Documentation
 
-For detailed server configuration options including database setup, environment variables, CLI arguments, and system registry settings, see [CONFIGURATION.md](CONFIGURATION.md).
+- **[Configuration Guide](CONFIGURATION.md)** - Server configuration options, database setup, environment variables, CLI arguments, and system registry settings
+- **[Migration Guide](MIGRATION.md)** - Database migration management for PostgreSQL/MySQL deployments
 
 ## Architecture
 

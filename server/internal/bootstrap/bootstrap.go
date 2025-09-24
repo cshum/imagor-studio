@@ -12,13 +12,12 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/encryption"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
-	"github.com/cshum/imagor-studio/server/internal/migrations"
+	"github.com/cshum/imagor-studio/server/internal/migrator"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/migrate"
 	"go.uber.org/zap"
 )
 
@@ -46,8 +45,8 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	// Run migrations
-	if err := runMigrations(db, logger); err != nil {
+	// Run migrations based on database type and configuration
+	if err := runMigrationsIfNeeded(db, cfg, logger); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
@@ -134,27 +133,11 @@ func initializeDatabase(cfg *config.Config) (*bun.DB, error) {
 	return database.Connect(cfg.DatabaseURL)
 }
 
-// runMigrations executes database migrations
-func runMigrations(db *bun.DB, logger *zap.Logger) error {
-	migrator := migrate.NewMigrator(db, migrations.Migrations)
-
-	err := migrator.Init(context.Background())
-	if err != nil {
-		return fmt.Errorf("failed to init migrator: %w", err)
-	}
-
-	group, err := migrator.Migrate(context.Background())
-	if err != nil {
-		return fmt.Errorf("failed to run migrations: %w", err)
-	}
-
-	if group.IsZero() {
-		logger.Info("No migrations to run")
-	} else {
-		logger.Info("Migrations applied", zap.String("group", group.String()))
-	}
-
-	return nil
+// runMigrationsIfNeeded executes database migrations using the migrator service
+func runMigrationsIfNeeded(db *bun.DB, cfg *config.Config, logger *zap.Logger) error {
+	// Create migration service and use it for auto-migration logic
+	service := migrator.NewService(db, logger)
+	return service.ExecuteAutoMigration(cfg)
 }
 
 // resolveJWTSecret handles JWT secret resolution: CLI/env -> registry -> generate new

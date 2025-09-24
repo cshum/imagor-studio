@@ -28,6 +28,10 @@ type Config struct {
 	// Authentication Configuration
 	AllowGuestMode bool // Allow guest mode access
 
+	// Migration Configuration
+	ForceAutoMigrate bool   // Force auto-migration even for PostgreSQL/MySQL
+	MigrateCommand   string // Migration command for migrate tool
+
 	// File Storage
 	FileBaseDir          string
 	FileMkdirPermissions os.FileMode
@@ -75,7 +79,9 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		jwtExpiration = fs.String("jwt-expiration", "168h", "JWT token expiration duration")
 		licenseKey    = fs.String("license-key", "", "license key for activation")
 
-		allowGuestMode = fs.Bool("allow-guest-mode", false, "allow guest mode access")
+		allowGuestMode   = fs.Bool("allow-guest-mode", false, "allow guest mode access")
+		forceAutoMigrate = fs.Bool("force-auto-migrate", false, "force auto-migration even for PostgreSQL/MySQL (use with caution in multi-instance environments)")
+		migrateCommand   = fs.String("migrate-command", "up", "migration command: up, down, status, reset")
 
 		fileBaseDir          = fs.String("file-base-dir", "/app/gallery", "base directory for file storage")
 		fileMkdirPermissions = fs.String("file-mkdir-permissions", "0755", "directory creation permissions")
@@ -180,6 +186,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		JWTExpiration:        jwtExp,
 		LicenseKey:           *licenseKey,
 		AllowGuestMode:       *allowGuestMode,
+		ForceAutoMigrate:     *forceAutoMigrate,
+		MigrateCommand:       *migrateCommand,
 		StorageType:          *storageType,
 		FileBaseDir:          *fileBaseDir,
 		FileMkdirPermissions: os.FileMode(mkdirPerm),

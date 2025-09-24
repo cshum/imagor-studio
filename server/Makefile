@@ -66,4 +66,25 @@ clean-db:
 
 reset-db: clean-db setup-db
 
-.PHONY: setup-db clean-db reset-db
+# Migration commands
+MIGRATE_BINARY=imagor-studio-migrate
+
+migrate-build:
+	$(GOBUILD) $(LDFLAGS) -o $(MIGRATE_BINARY) ./cmd/migrate
+
+migrate-up: migrate-build
+	./$(MIGRATE_BINARY) --command=up
+
+migrate-down: migrate-build
+	./$(MIGRATE_BINARY) --command=down
+
+migrate-status: migrate-build
+	./$(MIGRATE_BINARY) --command=status
+
+migrate-reset: migrate-build
+	./$(MIGRATE_BINARY) --command=reset
+
+migrate-clean:
+	rm -f $(MIGRATE_BINARY)
+
+.PHONY: setup-db clean-db reset-db migrate-build migrate-up migrate-down migrate-status migrate-reset migrate-clean
