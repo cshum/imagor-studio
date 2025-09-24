@@ -100,10 +100,15 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
         setCurrentSortBy(sortBy)
         setCurrentSortOrder(sortOrder)
 
-        // Invalidate router to trigger loader reload
-        router.invalidate()
-      } catch (error) {
-        console.error('Failed to save sorting preferences:', error)
+        // Invalidate only the current gallery route to trigger loader reload
+        router.invalidate({
+          filter: (route) => {
+            // Only invalidate gallery routes (root path or gallery routes)
+            return route.routeId === '/' || route.routeId === '/gallery/$galleryKey'
+          },
+        })
+      } catch {
+        // saliently fail for not saving user preference
       }
     }
   }
