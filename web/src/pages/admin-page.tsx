@@ -27,8 +27,8 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
   {
     key: 'config.app_default_sort_by',
     type: 'dual-select',
-    label: 'File Sorting',
-    description: 'Choose how files and folders are sorted',
+    label: 'Default File Sorting',
+    description: 'Choose how files and folders are sorted by default',
     defaultValue: 'NAME',
     options: ['NAME', 'MODIFIED_TIME', 'SIZE'],
     optionLabels: {
