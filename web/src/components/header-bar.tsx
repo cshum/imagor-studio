@@ -186,7 +186,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
                       <DropdownMenuLabel>Sort by</DropdownMenuLabel>
                       <DropdownMenuItem
                         className='hover:cursor-pointer'
-                        onClick={() => handleSortChange('NAME', currentSortOrder)}
+                        onSelect={(event) => {
+                          event.preventDefault()
+                          handleSortChange('NAME', currentSortOrder)
+                        }}
                       >
                         <FileText className='text-muted-foreground mr-3 h-4 w-4' />
                         Name
@@ -194,7 +197,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className='hover:cursor-pointer'
-                        onClick={() => handleSortChange('MODIFIED_TIME', currentSortOrder)}
+                        onSelect={(event) => {
+                          event.preventDefault()
+                          handleSortChange('MODIFIED_TIME', currentSortOrder)
+                        }}
                       >
                         <Clock className='text-muted-foreground mr-3 h-4 w-4' />
                         Modified Time
@@ -202,7 +208,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className='hover:cursor-pointer'
-                        onClick={() => handleSortChange('SIZE', currentSortOrder)}
+                        onSelect={(event) => {
+                          event.preventDefault()
+                          handleSortChange('SIZE', currentSortOrder)
+                        }}
                       >
                         <HardDrive className='text-muted-foreground mr-3 h-4 w-4' />
                         Size
@@ -212,7 +221,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
                       <DropdownMenuLabel>Sort order</DropdownMenuLabel>
                       <DropdownMenuItem
                         className='hover:cursor-pointer'
-                        onClick={() => handleSortChange(currentSortBy, 'ASC')}
+                        onSelect={(event) => {
+                          event.preventDefault()
+                          handleSortChange(currentSortBy, 'ASC')
+                        }}
                       >
                         <SortAsc className='text-muted-foreground mr-3 h-4 w-4' />
                         Ascending
@@ -220,7 +232,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className='hover:cursor-pointer'
-                        onClick={() => handleSortChange(currentSortBy, 'DESC')}
+                        onSelect={(event) => {
+                          event.preventDefault()
+                          handleSortChange(currentSortBy, 'DESC')
+                        }}
                       >
                         <SortDesc className='text-muted-foreground mr-3 h-4 w-4' />
                         Descending
