@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useRouter } from '@tanstack/react-router'
 import {
@@ -13,7 +13,7 @@ import {
   SortDesc,
 } from 'lucide-react'
 
-import { getUserRegistryMultiple, setUserRegistryMultiple } from '@/api/registry-api.ts'
+import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
   Breadcrumb,
@@ -36,14 +36,19 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { SortOption, SortOrder } from '@/generated/graphql'
 import { useBreadcrumb } from '@/hooks/use-breadcrumb'
+import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 interface HeaderBarProps {
   isScrolled?: boolean
+  galleryLoaderData?: GalleryLoaderData
 }
 
-export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown = false }) => {
+export const HeaderBar: React.FC<HeaderBarProps> = ({
+  isScrolled: isScrolledDown = false,
+  galleryLoaderData,
+}) => {
   const { t } = useTranslation()
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
@@ -51,65 +56,27 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
   const breadcrumbs = useBreadcrumb()
   const sidebar = useSidebar()
 
-  // Sorting state
-  const [currentSortBy, setCurrentSortBy] = useState<SortOption>('MODIFIED_TIME')
-  const [currentSortOrder, setCurrentSortOrder] = useState<SortOrder>('DESC')
-
-  // Load current user sorting preferences
-  useEffect(() => {
-    const loadUserSortingPreferences = async () => {
-      if (authState.profile?.id && authState.state === 'authenticated') {
-        try {
-          const userRegistry = await getUserRegistryMultiple(
-            ['config.app_default_sort_by', 'config.app_default_sort_order'],
-            authState.profile.id,
-          )
-
-          const sortByEntry = userRegistry.find((r) => r.key === 'config.app_default_sort_by')
-          const sortOrderEntry = userRegistry.find((r) => r.key === 'config.app_default_sort_order')
-
-          if (sortByEntry?.value) {
-            setCurrentSortBy(sortByEntry.value as SortOption)
-          }
-          if (sortOrderEntry?.value) {
-            setCurrentSortOrder(sortOrderEntry.value as SortOrder)
-          }
-        } catch {
-          // Failed to load user preferences, keep defaults
-        }
-      }
-    }
-
-    loadUserSortingPreferences()
-  }, [authState.profile?.id, authState.state])
+  // Get current sort values from gallery loader data (if available)
+  const currentSortBy = galleryLoaderData?.currentSortBy || 'MODIFIED_TIME'
+  const currentSortOrder = galleryLoaderData?.currentSortOrder || 'DESC'
 
   // Handle sorting change
   const handleSortChange = async (sortBy: SortOption, sortOrder: SortOrder) => {
     if (authState.profile?.id && authState.state === 'authenticated') {
-      try {
-        // Save user preferences to registry
-        await setUserRegistryMultiple(
-          [
-            { key: 'config.app_default_sort_by', value: sortBy, isEncrypted: false },
-            { key: 'config.app_default_sort_order', value: sortOrder, isEncrypted: false },
-          ],
-          authState.profile.id,
-        )
-
-        // Update local state
-        setCurrentSortBy(sortBy)
-        setCurrentSortOrder(sortOrder)
-
-        // Invalidate only the current gallery route to trigger loader reload
-        router.invalidate({
-          filter: (route) => {
-            // Only invalidate gallery routes (root path or gallery routes)
-            return route.routeId === '/' || route.routeId === '/gallery/$galleryKey'
-          },
-        })
-      } catch {
-        // saliently fail for not saving user preference
-      }
+      await setUserRegistryMultiple(
+        [
+          { key: 'config.app_default_sort_by', value: sortBy, isEncrypted: false },
+          { key: 'config.app_default_sort_order', value: sortOrder, isEncrypted: false },
+        ],
+        authState.profile.id,
+      )
+      // Invalidate only the current gallery route to trigger loader reload
+      router.invalidate({
+        filter: (route) => {
+          // Only invalidate gallery routes (root path or gallery routes)
+          return route.routeId === '/' || route.routeId === '/gallery/$galleryKey'
+        },
+      })
     }
   }
 
@@ -198,8 +165,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align='end' className='w-56'>
-                  {/* Sorting options - only show for authenticated users */}
-                  {authState.state === 'authenticated' && (
+                  {/* Sorting options - only show for authenticated users on gallery pages */}
+                  {authState.state === 'authenticated' && galleryLoaderData && (
                     <>
                       <DropdownMenuLabel>Sort by</DropdownMenuLabel>
                       <DropdownMenuItem

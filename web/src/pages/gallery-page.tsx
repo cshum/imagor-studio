@@ -86,7 +86,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         <div className='mx-4 my-2 grid'>
           <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
         </div>
-        <HeaderBar isScrolled={isScrolledDown} />
+        <HeaderBar isScrolled={isScrolledDown} galleryLoaderData={galleryLoaderData} />
         <Card className='rounded-lg border-none'>
           <CardContent className='p-2 md:p-4' ref={contentRef}>
             {contentWidth > 0 && (
