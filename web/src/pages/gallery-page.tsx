@@ -53,12 +53,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         authState.profile.id,
       )
       // Invalidate only the current gallery route to trigger loader reload
-      router.invalidate({
-        filter: (route) => {
-          // Only invalidate gallery routes (root path or gallery routes)
-          return route.routeId === '/' || route.routeId === '/gallery/$galleryKey'
-        },
-      })
+      router.invalidate()
     }
   }
 
