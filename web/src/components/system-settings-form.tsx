@@ -31,6 +31,8 @@ export interface SystemSetting {
   secondaryDefaultValue?: string | boolean // For dual-select type
   secondaryOptions?: string[] // For dual-select type
   secondaryOptionLabels?: Record<string, string> // For custom secondary option labels
+  primaryLabel?: string // For dual-select primary field label
+  secondaryLabel?: string // For dual-select secondary field label
 }
 
 export interface SystemSettingsFormProps {
@@ -341,7 +343,7 @@ export function SystemSettingsForm({
                 htmlFor={setting.key}
                 className='text-muted-foreground pb-1 text-sm font-medium'
               >
-                Sort By
+                {setting.primaryLabel || 'Primary'}
               </Label>
               <Select
                 value={effectiveValue}
@@ -369,7 +371,7 @@ export function SystemSettingsForm({
                 htmlFor={setting.secondaryKey}
                 className='text-muted-foreground pb-1 text-sm font-medium'
               >
-                Order
+                {setting.secondaryLabel || 'Secondary'}
               </Label>
               <Select
                 value={secondaryEffectiveValue}

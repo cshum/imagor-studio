@@ -36,6 +36,7 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
       MODIFIED_TIME: 'Date Modified',
       SIZE: 'File Size',
     },
+    primaryLabel: 'Sort By',
     secondaryKey: 'config.app_default_sort_order',
     secondaryDefaultValue: 'ASC',
     secondaryOptions: ['ASC', 'DESC'],
@@ -43,6 +44,7 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
       ASC: 'Ascending',
       DESC: 'Descending',
     },
+    secondaryLabel: 'Order',
   },
   {
     key: 'config.app_image_extensions',
