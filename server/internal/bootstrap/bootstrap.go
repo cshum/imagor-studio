@@ -61,6 +61,10 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 		return nil, fmt.Errorf("failed to resolve JWT secret: %w", err)
 	}
 
+	// Set JWT key in encryption service BEFORE loading enhanced config
+	// This ensures the registry store can decrypt license keys and other JWT-encrypted values
+	encryptionService.SetJWTKey(cfg.JWTSecret)
+
 	// Load enhanced config with registry values using the original args
 	enhancedCfg, err := config.Load(args, registryStore)
 	if err != nil {
@@ -71,9 +75,6 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	if enhancedCfg.JWTSecret == "" {
 		enhancedCfg.JWTSecret = cfg.JWTSecret
 	}
-
-	// Update encryption service with final JWT secret
-	encryptionService.SetJWTKey(enhancedCfg.JWTSecret)
 
 	// Initialize token manager
 	tokenManager := auth.NewTokenManager(enhancedCfg.JWTSecret, enhancedCfg.JWTExpiration)

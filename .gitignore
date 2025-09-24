@@ -64,6 +64,7 @@ tsconfig.*.tsbuildinfo
 
 # Go build artifacts
 server/imagor-studio-server
+server/imagor-studio
 server/server
 *.exe
 *.exe~
