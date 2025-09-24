@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
-import { Check, Clock, FileText, HardDrive, SortAsc, SortDesc } from 'lucide-react'
+import { Check, Clock, FileText, SortAsc, SortDesc } from 'lucide-react'
 
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { HeaderBar } from '@/components/header-bar'
@@ -137,17 +137,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           <Clock className='text-muted-foreground mr-3 h-4 w-4' />
           {t('pages.gallery.sorting.modifiedTime')}
           {currentSortBy === 'MODIFIED_TIME' && <Check className='ml-auto h-4 w-4' />}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className='hover:cursor-pointer'
-          onSelect={(event) => {
-            event.preventDefault()
-            handleSortChange('SIZE', currentSortOrder)
-          }}
-        >
-          <HardDrive className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.sorting.size')}
-          {currentSortBy === 'SIZE' && <Check className='ml-auto h-4 w-4' />}
         </DropdownMenuItem>
 
         <DropdownMenuLabel>{t('pages.gallery.sorting.sortOrder')}</DropdownMenuLabel>

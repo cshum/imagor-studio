@@ -100,7 +100,6 @@
         "sortOrder": "Sort order",
         "name": "Name",
         "modifiedTime": "Modified Time",
-        "size": "Size",
         "ascending": "Ascending",
         "descending": "Descending"
       }

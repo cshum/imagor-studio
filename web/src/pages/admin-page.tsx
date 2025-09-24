@@ -30,11 +30,10 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     label: 'Default File Sorting',
     description: 'Choose how files and folders are sorted by default',
     defaultValue: 'MODIFIED_TIME',
-    options: ['NAME', 'MODIFIED_TIME', 'SIZE'],
+    options: ['NAME', 'MODIFIED_TIME'],
     optionLabels: {
       NAME: 'Name',
       MODIFIED_TIME: 'Date Modified',
-      SIZE: 'File Size',
     },
     primaryLabel: 'Sort By',
     secondaryKey: 'config.app_default_sort_order',
