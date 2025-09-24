@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from '@tanstack/react-router'
-import { LogOut, MoreVertical, Settings } from 'lucide-react'
+import { Link, useNavigate, useRouter } from '@tanstack/react-router'
+import { Check, Clock, FileText, HardDrive, LogOut, MoreVertical, Settings, SortAsc, SortDesc } from 'lucide-react'
 
+import { setUserRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api.ts'
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
   Breadcrumb,
@@ -23,6 +24,7 @@ import {
 import { MobileBreadcrumb } from '@/components/ui/mobile-breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { SortOption, SortOrder } from '@/generated/graphql'
 import { useBreadcrumb } from '@/hooks/use-breadcrumb'
 import { useAuth } from '@/stores/auth-store'
 import { useSidebar } from '@/stores/sidebar-store'
@@ -35,8 +37,63 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
   const { t } = useTranslation()
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
+  const router = useRouter()
   const breadcrumbs = useBreadcrumb()
   const sidebar = useSidebar()
+
+  // Sorting state
+  const [currentSortBy, setCurrentSortBy] = useState<SortOption>('MODIFIED_TIME')
+  const [currentSortOrder, setCurrentSortOrder] = useState<SortOrder>('DESC')
+
+  // Load current user sorting preferences
+  useEffect(() => {
+    const loadUserSortingPreferences = async () => {
+      if (authState.profile?.id && authState.state === 'authenticated') {
+        try {
+          const userRegistry = await getUserRegistryMultiple([
+            'config.app_default_sort_by',
+            'config.app_default_sort_order',
+          ], authState.profile.id)
+
+          const sortByEntry = userRegistry.find((r) => r.key === 'config.app_default_sort_by')
+          const sortOrderEntry = userRegistry.find((r) => r.key === 'config.app_default_sort_order')
+
+          if (sortByEntry?.value) {
+            setCurrentSortBy(sortByEntry.value as SortOption)
+          }
+          if (sortOrderEntry?.value) {
+            setCurrentSortOrder(sortOrderEntry.value as SortOrder)
+          }
+        } catch {
+          // Failed to load user preferences, keep defaults
+        }
+      }
+    }
+
+    loadUserSortingPreferences()
+  }, [authState.profile?.id, authState.state])
+
+  // Handle sorting change
+  const handleSortChange = async (sortBy: SortOption, sortOrder: SortOrder) => {
+    if (authState.profile?.id && authState.state === 'authenticated') {
+      try {
+        // Save user preferences to registry
+        await setUserRegistryMultiple([
+          { key: 'config.app_default_sort_by', value: sortBy, isEncrypted: false },
+          { key: 'config.app_default_sort_order', value: sortOrder, isEncrypted: false },
+        ], authState.profile.id)
+
+        // Update local state
+        setCurrentSortBy(sortBy)
+        setCurrentSortOrder(sortOrder)
+
+        // Invalidate router to trigger loader reload
+        router.invalidate()
+      } catch (error) {
+        console.error('Failed to save sorting preferences:', error)
+      }
+    }
+  }
 
   // Get user display name
   const getUserDisplayName = () => {
@@ -123,6 +180,56 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align='end' className='w-56'>
+                  {/* Sorting options - only show for authenticated users */}
+                  {authState.state === 'authenticated' && (
+                    <>
+                      <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                      <DropdownMenuItem
+                        className='hover:cursor-pointer'
+                        onClick={() => handleSortChange('NAME', currentSortOrder)}
+                      >
+                        <FileText className='text-muted-foreground mr-3 h-4 w-4' />
+                        Name
+                        {currentSortBy === 'NAME' && <Check className='ml-auto h-4 w-4' />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className='hover:cursor-pointer'
+                        onClick={() => handleSortChange('MODIFIED_TIME', currentSortOrder)}
+                      >
+                        <Clock className='text-muted-foreground mr-3 h-4 w-4' />
+                        Modified Time
+                        {currentSortBy === 'MODIFIED_TIME' && <Check className='ml-auto h-4 w-4' />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className='hover:cursor-pointer'
+                        onClick={() => handleSortChange('SIZE', currentSortOrder)}
+                      >
+                        <HardDrive className='text-muted-foreground mr-3 h-4 w-4' />
+                        Size
+                        {currentSortBy === 'SIZE' && <Check className='ml-auto h-4 w-4' />}
+                      </DropdownMenuItem>
+
+                      <DropdownMenuLabel>Sort order</DropdownMenuLabel>
+                      <DropdownMenuItem
+                        className='hover:cursor-pointer'
+                        onClick={() => handleSortChange(currentSortBy, 'ASC')}
+                      >
+                        <SortAsc className='text-muted-foreground mr-3 h-4 w-4' />
+                        Ascending
+                        {currentSortOrder === 'ASC' && <Check className='ml-auto h-4 w-4' />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className='hover:cursor-pointer'
+                        onClick={() => handleSortChange(currentSortBy, 'DESC')}
+                      >
+                        <SortDesc className='text-muted-foreground mr-3 h-4 w-4' />
+                        Descending
+                        {currentSortOrder === 'DESC' && <Check className='ml-auto h-4 w-4' />}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+
                   <DropdownMenuLabel className='font-normal'>
                     <div className='flex flex-col space-y-1'>
                       <p className='text-sm leading-none font-medium'>{getUserDisplayName()}</p>

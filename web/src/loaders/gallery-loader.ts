@@ -1,4 +1,4 @@
-import { getSystemRegistryMultiple } from '@/api/registry-api.ts'
+import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api.ts'
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
@@ -7,6 +7,7 @@ import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
+import { getAuth } from '@/stores/auth-store.ts'
 import {
   FolderNode,
   folderTreeStore,
@@ -57,13 +58,40 @@ export const galleryLoader = async ({
   const path = galleryKey
 
   // Fetch registry settings for gallery filtering and sorting
+  // Priority: User registry → System registry → Hardcoded defaults
   let extensionsString: string | undefined
   let videoExtensions: string
   let showHidden: boolean
   let sortBy: SortOption
   let sortOrder: SortOrder
+
   try {
-    const registryResult = await getSystemRegistryMultiple([
+    // Get current user for user registry lookup
+    const auth = getAuth()
+    const userId = auth.profile?.id
+
+    // Try user registry first (if authenticated and not guest)
+    let userSortBy: string | undefined
+    let userSortOrder: string | undefined
+    if (userId && auth.state === 'authenticated') {
+      try {
+        const userRegistryResult = await getUserRegistryMultiple([
+          'config.app_default_sort_by',
+          'config.app_default_sort_order',
+        ], userId)
+
+        const userSortByEntry = userRegistryResult.find((r) => r.key === 'config.app_default_sort_by')
+        const userSortOrderEntry = userRegistryResult.find((r) => r.key === 'config.app_default_sort_order')
+
+        userSortBy = userSortByEntry?.value
+        userSortOrder = userSortOrderEntry?.value
+      } catch {
+        // User registry fetch failed, will fall back to system registry
+      }
+    }
+
+    // Fetch system registry for all settings (and as fallback for sorting)
+    const systemRegistryResult = await getSystemRegistryMultiple([
       'config.app_image_extensions',
       'config.app_video_extensions',
       'config.app_show_hidden',
@@ -71,8 +99,8 @@ export const galleryLoader = async ({
       'config.app_default_sort_order',
     ])
 
-    const imageExtensionsEntry = registryResult.find((r) => r.key === 'config.app_image_extensions')
-    const videoExtensionsEntry = registryResult.find((r) => r.key === 'config.app_video_extensions')
+    const imageExtensionsEntry = systemRegistryResult.find((r) => r.key === 'config.app_image_extensions')
+    const videoExtensionsEntry = systemRegistryResult.find((r) => r.key === 'config.app_video_extensions')
 
     const imageExtensions = imageExtensionsEntry?.value || DEFAULT_IMAGE_EXTENSIONS
     videoExtensions = videoExtensionsEntry?.value || DEFAULT_VIDEO_EXTENSIONS
@@ -80,14 +108,15 @@ export const galleryLoader = async ({
     // Combine image and video extensions
     extensionsString = `${imageExtensions},${videoExtensions}`
 
-    const showHiddenEntry = registryResult.find((r) => r.key === 'config.app_show_hidden')
+    const showHiddenEntry = systemRegistryResult.find((r) => r.key === 'config.app_show_hidden')
     showHidden = showHiddenEntry?.value === 'true'
 
-    const sortByEntry = registryResult.find((r) => r.key === 'config.app_default_sort_by')
-    sortBy = (sortByEntry?.value as SortOption) || 'NAME'
+    // Use user preferences if available, otherwise fall back to system registry, then defaults
+    const systemSortByEntry = systemRegistryResult.find((r) => r.key === 'config.app_default_sort_by')
+    const systemSortOrderEntry = systemRegistryResult.find((r) => r.key === 'config.app_default_sort_order')
 
-    const sortOrderEntry = registryResult.find((r) => r.key === 'config.app_default_sort_order')
-    sortOrder = (sortOrderEntry?.value as SortOrder) || 'ASC'
+    sortBy = (userSortBy || systemSortByEntry?.value || 'MODIFIED_TIME') as SortOption
+    sortOrder = (userSortOrder || systemSortOrderEntry?.value || 'DESC') as SortOrder
   } catch {
     // If registry fetch fails, use defaults
     extensionsString = `${DEFAULT_IMAGE_EXTENSIONS},${DEFAULT_VIDEO_EXTENSIONS}`
