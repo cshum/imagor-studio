@@ -1,9 +1,19 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useRouter } from '@tanstack/react-router'
-import { Check, Clock, FileText, HardDrive, LogOut, MoreVertical, Settings, SortAsc, SortDesc } from 'lucide-react'
+import {
+  Check,
+  Clock,
+  FileText,
+  HardDrive,
+  LogOut,
+  MoreVertical,
+  Settings,
+  SortAsc,
+  SortDesc,
+} from 'lucide-react'
 
-import { setUserRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api.ts'
+import { getUserRegistryMultiple, setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
   Breadcrumb,
@@ -50,10 +60,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
     const loadUserSortingPreferences = async () => {
       if (authState.profile?.id && authState.state === 'authenticated') {
         try {
-          const userRegistry = await getUserRegistryMultiple([
-            'config.app_default_sort_by',
-            'config.app_default_sort_order',
-          ], authState.profile.id)
+          const userRegistry = await getUserRegistryMultiple(
+            ['config.app_default_sort_by', 'config.app_default_sort_order'],
+            authState.profile.id,
+          )
 
           const sortByEntry = userRegistry.find((r) => r.key === 'config.app_default_sort_by')
           const sortOrderEntry = userRegistry.find((r) => r.key === 'config.app_default_sort_order')
@@ -78,10 +88,13 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ isScrolled: isScrolledDown
     if (authState.profile?.id && authState.state === 'authenticated') {
       try {
         // Save user preferences to registry
-        await setUserRegistryMultiple([
-          { key: 'config.app_default_sort_by', value: sortBy, isEncrypted: false },
-          { key: 'config.app_default_sort_order', value: sortOrder, isEncrypted: false },
-        ], authState.profile.id)
+        await setUserRegistryMultiple(
+          [
+            { key: 'config.app_default_sort_by', value: sortBy, isEncrypted: false },
+            { key: 'config.app_default_sort_order', value: sortOrder, isEncrypted: false },
+          ],
+          authState.profile.id,
+        )
 
         // Update local state
         setCurrentSortBy(sortBy)

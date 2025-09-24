@@ -75,13 +75,17 @@ export const galleryLoader = async ({
     let userSortOrder: string | undefined
     if (userId && auth.state === 'authenticated') {
       try {
-        const userRegistryResult = await getUserRegistryMultiple([
-          'config.app_default_sort_by',
-          'config.app_default_sort_order',
-        ], userId)
+        const userRegistryResult = await getUserRegistryMultiple(
+          ['config.app_default_sort_by', 'config.app_default_sort_order'],
+          userId,
+        )
 
-        const userSortByEntry = userRegistryResult.find((r) => r.key === 'config.app_default_sort_by')
-        const userSortOrderEntry = userRegistryResult.find((r) => r.key === 'config.app_default_sort_order')
+        const userSortByEntry = userRegistryResult.find(
+          (r) => r.key === 'config.app_default_sort_by',
+        )
+        const userSortOrderEntry = userRegistryResult.find(
+          (r) => r.key === 'config.app_default_sort_order',
+        )
 
         userSortBy = userSortByEntry?.value
         userSortOrder = userSortOrderEntry?.value
@@ -99,8 +103,12 @@ export const galleryLoader = async ({
       'config.app_default_sort_order',
     ])
 
-    const imageExtensionsEntry = systemRegistryResult.find((r) => r.key === 'config.app_image_extensions')
-    const videoExtensionsEntry = systemRegistryResult.find((r) => r.key === 'config.app_video_extensions')
+    const imageExtensionsEntry = systemRegistryResult.find(
+      (r) => r.key === 'config.app_image_extensions',
+    )
+    const videoExtensionsEntry = systemRegistryResult.find(
+      (r) => r.key === 'config.app_video_extensions',
+    )
 
     const imageExtensions = imageExtensionsEntry?.value || DEFAULT_IMAGE_EXTENSIONS
     videoExtensions = videoExtensionsEntry?.value || DEFAULT_VIDEO_EXTENSIONS
@@ -112,8 +120,12 @@ export const galleryLoader = async ({
     showHidden = showHiddenEntry?.value === 'true'
 
     // Use user preferences if available, otherwise fall back to system registry, then defaults
-    const systemSortByEntry = systemRegistryResult.find((r) => r.key === 'config.app_default_sort_by')
-    const systemSortOrderEntry = systemRegistryResult.find((r) => r.key === 'config.app_default_sort_order')
+    const systemSortByEntry = systemRegistryResult.find(
+      (r) => r.key === 'config.app_default_sort_by',
+    )
+    const systemSortOrderEntry = systemRegistryResult.find(
+      (r) => r.key === 'config.app_default_sort_order',
+    )
 
     sortBy = (userSortBy || systemSortByEntry?.value || 'MODIFIED_TIME') as SortOption
     sortOrder = (userSortOrder || systemSortOrderEntry?.value || 'DESC') as SortOrder
