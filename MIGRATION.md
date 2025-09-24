@@ -9,10 +9,6 @@ This prevents race conditions and migration conflicts in multi-instance producti
 
 ## Migration Command
 
-### Install and Use (Recommended)
-
-The easiest way to get the migration tool is via `go install`:
-
 ```bash
 # Install the migration tool
 go install github.com/cshum/imagor-studio/server/cmd/imagor-studio-migrate@latest
@@ -29,8 +25,6 @@ imagor-studio-migrate --database-url="postgres://user:pass@host:port/db" --migra
 # Reset all migrations (DANGEROUS - for development only)
 imagor-studio-migrate --database-url="postgres://user:pass@host:port/db" --migrate-command=reset
 ```
-
-### Basic Usage
 
 The migration tool uses the same configuration system as the main application, supporting CLI arguments, environment variables, and .env files.
 
@@ -58,47 +52,17 @@ Then run:
 imagor-studio-migrate
 ```
 
-### Makefile Shortcuts
-
-```bash
-# Build migration tool
-make migrate-build
-
-# Run migrations (requires DATABASE_URL env var)
-make migrate-up
-
-# Check status
-make migrate-status
-
-# Rollback
-make migrate-down
-
-# Clean up migration binary
-make migrate-clean
-```
-
-## Configuration Options
-
-### Force Auto-Migration
-
-For development or single-instance deployments, you can force auto-migration even with PostgreSQL/MySQL:
-
-```bash
-# Environment variable
-export FORCE_AUTO_MIGRATE=true
-
-# Command line flag
-imagor-studio --force-auto-migrate=true
-
-# In .env file
-FORCE_AUTO_MIGRATE=true
-```
-
-**⚠️ Warning**: Use `FORCE_AUTO_MIGRATE=true` with caution in multi-instance environments as it can cause race conditions.
-
 ## Deployment Strategies
 
-### Production Deployment (Recommended)
+### Single Instance Deployment (SQLite)
+
+For SQLite deployments (default):
+```bash
+# Auto-migration runs automatically
+imagor-studio
+```
+
+### Multi-instance Deployment (PostgreSQL/MySQL)
 
 1. **Pre-deployment**: Run migrations before starting application instances
    ```bash
@@ -110,96 +74,10 @@ FORCE_AUTO_MIGRATE=true
    imagor-studio --database-url="$DATABASE_URL"
    ```
 
-### Development Deployment
-
-For development with SQLite (default):
-```bash
-# Auto-migration runs automatically
-imagor-studio
-```
-
-For development with PostgreSQL/MySQL:
-```bash
-# Option 1: Use migration command
-imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=up
-imagor-studio --database-url="$DATABASE_URL"
-
-# Option 2: Force auto-migration
-imagor-studio --database-url="$DATABASE_URL" --force-auto-migrate=true
-```
-
-## Migration Workflow
-
-### Adding New Migrations
-
-1. Create migration file in `server/internal/migrations/`
-2. Follow naming convention: `YYYYMMDD_description.go`
-3. Test locally with SQLite or development database
-4. Deploy using migration command in production
-
-### Rolling Back Migrations
-
-```bash
-# Check current status
-imagor-studio-migrate --migrate-command=status
-
-# Rollback last migration
-imagor-studio-migrate --migrate-command=down
-
-# Verify rollback
-imagor-studio-migrate --migrate-command=status
-```
-
-## Database-Specific Behavior
-
-| Database Type | Auto-Migration | Manual Migration | Notes |
-|---------------|----------------|------------------|-------|
-| SQLite | Yes - Enabled | Yes - Available | Single-file, no concurrency issues |
-| PostgreSQL | No - Disabled | Yes - Required | Multi-instance safe |
-| MySQL | No - Disabled | Yes - Required | Multi-instance safe |
-
-## Troubleshooting
-
-### Migration Fails
-
-1. Check database connectivity:
-   ```bash
-   imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=status
-   ```
-
-2. Verify database permissions (CREATE, ALTER, DROP tables)
-
-3. Check migration logs for specific errors
-
-### Server Won't Start
-
-If server fails to start due to missing migrations:
-
-1. Run migrations manually:
-   ```bash
-   imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=up
-   ```
-
-2. Or enable force auto-migration temporarily:
-   ```bash
-   imagor-studio --force-auto-migrate=true
-   ```
-
-### Multi-Instance Race Conditions
-
-If you encounter migration conflicts in multi-instance environments:
-
-1. Ensure only one instance runs migrations
-2. Use a deployment strategy that runs migrations before starting instances
-3. Consider using database migration locks (advanced)
-
-## Examples
-
-### Docker Deployment
+### Docker Examples
 
 The Docker image includes both `imagor-studio` (main server) and `imagor-studio-migrate` (migration tool).
 
-#### Option 1: Run migrations in a separate container
 ```bash
 # Run migrations first
 docker run --rm \
@@ -212,7 +90,8 @@ docker run -p 8000:8000 \
   shumc/imagor-studio
 ```
 
-#### Option 2: Docker Compose with init container
+Docker Compose example:
+
 ```yaml
 version: '3.8'
 services:
@@ -258,7 +137,7 @@ FROM shumc/imagor-studio AS app
 CMD ["imagor-studio"]
 ```
 
-### Kubernetes Deployment
+Kubernetes example:
 
 ```yaml
 # Migration job
