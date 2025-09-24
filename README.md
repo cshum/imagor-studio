@@ -3,7 +3,7 @@
 [![Test Status](https://github.com/cshum/imagor-studio/workflows/test/badge.svg)](https://github.com/cshum/imagor-studio/actions/workflows/test.yml)
 [![Docker Hub](https://img.shields.io/badge/docker-shumc/imagor--studio-blue.svg)](https://hub.docker.com/r/shumc/imagor-studio/)
 
-Self-hosted image gallery and live editing web application, for creators and professionals
+Image gallery and live editing web application, for creators and professionals
 
 * High-performance image gallery with virtual scrolling and live editing capabilities powered by imagor.
 * Zero-configuration setup with universal storage support and non-destructive workflow.
