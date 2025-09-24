@@ -1,19 +1,8 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useRouter } from '@tanstack/react-router'
-import {
-  Check,
-  Clock,
-  FileText,
-  HardDrive,
-  LogOut,
-  MoreVertical,
-  Settings,
-  SortAsc,
-  SortDesc,
-} from 'lucide-react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { LogOut, MoreVertical, Settings } from 'lucide-react'
 
-import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
   Breadcrumb,
@@ -34,51 +23,24 @@ import {
 import { MobileBreadcrumb } from '@/components/ui/mobile-breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { SortOption, SortOrder } from '@/generated/graphql'
 import { useBreadcrumb } from '@/hooks/use-breadcrumb'
-import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 interface HeaderBarProps {
   isScrolled?: boolean
-  galleryLoaderData?: GalleryLoaderData
+  customMenuItems?: React.ReactNode
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
   isScrolled: isScrolledDown = false,
-  galleryLoaderData,
+  customMenuItems,
 }) => {
   const { t } = useTranslation()
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
-  const router = useRouter()
   const breadcrumbs = useBreadcrumb()
   const sidebar = useSidebar()
-
-  // Get current sort values from gallery loader data (if available)
-  const currentSortBy = galleryLoaderData?.currentSortBy || 'MODIFIED_TIME'
-  const currentSortOrder = galleryLoaderData?.currentSortOrder || 'DESC'
-
-  // Handle sorting change
-  const handleSortChange = async (sortBy: SortOption, sortOrder: SortOrder) => {
-    if (authState.profile?.id && authState.state === 'authenticated') {
-      await setUserRegistryMultiple(
-        [
-          { key: 'config.app_default_sort_by', value: sortBy, isEncrypted: false },
-          { key: 'config.app_default_sort_order', value: sortOrder, isEncrypted: false },
-        ],
-        authState.profile.id,
-      )
-      // Invalidate only the current gallery route to trigger loader reload
-      router.invalidate({
-        filter: (route) => {
-          // Only invalidate gallery routes (root path or gallery routes)
-          return route.routeId === '/' || route.routeId === '/gallery/$galleryKey'
-        },
-      })
-    }
-  }
 
   // Get user display name
   const getUserDisplayName = () => {
@@ -165,70 +127,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align='end' className='w-56'>
-                  {/* Sorting options - only show for authenticated users on gallery pages */}
-                  {authState.state === 'authenticated' && galleryLoaderData && (
-                    <>
-                      <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-                      <DropdownMenuItem
-                        className='hover:cursor-pointer'
-                        onSelect={(event) => {
-                          event.preventDefault()
-                          handleSortChange('NAME', currentSortOrder)
-                        }}
-                      >
-                        <FileText className='text-muted-foreground mr-3 h-4 w-4' />
-                        Name
-                        {currentSortBy === 'NAME' && <Check className='ml-auto h-4 w-4' />}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className='hover:cursor-pointer'
-                        onSelect={(event) => {
-                          event.preventDefault()
-                          handleSortChange('MODIFIED_TIME', currentSortOrder)
-                        }}
-                      >
-                        <Clock className='text-muted-foreground mr-3 h-4 w-4' />
-                        Modified Time
-                        {currentSortBy === 'MODIFIED_TIME' && <Check className='ml-auto h-4 w-4' />}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className='hover:cursor-pointer'
-                        onSelect={(event) => {
-                          event.preventDefault()
-                          handleSortChange('SIZE', currentSortOrder)
-                        }}
-                      >
-                        <HardDrive className='text-muted-foreground mr-3 h-4 w-4' />
-                        Size
-                        {currentSortBy === 'SIZE' && <Check className='ml-auto h-4 w-4' />}
-                      </DropdownMenuItem>
-
-                      <DropdownMenuLabel>Sort order</DropdownMenuLabel>
-                      <DropdownMenuItem
-                        className='hover:cursor-pointer'
-                        onSelect={(event) => {
-                          event.preventDefault()
-                          handleSortChange(currentSortBy, 'ASC')
-                        }}
-                      >
-                        <SortAsc className='text-muted-foreground mr-3 h-4 w-4' />
-                        Ascending
-                        {currentSortOrder === 'ASC' && <Check className='ml-auto h-4 w-4' />}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className='hover:cursor-pointer'
-                        onSelect={(event) => {
-                          event.preventDefault()
-                          handleSortChange(currentSortBy, 'DESC')
-                        }}
-                      >
-                        <SortDesc className='text-muted-foreground mr-3 h-4 w-4' />
-                        Descending
-                        {currentSortOrder === 'DESC' && <Check className='ml-auto h-4 w-4' />}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
+                  {/* Custom menu items slot - for page-specific functionality */}
+                  {customMenuItems}
 
                   <DropdownMenuLabel className='font-normal'>
                     <div className='flex flex-col space-y-1'>
