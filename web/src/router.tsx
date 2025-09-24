@@ -99,6 +99,7 @@ const rootPath = createRoute({
     )
   },
   loader: () => galleryLoader({ params: { galleryKey: '' } }),
+  shouldReload: false,
 })
 
 const rootImagePage = createRoute({
@@ -145,6 +146,7 @@ const galleryRoute = createRoute({
     )
   },
   loader: galleryLoader,
+  shouldReload: false,
 })
 
 const imagePage = createRoute({
