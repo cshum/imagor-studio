@@ -9,7 +9,7 @@ BINARY_NAME=imagor-studio-server
 BINARY_UNIX=$(BINARY_NAME)_unix
 
 # Main package path
-MAIN_PACKAGE=./cmd/server
+MAIN_PACKAGE=./cmd/imagor-studio
 
 # Build flags
 LDFLAGS=-ldflags "-w -s"
@@ -70,7 +70,7 @@ reset-db: clean-db setup-db
 MIGRATE_BINARY=imagor-studio-migrate
 
 migrate-build:
-	$(GOBUILD) $(LDFLAGS) -o $(MIGRATE_BINARY) ./cmd/migrate
+	$(GOBUILD) $(LDFLAGS) -o $(MIGRATE_BINARY) ./cmd/imagor-studio-migrate
 
 migrate-up: migrate-build
 	./$(MIGRATE_BINARY) --migrate-command=up

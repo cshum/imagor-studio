@@ -1,6 +1,6 @@
 # Database Migration Guide
 
-Imagor Studio now supports database-type-aware migration handling:
+Imagor Studio supports database-type-aware migration handling:
 
 - **SQLite**: Auto-migration runs during server startup (default behavior)
 - **PostgreSQL/MySQL**: Auto-migration is disabled by default, requires manual migration command
@@ -9,33 +9,30 @@ This prevents race conditions and migration conflicts in multi-instance producti
 
 ## Migration Command
 
-A dedicated migration tool is available for PostgreSQL and MySQL deployments:
+### Install and Use (Recommended)
+
+The easiest way to get the migration tool is via `go install`:
 
 ```bash
-# Build the migration tool
-make migrate-build
+# Install the migration tool
+go install github.com/cshum/imagor-studio/server/cmd/imagor-studio-migrate@latest
 
-# Or build manually
-go build -o imagor-studio-migrate ./cmd/migrate
+# Run pending migrations
+imagor-studio-migrate --database-url="postgres://user:pass@host:port/db" --migrate-command=up
+
+# Check migration status
+imagor-studio-migrate --database-url="mysql://user:pass@host:port/db" --migrate-command=status
+
+# Rollback last migration
+imagor-studio-migrate --database-url="postgres://user:pass@host:port/db" --migrate-command=down
+
+# Reset all migrations (DANGEROUS - for development only)
+imagor-studio-migrate --database-url="postgres://user:pass@host:port/db" --migrate-command=reset
 ```
 
 ### Basic Usage
 
-The migration tool now uses the same configuration system as the main application, supporting CLI arguments, environment variables, and .env files.
-
-```bash
-# Run pending migrations
-./imagor-studio-migrate --database-url="postgres://user:pass@host:port/db" --migrate-command=up
-
-# Check migration status
-./imagor-studio-migrate --database-url="mysql://user:pass@host:port/db" --migrate-command=status
-
-# Rollback last migration
-./imagor-studio-migrate --database-url="postgres://user:pass@host:port/db" --migrate-command=down
-
-# Reset all migrations (DANGEROUS - for development only)
-./imagor-studio-migrate --database-url="postgres://user:pass@host:port/db" --migrate-command=reset
-```
+The migration tool uses the same configuration system as the main application, supporting CLI arguments, environment variables, and .env files.
 
 ### Using Environment Variables
 
@@ -45,7 +42,7 @@ export DATABASE_URL="postgres://user:pass@host:port/db"
 export MIGRATE_COMMAND="up"
 
 # Run migrations
-./imagor-studio-migrate
+imagor-studio-migrate
 ```
 
 ### Using .env File
@@ -58,7 +55,7 @@ MIGRATE_COMMAND=status
 
 Then run:
 ```bash
-./imagor-studio-migrate
+imagor-studio-migrate
 ```
 
 ### Makefile Shortcuts
@@ -91,7 +88,7 @@ For development or single-instance deployments, you can force auto-migration eve
 export FORCE_AUTO_MIGRATE=true
 
 # Command line flag
-./imagor-studio-server --force-auto-migrate=true
+imagor-studio --force-auto-migrate=true
 
 # In .env file
 FORCE_AUTO_MIGRATE=true
@@ -105,12 +102,12 @@ FORCE_AUTO_MIGRATE=true
 
 1. **Pre-deployment**: Run migrations before starting application instances
    ```bash
-   ./imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=up
+   imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=up
    ```
 
 2. **Start application**: Auto-migration will be skipped for PostgreSQL/MySQL
    ```bash
-   ./imagor-studio-server --database-url="$DATABASE_URL"
+   imagor-studio --database-url="$DATABASE_URL"
    ```
 
 ### Development Deployment
@@ -118,17 +115,17 @@ FORCE_AUTO_MIGRATE=true
 For development with SQLite (default):
 ```bash
 # Auto-migration runs automatically
-./imagor-studio-server
+imagor-studio
 ```
 
 For development with PostgreSQL/MySQL:
 ```bash
 # Option 1: Use migration command
-./imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=up
-./imagor-studio-server --database-url="$DATABASE_URL"
+imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=up
+imagor-studio --database-url="$DATABASE_URL"
 
 # Option 2: Force auto-migration
-./imagor-studio-server --database-url="$DATABASE_URL" --force-auto-migrate=true
+imagor-studio --database-url="$DATABASE_URL" --force-auto-migrate=true
 ```
 
 ## Migration Workflow
@@ -144,13 +141,13 @@ For development with PostgreSQL/MySQL:
 
 ```bash
 # Check current status
-./imagor-studio-migrate --migrate-command=status
+imagor-studio-migrate --migrate-command=status
 
 # Rollback last migration
-./imagor-studio-migrate --migrate-command=down
+imagor-studio-migrate --migrate-command=down
 
 # Verify rollback
-./imagor-studio-migrate --migrate-command=status
+imagor-studio-migrate --migrate-command=status
 ```
 
 ## Database-Specific Behavior
@@ -167,7 +164,7 @@ For development with PostgreSQL/MySQL:
 
 1. Check database connectivity:
    ```bash
-   ./imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=status
+   imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=status
    ```
 
 2. Verify database permissions (CREATE, ALTER, DROP tables)
@@ -180,12 +177,12 @@ If server fails to start due to missing migrations:
 
 1. Run migrations manually:
    ```bash
-   ./imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=up
+   imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=up
    ```
 
 2. Or enable force auto-migration temporarily:
    ```bash
-   ./imagor-studio-server --force-auto-migrate=true
+   imagor-studio --force-auto-migrate=true
    ```
 
 ### Multi-Instance Race Conditions
@@ -200,12 +197,65 @@ If you encounter migration conflicts in multi-instance environments:
 
 ### Docker Deployment
 
-```dockerfile
-# Run migrations in init container
-RUN ./imagor-studio-migrate --database-url="$DATABASE_URL" --migrate-command=up
+The Docker image includes both `imagor-studio` (main server) and `imagor-studio-migrate` (migration tool).
 
-# Start main application
-CMD ["./imagor-studio-server"]
+#### Option 1: Run migrations in a separate container
+```bash
+# Run migrations first
+docker run --rm \
+  -e DATABASE_URL="postgres://user:pass@host:port/db" \
+  shumc/imagor-studio imagor-studio-migrate --migrate-command=up
+
+# Then start the main application
+docker run -p 8000:8000 \
+  -e DATABASE_URL="postgres://user:pass@host:port/db" \
+  shumc/imagor-studio
+```
+
+#### Option 2: Docker Compose with init container
+```yaml
+version: '3.8'
+services:
+  migrate:
+    image: shumc/imagor-studio
+    command: ["imagor-studio-migrate", "--migrate-command=up"]
+    environment:
+      - DATABASE_URL=postgres://user:pass@postgres:5432/db
+    depends_on:
+      - postgres
+
+  app:
+    image: shumc/imagor-studio
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://user:pass@postgres:5432/db
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+```
+
+#### Option 3: Multi-stage Dockerfile for custom builds
+```dockerfile
+FROM shumc/imagor-studio AS migrate
+RUN imagor-studio-migrate --migrate-command=up
+
+FROM shumc/imagor-studio AS app
+CMD ["imagor-studio"]
 ```
 
 ### Kubernetes Deployment
@@ -221,8 +271,8 @@ spec:
     spec:
       containers:
       - name: migrate
-        image: imagor-studio:latest
-        command: ["./imagor-studio-migrate", "--migrate-command=up"]
+        image: shumc/imagor-studio:latest
+        command: ["imagor-studio-migrate", "--migrate-command=up"]
         env:
         - name: DATABASE_URL
           valueFrom:
@@ -249,7 +299,7 @@ spec:
     spec:
       containers:
       - name: app
-        image: imagor-studio:latest
+        image: shumc/imagor-studio:latest
         env:
         - name: DATABASE_URL
           valueFrom:
