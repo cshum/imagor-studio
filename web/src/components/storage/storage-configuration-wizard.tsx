@@ -267,20 +267,19 @@ export function StorageConfigurationWizard({
         </div>
       )}
 
-      <div className='mt-6 flex flex-col justify-between gap-3 sm:flex-row'>
-        <div className='flex gap-3'>
-          {showCancel && (
-            <Button
-              type='button'
-              variant='outline'
-              onClick={onCancel}
-              disabled={isLoading || isTesting}
-            >
-              {t('common.buttons.cancel')}
-            </Button>
-          )}
-        </div>
-        <div className='flex gap-3'>
+      <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end'>
+        {showCancel && (
+          <Button
+            type='button'
+            variant='outline'
+            onClick={onCancel}
+            disabled={isLoading || isTesting}
+            className='sm:mr-auto'
+          >
+            {t('common.buttons.cancel')}
+          </Button>
+        )}
+        <div className='flex flex-col gap-3 sm:flex-row'>
           <ButtonWithLoading
             type='button'
             variant='outline'

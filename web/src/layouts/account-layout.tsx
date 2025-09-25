@@ -1,15 +1,23 @@
-import { PropsWithChildren } from 'react'
+import { PropsWithChildren, useEffect } from 'react'
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 
 import { HeaderBar } from '@/components/header-bar'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { useAuth } from '@/stores/auth-store'
 
 export function AccountLayout({ children }: PropsWithChildren) {
   const { authState } = useAuth()
   const location = useLocation()
-  const isAdmin = authState.profile?.role === 'admin'
+  const isAdmin = authState.profile?.role == 'admin'
+
+  useScrollHandler(location.pathname)
+
+  // Restore scroll position when pathname changes
+  useEffect(() => {
+    requestAnimationFrame(() => restoreScrollPosition(location.pathname))
+  }, [location.pathname])
 
   // Determine current tab based on pathname
   const currentTab = location.pathname.includes('/admin')

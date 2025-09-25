@@ -295,7 +295,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                       )}
                     />
 
-                    <div className='flex justify-end space-x-2'>
+                    <div className='flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3'>
                       <Button
                         type='button'
                         variant='outline'
