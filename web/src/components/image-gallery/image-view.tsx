@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
+  Maximize,
   Pause,
   Play,
   SquarePen,
@@ -89,6 +90,7 @@ export function ImageView({
   const [direction, setDirection] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
     const overlay = overlayRef.current
@@ -201,7 +203,13 @@ export function ImageView({
   const handleOverlayClick = () => {
     // Only handle click if we weren't dragging
     if (!isDragging) {
-      handleCloseFullView()
+      if (isFullscreen) {
+        // Exit fullscreen when clicking overlay in fullscreen mode
+        toggleFullscreen()
+      } else {
+        // Close image view when not in fullscreen
+        handleCloseFullView()
+      }
     }
   }
 
@@ -220,17 +228,52 @@ export function ImageView({
     }
   }
 
-  // Simplified slideshow functions
   const toggleSlideshow = () => {
     setDirection(1)
     transformComponentRef.current?.resetTransform()
     onSlideshowChange?.(!isSlideshow)
   }
 
-  // Enhanced handlers that pause slideshow
-  const handleInfoClick = () => {
-    toggleInfo()
+  const toggleFullscreen = async () => {
+    if (!isFullscreen) {
+      await document.documentElement.requestFullscreen()
+      setIsFullscreen(true)
+    } else {
+      await document.exitFullscreen()
+      setIsFullscreen(false)
+    }
   }
+
+  // Listen for fullscreen changes (e.g., ESC key)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
+  }, [])
+
+  // Keyboard shortcuts for navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Left arrow key for previous image
+      if (event.key === 'ArrowLeft' && onPrevImage) {
+        event.preventDefault()
+        handlePrevImage()
+      }
+      // Right arrow key for next image
+      else if (event.key === 'ArrowRight' && onNextImage) {
+        event.preventDefault()
+        handleNextImage()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onPrevImage, onNextImage, handlePrevImage, handleNextImage])
 
   const slideVariants = {
     enter: (direction: number) => ({
@@ -427,7 +470,7 @@ export function ImageView({
                       </motion.div>
                     )}
                   </TransformComponent>
-                  {!isSlideshow && !image.isVideo && (
+                  {!isSlideshow && !image.isVideo && !isFullscreen && (
                     <div className='absolute right-6 bottom-4 z-10 flex space-x-4'>
                       {scale > 1 && (
                         <button
@@ -448,7 +491,7 @@ export function ImageView({
                 </>
               )}
             </TransformWrapper>
-            {onPrevImage && scale <= 1 && !isSlideshow && (
+            {onPrevImage && scale <= 1 && !isSlideshow && !isFullscreen && (
               <div
                 className={`absolute z-10 ${isDesktop ? 'top-1/2 left-4 -translate-y-1/2' : 'bottom-4 left-8'}`}
               >
@@ -460,7 +503,7 @@ export function ImageView({
                 </button>
               </div>
             )}
-            {onNextImage && scale <= 1 && !isSlideshow && (
+            {onNextImage && scale <= 1 && !isSlideshow && !isFullscreen && (
               <div
                 className={`absolute z-10 ${isDesktop ? 'top-1/2 right-4 -translate-y-1/2' : 'bottom-4 left-20'}`}
               >
@@ -473,36 +516,50 @@ export function ImageView({
               </div>
             )}
 
-            <div className='absolute top-4 right-6 z-60 flex space-x-2'>
-              {authState.state === 'authenticated' && !image.isVideo && (
+            {!isFullscreen && (
+              <div className='absolute top-4 right-6 z-60 flex space-x-2'>
+                {authState.state === 'authenticated' && !image.isVideo && (
+                  <button
+                    onClick={handleImagorClick}
+                    className='rounded-full bg-black/50 px-2.5 py-2 text-white transition-colors hover:bg-black/75'
+                  >
+                    <SquarePen size={20} />
+                  </button>
+                )}
+                {!image.isVideo && (onPrevImage || onNextImage) && (
+                  <button
+                    onClick={toggleSlideshow}
+                    className='rounded-full bg-black/50 px-2.5 py-2 text-white transition-colors hover:bg-black/75'
+                  >
+                    {isSlideshow ? (
+                      <Pause size={20} fill='white' />
+                    ) : (
+                      <Play size={20} fill='white' />
+                    )}
+                  </button>
+                )}
+                {!image.isVideo && (
+                  <button
+                    onClick={toggleFullscreen}
+                    className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
+                  >
+                    <Maximize size={24} />
+                  </button>
+                )}
                 <button
-                  onClick={handleImagorClick}
-                  className='rounded-full bg-black/50 px-2.5 py-2 text-white transition-colors hover:bg-black/75'
+                  onClick={toggleInfo}
+                  className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
                 >
-                  <SquarePen size={20} />
+                  <Info size={24} />
                 </button>
-              )}
-              {(onPrevImage || onNextImage) && (
                 <button
-                  onClick={toggleSlideshow}
-                  className='rounded-full bg-black/50 px-2.5 py-2 text-white transition-colors hover:bg-black/75'
+                  onClick={handleCloseFullView}
+                  className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
                 >
-                  {isSlideshow ? <Pause size={20} fill='white' /> : <Play size={20} fill='white' />}
+                  <X size={24} />
                 </button>
-              )}
-              <button
-                onClick={handleInfoClick}
-                className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
-              >
-                <Info size={24} />
-              </button>
-              <button
-                onClick={handleCloseFullView}
-                className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
-              >
-                <X size={24} />
-              </button>
-            </div>
+              </div>
+            )}
 
             {scale <= 1 && !image.isVideo && overlayHandler}
 
