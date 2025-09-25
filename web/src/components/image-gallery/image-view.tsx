@@ -2,7 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
 import { useNavigate } from '@tanstack/react-router'
 import { AnimatePresence, motion, PanInfo } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Info, Pause, Play, X, ZoomIn, ZoomOut } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  Pause,
+  Play,
+  SquarePen,
+  X,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react'
 
 import { ImageInfo, ImageViewInfo } from '@/components/image-gallery/image-view-info.tsx'
 import { LicenseBadge } from '@/components/license-badge.tsx'
@@ -467,9 +477,9 @@ export function ImageView({
               {authState.state === 'authenticated' && !image.isVideo && (
                 <button
                   onClick={handleImagorClick}
-                  className='rounded-full bg-black/50 px-4 py-2 text-white transition-colors hover:bg-black/75'
+                  className='rounded-full bg-black/50 px-2.5 py-2 text-white transition-colors hover:bg-black/75'
                 >
-                  imagor
+                  <SquarePen size={20} />
                 </button>
               )}
               {(onPrevImage || onNextImage) && (
