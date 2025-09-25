@@ -77,7 +77,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   return (
     <TooltipProvider>
       {/* Spacer - preserves layout when header becomes fixed */}
-      {isScrolledDown && <div className='h-[48px] w-full' aria-hidden='true' />}
+      {isScrolledDown && <div className='h-[56px] w-full sm:h-[48px]' aria-hidden='true' />}
 
       {/* Actual header */}
       <header
@@ -87,9 +87,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           <div
             className={`flex items-center justify-between px-2 py-1 ${isScrolledDown ? 'md:mx-6' : ''}`}
           >
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center space-x-1 sm:space-x-2'>
               {/* Sidebar Toggle */}
-              <SidebarTrigger className='-ml-2' />
+              <SidebarTrigger className='-ml-2 h-12 w-12 sm:h-10 sm:w-10' />
 
               {/* Mobile: Dropdown-style breadcrumb */}
               <MobileBreadcrumb breadcrumbs={breadcrumbs} className='block sm:hidden' />
@@ -121,7 +121,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
               <ModeToggle />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant='ghost' size='icon'>
+                  <Button variant='ghost' size='icon' className='h-12 w-12 sm:h-10 sm:w-10'>
                     <MoreVertical className='h-4 w-4' />
                     <span className='sr-only'>{t('common.buttons.more')}</span>
                   </Button>

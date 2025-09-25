@@ -33,7 +33,7 @@ export const FolderGrid = ({ folders, onFolderClick, width, maxFolderWidth }: Fo
           onClick={() => onFolderClick?.(folder)}
           style={{ width: `${folderWidth - 8}px` }} // Subtracting 8px to account for the gap
         >
-          <CardContent className='flex items-center px-4 py-3'>
+          <CardContent className='flex items-center px-4 py-4 sm:py-3'>
             <Folder className='text-primary mr-2 h-5 w-5 flex-shrink-0' />
             <span className='truncate text-sm font-medium'>{folder.galleryName}</span>
           </CardContent>
