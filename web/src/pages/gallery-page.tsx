@@ -98,7 +98,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     })
   }
 
-  const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 40 : 30)
+  const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 48 : 38)
   const isEmpty = images.length === 0 && folders.length === 0
   const isRootGallery = galleryKey === ''
   const isNavigateToImage = !!(

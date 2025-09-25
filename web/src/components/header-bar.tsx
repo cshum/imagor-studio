@@ -77,7 +77,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   return (
     <TooltipProvider>
       {/* Spacer - preserves layout when header becomes fixed */}
-      {isScrolledDown && <div className='h-[48px] w-full' aria-hidden='true' />}
+      {isScrolledDown && <div className='h-[56px] w-full sm:h-[48px]' aria-hidden='true' />}
 
       {/* Actual header */}
       <header
