@@ -165,14 +165,18 @@ export function ImagorConfigurationWizard({
         )}
       </div>
 
-      <div className='mt-6 flex flex-col justify-between gap-3 sm:flex-row'>
-        <div className='flex gap-3'>
-          {showCancel && (
-            <Button type='button' variant='outline' onClick={onCancel} disabled={isLoading}>
-              {t('common.buttons.cancel')}
-            </Button>
-          )}
-        </div>
+      <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end'>
+        {showCancel && (
+          <Button
+            type='button'
+            variant='outline'
+            onClick={onCancel}
+            disabled={isLoading}
+            className='sm:mr-auto'
+          >
+            {t('common.buttons.cancel')}
+          </Button>
+        )}
         <ButtonWithLoading
           type='submit'
           disabled={isConfigOverridden}
