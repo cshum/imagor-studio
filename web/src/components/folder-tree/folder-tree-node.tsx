@@ -63,7 +63,7 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
     return (
       <SidebarMenuItem>
         <SidebarMenuButton onClick={handleFolderClick} isActive={isActive}>
-          <span className='-m-2 p-3 md:p-2'>
+          <span className='-m-2 p-4 md:p-2'>
             <div className='size-4' />
           </span>
           <Folder className='h-4 w-4' />
@@ -82,7 +82,7 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
       >
         <CollapsibleTrigger asChild>
           <SidebarMenuButton onClick={handleFolderClick} isActive={isActive}>
-            <span onClick={handleExpandClick} className='-m-2 p-3 md:p-2'>
+            <span onClick={handleExpandClick} className='-m-2 p-4 md:p-2'>
               <ChevronRight className='size-4 transition-transform' />
             </span>
             <Folder className='h-4 w-4' />
