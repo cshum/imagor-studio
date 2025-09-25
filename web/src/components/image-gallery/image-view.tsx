@@ -228,30 +228,19 @@ export function ImageView({
     }
   }
 
-  // Simplified slideshow functions
   const toggleSlideshow = () => {
     setDirection(1)
     transformComponentRef.current?.resetTransform()
     onSlideshowChange?.(!isSlideshow)
   }
 
-  // Enhanced handlers that pause slideshow
-  const handleInfoClick = () => {
-    toggleInfo()
-  }
-
-  // Fullscreen functionality
   const toggleFullscreen = async () => {
-    try {
-      if (!isFullscreen) {
-        await document.documentElement.requestFullscreen()
-        setIsFullscreen(true)
-      } else {
-        await document.exitFullscreen()
-        setIsFullscreen(false)
-      }
-    } catch (error) {
-      console.error('Fullscreen error:', error)
+    if (!isFullscreen) {
+      await document.documentElement.requestFullscreen()
+      setIsFullscreen(true)
+    } else {
+      await document.exitFullscreen()
+      setIsFullscreen(false)
     }
   }
 
@@ -260,7 +249,6 @@ export function ImageView({
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement)
     }
-
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange)
@@ -559,7 +547,7 @@ export function ImageView({
                   </button>
                 )}
                 <button
-                  onClick={handleInfoClick}
+                  onClick={toggleInfo}
                   className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
                 >
                   <Info size={24} />
