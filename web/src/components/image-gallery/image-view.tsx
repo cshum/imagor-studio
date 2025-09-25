@@ -538,7 +538,7 @@ export function ImageView({
                     )}
                   </button>
                 )}
-                {!image.isVideo && (
+                {!image.isVideo && isDesktop && (
                   <button
                     onClick={toggleFullscreen}
                     className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
