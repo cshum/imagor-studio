@@ -267,6 +267,26 @@ export function ImageView({
     }
   }, [])
 
+  // Keyboard shortcuts for navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Left arrow key for previous image
+      if (event.key === 'ArrowLeft' && onPrevImage) {
+        event.preventDefault()
+        handlePrevImage()
+      }
+      // Right arrow key for next image
+      else if (event.key === 'ArrowRight' && onNextImage) {
+        event.preventDefault()
+        handleNextImage()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onPrevImage, onNextImage, handlePrevImage, handleNextImage])
+
   const slideVariants = {
     enter: (direction: number) => ({
       x: direction > 0 ? 20 : -20,
