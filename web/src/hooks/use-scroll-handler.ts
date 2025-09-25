@@ -68,25 +68,23 @@ export const useScrollHandler = (
 
 export const restoreScrollPosition = (scrollKey: string) => {
   const savedPosition = getPosition(scrollKey)
-  if (savedPosition > 0) {
-    const scrollHeight = Math.max(
-      document.body.scrollHeight,
-      document.body.offsetHeight,
-      document.documentElement.clientHeight,
-      document.documentElement.scrollHeight,
-      document.documentElement.offsetHeight,
-    )
-    const clientHeight = window.innerHeight
-    const maxScrollPosition = scrollHeight - clientHeight
+  const scrollHeight = Math.max(
+    document.body.scrollHeight,
+    document.body.offsetHeight,
+    document.documentElement.clientHeight,
+    document.documentElement.scrollHeight,
+    document.documentElement.offsetHeight,
+  )
+  const clientHeight = window.innerHeight
+  const maxScrollPosition = scrollHeight - clientHeight
 
-    // Only restore if the saved position is valid for current content
-    const positionToRestore = Math.min(savedPosition, Math.max(0, maxScrollPosition))
+  // Only restore if the saved position is valid for current content
+  const positionToRestore = Math.min(savedPosition, Math.max(0, maxScrollPosition))
 
-    if (positionToRestore > 0) {
-      window.scrollTo({ top: positionToRestore, behavior: 'instant' })
-    } else {
-      // Content is too short for saved position, reset to top
-      window.scrollTo({ top: 0, behavior: 'instant' })
-    }
+  if (positionToRestore > 0) {
+    window.scrollTo({ top: positionToRestore, behavior: 'instant' })
+  } else {
+    // Content is too short for saved position, reset to top
+    window.scrollTo({ top: 0, behavior: 'instant' })
   }
 }
