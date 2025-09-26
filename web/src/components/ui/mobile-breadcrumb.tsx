@@ -32,7 +32,9 @@ export const MobileBreadcrumb: React.FC<MobileBreadcrumbProps> = ({
   if (breadcrumbs.length === 1) {
     return (
       <div className={`flex items-center ${className}`}>
-        <span className='max-w-[200px] truncate text-base font-medium py-2'>{currentPage.label}</span>
+        <span className='max-w-[200px] truncate py-2 text-base font-medium'>
+          {currentPage.label}
+        </span>
       </div>
     )
   }
@@ -44,7 +46,7 @@ export const MobileBreadcrumb: React.FC<MobileBreadcrumbProps> = ({
           <Button
             variant='ghost'
             size='default'
-            className='hover-touch:bg-accent/50 h-auto px-3 py-2 text-base font-medium min-h-[44px]'
+            className='hover-touch:bg-accent/50 h-auto min-h-[44px] px-3 py-2 text-base font-medium'
           >
             <span className='max-w-[180px] truncate'>{currentPage?.label || 'Gallery'}</span>
             <ChevronDown className='ml-2 h-4 w-4 flex-shrink-0' />
