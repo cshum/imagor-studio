@@ -29,7 +29,7 @@ export const FolderGrid = ({ folders, onFolderClick, width, maxFolderWidth }: Fo
       {folders.map((folder) => (
         <Card
           key={folder.galleryKey}
-          className='hover:bg-accent cursor-pointer transition-colors'
+          className='hover-touch:bg-accent cursor-pointer transition-colors'
           onClick={() => onFolderClick?.(folder)}
           style={{ width: `${folderWidth - 8}px` }} // Subtracting 8px to account for the gap
         >

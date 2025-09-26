@@ -44,7 +44,7 @@ export const MobileBreadcrumb: React.FC<MobileBreadcrumbProps> = ({
           <Button
             variant='ghost'
             size='sm'
-            className='hover:bg-accent/50 h-auto p-1 text-sm font-medium'
+            className='hover-touch:bg-accent/50 h-auto p-1 text-sm font-medium'
           >
             <span className='max-w-[160px] truncate'>{currentPage?.label || 'Gallery'}</span>
             <ChevronDown className='ml-1 h-3 w-3 flex-shrink-0' />

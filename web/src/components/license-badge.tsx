@@ -10,11 +10,11 @@ interface LicenseBadgeProps {
 
 const getThemeClasses = (theme: string) => {
   if (theme === 'light') {
-    return 'bg-blue-100/80 text-blue-800 hover:bg-blue-200/80 hover:text-blue-900'
+    return 'bg-blue-100/80 text-blue-800 hover-touch:bg-blue-200/80 hover-touch:text-blue-900'
   } else if (theme === 'dark') {
-    return 'bg-blue-900/70 text-blue-200 hover:bg-blue-700/70 hover:text-blue-100'
+    return 'bg-blue-900/70 text-blue-200 hover-touch:bg-blue-700/70 hover-touch:text-blue-100'
   } else {
-    return 'bg-blue-100/80 text-blue-800 hover:bg-blue-200/80 dark:bg-blue-900/70 dark:text-blue-200 hover:text-blue-900 dark:hover:text-blue-100 dark:hover:bg-blue-700/70'
+    return 'bg-blue-100/80 text-blue-800 hover-touch:bg-blue-200/80 dark:bg-blue-900/70 dark:text-blue-200 hover-touch:text-blue-900 dark:hover-touch:text-blue-100 dark:hover-touch:bg-blue-700/70'
   }
 }
 

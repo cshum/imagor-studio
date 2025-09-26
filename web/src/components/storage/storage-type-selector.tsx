@@ -41,10 +41,10 @@ export function StorageTypeSelector({ value, onChange, disabled }: StorageTypeSe
           <div
             key={option.value}
             className={cn(
-              'hover:border-primary/50 cursor-pointer rounded-lg border-2 p-4 transition-all',
+              'hover-touch:border-primary/50 cursor-pointer rounded-lg border-2 p-4 transition-all',
               value === option.value
                 ? 'border-primary bg-primary/5'
-                : 'border-border hover:border-primary/30',
+                : 'border-border hover-touch:border-primary/30',
               disabled && 'cursor-not-allowed opacity-50',
             )}
             onClick={() => !disabled && onChange(option.value)}
