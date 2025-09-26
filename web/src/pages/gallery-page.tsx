@@ -24,6 +24,7 @@ import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
+import { setCurrentPath } from '@/stores/folder-tree-store.ts'
 import { ImagePosition, setPosition } from '@/stores/image-position-store.ts'
 import { useSidebar } from '@/stores/sidebar-store.ts'
 
@@ -69,6 +70,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   useResizeHandler(updateWidth)
 
   useEffect(() => {
+    setCurrentPath(galleryKey)
     requestAnimationFrame(() => restoreScrollPosition(galleryKey))
   }, [galleryKey])
 

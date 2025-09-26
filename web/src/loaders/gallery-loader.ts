@@ -8,12 +8,7 @@ import { getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
 import { getAuth } from '@/stores/auth-store.ts'
-import {
-  FolderNode,
-  folderTreeStore,
-  setCurrentPath,
-  updateTreeData,
-} from '@/stores/folder-tree-store.ts'
+import { FolderNode, folderTreeStore, updateTreeData } from '@/stores/folder-tree-store.ts'
 
 export interface GalleryLoaderData {
   galleryName: string
@@ -168,9 +163,6 @@ export const galleryLoader = async ({
 
   // Update folder tree store with fresh data while preserving toggle states
   updateTreeData(path, folderNodes)
-
-  // Set current path in folder tree store
-  setCurrentPath(galleryKey)
 
   // Filter and convert image files
   const images: GalleryImage[] = result.items
