@@ -32,7 +32,9 @@ export const MobileBreadcrumb: React.FC<MobileBreadcrumbProps> = ({
   if (breadcrumbs.length === 1) {
     return (
       <div className={`flex items-center ${className}`}>
-        <span className='max-w-[200px] truncate text-sm font-medium'>{currentPage.label}</span>
+        <span className='max-w-[200px] truncate py-2 text-base font-medium'>
+          {currentPage.label}
+        </span>
       </div>
     )
   }
@@ -43,14 +45,14 @@ export const MobileBreadcrumb: React.FC<MobileBreadcrumbProps> = ({
         <DropdownMenuTrigger asChild>
           <Button
             variant='ghost'
-            size='sm'
-            className='hover:bg-accent/50 h-auto p-1 text-sm font-medium'
+            size='default'
+            className='hover-touch:bg-accent/50 h-auto min-h-[44px] px-3 py-2 text-base font-medium'
           >
-            <span className='max-w-[160px] truncate'>{currentPage?.label || 'Gallery'}</span>
-            <ChevronDown className='ml-1 h-3 w-3 flex-shrink-0' />
+            <span className='max-w-[180px] truncate'>{currentPage?.label || 'Gallery'}</span>
+            <ChevronDown className='ml-2 h-4 w-4 flex-shrink-0' />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align='start' className='w-56'>
+        <DropdownMenuContent align='start' className='w-64'>
           {breadcrumbs.map((breadcrumb, index) => {
             const isLast = index === breadcrumbs.length - 1
             const isClickable = breadcrumb.href && !breadcrumb.isActive
@@ -59,7 +61,7 @@ export const MobileBreadcrumb: React.FC<MobileBreadcrumbProps> = ({
               <DropdownMenuItem
                 key={index}
                 className={`flex items-center ${isLast ? 'bg-accent/50' : ''} ${
-                  isClickable ? 'cursor-pointer' : 'cursor-default'
+                  isClickable ? 'interactive:cursor-pointer' : 'cursor-default'
                 }`}
                 asChild={isClickable ? true : undefined}
               >

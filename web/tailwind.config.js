@@ -83,5 +83,30 @@ module.exports = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    function ({ addVariant }) {
+      // Desktop hover - only applies on devices with hover capability
+      addVariant('hover-desktop', '@media (hover: hover) and (pointer: fine) { &:hover }')
+
+      // Mobile touch - only applies on touch devices
+      addVariant('touch-mobile', '@media (hover: none) and (pointer: coarse) { &:active }')
+
+      // Combined hover-touch variant - works on both desktop (hover) and mobile (active/touch)
+      addVariant('hover-touch', [
+        '@media (hover: hover) and (pointer: fine) { &:hover }',
+        '@media (hover: none) and (pointer: coarse) { &:active }',
+      ])
+
+      // Focus-visible for keyboard navigation
+      addVariant('focus-visible', '&:focus-visible')
+
+      // Interactive variant - combines hover, touch, and focus for comprehensive interaction
+      addVariant('interactive', [
+        '@media (hover: hover) and (pointer: fine) { &:hover }',
+        '@media (hover: none) and (pointer: coarse) { &:active }',
+        '&:focus-visible',
+      ])
+    },
+  ],
 }

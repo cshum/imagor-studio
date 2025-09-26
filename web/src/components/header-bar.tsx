@@ -144,7 +144,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
                   {authState.state === 'guest' ? (
                     // Guest user menu
-                    <DropdownMenuItem className='hover:cursor-pointer' onClick={handleLoginClick}>
+                    <DropdownMenuItem
+                      className='interactive:cursor-pointer'
+                      onClick={handleLoginClick}
+                    >
                       <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
                       {t('common.navigation.login')}
                     </DropdownMenuItem>
@@ -152,14 +155,17 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                     // Authenticated user menu
                     <>
                       <DropdownMenuItem
-                        className='hover:cursor-pointer'
+                        className='interactive:cursor-pointer'
                         onClick={handleAccountClick}
                       >
                         <Settings className='text-muted-foreground mr-3 h-4 w-4' />
                         {t('common.navigation.accountSettings')}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className='hover:cursor-pointer' onClick={handleLogout}>
+                      <DropdownMenuItem
+                        className='interactive:cursor-pointer'
+                        onClick={handleLogout}
+                      >
                         <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
                         {t('common.navigation.signOut')}
                       </DropdownMenuItem>

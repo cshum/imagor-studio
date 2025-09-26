@@ -215,7 +215,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
           <CardDescription>{t('pages.profile.securitySettingsDescription')}</CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
-          <div className='flex items-center justify-between rounded-lg border p-4'>
+          <div className='flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0'>
             <div className='space-y-0.5'>
               <div className='text-base font-medium'>{t('pages.profile.password')}</div>
               <div className='text-muted-foreground text-sm'>
@@ -224,7 +224,9 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
             </div>
             <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant='outline'>{t('pages.profile.changePassword')}</Button>
+                <Button variant='outline' className='sm:ml-4'>
+                  {t('pages.profile.changePassword')}
+                </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
