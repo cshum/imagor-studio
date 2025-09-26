@@ -63,10 +63,7 @@ export function useBreadcrumb(): BreadcrumbItem[] {
             isActive,
           })
         })
-        return
-      }
-
-      if (isBreadcrumbItem(loaderData?.breadcrumb)) {
+      } else if (isBreadcrumbItem(loaderData?.breadcrumb)) {
         // Handle single breadcrumb from loader data
         const isActive = index === matches.length - 1
         const breadcrumb = loaderData.breadcrumb
@@ -82,7 +79,6 @@ export function useBreadcrumb(): BreadcrumbItem[] {
           href: isActive ? undefined : breadcrumb.href || typedMatch.pathname,
           isActive,
         })
-        return
       }
     })
 

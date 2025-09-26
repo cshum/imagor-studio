@@ -59,7 +59,7 @@ export const MobileBreadcrumb: React.FC<MobileBreadcrumbProps> = ({
               <DropdownMenuItem
                 key={index}
                 className={`flex items-center ${isLast ? 'bg-accent/50' : ''} ${
-                  isClickable ? 'cursor-pointer' : 'cursor-default'
+                  isClickable ? 'interactive:cursor-pointer' : 'cursor-default'
                 }`}
                 asChild={isClickable ? true : undefined}
               >
