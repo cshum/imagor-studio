@@ -111,6 +111,22 @@ export class ImageEditor {
   }
 
   /**
+   * Check if preview optimization should be applied
+   */
+  private shouldOptimizePreview(state: ImageEditorState, forPreview: boolean): boolean {
+    if (!forPreview || !this.config.previewMaxDimensions) return false
+
+    // Automatically disable for resolution-dependent filters that need full detail
+    if (state.blur !== undefined && state.blur !== 0) return false
+    if (state.sharpen !== undefined && state.sharpen !== 0) return false
+
+    // Future filters that need full resolution can be added here
+    // Example: if (state.someDetailFilter !== undefined) return false
+
+    return true
+  }
+
+  /**
    * Convert state to GraphQL input format
    */
   private convertToGraphQLParams(
@@ -124,9 +140,9 @@ export class ImageEditor {
     let height = state.height
 
     // Apply preview dimension constraints when generating preview URLs
-    if (forPreview && this.config.previewMaxDimensions) {
-      const maxWidth = this.config.previewMaxDimensions.width
-      const maxHeight = this.config.previewMaxDimensions.height
+    if (this.shouldOptimizePreview(state, forPreview)) {
+      const maxWidth = this.config.previewMaxDimensions!.width
+      const maxHeight = this.config.previewMaxDimensions!.height
 
       // Use original dimensions if user hasn't set explicit dimensions
       const targetWidth = width ?? this.config.originalDimensions.width
