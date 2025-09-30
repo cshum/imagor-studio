@@ -7,8 +7,6 @@ slug: /
 
 **Imagor Studio** is a self-hosted image gallery and live editing web application designed for creators who need powerful image management and editing capabilities.
 
-## Screenshots
-
 ### Lightning-Fast Gallery
 High-performance virtual scrolling gallery with instant thumbnail generation and smooth navigation through thousands of images.
 

@@ -10,7 +10,7 @@ const config: Config = {
   // Set the production url of your site here
   url: 'https://docs.imagor.net',
   // Set the /<baseUrl>/ pathname under which your site is served
-  baseUrl: '/studio/',
+  baseUrl: '/',
 
   // GitHub pages deployment config.
   organizationName: 'cshum',
