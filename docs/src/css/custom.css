@@ -183,3 +183,10 @@
   background-color: var(--ifm-color-primary-light) !important;
   color: #0a0a0a !important;
 }
+
+/* Navbar title styling to match imagor.net */
+.navbar__title {
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+  font-size: 1.5rem !important;
+}
