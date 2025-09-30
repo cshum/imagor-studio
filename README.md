@@ -38,7 +38,7 @@ http://localhost:8000
 
 
 > [!NOTE]
-> You can find the main documentation, including installation guides, at https://docs.imagor.net/.
+> Ready to dive deeper? Check out [Documentation](https://docs.imagor.net/)
 
 ## Links
 
