@@ -53,6 +53,10 @@ export interface ImageEditorConfig {
     width: number
     height: number
   }
+  previewMaxDimensions?: {
+    width: number
+    height: number
+  }
 }
 
 export interface ImageEditorCallbacks {
@@ -114,9 +118,33 @@ export class ImageEditor {
   ): Partial<ImagorParamsInput> {
     const graphqlParams: Partial<ImagorParamsInput> = {}
 
-    // Dimensions
-    if (state.width !== undefined) graphqlParams.width = state.width
-    if (state.height !== undefined) graphqlParams.height = state.height
+    // Dimensions - apply preview constraints if needed
+    let width = state.width
+    let height = state.height
+
+    // Apply preview dimension constraints when generating preview URLs
+    if (forPreview && this.config.previewMaxDimensions) {
+      const maxWidth = this.config.previewMaxDimensions.width
+      const maxHeight = this.config.previewMaxDimensions.height
+
+      // Use original dimensions if user hasn't set explicit dimensions
+      const targetWidth = width ?? this.config.originalDimensions.width
+      const targetHeight = height ?? this.config.originalDimensions.height
+
+      // Calculate if we need to scale down
+      if (targetWidth > maxWidth || targetHeight > maxHeight) {
+        const widthScale = maxWidth / targetWidth
+        const heightScale = maxHeight / targetHeight
+        const scale = Math.min(widthScale, heightScale)
+
+        // Apply proportional scaling
+        width = Math.round(targetWidth * scale)
+        height = Math.round(targetHeight * scale)
+      }
+    }
+
+    if (width !== undefined) graphqlParams.width = width
+    if (height !== undefined) graphqlParams.height = height
 
     // Cropping
     if (state.cropLeft !== undefined) graphqlParams.cropLeft = state.cropLeft

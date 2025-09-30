@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, Copy, Download } from 'lucide-react'
 
@@ -21,6 +21,7 @@ interface PreviewAreaProps {
   onLoad?: (width: number, height: number) => void
   onCopyUrl: () => void
   onDownload: () => void
+  onPreviewDimensionsChange?: (dimensions: { width: number; height: number }) => void
 }
 
 export function PreviewArea({
@@ -32,12 +33,38 @@ export function PreviewArea({
   onLoad,
   onCopyUrl,
   onDownload,
+  onPreviewDimensionsChange,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const [currentImageSrc, setCurrentImageSrc] = useState<string>('')
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
+  const previewContainerRef = useRef<HTMLDivElement>(null)
 
   const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
+
+  // Calculate and report preview area dimensions
+  useEffect(() => {
+    const calculatePreviewDimensions = () => {
+      if (previewContainerRef.current && onPreviewDimensionsChange) {
+        const rect = previewContainerRef.current.getBoundingClientRect()
+        // Account for padding (16px on each side = 32px total)
+        const maxWidth = Math.floor(rect.width - 32)
+        const maxHeight = Math.floor(rect.height - 32)
+
+        onPreviewDimensionsChange({
+          width: maxWidth,
+          height: maxHeight,
+        })
+      }
+    }
+
+    // Calculate on mount and when mobile state changes
+    calculatePreviewDimensions()
+
+    // Recalculate on window resize
+    window.addEventListener('resize', calculatePreviewDimensions)
+    return () => window.removeEventListener('resize', calculatePreviewDimensions)
+  }, [isMobile, onPreviewDimensionsChange])
 
   // Simple URL update - PreloadImage handles all the complexity
   useEffect(() => {
@@ -50,7 +77,10 @@ export function PreviewArea({
     <div className='relative flex h-full flex-col'>
       <LicenseBadge />
       {/* Preview Content */}
-      <div className='bg-muted/20 flex min-h-0 flex-1 touch-none items-center justify-center overflow-hidden p-4'>
+      <div
+        ref={previewContainerRef}
+        className='bg-muted/20 flex min-h-0 flex-1 touch-none items-center justify-center overflow-hidden p-4'
+      >
         {error ? (
           <div className='flex flex-col items-center gap-4 text-center'>
             <AlertCircle className='text-destructive h-12 w-12' />

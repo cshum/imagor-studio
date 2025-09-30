@@ -60,6 +60,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [previewUrl, setPreviewUrl] = useState<string>()
   const [aspectLocked, setAspectLocked] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const [previewMaxDimensions, setPreviewMaxDimensions] = useState<{
+    width: number
+    height: number
+  } | null>(null)
 
   const transformRef = useRef<ImageEditor | undefined>(undefined)
 
@@ -69,6 +73,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         galleryKey,
         imageKey,
         originalDimensions: loaderData.originalDimensions,
+        previewMaxDimensions: previewMaxDimensions ?? undefined,
       },
       {
         onPreviewUpdate: setPreviewUrl,
@@ -85,7 +90,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     return () => {
       transform.destroy()
     }
-  }, [galleryKey, imageKey, loaderData.originalDimensions])
+  }, [galleryKey, imageKey, loaderData.originalDimensions, previewMaxDimensions])
 
   const originalAspectRatio =
     loaderData.originalDimensions.width / loaderData.originalDimensions.height
@@ -231,6 +236,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           onLoad={() => setIsLoading(false)}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}
+          onPreviewDimensionsChange={setPreviewMaxDimensions}
         />
       </div>
 
