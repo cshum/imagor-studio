@@ -97,7 +97,6 @@
 
 /* Additional styling for consistency */
 .navbar {
-  backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--ifm-toc-border-color);
 }
 
@@ -168,10 +167,10 @@
 }
 
 .navbar-buy-button:hover {
-  background-color: var(--ifm-color-primary-dark) !important;
+  background-color: var(--ifm-color-primary-light) !important;
   color: white !important;
   text-decoration: none !important;
-  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
 [data-theme='dark'] .navbar-buy-button {
