@@ -38,11 +38,11 @@ http://localhost:8000
 
 
 > [!NOTE]
-> Ready to dive deeper? Check out [Documentation](https://docs.imagor.net/)
+> Ready to dive deeper? Check out [Documentation](https://docs.studio.imagor.net/)
 
 ## Links
 
-- **[Documentation](https://docs.imagor.net/)** - Documentation including configuration, architecture, and deployment guides
+- **[Documentation](https://docs.studio.imagor.net/)** - Documentation including configuration, architecture, and deployment guides
 - **[imagor](https://github.com/cshum/imagor)** - Fast, secure image processing server and Go library, using libvips
 - **[vipsgen](https://github.com/cshum/vipsgen)** - Type-safe, comprehensive Go binding generator for libvips
 - **[imagorvideo](https://github.com/cshum/imagorvideo)** - imagor video thumbnail server in Go and ffmpeg C bindings

@@ -260,7 +260,7 @@ All projects in the ecosystem are open source:
 
 ### Documentation
 
-- [Imagor Studio Docs](https://docs.imagor.net) - This site
+- [Imagor Studio Docs](https://docs.studio.imagor.net) - This site
 - [imagor Documentation](https://github.com/cshum/imagor#readme)
 - [libvips Documentation](https://libvips.github.io/libvips/API/current/)
 - [FFmpeg Documentation](https://ffmpeg.org/documentation.html)
