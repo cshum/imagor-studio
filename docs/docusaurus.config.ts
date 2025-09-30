@@ -62,6 +62,12 @@ const config: Config = {
           label: 'GitHub',
           position: 'right',
         },
+        {
+          href: 'https://imagor.net/buy/early-bird/',
+          label: 'Early Bird $39',
+          position: 'right',
+          className: 'navbar-buy-button',
+        },
       ],
     },
     footer: {

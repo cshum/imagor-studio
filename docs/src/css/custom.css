@@ -153,3 +153,33 @@
 [data-theme='dark'] .screenshot-container img {
   box-shadow: 0 4px 6px -1px rgba(255, 255, 255, 0.1), 0 2px 4px -1px rgba(255, 255, 255, 0.06);
 }
+
+/* Buy button styling */
+.navbar-buy-button {
+  background-color: var(--ifm-color-primary) !important;
+  color: white !important;
+  border-radius: 0.5rem !important;
+  padding: 0.5rem 1rem !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
+  margin-left: 0.5rem !important;
+  margin-right: 0.75rem !important;
+}
+
+.navbar-buy-button:hover {
+  background-color: var(--ifm-color-primary-dark) !important;
+  color: white !important;
+  text-decoration: none !important;
+  transform: translateY(-1px) !important;
+}
+
+[data-theme='dark'] .navbar-buy-button {
+  background-color: var(--ifm-color-primary) !important;
+  color: #0a0a0a !important;
+}
+
+[data-theme='dark'] .navbar-buy-button:hover {
+  background-color: var(--ifm-color-primary-light) !important;
+  color: #0a0a0a !important;
+}
