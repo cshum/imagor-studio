@@ -79,11 +79,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         onPreviewUpdate: setPreviewUrl,
         onError: setError,
         onStateChange: setParams,
-        onLoadingChange: (loading) => {
-          if (loading) {
-            setIsLoading(true)
-          }
-        },
+        onLoadingChange: setIsLoading,
       },
     )
     transformRef.current = transform
