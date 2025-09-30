@@ -78,6 +78,7 @@ export class ImageEditor {
   private abortController: AbortController | null = null
   private aspectLocked = true
   private lockedAspectRatio: number | null = null
+  private lastPreviewUrl: string | null = null
 
   constructor(config: ImageEditorConfig, callbacks: ImageEditorCallbacks = {}) {
     this.config = config
@@ -249,14 +250,20 @@ export class ImageEditor {
       })
 
       if (!this.abortController.signal.aborted) {
-        this.callbacks.onPreviewUpdate?.(url)
+        // Only update if URL actually changed
+        if (url !== this.lastPreviewUrl) {
+          this.lastPreviewUrl = url
+          this.callbacks.onPreviewUpdate?.(url)
+          // Don't clear loading here - let PreviewArea clear it when image actually loads
+        } else {
+          // Same URL - image is already loaded, clear loading immediately
+          this.callbacks.onLoadingChange?.(false)
+        }
       }
     } catch (error) {
       if (!this.abortController.signal.aborted) {
         this.callbacks.onError?.(error as Error)
-      }
-    } finally {
-      if (!this.abortController.signal.aborted) {
+        // Clear loading on error
         this.callbacks.onLoadingChange?.(false)
       }
     }
@@ -266,7 +273,12 @@ export class ImageEditor {
    * Debounced preview generation
    */
   private schedulePreviewUpdate(): void {
-    this.callbacks.onLoadingChange?.(true)
+    // Only set loading state if we're starting a new preview generation
+    // The loading state will be cleared in generatePreview's finally block
+    if (!this.debounceTimer) {
+      this.callbacks.onLoadingChange?.(true)
+    }
+
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer)
     }
