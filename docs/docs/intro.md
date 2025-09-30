@@ -61,11 +61,6 @@ All image transformations benefit from imagor's high-performance architecture, c
 - [Architecture](./architecture) - Understand how it works
 - [GitHub Repository](https://github.com/cshum/imagor-studio) - Source code and issues
 
-## Community & Support
-
-- **GitHub Issues**: [Report bugs or request features](https://github.com/cshum/imagor-studio/issues)
-- **Docker Hub**: [Official Docker images](https://hub.docker.com/r/shumc/imagor-studio)
-
 ---
 
 Ready to get started? Head over to the [Quick Start Guide](./getting-started/quick-start)!
