@@ -64,6 +64,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     width: number
     height: number
   } | null>(null)
+  const [resetCounter, setResetCounter] = useState(0)
 
   const transformRef = useRef<ImageEditor | undefined>(undefined)
 
@@ -100,6 +101,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
   const resetParams = () => {
     transformRef.current?.resetParams()
+    setResetCounter((prev) => prev + 1)
   }
 
   const toggleAspectLock = () => {
@@ -207,6 +209,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   {/* Scrollable Controls */}
                   <div className='flex-1 touch-pan-y overflow-y-auto p-4 select-text'>
                     <ImageEditorControls
+                      key={resetCounter}
                       params={params}
                       aspectLocked={aspectLocked}
                       originalAspectRatio={originalAspectRatio}
@@ -253,6 +256,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           {/* Controls */}
           <div className='flex-1 touch-pan-y overflow-y-auto p-4 select-text'>
             <ImageEditorControls
+              key={resetCounter}
               params={params}
               aspectLocked={aspectLocked}
               originalAspectRatio={originalAspectRatio}
