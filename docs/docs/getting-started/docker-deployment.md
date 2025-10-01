@@ -11,7 +11,7 @@ Advanced Docker deployment configurations for Imagor Studio.
 Create a `docker-compose.yml` file for easier management:
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   imagor-studio:
@@ -38,7 +38,7 @@ docker-compose up -d
 ### With S3 Storage
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   imagor-studio:
@@ -85,8 +85,8 @@ Ensure your data persists across container restarts:
 
 ```yaml
 volumes:
-  - ./imagor-studio-data:/app/data  # Database and config
-  - ~/Pictures:/app/gallery:ro       # Image files (read-only)
+  - ./imagor-studio-data:/app/data # Database and config
+  - ~/Pictures:/app/gallery:ro # Image files (read-only)
 ```
 
 ## Health Checks
@@ -110,10 +110,10 @@ Set resource limits for production:
 deploy:
   resources:
     limits:
-      cpus: '2'
+      cpus: "2"
       memory: 2G
     reservations:
-      cpus: '1'
+      cpus: "1"
       memory: 1G
 ```
 

@@ -13,19 +13,20 @@ imagor is a fast, secure image processing server and Go library that powers Imag
 ## Imagor Modes
 
 Imagor Studio supports two modes:
+
 - **Embedded Mode** (default) - Built-in imagor server
 - **External Mode** - Connect to external imagor service
 
 ## Configuration
 
-| Flag | Environment Variable | Encrypted | Description |
-|------|---------------------|-----------|-------------|
-| `--imagor-mode` | `IMAGOR_MODE` | No | `embedded` or `external` |
-| `--imagor-base-url` | `IMAGOR_BASE_URL` | No | External imagor URL |
-| `--imagor-secret` | `IMAGOR_SECRET` | Yes | Imagor signing secret |
-| `--imagor-unsafe` | `IMAGOR_UNSAFE` | No | Enable unsafe URLs |
-| `--imagor-signer-type` | `IMAGOR_SIGNER_TYPE` | No | Signature algorithm |
-| `--imagor-signer-truncate` | `IMAGOR_SIGNER_TRUNCATE` | No | Signature truncation |
+| Flag                       | Environment Variable     | Encrypted | Description              |
+| -------------------------- | ------------------------ | --------- | ------------------------ |
+| `--imagor-mode`            | `IMAGOR_MODE`            | No        | `embedded` or `external` |
+| `--imagor-base-url`        | `IMAGOR_BASE_URL`        | No        | External imagor URL      |
+| `--imagor-secret`          | `IMAGOR_SECRET`          | Yes       | Imagor signing secret    |
+| `--imagor-unsafe`          | `IMAGOR_UNSAFE`          | No        | Enable unsafe URLs       |
+| `--imagor-signer-type`     | `IMAGOR_SIGNER_TYPE`     | No        | Signature algorithm      |
+| `--imagor-signer-truncate` | `IMAGOR_SIGNER_TRUNCATE` | No        | Signature truncation     |
 
 ## Embedded Mode (Default)
 
@@ -37,6 +38,7 @@ export IMAGOR_SECRET=my-secret-key
 ```
 
 **Features:**
+
 - Zero external dependencies
 - High-performance libvips processing
 - Automatic configuration
@@ -53,6 +55,7 @@ export IMAGOR_SECRET=shared-secret-key
 ```
 
 **Use Cases:**
+
 - Separate image processing workload
 - Multiple Imagor Studio instances sharing one imagor
 - Custom imagor configurations
@@ -91,6 +94,7 @@ services:
 imagor provides comprehensive image transformation capabilities:
 
 #### Resize and Crop
+
 - **Resize** - Scale images to specific dimensions
 - **Fit-in** - Fit image within dimensions without cropping
 - **Smart Crop** - Intelligent focal point detection
@@ -98,12 +102,14 @@ imagor provides comprehensive image transformation capabilities:
 - **Stretch** - Resize without maintaining aspect ratio
 
 #### Transformations
+
 - **Rotate** - Rotate by 0, 90, 180, 270 degrees
 - **Flip** - Horizontal and vertical flipping
 - **Trim** - Remove surrounding space
 - **Padding** - Add padding around images
 
 #### Filters
+
 - **Brightness** - Adjust image brightness (-100 to 100%)
 - **Contrast** - Adjust image contrast (-100 to 100%)
 - **Saturation** - Adjust color saturation (-100 to 100%)
@@ -114,6 +120,7 @@ imagor provides comprehensive image transformation capabilities:
 - **RGB** - Adjust individual RGB channels
 
 #### Advanced Features
+
 - **Format Conversion** - Convert between JPEG, PNG, WebP, AVIF, GIF, TIFF, JXL
 - **Quality Control** - Adjust compression quality (0-100%)
 - **Watermarks** - Add watermarks with positioning and transparency
@@ -123,6 +130,7 @@ imagor provides comprehensive image transformation capabilities:
 - **Max Bytes** - Auto-degrade quality to meet size limits
 
 #### Metadata Operations
+
 - **Strip EXIF** - Remove EXIF metadata
 - **Strip ICC** - Remove ICC profile
 - **Strip Metadata** - Remove all metadata
@@ -234,6 +242,7 @@ imagor uses URL-based image transformations following this structure:
 ```
 
 **Key Components:**
+
 - `HASH` - URL signature (or `unsafe` in development)
 - `trim` - Remove surrounding space
 - `AxB:CxD` - Manual crop coordinates
@@ -289,6 +298,7 @@ IMAGOR_SECRET=same-secret-key
 ### Format Not Supported
 
 If you encounter unsupported format errors, verify:
+
 - The image format is in the supported list
 - For video files, ensure FFmpeg support is enabled
 - Check file extension configuration

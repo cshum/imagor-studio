@@ -97,15 +97,15 @@ These can be configured via any method:
 
 ## Quick Reference
 
-| Setting | CLI/ENV | GUI | Description |
-|---------|---------|-----|-------------|
-| Database URL | ✅ | ❌ | Database connection |
-| Port | ✅ | ❌ | Server port |
-| JWT Secret | ✅ | ❌ | Auth secret |
-| Storage Type | ✅ | ✅ | file or s3 |
-| S3 Credentials | ✅ | ✅ | AWS credentials |
-| License Key | ✅ | ✅ | License activation |
-| Guest Mode | ✅ | ✅ | Allow guest access |
+| Setting        | CLI/ENV | GUI | Description         |
+| -------------- | ------- | --- | ------------------- |
+| Database URL   | ✅      | ❌  | Database connection |
+| Port           | ✅      | ❌  | Server port         |
+| JWT Secret     | ✅      | ❌  | Auth secret         |
+| Storage Type   | ✅      | ✅  | file or s3          |
+| S3 Credentials | ✅      | ✅  | AWS credentials     |
+| License Key    | ✅      | ✅  | License activation  |
+| Guest Mode     | ✅      | ✅  | Allow guest access  |
 
 ## Next Steps
 

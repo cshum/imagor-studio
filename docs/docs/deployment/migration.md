@@ -137,7 +137,7 @@ docker run -p 8000:8000 \
 ### Docker Compose
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   postgres:
@@ -191,15 +191,15 @@ spec:
   template:
     spec:
       containers:
-      - name: migrate
-        image: shumc/imagor-studio:latest
-        command: ["imagor-studio-migrate", "--migrate-command=up"]
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: database-secret
-              key: url
+        - name: migrate
+          image: shumc/imagor-studio:latest
+          command: ["imagor-studio-migrate", "--migrate-command=up"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secret
+                  key: url
       restartPolicy: OnFailure
 ```
 
@@ -221,16 +221,16 @@ spec:
         app: imagor-studio
     spec:
       containers:
-      - name: app
-        image: shumc/imagor-studio:latest
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: database-secret
-              key: url
-        ports:
-        - containerPort: 8000
+        - name: app
+          image: shumc/imagor-studio:latest
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secret
+                  key: url
+          ports:
+            - containerPort: 8000
 ```
 
 Deploy in order:

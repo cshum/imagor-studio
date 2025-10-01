@@ -8,6 +8,7 @@ slug: /
 **Imagor Studio** is a self-hosted image gallery and live editing web application designed for creators who need powerful image management and editing capabilities.
 
 ### Lightning-Fast Gallery
+
 High-performance virtual scrolling gallery with instant thumbnail generation and smooth navigation through thousands of images.
 
 <div className="screenshot-container">
@@ -17,6 +18,7 @@ High-performance virtual scrolling gallery with instant thumbnail generation and
 </div>
 
 ### Professional Live Editing
+
 Advanced image editing with real-time preview, color adjustments, effects, cropping, and instant URL generation for transformed images.
 
 <div className="screenshot-container">
@@ -26,6 +28,7 @@ Advanced image editing with real-time preview, color adjustments, effects, cropp
 </div>
 
 ### Mobile Experience
+
 Touch-optimized interface that works seamlessly on mobile while maintaining desktop power and full functionality.
 
 <div className="screenshot-container-mobile">
@@ -44,12 +47,15 @@ Touch-optimized interface that works seamlessly on mobile while maintaining desk
 ## What Makes Imagor Studio Special?
 
 ### Non-Destructive Workflow
+
 All image transformations are URL-based, meaning your original images remain untouched. Generate transformed versions on-the-fly without modifying source files.
 
 ### Universal Storage Support
+
 Works with local filesystems, S3-compatible storage, and more. Switch between storage backends without changing your workflow.
 
 ### Built on imagor
+
 Imagor Studio is powered by [imagor](https://github.com/cshum/imagor), a fast and secure image processing server that provides URL-based image transformations. Imagor Studio extends imagor with a beautiful gallery interface and live editing capabilities, giving you the best of both worlds: imagor's powerful processing engine with an intuitive visual interface.
 
 All image transformations benefit from imagor's high-performance architecture, comprehensive operation support, and proven reliability in production environments.

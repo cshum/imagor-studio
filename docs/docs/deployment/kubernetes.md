@@ -49,15 +49,15 @@ spec:
   template:
     spec:
       containers:
-      - name: migrate
-        image: shumc/imagor-studio:latest
-        command: ["imagor-studio-migrate", "--migrate-command=up"]
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: database-secret
-              key: url
+        - name: migrate
+          image: shumc/imagor-studio:latest
+          command: ["imagor-studio-migrate", "--migrate-command=up"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secret
+                  key: url
       restartPolicy: OnFailure
 ```
 
@@ -80,38 +80,38 @@ spec:
         app: imagor-studio
     spec:
       containers:
-      - name: imagor-studio
-        image: shumc/imagor-studio:latest
-        ports:
-        - containerPort: 8000
-          name: http
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: database-secret
-              key: url
-        - name: PORT
-          value: "8000"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "2Gi"
-            cpu: "2000m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: imagor-studio
+          image: shumc/imagor-studio:latest
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secret
+                  key: url
+            - name: PORT
+              value: "8000"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
 ```
 
 ### Service
@@ -126,9 +126,9 @@ spec:
   selector:
     app: imagor-studio
   ports:
-  - port: 80
-    targetPort: 8000
-    name: http
+    - port: 80
+      targetPort: 8000
+      name: http
   type: ClusterIP
 ```
 
@@ -145,20 +145,20 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-  - hosts:
-    - imagor.example.com
-    secretName: imagor-studio-tls
+    - hosts:
+        - imagor.example.com
+      secretName: imagor-studio-tls
   rules:
-  - host: imagor.example.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: imagor-studio
-            port:
-              number: 80
+    - host: imagor.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: imagor-studio
+                port:
+                  number: 80
 ```
 
 ## Deploy
@@ -200,31 +200,31 @@ spec:
         app: postgres
     spec:
       containers:
-      - name: postgres
-        image: postgres:15
-        ports:
-        - containerPort: 5432
-        env:
-        - name: POSTGRES_DB
-          value: imagor_studio
-        - name: POSTGRES_USER
-          value: imagor
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: password
-        volumeMounts:
-        - name: postgres-data
-          mountPath: /var/lib/postgresql/data
+        - name: postgres
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: imagor_studio
+            - name: POSTGRES_USER
+              value: imagor
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
   volumeClaimTemplates:
-  - metadata:
-      name: postgres-data
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      resources:
-        requests:
-          storage: 10Gi
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
 ```
 
 ## Scaling
@@ -245,18 +245,18 @@ spec:
   minReplicas: 3
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
 ```
 
 ## Monitoring
@@ -274,9 +274,9 @@ spec:
     matchLabels:
       app: imagor-studio
   endpoints:
-  - port: http
-    path: /metrics
-    interval: 30s
+    - port: http
+      path: /metrics
+      interval: 30s
 ```
 
 ## Best Practices
