@@ -146,36 +146,36 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	s.services.Logger.Info("Starting graceful shutdown...")
-	
+	s.services.Logger.Debug("Starting graceful shutdown...")
+
 	// Shutdown HTTP server gracefully
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		s.services.Logger.Error("HTTP server shutdown error", zap.Error(err))
 		return err
 	}
-	
-	s.services.Logger.Info("HTTP server shutdown completed")
+
+	s.services.Logger.Debug("HTTP server shutdown completed")
 	return nil
 }
 
 func (s *Server) Close() error {
-	s.services.Logger.Info("Closing server resources...")
-	
+	s.services.Logger.Debug("Closing server resources...")
+
 	// Shutdown imagor first (includes libvips cleanup)
 	ctx := context.Background()
 	if err := s.services.ImagorProvider.Shutdown(ctx); err != nil {
 		s.services.Logger.Error("Imagor shutdown error", zap.Error(err))
 		// Continue with other cleanup even if imagor shutdown fails
 	}
-	
+
 	// Close database connection
-	s.services.Logger.Info("Closing database connection...")
+	s.services.Logger.Debug("Closing database connection...")
 	if err := s.services.DB.Close(); err != nil {
 		s.services.Logger.Error("Database close error", zap.Error(err))
 		return err
 	}
-	s.services.Logger.Info("Database connection closed")
-	
-	s.services.Logger.Info("Server resources closed successfully")
+	s.services.Logger.Debug("Database connection closed")
+
+	s.services.Logger.Debug("Server resources closed successfully")
 	return nil
 }
