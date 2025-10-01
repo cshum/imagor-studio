@@ -18,7 +18,22 @@ const config: Config = {
   projectName: "imagor-studio",
 
   onBrokenLinks: "throw",
-  onBrokenMarkdownLinks: "warn",
+
+  // Enable SWC for faster builds
+  future: {
+    experimental_faster: {
+      swcJsLoader: true,
+      swcJsMinimizer: true,
+      swcHtmlMinimizer: true,
+    },
+  },
+
+  markdown: {
+    mermaid: true,
+    hooks: {
+      onBrokenMarkdownLinks: "warn",
+    },
+  },
 
   i18n: {
     defaultLocale: "en",
@@ -42,9 +57,6 @@ const config: Config = {
     ],
   ],
 
-  markdown: {
-    mermaid: true,
-  },
   themes: ["@docusaurus/theme-mermaid"],
 
   themeConfig: {
