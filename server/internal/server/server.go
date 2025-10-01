@@ -1,9 +1,11 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"net/http"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -18,8 +20,9 @@ import (
 )
 
 type Server struct {
-	cfg      *config.Config
-	services *bootstrap.Services
+	cfg        *config.Config
+	services   *bootstrap.Services
+	httpServer *http.Server
 }
 
 func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (*Server, error) {
@@ -119,21 +122,48 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		),
 	)
 
-	// Set the final handler
-	http.Handle("/", h)
+	// Create HTTP server instance
+	addr := fmt.Sprintf(":%d", cfg.Port)
+	httpServer := &http.Server{
+		Addr:    addr,
+		Handler: h,
+		// Set reasonable timeouts for production use
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
 
 	return &Server{
-		cfg:      cfg,
-		services: services,
+		cfg:        cfg,
+		services:   services,
+		httpServer: httpServer,
 	}, nil
 }
 
 func (s *Server) Run() error {
-	addr := fmt.Sprintf(":%d", s.cfg.Port)
-	s.services.Logger.Info("Server is running", zap.String("address", fmt.Sprintf("http://localhost%s", addr)))
-	return http.ListenAndServe(addr, nil)
+	s.services.Logger.Info("Server is running", zap.String("address", fmt.Sprintf("http://localhost%s", s.httpServer.Addr)))
+	return s.httpServer.ListenAndServe()
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	s.services.Logger.Info("Starting graceful shutdown...")
+	
+	// Shutdown HTTP server gracefully
+	if err := s.httpServer.Shutdown(ctx); err != nil {
+		s.services.Logger.Error("HTTP server shutdown error", zap.Error(err))
+		return err
+	}
+	
+	s.services.Logger.Info("HTTP server shutdown completed")
+	return nil
 }
 
 func (s *Server) Close() error {
-	return s.services.DB.Close()
+	s.services.Logger.Info("Closing database connection...")
+	if err := s.services.DB.Close(); err != nil {
+		s.services.Logger.Error("Database close error", zap.Error(err))
+		return err
+	}
+	s.services.Logger.Info("Database connection closed")
+	return nil
 }
