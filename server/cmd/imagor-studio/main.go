@@ -55,31 +55,31 @@ func main() {
 	select {
 	case sig := <-sigChan:
 		logger.Info("Received shutdown signal", zap.String("signal", sig.String()))
-		
+
 		// Create context with timeout for graceful shutdown
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		
+
 		// Shutdown HTTP server gracefully
 		if err := srv.Shutdown(ctx); err != nil {
 			logger.Error("HTTP server shutdown failed", zap.Error(err))
 		}
-		
+
 		// Close database and other resources
 		if err := srv.Close(); err != nil {
 			logger.Error("Error closing server resources", zap.Error(err))
 		}
-		
-		logger.Info("Graceful shutdown completed")
-		
+
+		logger.Info("Shutdown completed")
+
 	case err := <-serverErrChan:
 		logger.Error("Server error", zap.Error(err))
-		
+
 		// Close resources on error
 		if closeErr := srv.Close(); closeErr != nil {
 			logger.Error("Error closing server resources", zap.Error(closeErr))
 		}
-		
+
 		os.Exit(1)
 	}
 }
