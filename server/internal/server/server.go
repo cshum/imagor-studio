@@ -159,11 +159,23 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 func (s *Server) Close() error {
+	s.services.Logger.Info("Closing server resources...")
+	
+	// Shutdown imagor first (includes libvips cleanup)
+	ctx := context.Background()
+	if err := s.services.ImagorProvider.Shutdown(ctx); err != nil {
+		s.services.Logger.Error("Imagor shutdown error", zap.Error(err))
+		// Continue with other cleanup even if imagor shutdown fails
+	}
+	
+	// Close database connection
 	s.services.Logger.Info("Closing database connection...")
 	if err := s.services.DB.Close(); err != nil {
 		s.services.Logger.Error("Database close error", zap.Error(err))
 		return err
 	}
 	s.services.Logger.Info("Database connection closed")
+	
+	s.services.Logger.Info("Server resources closed successfully")
 	return nil
 }

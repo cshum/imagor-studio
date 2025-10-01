@@ -61,6 +61,7 @@ type Provider struct {
 	storageProvider *storageprovider.Provider
 	currentConfig   *ImagorConfig
 	imagorHandler   http.Handler // For embedded mode
+	imagorInstance  *imagor.Imagor // For shutdown cleanup
 	configLoadedAt  int64        // Unix milliseconds when config was loaded
 	mutex           sync.RWMutex
 }
@@ -400,7 +401,35 @@ func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error
 	}
 
 	app := imagor.New(options...)
+	
+	// Store the imagor instance for shutdown cleanup
+	p.imagorInstance = app
+	
+	// Start the imagor instance
+	ctx := context.Background()
+	if err := app.Startup(ctx); err != nil {
+		return nil, fmt.Errorf("failed to start imagor: %w", err)
+	}
+	
 	return app, nil
+}
+
+// Shutdown gracefully shuts down the imagor instance
+func (p *Provider) Shutdown(ctx context.Context) error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	
+	if p.imagorInstance != nil {
+		p.logger.Info("Shutting down imagor instance...")
+		if err := p.imagorInstance.Shutdown(ctx); err != nil {
+			p.logger.Error("Error shutting down imagor", zap.Error(err))
+			return err
+		}
+		p.imagorInstance = nil
+		p.logger.Info("Imagor shutdown completed")
+	}
+	
+	return nil
 }
 
 // buildStorageOptions creates imagor storage options based on current storage provider configuration
