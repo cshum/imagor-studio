@@ -41,6 +41,7 @@ imagor is a fast, secure image processing server and Go library that uses [libvi
 #### Integration with Imagor Studio
 
 Imagor Studio uses imagor as its image processing engine:
+
 - **Embedded mode** (default) - Built-in imagor server for zero-configuration setup
 - **External mode** - Connect to standalone imagor service for distributed processing
 
@@ -79,6 +80,7 @@ This approach ensures type safety while maintaining the flexibility of libvips's
 #### Role in Ecosystem
 
 vipsgen is the foundation that powers imagor:
+
 - **Direct libvips access** - Full access to libvips functionality
 - **Type-safe operations** - Compile-time type checking for image operations
 - **Efficient memory management** - Proper resource cleanup and lifecycle management
@@ -129,6 +131,7 @@ imagorvideo brings video thumbnail capability through ffmpeg, built on the found
 #### Integration with Imagor Studio
 
 Imagor Studio integrates imagorvideo for seamless video support:
+
 - **Video files in gallery** - MP4, WebM, AVI, MOV, MKV appear alongside images
 - **Automatic thumbnails** - Best frame automatically selected and processed
 - **Play icon overlays** - Visual distinction for video files

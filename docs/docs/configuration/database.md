@@ -12,9 +12,9 @@ Database configuration must be set via command line arguments or environment var
 
 ## Configuration
 
-| Flag | Environment Variable | Default | Description |
-|------|---------------------|---------|-------------|
-| `--database-url` | `DATABASE_URL` | `sqlite:./imagor-studio.db` | Database connection string |
+| Flag             | Environment Variable | Default                     | Description                |
+| ---------------- | -------------------- | --------------------------- | -------------------------- |
+| `--database-url` | `DATABASE_URL`       | `sqlite:./imagor-studio.db` | Database connection string |
 
 ## Supported Databases
 
@@ -35,6 +35,7 @@ DATABASE_URL=sqlite::memory:
 ```
 
 **Features:**
+
 - Zero configuration
 - Automatic migrations on startup
 - Perfect for development and small deployments
@@ -63,6 +64,7 @@ DATABASE_URL=postgres://user:password@localhost:5432/imagor_studio?sslmode=disab
 ```
 
 **Features:**
+
 - Production-ready
 - Supports multiple instances
 - Requires manual migrations
@@ -91,6 +93,7 @@ DATABASE_URL=mysql://user:password@localhost/imagor_studio
 ```
 
 **Features:**
+
 - Production-ready
 - Wide hosting support
 - Requires manual migrations
@@ -99,11 +102,13 @@ DATABASE_URL=mysql://user:password@localhost/imagor_studio
 ## Migration Behavior
 
 ### SQLite
+
 - **Auto-migration**: Enabled by default
 - Migrations run automatically on server startup
 - Perfect for single-instance deployments
 
 ### PostgreSQL/MySQL
+
 - **Auto-migration**: Disabled by default
 - Requires manual migration command
 - Prevents race conditions in multi-instance deployments
@@ -153,6 +158,7 @@ volumes:
 ### Encryption Key Derivation
 
 The database URL is used to derive the master encryption key via PBKDF2. This ensures:
+
 - Consistent encryption across restarts
 - Secure storage of sensitive configuration
 - JWT secrets can be decrypted during bootstrap

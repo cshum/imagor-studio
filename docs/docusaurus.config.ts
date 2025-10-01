@@ -1,118 +1,131 @@
-import {themes as prismThemes} from 'prism-react-renderer';
-import type {Config} from '@docusaurus/types';
-import type * as Preset from '@docusaurus/preset-classic';
+import { themes as prismThemes } from "prism-react-renderer";
+import type { Config } from "@docusaurus/types";
+import type * as Preset from "@docusaurus/preset-classic";
 
 const config: Config = {
-  title: 'Imagor Studio',
-  tagline: 'Self-hosted image gallery and live editing web application for creators',
-  favicon: 'img/favicon.ico',
+  title: "Imagor Studio",
+  tagline:
+    "Self-hosted image gallery and live editing web application for creators",
+  favicon: "img/favicon.ico",
 
   // Set the production url of your site here
-  url: 'https://docs.studio.imagor.net',
+  url: "https://docs.studio.imagor.net",
   // Set the /<baseUrl>/ pathname under which your site is served
-  baseUrl: '/',
+  baseUrl: "/",
 
   // GitHub pages deployment config.
-  organizationName: 'cshum',
-  projectName: 'imagor-studio',
+  organizationName: "cshum",
+  projectName: "imagor-studio",
 
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenLinks: "throw",
+
+  // Enable SWC for faster builds
+  future: {
+    experimental_faster: {
+      swcJsLoader: true,
+      swcJsMinimizer: true,
+      swcHtmlMinimizer: true,
+    },
+  },
+
+  markdown: {
+    mermaid: true,
+    hooks: {
+      onBrokenMarkdownLinks: "warn",
+    },
+  },
 
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en'],
+    defaultLocale: "en",
+    locales: ["en"],
   },
 
   presets: [
     [
-      'classic',
+      "classic",
       {
         docs: {
-          sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/cshum/imagor-studio/tree/main/docs/',
-          routeBasePath: '/',
+          sidebarPath: "./sidebars.ts",
+          editUrl: "https://github.com/cshum/imagor-studio/tree/main/docs/",
+          routeBasePath: "/",
         },
         blog: false,
         theme: {
-          customCss: './src/css/custom.css',
+          customCss: "./src/css/custom.css",
         },
       } satisfies Preset.Options,
     ],
   ],
 
-  markdown: {
-    mermaid: true,
-  },
-  themes: ['@docusaurus/theme-mermaid'],
+  themes: ["@docusaurus/theme-mermaid"],
 
   themeConfig: {
-    image: 'img/social-card.jpg',
+    image: "img/social-card.jpg",
     navbar: {
-      title: 'Imagor Studio',
+      title: "Imagor Studio",
       items: [
         {
-          type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
-          position: 'left',
-          label: 'Documentation',
+          type: "docSidebar",
+          sidebarId: "tutorialSidebar",
+          position: "left",
+          label: "Documentation",
         },
         {
-          href: 'https://github.com/cshum/imagor-studio',
-          label: 'GitHub',
-          position: 'right',
+          href: "https://github.com/cshum/imagor-studio",
+          label: "GitHub",
+          position: "right",
         },
         {
-          href: 'https://imagor.net/buy/early-bird/',
-          label: 'Early Bird $39',
-          position: 'right',
-          className: 'navbar-buy-button',
+          href: "https://imagor.net/buy/early-bird/",
+          label: "Early Bird $39",
+          position: "right",
+          className: "navbar-buy-button",
         },
       ],
     },
     footer: {
-      style: 'dark',
+      style: "dark",
       links: [
         {
-          title: 'Docs',
+          title: "Docs",
           items: [
             {
-              label: 'Getting Started',
-              to: '/',
+              label: "Getting Started",
+              to: "/",
             },
             {
-              label: 'Configuration',
-              to: '/configuration/overview',
+              label: "Configuration",
+              to: "/configuration/overview",
             },
           ],
         },
         {
-          title: 'Ecosystem',
+          title: "Ecosystem",
           items: [
             {
-              label: 'imagor',
-              href: 'https://github.com/cshum/imagor',
+              label: "imagor",
+              href: "https://github.com/cshum/imagor",
             },
             {
-              label: 'vipsgen',
-              href: 'https://github.com/cshum/vipsgen',
+              label: "vipsgen",
+              href: "https://github.com/cshum/vipsgen",
             },
             {
-              label: 'imagorvideo',
-              href: 'https://github.com/cshum/imagorvideo',
+              label: "imagorvideo",
+              href: "https://github.com/cshum/imagorvideo",
             },
           ],
         },
         {
-          title: 'More',
+          title: "More",
           items: [
             {
-              label: 'GitHub',
-              href: 'https://github.com/cshum/imagor-studio',
+              label: "GitHub",
+              href: "https://github.com/cshum/imagor-studio",
             },
             {
-              label: 'Docker Hub',
-              href: 'https://hub.docker.com/r/shumc/imagor-studio',
+              label: "Docker Hub",
+              href: "https://hub.docker.com/r/shumc/imagor-studio",
             },
           ],
         },
@@ -122,7 +135,7 @@ const config: Config = {
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
-      additionalLanguages: ['bash', 'yaml', 'docker', 'go'],
+      additionalLanguages: ["bash", "yaml", "docker", "go"],
     },
   } satisfies Preset.ThemeConfig,
 };

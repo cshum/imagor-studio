@@ -10,10 +10,10 @@ Configure security settings for Imagor Studio.
 
 ### JWT Configuration
 
-| Flag | Environment Variable | Default | Description |
-|------|---------------------|---------|-------------|
-| `--jwt-secret` | `JWT_SECRET` | Auto-generated | Secret key for JWT signing (optional) |
-| `--jwt-expiration` | `JWT_EXPIRATION` | `168h` | Token expiration (7 days) |
+| Flag               | Environment Variable | Default        | Description                           |
+| ------------------ | -------------------- | -------------- | ------------------------------------- |
+| `--jwt-secret`     | `JWT_SECRET`         | Auto-generated | Secret key for JWT signing (optional) |
+| `--jwt-expiration` | `JWT_EXPIRATION`     | `168h`         | Token expiration (7 days)             |
 
 ```bash
 # Optionally set a JWT secret (auto-generated if not provided)
@@ -90,6 +90,7 @@ The **master key** is the foundation of the encryption system:
 #### Why Database Path?
 
 The database path is used as the master key source because:
+
 - **Available at startup** - Known before database connection
 - **Deterministic** - Same path always produces same key
 - **Persistent** - Doesn't change across restarts
@@ -99,11 +100,12 @@ The database path is used as the master key source because:
 Changing your `DATABASE_URL` will change the master key, making existing encrypted JWT secrets **unreadable**. Plan your database configuration carefully before initial deployment.
 
 If you must change the database URL:
+
 1. Note your current JWT secret (if auto-generated, retrieve from database)
 2. Change the database URL
 3. Set the JWT secret explicitly via environment variable
 4. Restart the application
-:::
+   :::
 
 ### JWT Key Encryption
 
@@ -126,9 +128,11 @@ The **JWT key** provides a second layer of encryption:
 ### What Gets Encrypted
 
 #### Master Key Encrypted (Tier 1)
+
 - `config.jwt_secret` - JWT signing secret
 
 #### JWT Key Encrypted (Tier 2)
+
 - `config.s3_access_key_id` - S3 access credentials
 - `config.s3_secret_access_key` - S3 secret credentials
 - `config.s3_session_token` - S3 session tokens
@@ -136,6 +140,7 @@ The **JWT key** provides a second layer of encryption:
 - `config.license_key` - License activation key
 
 #### Not Encrypted
+
 - Database URL (used to derive master key)
 - Port, storage type, file paths
 - Boolean flags and non-sensitive settings
@@ -155,6 +160,7 @@ License keys are encrypted when stored in the system registry.
 ### License Validation
 
 The license system validates:
+
 - License signature
 - Expiration date
 - Feature entitlements
@@ -280,6 +286,7 @@ Monitor system access and changes:
 - System events
 
 Logs are available through:
+
 - Docker logs: `docker logs imagor-studio`
 - System logs in the database
 - External logging services (if configured)

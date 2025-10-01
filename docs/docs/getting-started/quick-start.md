@@ -36,6 +36,7 @@ http://localhost:8000
 ```
 
 On first launch, you'll be redirected to the admin setup process where you can:
+
 1. Create your admin account
 2. Configure basic settings
 3. Start managing your images
@@ -82,3 +83,4 @@ The SQLite database is stored in the mounted data directory. To reset the applic
 
 ```bash
 rm imagor-studio-data/imagor-studio.db
+```

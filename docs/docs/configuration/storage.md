@@ -9,6 +9,7 @@ Configure where Imagor Studio stores and accesses your images.
 ## Storage Types
 
 Imagor Studio supports two storage backends:
+
 - **File Storage** - Local filesystem (default)
 - **S3 Storage** - Amazon S3 or S3-compatible services
 
@@ -18,12 +19,12 @@ Perfect for local deployments and development.
 
 ### Configuration
 
-| Flag | Environment Variable | Default | Description |
-|------|---------------------|---------|-------------|
-| `--storage-type` | `STORAGE_TYPE` | `file` | Storage backend type |
-| `--file-base-dir` | `FILE_BASE_DIR` | `/app/gallery` | Base directory for images |
-| `--file-mkdir-permissions` | `FILE_MKDIR_PERMISSIONS` | `0755` | Directory creation permissions |
-| `--file-write-permissions` | `FILE_WRITE_PERMISSIONS` | `0644` | File write permissions |
+| Flag                       | Environment Variable     | Default        | Description                    |
+| -------------------------- | ------------------------ | -------------- | ------------------------------ |
+| `--storage-type`           | `STORAGE_TYPE`           | `file`         | Storage backend type           |
+| `--file-base-dir`          | `FILE_BASE_DIR`          | `/app/gallery` | Base directory for images      |
+| `--file-mkdir-permissions` | `FILE_MKDIR_PERMISSIONS` | `0755`         | Directory creation permissions |
+| `--file-write-permissions` | `FILE_WRITE_PERMISSIONS` | `0644`         | File write permissions         |
 
 ### Example
 
@@ -46,7 +47,7 @@ services:
       - STORAGE_TYPE=file
       - FILE_BASE_DIR=/app/gallery
     volumes:
-      - ~/Pictures:/app/gallery:ro  # Mount as read-only
+      - ~/Pictures:/app/gallery:ro # Mount as read-only
 ```
 
 :::tip Read-Only Mount
@@ -59,17 +60,17 @@ For cloud deployments and scalable storage.
 
 ### Configuration
 
-| Flag | Environment Variable | Encrypted | Description |
-|------|---------------------|-----------|-------------|
-| `--storage-type` | `STORAGE_TYPE` | No | Must be set to `s3` |
-| `--s3-bucket` | `S3_BUCKET` | No | S3 bucket name |
-| `--s3-region` | `S3_REGION` | No | AWS region |
-| `--s3-endpoint` | `S3_ENDPOINT` | No | Custom endpoint (optional) |
-| `--s3-force-path-style` | `S3_FORCE_PATH_STYLE` | No | Force path-style URLs |
-| `--s3-access-key-id` | `S3_ACCESS_KEY_ID` | Yes | AWS access key |
-| `--s3-secret-access-key` | `S3_SECRET_ACCESS_KEY` | Yes | AWS secret key |
-| `--s3-session-token` | `S3_SESSION_TOKEN` | Yes | AWS session token |
-| `--s3-base-dir` | `S3_BASE_DIR` | No | Base directory in bucket |
+| Flag                     | Environment Variable   | Encrypted | Description                |
+| ------------------------ | ---------------------- | --------- | -------------------------- |
+| `--storage-type`         | `STORAGE_TYPE`         | No        | Must be set to `s3`        |
+| `--s3-bucket`            | `S3_BUCKET`            | No        | S3 bucket name             |
+| `--s3-region`            | `S3_REGION`            | No        | AWS region                 |
+| `--s3-endpoint`          | `S3_ENDPOINT`          | No        | Custom endpoint (optional) |
+| `--s3-force-path-style`  | `S3_FORCE_PATH_STYLE`  | No        | Force path-style URLs      |
+| `--s3-access-key-id`     | `S3_ACCESS_KEY_ID`     | Yes       | AWS access key             |
+| `--s3-secret-access-key` | `S3_SECRET_ACCESS_KEY` | Yes       | AWS secret key             |
+| `--s3-session-token`     | `S3_SESSION_TOKEN`     | Yes       | AWS session token          |
+| `--s3-base-dir`          | `S3_BASE_DIR`          | No        | Base directory in bucket   |
 
 ### AWS S3 Example
 
@@ -167,6 +168,7 @@ export S3_SECRET_ACCESS_KEY=your_secret_key
 ### Encrypted Credentials
 
 S3 credentials are automatically encrypted when stored in the system registry:
+
 - Access keys encrypted with JWT-based encryption
 - Secret keys encrypted with JWT-based encryption
 - Session tokens encrypted with JWT-based encryption
@@ -181,10 +183,7 @@ Minimum required S3 permissions:
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:ListBucket"
-      ],
+      "Action": ["s3:GetObject", "s3:ListBucket"],
       "Resource": [
         "arn:aws:s3:::my-images-bucket",
         "arn:aws:s3:::my-images-bucket/*"
