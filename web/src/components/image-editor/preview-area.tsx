@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, Copy, Download } from 'lucide-react'
 
@@ -36,7 +36,6 @@ export function PreviewArea({
   onPreviewDimensionsChange,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
-  const [currentImageSrc, setCurrentImageSrc] = useState<string>('')
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
   const previewContainerRef = useRef<HTMLDivElement>(null)
 
@@ -66,13 +65,6 @@ export function PreviewArea({
     return () => window.removeEventListener('resize', calculatePreviewDimensions)
   }, [isMobile, onPreviewDimensionsChange])
 
-  // Simple URL update - PreloadImage handles all the complexity
-  useEffect(() => {
-    if (previewUrl) {
-      setCurrentImageSrc(getFullImageUrl(previewUrl))
-    }
-  }, [previewUrl])
-
   return (
     <div className='relative flex h-full flex-col'>
       <LicenseBadge />
@@ -101,9 +93,9 @@ export function PreviewArea({
               {t('imageEditor.page.retry')}
             </Button>
           </div>
-        ) : currentImageSrc ? (
+        ) : previewUrl ? (
           <PreloadImage
-            src={currentImageSrc}
+            src={getFullImageUrl(previewUrl)}
             alt={`Preview of ${imagePath}`}
             onLoad={onLoad}
             className={cn(
