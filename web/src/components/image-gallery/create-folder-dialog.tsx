@@ -1,8 +1,11 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from '@tanstack/react-router'
 import { FolderPlus } from 'lucide-react'
 import { toast } from 'sonner'
+import * as z from 'zod'
 
 import { createFolder } from '@/api/storage-api'
 import { Button } from '@/components/ui/button'
@@ -15,7 +18,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+
+const createFolderSchema = z.object({
+  folderName: z
+    .string()
+    .min(1, 'Folder name is required')
+    .refine(
+      (name) => !/[<>:"/\\|?*]/.test(name),
+      'Folder name contains invalid characters (<>:"/\\|?*)',
+    ),
+})
+
+type CreateFolderFormData = z.infer<typeof createFolderSchema>
 
 interface CreateFolderDialogProps {
   open: boolean
@@ -26,44 +49,39 @@ interface CreateFolderDialogProps {
 export function CreateFolderDialog({ open, onOpenChange, currentPath }: CreateFolderDialogProps) {
   const { t } = useTranslation()
   const router = useRouter()
-  const [folderName, setFolderName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const form = useForm<CreateFolderFormData>({
+    resolver: zodResolver(createFolderSchema),
+    defaultValues: {
+      folderName: '',
+    },
+  })
 
-    if (!folderName.trim()) {
-      setError(t('pages.gallery.createFolder.errors.nameRequired'))
-      return
-    }
-
-    // Basic validation for folder name
-    const invalidChars = /[<>:"/\\|?*]/
-    if (invalidChars.test(folderName)) {
-      setError(t('pages.gallery.createFolder.errors.invalidCharacters'))
-      return
-    }
-
+  const handleSubmit = async (values: CreateFolderFormData) => {
     setIsCreating(true)
-    setError(null)
 
     try {
       // Construct the full path for the new folder
-      const folderPath = currentPath ? `${currentPath}/${folderName.trim()}` : folderName.trim()
+      const folderPath = currentPath
+        ? `${currentPath}/${values.folderName.trim()}`
+        : values.folderName.trim()
 
       await createFolder(folderPath)
 
       // Show success message with folder name
-      toast.success(t('pages.gallery.createFolder.success', { folderName: folderName.trim() }))
+      toast.success(
+        t('pages.gallery.createFolder.success', { folderName: values.folderName.trim() }),
+      )
       onOpenChange(false)
-      setFolderName('')
-      setError(null)
+      form.reset()
       await router.invalidate()
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : t('pages.gallery.createFolder.errors.createFailed')
-      setError(errorMessage)
+
+      // Set error on the form field
+      form.setError('folderName', { message: errorMessage })
     } finally {
       setIsCreating(false)
     }
@@ -74,8 +92,7 @@ export function CreateFolderDialog({ open, onOpenChange, currentPath }: CreateFo
       onOpenChange(newOpen)
       if (!newOpen) {
         // Reset form when closing
-        setFolderName('')
-        setError(null)
+        form.reset()
       }
     }
   }
@@ -90,36 +107,46 @@ export function CreateFolderDialog({ open, onOpenChange, currentPath }: CreateFo
           </DialogTitle>
           <DialogDescription>{t('pages.gallery.createFolder.description')}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className='space-y-4'>
-          <div className='grid gap-2'>
-            <label htmlFor='folder-name' className='text-sm font-medium'>
-              {t('pages.gallery.createFolder.folderName')}
-            </label>
-            <Input
-              id='folder-name'
-              value={folderName}
-              onChange={(e) => setFolderName(e.target.value)}
-              placeholder={t('pages.gallery.createFolder.placeholder')}
-              disabled={isCreating}
-              autoFocus
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4'>
+            <FormField
+              control={form.control}
+              name='folderName'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.gallery.createFolder.folderName')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t('pages.gallery.createFolder.placeholder')}
+                      {...field}
+                      disabled={isCreating}
+                      autoFocus
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {error && <p className='text-destructive text-sm'>{error}</p>}
-          </div>
 
-          <DialogFooter>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => handleOpenChange(false)}
-              disabled={isCreating}
-            >
-              {t('common.buttons.cancel')}
-            </Button>
-            <ButtonWithLoading type='submit' isLoading={isCreating} disabled={!folderName.trim()}>
-              {t('common.buttons.create')}
-            </ButtonWithLoading>
-          </DialogFooter>
-        </form>
+            <DialogFooter>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => handleOpenChange(false)}
+                disabled={isCreating}
+              >
+                {t('common.buttons.cancel')}
+              </Button>
+              <ButtonWithLoading
+                type='submit'
+                isLoading={isCreating}
+                disabled={!form.watch('folderName')?.trim()}
+              >
+                {t('common.buttons.create')}
+              </ButtonWithLoading>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )
