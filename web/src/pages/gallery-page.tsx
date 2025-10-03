@@ -7,6 +7,7 @@ import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { HeaderBar } from '@/components/header-bar'
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
+import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
@@ -174,7 +175,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         <Card className='rounded-lg border-none'>
           <CardContent className='p-2 md:p-4' ref={contentRef}>
             {contentWidth > 0 && (
-              <>
+              <GalleryDropZone currentPath={galleryKey} isEmpty={isEmpty}>
                 {isEmpty ? (
                   <EmptyGalleryState width={contentWidth} isRootGallery={isRootGallery} />
                 ) : (
@@ -195,7 +196,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                     />
                   </>
                 )}
-              </>
+              </GalleryDropZone>
             )}
           </CardContent>
         </Card>
