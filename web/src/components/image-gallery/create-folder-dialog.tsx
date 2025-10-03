@@ -54,8 +54,8 @@ export function CreateFolderDialog({ open, onOpenChange, currentPath }: CreateFo
 
       await createFolder(folderPath)
 
-      // Follow the exact pattern from users page
-      toast.success(t('pages.gallery.createFolder.success'))
+      // Show success message with folder name
+      toast.success(t('pages.gallery.createFolder.success', { folderName: folderName.trim() }))
       onOpenChange(false)
       setFolderName('')
       setError(null)
