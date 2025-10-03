@@ -164,9 +164,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className='hover:cursor-pointer'
-          onSelect={(event) => {
-            event.preventDefault()
-            setIsCreateFolderDialogOpen(true)
+          onSelect={() => {
+            setTimeout(() => setIsCreateFolderDialogOpen(true), 0)
           }}
         >
           <FolderPlus className='text-muted-foreground mr-3 h-4 w-4' />
