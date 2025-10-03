@@ -23,11 +23,7 @@ interface CreateFolderDialogProps {
   currentPath: string
 }
 
-export function CreateFolderDialog({
-  open,
-  onOpenChange,
-  currentPath,
-}: CreateFolderDialogProps) {
+export function CreateFolderDialog({ open, onOpenChange, currentPath }: CreateFolderDialogProps) {
   const { t } = useTranslation()
   const router = useRouter()
   const [folderName, setFolderName] = useState('')
