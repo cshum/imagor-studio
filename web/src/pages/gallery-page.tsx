@@ -60,10 +60,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
-  const handleCreateFolderSuccess = () => {
-    // Refresh the gallery to show the new folder
-    router.invalidate()
-  }
 
   const isDesktop = useBreakpoint('md')
   const maxItemWidth = 250
@@ -224,7 +220,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
         currentPath={galleryKey}
-        onSuccess={handleCreateFolderSuccess}
       />
 
       {children}

@@ -110,6 +110,7 @@
         "description": "Enter a name for the new folder.",
         "folderName": "Folder Name",
         "placeholder": "Enter folder name",
+        "success": "Folder created successfully!",
         "errors": {
           "nameRequired": "Folder name is required",
           "invalidCharacters": "Folder name contains invalid characters",

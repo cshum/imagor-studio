@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useRouter } from '@tanstack/react-router'
 import { FolderPlus } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { createFolder } from '@/api/storage-api'
 import { Button } from '@/components/ui/button'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
   Dialog,
   DialogContent,
@@ -18,16 +21,15 @@ interface CreateFolderDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   currentPath: string
-  onSuccess?: () => void
 }
 
 export function CreateFolderDialog({
   open,
   onOpenChange,
   currentPath,
-  onSuccess,
 }: CreateFolderDialogProps) {
   const { t } = useTranslation()
+  const router = useRouter()
   const [folderName, setFolderName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -56,12 +58,12 @@ export function CreateFolderDialog({
 
       await createFolder(folderPath)
 
-      // Reset form
-      setFolderName('')
+      // Follow the exact pattern from users page
+      toast.success(t('pages.gallery.createFolder.success'))
       onOpenChange(false)
-
-      // Trigger success callback to refresh the gallery
-      onSuccess?.()
+      setFolderName('')
+      setError(null)
+      await router.invalidate()
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : t('pages.gallery.createFolder.errors.createFailed')
@@ -92,23 +94,22 @@ export function CreateFolderDialog({
           </DialogTitle>
           <DialogDescription>{t('pages.gallery.createFolder.description')}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className='grid gap-4 py-4'>
-            <div className='grid gap-2'>
-              <label htmlFor='folder-name' className='text-sm font-medium'>
-                {t('pages.gallery.createFolder.folderName')}
-              </label>
-              <Input
-                id='folder-name'
-                value={folderName}
-                onChange={(e) => setFolderName(e.target.value)}
-                placeholder={t('pages.gallery.createFolder.placeholder')}
-                disabled={isCreating}
-                autoFocus
-              />
-              {error && <p className='text-destructive text-sm'>{error}</p>}
-            </div>
+        <form onSubmit={handleSubmit} className='space-y-4'>
+          <div className='grid gap-2'>
+            <label htmlFor='folder-name' className='text-sm font-medium'>
+              {t('pages.gallery.createFolder.folderName')}
+            </label>
+            <Input
+              id='folder-name'
+              value={folderName}
+              onChange={(e) => setFolderName(e.target.value)}
+              placeholder={t('pages.gallery.createFolder.placeholder')}
+              disabled={isCreating}
+              autoFocus
+            />
+            {error && <p className='text-destructive text-sm'>{error}</p>}
           </div>
+
           <DialogFooter>
             <Button
               type='button'
@@ -118,9 +119,9 @@ export function CreateFolderDialog({
             >
               {t('common.buttons.cancel')}
             </Button>
-            <Button type='submit' disabled={isCreating || !folderName.trim()}>
-              {isCreating ? t('common.status.creating') : t('common.buttons.create')}
-            </Button>
+            <ButtonWithLoading type='submit' isLoading={isCreating} disabled={!folderName.trim()}>
+              {t('common.buttons.create')}
+            </ButtonWithLoading>
           </DialogFooter>
         </form>
       </DialogContent>
