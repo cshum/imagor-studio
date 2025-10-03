@@ -185,7 +185,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         </div>
         <HeaderBar isScrolled={isScrolledDown} customMenuItems={customMenuItems} />
         <Card className='rounded-lg border-none'>
-          <CardContent className='p-2 md:p-4' ref={contentRef}>
+          <CardContent className='overflow-hidden p-2 md:p-4' ref={contentRef}>
             {contentWidth > 0 && (
               <>
                 {isEmpty ? (
