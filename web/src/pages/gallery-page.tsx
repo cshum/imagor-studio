@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
-import { Check, Clock, FileText, SortAsc, SortDesc } from 'lucide-react'
+import { Check, Clock, FileText, FolderPlus, SortAsc, SortDesc } from 'lucide-react'
 
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { HeaderBar } from '@/components/header-bar'
+import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
@@ -40,6 +41,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const contentRef = useRef<HTMLDivElement | null>(null)
   const { isLoading, pendingMatches } = useRouterState()
   const { authState } = useAuth()
+  const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
 
   const { galleryName, images, folders, currentSortBy, currentSortOrder } = galleryLoaderData
   const sidebar = useSidebar()
@@ -56,6 +58,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       // Invalidate only the current gallery route to trigger loader reload
       router.invalidate()
     }
+  }
+
+  const handleCreateFolderSuccess = () => {
+    // Refresh the gallery to show the new folder
+    router.invalidate()
   }
 
   const isDesktop = useBreakpoint('md')
@@ -108,10 +115,22 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     pendingMatches[pendingMatches.length - 1].routeId?.toString()?.includes('$imageKey')
   )
 
-  // Create sorting menu items for authenticated users
-  const sortingMenuItems =
+  // Create menu items for authenticated users
+  const customMenuItems =
     authState.state === 'authenticated' ? (
       <>
+        <DropdownMenuItem
+          className='hover:cursor-pointer'
+          onSelect={(event) => {
+            event.preventDefault()
+            setIsCreateFolderDialogOpen(true)
+          }}
+        >
+          <FolderPlus className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.gallery.createFolder.newFolder')}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+
         <DropdownMenuLabel>{t('pages.gallery.sorting.sortBy')}</DropdownMenuLabel>
         <DropdownMenuItem
           className='hover:cursor-pointer'
@@ -170,7 +189,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         <div className='mx-4 my-2 grid'>
           <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
         </div>
-        <HeaderBar isScrolled={isScrolledDown} customMenuItems={sortingMenuItems} />
+        <HeaderBar isScrolled={isScrolledDown} customMenuItems={customMenuItems} />
         <Card className='rounded-lg border-none'>
           <CardContent className='p-2 md:p-4' ref={contentRef}>
             {contentWidth > 0 && (
@@ -200,6 +219,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           </CardContent>
         </Card>
       </ContentLayout>
+
+      <CreateFolderDialog
+        open={isCreateFolderDialogOpen}
+        onOpenChange={setIsCreateFolderDialogOpen}
+        currentPath={galleryKey}
+        onSuccess={handleCreateFolderSuccess}
+      />
+
       {children}
     </>
   )
