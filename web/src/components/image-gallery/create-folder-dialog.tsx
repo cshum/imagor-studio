@@ -62,14 +62,12 @@ export function CreateFolderDialog({ open, onOpenChange, currentPath }: CreateFo
     setIsCreating(true)
 
     try {
-      // Construct the full path for the new folder
       const folderPath = currentPath
         ? `${currentPath}/${values.folderName.trim()}`
         : values.folderName.trim()
 
       await createFolder(folderPath)
 
-      // Show success message with folder name
       toast.success(
         t('pages.gallery.createFolder.success', { folderName: values.folderName.trim() }),
       )
@@ -80,7 +78,6 @@ export function CreateFolderDialog({ open, onOpenChange, currentPath }: CreateFo
       const errorMessage =
         err instanceof Error ? err.message : t('pages.gallery.createFolder.errors.createFailed')
 
-      // Set error on the form field
       form.setError('folderName', { message: errorMessage })
     } finally {
       setIsCreating(false)

@@ -165,6 +165,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         <DropdownMenuItem
           className='hover:cursor-pointer'
           onSelect={() => {
+            // need to wait for dropdown close before opening dialog
             setTimeout(() => setIsCreateFolderDialogOpen(true), 0)
           }}
         >
