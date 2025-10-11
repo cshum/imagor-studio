@@ -148,8 +148,6 @@
           "uploading": "Uploading..."
         },
         "messages": {
-          "filesAdded": "Added {{count}} file to upload queue",
-          "filesAddedPlural": "Added {{count}} files to upload queue",
           "uploadSuccess": "Files uploaded successfully!",
           "uploadFailed": "Failed to upload {{fileName}}",
           "uploadSuccessPartial": "{{count}} files uploaded successfully",

@@ -29,24 +29,12 @@ export function GalleryDropZone({
   const handleFileUpload = useCallback(
     async (file: File, path: string): Promise<boolean> => {
       try {
-        const result = await uploadFile(path, file)
-        return result
+        return await uploadFile(path, file)
       } catch (error) {
         console.error('Upload failed:', error)
         toast.error(t('pages.gallery.upload.messages.uploadFailed', { fileName: file.name }))
         return false
       }
-    },
-    [t],
-  )
-
-  const handleFilesAdded = useCallback(
-    (files: File[]) => {
-      const message =
-        files.length === 1
-          ? t('pages.gallery.upload.messages.filesAdded', { count: files.length })
-          : t('pages.gallery.upload.messages.filesAddedPlural', { count: files.length })
-      toast.success(message)
     },
     [t],
   )
@@ -67,7 +55,6 @@ export function GalleryDropZone({
     retryFile,
     isUploading,
   } = useDragDrop({
-    onFilesAdded: handleFilesAdded,
     onFileUpload: handleFileUpload,
     currentPath,
     acceptedTypes: ['image/*', 'video/*'],
@@ -202,8 +189,7 @@ export function GalleryDropZoneWrapper({
   const handleFileUpload = useCallback(
     async (file: File, path: string): Promise<boolean> => {
       try {
-        const result = await uploadFile(path, file)
-        return result
+        return await uploadFile(path, file)
       } catch (error) {
         console.error('Upload failed:', error)
         toast.error(t('pages.gallery.upload.messages.uploadFailed', { fileName: file.name }))
