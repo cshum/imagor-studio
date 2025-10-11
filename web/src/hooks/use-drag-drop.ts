@@ -11,6 +11,7 @@ export interface DragDropFile {
 export interface UseDragDropOptions {
   onFilesAdded?: (files: File[]) => void
   onFileUpload?: (file: File, path: string) => Promise<boolean>
+  onFilesDropped?: () => void
   acceptedTypes?: string[]
   maxFileSize?: number
   maxFiles?: number
@@ -38,6 +39,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
   const {
     onFilesAdded,
     onFileUpload,
+    onFilesDropped,
     acceptedTypes = ['image/*', 'video/*'],
     maxFileSize = 50 * 1024 * 1024, // 50MB
     maxFiles = 10,
@@ -156,9 +158,10 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
       const droppedFiles = Array.from(e.dataTransfer.files)
       if (droppedFiles.length > 0) {
         addFiles(droppedFiles)
+        onFilesDropped?.()
       }
     },
-    [addFiles],
+    [addFiles, onFilesDropped],
   )
 
   const uploadFiles = useCallback(async () => {

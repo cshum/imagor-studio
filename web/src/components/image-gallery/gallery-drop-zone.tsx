@@ -45,6 +45,11 @@ export function GalleryDropZone({
     toast.success(t('pages.gallery.upload.messages.uploadSuccess'))
   }, [router, t])
 
+  const handleFilesDropped = useCallback(() => {
+    // Scroll to top when files are dropped
+    window.scrollTo({ top: 0 })
+  }, [])
+
   const {
     isDragActive,
     files,
@@ -56,6 +61,7 @@ export function GalleryDropZone({
     isUploading,
   } = useDragDrop({
     onFileUpload: handleFileUpload,
+    onFilesDropped: handleFilesDropped,
     currentPath,
     acceptedTypes: ['image/*', 'video/*'],
     maxFileSize: 50 * 1024 * 1024, // 50MB
