@@ -63,7 +63,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const isDesktop = useBreakpoint('md')
   const maxItemWidth = 250
-  const maxFileCardWidth = 300
 
   const { scrollPosition } = useScrollHandler(galleryKey)
   const { contentWidth, updateWidth } = useWidthHandler(
@@ -190,12 +189,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         <Card className='rounded-lg border-none'>
           <CardContent className='overflow-hidden p-2 md:p-4' ref={contentRef}>
             {contentWidth > 0 && (
-              <GalleryDropZone
-                currentPath={galleryKey}
-                isEmpty={isEmpty}
-                width={contentWidth}
-                maxFileCardWidth={maxFileCardWidth}
-              >
+              <GalleryDropZone currentPath={galleryKey} isEmpty={isEmpty}>
                 {isEmpty ? (
                   <EmptyGalleryState width={contentWidth} isRootGallery={isRootGallery} />
                 ) : (

@@ -14,8 +14,6 @@ export interface GalleryDropZoneProps {
   isEmpty?: boolean
   className?: string
   children?: React.ReactNode
-  width?: number
-  maxFileCardWidth?: number
 }
 
 export function GalleryDropZone({
@@ -23,8 +21,6 @@ export function GalleryDropZone({
   isEmpty = false,
   className,
   children,
-  width = 800,
-  maxFileCardWidth = 280,
 }: GalleryDropZoneProps) {
   const { t } = useTranslation()
   const router = useRouter()
@@ -153,8 +149,6 @@ export function GalleryDropZone({
             onRemoveFile={removeFile}
             onRetryFile={retryFile}
             onClearAll={clearFiles}
-            width={width}
-            maxFileCardWidth={maxFileCardWidth}
           />
         </div>
       )}

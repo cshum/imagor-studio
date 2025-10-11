@@ -15,8 +15,6 @@ export interface UploadProgressProps {
   onRetryFile?: (id: string) => void
   onClearAll?: () => void
   className?: string
-  width?: number
-  maxFileCardWidth?: number
 }
 
 export interface UnifiedUploadProps {
@@ -39,8 +37,6 @@ export function UploadProgress({
   onRetryFile,
   onClearAll,
   className,
-  width = 800,
-  maxFileCardWidth = 280,
 }: UploadProgressProps) {
   const { t } = useTranslation()
 
@@ -53,9 +49,6 @@ export function UploadProgress({
 
   const overallProgress =
     files.length > 0 ? files.reduce((acc, file) => acc + file.progress, 0) / files.length : 0
-
-  // Calculate grid layout similar to folder grid
-  const columnCount = Math.max(2, Math.floor(width / maxFileCardWidth))
 
   // Determine current state
   const isAllPending = pendingFiles === files.length
@@ -130,63 +123,56 @@ export function UploadProgress({
         </div>
       )}
 
-      {/* File Grid */}
-      <div>
-        <div
-          className='grid gap-2'
-          style={{
-            gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-          }}
-        >
-          {files.map((file) => (
-            <Card key={file.id} className='hover-touch:bg-accent relative transition-colors'>
-              <CardContent className='flex items-center px-4 py-4 sm:py-3'>
-                <FileStatusIcon status={file.status} />
+      {/* File Grid - Responsive Tailwind Grid */}
+      <div className='grid-cols grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+        {files.map((file) => (
+          <Card key={file.id} className='hover-touch:bg-accent relative transition-colors'>
+            <CardContent className='flex items-center px-4 py-4 sm:py-3'>
+              <FileStatusIcon status={file.status} />
 
-                <div className='ml-2 min-w-0 flex-1'>
-                  <p className='truncate text-sm font-medium'>{file.file.name}</p>
-                  <div className='text-muted-foreground flex items-center gap-2 text-xs'>
-                    <span>{formatFileSize(file.file.size)}</span>
-                    {file.status === 'uploading' && <span>{Math.round(file.progress)}%</span>}
-                    {file.error && <span className='text-destructive truncate'>{file.error}</span>}
-                  </div>
+              <div className='ml-2 min-w-0 flex-1'>
+                <p className='truncate text-sm font-medium'>{file.file.name}</p>
+                <div className='text-muted-foreground flex items-center gap-2 text-xs'>
+                  <span>{formatFileSize(file.file.size)}</span>
+                  {file.status === 'uploading' && <span>{Math.round(file.progress)}%</span>}
+                  {file.error && <span className='text-destructive truncate'>{file.error}</span>}
                 </div>
+              </div>
 
-                <div className='ml-2 flex items-center gap-1'>
-                  {file.status === 'error' && onRetryFile && (
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => onRetryFile(file.id)}
-                      className='h-6 w-6 p-0'
-                    >
-                      <RotateCcw className='h-3 w-3' />
-                    </Button>
-                  )}
+              <div className='ml-2 flex items-center gap-1'>
+                {file.status === 'error' && onRetryFile && (
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => onRetryFile(file.id)}
+                    className='h-6 w-6 p-0'
+                  >
+                    <RotateCcw className='h-3 w-3' />
+                  </Button>
+                )}
 
-                  {/* Only show individual remove button for failed files */}
-                  {onRemoveFile && file.status === 'error' && (
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => onRemoveFile(file.id)}
-                      className='h-6 w-6 p-0'
-                    >
-                      <X className='h-3 w-3' />
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
+                {/* Show individual remove button for all files except uploading */}
+                {onRemoveFile && file.status !== 'uploading' && (
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => onRemoveFile(file.id)}
+                    className='h-6 w-6 p-0'
+                  >
+                    <X className='h-3 w-3' />
+                  </Button>
+                )}
+              </div>
+            </CardContent>
 
-              {/* Upload progress overlay */}
-              {file.status === 'uploading' && (
-                <div className='absolute right-0 bottom-0 left-0'>
-                  <Progress value={file.progress} className='h-1 rounded-none' />
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
+            {/* Upload progress overlay */}
+            {file.status === 'uploading' && (
+              <div className='absolute right-0 bottom-0 left-0'>
+                <Progress value={file.progress} className='h-1 rounded-none' />
+              </div>
+            )}
+          </Card>
+        ))}
       </div>
 
       {/* Summary Stats */}
@@ -197,11 +183,6 @@ export function UploadProgress({
               {uploadingFiles > 0 && (
                 <span className='text-blue-600'>
                   {t('pages.gallery.upload.progress.uploading', { count: uploadingFiles })}
-                </span>
-              )}
-              {pendingFiles > 0 && (
-                <span className='text-muted-foreground'>
-                  {t('pages.gallery.upload.progress.pending', { count: pendingFiles })}
                 </span>
               )}
               {failedFiles > 0 && (
