@@ -64,7 +64,7 @@ export function GalleryDropZone({
   })
 
   const handleUpload = useCallback(async () => {
-    const results = await uploadFiles()
+    await uploadFiles()
     
     // Wait a bit for state to update, then check results
     setTimeout(() => {
@@ -82,17 +82,18 @@ export function GalleryDropZone({
         // Some files succeeded, some failed
         toast.success(`${successfulFiles.length} files uploaded successfully`)
         toast.error(`${failedFiles.length} files failed to upload`)
+        // Revalidate even with partial success to show uploaded files
+        router.invalidate()
       } else if (failedFiles.length > 0) {
         // All files failed
         toast.error(`Failed to upload ${failedFiles.length} file${failedFiles.length !== 1 ? 's' : ''}`)
       }
     }, 100)
-  }, [uploadFiles, files, handleUploadComplete, clearFiles])
+  }, [uploadFiles, files, handleUploadComplete, clearFiles, router])
 
   const handleFileSelect = useCallback(
     (fileList: FileList | null) => {
       if (fileList) {
-        const filesArray = Array.from(fileList)
         // The useDragDrop hook will handle adding these files
         dragProps.onDrop({
           preventDefault: () => {},
@@ -161,7 +162,6 @@ export function GalleryDropZoneWrapper({
   className,
 }: GalleryDropZoneWrapperProps) {
   const { authState } = useAuth()
-  const router = useRouter()
 
   const handleFileUpload = useCallback(async (file: File, path: string): Promise<boolean> => {
     try {
