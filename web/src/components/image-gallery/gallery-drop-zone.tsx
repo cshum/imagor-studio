@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
@@ -21,29 +22,40 @@ export function GalleryDropZone({
   className,
   children,
 }: GalleryDropZoneProps) {
+  const { t } = useTranslation()
   const router = useRouter()
   const { authState } = useAuth()
 
-  const handleFileUpload = useCallback(async (file: File, path: string): Promise<boolean> => {
-    try {
-      const result = await uploadFile(path, file)
-      return result
-    } catch (error) {
-      console.error('Upload failed:', error)
-      toast.error(`Failed to upload ${file.name}`)
-      return false
-    }
-  }, [])
+  const handleFileUpload = useCallback(
+    async (file: File, path: string): Promise<boolean> => {
+      try {
+        const result = await uploadFile(path, file)
+        return result
+      } catch (error) {
+        console.error('Upload failed:', error)
+        toast.error(t('pages.gallery.upload.messages.uploadFailed', { fileName: file.name }))
+        return false
+      }
+    },
+    [t],
+  )
 
-  const handleFilesAdded = useCallback((files: File[]) => {
-    toast.success(`Added ${files.length} file${files.length !== 1 ? 's' : ''} to upload queue`)
-  }, [])
+  const handleFilesAdded = useCallback(
+    (files: File[]) => {
+      const message =
+        files.length === 1
+          ? t('pages.gallery.upload.messages.filesAdded', { count: files.length })
+          : t('pages.gallery.upload.messages.filesAddedPlural', { count: files.length })
+      toast.success(message)
+    },
+    [t],
+  )
 
   const handleUploadComplete = useCallback(() => {
     // Refresh the gallery after successful uploads
     router.invalidate()
-    toast.success('Files uploaded successfully!')
-  }, [router])
+    toast.success(t('pages.gallery.upload.messages.uploadSuccess'))
+  }, [router, t])
 
   const {
     isDragActive,
@@ -90,15 +102,25 @@ export function GalleryDropZone({
           }, 2000)
         } else if (successfulFiles.length > 0 && failedFiles.length > 0) {
           // Some files succeeded, some failed
-          toast.success(`${successfulFiles.length} files uploaded successfully`)
-          toast.error(`${failedFiles.length} files failed to upload`)
+          toast.success(
+            t('pages.gallery.upload.messages.uploadSuccessPartial', {
+              count: successfulFiles.length,
+            }),
+          )
+          toast.error(
+            t('pages.gallery.upload.messages.uploadFailedPartial', { count: failedFiles.length }),
+          )
           // Revalidate even with partial success to show uploaded files
           router.invalidate()
         } else if (failedFiles.length > 0) {
           // All files failed
-          toast.error(
-            `Failed to upload ${failedFiles.length} file${failedFiles.length !== 1 ? 's' : ''}`,
-          )
+          const message =
+            failedFiles.length === 1
+              ? t('pages.gallery.upload.messages.uploadFailedAll', { count: failedFiles.length })
+              : t('pages.gallery.upload.messages.uploadFailedAllPlural', {
+                  count: failedFiles.length,
+                })
+          toast.error(message)
         }
       }
     }
@@ -174,22 +196,33 @@ export function GalleryDropZoneWrapper({
   children,
   className,
 }: GalleryDropZoneWrapperProps) {
+  const { t } = useTranslation()
   const { authState } = useAuth()
 
-  const handleFileUpload = useCallback(async (file: File, path: string): Promise<boolean> => {
-    try {
-      const result = await uploadFile(path, file)
-      return result
-    } catch (error) {
-      console.error('Upload failed:', error)
-      toast.error(`Failed to upload ${file.name}`)
-      return false
-    }
-  }, [])
+  const handleFileUpload = useCallback(
+    async (file: File, path: string): Promise<boolean> => {
+      try {
+        const result = await uploadFile(path, file)
+        return result
+      } catch (error) {
+        console.error('Upload failed:', error)
+        toast.error(t('pages.gallery.upload.messages.uploadFailed', { fileName: file.name }))
+        return false
+      }
+    },
+    [t],
+  )
 
-  const handleFilesAdded = useCallback((files: File[]) => {
-    toast.success(`Added ${files.length} file${files.length !== 1 ? 's' : ''} to upload queue`)
-  }, [])
+  const handleFilesAdded = useCallback(
+    (files: File[]) => {
+      const message =
+        files.length === 1
+          ? t('pages.gallery.upload.messages.filesAdded', { count: files.length })
+          : t('pages.gallery.upload.messages.filesAddedPlural', { count: files.length })
+      toast.success(message)
+    },
+    [t],
+  )
 
   const { isDragActive, dragProps } = useDragDrop({
     onFilesAdded: handleFilesAdded,

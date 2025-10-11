@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { CheckCircle, RotateCcw, Upload, X, XCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,8 @@ export function UploadProgress({
   onClearAll,
   className,
 }: UploadProgressProps) {
+  const { t } = useTranslation()
+
   if (files.length === 0) return null
 
   const completedFiles = files.filter((f) => f.status === 'success').length
@@ -34,10 +37,14 @@ export function UploadProgress({
     <div className={cn('bg-card rounded-lg border p-4 shadow-sm', className)}>
       <div className='mb-4 flex items-center justify-between'>
         <div>
-          <h3 className='font-medium'>Upload Progress</h3>
+          <h3 className='font-medium'>{t('pages.gallery.upload.progress.uploadProgress')}</h3>
           <p className='text-muted-foreground text-sm'>
-            {completedFiles} of {files.length} files completed
-            {failedFiles > 0 && ` • ${failedFiles} failed`}
+            {t('pages.gallery.upload.progress.filesCompleted', {
+              completed: completedFiles,
+              total: files.length,
+            })}
+            {failedFiles > 0 &&
+              ` • ${t('pages.gallery.upload.progress.failed', { count: failedFiles })}`}
           </p>
         </div>
         {onClearAll && (
@@ -104,16 +111,26 @@ export function UploadProgress({
           <div className='flex items-center justify-between text-sm'>
             <div className='flex items-center gap-4'>
               {uploadingFiles > 0 && (
-                <span className='text-blue-600'>{uploadingFiles} uploading</span>
+                <span className='text-blue-600'>
+                  {t('pages.gallery.upload.progress.uploading', { count: uploadingFiles })}
+                </span>
               )}
               {pendingFiles > 0 && (
-                <span className='text-muted-foreground'>{pendingFiles} pending</span>
+                <span className='text-muted-foreground'>
+                  {t('pages.gallery.upload.progress.pending', { count: pendingFiles })}
+                </span>
               )}
-              {failedFiles > 0 && <span className='text-destructive'>{failedFiles} failed</span>}
+              {failedFiles > 0 && (
+                <span className='text-destructive'>
+                  {t('pages.gallery.upload.progress.failed', { count: failedFiles })}
+                </span>
+              )}
             </div>
 
             {completedFiles > 0 && (
-              <span className='text-green-600'>{completedFiles} completed</span>
+              <span className='text-green-600'>
+                {t('pages.gallery.upload.progress.completed', { count: completedFiles })}
+              </span>
             )}
           </div>
         </div>
@@ -161,6 +178,8 @@ export function UploadSummary({
   onClear,
   className,
 }: UploadSummaryProps) {
+  const { t } = useTranslation()
+
   if (files.length === 0) return null
 
   const pendingFiles = files.filter((f) => f.status === 'pending')
@@ -172,25 +191,31 @@ export function UploadSummary({
     >
       <div>
         <p className='font-medium'>
-          {files.length} file{files.length !== 1 ? 's' : ''} ready
+          {files.length === 1
+            ? t('pages.gallery.upload.summary.fileReady', { count: files.length })
+            : t('pages.gallery.upload.summary.filesReady', { count: files.length })}
         </p>
         <p className='text-muted-foreground text-sm'>
-          {hasFilesToUpload ? `${pendingFiles.length} pending upload` : 'All files processed'}
+          {hasFilesToUpload
+            ? t('pages.gallery.upload.summary.pendingUpload', { count: pendingFiles.length })
+            : t('pages.gallery.upload.summary.allFilesProcessed')}
         </p>
       </div>
 
       <div className='flex items-center gap-2'>
         {onClear && (
           <Button variant='outline' size='sm' onClick={onClear} disabled={isUploading}>
-            Clear
+            {t('pages.gallery.upload.summary.clear')}
           </Button>
         )}
 
         {onUpload && hasFilesToUpload && (
           <Button size='sm' onClick={onUpload} disabled={isUploading}>
             {isUploading
-              ? 'Uploading...'
-              : `Upload ${pendingFiles.length} file${pendingFiles.length !== 1 ? 's' : ''}`}
+              ? t('pages.gallery.upload.summary.uploading')
+              : pendingFiles.length === 1
+                ? t('pages.gallery.upload.summary.upload', { count: pendingFiles.length })
+                : t('pages.gallery.upload.summary.uploadFiles', { count: pendingFiles.length })}
           </Button>
         )}
       </div>

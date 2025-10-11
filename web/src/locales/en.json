@@ -116,6 +116,47 @@
           "invalidCharacters": "Folder name contains invalid characters",
           "createFailed": "Failed to create folder"
         }
+      },
+      "upload": {
+        "dropZone": {
+          "dragAndDrop": "Drag and drop files here",
+          "browseToChoose": "browse to choose files",
+          "or": "or",
+          "supportedFormats": "Supported formats: {{formats}}",
+          "maxFiles": "Maximum {{maxFiles}} files, up to {{maxSize}}MB each",
+          "dropFilesHere": "Drop files here",
+          "dropToUpload": "Drop files to upload",
+          "releaseToAdd": "Release to add files to your gallery",
+          "uploading": "Uploading files..."
+        },
+        "progress": {
+          "uploadProgress": "Upload Progress",
+          "filesCompleted": "{{completed}} of {{total}} files completed",
+          "failed": "{{count}} failed",
+          "uploading": "{{count}} uploading",
+          "pending": "{{count}} pending",
+          "completed": "{{count}} completed"
+        },
+        "summary": {
+          "fileReady": "{{count}} file ready",
+          "filesReady": "{{count}} files ready",
+          "allFilesProcessed": "All files processed",
+          "pendingUpload": "{{count}} pending upload",
+          "clear": "Clear",
+          "upload": "Upload {{count}} file",
+          "uploadFiles": "Upload {{count}} files",
+          "uploading": "Uploading..."
+        },
+        "messages": {
+          "filesAdded": "Added {{count}} file to upload queue",
+          "filesAddedPlural": "Added {{count}} files to upload queue",
+          "uploadSuccess": "Files uploaded successfully!",
+          "uploadFailed": "Failed to upload {{fileName}}",
+          "uploadSuccessPartial": "{{count}} files uploaded successfully",
+          "uploadFailedPartial": "{{count}} files failed to upload",
+          "uploadFailedAll": "Failed to upload {{count}} file",
+          "uploadFailedAllPlural": "Failed to upload {{count}} files"
+        }
       }
     },
     "profile": {

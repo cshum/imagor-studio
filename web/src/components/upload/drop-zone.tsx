@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Upload, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -27,6 +28,7 @@ export function DropZone({
   maxFileSize = 50,
   maxFiles = 10,
 }: DropZoneProps) {
+  const { t } = useTranslation()
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,7 +76,9 @@ export function DropZone({
         <div className='bg-primary/10 absolute inset-0 z-10 flex items-center justify-center rounded-lg'>
           <div className='text-center'>
             <Upload className='text-primary mx-auto h-12 w-12' />
-            <p className='text-primary mt-2 text-lg font-medium'>Drop files here</p>
+            <p className='text-primary mt-2 text-lg font-medium'>
+              {t('pages.gallery.upload.dropZone.dropFilesHere')}
+            </p>
           </div>
         </div>
       )}
@@ -85,24 +89,30 @@ export function DropZone({
             <Upload className='text-muted-foreground mx-auto h-12 w-12' />
             <div className='mt-4'>
               <p className='text-lg font-medium'>
-                {isUploading ? 'Uploading files...' : 'Drag and drop files here'}
+                {isUploading
+                  ? t('pages.gallery.upload.dropZone.uploading')
+                  : t('pages.gallery.upload.dropZone.dragAndDrop')}
               </p>
               <p className='text-muted-foreground mt-1 text-sm'>
-                or{' '}
+                {t('pages.gallery.upload.dropZone.or')}{' '}
                 <Button
                   variant='link'
                   className='h-auto p-0 text-sm'
                   onClick={handleBrowseClick}
                   disabled={disabled || isUploading}
                 >
-                  browse to choose files
+                  {t('pages.gallery.upload.dropZone.browseToChoose')}
                 </Button>
               </p>
             </div>
             <div className='text-muted-foreground mt-4 text-xs'>
-              <p>Supported formats: {formatFileTypes()}</p>
               <p>
-                Maximum {maxFiles} files, up to {maxFileSize}MB each
+                {t('pages.gallery.upload.dropZone.supportedFormats', {
+                  formats: formatFileTypes(),
+                })}
+              </p>
+              <p>
+                {t('pages.gallery.upload.dropZone.maxFiles', { maxFiles, maxSize: maxFileSize })}
               </p>
             </div>
           </>
@@ -118,6 +128,8 @@ export interface DropZoneOverlayProps {
 }
 
 export function DropZoneOverlay({ isDragActive, onClose }: DropZoneOverlayProps) {
+  const { t } = useTranslation()
+
   if (!isDragActive) return null
 
   return (
@@ -134,8 +146,12 @@ export function DropZoneOverlay({ isDragActive, onClose }: DropZoneOverlayProps)
           </Button>
         )}
         <Upload className='text-primary mx-auto h-16 w-16' />
-        <h3 className='mt-4 text-xl font-semibold'>Drop files to upload</h3>
-        <p className='text-muted-foreground mt-2 text-sm'>Release to add files to your gallery</p>
+        <h3 className='mt-4 text-xl font-semibold'>
+          {t('pages.gallery.upload.dropZone.dropToUpload')}
+        </h3>
+        <p className='text-muted-foreground mt-2 text-sm'>
+          {t('pages.gallery.upload.dropZone.releaseToAdd')}
+        </p>
       </div>
     </div>
   )
