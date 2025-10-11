@@ -1,5 +1,34 @@
 import { useCallback, useRef, useState } from 'react'
 
+// Helper function to generate unique filename
+function generateUniqueFilename(
+  originalName: string,
+  existingFiles: string[],
+  usedNames: string[],
+): string {
+  const allExistingFiles = [...existingFiles, ...usedNames]
+
+  if (!allExistingFiles.includes(originalName)) {
+    return originalName
+  }
+
+  // Parse filename to extract name and extension
+  const lastDotIndex = originalName.lastIndexOf('.')
+  const name = lastDotIndex > 0 ? originalName.substring(0, lastDotIndex) : originalName
+  const extension = lastDotIndex > 0 ? originalName.substring(lastDotIndex) : ''
+
+  // Generate numbered alternatives: image.jpg -> image(1).jpg -> image(2).jpg
+  let counter = 1
+  let uniqueName = `${name}(${counter})${extension}`
+
+  while (allExistingFiles.includes(uniqueName)) {
+    counter++
+    uniqueName = `${name}(${counter})${extension}`
+  }
+
+  return uniqueName
+}
+
 export interface DragDropFile {
   file: File
   id: string
@@ -12,6 +41,7 @@ export interface UseDragDropOptions {
   onFilesAdded?: (files: File[]) => void
   onFileUpload?: (file: File, path: string) => Promise<boolean>
   onFilesDropped?: () => void
+  existingFiles?: string[]
   acceptedTypes?: string[]
   maxFileSize?: number
   maxFiles?: number
@@ -40,6 +70,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     onFilesAdded,
     onFileUpload,
     onFilesDropped,
+    existingFiles = [],
     acceptedTypes = ['image/*', 'video/*'],
     maxFileSize = 50 * 1024 * 1024, // 50MB
     maxFiles = 10,
@@ -80,6 +111,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     (newFiles: File[]) => {
       const validFiles: DragDropFile[] = []
       const errors: string[] = []
+      const usedNames: string[] = []
 
       for (const file of newFiles) {
         if (files.length + validFiles.length >= maxFiles) {
@@ -93,7 +125,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
           continue
         }
 
-        // Check for duplicates
+        // Check for duplicates in current upload queue
         const isDuplicate = files.some(
           (f) => f.file.name === file.name && f.file.size === file.size,
         )
@@ -102,9 +134,19 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
           continue
         }
 
+        // Generate unique filename to avoid conflicts
+        const uniqueFileName = generateUniqueFilename(file.name, existingFiles, usedNames)
+        usedNames.push(uniqueFileName)
+
+        // Create a new File object with the unique name if it was renamed
+        let fileToAdd = file
+        if (uniqueFileName !== file.name) {
+          fileToAdd = new File([file], uniqueFileName, { type: file.type })
+        }
+
         validFiles.push({
-          file,
-          id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
+          file: fileToAdd,
+          id: `${uniqueFileName}-${file.size}-${Date.now()}-${Math.random()}`,
           status: 'pending',
           progress: 0,
         })
@@ -120,7 +162,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
         // You might want to show these errors in a toast or notification
       }
     },
-    [files, maxFiles, validateFile, onFilesAdded],
+    [files, maxFiles, validateFile, onFilesAdded, existingFiles],
   )
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {

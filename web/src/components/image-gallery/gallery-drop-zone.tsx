@@ -11,6 +11,7 @@ import { useAuth } from '@/stores/auth-store'
 
 export interface GalleryDropZoneProps {
   currentPath: string
+  existingFiles?: string[]
   isEmpty?: boolean
   className?: string
   children?: React.ReactNode
@@ -18,6 +19,7 @@ export interface GalleryDropZoneProps {
 
 export function GalleryDropZone({
   currentPath,
+  existingFiles = [],
   isEmpty = false,
   className,
   children,
@@ -62,6 +64,7 @@ export function GalleryDropZone({
   } = useDragDrop({
     onFileUpload: handleFileUpload,
     onFilesDropped: handleFilesDropped,
+    existingFiles,
     currentPath,
     acceptedTypes: ['image/*', 'video/*'],
     maxFileSize: 50 * 1024 * 1024, // 50MB

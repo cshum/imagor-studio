@@ -189,7 +189,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         <Card className='rounded-lg border-none'>
           <CardContent className='overflow-hidden p-2 md:p-4' ref={contentRef}>
             {contentWidth > 0 && (
-              <GalleryDropZone currentPath={galleryKey} isEmpty={isEmpty}>
+              <GalleryDropZone
+                currentPath={galleryKey}
+                existingFiles={images.map((img) => img.imageName)}
+                isEmpty={isEmpty}
+              >
                 {isEmpty ? (
                   <EmptyGalleryState width={contentWidth} isRootGallery={isRootGallery} />
                 ) : (
