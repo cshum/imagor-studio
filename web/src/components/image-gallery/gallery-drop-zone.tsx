@@ -124,7 +124,7 @@ export function GalleryDropZone({
         }
       }
     }
-  }, [isUploading, files, handleUploadComplete, clearFiles, router])
+  }, [isUploading, files, handleUploadComplete, clearFiles, router, t])
 
   const handleFileSelect = useCallback(
     (fileList: FileList | null) => {
