@@ -18,8 +18,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
+import { UploadProgress } from '@/components/upload/upload-progress.tsx'
 import { SortOption, SortOrder } from '@/generated/graphql'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
+import { DragDropFile } from '@/hooks/use-drag-drop.ts'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
@@ -45,6 +47,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const { isLoading, pendingMatches } = useRouterState()
   const { authState } = useAuth()
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
+  const [uploadState, setUploadState] = useState<{
+    files: DragDropFile[]
+    isUploading: boolean
+    uploadFiles: () => Promise<void>
+    removeFile: (id: string) => void
+    retryFile: (id: string) => Promise<void>
+    clearFiles: () => void
+  } | null>(null)
 
   const { galleryName, images, folders, currentSortBy, currentSortOrder } = galleryLoaderData
   const sidebar = useSidebar()
@@ -212,43 +222,60 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     <>
       {isNavigateToImage && <LoadingBar isLoading={isLoading} />}
       <ContentLayout title={galleryName}>
-        <div className='mx-4 my-2 grid'>
-          <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
-        </div>
-        <HeaderBar isScrolled={isScrolledDown} customMenuItems={customMenuItems} />
-        <Card className='rounded-lg border-none'>
-          <CardContent className='overflow-hidden p-2 md:p-4' ref={contentRef}>
-            {contentWidth > 0 && (
-              <GalleryDropZone
-                currentPath={galleryKey}
-                existingFiles={images.map((img) => img.imageName)}
-                isEmpty={isEmpty}
-                onFileSelect={handleFileSelectHandler}
-              >
-                {isEmpty ? (
-                  <EmptyGalleryState width={contentWidth} isRootGallery={isRootGallery} />
-                ) : (
-                  <>
-                    <FolderGrid
-                      folders={folders}
-                      onFolderClick={handleFolderClick}
-                      width={contentWidth}
-                      maxFolderWidth={maxItemWidth}
-                    />
-                    <ImageGrid
-                      images={images}
-                      aspectRatio={4 / 3}
-                      width={contentWidth}
-                      scrollTop={scrollPosition}
-                      maxImageWidth={maxItemWidth}
-                      onImageClick={handleImageClick}
-                    />
-                  </>
-                )}
-              </GalleryDropZone>
-            )}
-          </CardContent>
-        </Card>
+        <GalleryDropZone
+          currentPath={galleryKey}
+          existingFiles={images.map((img) => img.imageName)}
+          onFileSelect={handleFileSelectHandler}
+          onUploadStateChange={setUploadState}
+          className='min-h-screen'
+        >
+          <div className='mx-4 my-2 grid'>
+            <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
+          </div>
+          <HeaderBar isScrolled={isScrolledDown} customMenuItems={customMenuItems} />
+
+          <Card className='rounded-lg border-none'>
+            <CardContent className='overflow-hidden p-2 md:p-4' ref={contentRef}>
+              {/* Upload Progress - After header, before gallery content */}
+              {uploadState && uploadState.files.length > 0 && (
+                <div className='mb-4'>
+                  <UploadProgress
+                    files={uploadState.files}
+                    isUploading={uploadState.isUploading}
+                    onUpload={uploadState.uploadFiles}
+                    onRemoveFile={uploadState.removeFile}
+                    onRetryFile={uploadState.retryFile}
+                    onClearAll={uploadState.clearFiles}
+                  />
+                </div>
+              )}
+              {contentWidth > 0 && (
+                <>
+                  {isEmpty ? (
+                    <EmptyGalleryState width={contentWidth} isRootGallery={isRootGallery} />
+                  ) : (
+                    <>
+                      <FolderGrid
+                        folders={folders}
+                        onFolderClick={handleFolderClick}
+                        width={contentWidth}
+                        maxFolderWidth={maxItemWidth}
+                      />
+                      <ImageGrid
+                        images={images}
+                        aspectRatio={4 / 3}
+                        width={contentWidth}
+                        scrollTop={scrollPosition}
+                        maxImageWidth={maxItemWidth}
+                        onImageClick={handleImageClick}
+                      />
+                    </>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </GalleryDropZone>
       </ContentLayout>
 
       <CreateFolderDialog
