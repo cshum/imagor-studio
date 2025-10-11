@@ -135,6 +135,28 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const customMenuItems =
     authState.state === 'authenticated' ? (
       <>
+        <DropdownMenuItem
+          className='hover:cursor-pointer'
+          onSelect={() => {
+            // need to wait for dropdown close before opening dialog
+            setTimeout(() => setIsCreateFolderDialogOpen(true), 0)
+          }}
+        >
+          <FolderPlus className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.gallery.createFolder.newFolder')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className='hover:cursor-pointer'
+          onSelect={() => {
+            // need to wait for dropdown close before triggering file dialog
+            setTimeout(() => handleUploadFiles(), 0)
+          }}
+        >
+          <Upload className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.gallery.upload.uploadFiles')}
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
         <DropdownMenuLabel>{t('pages.gallery.sorting.sortBy')}</DropdownMenuLabel>
         <DropdownMenuItem
           className='hover:cursor-pointer'
@@ -182,28 +204,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           {t('pages.gallery.sorting.descending')}
           {currentSortOrder === 'DESC' && <Check className='ml-auto h-4 w-4' />}
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className='hover:cursor-pointer'
-          onSelect={() => {
-            // need to wait for dropdown close before opening dialog
-            setTimeout(() => setIsCreateFolderDialogOpen(true), 0)
-          }}
-        >
-          <FolderPlus className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.createFolder.newFolder')}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className='hover:cursor-pointer'
-          onSelect={() => {
-            // need to wait for dropdown close before triggering file dialog
-            setTimeout(() => handleUploadFiles(), 0)
-          }}
-        >
-          <Upload className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.upload.uploadFiles')}
-        </DropdownMenuItem>
-
         <DropdownMenuSeparator />
       </>
     ) : null
