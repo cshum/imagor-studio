@@ -17,7 +17,6 @@ import type {
   TestStorageConfigMutation,
   TestStorageConfigMutationVariables,
   UploadFileMutation,
-  UploadFileMutationVariables,
 } from '@/generated/graphql'
 import { getSdk } from '@/generated/graphql-request'
 import { getGraphQLClient } from '@/lib/graphql-client'
@@ -46,68 +45,27 @@ export async function statFile(path: string): Promise<StatFileQuery['statFile']>
 }
 
 /**
- * Upload a file using multipart form data
- * Note: We use custom fetch instead of GraphQL client because graphql-request
- * doesn't support file uploads properly
+ * Upload a file using the GraphQL upload utility
  */
 export async function uploadFile(
   path: string,
   file: File,
 ): Promise<UploadFileMutation['uploadFile']> {
-  const { getBaseUrl } = await import('@/lib/api-utils')
-  const { getAuth } = await import('@/stores/auth-store')
-
-  const endpoint = `${getBaseUrl()}/api/query`
-  const auth = getAuth()
-
-  // Create the GraphQL multipart request according to the spec
-  // https://github.com/jaydenseric/graphql-multipart-request-spec
-  const formData = new FormData()
-
-  // Add the GraphQL operation
-  const operations = {
-    query: `
-      mutation UploadFile($path: String!, $content: Upload!) {
-        uploadFile(path: $path, content: $content)
-      }
-    `,
-    variables: {
-      path,
-      content: null, // Will be replaced by file reference
-    },
+  const { UploadFileMutation } = await import('@/graphql/storage.gql')
+  const { uploadSingleFile } = await import('@/lib/graphql-upload')
+  
+  interface UploadFileResult {
+    uploadFile: boolean
   }
-
-  // Add the file map (maps file references to actual files)
-  const map = {
-    '0': ['variables.content'],
-  }
-
-  formData.append('operations', JSON.stringify(operations))
-  formData.append('map', JSON.stringify(map))
-  formData.append('0', file) // The actual file
-
-  const headers: Record<string, string> = {}
-  if (auth.accessToken) {
-    headers.Authorization = `Bearer ${auth.accessToken}`
-  }
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers,
-    body: formData,
-  })
-
-  if (!response.ok) {
-    throw new Error(`Upload failed: ${response.status} ${response.statusText}`)
-  }
-
-  const result = await response.json()
-
-  if (result.errors) {
-    throw new Error(`GraphQL error: ${result.errors[0]?.message || 'Unknown error'}`)
-  }
-
-  return result.data?.uploadFile || false
+  
+  const result = await uploadSingleFile<UploadFileResult>(
+    UploadFileMutation,
+    { path, content: file },
+    'content',
+    file,
+  )
+  
+  return result.uploadFile
 }
 
 /**
