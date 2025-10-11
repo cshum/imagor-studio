@@ -221,7 +221,9 @@ export class ImageEditor {
 
     // Format handling
     if (forPreview) {
-      // Always WebP for preview (browser compatibility)
+      // disable result storage on preview
+      filters.push({ name: 'preview', args: '' })
+      // Always WebP for preview
       filters.push({ name: 'format', args: 'webp' })
     } else if (state.format) {
       // Use user-selected format for Copy URL / Download
