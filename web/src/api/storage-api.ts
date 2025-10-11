@@ -53,18 +53,18 @@ export async function uploadFile(
 ): Promise<UploadFileMutation['uploadFile']> {
   const { UploadFileMutation } = await import('@/graphql/storage.gql')
   const { uploadSingleFile } = await import('@/lib/graphql-upload')
-  
+
   interface UploadFileResult {
     uploadFile: boolean
   }
-  
+
   const result = await uploadSingleFile<UploadFileResult>(
     UploadFileMutation,
     { path, content: file },
     'content',
     file,
   )
-  
+
   return result.uploadFile
 }
 

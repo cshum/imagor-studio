@@ -135,9 +135,7 @@ export function DropZoneOverlay({ isDragActive, onClose }: DropZoneOverlayProps)
         )}
         <Upload className='text-primary mx-auto h-16 w-16' />
         <h3 className='mt-4 text-xl font-semibold'>Drop files to upload</h3>
-        <p className='text-muted-foreground mt-2 text-sm'>
-          Release to add files to your gallery
-        </p>
+        <p className='text-muted-foreground mt-2 text-sm'>Release to add files to your gallery</p>
       </div>
     </div>
   )

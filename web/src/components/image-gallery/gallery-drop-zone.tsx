@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
@@ -63,33 +63,46 @@ export function GalleryDropZone({
     maxFiles: 20,
   })
 
+  const uploadCompletedRef = useRef(false)
+
   const handleUpload = useCallback(async () => {
+    uploadCompletedRef.current = false
     await uploadFiles()
-    
-    // Wait a bit for state to update, then check results
-    setTimeout(() => {
-      const currentFiles = files
-      const successfulFiles = currentFiles.filter((f) => f.status === 'success')
-      const failedFiles = currentFiles.filter((f) => f.status === 'error')
-      
-      if (successfulFiles.length > 0 && failedFiles.length === 0) {
-        // All files uploaded successfully
-        handleUploadComplete()
-        setTimeout(() => {
-          clearFiles()
-        }, 2000)
-      } else if (successfulFiles.length > 0 && failedFiles.length > 0) {
-        // Some files succeeded, some failed
-        toast.success(`${successfulFiles.length} files uploaded successfully`)
-        toast.error(`${failedFiles.length} files failed to upload`)
-        // Revalidate even with partial success to show uploaded files
-        router.invalidate()
-      } else if (failedFiles.length > 0) {
-        // All files failed
-        toast.error(`Failed to upload ${failedFiles.length} file${failedFiles.length !== 1 ? 's' : ''}`)
+  }, [uploadFiles])
+
+  // Watch for upload completion
+  useEffect(() => {
+    if (!isUploading && files.length > 0 && !uploadCompletedRef.current) {
+      const successfulFiles = files.filter((f) => f.status === 'success')
+      const failedFiles = files.filter((f) => f.status === 'error')
+      const totalProcessed = successfulFiles.length + failedFiles.length
+      const totalFiles = files.length
+
+      // Only process results if all files have been processed
+      if (totalProcessed === totalFiles) {
+        uploadCompletedRef.current = true
+
+        if (successfulFiles.length > 0 && failedFiles.length === 0) {
+          // All files uploaded successfully
+          handleUploadComplete()
+          setTimeout(() => {
+            clearFiles()
+          }, 2000)
+        } else if (successfulFiles.length > 0 && failedFiles.length > 0) {
+          // Some files succeeded, some failed
+          toast.success(`${successfulFiles.length} files uploaded successfully`)
+          toast.error(`${failedFiles.length} files failed to upload`)
+          // Revalidate even with partial success to show uploaded files
+          router.invalidate()
+        } else if (failedFiles.length > 0) {
+          // All files failed
+          toast.error(
+            `Failed to upload ${failedFiles.length} file${failedFiles.length !== 1 ? 's' : ''}`,
+          )
+        }
       }
-    }, 100)
-  }, [uploadFiles, files, handleUploadComplete, clearFiles, router])
+    }
+  }, [isUploading, files, handleUploadComplete, clearFiles, router])
 
   const handleFileSelect = useCallback(
     (fileList: FileList | null) => {

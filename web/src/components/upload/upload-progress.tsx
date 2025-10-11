@@ -55,48 +55,45 @@ export function UploadProgress({
       {/* File List */}
       <div className='max-h-60 space-y-2 overflow-y-auto'>
         {files.map((file) => (
-          <div
-            key={file.id}
-            className='flex items-center gap-3 rounded-md border p-3'
-          >
-              <FileStatusIcon status={file.status} />
+          <div key={file.id} className='flex items-center gap-3 rounded-md border p-3'>
+            <FileStatusIcon status={file.status} />
 
-              <div className='min-w-0 flex-1'>
-                <p className='truncate text-sm font-medium'>{file.file.name}</p>
-                <div className='text-muted-foreground flex items-center gap-2 text-xs'>
-                  <span>{formatFileSize(file.file.size)}</span>
-                  {file.status === 'uploading' && <span>{Math.round(file.progress)}%</span>}
-                  {file.error && <span className='text-destructive'>{file.error}</span>}
-                </div>
-
-                {file.status === 'uploading' && (
-                  <Progress value={file.progress} className='mt-1 h-1' />
-                )}
+            <div className='min-w-0 flex-1'>
+              <p className='truncate text-sm font-medium'>{file.file.name}</p>
+              <div className='text-muted-foreground flex items-center gap-2 text-xs'>
+                <span>{formatFileSize(file.file.size)}</span>
+                {file.status === 'uploading' && <span>{Math.round(file.progress)}%</span>}
+                {file.error && <span className='text-destructive'>{file.error}</span>}
               </div>
 
-              <div className='flex items-center gap-1'>
-                {file.status === 'error' && onRetryFile && (
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => onRetryFile(file.id)}
-                    className='h-8 w-8 p-0'
-                  >
-                    <RotateCcw className='h-3 w-3' />
-                  </Button>
-                )}
+              {file.status === 'uploading' && (
+                <Progress value={file.progress} className='mt-1 h-1' />
+              )}
+            </div>
 
-                {onRemoveFile && file.status !== 'uploading' && (
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => onRemoveFile(file.id)}
-                    className='h-8 w-8 p-0'
-                  >
-                    <X className='h-3 w-3' />
-                  </Button>
-                )}
-              </div>
+            <div className='flex items-center gap-1'>
+              {file.status === 'error' && onRetryFile && (
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => onRetryFile(file.id)}
+                  className='h-8 w-8 p-0'
+                >
+                  <RotateCcw className='h-3 w-3' />
+                </Button>
+              )}
+
+              {onRemoveFile && file.status !== 'uploading' && (
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => onRemoveFile(file.id)}
+                  className='h-8 w-8 p-0'
+                >
+                  <X className='h-3 w-3' />
+                </Button>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -170,7 +167,9 @@ export function UploadSummary({
   const hasFilesToUpload = pendingFiles.length > 0
 
   return (
-    <div className={cn('bg-card flex items-center justify-between rounded-lg border p-4', className)}>
+    <div
+      className={cn('bg-card flex items-center justify-between rounded-lg border p-4', className)}
+    >
       <div>
         <p className='font-medium'>
           {files.length} file{files.length !== 1 ? 's' : ''} ready
