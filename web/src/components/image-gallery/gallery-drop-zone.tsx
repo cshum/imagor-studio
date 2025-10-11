@@ -5,8 +5,7 @@ import { toast } from 'sonner'
 
 import { uploadFile } from '@/api/storage-api'
 import { DropZoneOverlay } from '@/components/upload/drop-zone'
-import { UploadProgress } from '@/components/upload/upload-progress'
-import { useDragDrop } from '@/hooks/use-drag-drop'
+import { DragDropFile, useDragDrop } from '@/hooks/use-drag-drop'
 import { useAuth } from '@/stores/auth-store'
 
 export interface GalleryDropZoneProps {
@@ -15,6 +14,14 @@ export interface GalleryDropZoneProps {
   className?: string
   children?: React.ReactNode
   onFileSelect?: (handler: (fileList: FileList | null) => void) => void
+  onUploadStateChange?: (uploadState: {
+    files: DragDropFile[]
+    isUploading: boolean
+    uploadFiles: () => Promise<void>
+    removeFile: (id: string) => void
+    retryFile: (id: string) => Promise<void>
+    clearFiles: () => void
+  }) => void
 }
 
 export function GalleryDropZone({
@@ -23,6 +30,7 @@ export function GalleryDropZone({
   className,
   children,
   onFileSelect,
+  onUploadStateChange,
 }: GalleryDropZoneProps) {
   const { t } = useTranslation()
   const router = useRouter()
@@ -141,6 +149,20 @@ export function GalleryDropZone({
     }
   }, [onFileSelect, handleFileSelect])
 
+  // Expose upload state to parent component
+  useEffect(() => {
+    if (onUploadStateChange) {
+      onUploadStateChange({
+        files,
+        isUploading,
+        uploadFiles: handleUpload,
+        removeFile,
+        retryFile,
+        clearFiles,
+      })
+    }
+  }, [files, isUploading, handleUpload, removeFile, retryFile, clearFiles, onUploadStateChange])
+
   // Check if user has write permissions
   const canUpload = authState.state === 'authenticated'
 
@@ -152,20 +174,6 @@ export function GalleryDropZone({
     <div {...dragProps} className={className}>
       {/* Full-screen overlay when dragging */}
       <DropZoneOverlay isDragActive={isDragActive} />
-
-      {/* Unified Upload Component */}
-      {files.length > 0 && (
-        <div className='mb-4'>
-          <UploadProgress
-            files={files}
-            isUploading={isUploading}
-            onUpload={handleUpload}
-            onRemoveFile={removeFile}
-            onRetryFile={retryFile}
-            onClearAll={clearFiles}
-          />
-        </div>
-      )}
       {children}
     </div>
   )
