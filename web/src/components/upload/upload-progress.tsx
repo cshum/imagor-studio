@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils'
 
 export interface UploadProgressProps {
   files: DragDropFile[]
+  isUploading: boolean
+  onUpload?: () => void
   onRemoveFile?: (id: string) => void
   onRetryFile?: (id: string) => void
   onClearAll?: () => void
@@ -17,8 +19,22 @@ export interface UploadProgressProps {
   maxFileCardWidth?: number
 }
 
+export interface UnifiedUploadProps {
+  files: DragDropFile[]
+  isUploading: boolean
+  onUpload?: () => void
+  onRemoveFile?: (id: string) => void
+  onRetryFile?: (id: string) => void
+  onClear?: () => void
+  className?: string
+  width?: number
+  maxFileCardWidth?: number
+}
+
 export function UploadProgress({
   files,
+  isUploading,
+  onUpload,
   onRemoveFile,
   onRetryFile,
   onClearAll,
@@ -40,33 +56,79 @@ export function UploadProgress({
 
   // Calculate grid layout similar to folder grid
   const columnCount = Math.max(2, Math.floor(width / maxFileCardWidth))
-  const fileCardWidth = width / columnCount
+
+  // Determine current state
+  const isAllPending = pendingFiles === files.length
+  const hasActiveUploads = uploadingFiles > 0
+  const isComplete = completedFiles + failedFiles === files.length && files.length > 0
+
+  // Dynamic header content
+  const getHeaderContent = () => {
+    if (isAllPending) {
+      return {
+        title:
+          files.length === 1
+            ? t('pages.gallery.upload.summary.fileReady', { count: files.length })
+            : t('pages.gallery.upload.summary.filesReady', { count: files.length }),
+        subtitle: t('pages.gallery.upload.summary.pendingUpload', { count: pendingFiles }),
+      }
+    } else if (hasActiveUploads) {
+      return {
+        title: t('pages.gallery.upload.progress.uploadProgress'),
+        subtitle: t('pages.gallery.upload.progress.filesCompleted', {
+          completed: completedFiles,
+          total: files.length,
+        }),
+      }
+    } else if (isComplete) {
+      if (failedFiles === 0) {
+        return {
+          title: t('pages.gallery.upload.messages.uploadSuccess'),
+          subtitle: t('pages.gallery.upload.progress.completed', { count: completedFiles }),
+        }
+      } else {
+        return {
+          title: t('pages.gallery.upload.summary.allFilesProcessed'),
+          subtitle: `${completedFiles} successful${failedFiles > 0 ? `, ${failedFiles} failed` : ''}`,
+        }
+      }
+    }
+    return { title: '', subtitle: '' }
+  }
+
+  const { title, subtitle } = getHeaderContent()
 
   return (
     <div className={cn('bg-card rounded-lg border p-4 shadow-sm', className)}>
       <div className='mb-4 flex items-center justify-between'>
         <div>
-          <h3 className='font-medium'>{t('pages.gallery.upload.progress.uploadProgress')}</h3>
-          <p className='text-muted-foreground text-sm'>
-            {t('pages.gallery.upload.progress.filesCompleted', {
-              completed: completedFiles,
-              total: files.length,
-            })}
-            {failedFiles > 0 &&
-              ` • ${t('pages.gallery.upload.progress.failed', { count: failedFiles })}`}
-          </p>
+          <h3 className='font-medium'>{title}</h3>
+          <p className='text-muted-foreground text-sm'>{subtitle}</p>
         </div>
-        {onClearAll && (
-          <Button variant='ghost' size='sm' onClick={onClearAll} className='h-8 w-8 p-0'>
-            <X className='h-4 w-4' />
-          </Button>
-        )}
+        <div className='flex items-center gap-2'>
+          {onClearAll && (
+            <Button variant='outline' size='sm' onClick={onClearAll} disabled={isUploading}>
+              {t('pages.gallery.upload.summary.clear')}
+            </Button>
+          )}
+          {onUpload && isAllPending && (
+            <Button size='sm' onClick={onUpload} disabled={isUploading}>
+              {isUploading
+                ? t('pages.gallery.upload.summary.uploading')
+                : pendingFiles === 1
+                  ? t('pages.gallery.upload.summary.upload', { count: pendingFiles })
+                  : t('pages.gallery.upload.summary.uploadFiles', { count: pendingFiles })}
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Overall Progress */}
-      <div className='mb-4'>
-        <Progress value={overallProgress} className='h-2' />
-      </div>
+      {/* Progress bar - only show during active upload */}
+      {hasActiveUploads && (
+        <div className='mb-4'>
+          <Progress value={overallProgress} className='h-2' />
+        </div>
+      )}
 
       {/* File Grid */}
       <div>
@@ -74,15 +136,10 @@ export function UploadProgress({
           className='grid gap-2'
           style={{
             gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-            width: `${width}px`,
           }}
         >
           {files.map((file) => (
-            <Card
-              key={file.id}
-              className='hover-touch:bg-accent relative transition-colors'
-              style={{ width: `${fileCardWidth - 8}px` }}
-            >
+            <Card key={file.id} className='hover-touch:bg-accent relative transition-colors'>
               <CardContent className='flex items-center px-4 py-4 sm:py-3'>
                 <FileStatusIcon status={file.status} />
 
@@ -107,7 +164,8 @@ export function UploadProgress({
                     </Button>
                   )}
 
-                  {onRemoveFile && file.status !== 'uploading' && (
+                  {/* Only show individual remove button for failed files */}
+                  {onRemoveFile && file.status === 'error' && (
                     <Button
                       variant='ghost'
                       size='sm'

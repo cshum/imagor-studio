@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 
 import { uploadFile } from '@/api/storage-api'
 import { DropZone, DropZoneOverlay } from '@/components/upload/drop-zone'
-import { UploadProgress, UploadSummary } from '@/components/upload/upload-progress'
+import { UploadProgress } from '@/components/upload/upload-progress'
 import { useDragDrop } from '@/hooks/use-drag-drop'
 import { useAuth } from '@/stores/auth-store'
 
@@ -143,17 +143,13 @@ export function GalleryDropZone({
       {/* Full-screen overlay when dragging */}
       <DropZoneOverlay isDragActive={isDragActive} />
 
-      {/* Upload progress and summary */}
+      {/* Unified Upload Component */}
       {files.length > 0 && (
-        <div className='mb-4 space-y-4'>
-          <UploadSummary
+        <div className='mb-4'>
+          <UploadProgress
             files={files}
             isUploading={isUploading}
             onUpload={handleUpload}
-            onClear={clearFiles}
-          />
-          <UploadProgress
-            files={files}
             onRemoveFile={removeFile}
             onRetryFile={retryFile}
             onClearAll={clearFiles}
