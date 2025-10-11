@@ -90,9 +90,7 @@ export function GalleryDropZone({
         if (successfulFiles.length > 0 && failedFiles.length === 0) {
           // All files uploaded successfully
           handleUploadComplete()
-          setTimeout(() => {
-            clearFiles()
-          }, 2000)
+          clearFiles()
         } else if (successfulFiles.length > 0 && failedFiles.length > 0) {
           // Some files succeeded, some failed
           toast.success(
