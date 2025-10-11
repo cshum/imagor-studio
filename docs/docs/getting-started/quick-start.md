@@ -18,7 +18,7 @@ Run Imagor Studio with SQLite database and your image directory mounted:
 ```bash
 docker run -p 8000:8000 --rm \
   -v $(pwd)/imagor-studio-data:/app/data \
-  -v ~/Pictures:/app/gallery:ro \
+  -v ~/Pictures:/app/gallery \
   -e DATABASE_URL="sqlite:///app/data/imagor-studio.db" \
   shumc/imagor-studio
 ```
@@ -62,7 +62,7 @@ If port 8000 is already in use, change it to another port:
 ```bash
 docker run -p 9000:8000 --rm \
   -v $(pwd)/imagor-studio-data:/app/data \
-  -v ~/Pictures:/app/gallery:ro \
+  -v ~/Pictures:/app/gallery \
   -e DATABASE_URL="sqlite:///app/data/imagor-studio.db" \
   shumc/imagor-studio
 ```

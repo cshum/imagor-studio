@@ -47,12 +47,8 @@ services:
       - STORAGE_TYPE=file
       - FILE_BASE_DIR=/app/gallery
     volumes:
-      - ~/Pictures:/app/gallery:ro # Mount as read-only
+      - ~/Pictures:/app/gallery
 ```
-
-:::tip Read-Only Mount
-Mount your image directory as read-only (`:ro`) for safety. Imagor Studio doesn't modify original images.
-:::
 
 ## S3 Storage
 

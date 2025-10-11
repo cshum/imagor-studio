@@ -86,7 +86,7 @@ Ensure your data persists across container restarts:
 ```yaml
 volumes:
   - ./imagor-studio-data:/app/data # Database and config
-  - ~/Pictures:/app/gallery:ro # Image files (read-only)
+  - ~/Pictures:/app/gallery # Image files
 ```
 
 ## Health Checks
