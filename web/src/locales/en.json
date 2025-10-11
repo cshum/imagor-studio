@@ -147,6 +147,7 @@
           "uploadFiles": "Upload {{count}} files",
           "uploading": "Uploading..."
         },
+        "uploadFiles": "Upload Files",
         "messages": {
           "uploadSuccess": "Files uploaded successfully!",
           "uploadFailed": "Failed to upload {{fileName}}",

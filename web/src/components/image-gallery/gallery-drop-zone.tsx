@@ -15,6 +15,7 @@ export interface GalleryDropZoneProps {
   isEmpty?: boolean
   className?: string
   children?: React.ReactNode
+  onFileSelect?: (handler: (fileList: FileList | null) => void) => void
 }
 
 export function GalleryDropZone({
@@ -23,6 +24,7 @@ export function GalleryDropZone({
   isEmpty = false,
   className,
   children,
+  onFileSelect,
 }: GalleryDropZoneProps) {
   const { t } = useTranslation()
   const router = useRouter()
@@ -133,6 +135,13 @@ export function GalleryDropZone({
     },
     [dragProps],
   )
+
+  // Expose file selection to parent component
+  useEffect(() => {
+    if (onFileSelect) {
+      onFileSelect(handleFileSelect)
+    }
+  }, [onFileSelect, handleFileSelect])
 
   // Check if user has write permissions
   const canUpload = authState.state === 'authenticated'

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
-import { Check, Clock, FileText, FolderPlus, SortAsc, SortDesc } from 'lucide-react'
+import { Check, Clock, FileText, FolderPlus, SortAsc, SortDesc, Upload } from 'lucide-react'
 
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { HeaderBar } from '@/components/header-bar'
@@ -40,6 +40,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const navigate = useNavigate()
   const router = useRouter()
   const contentRef = useRef<HTMLDivElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const fileSelectHandlerRef = useRef<((fileList: FileList | null) => void) | null>(null)
   const { isLoading, pendingMatches } = useRouterState()
   const { authState } = useAuth()
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
@@ -101,6 +103,24 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       to: '/gallery/$galleryKey',
       params: { galleryKey },
     })
+  }
+
+  const handleUploadFiles = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (files && files.length > 0 && fileSelectHandlerRef.current) {
+      // Use the file select handler from GalleryDropZone
+      fileSelectHandlerRef.current(files)
+      // Reset the input value so the same file can be selected again
+      event.target.value = ''
+    }
+  }
+
+  const handleFileSelectHandler = (handler: (fileList: FileList | null) => void) => {
+    fileSelectHandlerRef.current = handler
   }
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 48 : 38)
@@ -173,6 +193,16 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           <FolderPlus className='text-muted-foreground mr-3 h-4 w-4' />
           {t('pages.gallery.createFolder.newFolder')}
         </DropdownMenuItem>
+        <DropdownMenuItem
+          className='hover:cursor-pointer'
+          onSelect={() => {
+            // need to wait for dropdown close before triggering file dialog
+            setTimeout(() => handleUploadFiles(), 0)
+          }}
+        >
+          <Upload className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.gallery.upload.uploadFiles')}
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
       </>
@@ -193,6 +223,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                 currentPath={galleryKey}
                 existingFiles={images.map((img) => img.imageName)}
                 isEmpty={isEmpty}
+                onFileSelect={handleFileSelectHandler}
               >
                 {isEmpty ? (
                   <EmptyGalleryState width={contentWidth} isRootGallery={isRootGallery} />
@@ -224,6 +255,16 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
         currentPath={galleryKey}
+      />
+
+      {/* Hidden file input for traditional upload */}
+      <input
+        type='file'
+        multiple
+        accept='image/*,video/*'
+        ref={fileInputRef}
+        onChange={handleFileSelect}
+        style={{ display: 'none' }}
       />
 
       {children}
