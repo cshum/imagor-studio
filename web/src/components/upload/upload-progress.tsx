@@ -69,7 +69,7 @@ export function UploadProgress({
       </div>
 
       {/* File Grid */}
-      <div className='max-h-60 overflow-y-auto'>
+      <div>
         <div
           className='grid gap-2'
           style={{
@@ -85,7 +85,7 @@ export function UploadProgress({
             >
               <CardContent className='flex items-center px-4 py-4 sm:py-3'>
                 <FileStatusIcon status={file.status} />
-                
+
                 <div className='ml-2 min-w-0 flex-1'>
                   <p className='truncate text-sm font-medium'>{file.file.name}</p>
                   <div className='text-muted-foreground flex items-center gap-2 text-xs'>
@@ -122,7 +122,7 @@ export function UploadProgress({
 
               {/* Upload progress overlay */}
               {file.status === 'uploading' && (
-                <div className='absolute bottom-0 left-0 right-0'>
+                <div className='absolute right-0 bottom-0 left-0'>
                   <Progress value={file.progress} className='h-1 rounded-none' />
                 </div>
               )}
