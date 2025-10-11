@@ -71,7 +71,7 @@ services:
       - IMAGOR_SECRET=shared-secret-key
       - PORT=8080
     volumes:
-      - ~/Pictures:/mnt/images:ro
+      - ~/Pictures:/mnt/images
 
   imagor-studio:
     image: shumc/imagor-studio:latest
@@ -82,7 +82,7 @@ services:
       - STORAGE_TYPE=file
       - FILE_BASE_DIR=/mnt/images
     volumes:
-      - ~/Pictures:/mnt/images:ro
+      - ~/Pictures:/mnt/images
     depends_on:
       - imagor
 ```

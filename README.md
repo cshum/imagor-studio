@@ -19,7 +19,7 @@ Run with SQLite database and your image directory mounted. You can replace `~/Pi
 ```bash
 docker run -p 8000:8000 --rm \
   -v $(pwd)/imagor-studio-data:/app/data \
-  -v ~/Pictures:/app/gallery:ro \
+  -v ~/Pictures:/app/gallery \
   -e DATABASE_URL="sqlite:///app/data/imagor-studio.db" \
   shumc/imagor-studio
 ```
@@ -31,7 +31,7 @@ http://localhost:8000
 ```
 
 **What this does:**
-- Mounts your Photos directory as read-only for safe access
+- Mounts your Photos directory
 - Creates persistent storage for the app database (SQLite)
 - Redirects to admin setup process on first launch
 

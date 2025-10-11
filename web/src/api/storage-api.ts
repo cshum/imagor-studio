@@ -17,7 +17,6 @@ import type {
   TestStorageConfigMutation,
   TestStorageConfigMutationVariables,
   UploadFileMutation,
-  UploadFileMutationVariables,
 } from '@/generated/graphql'
 import { getSdk } from '@/generated/graphql-request'
 import { getGraphQLClient } from '@/lib/graphql-client'
@@ -46,19 +45,26 @@ export async function statFile(path: string): Promise<StatFileQuery['statFile']>
 }
 
 /**
- * Upload a file
+ * Upload a file using the GraphQL upload utility
  */
 export async function uploadFile(
   path: string,
   file: File,
 ): Promise<UploadFileMutation['uploadFile']> {
-  const sdk = getSdk(getGraphQLClient())
+  const { UploadFileMutation } = await import('@/graphql/storage.gql')
+  const { uploadSingleFile } = await import('@/lib/graphql-upload')
 
-  const variables: UploadFileMutationVariables = {
-    path,
-    content: file,
+  interface UploadFileResult {
+    uploadFile: boolean
   }
-  const result = await sdk.UploadFile(variables)
+
+  const result = await uploadSingleFile<UploadFileResult>(
+    UploadFileMutation,
+    { path, content: file },
+    'content',
+    file,
+  )
+
   return result.uploadFile
 }
 
