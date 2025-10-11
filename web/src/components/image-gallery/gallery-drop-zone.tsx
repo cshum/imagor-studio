@@ -4,7 +4,7 @@ import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 import { uploadFile } from '@/api/storage-api'
-import { DropZone, DropZoneOverlay } from '@/components/upload/drop-zone'
+import { DropZoneOverlay } from '@/components/upload/drop-zone'
 import { UploadProgress } from '@/components/upload/upload-progress'
 import { useDragDrop } from '@/hooks/use-drag-drop'
 import { useAuth } from '@/stores/auth-store'
@@ -12,7 +12,6 @@ import { useAuth } from '@/stores/auth-store'
 export interface GalleryDropZoneProps {
   currentPath: string
   existingFiles?: string[]
-  isEmpty?: boolean
   className?: string
   children?: React.ReactNode
   onFileSelect?: (handler: (fileList: FileList | null) => void) => void
@@ -21,7 +20,6 @@ export interface GalleryDropZoneProps {
 export function GalleryDropZone({
   currentPath,
   existingFiles = [],
-  isEmpty = false,
   className,
   children,
   onFileSelect,
@@ -168,18 +166,7 @@ export function GalleryDropZone({
           />
         </div>
       )}
-
-      {/* Drop zone for empty gallery */}
-      {isEmpty ? (
-        <DropZone
-          isDragActive={isDragActive}
-          isUploading={isUploading}
-          onFileSelect={handleFileSelect}
-          className='min-h-[300px]'
-        />
-      ) : (
-        children
-      )}
+      {children}
     </div>
   )
 }

@@ -222,7 +222,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
               <GalleryDropZone
                 currentPath={galleryKey}
                 existingFiles={images.map((img) => img.imageName)}
-                isEmpty={isEmpty}
                 onFileSelect={handleFileSelectHandler}
               >
                 {isEmpty ? (
