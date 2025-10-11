@@ -1,33 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 
-// Helper function to generate unique filename
-function generateUniqueFilename(
-  originalName: string,
-  existingFiles: string[],
-  usedNames: string[],
-): string {
-  const allExistingFiles = [...existingFiles, ...usedNames]
-
-  if (!allExistingFiles.includes(originalName)) {
-    return originalName
-  }
-
-  // Parse filename to extract name and extension
-  const lastDotIndex = originalName.lastIndexOf('.')
-  const name = lastDotIndex > 0 ? originalName.substring(0, lastDotIndex) : originalName
-  const extension = lastDotIndex > 0 ? originalName.substring(lastDotIndex) : ''
-
-  // Generate numbered alternatives: image.jpg -> image(1).jpg -> image(2).jpg
-  let counter = 1
-  let uniqueName = `${name}(${counter})${extension}`
-
-  while (allExistingFiles.includes(uniqueName)) {
-    counter++
-    uniqueName = `${name}(${counter})${extension}`
-  }
-
-  return uniqueName
-}
+import { generateUniqueFilename } from '@/lib/file-utils'
 
 export interface DragDropFile {
   file: File
