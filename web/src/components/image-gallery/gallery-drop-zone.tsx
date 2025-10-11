@@ -14,6 +14,8 @@ export interface GalleryDropZoneProps {
   isEmpty?: boolean
   className?: string
   children?: React.ReactNode
+  width?: number
+  maxFileCardWidth?: number
 }
 
 export function GalleryDropZone({
@@ -21,6 +23,8 @@ export function GalleryDropZone({
   isEmpty = false,
   className,
   children,
+  width = 800,
+  maxFileCardWidth = 280,
 }: GalleryDropZoneProps) {
   const { t } = useTranslation()
   const router = useRouter()
@@ -153,6 +157,8 @@ export function GalleryDropZone({
             onRemoveFile={removeFile}
             onRetryFile={retryFile}
             onClearAll={clearFiles}
+            width={width}
+            maxFileCardWidth={maxFileCardWidth}
           />
         </div>
       )}
@@ -168,69 +174,6 @@ export function GalleryDropZone({
       ) : (
         children
       )}
-    </div>
-  )
-}
-
-export interface GalleryDropZoneWrapperProps {
-  currentPath: string
-  children: React.ReactNode
-  className?: string
-}
-
-export function GalleryDropZoneWrapper({
-  currentPath,
-  children,
-  className,
-}: GalleryDropZoneWrapperProps) {
-  const { t } = useTranslation()
-  const { authState } = useAuth()
-
-  const handleFileUpload = useCallback(
-    async (file: File, path: string): Promise<boolean> => {
-      try {
-        return await uploadFile(path, file)
-      } catch (error) {
-        console.error('Upload failed:', error)
-        toast.error(t('pages.gallery.upload.messages.uploadFailed', { fileName: file.name }))
-        return false
-      }
-    },
-    [t],
-  )
-
-  const handleFilesAdded = useCallback(
-    (files: File[]) => {
-      const message =
-        files.length === 1
-          ? t('pages.gallery.upload.messages.filesAdded', { count: files.length })
-          : t('pages.gallery.upload.messages.filesAddedPlural', { count: files.length })
-      toast.success(message)
-    },
-    [t],
-  )
-
-  const { isDragActive, dragProps } = useDragDrop({
-    onFilesAdded: handleFilesAdded,
-    onFileUpload: handleFileUpload,
-    currentPath,
-    acceptedTypes: ['image/*', 'video/*'],
-    maxFileSize: 50 * 1024 * 1024, // 50MB
-    maxFiles: 20,
-  })
-
-  // Check if user has write permissions
-  const canUpload = authState.state === 'authenticated'
-
-  if (!canUpload) {
-    return <div className={className}>{children}</div>
-  }
-
-  return (
-    <div {...dragProps} className={className}>
-      {/* Full-screen overlay when dragging */}
-      <DropZoneOverlay isDragActive={isDragActive} />
-      {children}
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { CheckCircle, RotateCcw, Upload, X, XCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { DragDropFile } from '@/hooks/use-drag-drop'
 import { cn } from '@/lib/utils'
@@ -12,6 +13,8 @@ export interface UploadProgressProps {
   onRetryFile?: (id: string) => void
   onClearAll?: () => void
   className?: string
+  width?: number
+  maxFileCardWidth?: number
 }
 
 export function UploadProgress({
@@ -20,6 +23,8 @@ export function UploadProgress({
   onRetryFile,
   onClearAll,
   className,
+  width = 800,
+  maxFileCardWidth = 280,
 }: UploadProgressProps) {
   const { t } = useTranslation()
 
@@ -32,6 +37,10 @@ export function UploadProgress({
 
   const overallProgress =
     files.length > 0 ? files.reduce((acc, file) => acc + file.progress, 0) / files.length : 0
+
+  // Calculate grid layout similar to folder grid
+  const columnCount = Math.max(2, Math.floor(width / maxFileCardWidth))
+  const fileCardWidth = width / columnCount
 
   return (
     <div className={cn('bg-card rounded-lg border p-4 shadow-sm', className)}>
@@ -59,50 +68,67 @@ export function UploadProgress({
         <Progress value={overallProgress} className='h-2' />
       </div>
 
-      {/* File List */}
-      <div className='max-h-60 space-y-2 overflow-y-auto'>
-        {files.map((file) => (
-          <div key={file.id} className='flex items-center gap-3 rounded-md border p-3'>
-            <FileStatusIcon status={file.status} />
+      {/* File Grid */}
+      <div className='max-h-60 overflow-y-auto'>
+        <div
+          className='grid gap-2'
+          style={{
+            gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+            width: `${width}px`,
+          }}
+        >
+          {files.map((file) => (
+            <Card
+              key={file.id}
+              className='hover-touch:bg-accent relative transition-colors'
+              style={{ width: `${fileCardWidth - 8}px` }}
+            >
+              <CardContent className='flex items-center px-4 py-4 sm:py-3'>
+                <FileStatusIcon status={file.status} />
+                
+                <div className='ml-2 min-w-0 flex-1'>
+                  <p className='truncate text-sm font-medium'>{file.file.name}</p>
+                  <div className='text-muted-foreground flex items-center gap-2 text-xs'>
+                    <span>{formatFileSize(file.file.size)}</span>
+                    {file.status === 'uploading' && <span>{Math.round(file.progress)}%</span>}
+                    {file.error && <span className='text-destructive truncate'>{file.error}</span>}
+                  </div>
+                </div>
 
-            <div className='min-w-0 flex-1'>
-              <p className='truncate text-sm font-medium'>{file.file.name}</p>
-              <div className='text-muted-foreground flex items-center gap-2 text-xs'>
-                <span>{formatFileSize(file.file.size)}</span>
-                {file.status === 'uploading' && <span>{Math.round(file.progress)}%</span>}
-                {file.error && <span className='text-destructive'>{file.error}</span>}
-              </div>
+                <div className='ml-2 flex items-center gap-1'>
+                  {file.status === 'error' && onRetryFile && (
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onRetryFile(file.id)}
+                      className='h-6 w-6 p-0'
+                    >
+                      <RotateCcw className='h-3 w-3' />
+                    </Button>
+                  )}
 
+                  {onRemoveFile && file.status !== 'uploading' && (
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onRemoveFile(file.id)}
+                      className='h-6 w-6 p-0'
+                    >
+                      <X className='h-3 w-3' />
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+
+              {/* Upload progress overlay */}
               {file.status === 'uploading' && (
-                <Progress value={file.progress} className='mt-1 h-1' />
+                <div className='absolute bottom-0 left-0 right-0'>
+                  <Progress value={file.progress} className='h-1 rounded-none' />
+                </div>
               )}
-            </div>
-
-            <div className='flex items-center gap-1'>
-              {file.status === 'error' && onRetryFile && (
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={() => onRetryFile(file.id)}
-                  className='h-8 w-8 p-0'
-                >
-                  <RotateCcw className='h-3 w-3' />
-                </Button>
-              )}
-
-              {onRemoveFile && file.status !== 'uploading' && (
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={() => onRemoveFile(file.id)}
-                  className='h-8 w-8 p-0'
-                >
-                  <X className='h-3 w-3' />
-                </Button>
-              )}
-            </div>
-          </div>
-        ))}
+            </Card>
+          ))}
+        </div>
       </div>
 
       {/* Summary Stats */}
