@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
-import { Check, Clock, FileText, SortAsc, SortDesc } from 'lucide-react'
+import { Check, Clock, FileText, FolderPlus, SortAsc, SortDesc } from 'lucide-react'
 
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { HeaderBar } from '@/components/header-bar'
+import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
@@ -41,6 +42,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const contentRef = useRef<HTMLDivElement | null>(null)
   const { isLoading, pendingMatches } = useRouterState()
   const { authState } = useAuth()
+  const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
 
   const { galleryName, images, folders, currentSortBy, currentSortOrder } = galleryLoaderData
   const sidebar = useSidebar()
@@ -109,8 +111,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     pendingMatches[pendingMatches.length - 1].routeId?.toString()?.includes('$imageKey')
   )
 
-  // Create sorting menu items for authenticated users
-  const sortingMenuItems =
+  // Create menu items for authenticated users
+  const customMenuItems =
     authState.state === 'authenticated' ? (
       <>
         <DropdownMenuLabel>{t('pages.gallery.sorting.sortBy')}</DropdownMenuLabel>
@@ -161,6 +163,18 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           {currentSortOrder === 'DESC' && <Check className='ml-auto h-4 w-4' />}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className='hover:cursor-pointer'
+          onSelect={() => {
+            // need to wait for dropdown close before opening dialog
+            setTimeout(() => setIsCreateFolderDialogOpen(true), 0)
+          }}
+        >
+          <FolderPlus className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.gallery.createFolder.newFolder')}
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
       </>
     ) : null
 
@@ -171,9 +185,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         <div className='mx-4 my-2 grid'>
           <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
         </div>
-        <HeaderBar isScrolled={isScrolledDown} customMenuItems={sortingMenuItems} />
+        <HeaderBar isScrolled={isScrolledDown} customMenuItems={customMenuItems} />
         <Card className='rounded-lg border-none'>
-          <CardContent className='p-2 md:p-4' ref={contentRef}>
+          <CardContent className='overflow-hidden p-2 md:p-4' ref={contentRef}>
             {contentWidth > 0 && (
               <GalleryDropZone currentPath={galleryKey} isEmpty={isEmpty}>
                 {isEmpty ? (
@@ -201,6 +215,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           </CardContent>
         </Card>
       </ContentLayout>
+
+      <CreateFolderDialog
+        open={isCreateFolderDialogOpen}
+        onOpenChange={setIsCreateFolderDialogOpen}
+        currentPath={galleryKey}
+      />
+
       {children}
     </>
   )

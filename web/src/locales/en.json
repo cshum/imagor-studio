@@ -30,7 +30,8 @@
       "yes": "Yes",
       "no": "No",
       "enabled": "Enabled",
-      "disabled": "Disabled"
+      "disabled": "Disabled",
+      "creating": "Creating..."
     },
     "labels": {
       "username": "Username",
@@ -102,6 +103,19 @@
         "modifiedTime": "Modified Time",
         "ascending": "Ascending",
         "descending": "Descending"
+      },
+      "createFolder": {
+        "newFolder": "New Folder",
+        "title": "Create New Folder",
+        "description": "Enter a name for the new folder.",
+        "folderName": "Folder Name",
+        "placeholder": "Enter folder name",
+        "success": "Folder {{folderName}} created successfully",
+        "errors": {
+          "nameRequired": "Folder name is required",
+          "invalidCharacters": "Folder name contains invalid characters",
+          "createFailed": "Failed to create folder"
+        }
       }
     },
     "profile": {
