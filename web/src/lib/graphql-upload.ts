@@ -28,7 +28,6 @@ import { getAuth } from '@/stores/auth-store'
 
 export interface GraphQLUploadOptions<
   TVariables extends Record<string, unknown> = Record<string, unknown>,
-  TData = unknown,
 > {
   mutation: DocumentNode
   variables: TVariables
@@ -70,7 +69,7 @@ export interface GraphQLUploadResult<TData = unknown> {
 export async function executeGraphQLUpload<
   TVariables extends Record<string, unknown> = Record<string, unknown>,
   TData = unknown,
->({ mutation, variables, files }: GraphQLUploadOptions<TVariables, TData>): Promise<TData> {
+>({ mutation, variables, files }: GraphQLUploadOptions<TVariables>): Promise<TData> {
   const endpoint = `${getBaseUrl()}/api/query`
   const auth = getAuth()
 
@@ -83,7 +82,7 @@ export async function executeGraphQLUpload<
   let fileIndex = 0
 
   // Replace file objects with null and build the file map
-  for (const [key, file] of Object.entries(files)) {
+  for (const [key] of Object.entries(files)) {
     const variablePath = `variables.${key}`
     processedVariables[key as keyof TVariables] = null as TVariables[keyof TVariables]
     fileMap[fileIndex.toString()] = [variablePath]
