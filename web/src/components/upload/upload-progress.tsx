@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle, RotateCcw, Upload, X, XCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -32,12 +31,7 @@ export function UploadProgress({
     files.length > 0 ? files.reduce((acc, file) => acc + file.progress, 0) / files.length : 0
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-      className={cn('bg-card rounded-lg border p-4 shadow-sm', className)}
-    >
+    <div className={cn('bg-card rounded-lg border p-4 shadow-sm', className)}>
       <div className='mb-4 flex items-center justify-between'>
         <div>
           <h3 className='font-medium'>Upload Progress</h3>
@@ -60,15 +54,11 @@ export function UploadProgress({
 
       {/* File List */}
       <div className='max-h-60 space-y-2 overflow-y-auto'>
-        <AnimatePresence>
-          {files.map((file) => (
-            <motion.div
-              key={file.id}
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className='flex items-center gap-3 rounded-md border p-3'
-            >
+        {files.map((file) => (
+          <div
+            key={file.id}
+            className='flex items-center gap-3 rounded-md border p-3'
+          >
               <FileStatusIcon status={file.status} />
 
               <div className='min-w-0 flex-1'>
@@ -107,9 +97,8 @@ export function UploadProgress({
                   </Button>
                 )}
               </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+          </div>
+        ))}
       </div>
 
       {/* Summary Stats */}
@@ -132,7 +121,7 @@ export function UploadProgress({
           </div>
         </div>
       )}
-    </motion.div>
+    </div>
   )
 }
 
@@ -143,14 +132,7 @@ function FileStatusIcon({ status }: { status: DragDropFile['status'] }) {
     case 'error':
       return <XCircle className='text-destructive h-4 w-4' />
     case 'uploading':
-      return (
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-        >
-          <Upload className='h-4 w-4 text-blue-600' />
-        </motion.div>
-      )
+      return <Upload className='h-4 w-4 text-blue-600' />
     case 'pending':
     default:
       return <Upload className='text-muted-foreground h-4 w-4' />
@@ -188,12 +170,7 @@ export function UploadSummary({
   const hasFilesToUpload = pendingFiles.length > 0
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-      className={cn('bg-card flex items-center justify-between rounded-lg border p-4', className)}
-    >
+    <div className={cn('bg-card flex items-center justify-between rounded-lg border p-4', className)}>
       <div>
         <p className='font-medium'>
           {files.length} file{files.length !== 1 ? 's' : ''} ready
@@ -218,6 +195,6 @@ export function UploadSummary({
           </Button>
         )}
       </div>
-    </motion.div>
+    </div>
   )
 }

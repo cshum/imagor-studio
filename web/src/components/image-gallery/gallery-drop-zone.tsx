@@ -64,16 +64,29 @@ export function GalleryDropZone({
   })
 
   const handleUpload = useCallback(async () => {
-    await uploadFiles()
-    // Check if all files were uploaded successfully
-    const hasErrors = files.some((f) => f.status === 'error')
-    if (!hasErrors) {
-      handleUploadComplete()
-      // Clear successful uploads after a delay
-      setTimeout(() => {
-        clearFiles()
-      }, 2000)
-    }
+    const results = await uploadFiles()
+    
+    // Wait a bit for state to update, then check results
+    setTimeout(() => {
+      const currentFiles = files
+      const successfulFiles = currentFiles.filter((f) => f.status === 'success')
+      const failedFiles = currentFiles.filter((f) => f.status === 'error')
+      
+      if (successfulFiles.length > 0 && failedFiles.length === 0) {
+        // All files uploaded successfully
+        handleUploadComplete()
+        setTimeout(() => {
+          clearFiles()
+        }, 2000)
+      } else if (successfulFiles.length > 0 && failedFiles.length > 0) {
+        // Some files succeeded, some failed
+        toast.success(`${successfulFiles.length} files uploaded successfully`)
+        toast.error(`${failedFiles.length} files failed to upload`)
+      } else if (failedFiles.length > 0) {
+        // All files failed
+        toast.error(`Failed to upload ${failedFiles.length} file${failedFiles.length !== 1 ? 's' : ''}`)
+      }
+    }, 100)
   }, [uploadFiles, files, handleUploadComplete, clearFiles])
 
   const handleFileSelect = useCallback(

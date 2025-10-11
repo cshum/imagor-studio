@@ -1,5 +1,4 @@
 import React from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
 import { Upload, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -71,21 +70,14 @@ export function DropZone({
         disabled={disabled || isUploading}
       />
 
-      <AnimatePresence>
-        {isDragActive && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className='bg-primary/10 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-sm'
-          >
-            <div className='text-center'>
-              <Upload className='text-primary mx-auto h-12 w-12' />
-              <p className='text-primary mt-2 text-lg font-medium'>Drop files here</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {isDragActive && (
+        <div className='bg-primary/10 absolute inset-0 z-10 flex items-center justify-center rounded-lg'>
+          <div className='text-center'>
+            <Upload className='text-primary mx-auto h-12 w-12' />
+            <p className='text-primary mt-2 text-lg font-medium'>Drop files here</p>
+          </div>
+        </div>
+      )}
 
       <div className='p-6 text-center'>
         {children || (
@@ -126,39 +118,27 @@ export interface DropZoneOverlayProps {
 }
 
 export function DropZoneOverlay({ isDragActive, onClose }: DropZoneOverlayProps) {
+  if (!isDragActive) return null
+
   return (
-    <AnimatePresence>
-      {isDragActive && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className='bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm'
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className='border-primary bg-card relative mx-4 max-w-md rounded-lg border-2 border-dashed p-8 text-center shadow-lg'
+    <div className='bg-background/80 fixed inset-0 z-50 flex items-center justify-center'>
+      <div className='border-primary bg-card relative mx-4 max-w-md rounded-lg border-2 border-dashed p-8 text-center shadow-lg'>
+        {onClose && (
+          <Button
+            variant='ghost'
+            size='sm'
+            className='absolute top-2 right-2 h-8 w-8 p-0'
+            onClick={onClose}
           >
-            {onClose && (
-              <Button
-                variant='ghost'
-                size='sm'
-                className='absolute top-2 right-2 h-8 w-8 p-0'
-                onClick={onClose}
-              >
-                <X className='h-4 w-4' />
-              </Button>
-            )}
-            <Upload className='text-primary mx-auto h-16 w-16' />
-            <h3 className='mt-4 text-xl font-semibold'>Drop files to upload</h3>
-            <p className='text-muted-foreground mt-2 text-sm'>
-              Release to add files to your gallery
-            </p>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            <X className='h-4 w-4' />
+          </Button>
+        )}
+        <Upload className='text-primary mx-auto h-16 w-16' />
+        <h3 className='mt-4 text-xl font-semibold'>Drop files to upload</h3>
+        <p className='text-muted-foreground mt-2 text-sm'>
+          Release to add files to your gallery
+        </p>
+      </div>
+    </div>
   )
 }
