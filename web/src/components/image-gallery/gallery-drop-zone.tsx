@@ -80,8 +80,6 @@ export function GalleryDropZone({
     currentPath,
     imageExtensions,
     videoExtensions,
-    maxFileSize: 50 * 1024 * 1024, // 50MB
-    maxFiles: 20,
   })
 
   const uploadCompletedRef = useRef(false)

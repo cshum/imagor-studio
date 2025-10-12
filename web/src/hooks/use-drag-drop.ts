@@ -18,8 +18,6 @@ export interface UseDragDropOptions {
   existingFiles?: string[]
   imageExtensions?: string
   videoExtensions?: string
-  maxFileSize?: number
-  maxFiles?: number
   currentPath?: string
 }
 
