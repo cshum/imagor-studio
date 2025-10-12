@@ -1,5 +1,6 @@
-import { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 
+import { isValidFileExtension } from '@/lib/file-extensions'
 import { generateUniqueFilename } from '@/lib/file-utils'
 
 export interface DragDropFile {
@@ -15,9 +16,8 @@ export interface UseDragDropOptions {
   onFileUpload?: (file: File, path: string) => Promise<boolean>
   onFilesDropped?: () => void
   existingFiles?: string[]
-  acceptedTypes?: string[]
-  maxFileSize?: number
-  maxFiles?: number
+  imageExtensions?: string
+  videoExtensions?: string
   currentPath?: string
 }
 
@@ -44,9 +44,8 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     onFileUpload,
     onFilesDropped,
     existingFiles = [],
-    acceptedTypes = ['image/*', 'video/*'],
-    maxFileSize = 50 * 1024 * 1024, // 50MB
-    maxFiles = 10,
+    imageExtensions = '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif',
+    videoExtensions = '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg',
     currentPath = '',
   } = options
 
@@ -57,44 +56,23 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
 
   const validateFile = useCallback(
     (file: File): string | null => {
-      // Check file size
-      if (file.size > maxFileSize) {
-        return `File size exceeds ${Math.round(maxFileSize / (1024 * 1024))}MB limit`
+      // Check file extension (more reliable than MIME type)
+      if (!isValidFileExtension(file.name, imageExtensions, videoExtensions)) {
+        return 'File type not supported.'
       }
-
-      // Check file type
-      const isValidType = acceptedTypes.some((type) => {
-        if (type.endsWith('/*')) {
-          const category = type.slice(0, -2)
-          return file.type.startsWith(category)
-        }
-        return file.type === type
-      })
-
-      if (!isValidType) {
-        return `File type not supported. Accepted types: ${acceptedTypes.join(', ')}`
-      }
-
       return null
     },
-    [acceptedTypes, maxFileSize],
+    [imageExtensions, videoExtensions],
   )
 
   const addFiles = useCallback(
     (newFiles: File[]) => {
       const validFiles: DragDropFile[] = []
-      const errors: string[] = []
       const usedNames: string[] = []
 
       for (const file of newFiles) {
-        if (files.length + validFiles.length >= maxFiles) {
-          errors.push(`Maximum ${maxFiles} files allowed`)
-          break
-        }
-
         const error = validateFile(file)
         if (error) {
-          errors.push(`${file.name}: ${error}`)
           continue
         }
 
@@ -103,7 +81,6 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
           (f) => f.file.name === file.name && f.file.size === file.size,
         )
         if (isDuplicate) {
-          errors.push(`${file.name}: File already added`)
           continue
         }
 
@@ -129,13 +106,8 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
         setFiles((prev) => [...prev, ...validFiles])
         onFilesAdded?.(validFiles.map((f) => f.file))
       }
-
-      if (errors.length > 0) {
-        console.warn('File validation errors:', errors)
-        // You might want to show these errors in a toast or notification
-      }
     },
-    [files, maxFiles, validateFile, onFilesAdded, existingFiles],
+    [files, validateFile, onFilesAdded, existingFiles],
   )
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {

@@ -176,8 +176,8 @@ export function UploadProgress({
       </div>
 
       {/* Summary Stats */}
-      {(uploadingFiles > 0 || pendingFiles > 0 || failedFiles > 0) && (
-        <div className='mt-4 border-t pt-4'>
+      {(uploadingFiles > 0 || failedFiles > 0 || completedFiles > 0) && (
+        <div className='mt-4 pt-4'>
           <div className='flex items-center justify-between text-sm'>
             <div className='flex items-center gap-4'>
               {uploadingFiles > 0 && (
