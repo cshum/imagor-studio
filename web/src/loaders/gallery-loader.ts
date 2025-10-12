@@ -16,6 +16,7 @@ export interface GalleryLoaderData {
   images: GalleryImage[]
   folders: Gallery[]
   breadcrumbs: BreadcrumbItem[]
+  imageExtensions: string
   videoExtensions: string
   currentSortBy: SortOption
   currentSortOrder: SortOrder
@@ -57,6 +58,7 @@ export const galleryLoader = async ({
   // Fetch registry settings for gallery filtering and sorting
   // Priority: User registry → System registry → Hardcoded defaults
   let extensionsString: string | undefined
+  let imageExtensions: string
   let videoExtensions: string
   let showHidden: boolean
   let sortBy: SortOption
@@ -107,7 +109,7 @@ export const galleryLoader = async ({
       (r) => r.key === 'config.app_video_extensions',
     )
 
-    const imageExtensions = imageExtensionsEntry?.value || DEFAULT_IMAGE_EXTENSIONS
+    imageExtensions = imageExtensionsEntry?.value || DEFAULT_IMAGE_EXTENSIONS
     videoExtensions = videoExtensionsEntry?.value || DEFAULT_VIDEO_EXTENSIONS
 
     // Combine image and video extensions
@@ -129,6 +131,7 @@ export const galleryLoader = async ({
   } catch {
     // If registry fetch fails, use defaults
     extensionsString = `${DEFAULT_IMAGE_EXTENSIONS},${DEFAULT_VIDEO_EXTENSIONS}`
+    imageExtensions = DEFAULT_IMAGE_EXTENSIONS
     videoExtensions = DEFAULT_VIDEO_EXTENSIONS
     showHidden = false
     sortBy = 'MODIFIED_TIME'
@@ -215,6 +218,7 @@ export const galleryLoader = async ({
     folders,
     galleryKey,
     breadcrumbs,
+    imageExtensions,
     videoExtensions,
     currentSortBy: sortBy,
     currentSortOrder: sortOrder,

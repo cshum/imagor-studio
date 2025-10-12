@@ -56,7 +56,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     clearFiles: () => void
   } | null>(null)
 
-  const { galleryName, images, folders, currentSortBy, currentSortOrder } = galleryLoaderData
+  const {
+    galleryName,
+    images,
+    folders,
+    currentSortBy,
+    currentSortOrder,
+    imageExtensions,
+    videoExtensions,
+  } = galleryLoaderData
   const sidebar = useSidebar()
 
   const handleSortChange = async (sortBy: SortOption, sortOrder: SortOrder) => {
@@ -225,6 +233,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         <GalleryDropZone
           currentPath={galleryKey}
           existingFiles={images.map((img) => img.imageName)}
+          imageExtensions={imageExtensions}
+          videoExtensions={videoExtensions}
           onFileSelect={handleFileSelectHandler}
           onUploadStateChange={setUploadState}
           className='min-h-screen'

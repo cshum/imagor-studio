@@ -1,5 +1,6 @@
-import { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 
+import { getSupportedExtensionsText, isValidFileExtension } from '@/lib/file-extensions'
 import { generateUniqueFilename } from '@/lib/file-utils'
 
 export interface DragDropFile {
@@ -15,7 +16,8 @@ export interface UseDragDropOptions {
   onFileUpload?: (file: File, path: string) => Promise<boolean>
   onFilesDropped?: () => void
   existingFiles?: string[]
-  acceptedTypes?: string[]
+  imageExtensions?: string
+  videoExtensions?: string
   maxFileSize?: number
   maxFiles?: number
   currentPath?: string
@@ -44,7 +46,8 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     onFileUpload,
     onFilesDropped,
     existingFiles = [],
-    acceptedTypes = ['image/*', 'video/*'],
+    imageExtensions = '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif',
+    videoExtensions = '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg',
     maxFileSize = 50 * 1024 * 1024, // 50MB
     maxFiles = 10,
     currentPath = '',
@@ -62,22 +65,15 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
         return `File size exceeds ${Math.round(maxFileSize / (1024 * 1024))}MB limit`
       }
 
-      // Check file type
-      const isValidType = acceptedTypes.some((type) => {
-        if (type.endsWith('/*')) {
-          const category = type.slice(0, -2)
-          return file.type.startsWith(category)
-        }
-        return file.type === type
-      })
-
-      if (!isValidType) {
-        return `File type not supported. Accepted types: ${acceptedTypes.join(', ')}`
+      // Check file extension (more reliable than MIME type)
+      if (!isValidFileExtension(file.name, imageExtensions, videoExtensions)) {
+        const supportedExts = getSupportedExtensionsText(imageExtensions, videoExtensions)
+        return `File type not supported. Supported extensions: ${supportedExts}`
       }
 
       return null
     },
-    [acceptedTypes, maxFileSize],
+    [imageExtensions, videoExtensions, maxFileSize],
   )
 
   const addFiles = useCallback(
