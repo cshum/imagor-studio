@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react'
 
-import { getSupportedExtensionsText, isValidFileExtension } from '@/lib/file-extensions'
+import { isValidFileExtension } from '@/lib/file-extensions'
 import { generateUniqueFilename } from '@/lib/file-utils'
 
 export interface DragDropFile {
@@ -67,8 +67,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
 
       // Check file extension (more reliable than MIME type)
       if (!isValidFileExtension(file.name, imageExtensions, videoExtensions)) {
-        const supportedExts = getSupportedExtensionsText(imageExtensions, videoExtensions)
-        return `File type not supported. Supported extensions: ${supportedExts}`
+        return 'File type not supported.'
       }
 
       return null
@@ -124,11 +123,6 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
       if (validFiles.length > 0) {
         setFiles((prev) => [...prev, ...validFiles])
         onFilesAdded?.(validFiles.map((f) => f.file))
-      }
-
-      if (errors.length > 0) {
-        console.warn('File validation errors:', errors)
-        // You might want to show these errors in a toast or notification
       }
     },
     [files, maxFiles, validateFile, onFilesAdded, existingFiles],
