@@ -48,8 +48,6 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     existingFiles = [],
     imageExtensions = '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif',
     videoExtensions = '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg',
-    maxFileSize = 50 * 1024 * 1024, // 50MB
-    maxFiles = 10,
     currentPath = '',
   } = options
 
@@ -60,36 +58,23 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
 
   const validateFile = useCallback(
     (file: File): string | null => {
-      // Check file size
-      if (file.size > maxFileSize) {
-        return `File size exceeds ${Math.round(maxFileSize / (1024 * 1024))}MB limit`
-      }
-
       // Check file extension (more reliable than MIME type)
       if (!isValidFileExtension(file.name, imageExtensions, videoExtensions)) {
         return 'File type not supported.'
       }
-
       return null
     },
-    [imageExtensions, videoExtensions, maxFileSize],
+    [imageExtensions, videoExtensions],
   )
 
   const addFiles = useCallback(
     (newFiles: File[]) => {
       const validFiles: DragDropFile[] = []
-      const errors: string[] = []
       const usedNames: string[] = []
 
       for (const file of newFiles) {
-        if (files.length + validFiles.length >= maxFiles) {
-          errors.push(`Maximum ${maxFiles} files allowed`)
-          break
-        }
-
         const error = validateFile(file)
         if (error) {
-          errors.push(`${file.name}: ${error}`)
           continue
         }
 
@@ -98,7 +83,6 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
           (f) => f.file.name === file.name && f.file.size === file.size,
         )
         if (isDuplicate) {
-          errors.push(`${file.name}: File already added`)
           continue
         }
 
@@ -125,7 +109,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
         onFilesAdded?.(validFiles.map((f) => f.file))
       }
     },
-    [files, maxFiles, validateFile, onFilesAdded, existingFiles],
+    [files, validateFile, onFilesAdded, existingFiles],
   )
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
