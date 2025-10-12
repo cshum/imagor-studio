@@ -6,6 +6,7 @@ import { SortOption, SortOrder } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
+import { hasExtension } from '@/lib/file-extensions.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
 import { getAuth } from '@/stores/auth-store.ts'
 import { FolderNode, folderTreeStore, updateTreeData } from '@/stores/folder-tree-store.ts'
@@ -31,18 +32,6 @@ export interface ImageLoaderData {
 const DEFAULT_IMAGE_EXTENSIONS =
   '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif'
 const DEFAULT_VIDEO_EXTENSIONS = '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg'
-
-/**
- * Check if a file extension matches any in a comma-separated list of extensions
- * @param filename - The filename to check
- * @param extensions - Comma-separated list of extensions (e.g., '.mp4,.webm,.avi')
- * @returns true if the file extension is in the extensions list
- */
-const hasExtension = (filename: string, extensions: string): boolean => {
-  const ext = '.' + filename.split('.').pop()?.toLowerCase()
-  return extensions.toLowerCase().includes(ext)
-}
-
 /**
  * Gallery loader using imagor for thumbnail generation
  * Loads images and folders from storage API with imagor-generated thumbnails
