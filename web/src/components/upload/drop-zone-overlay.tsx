@@ -15,7 +15,7 @@ export function DropZoneOverlay({ isDragActive, onClose }: DropZoneOverlayProps)
 
   return (
     <div className='bg-background/80 fixed inset-0 z-50 flex items-center justify-center'>
-      <div className='border-primary bg-card relative mx-4 max-w-md rounded-lg border-1 border-dashed p-8 text-center shadow-lg'>
+      <div className='border-muted-foreground bg-card relative mx-4 max-w-md rounded-lg border-1 border-dashed p-8 text-center shadow-lg'>
         {onClose && (
           <Button
             variant='ghost'
