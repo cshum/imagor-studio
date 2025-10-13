@@ -4,7 +4,7 @@ import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 import { uploadFile } from '@/api/storage-api'
-import { DropZoneOverlay } from '@/components/upload/drop-zone'
+import { DropZoneOverlay } from '@/components/upload/drop-zone-overlay.tsx'
 import { DragDropFile, useDragDrop } from '@/hooks/use-drag-drop'
 import { useAuth } from '@/stores/auth-store'
 
