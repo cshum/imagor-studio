@@ -119,22 +119,14 @@
       },
       "upload": {
         "dropZone": {
-          "dragAndDrop": "Drag and drop files here",
-          "browseToChoose": "browse to choose files",
-          "or": "or",
-          "supportedFormats": "Supported formats: {{formats}}",
-          "maxFiles": "Maximum {{maxFiles}} files, up to {{maxSize}}MB each",
-          "dropFilesHere": "Drop files here",
           "dropToUpload": "Drop files to upload",
-          "releaseToAdd": "Release to add files to your gallery",
-          "uploading": "Uploading files..."
+          "releaseToAdd": "Release to add files to your gallery"
         },
         "progress": {
           "uploadProgress": "Upload Progress",
           "filesCompleted": "{{completed}} of {{total}} files completed",
           "failed": "{{count}} failed",
           "uploading": "{{count}} uploading",
-          "pending": "{{count}} pending",
           "completed": "{{count}} completed"
         },
         "summary": {
