@@ -42,75 +42,6 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	if cfg.EmbeddedMode {
 		return initializeEmbeddedMode(cfg, logger)
 	}
-	return initializeNormalMode(cfg, logger, args)
-}
-
-// initializeEmbeddedMode initializes services for embedded mode (stateless, no database)
-func initializeEmbeddedMode(cfg *config.Config, logger *zap.Logger) (*Services, error) {
-	// No database initialization in embedded mode
-	// No migrations needed
-
-	// Create no-op stores
-	registryStore := noop.NewRegistryStore()
-	userStore := noop.NewUserStore()
-
-	// Generate a static JWT secret for embedded mode if not provided
-	if cfg.JWTSecret == "" {
-		cfg.JWTSecret = "embedded-mode-static-secret-change-in-production"
-	}
-
-	// Initialize token manager
-	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
-
-	// Initialize storage provider with no-op registry store and config
-	storageProvider := storageprovider.New(logger, registryStore, cfg)
-
-	// Initialize storage with config (will use NoOp if not configured)
-	err := storageProvider.InitializeWithConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize storage: %w", err)
-	}
-
-	// Get the current storage instance
-	stor := storageProvider.GetStorage()
-
-	// Initialize imagor provider with no-op registry store, config, and storage provider
-	imagorProvider := imagorprovider.New(logger, registryStore, cfg, storageProvider)
-
-	// Initialize imagor with config (will use disabled if not configured)
-	err = imagorProvider.InitializeWithConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize imagor: %w", err)
-	}
-
-	// Initialize license service with config provider
-	licenseService := license.NewService(registryStore, cfg)
-
-	// Log embedded mode configuration loaded
-	logger.Info("Embedded mode configuration loaded",
-		zap.Int("port", cfg.Port),
-		zap.Bool("embeddedMode", cfg.EmbeddedMode),
-		zap.Duration("jwtExpiration", cfg.JWTExpiration),
-		zap.String("storageType", cfg.StorageType),
-	)
-
-	return &Services{
-		DB:              nil, // No database in embedded mode
-		TokenManager:    tokenManager,
-		Storage:         stor,
-		StorageProvider: storageProvider,
-		ImagorProvider:  imagorProvider,
-		RegistryStore:   registryStore,
-		UserStore:       userStore,
-		LicenseService:  licenseService,
-		Encryption:      nil, // No encryption service in embedded mode
-		Config:          cfg,
-		Logger:          logger,
-	}, nil
-}
-
-// initializeNormalMode initializes services for normal mode (with database)
-func initializeNormalMode(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
 	// Initialize database
 	db, err := initializeDatabase(cfg)
 	if err != nil {
@@ -197,6 +128,70 @@ func initializeNormalMode(cfg *config.Config, logger *zap.Logger, args []string)
 		LicenseService:  licenseService,
 		Encryption:      encryptionService,
 		Config:          enhancedCfg,
+		Logger:          logger,
+	}, nil
+}
+
+// initializeEmbeddedMode initializes services for embedded mode (stateless, no database)
+func initializeEmbeddedMode(cfg *config.Config, logger *zap.Logger) (*Services, error) {
+	// No database initialization in embedded mode
+	// No migrations needed
+
+	// Create no-op stores
+	registryStore := noop.NewRegistryStore()
+	userStore := noop.NewUserStore()
+
+	// Generate a static JWT secret for embedded mode if not provided
+	if cfg.JWTSecret == "" {
+		cfg.JWTSecret = "embedded-mode-static-secret-change-in-production"
+	}
+
+	// Initialize token manager
+	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
+
+	// Initialize storage provider with no-op registry store and config
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+
+	// Initialize storage with config (will use NoOp if not configured)
+	err := storageProvider.InitializeWithConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize storage: %w", err)
+	}
+
+	// Get the current storage instance
+	stor := storageProvider.GetStorage()
+
+	// Initialize imagor provider with no-op registry store, config, and storage provider
+	imagorProvider := imagorprovider.New(logger, registryStore, cfg, storageProvider)
+
+	// Initialize imagor with config (will use disabled if not configured)
+	err = imagorProvider.InitializeWithConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize imagor: %w", err)
+	}
+
+	// Initialize license service with config provider
+	licenseService := license.NewService(registryStore, cfg)
+
+	// Log embedded mode configuration loaded
+	logger.Info("Embedded mode configuration loaded",
+		zap.Int("port", cfg.Port),
+		zap.Bool("embeddedMode", cfg.EmbeddedMode),
+		zap.Duration("jwtExpiration", cfg.JWTExpiration),
+		zap.String("storageType", cfg.StorageType),
+	)
+
+	return &Services{
+		DB:              nil, // No database in embedded mode
+		TokenManager:    tokenManager,
+		Storage:         stor,
+		StorageProvider: storageProvider,
+		ImagorProvider:  imagorProvider,
+		RegistryStore:   registryStore,
+		UserStore:       userStore,
+		LicenseService:  licenseService,
+		Encryption:      nil, // No encryption service in embedded mode
+		Config:          cfg,
 		Logger:          logger,
 	}, nil
 }
