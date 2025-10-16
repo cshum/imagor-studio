@@ -28,6 +28,9 @@ type Config struct {
 	// Authentication Configuration
 	AllowGuestMode bool // Allow guest mode access
 
+	// Embedded Mode Configuration
+	EmbeddedMode bool // Enable embedded mode (stateless, no database)
+
 	// Migration Configuration
 	ForceAutoMigrate bool   // Force auto-migration even for PostgreSQL/MySQL
 	MigrateCommand   string // Migration command for migrate tool
@@ -82,6 +85,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		licenseKey    = fs.String("license-key", "", "license key for activation")
 
 		allowGuestMode   = fs.Bool("allow-guest-mode", false, "allow guest mode access")
+		embeddedMode     = fs.Bool("embedded-mode", false, "enable embedded mode (stateless, no database)")
 		forceAutoMigrate = fs.Bool("force-auto-migrate", false, "force auto-migration even for PostgreSQL/MySQL (use with caution in multi-instance environments)")
 		migrateCommand   = fs.String("migrate-command", "up", "migration command: up, down, status, reset")
 
@@ -190,6 +194,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		JWTExpiration:        jwtExp,
 		LicenseKey:           *licenseKey,
 		AllowGuestMode:       *allowGuestMode,
+		EmbeddedMode:         *embeddedMode,
 		ForceAutoMigrate:     *forceAutoMigrate,
 		MigrateCommand:       *migrateCommand,
 		StorageType:          *storageType,

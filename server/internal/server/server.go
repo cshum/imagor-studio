@@ -168,13 +168,15 @@ func (s *Server) Close() error {
 		// Continue with other cleanup even if imagor shutdown fails
 	}
 
-	// Close database connection
-	s.services.Logger.Debug("Closing database connection...")
-	if err := s.services.DB.Close(); err != nil {
-		s.services.Logger.Error("Database close error", zap.Error(err))
-		return err
+	// Close database connection (only if not in embedded mode)
+	if s.services.DB != nil {
+		s.services.Logger.Debug("Closing database connection...")
+		if err := s.services.DB.Close(); err != nil {
+			s.services.Logger.Error("Database close error", zap.Error(err))
+			return err
+		}
+		s.services.Logger.Debug("Database connection closed")
 	}
-	s.services.Logger.Debug("Database connection closed")
 
 	s.services.Logger.Debug("Server resources closed successfully")
 	return nil
