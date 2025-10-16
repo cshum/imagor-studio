@@ -62,6 +62,80 @@ func TestInitialize(t *testing.T) {
 	services.DB.Close()
 }
 
+func TestInitializeEmbeddedMode(t *testing.T) {
+	cfg := &config.Config{
+		Port:          8080,
+		EmbeddedMode:  true, // Enable embedded mode
+		JWTSecret:     "test-jwt-secret",
+		JWTExpiration: 168 * time.Hour,
+		StorageType:   "file",
+		FileBaseDir:   "/tmp/test-storage",
+		ImagorMode:    "embedded",
+	}
+
+	logger := zap.NewNop()
+	args := []string{"--embedded-mode", "--jwt-secret", "test-jwt-secret"}
+	services, err := Initialize(cfg, logger, args)
+
+	require.NoError(t, err)
+	require.NotNil(t, services)
+
+	// Verify embedded mode characteristics
+	assert.Nil(t, services.DB, "Database should be nil in embedded mode")
+	assert.Nil(t, services.Encryption, "Encryption service should be nil in embedded mode")
+
+	// Verify essential services are still initialized
+	assert.NotNil(t, services.TokenManager)
+	assert.NotNil(t, services.Storage)
+	assert.NotNil(t, services.StorageProvider)
+	assert.NotNil(t, services.ImagorProvider)
+	assert.NotNil(t, services.RegistryStore)
+	assert.NotNil(t, services.UserStore)
+	assert.NotNil(t, services.LicenseService)
+	assert.NotNil(t, services.Logger)
+
+	// Verify JWT secret was set
+	assert.Equal(t, "test-jwt-secret", cfg.JWTSecret)
+
+	// Test that no-op stores return appropriate errors
+	ctx := context.Background()
+
+	// Test registry store returns embedded mode error
+	_, err = services.RegistryStore.Get(ctx, "test", "test-key")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "embedded mode")
+
+	// Test user store returns embedded mode error
+	_, err = services.UserStore.GetByID(ctx, "test-id")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "embedded mode")
+}
+
+func TestEmbeddedModeJWTSecretGeneration(t *testing.T) {
+	cfg := &config.Config{
+		Port:         8080,
+		EmbeddedMode: true,
+		// No JWT secret provided - should generate static one
+		JWTExpiration: 168 * time.Hour,
+		StorageType:   "file",
+		FileBaseDir:   "/tmp/test-storage",
+	}
+
+	logger := zap.NewNop()
+	args := []string{"--embedded-mode"}
+	services, err := Initialize(cfg, logger, args)
+
+	require.NoError(t, err)
+	require.NotNil(t, services)
+
+	// Verify static JWT secret was generated
+	assert.NotEmpty(t, cfg.JWTSecret)
+	assert.Equal(t, "embedded-mode-static-secret-change-in-production", cfg.JWTSecret)
+
+	// Verify TokenManager works with the generated secret
+	assert.NotNil(t, services.TokenManager)
+}
+
 func TestInitializeDatabase(t *testing.T) {
 	tmpDB := "/tmp/test_init_db.db"
 	defer os.Remove(tmpDB)
