@@ -32,6 +32,11 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		return nil, fmt.Errorf("failed to initialize services: %w", err)
 	}
 
+	// Check if we're in embedded mode
+	if cfg.EmbeddedMode {
+		return newEmbeddedServer(cfg, embedFS, services, logger)
+	}
+
 	// Initialize GraphQL with enhanced config from services
 	storageResolver := resolver.NewResolver(
 		services.StorageProvider,
@@ -156,6 +161,105 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 	s.services.Logger.Debug("HTTP server shutdown completed")
 	return nil
+}
+
+// newEmbeddedServer creates a server instance for embedded mode
+func newEmbeddedServer(cfg *config.Config, embedFS fs.FS, services *bootstrap.Services, logger *zap.Logger) (*Server, error) {
+	mux := http.NewServeMux()
+
+	// Health check endpoint
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok","mode":"embedded"}`))
+	})
+
+	// Imagor endpoint for image processing
+	mux.Handle("/imagor/", http.StripPrefix("/imagor", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if currentHandler := services.ImagorProvider.GetHandler(); currentHandler != nil {
+			currentHandler.ServeHTTP(w, r)
+		} else {
+			http.NotFound(w, r)
+		}
+	})))
+
+	// Embedded static files - serve from embedded-static subdirectory
+	embeddedStaticFS, err := fs.Sub(embedFS, "embedded-static")
+	if err != nil {
+		// Fallback to regular static if embedded-static doesn't exist yet
+		embeddedStaticFS, err = fs.Sub(embedFS, "static")
+		if err != nil {
+			return nil, fmt.Errorf("failed to load embedded static files: %w", err)
+		}
+	}
+
+	// JWT middleware for embedded mode
+	var authMiddleware func(http.Handler) http.Handler
+	if cfg.JWTSecret != "" {
+		// Use JWT authentication if secret is provided
+		authMiddleware = middleware.OptionalEmbeddedJWTMiddleware(cfg.JWTSecret, logger)
+	} else {
+		// No authentication - just validate image path
+		authMiddleware = func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				imagePath := r.URL.Query().Get("image")
+				if imagePath == "" {
+					http.Error(w, "missing image parameter", http.StatusBadRequest)
+					return
+				}
+
+				// Basic path validation
+				if err := middleware.ValidateImagePath(imagePath, cfg.FileBaseDir); err != nil {
+					logger.Warn("Invalid image path", zap.String("path", imagePath), zap.Error(err))
+					http.Error(w, "invalid image path", http.StatusBadRequest)
+					return
+				}
+
+				next.ServeHTTP(w, r)
+			})
+		}
+	}
+
+	// Root path serves the embedded editor with authentication
+	mux.Handle("/", authMiddleware(httphandler.SPAHandler(embeddedStaticFS, logger)))
+
+	// Configure CORS for embedded mode - more permissive for iframe embedding
+	corsConfig := middleware.CORSConfig{
+		AllowedOrigins:   []string{"*"}, // Allow all origins for iframe embedding
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: false, // Don't allow credentials for embedded mode
+		MaxAge:           86400,
+	}
+
+	// Apply middleware
+	h := middleware.CORSMiddleware(corsConfig)(
+		middleware.ErrorMiddleware(logger)(
+			mux,
+		),
+	)
+
+	// Create HTTP server instance
+	addr := fmt.Sprintf(":%d", cfg.Port)
+	httpServer := &http.Server{
+		Addr:    addr,
+		Handler: h,
+		// Set reasonable timeouts for embedded use
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	logger.Info("Starting in embedded mode",
+		zap.Bool("jwt_auth", cfg.JWTSecret != ""),
+		zap.String("storage_type", cfg.StorageType),
+		zap.String("imagor_mode", cfg.ImagorMode))
+
+	return &Server{
+		cfg:        cfg,
+		services:   services,
+		httpServer: httpServer,
+	}, nil
 }
 
 func (s *Server) Close() error {

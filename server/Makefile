@@ -20,8 +20,8 @@ GQLGEN=go run github.com/99designs/gqlgen generate
 all: test build
 
 build:
-	mkdir -p static
-	touch static/.placeholder
+	mkdir -p static embedded-static
+	touch static/.placeholder embedded-static/.placeholder
 	$(GOBUILD) $(LDFLAGS) -o $(BINARY_NAME) $(MAIN_PACKAGE)
 
 test:

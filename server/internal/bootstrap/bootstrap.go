@@ -38,6 +38,10 @@ type Services struct {
 
 // Initialize sets up the database, runs migrations, and initializes all services
 func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
+	// Check if we're in embedded mode
+	if cfg.EmbeddedMode {
+		return initializeEmbedded(cfg, logger)
+	}
 
 	// Initialize database
 	db, err := initializeDatabase(cfg)
@@ -196,4 +200,58 @@ func generateSecureJWTSecret() (string, error) {
 
 	// Encode as base64 for safe storage and transmission
 	return base64.StdEncoding.EncodeToString(bytes), nil
+}
+
+// initializeEmbedded sets up services for embedded mode (no database)
+func initializeEmbedded(cfg *config.Config, logger *zap.Logger) (*Services, error) {
+	// Validate JWT secret is provided for embedded mode
+	if cfg.JWTSecret == "" {
+		return nil, fmt.Errorf("jwt-secret is required for embedded mode")
+	}
+
+	// Initialize token manager
+	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
+
+	// Initialize storage provider without registry store (nil)
+	storageProvider := storageprovider.New(logger, nil, cfg)
+
+	// Initialize storage with config
+	err := storageProvider.InitializeWithConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize storage: %w", err)
+	}
+
+	// Get the current storage instance
+	stor := storageProvider.GetStorage()
+
+	// Initialize imagor provider without registry store (nil)
+	imagorProvider := imagorprovider.New(logger, nil, cfg, storageProvider)
+
+	// Initialize imagor with config
+	err = imagorProvider.InitializeWithConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize imagor: %w", err)
+	}
+
+	// Log embedded configuration
+	logger.Info("Embedded mode configuration loaded",
+		zap.Int("port", cfg.Port),
+		zap.Duration("jwtExpiration", cfg.JWTExpiration),
+		zap.String("storageType", cfg.StorageType),
+		zap.String("imagorMode", cfg.ImagorMode),
+	)
+
+	return &Services{
+		DB:              nil, // No database in embedded mode
+		TokenManager:    tokenManager,
+		Storage:         stor,
+		StorageProvider: storageProvider,
+		ImagorProvider:  imagorProvider,
+		RegistryStore:   nil, // No registry store in embedded mode
+		UserStore:       nil, // No user store in embedded mode
+		LicenseService:  nil, // No license service in embedded mode
+		Encryption:      nil, // No encryption service in embedded mode
+		Config:          cfg,
+		Logger:          logger,
+	}, nil
 }

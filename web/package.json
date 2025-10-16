@@ -6,8 +6,11 @@
   "scripts": {
     "dev": "vite --host",
     "build": "tsc -b && vite build",
+    "build:embedded": "tsc -b && vite build --config vite.embedded.config.ts",
+    "dev:embedded": "vite --config vite.embedded.config.ts --host",
     "lint": "eslint .",
     "preview": "vite preview",
+    "preview:embedded": "vite preview --config vite.embedded.config.ts",
     "type-check": "tsc -p tsconfig.app.json",
     "codegen": "graphql-codegen --config codegen.ts",
     "codegen:watch": "graphql-codegen --config codegen.ts --watch"
