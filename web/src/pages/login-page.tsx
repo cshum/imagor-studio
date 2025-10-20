@@ -30,6 +30,11 @@ export function LoginPage() {
   const navigate = useNavigate()
   const search = useSearch({ from: '/login' })
 
+  // Redirect embedded guests to homepage to avoid login UI
+  if (authState.isEmbedded) {
+    return <Navigate to='/' replace />
+  }
+
   // Helper function to validate redirect URL for security
   const isValidRedirectUrl = (url: string): boolean => {
     // Only allow relative URLs that start with /

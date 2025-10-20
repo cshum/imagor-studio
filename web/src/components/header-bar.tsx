@@ -119,60 +119,62 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
             <div className='flex items-center space-x-1'>
               <ModeToggle />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant='ghost' size='icon' className='h-12 w-12 sm:h-10 sm:w-10'>
-                    <MoreVertical className='h-4 w-4' />
-                    <span className='sr-only'>{t('common.buttons.more')}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-56'>
-                  {/* Custom menu items slot - for page-specific functionality */}
-                  {customMenuItems}
+              {!authState.isEmbedded && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='ghost' size='icon' className='h-12 w-12 sm:h-10 sm:w-10'>
+                      <MoreVertical className='h-4 w-4' />
+                      <span className='sr-only'>{t('common.buttons.more')}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end' className='w-56'>
+                    {/* Custom menu items slot - for page-specific functionality */}
+                    {customMenuItems}
 
-                  <DropdownMenuLabel className='font-normal'>
-                    <div className='flex flex-col space-y-1'>
-                      <p className='text-sm leading-none font-medium'>{getUserDisplayName()}</p>
-                      {getUserRole() && (
-                        <p className='text-muted-foreground text-xs leading-none capitalize'>
-                          {getUserRole()}
-                        </p>
-                      )}
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                    <DropdownMenuLabel className='font-normal'>
+                      <div className='flex flex-col space-y-1'>
+                        <p className='text-sm leading-none font-medium'>{getUserDisplayName()}</p>
+                        {getUserRole() && (
+                          <p className='text-muted-foreground text-xs leading-none capitalize'>
+                            {getUserRole()}
+                          </p>
+                        )}
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
 
-                  {authState.state === 'guest' ? (
-                    // Guest user menu
-                    <DropdownMenuItem
-                      className='interactive:cursor-pointer'
-                      onClick={handleLoginClick}
-                    >
-                      <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
-                      {t('common.navigation.login')}
-                    </DropdownMenuItem>
-                  ) : (
-                    // Authenticated user menu
-                    <>
+                    {authState.state === 'guest' ? (
+                      // Guest user menu
                       <DropdownMenuItem
                         className='interactive:cursor-pointer'
-                        onClick={handleAccountClick}
-                      >
-                        <Settings className='text-muted-foreground mr-3 h-4 w-4' />
-                        {t('common.navigation.accountSettings')}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className='interactive:cursor-pointer'
-                        onClick={handleLogout}
+                        onClick={handleLoginClick}
                       >
                         <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
-                        {t('common.navigation.signOut')}
+                        {t('common.navigation.login')}
                       </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    ) : (
+                      // Authenticated user menu
+                      <>
+                        <DropdownMenuItem
+                          className='interactive:cursor-pointer'
+                          onClick={handleAccountClick}
+                        >
+                          <Settings className='text-muted-foreground mr-3 h-4 w-4' />
+                          {t('common.navigation.accountSettings')}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className='interactive:cursor-pointer'
+                          onClick={handleLogout}
+                        >
+                          <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
+                          {t('common.navigation.signOut')}
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
         </div>
