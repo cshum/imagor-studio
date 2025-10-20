@@ -14,6 +14,7 @@ import (
 // ConfigProvider interface for configuration methods used by the resolver
 type ConfigProvider interface {
 	GetByRegistryKey(registryKey string) (effectiveValue string, exists bool)
+	IsEmbeddedMode() bool
 }
 
 // StorageProvider interface for getting storage dynamically

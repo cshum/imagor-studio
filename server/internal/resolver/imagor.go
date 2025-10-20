@@ -15,8 +15,7 @@ import (
 
 // GenerateImagorURL is the resolver for the generateImagorUrl field.
 func (r *mutationResolver) GenerateImagorURL(ctx context.Context, galleryKey string, imageKey string, params gql.ImagorParamsInput) (string, error) {
-	// Check write permissions - only users with write scope can generate imagor URLs
-	if err := RequireWritePermission(ctx); err != nil {
+	if err := RequireEditPermission(ctx); err != nil {
 		return "", err
 	}
 

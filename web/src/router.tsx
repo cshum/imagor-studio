@@ -19,7 +19,7 @@ import { SessionConfigStorage } from '@/lib/config-storage/session-config-storag
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
 import { adminLoader, profileLoader, usersLoader } from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
-import { requireAccountAuth, requireAdminAccountAuth, requireAuth } from '@/loaders/auth-loader.ts'
+import { requireAccountAuth, requireAdminAccountAuth, requireAuth, requireImageEditorAuth } from '@/loaders/auth-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
@@ -124,7 +124,7 @@ const rootImagePage = createRoute({
 const rootImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/$imageKey/editor',
-  beforeLoad: requireAccountAuth,
+  beforeLoad: requireImageEditorAuth,
   loader: ({ params }) => imageEditorLoader({ params: { ...params, galleryKey: '' } }),
   component: () => {
     const loaderData = rootImageEditorRoute.useLoaderData()
@@ -171,7 +171,7 @@ const imagePage = createRoute({
 const galleryImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/gallery/$galleryKey/$imageKey/editor',
-  beforeLoad: requireAccountAuth,
+  beforeLoad: requireImageEditorAuth,
   loader: ({ params }) => imageEditorLoader({ params }),
   component: () => {
     const loaderData = galleryImageEditorRoute.useLoaderData()

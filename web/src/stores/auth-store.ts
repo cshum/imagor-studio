@@ -1,4 +1,4 @@
-import { checkFirstRun, guestLogin } from '@/api/auth-api'
+import { checkFirstRun, embeddedGuestLogin, guestLogin } from '@/api/auth-api'
 import { getCurrentUser } from '@/api/user-api.ts'
 import type { MeQuery } from '@/generated/graphql'
 import { createStore } from '@/lib/create-store.ts'
@@ -14,6 +14,7 @@ export interface Auth {
   profile: UserProfile | null
   isFirstRun: boolean | null
   error: string | null
+  isEmbedded: boolean
 }
 
 const initialState: Auth = {
@@ -22,10 +23,11 @@ const initialState: Auth = {
   profile: null,
   isFirstRun: null,
   error: null,
+  isEmbedded: false,
 }
 
 export type AuthAction =
-  | { type: 'INIT'; payload: { accessToken: string; profile: UserProfile } }
+  | { type: 'INIT'; payload: { accessToken: string; profile: UserProfile; isEmbedded?: boolean } }
   | { type: 'LOGOUT' }
   | { type: 'SET_ERROR'; payload: { error: string } }
   | { type: 'SET_FIRST_RUN'; payload: { isFirstRun: boolean } }
@@ -34,7 +36,7 @@ export type AuthAction =
 function reducer(state: Auth, action: AuthAction): Auth {
   switch (action.type) {
     case 'INIT': {
-      const { profile, accessToken } = action.payload
+      const { profile, accessToken, isEmbedded = false } = action.payload
       const authState = profile?.role === 'guest' ? 'guest' : 'authenticated'
 
       setToken(accessToken)
@@ -45,6 +47,7 @@ function reducer(state: Auth, action: AuthAction): Auth {
         accessToken,
         profile,
         error: null,
+        isEmbedded,
       }
     }
 
@@ -84,9 +87,45 @@ function reducer(state: Auth, action: AuthAction): Auth {
 export const authStore = createStore(initialState, reducer)
 
 /**
- * Initialize auth state from existing token or provided token
+ * Handle embedded authentication flow
+ */
+const handleEmbeddedAuth = async (jwtToken: string): Promise<Auth> => {
+  try {
+    // Call /api/auth/embedded-guest with JWT
+    const response = await embeddedGuestLogin(jwtToken)
+
+    // Get user profile with session token
+    const profile = await getCurrentUser(response.token)
+
+    // Dispatch unified init action with embedded flag
+    return authStore.dispatch({
+      type: 'INIT',
+      payload: {
+        accessToken: response.token,
+        profile,
+        isEmbedded: true,
+      },
+    })
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Embedded authentication failed'
+    authStore.dispatch({ type: 'SET_ERROR', payload: { error: errorMessage } })
+    return authStore.dispatch({ type: 'LOGOUT' })
+  }
+}
+
+/**
+ * Initialize auth state - unified entry point for both normal and embedded modes
  */
 export const initAuth = async (accessToken?: string): Promise<Auth> => {
+  // Early return for embedded mode - check for JWT token in URL
+  const urlParams = new URLSearchParams(window.location.search)
+  const jwtToken = urlParams.get('token')
+
+  if (jwtToken) {
+    return handleEmbeddedAuth(jwtToken)
+  }
+
+  // Continue with normal auth flow
   try {
     const currentAccessToken = accessToken || getAuth().accessToken
 

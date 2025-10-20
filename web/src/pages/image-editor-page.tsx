@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { ImageEditor, type ImageEditorState } from '@/lib/image-editor.ts'
 import { cn, debounce } from '@/lib/utils.ts'
+import { useAuth } from '@/stores/auth-store'
 import type { EditorOpenSections, ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 
 interface ImageEditorPageProps {
@@ -25,6 +26,7 @@ interface ImageEditorPageProps {
 export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { authState } = useAuth()
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
   const [copyUrl, setCopyUrl] = useState('')
@@ -34,13 +36,15 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   )
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
 
-  // Debounced save function for editor open sections
+  // Debounced save function for editor open sections (skip for embedded mode - completely stateless)
   const debouncedSaveOpenSections = useMemo(
     () =>
       debounce(async (sections: EditorOpenSections) => {
-        await setUserRegistry('config.editor_open_sections', JSON.stringify(sections))
+        if (!authState.isEmbedded) {
+          await setUserRegistry('config.editor_open_sections', JSON.stringify(sections))
+        }
       }, 300),
-    [],
+    [authState.isEmbedded],
   )
 
   // Handler that updates state immediately and saves with debounce

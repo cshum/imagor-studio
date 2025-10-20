@@ -134,20 +134,25 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	// Check if storage is configured in registry
-	if p.isStorageConfiguredInRegistry() {
-		s, err := p.NewStorageFromConfig(cfg)
-		if err != nil {
-			p.logger.Warn("Failed to create storage from config, using NoOp storage", zap.Error(err))
-			p.currentStorage = noopstorage.New()
-			p.storageState = StorageStateNoop
-			return nil
-		}
+	// Try to create storage from config first (env/CLI)
+	s, err := p.NewStorageFromConfig(cfg)
+	if s != nil && err == nil {
+		// Env/CLI config worked - use it immediately
 		p.currentStorage = s
 		p.storageState = StorageStateConfigured
 		p.configLoadedAt = time.Now().UnixMilli()
 		p.logger.Info("Storage initialized successfully", zap.String("type", cfg.StorageType))
+		return nil
+	}
+
+	// Env config failed, check if we should enable lazy loading
+	if p.isStorageConfiguredInRegistry() {
+		// Registry has config - set up for lazy loading
+		p.currentStorage = noopstorage.New()
+		p.storageState = StorageStateNoop
+		p.logger.Info("Storage will be lazy loaded from registry")
 	} else {
+		// No config anywhere - use NoOp
 		p.currentStorage = noopstorage.New()
 		p.storageState = StorageStateNoop
 		p.logger.Info("No storage configuration found, using NoOp storage")

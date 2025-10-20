@@ -330,13 +330,22 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 	// All authenticated users can read system registry
 	// No additional permission check needed
 
-	registryList, err := r.registryStore.List(ctx, registrystore.SystemOwnerID, prefix)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list system registry: %w", err)
-	}
+	var registryList []*registrystore.Registry
 
-	result := make([]*gql.SystemRegistry, len(registryList))
-	for i, registry := range registryList {
+	// Only access database if NOT in embedded mode
+	if !r.config.IsEmbeddedMode() {
+		var err error
+		registryList, err = r.registryStore.List(ctx, registrystore.SystemOwnerID, prefix)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list system registry: %w", err)
+		}
+	}
+	// If embedded mode, registryList stays empty []
+
+	var result []*gql.SystemRegistry
+
+	// Process database results (if any)
+	for _, registry := range registryList {
 		// Hide encrypted values in GraphQL responses
 		value := registry.Value
 		if registry.IsEncrypted {
@@ -352,13 +361,19 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 			effectiveValue = value
 		}
 
-		result[i] = &gql.SystemRegistry{
+		result = append(result, &gql.SystemRegistry{
 			Key:                  registry.Key,
 			Value:                effectiveValue,
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
-		}
+		})
 	}
+
+	// In embedded mode, we could potentially list all config keys with "config." prefix
+	// but since this is a list operation and we don't have a way to enumerate all config keys,
+	// we'll just return the empty result. Config values will be available via GetSystemRegistry
+	// when specifically requested.
+
 	return result, nil
 }
 
@@ -374,25 +389,39 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 
 	var registries []*registrystore.Registry
 
+	// Only access database if NOT in embedded mode
+	if !r.config.IsEmbeddedMode() {
+		if key != nil {
+			// Single key operation
+			registry, err := r.registryStore.Get(ctx, registrystore.SystemOwnerID, *key)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get system registry: %w", err)
+			}
+			if registry != nil {
+				registries = []*registrystore.Registry{registry}
+			}
+		} else {
+			// Multi key operation
+			var err error
+			registries, err = r.registryStore.GetMulti(ctx, registrystore.SystemOwnerID, keys)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get system registries: %w", err)
+			}
+		}
+	}
+	// If embedded mode, registries stays empty []
+
+	// Determine which keys to check for config overrides
+	var keysToCheck []string
 	if key != nil {
-		// Single key operation
-		registry, err := r.registryStore.Get(ctx, registrystore.SystemOwnerID, *key)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get system registry: %w", err)
-		}
-		if registry != nil {
-			registries = []*registrystore.Registry{registry}
-		}
+		keysToCheck = []string{*key}
 	} else {
-		// Multi key operation
-		var err error
-		registries, err = r.registryStore.GetMulti(ctx, registrystore.SystemOwnerID, keys)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get system registries: %w", err)
-		}
+		keysToCheck = keys
 	}
 
 	var result []*gql.SystemRegistry
+
+	// Process database results (if any)
 	for _, registry := range registries {
 		// Hide encrypted values in GraphQL responses
 		value := registry.Value
@@ -415,6 +444,31 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 			IsEncrypted:          registry.IsEncrypted,
 			IsOverriddenByConfig: configExists,
 		})
+	}
+
+	// In embedded mode, also check for config-only values that weren't in database
+	if r.config.IsEmbeddedMode() {
+		for _, k := range keysToCheck {
+			configValue, configExists := r.config.GetByRegistryKey(k)
+			if configExists {
+				// Check if we already added this key from database results
+				found := false
+				for _, existing := range result {
+					if existing.Key == k {
+						found = true
+						break
+					}
+				}
+				if !found {
+					result = append(result, &gql.SystemRegistry{
+						Key:                  k,
+						Value:                configValue,
+						IsEncrypted:          false, // Config values are never encrypted
+						IsOverriddenByConfig: true,
+					})
+				}
+			}
+		}
 	}
 
 	return result, nil

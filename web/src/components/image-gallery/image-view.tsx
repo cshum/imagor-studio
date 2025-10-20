@@ -518,14 +518,15 @@ export function ImageView({
 
             {!isFullscreen && (
               <div className='absolute top-4 right-6 z-60 flex space-x-2'>
-                {authState.state === 'authenticated' && !image.isVideo && (
-                  <button
-                    onClick={handleImagorClick}
-                    className='rounded-full bg-black/50 px-2.5 py-2 text-white transition-colors hover:bg-black/75'
-                  >
-                    <SquarePen size={20} />
-                  </button>
-                )}
+                {(authState.state === 'authenticated' || authState.isEmbedded) &&
+                  !image.isVideo && (
+                    <button
+                      onClick={handleImagorClick}
+                      className='rounded-full bg-black/50 px-2.5 py-2 text-white transition-colors hover:bg-black/75'
+                    >
+                      <SquarePen size={20} />
+                    </button>
+                  )}
                 {!image.isVideo && (onPrevImage || onNextImage) && (
                   <button
                     onClick={toggleSlideshow}
@@ -538,7 +539,7 @@ export function ImageView({
                     )}
                   </button>
                 )}
-                {!image.isVideo && isDesktop && (
+                {!image.isVideo && isDesktop && window === window.parent && (
                   <button
                     onClick={toggleFullscreen}
                     className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'

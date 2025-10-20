@@ -20,14 +20,16 @@ type AuthHandler struct {
 	userStore     userstore.Store
 	registryStore registrystore.Store
 	logger        *zap.Logger
+	embeddedMode  bool
 }
 
-func NewAuthHandler(tokenManager *auth.TokenManager, userStore userstore.Store, registryStore registrystore.Store, logger *zap.Logger) *AuthHandler {
+func NewAuthHandler(tokenManager *auth.TokenManager, userStore userstore.Store, registryStore registrystore.Store, logger *zap.Logger, embeddedMode bool) *AuthHandler {
 	return &AuthHandler{
 		tokenManager:  tokenManager,
 		userStore:     userStore,
 		registryStore: registryStore,
 		logger:        logger,
+		embeddedMode:  embeddedMode,
 	}
 }
 
@@ -304,6 +306,62 @@ func (h *AuthHandler) RefreshToken() http.HandlerFunc {
 				Role:        user.Role,
 			},
 		}
+
+		return WriteSuccess(w, response)
+	})
+}
+
+func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		// Check if embedded mode is enabled
+		if !h.embeddedMode {
+			return apperror.NewAppError(http.StatusForbidden, apperror.ErrPermissionDenied,
+				"Embedded mode is not enabled", nil)
+		}
+
+		// Extract JWT token from Authorization header
+		authHeader := r.Header.Get("Authorization")
+		jwtToken, err := auth.ExtractTokenFromHeader(authHeader)
+		if err != nil {
+			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidToken,
+				"Authorization header is missing or invalid", map[string]interface{}{
+					"error": err.Error(),
+				})
+		}
+
+		// Validate the JWT token (this validates the token from the CMS)
+		_, err = h.tokenManager.ValidateToken(jwtToken)
+		if err != nil {
+			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidToken,
+				"Invalid or expired JWT token", map[string]interface{}{
+					"error": err.Error(),
+				})
+		}
+
+		// Generate embedded guest user ID
+		embeddedGuestID := uuid.GenerateUUID()
+
+		// Generate session token for embedded guest with editor permissions
+		sessionToken, err := h.tokenManager.GenerateToken(embeddedGuestID, "guest", []string{"read", "edit"})
+		if err != nil {
+			h.logger.Error("Failed to generate embedded guest token", zap.Error(err))
+			return apperror.InternalServerError("Failed to generate session token")
+		}
+
+		response := LoginResponse{
+			Token:     sessionToken,
+			ExpiresIn: h.tokenManager.TokenDuration().Milliseconds() / 1000,
+			User: UserResponse{
+				ID:          embeddedGuestID,
+				DisplayName: "Embedded Guest",
+				Username:    "embedded-guest",
+				Role:        "guest",
+			},
+		}
+
+		h.logger.Info("Embedded guest login successful",
+			zap.String("embeddedGuestID", embeddedGuestID),
+			zap.String("userAgent", r.Header.Get("User-Agent")))
 
 		return WriteSuccess(w, response)
 	})

@@ -26,10 +26,10 @@ func TestLoadBasic(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	// Verify default values
+	// Verify default values - storage type should auto-detect to "file" when no S3 config
 	assert.Equal(t, 8080, cfg.Port)
 	assert.Equal(t, "sqlite:./imagor-studio.db", cfg.DatabaseURL)
-	assert.Equal(t, "file", cfg.StorageType)
+	assert.Equal(t, "file", cfg.StorageType) // auto-detected default
 	assert.Equal(t, "/app/gallery", cfg.FileBaseDir)
 	assert.Equal(t, "embedded", cfg.ImagorMode)
 	assert.Equal(t, "", cfg.ImagorBaseURL)
@@ -677,6 +677,190 @@ func TestValueSourceTracking(t *testing.T) {
 	assert.Equal(t, "file", cfg.StorageType, "StorageType should be overridden by env")
 	assert.Equal(t, true, cfg.AllowGuestMode, "AllowGuestMode should come from registry")
 	assert.Equal(t, "disabled", cfg.ImagorMode, "ImagorMode should come from args")
+}
+
+// Test auto-population of storage type based on provided configuration
+func TestStorageTypeAutoPopulation(t *testing.T) {
+	tests := []struct {
+		name         string
+		args         []string
+		envVars      map[string]string
+		expectedType string
+		description  string
+	}{
+		{
+			name:         "Auto-detect S3 from bucket",
+			args:         []string{"--s3-bucket", "my-bucket", "--jwt-secret", "test"},
+			expectedType: "s3",
+			description:  "Should auto-detect s3 when S3 bucket is provided",
+		},
+		{
+			name:         "Auto-detect file when no S3 config",
+			args:         []string{"--jwt-secret", "test"},
+			expectedType: "file",
+			description:  "Should default to file when no S3 configuration is provided",
+		},
+		{
+			name:         "Auto-detect file with custom file base dir",
+			args:         []string{"--file-base-dir", "/custom/path", "--jwt-secret", "test"},
+			expectedType: "file",
+			description:  "Should default to file when file configuration is provided",
+		},
+		{
+			name: "Auto-detect S3 from env bucket",
+			envVars: map[string]string{
+				"S3_BUCKET": "env-bucket",
+			},
+			args:         []string{"--jwt-secret", "test"},
+			expectedType: "s3",
+			description:  "Should auto-detect s3 when S3 bucket is provided via environment",
+		},
+		{
+			name:         "Explicit storage type overrides auto-detection",
+			args:         []string{"--storage-type", "file", "--s3-bucket", "my-bucket", "--jwt-secret", "test"},
+			expectedType: "file",
+			description:  "Explicit storage-type should override auto-detection even with S3 config",
+		},
+		{
+			name: "Explicit env storage type overrides auto-detection",
+			envVars: map[string]string{
+				"STORAGE_TYPE": "file",
+				"S3_BUCKET":    "env-bucket",
+			},
+			args:         []string{"--jwt-secret", "test"},
+			expectedType: "file",
+			description:  "Explicit env storage-type should override auto-detection",
+		},
+		{
+			name:         "Partial S3 config still auto-detects",
+			args:         []string{"--s3-bucket", "my-bucket", "--s3-region", "us-west-2", "--jwt-secret", "test"},
+			expectedType: "s3",
+			description:  "Should auto-detect s3 even with partial S3 configuration",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set environment variables
+			for envKey, envValue := range tt.envVars {
+				os.Setenv(envKey, envValue)
+				defer os.Unsetenv(envKey)
+			}
+
+			cfg, err := Load(tt.args, nil)
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, cfg)
+
+			assert.Equal(t, tt.expectedType, cfg.StorageType, tt.description)
+		})
+	}
+}
+
+// Test auto-population with registry values
+func TestStorageTypeAutoPopulationWithRegistry(t *testing.T) {
+	// Create temporary database
+	tmpDB := "/tmp/test_auto_population_registry.db"
+	defer os.Remove(tmpDB)
+
+	// Initialize database and registry store
+	db, registryStore := setupTestRegistry(t, tmpDB)
+	defer db.Close()
+
+	tests := []struct {
+		name           string
+		registryValues map[string]string
+		args           []string
+		expectedType   string
+		description    string
+	}{
+		{
+			name: "Auto-detect S3 from registry bucket",
+			registryValues: map[string]string{
+				"config.s3_bucket": "registry-bucket",
+			},
+			args:         []string{"--jwt-secret", "test"},
+			expectedType: "s3",
+			description:  "Should auto-detect s3 when S3 bucket is in registry",
+		},
+		{
+			name: "Explicit registry storage type overrides auto-detection",
+			registryValues: map[string]string{
+				"config.storage_type": "file",
+				"config.s3_bucket":    "registry-bucket",
+			},
+			args:         []string{"--jwt-secret", "test"},
+			expectedType: "file",
+			description:  "Explicit registry storage-type should override auto-detection",
+		},
+		{
+			name: "CLI overrides registry auto-detection",
+			registryValues: map[string]string{
+				"config.s3_bucket": "registry-bucket",
+			},
+			args:         []string{"--storage-type", "file", "--jwt-secret", "test"},
+			expectedType: "file",
+			description:  "CLI storage-type should override registry-based auto-detection",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set registry values
+			ctx := context.Background()
+			for key, value := range tt.registryValues {
+				_, err := registryStore.Set(ctx, registrystore.SystemOwnerID, key, value, false)
+				require.NoError(t, err)
+			}
+
+			cfg, err := Load(tt.args, registryStore)
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, cfg)
+
+			assert.Equal(t, tt.expectedType, cfg.StorageType, tt.description)
+
+			// Clean up registry for next test
+			for key := range tt.registryValues {
+				registryStore.Delete(ctx, registrystore.SystemOwnerID, key)
+			}
+		})
+	}
+}
+
+// Test validation still works with auto-populated values
+func TestAutoPopulationValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		args        []string
+		expectError bool
+		description string
+	}{
+		{
+			name:        "Auto-detected S3 with missing bucket should fail validation",
+			args:        []string{"--jwt-secret", "test"}, // No S3 config, should default to file
+			expectError: false,
+			description: "Should succeed with file storage when no S3 config",
+		},
+		{
+			name:        "Auto-detected S3 with valid bucket should pass validation",
+			args:        []string{"--s3-bucket", "valid-bucket", "--jwt-secret", "test"},
+			expectError: false,
+			description: "Should succeed with valid S3 configuration",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg, err := Load(tt.args, nil)
+
+			if tt.expectError {
+				assert.Error(t, err, tt.description)
+				assert.Nil(t, cfg)
+			} else {
+				assert.NoError(t, err, tt.description)
+				assert.NotNil(t, cfg)
+			}
+		})
+	}
 }
 
 // Helper function to set up test registry

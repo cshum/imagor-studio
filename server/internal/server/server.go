@@ -65,6 +65,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		services.UserStore,
 		services.RegistryStore,
 		services.Logger,
+		cfg.EmbeddedMode,
 	)
 
 	// Create middleware chain
@@ -82,6 +83,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	mux.HandleFunc("/api/auth/login", authHandler.Login())
 	mux.HandleFunc("/api/auth/refresh", authHandler.RefreshToken())
 	mux.HandleFunc("/api/auth/guest", authHandler.GuestLogin())
+	mux.HandleFunc("/api/auth/embedded-guest", authHandler.EmbeddedGuestLogin())
 
 	// Add the new endpoints
 	mux.HandleFunc("/api/auth/first-run", authHandler.CheckFirstRun())
@@ -168,13 +170,15 @@ func (s *Server) Close() error {
 		// Continue with other cleanup even if imagor shutdown fails
 	}
 
-	// Close database connection
-	s.services.Logger.Debug("Closing database connection...")
-	if err := s.services.DB.Close(); err != nil {
-		s.services.Logger.Error("Database close error", zap.Error(err))
-		return err
+	// Close database connection (only if not in embedded mode)
+	if s.services.DB != nil {
+		s.services.Logger.Debug("Closing database connection...")
+		if err := s.services.DB.Close(); err != nil {
+			s.services.Logger.Error("Database close error", zap.Error(err))
+			return err
+		}
+		s.services.Logger.Debug("Database connection closed")
 	}
-	s.services.Logger.Debug("Database connection closed")
 
 	s.services.Logger.Debug("Server resources closed successfully")
 	return nil

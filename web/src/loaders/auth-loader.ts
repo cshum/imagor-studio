@@ -67,6 +67,23 @@ export const requireAccountAuth = async (context?: {
 }
 
 /**
+ * Authentication check for image editor - allows embedded guests or delegates to requireAccountAuth
+ */
+export const requireImageEditorAuth = async (context?: {
+  location?: { pathname: string; search: Record<string, unknown> }
+}) => {
+  const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
+
+  // Allow embedded guests to access image editor directly
+  if (currentAuth.isEmbedded) {
+    return currentAuth
+  }
+
+  // For non-embedded users, use the existing account auth logic
+  return requireAccountAuth(context)
+}
+
+/**
  * Combined auth and admin check for admin routes
  * First ensures authentication, then checks admin role
  */

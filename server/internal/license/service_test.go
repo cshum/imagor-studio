@@ -123,6 +123,10 @@ func (m *mockConfigProvider) GetByRegistryKey(registryKey string) (effectiveValu
 	return m.configValue, m.configExists
 }
 
+func (m *mockConfigProvider) IsEmbeddedMode() bool {
+	return false // Default to non-embedded mode for license tests
+}
+
 func (m *mockConfigProvider) setConfigOverride(key, value string) {
 	if key == "config.license_key" {
 		m.configValue = value

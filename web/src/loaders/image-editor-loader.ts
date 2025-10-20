@@ -5,6 +5,7 @@ import { getFullImageUrl } from '@/lib/api-utils'
 import { fetchImageMetadata } from '@/lib/exif-utils'
 import { preloadImage } from '@/lib/preload-image'
 import { clearPosition } from '@/stores/image-position-store.ts'
+import { getAuth } from '@/stores/auth-store'
 
 export interface EditorOpenSections {
   dimensions: boolean
@@ -54,14 +55,19 @@ export const imageEditorLoader = async ({
   }
 
   let editorOpenSections = defaultOpenSections
-  try {
-    const registryEntries = await getUserRegistry('config.editor_open_sections')
-    if (registryEntries && registryEntries.length > 0) {
-      const savedSections = JSON.parse(registryEntries[0].value) as EditorOpenSections
-      editorOpenSections = { ...defaultOpenSections, ...savedSections }
+  
+  // Skip registry operations for embedded mode (completely stateless)
+  const authState = getAuth()
+  if (!authState.isEmbedded) {
+    try {
+      const registryEntries = await getUserRegistry('config.editor_open_sections')
+      if (registryEntries && registryEntries.length > 0) {
+        const savedSections = JSON.parse(registryEntries[0].value) as EditorOpenSections
+        editorOpenSections = { ...defaultOpenSections, ...savedSections }
+      }
+    } catch {
+      // Silently fall back to defaults if registry loading fails
     }
-  } catch {
-    // Silently fall back to defaults if registry loading fails
   }
 
   // Get full-size image URL

@@ -28,6 +28,9 @@ type Config struct {
 	// Authentication Configuration
 	AllowGuestMode bool // Allow guest mode access
 
+	// Embedded Mode Configuration
+	EmbeddedMode bool // Enable embedded mode (stateless, no database)
+
 	// Migration Configuration
 	ForceAutoMigrate bool   // Force auto-migration even for PostgreSQL/MySQL
 	MigrateCommand   string // Migration command for migrate tool
@@ -76,12 +79,13 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 	var (
 		port          = fs.String("port", "8080", "port to listen on")
 		databaseURL   = fs.String("database-url", "sqlite:./imagor-studio.db", "database URL (sqlite:./path.db, postgres://user:pass@host:port/db, mysql://user:pass@host:port/db)")
-		storageType   = fs.String("storage-type", "file", "storage type: file or s3")
+		storageType   = fs.String("storage-type", "", "storage type: file or s3 (auto-detected if not specified)")
 		jwtSecret     = fs.String("jwt-secret", "", "secret key for JWT signing")
 		jwtExpiration = fs.String("jwt-expiration", "168h", "JWT token expiration duration")
 		licenseKey    = fs.String("license-key", "", "license key for activation")
 
 		allowGuestMode   = fs.Bool("allow-guest-mode", false, "allow guest mode access")
+		embeddedMode     = fs.Bool("embedded-mode", false, "enable embedded mode (stateless, no database)")
 		forceAutoMigrate = fs.Bool("force-auto-migrate", false, "force auto-migration even for PostgreSQL/MySQL (use with caution in multi-instance environments)")
 		migrateCommand   = fs.String("migrate-command", "up", "migration command: up, down, status, reset")
 
@@ -190,6 +194,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		JWTExpiration:        jwtExp,
 		LicenseKey:           *licenseKey,
 		AllowGuestMode:       *allowGuestMode,
+		EmbeddedMode:         *embeddedMode,
 		ForceAutoMigrate:     *forceAutoMigrate,
 		MigrateCommand:       *migrateCommand,
 		StorageType:          *storageType,
@@ -217,6 +222,15 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		AppDefaultSortBy:     *appDefaultSortBy,
 		AppDefaultSortOrder:  *appDefaultSortOrder,
 		overriddenFlags:      overriddenFlags,
+	}
+
+	// Auto-populate storage type if not explicitly set
+	if cfg.StorageType == "" {
+		if cfg.S3Bucket != "" {
+			cfg.StorageType = "s3"
+		} else {
+			cfg.StorageType = "file" // default fallback
+		}
 	}
 
 	// Validate storage configuration
@@ -281,6 +295,11 @@ func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, ex
 	}
 
 	return "", false
+}
+
+// IsEmbeddedMode returns whether embedded mode is enabled
+func (c *Config) IsEmbeddedMode() bool {
+	return c.EmbeddedMode
 }
 
 // applyRegistryValues applies registry values to flags that weren't overridden by CLI/env
