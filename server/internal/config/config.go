@@ -79,7 +79,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 	var (
 		port          = fs.String("port", "8080", "port to listen on")
 		databaseURL   = fs.String("database-url", "sqlite:./imagor-studio.db", "database URL (sqlite:./path.db, postgres://user:pass@host:port/db, mysql://user:pass@host:port/db)")
-		storageType   = fs.String("storage-type", "file", "storage type: file or s3")
+		storageType   = fs.String("storage-type", "", "storage type: file or s3 (auto-detected if not specified)")
 		jwtSecret     = fs.String("jwt-secret", "", "secret key for JWT signing")
 		jwtExpiration = fs.String("jwt-expiration", "168h", "JWT token expiration duration")
 		licenseKey    = fs.String("license-key", "", "license key for activation")
@@ -222,6 +222,15 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		AppDefaultSortBy:     *appDefaultSortBy,
 		AppDefaultSortOrder:  *appDefaultSortOrder,
 		overriddenFlags:      overriddenFlags,
+	}
+
+	// Auto-populate storage type if not explicitly set
+	if cfg.StorageType == "" {
+		if cfg.S3Bucket != "" {
+			cfg.StorageType = "s3"
+		} else {
+			cfg.StorageType = "file" // default fallback
+		}
 	}
 
 	// Validate storage configuration
