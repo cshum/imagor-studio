@@ -139,3 +139,23 @@ export async function refreshToken(token: string): Promise<LoginResponse> {
 
   return response.json()
 }
+
+/**
+ * Login as embedded guest using JWT token
+ */
+export async function embeddedGuestLogin(jwtToken: string): Promise<LoginResponse> {
+  const response = await fetch(`${BASE_URL}/api/auth/embedded-guest`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+  }
+
+  return response.json()
+}

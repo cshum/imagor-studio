@@ -82,6 +82,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	mux.HandleFunc("/api/auth/login", authHandler.Login())
 	mux.HandleFunc("/api/auth/refresh", authHandler.RefreshToken())
 	mux.HandleFunc("/api/auth/guest", authHandler.GuestLogin())
+	mux.HandleFunc("/api/auth/embedded-guest", authHandler.EmbeddedGuestLogin())
 
 	// Add the new endpoints
 	mux.HandleFunc("/api/auth/first-run", authHandler.CheckFirstRun())
