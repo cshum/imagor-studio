@@ -19,22 +19,20 @@ Perfect for local deployments and development.
 
 ### Configuration
 
-| Flag                       | Environment Variable     | Default        | Description                    |
-| -------------------------- | ------------------------ | -------------- | ------------------------------ |
-| `--storage-type`           | `STORAGE_TYPE`           | `file`         | Storage backend type           |
-| `--file-base-dir`          | `FILE_BASE_DIR`          | `/app/gallery` | Base directory for images      |
-| `--file-mkdir-permissions` | `FILE_MKDIR_PERMISSIONS` | `0755`         | Directory creation permissions |
-| `--file-write-permissions` | `FILE_WRITE_PERMISSIONS` | `0644`         | File write permissions         |
+| Flag                              | Environment Variable            | Default        | Description                    |
+| --------------------------------- | ------------------------------- | -------------- | ------------------------------ |
+| `--file-storage-base-dir`         | `FILE_STORAGE_BASE_DIR`         | `/app/gallery` | Base directory for images      |
+| `--file-storage-mkdir-permissions`| `FILE_STORAGE_MKDIR_PERMISSIONS`| `0755`         | Directory creation permissions |
+| `--file-storage-write-permissions`| `FILE_STORAGE_WRITE_PERMISSIONS`| `0644`         | File write permissions         |
 
 ### Example
 
 ```bash
-# Environment variables
-export STORAGE_TYPE=file
-export FILE_BASE_DIR=/path/to/images
+# Environment variables (storage type auto-detected as 'file')
+export FILE_STORAGE_BASE_DIR=/path/to/images
 
 # Or command line
-./imagor-studio --storage-type=file --file-base-dir=/path/to/images
+./imagor-studio --file-storage-base-dir=/path/to/images
 ```
 
 ### Docker Example
@@ -44,8 +42,7 @@ services:
   imagor-studio:
     image: shumc/imagor-studio:latest
     environment:
-      - STORAGE_TYPE=file
-      - FILE_BASE_DIR=/app/gallery
+      - FILE_STORAGE_BASE_DIR=/app/gallery
     volumes:
       - ~/Pictures:/app/gallery
 ```
@@ -56,38 +53,35 @@ For cloud deployments and scalable storage.
 
 ### Configuration
 
-| Flag                     | Environment Variable   | Encrypted | Description                |
-| ------------------------ | ---------------------- | --------- | -------------------------- |
-| `--storage-type`         | `STORAGE_TYPE`         | No        | Must be set to `s3`        |
-| `--s3-bucket`            | `S3_BUCKET`            | No        | S3 bucket name             |
-| `--s3-region`            | `S3_REGION`            | No        | AWS region                 |
-| `--s3-endpoint`          | `S3_ENDPOINT`          | No        | Custom endpoint (optional) |
-| `--s3-force-path-style`  | `S3_FORCE_PATH_STYLE`  | No        | Force path-style URLs      |
-| `--s3-access-key-id`     | `S3_ACCESS_KEY_ID`     | Yes       | AWS access key             |
-| `--s3-secret-access-key` | `S3_SECRET_ACCESS_KEY` | Yes       | AWS secret key             |
-| `--s3-session-token`     | `S3_SESSION_TOKEN`     | Yes       | AWS session token          |
-| `--s3-base-dir`          | `S3_BASE_DIR`          | No        | Base directory in bucket   |
+| Flag                            | Environment Variable          | Encrypted | Description                |
+| ------------------------------- | ----------------------------- | --------- | -------------------------- |
+| `--s3-storage-bucket`           | `S3_STORAGE_BUCKET`           | No        | S3 bucket name             |
+| `--s3-storage-region`           | `S3_STORAGE_REGION`           | No        | AWS region                 |
+| `--s3-storage-endpoint`         | `S3_STORAGE_ENDPOINT`         | No        | Custom endpoint (optional) |
+| `--s3-storage-force-path-style` | `S3_STORAGE_FORCE_PATH_STYLE` | No        | Force path-style URLs      |
+| `--s3-storage-access-key-id`    | `S3_STORAGE_ACCESS_KEY_ID`    | Yes       | AWS access key             |
+| `--s3-storage-secret-access-key`| `S3_STORAGE_SECRET_ACCESS_KEY`| Yes       | AWS secret key             |
+| `--s3-storage-session-token`    | `S3_STORAGE_SESSION_TOKEN`    | Yes       | AWS session token          |
+| `--s3-storage-base-dir`         | `S3_STORAGE_BASE_DIR`         | No        | Base directory in bucket   |
 
 ### AWS S3 Example
 
 ```bash
-export STORAGE_TYPE=s3
-export S3_BUCKET=my-images-bucket
-export S3_REGION=us-east-1
-export S3_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-export S3_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+export S3_STORAGE_BUCKET=my-images-bucket
+export S3_STORAGE_REGION=us-east-1
+export S3_STORAGE_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+export S3_STORAGE_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 ```
 
 ### MinIO Example
 
 ```bash
-export STORAGE_TYPE=s3
-export S3_BUCKET=images
-export S3_REGION=us-east-1
-export S3_ENDPOINT=http://minio:9000
-export S3_FORCE_PATH_STYLE=true
-export S3_ACCESS_KEY_ID=minioadmin
-export S3_SECRET_ACCESS_KEY=minioadmin
+export S3_STORAGE_BUCKET=images
+export S3_STORAGE_REGION=us-east-1
+export S3_STORAGE_ENDPOINT=http://minio:9000
+export S3_STORAGE_FORCE_PATH_STYLE=true
+export S3_STORAGE_ACCESS_KEY_ID=minioadmin
+export S3_STORAGE_SECRET_ACCESS_KEY=minioadmin
 ```
 
 ### Docker Compose with S3
@@ -97,11 +91,10 @@ services:
   imagor-studio:
     image: shumc/imagor-studio:latest
     environment:
-      - STORAGE_TYPE=s3
-      - S3_BUCKET=my-images-bucket
-      - S3_REGION=us-east-1
-      - S3_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - S3_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_STORAGE_BUCKET=my-images-bucket
+      - S3_STORAGE_REGION=us-east-1
+      - S3_STORAGE_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - S3_STORAGE_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 ```
 
 ### Docker Compose with MinIO
@@ -123,13 +116,12 @@ services:
   imagor-studio:
     image: shumc/imagor-studio:latest
     environment:
-      - STORAGE_TYPE=s3
-      - S3_BUCKET=images
-      - S3_REGION=us-east-1
-      - S3_ENDPOINT=http://minio:9000
-      - S3_FORCE_PATH_STYLE=true
-      - S3_ACCESS_KEY_ID=minioadmin
-      - S3_SECRET_ACCESS_KEY=minioadmin
+      - S3_STORAGE_BUCKET=images
+      - S3_STORAGE_REGION=us-east-1
+      - S3_STORAGE_ENDPOINT=http://minio:9000
+      - S3_STORAGE_FORCE_PATH_STYLE=true
+      - S3_STORAGE_ACCESS_KEY_ID=minioadmin
+      - S3_STORAGE_SECRET_ACCESS_KEY=minioadmin
     depends_on:
       - minio
 
@@ -151,12 +143,11 @@ Imagor Studio works with any S3-compatible service:
 ### Cloudflare R2 Example
 
 ```bash
-export STORAGE_TYPE=s3
-export S3_BUCKET=my-bucket
-export S3_REGION=auto
-export S3_ENDPOINT=https://ACCOUNT_ID.r2.cloudflarestorage.com
-export S3_ACCESS_KEY_ID=your_access_key
-export S3_SECRET_ACCESS_KEY=your_secret_key
+export S3_STORAGE_BUCKET=my-bucket
+export S3_STORAGE_REGION=auto
+export S3_STORAGE_ENDPOINT=https://ACCOUNT_ID.r2.cloudflarestorage.com
+export S3_STORAGE_ACCESS_KEY_ID=your_access_key
+export S3_STORAGE_SECRET_ACCESS_KEY=your_secret_key
 ```
 
 ## Security
@@ -197,9 +188,11 @@ Imagor Studio only needs read access to your images. Use read-only IAM policies 
 
 You can switch between storage backends by changing the configuration:
 
-1. Update `STORAGE_TYPE` environment variable
-2. Configure the new storage backend settings
+1. **To switch to S3 storage:** Add S3 storage configuration (bucket, credentials, etc.)
+2. **To switch to file storage:** Remove S3 storage configuration or set empty values
 3. Restart the application
+
+The storage type will be automatically detected based on your configuration.
 
 :::warning
 Switching storage backends doesn't migrate your images. You'll need to manually move files if needed.
