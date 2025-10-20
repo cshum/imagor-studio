@@ -242,9 +242,9 @@ func (r *queryResolver) StorageStatus(ctx context.Context) (*gql.StorageStatus, 
 func (r *queryResolver) getFileStorageConfig(ctx context.Context) (*gql.FileStorageConfig, bool) {
 	// Use batch operation for better performance
 	results := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
-		"config.file_base_dir",
-		"config.file_mkdir_permissions",
-		"config.file_write_permissions")
+		"config.file_storage_base_dir",
+		"config.file_storage_mkdir_permissions",
+		"config.file_storage_write_permissions")
 
 	// Create a map for easy lookup
 	resultMap := make(map[string]registryutil.EffectiveValueResult)
@@ -263,17 +263,17 @@ func (r *queryResolver) getFileStorageConfig(ctx context.Context) (*gql.FileStor
 
 	// Set defaults and override with registry values if they exist
 	baseDir := "/app/gallery" // Default
-	if result := resultMap["config.file_base_dir"]; result.Exists {
+	if result := resultMap["config.file_storage_base_dir"]; result.Exists {
 		baseDir = result.Value
 	}
 
 	mkdirPermissions := "0755" // Default
-	if result := resultMap["config.file_mkdir_permissions"]; result.Exists {
+	if result := resultMap["config.file_storage_mkdir_permissions"]; result.Exists {
 		mkdirPermissions = result.Value
 	}
 
 	writePermissions := "0644" // Default
-	if result := resultMap["config.file_write_permissions"]; result.Exists {
+	if result := resultMap["config.file_storage_write_permissions"]; result.Exists {
 		writePermissions = result.Value
 	}
 
@@ -288,11 +288,11 @@ func (r *queryResolver) getFileStorageConfig(ctx context.Context) (*gql.FileStor
 func (r *queryResolver) getS3StorageConfig(ctx context.Context) (*gql.S3StorageConfig, bool) {
 	// Use batch operation for better performance
 	results := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
-		"config.s3_bucket",
-		"config.s3_region",
-		"config.s3_endpoint",
-		"config.s3_force_path_style",
-		"config.s3_base_dir")
+		"config.s3_storage_bucket",
+		"config.s3_storage_region",
+		"config.s3_storage_endpoint",
+		"config.s3_storage_force_path_style",
+		"config.s3_storage_base_dir")
 
 	// Create a map for easy lookup
 	resultMap := make(map[string]registryutil.EffectiveValueResult)
@@ -301,7 +301,7 @@ func (r *queryResolver) getS3StorageConfig(ctx context.Context) (*gql.S3StorageC
 	}
 
 	// Check if bucket exists (required)
-	bucketResult := resultMap["config.s3_bucket"]
+	bucketResult := resultMap["config.s3_storage_bucket"]
 	if !bucketResult.Exists {
 		return nil, false
 	}
@@ -319,21 +319,21 @@ func (r *queryResolver) getS3StorageConfig(ctx context.Context) (*gql.S3StorageC
 		Bucket: bucketResult.Value,
 	}
 
-	if regionResult := resultMap["config.s3_region"]; regionResult.Exists {
+	if regionResult := resultMap["config.s3_storage_region"]; regionResult.Exists {
 		c.Region = &regionResult.Value
 	}
 
-	if endpointResult := resultMap["config.s3_endpoint"]; endpointResult.Exists {
+	if endpointResult := resultMap["config.s3_storage_endpoint"]; endpointResult.Exists {
 		c.Endpoint = &endpointResult.Value
 	}
 
-	if forcePathStyleResult := resultMap["config.s3_force_path_style"]; forcePathStyleResult.Exists {
+	if forcePathStyleResult := resultMap["config.s3_storage_force_path_style"]; forcePathStyleResult.Exists {
 		if forcePathStyle, err := strconv.ParseBool(forcePathStyleResult.Value); err == nil {
 			c.ForcePathStyle = &forcePathStyle
 		}
 	}
 
-	if baseDirResult := resultMap["config.s3_base_dir"]; baseDirResult.Exists {
+	if baseDirResult := resultMap["config.s3_storage_base_dir"]; baseDirResult.Exists {
 		c.BaseDir = &baseDirResult.Value
 	}
 
@@ -374,19 +374,19 @@ func (r *mutationResolver) ConfigureFileStorage(ctx context.Context, input gql.F
 	entries := []gql.RegistryEntryInput{
 		{Key: "config.storage_type", Value: "file", IsEncrypted: false},
 		{Key: "config.storage_configured", Value: "true", IsEncrypted: false},
-		{Key: "config.file_base_dir", Value: input.BaseDir, IsEncrypted: false},
+		{Key: "config.file_storage_base_dir", Value: input.BaseDir, IsEncrypted: false},
 		{Key: "config.storage_config_updated_at", Value: timestampStr, IsEncrypted: false},
 	}
 
 	// Add optional permissions
 	if input.MkdirPermissions != nil {
 		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.file_mkdir_permissions", Value: *input.MkdirPermissions, IsEncrypted: false,
+			Key: "config.file_storage_mkdir_permissions", Value: *input.MkdirPermissions, IsEncrypted: false,
 		})
 	}
 	if input.WritePermissions != nil {
 		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.file_write_permissions", Value: *input.WritePermissions, IsEncrypted: false,
+			Key: "config.file_storage_write_permissions", Value: *input.WritePermissions, IsEncrypted: false,
 		})
 	}
 
@@ -464,44 +464,44 @@ func (r *mutationResolver) ConfigureS3Storage(ctx context.Context, input gql.S3S
 	entries := []gql.RegistryEntryInput{
 		{Key: "config.storage_type", Value: "s3", IsEncrypted: false},
 		{Key: "config.storage_configured", Value: "true", IsEncrypted: false},
-		{Key: "config.s3_bucket", Value: input.Bucket, IsEncrypted: false},
+		{Key: "config.s3_storage_bucket", Value: input.Bucket, IsEncrypted: false},
 		{Key: "config.storage_config_updated_at", Value: timestampStr, IsEncrypted: false},
 	}
 
 	// Add optional S3 configuration
 	if input.Region != nil {
 		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.s3_region", Value: *input.Region, IsEncrypted: false,
+			Key: "config.s3_storage_region", Value: *input.Region, IsEncrypted: false,
 		})
 	}
 	if input.Endpoint != nil {
 		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.s3_endpoint", Value: *input.Endpoint, IsEncrypted: false,
+			Key: "config.s3_storage_endpoint", Value: *input.Endpoint, IsEncrypted: false,
 		})
 	}
 	if input.AccessKeyID != nil {
 		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.s3_access_key_id", Value: *input.AccessKeyID, IsEncrypted: true,
+			Key: "config.s3_storage_access_key_id", Value: *input.AccessKeyID, IsEncrypted: true,
 		})
 	}
 	if input.SecretAccessKey != nil {
 		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.s3_secret_access_key", Value: *input.SecretAccessKey, IsEncrypted: true,
+			Key: "config.s3_storage_secret_access_key", Value: *input.SecretAccessKey, IsEncrypted: true,
 		})
 	}
 	if input.SessionToken != nil {
 		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.s3_session_token", Value: *input.SessionToken, IsEncrypted: true,
+			Key: "config.s3_storage_session_token", Value: *input.SessionToken, IsEncrypted: true,
 		})
 	}
 	if input.ForcePathStyle != nil {
 		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.s3_force_path_style", Value: fmt.Sprintf("%t", *input.ForcePathStyle), IsEncrypted: false,
+			Key: "config.s3_storage_force_path_style", Value: fmt.Sprintf("%t", *input.ForcePathStyle), IsEncrypted: false,
 		})
 	}
 	if input.BaseDir != nil {
 		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.s3_base_dir", Value: *input.BaseDir, IsEncrypted: false,
+			Key: "config.s3_storage_base_dir", Value: *input.BaseDir, IsEncrypted: false,
 		})
 	}
 
@@ -547,10 +547,10 @@ func (r *mutationResolver) validateStorageConfig(ctx context.Context, input gql.
 			}
 		}
 		cfg.StorageType = "file"
-		cfg.FileBaseDir = input.FileConfig.BaseDir
+		cfg.FileStorageBaseDir = input.FileConfig.BaseDir
 		// Set defaults for permissions if not provided
-		cfg.FileMkdirPermissions = 0755
-		cfg.FileWritePermissions = 0644
+		cfg.FileStorageMkdirPermissions = 0755
+		cfg.FileStorageWritePermissions = 0644
 
 	case gql.StorageTypeS3:
 		if input.S3Config == nil {
@@ -560,27 +560,27 @@ func (r *mutationResolver) validateStorageConfig(ctx context.Context, input gql.
 			}
 		}
 		cfg.StorageType = "s3"
-		cfg.S3Bucket = input.S3Config.Bucket
+		cfg.S3StorageBucket = input.S3Config.Bucket
 		if input.S3Config.Region != nil {
-			cfg.S3Region = *input.S3Config.Region
+			cfg.S3StorageRegion = *input.S3Config.Region
 		}
 		if input.S3Config.Endpoint != nil {
-			cfg.S3Endpoint = *input.S3Config.Endpoint
+			cfg.S3StorageEndpoint = *input.S3Config.Endpoint
 		}
 		if input.S3Config.AccessKeyID != nil {
-			cfg.S3AccessKeyID = *input.S3Config.AccessKeyID
+			cfg.S3StorageAccessKeyID = *input.S3Config.AccessKeyID
 		}
 		if input.S3Config.SecretAccessKey != nil {
-			cfg.S3SecretAccessKey = *input.S3Config.SecretAccessKey
+			cfg.S3StorageSecretAccessKey = *input.S3Config.SecretAccessKey
 		}
 		if input.S3Config.SessionToken != nil {
-			cfg.S3SessionToken = *input.S3Config.SessionToken
+			cfg.S3StorageSessionToken = *input.S3Config.SessionToken
 		}
 		if input.S3Config.ForcePathStyle != nil {
-			cfg.S3ForcePathStyle = *input.S3Config.ForcePathStyle
+			cfg.S3StorageForcePathStyle = *input.S3Config.ForcePathStyle
 		}
 		if input.S3Config.BaseDir != nil {
-			cfg.S3BaseDir = *input.S3Config.BaseDir
+			cfg.S3StorageBaseDir = *input.S3Config.BaseDir
 		}
 	}
 

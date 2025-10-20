@@ -447,8 +447,8 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 	case "file", "filesystem":
 		// Create imagor file storage as LOADER only with custom SafeChars for Unicode handling
 		fileStorageOptions := []filestorage.Option{
-			filestorage.WithMkdirPermission(storageConfig.FileMkdirPermissions.String()),
-			filestorage.WithWritePermission(storageConfig.FileWritePermissions.String()),
+			filestorage.WithMkdirPermission(storageConfig.FileStorageMkdirPermissions.String()),
+			filestorage.WithWritePermission(storageConfig.FileStorageWritePermissions.String()),
 			filestorage.WithSafeChars("--"),
 		}
 
@@ -460,7 +460,7 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 		}
 
 		fileStorage := filestorage.New(
-			storageConfig.FileBaseDir,
+			storageConfig.FileStorageBaseDir,
 			fileStorageOptions...,
 		)
 		options = append(options, imagor.WithLoaders(fileStorage))
@@ -473,10 +473,10 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 			return nil
 		}
 
-		s3Storage := s3storage.New(*awsConfig, storageConfig.S3Bucket,
-			s3storage.WithBaseDir(storageConfig.S3BaseDir),
-			s3storage.WithEndpoint(storageConfig.S3Endpoint),
-			s3storage.WithForcePathStyle(storageConfig.S3ForcePathStyle),
+		s3Storage := s3storage.New(*awsConfig, storageConfig.S3StorageBucket,
+			s3storage.WithBaseDir(storageConfig.S3StorageBaseDir),
+			s3storage.WithEndpoint(storageConfig.S3StorageEndpoint),
+			s3storage.WithForcePathStyle(storageConfig.S3StorageForcePathStyle),
 			s3storage.WithSafeChars("--"),
 		)
 		options = append(options, imagor.WithLoaders(s3Storage))
@@ -511,18 +511,18 @@ func (p *Provider) buildStorageConfigFromRegistry() (*config.Config, error) {
 	results := registryutil.GetEffectiveValues(ctx, p.registryStore, p.config,
 		"config.storage_type",
 		// File storage keys
-		"config.file_base_dir",
-		"config.file_mkdir_permissions",
-		"config.file_write_permissions",
+		"config.file_storage_base_dir",
+		"config.file_storage_mkdir_permissions",
+		"config.file_storage_write_permissions",
 		// S3 storage keys
-		"config.s3_bucket",
-		"config.s3_region",
-		"config.s3_endpoint",
-		"config.s3_force_path_style",
-		"config.s3_access_key_id",
-		"config.s3_secret_access_key",
-		"config.s3_session_token",
-		"config.s3_base_dir")
+		"config.s3_storage_bucket",
+		"config.s3_storage_region",
+		"config.s3_storage_endpoint",
+		"config.s3_storage_force_path_style",
+		"config.s3_storage_access_key_id",
+		"config.s3_storage_secret_access_key",
+		"config.s3_storage_session_token",
+		"config.s3_storage_base_dir")
 
 	// Create a map for easy lookup
 	resultMap := make(map[string]registryutil.EffectiveValueResult)
@@ -550,63 +550,63 @@ func (p *Provider) buildStorageConfigFromRegistry() (*config.Config, error) {
 
 // loadFileConfigFromResults loads file storage configuration from pre-fetched results
 func (p *Provider) loadFileConfigFromResults(resultMap map[string]registryutil.EffectiveValueResult, cfg *config.Config) {
-	if result := resultMap["config.file_base_dir"]; result.Exists {
-		cfg.FileBaseDir = result.Value
+	if result := resultMap["config.file_storage_base_dir"]; result.Exists {
+		cfg.FileStorageBaseDir = result.Value
 	} else {
-		cfg.FileBaseDir = "/app/gallery" // Default
+		cfg.FileStorageBaseDir = "/app/gallery" // Default
 	}
 
-	if result := resultMap["config.file_mkdir_permissions"]; result.Exists {
+	if result := resultMap["config.file_storage_mkdir_permissions"]; result.Exists {
 		if perm, err := strconv.ParseUint(result.Value, 8, 32); err == nil {
-			cfg.FileMkdirPermissions = os.FileMode(perm)
+			cfg.FileStorageMkdirPermissions = os.FileMode(perm)
 		}
 	} else {
-		cfg.FileMkdirPermissions = 0755 // Default
+		cfg.FileStorageMkdirPermissions = 0755 // Default
 	}
 
-	if result := resultMap["config.file_write_permissions"]; result.Exists {
+	if result := resultMap["config.file_storage_write_permissions"]; result.Exists {
 		if perm, err := strconv.ParseUint(result.Value, 8, 32); err == nil {
-			cfg.FileWritePermissions = os.FileMode(perm)
+			cfg.FileStorageWritePermissions = os.FileMode(perm)
 		}
 	} else {
-		cfg.FileWritePermissions = 0644 // Default
+		cfg.FileStorageWritePermissions = 0644 // Default
 	}
 }
 
 // loadS3ConfigFromResults loads S3 storage configuration from pre-fetched results
 func (p *Provider) loadS3ConfigFromResults(resultMap map[string]registryutil.EffectiveValueResult, cfg *config.Config) {
-	if result := resultMap["config.s3_bucket"]; result.Exists {
-		cfg.S3Bucket = result.Value
+	if result := resultMap["config.s3_storage_bucket"]; result.Exists {
+		cfg.S3StorageBucket = result.Value
 	}
 
-	if result := resultMap["config.s3_region"]; result.Exists {
-		cfg.S3Region = result.Value
+	if result := resultMap["config.s3_storage_region"]; result.Exists {
+		cfg.S3StorageRegion = result.Value
 	}
 
-	if result := resultMap["config.s3_endpoint"]; result.Exists {
-		cfg.S3Endpoint = result.Value
+	if result := resultMap["config.s3_storage_endpoint"]; result.Exists {
+		cfg.S3StorageEndpoint = result.Value
 	}
 
-	if result := resultMap["config.s3_force_path_style"]; result.Exists {
+	if result := resultMap["config.s3_storage_force_path_style"]; result.Exists {
 		if forcePathStyle, err := strconv.ParseBool(result.Value); err == nil {
-			cfg.S3ForcePathStyle = forcePathStyle
+			cfg.S3StorageForcePathStyle = forcePathStyle
 		}
 	}
 
-	if result := resultMap["config.s3_access_key_id"]; result.Exists {
-		cfg.S3AccessKeyID = result.Value
+	if result := resultMap["config.s3_storage_access_key_id"]; result.Exists {
+		cfg.S3StorageAccessKeyID = result.Value
 	}
 
-	if result := resultMap["config.s3_secret_access_key"]; result.Exists {
-		cfg.S3SecretAccessKey = result.Value
+	if result := resultMap["config.s3_storage_secret_access_key"]; result.Exists {
+		cfg.S3StorageSecretAccessKey = result.Value
 	}
 
-	if result := resultMap["config.s3_session_token"]; result.Exists {
-		cfg.S3SessionToken = result.Value
+	if result := resultMap["config.s3_storage_session_token"]; result.Exists {
+		cfg.S3StorageSessionToken = result.Value
 	}
 
-	if result := resultMap["config.s3_base_dir"]; result.Exists {
-		cfg.S3BaseDir = result.Value
+	if result := resultMap["config.s3_storage_base_dir"]; result.Exists {
+		cfg.S3StorageBaseDir = result.Value
 	}
 }
 
@@ -622,16 +622,16 @@ func (p *Provider) buildAWSConfig(storageConfig *config.Config) *aws.Config {
 	}
 
 	// Set region if provided
-	if storageConfig.S3Region != "" {
-		cfg.Region = storageConfig.S3Region
+	if storageConfig.S3StorageRegion != "" {
+		cfg.Region = storageConfig.S3StorageRegion
 	}
 
 	// Set credentials if provided
-	if storageConfig.S3AccessKeyID != "" && storageConfig.S3SecretAccessKey != "" {
+	if storageConfig.S3StorageAccessKeyID != "" && storageConfig.S3StorageSecretAccessKey != "" {
 		cfg.Credentials = credentials.NewStaticCredentialsProvider(
-			storageConfig.S3AccessKeyID,
-			storageConfig.S3SecretAccessKey,
-			storageConfig.S3SessionToken,
+			storageConfig.S3StorageAccessKeyID,
+			storageConfig.S3StorageSecretAccessKey,
+			storageConfig.S3StorageSessionToken,
 		)
 	}
 

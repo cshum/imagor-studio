@@ -64,56 +64,56 @@ func (p *Provider) NewStorageFromConfig(cfg *config.Config) (storage.Storage, er
 // NewFileStorage creates a file storage instance
 func (p *Provider) NewFileStorage(cfg *config.Config) (storage.Storage, error) {
 	p.logger.Info("Creating file storage",
-		zap.String("baseDir", cfg.FileBaseDir),
-		zap.String("mkdirPermissions", cfg.FileMkdirPermissions.String()),
-		zap.String("writePermissions", cfg.FileWritePermissions.String()),
+		zap.String("baseDir", cfg.FileStorageBaseDir),
+		zap.String("mkdirPermissions", cfg.FileStorageMkdirPermissions.String()),
+		zap.String("writePermissions", cfg.FileStorageWritePermissions.String()),
 	)
 
-	return filestorage.New(cfg.FileBaseDir,
-		filestorage.WithMkdirPermission(cfg.FileMkdirPermissions),
-		filestorage.WithWritePermission(cfg.FileWritePermissions),
+	return filestorage.New(cfg.FileStorageBaseDir,
+		filestorage.WithMkdirPermission(cfg.FileStorageMkdirPermissions),
+		filestorage.WithWritePermission(cfg.FileStorageWritePermissions),
 		filestorage.WithLogger(p.logger),
 	)
 }
 
 // NewS3Storage creates an S3 storage instance
 func (p *Provider) NewS3Storage(cfg *config.Config) (storage.Storage, error) {
-	if cfg.S3Bucket == "" {
-		return nil, fmt.Errorf("s3-bucket is required when storage-type is s3")
+	if cfg.S3StorageBucket == "" {
+		return nil, fmt.Errorf("s3-storage-bucket is required when storage-type is s3")
 	}
 
 	p.logger.Info("Creating S3 storage",
-		zap.String("bucket", cfg.S3Bucket),
-		zap.String("region", cfg.S3Region),
-		zap.String("endpoint", cfg.S3Endpoint),
-		zap.String("baseDir", cfg.S3BaseDir),
+		zap.String("bucket", cfg.S3StorageBucket),
+		zap.String("region", cfg.S3StorageRegion),
+		zap.String("endpoint", cfg.S3StorageEndpoint),
+		zap.String("baseDir", cfg.S3StorageBaseDir),
 	)
 
 	var options []s3storage.Option
 
-	if cfg.S3Region != "" {
-		options = append(options, s3storage.WithRegion(cfg.S3Region))
+	if cfg.S3StorageRegion != "" {
+		options = append(options, s3storage.WithRegion(cfg.S3StorageRegion))
 	}
 
-	if cfg.S3Endpoint != "" {
-		options = append(options, s3storage.WithEndpoint(cfg.S3Endpoint))
+	if cfg.S3StorageEndpoint != "" {
+		options = append(options, s3storage.WithEndpoint(cfg.S3StorageEndpoint))
 	}
 
-	if cfg.S3AccessKeyID != "" && cfg.S3SecretAccessKey != "" {
+	if cfg.S3StorageAccessKeyID != "" && cfg.S3StorageSecretAccessKey != "" {
 		options = append(options, s3storage.WithCredentials(
-			cfg.S3AccessKeyID,
-			cfg.S3SecretAccessKey,
-			cfg.S3SessionToken,
+			cfg.S3StorageAccessKeyID,
+			cfg.S3StorageSecretAccessKey,
+			cfg.S3StorageSessionToken,
 		))
 	}
 
-	if cfg.S3BaseDir != "" {
-		options = append(options, s3storage.WithBaseDir(cfg.S3BaseDir))
+	if cfg.S3StorageBaseDir != "" {
+		options = append(options, s3storage.WithBaseDir(cfg.S3StorageBaseDir))
 	}
 
-	options = append(options, s3storage.WithForcePathStyle(cfg.S3ForcePathStyle))
+	options = append(options, s3storage.WithForcePathStyle(cfg.S3StorageForcePathStyle))
 
-	return s3storage.New(cfg.S3Bucket, options...)
+	return s3storage.New(cfg.S3StorageBucket, options...)
 }
 
 // GetStorage returns the current storage instance, checking registry if in NoOp state
@@ -265,18 +265,18 @@ func (p *Provider) buildConfigFromRegistry() (*config.Config, error) {
 	results := registryutil.GetEffectiveValues(ctx, p.registryStore, p.config,
 		"config.storage_type",
 		// File storage keys
-		"config.file_base_dir",
-		"config.file_mkdir_permissions",
-		"config.file_write_permissions",
+		"config.file_storage_base_dir",
+		"config.file_storage_mkdir_permissions",
+		"config.file_storage_write_permissions",
 		// S3 storage keys
-		"config.s3_bucket",
-		"config.s3_region",
-		"config.s3_endpoint",
-		"config.s3_force_path_style",
-		"config.s3_access_key_id",
-		"config.s3_secret_access_key",
-		"config.s3_session_token",
-		"config.s3_base_dir")
+		"config.s3_storage_bucket",
+		"config.s3_storage_region",
+		"config.s3_storage_endpoint",
+		"config.s3_storage_force_path_style",
+		"config.s3_storage_access_key_id",
+		"config.s3_storage_secret_access_key",
+		"config.s3_storage_session_token",
+		"config.s3_storage_base_dir")
 
 	// Create a map for easy lookup
 	resultMap := make(map[string]registryutil.EffectiveValueResult)
@@ -310,30 +310,30 @@ func (p *Provider) buildConfigFromRegistry() (*config.Config, error) {
 
 // loadFileConfigFromResults loads file storage configuration from pre-fetched results
 func (p *Provider) loadFileConfigFromResults(resultMap map[string]registryutil.EffectiveValueResult, cfg *config.Config) error {
-	if result := resultMap["config.file_base_dir"]; result.Exists {
-		cfg.FileBaseDir = result.Value
+	if result := resultMap["config.file_storage_base_dir"]; result.Exists {
+		cfg.FileStorageBaseDir = result.Value
 	} else {
-		cfg.FileBaseDir = "/app/gallery" // Default
+		cfg.FileStorageBaseDir = "/app/gallery" // Default
 	}
 
-	if result := resultMap["config.file_mkdir_permissions"]; result.Exists {
+	if result := resultMap["config.file_storage_mkdir_permissions"]; result.Exists {
 		perm, err := strconv.ParseUint(result.Value, 8, 32)
 		if err != nil {
 			return fmt.Errorf("invalid file mkdir permissions: %w", err)
 		}
-		cfg.FileMkdirPermissions = os.FileMode(perm)
+		cfg.FileStorageMkdirPermissions = os.FileMode(perm)
 	} else {
-		cfg.FileMkdirPermissions = 0755 // Default
+		cfg.FileStorageMkdirPermissions = 0755 // Default
 	}
 
-	if result := resultMap["config.file_write_permissions"]; result.Exists {
+	if result := resultMap["config.file_storage_write_permissions"]; result.Exists {
 		perm, err := strconv.ParseUint(result.Value, 8, 32)
 		if err != nil {
 			return fmt.Errorf("invalid file write permissions: %w", err)
 		}
-		cfg.FileWritePermissions = os.FileMode(perm)
+		cfg.FileStorageWritePermissions = os.FileMode(perm)
 	} else {
-		cfg.FileWritePermissions = 0644 // Default
+		cfg.FileStorageWritePermissions = 0644 // Default
 	}
 
 	return nil
@@ -341,42 +341,42 @@ func (p *Provider) loadFileConfigFromResults(resultMap map[string]registryutil.E
 
 // loadS3ConfigFromResults loads S3 storage configuration from pre-fetched results
 func (p *Provider) loadS3ConfigFromResults(resultMap map[string]registryutil.EffectiveValueResult, cfg *config.Config) error {
-	if result := resultMap["config.s3_bucket"]; result.Exists {
-		cfg.S3Bucket = result.Value
+	if result := resultMap["config.s3_storage_bucket"]; result.Exists {
+		cfg.S3StorageBucket = result.Value
 	} else {
 		return fmt.Errorf("s3 bucket is required")
 	}
 
-	if result := resultMap["config.s3_region"]; result.Exists {
-		cfg.S3Region = result.Value
+	if result := resultMap["config.s3_storage_region"]; result.Exists {
+		cfg.S3StorageRegion = result.Value
 	}
 
-	if result := resultMap["config.s3_endpoint"]; result.Exists {
-		cfg.S3Endpoint = result.Value
+	if result := resultMap["config.s3_storage_endpoint"]; result.Exists {
+		cfg.S3StorageEndpoint = result.Value
 	}
 
-	if result := resultMap["config.s3_force_path_style"]; result.Exists {
+	if result := resultMap["config.s3_storage_force_path_style"]; result.Exists {
 		forcePathStyle, err := strconv.ParseBool(result.Value)
 		if err != nil {
 			return fmt.Errorf("invalid s3 force path style value: %w", err)
 		}
-		cfg.S3ForcePathStyle = forcePathStyle
+		cfg.S3StorageForcePathStyle = forcePathStyle
 	}
 
-	if result := resultMap["config.s3_access_key_id"]; result.Exists {
-		cfg.S3AccessKeyID = result.Value
+	if result := resultMap["config.s3_storage_access_key_id"]; result.Exists {
+		cfg.S3StorageAccessKeyID = result.Value
 	}
 
-	if result := resultMap["config.s3_secret_access_key"]; result.Exists {
-		cfg.S3SecretAccessKey = result.Value
+	if result := resultMap["config.s3_storage_secret_access_key"]; result.Exists {
+		cfg.S3StorageSecretAccessKey = result.Value
 	}
 
-	if result := resultMap["config.s3_session_token"]; result.Exists {
-		cfg.S3SessionToken = result.Value
+	if result := resultMap["config.s3_storage_session_token"]; result.Exists {
+		cfg.S3StorageSessionToken = result.Value
 	}
 
-	if result := resultMap["config.s3_base_dir"]; result.Exists {
-		cfg.S3BaseDir = result.Value
+	if result := resultMap["config.s3_storage_base_dir"]; result.Exists {
+		cfg.S3StorageBaseDir = result.Value
 	}
 
 	return nil

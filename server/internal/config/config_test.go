@@ -30,7 +30,7 @@ func TestLoadBasic(t *testing.T) {
 	assert.Equal(t, 8080, cfg.Port)
 	assert.Equal(t, "sqlite:./imagor-studio.db", cfg.DatabaseURL)
 	assert.Equal(t, "file", cfg.StorageType) // auto-detected default
-	assert.Equal(t, "/app/gallery", cfg.FileBaseDir)
+	assert.Equal(t, "/app/gallery", cfg.FileStorageBaseDir)
 	assert.Equal(t, "embedded", cfg.ImagorMode)
 	assert.Equal(t, "", cfg.ImagorBaseURL)
 	assert.Equal(t, 168*time.Hour, cfg.JWTExpiration)
@@ -46,7 +46,7 @@ func TestLoadWithArgs(t *testing.T) {
 	args := []string{
 		"--port", "9090",
 		"--storage-type", "s3",
-		"--s3-bucket", "test-bucket",
+		"--s3-storage-bucket", "test-bucket",
 		"--imagor-mode", "disabled",
 		"--jwt-secret", "test-secret",
 	}
@@ -58,7 +58,7 @@ func TestLoadWithArgs(t *testing.T) {
 	// Verify custom values
 	assert.Equal(t, 9090, cfg.Port)
 	assert.Equal(t, "s3", cfg.StorageType)
-	assert.Equal(t, "test-bucket", cfg.S3Bucket)
+	assert.Equal(t, "test-bucket", cfg.S3StorageBucket)
 	assert.Equal(t, "disabled", cfg.ImagorMode)
 }
 
@@ -66,12 +66,12 @@ func TestLoadWithEnvVars(t *testing.T) {
 	// Set environment variables
 	os.Setenv("PORT", "7070")
 	os.Setenv("STORAGE_TYPE", "s3")
-	os.Setenv("S3_BUCKET", "env-bucket")
+	os.Setenv("S3_STORAGE_BUCKET", "env-bucket")
 	os.Setenv("IMAGOR_MODE", "embedded")
 	defer func() {
 		os.Unsetenv("PORT")
 		os.Unsetenv("STORAGE_TYPE")
-		os.Unsetenv("S3_BUCKET")
+		os.Unsetenv("S3_STORAGE_BUCKET")
 		os.Unsetenv("IMAGOR_MODE")
 	}()
 
@@ -82,7 +82,7 @@ func TestLoadWithEnvVars(t *testing.T) {
 	// Verify environment values
 	assert.Equal(t, 7070, cfg.Port)
 	assert.Equal(t, "s3", cfg.StorageType)
-	assert.Equal(t, "env-bucket", cfg.S3Bucket)
+	assert.Equal(t, "env-bucket", cfg.S3StorageBucket)
 	assert.Equal(t, "embedded", cfg.ImagorMode)
 }
 
@@ -99,7 +99,7 @@ func TestLoadWithRegistry(t *testing.T) {
 	ctx := context.Background()
 	_, err := registryStore.Set(ctx, registrystore.SystemOwnerID, "config.storage_type", "s3", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.s3_bucket", "registry-bucket", false)
+	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.s3_storage_bucket", "registry-bucket", false)
 	require.NoError(t, err)
 	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "disabled", false)
 	require.NoError(t, err)
@@ -111,7 +111,7 @@ func TestLoadWithRegistry(t *testing.T) {
 
 	// Verify registry values were applied
 	assert.Equal(t, "s3", cfg.StorageType)
-	assert.Equal(t, "registry-bucket", cfg.S3Bucket)
+	assert.Equal(t, "registry-bucket", cfg.S3StorageBucket)
 	assert.Equal(t, "disabled", cfg.ImagorMode)
 }
 
@@ -213,8 +213,8 @@ func TestValidateStorageConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &Config{
-				StorageType: tt.storageType,
-				S3Bucket:    tt.s3Bucket,
+				StorageType:     tt.storageType,
+				S3StorageBucket: tt.s3Bucket,
 			}
 
 			err := cfg.validateStorageConfig()
@@ -242,7 +242,7 @@ func TestAutoParsingWithConfigPrefix(t *testing.T) {
 	require.NoError(t, err)
 	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.storage_type", "s3", false)
 	require.NoError(t, err)
-	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.s3_bucket", "auto-parsed-bucket", false)
+	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.s3_storage_bucket", "auto-parsed-bucket", false)
 	require.NoError(t, err)
 	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.allow_guest_mode", "true", false)
 	require.NoError(t, err)
@@ -255,7 +255,7 @@ func TestAutoParsingWithConfigPrefix(t *testing.T) {
 	// Verify auto-parsed registry values were applied
 	assert.Equal(t, "registry-jwt-secret", cfg.JWTSecret)
 	assert.Equal(t, "s3", cfg.StorageType)
-	assert.Equal(t, "auto-parsed-bucket", cfg.S3Bucket)
+	assert.Equal(t, "auto-parsed-bucket", cfg.S3StorageBucket)
 	assert.Equal(t, true, cfg.AllowGuestMode)
 }
 
@@ -446,8 +446,8 @@ func TestJWTSecretOverridesPersisted(t *testing.T) {
 func TestConfigFilePermissions(t *testing.T) {
 	// Test file permission parsing
 	args := []string{
-		"--file-mkdir-permissions", "0755",
-		"--file-write-permissions", "0644",
+		"--file-storage-mkdir-permissions", "0755",
+		"--file-storage-write-permissions", "0644",
 		"--jwt-secret", "test-secret",
 	}
 
@@ -455,8 +455,8 @@ func TestConfigFilePermissions(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	assert.Equal(t, os.FileMode(0755), cfg.FileMkdirPermissions)
-	assert.Equal(t, os.FileMode(0644), cfg.FileWritePermissions)
+	assert.Equal(t, os.FileMode(0755), cfg.FileStorageMkdirPermissions)
+	assert.Equal(t, os.FileMode(0644), cfg.FileStorageWritePermissions)
 }
 
 func TestConfigInvalidValues(t *testing.T) {
@@ -477,13 +477,13 @@ func TestConfigInvalidValues(t *testing.T) {
 		},
 		{
 			name:          "invalid mkdir permissions",
-			args:          []string{"--file-mkdir-permissions", "invalid", "--jwt-secret", "test"},
-			errorContains: "invalid file-mkdir-permissions",
+			args:          []string{"--file-storage-mkdir-permissions", "invalid", "--jwt-secret", "test"},
+			errorContains: "invalid file-storage-mkdir-permissions",
 		},
 		{
 			name:          "invalid write permissions",
-			args:          []string{"--file-write-permissions", "invalid", "--jwt-secret", "test"},
-			errorContains: "invalid file-write-permissions",
+			args:          []string{"--file-storage-write-permissions", "invalid", "--jwt-secret", "test"},
+			errorContains: "invalid file-storage-write-permissions",
 		},
 	}
 
@@ -690,7 +690,7 @@ func TestStorageTypeAutoPopulation(t *testing.T) {
 	}{
 		{
 			name:         "Auto-detect S3 from bucket",
-			args:         []string{"--s3-bucket", "my-bucket", "--jwt-secret", "test"},
+			args:         []string{"--s3-storage-bucket", "my-bucket", "--jwt-secret", "test"},
 			expectedType: "s3",
 			description:  "Should auto-detect s3 when S3 bucket is provided",
 		},
@@ -702,14 +702,14 @@ func TestStorageTypeAutoPopulation(t *testing.T) {
 		},
 		{
 			name:         "Auto-detect file with custom file base dir",
-			args:         []string{"--file-base-dir", "/custom/path", "--jwt-secret", "test"},
+			args:         []string{"--file-storage-base-dir", "/custom/path", "--jwt-secret", "test"},
 			expectedType: "file",
 			description:  "Should default to file when file configuration is provided",
 		},
 		{
 			name: "Auto-detect S3 from env bucket",
 			envVars: map[string]string{
-				"S3_BUCKET": "env-bucket",
+				"S3_STORAGE_BUCKET": "env-bucket",
 			},
 			args:         []string{"--jwt-secret", "test"},
 			expectedType: "s3",
@@ -717,15 +717,15 @@ func TestStorageTypeAutoPopulation(t *testing.T) {
 		},
 		{
 			name:         "Explicit storage type overrides auto-detection",
-			args:         []string{"--storage-type", "file", "--s3-bucket", "my-bucket", "--jwt-secret", "test"},
+			args:         []string{"--storage-type", "file", "--s3-storage-bucket", "my-bucket", "--jwt-secret", "test"},
 			expectedType: "file",
 			description:  "Explicit storage-type should override auto-detection even with S3 config",
 		},
 		{
 			name: "Explicit env storage type overrides auto-detection",
 			envVars: map[string]string{
-				"STORAGE_TYPE": "file",
-				"S3_BUCKET":    "env-bucket",
+				"STORAGE_TYPE":      "file",
+				"S3_STORAGE_BUCKET": "env-bucket",
 			},
 			args:         []string{"--jwt-secret", "test"},
 			expectedType: "file",
@@ -733,7 +733,7 @@ func TestStorageTypeAutoPopulation(t *testing.T) {
 		},
 		{
 			name:         "Partial S3 config still auto-detects",
-			args:         []string{"--s3-bucket", "my-bucket", "--s3-region", "us-west-2", "--jwt-secret", "test"},
+			args:         []string{"--s3-storage-bucket", "my-bucket", "--s3-storage-region", "us-west-2", "--jwt-secret", "test"},
 			expectedType: "s3",
 			description:  "Should auto-detect s3 even with partial S3 configuration",
 		},
@@ -776,7 +776,7 @@ func TestStorageTypeAutoPopulationWithRegistry(t *testing.T) {
 		{
 			name: "Auto-detect S3 from registry bucket",
 			registryValues: map[string]string{
-				"config.s3_bucket": "registry-bucket",
+				"config.s3_storage_bucket": "registry-bucket",
 			},
 			args:         []string{"--jwt-secret", "test"},
 			expectedType: "s3",
@@ -785,8 +785,8 @@ func TestStorageTypeAutoPopulationWithRegistry(t *testing.T) {
 		{
 			name: "Explicit registry storage type overrides auto-detection",
 			registryValues: map[string]string{
-				"config.storage_type": "file",
-				"config.s3_bucket":    "registry-bucket",
+				"config.storage_type":      "file",
+				"config.s3_storage_bucket": "registry-bucket",
 			},
 			args:         []string{"--jwt-secret", "test"},
 			expectedType: "file",
@@ -795,7 +795,7 @@ func TestStorageTypeAutoPopulationWithRegistry(t *testing.T) {
 		{
 			name: "CLI overrides registry auto-detection",
 			registryValues: map[string]string{
-				"config.s3_bucket": "registry-bucket",
+				"config.s3_storage_bucket": "registry-bucket",
 			},
 			args:         []string{"--storage-type", "file", "--jwt-secret", "test"},
 			expectedType: "file",
@@ -842,7 +842,7 @@ func TestAutoPopulationValidation(t *testing.T) {
 		},
 		{
 			name:        "Auto-detected S3 with valid bucket should pass validation",
-			args:        []string{"--s3-bucket", "valid-bucket", "--jwt-secret", "test"},
+			args:        []string{"--s3-storage-bucket", "valid-bucket", "--jwt-secret", "test"},
 			expectError: false,
 			description: "Should succeed with valid S3 configuration",
 		},
