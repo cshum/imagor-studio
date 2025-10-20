@@ -32,8 +32,7 @@ clean:
 	rm -f $(BINARY_NAME)
 	rm -f $(BINARY_UNIX)
 
-run:
-	$(GOBUILD) $(LDFLAGS) -o $(BINARY_NAME) $(MAIN_PACKAGE)
+run: build
 	./$(BINARY_NAME)
 
 deps:
