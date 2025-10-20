@@ -147,7 +147,7 @@ export async function embeddedGuestLogin(jwtToken: string): Promise<LoginRespons
   const response = await fetch(`${BASE_URL}/api/auth/embedded-guest`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+      Authorization: `Bearer ${jwtToken}`,
       'Content-Type': 'application/json',
     },
   })
