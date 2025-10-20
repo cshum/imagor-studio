@@ -9,6 +9,7 @@ import (
 // ConfigProvider interface for configuration methods
 type ConfigProvider interface {
 	GetByRegistryKey(registryKey string) (effectiveValue string, exists bool)
+	IsEmbeddedMode() bool
 }
 
 // EffectiveValueResult represents the result of a registry value lookup
@@ -64,8 +65,9 @@ func GetEffectiveValues(ctx context.Context, registryStore registrystore.Store, 
 	}
 
 	// Batch fetch from registry for non-overridden keys
+	// Skip database access if embedded mode is enabled
 	var registryEntries []*registrystore.Registry
-	if registryStore != nil && len(registryKeys) > 0 {
+	if registryStore != nil && len(registryKeys) > 0 && (cfg == nil || !cfg.IsEmbeddedMode()) {
 		var err error
 		registryEntries, err = registryStore.GetMulti(ctx, registrystore.SystemOwnerID, registryKeys)
 		if err != nil {

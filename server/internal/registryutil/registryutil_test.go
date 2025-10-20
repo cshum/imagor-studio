@@ -9,7 +9,8 @@ import (
 
 // MockConfigProvider implements the ConfigProvider interface for testing
 type MockConfigProvider struct {
-	overrides map[string]string
+	overrides    map[string]string
+	embeddedMode bool
 }
 
 func (m *MockConfigProvider) GetByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
@@ -18,6 +19,10 @@ func (m *MockConfigProvider) GetByRegistryKey(registryKey string) (effectiveValu
 	}
 	value, exists := m.overrides[registryKey]
 	return value, exists
+}
+
+func (m *MockConfigProvider) IsEmbeddedMode() bool {
+	return m.embeddedMode
 }
 
 func TestGetEffectiveValue_ConfigOverride(t *testing.T) {
@@ -95,4 +100,115 @@ func TestGetEffectiveValues_EmptyKeys(t *testing.T) {
 	ctx := context.Background()
 	results := GetEffectiveValues(ctx, nil, nil)
 	assert.Empty(t, results)
+}
+
+func TestGetEffectiveValues_EmbeddedMode(t *testing.T) {
+	// Mock config provider with embedded mode enabled
+	mockConfig := &MockConfigProvider{
+		overrides: map[string]string{
+			"config.storage_type": "s3",
+			"config.s3_bucket":    "my-bucket",
+		},
+		embeddedMode: true,
+	}
+
+	// Test that in embedded mode, only config overrides are returned
+	// and registry store is not accessed (even if provided)
+	ctx := context.Background()
+	results := GetEffectiveValues(ctx, nil, mockConfig,
+		"config.storage_type",
+		"config.s3_bucket",
+		"config.s3_region")
+
+	assert.Len(t, results, 3)
+
+	// First key - overridden by config
+	assert.Equal(t, "config.storage_type", results[0].Key)
+	assert.Equal(t, "s3", results[0].Value)
+	assert.True(t, results[0].Exists)
+	assert.True(t, results[0].IsOverriddenByConfig)
+	assert.False(t, results[0].IsEncrypted)
+
+	// Second key - overridden by config
+	assert.Equal(t, "config.s3_bucket", results[1].Key)
+	assert.Equal(t, "my-bucket", results[1].Value)
+	assert.True(t, results[1].Exists)
+	assert.True(t, results[1].IsOverriddenByConfig)
+	assert.False(t, results[1].IsEncrypted)
+
+	// Third key - not found (no config override, and registry not accessed in embedded mode)
+	assert.Equal(t, "config.s3_region", results[2].Key)
+	assert.Equal(t, "", results[2].Value)
+	assert.False(t, results[2].Exists)
+	assert.False(t, results[2].IsOverriddenByConfig)
+	assert.False(t, results[2].IsEncrypted)
+}
+
+func TestGetEffectiveValues_NonEmbeddedMode(t *testing.T) {
+	// Mock config provider with embedded mode disabled
+	mockConfig := &MockConfigProvider{
+		overrides: map[string]string{
+			"config.storage_type": "s3",
+		},
+		embeddedMode: false,
+	}
+
+	// Test that in non-embedded mode, registry store would be accessed
+	// (but we pass nil registry store, so non-config keys return not found)
+	ctx := context.Background()
+	results := GetEffectiveValues(ctx, nil, mockConfig,
+		"config.storage_type",
+		"config.s3_region")
+
+	assert.Len(t, results, 2)
+
+	// First key - overridden by config
+	assert.Equal(t, "config.storage_type", results[0].Key)
+	assert.Equal(t, "s3", results[0].Value)
+	assert.True(t, results[0].Exists)
+	assert.True(t, results[0].IsOverriddenByConfig)
+
+	// Second key - not found (no config override, and nil registry store)
+	assert.Equal(t, "config.s3_region", results[1].Key)
+	assert.Equal(t, "", results[1].Value)
+	assert.False(t, results[1].Exists)
+	assert.False(t, results[1].IsOverriddenByConfig)
+}
+
+func TestGetEffectiveValue_EmbeddedMode(t *testing.T) {
+	// Mock config provider with embedded mode enabled
+	mockConfig := &MockConfigProvider{
+		overrides: map[string]string{
+			"config.storage_type": "file",
+		},
+		embeddedMode: true,
+	}
+
+	// Test single key lookup in embedded mode
+	ctx := context.Background()
+	result := GetEffectiveValue(ctx, nil, mockConfig, "config.storage_type")
+
+	assert.True(t, result.Exists)
+	assert.Equal(t, "file", result.Value)
+	assert.True(t, result.IsOverriddenByConfig)
+	assert.False(t, result.IsEncrypted)
+	assert.Equal(t, "config.storage_type", result.Key)
+}
+
+func TestGetEffectiveValue_EmbeddedModeKeyNotFound(t *testing.T) {
+	// Mock config provider with embedded mode enabled but no overrides
+	mockConfig := &MockConfigProvider{
+		overrides:    map[string]string{},
+		embeddedMode: true,
+	}
+
+	// Test that in embedded mode, keys without config overrides return not found
+	ctx := context.Background()
+	result := GetEffectiveValue(ctx, nil, mockConfig, "config.unknown_key")
+
+	assert.False(t, result.Exists)
+	assert.Equal(t, "", result.Value)
+	assert.False(t, result.IsOverriddenByConfig)
+	assert.False(t, result.IsEncrypted)
+	assert.Equal(t, "config.unknown_key", result.Key)
 }
