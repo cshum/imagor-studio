@@ -9,6 +9,7 @@ import (
 // ConfigProvider interface for configuration methods
 type ConfigProvider interface {
 	GetByRegistryKey(registryKey string) (effectiveValue string, exists bool)
+	IsEmbeddedMode() bool
 }
 
 // EffectiveValueResult represents the result of a registry value lookup

@@ -288,6 +288,11 @@ func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, ex
 	return "", false
 }
 
+// IsEmbeddedMode returns whether embedded mode is enabled
+func (c *Config) IsEmbeddedMode() bool {
+	return c.EmbeddedMode
+}
+
 // applyRegistryValues applies registry values to flags that weren't overridden by CLI/env
 func applyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]string, registryStore registrystore.Store) error {
 	ctx := context.Background()

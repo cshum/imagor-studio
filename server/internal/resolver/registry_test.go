@@ -972,6 +972,10 @@ func (m *MockConfig) GetByRegistryKey(registryKey string) (effectiveValue string
 	return m.configValue, m.configExists
 }
 
+func (m *MockConfig) IsEmbeddedMode() bool {
+	return false // Default to non-embedded mode for tests
+}
+
 // MockConfigMultiple for testing multiple registry keys
 type MockConfigMultiple struct {
 	configs map[string]MockConfigEntry
@@ -987,4 +991,8 @@ func (m *MockConfigMultiple) GetByRegistryKey(registryKey string) (effectiveValu
 		return entry.value, entry.exists
 	}
 	return "", false
+}
+
+func (m *MockConfigMultiple) IsEmbeddedMode() bool {
+	return false // Default to non-embedded mode for tests
 }
