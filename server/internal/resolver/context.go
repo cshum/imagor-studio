@@ -3,6 +3,7 @@ package resolver
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
 )
@@ -27,28 +28,35 @@ func GetUserIDFromContext(ctx context.Context) (string, error) {
 	return ownerID, nil
 }
 
-func RequirePermission(ctx context.Context, requiredScope string) error {
+func RequirePermission(ctx context.Context, requiredScopes ...string) error {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return fmt.Errorf("unauthorized")
 	}
 
-	hasScope := false
-	for _, scope := range claims.Scopes {
-		if scope == requiredScope {
-			hasScope = true
-			break
+	// Check if user has ANY of the required scopes
+	for _, userScope := range claims.Scopes {
+		for _, requiredScope := range requiredScopes {
+			if userScope == requiredScope {
+				return nil
+			}
 		}
 	}
-	if !hasScope {
-		return fmt.Errorf("insufficient permission: %s access required", requiredScope)
+
+	if len(requiredScopes) == 1 {
+		return fmt.Errorf("insufficient permission: %s access required", requiredScopes[0])
 	}
-	return nil
+	return fmt.Errorf("insufficient permission: one of %s access required", strings.Join(requiredScopes, ", "))
 }
 
 // RequireWritePermission to check write permissions
 func RequireWritePermission(ctx context.Context) error {
 	return RequirePermission(ctx, "write")
+}
+
+// RequireEditPermission to check edit permissions
+func RequireEditPermission(ctx context.Context) error {
+	return RequirePermission(ctx, "edit", "write")
 }
 
 // RequireAdminPermission to check admin permissions
