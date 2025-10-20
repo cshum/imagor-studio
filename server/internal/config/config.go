@@ -36,19 +36,19 @@ type Config struct {
 	MigrateCommand   string // Migration command for migrate tool
 
 	// File Storage
-	FileBaseDir          string
-	FileMkdirPermissions os.FileMode
-	FileWritePermissions os.FileMode
+	FileStorageBaseDir          string
+	FileStorageMkdirPermissions os.FileMode
+	FileStorageWritePermissions os.FileMode
 
 	// S3 Storage
-	S3Bucket          string
-	S3Region          string
-	S3Endpoint        string
-	S3ForcePathStyle  bool
-	S3AccessKeyID     string
-	S3SecretAccessKey string
-	S3SessionToken    string
-	S3BaseDir         string
+	S3StorageBucket          string
+	S3StorageRegion          string
+	S3StorageEndpoint        string
+	S3StorageForcePathStyle  bool
+	S3StorageAccessKeyID     string
+	S3StorageSecretAccessKey string
+	S3StorageSessionToken    string
+	S3StorageBaseDir         string
 
 	// Imagor Configuration
 	ImagorMode           string // "external", "embedded"
@@ -89,18 +89,18 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		forceAutoMigrate = fs.Bool("force-auto-migrate", false, "force auto-migration even for PostgreSQL/MySQL (use with caution in multi-instance environments)")
 		migrateCommand   = fs.String("migrate-command", "up", "migration command: up, down, status, reset")
 
-		fileBaseDir          = fs.String("file-base-dir", "/app/gallery", "base directory for file storage")
-		fileMkdirPermissions = fs.String("file-mkdir-permissions", "0755", "directory creation permissions")
-		fileWritePermissions = fs.String("file-write-permissions", "0644", "file write permissions")
+		fileStorageBaseDir          = fs.String("file-storage-base-dir", "/app/gallery", "base directory for file storage")
+		fileStorageMkdirPermissions = fs.String("file-storage-mkdir-permissions", "0755", "directory creation permissions")
+		fileStorageWritePermissions = fs.String("file-storage-write-permissions", "0644", "file write permissions")
 
-		s3Bucket          = fs.String("s3-bucket", "", "S3 bucket name")
-		s3Region          = fs.String("s3-region", "", "S3 region")
-		s3Endpoint        = fs.String("s3-endpoint", "", "S3 endpoint (optional)")
-		s3ForcePathStyle  = fs.Bool("s3-force-path-style", false, "S3 force path style (optional)")
-		s3AccessKeyID     = fs.String("s3-access-key-id", "", "S3 access key ID (optional)")
-		s3SecretAccessKey = fs.String("s3-secret-access-key", "", "S3 secret access key (optional)")
-		s3SessionToken    = fs.String("s3-session-token", "", "S3 session token (optional)")
-		s3BaseDir         = fs.String("s3-base-dir", "", "S3 base directory (optional)")
+		s3StorageBucket          = fs.String("s3-storage-bucket", "", "S3 bucket name")
+		s3StorageRegion          = fs.String("s3-storage-region", "", "S3 region")
+		s3StorageEndpoint        = fs.String("s3-storage-endpoint", "", "S3 endpoint (optional)")
+		s3StorageForcePathStyle  = fs.Bool("s3-storage-force-path-style", false, "S3 force path style (optional)")
+		s3StorageAccessKeyID     = fs.String("s3-storage-access-key-id", "", "S3 access key ID (optional)")
+		s3StorageSecretAccessKey = fs.String("s3-storage-secret-access-key", "", "S3 secret access key (optional)")
+		s3StorageSessionToken    = fs.String("s3-storage-session-token", "", "S3 session token (optional)")
+		s3StorageBaseDir         = fs.String("s3-storage-base-dir", "", "S3 base directory (optional)")
 
 		imagorMode           = fs.String("imagor-mode", "embedded", "imagor mode: embedded, external")
 		imagorSecret         = fs.String("imagor-secret", "", "secret key for imagor")
@@ -171,14 +171,14 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 	}
 
 	// Parse file permissions
-	mkdirPerm, err := strconv.ParseUint(*fileMkdirPermissions, 8, 32)
+	mkdirPerm, err := strconv.ParseUint(*fileStorageMkdirPermissions, 8, 32)
 	if err != nil {
-		return nil, fmt.Errorf("invalid file-mkdir-permissions: %w", err)
+		return nil, fmt.Errorf("invalid file-storage-mkdir-permissions: %w", err)
 	}
 
-	writePerm, err := strconv.ParseUint(*fileWritePermissions, 8, 32)
+	writePerm, err := strconv.ParseUint(*fileStorageWritePermissions, 8, 32)
 	if err != nil {
-		return nil, fmt.Errorf("invalid file-write-permissions: %w", err)
+		return nil, fmt.Errorf("invalid file-storage-write-permissions: %w", err)
 	}
 
 	// Parse imagor signer truncate
@@ -188,45 +188,45 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 	}
 
 	cfg := &Config{
-		Port:                 portInt,
-		DatabaseURL:          *databaseURL,
-		JWTSecret:            *jwtSecret,
-		JWTExpiration:        jwtExp,
-		LicenseKey:           *licenseKey,
-		AllowGuestMode:       *allowGuestMode,
-		EmbeddedMode:         *embeddedMode,
-		ForceAutoMigrate:     *forceAutoMigrate,
-		MigrateCommand:       *migrateCommand,
-		StorageType:          *storageType,
-		FileBaseDir:          *fileBaseDir,
-		FileMkdirPermissions: os.FileMode(mkdirPerm),
-		FileWritePermissions: os.FileMode(writePerm),
-		S3Bucket:             *s3Bucket,
-		S3Region:             *s3Region,
-		S3Endpoint:           *s3Endpoint,
-		S3ForcePathStyle:     *s3ForcePathStyle,
-		S3AccessKeyID:        *s3AccessKeyID,
-		S3SecretAccessKey:    *s3SecretAccessKey,
-		S3SessionToken:       *s3SessionToken,
-		S3BaseDir:            *s3BaseDir,
-		ImagorMode:           *imagorMode,
-		ImagorBaseURL:        *imagorBaseURL,
-		ImagorSecret:         *imagorSecret,
-		ImagorUnsafe:         *imagorUnsafe,
-		ImagorSignerType:     *imagorSignerType,
-		ImagorSignerTruncate: imagorSignerTruncateInt,
-		AppHomeTitle:         *appHomeTitle,
-		AppImageExtensions:   *appImageExtensions,
-		AppVideoExtensions:   *appVideoExtensions,
-		AppShowHidden:        *appShowHidden,
-		AppDefaultSortBy:     *appDefaultSortBy,
-		AppDefaultSortOrder:  *appDefaultSortOrder,
-		overriddenFlags:      overriddenFlags,
+		Port:                        portInt,
+		DatabaseURL:                 *databaseURL,
+		JWTSecret:                   *jwtSecret,
+		JWTExpiration:               jwtExp,
+		LicenseKey:                  *licenseKey,
+		AllowGuestMode:              *allowGuestMode,
+		EmbeddedMode:                *embeddedMode,
+		ForceAutoMigrate:            *forceAutoMigrate,
+		MigrateCommand:              *migrateCommand,
+		StorageType:                 *storageType,
+		FileStorageBaseDir:          *fileStorageBaseDir,
+		FileStorageMkdirPermissions: os.FileMode(mkdirPerm),
+		FileStorageWritePermissions: os.FileMode(writePerm),
+		S3StorageBucket:             *s3StorageBucket,
+		S3StorageRegion:             *s3StorageRegion,
+		S3StorageEndpoint:           *s3StorageEndpoint,
+		S3StorageForcePathStyle:     *s3StorageForcePathStyle,
+		S3StorageAccessKeyID:        *s3StorageAccessKeyID,
+		S3StorageSecretAccessKey:    *s3StorageSecretAccessKey,
+		S3StorageSessionToken:       *s3StorageSessionToken,
+		S3StorageBaseDir:            *s3StorageBaseDir,
+		ImagorMode:                  *imagorMode,
+		ImagorBaseURL:               *imagorBaseURL,
+		ImagorSecret:                *imagorSecret,
+		ImagorUnsafe:                *imagorUnsafe,
+		ImagorSignerType:            *imagorSignerType,
+		ImagorSignerTruncate:        imagorSignerTruncateInt,
+		AppHomeTitle:                *appHomeTitle,
+		AppImageExtensions:          *appImageExtensions,
+		AppVideoExtensions:          *appVideoExtensions,
+		AppShowHidden:               *appShowHidden,
+		AppDefaultSortBy:            *appDefaultSortBy,
+		AppDefaultSortOrder:         *appDefaultSortOrder,
+		overriddenFlags:             overriddenFlags,
 	}
 
 	// Auto-populate storage type if not explicitly set
 	if cfg.StorageType == "" {
-		if cfg.S3Bucket != "" {
+		if cfg.S3StorageBucket != "" {
 			cfg.StorageType = "s3"
 		} else {
 			cfg.StorageType = "file" // default fallback
@@ -247,8 +247,8 @@ func (c *Config) validateStorageConfig() error {
 		// File storage is always valid - will create directory if needed
 		return nil
 	case "s3":
-		if c.S3Bucket == "" {
-			return fmt.Errorf("s3-bucket is required when storage-type is s3")
+		if c.S3StorageBucket == "" {
+			return fmt.Errorf("s3-storage-bucket is required when storage-type is s3")
 		}
 		return nil
 	default:

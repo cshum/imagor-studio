@@ -93,9 +93,9 @@ func TestProvider_NewFileStorage(t *testing.T) {
 	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
-		FileBaseDir:          "./test-storage",
-		FileMkdirPermissions: 0755,
-		FileWritePermissions: 0644,
+		FileStorageBaseDir:          "./test-storage",
+		FileStorageMkdirPermissions: 0755,
+		FileStorageWritePermissions: 0644,
 	}
 
 	storage, err := provider.NewFileStorage(cfg)
@@ -109,10 +109,10 @@ func TestProvider_NewS3Storage(t *testing.T) {
 	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
-		S3Bucket:          "test-bucket",
-		S3Region:          "us-east-1",
-		S3AccessKeyID:     "test-key",
-		S3SecretAccessKey: "test-secret",
+		S3StorageBucket:          "test-bucket",
+		S3StorageRegion:          "us-east-1",
+		S3StorageAccessKeyID:     "test-key",
+		S3StorageSecretAccessKey: "test-secret",
 	}
 
 	storage, err := provider.NewS3Storage(cfg)
@@ -126,11 +126,11 @@ func TestProvider_NewS3Storage_WithForcePathStyle(t *testing.T) {
 	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
-		S3Bucket:          "test-bucket",
-		S3Region:          "us-east-1",
-		S3AccessKeyID:     "test-key",
-		S3SecretAccessKey: "test-secret",
-		S3ForcePathStyle:  true,
+		S3StorageBucket:          "test-bucket",
+		S3StorageRegion:          "us-east-1",
+		S3StorageAccessKeyID:     "test-key",
+		S3StorageSecretAccessKey: "test-secret",
+		S3StorageForcePathStyle:  true,
 	}
 
 	storage, err := provider.NewS3Storage(cfg)
@@ -150,11 +150,11 @@ func TestProvider_NewS3Storage_WithForcePathStyleFalse(t *testing.T) {
 	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
-		S3Bucket:          "test-bucket",
-		S3Region:          "us-east-1",
-		S3AccessKeyID:     "test-key",
-		S3SecretAccessKey: "test-secret",
-		S3ForcePathStyle:  false,
+		S3StorageBucket:          "test-bucket",
+		S3StorageRegion:          "us-east-1",
+		S3StorageAccessKeyID:     "test-key",
+		S3StorageSecretAccessKey: "test-secret",
+		S3StorageForcePathStyle:  false,
 	}
 
 	storage, err := provider.NewS3Storage(cfg)
@@ -172,14 +172,14 @@ func TestProvider_NewS3Storage_MissingBucket(t *testing.T) {
 	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
-		S3Bucket: "", // Missing bucket
+		S3StorageBucket: "", // Missing bucket
 	}
 
 	storage, err := provider.NewS3Storage(cfg)
 
 	assert.Error(t, err)
 	assert.Nil(t, storage)
-	assert.Contains(t, err.Error(), "s3-bucket is required")
+	assert.Contains(t, err.Error(), "s3-storage-bucket is required")
 }
 
 func TestProvider_NewStorageFromConfig_File(t *testing.T) {
@@ -187,10 +187,10 @@ func TestProvider_NewStorageFromConfig_File(t *testing.T) {
 	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
-		StorageType:          "file",
-		FileBaseDir:          "./test-storage",
-		FileMkdirPermissions: 0755,
-		FileWritePermissions: 0644,
+		StorageType:                 "file",
+		FileStorageBaseDir:          "./test-storage",
+		FileStorageMkdirPermissions: 0755,
+		FileStorageWritePermissions: 0644,
 	}
 
 	storage, err := provider.NewStorageFromConfig(cfg)
@@ -204,11 +204,11 @@ func TestProvider_NewStorageFromConfig_S3(t *testing.T) {
 	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
-		StorageType:       "s3",
-		S3Bucket:          "test-bucket",
-		S3Region:          "us-east-1",
-		S3AccessKeyID:     "test-key",
-		S3SecretAccessKey: "test-secret",
+		StorageType:              "s3",
+		S3StorageBucket:          "test-bucket",
+		S3StorageRegion:          "us-east-1",
+		S3StorageAccessKeyID:     "test-key",
+		S3StorageSecretAccessKey: "test-secret",
 	}
 
 	storage, err := provider.NewStorageFromConfig(cfg)
@@ -238,10 +238,10 @@ func TestProvider_InitializeWithConfig_ValidFileEnvConfig(t *testing.T) {
 	mockRegistry := &MockRegistryStore{}
 
 	cfg := &config.Config{
-		StorageType:          "file",
-		FileBaseDir:          "./test-storage",
-		FileMkdirPermissions: 0755,
-		FileWritePermissions: 0644,
+		StorageType:                 "file",
+		FileStorageBaseDir:          "./test-storage",
+		FileStorageMkdirPermissions: 0755,
+		FileStorageWritePermissions: 0644,
 	}
 
 	provider := New(logger, mockRegistry, cfg)
@@ -266,11 +266,11 @@ func TestProvider_InitializeWithConfig_ValidS3EnvConfig(t *testing.T) {
 	mockRegistry := &MockRegistryStore{}
 
 	cfg := &config.Config{
-		StorageType:       "s3",
-		S3Bucket:          "test-bucket",
-		S3Region:          "us-east-1",
-		S3AccessKeyID:     "test-key",
-		S3SecretAccessKey: "test-secret",
+		StorageType:              "s3",
+		S3StorageBucket:          "test-bucket",
+		S3StorageRegion:          "us-east-1",
+		S3StorageAccessKeyID:     "test-key",
+		S3StorageSecretAccessKey: "test-secret",
 	}
 
 	provider := New(logger, mockRegistry, cfg)
@@ -296,8 +296,8 @@ func TestProvider_InitializeWithConfig_InvalidEnvValidRegistry(t *testing.T) {
 
 	// Invalid S3 config (missing bucket)
 	cfg := &config.Config{
-		StorageType: "s3",
-		S3Bucket:    "", // Missing required bucket
+		StorageType:     "s3",
+		S3StorageBucket: "", // Missing required bucket
 	}
 
 	// Mock registry to indicate storage is configured
@@ -327,8 +327,8 @@ func TestProvider_InitializeWithConfig_NoConfigAnywhere(t *testing.T) {
 
 	// Invalid config
 	cfg := &config.Config{
-		StorageType: "s3",
-		S3Bucket:    "", // Missing required bucket
+		StorageType:     "s3",
+		S3StorageBucket: "", // Missing required bucket
 	}
 
 	// Mock registry to indicate no storage configured
@@ -386,10 +386,10 @@ func TestProvider_InitializeWithConfig_EnvOverridesRegistry(t *testing.T) {
 
 	// Valid env config
 	cfg := &config.Config{
-		StorageType:          "file",
-		FileBaseDir:          "./test-storage",
-		FileMkdirPermissions: 0755,
-		FileWritePermissions: 0644,
+		StorageType:                 "file",
+		FileStorageBaseDir:          "./test-storage",
+		FileStorageMkdirPermissions: 0755,
+		FileStorageWritePermissions: 0644,
 	}
 
 	// Even though registry has config, env should take precedence
@@ -415,10 +415,10 @@ func TestProvider_GetStorage_AfterEnvInitialization(t *testing.T) {
 	mockRegistry := &MockRegistryStore{}
 
 	cfg := &config.Config{
-		StorageType:          "file",
-		FileBaseDir:          "./test-storage",
-		FileMkdirPermissions: 0755,
-		FileWritePermissions: 0644,
+		StorageType:                 "file",
+		FileStorageBaseDir:          "./test-storage",
+		FileStorageMkdirPermissions: 0755,
+		FileStorageWritePermissions: 0644,
 	}
 
 	provider := New(logger, mockRegistry, cfg)

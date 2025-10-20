@@ -23,18 +23,18 @@ func TestInitialize(t *testing.T) {
 	defer os.Remove(tmpDB)
 
 	cfg := &config.Config{
-		Port:                 8080,
-		DatabaseURL:          "sqlite:" + tmpDB,
-		JWTSecret:            "test-jwt-secret",
-		JWTExpiration:        168 * time.Hour,
-		StorageType:          "file",
-		FileBaseDir:          "/tmp/test-storage",
-		FileMkdirPermissions: 0755,
-		FileWritePermissions: 0644,
-		ImagorMode:           "external",
-		ImagorBaseURL:        "http://localhost:8000",
-		ImagorSecret:         "",
-		ImagorUnsafe:         false,
+		Port:                        8080,
+		DatabaseURL:                 "sqlite:" + tmpDB,
+		JWTSecret:                   "test-jwt-secret",
+		JWTExpiration:               168 * time.Hour,
+		StorageType:                 "file",
+		FileStorageBaseDir:          "/tmp/test-storage",
+		FileStorageMkdirPermissions: 0755,
+		FileStorageWritePermissions: 0644,
+		ImagorMode:                  "external",
+		ImagorBaseURL:               "http://localhost:8000",
+		ImagorSecret:                "",
+		ImagorUnsafe:                false,
 	}
 
 	logger := zap.NewNop()
@@ -64,13 +64,13 @@ func TestInitialize(t *testing.T) {
 
 func TestInitializeEmbeddedMode(t *testing.T) {
 	cfg := &config.Config{
-		Port:          8080,
-		EmbeddedMode:  true, // Enable embedded mode
-		JWTSecret:     "test-jwt-secret",
-		JWTExpiration: 168 * time.Hour,
-		StorageType:   "file",
-		FileBaseDir:   "/tmp/test-storage",
-		ImagorMode:    "embedded",
+		Port:               8080,
+		EmbeddedMode:       true, // Enable embedded mode
+		JWTSecret:          "test-jwt-secret",
+		JWTExpiration:      168 * time.Hour,
+		StorageType:        "file",
+		FileStorageBaseDir: "/tmp/test-storage",
+		ImagorMode:         "embedded",
 	}
 
 	logger := zap.NewNop()
@@ -116,9 +116,9 @@ func TestEmbeddedModeJWTSecretGeneration(t *testing.T) {
 		Port:         8080,
 		EmbeddedMode: true,
 		// No JWT secret provided - should generate static one
-		JWTExpiration: 168 * time.Hour,
-		StorageType:   "file",
-		FileBaseDir:   "/tmp/test-storage",
+		JWTExpiration:      168 * time.Hour,
+		StorageType:        "file",
+		FileStorageBaseDir: "/tmp/test-storage",
 	}
 
 	logger := zap.NewNop()
@@ -241,7 +241,7 @@ func TestConfigEnhancement(t *testing.T) {
 	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.storage_type", "s3", false)
 	require.NoError(t, err)
 
-	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.s3_bucket", "test-bucket", false)
+	_, err = registryStore.Set(ctx, registrystore.SystemOwnerID, "config.s3_storage_bucket", "test-bucket", false)
 	require.NoError(t, err)
 
 	// Load config with registry enhancement
@@ -250,7 +250,7 @@ func TestConfigEnhancement(t *testing.T) {
 
 	// Verify that registry values were applied
 	assert.Equal(t, "s3", enhancedCfg.StorageType)
-	assert.Equal(t, "test-bucket", enhancedCfg.S3Bucket)
+	assert.Equal(t, "test-bucket", enhancedCfg.S3StorageBucket)
 }
 
 func TestConfigEnhancementWithEnvPriority(t *testing.T) {
@@ -277,10 +277,10 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 
 	// Set environment variables (s3 requires bucket)
 	os.Setenv("STORAGE_TYPE", "s3")
-	os.Setenv("S3_BUCKET", "env-test-bucket")
+	os.Setenv("S3_STORAGE_BUCKET", "env-test-bucket")
 	defer func() {
 		os.Unsetenv("STORAGE_TYPE")
-		os.Unsetenv("S3_BUCKET")
+		os.Unsetenv("S3_STORAGE_BUCKET")
 	}()
 
 	// Set registry value (should be overridden by env)
@@ -294,7 +294,7 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 
 	// Verify that env value takes priority over registry
 	assert.Equal(t, "s3", enhancedCfg.StorageType)
-	assert.Equal(t, "env-test-bucket", enhancedCfg.S3Bucket)
+	assert.Equal(t, "env-test-bucket", enhancedCfg.S3StorageBucket)
 }
 
 func TestImagorProviderIntegration(t *testing.T) {
