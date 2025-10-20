@@ -20,14 +20,16 @@ type AuthHandler struct {
 	userStore     userstore.Store
 	registryStore registrystore.Store
 	logger        *zap.Logger
+	embeddedMode  bool
 }
 
-func NewAuthHandler(tokenManager *auth.TokenManager, userStore userstore.Store, registryStore registrystore.Store, logger *zap.Logger) *AuthHandler {
+func NewAuthHandler(tokenManager *auth.TokenManager, userStore userstore.Store, registryStore registrystore.Store, logger *zap.Logger, embeddedMode bool) *AuthHandler {
 	return &AuthHandler{
 		tokenManager:  tokenManager,
 		userStore:     userStore,
 		registryStore: registryStore,
 		logger:        logger,
+		embeddedMode:  embeddedMode,
 	}
 }
 
@@ -311,6 +313,12 @@ func (h *AuthHandler) RefreshToken() http.HandlerFunc {
 
 func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		// Check if embedded mode is enabled
+		if !h.embeddedMode {
+			return apperror.NewAppError(http.StatusForbidden, apperror.ErrPermissionDenied,
+				"Embedded mode is not enabled", nil)
+		}
+
 		// Extract JWT token from Authorization header
 		authHeader := r.Header.Get("Authorization")
 		jwtToken, err := auth.ExtractTokenFromHeader(authHeader)

@@ -65,6 +65,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		services.UserStore,
 		services.RegistryStore,
 		services.Logger,
+		cfg.EmbeddedMode,
 	)
 
 	// Create middleware chain
