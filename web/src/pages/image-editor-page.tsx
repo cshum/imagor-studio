@@ -4,18 +4,21 @@ import { useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { setUserRegistry } from '@/api/registry-api'
 import { ImageEditorControls } from '@/components/image-editor/imagor-editor-controls.tsx'
 import { PreviewArea } from '@/components/image-editor/preview-area'
 import { LoadingBar } from '@/components/loading-bar'
+import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
-import { ModeToggle } from '@/components/mode-toggle'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
+import {
+  EditorOpenSectionsStorage,
+  type EditorOpenSections,
+} from '@/lib/editor-open-sections-storage'
 import { ImageEditor, type ImageEditorState } from '@/lib/image-editor.ts'
 import { cn, debounce } from '@/lib/utils.ts'
-import type { EditorOpenSections, ImageEditorLoaderData } from '@/loaders/image-editor-loader'
+import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 import { useAuth } from '@/stores/auth-store'
 
 interface ImageEditorPageProps {
@@ -37,15 +40,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   )
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
 
-  // Debounced save function for editor open sections (skip for embedded mode - completely stateless)
+  // Storage service for editor open sections
+  const storage = useMemo(() => new EditorOpenSectionsStorage(authState), [authState])
+
+  // Debounced save function for editor open sections
   const debouncedSaveOpenSections = useMemo(
-    () =>
-      debounce(async (sections: EditorOpenSections) => {
-        if (!authState.isEmbedded) {
-          await setUserRegistry('config.editor_open_sections', JSON.stringify(sections))
-        }
-      }, 300),
-    [authState.isEmbedded],
+    () => debounce(storage.set.bind(storage), 300),
+    [storage],
   )
 
   // Handler that updates state immediately and saves with debounce

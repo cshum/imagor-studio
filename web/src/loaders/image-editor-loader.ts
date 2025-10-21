@@ -1,19 +1,14 @@
-import { getUserRegistry } from '@/api/registry-api'
 import { statFile } from '@/api/storage-api'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { getFullImageUrl } from '@/lib/api-utils'
+import {
+  EditorOpenSectionsStorage,
+  type EditorOpenSections,
+} from '@/lib/editor-open-sections-storage'
 import { fetchImageMetadata } from '@/lib/exif-utils'
 import { preloadImage } from '@/lib/preload-image'
 import { getAuth } from '@/stores/auth-store'
 import { clearPosition } from '@/stores/image-position-store.ts'
-
-export interface EditorOpenSections {
-  dimensions: boolean
-  output: boolean
-  crop: boolean
-  effects: boolean
-  transform: boolean
-}
 
 export interface ImageEditorLoaderData {
   imageElement: HTMLImageElement
@@ -45,30 +40,10 @@ export const imageEditorLoader = async ({
     throw new Error('Image not found')
   }
 
-  // Load user preferences for editor open sections
-  const defaultOpenSections: EditorOpenSections = {
-    dimensions: true,
-    output: false,
-    crop: false,
-    effects: false,
-    transform: false,
-  }
-
-  let editorOpenSections = defaultOpenSections
-
-  // Skip registry operations for embedded mode (completely stateless)
+  // Load user preferences for editor open sections using storage service
   const authState = getAuth()
-  if (!authState.isEmbedded) {
-    try {
-      const registryEntries = await getUserRegistry('config.editor_open_sections')
-      if (registryEntries && registryEntries.length > 0) {
-        const savedSections = JSON.parse(registryEntries[0].value) as EditorOpenSections
-        editorOpenSections = { ...defaultOpenSections, ...savedSections }
-      }
-    } catch {
-      // Silently fall back to defaults if registry loading fails
-    }
-  }
+  const storage = new EditorOpenSectionsStorage(authState)
+  const editorOpenSections = await storage.get()
 
   // Get full-size image URL
   const fullSizeSrc = getFullImageUrl(
