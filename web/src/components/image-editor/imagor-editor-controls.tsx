@@ -9,8 +9,8 @@ import { SimpleCropControl } from '@/components/image-editor/controls/simple-cro
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import type { EditorOpenSections } from '@/lib/editor-open-sections-storage'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
-import type { EditorOpenSections } from '@/loaders/image-editor-loader'
 
 interface ImageEditorControlsProps {
   params: ImageEditorState

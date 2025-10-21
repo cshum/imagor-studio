@@ -19,7 +19,12 @@ import { SessionConfigStorage } from '@/lib/config-storage/session-config-storag
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
 import { adminLoader, profileLoader, usersLoader } from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
-import { requireAccountAuth, requireAdminAccountAuth, requireAuth, requireImageEditorAuth } from '@/loaders/auth-loader.ts'
+import {
+  requireAccountAuth,
+  requireAdminAccountAuth,
+  requireAuth,
+  requireImageEditorAuth,
+} from '@/loaders/auth-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
