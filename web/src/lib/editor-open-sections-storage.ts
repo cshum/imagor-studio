@@ -1,6 +1,5 @@
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
-import { MemoryConfigStorage } from '@/lib/config-storage/memory-config-storage'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage'
 import type { Auth } from '@/stores/auth-store'
 
@@ -25,10 +24,10 @@ export class EditorOpenSectionsStorage {
 
   constructor(auth: Auth) {
     if (auth.isEmbedded) {
-      // Embedded mode: completely stateless
-      this.storage = new MemoryConfigStorage()
+      // Embedded mode: use localStorage
+      this.storage = new LocalConfigStorage('editor_open_sections')
     } else {
-      // Non-embedded mode: use localStorage with user registry fallback for migration
+      // Non-embedded mode: use UserRegistryConfigStorage with localStorage fallback
       const localStorage = new LocalConfigStorage('editor_open_sections')
       this.storage = new UserRegistryConfigStorage('editor_open_sections', localStorage)
     }
