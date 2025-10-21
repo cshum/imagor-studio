@@ -45,7 +45,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
   // Debounced save function for editor open sections
   const debouncedSaveOpenSections = useMemo(
-    () => debounce(storage.set.bind(storage), 300),
+    () => debounce((sections: EditorOpenSections) => storage.set(sections), 300),
     [storage],
   )
 
