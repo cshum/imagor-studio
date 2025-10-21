@@ -10,6 +10,7 @@ import { PreviewArea } from '@/components/image-editor/preview-area'
 import { LoadingBar } from '@/components/loading-bar'
 import { Button } from '@/components/ui/button'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
+import { ModeToggle } from '@/components/mode-toggle'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { ImageEditor, type ImageEditorState } from '@/lib/image-editor.ts'
@@ -184,6 +185,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               {t('imageEditor.page.title')}
             </a>
           </div>
+
+          {/* Desktop Theme Toggle */}
+          {!isMobile && (
+            <div className='ml-auto'>
+              <ModeToggle />
+            </div>
+          )}
 
           {/* Mobile Controls Trigger */}
           {isMobile && (
