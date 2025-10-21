@@ -14,8 +14,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { ImageEditor, type ImageEditorState } from '@/lib/image-editor.ts'
 import { cn, debounce } from '@/lib/utils.ts'
-import { useAuth } from '@/stores/auth-store'
 import type { EditorOpenSections, ImageEditorLoaderData } from '@/loaders/image-editor-loader'
+import { useAuth } from '@/stores/auth-store'
 
 interface ImageEditorPageProps {
   galleryKey: string
@@ -176,7 +176,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
           {/* Centered title */}
           <div className='flex flex-1 justify-center'>
-            <h1 className='text-foreground text-lg font-semibold'>{t('imageEditor.page.title')}</h1>
+            <a
+              href='https://imagor.net'
+              target='_blank'
+              className='text-foreground hover:text-foreground/80 text-lg font-semibold transition-colors'
+            >
+              {t('imageEditor.page.title')}
+            </a>
           </div>
 
           {/* Mobile Controls Trigger */}

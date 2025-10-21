@@ -4,8 +4,8 @@ import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { getFullImageUrl } from '@/lib/api-utils'
 import { fetchImageMetadata } from '@/lib/exif-utils'
 import { preloadImage } from '@/lib/preload-image'
-import { clearPosition } from '@/stores/image-position-store.ts'
 import { getAuth } from '@/stores/auth-store'
+import { clearPosition } from '@/stores/image-position-store.ts'
 
 export interface EditorOpenSections {
   dimensions: boolean
@@ -55,7 +55,7 @@ export const imageEditorLoader = async ({
   }
 
   let editorOpenSections = defaultOpenSections
-  
+
   // Skip registry operations for embedded mode (completely stateless)
   const authState = getAuth()
   if (!authState.isEmbedded) {
