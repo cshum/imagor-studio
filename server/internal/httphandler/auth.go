@@ -362,7 +362,7 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 		embeddedGuestID := uuid.GenerateUUID()
 
 		// Generate session token for embedded guest with editor permissions and path prefix
-		sessionToken, err := h.tokenManager.GenerateToken(embeddedGuestID, "guest", []string{"read", "edit"}, pathPrefix)
+		sessionToken, err := h.tokenManager.GenerateTokenWithOptions(embeddedGuestID, "guest", []string{"read", "edit"}, true, pathPrefix)
 		if err != nil {
 			h.logger.Error("Failed to generate embedded guest token", zap.Error(err))
 			return apperror.InternalServerError("Failed to generate session token")

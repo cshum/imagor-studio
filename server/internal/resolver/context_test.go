@@ -272,3 +272,99 @@ func TestRequireWritePermissionWithPath(t *testing.T) {
 		})
 	}
 }
+
+func TestIsEmbeddedMode(t *testing.T) {
+	tests := []struct {
+		name       string
+		isEmbedded bool
+		expected   bool
+	}{
+		{
+			name:       "Embedded mode enabled",
+			isEmbedded: true,
+			expected:   true,
+		},
+		{
+			name:       "Embedded mode disabled",
+			isEmbedded: false,
+			expected:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create context with claims
+			claims := &auth.Claims{
+				UserID:     "test-user",
+				Role:       "guest",
+				Scopes:     []string{"read", "edit"},
+				PathPrefix: "/user123/images",
+				IsEmbedded: tt.isEmbedded,
+			}
+			ctx := auth.SetClaimsInContext(context.Background(), claims)
+
+			result := IsEmbeddedMode(ctx)
+
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestEmbeddedModeWithPathValidation(t *testing.T) {
+	tests := []struct {
+		name          string
+		pathPrefix    string
+		requestedPath string
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name:          "Embedded user can access files within path prefix",
+			pathPrefix:    "/user123/images",
+			requestedPath: "/user123/images/photo.jpg",
+			expectError:   false,
+		},
+		{
+			name:          "Embedded user cannot access files outside path prefix",
+			pathPrefix:    "/user123/images",
+			requestedPath: "/other-user/images/photo.jpg",
+			expectError:   true,
+			errorContains: "path access denied",
+		},
+		{
+			name:          "Embedded user with root prefix can access all paths",
+			pathPrefix:    "/",
+			requestedPath: "/any/path/photo.jpg",
+			expectError:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create embedded context
+			claims := &auth.Claims{
+				UserID:     "embedded-guest",
+				Role:       "guest",
+				Scopes:     []string{"read", "edit"},
+				PathPrefix: tt.pathPrefix,
+				IsEmbedded: true,
+			}
+			ctx := auth.SetClaimsInContext(context.Background(), claims)
+
+			// Test that embedded mode is detected
+			assert.True(t, IsEmbeddedMode(ctx))
+
+			// Test path validation for edit permission (which embedded users have)
+			err := RequireEditPermission(ctx, tt.requestedPath)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if tt.errorContains != "" {
+					assert.Contains(t, err.Error(), tt.errorContains)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

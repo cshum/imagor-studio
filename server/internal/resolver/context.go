@@ -106,6 +106,15 @@ func IsGuestUser(ctx context.Context) bool {
 	return claims.Role == "guest"
 }
 
+// IsEmbeddedMode to check if user is in embedded mode
+func IsEmbeddedMode(ctx context.Context) bool {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return false
+	}
+	return claims.IsEmbedded
+}
+
 // GetEffectiveTargetUserID to determine effective owner ID for user metadata operations
 func GetEffectiveTargetUserID(ctx context.Context, providedUserID *string) (string, error) {
 	currentUserID, err := GetUserIDFromContext(ctx)

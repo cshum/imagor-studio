@@ -16,6 +16,7 @@ type Claims struct {
 	Role       string   `json:"role"`
 	Scopes     []string `json:"scopes"`
 	PathPrefix string   `json:"path_prefix,omitempty"`
+	IsEmbedded bool     `json:"is_embedded,omitempty"`
 }
 
 // TokenManager handles JWT operations
@@ -39,6 +40,11 @@ func NewTokenManager(secret string, tokenDuration time.Duration) *TokenManager {
 
 // GenerateToken creates a new JWT token
 func (tm *TokenManager) GenerateToken(userID, role string, scopes []string, pathPrefix ...string) (string, error) {
+	return tm.GenerateTokenWithOptions(userID, role, scopes, false, pathPrefix...)
+}
+
+// GenerateTokenWithOptions creates a new JWT token with embedded mode option
+func (tm *TokenManager) GenerateTokenWithOptions(userID, role string, scopes []string, isEmbedded bool, pathPrefix ...string) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -48,9 +54,10 @@ func (tm *TokenManager) GenerateToken(userID, role string, scopes []string, path
 			IssuedAt:  jwt.NewNumericDate(now),
 			ID:        fmt.Sprintf("%d", time.Now().UnixNano()),
 		},
-		UserID: userID,
-		Role:   role,
-		Scopes: scopes,
+		UserID:     userID,
+		Role:       role,
+		Scopes:     scopes,
+		IsEmbedded: isEmbedded,
 	}
 
 	// Set path prefix if provided
@@ -101,6 +108,7 @@ func (tm *TokenManager) RefreshToken(claims *Claims) (string, error) {
 		Role:       claims.Role,
 		Scopes:     claims.Scopes,
 		PathPrefix: claims.PathPrefix, // Preserve path prefix
+		IsEmbedded: claims.IsEmbedded, // Preserve embedded flag
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)
