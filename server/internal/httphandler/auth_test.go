@@ -938,19 +938,28 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 	validToken, err := tokenManager.GenerateToken("test-user", "user", []string{"read"})
 	require.NoError(t, err)
 
+	// Generate token with path prefix
+	tokenWithPathPrefix, err := tokenManager.GenerateTokenWithOptions("test-user", "user", []string{"read"}, true, "/user123/images")
+	require.NoError(t, err)
+
+	// Generate token with root path prefix
+	tokenWithRootPrefix, err := tokenManager.GenerateTokenWithOptions("test-user", "user", []string{"read"}, true, "/")
+	require.NoError(t, err)
+
 	// Generate expired token
 	expiredTokenManager := auth.NewTokenManager("test-secret", -time.Hour)
 	expiredToken, err := expiredTokenManager.GenerateToken("test-user", "user", []string{"read"})
 	require.NoError(t, err)
 
 	tests := []struct {
-		name           string
-		embeddedMode   bool
-		method         string
-		authHeader     string
-		expectedStatus int
-		expectError    bool
-		errorCode      apperror.ErrorCode
+		name               string
+		embeddedMode       bool
+		method             string
+		authHeader         string
+		expectedStatus     int
+		expectError        bool
+		errorCode          apperror.ErrorCode
+		expectedPathPrefix *string
 	}{
 		{
 			name:           "Embedded mode disabled",
@@ -962,12 +971,31 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 			errorCode:      apperror.ErrPermissionDenied,
 		},
 		{
-			name:           "Valid JWT token - successful embedded guest login",
-			embeddedMode:   true,
-			method:         http.MethodPost,
-			authHeader:     fmt.Sprintf("Bearer %s", validToken),
-			expectedStatus: http.StatusOK,
-			expectError:    false,
+			name:               "Valid JWT token - successful embedded guest login",
+			embeddedMode:       true,
+			method:             http.MethodPost,
+			authHeader:         fmt.Sprintf("Bearer %s", validToken),
+			expectedStatus:     http.StatusOK,
+			expectError:        false,
+			expectedPathPrefix: nil, // No path prefix in token
+		},
+		{
+			name:               "Valid JWT token with path prefix",
+			embeddedMode:       true,
+			method:             http.MethodPost,
+			authHeader:         fmt.Sprintf("Bearer %s", tokenWithPathPrefix),
+			expectedStatus:     http.StatusOK,
+			expectError:        false,
+			expectedPathPrefix: func() *string { s := "/user123/images"; return &s }(),
+		},
+		{
+			name:               "Valid JWT token with root path prefix",
+			embeddedMode:       true,
+			method:             http.MethodPost,
+			authHeader:         fmt.Sprintf("Bearer %s", tokenWithRootPrefix),
+			expectedStatus:     http.StatusOK,
+			expectError:        false,
+			expectedPathPrefix: func() *string { s := "/"; return &s }(),
 		},
 		{
 			name:           "Missing Authorization header",
@@ -1048,6 +1076,14 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 				assert.Equal(t, "embedded-guest", loginResp.User.Username)
 				assert.NotEmpty(t, loginResp.User.ID)
 
+				// Verify path prefix in response
+				if tt.expectedPathPrefix == nil {
+					assert.Nil(t, loginResp.PathPrefix)
+				} else {
+					require.NotNil(t, loginResp.PathPrefix)
+					assert.Equal(t, *tt.expectedPathPrefix, *loginResp.PathPrefix)
+				}
+
 				// Verify the session token is valid and has correct claims
 				sessionClaims, err := tokenManager.ValidateToken(loginResp.Token)
 				require.NoError(t, err)
@@ -1056,6 +1092,14 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 				assert.Contains(t, sessionClaims.Scopes, "edit")
 				assert.NotContains(t, sessionClaims.Scopes, "write")
 				assert.NotContains(t, sessionClaims.Scopes, "admin")
+				assert.True(t, sessionClaims.IsEmbedded)
+
+				// Verify path prefix is preserved in session token
+				if tt.expectedPathPrefix == nil {
+					assert.Empty(t, sessionClaims.PathPrefix)
+				} else {
+					assert.Equal(t, *tt.expectedPathPrefix, sessionClaims.PathPrefix)
+				}
 			}
 		})
 	}
