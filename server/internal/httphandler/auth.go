@@ -242,7 +242,7 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 
 		guestID := uuid.GenerateUUID()
 
-		token, err := h.tokenManager.GenerateToken(guestID, "guest", []string{"read"})
+		token, err := h.tokenManager.GenerateToken(guestID, "guest", []string{"read"}, "")
 		if err != nil {
 			h.logger.Error("Failed to generate guest token", zap.Error(err))
 			return apperror.InternalServerError("Failed to generate token")
@@ -427,7 +427,7 @@ func (h *AuthHandler) generateAuthResponse(userID, displayName, username, role s
 	}
 
 	// Generate token
-	token, err := h.tokenManager.GenerateToken(userID, role, scopes)
+	token, err := h.tokenManager.GenerateToken(userID, role, scopes, "")
 	if err != nil {
 		h.logger.Error("Failed to generate token", zap.Error(err))
 		return nil, apperror.InternalServerError("Failed to generate token")

@@ -13,6 +13,13 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Integration",
+      items: [
+        "integration/embedded-mode",
+      ],
+    },
+    {
+      type: "category",
       label: "Configuration",
       items: [
         "configuration/overview",

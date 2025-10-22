@@ -39,12 +39,12 @@ func NewTokenManager(secret string, tokenDuration time.Duration) *TokenManager {
 }
 
 // GenerateToken creates a new JWT token
-func (tm *TokenManager) GenerateToken(userID, role string, scopes []string, pathPrefix ...string) (string, error) {
-	return tm.GenerateTokenWithOptions(userID, role, scopes, false, pathPrefix...)
+func (tm *TokenManager) GenerateToken(userID, role string, scopes []string, pathPrefix string) (string, error) {
+	return tm.GenerateTokenWithOptions(userID, role, scopes, false, pathPrefix)
 }
 
 // GenerateTokenWithOptions creates a new JWT token with embedded mode option
-func (tm *TokenManager) GenerateTokenWithOptions(userID, role string, scopes []string, isEmbedded bool, pathPrefix ...string) (string, error) {
+func (tm *TokenManager) GenerateTokenWithOptions(userID, role string, scopes []string, isEmbedded bool, pathPrefix string) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -61,8 +61,8 @@ func (tm *TokenManager) GenerateTokenWithOptions(userID, role string, scopes []s
 	}
 
 	// Set path prefix if provided
-	if len(pathPrefix) > 0 && pathPrefix[0] != "" {
-		claims.PathPrefix = pathPrefix[0]
+	if pathPrefix != "" {
+		claims.PathPrefix = pathPrefix
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

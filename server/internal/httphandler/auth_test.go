@@ -531,7 +531,7 @@ func TestRefreshToken(t *testing.T) {
 	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger, false)
 
 	// Generate a valid token first
-	validToken, err := tokenManager.GenerateToken("user1", "user", []string{"read"})
+	validToken, err := tokenManager.GenerateToken("user1", "user", []string{"read"}, "")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -935,7 +935,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 	mockRegistryStore := new(MockRegistryStore)
 
 	// Generate valid JWT tokens for testing
-	validToken, err := tokenManager.GenerateToken("test-user", "user", []string{"read"})
+	validToken, err := tokenManager.GenerateToken("test-user", "user", []string{"read"}, "")
 	require.NoError(t, err)
 
 	// Generate token with path prefix
@@ -948,7 +948,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 
 	// Generate expired token
 	expiredTokenManager := auth.NewTokenManager("test-secret", -time.Hour)
-	expiredToken, err := expiredTokenManager.GenerateToken("test-user", "user", []string{"read"})
+	expiredToken, err := expiredTokenManager.GenerateToken("test-user", "user", []string{"read"}, "")
 	require.NoError(t, err)
 
 	tests := []struct {

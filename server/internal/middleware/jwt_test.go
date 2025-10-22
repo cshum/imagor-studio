@@ -19,7 +19,7 @@ func TestJWTMiddleware(t *testing.T) {
 
 	// Generate a valid token
 	userID := "test-user-id"
-	token, err := tokenManager.GenerateToken(userID, "user", []string{"read"})
+	token, err := tokenManager.GenerateToken(userID, "user", []string{"read"}, "")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -195,7 +195,7 @@ func TestAuthorizationMiddleware_NoClaimsInContext(t *testing.T) {
 func generateExpiredToken(t *testing.T) string {
 	// Create a token manager with negative duration to generate expired token
 	expiredTM := auth.NewTokenManager("test-secret", -time.Hour)
-	token, err := expiredTM.GenerateToken("user1", "user", []string{"read"})
+	token, err := expiredTM.GenerateToken("user1", "user", []string{"read"}, "")
 	require.NoError(t, err)
 	return token
 }

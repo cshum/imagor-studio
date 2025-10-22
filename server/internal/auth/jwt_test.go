@@ -34,7 +34,7 @@ func TestGenerateToken(t *testing.T) {
 	role := "admin"
 	scopes := []string{"read", "write"}
 
-	token, err := tm.GenerateToken(userID, role, scopes)
+	token, err := tm.GenerateToken(userID, role, scopes, "")
 	require.NoError(t, err)
 	assert.NotEmpty(t, token)
 
@@ -64,7 +64,7 @@ func TestValidateToken(t *testing.T) {
 	scopes := []string{"read", "write"}
 
 	// Generate a valid token
-	token, err := tm.GenerateToken(userID, role, scopes)
+	token, err := tm.GenerateToken(userID, role, scopes, "")
 	require.NoError(t, err)
 
 	// Validate the token
@@ -90,7 +90,7 @@ func TestValidateToken_WrongSecret(t *testing.T) {
 	tm2 := NewTokenManager("secret2", time.Hour)
 
 	// Generate token with first secret
-	token, err := tm1.GenerateToken("user1", "user", []string{"read"})
+	token, err := tm1.GenerateToken("user1", "user", []string{"read"}, "")
 	require.NoError(t, err)
 
 	// Try to validate with different secret
@@ -102,7 +102,7 @@ func TestValidateToken_ExpiredToken(t *testing.T) {
 	tm := NewTokenManager("test-secret", -time.Hour) // Negative duration for immediate expiration
 
 	// Generate an expired token
-	token, err := tm.GenerateToken("user1", "user", []string{"read"})
+	token, err := tm.GenerateToken("user1", "user", []string{"read"}, "")
 	require.NoError(t, err)
 
 	// Wait a moment to ensure token is expired
