@@ -107,8 +107,8 @@ func (tm *TokenManager) RefreshToken(claims *Claims) (string, error) {
 		UserID:     claims.UserID,
 		Role:       claims.Role,
 		Scopes:     claims.Scopes,
-		PathPrefix: claims.PathPrefix, // Preserve path prefix
-		IsEmbedded: claims.IsEmbedded, // Preserve embedded flag
+		PathPrefix: claims.PathPrefix,
+		IsEmbedded: claims.IsEmbedded,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)

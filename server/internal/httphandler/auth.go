@@ -338,7 +338,6 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 				})
 		}
 
-		// Extract path prefix from CMS token
 		pathPrefix := claims.PathPrefix
 
 		// Validate path prefix format if provided
