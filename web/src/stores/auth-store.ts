@@ -241,9 +241,7 @@ export const useAuth = () => {
 /**
  * Check if a path is accessible based on the current user's path prefix
  */
-export const isPathAccessible = (requestedPath: string): boolean => {
-  const auth = getAuth()
-
+export const isPathAccessible = (auth: Auth, requestedPath: string): boolean => {
   // If no path prefix is set, allow all paths (backward compatibility)
   if (!auth.pathPrefix) {
     return true
@@ -260,46 +258,4 @@ export const isPathAccessible = (requestedPath: string): boolean => {
 
   // Check if the requested path starts with the allowed prefix
   return normalizedRequested.startsWith(normalizedPrefix)
-}
-
-/**
- * Get the current user's path prefix
- */
-export const getPathPrefix = (): string | null => {
-  return getAuth().pathPrefix
-}
-
-/**
- * Check if the current user is in embedded mode
- */
-export const isEmbeddedMode = (): boolean => {
-  return getAuth().isEmbedded
-}
-
-/**
- * Validate a path and return an error message if invalid
- */
-export const validatePath = (requestedPath: string): string | null => {
-  if (!isPathAccessible(requestedPath)) {
-    const pathPrefix = getPathPrefix()
-    return `Access denied. You can only access files within: ${pathPrefix || 'your allowed directory'}`
-  }
-  return null
-}
-
-/**
- * Get user-friendly path restrictions message
- */
-export const getPathRestrictionsMessage = (): string | null => {
-  const auth = getAuth()
-
-  if (!auth.isEmbedded || !auth.pathPrefix) {
-    return null
-  }
-
-  if (auth.pathPrefix === '/') {
-    return 'You have access to all files and folders.'
-  }
-
-  return `You can only access files within: ${auth.pathPrefix}`
 }
