@@ -12,9 +12,10 @@ import (
 // Claims represents JWT claims structure
 type Claims struct {
 	jwt.RegisteredClaims
-	UserID string   `json:"user_id"`
-	Role   string   `json:"role"`
-	Scopes []string `json:"scopes"`
+	UserID     string   `json:"user_id"`
+	Role       string   `json:"role"`
+	Scopes     []string `json:"scopes"`
+	PathPrefix string   `json:"path_prefix,omitempty"`
 }
 
 // TokenManager handles JWT operations
@@ -37,7 +38,7 @@ func NewTokenManager(secret string, tokenDuration time.Duration) *TokenManager {
 }
 
 // GenerateToken creates a new JWT token
-func (tm *TokenManager) GenerateToken(userID, role string, scopes []string) (string, error) {
+func (tm *TokenManager) GenerateToken(userID, role string, scopes []string, pathPrefix ...string) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -50,6 +51,11 @@ func (tm *TokenManager) GenerateToken(userID, role string, scopes []string) (str
 		UserID: userID,
 		Role:   role,
 		Scopes: scopes,
+	}
+
+	// Set path prefix if provided
+	if len(pathPrefix) > 0 && pathPrefix[0] != "" {
+		claims.PathPrefix = pathPrefix[0]
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -91,9 +97,10 @@ func (tm *TokenManager) RefreshToken(claims *Claims) (string, error) {
 			IssuedAt:  jwt.NewNumericDate(now),
 			ID:        fmt.Sprintf("%d", now.UnixNano()),
 		},
-		UserID: claims.UserID,
-		Role:   claims.Role,
-		Scopes: claims.Scopes,
+		UserID:     claims.UserID,
+		Role:       claims.Role,
+		Scopes:     claims.Scopes,
+		PathPrefix: claims.PathPrefix, // Preserve path prefix
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)

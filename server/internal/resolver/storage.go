@@ -18,8 +18,8 @@ import (
 
 // UploadFile is the resolver for the uploadFile field.
 func (r *mutationResolver) UploadFile(ctx context.Context, path string, content graphql.Upload) (bool, error) {
-	// Check write permissions
-	if err := RequireWritePermission(ctx); err != nil {
+	// Check write permissions and path access
+	if err := RequireWritePermission(ctx, path); err != nil {
 		return false, err
 	}
 	r.logger.Debug("Uploading file", zap.String("path", path), zap.String("filename", content.Filename))
@@ -34,8 +34,8 @@ func (r *mutationResolver) UploadFile(ctx context.Context, path string, content 
 
 // DeleteFile is the resolver for the deleteFile field.
 func (r *mutationResolver) DeleteFile(ctx context.Context, path string) (bool, error) {
-	// Check write permissions
-	if err := RequireWritePermission(ctx); err != nil {
+	// Check write permissions and path access
+	if err := RequireWritePermission(ctx, path); err != nil {
 		return false, err
 	}
 
@@ -51,8 +51,8 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, path string) (bool, e
 
 // CreateFolder is the resolver for the createFolder field.
 func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool, error) {
-	// Check write permissions
-	if err := RequireWritePermission(ctx); err != nil {
+	// Check write permissions and path access
+	if err := RequireWritePermission(ctx, path); err != nil {
 		return false, err
 	}
 
@@ -68,6 +68,11 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool,
 
 // ListFiles is the resolver for the listFiles field.
 func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
+	// Check read permissions and path access
+	if err := RequireReadPermission(ctx, path); err != nil {
+		return nil, err
+	}
+
 	// Handle optional offset parameter - default to 0 if not provided
 	offsetValue := 0
 	if offset != nil {
@@ -153,6 +158,11 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int,
 
 // StatFile is the resolver for the statFile field.
 func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileStat, error) {
+	// Check read permissions and path access
+	if err := RequireReadPermission(ctx, path); err != nil {
+		return nil, err
+	}
+
 	r.logger.Debug("Getting file stats", zap.String("path", path))
 
 	fileInfo, err := r.getStorage().Stat(ctx, path)

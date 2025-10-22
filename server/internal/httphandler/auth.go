@@ -330,7 +330,7 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 		}
 
 		// Validate the JWT token (this validates the token from the CMS)
-		_, err = h.tokenManager.ValidateToken(jwtToken)
+		claims, err := h.tokenManager.ValidateToken(jwtToken)
 		if err != nil {
 			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidToken,
 				"Invalid or expired JWT token", map[string]interface{}{
@@ -338,11 +338,31 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 				})
 		}
 
+		// Extract path prefix from CMS token
+		pathPrefix := claims.PathPrefix
+
+		// Validate path prefix format if provided
+		if pathPrefix != "" {
+			// Normalize path prefix - ensure it starts with / and doesn't end with / (unless it's root)
+			if !strings.HasPrefix(pathPrefix, "/") {
+				pathPrefix = "/" + pathPrefix
+			}
+			if len(pathPrefix) > 1 && strings.HasSuffix(pathPrefix, "/") {
+				pathPrefix = strings.TrimSuffix(pathPrefix, "/")
+			}
+
+			// Basic security check - prevent path traversal
+			if strings.Contains(pathPrefix, "..") {
+				return apperror.NewAppError(http.StatusBadRequest, apperror.ErrInvalidInput,
+					"Invalid path prefix: path traversal not allowed", nil)
+			}
+		}
+
 		// Generate embedded guest user ID
 		embeddedGuestID := uuid.GenerateUUID()
 
-		// Generate session token for embedded guest with editor permissions
-		sessionToken, err := h.tokenManager.GenerateToken(embeddedGuestID, "guest", []string{"read", "edit"})
+		// Generate session token for embedded guest with editor permissions and path prefix
+		sessionToken, err := h.tokenManager.GenerateToken(embeddedGuestID, "guest", []string{"read", "edit"}, pathPrefix)
 		if err != nil {
 			h.logger.Error("Failed to generate embedded guest token", zap.Error(err))
 			return apperror.InternalServerError("Failed to generate session token")
@@ -361,6 +381,7 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 
 		h.logger.Info("Embedded guest login successful",
 			zap.String("embeddedGuestID", embeddedGuestID),
+			zap.String("pathPrefix", pathPrefix),
 			zap.String("userAgent", r.Header.Get("User-Agent")))
 
 		return WriteSuccess(w, response)
