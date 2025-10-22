@@ -15,7 +15,7 @@ export interface Auth {
   isFirstRun: boolean | null
   error: string | null
   isEmbedded: boolean
-  pathPrefix: string | null
+  pathPrefix: string
 }
 
 const initialState: Auth = {
@@ -25,7 +25,7 @@ const initialState: Auth = {
   isFirstRun: null,
   error: null,
   isEmbedded: false,
-  pathPrefix: null,
+  pathPrefix: '',
 }
 
 export type AuthAction =
@@ -35,7 +35,7 @@ export type AuthAction =
         accessToken: string
         profile: UserProfile
         isEmbedded?: boolean
-        pathPrefix?: string | null
+        pathPrefix?: string
       }
     }
   | { type: 'LOGOUT' }
@@ -46,7 +46,7 @@ export type AuthAction =
 function reducer(state: Auth, action: AuthAction): Auth {
   switch (action.type) {
     case 'INIT': {
-      const { profile, accessToken, isEmbedded = false, pathPrefix = null } = action.payload
+      const { profile, accessToken, isEmbedded = false, pathPrefix = '' } = action.payload
       const authState = profile?.role === 'guest' ? 'guest' : 'authenticated'
 
       setToken(accessToken)
@@ -71,7 +71,7 @@ function reducer(state: Auth, action: AuthAction): Auth {
         profile: null,
         error: null,
         isEmbedded: false,
-        pathPrefix: null,
+        pathPrefix: '',
       }
 
     case 'SET_ERROR':
@@ -117,7 +117,7 @@ const handleEmbeddedAuth = async (jwtToken: string): Promise<Auth> => {
         accessToken: response.token,
         profile,
         isEmbedded: true,
-        pathPrefix: response.pathPrefix || null,
+        pathPrefix: response.pathPrefix || '',
       },
     })
   } catch (error) {

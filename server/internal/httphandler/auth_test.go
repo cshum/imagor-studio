@@ -959,7 +959,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 		expectedStatus     int
 		expectError        bool
 		errorCode          apperror.ErrorCode
-		expectedPathPrefix *string
+		expectedPathPrefix string
 	}{
 		{
 			name:           "Embedded mode disabled",
@@ -977,7 +977,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 			authHeader:         fmt.Sprintf("Bearer %s", validToken),
 			expectedStatus:     http.StatusOK,
 			expectError:        false,
-			expectedPathPrefix: nil, // No path prefix in token
+			expectedPathPrefix: "", // No path prefix in token
 		},
 		{
 			name:               "Valid JWT token with path prefix",
@@ -986,7 +986,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 			authHeader:         fmt.Sprintf("Bearer %s", tokenWithPathPrefix),
 			expectedStatus:     http.StatusOK,
 			expectError:        false,
-			expectedPathPrefix: func() *string { s := "/user123/images"; return &s }(),
+			expectedPathPrefix: "/user123/images",
 		},
 		{
 			name:               "Valid JWT token with root path prefix",
@@ -995,7 +995,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 			authHeader:         fmt.Sprintf("Bearer %s", tokenWithRootPrefix),
 			expectedStatus:     http.StatusOK,
 			expectError:        false,
-			expectedPathPrefix: func() *string { s := "/"; return &s }(),
+			expectedPathPrefix: "/",
 		},
 		{
 			name:           "Missing Authorization header",
@@ -1077,12 +1077,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 				assert.NotEmpty(t, loginResp.User.ID)
 
 				// Verify path prefix in response
-				if tt.expectedPathPrefix == nil {
-					assert.Nil(t, loginResp.PathPrefix)
-				} else {
-					require.NotNil(t, loginResp.PathPrefix)
-					assert.Equal(t, *tt.expectedPathPrefix, *loginResp.PathPrefix)
-				}
+				assert.Equal(t, tt.expectedPathPrefix, loginResp.PathPrefix)
 
 				// Verify the session token is valid and has correct claims
 				sessionClaims, err := tokenManager.ValidateToken(loginResp.Token)
@@ -1095,11 +1090,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 				assert.True(t, sessionClaims.IsEmbedded)
 
 				// Verify path prefix is preserved in session token
-				if tt.expectedPathPrefix == nil {
-					assert.Empty(t, sessionClaims.PathPrefix)
-				} else {
-					assert.Equal(t, *tt.expectedPathPrefix, sessionClaims.PathPrefix)
-				}
+				assert.Equal(t, tt.expectedPathPrefix, sessionClaims.PathPrefix)
 			}
 		})
 	}

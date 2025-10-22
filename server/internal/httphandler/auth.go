@@ -54,7 +54,7 @@ type LoginResponse struct {
 	Token      string       `json:"token"`
 	ExpiresIn  int64        `json:"expiresIn"`
 	User       UserResponse `json:"user"`
-	PathPrefix *string      `json:"pathPrefix,omitempty"`
+	PathPrefix string       `json:"pathPrefix,omitempty"`
 }
 
 type UserResponse struct {
@@ -377,12 +377,7 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 				Username:    "embedded-guest",
 				Role:        "guest",
 			},
-			PathPrefix: func() *string {
-				if pathPrefix != "" {
-					return &pathPrefix
-				}
-				return nil
-			}(),
+			PathPrefix: pathPrefix,
 		}
 
 		h.logger.Info("Embedded guest login successful",
