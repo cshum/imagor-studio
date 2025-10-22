@@ -1200,8 +1200,8 @@ func TestListFiles(t *testing.T) {
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
-	// Create context with owner ID
-	ctx := context.WithValue(context.Background(), UserIDContextKey, "test-owner-id")
+	// Create context with proper authentication
+	ctx := createReadOnlyContext("test-owner-id")
 	path := "/test"
 	offset := 0
 	limit := 10
@@ -1241,7 +1241,7 @@ func TestStatFile(t *testing.T) {
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
-	ctx := context.WithValue(context.Background(), UserIDContextKey, "test-owner-id")
+	ctx := createReadOnlyContext("test-owner-id")
 	path := "/test/file1.txt"
 
 	mockStorage.On("Stat", ctx, path).Return(storage.FileInfo{

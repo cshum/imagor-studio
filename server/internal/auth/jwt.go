@@ -12,9 +12,11 @@ import (
 // Claims represents JWT claims structure
 type Claims struct {
 	jwt.RegisteredClaims
-	UserID string   `json:"user_id"`
-	Role   string   `json:"role"`
-	Scopes []string `json:"scopes"`
+	UserID     string   `json:"user_id"`
+	Role       string   `json:"role"`
+	Scopes     []string `json:"scopes"`
+	PathPrefix string   `json:"path_prefix,omitempty"`
+	IsEmbedded bool     `json:"is_embedded,omitempty"`
 }
 
 // TokenManager handles JWT operations
@@ -37,7 +39,12 @@ func NewTokenManager(secret string, tokenDuration time.Duration) *TokenManager {
 }
 
 // GenerateToken creates a new JWT token
-func (tm *TokenManager) GenerateToken(userID, role string, scopes []string) (string, error) {
+func (tm *TokenManager) GenerateToken(userID, role string, scopes []string, pathPrefix string) (string, error) {
+	return tm.GenerateTokenWithOptions(userID, role, scopes, false, pathPrefix)
+}
+
+// GenerateTokenWithOptions creates a new JWT token with embedded mode option
+func (tm *TokenManager) GenerateTokenWithOptions(userID, role string, scopes []string, isEmbedded bool, pathPrefix string) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -47,9 +54,15 @@ func (tm *TokenManager) GenerateToken(userID, role string, scopes []string) (str
 			IssuedAt:  jwt.NewNumericDate(now),
 			ID:        fmt.Sprintf("%d", time.Now().UnixNano()),
 		},
-		UserID: userID,
-		Role:   role,
-		Scopes: scopes,
+		UserID:     userID,
+		Role:       role,
+		Scopes:     scopes,
+		IsEmbedded: isEmbedded,
+	}
+
+	// Set path prefix if provided
+	if pathPrefix != "" {
+		claims.PathPrefix = pathPrefix
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -91,9 +104,11 @@ func (tm *TokenManager) RefreshToken(claims *Claims) (string, error) {
 			IssuedAt:  jwt.NewNumericDate(now),
 			ID:        fmt.Sprintf("%d", now.UnixNano()),
 		},
-		UserID: claims.UserID,
-		Role:   claims.Role,
-		Scopes: claims.Scopes,
+		UserID:     claims.UserID,
+		Role:       claims.Role,
+		Scopes:     claims.Scopes,
+		PathPrefix: claims.PathPrefix,
+		IsEmbedded: claims.IsEmbedded,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)

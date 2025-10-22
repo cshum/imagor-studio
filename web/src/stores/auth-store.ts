@@ -15,6 +15,7 @@ export interface Auth {
   isFirstRun: boolean | null
   error: string | null
   isEmbedded: boolean
+  pathPrefix: string
 }
 
 const initialState: Auth = {
@@ -24,10 +25,19 @@ const initialState: Auth = {
   isFirstRun: null,
   error: null,
   isEmbedded: false,
+  pathPrefix: '',
 }
 
 export type AuthAction =
-  | { type: 'INIT'; payload: { accessToken: string; profile: UserProfile; isEmbedded?: boolean } }
+  | {
+      type: 'INIT'
+      payload: {
+        accessToken: string
+        profile: UserProfile
+        isEmbedded?: boolean
+        pathPrefix?: string
+      }
+    }
   | { type: 'LOGOUT' }
   | { type: 'SET_ERROR'; payload: { error: string } }
   | { type: 'SET_FIRST_RUN'; payload: { isFirstRun: boolean } }
@@ -36,7 +46,7 @@ export type AuthAction =
 function reducer(state: Auth, action: AuthAction): Auth {
   switch (action.type) {
     case 'INIT': {
-      const { profile, accessToken, isEmbedded = false } = action.payload
+      const { profile, accessToken, isEmbedded = false, pathPrefix = '' } = action.payload
       const authState = profile?.role === 'guest' ? 'guest' : 'authenticated'
 
       setToken(accessToken)
@@ -48,6 +58,7 @@ function reducer(state: Auth, action: AuthAction): Auth {
         profile,
         error: null,
         isEmbedded,
+        pathPrefix,
       }
     }
 
@@ -59,6 +70,8 @@ function reducer(state: Auth, action: AuthAction): Auth {
         accessToken: null,
         profile: null,
         error: null,
+        isEmbedded: false,
+        pathPrefix: '',
       }
 
     case 'SET_ERROR':
@@ -97,18 +110,22 @@ const handleEmbeddedAuth = async (jwtToken: string): Promise<Auth> => {
     // Get user profile with session token
     const profile = await getCurrentUser(response.token)
 
-    // Dispatch unified init action with embedded flag
+    // Dispatch unified init action with embedded flag and path prefix
     return authStore.dispatch({
       type: 'INIT',
       payload: {
         accessToken: response.token,
         profile,
         isEmbedded: true,
+        pathPrefix: response.pathPrefix || '',
       },
     })
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Embedded authentication failed'
-    authStore.dispatch({ type: 'SET_ERROR', payload: { error: errorMessage } })
+    authStore.dispatch({
+      type: 'SET_ERROR',
+      payload: { error: errorMessage },
+    })
     return authStore.dispatch({ type: 'LOGOUT' })
   }
 }
@@ -219,4 +236,26 @@ export const useAuth = () => {
     logout,
     clearAuthError,
   }
+}
+
+/**
+ * Check if a path is accessible based on the current user's path prefix
+ */
+export const isPathAccessible = (auth: Auth, requestedPath: string): boolean => {
+  // If no path prefix is set, allow all paths (backward compatibility)
+  if (!auth.pathPrefix) {
+    return true
+  }
+
+  // Normalize paths for comparison
+  const normalizedRequested = '/' + requestedPath.replace(/^\/+/, '')
+  const normalizedPrefix = '/' + auth.pathPrefix.replace(/^\/+/, '').replace(/\/+$/, '')
+
+  // Root prefix allows access to all paths
+  if (normalizedPrefix === '/') {
+    return true
+  }
+
+  // Check if the requested path starts with the allowed prefix
+  return normalizedRequested.startsWith(normalizedPrefix)
 }

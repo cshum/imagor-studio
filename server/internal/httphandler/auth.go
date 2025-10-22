@@ -51,9 +51,10 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Token     string       `json:"token"`
-	ExpiresIn int64        `json:"expiresIn"`
-	User      UserResponse `json:"user"`
+	Token      string       `json:"token"`
+	ExpiresIn  int64        `json:"expiresIn"`
+	User       UserResponse `json:"user"`
+	PathPrefix string       `json:"pathPrefix,omitempty"`
 }
 
 type UserResponse struct {
@@ -241,7 +242,7 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 
 		guestID := uuid.GenerateUUID()
 
-		token, err := h.tokenManager.GenerateToken(guestID, "guest", []string{"read"})
+		token, err := h.tokenManager.GenerateToken(guestID, "guest", []string{"read"}, "")
 		if err != nil {
 			h.logger.Error("Failed to generate guest token", zap.Error(err))
 			return apperror.InternalServerError("Failed to generate token")
@@ -330,7 +331,7 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 		}
 
 		// Validate the JWT token (this validates the token from the CMS)
-		_, err = h.tokenManager.ValidateToken(jwtToken)
+		claims, err := h.tokenManager.ValidateToken(jwtToken)
 		if err != nil {
 			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidToken,
 				"Invalid or expired JWT token", map[string]interface{}{
@@ -338,11 +339,30 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 				})
 		}
 
+		pathPrefix := claims.PathPrefix
+
+		// Validate path prefix format if provided
+		if pathPrefix != "" {
+			// Normalize path prefix - ensure it starts with / and doesn't end with / (unless it's root)
+			if !strings.HasPrefix(pathPrefix, "/") {
+				pathPrefix = "/" + pathPrefix
+			}
+			if len(pathPrefix) > 1 && strings.HasSuffix(pathPrefix, "/") {
+				pathPrefix = strings.TrimSuffix(pathPrefix, "/")
+			}
+
+			// Basic security check - prevent path traversal
+			if strings.Contains(pathPrefix, "..") {
+				return apperror.NewAppError(http.StatusBadRequest, apperror.ErrInvalidInput,
+					"Invalid path prefix: path traversal not allowed", nil)
+			}
+		}
+
 		// Generate embedded guest user ID
 		embeddedGuestID := uuid.GenerateUUID()
 
-		// Generate session token for embedded guest with editor permissions
-		sessionToken, err := h.tokenManager.GenerateToken(embeddedGuestID, "guest", []string{"read", "edit"})
+		// Generate session token for embedded guest with editor permissions and path prefix
+		sessionToken, err := h.tokenManager.GenerateTokenWithOptions(embeddedGuestID, "guest", []string{"read", "edit"}, true, pathPrefix)
 		if err != nil {
 			h.logger.Error("Failed to generate embedded guest token", zap.Error(err))
 			return apperror.InternalServerError("Failed to generate session token")
@@ -357,10 +377,12 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 				Username:    "embedded-guest",
 				Role:        "guest",
 			},
+			PathPrefix: pathPrefix,
 		}
 
 		h.logger.Info("Embedded guest login successful",
 			zap.String("embeddedGuestID", embeddedGuestID),
+			zap.String("pathPrefix", pathPrefix),
 			zap.String("userAgent", r.Header.Get("User-Agent")))
 
 		return WriteSuccess(w, response)
@@ -405,7 +427,7 @@ func (h *AuthHandler) generateAuthResponse(userID, displayName, username, role s
 	}
 
 	// Generate token
-	token, err := h.tokenManager.GenerateToken(userID, role, scopes)
+	token, err := h.tokenManager.GenerateToken(userID, role, scopes, "")
 	if err != nil {
 		h.logger.Error("Failed to generate token", zap.Error(err))
 		return nil, apperror.InternalServerError("Failed to generate token")

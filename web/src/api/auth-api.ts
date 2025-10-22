@@ -26,6 +26,7 @@ export interface LoginResponse {
     username: string
     role: string
   }
+  pathPrefix?: string
 }
 
 export interface FirstRunResponse {

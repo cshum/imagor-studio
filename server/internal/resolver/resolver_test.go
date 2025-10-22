@@ -25,6 +25,24 @@ func createUserContext(userID, role string, scopes []string) context.Context {
 	return context.WithValue(ctx, UserIDContextKey, userID)
 }
 
+// Helper function to create embedded user context
+func createEmbeddedUserContext(userID, role string, scopes []string, pathPrefix string) context.Context {
+	claims := &auth.Claims{
+		UserID:     userID,
+		Role:       role,
+		Scopes:     scopes,
+		PathPrefix: pathPrefix,
+		IsEmbedded: true,
+	}
+	ctx := auth.SetClaimsInContext(context.Background(), claims)
+	return context.WithValue(ctx, UserIDContextKey, userID)
+}
+
+// Helper function to create embedded read-write context
+func createEmbeddedReadWriteContext(userID, pathPrefix string) context.Context {
+	return createEmbeddedUserContext(userID, "guest", []string{"read", "edit"}, pathPrefix)
+}
+
 // Helper function to create admin context
 func createAdminContext(userID string) context.Context {
 	return createUserContext(userID, "admin", []string{"read", "write", "admin"})
