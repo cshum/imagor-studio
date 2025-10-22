@@ -31,6 +31,11 @@ const sidebars: SidebarsConfig = {
         "deployment/kubernetes",
       ],
     },
+    {
+      type: "category",
+      label: "Integration",
+      items: ["integration/embedded-mode"],
+    },
     "architecture",
     "ecosystem",
   ],
