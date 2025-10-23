@@ -80,13 +80,29 @@ func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Conf
 
 // createDefaultEmbeddedConfig creates a default embedded mode configuration
 func createDefaultEmbeddedConfig(cfg *config.Config) *ImagorConfig {
+	// Use enriched config values (CLI/ENV/registry) with safe defaults as fallback
+	secret := cfg.ImagorSecret
+	if secret == "" {
+		secret = cfg.JWTSecret // Fallback to JWT secret if no imagor secret provided
+	}
+
+	signerType := cfg.ImagorSignerType
+	if signerType == "" {
+		signerType = "sha256" // Safe default
+	}
+
+	signerTruncate := cfg.ImagorSignerTruncate
+	if signerTruncate == 0 {
+		signerTruncate = 32 // Safe default
+	}
+
 	return &ImagorConfig{
 		Mode:           ImagorModeEmbedded,
 		BaseURL:        "/imagor",
-		Secret:         cfg.JWTSecret, // Always use JWT secret (no override)
-		Unsafe:         false,         // Always false (fixed)
-		SignerType:     "sha256",      // Fixed: always SHA256
-		SignerTruncate: 32,            // Fixed: always 32-char truncation
+		Secret:         secret,
+		Unsafe:         cfg.ImagorUnsafe, // Use enriched value (respects CLI/ENV)
+		SignerType:     signerType,
+		SignerTruncate: signerTruncate,
 	}
 }
 
@@ -123,16 +139,19 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 			p.logger.Info("Imagor defaulted to embedded mode")
 		} else {
 			// Use startup config
-			imagorConfig = &ImagorConfig{
-				Mode:    ImagorMode(strings.ToLower(cfg.ImagorMode)), // Normalize to lowercase and cast to enum
-				BaseURL: cfg.ImagorBaseURL,
-				Secret:  cfg.ImagorSecret,
-				Unsafe:  cfg.ImagorUnsafe,
-			}
-
-			// Adjust base URL for embedded mode
-			if imagorConfig.Mode == ImagorModeEmbedded {
-				imagorConfig.BaseURL = "/imagor"
+			if strings.ToLower(cfg.ImagorMode) == "embedded" {
+				// For embedded mode, use the createDefaultEmbeddedConfig which handles all the configuration
+				imagorConfig = createDefaultEmbeddedConfig(cfg)
+			} else {
+				// For external mode, use the provided values
+				imagorConfig = &ImagorConfig{
+					Mode:           ImagorMode(strings.ToLower(cfg.ImagorMode)),
+					BaseURL:        cfg.ImagorBaseURL,
+					Secret:         cfg.ImagorSecret,
+					Unsafe:         cfg.ImagorUnsafe,
+					SignerType:     cfg.ImagorSignerType,
+					SignerTruncate: cfg.ImagorSignerTruncate,
+				}
 			}
 
 			p.logger.Info("Imagor initialized from startup config", zap.String("mode", imagorConfig.Mode.String()))
@@ -356,9 +375,16 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 	var signer imagorpath.Signer
 
 	if cfg.Mode == ImagorModeEmbedded {
-		// For embedded mode, use the configured secret (which is always JWT secret)
-		signer = imagorpath.NewHMACSigner(sha256.New, 32, p.config.JWTSecret)
-		path = imagorpath.Generate(params, signer)
+		// For embedded mode, use the configured signer settings
+		if cfg.Unsafe {
+			path = imagorpath.GenerateUnsafe(params)
+		} else if cfg.Secret != "" {
+			hashAlg := getHashAlgorithm(cfg.SignerType)
+			signer = imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
+			path = imagorpath.Generate(params, signer)
+		} else {
+			return "", fmt.Errorf("imagor secret is required for signed URLs")
+		}
 	} else if cfg.Secret != "" {
 		// Use configurable signer for external mode
 		hashAlg := getHashAlgorithm(cfg.SignerType)
@@ -389,9 +415,10 @@ func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error
 		),
 	))
 
-	// Use server's JWT secret with SHA256 and 32-char truncation
-	if p.config.JWTSecret != "" {
-		signer := imagorpath.NewHMACSigner(sha256.New, 32, p.config.JWTSecret)
+	// Use configurable signer settings for embedded mode
+	if cfg.Secret != "" && !cfg.Unsafe {
+		hashAlg := getHashAlgorithm(cfg.SignerType)
+		signer := imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
 		options = append(options, imagor.WithSigner(signer))
 	}
 

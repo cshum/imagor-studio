@@ -995,3 +995,234 @@ func TestGenerateURL_EmbeddedVsExternal_SignerComparison(t *testing.T) {
 	assert.Equal(t, embeddedSig, externalSig,
 		"Embedded and external modes should produce identical signatures with same configuration")
 }
+
+func TestCreateDefaultEmbeddedConfig_WithCLIConfig(t *testing.T) {
+	tests := []struct {
+		name           string
+		config         *config.Config
+		expectedSecret string
+		expectedUnsafe bool
+		expectedType   string
+		expectedTrunc  int
+	}{
+		{
+			name: "Default values when no CLI config",
+			config: &config.Config{
+				JWTSecret: "jwt-secret",
+			},
+			expectedSecret: "jwt-secret",
+			expectedUnsafe: false,
+			expectedType:   "sha256",
+			expectedTrunc:  32,
+		},
+		{
+			name: "CLI config overrides defaults",
+			config: &config.Config{
+				JWTSecret:            "jwt-secret",
+				ImagorSecret:         "custom-secret",
+				ImagorUnsafe:         true,
+				ImagorSignerType:     "sha1",
+				ImagorSignerTruncate: 28,
+			},
+			expectedSecret: "custom-secret",
+			expectedUnsafe: true,
+			expectedType:   "sha1",
+			expectedTrunc:  28,
+		},
+		{
+			name: "Partial CLI config with defaults",
+			config: &config.Config{
+				JWTSecret:    "jwt-secret",
+				ImagorSecret: "custom-secret",
+				ImagorUnsafe: true,
+				// SignerType and SignerTruncate not set, should use defaults
+			},
+			expectedSecret: "custom-secret",
+			expectedUnsafe: true,
+			expectedType:   "sha256", // Default
+			expectedTrunc:  32,       // Default
+		},
+		{
+			name: "Empty imagor secret falls back to JWT secret",
+			config: &config.Config{
+				JWTSecret:            "jwt-secret",
+				ImagorSecret:         "", // Empty, should fall back
+				ImagorSignerType:     "sha512",
+				ImagorSignerTruncate: 40,
+			},
+			expectedSecret: "jwt-secret", // Should fall back
+			expectedUnsafe: false,
+			expectedType:   "sha512",
+			expectedTrunc:  40,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := createDefaultEmbeddedConfig(tt.config)
+
+			assert.Equal(t, ImagorModeEmbedded, result.Mode)
+			assert.Equal(t, "/imagor", result.BaseURL)
+			assert.Equal(t, tt.expectedSecret, result.Secret)
+			assert.Equal(t, tt.expectedUnsafe, result.Unsafe)
+			assert.Equal(t, tt.expectedType, result.SignerType)
+			assert.Equal(t, tt.expectedTrunc, result.SignerTruncate)
+		})
+	}
+}
+
+func TestInitializeWithConfig_EmbeddedWithCLIConfig(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	cfg := &config.Config{
+		JWTSecret:            "jwt-secret",
+		ImagorMode:           "embedded",
+		ImagorSecret:         "cli-secret",
+		ImagorUnsafe:         true,
+		ImagorSignerType:     "sha1",
+		ImagorSignerTruncate: 28,
+	}
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	provider := New(logger, registryStore, cfg, storageProvider)
+	err = provider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	config := provider.GetConfig()
+	require.NotNil(t, config)
+	assert.Equal(t, ImagorModeEmbedded, config.Mode)
+	assert.Equal(t, "/imagor", config.BaseURL)
+	assert.Equal(t, "cli-secret", config.Secret)
+	assert.True(t, config.Unsafe)
+	assert.Equal(t, "sha1", config.SignerType)
+	assert.Equal(t, 28, config.SignerTruncate)
+
+	// Should have an embedded handler
+	handler := provider.GetHandler()
+	assert.NotNil(t, handler)
+}
+
+func TestGenerateURL_EmbeddedWithCLIConfig(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	cfg := &config.Config{
+		JWTSecret:            "jwt-secret",
+		ImagorMode:           "embedded",
+		ImagorSecret:         "cli-secret",
+		ImagorUnsafe:         false, // Use signed URLs
+		ImagorSignerType:     "sha1",
+		ImagorSignerTruncate: 28,
+	}
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	provider := New(logger, registryStore, cfg, storageProvider)
+	err = provider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
+		Width:  300,
+		Height: 200,
+	})
+
+	require.NoError(t, err)
+	assert.Contains(t, url, "/imagor/")
+	assert.Contains(t, url, "300x200")
+	assert.Contains(t, url, "test/image.jpg")
+	// Should contain signature (not unsafe)
+	assert.Regexp(t, `^/imagor/[a-zA-Z0-9_=/-]+/`, url)
+}
+
+func TestGenerateURL_EmbeddedUnsafeMode(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	cfg := &config.Config{
+		JWTSecret:    "jwt-secret",
+		ImagorMode:   "embedded",
+		ImagorUnsafe: true, // Enable unsafe mode
+	}
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	provider := New(logger, registryStore, cfg, storageProvider)
+	err = provider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
+		Width:  300,
+		Height: 200,
+	})
+
+	require.NoError(t, err)
+	assert.Contains(t, url, "/imagor/unsafe/")
+	assert.Contains(t, url, "300x200")
+	assert.Contains(t, url, "test/image.jpg")
+}
+
+func TestGenerateURL_EmbeddedConfigurableSigners(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, &config.Config{})
+	err := storageProvider.InitializeWithConfig(&config.Config{})
+	require.NoError(t, err)
+
+	provider := New(logger, registryStore, &config.Config{}, storageProvider)
+
+	params := imagorpath.Params{
+		Width:  300,
+		Height: 200,
+		Image:  "test/image.jpg",
+	}
+
+	tests := []struct {
+		name           string
+		signerType     string
+		signerTruncate int
+		secret         string
+		expectError    bool
+	}{
+		{"SHA1 with truncation", "sha1", 28, "test-secret", false},
+		{"SHA256 default", "sha256", 32, "test-secret", false},
+		{"SHA512 with truncation", "sha512", 40, "test-secret", false},
+		{"No secret should error when not unsafe", "sha256", 32, "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set up embedded configuration with CLI-style values
+			embeddedConfig := &ImagorConfig{
+				Mode:           ImagorModeEmbedded,
+				BaseURL:        "/imagor",
+				Secret:         tt.secret,
+				Unsafe:         false,
+				SignerType:     tt.signerType,
+				SignerTruncate: tt.signerTruncate,
+			}
+
+			provider.currentConfig = embeddedConfig
+
+			url, err := provider.GenerateURL("test/image.jpg", params)
+
+			if tt.expectError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Contains(t, url, "/imagor/")
+			assert.Contains(t, url, "300x200")
+			assert.Contains(t, url, "test/image.jpg")
+
+			// Verify URL contains signature (should start with /imagor/ + signature)
+			assert.Regexp(t, `^/imagor/[a-zA-Z0-9_=/-]+/`, url)
+		})
+	}
+}
