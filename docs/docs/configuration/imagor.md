@@ -35,8 +35,6 @@ The built-in imagor server processes images directly using libvips.
 ```bash
 export IMAGOR_MODE=embedded
 export IMAGOR_SECRET=my-secret-key
-export IMAGOR_SIGNER_TYPE=sha256
-export IMAGOR_SIGNER_TRUNCATE=32
 ```
 
 **Features:**
@@ -45,37 +43,6 @@ export IMAGOR_SIGNER_TRUNCATE=32
 - High-performance libvips processing
 - Automatic configuration
 - Perfect for most deployments
-
-**Configuration Options:**
-
-All imagor configuration flags work with embedded mode:
-
-```bash
-# Enable unsafe mode for development
-export IMAGOR_UNSAFE=true
-
-# Configure custom secret (falls back to JWT secret if not set)
-export IMAGOR_SECRET=my-custom-secret
-
-# Choose signing algorithm: sha1, sha256, sha512
-export IMAGOR_SIGNER_TYPE=sha256
-
-# Set signature truncation length
-export IMAGOR_SIGNER_TRUNCATE=32
-```
-
-**CLI Examples:**
-
-```bash
-# Embedded mode with unsafe URLs (development)
-imagor-studio -imagor-mode=embedded -imagor-unsafe
-
-# Embedded mode with custom secret and SHA1 signing
-imagor-studio -imagor-mode=embedded -imagor-secret=mysecret -imagor-signer-type=sha1
-
-# Embedded mode with SHA512 and truncated signatures
-imagor-studio -imagor-mode=embedded -imagor-secret=mysecret -imagor-signer-type=sha512 -imagor-signer-truncate=40
-```
 
 ## External Mode
 
