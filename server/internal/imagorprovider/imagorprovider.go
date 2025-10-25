@@ -285,25 +285,19 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 		// For embedded mode, use the configured signer settings
 		if cfg.Unsafe {
 			path = imagorpath.GenerateUnsafe(params)
-		} else if cfg.Secret != "" {
+		} else {
 			hashAlg := getHashAlgorithm(cfg.SignerType)
 			signer = imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
 			path = imagorpath.Generate(params, signer)
-		} else {
-			return "", fmt.Errorf("imagor secret is required for signed URLs")
 		}
-	} else if cfg.Secret != "" {
+	} else if cfg.Unsafe {
+		path = imagorpath.GenerateUnsafe(params)
+	} else {
 		// Use configurable signer for external mode
 		hashAlg := getHashAlgorithm(cfg.SignerType)
 		signer = imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
 		path = imagorpath.Generate(params, signer)
-	} else if cfg.Unsafe {
-		path = imagorpath.GenerateUnsafe(params)
-	} else {
-		return "", fmt.Errorf("imagor secret is required for signed URLs")
 	}
-
-	// Combine with base URL
 	return fmt.Sprintf("%s/%s", cfg.BaseURL, path), nil
 }
 

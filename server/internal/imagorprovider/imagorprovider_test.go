@@ -535,15 +535,14 @@ func TestGenerateURL_BasicScenarios(t *testing.T) {
 			description: "External unsafe mode should generate unsigned URLs",
 		},
 		{
-			name: "External no secret - should error",
+			name: "External no secret",
 			cliArgs: []string{
 				"--imagor-mode", "external",
 				"--imagor-base-url", "http://localhost:8000",
 				// No jwt-secret and no imagor-secret and not unsafe
 			},
-			expectError:   true,
-			errorContains: "imagor secret is required for signed URLs",
-			description:   "External mode without any secret should error",
+			expectError: false,
+			description: "External mode without any secret",
 		},
 		{
 			name: "Embedded with secret",
