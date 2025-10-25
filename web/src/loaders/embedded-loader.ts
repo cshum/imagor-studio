@@ -1,4 +1,5 @@
-import { imageEditorLoader } from './image-editor-loader'
+import i18n from '@/i18n'
+import { imageEditorLoader } from '@/loaders/image-editor-loader'
 
 /**
  * Search params interface for embedded mode
@@ -30,16 +31,14 @@ export const embeddedLoaderDeps = ({ search: { path } }: { search: EmbeddedSearc
  */
 export const parseEmbeddedPath = (path: string) => {
   if (!path) {
-    throw new Error(
-      'Path parameter is required. Expected format: /?token=YOUR_JWT_TOKEN&path=image.jpg',
-    )
+    throw new Error(i18n.t('auth.embedded.pathMissing'))
   }
 
   // Handle gallery paths: "gallery/folder/image.jpg" -> galleryKey="folder", imageKey="image.jpg"
   if (path.startsWith('gallery/')) {
     const pathParts = path.split('/')
     if (pathParts.length < 3) {
-      throw new Error('Invalid gallery path format. Expected: gallery/folder/image.jpg')
+      throw new Error(i18n.t('auth.embedded.pathInvalid'))
     }
     const imageKey = pathParts[pathParts.length - 1]
     const galleryKey = pathParts.slice(1, -1).join('/')

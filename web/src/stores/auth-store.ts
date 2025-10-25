@@ -1,6 +1,7 @@
 import { checkFirstRun, embeddedGuestLogin, guestLogin } from '@/api/auth-api'
 import { getCurrentUser } from '@/api/user-api.ts'
 import type { MeQuery } from '@/generated/graphql'
+import i18n from '@/i18n'
 import { createStore } from '@/lib/create-store.ts'
 import { getToken, removeToken, setToken } from '@/lib/token'
 
@@ -231,27 +232,41 @@ export const initEmbeddedAuth = async (): Promise<Auth> => {
   const token = urlParams.get('token')
 
   if (!token) {
-    throw new Error(
-      'Missing authentication token. Embedded mode requires a JWT token in the URL. Expected format: /?token=YOUR_JWT_TOKEN&path=image.jpg',
-    )
+    throw new Error(i18n.t('auth.embedded.tokenMissing'))
   }
 
-  // Call /api/auth/embedded-guest with JWT
-  const response = await embeddedGuestLogin(token)
+  try {
+    // Call /api/auth/embedded-guest with JWT
+    const response = await embeddedGuestLogin(token)
 
-  // Get user profile with session token
-  const profile = await getCurrentUser(response.token)
+    // Get user profile with session token
+    const profile = await getCurrentUser(response.token)
 
-  // Dispatch unified init action with embedded flag and path prefix
-  return authStore.dispatch({
-    type: 'INIT',
-    payload: {
-      accessToken: response.token,
-      profile,
-      isEmbedded: true,
-      pathPrefix: response.pathPrefix || '',
-    },
-  })
+    // Dispatch unified init action with embedded flag and path prefix
+    return authStore.dispatch({
+      type: 'INIT',
+      payload: {
+        accessToken: response.token,
+        profile,
+        isEmbedded: true,
+        pathPrefix: response.pathPrefix || '',
+      },
+    })
+  } catch (error) {
+    // Provide more specific error messages based on the error type
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase()
+      if (
+        errorMessage.includes('invalid') ||
+        errorMessage.includes('expired') ||
+        errorMessage.includes('unauthorized')
+      ) {
+        throw new Error(i18n.t('auth.embedded.tokenInvalid'))
+      }
+    }
+    // Generic authentication failure
+    throw new Error(i18n.t('auth.embedded.authenticationFailed'))
+  }
 }
 
 export const useAuthEffect = authStore.useStoreEffect
