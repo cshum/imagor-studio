@@ -175,7 +175,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <Button
             variant='ghost'
             size='sm'
-            className={cn(authState.isEmbedded, 'invisible')}
+            className={cn(authState.isEmbedded && 'invisible')}
             onClick={handleBack}
           >
             <ChevronLeft className='mr-1 h-4 w-4' />
