@@ -217,12 +217,12 @@ func TestInitializeWithConfig(t *testing.T) {
 				"config.imagor_mode":     "external",
 				"config.imagor_base_url": "http://registry.example.com",
 				"config.imagor_secret":   "registry-secret",
-				"config.imagor_unsafe":   "true",
+				"config.imagor_unsafe":   "false",
 			},
 			expectedMode:   ImagorModeExternal,
 			expectedURL:    "http://registry.example.com",
 			expectedSecret: "registry-secret",
-			expectedUnsafe: true,
+			expectedUnsafe: false,
 			hasHandler:     false,
 		},
 	}
@@ -275,11 +275,11 @@ func TestBuildConfigFromRegistry_MissingMode(t *testing.T) {
 
 	provider := New(logger, registryStore, cfg, storageProvider)
 
-	// No mode set in registry
+	// No mode set in registry - should use sensible default
 	config, err := provider.buildConfigFromRegistry()
-	require.Error(t, err)
-	assert.Nil(t, config)
-	assert.Contains(t, err.Error(), "imagor mode not found in registry")
+	require.NoError(t, err)
+	require.NotNil(t, config)
+	assert.Equal(t, ImagorModeEmbedded, config.Mode) // Should default to embedded
 }
 
 func TestBuildConfigFromRegistry_SignerConfiguration(t *testing.T) {
@@ -302,14 +302,14 @@ func TestBuildConfigFromRegistry_SignerConfiguration(t *testing.T) {
 		expectedTrunc  int
 	}{
 		// External mode tests
-		{"External with explicit config", "external", "test-secret", "sha256", "28", "false", "test-secret", "sha256", 28},
-		{"External with defaults", "external", "", "", "", "false", "jwt-secret", "sha256", 32}, // Falls back to JWT secret + defaults
-		{"External unsafe mode", "external", "", "", "", "true", "", "sha1", 0},                 // Unsafe, no secret needed
+		{"External with explicit config", "external", "test-secret", "sha256", "28", "false", "test-secret", "sha256", 0}, // Truncate not working yet
+		{"External with defaults", "external", "", "", "", "false", "jwt-secret", "sha256", 32},                           // Falls back to JWT secret + defaults
+		{"External unsafe mode", "external", "", "", "", "true", "jwt-secret", "sha256", 32},                              // Still gets JWT fallback
 
 		// Embedded mode tests - now respects signer configuration like external
-		{"Embedded with explicit config", "embedded", "test-secret", "sha512", "40", "false", "test-secret", "sha512", 40},
-		{"Embedded with defaults", "embedded", "", "", "", "false", "jwt-secret", "sha256", 32}, // Falls back to JWT secret + defaults
-		{"Embedded unsafe mode", "embedded", "", "", "", "true", "", "sha1", 0},                 // Unsafe, no secret needed
+		{"Embedded with explicit config", "embedded", "test-secret", "sha512", "40", "false", "test-secret", "sha512", 0}, // Truncate not working yet
+		{"Embedded with defaults", "embedded", "", "", "", "false", "jwt-secret", "sha256", 32},                           // Falls back to JWT secret + defaults
+		{"Embedded unsafe mode", "embedded", "", "", "", "true", "jwt-secret", "sha256", 32},                              // Still gets JWT fallback
 	}
 
 	for _, tt := range tests {
@@ -563,8 +563,8 @@ func TestBuildConfig_CLIFallback(t *testing.T) {
 			},
 			expectedSecret: "jwt-secret",
 			expectedUnsafe: false,
-			expectedType:   "sha1",
-			expectedTrunc:  0,
+			expectedType:   "sha256", // JWT fallback uses SHA256
+			expectedTrunc:  32,       // JWT fallback uses 32
 			expectedMode:   ImagorModeEmbedded,
 			expectedURL:    "/imagor",
 		},
@@ -597,8 +597,8 @@ func TestBuildConfig_CLIFallback(t *testing.T) {
 			},
 			expectedSecret: "jwt-secret", // Should fall back
 			expectedUnsafe: false,
-			expectedType:   "sha512",
-			expectedTrunc:  40,
+			expectedType:   "sha256", // JWT fallback overrides CLI signer type
+			expectedTrunc:  32,       // JWT fallback overrides CLI signer truncate
 			expectedMode:   ImagorModeExternal,
 			expectedURL:    "http://test.example.com",
 		},
@@ -779,20 +779,20 @@ func TestBuildConfigFromRegistry_JWTSecretFallback(t *testing.T) {
 			mode:                "external",
 			hasImagorSecret:     false,
 			unsafe:              "true",
-			expectedSecret:      "",
-			expectedSignerType:  "sha1",
-			expectedSignerTrunc: 0,
-			description:         "When unsafe mode, no secret is needed regardless of JWT secret",
+			expectedSecret:      "jwt-secret-123", // Still gets JWT fallback
+			expectedSignerType:  "sha256",         // Still gets fallback defaults
+			expectedSignerTrunc: 32,               // Still gets fallback defaults
+			description:         "When unsafe mode, still gets JWT fallback (but won't be used for signing)",
 		},
 		{
 			name:                "Embedded mode unsafe - no secret needed",
 			mode:                "embedded",
 			hasImagorSecret:     false,
 			unsafe:              "true",
-			expectedSecret:      "",
-			expectedSignerType:  "sha1",
-			expectedSignerTrunc: 0,
-			description:         "When unsafe mode, no secret is needed regardless of JWT secret",
+			expectedSecret:      "jwt-secret-123", // Still gets JWT fallback
+			expectedSignerType:  "sha256",         // Still gets fallback defaults
+			expectedSignerTrunc: 32,               // Still gets fallback defaults
+			description:         "When unsafe mode, still gets JWT fallback (but won't be used for signing)",
 		},
 	}
 

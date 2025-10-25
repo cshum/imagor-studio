@@ -68,6 +68,7 @@ type Config struct {
 
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
+	flagSet         *flag.FlagSet // Private field to access flag values
 }
 
 // Load loads configuration with optional registry enhancement
@@ -216,6 +217,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		AppDefaultSortBy:            *appDefaultSortBy,
 		AppDefaultSortOrder:         *appDefaultSortOrder,
 		overriddenFlags:             overriddenFlags,
+		flagSet:                     fs, // Store the flagSet for later use
 	}
 
 	// Auto-populate storage type if not explicitly set
@@ -286,6 +288,22 @@ func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, ex
 	// Check if this flag was overridden by CLI/env
 	if value, overridden := c.overriddenFlags[flagName]; overridden {
 		return value, true
+	}
+
+	// Return actual config values even if not "overridden"
+	switch registryKey {
+	case "config.imagor_mode":
+		return c.ImagorMode, c.ImagorMode != ""
+	case "config.imagor_base_url":
+		return c.ImagorBaseURL, c.ImagorBaseURL != ""
+	case "config.imagor_secret":
+		return c.ImagorSecret, c.ImagorSecret != ""
+	case "config.imagor_unsafe":
+		return strconv.FormatBool(c.ImagorUnsafe), true
+	case "config.imagor_signer_type":
+		return c.ImagorSignerType, c.ImagorSignerType != ""
+	case "config.imagor_signer_truncate":
+		return strconv.Itoa(c.ImagorSignerTruncate), true
 	}
 
 	return "", false

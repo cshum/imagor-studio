@@ -80,47 +80,8 @@ func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Conf
 
 // buildConfig creates imagor configuration from registry, CLI, or defaults with proper priority
 func (p *Provider) buildConfig() (*ImagorConfig, error) {
-	// Try registry first (handles CLI/ENV/Registry priority via GetEffectiveValues)
-	if c, err := p.buildConfigFromRegistry(); err == nil && c.Mode != "" {
-		return c, nil
-	}
-
-	// Fall back to CLI c or defaults
-	cfg := p.config
-	mode := strings.ToLower(cfg.ImagorMode)
-	if mode == "" {
-		mode = "embedded" // Default to embedded
-	}
-
-	imagorConfig := &ImagorConfig{
-		Mode:   ImagorMode(mode),
-		Unsafe: cfg.ImagorUnsafe,
-	}
-
-	// Set mode-specific defaults
-	if imagorConfig.Mode == ImagorModeEmbedded {
-		imagorConfig.BaseURL = "/imagor"
-	} else {
-		imagorConfig.BaseURL = cfg.ImagorBaseURL
-		if imagorConfig.BaseURL == "" {
-			imagorConfig.BaseURL = "http://localhost:8000" // Default for external
-		}
-	}
-
-	// Handle secret with fallback
-	imagorConfig.Secret = cfg.ImagorSecret
-	if imagorConfig.Secret == "" {
-		imagorConfig.Secret = cfg.JWTSecret // Fallback to JWT secret
-	}
-
-	// Set signer configuration
-	imagorConfig.SignerType = cfg.ImagorSignerType
-	if imagorConfig.SignerType == "" {
-		imagorConfig.SignerType = "sha1" // Default
-	}
-	imagorConfig.SignerTruncate = cfg.ImagorSignerTruncate
-
-	return imagorConfig, nil
+	// Single call handles CLI/ENV/Registry/Defaults automatically!
+	return p.buildConfigFromRegistry()
 }
 
 // GetConfig returns the current imagor configuration
@@ -240,14 +201,15 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 		resultMap[result.Key] = result
 	}
 
-	// Get imagor mode
+	// Get imagor mode with sensible default
 	modeResult := resultMap["config.imagor_mode"]
-	if !modeResult.Exists {
-		return nil, fmt.Errorf("imagor mode not found in registry")
+	mode := "embedded" // Sensible default
+	if modeResult.Exists {
+		mode = strings.ToLower(modeResult.Value)
 	}
 
 	imagorConfig := &ImagorConfig{
-		Mode: ImagorMode(modeResult.Value),
+		Mode: ImagorMode(mode),
 	}
 
 	if imagorConfig.Mode == ImagorModeEmbedded {
