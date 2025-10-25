@@ -3,12 +3,10 @@ package imagorprovider
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/config"
-	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor/imagorpath"
@@ -99,13 +97,56 @@ func (m *mockRegistryStore) SetMulti(ctx context.Context, ownerID string, entrie
 	return results, nil
 }
 
-func TestNew(t *testing.T) {
+// Test helper functions
+func setupTestProvider(t *testing.T, cfg *config.Config) (*Provider, *mockRegistryStore) {
+	t.Helper()
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
-	cfg := &config.Config{}
-	storageProvider := &storageprovider.Provider{} // Mock storage provider
+	storageProvider := &storageprovider.Provider{}
+
+	if cfg == nil {
+		cfg = &config.Config{}
+	}
 
 	provider := New(logger, registryStore, cfg, storageProvider)
+	return provider, registryStore
+}
+
+func setupTestProviderWithStorage(t *testing.T, cfg *config.Config) (*Provider, *mockRegistryStore) {
+	t.Helper()
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+
+	if cfg == nil {
+		cfg = &config.Config{JWTSecret: "test-jwt-secret"}
+	}
+
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	provider := New(logger, registryStore, cfg, storageProvider)
+	return provider, registryStore
+}
+
+func setupRegistryConfig(t *testing.T, registryStore *mockRegistryStore, mode, baseURL, secret, unsafe string) {
+	t.Helper()
+	ctx := context.Background()
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", mode, false)
+	if baseURL != "" {
+		registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", baseURL, false)
+	}
+	if secret != "" {
+		registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", secret, false)
+	}
+	if unsafe != "" {
+		registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", unsafe, false)
+	}
+}
+
+func TestNew(t *testing.T) {
+	provider, _ := setupTestProvider(t, nil)
 
 	assert.NotNil(t, provider)
 	assert.NotNil(t, provider.logger)
@@ -114,369 +155,210 @@ func TestNew(t *testing.T) {
 	assert.NotNil(t, provider.storageProvider)
 }
 
-func TestInitializeWithConfig_DefaultToEmbedded(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		JWTSecret: "test-jwt-secret",
-	}
-	// Create a properly initialized storage provider
-	storageProvider := storageprovider.New(logger, registryStore, cfg)
-	err := storageProvider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err = provider.InitializeWithConfig(cfg)
-
-	require.NoError(t, err)
-
-	config := provider.GetConfig()
-	require.NotNil(t, config)
-	assert.Equal(t, ImagorModeEmbedded, config.Mode)
-	assert.Equal(t, "/imagor", config.BaseURL)
-	assert.Equal(t, "test-jwt-secret", config.Secret)
-	assert.False(t, config.Unsafe)
-	assert.Equal(t, "sha256", config.SignerType)
-	assert.Equal(t, 32, config.SignerTruncate)
-}
-
-func TestInitializeWithConfig_External(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		ImagorMode:    string(gql.ImagorModeExternal),
-		ImagorBaseURL: "http://localhost:8000",
-		ImagorSecret:  "test-secret",
-		ImagorUnsafe:  false,
-	}
-	storageProvider := &storageprovider.Provider{}
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
-
-	require.NoError(t, err)
-
-	config := provider.GetConfig()
-	require.NotNil(t, config)
-	assert.Equal(t, ImagorModeExternal, config.Mode)
-	assert.Equal(t, "http://localhost:8000", config.BaseURL)
-	assert.Equal(t, "test-secret", config.Secret)
-	assert.False(t, config.Unsafe)
-}
-
-func TestInitializeWithConfig_Embedded(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		ImagorMode:   string(gql.ImagorModeEmbedded),
-		ImagorSecret: "test-secret",
-		ImagorUnsafe: true,
-	}
-	// Create a properly initialized storage provider
-	storageProvider := storageprovider.New(logger, registryStore, cfg)
-	err := storageProvider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err = provider.InitializeWithConfig(cfg)
-
-	require.NoError(t, err)
-
-	config := provider.GetConfig()
-	require.NotNil(t, config)
-	assert.Equal(t, ImagorModeEmbedded, config.Mode)
-	assert.Equal(t, "/imagor", config.BaseURL)
-	assert.Equal(t, "test-secret", config.Secret)
-	assert.True(t, config.Unsafe)
-
-	// Should have an embedded handler
-	handler := provider.GetHandler()
-	assert.NotNil(t, handler)
-}
-
-func TestInitializeWithConfig_FromRegistry(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{}
-	storageProvider := &storageprovider.Provider{}
-
-	// Set up registry configuration
-	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://registry.example.com", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "registry-secret", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", "true", false)
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
-
-	require.NoError(t, err)
-
-	config := provider.GetConfig()
-	require.NotNil(t, config)
-	assert.Equal(t, ImagorModeExternal, config.Mode)
-	assert.Equal(t, "http://registry.example.com", config.BaseURL)
-	assert.Equal(t, "registry-secret", config.Secret)
-	assert.True(t, config.Unsafe)
-}
-
-func TestGenerateURL_EmbeddedDefault(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		JWTSecret: "test-jwt-secret",
-	}
-	// Create a properly initialized storage provider
-	storageProvider := storageprovider.New(logger, registryStore, cfg)
-	err := storageProvider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err = provider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
-		Width:  300,
-		Height: 200,
-	})
-
-	require.NoError(t, err)
-	assert.Contains(t, url, "/imagor/")
-	assert.Contains(t, url, "300x200")
-	assert.Contains(t, url, "test/image.jpg")
-}
-
-func TestGenerateURL_External_Unsafe(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		ImagorMode:    "external",
-		ImagorBaseURL: "http://localhost:8000",
-		ImagorUnsafe:  true,
-	}
-	storageProvider := &storageprovider.Provider{}
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
-		Width:  300,
-		Height: 200,
-	})
-
-	require.NoError(t, err)
-	assert.Contains(t, url, "http://localhost:8000")
-	assert.Contains(t, url, "300x200")
-	assert.Contains(t, url, "test/image.jpg")
-}
-
-func TestGenerateURL_External_Signed(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		ImagorMode:    "external",
-		ImagorBaseURL: "http://localhost:8000",
-		ImagorSecret:  "test-secret",
-		ImagorUnsafe:  false,
-	}
-	storageProvider := &storageprovider.Provider{}
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
-		Width:  300,
-		Height: 200,
-	})
-
-	require.NoError(t, err)
-	assert.Contains(t, url, "http://localhost:8000")
-	assert.Contains(t, url, "300x200")
-	assert.Contains(t, url, "test/image.jpg")
-	// Should contain signature
-	assert.Regexp(t, `^http://localhost:8000/[a-zA-Z0-9_=/-]+/`, url)
-}
-
-func TestGenerateURL_External_NoSecret(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		ImagorMode:    "external",
-		ImagorBaseURL: "http://localhost:8000",
-		ImagorSecret:  "",
-		ImagorUnsafe:  false,
-	}
-	storageProvider := &storageprovider.Provider{}
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	_, err = provider.GenerateURL("test/image.jpg", imagorpath.Params{
-		Width:  300,
-		Height: 200,
-	})
-
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "imagor secret is required for signed URLs")
-}
-
-func TestGenerateURL_Embedded(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		ImagorMode:   "embedded",
-		ImagorSecret: "test-secret",
-		ImagorUnsafe: true,
-	}
-	// Create a properly initialized storage provider
-	storageProvider := storageprovider.New(logger, registryStore, cfg)
-	err := storageProvider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err = provider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
-		Width:  300,
-		Height: 200,
-	})
-
-	require.NoError(t, err)
-	assert.Contains(t, url, "/imagor/")
-	assert.Contains(t, url, "300x200")
-	assert.Contains(t, url, "test/image.jpg")
-}
-
-func TestGenerateURL_WithFilters(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		ImagorMode:    "external",
-		ImagorBaseURL: "http://localhost:8000",
-		ImagorUnsafe:  true,
-	}
-	storageProvider := &storageprovider.Provider{}
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
-		Width:  300,
-		Height: 200,
-		Filters: imagorpath.Filters{
-			{Name: "quality", Args: "85"},
-			{Name: "format", Args: "webp"},
+func TestInitializeWithConfig(t *testing.T) {
+	tests := []struct {
+		name           string
+		cliArgs        []string
+		registryConfig map[string]string
+		needsStorage   bool
+		expectedMode   ImagorMode
+		expectedURL    string
+		expectedSecret string
+		expectedUnsafe bool
+		hasHandler     bool
+		description    string
+	}{
+		{
+			name: "External mode via CLI args",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://localhost:8000",
+				"--imagor-secret", "test-secret",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedMode:   ImagorModeExternal,
+			expectedURL:    "http://localhost:8000",
+			expectedSecret: "test-secret",
+			expectedUnsafe: false,
+			hasHandler:     false,
+			description:    "External mode should be configured via CLI arguments",
 		},
-	})
-
-	require.NoError(t, err)
-	assert.Contains(t, url, "http://localhost:8000")
-	assert.Contains(t, url, "300x200")
-	assert.Contains(t, url, "test/image.jpg")
-	assert.Contains(t, url, "quality(85)")
-	assert.Contains(t, url, "format(webp)")
-}
-
-func TestIsRestartRequired(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		JWTSecret: "test-jwt-secret",
+		{
+			name: "Embedded mode via CLI args",
+			cliArgs: []string{
+				"--imagor-mode", "embedded",
+				"--imagor-secret", "test-secret",
+				"--imagor-unsafe",
+				"--jwt-secret", "jwt-secret",
+			},
+			needsStorage:   true,
+			expectedMode:   ImagorModeEmbedded,
+			expectedURL:    "/imagor",
+			expectedSecret: "test-secret",
+			expectedUnsafe: true,
+			hasHandler:     true,
+			description:    "Embedded mode should be configured via CLI arguments",
+		},
+		{
+			name: "Default embedded with minimal CLI args",
+			cliArgs: []string{
+				"--jwt-secret", "test-jwt-secret",
+			},
+			needsStorage:   true,
+			expectedMode:   ImagorModeEmbedded,
+			expectedURL:    "/imagor",
+			expectedSecret: "test-jwt-secret",
+			expectedUnsafe: false,
+			hasHandler:     true,
+			description:    "Should default to embedded mode with JWT secret fallback",
+		},
+		{
+			name: "CLI args with registry overrides",
+			cliArgs: []string{
+				"--imagor-mode", "embedded", // CLI sets embedded
+				"--jwt-secret", "jwt-secret",
+			},
+			registryConfig: map[string]string{
+				"config.imagor_mode":     "external",                    // Registry tries to override
+				"config.imagor_base_url": "http://registry.example.com", // Registry provides base URL
+				"config.imagor_secret":   "registry-secret",             // Registry provides secret
+				"config.imagor_unsafe":   "false",
+			},
+			needsStorage:   true, // CLI wins with embedded
+			expectedMode:   ImagorModeEmbedded,
+			expectedURL:    "/imagor",
+			expectedSecret: "registry-secret", // Registry secret is used since no CLI override
+			expectedUnsafe: false,
+			hasHandler:     true,
+			description:    "CLI args should take priority over registry values",
+		},
+		{
+			name: "Registry configuration with minimal CLI",
+			cliArgs: []string{
+				"--jwt-secret", "jwt-secret",
+			},
+			registryConfig: map[string]string{
+				"config.imagor_mode":     "external",
+				"config.imagor_base_url": "http://registry.example.com",
+				"config.imagor_secret":   "registry-secret",
+				"config.imagor_unsafe":   "false",
+			},
+			expectedMode:   ImagorModeExternal,
+			expectedURL:    "http://registry.example.com",
+			expectedSecret: "registry-secret",
+			expectedUnsafe: false,
+			hasHandler:     false,
+			description:    "Registry values should be used when no CLI override exists",
+		},
+		{
+			name: "Complex signer configuration via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://localhost:8000",
+				"--imagor-secret", "custom-secret",
+				"--imagor-signer-type", "sha256",
+				"--imagor-signer-truncate", "28",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedMode:   ImagorModeExternal,
+			expectedURL:    "http://localhost:8000",
+			expectedSecret: "custom-secret",
+			expectedUnsafe: false,
+			hasHandler:     false,
+			description:    "Complex signer configuration should work via CLI args",
+		},
+		{
+			name: "Mixed CLI and registry signer config",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://localhost:8000",
+				"--imagor-signer-type", "sha512", // CLI sets signer type
+				"--jwt-secret", "jwt-secret",
+			},
+			registryConfig: map[string]string{
+				"config.imagor_secret":          "registry-secret",
+				"config.imagor_signer_type":     "sha256", // Registry tries to override
+				"config.imagor_signer_truncate": "32",     // Registry sets truncate
+				"config.imagor_unsafe":          "false",
+			},
+			expectedMode:   ImagorModeExternal,
+			expectedURL:    "http://localhost:8000",
+			expectedSecret: "registry-secret", // From registry (no CLI override)
+			expectedUnsafe: false,
+			hasHandler:     false,
+			description:    "CLI signer type should override registry, but registry truncate should be used",
+		},
+		{
+			name: "Imagor Unsafe config via cli",
+			cliArgs: []string{
+				"--imagor-mode", "embedded",
+				"--imagor-unsafe",
+				"--jwt-secret", "env-jwt-secret",
+			},
+			needsStorage:   true,
+			expectedMode:   ImagorModeEmbedded,
+			expectedURL:    "/imagor",
+			expectedSecret: "",
+			expectedUnsafe: true,
+			hasHandler:     true,
+			description:    "Should handle environment-like configuration via CLI args",
+		},
 	}
-	// Create a properly initialized storage provider
-	storageProvider := storageprovider.New(logger, registryStore, cfg)
-	err := storageProvider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
 
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err = provider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock registry store
+			registryStore := newMockRegistryStore()
 
-	// No timestamp set, should not require restart
-	assert.False(t, provider.IsRestartRequired())
+			// Set up registry configuration if provided
+			if tt.registryConfig != nil {
+				ctx := context.Background()
+				for key, value := range tt.registryConfig {
+					registryStore.Set(ctx, registrystore.SystemOwnerID, key, value, false)
+				}
+			}
 
-	// Configure imagor to external mode
-	cfg.ImagorMode = "external"
-	cfg.ImagorBaseURL = "http://localhost:8000"
-	err = provider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
+			// Load config using CLI args and registry store (realistic approach)
+			cfg, err := config.Load(tt.cliArgs, registryStore)
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, cfg, tt.description)
 
-	// Still no timestamp set, should not require restart
-	assert.False(t, provider.IsRestartRequired())
+			// Create provider with realistic setup
+			logger := zap.NewNop()
+			var provider *Provider
 
-	// Set a future timestamp
-	ctx := context.Background()
-	futureTime := time.Now().Add(time.Hour).UnixMilli()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_config_updated_at",
-		fmt.Sprintf("%d", futureTime), false)
+			if tt.needsStorage {
+				// Create a properly initialized storage provider
+				storageProvider := storageprovider.New(logger, registryStore, cfg)
+				err := storageProvider.InitializeWithConfig(cfg)
+				require.NoError(t, err, tt.description)
+				provider = New(logger, registryStore, cfg, storageProvider)
+			} else {
+				storageProvider := &storageprovider.Provider{}
+				provider = New(logger, registryStore, cfg, storageProvider)
+			}
 
-	// Should require restart
-	assert.True(t, provider.IsRestartRequired())
-}
+			// Initialize the provider
+			err = provider.Initialize()
+			require.NoError(t, err, tt.description)
 
-func TestReloadFromRegistry(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		JWTSecret: "test-jwt-secret",
+			// Verify the configuration
+			config := provider.GetConfig()
+			require.NotNil(t, config, tt.description)
+			assert.Equal(t, tt.expectedMode, config.Mode, tt.description)
+			assert.Equal(t, tt.expectedURL, config.BaseURL, tt.description)
+			assert.Equal(t, tt.expectedSecret, config.Secret, tt.description)
+			assert.Equal(t, tt.expectedUnsafe, config.Unsafe, tt.description)
+
+			// Check handler presence
+			handler := provider.GetHandler()
+			if tt.hasHandler {
+				assert.NotNil(t, handler, "Expected handler to be present: %s", tt.description)
+			} else {
+				assert.Nil(t, handler, "Expected no handler: %s", tt.description)
+			}
+		})
 	}
-	// Create a properly initialized storage provider
-	storageProvider := storageprovider.New(logger, registryStore, cfg)
-	err := storageProvider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err = provider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	// Initially defaults to embedded
-	config := provider.GetConfig()
-	assert.Equal(t, ImagorModeEmbedded, config.Mode)
-
-	// Set up registry configuration
-	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://new.example.com", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "new-secret", false)
-
-	// Reload from registry
-	err = provider.ReloadFromRegistry()
-	require.NoError(t, err)
-
-	// Should now be configured from registry
-	config = provider.GetConfig()
-	assert.Equal(t, ImagorModeExternal, config.Mode)
-	assert.Equal(t, "http://new.example.com", config.BaseURL)
-	assert.Equal(t, "new-secret", config.Secret)
-}
-
-func TestReloadFromRegistry_NoConfig(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		JWTSecret: "test-jwt-secret",
-	}
-	// Create a properly initialized storage provider
-	storageProvider := storageprovider.New(logger, registryStore, cfg)
-	err := storageProvider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err = provider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	// Reload from registry with no config
-	err = provider.ReloadFromRegistry()
-	require.NoError(t, err)
-
-	// Should default to embedded mode
-	config := provider.GetConfig()
-	assert.Equal(t, ImagorModeEmbedded, config.Mode)
 }
 
 func TestBuildConfigFromRegistry_MissingMode(t *testing.T) {
@@ -487,132 +369,313 @@ func TestBuildConfigFromRegistry_MissingMode(t *testing.T) {
 
 	provider := New(logger, registryStore, cfg, storageProvider)
 
-	// No mode set in registry
-	config, err := provider.buildConfigFromRegistry()
-	require.Error(t, err)
-	assert.Nil(t, config)
-	assert.Contains(t, err.Error(), "imagor mode not found in registry")
-}
-
-func TestBuildConfigFromRegistry_EmbeddedMode(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		JWTSecret: "jwt-secret",
-	}
-	storageProvider := &storageprovider.Provider{}
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-
-	// Set up embedded mode configuration
-	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "embedded", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "embedded-secret", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", "false", false)
-
+	// No mode set in registry - should use sensible default
 	config, err := provider.buildConfigFromRegistry()
 	require.NoError(t, err)
 	require.NotNil(t, config)
-
-	assert.Equal(t, ImagorModeEmbedded, config.Mode)
-	assert.Equal(t, "/imagor", config.BaseURL)   // Should be set to /imagor for embedded
-	assert.Equal(t, "jwt-secret", config.Secret) // Should always use JWT secret, ignoring registry value
-	assert.False(t, config.Unsafe)
-	assert.Equal(t, "sha256", config.SignerType)
-	assert.Equal(t, 32, config.SignerTruncate)
+	assert.Equal(t, ImagorModeEmbedded, config.Mode) // Should default to embedded
 }
 
-func TestBuildConfigFromRegistry_ExternalModeDefaults(t *testing.T) {
+func TestBuildConfigFromRegistry_SignerConfiguration(t *testing.T) {
+	tests := []struct {
+		name           string
+		cliArgs        []string
+		registryConfig map[string]string
+		expectedSecret string
+		expectedType   string
+		expectedTrunc  int
+		description    string
+	}{
+		{
+			name: "External with explicit config via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://test.example.com",
+				"--imagor-secret", "test-secret",
+				"--imagor-signer-type", "sha256",
+				"--imagor-signer-truncate", "28",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedSecret: "test-secret",
+			expectedType:   "sha256",
+			expectedTrunc:  28,
+			description:    "CLI args should set explicit signer configuration",
+		},
+		{
+			name: "External with defaults via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://test.example.com",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedSecret: "jwt-secret",
+			expectedType:   "sha256",
+			expectedTrunc:  32,
+			description:    "Should fall back to JWT secret with SHA256+32 defaults",
+		},
+		{
+			name: "External unsafe mode via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://test.example.com",
+				"--imagor-unsafe",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedSecret: "",
+			expectedType:   "sha1",
+			expectedTrunc:  0,
+			description:    "Unsafe mode doesn't need secret or special signer config",
+		},
+		{
+			name: "Embedded with explicit config via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "embedded",
+				"--imagor-secret", "test-secret",
+				"--imagor-signer-type", "sha512",
+				"--imagor-signer-truncate", "40",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedSecret: "test-secret",
+			expectedType:   "sha512",
+			expectedTrunc:  40,
+			description:    "Embedded mode should respect explicit signer configuration",
+		},
+		{
+			name: "Embedded with defaults via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "embedded",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedSecret: "jwt-secret",
+			expectedType:   "sha256",
+			expectedTrunc:  32,
+			description:    "Should fall back to JWT secret with SHA256+32 defaults",
+		},
+		{
+			name: "Embedded unsafe mode via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "embedded",
+				"--imagor-unsafe",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedSecret: "",
+			expectedType:   "sha1",
+			expectedTrunc:  0,
+			description:    "Unsafe mode doesn't need secret or special signer config",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock registry store
+			registryStore := newMockRegistryStore()
+
+			// Set up registry configuration if provided
+			if tt.registryConfig != nil {
+				ctx := context.Background()
+				for key, value := range tt.registryConfig {
+					registryStore.Set(ctx, registrystore.SystemOwnerID, key, value, false)
+				}
+			}
+
+			// Load config using CLI args and registry store
+			cfg, err := config.Load(tt.cliArgs, registryStore)
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, cfg, tt.description)
+
+			// Create provider with loaded config
+			logger := zap.NewNop()
+			storageProvider := &storageprovider.Provider{}
+			provider := New(logger, registryStore, cfg, storageProvider)
+
+			// Build config from registry
+			config, err := provider.buildConfigFromRegistry()
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, config, tt.description)
+
+			assert.Equal(t, tt.expectedSecret, config.Secret, tt.description)
+			assert.Equal(t, tt.expectedType, config.SignerType, tt.description)
+			assert.Equal(t, tt.expectedTrunc, config.SignerTruncate, tt.description)
+		})
+	}
+}
+
+func TestGenerateURL_BasicScenarios(t *testing.T) {
+	tests := []struct {
+		name          string
+		cliArgs       []string
+		needsStorage  bool
+		expectError   bool
+		expectedURL   string
+		expectedRegex string
+		errorContains string
+		description   string
+	}{
+		{
+			name: "External with secret",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://localhost:8000",
+				"--imagor-secret", "test-secret",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedURL:   "http://localhost:8000",
+			expectedRegex: `^http://localhost:8000/[a-zA-Z0-9_=/-]+/`,
+			description:   "External mode with secret should generate signed URLs",
+		},
+		{
+			name: "External unsafe mode",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://localhost:8000",
+				"--imagor-unsafe",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedURL: "http://localhost:8000",
+			description: "External unsafe mode should generate unsigned URLs",
+		},
+		{
+			name: "External no secret",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://localhost:8000",
+				// No jwt-secret and no imagor-secret and not unsafe
+			},
+			expectError: false,
+			description: "External mode without any secret",
+		},
+		{
+			name: "Embedded with secret",
+			cliArgs: []string{
+				"--imagor-mode", "embedded",
+				"--imagor-secret", "test-secret",
+				"--jwt-secret", "jwt-secret",
+			},
+			needsStorage:  true,
+			expectedURL:   "/imagor/",
+			expectedRegex: `^/imagor/[a-zA-Z0-9_=/-]+/`,
+			description:   "Embedded mode with secret should generate signed URLs",
+		},
+		{
+			name: "Embedded unsafe mode",
+			cliArgs: []string{
+				"--imagor-mode", "embedded",
+				"--imagor-unsafe",
+				"--jwt-secret", "jwt-secret",
+			},
+			needsStorage: true,
+			expectedURL:  "/imagor/unsafe/",
+			description:  "Embedded unsafe mode should generate unsigned URLs",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock registry store
+			registryStore := newMockRegistryStore()
+
+			// Load config using CLI args
+			cfg, err := config.Load(tt.cliArgs, registryStore)
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, cfg, tt.description)
+
+			// Create provider with loaded config
+			logger := zap.NewNop()
+			var provider *Provider
+
+			if tt.needsStorage {
+				// Create a properly initialized storage provider
+				storageProvider := storageprovider.New(logger, registryStore, cfg)
+				err := storageProvider.InitializeWithConfig(cfg)
+				require.NoError(t, err, tt.description)
+				provider = New(logger, registryStore, cfg, storageProvider)
+			} else {
+				storageProvider := &storageprovider.Provider{}
+				provider = New(logger, registryStore, cfg, storageProvider)
+			}
+
+			err = provider.Initialize()
+			require.NoError(t, err, tt.description)
+
+			url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
+				Width:  300,
+				Height: 200,
+			})
+
+			if tt.expectError {
+				require.Error(t, err, tt.description)
+				assert.Contains(t, err.Error(), tt.errorContains, tt.description)
+				return
+			}
+
+			require.NoError(t, err, tt.description)
+			assert.Contains(t, url, tt.expectedURL, tt.description)
+			assert.Contains(t, url, "300x200", tt.description)
+			assert.Contains(t, url, "test/image.jpg", tt.description)
+
+			if tt.expectedRegex != "" {
+				assert.Regexp(t, tt.expectedRegex, url, tt.description)
+			}
+		})
+	}
+}
+
+func TestGenerateURL_ConfigurableSigners(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
 	cfg := &config.Config{}
 	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg, storageProvider)
-
-	// Set up external mode with minimal configuration
-	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
-
-	config, err := provider.buildConfigFromRegistry()
-	require.NoError(t, err)
-	require.NotNil(t, config)
-
-	assert.Equal(t, ImagorModeExternal, config.Mode)
-	assert.Equal(t, "http://localhost:8000", config.BaseURL) // Default for external
-	assert.Equal(t, "", config.Secret)                       // Not set
-	assert.False(t, config.Unsafe)                           // Default
-}
-
-func TestGetHandler_External(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		ImagorMode:    string(gql.ImagorModeExternal),
-		ImagorBaseURL: "http://localhost:8000",
-	}
-	storageProvider := &storageprovider.Provider{}
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	// External mode should not have a handler
-	handler := provider.GetHandler()
-	assert.Nil(t, handler)
-}
-
-func TestGetHandler_EmbeddedDefault(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		JWTSecret: "test-jwt-secret",
-	}
-	// Create a properly initialized storage provider
-	storageProvider := storageprovider.New(logger, registryStore, cfg)
-	err := storageProvider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err = provider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	// Embedded mode should have a handler
-	handler := provider.GetHandler()
-	assert.NotNil(t, handler)
-}
-
-func TestCreateEmbeddedHandler(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{}
-	// Create a properly initialized storage provider
-	storageProvider := storageprovider.New(logger, registryStore, cfg)
-	err := storageProvider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-
-	// Test with unsafe mode
-	imagorConfig := &ImagorConfig{
-		Mode:   "embedded",
-		Unsafe: true,
+	tests := []struct {
+		name           string
+		mode           string
+		baseURL        string
+		signerType     string
+		signerTruncate int
+		secret         string
+	}{
+		{"External SHA1", "external", "http://localhost:8000", "sha1", 0, "test-secret"},
+		{"External SHA256", "external", "http://localhost:8000", "sha256", 28, "test-secret"},
+		{"External SHA512", "external", "http://localhost:8000", "sha512", 32, "test-secret"},
+		{"Embedded SHA1", "embedded", "/imagor", "sha1", 0, "test-secret"},
+		{"Embedded SHA256", "embedded", "/imagor", "sha256", 28, "test-secret"},
+		{"Embedded SHA512", "embedded", "/imagor", "sha512", 32, "test-secret"},
 	}
 
-	handler, err := provider.createEmbeddedHandler(imagorConfig)
-	require.NoError(t, err)
-	assert.NotNil(t, handler)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider := New(logger, registryStore, cfg, storageProvider)
 
-	// Test with secret
-	imagorConfig = &ImagorConfig{
-		Mode:   "embedded",
-		Secret: "test-secret",
-		Unsafe: false,
+			// Set up configuration directly
+			imagorConfig := &ImagorConfig{
+				Mode:           ImagorMode(tt.mode),
+				BaseURL:        tt.baseURL,
+				Secret:         tt.secret,
+				Unsafe:         false,
+				SignerType:     tt.signerType,
+				SignerTruncate: tt.signerTruncate,
+			}
+
+			provider.currentConfig = imagorConfig
+
+			url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
+				Width:  300,
+				Height: 200,
+			})
+
+			require.NoError(t, err)
+			assert.Contains(t, url, tt.baseURL)
+			assert.Contains(t, url, "300x200")
+			assert.Contains(t, url, "test/image.jpg")
+
+			// Verify URL contains signature
+			if tt.mode == "external" {
+				assert.Regexp(t, `^http://localhost:8000/[a-zA-Z0-9_=/-]+/`, url)
+			} else {
+				assert.Regexp(t, `^/imagor/[a-zA-Z0-9_=/-]+/`, url)
+			}
+		})
 	}
-
-	handler, err = provider.createEmbeddedHandler(imagorConfig)
-	require.NoError(t, err)
-	assert.NotNil(t, handler)
 }
 
 func TestGetHashAlgorithm(t *testing.T) {
@@ -652,31 +715,289 @@ func TestGetHashAlgorithm(t *testing.T) {
 	}
 }
 
-func TestBuildConfigFromRegistry_SignerConfiguration(t *testing.T) {
+func TestBuildConfig_CLIFallback(t *testing.T) {
+	tests := []struct {
+		name           string
+		cliArgs        []string
+		expectedSecret string
+		expectedUnsafe bool
+		expectedType   string
+		expectedTrunc  int
+		expectedMode   ImagorMode
+		expectedURL    string
+		description    string
+	}{
+		{
+			name: "Default embedded when no mode specified",
+			cliArgs: []string{
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedSecret: "jwt-secret",
+			expectedUnsafe: false,
+			expectedType:   "sha256", // JWT fallback uses SHA256
+			expectedTrunc:  32,       // JWT fallback uses 32
+			expectedMode:   ImagorModeEmbedded,
+			expectedURL:    "/imagor",
+			description:    "Should default to embedded mode with JWT fallback",
+		},
+		{
+			name: "CLI config for embedded mode",
+			cliArgs: []string{
+				"--imagor-mode", "embedded",
+				"--jwt-secret", "jwt-secret",
+				"--imagor-secret", "custom-secret",
+				"--imagor-unsafe",
+				"--imagor-signer-type", "sha1",
+				"--imagor-signer-truncate", "28",
+			},
+			expectedSecret: "custom-secret",
+			expectedUnsafe: true,
+			expectedType:   "sha1",
+			expectedTrunc:  28,
+			expectedMode:   ImagorModeEmbedded,
+			expectedURL:    "/imagor",
+			description:    "Should use explicit CLI configuration for embedded mode",
+		},
+		{
+			name: "CLI config for external mode",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://test.example.com",
+				"--jwt-secret", "jwt-secret",
+				// No imagor-secret, should fall back to JWT
+				"--imagor-signer-type", "sha512",
+				"--imagor-signer-truncate", "40",
+			},
+			expectedSecret: "jwt-secret", // Should fall back
+			expectedUnsafe: false,
+			expectedType:   "sha256", // JWT fallback overrides CLI signer type
+			expectedTrunc:  32,       // JWT fallback overrides CLI signer truncate
+			expectedMode:   ImagorModeExternal,
+			expectedURL:    "http://test.example.com",
+			description:    "Should use JWT fallback when no imagor secret provided",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock registry store
+			registryStore := newMockRegistryStore()
+
+			// Load config using CLI args
+			cfg, err := config.Load(tt.cliArgs, registryStore)
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, cfg, tt.description)
+
+			// Create provider with loaded config
+			logger := zap.NewNop()
+			storageProvider := &storageprovider.Provider{}
+			provider := New(logger, registryStore, cfg, storageProvider)
+
+			result, err := provider.buildConfig()
+			require.NoError(t, err, tt.description)
+
+			assert.Equal(t, tt.expectedMode, result.Mode, tt.description)
+			assert.Equal(t, tt.expectedURL, result.BaseURL, tt.description)
+			assert.Equal(t, tt.expectedSecret, result.Secret, tt.description)
+			assert.Equal(t, tt.expectedUnsafe, result.Unsafe, tt.description)
+			assert.Equal(t, tt.expectedType, result.SignerType, tt.description)
+			assert.Equal(t, tt.expectedTrunc, result.SignerTruncate, tt.description)
+		})
+	}
+}
+
+func TestIsRestartRequired(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
-	cfg := &config.Config{JWTSecret: "jwt-secret"}
+	cfg := &config.Config{
+		JWTSecret: "test-jwt-secret",
+	}
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	provider := New(logger, registryStore, cfg, storageProvider)
+	err = provider.Initialize()
+	require.NoError(t, err)
+
+	// No timestamp set, should not require restart
+	assert.False(t, provider.IsRestartRequired())
+
+	// Set a future timestamp
+	ctx := context.Background()
+	futureTime := time.Now().Add(time.Hour).UnixMilli()
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_config_updated_at",
+		fmt.Sprintf("%d", futureTime), false)
+
+	// Should require restart
+	assert.True(t, provider.IsRestartRequired())
+}
+
+func TestReloadFromRegistry(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	cfg := &config.Config{
+		JWTSecret: "test-jwt-secret",
+	}
+	// Create a properly initialized storage provider
+	storageProvider := storageprovider.New(logger, registryStore, cfg)
+	err := storageProvider.InitializeWithConfig(cfg)
+	require.NoError(t, err)
+
+	provider := New(logger, registryStore, cfg, storageProvider)
+	err = provider.Initialize()
+	require.NoError(t, err)
+
+	// Initially defaults to embedded
+	config := provider.GetConfig()
+	assert.Equal(t, ImagorModeEmbedded, config.Mode)
+
+	// Set up registry configuration
+	ctx := context.Background()
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://new.example.com", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "new-secret", false)
+
+	// Reload from registry
+	err = provider.ReloadFromRegistry()
+	require.NoError(t, err)
+
+	// Should now be configured from registry
+	config = provider.GetConfig()
+	assert.Equal(t, ImagorModeExternal, config.Mode)
+	assert.Equal(t, "http://new.example.com", config.BaseURL)
+	assert.Equal(t, "new-secret", config.Secret)
+}
+
+func TestGetHandler(t *testing.T) {
+	t.Run("External mode has no handler", func(t *testing.T) {
+		// Create mock registry store
+		registryStore := newMockRegistryStore()
+
+		// Load config using CLI args for external mode
+		cliArgs := []string{
+			"--imagor-mode", "external",
+			"--imagor-base-url", "http://localhost:8000",
+			"--jwt-secret", "test-jwt-secret",
+		}
+
+		cfg, err := config.Load(cliArgs, registryStore)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
+
+		// Create provider with loaded config
+		logger := zap.NewNop()
+		storageProvider := &storageprovider.Provider{}
+		provider := New(logger, registryStore, cfg, storageProvider)
+
+		err = provider.Initialize()
+		require.NoError(t, err)
+
+		// External mode should not have a handler
+		handler := provider.GetHandler()
+		assert.Nil(t, handler)
+	})
+
+	t.Run("Embedded mode has handler", func(t *testing.T) {
+		// Create mock registry store
+		registryStore := newMockRegistryStore()
+
+		// Load config using CLI args for embedded mode (default)
+		cliArgs := []string{
+			"--jwt-secret", "test-jwt-secret",
+		}
+
+		cfg, err := config.Load(cliArgs, registryStore)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
+
+		// Create provider with loaded config and proper storage
+		logger := zap.NewNop()
+		storageProvider := storageprovider.New(logger, registryStore, cfg)
+		err = storageProvider.InitializeWithConfig(cfg)
+		require.NoError(t, err)
+
+		provider := New(logger, registryStore, cfg, storageProvider)
+		err = provider.Initialize()
+		require.NoError(t, err)
+
+		// Embedded mode should have a handler
+		handler := provider.GetHandler()
+		assert.NotNil(t, handler)
+	})
+}
+
+func TestBuildConfigFromRegistry_JWTSecretFallback(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	cfg := &config.Config{JWTSecret: "jwt-secret-123"}
 	storageProvider := &storageprovider.Provider{}
 
 	provider := New(logger, registryStore, cfg, storageProvider)
 
 	tests := []struct {
-		name           string
-		mode           string
-		signerType     string
-		signerTruncate string
-		expectedType   string
-		expectedTrunc  int
+		name                string
+		mode                string
+		hasImagorSecret     bool
+		imagorSecret        string
+		unsafe              string
+		expectedSecret      string
+		expectedSignerType  string
+		expectedSignerTrunc int
+		description         string
 	}{
-		// External mode tests (configurable)
-		{"External default values", "external", "", "", "sha1", 0},
-		{"External SHA256 with truncation", "external", "sha256", "28", "sha256", 28},
-		{"External SHA512 with truncation", "external", "sha512", "32", "sha512", 32},
-		{"External SHA1 explicit", "external", "sha1", "0", "sha1", 0},
-		{"External invalid truncate value", "external", "sha256", "invalid", "sha256", 0},
-		// Embedded mode tests (fixed)
-		{"Embedded mode ignores signer config", "embedded", "sha512", "32", "sha256", 32},
-		{"Embedded mode always SHA256+32", "embedded", "", "", "sha256", 32},
+		{
+			name:                "External mode no secret not unsafe - should use JWT fallback",
+			mode:                "external",
+			hasImagorSecret:     false,
+			unsafe:              "false",
+			expectedSecret:      "jwt-secret-123",
+			expectedSignerType:  "sha256",
+			expectedSignerTrunc: 32,
+			description:         "When no imagor_secret exists and not unsafe, should fall back to JWT secret with SHA256+32",
+		},
+		{
+			name:                "Embedded mode no secret not unsafe - should use JWT fallback",
+			mode:                "embedded",
+			hasImagorSecret:     false,
+			unsafe:              "false",
+			expectedSecret:      "jwt-secret-123",
+			expectedSignerType:  "sha256",
+			expectedSignerTrunc: 32,
+			description:         "When no imagor_secret exists and not unsafe, should fall back to JWT secret with SHA256+32",
+		},
+		{
+			name:                "External mode with secret - should use provided secret",
+			mode:                "external",
+			hasImagorSecret:     true,
+			imagorSecret:        "custom-secret",
+			unsafe:              "false",
+			expectedSecret:      "custom-secret",
+			expectedSignerType:  "sha1", // Default when not specified
+			expectedSignerTrunc: 0,      // Default when not specified
+			description:         "When imagor_secret exists, should use it instead of JWT fallback",
+		},
+		{
+			name:                "External mode unsafe - no secret needed",
+			mode:                "external",
+			hasImagorSecret:     false,
+			unsafe:              "true",
+			expectedSecret:      "",     // Unsafe mode doesn't need secret
+			expectedSignerType:  "sha1", // Default signer type
+			expectedSignerTrunc: 0,      // Default truncate
+			description:         "When unsafe mode, doesn't need secret or special signer config",
+		},
+		{
+			name:                "Embedded mode unsafe - no secret needed",
+			mode:                "embedded",
+			hasImagorSecret:     false,
+			unsafe:              "true",
+			expectedSecret:      "",     // Unsafe mode doesn't need secret
+			expectedSignerType:  "sha1", // Default signer type
+			expectedSignerTrunc: 0,      // Default truncate
+			description:         "When unsafe mode, doesn't need secret or special signer config",
+		},
 	}
 
 	for _, tt := range tests {
@@ -690,61 +1011,193 @@ func TestBuildConfigFromRegistry_SignerConfiguration(t *testing.T) {
 
 			if tt.mode == "external" {
 				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://test.example.com", false)
-				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "test-secret", false)
 			}
 
-			// Set signer configuration if provided
-			if tt.signerType != "" {
-				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_type", tt.signerType, false)
+			// Set imagor_secret if specified
+			if tt.hasImagorSecret {
+				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", tt.imagorSecret, false)
 			}
-			if tt.signerTruncate != "" {
-				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_truncate", tt.signerTruncate, false)
+
+			// Set unsafe mode if specified
+			if tt.unsafe != "" {
+				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", tt.unsafe, false)
 			}
 
 			config, err := provider.buildConfigFromRegistry()
-			require.NoError(t, err)
-			require.NotNil(t, config)
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, config, tt.description)
 
-			assert.Equal(t, tt.expectedType, config.SignerType)
-			assert.Equal(t, tt.expectedTrunc, config.SignerTruncate)
+			assert.Equal(t, tt.expectedSecret, config.Secret, tt.description)
+			assert.Equal(t, tt.expectedSignerType, config.SignerType, tt.description)
+			assert.Equal(t, tt.expectedSignerTrunc, config.SignerTruncate, tt.description)
 		})
 	}
 }
 
-func TestGenerateURL_External_ConfigurableSigner(t *testing.T) {
+func TestBuildConfigFromRegistry_CLIVsRegistryPriority(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
-	cfg := &config.Config{}
 	storageProvider := &storageprovider.Provider{}
 
 	tests := []struct {
-		name           string
-		signerType     string
-		signerTruncate int
-		secret         string
-		expectError    bool
+		name                string
+		cliArgs             []string
+		registrySecret      string
+		registrySignerType  string
+		registryTruncate    string
+		expectedSecret      string
+		expectedSignerType  string
+		expectedSignerTrunc int
+		description         string
 	}{
-		{"SHA1 default", "sha1", 0, "test-secret", false},
-		{"SHA1 with truncation", "sha1", 28, "test-secret", false},
-		{"SHA256 default", "sha256", 0, "test-secret", false},
-		{"SHA256 with truncation", "sha256", 28, "test-secret", false},
-		{"SHA512 default", "sha512", 0, "test-secret", false},
-		{"SHA512 with truncation", "sha512", 32, "test-secret", false},
-		{"No secret should error", "sha256", 28, "", true},
+		{
+			name: "CLI secret overrides registry secret",
+			cliArgs: []string{
+				"--imagor-secret", "cli-secret",
+				"--jwt-secret", "jwt-secret",
+			},
+			registrySecret:      "registry-secret",
+			expectedSecret:      "cli-secret",
+			expectedSignerType:  "sha1", // Default
+			expectedSignerTrunc: 0,      // Default
+			description:         "CLI/ENV config should take priority over registry values",
+		},
+		{
+			name: "CLI signer config overrides registry signer config",
+			cliArgs: []string{
+				"--imagor-secret", "cli-secret",
+				"--imagor-signer-type", "sha512",
+				"--imagor-signer-truncate", "40",
+				"--jwt-secret", "jwt-secret",
+			},
+			registrySecret:      "registry-secret",
+			registrySignerType:  "sha256",
+			registryTruncate:    "28",
+			expectedSecret:      "cli-secret",
+			expectedSignerType:  "sha512", // From CLI
+			expectedSignerTrunc: 40,       // From CLI
+			description:         "CLI signer configuration should override registry signer configuration",
+		},
+		{
+			name: "Registry values used when no CLI override",
+			cliArgs: []string{
+				"--jwt-secret", "jwt-secret",
+			},
+			registrySecret:      "registry-secret",
+			registrySignerType:  "sha256",
+			registryTruncate:    "28",
+			expectedSecret:      "registry-secret",
+			expectedSignerType:  "sha256",
+			expectedSignerTrunc: 28,
+			description:         "Registry values should be used when no CLI override exists",
+		},
+		{
+			name: "Mixed CLI and registry - CLI takes priority where present",
+			cliArgs: []string{
+				"--imagor-secret", "cli-secret",
+				"--imagor-signer-type", "sha512",
+				"--jwt-secret", "jwt-secret",
+				// imagor-signer-truncate not in CLI args
+			},
+			registrySecret:      "registry-secret",
+			registrySignerType:  "sha256",
+			registryTruncate:    "28",
+			expectedSecret:      "cli-secret", // From CLI
+			expectedSignerType:  "sha512",     // From CLI
+			expectedSignerTrunc: 28,           // From registry (no CLI override)
+			description:         "Should use CLI values where present, registry values where CLI not set",
+		},
+		{
+			name: "No CLI, no registry - JWT fallback",
+			cliArgs: []string{
+				"--jwt-secret", "jwt-secret",
+			},
+			// No registry values set
+			expectedSecret:      "jwt-secret",
+			expectedSignerType:  "sha256",
+			expectedSignerTrunc: 32,
+			description:         "Should fall back to JWT secret with SHA256+32 when no CLI or registry values",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Clear registry
+			registryStore.data = make(map[string]string)
+
+			// Set up basic configuration
+			ctx := context.Background()
+			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
+			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://test.example.com", false)
+			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", "false", false)
+
+			// Set registry values if provided
+			if tt.registrySecret != "" {
+				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", tt.registrySecret, false)
+			}
+			if tt.registrySignerType != "" {
+				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_type", tt.registrySignerType, false)
+			}
+			if tt.registryTruncate != "" {
+				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_truncate", tt.registryTruncate, false)
+			}
+
+			// Load config using the real config system with CLI args
+			cfg, err := config.Load(tt.cliArgs, registryStore)
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, cfg, tt.description)
+
+			// Create provider with the loaded config
+			provider := New(logger, registryStore, cfg, storageProvider)
+			imagorConfig, err := provider.buildConfigFromRegistry()
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, imagorConfig, tt.description)
+
+			assert.Equal(t, tt.expectedSecret, imagorConfig.Secret, tt.description)
+			assert.Equal(t, tt.expectedSignerType, imagorConfig.SignerType, tt.description)
+			assert.Equal(t, tt.expectedSignerTrunc, imagorConfig.SignerTruncate, tt.description)
+		})
+	}
+}
+
+func TestGenerateURL_JWTSecretFallback(t *testing.T) {
+	logger := zap.NewNop()
+	registryStore := newMockRegistryStore()
+	cfg := &config.Config{JWTSecret: "jwt-secret-for-url-test"}
+	storageProvider := &storageprovider.Provider{}
+
+	tests := []struct {
+		name        string
+		mode        string
+		baseURL     string
+		description string
+	}{
+		{
+			name:        "External mode with JWT secret fallback",
+			mode:        "external",
+			baseURL:     "http://localhost:8000",
+			description: "External mode should generate valid URLs using JWT secret fallback with SHA256+32",
+		},
+		{
+			name:        "Embedded mode with JWT secret fallback",
+			mode:        "embedded",
+			baseURL:     "/imagor",
+			description: "Embedded mode should generate valid URLs using JWT secret fallback with SHA256+32",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			provider := New(logger, registryStore, cfg, storageProvider)
 
-			// Set up configuration
+			// Set up configuration with JWT secret fallback (SHA256 + 32-char truncation)
 			imagorConfig := &ImagorConfig{
-				Mode:           "external",
-				BaseURL:        "http://localhost:8000",
-				Secret:         tt.secret,
+				Mode:           ImagorMode(tt.mode),
+				BaseURL:        tt.baseURL,
+				Secret:         "jwt-secret-for-url-test", // JWT secret
 				Unsafe:         false,
-				SignerType:     tt.signerType,
-				SignerTruncate: tt.signerTruncate,
+				SignerType:     "sha256", // Fallback default
+				SignerTruncate: 32,       // Fallback default
 			}
 
 			provider.currentConfig = imagorConfig
@@ -754,244 +1207,71 @@ func TestGenerateURL_External_ConfigurableSigner(t *testing.T) {
 				Height: 200,
 			})
 
-			if tt.expectError {
-				require.Error(t, err)
-				return
+			require.NoError(t, err, tt.description)
+			assert.Contains(t, url, tt.baseURL, tt.description)
+			assert.Contains(t, url, "300x200", tt.description)
+			assert.Contains(t, url, "test/image.jpg", tt.description)
+
+			// Verify URL contains signature (not unsafe)
+			if tt.mode == "external" {
+				assert.Regexp(t, `^http://localhost:8000/[a-zA-Z0-9_=/-]+/`, url, tt.description)
+			} else {
+				assert.Regexp(t, `^/imagor/[a-zA-Z0-9_=/-]+/`, url, tt.description)
 			}
 
-			require.NoError(t, err)
-			assert.Contains(t, url, "http://localhost:8000")
-			assert.Contains(t, url, "300x200")
-			assert.Contains(t, url, "test/image.jpg")
+			// Generate another URL with different parameters to ensure consistency
+			url2, err := provider.GenerateURL("another/test.png", imagorpath.Params{
+				Width:  150,
+				Height: 100,
+			})
 
-			// Verify URL contains signature (should start with base URL + signature)
-			assert.Regexp(t, `^http://localhost:8000/[a-zA-Z0-9_=/-]+/`, url)
+			require.NoError(t, err, tt.description)
+			assert.Contains(t, url2, tt.baseURL, tt.description)
+			assert.Contains(t, url2, "150x100", tt.description)
+			assert.Contains(t, url2, "another/test.png", tt.description)
+
+			// URLs should be different (different images/params should produce different signatures)
+			assert.NotEqual(t, url, url2, "Different images should produce different URLs")
 		})
 	}
 }
 
-func TestGenerateURL_External_SignerTruncation(t *testing.T) {
+func TestInitializeWithConfig_JWTSecretFallbackIntegration(t *testing.T) {
 	logger := zap.NewNop()
 	registryStore := newMockRegistryStore()
-	cfg := &config.Config{}
+	cfg := &config.Config{JWTSecret: "integration-jwt-secret"}
 	storageProvider := &storageprovider.Provider{}
 
-	provider := New(logger, registryStore, cfg, storageProvider)
-
-	// Test that truncation actually affects the signature length
-	params := imagorpath.Params{
-		Width:  300,
-		Height: 200,
-		Image:  "test/image.jpg",
-	}
-
-	// Generate URL with no truncation
-	configNoTrunc := &ImagorConfig{
-		Mode:           "external",
-		BaseURL:        "http://localhost:8000",
-		Secret:         "test-secret",
-		SignerType:     "sha256",
-		SignerTruncate: 0,
-	}
-	provider.currentConfig = configNoTrunc
-
-	urlNoTrunc, err := provider.GenerateURL("test/image.jpg", params)
-	require.NoError(t, err)
-
-	// Generate URL with truncation
-	configTrunc := &ImagorConfig{
-		Mode:           "external",
-		BaseURL:        "http://localhost:8000",
-		Secret:         "test-secret",
-		SignerType:     "sha256",
-		SignerTruncate: 28,
-	}
-	provider.currentConfig = configTrunc
-
-	urlTrunc, err := provider.GenerateURL("test/image.jpg", params)
-	require.NoError(t, err)
-
-	// Extract signatures (part between base URL and path)
-	baseURL := "http://localhost:8000/"
-	sigNoTrunc := urlNoTrunc[len(baseURL) : strings.Index(urlNoTrunc[len(baseURL):], "/")+len(baseURL)]
-	sigTrunc := urlTrunc[len(baseURL) : strings.Index(urlTrunc[len(baseURL):], "/")+len(baseURL)]
-
-	// Truncated signature should be shorter
-	assert.True(t, len(sigTrunc) < len(sigNoTrunc),
-		"Truncated signature (%d chars) should be shorter than non-truncated (%d chars)",
-		len(sigTrunc), len(sigNoTrunc))
-
-	// Truncated signature should be exactly 28 characters (plus padding)
-	assert.True(t, len(sigTrunc) <= 28+4, // Allow for base64 padding
-		"Truncated signature should be around 28 characters, got %d", len(sigTrunc))
-}
-
-func TestGenerateURL_External_DifferentHashAlgorithms(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{}
-	storageProvider := &storageprovider.Provider{}
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-
-	params := imagorpath.Params{
-		Width:  300,
-		Height: 200,
-		Image:  "test/image.jpg",
-	}
-
-	algorithms := []string{"sha1", "sha256", "sha512"}
-	urls := make(map[string]string)
-
-	// Generate URLs with different algorithms
-	for _, alg := range algorithms {
-		config := &ImagorConfig{
-			Mode:           "external",
-			BaseURL:        "http://localhost:8000",
-			Secret:         "test-secret",
-			SignerType:     alg,
-			SignerTruncate: 0,
-		}
-		provider.currentConfig = config
-
-		url, err := provider.GenerateURL("test/image.jpg", params)
-		require.NoError(t, err)
-		urls[alg] = url
-	}
-
-	// All URLs should be different (different signatures)
-	assert.NotEqual(t, urls["sha1"], urls["sha256"], "SHA1 and SHA256 should produce different signatures")
-	assert.NotEqual(t, urls["sha256"], urls["sha512"], "SHA256 and SHA512 should produce different signatures")
-	assert.NotEqual(t, urls["sha1"], urls["sha512"], "SHA1 and SHA512 should produce different signatures")
-
-	// All should contain the same base URL and parameters
-	for alg, url := range urls {
-		assert.Contains(t, url, "http://localhost:8000", "Algorithm %s URL should contain base URL", alg)
-		assert.Contains(t, url, "300x200", "Algorithm %s URL should contain dimensions", alg)
-		assert.Contains(t, url, "test/image.jpg", "Algorithm %s URL should contain image path", alg)
-	}
-}
-
-func TestInitializeWithConfig_FromRegistry_WithSignerConfig(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{}
-	storageProvider := &storageprovider.Provider{}
-
-	// Set up registry configuration with signer options
+	// Set up registry with mode but no imagor_secret (should trigger JWT fallback)
 	ctx := context.Background()
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://registry.example.com", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "registry-secret", false)
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://fallback.example.com", false)
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", "false", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_type", "sha256", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_truncate", "28", false)
+	// Intentionally NOT setting config.imagor_secret to test fallback
 
 	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
+	err := provider.Initialize()
 
 	require.NoError(t, err)
 
 	config := provider.GetConfig()
 	require.NotNil(t, config)
 	assert.Equal(t, ImagorModeExternal, config.Mode)
-	assert.Equal(t, "http://registry.example.com", config.BaseURL)
-	assert.Equal(t, "registry-secret", config.Secret)
+	assert.Equal(t, "http://fallback.example.com", config.BaseURL)
+	assert.Equal(t, "integration-jwt-secret", config.Secret) // Should use JWT secret
+	assert.Equal(t, "sha256", config.SignerType)             // Should use fallback default
+	assert.Equal(t, 32, config.SignerTruncate)               // Should use fallback default
 	assert.False(t, config.Unsafe)
-	assert.Equal(t, "sha256", config.SignerType)
-	assert.Equal(t, 28, config.SignerTruncate)
-}
 
-func TestReloadFromRegistry_WithSignerConfig(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		JWTSecret: "test-jwt-secret",
-	}
-	// Create a properly initialized storage provider
-	storageProvider := storageprovider.New(logger, registryStore, cfg)
-	err := storageProvider.InitializeWithConfig(cfg)
+	// Test that URL generation works with the fallback configuration
+	url, err := provider.GenerateURL("fallback/test.jpg", imagorpath.Params{
+		Width:  400,
+		Height: 300,
+	})
+
 	require.NoError(t, err)
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-	err = provider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	// Initially defaults to embedded
-	config := provider.GetConfig()
-	assert.Equal(t, ImagorModeEmbedded, config.Mode)
-
-	// Set up registry configuration with signer options
-	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", "external", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://new.example.com", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "new-secret", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_type", "sha512", false)
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_truncate", "32", false)
-
-	// Reload from registry
-	err = provider.ReloadFromRegistry()
-	require.NoError(t, err)
-
-	// Should now be configured from registry with signer options
-	config = provider.GetConfig()
-	assert.Equal(t, ImagorModeExternal, config.Mode)
-	assert.Equal(t, "http://new.example.com", config.BaseURL)
-	assert.Equal(t, "new-secret", config.Secret)
-	assert.Equal(t, "sha512", config.SignerType)
-	assert.Equal(t, 32, config.SignerTruncate)
-}
-
-func TestGenerateURL_EmbeddedVsExternal_SignerComparison(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{
-		JWTSecret: "jwt-secret",
-	}
-	// Create a properly initialized storage provider
-	storageProvider := storageprovider.New(logger, registryStore, cfg)
-	err := storageProvider.InitializeWithConfig(cfg)
-	require.NoError(t, err)
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-
-	params := imagorpath.Params{
-		Width:  300,
-		Height: 200,
-		Image:  "test/image.jpg",
-	}
-
-	// Test embedded mode (uses JWT secret with SHA256 + 32-char truncation)
-	embeddedConfig := &ImagorConfig{
-		Mode:           "embedded",
-		BaseURL:        "/imagor",
-		Secret:         "jwt-secret", // Use same secret as JWT secret
-		SignerType:     "sha256",     // Explicitly set to match external
-		SignerTruncate: 32,           // Explicitly set to match external
-	}
-	provider.currentConfig = embeddedConfig
-
-	embeddedURL, err := provider.GenerateURL("test/image.jpg", params)
-	require.NoError(t, err)
-
-	// Test external mode with same configuration as embedded (SHA256 + 32-char truncation)
-	externalConfig := &ImagorConfig{
-		Mode:           "external",
-		BaseURL:        "http://localhost:8000",
-		Secret:         "jwt-secret", // Same as JWT secret
-		SignerType:     "sha256",
-		SignerTruncate: 32,
-	}
-	provider.currentConfig = externalConfig
-
-	externalURL, err := provider.GenerateURL("test/image.jpg", params)
-	require.NoError(t, err)
-
-	// Extract signatures
-	embeddedSig := embeddedURL[strings.Index(embeddedURL, "/imagor/")+8 : strings.LastIndex(embeddedURL, "/")]
-	externalSig := externalURL[strings.Index(externalURL, "8000/")+5 : strings.LastIndex(externalURL, "/")]
-
-	// Signatures should be identical when using same secret, algorithm, and truncation
-	assert.Equal(t, embeddedSig, externalSig,
-		"Embedded and external modes should produce identical signatures with same configuration")
+	assert.Contains(t, url, "http://fallback.example.com")
+	assert.Contains(t, url, "400x300")
+	assert.Contains(t, url, "fallback/test.jpg")
+	assert.Regexp(t, `^http://fallback.example.com/[a-zA-Z0-9_=/-]+/`, url)
 }

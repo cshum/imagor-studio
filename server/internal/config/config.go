@@ -68,6 +68,7 @@ type Config struct {
 
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
+	flagSet         *flag.FlagSet // Private field to access flag values
 }
 
 // Load loads configuration with optional registry enhancement
@@ -106,8 +107,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		imagorSecret         = fs.String("imagor-secret", "", "secret key for imagor")
 		imagorBaseURL        = fs.String("imagor-base-url", "", "external imagor service URL")
 		imagorUnsafe         = fs.Bool("imagor-unsafe", false, "enable unsafe imagor URLs for development")
-		imagorSignerType     = fs.String("imagor-signer-type", "", "imagor signer algorithm: sha1, sha256, sha512")
-		imagorSignerTruncate = fs.String("imagor-signer-truncate", "0", "imagor signer truncation length")
+		imagorSignerType     = fs.String("imagor-signer-type", "sha1", "imagor signer algorithm: sha1, sha256, sha512")
+		imagorSignerTruncate = fs.Int("imagor-signer-truncate", 0, "imagor signer truncation length")
 
 		appHomeTitle        = fs.String("app-home-title", "", "custom home page title")
 		appImageExtensions  = fs.String("app-image-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif", "comma-separated list of image file extensions to show in application")
@@ -181,12 +182,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		return nil, fmt.Errorf("invalid file-storage-write-permissions: %w", err)
 	}
 
-	// Parse imagor signer truncate
-	imagorSignerTruncateInt, err := strconv.Atoi(*imagorSignerTruncate)
-	if err != nil {
-		return nil, fmt.Errorf("invalid imagor-signer-truncate: %w", err)
-	}
-
 	cfg := &Config{
 		Port:                        portInt,
 		DatabaseURL:                 *databaseURL,
@@ -214,7 +209,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		ImagorSecret:                *imagorSecret,
 		ImagorUnsafe:                *imagorUnsafe,
 		ImagorSignerType:            *imagorSignerType,
-		ImagorSignerTruncate:        imagorSignerTruncateInt,
+		ImagorSignerTruncate:        *imagorSignerTruncate,
 		AppHomeTitle:                *appHomeTitle,
 		AppImageExtensions:          *appImageExtensions,
 		AppVideoExtensions:          *appVideoExtensions,
@@ -222,6 +217,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		AppDefaultSortBy:            *appDefaultSortBy,
 		AppDefaultSortOrder:         *appDefaultSortOrder,
 		overriddenFlags:             overriddenFlags,
+		flagSet:                     fs, // Store the flagSet for later use
 	}
 
 	// Auto-populate storage type if not explicitly set
@@ -280,7 +276,7 @@ func GetFlagNameForRegistryKey(registryKey string) string {
 }
 
 // GetByRegistryKey returns the effective config value and whether the config key is overridden by external config
-func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
+func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, isSet bool) {
 	// Only handle config. prefixed keys
 	if !strings.HasPrefix(strings.ToLower(registryKey), "config.") {
 		return "", false
@@ -293,7 +289,12 @@ func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, ex
 	if value, overridden := c.overriddenFlags[flagName]; overridden {
 		return value, true
 	}
-
+	// Check default flag value
+	if c.flagSet != nil {
+		if f := c.flagSet.Lookup(flagName); f != nil {
+			return f.Value.String(), false
+		}
+	}
 	return "", false
 }
 
@@ -322,8 +323,8 @@ func applyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]strin
 		// Only apply if not overridden by CLI/env
 		if _, overridden := overriddenFlags[flagName]; !overridden {
 			// Use the flag system to set the value - this handles type conversion automatically
-			if flag := flagSet.Lookup(flagName); flag != nil {
-				if err := flag.Value.Set(entry.Value); err != nil {
+			if f := flagSet.Lookup(flagName); f != nil {
+				if err := f.Value.Set(entry.Value); err != nil {
 					return fmt.Errorf("failed to set flag %s to value %s: %w", flagName, entry.Value, err)
 				}
 			}

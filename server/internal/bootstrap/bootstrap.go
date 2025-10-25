@@ -101,7 +101,7 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	imagorProvider := imagorprovider.New(logger, registryStore, enhancedCfg, storageProvider)
 
 	// Initialize imagor with config (will use disabled if not configured)
-	err = imagorProvider.InitializeWithConfig(enhancedCfg)
+	err = imagorProvider.Initialize()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize imagor: %w", err)
 	}
@@ -165,7 +165,7 @@ func initializeEmbeddedMode(cfg *config.Config, logger *zap.Logger) (*Services, 
 	imagorProvider := imagorprovider.New(logger, registryStore, cfg, storageProvider)
 
 	// Initialize imagor with config (will use disabled if not configured)
-	err = imagorProvider.InitializeWithConfig(cfg)
+	err = imagorProvider.Initialize()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize imagor: %w", err)
 	}
