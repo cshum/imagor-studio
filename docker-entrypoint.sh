@@ -23,6 +23,6 @@ GROUP_NAME=${GROUP_NAME:-$(getent group "$PGID" | cut -d: -f1)}
 echo "Starting with UID: $PUID ($USER_NAME) GID: $PGID ($GROUP_NAME)"
 
 mkdir -p /app/data /app/gallery
-chown -R "$PUID:$PGID" /app/data /app/gallery
+chown -R "$PUID:$PGID" /app/data
 
 exec gosu "$PUID:$PGID" "$@"
