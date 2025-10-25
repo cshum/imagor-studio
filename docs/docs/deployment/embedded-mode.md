@@ -2,8 +2,6 @@
 
 Imagor Studio Embedded is a stateless, iframe-ready image editor built on top of imagor. It provides a web-based editing interface while maintaining the similar imagor configuration and URL signing.
 
-## Quick Start
-
 ### Docker Build `imagor-studio-embedded`
 
 ```bash
@@ -80,15 +78,6 @@ services:
 | `S3_ENDPOINT`           | S3 endpoint (optional, for MinIO/DigitalOcean Spaces)   |
 | `S3_FORCE_PATH_STYLE`   | Force path-style addressing (optional, for MinIO)       |
 | `S3_STORAGE_BASE_DIR`   | S3 base directory (optional)                            |
-
-## Docker Images
-
-Pre-built images are available:
-
-- **Docker Hub**: `ghcr.io/cshum/imagor-studio-embedded`
-- **GitHub Container Registry**: `ghcr.io/cshum/imagor-studio-embedded`
-
-Both AMD64 and ARM64 architectures supported.
 
 ## JWT Token Generation
 
