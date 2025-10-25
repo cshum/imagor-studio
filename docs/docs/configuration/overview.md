@@ -95,6 +95,17 @@ These can be configured via any method:
 - **Security Options** - License keys, guest mode
 - **Application Behavior** - File extensions, UI settings
 
+## Docker-Specific Settings
+
+When running in Docker containers, additional environment variables are available for user/permission management:
+
+| Setting | Default | Description                                    |
+| ------- | ------- | ---------------------------------------------- |
+| PUID    | 65534   | Process User ID (for file ownership)          |
+| PGID    | 65534   | Process Group ID (for file ownership)         |
+
+These settings help resolve permission issues when mounting volumes, especially in Kubernetes environments.
+
 ## Quick Reference
 
 | Setting        | CLI/ENV | GUI | Description         |
@@ -102,6 +113,8 @@ These can be configured via any method:
 | Database URL   | ✅      | ❌  | Database connection |
 | Port           | ✅      | ❌  | Server port         |
 | JWT Secret     | ✅      | ❌  | Auth secret         |
+| PUID           | ✅      | ❌  | Docker user ID      |
+| PGID           | ✅      | ❌  | Docker group ID     |
 | Storage Type   | ✅      | ✅  | file or s3          |
 | S3 Credentials | ✅      | ✅  | AWS credentials     |
 | License Key    | ✅      | ✅  | License activation  |

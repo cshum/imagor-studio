@@ -79,6 +79,11 @@ spec:
       labels:
         app: imagor-studio
     spec:
+      # Security context for proper file permissions
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: imagor-studio
           image: shumc/imagor-studio:latest
@@ -93,6 +98,11 @@ spec:
                   key: url
             - name: PORT
               value: "8000"
+            # User/Group configuration (should match securityContext)
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
           resources:
             requests:
               memory: "512Mi"
@@ -279,6 +289,38 @@ spec:
       interval: 30s
 ```
 
+## Permission Management
+
+### Security Context Configuration
+
+The deployment example above includes proper security context configuration to avoid permission issues:
+
+```yaml
+securityContext:
+  runAsUser: 1000    # User ID to run containers
+  runAsGroup: 1000   # Group ID to run containers  
+  fsGroup: 1000      # Group ID for volume ownership
+```
+
+### Environment Variables
+
+The PUID/PGID environment variables should match your security context:
+
+```yaml
+env:
+  - name: PUID
+    value: "1000"  # Should match runAsUser
+  - name: PGID
+    value: "1000"  # Should match runAsGroup
+```
+
+### Benefits
+
+- **Resolves k3s permission issues**: No more `nobody:nogroup` ownership problems
+- **Proper file ownership**: Database and data files owned by specified user/group
+- **Security compliance**: Follows Kubernetes security best practices
+- **No permission workarounds**: Eliminates need for overly permissive directory permissions
+
 ## Best Practices
 
 1. **Use StatefulSets for databases**
@@ -289,6 +331,7 @@ spec:
 6. **Configure ingress with TLS**
 7. **Set up monitoring and logging**
 8. **Use persistent volumes for data**
+9. **Configure proper security contexts**
 
 ## Next Steps
 
