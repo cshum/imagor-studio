@@ -405,8 +405,8 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 
 		s3Storage := s3storage.New(*awsConfig, storageConfig.S3StorageBucket,
 			s3storage.WithBaseDir(storageConfig.S3StorageBaseDir),
-			s3storage.WithEndpoint(storageConfig.S3StorageEndpoint),
-			s3storage.WithForcePathStyle(storageConfig.S3StorageForcePathStyle),
+			s3storage.WithEndpoint(storageConfig.S3Endpoint),
+			s3storage.WithForcePathStyle(storageConfig.S3ForcePathStyle),
 			s3storage.WithSafeChars("--"),
 		)
 		options = append(options, imagor.WithLoaders(s3Storage))
@@ -510,29 +510,29 @@ func (p *Provider) loadS3ConfigFromResults(resultMap map[string]registryutil.Eff
 	}
 
 	if result := resultMap["config.s3_storage_region"]; result.Exists {
-		cfg.S3StorageRegion = result.Value
+		cfg.AWSRegion = result.Value
 	}
 
 	if result := resultMap["config.s3_storage_endpoint"]; result.Exists {
-		cfg.S3StorageEndpoint = result.Value
+		cfg.S3Endpoint = result.Value
 	}
 
 	if result := resultMap["config.s3_storage_force_path_style"]; result.Exists {
 		if forcePathStyle, err := strconv.ParseBool(result.Value); err == nil {
-			cfg.S3StorageForcePathStyle = forcePathStyle
+			cfg.S3ForcePathStyle = forcePathStyle
 		}
 	}
 
 	if result := resultMap["config.s3_storage_access_key_id"]; result.Exists {
-		cfg.S3StorageAccessKeyID = result.Value
+		cfg.AWSAccessKeyID = result.Value
 	}
 
 	if result := resultMap["config.s3_storage_secret_access_key"]; result.Exists {
-		cfg.S3StorageSecretAccessKey = result.Value
+		cfg.AWSSecretAccessKey = result.Value
 	}
 
 	if result := resultMap["config.s3_storage_session_token"]; result.Exists {
-		cfg.S3StorageSessionToken = result.Value
+		cfg.AWSSessionToken = result.Value
 	}
 
 	if result := resultMap["config.s3_storage_base_dir"]; result.Exists {
@@ -552,16 +552,16 @@ func (p *Provider) buildAWSConfig(storageConfig *config.Config) *aws.Config {
 	}
 
 	// Set region if provided
-	if storageConfig.S3StorageRegion != "" {
-		cfg.Region = storageConfig.S3StorageRegion
+	if storageConfig.AWSRegion != "" {
+		cfg.Region = storageConfig.AWSRegion
 	}
 
 	// Set credentials if provided
-	if storageConfig.S3StorageAccessKeyID != "" && storageConfig.S3StorageSecretAccessKey != "" {
+	if storageConfig.AWSAccessKeyID != "" && storageConfig.AWSSecretAccessKey != "" {
 		cfg.Credentials = credentials.NewStaticCredentialsProvider(
-			storageConfig.S3StorageAccessKeyID,
-			storageConfig.S3StorageSecretAccessKey,
-			storageConfig.S3StorageSessionToken,
+			storageConfig.AWSAccessKeyID,
+			storageConfig.AWSSecretAccessKey,
+			storageConfig.AWSSessionToken,
 		)
 	}
 

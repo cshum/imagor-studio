@@ -55,33 +55,33 @@ For cloud deployments and scalable storage.
 
 | Flag                            | Environment Variable          | Encrypted | Description                |
 | ------------------------------- | ----------------------------- | --------- | -------------------------- |
+| `--aws-region`                  | `AWS_REGION`                  | No        | AWS region                 |
+| `--aws-access-key-id`           | `AWS_ACCESS_KEY_ID`           | Yes       | AWS access key ID          |
+| `--aws-secret-access-key`       | `AWS_SECRET_ACCESS_KEY`       | Yes       | AWS secret access key      |
+| `--aws-session-token`           | `AWS_SESSION_TOKEN`           | Yes       | AWS session token          |
 | `--s3-storage-bucket`           | `S3_STORAGE_BUCKET`           | No        | S3 bucket name             |
-| `--s3-storage-region`           | `S3_STORAGE_REGION`           | No        | AWS region                 |
-| `--s3-storage-endpoint`         | `S3_STORAGE_ENDPOINT`         | No        | Custom endpoint (optional) |
-| `--s3-storage-force-path-style` | `S3_STORAGE_FORCE_PATH_STYLE` | No        | Force path-style URLs      |
-| `--s3-storage-access-key-id`    | `S3_STORAGE_ACCESS_KEY_ID`    | Yes       | AWS access key             |
-| `--s3-storage-secret-access-key`| `S3_STORAGE_SECRET_ACCESS_KEY`| Yes       | AWS secret key             |
-| `--s3-storage-session-token`    | `S3_STORAGE_SESSION_TOKEN`    | Yes       | AWS session token          |
+| `--s3-endpoint`                 | `S3_ENDPOINT`                 | No        | Custom endpoint (optional) |
+| `--s3-force-path-style`         | `S3_FORCE_PATH_STYLE`         | No        | Force path-style URLs      |
 | `--s3-storage-base-dir`         | `S3_STORAGE_BASE_DIR`         | No        | Base directory in bucket   |
 
 ### AWS S3 Example
 
 ```bash
 export S3_STORAGE_BUCKET=my-images-bucket
-export S3_STORAGE_REGION=us-east-1
-export S3_STORAGE_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-export S3_STORAGE_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+export AWS_REGION=us-east-1
+export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 ```
 
 ### MinIO Example
 
 ```bash
 export S3_STORAGE_BUCKET=images
-export S3_STORAGE_REGION=us-east-1
-export S3_STORAGE_ENDPOINT=http://minio:9000
-export S3_STORAGE_FORCE_PATH_STYLE=true
-export S3_STORAGE_ACCESS_KEY_ID=minioadmin
-export S3_STORAGE_SECRET_ACCESS_KEY=minioadmin
+export AWS_REGION=us-east-1
+export S3_ENDPOINT=http://minio:9000
+export S3_FORCE_PATH_STYLE=true
+export AWS_ACCESS_KEY_ID=minioadmin
+export AWS_SECRET_ACCESS_KEY=minioadmin
 ```
 
 ### Docker Compose with S3
@@ -92,9 +92,9 @@ services:
     image: shumc/imagor-studio:latest
     environment:
       - S3_STORAGE_BUCKET=my-images-bucket
-      - S3_STORAGE_REGION=us-east-1
-      - S3_STORAGE_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - S3_STORAGE_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 ```
 
 ### Docker Compose with MinIO
@@ -117,11 +117,11 @@ services:
     image: shumc/imagor-studio:latest
     environment:
       - S3_STORAGE_BUCKET=images
-      - S3_STORAGE_REGION=us-east-1
-      - S3_STORAGE_ENDPOINT=http://minio:9000
-      - S3_STORAGE_FORCE_PATH_STYLE=true
-      - S3_STORAGE_ACCESS_KEY_ID=minioadmin
-      - S3_STORAGE_SECRET_ACCESS_KEY=minioadmin
+      - AWS_REGION=us-east-1
+      - S3_ENDPOINT=http://minio:9000
+      - S3_FORCE_PATH_STYLE=true
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
     depends_on:
       - minio
 
@@ -144,10 +144,10 @@ Imagor Studio works with any S3-compatible service:
 
 ```bash
 export S3_STORAGE_BUCKET=my-bucket
-export S3_STORAGE_REGION=auto
-export S3_STORAGE_ENDPOINT=https://ACCOUNT_ID.r2.cloudflarestorage.com
-export S3_STORAGE_ACCESS_KEY_ID=your_access_key
-export S3_STORAGE_SECRET_ACCESS_KEY=your_secret_key
+export AWS_REGION=auto
+export S3_ENDPOINT=https://ACCOUNT_ID.r2.cloudflarestorage.com
+export AWS_ACCESS_KEY_ID=your_access_key
+export AWS_SECRET_ACCESS_KEY=your_secret_key
 ```
 
 ## Security

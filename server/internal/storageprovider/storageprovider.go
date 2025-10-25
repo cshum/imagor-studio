@@ -84,26 +84,26 @@ func (p *Provider) NewS3Storage(cfg *config.Config) (storage.Storage, error) {
 
 	p.logger.Info("Creating S3 storage",
 		zap.String("bucket", cfg.S3StorageBucket),
-		zap.String("region", cfg.S3StorageRegion),
-		zap.String("endpoint", cfg.S3StorageEndpoint),
+		zap.String("region", cfg.AWSRegion),
+		zap.String("endpoint", cfg.S3Endpoint),
 		zap.String("baseDir", cfg.S3StorageBaseDir),
 	)
 
 	var options []s3storage.Option
 
-	if cfg.S3StorageRegion != "" {
-		options = append(options, s3storage.WithRegion(cfg.S3StorageRegion))
+	if cfg.AWSRegion != "" {
+		options = append(options, s3storage.WithRegion(cfg.AWSRegion))
 	}
 
-	if cfg.S3StorageEndpoint != "" {
-		options = append(options, s3storage.WithEndpoint(cfg.S3StorageEndpoint))
+	if cfg.S3Endpoint != "" {
+		options = append(options, s3storage.WithEndpoint(cfg.S3Endpoint))
 	}
 
-	if cfg.S3StorageAccessKeyID != "" && cfg.S3StorageSecretAccessKey != "" {
+	if cfg.AWSAccessKeyID != "" && cfg.AWSSecretAccessKey != "" {
 		options = append(options, s3storage.WithCredentials(
-			cfg.S3StorageAccessKeyID,
-			cfg.S3StorageSecretAccessKey,
-			cfg.S3StorageSessionToken,
+			cfg.AWSAccessKeyID,
+			cfg.AWSSecretAccessKey,
+			cfg.AWSSessionToken,
 		))
 	}
 
@@ -111,7 +111,7 @@ func (p *Provider) NewS3Storage(cfg *config.Config) (storage.Storage, error) {
 		options = append(options, s3storage.WithBaseDir(cfg.S3StorageBaseDir))
 	}
 
-	options = append(options, s3storage.WithForcePathStyle(cfg.S3StorageForcePathStyle))
+	options = append(options, s3storage.WithForcePathStyle(cfg.S3ForcePathStyle))
 
 	return s3storage.New(cfg.S3StorageBucket, options...)
 }
@@ -348,11 +348,11 @@ func (p *Provider) loadS3ConfigFromResults(resultMap map[string]registryutil.Eff
 	}
 
 	if result := resultMap["config.s3_storage_region"]; result.Exists {
-		cfg.S3StorageRegion = result.Value
+		cfg.AWSRegion = result.Value
 	}
 
 	if result := resultMap["config.s3_storage_endpoint"]; result.Exists {
-		cfg.S3StorageEndpoint = result.Value
+		cfg.S3Endpoint = result.Value
 	}
 
 	if result := resultMap["config.s3_storage_force_path_style"]; result.Exists {
@@ -360,19 +360,19 @@ func (p *Provider) loadS3ConfigFromResults(resultMap map[string]registryutil.Eff
 		if err != nil {
 			return fmt.Errorf("invalid s3 force path style value: %w", err)
 		}
-		cfg.S3StorageForcePathStyle = forcePathStyle
+		cfg.S3ForcePathStyle = forcePathStyle
 	}
 
 	if result := resultMap["config.s3_storage_access_key_id"]; result.Exists {
-		cfg.S3StorageAccessKeyID = result.Value
+		cfg.AWSAccessKeyID = result.Value
 	}
 
 	if result := resultMap["config.s3_storage_secret_access_key"]; result.Exists {
-		cfg.S3StorageSecretAccessKey = result.Value
+		cfg.AWSSecretAccessKey = result.Value
 	}
 
 	if result := resultMap["config.s3_storage_session_token"]; result.Exists {
-		cfg.S3StorageSessionToken = result.Value
+		cfg.AWSSessionToken = result.Value
 	}
 
 	if result := resultMap["config.s3_storage_base_dir"]; result.Exists {

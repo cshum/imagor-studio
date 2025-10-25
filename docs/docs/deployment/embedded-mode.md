@@ -2,11 +2,6 @@
 
 Imagor Studio Embedded is a stateless, iframe-ready image editor built on top of imagor. It provides a web-based editing interface while maintaining the similar imagor configuration and URL signing.
 
-- **Same Core**: Uses your existing imagor configuration
-- **Stateless Operation**: No database required, uses JWT for stateless authentication
-- **Iframe Ready**: Designed for embedding in CMS and web applications
-- **Familiar Config**: Reuse your existing imagor secrets and settings
-
 ## Quick Start
 
 ### Using Pre-built Docker Image
@@ -52,7 +47,7 @@ services:
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `JWT_SECRET` | Secret for embedded authentication | `your-jwt-secret` |
-| `IMAGOR_SECRET` | Imagor URL signing secret (familiar!) | `your-imagor-secret` |
+| `IMAGOR_SECRET` | Imagor URL signing secret | `your-imagor-secret` |
 | `FILE_STORAGE_BASE_DIR` | Directory for image files | `/app/images` |
 
 ### Optional Imagor Configuration
@@ -66,11 +61,14 @@ services:
 
 | Variable | Description |
 |----------|-------------|
-| `STORAGE_TYPE` | Set to `s3` for S3 storage |
+| `AWS_REGION` | AWS region |
+| `AWS_ACCESS_KEY_ID` | AWS access key ID (optional) |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret access key (optional) |
+| `AWS_SESSION_TOKEN` | AWS session token (optional, for temporary credentials) |
 | `S3_STORAGE_BUCKET` | S3 bucket name |
-| `S3_STORAGE_REGION` | AWS region |
-| `S3_STORAGE_ACCESS_KEY_ID` | AWS access key |
-| `S3_STORAGE_SECRET_ACCESS_KEY` | AWS secret key |
+| `S3_ENDPOINT` | S3 endpoint (optional, for MinIO/DigitalOcean Spaces) |
+| `S3_FORCE_PATH_STYLE` | Force path-style addressing (optional, for MinIO) |
+| `S3_STORAGE_BASE_DIR` | S3 base directory (optional) |
 
 ## Docker Images
 

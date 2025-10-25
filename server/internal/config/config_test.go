@@ -733,7 +733,7 @@ func TestStorageTypeAutoPopulation(t *testing.T) {
 		},
 		{
 			name:         "Partial S3 config still auto-detects",
-			args:         []string{"--s3-storage-bucket", "my-bucket", "--s3-storage-region", "us-west-2", "--jwt-secret", "test"},
+			args:         []string{"--s3-storage-bucket", "my-bucket", "--aws-region", "us-west-2", "--jwt-secret", "test"},
 			expectedType: "s3",
 			description:  "Should auto-detect s3 even with partial S3 configuration",
 		},
