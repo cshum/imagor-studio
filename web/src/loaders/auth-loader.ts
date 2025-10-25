@@ -9,12 +9,12 @@ import { authStore } from '@/stores/auth-store'
 const createLoginRedirect = (currentLocation: string) => {
   // Check if we're in embedded mode
   const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
-  
+
   if (isEmbeddedMode) {
     // In embedded mode, throw an error instead of redirecting
     throw new Error('Authentication required. Please provide a valid token.')
   }
-  
+
   if (currentLocation && currentLocation !== '/') {
     return redirect({
       to: '/login',

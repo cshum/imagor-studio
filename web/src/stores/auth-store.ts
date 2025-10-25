@@ -4,6 +4,9 @@ import type { MeQuery } from '@/generated/graphql'
 import { createStore } from '@/lib/create-store.ts'
 import { getToken, removeToken, setToken } from '@/lib/token'
 
+// Check if we're in embedded mode
+const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
+
 export type UserProfile = MeQuery['me']
 
 export type AuthState = 'loading' | 'authenticated' | 'unauthenticated' | 'guest'
@@ -104,7 +107,20 @@ export const authStore = createStore(initialState, reducer)
 /**
  * Handle embedded authentication flow
  */
-const handleEmbeddedAuth = async (jwtToken: string): Promise<Auth> => {
+const handleEmbeddedAuth = async (): Promise<Auth> => {
+  const urlParams = new URLSearchParams(window.location.search)
+  const jwtToken = urlParams.get('token')
+
+  if (!jwtToken) {
+    return authStore.dispatch({
+      type: 'SET_ERROR',
+      payload: {
+        error:
+          'Missing authentication token. Embedded mode requires a JWT token in the URL. Expected format: /?token=YOUR_JWT_TOKEN&path=image.jpg',
+      },
+    })
+  }
+
   try {
     // Call /api/auth/embedded-guest with JWT
     const response = await embeddedGuestLogin(jwtToken)
@@ -124,7 +140,7 @@ const handleEmbeddedAuth = async (jwtToken: string): Promise<Auth> => {
     })
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Embedded authentication failed'
-    
+
     // In embedded mode, just set error and return the state
     // No logout needed - just show error in embedded context
     return authStore.dispatch({
@@ -138,12 +154,9 @@ const handleEmbeddedAuth = async (jwtToken: string): Promise<Auth> => {
  * Initialize auth state - unified entry point for both normal and embedded modes
  */
 export const initAuth = async (accessToken?: string): Promise<Auth> => {
-  // Early return for embedded mode - check for JWT token in URL
-  const urlParams = new URLSearchParams(window.location.search)
-  const jwtToken = urlParams.get('token')
-
-  if (jwtToken) {
-    return handleEmbeddedAuth(jwtToken)
+  // Early return for embedded mode
+  if (isEmbeddedMode) {
+    return handleEmbeddedAuth()
   }
 
   // Continue with normal auth flow

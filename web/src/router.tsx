@@ -241,7 +241,7 @@ const parseEmbeddedPath = (path: string) => {
   if (!path) {
     throw new Error('Path parameter is required in embedded mode')
   }
-  
+
   // Handle gallery paths: "gallery/folder/image.jpg" -> galleryKey="folder", imageKey="image.jpg"
   if (path.startsWith('gallery/')) {
     const pathParts = path.split('/')
@@ -252,7 +252,7 @@ const parseEmbeddedPath = (path: string) => {
     const galleryKey = pathParts.slice(1, -1).join('/')
     return { galleryKey, imageKey }
   }
-  
+
   // Handle root level images: "image.jpg" -> galleryKey="", imageKey="image.jpg"
   return { galleryKey: '', imageKey: path }
 }
