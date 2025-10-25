@@ -2,19 +2,13 @@ import { redirect } from '@tanstack/react-router'
 
 import { authStore } from '@/stores/auth-store'
 
+const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
+
 /**
  * Helper function to create login redirect with current location
  * In embedded mode, throws an error instead of redirecting
  */
 const createLoginRedirect = (currentLocation: string) => {
-  // Check if we're in embedded mode
-  const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
-
-  if (isEmbeddedMode) {
-    // In embedded mode, throw an error instead of redirecting
-    throw new Error('Authentication required. Please provide a valid token.')
-  }
-
   if (currentLocation && currentLocation !== '/') {
     return redirect({
       to: '/login',
@@ -35,6 +29,11 @@ export const requireAuth = async (context?: {
   const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
 
   if (currentAuth.state === 'unauthenticated') {
+    // If embedded mode and there's an error, throw it
+    if (isEmbeddedMode && currentAuth.error) {
+      throw new Error(currentAuth.error)
+    }
+
     if (!currentAuth.isFirstRun) {
       // Capture current location for redirect after login
       const currentLocation = context?.location

@@ -4,7 +4,6 @@ import type { MeQuery } from '@/generated/graphql'
 import { createStore } from '@/lib/create-store.ts'
 import { getToken, removeToken, setToken } from '@/lib/token'
 
-// Check if we're in embedded mode
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
 
 export type UserProfile = MeQuery['me']
@@ -42,6 +41,7 @@ export type AuthAction =
       }
     }
   | { type: 'LOGOUT' }
+  | { type: 'LOGOUT_WITH_ERROR'; payload: { error: string } }
   | { type: 'SET_ERROR'; payload: { error: string } }
   | { type: 'SET_FIRST_RUN'; payload: { isFirstRun: boolean } }
   | { type: 'CLEAR_ERROR' }
@@ -69,13 +69,28 @@ function reducer(state: Auth, action: AuthAction): Auth {
     }
 
     case 'LOGOUT':
-      removeToken()
+      if (!isEmbeddedMode) {
+        removeToken()
+      }
       return {
         ...state,
         state: 'unauthenticated',
         accessToken: null,
         profile: null,
         error: null,
+        pathPrefix: '',
+      }
+
+    case 'LOGOUT_WITH_ERROR':
+      if (!isEmbeddedMode) {
+        removeToken()
+      }
+      return {
+        ...state,
+        state: 'unauthenticated',
+        accessToken: null,
+        profile: null,
+        error: action.payload.error,
         pathPrefix: '',
       }
 
@@ -110,7 +125,15 @@ export const authStore = createStore(initialState, reducer)
 export const initAuth = async (accessToken?: string): Promise<Auth> => {
   // In embedded mode, handle embedded token from URL
   if (isEmbeddedMode) {
-    return await initEmbeddedAuth()
+    try {
+      return await initEmbeddedAuth()
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Embedded authentication failed'
+      return authStore.dispatch({
+        type: 'LOGOUT_WITH_ERROR',
+        payload: { error: errorMessage },
+      })
+    }
   }
 
   // Continue with normal auth flow
@@ -160,7 +183,9 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
       const firstRunResponse = await checkFirstRun()
       if (firstRunResponse.isFirstRun) {
         // Clear invalid token and set first run state
-        removeToken()
+        if (!isEmbeddedMode) {
+          removeToken()
+        }
         authStore.dispatch({
           type: 'SET_FIRST_RUN',
           payload: { isFirstRun: true },
