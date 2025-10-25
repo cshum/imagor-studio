@@ -378,70 +378,125 @@ func TestBuildConfigFromRegistry_MissingMode(t *testing.T) {
 }
 
 func TestBuildConfigFromRegistry_SignerConfiguration(t *testing.T) {
-	logger := zap.NewNop()
-	registryStore := newMockRegistryStore()
-	cfg := &config.Config{JWTSecret: "jwt-secret"}
-	storageProvider := &storageprovider.Provider{}
-
-	provider := New(logger, registryStore, cfg, storageProvider)
-
 	tests := []struct {
 		name           string
-		mode           string
-		secret         string
-		signerType     string
-		signerTruncate string
-		unsafe         string
+		cliArgs        []string
+		registryConfig map[string]string
 		expectedSecret string
 		expectedType   string
 		expectedTrunc  int
+		description    string
 	}{
-		// External mode tests
-		{"External with explicit config", "external", "test-secret", "sha256", "28", "false", "test-secret", "sha256", 0}, // Truncate not working yet
-		{"External with defaults", "external", "", "", "", "false", "jwt-secret", "sha256", 32},                           // Falls back to JWT secret + defaults
-		{"External unsafe mode", "external", "", "", "", "true", "jwt-secret", "sha256", 32},                              // Still gets JWT fallback
-
-		// Embedded mode tests - now respects signer configuration like external
-		{"Embedded with explicit config", "embedded", "test-secret", "sha512", "40", "false", "test-secret", "sha512", 0}, // Truncate not working yet
-		{"Embedded with defaults", "embedded", "", "", "", "false", "jwt-secret", "sha256", 32},                           // Falls back to JWT secret + defaults
-		{"Embedded unsafe mode", "embedded", "", "", "", "true", "jwt-secret", "sha256", 32},                              // Still gets JWT fallback
+		{
+			name: "External with explicit config via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://test.example.com",
+				"--imagor-secret", "test-secret",
+				"--imagor-signer-type", "sha256",
+				"--imagor-signer-truncate", "28",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedSecret: "test-secret",
+			expectedType:   "sha256",
+			expectedTrunc:  28,
+			description:    "CLI args should set explicit signer configuration",
+		},
+		{
+			name: "External with defaults via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://test.example.com",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedSecret: "jwt-secret",
+			expectedType:   "sha256",
+			expectedTrunc:  32,
+			description:    "Should fall back to JWT secret with SHA256+32 defaults",
+		},
+		{
+			name: "External unsafe mode via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://test.example.com",
+				"--imagor-unsafe",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedSecret: "",
+			expectedType:   "sha1",
+			expectedTrunc:  0,
+			description:    "Unsafe mode doesn't need secret or special signer config",
+		},
+		{
+			name: "Embedded with explicit config via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "embedded",
+				"--imagor-secret", "test-secret",
+				"--imagor-signer-type", "sha512",
+				"--imagor-signer-truncate", "40",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedSecret: "test-secret",
+			expectedType:   "sha512",
+			expectedTrunc:  40,
+			description:    "Embedded mode should respect explicit signer configuration",
+		},
+		{
+			name: "Embedded with defaults via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "embedded",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedSecret: "jwt-secret",
+			expectedType:   "sha256",
+			expectedTrunc:  32,
+			description:    "Should fall back to JWT secret with SHA256+32 defaults",
+		},
+		{
+			name: "Embedded unsafe mode via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "embedded",
+				"--imagor-unsafe",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedSecret: "",
+			expectedType:   "sha1",
+			expectedTrunc:  0,
+			description:    "Unsafe mode doesn't need secret or special signer config",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Clear registry
-			registryStore.data = make(map[string]string)
+			// Create mock registry store
+			registryStore := newMockRegistryStore()
 
-			// Set up basic configuration
-			ctx := context.Background()
-			registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_mode", tt.mode, false)
-
-			if tt.mode == "external" && tt.secret == "" && tt.unsafe != "true" {
-				// For external mode without secret and not unsafe, we need base URL
-				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_base_url", "http://test.example.com", false)
-			}
-
-			// Set optional configuration if provided
-			if tt.secret != "" {
-				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", tt.secret, false)
-			}
-			if tt.signerType != "" {
-				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_type", tt.signerType, false)
-			}
-			if tt.signerTruncate != "" {
-				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_signer_truncate", tt.signerTruncate, false)
-			}
-			if tt.unsafe != "" {
-				registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", tt.unsafe, false)
+			// Set up registry configuration if provided
+			if tt.registryConfig != nil {
+				ctx := context.Background()
+				for key, value := range tt.registryConfig {
+					registryStore.Set(ctx, registrystore.SystemOwnerID, key, value, false)
+				}
 			}
 
+			// Load config using CLI args and registry store
+			cfg, err := config.Load(tt.cliArgs, registryStore)
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, cfg, tt.description)
+
+			// Create provider with loaded config
+			logger := zap.NewNop()
+			storageProvider := &storageprovider.Provider{}
+			provider := New(logger, registryStore, cfg, storageProvider)
+
+			// Build config from registry
 			config, err := provider.buildConfigFromRegistry()
-			require.NoError(t, err)
-			require.NotNil(t, config)
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, config, tt.description)
 
-			assert.Equal(t, tt.expectedSecret, config.Secret)
-			assert.Equal(t, tt.expectedType, config.SignerType)
-			assert.Equal(t, tt.expectedTrunc, config.SignerTruncate)
+			assert.Equal(t, tt.expectedSecret, config.Secret, tt.description)
+			assert.Equal(t, tt.expectedType, config.SignerType, tt.description)
+			assert.Equal(t, tt.expectedTrunc, config.SignerTruncate, tt.description)
 		})
 	}
 }
@@ -874,20 +929,20 @@ func TestBuildConfigFromRegistry_JWTSecretFallback(t *testing.T) {
 			mode:                "external",
 			hasImagorSecret:     false,
 			unsafe:              "true",
-			expectedSecret:      "jwt-secret-123", // Still gets JWT fallback
-			expectedSignerType:  "sha256",         // Still gets fallback defaults
-			expectedSignerTrunc: 32,               // Still gets fallback defaults
-			description:         "When unsafe mode, still gets JWT fallback (but won't be used for signing)",
+			expectedSecret:      "",     // Unsafe mode doesn't need secret
+			expectedSignerType:  "sha1", // Default signer type
+			expectedSignerTrunc: 0,      // Default truncate
+			description:         "When unsafe mode, doesn't need secret or special signer config",
 		},
 		{
 			name:                "Embedded mode unsafe - no secret needed",
 			mode:                "embedded",
 			hasImagorSecret:     false,
 			unsafe:              "true",
-			expectedSecret:      "jwt-secret-123", // Still gets JWT fallback
-			expectedSignerType:  "sha256",         // Still gets fallback defaults
-			expectedSignerTrunc: 32,               // Still gets fallback defaults
-			description:         "When unsafe mode, still gets JWT fallback (but won't be used for signing)",
+			expectedSecret:      "",     // Unsafe mode doesn't need secret
+			expectedSignerType:  "sha1", // Default signer type
+			expectedSignerTrunc: 0,      // Default truncate
+			description:         "When unsafe mode, doesn't need secret or special signer config",
 		},
 	}
 
