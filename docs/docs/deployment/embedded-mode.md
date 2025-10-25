@@ -42,22 +42,24 @@ services:
 
 ## Configuration
 
-### Essential Environment Variables
+### Auth and Imagor Configuration
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `JWT_SECRET` | Secret for embedded authentication | `your-jwt-secret` |
-| `IMAGOR_SECRET` | Imagor URL signing secret | `your-imagor-secret` |
-| `FILE_STORAGE_BASE_DIR` | Directory for image files | `/app/images` |
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `JWT_SECRET` | Secret for embedded authentication | - | `your-jwt-secret` |
+| `IMAGOR_SECRET` | Imagor URL signing secret | - | `your-imagor-secret` |
+| `IMAGOR_SIGNER_TYPE` | Signing algorithm (optional) | `sha1` | `sha256` |
+| `IMAGOR_SIGNER_TRUNCATE` | Signature truncation length (optional) | `40` | `32` |
 
-### Optional Imagor Configuration
+### File Storage Configuration
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `IMAGOR_SIGNER_TYPE` | Signing algorithm | `sha1` |
-| `IMAGOR_SIGNER_TRUNCATE` | Signature truncation length | `40` |
+| `FILE_STORAGE_BASE_DIR` | Directory for image files | `/app/gallery` |
+| `FILE_STORAGE_MKDIR_PERMISSIONS` | Directory creation permissions (optional) | `0755` |
+| `FILE_STORAGE_WRITE_PERMISSIONS` | File write permissions (optional) | `0644` |
 
-### Advanced Storage (S3)
+### S3 Storage Configuration
 
 | Variable | Description |
 |----------|-------------|
