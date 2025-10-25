@@ -276,7 +276,7 @@ func GetFlagNameForRegistryKey(registryKey string) string {
 }
 
 // GetByRegistryKey returns the effective config value and whether the config key is overridden by external config
-func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
+func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, isSet bool) {
 	// Only handle config. prefixed keys
 	if !strings.HasPrefix(strings.ToLower(registryKey), "config.") {
 		return "", false
@@ -289,6 +289,7 @@ func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, ex
 	if value, overridden := c.overriddenFlags[flagName]; overridden {
 		return value, true
 	}
+	// Check default flag value
 	if c.flagSet != nil {
 		if f := c.flagSet.Lookup(flagName); f != nil {
 			return f.Value.String(), false
