@@ -24,8 +24,32 @@ services:
     environment:
       - DATABASE_URL=sqlite:///app/data/imagor-studio.db
       - PORT=8000
+      # User/Group configuration (optional)
+      - PUID=1000  # Set to your user ID
+      - PGID=1000  # Set to your group ID
     restart: unless-stopped
 ```
+
+### Setting User/Group IDs
+
+To avoid permission issues with mounted volumes, especially in Kubernetes environments, you can specify the user and group IDs that the container should run as:
+
+```bash
+# Find your user and group IDs
+id
+
+# Example output: uid=1000(username) gid=1000(groupname)
+```
+
+Then use these values in your Docker Compose file:
+
+```yaml
+environment:
+  - PUID=1000  # Your user ID
+  - PGID=1000  # Your group ID
+```
+
+**Default behavior**: If not specified, PUID and PGID default to 65534 (nobody:nogroup).
 
 Start the service:
 
@@ -54,6 +78,9 @@ services:
       - S3_REGION=us-east-1
       - S3_ACCESS_KEY_ID=your_access_key
       - S3_SECRET_ACCESS_KEY=your_secret_key
+      # User/Group configuration (optional)
+      - PUID=1000
+      - PGID=1000
     restart: unless-stopped
 ```
 
@@ -73,6 +100,10 @@ JWT_EXPIRATION=168h
 # Storage
 STORAGE_TYPE=file
 FILE_BASE_DIR=/app/gallery
+
+# User/Group Configuration
+PUID=1000  # Process User ID (defaults to 65534)
+PGID=1000  # Process Group ID (defaults to 65534)
 
 # Security
 ALLOW_GUEST_MODE=false
