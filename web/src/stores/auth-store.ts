@@ -1,4 +1,4 @@
-import { checkFirstRun, embeddedGuestLogin, guestLogin } from '@/api/auth-api'
+import { checkFirstRun, guestLogin } from '@/api/auth-api'
 import { getCurrentUser } from '@/api/user-api.ts'
 import type { MeQuery } from '@/generated/graphql'
 import { createStore } from '@/lib/create-store.ts'
@@ -105,58 +105,13 @@ function reducer(state: Auth, action: AuthAction): Auth {
 export const authStore = createStore(initialState, reducer)
 
 /**
- * Handle embedded authentication flow
- */
-const handleEmbeddedAuth = async (): Promise<Auth> => {
-  const urlParams = new URLSearchParams(window.location.search)
-  const jwtToken = urlParams.get('token')
-
-  if (!jwtToken) {
-    return authStore.dispatch({
-      type: 'SET_ERROR',
-      payload: {
-        error:
-          'Missing authentication token. Embedded mode requires a JWT token in the URL. Expected format: /?token=YOUR_JWT_TOKEN&path=image.jpg',
-      },
-    })
-  }
-
-  try {
-    // Call /api/auth/embedded-guest with JWT
-    const response = await embeddedGuestLogin(jwtToken)
-
-    // Get user profile with session token
-    const profile = await getCurrentUser(response.token)
-
-    // Dispatch unified init action with embedded flag and path prefix
-    return authStore.dispatch({
-      type: 'INIT',
-      payload: {
-        accessToken: response.token,
-        profile,
-        isEmbedded: true,
-        pathPrefix: response.pathPrefix || '',
-      },
-    })
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Embedded authentication failed'
-
-    // In embedded mode, just set error and return the state
-    // No logout needed - just show error in embedded context
-    return authStore.dispatch({
-      type: 'SET_ERROR',
-      payload: { error: errorMessage },
-    })
-  }
-}
-
-/**
- * Initialize auth state - unified entry point for both normal and embedded modes
+ * Initialize auth state - for normal mode only (embedded mode uses dedicated loader)
  */
 export const initAuth = async (accessToken?: string): Promise<Auth> => {
-  // Early return for embedded mode
+  // In embedded mode, auth is handled by the embedded loader
   if (isEmbeddedMode) {
-    return handleEmbeddedAuth()
+    // Just return current state - embedded loader will handle auth
+    return authStore.getState()
   }
 
   // Continue with normal auth flow
