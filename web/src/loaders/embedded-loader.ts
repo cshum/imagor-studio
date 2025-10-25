@@ -1,7 +1,3 @@
-import { embeddedGuestLogin } from '@/api/auth-api'
-import { getCurrentUser } from '@/api/user-api'
-import { authStore } from '@/stores/auth-store'
-
 import { imageEditorLoader } from './image-editor-loader'
 
 /**
@@ -23,10 +19,9 @@ export const embeddedValidateSearch = (search: Record<string, unknown>): Embedde
 }
 
 /**
- * Extract search params for embedded loader deps
+ * Extract search params for embedded loader deps (only path needed)
  */
-export const embeddedLoaderDeps = ({ search: { token, path } }: { search: EmbeddedSearch }) => ({
-  token,
+export const embeddedLoaderDeps = ({ search: { path } }: { search: EmbeddedSearch }) => ({
   path,
 })
 
@@ -56,86 +51,20 @@ export const parseEmbeddedPath = (path: string) => {
 }
 
 /**
- * Handle embedded authentication and return auth state
+ * Embedded loader - loads image editor data (auth handled by initAuth)
  */
-export const handleEmbeddedAuth = async (token: string) => {
-  if (!token) {
-    throw new Error(
-      'Missing authentication token. Embedded mode requires a JWT token in the URL. Expected format: /?token=YOUR_JWT_TOKEN&path=image.jpg',
-    )
-  }
+export const embeddedLoader = async ({ deps: { path } }: { deps: { path: string } }) => {
+  // Parse path (will throw if invalid)
+  const { galleryKey, imageKey } = parseEmbeddedPath(path)
 
-  try {
-    // Call /api/auth/embedded-guest with JWT
-    const response = await embeddedGuestLogin(token)
+  // Load image editor data (will throw if fails)
+  const imageEditorData = await imageEditorLoader({
+    params: { galleryKey, imageKey },
+  })
 
-    // Get user profile with session token
-    const profile = await getCurrentUser(response.token)
-
-    // Dispatch unified init action with embedded flag and path prefix
-    authStore.dispatch({
-      type: 'INIT',
-      payload: {
-        accessToken: response.token,
-        profile,
-        isEmbedded: true,
-        pathPrefix: response.pathPrefix || '',
-      },
-    })
-
-    return {
-      accessToken: response.token,
-      profile,
-      pathPrefix: response.pathPrefix || '',
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Embedded authentication failed'
-
-    // Set error in auth store
-    authStore.dispatch({
-      type: 'SET_ERROR',
-      payload: { error: errorMessage },
-    })
-
-    throw new Error(errorMessage)
-  }
-}
-
-/**
- * Embedded loader - handles authentication and loads image editor data
- */
-export const embeddedLoader = async ({ deps: { token, path } }: { deps: EmbeddedSearch }) => {
-  try {
-    const authResult = await handleEmbeddedAuth(token)
-
-    const { galleryKey, imageKey } = parseEmbeddedPath(path)
-
-    const imageEditorData = await imageEditorLoader({
-      params: { galleryKey, imageKey },
-    })
-
-    return {
-      auth: authResult,
-      galleryKey,
-      imageKey,
-      imageEditorData,
-    }
-  } catch (error) {
-    // For embedded mode, we want to show the error rather than redirect
-    const errorMessage =
-      error instanceof Error ? error.message : 'Embedded mode initialization failed'
-
-    authStore.dispatch({
-      type: 'SET_ERROR',
-      payload: { error: errorMessage },
-    })
-
-    // Return error state instead of throwing
-    return {
-      error: errorMessage,
-      galleryKey: '',
-      imageKey: '',
-      imageEditorData: null,
-    }
+  return {
+    galleryKey,
+    imageKey,
+    imageEditorData,
   }
 }

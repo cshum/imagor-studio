@@ -1,4 +1,4 @@
-import { checkFirstRun, guestLogin } from '@/api/auth-api'
+import { checkFirstRun, embeddedGuestLogin, guestLogin } from '@/api/auth-api'
 import { getCurrentUser } from '@/api/user-api.ts'
 import type { MeQuery } from '@/generated/graphql'
 import { createStore } from '@/lib/create-store.ts'
@@ -105,13 +105,12 @@ function reducer(state: Auth, action: AuthAction): Auth {
 export const authStore = createStore(initialState, reducer)
 
 /**
- * Initialize auth state - for normal mode only (embedded mode uses dedicated loader)
+ * Initialize auth state - handles both normal and embedded modes
  */
 export const initAuth = async (accessToken?: string): Promise<Auth> => {
-  // In embedded mode, auth is handled by the embedded loader
+  // In embedded mode, handle embedded token from URL
   if (isEmbeddedMode) {
-    // Just return current state - embedded loader will handle auth
-    return authStore.getState()
+    return await initEmbeddedAuth()
   }
 
   // Continue with normal auth flow
@@ -196,6 +195,38 @@ export const getAuth = (): Auth => {
  */
 export const clearAuthError = (): Auth => {
   return authStore.dispatch({ type: 'CLEAR_ERROR' })
+}
+
+/**
+ * Initialize embedded auth by parsing JWT token from URL
+ */
+export const initEmbeddedAuth = async (): Promise<Auth> => {
+  // Parse token from current URL
+  const urlParams = new URLSearchParams(window.location.search)
+  const token = urlParams.get('token')
+
+  if (!token) {
+    throw new Error(
+      'Missing authentication token. Embedded mode requires a JWT token in the URL. Expected format: /?token=YOUR_JWT_TOKEN&path=image.jpg',
+    )
+  }
+
+  // Call /api/auth/embedded-guest with JWT
+  const response = await embeddedGuestLogin(token)
+
+  // Get user profile with session token
+  const profile = await getCurrentUser(response.token)
+
+  // Dispatch unified init action with embedded flag and path prefix
+  return authStore.dispatch({
+    type: 'INIT',
+    payload: {
+      accessToken: response.token,
+      profile,
+      isEmbedded: true,
+      pathPrefix: response.pathPrefix || '',
+    },
+  })
 }
 
 export const useAuthEffect = authStore.useStoreEffect
