@@ -106,8 +106,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		imagorSecret         = fs.String("imagor-secret", "", "secret key for imagor")
 		imagorBaseURL        = fs.String("imagor-base-url", "", "external imagor service URL")
 		imagorUnsafe         = fs.Bool("imagor-unsafe", false, "enable unsafe imagor URLs for development")
-		imagorSignerType     = fs.String("imagor-signer-type", "", "imagor signer algorithm: sha1, sha256, sha512")
-		imagorSignerTruncate = fs.String("imagor-signer-truncate", "0", "imagor signer truncation length")
+		imagorSignerType     = fs.String("imagor-signer-type", "sha1", "imagor signer algorithm: sha1, sha256, sha512")
+		imagorSignerTruncate = fs.Int("imagor-signer-truncate", 0, "imagor signer truncation length")
 
 		appHomeTitle        = fs.String("app-home-title", "", "custom home page title")
 		appImageExtensions  = fs.String("app-image-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif", "comma-separated list of image file extensions to show in application")
@@ -181,12 +181,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		return nil, fmt.Errorf("invalid file-storage-write-permissions: %w", err)
 	}
 
-	// Parse imagor signer truncate
-	imagorSignerTruncateInt, err := strconv.Atoi(*imagorSignerTruncate)
-	if err != nil {
-		return nil, fmt.Errorf("invalid imagor-signer-truncate: %w", err)
-	}
-
 	cfg := &Config{
 		Port:                        portInt,
 		DatabaseURL:                 *databaseURL,
@@ -214,7 +208,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		ImagorSecret:                *imagorSecret,
 		ImagorUnsafe:                *imagorUnsafe,
 		ImagorSignerType:            *imagorSignerType,
-		ImagorSignerTruncate:        imagorSignerTruncateInt,
+		ImagorSignerTruncate:        *imagorSignerTruncate,
 		AppHomeTitle:                *appHomeTitle,
 		AppImageExtensions:          *appImageExtensions,
 		AppVideoExtensions:          *appVideoExtensions,

@@ -80,29 +80,17 @@ func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Conf
 
 // createDefaultEmbeddedConfig creates a default embedded mode configuration
 func createDefaultEmbeddedConfig(cfg *config.Config) *ImagorConfig {
-	// Use enriched config values (CLI/ENV/registry) with safe defaults as fallback
 	secret := cfg.ImagorSecret
 	if secret == "" {
 		secret = cfg.JWTSecret // Fallback to JWT secret if no imagor secret provided
 	}
-
-	signerType := cfg.ImagorSignerType
-	if signerType == "" {
-		signerType = "sha256" // Safe default
-	}
-
-	signerTruncate := cfg.ImagorSignerTruncate
-	if signerTruncate == 0 {
-		signerTruncate = 32 // Safe default
-	}
-
 	return &ImagorConfig{
 		Mode:           ImagorModeEmbedded,
 		BaseURL:        "/imagor",
 		Secret:         secret,
-		Unsafe:         cfg.ImagorUnsafe, // Use enriched value (respects CLI/ENV)
-		SignerType:     signerType,
-		SignerTruncate: signerTruncate,
+		Unsafe:         cfg.ImagorUnsafe,
+		SignerType:     cfg.ImagorSignerType,
+		SignerTruncate: cfg.ImagorSignerTruncate,
 	}
 }
 
@@ -299,49 +287,42 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 	}
 
 	if imagorConfig.Mode == ImagorModeEmbedded {
-		// Embedded mode: Simple configuration with fixed secure defaults
 		imagorConfig.BaseURL = "/imagor"
-		imagorConfig.Unsafe = false              // Fixed: always false
-		imagorConfig.SignerType = "sha256"       // Fixed: always SHA256
-		imagorConfig.SignerTruncate = 32         // Fixed: always 32-char truncation
-		imagorConfig.Secret = p.config.JWTSecret // Always use JWT secret (no override)
 	} else {
-		// External mode: Fully configurable
-
-		// Base URL
 		if baseURLResult := resultMap["config.imagor_base_url"]; baseURLResult.Exists {
 			imagorConfig.BaseURL = baseURLResult.Value
 		} else {
 			imagorConfig.BaseURL = "http://localhost:8000" // Default for external
 		}
+	}
 
-		// Secret
-		if secretResult := resultMap["config.imagor_secret"]; secretResult.Exists {
-			imagorConfig.Secret = secretResult.Value
-		}
+	if signerTypeResult := resultMap["config.imagor_signer_type"]; signerTypeResult.Exists {
+		imagorConfig.SignerType = signerTypeResult.Value
+	} else {
+		imagorConfig.SignerType = "sha1"
+	}
 
-		// Unsafe flag
-		if unsafeResult := resultMap["config.imagor_unsafe"]; unsafeResult.Exists {
-			if unsafe, err := strconv.ParseBool(unsafeResult.Value); err == nil {
-				imagorConfig.Unsafe = unsafe
-			}
+	if signerTruncateResult := resultMap["config.imagor_signer_truncate"]; signerTruncateResult.Exists {
+		if truncate, err := strconv.Atoi(signerTruncateResult.Value); err == nil {
+			imagorConfig.SignerTruncate = truncate
 		}
+	} else {
+		imagorConfig.SignerTruncate = 0
+	}
 
-		// Signer type (defaults to SHA1 for external)
-		if signerTypeResult := resultMap["config.imagor_signer_type"]; signerTypeResult.Exists {
-			imagorConfig.SignerType = signerTypeResult.Value
-		} else {
-			imagorConfig.SignerType = "sha1" // Default for external
+	if unsafeResult := resultMap["config.imagor_unsafe"]; unsafeResult.Exists {
+		if unsafe, err := strconv.ParseBool(unsafeResult.Value); err == nil {
+			imagorConfig.Unsafe = unsafe
 		}
+	}
 
-		// Signer truncate (defaults to 0 for external)
-		if signerTruncateResult := resultMap["config.imagor_signer_truncate"]; signerTruncateResult.Exists {
-			if truncate, err := strconv.Atoi(signerTruncateResult.Value); err == nil {
-				imagorConfig.SignerTruncate = truncate
-			}
-		} else {
-			imagorConfig.SignerTruncate = 0 // Default for external (no truncation)
-		}
+	if secretResult := resultMap["config.imagor_secret"]; secretResult.Exists {
+		imagorConfig.Secret = secretResult.Value
+	} else if !imagorConfig.Unsafe {
+		// defaults to jwt secret, sha256, truncate 32 if imagor secret not set
+		imagorConfig.Secret = p.config.JWTSecret
+		imagorConfig.SignerType = "sha256"
+		imagorConfig.SignerTruncate = 32
 	}
 
 	return imagorConfig, nil

@@ -337,14 +337,28 @@ func (r *mutationResolver) ConfigureEmbeddedImagor(ctx context.Context) (*gql.Im
 	timestamp := time.Now().UnixMilli()
 	timestampStr := fmt.Sprintf("%d", timestamp)
 
-	// Prepare registry entries
-	entries := []gql.RegistryEntryInput{
-		{Key: "config.imagor_mode", Value: "embedded", IsEncrypted: false},
-		{Key: "config.imagor_config_updated_at", Value: timestampStr, IsEncrypted: false},
+	// delete from registry
+	if _, err := r.DeleteSystemRegistry(ctx, nil, []string{
+		"config.imagor_unsafe",
+		"config.imagor_base_url",
+		"config.imagor_secret",
+		"config.imagor_signer_type",
+		"config.imagor_signer_truncate",
+	}); err != nil {
+		r.logger.Error("Failed to save embedded imagor configuration", zap.Error(err))
+		return &gql.ImagorConfigResult{
+			Success:         false,
+			RestartRequired: false,
+			Timestamp:       timestampStr,
+			Message:         &[]string{"Failed to save configuration"}[0],
+		}, nil
 	}
 
 	// Save to registry
-	_, err := r.setSystemRegistryEntries(ctx, entries)
+	_, err := r.setSystemRegistryEntries(ctx, []gql.RegistryEntryInput{
+		{Key: "config.imagor_mode", Value: "embedded", IsEncrypted: false},
+		{Key: "config.imagor_config_updated_at", Value: timestampStr, IsEncrypted: false},
+	})
 	if err != nil {
 		r.logger.Error("Failed to save embedded imagor configuration", zap.Error(err))
 		return &gql.ImagorConfigResult{
