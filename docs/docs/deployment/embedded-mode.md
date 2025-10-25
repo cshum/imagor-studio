@@ -87,53 +87,73 @@ Both AMD64 and ARM64 architectures supported.
 
 ## JWT Token Generation
 
-Your application needs to generate JWT tokens for authentication. Here are simple examples:
+Your application needs to generate JWT tokens for authentication. The token format is minimal - only expiration is required.
+
+### Token Format
+
+**Minimal Required:**
+```javascript
+{
+  "exp": Math.floor(Date.now() / 1000) + (60 * 60)  // 1 hour expiration
+}
+```
+
+**With Path Restriction (Optional):**
+```javascript
+{
+  "exp": Math.floor(Date.now() / 1000) + (60 * 60),
+  "path_prefix": "users/123/images"  // Restrict to specific folder
+}
+```
+
+**Algorithm:** HS256 (HMAC SHA-256)
 
 ### Node.js Example
 
 ```javascript
 const jwt = require('jsonwebtoken');
 
-function generateEditorToken(imagePath, userId) {
+function generateEditorToken(userId) {
   return jwt.sign({
-    user_id: userId,
-    role: 'guest',
-    scopes: ['read', 'edit'],
-    is_embedded: true,
-    path_prefix: `users/${userId}`, // Optional: restrict access
     exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour
-  }, process.env.JWT_SECRET);
+    path_prefix: `users/${userId}`, // Optional: restrict access
+  }, process.env.JWT_SECRET, { algorithm: 'HS256' });
 }
 
 // Usage
-const token = generateEditorToken('photo.jpg', 'user123');
+const token = generateEditorToken('user123');
 const editorUrl = `http://localhost:8000/?token=${token}&path=photo.jpg`;
 ```
 
 ### PHP Example
 
+**Installation:**
+```bash
+composer require firebase/php-jwt
+```
+
+**Code:**
 ```php
 <?php
 require_once 'vendor/autoload.php';
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-function generateEditorToken($imagePath, $userId) {
+function generateEditorToken($userId) {
     $payload = [
-        'user_id' => $userId,
-        'role' => 'guest',
-        'scopes' => ['read', 'edit'],
-        'is_embedded' => true,
+        'exp' => time() + (60 * 60), // 1 hour
         'path_prefix' => "users/{$userId}", // Optional: restrict access
-        'exp' => time() + (60 * 60) // 1 hour
     ];
     
     return JWT::encode($payload, $_ENV['JWT_SECRET'], 'HS256');
 }
 
 // Usage
-$token = generateEditorToken('photo.jpg', 'user123');
+$token = generateEditorToken('user123');
 $editorUrl = "http://localhost:8000/?token={$token}&path=photo.jpg";
+
+// Example: Generate token for iframe
+echo '<iframe src="' . htmlspecialchars($editorUrl) . '" width="100%" height="600"></iframe>';
 ?>
 ```
 
@@ -197,38 +217,41 @@ Embedded mode uses a simple URL structure:
 - **Path Restrictions**: Use `path_prefix` to limit file access
 - **Regenerate Tokens**: Create new tokens for each editing session
 
-### Path Restrictions
+### Path Prefix Scoping
 
-Limit user access to specific directories:
+The `path_prefix` field in your JWT token restricts which files and folders users can access. This provides security isolation between different users or tenants.
+
+**How it works:**
+- If no `path_prefix` is set, users can access all files
+- If `path_prefix` is set, users can only access files within that directory
+- Path matching is prefix-based (e.g., `users/123` allows `users/123/photos/image.jpg`)
+
+**Examples:**
 
 ```javascript
-// Restrict user to their own folder
-const token = jwt.sign({
-  // ... other claims
-  path_prefix: `users/${userId}/images`,
-}, JWT_SECRET);
+// Allow access to entire user folder
+{
+  "exp": Math.floor(Date.now() / 1000) + (60 * 60),
+  "path_prefix": "users/123"
+}
+
+// Restrict to specific subfolder
+{
+  "exp": Math.floor(Date.now() / 1000) + (60 * 60),
+  "path_prefix": "users/123/gallery"
+}
+
+// Tenant-based isolation
+{
+  "exp": Math.floor(Date.now() / 1000) + (60 * 60),
+  "path_prefix": "tenants/company-a/assets"
+}
 ```
 
-## For Imagor Users
-
-### Migration from Imagor
-
-If you're already using Imagor, you can:
-
-1. **Reuse Configuration**: Same `IMAGOR_SECRET` and signer settings
-2. **Keep URL Signing**: Existing Imagor URLs continue to work
-3. **Add Editing**: Just add `JWT_SECRET` for embedded authentication
-4. **Same Storage**: Use your existing file or S3 storage setup
-
-### Differences from Standard Imagor
-
-| Feature | Standard Imagor | Imagor Studio Embedded |
-|---------|-----------------|------------------------|
-| Image Processing | ✅ Full Imagor | ✅ Full Imagor |
-| URL Signing | ✅ Standard | ✅ Standard |
-| Web Interface | ❌ None | ✅ Image Editor |
-| Authentication | 🔧 URL-based | 🔧 URL + JWT |
-| Database | ❌ None | ❌ None |
+**Security Features:**
+- Path traversal protection (blocks `..` sequences)
+- Automatic path normalization
+- Prefix-based matching ensures users stay within allowed directories
 
 ## Production Deployment
 
@@ -310,7 +333,7 @@ spec:
 **Token Authentication Fails**
 - Verify `JWT_SECRET` matches between your app and Imagor Studio
 - Check token expiration time
-- Ensure token includes `is_embedded: true`
+- Ensure token uses HS256 algorithm
 
 **Image Not Found**
 - Check `FILE_STORAGE_BASE_DIR` path
