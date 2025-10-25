@@ -289,23 +289,11 @@ func (c *Config) GetByRegistryKey(registryKey string) (effectiveValue string, ex
 	if value, overridden := c.overriddenFlags[flagName]; overridden {
 		return value, true
 	}
-
-	// Return actual config values even if not "overridden"
-	switch registryKey {
-	case "config.imagor_mode":
-		return c.ImagorMode, c.ImagorMode != ""
-	case "config.imagor_base_url":
-		return c.ImagorBaseURL, c.ImagorBaseURL != ""
-	case "config.imagor_secret":
-		return c.ImagorSecret, c.ImagorSecret != ""
-	case "config.imagor_unsafe":
-		return strconv.FormatBool(c.ImagorUnsafe), true
-	case "config.imagor_signer_type":
-		return c.ImagorSignerType, c.ImagorSignerType != ""
-	case "config.imagor_signer_truncate":
-		return strconv.Itoa(c.ImagorSignerTruncate), true
+	if c.flagSet != nil {
+		if f := c.flagSet.Lookup(flagName); f != nil {
+			return f.Value.String(), false
+		}
 	}
-
 	return "", false
 }
 
@@ -334,8 +322,8 @@ func applyRegistryValues(flagSet *flag.FlagSet, overriddenFlags map[string]strin
 		// Only apply if not overridden by CLI/env
 		if _, overridden := overriddenFlags[flagName]; !overridden {
 			// Use the flag system to set the value - this handles type conversion automatically
-			if flag := flagSet.Lookup(flagName); flag != nil {
-				if err := flag.Value.Set(entry.Value); err != nil {
+			if f := flagSet.Lookup(flagName); f != nil {
+				if err := f.Value.Set(entry.Value); err != nil {
 					return fmt.Errorf("failed to set flag %s to value %s: %w", flagName, entry.Value, err)
 				}
 			}

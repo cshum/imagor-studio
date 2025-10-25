@@ -48,10 +48,14 @@ func GetEffectiveValues(ctx context.Context, registryStore registrystore.Store, 
 
 	// First, check config overrides for all keys
 	configOverrides := make(map[string]string)
+	configDefaults := make(map[string]string)
 	if cfg != nil {
 		for _, key := range keys {
-			if configValue, configExists := cfg.GetByRegistryKey(key); configExists {
+			configValue, configExists := cfg.GetByRegistryKey(key)
+			if configExists {
 				configOverrides[key] = configValue
+			} else {
+				configDefaults[key] = configValue
 			}
 		}
 	}
@@ -110,7 +114,7 @@ func GetEffectiveValues(ctx context.Context, registryStore registrystore.Store, 
 		} else {
 			results[i] = EffectiveValueResult{
 				Key:                  key,
-				Value:                "",
+				Value:                configDefaults[key],
 				Exists:               false,
 				IsOverriddenByConfig: false,
 				IsEncrypted:          false,
