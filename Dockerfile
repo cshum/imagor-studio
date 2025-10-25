@@ -6,7 +6,6 @@ ARG EMBEDDED_MODE=false
 FROM node:${NODE_VERSION}-alpine AS web-builder
 
 ARG EMBEDDED_MODE
-ENV VITE_EMBEDDED_MODE=${EMBEDDED_MODE}
 
 WORKDIR /app/web
 
@@ -16,8 +15,8 @@ RUN npm ci
 
 COPY web/ ./
 
-# Build the frontend (outputs to ../server/static)
-RUN npm run build
+# Build the frontend with embedded mode environment variable
+RUN export VITE_EMBEDDED_MODE=${EMBEDDED_MODE:-false} && npm run build
 
 # Stage 2: Build server using builder image with go + libvips + FFmpeg
 FROM ghcr.io/cshum/imagor-studio-builder:${BUILDER_IMAGE_TAG} AS server-builder
