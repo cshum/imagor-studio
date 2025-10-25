@@ -25,6 +25,11 @@ import {
   requireAuth,
   requireImageEditorAuth,
 } from '@/loaders/auth-loader.ts'
+import {
+  embeddedLoader,
+  embeddedLoaderDeps,
+  embeddedValidateSearch,
+} from '@/loaders/embedded-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
@@ -236,22 +241,49 @@ const accountUsersRoute = createRoute({
   },
 })
 
-const routeTree = rootRoute.addChildren([
-  loginRoute,
-  adminSetupRoute,
-  rootImageEditorRoute,
-  galleryImageEditorRoute,
-  baseLayoutRoute.addChildren([
-    rootPath.addChildren([rootImagePage]),
-    galleryRoute.addChildren([imagePage]),
-    accountLayoutRoute.addChildren([
-      accountRedirectRoute,
-      accountProfileRoute,
-      accountAdminRoute,
-      accountUsersRoute,
-    ]),
-  ]),
-])
+// Check if embedded mode is enabled via environment variable
+const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
+
+// Embedded mode route - single root route with URL parameters
+const embeddedEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  validateSearch: embeddedValidateSearch,
+  loaderDeps: embeddedLoaderDeps,
+  loader: embeddedLoader,
+  component: () => {
+    const loaderData = embeddedEditorRoute.useLoaderData()
+    return (
+      <ImageEditorPage
+        galleryKey={loaderData.galleryKey}
+        imageKey={loaderData.imageKey}
+        loaderData={loaderData.imageEditorData}
+      />
+    )
+  },
+})
+
+// Create different route trees based on embedded mode
+const routeTree = isEmbeddedMode
+  ? // Embedded mode: single root route with URL parameters
+    rootRoute.addChildren([embeddedEditorRoute])
+  : // Normal mode: full route tree
+    rootRoute.addChildren([
+      loginRoute,
+      adminSetupRoute,
+      rootImageEditorRoute,
+      galleryImageEditorRoute,
+      baseLayoutRoute.addChildren([
+        rootPath.addChildren([rootImagePage]),
+        galleryRoute.addChildren([imagePage]),
+        accountLayoutRoute.addChildren([
+          accountRedirectRoute,
+          accountProfileRoute,
+          accountAdminRoute,
+          accountUsersRoute,
+        ]),
+      ]),
+    ])
 
 const createAppRouter = () => createRouter({ routeTree })
 

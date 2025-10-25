@@ -223,11 +223,48 @@ docker-compose-down: ## Stop docker-compose services
 	@echo "$(GREEN)Stopping docker-compose services...$(NC)"
 	docker-compose down
 
+.PHONY: docker-build-embedded
+docker-build-embedded: ## Build Docker image for embedded mode
+	@echo "$(GREEN)Building Docker image for embedded mode...$(NC)"
+	@echo "$(YELLOW)Image: $(DOCKER_IMAGE)-embedded:$(DOCKER_TAG)$(NC)"
+	docker build --build-arg EMBEDDED_MODE=true -t $(DOCKER_IMAGE)-embedded:$(DOCKER_TAG) .
+	@echo "$(GREEN)✓ Embedded Docker image built successfully!$(NC)"
+	@echo "$(YELLOW)To run: make docker-run-embedded$(NC)"
+
+.PHONY: docker-run-embedded
+docker-run-embedded: ## Run embedded Docker container
+	@echo "$(GREEN)Running embedded Docker container...$(NC)"
+	@echo "$(YELLOW)Gallery directory: ./imagor-studio-gallery$(NC)"
+	@mkdir -p ./imagor-studio-gallery
+	docker run --rm -p 8000:8000 \
+		-v "$(PWD)/imagor-studio-gallery":/app/gallery \
+		-e EMBEDDED_MODE=true \
+		-e JWT_SECRET=your-secret-key-change-in-production \
+		-e STORAGE_TYPE=file \
+		-e FILE_STORAGE_BASE_DIR=/app/gallery \
+		-e IMAGOR_MODE=embedded \
+		$(DOCKER_IMAGE)-embedded:$(DOCKER_TAG)
+
+.PHONY: docker-run-embedded-detached
+docker-run-embedded-detached: ## Run embedded Docker container in background
+	@echo "$(GREEN)Running embedded Docker container in background...$(NC)"
+	@echo "$(YELLOW)Gallery directory: ./imagor-studio-gallery$(NC)"
+	@mkdir -p ./imagor-studio-gallery
+	docker run -d --name $(PROJECT_NAME)-embedded -p 8000:8000 \
+		-v "$(PWD)/imagor-studio-gallery":/app/gallery \
+		-e EMBEDDED_MODE=true \
+		-e JWT_SECRET=your-secret-key-change-in-production \
+		-e STORAGE_TYPE=file \
+		-e FILE_STORAGE_BASE_DIR=/app/gallery \
+		-e IMAGOR_MODE=embedded \
+		$(DOCKER_IMAGE)-embedded:$(DOCKER_TAG)
+
 .PHONY: docker-clean
 docker-clean: ## Clean Docker images and containers
 	@echo "$(GREEN)Cleaning Docker images and containers...$(NC)"
 	docker system prune -f
 	docker image rm $(DOCKER_IMAGE):$(DOCKER_TAG) 2>/dev/null || true
+	docker image rm $(DOCKER_IMAGE)-embedded:$(DOCKER_TAG) 2>/dev/null || true
 
 # =============================================================================
 # Production Commands

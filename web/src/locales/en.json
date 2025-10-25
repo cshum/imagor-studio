@@ -53,6 +53,13 @@
       "usernameMaxLength": "Username must be at most 30 characters",
       "passwordRequired": "Password is required",
       "invalidUsername": "Please enter a valid username"
+    },
+    "embedded": {
+      "tokenMissing": "Missing authentication token. Embedded mode requires a JWT token in the URL. Expected format: /?token=YOUR_JWT_TOKEN&path=image.jpg",
+      "tokenInvalid": "Invalid or expired authentication token. Please check your JWT token and try again.",
+      "authenticationFailed": "Embedded authentication failed. Please verify your token is valid and has not expired.",
+      "pathMissing": "Path parameter is required. Expected format: /?token=YOUR_JWT_TOKEN&path=image.jpg",
+      "pathInvalid": "Invalid path format. Expected: gallery/folder/image.jpg or image.jpg"
     }
   },
   "forms": {

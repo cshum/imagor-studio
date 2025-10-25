@@ -9,6 +9,8 @@ interface ErrorPageProps {
   description?: string
 }
 
+const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
+
 export function ErrorPage({
   error,
   title = 'Something went wrong',
@@ -37,10 +39,12 @@ export function ErrorPage({
               <p className='mt-1 font-mono text-xs text-red-700'>{errorMessage}</p>
             </div>
           )}
-          <Button onClick={handleGoHome} className='w-full'>
-            <Home className='mr-2 h-4 w-4' />
-            Home
-          </Button>
+          {!isEmbeddedMode && (
+            <Button onClick={handleGoHome} className='w-full'>
+              <Home className='mr-2 h-4 w-4' />
+              Home
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -109,10 +109,10 @@ func TestProvider_NewS3Storage(t *testing.T) {
 	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
-		S3StorageBucket:          "test-bucket",
-		S3StorageRegion:          "us-east-1",
-		S3StorageAccessKeyID:     "test-key",
-		S3StorageSecretAccessKey: "test-secret",
+		S3StorageBucket:    "test-bucket",
+		AWSRegion:          "us-east-1",
+		AWSAccessKeyID:     "test-key",
+		AWSSecretAccessKey: "test-secret",
 	}
 
 	storage, err := provider.NewS3Storage(cfg)
@@ -126,11 +126,11 @@ func TestProvider_NewS3Storage_WithForcePathStyle(t *testing.T) {
 	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
-		S3StorageBucket:          "test-bucket",
-		S3StorageRegion:          "us-east-1",
-		S3StorageAccessKeyID:     "test-key",
-		S3StorageSecretAccessKey: "test-secret",
-		S3StorageForcePathStyle:  true,
+		S3StorageBucket:    "test-bucket",
+		AWSRegion:          "us-east-1",
+		AWSAccessKeyID:     "test-key",
+		AWSSecretAccessKey: "test-secret",
+		S3ForcePathStyle:   true,
 	}
 
 	storage, err := provider.NewS3Storage(cfg)
@@ -150,11 +150,11 @@ func TestProvider_NewS3Storage_WithForcePathStyleFalse(t *testing.T) {
 	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
-		S3StorageBucket:          "test-bucket",
-		S3StorageRegion:          "us-east-1",
-		S3StorageAccessKeyID:     "test-key",
-		S3StorageSecretAccessKey: "test-secret",
-		S3StorageForcePathStyle:  false,
+		S3StorageBucket:    "test-bucket",
+		AWSRegion:          "us-east-1",
+		AWSAccessKeyID:     "test-key",
+		AWSSecretAccessKey: "test-secret",
+		S3ForcePathStyle:   false,
 	}
 
 	storage, err := provider.NewS3Storage(cfg)
@@ -204,11 +204,11 @@ func TestProvider_NewStorageFromConfig_S3(t *testing.T) {
 	provider := New(logger, nil, nil)
 
 	cfg := &config.Config{
-		StorageType:              "s3",
-		S3StorageBucket:          "test-bucket",
-		S3StorageRegion:          "us-east-1",
-		S3StorageAccessKeyID:     "test-key",
-		S3StorageSecretAccessKey: "test-secret",
+		StorageType:        "s3",
+		S3StorageBucket:    "test-bucket",
+		AWSRegion:          "us-east-1",
+		AWSAccessKeyID:     "test-key",
+		AWSSecretAccessKey: "test-secret",
 	}
 
 	storage, err := provider.NewStorageFromConfig(cfg)
@@ -266,11 +266,11 @@ func TestProvider_InitializeWithConfig_ValidS3EnvConfig(t *testing.T) {
 	mockRegistry := &MockRegistryStore{}
 
 	cfg := &config.Config{
-		StorageType:              "s3",
-		S3StorageBucket:          "test-bucket",
-		S3StorageRegion:          "us-east-1",
-		S3StorageAccessKeyID:     "test-key",
-		S3StorageSecretAccessKey: "test-secret",
+		StorageType:        "s3",
+		S3StorageBucket:    "test-bucket",
+		AWSRegion:          "us-east-1",
+		AWSAccessKeyID:     "test-key",
+		AWSSecretAccessKey: "test-secret",
 	}
 
 	provider := New(logger, mockRegistry, cfg)

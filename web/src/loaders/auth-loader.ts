@@ -2,8 +2,11 @@ import { redirect } from '@tanstack/react-router'
 
 import { authStore } from '@/stores/auth-store'
 
+const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
+
 /**
  * Helper function to create login redirect with current location
+ * In embedded mode, throws an error instead of redirecting
  */
 const createLoginRedirect = (currentLocation: string) => {
   if (currentLocation && currentLocation !== '/') {
@@ -26,6 +29,11 @@ export const requireAuth = async (context?: {
   const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
 
   if (currentAuth.state === 'unauthenticated') {
+    // If embedded mode and there's an error, throw it
+    if (isEmbeddedMode && currentAuth.error) {
+      throw new Error(currentAuth.error)
+    }
+
     if (!currentAuth.isFirstRun) {
       // Capture current location for redirect after login
       const currentLocation = context?.location
@@ -74,8 +82,13 @@ export const requireImageEditorAuth = async (context?: {
 }) => {
   const currentAuth = await authStore.waitFor((state) => state.state !== 'loading')
 
-  // Allow embedded guests to access image editor directly
+  // Handle embedded mode
   if (currentAuth.isEmbedded) {
+    // If embedded auth failed, throw the error instead of redirecting
+    if (currentAuth.state === 'unauthenticated' && currentAuth.error) {
+      throw new Error(currentAuth.error)
+    }
+    // Allow successful embedded guests to access image editor directly
     return currentAuth
   }
 

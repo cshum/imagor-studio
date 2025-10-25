@@ -572,22 +572,22 @@ func (r *mutationResolver) validateStorageConfig(ctx context.Context, input gql.
 		cfg.StorageType = "s3"
 		cfg.S3StorageBucket = input.S3Config.Bucket
 		if input.S3Config.Region != nil {
-			cfg.S3StorageRegion = *input.S3Config.Region
+			cfg.AWSRegion = *input.S3Config.Region
 		}
 		if input.S3Config.Endpoint != nil {
-			cfg.S3StorageEndpoint = *input.S3Config.Endpoint
+			cfg.S3Endpoint = *input.S3Config.Endpoint
 		}
 		if input.S3Config.AccessKeyID != nil {
-			cfg.S3StorageAccessKeyID = *input.S3Config.AccessKeyID
+			cfg.AWSAccessKeyID = *input.S3Config.AccessKeyID
 		}
 		if input.S3Config.SecretAccessKey != nil {
-			cfg.S3StorageSecretAccessKey = *input.S3Config.SecretAccessKey
+			cfg.AWSSecretAccessKey = *input.S3Config.SecretAccessKey
 		}
 		if input.S3Config.SessionToken != nil {
-			cfg.S3StorageSessionToken = *input.S3Config.SessionToken
+			cfg.AWSSessionToken = *input.S3Config.SessionToken
 		}
 		if input.S3Config.ForcePathStyle != nil {
-			cfg.S3StorageForcePathStyle = *input.S3Config.ForcePathStyle
+			cfg.S3ForcePathStyle = *input.S3Config.ForcePathStyle
 		}
 		if input.S3Config.BaseDir != nil {
 			cfg.S3StorageBaseDir = *input.S3Config.BaseDir

@@ -25,8 +25,8 @@ services:
       - DATABASE_URL=sqlite:///app/data/imagor-studio.db
       - PORT=8000
       # User/Group configuration (optional)
-      - PUID=1000  # Set to your user ID
-      - PGID=1000  # Set to your group ID
+      - PUID=1000 # Set to your user ID
+      - PGID=1000 # Set to your group ID
     restart: unless-stopped
 ```
 
@@ -45,8 +45,8 @@ Then use these values in your Docker Compose file:
 
 ```yaml
 environment:
-  - PUID=1000  # Your user ID
-  - PGID=1000  # Your group ID
+  - PUID=1000 # Your user ID
+  - PGID=1000 # Your group ID
 ```
 
 **Default behavior**: If not specified, PUID and PGID default to 65534 (nobody:nogroup).

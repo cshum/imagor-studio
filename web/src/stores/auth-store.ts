@@ -1,8 +1,11 @@
 import { checkFirstRun, embeddedGuestLogin, guestLogin } from '@/api/auth-api'
 import { getCurrentUser } from '@/api/user-api.ts'
 import type { MeQuery } from '@/generated/graphql'
+import i18n from '@/i18n'
 import { createStore } from '@/lib/create-store.ts'
 import { getToken, removeToken, setToken } from '@/lib/token'
+
+const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
 
 export type UserProfile = MeQuery['me']
 
@@ -20,7 +23,7 @@ export interface Auth {
 
 const initialState: Auth = {
   state: 'loading',
-  accessToken: getToken(),
+  accessToken: null,
   profile: null,
   isFirstRun: null,
   error: null,
@@ -39,6 +42,7 @@ export type AuthAction =
       }
     }
   | { type: 'LOGOUT' }
+  | { type: 'LOGOUT_WITH_ERROR'; payload: { error: string } }
   | { type: 'SET_ERROR'; payload: { error: string } }
   | { type: 'SET_FIRST_RUN'; payload: { isFirstRun: boolean } }
   | { type: 'CLEAR_ERROR' }
@@ -49,7 +53,10 @@ function reducer(state: Auth, action: AuthAction): Auth {
       const { profile, accessToken, isEmbedded = false, pathPrefix = '' } = action.payload
       const authState = profile?.role === 'guest' ? 'guest' : 'authenticated'
 
-      setToken(accessToken)
+      // Only persist to localStorage if not embedded (stateless)
+      if (!isEmbedded) {
+        setToken(accessToken)
+      }
 
       return {
         ...state,
@@ -63,14 +70,28 @@ function reducer(state: Auth, action: AuthAction): Auth {
     }
 
     case 'LOGOUT':
-      removeToken()
+      if (!isEmbeddedMode) {
+        removeToken()
+      }
       return {
         ...state,
         state: 'unauthenticated',
         accessToken: null,
         profile: null,
         error: null,
-        isEmbedded: false,
+        pathPrefix: '',
+      }
+
+    case 'LOGOUT_WITH_ERROR':
+      if (!isEmbeddedMode) {
+        removeToken()
+      }
+      return {
+        ...state,
+        state: 'unauthenticated',
+        accessToken: null,
+        profile: null,
+        error: action.payload.error,
         pathPrefix: '',
       }
 
@@ -100,51 +121,25 @@ function reducer(state: Auth, action: AuthAction): Auth {
 export const authStore = createStore(initialState, reducer)
 
 /**
- * Handle embedded authentication flow
- */
-const handleEmbeddedAuth = async (jwtToken: string): Promise<Auth> => {
-  try {
-    // Call /api/auth/embedded-guest with JWT
-    const response = await embeddedGuestLogin(jwtToken)
-
-    // Get user profile with session token
-    const profile = await getCurrentUser(response.token)
-
-    // Dispatch unified init action with embedded flag and path prefix
-    return authStore.dispatch({
-      type: 'INIT',
-      payload: {
-        accessToken: response.token,
-        profile,
-        isEmbedded: true,
-        pathPrefix: response.pathPrefix || '',
-      },
-    })
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Embedded authentication failed'
-    authStore.dispatch({
-      type: 'SET_ERROR',
-      payload: { error: errorMessage },
-    })
-    return authStore.dispatch({ type: 'LOGOUT' })
-  }
-}
-
-/**
- * Initialize auth state - unified entry point for both normal and embedded modes
+ * Initialize auth state - handles both normal and embedded modes
  */
 export const initAuth = async (accessToken?: string): Promise<Auth> => {
-  // Early return for embedded mode - check for JWT token in URL
-  const urlParams = new URLSearchParams(window.location.search)
-  const jwtToken = urlParams.get('token')
-
-  if (jwtToken) {
-    return handleEmbeddedAuth(jwtToken)
+  // In embedded mode, handle embedded token from URL
+  if (isEmbeddedMode) {
+    try {
+      return await initEmbeddedAuth()
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Embedded authentication failed'
+      return authStore.dispatch({
+        type: 'LOGOUT_WITH_ERROR',
+        payload: { error: errorMessage },
+      })
+    }
   }
 
   // Continue with normal auth flow
   try {
-    const currentAccessToken = accessToken || getAuth().accessToken
+    const currentAccessToken = accessToken || getToken()
 
     if (currentAccessToken) {
       const profile = await getCurrentUser(currentAccessToken)
@@ -189,7 +184,9 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
       const firstRunResponse = await checkFirstRun()
       if (firstRunResponse.isFirstRun) {
         // Clear invalid token and set first run state
-        removeToken()
+        if (!isEmbeddedMode) {
+          removeToken()
+        }
         authStore.dispatch({
           type: 'SET_FIRST_RUN',
           payload: { isFirstRun: true },
@@ -224,6 +221,52 @@ export const getAuth = (): Auth => {
  */
 export const clearAuthError = (): Auth => {
   return authStore.dispatch({ type: 'CLEAR_ERROR' })
+}
+
+/**
+ * Initialize embedded auth by parsing JWT token from URL
+ */
+export const initEmbeddedAuth = async (): Promise<Auth> => {
+  // Parse token from current URL
+  const urlParams = new URLSearchParams(window.location.search)
+  const token = urlParams.get('token')
+
+  if (!token) {
+    throw new Error(i18n.t('auth.embedded.tokenMissing'))
+  }
+
+  try {
+    // Call /api/auth/embedded-guest with JWT
+    const response = await embeddedGuestLogin(token)
+
+    // Get user profile with session token
+    const profile = await getCurrentUser(response.token)
+
+    // Dispatch unified init action with embedded flag and path prefix
+    return authStore.dispatch({
+      type: 'INIT',
+      payload: {
+        accessToken: response.token,
+        profile,
+        isEmbedded: true,
+        pathPrefix: response.pathPrefix || '',
+      },
+    })
+  } catch (error) {
+    // Provide more specific error messages based on the error type
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase()
+      if (
+        errorMessage.includes('invalid') ||
+        errorMessage.includes('expired') ||
+        errorMessage.includes('unauthorized')
+      ) {
+        throw new Error(i18n.t('auth.embedded.tokenInvalid'))
+      }
+    }
+    // Generic authentication failure
+    throw new Error(i18n.t('auth.embedded.authenticationFailed'))
+  }
 }
 
 export const useAuthEffect = authStore.useStoreEffect

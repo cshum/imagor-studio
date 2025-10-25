@@ -41,14 +41,14 @@ type Config struct {
 	FileStorageWritePermissions os.FileMode
 
 	// S3 Storage
-	S3StorageBucket          string
-	S3StorageRegion          string
-	S3StorageEndpoint        string
-	S3StorageForcePathStyle  bool
-	S3StorageAccessKeyID     string
-	S3StorageSecretAccessKey string
-	S3StorageSessionToken    string
-	S3StorageBaseDir         string
+	S3StorageBucket    string
+	AWSRegion          string
+	S3Endpoint         string
+	S3ForcePathStyle   bool
+	AWSAccessKeyID     string
+	AWSSecretAccessKey string
+	AWSSessionToken    string
+	S3StorageBaseDir   string
 
 	// Imagor Configuration
 	ImagorMode           string // "external", "embedded"
@@ -94,14 +94,14 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		fileStorageMkdirPermissions = fs.String("file-storage-mkdir-permissions", "0755", "directory creation permissions")
 		fileStorageWritePermissions = fs.String("file-storage-write-permissions", "0644", "file write permissions")
 
-		s3StorageBucket          = fs.String("s3-storage-bucket", "", "S3 bucket name")
-		s3StorageRegion          = fs.String("s3-storage-region", "", "S3 region")
-		s3StorageEndpoint        = fs.String("s3-storage-endpoint", "", "S3 endpoint (optional)")
-		s3StorageForcePathStyle  = fs.Bool("s3-storage-force-path-style", false, "S3 force path style (optional)")
-		s3StorageAccessKeyID     = fs.String("s3-storage-access-key-id", "", "S3 access key ID (optional)")
-		s3StorageSecretAccessKey = fs.String("s3-storage-secret-access-key", "", "S3 secret access key (optional)")
-		s3StorageSessionToken    = fs.String("s3-storage-session-token", "", "S3 session token (optional)")
-		s3StorageBaseDir         = fs.String("s3-storage-base-dir", "", "S3 base directory (optional)")
+		awsRegion          = fs.String("aws-region", "", "AWS region")
+		awsAccessKeyID     = fs.String("aws-access-key-id", "", "AWS access key ID (optional)")
+		awsSecretAccessKey = fs.String("aws-secret-access-key", "", "AWS secret access key (optional)")
+		awsSessionToken    = fs.String("aws-session-token", "", "AWS session token (optional)")
+		s3StorageBucket    = fs.String("s3-storage-bucket", "", "S3 bucket name")
+		s3Endpoint         = fs.String("s3-endpoint", "", "S3 endpoint (optional)")
+		s3ForcePathStyle   = fs.Bool("s3-force-path-style", false, "S3 force path style (optional)")
+		s3StorageBaseDir   = fs.String("s3-storage-base-dir", "", "S3 base directory (optional)")
 
 		imagorMode           = fs.String("imagor-mode", "embedded", "imagor mode: embedded, external")
 		imagorSecret         = fs.String("imagor-secret", "", "secret key for imagor")
@@ -197,12 +197,12 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		FileStorageMkdirPermissions: os.FileMode(mkdirPerm),
 		FileStorageWritePermissions: os.FileMode(writePerm),
 		S3StorageBucket:             *s3StorageBucket,
-		S3StorageRegion:             *s3StorageRegion,
-		S3StorageEndpoint:           *s3StorageEndpoint,
-		S3StorageForcePathStyle:     *s3StorageForcePathStyle,
-		S3StorageAccessKeyID:        *s3StorageAccessKeyID,
-		S3StorageSecretAccessKey:    *s3StorageSecretAccessKey,
-		S3StorageSessionToken:       *s3StorageSessionToken,
+		AWSRegion:                   *awsRegion,
+		S3Endpoint:                  *s3Endpoint,
+		S3ForcePathStyle:            *s3ForcePathStyle,
+		AWSAccessKeyID:              *awsAccessKeyID,
+		AWSSecretAccessKey:          *awsSecretAccessKey,
+		AWSSessionToken:             *awsSessionToken,
 		S3StorageBaseDir:            *s3StorageBaseDir,
 		ImagorMode:                  *imagorMode,
 		ImagorBaseURL:               *imagorBaseURL,
