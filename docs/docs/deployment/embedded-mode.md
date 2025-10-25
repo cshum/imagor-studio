@@ -187,17 +187,6 @@ echo '<iframe src="' . htmlspecialchars($editorUrl) . '" width="100%" height="60
     >
     </iframe>
 
-    <script>
-      // Listen for messages from the editor
-      window.addEventListener("message", function (event) {
-        if (event.origin !== "http://localhost:8000") return;
-
-        if (event.data.type === "imagor-studio-save") {
-          console.log("Image saved:", event.data.imageUrl);
-          // Handle the saved image URL
-        }
-      });
-    </script>
   </body>
 </html>
 ```
