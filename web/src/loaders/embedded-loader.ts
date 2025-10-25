@@ -1,12 +1,13 @@
 import i18n from '@/i18n'
 import { imageEditorLoader } from '@/loaders/image-editor-loader'
+import { setTheme } from '@/stores/theme-store'
 
 /**
  * Search params interface for embedded mode
  */
 export interface EmbeddedSearch {
-  token: string
   path: string
+  theme?: string
 }
 
 /**
@@ -14,16 +15,17 @@ export interface EmbeddedSearch {
  */
 export const embeddedValidateSearch = (search: Record<string, unknown>): EmbeddedSearch => {
   return {
-    token: (search.token as string) || '',
     path: (search.path as string) || '',
+    theme: (search.theme as string) || undefined,
   }
 }
 
 /**
- * Extract search params for embedded loader deps (only path needed)
+ * Extract search params for embedded loader deps (only path and theme needed)
  */
-export const embeddedLoaderDeps = ({ search: { path } }: { search: EmbeddedSearch }) => ({
+export const embeddedLoaderDeps = ({ search: { path, theme } }: { search: EmbeddedSearch }) => ({
   path,
+  theme,
 })
 
 /**
@@ -52,7 +54,16 @@ export const parseEmbeddedPath = (path: string) => {
 /**
  * Embedded loader - loads image editor data (auth handled by initAuth)
  */
-export const embeddedLoader = async ({ deps: { path } }: { deps: { path: string } }) => {
+export const embeddedLoader = async ({
+  deps: { path, theme },
+}: {
+  deps: { path: string; theme?: string }
+}) => {
+  // Apply theme if provided and valid
+  if (theme && (theme === 'light' || theme === 'dark')) {
+    await setTheme(theme)
+  }
+
   // Parse path (will throw if invalid)
   const { galleryKey, imageKey } = parseEmbeddedPath(path)
 

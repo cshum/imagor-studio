@@ -201,6 +201,50 @@ Embedded mode uses a simple URL structure:
 
 # Nested paths
 /?token=JWT_TOKEN&path=gallery/2024/events/photo.jpg
+
+# With theme
+/?token=JWT_TOKEN&path=image.jpg&theme=dark
+```
+
+## Theme Configuration
+
+You can control the appearance of the embedded editor using the `theme` URL parameter.
+
+### Supported Values
+
+- `light` - Light theme
+- `dark` - Dark theme
+
+### Examples
+
+```
+# Light theme
+/?token=JWT_TOKEN&path=image.jpg&theme=light
+
+# Dark theme
+/?token=JWT_TOKEN&path=image.jpg&theme=dark
+
+# No theme parameter (uses default)
+/?token=JWT_TOKEN&path=image.jpg
+```
+
+### Notes
+
+- Theme parameter is optional
+- Invalid theme values are ignored
+- If no theme is specified, the system default theme is used
+- Theme setting applies only to the current session and doesn't persist
+
+### Integration Example
+
+```html
+<iframe 
+    src="http://localhost:8000/?token=YOUR_JWT_TOKEN&path=photo.jpg&theme=dark"
+    width="100%" 
+    height="600"
+    frameborder="0"
+    title="Image Editor">
+</iframe>
 ```
 
 ## Security
