@@ -74,11 +74,14 @@ COPY --from=server-builder /go/bin/imagor-studio /usr/local/bin/imagor-studio
 # Copy migration tool (will be empty file for embedded mode)
 COPY --from=server-builder /go/bin/imagor-studio-migrate /usr/local/bin/imagor-studio-migrate
 
-# Remove migration tool if in embedded mode
+# Remove migration tool if in embedded mode and set environment variable
 ARG EMBEDDED_MODE
 RUN if [ "$EMBEDDED_MODE" = "true" ]; then \
       rm -f /usr/local/bin/imagor-studio-migrate; \
     fi
+
+# Set EMBEDDED_MODE environment variable for runtime if built with embedded mode
+ENV EMBEDDED_MODE=${EMBEDDED_MODE}
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
