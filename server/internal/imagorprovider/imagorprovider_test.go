@@ -545,7 +545,7 @@ func TestGetHashAlgorithm(t *testing.T) {
 	}
 }
 
-func TestCreateDefaultEmbeddedConfig(t *testing.T) {
+func TestBuildConfig_CLIFallback(t *testing.T) {
 	tests := []struct {
 		name           string
 		config         *config.Config
@@ -553,20 +553,25 @@ func TestCreateDefaultEmbeddedConfig(t *testing.T) {
 		expectedUnsafe bool
 		expectedType   string
 		expectedTrunc  int
+		expectedMode   ImagorMode
+		expectedURL    string
 	}{
 		{
-			name: "Default values when no CLI config",
+			name: "Default embedded when no mode specified",
 			config: &config.Config{
 				JWTSecret: "jwt-secret",
 			},
 			expectedSecret: "jwt-secret",
 			expectedUnsafe: false,
-			expectedType:   "",
+			expectedType:   "sha1",
 			expectedTrunc:  0,
+			expectedMode:   ImagorModeEmbedded,
+			expectedURL:    "/imagor",
 		},
 		{
-			name: "CLI config overrides defaults",
+			name: "CLI config for embedded mode",
 			config: &config.Config{
+				ImagorMode:           "embedded",
 				JWTSecret:            "jwt-secret",
 				ImagorSecret:         "custom-secret",
 				ImagorUnsafe:         true,
@@ -577,10 +582,14 @@ func TestCreateDefaultEmbeddedConfig(t *testing.T) {
 			expectedUnsafe: true,
 			expectedType:   "sha1",
 			expectedTrunc:  28,
+			expectedMode:   ImagorModeEmbedded,
+			expectedURL:    "/imagor",
 		},
 		{
-			name: "Empty imagor secret falls back to JWT secret",
+			name: "CLI config for external mode",
 			config: &config.Config{
+				ImagorMode:           "external",
+				ImagorBaseURL:        "http://test.example.com",
 				JWTSecret:            "jwt-secret",
 				ImagorSecret:         "", // Empty, should fall back
 				ImagorSignerType:     "sha512",
@@ -590,15 +599,20 @@ func TestCreateDefaultEmbeddedConfig(t *testing.T) {
 			expectedUnsafe: false,
 			expectedType:   "sha512",
 			expectedTrunc:  40,
+			expectedMode:   ImagorModeExternal,
+			expectedURL:    "http://test.example.com",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := createDefaultEmbeddedConfig(tt.config)
+			provider, _ := setupTestProvider(t, tt.config)
 
-			assert.Equal(t, ImagorModeEmbedded, result.Mode)
-			assert.Equal(t, "/imagor", result.BaseURL)
+			result, err := provider.buildConfig()
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectedMode, result.Mode)
+			assert.Equal(t, tt.expectedURL, result.BaseURL)
 			assert.Equal(t, tt.expectedSecret, result.Secret)
 			assert.Equal(t, tt.expectedUnsafe, result.Unsafe)
 			assert.Equal(t, tt.expectedType, result.SignerType)
