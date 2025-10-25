@@ -18,6 +18,7 @@ docker run -p 8000:8000 \
   -e JWT_SECRET=your-jwt-secret-change-in-production \
   -e IMAGOR_SECRET=your-imagor-secret \
   -e FILE_STORAGE_BASE_DIR=/app/images \
+  -e LICENSE_KEY=your-license-key-here \
   ghcr.io/cshum/imagor-studio-embedded:latest
 ```
 
@@ -41,6 +42,9 @@ services:
 
       # Storage
       - FILE_STORAGE_BASE_DIR=/app/images
+      
+      # License
+      - LICENSE_KEY=your-license-key-here
     restart: unless-stopped
 ```
 
@@ -54,6 +58,7 @@ services:
 | `IMAGOR_SECRET`          | Imagor URL signing secret              | -       | `your-imagor-secret` |
 | `IMAGOR_SIGNER_TYPE`     | Signing algorithm (optional)           | `sha1`  | `sha256`             |
 | `IMAGOR_SIGNER_TRUNCATE` | Signature truncation length (optional) | `40`    | `32`                 |
+| `LICENSE_KEY`            | Imagor Studio license key (optional)   | -       | `IMGR-XXXX-XXXX...` |
 
 ### File Storage Configuration
 
@@ -289,6 +294,38 @@ The `path_prefix` field in your JWT token restricts which files and folders user
 - Path traversal protection (blocks `..` sequences)
 - Automatic path normalization
 - Prefix-based matching ensures users stay within allowed directories
+
+## License Configuration
+
+In embedded mode, license activation is handled through environment variables rather than the web interface.
+
+### Setting Up License
+
+Configure your license key using the `LICENSE_KEY` environment variable:
+
+```bash
+# Docker run
+docker run -e LICENSE_KEY=your-license-key-here imagor-studio-embedded
+
+# Docker Compose
+environment:
+  - LICENSE_KEY=your-license-key-here
+```
+
+### License Behavior in Embedded Mode
+
+- **No UI activation**: License cannot be activated through the web interface
+- **Environment-only**: License must be configured via `LICENSE_KEY` environment variable
+- **Purchase available**: Users can still access the purchase link to buy licenses
+- **Stateless**: License configuration is read at startup, no database storage
+
+### Getting a License
+
+To obtain a license key:
+1. Visit [https://imagor.net/buy/early-bird/](https://imagor.net/buy/early-bird/)
+2. Purchase your license
+3. Configure the `LICENSE_KEY` environment variable with your key
+4. Restart the container to apply the license
 
 ## Troubleshooting
 

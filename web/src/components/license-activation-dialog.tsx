@@ -30,6 +30,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { checkLicense } from '@/stores/license-store'
 
+const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
+
 const licenseKeySchema = z.object({
   licenseKey: z.string().min(1, 'License key is required').trim(),
 })
@@ -120,40 +122,60 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
             </p>
           </div>
 
-          {/* License Key Form */}
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-              <div className={cn('space-y-6', isLoading && 'opacity-60')}>
-                <FormField
-                  control={form.control}
-                  name='licenseKey'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('pages.license.licenseKeyLabel')}</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder='IMGR-...'
-                          className='min-h-[120px] resize-none font-mono text-sm'
-                          rows={5}
-                          disabled={isLoading}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>{t('pages.license.licenseKeyDescription')}</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className='bg-destructive/10 text-destructive rounded-md p-3 text-sm'>
-                  {error}
+          {/* License Key Form - Hidden in embedded mode */}
+          {!isEmbeddedMode && (
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+                <div className={cn('space-y-6', isLoading && 'opacity-60')}>
+                  <FormField
+                    control={form.control}
+                    name='licenseKey'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('pages.license.licenseKeyLabel')}</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder='IMGR-...'
+                            className='min-h-[120px] resize-none font-mono text-sm'
+                            rows={5}
+                            disabled={isLoading}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t('pages.license.licenseKeyDescription')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-              )}
-            </form>
-          </Form>
+
+                {/* Error Message */}
+                {error && (
+                  <div className='bg-destructive/10 text-destructive rounded-md p-3 text-sm'>
+                    {error}
+                  </div>
+                )}
+              </form>
+            </Form>
+          )}
+
+          {/* Embedded Mode Note */}
+          {isEmbeddedMode && (
+            <div className='rounded-lg border bg-amber-50 p-4 dark:bg-amber-900/20'>
+              <h4 className='mb-2 text-sm font-medium text-amber-900 dark:text-amber-400'>
+                Embedded Mode Configuration
+              </h4>
+              <p className='text-sm text-amber-800 dark:text-amber-300'>
+                In embedded mode, configure your license key via the{' '}
+                <code className='rounded bg-amber-100 px-1 py-0.5 text-xs dark:bg-amber-800'>
+                  LICENSE_KEY
+                </code>{' '}
+                environment variable when deploying the container.
+              </p>
+            </div>
+          )}
         </div>
 
         <DialogFooter className='flex justify-end gap-2'>
@@ -166,14 +188,17 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
           >
             {t('pages.license.getEarlyBirdLicense')}
           </Button>
-          <ButtonWithLoading
-            type='submit'
-            onClick={form.handleSubmit(handleSubmit)}
-            disabled={!form.formState.isValid}
-            isLoading={isLoading}
-          >
-            {t('pages.license.activateLicense')}
-          </ButtonWithLoading>
+          {/* Hide Activate License button in embedded mode */}
+          {!isEmbeddedMode && (
+            <ButtonWithLoading
+              type='submit'
+              onClick={form.handleSubmit(handleSubmit)}
+              disabled={!form.formState.isValid}
+              isLoading={isLoading}
+            >
+              {t('pages.license.activateLicense')}
+            </ButtonWithLoading>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
