@@ -4,7 +4,13 @@ Imagor Studio Embedded is a stateless, iframe-ready image editor built on top of
 
 ## Quick Start
 
-### Using Pre-built Docker Image
+### Docker Build `imagor-studio-embedded`
+
+```bash
+docker pull ghcr.io/cshum/imagor-studio-embedded
+```
+
+Usage:
 
 ```bash
 docker run -p 8000:8000 \
