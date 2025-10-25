@@ -317,10 +317,12 @@ func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error
 	))
 
 	// Use configurable signer settings for embedded mode
-	if cfg.Secret != "" && !cfg.Unsafe {
+	if !cfg.Unsafe {
 		hashAlg := getHashAlgorithm(cfg.SignerType)
 		signer := imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
 		options = append(options, imagor.WithSigner(signer))
+	} else {
+		options = append(options, imagor.WithUnsafe(true))
 	}
 
 	// Configure storage based on current storage provider
