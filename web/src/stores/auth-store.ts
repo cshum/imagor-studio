@@ -20,7 +20,7 @@ export interface Auth {
 
 const initialState: Auth = {
   state: 'loading',
-  accessToken: getToken(),
+  accessToken: null,
   profile: null,
   isFirstRun: null,
   error: null,
@@ -49,7 +49,10 @@ function reducer(state: Auth, action: AuthAction): Auth {
       const { profile, accessToken, isEmbedded = false, pathPrefix = '' } = action.payload
       const authState = profile?.role === 'guest' ? 'guest' : 'authenticated'
 
-      setToken(accessToken)
+      // Only persist to localStorage if not embedded (stateless)
+      if (!isEmbedded) {
+        setToken(accessToken)
+      }
 
       return {
         ...state,
@@ -70,7 +73,6 @@ function reducer(state: Auth, action: AuthAction): Auth {
         accessToken: null,
         profile: null,
         error: null,
-        isEmbedded: false,
         pathPrefix: '',
       }
 
@@ -123,22 +125,12 @@ const handleEmbeddedAuth = async (jwtToken: string): Promise<Auth> => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Embedded authentication failed'
     
-    // In embedded mode, we want to preserve the embedded state even on auth failure
-    // so the auth loader can detect it's embedded mode and show error instead of redirect
-    authStore.dispatch({
+    // In embedded mode, just set error and return the state
+    // No logout needed - just show error in embedded context
+    return authStore.dispatch({
       type: 'SET_ERROR',
       payload: { error: errorMessage },
     })
-    
-    // Set state to unauthenticated but keep isEmbedded flag
-    return {
-      ...authStore.getState(),
-      state: 'unauthenticated',
-      accessToken: null,
-      profile: null,
-      isEmbedded: true,
-      error: errorMessage,
-    }
   }
 }
 
@@ -156,7 +148,7 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
 
   // Continue with normal auth flow
   try {
-    const currentAccessToken = accessToken || getAuth().accessToken
+    const currentAccessToken = accessToken || getToken()
 
     if (currentAccessToken) {
       const profile = await getCurrentUser(currentAccessToken)
