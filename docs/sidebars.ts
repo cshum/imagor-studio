@@ -29,6 +29,7 @@ const sidebars: SidebarsConfig = {
         "deployment/migration",
         "deployment/docker",
         "deployment/kubernetes",
+        "deployment/embedded-mode",
       ],
     },
     "architecture",

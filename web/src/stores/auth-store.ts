@@ -122,11 +122,23 @@ const handleEmbeddedAuth = async (jwtToken: string): Promise<Auth> => {
     })
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Embedded authentication failed'
+    
+    // In embedded mode, we want to preserve the embedded state even on auth failure
+    // so the auth loader can detect it's embedded mode and show error instead of redirect
     authStore.dispatch({
       type: 'SET_ERROR',
       payload: { error: errorMessage },
     })
-    return authStore.dispatch({ type: 'LOGOUT' })
+    
+    // Set state to unauthenticated but keep isEmbedded flag
+    return {
+      ...authStore.getState(),
+      state: 'unauthenticated',
+      accessToken: null,
+      profile: null,
+      isEmbedded: true,
+      error: errorMessage,
+    }
   }
 }
 

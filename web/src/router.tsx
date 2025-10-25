@@ -236,22 +236,76 @@ const accountUsersRoute = createRoute({
   },
 })
 
-const routeTree = rootRoute.addChildren([
-  loginRoute,
-  adminSetupRoute,
-  rootImageEditorRoute,
-  galleryImageEditorRoute,
-  baseLayoutRoute.addChildren([
-    rootPath.addChildren([rootImagePage]),
-    galleryRoute.addChildren([imagePage]),
-    accountLayoutRoute.addChildren([
-      accountRedirectRoute,
-      accountProfileRoute,
-      accountAdminRoute,
-      accountUsersRoute,
-    ]),
-  ]),
-])
+// Helper function to parse path parameter for embedded mode
+const parseEmbeddedPath = (path: string) => {
+  if (!path) {
+    throw new Error('Path parameter is required in embedded mode')
+  }
+  
+  // Handle gallery paths: "gallery/folder/image.jpg" -> galleryKey="folder", imageKey="image.jpg"
+  if (path.startsWith('gallery/')) {
+    const pathParts = path.split('/')
+    if (pathParts.length < 3) {
+      throw new Error('Invalid gallery path format')
+    }
+    const imageKey = pathParts[pathParts.length - 1]
+    const galleryKey = pathParts.slice(1, -1).join('/')
+    return { galleryKey, imageKey }
+  }
+  
+  // Handle root level images: "image.jpg" -> galleryKey="", imageKey="image.jpg"
+  return { galleryKey: '', imageKey: path }
+}
+
+// Check if embedded mode is enabled via environment variable
+const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
+
+// Embedded mode route - single root route with URL parameters
+const embeddedEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  beforeLoad: requireImageEditorAuth,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      token: (search.token as string) || '',
+      path: (search.path as string) || '',
+    }
+  },
+  loaderDeps: ({ search }) => ({ path: search.path }),
+  loader: ({ deps }) => {
+    const { path } = deps
+    const { galleryKey, imageKey } = parseEmbeddedPath(path)
+    return imageEditorLoader({ params: { galleryKey, imageKey } })
+  },
+  component: () => {
+    const loaderData = embeddedEditorRoute.useLoaderData()
+    const { path } = embeddedEditorRoute.useSearch()
+    const { galleryKey, imageKey } = parseEmbeddedPath(path)
+    return <ImageEditorPage galleryKey={galleryKey} imageKey={imageKey} loaderData={loaderData} />
+  },
+})
+
+// Create different route trees based on embedded mode
+const routeTree = isEmbeddedMode
+  ? // Embedded mode: single root route with URL parameters
+    rootRoute.addChildren([embeddedEditorRoute])
+  : // Normal mode: full route tree
+    rootRoute.addChildren([
+      loginRoute,
+      adminSetupRoute,
+      rootImageEditorRoute,
+      galleryImageEditorRoute,
+      baseLayoutRoute.addChildren([
+        rootPath.addChildren([rootImagePage]),
+        galleryRoute.addChildren([imagePage]),
+        accountLayoutRoute.addChildren([
+          accountRedirectRoute,
+          accountProfileRoute,
+          accountAdminRoute,
+          accountUsersRoute,
+        ]),
+      ]),
+    ])
 
 const createAppRouter = () => createRouter({ routeTree })
 

@@ -1,8 +1,12 @@
 ARG NODE_VERSION=22.19.0
 ARG BUILDER_IMAGE_TAG=ffmpeg-7.1.1-vips-8.17.2-go-1.25.1
+ARG EMBEDDED_MODE=false
 
 # Stage 1: Build web frontend
 FROM node:${NODE_VERSION}-alpine AS web-builder
+
+ARG EMBEDDED_MODE
+ENV VITE_EMBEDDED_MODE=${EMBEDDED_MODE}
 
 WORKDIR /app/web
 
@@ -18,6 +22,7 @@ RUN npm run build
 # Stage 2: Build server using builder image with go + libvips + FFmpeg
 FROM ghcr.io/cshum/imagor-studio-builder:${BUILDER_IMAGE_TAG} AS server-builder
 
+ARG EMBEDDED_MODE
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
 WORKDIR /app
@@ -33,7 +38,13 @@ COPY server/ ./server/
 COPY graphql/ ./graphql/
 
 RUN cd server && go build -o /go/bin/imagor-studio ./cmd/imagor-studio/main.go
-RUN cd server && go build -o /go/bin/imagor-studio-migrate ./cmd/imagor-studio-migrate/main.go
+
+# Conditionally build migration tool (not needed for embedded mode)
+RUN if [ "$EMBEDDED_MODE" != "true" ]; then \
+      cd server && go build -o /go/bin/imagor-studio-migrate ./cmd/imagor-studio-migrate/main.go; \
+    else \
+      touch /go/bin/imagor-studio-migrate; \
+    fi
 
 # Stage 3: Runtime image
 FROM debian:trixie-slim AS runtime
@@ -59,7 +70,15 @@ RUN DEBIAN_FRONTEND=noninteractive \
   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY --from=server-builder /go/bin/imagor-studio /usr/local/bin/imagor-studio
+
+# Copy migration tool (will be empty file for embedded mode)
 COPY --from=server-builder /go/bin/imagor-studio-migrate /usr/local/bin/imagor-studio-migrate
+
+# Remove migration tool if in embedded mode
+ARG EMBEDDED_MODE
+RUN if [ "$EMBEDDED_MODE" = "true" ]; then \
+      rm -f /usr/local/bin/imagor-studio-migrate; \
+    fi
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
