@@ -21,7 +21,7 @@ docker run -p 8000:8000 \
 version: '3.8'
 services:
   imagor-studio-embedded:
-    image: shumc/imagor-studio-embedded:latest
+    image: ghcr.io/cshum/imagor-studio-embedded:latest
     ports:
       - "8000:8000"
     volumes:
@@ -73,7 +73,7 @@ services:
 ## Docker Images
 
 Pre-built images are available:
-- **Docker Hub**: `shumc/imagor-studio-embedded`
+- **Docker Hub**: `ghcr.io/cshum/imagor-studio-embedded`
 - **GitHub Container Registry**: `ghcr.io/cshum/imagor-studio-embedded`
 
 Both AMD64 and ARM64 architectures supported.
@@ -203,13 +203,6 @@ Embedded mode uses a simple URL structure:
 
 ## Security
 
-### JWT Configuration
-
-- **Strong Secrets**: Use cryptographically strong JWT secrets
-- **Short Expiration**: 1-24 hours recommended
-- **Path Restrictions**: Use `path_prefix` to limit file access
-- **Regenerate Tokens**: Create new tokens for each editing session
-
 ### Path Prefix Scoping
 
 The `path_prefix` field in your JWT token restricts which files and folders users can access. This provides security isolation between different users or tenants.
@@ -254,7 +247,7 @@ The `path_prefix` field in your JWT token restricts which files and folders user
 version: '3.8'
 services:
   imagor-studio-embedded:
-    image: shumc/imagor-studio-embedded:latest
+    image: ghcr.io/cshum/imagor-studio-embedded:latest
     ports:
       - "8000:8000"
     volumes:
@@ -294,7 +287,7 @@ spec:
     spec:
       containers:
       - name: imagor-studio-embedded
-        image: shumc/imagor-studio-embedded:latest
+        image: ghcr.io/cshum/imagor-studio-embedded:latest
         ports:
         - containerPort: 8000
         env:
@@ -337,32 +330,3 @@ spec:
 - Verify `IMAGOR_SECRET` configuration
 - Check `IMAGOR_SIGNER_TYPE` and `IMAGOR_SIGNER_TRUNCATE` settings
 - Test with standard Imagor URLs first
-
-### Debug Mode
-
-Enable debug logging:
-
-```bash
-docker run ... -e LOG_LEVEL=debug shumc/imagor-studio-embedded
-```
-
-### Health Check
-
-```bash
-curl http://localhost:8000/health
-```
-
-## Building from Source
-
-If you need to build your own image:
-
-```bash
-# Clone repository
-git clone https://github.com/cshum/imagor-studio.git
-cd imagor-studio
-
-# Build embedded variant
-make docker-build-embedded
-
-# Or with Docker directly
-docker build --build-arg EMBEDDED_MODE=true -t my-imagor-studio-embedded .
