@@ -299,8 +299,6 @@ The `path_prefix` field in your JWT token restricts which files and folders user
 
 In embedded mode, license activation is handled through environment variables rather than the web interface.
 
-### Setting Up License
-
 Configure your license key using the `LICENSE_KEY` environment variable:
 
 ```bash
@@ -311,13 +309,6 @@ docker run -e LICENSE_KEY=your-license-key-here imagor-studio-embedded
 environment:
   - LICENSE_KEY=your-license-key-here
 ```
-
-### License Behavior in Embedded Mode
-
-- **No UI activation**: License cannot be activated through the web interface
-- **Environment-only**: License must be configured via `LICENSE_KEY` environment variable
-- **Purchase available**: Users can still access the purchase link to buy licenses
-- **Stateless**: License configuration is read at startup, no database storage
 
 ### Getting a License
 
