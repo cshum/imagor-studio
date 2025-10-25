@@ -1,143 +1,29 @@
 # Embedded Mode
 
-Imagor Studio can be deployed in embedded mode for seamless integration with Content Management Systems (CMS). This mode creates a stateless, iframe-ready image editor that operates without database dependencies.
+Imagor Studio Embedded is a stateless, iframe-ready image editor built on top of Imagor. It provides a web-based editing interface while maintaining all the familiar Imagor configuration and URL signing you already know.
 
 ## Overview
 
-Embedded mode provides:
+For existing Imagor users, think of it as:
+**"Your familiar Imagor + web-based image editor"**
 
+- **Same Imagor Core**: Uses your existing Imagor configuration
 - **Stateless Operation**: No database required, uses JWT authentication
-- **Single Route Interface**: Simple URL structure with query parameters
-- **CMS Integration**: Designed for iframe embedding in external systems
-- **Security**: JWT-based authentication with optional path restrictions
+- **Iframe Ready**: Designed for embedding in CMS and web applications
+- **Familiar Config**: Reuse your existing Imagor secrets and settings
 
-## Building Embedded Image
+## Quick Start
 
-### Using Make
-
-```bash
-# Build embedded Docker image
-make docker-build-embedded
-
-# Run embedded container
-make docker-run-embedded
-```
-
-### Using Docker
+### Using Pre-built Docker Image
 
 ```bash
-# Build with embedded mode flag
-docker build --build-arg EMBEDDED_MODE=true -t imagor-studio-embedded .
-
-# Run with required environment variables
-docker run --rm -p 8000:8000 \
-  -v "$(pwd)/gallery":/app/gallery \
-  -e EMBEDDED_MODE=true \
-  -e JWT_SECRET=your-secret-key-change-in-production \
-  -e STORAGE_TYPE=file \
-  -e FILE_STORAGE_BASE_DIR=/app/gallery \
-  -e IMAGOR_MODE=embedded \
-  imagor-studio-embedded
+docker run -p 8000:8000 \
+  -v "$(pwd)/images":/app/images \
+  -e JWT_SECRET=your-jwt-secret-change-in-production \
+  -e IMAGOR_SECRET=your-imagor-secret \
+  -e FILE_STORAGE_BASE_DIR=/app/images \
+  shumc/imagor-studio-embedded:latest
 ```
-
-## Environment Variables
-
-### Required Configuration
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `EMBEDDED_MODE` | Enables embedded mode | `true` |
-| `JWT_SECRET` | Secret key for JWT signing | `your-secret-key` |
-| `STORAGE_TYPE` | Storage backend type | `file` or `s3` |
-| `IMAGOR_MODE` | Imagor instance mode | `embedded` |
-
-### File Storage
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `FILE_STORAGE_BASE_DIR` | Base directory for images | `/app/gallery` |
-
-### S3 Storage
-
-| Variable | Description |
-|----------|-------------|
-| `S3_STORAGE_BUCKET` | S3 bucket name |
-| `S3_STORAGE_REGION` | AWS region |
-| `S3_STORAGE_ACCESS_KEY_ID` | AWS access key |
-| `S3_STORAGE_SECRET_ACCESS_KEY` | AWS secret key |
-
-## CMS Integration
-
-### JWT Token Generation
-
-Your CMS must generate JWT tokens with the following structure:
-
-```javascript
-const jwt = require('jsonwebtoken');
-
-const token = jwt.sign({
-  user_id: 'cms-user-id',
-  role: 'guest',
-  scopes: ['read', 'edit'],
-  is_embedded: true,
-  path_prefix: 'users/123', // Optional: restrict access
-  exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour
-}, process.env.JWT_SECRET);
-```
-
-### URL Structure
-
-Embedded mode uses a single root route with query parameters:
-
-```
-# Root level image
-/?token=JWT_TOKEN&path=image.jpg
-
-# Gallery structure
-/?token=JWT_TOKEN&path=gallery/folder/image.jpg
-
-# Complex paths
-/?token=JWT_TOKEN&path=gallery/users/123/photos/image.jpg
-```
-
-### Iframe Integration
-
-```html
-<iframe 
-  src="https://your-imagor-studio.com/?token=JWT_TOKEN&path=path/to/image.jpg"
-  width="100%" 
-  height="600"
-  frameborder="0"
-  title="Image Editor">
-</iframe>
-```
-
-## Security
-
-### JWT Configuration
-
-- Use strong, unique secret keys
-- Set appropriate expiration times (1-24 hours recommended)
-- Include `path_prefix` to restrict file access
-- Regenerate tokens for each editing session
-
-### CORS Setup
-
-For cross-domain embedding:
-
-```bash
--e CORS_ALLOWED_ORIGINS=https://your-cms-domain.com
-```
-
-### Content Security Policy
-
-Update your CMS's CSP headers:
-
-```
-Content-Security-Policy: frame-src https://your-imagor-studio.com;
-```
-
-## Production Deployment
 
 ### Docker Compose
 
@@ -145,22 +31,231 @@ Content-Security-Policy: frame-src https://your-imagor-studio.com;
 version: '3.8'
 services:
   imagor-studio-embedded:
-    image: imagor-studio-embedded:latest
+    image: shumc/imagor-studio-embedded:latest
     ports:
       - "8000:8000"
+    volumes:
+      - ./images:/app/images
     environment:
-      - EMBEDDED_MODE=true
+      # New for embedded authentication
+      - JWT_SECRET=your-jwt-secret-change-in-production
+      
+      # Familiar Imagor configuration
+      - IMAGOR_SECRET=your-imagor-secret
+      - IMAGOR_SIGNER_TYPE=sha256
+      - IMAGOR_SIGNER_TRUNCATE=40
+      
+      # Storage
+      - FILE_STORAGE_BASE_DIR=/app/images
+    restart: unless-stopped
+```
+
+## Configuration
+
+### Essential Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `JWT_SECRET` | Secret for embedded authentication | `your-jwt-secret` |
+| `IMAGOR_SECRET` | Imagor URL signing secret (familiar!) | `your-imagor-secret` |
+| `FILE_STORAGE_BASE_DIR` | Directory for image files | `/app/images` |
+
+### Optional Imagor Configuration
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `IMAGOR_SIGNER_TYPE` | Signing algorithm | `sha1` |
+| `IMAGOR_SIGNER_TRUNCATE` | Signature truncation length | `40` |
+
+### Advanced Storage (S3)
+
+| Variable | Description |
+|----------|-------------|
+| `STORAGE_TYPE` | Set to `s3` for S3 storage |
+| `S3_STORAGE_BUCKET` | S3 bucket name |
+| `S3_STORAGE_REGION` | AWS region |
+| `S3_STORAGE_ACCESS_KEY_ID` | AWS access key |
+| `S3_STORAGE_SECRET_ACCESS_KEY` | AWS secret key |
+
+## Docker Images
+
+Pre-built images are available:
+- **Docker Hub**: `shumc/imagor-studio-embedded`
+- **GitHub Container Registry**: `ghcr.io/cshum/imagor-studio-embedded`
+
+Both AMD64 and ARM64 architectures supported.
+
+## JWT Token Generation
+
+Your application needs to generate JWT tokens for authentication. Here are simple examples:
+
+### Node.js Example
+
+```javascript
+const jwt = require('jsonwebtoken');
+
+function generateEditorToken(imagePath, userId) {
+  return jwt.sign({
+    user_id: userId,
+    role: 'guest',
+    scopes: ['read', 'edit'],
+    is_embedded: true,
+    path_prefix: `users/${userId}`, // Optional: restrict access
+    exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour
+  }, process.env.JWT_SECRET);
+}
+
+// Usage
+const token = generateEditorToken('photo.jpg', 'user123');
+const editorUrl = `http://localhost:8000/?token=${token}&path=photo.jpg`;
+```
+
+### PHP Example
+
+```php
+<?php
+require_once 'vendor/autoload.php';
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+
+function generateEditorToken($imagePath, $userId) {
+    $payload = [
+        'user_id' => $userId,
+        'role' => 'guest',
+        'scopes' => ['read', 'edit'],
+        'is_embedded' => true,
+        'path_prefix' => "users/{$userId}", // Optional: restrict access
+        'exp' => time() + (60 * 60) // 1 hour
+    ];
+    
+    return JWT::encode($payload, $_ENV['JWT_SECRET'], 'HS256');
+}
+
+// Usage
+$token = generateEditorToken('photo.jpg', 'user123');
+$editorUrl = "http://localhost:8000/?token={$token}&path=photo.jpg";
+?>
+```
+
+## Simple Integration
+
+### HTML Iframe
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Editor</title>
+</head>
+<body>
+    <h1>Edit Your Image</h1>
+    
+    <iframe 
+        src="http://localhost:8000/?token=YOUR_JWT_TOKEN&path=photo.jpg"
+        width="100%" 
+        height="600"
+        frameborder="0"
+        title="Image Editor">
+    </iframe>
+    
+    <script>
+        // Listen for messages from the editor
+        window.addEventListener('message', function(event) {
+            if (event.origin !== 'http://localhost:8000') return;
+            
+            if (event.data.type === 'imagor-studio-save') {
+                console.log('Image saved:', event.data.imageUrl);
+                // Handle the saved image URL
+            }
+        });
+    </script>
+</body>
+</html>
+```
+
+## URL Structure
+
+Embedded mode uses a simple URL structure:
+
+```
+# Basic usage
+/?token=JWT_TOKEN&path=image.jpg
+
+# With folders
+/?token=JWT_TOKEN&path=users/123/photos/image.jpg
+
+# Nested paths
+/?token=JWT_TOKEN&path=gallery/2024/events/photo.jpg
+```
+
+## Security
+
+### JWT Configuration
+
+- **Strong Secrets**: Use cryptographically strong JWT secrets
+- **Short Expiration**: 1-24 hours recommended
+- **Path Restrictions**: Use `path_prefix` to limit file access
+- **Regenerate Tokens**: Create new tokens for each editing session
+
+### Path Restrictions
+
+Limit user access to specific directories:
+
+```javascript
+// Restrict user to their own folder
+const token = jwt.sign({
+  // ... other claims
+  path_prefix: `users/${userId}/images`,
+}, JWT_SECRET);
+```
+
+## For Imagor Users
+
+### Migration from Imagor
+
+If you're already using Imagor, you can:
+
+1. **Reuse Configuration**: Same `IMAGOR_SECRET` and signer settings
+2. **Keep URL Signing**: Existing Imagor URLs continue to work
+3. **Add Editing**: Just add `JWT_SECRET` for embedded authentication
+4. **Same Storage**: Use your existing file or S3 storage setup
+
+### Differences from Standard Imagor
+
+| Feature | Standard Imagor | Imagor Studio Embedded |
+|---------|-----------------|------------------------|
+| Image Processing | ✅ Full Imagor | ✅ Full Imagor |
+| URL Signing | ✅ Standard | ✅ Standard |
+| Web Interface | ❌ None | ✅ Image Editor |
+| Authentication | 🔧 URL-based | 🔧 URL + JWT |
+| Database | ❌ None | ❌ None |
+
+## Production Deployment
+
+### Docker Compose with Secrets
+
+```yaml
+version: '3.8'
+services:
+  imagor-studio-embedded:
+    image: shumc/imagor-studio-embedded:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./images:/app/images
+    environment:
       - JWT_SECRET_FILE=/run/secrets/jwt_secret
-      - STORAGE_TYPE=s3
-      - S3_STORAGE_BUCKET=your-media-bucket
-      - S3_STORAGE_REGION=us-east-1
-      - IMAGOR_MODE=embedded
+      - IMAGOR_SECRET_FILE=/run/secrets/imagor_secret
+      - FILE_STORAGE_BASE_DIR=/app/images
     secrets:
       - jwt_secret
+      - imagor_secret
     restart: unless-stopped
 
 secrets:
   jwt_secret:
+    external: true
+  imagor_secret:
     external: true
 ```
 
@@ -183,87 +278,29 @@ spec:
     spec:
       containers:
       - name: imagor-studio-embedded
-        image: imagor-studio-embedded:latest
+        image: shumc/imagor-studio-embedded:latest
         ports:
         - containerPort: 8000
         env:
-        - name: EMBEDDED_MODE
-          value: "true"
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
               name: imagor-secrets
               key: jwt-secret
-        - name: STORAGE_TYPE
-          value: "s3"
-        - name: S3_STORAGE_BUCKET
-          value: "your-media-bucket"
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-```
-
-## Example Implementation
-
-### Backend (Node.js)
-
-```javascript
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const app = express();
-
-app.post('/api/image-editor-token', (req, res) => {
-  const { imagePath, userId } = req.body;
-  
-  const token = jwt.sign({
-    user_id: userId,
-    role: 'guest',
-    scopes: ['read', 'edit'],
-    is_embedded: true,
-    path_prefix: `users/${userId}`,
-    exp: Math.floor(Date.now() / 1000) + (60 * 60),
-  }, process.env.JWT_SECRET);
-  
-  const editorUrl = `${process.env.IMAGOR_STUDIO_URL}/?token=${token}&path=${imagePath}`;
-  
-  res.json({ editorUrl });
-});
-```
-
-### Frontend (React)
-
-```jsx
-import React, { useState, useEffect } from 'react';
-
-const ImageEditor = ({ imagePath, userId }) => {
-  const [editorUrl, setEditorUrl] = useState('');
-  
-  useEffect(() => {
-    fetch('/api/image-editor-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imagePath, userId })
-    })
-    .then(res => res.json())
-    .then(data => setEditorUrl(data.editorUrl));
-  }, [imagePath, userId]);
-  
-  if (!editorUrl) return <div>Loading editor...</div>;
-  
-  return (
-    <iframe
-      src={editorUrl}
-      width="100%"
-      height="600"
-      frameBorder="0"
-      title="Image Editor"
-    />
-  );
-};
+        - name: IMAGOR_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: imagor-secrets
+              key: imagor-secret
+        - name: FILE_STORAGE_BASE_DIR
+          value: "/app/images"
+        volumeMounts:
+        - name: images
+          mountPath: /app/images
+      volumes:
+      - name: images
+        persistentVolumeClaim:
+          claimName: images-pvc
 ```
 
 ## Troubleshooting
@@ -271,55 +308,45 @@ const ImageEditor = ({ imagePath, userId }) => {
 ### Common Issues
 
 **Token Authentication Fails**
-- Verify JWT secret matches between CMS and Imagor Studio
+- Verify `JWT_SECRET` matches between your app and Imagor Studio
 - Check token expiration time
-- Ensure token includes required claims (`is_embedded: true`)
-- In embedded mode, authentication failures show error messages instead of redirecting to login
+- Ensure token includes `is_embedded: true`
 
 **Image Not Found**
-- Verify storage configuration
-- Check file permissions
+- Check `FILE_STORAGE_BASE_DIR` path
+- Verify file permissions
 - Ensure path prefix allows access to requested file
 
-**CORS Errors**
-- Configure `CORS_ALLOWED_ORIGINS` environment variable
-- Check browser console for specific CORS errors
-- Verify iframe src domain matches CORS configuration
-
-**Error Handling in Embedded Mode**
-- Authentication errors display user-friendly error messages
-- No login page redirects occur in embedded mode
-- Error messages include specific details about the failure
-- Common error messages:
-  - "Authentication required. Please provide a valid token."
-  - "Embedded authentication failed"
-  - "Invalid or expired token"
+**Imagor Processing Issues**
+- Verify `IMAGOR_SECRET` configuration
+- Check `IMAGOR_SIGNER_TYPE` and `IMAGOR_SIGNER_TRUNCATE` settings
+- Test with standard Imagor URLs first
 
 ### Debug Mode
 
 Enable debug logging:
 
 ```bash
-docker run ... -e LOG_LEVEL=debug imagor-studio-embedded
+docker run ... -e LOG_LEVEL=debug shumc/imagor-studio-embedded
 ```
 
 ### Health Check
-
-Verify the embedded instance:
 
 ```bash
 curl http://localhost:8000/health
 ```
 
-## Differences from Standard Mode
+## Building from Source
 
-| Feature | Standard Mode | Embedded Mode |
-|---------|---------------|---------------|
-| Database | Required | None |
-| User Management | Full system | JWT-based |
-| Navigation | Full UI | Editor only |
-| Gallery | Available | Not available |
-| Admin Panel | Available | Not available |
-| Migration Tools | Included | Excluded |
-| Authentication | Login system | JWT tokens |
-| URL Structure | Multiple routes | Single root route |
+If you need to build your own image:
+
+```bash
+# Clone repository
+git clone https://github.com/cshum/imagor-studio.git
+cd imagor-studio
+
+# Build embedded variant
+make docker-build-embedded
+
+# Or with Docker directly
+docker build --build-arg EMBEDDED_MODE=true -t my-imagor-studio-embedded .
