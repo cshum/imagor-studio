@@ -1,16 +1,11 @@
 # Embedded Mode
 
-Imagor Studio Embedded is a stateless, iframe-ready image editor built on top of Imagor. It provides a web-based editing interface while maintaining all the familiar Imagor configuration and URL signing you already know.
+Imagor Studio Embedded is a stateless, iframe-ready image editor built on top of imagor. It provides a web-based editing interface while maintaining the similar imagor configuration and URL signing.
 
-## Overview
-
-For existing Imagor users, think of it as:
-**"Your familiar Imagor + web-based image editor"**
-
-- **Same Imagor Core**: Uses your existing Imagor configuration
-- **Stateless Operation**: No database required, uses JWT authentication
+- **Same Core**: Uses your existing imagor configuration
+- **Stateless Operation**: No database required, uses JWT for stateless authentication
 - **Iframe Ready**: Designed for embedding in CMS and web applications
-- **Familiar Config**: Reuse your existing Imagor secrets and settings
+- **Familiar Config**: Reuse your existing imagor secrets and settings
 
 ## Quick Start
 
