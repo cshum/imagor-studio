@@ -171,10 +171,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       <div className='ios-preview-container-fix flex flex-1 flex-col'>
         {/* Header */}
         <div className='flex items-center gap-2 border-b p-4'>
-          <Button variant='ghost' size='sm' onClick={handleBack}>
-            <ChevronLeft className='mr-1 h-4 w-4' />
-            {t('imageEditor.page.back')}
-          </Button>
+          {/* Back button - hidden in embedded mode */}
+          {!authState.isEmbedded && (
+            <Button variant='ghost' size='sm' onClick={handleBack}>
+              <ChevronLeft className='mr-1 h-4 w-4' />
+              {t('imageEditor.page.back')}
+            </Button>
+          )}
 
           {/* Centered title */}
           <div className='flex flex-1 justify-center'>
