@@ -141,8 +141,8 @@ func (p *Provider) GetHandler() http.Handler {
 	return nil
 }
 
-// InitializeWithConfig initializes imagor with the given configuration
-func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
+// Initialize initializes imagor using registry and provider configuration
+func (p *Provider) Initialize() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 

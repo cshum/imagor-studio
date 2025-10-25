@@ -246,7 +246,7 @@ func TestInitializeWithConfig(t *testing.T) {
 				}
 			}
 
-			err := provider.InitializeWithConfig(tt.config)
+			err := provider.Initialize()
 			require.NoError(t, err)
 
 			config := provider.GetConfig()
@@ -424,7 +424,7 @@ func TestGenerateURL_BasicScenarios(t *testing.T) {
 				provider, _ = setupTestProvider(t, tt.config)
 			}
 
-			err := provider.InitializeWithConfig(tt.config)
+			err := provider.Initialize()
 			require.NoError(t, err)
 
 			url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
@@ -633,7 +633,7 @@ func TestIsRestartRequired(t *testing.T) {
 	require.NoError(t, err)
 
 	provider := New(logger, registryStore, cfg, storageProvider)
-	err = provider.InitializeWithConfig(cfg)
+	err = provider.Initialize()
 	require.NoError(t, err)
 
 	// No timestamp set, should not require restart
@@ -661,7 +661,7 @@ func TestReloadFromRegistry(t *testing.T) {
 	require.NoError(t, err)
 
 	provider := New(logger, registryStore, cfg, storageProvider)
-	err = provider.InitializeWithConfig(cfg)
+	err = provider.Initialize()
 	require.NoError(t, err)
 
 	// Initially defaults to embedded
@@ -697,7 +697,7 @@ func TestGetHandler(t *testing.T) {
 		}
 
 		provider := New(logger, registryStore, cfg, storageProvider)
-		err := provider.InitializeWithConfig(cfg)
+		err := provider.Initialize()
 		require.NoError(t, err)
 
 		// External mode should not have a handler
@@ -715,7 +715,7 @@ func TestGetHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		provider := New(logger, registryStore, cfg, storageProvider)
-		err = provider.InitializeWithConfig(cfg)
+		err = provider.Initialize()
 		require.NoError(t, err)
 
 		// Embedded mode should have a handler
@@ -1046,7 +1046,7 @@ func TestInitializeWithConfig_JWTSecretFallbackIntegration(t *testing.T) {
 	// Intentionally NOT setting config.imagor_secret to test fallback
 
 	provider := New(logger, registryStore, cfg, storageProvider)
-	err := provider.InitializeWithConfig(cfg)
+	err := provider.Initialize()
 
 	require.NoError(t, err)
 
