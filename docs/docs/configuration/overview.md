@@ -99,10 +99,10 @@ These can be configured via any method:
 
 When running in Docker containers, additional environment variables are available for user/permission management:
 
-| Setting | Default | Description                                    |
-| ------- | ------- | ---------------------------------------------- |
-| PUID    | 65534   | Process User ID (for file ownership)          |
-| PGID    | 65534   | Process Group ID (for file ownership)         |
+| Setting | Default | Description                           |
+| ------- | ------- | ------------------------------------- |
+| PUID    | 65534   | Process User ID (for file ownership)  |
+| PGID    | 65534   | Process Group ID (for file ownership) |
 
 These settings help resolve permission issues when mounting volumes, especially in Kubernetes environments.
 

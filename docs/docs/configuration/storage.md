@@ -19,11 +19,11 @@ Perfect for local deployments and development.
 
 ### Configuration
 
-| Flag                              | Environment Variable            | Default        | Description                    |
-| --------------------------------- | ------------------------------- | -------------- | ------------------------------ |
-| `--file-storage-base-dir`         | `FILE_STORAGE_BASE_DIR`         | `/app/gallery` | Base directory for images      |
-| `--file-storage-mkdir-permissions`| `FILE_STORAGE_MKDIR_PERMISSIONS`| `0755`         | Directory creation permissions |
-| `--file-storage-write-permissions`| `FILE_STORAGE_WRITE_PERMISSIONS`| `0644`         | File write permissions         |
+| Flag                               | Environment Variable             | Default        | Description                    |
+| ---------------------------------- | -------------------------------- | -------------- | ------------------------------ |
+| `--file-storage-base-dir`          | `FILE_STORAGE_BASE_DIR`          | `/app/gallery` | Base directory for images      |
+| `--file-storage-mkdir-permissions` | `FILE_STORAGE_MKDIR_PERMISSIONS` | `0755`         | Directory creation permissions |
+| `--file-storage-write-permissions` | `FILE_STORAGE_WRITE_PERMISSIONS` | `0644`         | File write permissions         |
 
 ### Example
 
@@ -53,16 +53,16 @@ For cloud deployments and scalable storage.
 
 ### Configuration
 
-| Flag                            | Environment Variable          | Encrypted | Description                |
-| ------------------------------- | ----------------------------- | --------- | -------------------------- |
-| `--aws-region`                  | `AWS_REGION`                  | No        | AWS region                 |
-| `--aws-access-key-id`           | `AWS_ACCESS_KEY_ID`           | Yes       | AWS access key ID          |
-| `--aws-secret-access-key`       | `AWS_SECRET_ACCESS_KEY`       | Yes       | AWS secret access key      |
-| `--aws-session-token`           | `AWS_SESSION_TOKEN`           | Yes       | AWS session token          |
-| `--s3-storage-bucket`           | `S3_STORAGE_BUCKET`           | No        | S3 bucket name             |
-| `--s3-endpoint`                 | `S3_ENDPOINT`                 | No        | Custom endpoint (optional) |
-| `--s3-force-path-style`         | `S3_FORCE_PATH_STYLE`         | No        | Force path-style URLs      |
-| `--s3-storage-base-dir`         | `S3_STORAGE_BASE_DIR`         | No        | Base directory in bucket   |
+| Flag                      | Environment Variable    | Encrypted | Description                |
+| ------------------------- | ----------------------- | --------- | -------------------------- |
+| `--aws-region`            | `AWS_REGION`            | No        | AWS region                 |
+| `--aws-access-key-id`     | `AWS_ACCESS_KEY_ID`     | Yes       | AWS access key ID          |
+| `--aws-secret-access-key` | `AWS_SECRET_ACCESS_KEY` | Yes       | AWS secret access key      |
+| `--aws-session-token`     | `AWS_SESSION_TOKEN`     | Yes       | AWS session token          |
+| `--s3-storage-bucket`     | `S3_STORAGE_BUCKET`     | No        | S3 bucket name             |
+| `--s3-endpoint`           | `S3_ENDPOINT`           | No        | Custom endpoint (optional) |
+| `--s3-force-path-style`   | `S3_FORCE_PATH_STYLE`   | No        | Force path-style URLs      |
+| `--s3-storage-base-dir`   | `S3_STORAGE_BASE_DIR`   | No        | Base directory in bucket   |
 
 ### AWS S3 Example
 

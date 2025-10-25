@@ -297,9 +297,9 @@ The deployment example above includes proper security context configuration to a
 
 ```yaml
 securityContext:
-  runAsUser: 1000    # User ID to run containers
-  runAsGroup: 1000   # Group ID to run containers  
-  fsGroup: 1000      # Group ID for volume ownership
+  runAsUser: 1000 # User ID to run containers
+  runAsGroup: 1000 # Group ID to run containers
+  fsGroup: 1000 # Group ID for volume ownership
 ```
 
 ### Environment Variables
@@ -309,9 +309,9 @@ The PUID/PGID environment variables should match your security context:
 ```yaml
 env:
   - name: PUID
-    value: "1000"  # Should match runAsUser
+    value: "1000" # Should match runAsUser
   - name: PGID
-    value: "1000"  # Should match runAsGroup
+    value: "1000" # Should match runAsGroup
 ```
 
 ### Benefits
