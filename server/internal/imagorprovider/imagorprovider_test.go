@@ -159,7 +159,7 @@ func TestNew(t *testing.T) {
 func TestInitializeWithConfig(t *testing.T) {
 	tests := []struct {
 		name           string
-		config         *config.Config
+		cliArgs        []string
 		registryConfig map[string]string
 		needsStorage   bool
 		expectedMode   ImagorMode
@@ -167,27 +167,30 @@ func TestInitializeWithConfig(t *testing.T) {
 		expectedSecret string
 		expectedUnsafe bool
 		hasHandler     bool
+		description    string
 	}{
 		{
-			name: "External mode",
-			config: &config.Config{
-				ImagorMode:    string(gql.ImagorModeExternal),
-				ImagorBaseURL: "http://localhost:8000",
-				ImagorSecret:  "test-secret",
-				ImagorUnsafe:  false,
+			name: "External mode via CLI args",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://localhost:8000",
+				"--imagor-secret", "test-secret",
+				"--jwt-secret", "jwt-secret",
 			},
 			expectedMode:   ImagorModeExternal,
 			expectedURL:    "http://localhost:8000",
 			expectedSecret: "test-secret",
 			expectedUnsafe: false,
 			hasHandler:     false,
+			description:    "External mode should be configured via CLI arguments",
 		},
 		{
-			name: "Embedded mode",
-			config: &config.Config{
-				ImagorMode:   string(gql.ImagorModeEmbedded),
-				ImagorSecret: "test-secret",
-				ImagorUnsafe: true,
+			name: "Embedded mode via CLI args",
+			cliArgs: []string{
+				"--imagor-mode", "embedded",
+				"--imagor-secret", "test-secret",
+				"--imagor-unsafe",
+				"--jwt-secret", "jwt-secret",
 			},
 			needsStorage:   true,
 			expectedMode:   ImagorModeEmbedded,
@@ -195,11 +198,12 @@ func TestInitializeWithConfig(t *testing.T) {
 			expectedSecret: "test-secret",
 			expectedUnsafe: true,
 			hasHandler:     true,
+			description:    "Embedded mode should be configured via CLI arguments",
 		},
 		{
-			name: "Default embedded with JWT fallback",
-			config: &config.Config{
-				JWTSecret: "test-jwt-secret",
+			name: "Default embedded with minimal CLI args",
+			cliArgs: []string{
+				"--jwt-secret", "test-jwt-secret",
 			},
 			needsStorage:   true,
 			expectedMode:   ImagorModeEmbedded,
@@ -207,11 +211,32 @@ func TestInitializeWithConfig(t *testing.T) {
 			expectedSecret: "test-jwt-secret",
 			expectedUnsafe: false,
 			hasHandler:     true,
+			description:    "Should default to embedded mode with JWT secret fallback",
 		},
 		{
-			name: "From registry configuration",
-			config: &config.Config{
-				JWTSecret: "jwt-secret",
+			name: "CLI args with registry overrides",
+			cliArgs: []string{
+				"--imagor-mode", "embedded", // CLI sets embedded
+				"--jwt-secret", "jwt-secret",
+			},
+			registryConfig: map[string]string{
+				"config.imagor_mode":     "external",                    // Registry tries to override
+				"config.imagor_base_url": "http://registry.example.com", // Registry provides base URL
+				"config.imagor_secret":   "registry-secret",             // Registry provides secret
+				"config.imagor_unsafe":   "false",
+			},
+			needsStorage:   true, // CLI wins with embedded
+			expectedMode:   ImagorModeEmbedded,
+			expectedURL:    "/imagor",
+			expectedSecret: "registry-secret", // Registry secret is used since no CLI override
+			expectedUnsafe: false,
+			hasHandler:     true,
+			description:    "CLI args should take priority over registry values",
+		},
+		{
+			name: "Registry configuration with minimal CLI",
+			cliArgs: []string{
+				"--jwt-secret", "jwt-secret",
 			},
 			registryConfig: map[string]string{
 				"config.imagor_mode":     "external",
@@ -224,19 +249,67 @@ func TestInitializeWithConfig(t *testing.T) {
 			expectedSecret: "registry-secret",
 			expectedUnsafe: false,
 			hasHandler:     false,
+			description:    "Registry values should be used when no CLI override exists",
+		},
+		{
+			name: "Complex signer configuration via CLI",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://localhost:8000",
+				"--imagor-secret", "custom-secret",
+				"--imagor-signer-type", "sha256",
+				"--imagor-signer-truncate", "28",
+				"--jwt-secret", "jwt-secret",
+			},
+			expectedMode:   ImagorModeExternal,
+			expectedURL:    "http://localhost:8000",
+			expectedSecret: "custom-secret",
+			expectedUnsafe: false,
+			hasHandler:     false,
+			description:    "Complex signer configuration should work via CLI args",
+		},
+		{
+			name: "Mixed CLI and registry signer config",
+			cliArgs: []string{
+				"--imagor-mode", "external",
+				"--imagor-base-url", "http://localhost:8000",
+				"--imagor-signer-type", "sha512", // CLI sets signer type
+				"--jwt-secret", "jwt-secret",
+			},
+			registryConfig: map[string]string{
+				"config.imagor_secret":          "registry-secret",
+				"config.imagor_signer_type":     "sha256", // Registry tries to override
+				"config.imagor_signer_truncate": "32",     // Registry sets truncate
+				"config.imagor_unsafe":          "false",
+			},
+			expectedMode:   ImagorModeExternal,
+			expectedURL:    "http://localhost:8000",
+			expectedSecret: "registry-secret", // From registry (no CLI override)
+			expectedUnsafe: false,
+			hasHandler:     false,
+			description:    "CLI signer type should override registry, but registry truncate should be used",
+		},
+		{
+			name: "Imagor Unsafe config via cli",
+			cliArgs: []string{
+				"--imagor-mode", "embedded",
+				"--imagor-unsafe",
+				"--jwt-secret", "env-jwt-secret",
+			},
+			needsStorage:   true,
+			expectedMode:   ImagorModeEmbedded,
+			expectedURL:    "/imagor",
+			expectedSecret: "",
+			expectedUnsafe: true,
+			hasHandler:     true,
+			description:    "Should handle environment-like configuration via CLI args",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var provider *Provider
-			var registryStore *mockRegistryStore
-
-			if tt.needsStorage {
-				provider, registryStore = setupTestProviderWithStorage(t, tt.config)
-			} else {
-				provider, registryStore = setupTestProvider(t, tt.config)
-			}
+			// Create mock registry store
+			registryStore := newMockRegistryStore()
 
 			// Set up registry configuration if provided
 			if tt.registryConfig != nil {
@@ -246,22 +319,44 @@ func TestInitializeWithConfig(t *testing.T) {
 				}
 			}
 
-			err := provider.Initialize()
-			require.NoError(t, err)
+			// Load config using CLI args and registry store (realistic approach)
+			cfg, err := config.Load(tt.cliArgs, registryStore)
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, cfg, tt.description)
 
+			// Create provider with realistic setup
+			logger := zap.NewNop()
+			var provider *Provider
+
+			if tt.needsStorage {
+				// Create a properly initialized storage provider
+				storageProvider := storageprovider.New(logger, registryStore, cfg)
+				err := storageProvider.InitializeWithConfig(cfg)
+				require.NoError(t, err, tt.description)
+				provider = New(logger, registryStore, cfg, storageProvider)
+			} else {
+				storageProvider := &storageprovider.Provider{}
+				provider = New(logger, registryStore, cfg, storageProvider)
+			}
+
+			// Initialize the provider
+			err = provider.Initialize()
+			require.NoError(t, err, tt.description)
+
+			// Verify the configuration
 			config := provider.GetConfig()
-			require.NotNil(t, config)
-			assert.Equal(t, tt.expectedMode, config.Mode)
-			assert.Equal(t, tt.expectedURL, config.BaseURL)
-			assert.Equal(t, tt.expectedSecret, config.Secret)
-			assert.Equal(t, tt.expectedUnsafe, config.Unsafe)
+			require.NotNil(t, config, tt.description)
+			assert.Equal(t, tt.expectedMode, config.Mode, tt.description)
+			assert.Equal(t, tt.expectedURL, config.BaseURL, tt.description)
+			assert.Equal(t, tt.expectedSecret, config.Secret, tt.description)
+			assert.Equal(t, tt.expectedUnsafe, config.Unsafe, tt.description)
 
 			// Check handler presence
 			handler := provider.GetHandler()
 			if tt.hasHandler {
-				assert.NotNil(t, handler)
+				assert.NotNil(t, handler, "Expected handler to be present: %s", tt.description)
 			} else {
-				assert.Nil(t, handler)
+				assert.Nil(t, handler, "Expected no handler: %s", tt.description)
 			}
 		})
 	}
