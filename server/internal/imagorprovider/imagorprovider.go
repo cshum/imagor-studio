@@ -81,11 +81,11 @@ func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Conf
 // buildConfig creates imagor configuration from registry, CLI, or defaults with proper priority
 func (p *Provider) buildConfig() (*ImagorConfig, error) {
 	// Try registry first (handles CLI/ENV/Registry priority via GetEffectiveValues)
-	if config, err := p.buildConfigFromRegistry(); err == nil && config.Mode != "" {
-		return config, nil
+	if c, err := p.buildConfigFromRegistry(); err == nil && c.Mode != "" {
+		return c, nil
 	}
 
-	// Fall back to CLI config or defaults
+	// Fall back to CLI c or defaults
 	cfg := p.config
 	mode := strings.ToLower(cfg.ImagorMode)
 	if mode == "" {
