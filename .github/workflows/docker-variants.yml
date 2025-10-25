@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - embedded-build
     tags: ["v*.*.*"]
 
 jobs:

@@ -12,7 +12,7 @@ docker run -p 8000:8000 \
   -e JWT_SECRET=your-jwt-secret-change-in-production \
   -e IMAGOR_SECRET=your-imagor-secret \
   -e FILE_STORAGE_BASE_DIR=/app/images \
-  shumc/imagor-studio-embedded:latest
+  ghcr.io/cshum/imagor-studio-embedded:latest
 ```
 
 ### Docker Compose
