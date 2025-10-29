@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	validation2 "github.com/cshum/imagor-studio/server/internal/validation"
@@ -324,11 +325,14 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserI
 	// Create user
 	user, err := r.userStore.Create(ctx, normalizedDisplayName, normalizedUsername, hashedPassword, normalizedRole)
 	if err != nil {
-		if strings.Contains(err.Error(), "already exists") {
-			return nil, fmt.Errorf("user creation failed: %w", err)
+		if strings.Contains(err.Error(), "username already exists") {
+			return nil, apperror.Conflict("Username already exists", "username", "input.username")
+		}
+		if strings.Contains(err.Error(), "displayName already exists") {
+			return nil, apperror.Conflict("Display name already exists", "displayName", "input.displayName")
 		}
 		r.logger.Error("Failed to create user", zap.Error(err))
-		return nil, fmt.Errorf("failed to create user")
+		return nil, apperror.InternalServerError("Failed to create user")
 	}
 
 	r.logger.Info("User created by admin",
@@ -352,23 +356,23 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserI
 func (r *mutationResolver) validateCreateUserInput(input *gql.CreateUserInput) error {
 	// Validate displayName
 	if err := validation2.ValidateDisplayName(input.DisplayName); err != nil {
-		return fmt.Errorf("invalid display name: %w", err)
+		return apperror.BadRequest("Invalid display name", nil, "displayName", "input.displayName")
 	}
 
 	// Validate username
 	if err := validation2.ValidateUsername(input.Username); err != nil {
-		return fmt.Errorf("invalid username: %w", err)
+		return apperror.BadRequest("Invalid username", nil, "username", "input.username")
 	}
 
 	// Validate password
 	if err := validation2.ValidatePassword(input.Password); err != nil {
-		return fmt.Errorf("invalid password: %w", err)
+		return apperror.BadRequest("Invalid password", nil, "password", "input.password")
 	}
 
 	// Validate role (if provided)
 	role := strings.TrimSpace(input.Role)
 	if role == "" {
-		return fmt.Errorf("role cannot be empty")
+		return apperror.BadRequest("Role cannot be empty", nil, "role", "input.role")
 	}
 
 	return nil
