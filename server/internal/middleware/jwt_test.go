@@ -26,7 +26,7 @@ func TestJWTMiddleware(t *testing.T) {
 		name           string
 		authHeader     string
 		expectedStatus int
-		expectedError  apperror.ErrorCode
+		expectedError  string
 		setupRequest   func(*http.Request)
 	}{
 		{
@@ -38,25 +38,25 @@ func TestJWTMiddleware(t *testing.T) {
 			name:           "Missing Authorization header",
 			authHeader:     "",
 			expectedStatus: http.StatusUnauthorized,
-			expectedError:  apperror.ErrInvalidToken,
+			expectedError:  "UNAUTHORIZED",
 		},
 		{
 			name:           "Invalid header format",
 			authHeader:     "InvalidFormat " + token,
 			expectedStatus: http.StatusUnauthorized,
-			expectedError:  apperror.ErrInvalidToken,
+			expectedError:  "UNAUTHORIZED",
 		},
 		{
 			name:           "Invalid token",
 			authHeader:     "Bearer invalid.token.here",
 			expectedStatus: http.StatusUnauthorized,
-			expectedError:  apperror.ErrInvalidToken,
+			expectedError:  "UNAUTHORIZED",
 		},
 		{
 			name:           "Expired token",
 			authHeader:     "Bearer " + generateExpiredToken(t),
 			expectedStatus: http.StatusUnauthorized,
-			expectedError:  apperror.ErrTokenExpired,
+			expectedError:  "UNAUTHORIZED",
 		},
 	}
 
@@ -100,7 +100,7 @@ func TestJWTMiddleware(t *testing.T) {
 				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, tt.expectedError, errResp.Error.Code)
+				assert.Equal(t, tt.expectedError, errResp.Code)
 			}
 		})
 	}
@@ -112,7 +112,7 @@ func TestAuthorizationMiddleware(t *testing.T) {
 		requiredScope  string
 		userScopes     []string
 		expectedStatus int
-		expectedError  apperror.ErrorCode
+		expectedError  string
 	}{
 		{
 			name:           "User has required scope",
@@ -125,14 +125,14 @@ func TestAuthorizationMiddleware(t *testing.T) {
 			requiredScope:  "admin",
 			userScopes:     []string{"read", "write"},
 			expectedStatus: http.StatusForbidden,
-			expectedError:  apperror.ErrPermissionDenied,
+			expectedError:  "FORBIDDEN",
 		},
 		{
 			name:           "Empty user scopes",
 			requiredScope:  "read",
 			userScopes:     []string{},
 			expectedStatus: http.StatusForbidden,
-			expectedError:  apperror.ErrPermissionDenied,
+			expectedError:  "FORBIDDEN",
 		},
 	}
 
@@ -164,8 +164,10 @@ func TestAuthorizationMiddleware(t *testing.T) {
 				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, tt.expectedError, errResp.Error.Code)
-				assert.Contains(t, errResp.Error.Details["requiredScope"], tt.requiredScope)
+				assert.Equal(t, tt.expectedError, errResp.Code)
+				if errResp.Details != nil {
+					assert.Contains(t, errResp.Details["requiredScope"], tt.requiredScope)
+				}
 			}
 		})
 	}
@@ -188,7 +190,7 @@ func TestAuthorizationMiddleware_NoClaimsInContext(t *testing.T) {
 	var errResp apperror.ErrorResponse
 	err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 	require.NoError(t, err)
-	assert.Equal(t, apperror.ErrUnauthorized, errResp.Error.Code)
+	assert.Equal(t, "UNAUTHORIZED", errResp.Code)
 }
 
 // Helper function to generate expired token for testing

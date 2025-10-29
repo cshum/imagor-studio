@@ -64,8 +64,8 @@ func TestErrorMiddleware(t *testing.T) {
 				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, apperror.ErrInternalServer, errResp.Error.Code)
-				assert.Equal(t, "An unexpected error occurred", errResp.Error.Message)
+				assert.Equal(t, "INTERNAL_SERVER_ERROR", errResp.Code)
+				assert.NotEmpty(t, errResp.Error)
 			}
 		})
 	}

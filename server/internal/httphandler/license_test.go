@@ -168,9 +168,7 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 		},
 		{
 			name:           "wrong method returns error",
-			method:         "POST",
-			mockStatus:     nil,
-			mockError:      nil,
+			method:         http.MethodPost,
 			expectedStatus: http.StatusMethodNotAllowed,
 		},
 	}
@@ -293,10 +291,8 @@ func TestLicenseHandler_ActivateLicense(t *testing.T) {
 		},
 		{
 			name:           "wrong method returns error",
-			method:         "GET",
+			method:         http.MethodGet,
 			requestBody:    nil,
-			mockStatus:     nil,
-			mockError:      nil,
 			expectedStatus: http.StatusMethodNotAllowed,
 		},
 	}

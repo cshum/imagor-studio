@@ -154,7 +154,7 @@ func TestRegister(t *testing.T) {
 		setupMocks     func()
 		expectedStatus int
 		expectError    bool
-		errorCode      apperror.ErrorCode
+		errorCode      string
 	}{
 		{
 			name:   "Valid registration",
@@ -189,7 +189,7 @@ func TestRegister(t *testing.T) {
 			},
 			expectedStatus: http.StatusConflict,
 			expectError:    true,
-			errorCode:      apperror.ErrAlreadyExists,
+			errorCode:      "ALREADY_EXISTS",
 		},
 		{
 			name:   "Email already exists",
@@ -204,7 +204,7 @@ func TestRegister(t *testing.T) {
 			},
 			expectedStatus: http.StatusConflict,
 			expectError:    true,
-			errorCode:      apperror.ErrAlreadyExists,
+			errorCode:      "ALREADY_EXISTS",
 		},
 		{
 			name:   "Invalid password too short",
@@ -217,7 +217,7 @@ func TestRegister(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidInput,
+			errorCode:      "INVALID_INPUT",
 		},
 		{
 			name:   "Missing displayName",
@@ -230,7 +230,7 @@ func TestRegister(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidInput,
+			errorCode:      "INVALID_INPUT",
 		},
 		{
 			name:   "Missing username",
@@ -243,7 +243,7 @@ func TestRegister(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidInput,
+			errorCode:      "INVALID_INPUT",
 		},
 		{
 			name:   "Invalid username format",
@@ -256,7 +256,7 @@ func TestRegister(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidInput,
+			errorCode:      "INVALID_INPUT",
 		},
 		{
 			name:           "Invalid method",
@@ -265,7 +265,7 @@ func TestRegister(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusMethodNotAllowed,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidInput,
+			errorCode:      "METHOD_NOT_ALLOWED",
 		},
 		{
 			name:           "Invalid JSON body",
@@ -274,7 +274,7 @@ func TestRegister(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidInput,
+			errorCode:      "INVALID_INPUT",
 		},
 	}
 
@@ -306,7 +306,7 @@ func TestRegister(t *testing.T) {
 				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, tt.errorCode, errResp.Error.Code)
+				assert.Equal(t, tt.errorCode, errResp.Code)
 			} else {
 				var loginResp LoginResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &loginResp)
@@ -348,7 +348,7 @@ func TestLogin(t *testing.T) {
 		setupMocks     func()
 		expectedStatus int
 		expectError    bool
-		errorCode      apperror.ErrorCode
+		errorCode      string
 	}{
 		{
 			name:   "Valid login with username",
@@ -411,7 +411,7 @@ func TestLogin(t *testing.T) {
 			},
 			expectedStatus: http.StatusUnauthorized,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidCredentials,
+			errorCode:      "INVALID_CREDENTIALS",
 		},
 		{
 			name:   "User not found",
@@ -425,7 +425,7 @@ func TestLogin(t *testing.T) {
 			},
 			expectedStatus: http.StatusUnauthorized,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidCredentials,
+			errorCode:      "INVALID_CREDENTIALS",
 		},
 		{
 			name:   "Empty username",
@@ -437,7 +437,7 @@ func TestLogin(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidInput,
+			errorCode:      "INVALID_INPUT",
 		},
 		{
 			name:   "Empty password",
@@ -449,7 +449,7 @@ func TestLogin(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidInput,
+			errorCode:      "INVALID_INPUT",
 		},
 		{
 			name:           "Invalid method",
@@ -458,7 +458,7 @@ func TestLogin(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusMethodNotAllowed,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidInput,
+			errorCode:      "METHOD_NOT_ALLOWED",
 		},
 		{
 			name:           "Invalid JSON body",
@@ -467,7 +467,7 @@ func TestLogin(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidInput,
+			errorCode:      "INVALID_INPUT",
 		},
 	}
 
@@ -499,7 +499,7 @@ func TestLogin(t *testing.T) {
 				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, tt.errorCode, errResp.Error.Code)
+				assert.Equal(t, tt.errorCode, errResp.Code)
 			} else {
 				var loginResp LoginResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &loginResp)
@@ -541,7 +541,7 @@ func TestRefreshToken(t *testing.T) {
 		setupMocks     func()
 		expectedStatus int
 		expectError    bool
-		errorCode      apperror.ErrorCode
+		errorCode      string
 	}{
 		{
 			name:   "Valid refresh request",
@@ -572,7 +572,7 @@ func TestRefreshToken(t *testing.T) {
 			},
 			expectedStatus: http.StatusUnauthorized,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidToken,
+			errorCode:      "UNAUTHORIZED",
 		},
 		{
 			name:           "Invalid method",
@@ -581,7 +581,7 @@ func TestRefreshToken(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusMethodNotAllowed,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidInput,
+			errorCode:      "METHOD_NOT_ALLOWED",
 		},
 		{
 			name:           "Invalid JSON body",
@@ -590,7 +590,7 @@ func TestRefreshToken(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidInput,
+			errorCode:      "INVALID_INPUT",
 		},
 		{
 			name:   "Invalid token",
@@ -601,7 +601,7 @@ func TestRefreshToken(t *testing.T) {
 			setupMocks:     func() {},
 			expectedStatus: http.StatusUnauthorized,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidToken,
+			errorCode:      "UNAUTHORIZED",
 		},
 	}
 
@@ -633,7 +633,7 @@ func TestRefreshToken(t *testing.T) {
 				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, tt.errorCode, errResp.Error.Code)
+				assert.Equal(t, tt.errorCode, errResp.Code)
 			} else {
 				var refreshResp LoginResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &refreshResp)
@@ -664,7 +664,7 @@ func TestGuestLogin(t *testing.T) {
 		setupMocks     func()
 		expectedStatus int
 		expectError    bool
-		errorCode      apperror.ErrorCode
+		errorCode      string
 	}{
 		{
 			name: "Guest login enabled",
@@ -687,7 +687,7 @@ func TestGuestLogin(t *testing.T) {
 			},
 			expectedStatus: http.StatusForbidden,
 			expectError:    true,
-			errorCode:      apperror.ErrPermissionDenied,
+			errorCode:      "FORBIDDEN",
 		},
 		{
 			name: "Guest mode setting not found - fallback to old key",
@@ -699,7 +699,7 @@ func TestGuestLogin(t *testing.T) {
 			},
 			expectedStatus: http.StatusForbidden,
 			expectError:    true,
-			errorCode:      apperror.ErrPermissionDenied,
+			errorCode:      "FORBIDDEN",
 		},
 	}
 
@@ -721,7 +721,7 @@ func TestGuestLogin(t *testing.T) {
 				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, tt.errorCode, errResp.Error.Code)
+				assert.Equal(t, tt.errorCode, errResp.Code)
 			} else {
 				var loginResp LoginResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &loginResp)
@@ -795,7 +795,7 @@ func TestRegisterAdmin(t *testing.T) {
 		existingUsers  int
 		expectedStatus int
 		expectError    bool
-		errorCode      apperror.ErrorCode
+		errorCode      string
 		setupMocks     func()
 	}{
 		{
@@ -884,7 +884,7 @@ func TestRegisterAdmin(t *testing.T) {
 			existingUsers:  1,
 			expectedStatus: http.StatusConflict,
 			expectError:    true,
-			errorCode:      apperror.ErrAlreadyExists,
+			errorCode:      "ALREADY_EXISTS",
 			setupMocks:     func() {},
 		},
 	}
@@ -913,7 +913,7 @@ func TestRegisterAdmin(t *testing.T) {
 				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, tt.errorCode, errResp.Error.Code)
+				assert.Equal(t, tt.errorCode, errResp.Code)
 			} else {
 				var loginResp LoginResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &loginResp)
@@ -958,7 +958,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 		authHeader         string
 		expectedStatus     int
 		expectError        bool
-		errorCode          apperror.ErrorCode
+		errorCode          string
 		expectedPathPrefix string
 	}{
 		{
@@ -968,7 +968,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 			authHeader:     fmt.Sprintf("Bearer %s", validToken),
 			expectedStatus: http.StatusForbidden,
 			expectError:    true,
-			errorCode:      apperror.ErrPermissionDenied,
+			errorCode:      "FORBIDDEN",
 		},
 		{
 			name:               "Valid JWT token - successful embedded guest login",
@@ -1004,7 +1004,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 			authHeader:     "",
 			expectedStatus: http.StatusUnauthorized,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidToken,
+			errorCode:      "UNAUTHORIZED",
 		},
 		{
 			name:           "Invalid Authorization header format",
@@ -1013,7 +1013,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 			authHeader:     validToken,
 			expectedStatus: http.StatusUnauthorized,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidToken,
+			errorCode:      "UNAUTHORIZED",
 		},
 		{
 			name:           "Invalid JWT token",
@@ -1022,7 +1022,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 			authHeader:     "Bearer invalid.jwt.token",
 			expectedStatus: http.StatusUnauthorized,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidToken,
+			errorCode:      "UNAUTHORIZED",
 		},
 		{
 			name:           "Expired JWT token",
@@ -1031,7 +1031,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 			authHeader:     fmt.Sprintf("Bearer %s", expiredToken),
 			expectedStatus: http.StatusUnauthorized,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidToken,
+			errorCode:      "UNAUTHORIZED",
 		},
 		{
 			name:           "Invalid HTTP method",
@@ -1040,7 +1040,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 			authHeader:     fmt.Sprintf("Bearer %s", validToken),
 			expectedStatus: http.StatusMethodNotAllowed,
 			expectError:    true,
-			errorCode:      apperror.ErrInvalidInput,
+			errorCode:      "METHOD_NOT_ALLOWED",
 		},
 	}
 
@@ -1062,7 +1062,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 				var errResp apperror.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, tt.errorCode, errResp.Error.Code)
+				assert.Equal(t, tt.errorCode, errResp.Code)
 			} else {
 				var loginResp LoginResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &loginResp)

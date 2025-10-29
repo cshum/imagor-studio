@@ -103,9 +103,7 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 		}
 
 		if totalCount > 0 {
-			return apperror.NewAppError(http.StatusConflict, apperror.ErrAlreadyExists,
-				"Admin user already exists. System is already initialized.",
-				nil)
+			return apperror.Conflict("Admin user already exists. System is already initialized.")
 		}
 
 		// Convert to RegisterRequest for user creation
@@ -176,8 +174,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 
 		// Validate input
 		if strings.TrimSpace(req.Username) == "" || strings.TrimSpace(req.Password) == "" {
-			return apperror.NewAppError(http.StatusBadRequest, apperror.ErrInvalidInput,
-				"Username and password are required", nil)
+			return apperror.BadRequest("Username and password are required", nil)
 		}
 
 		// Normalize username
@@ -191,14 +188,12 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 		}
 
 		if user == nil || !user.IsActive {
-			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidCredentials,
-				"Invalid credentials", nil)
+			return apperror.InvalidCredentials("Invalid credentials")
 		}
 
 		// Check password
 		if err := auth.CheckPassword(user.HashedPassword, req.Password); err != nil {
-			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidCredentials,
-				"Invalid credentials", nil)
+			return apperror.InvalidCredentials("Invalid credentials")
 		}
 
 		// Update last login
@@ -236,8 +231,7 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 
 		// If guest mode is not set or not "true", block guest login
 		if guestModeMetadata == nil || guestModeMetadata.Value != "true" {
-			return apperror.NewAppError(http.StatusForbidden, apperror.ErrPermissionDenied,
-				"Guest mode is not enabled", nil)
+			return apperror.Forbidden("Guest mode is not enabled")
 		}
 
 		guestID := uuid.GenerateUUID()
@@ -274,8 +268,7 @@ func (h *AuthHandler) RefreshToken() http.HandlerFunc {
 		// Validate existing token
 		claims, err := h.tokenManager.ValidateToken(req.Token)
 		if err != nil {
-			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidToken,
-				"Invalid token", map[string]interface{}{"error": err.Error()})
+			return apperror.Unauthorized("Invalid token")
 		}
 
 		// Verify user still exists and is active
@@ -286,8 +279,7 @@ func (h *AuthHandler) RefreshToken() http.HandlerFunc {
 		}
 
 		if user == nil {
-			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidToken,
-				"User not found or inactive", nil)
+			return apperror.Unauthorized("User not found or inactive")
 		}
 
 		// Generate new token
@@ -316,27 +308,20 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
 		// Check if embedded mode is enabled
 		if !h.embeddedMode {
-			return apperror.NewAppError(http.StatusForbidden, apperror.ErrPermissionDenied,
-				"Embedded mode is not enabled", nil)
+			return apperror.Forbidden("Embedded mode is not enabled")
 		}
 
 		// Extract JWT token from Authorization header
 		authHeader := r.Header.Get("Authorization")
 		jwtToken, err := auth.ExtractTokenFromHeader(authHeader)
 		if err != nil {
-			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidToken,
-				"Authorization header is missing or invalid", map[string]interface{}{
-					"error": err.Error(),
-				})
+			return apperror.Unauthorized("Authorization header is missing or invalid")
 		}
 
 		// Validate the JWT token (this validates the token from the CMS)
 		claims, err := h.tokenManager.ValidateToken(jwtToken)
 		if err != nil {
-			return apperror.NewAppError(http.StatusUnauthorized, apperror.ErrInvalidToken,
-				"Invalid or expired JWT token", map[string]interface{}{
-					"error": err.Error(),
-				})
+			return apperror.Unauthorized("Invalid or expired JWT token")
 		}
 
 		pathPrefix := claims.PathPrefix
@@ -353,8 +338,7 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 
 			// Basic security check - prevent path traversal
 			if strings.Contains(pathPrefix, "..") {
-				return apperror.NewAppError(http.StatusBadRequest, apperror.ErrInvalidInput,
-					"Invalid path prefix: path traversal not allowed", nil)
+				return apperror.BadRequest("Invalid path prefix: path traversal not allowed", nil)
 			}
 		}
 
@@ -392,7 +376,7 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role string) (*LoginResponse, error) {
 	// Validate input
 	if err := h.validateRegisterRequest(&req); err != nil {
-		return nil, apperror.NewAppError(http.StatusBadRequest, apperror.ErrInvalidInput, err.Error(), nil)
+		return nil, apperror.BadRequest(err.Error(), nil)
 	}
 
 	// Normalize inputs
@@ -410,7 +394,7 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	user, err := h.userStore.Create(ctx, normalizedDisplayName, normalizedUsername, hashedPassword, role)
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
-			return nil, apperror.NewAppError(http.StatusConflict, apperror.ErrAlreadyExists, err.Error(), nil)
+			return nil, apperror.Conflict(err.Error())
 		}
 		h.logger.Error("Failed to create user", zap.Error(err))
 		return nil, apperror.InternalServerError("Failed to create user")
