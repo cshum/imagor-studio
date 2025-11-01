@@ -306,11 +306,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         )}
         <ContextMenuItem onClick={() => handleCopyUrl(imageKey, isVideo)}>
           <Copy className='mr-2 h-4 w-4' />
-          Copy URL
+          {t('pages.gallery.contextMenu.copyUrl')}
         </ContextMenuItem>
         <ContextMenuItem onClick={() => handleDownload(imageKey, isVideo)}>
           <Download className='mr-2 h-4 w-4' />
-          Download
+          {t('pages.gallery.contextMenu.download')}
         </ContextMenuItem>
         {isAuthenticated && (
           <>

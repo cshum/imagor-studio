@@ -161,7 +161,17 @@
       "contextMenu": {
         "open": "Open",
         "edit": "Edit",
-        "delete": "Delete"
+        "copyUrl": "Copy URL",
+        "download": "Download",
+        "delete": "Delete",
+        "copyUrlError": "Failed to copy URL",
+        "downloadError": "Failed to download"
+      },
+      "copyUrlDialog": {
+        "title": "Copy URL",
+        "description": "Copy the URL below. We attempted to copy it automatically, but you may need to copy it manually.",
+        "closeButton": "Close",
+        "copyButton": "Select & Copy"
       },
       "deleteImage": {
         "title": "Delete Image",
