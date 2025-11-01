@@ -191,11 +191,14 @@ func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileSta
 
 // StorageStatus is the resolver for the storageStatus field.
 func (r *queryResolver) StorageStatus(ctx context.Context) (*gql.StorageStatus, error) {
-	// Use batch operation for better performance
+	// Use batch operation for better performance - include all storage keys to detect overrides
 	results := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
 		"config.storage_configured",
 		"config.storage_type",
-		"config.storage_config_updated_at")
+		"config.storage_config_updated_at",
+		"config.file_storage_base_dir",
+		"config.s3_storage_bucket",
+	)
 
 	// Create a map for easy lookup
 	resultMap := make(map[string]registryutil.EffectiveValueResult)
@@ -203,31 +206,50 @@ func (r *queryResolver) StorageStatus(ctx context.Context) (*gql.StorageStatus, 
 		resultMap[result.Key] = result
 	}
 
-	// Check if storage is configured
+	// Check if ANY storage config is overridden by external config
+	isConfigOverridden := false
+	for _, result := range results {
+		if result.IsOverriddenByConfig {
+			isConfigOverridden = true
+			break
+		}
+	}
+
+	// Check if storage is configured (either in registry or by external config)
 	configuredResult := resultMap["config.storage_configured"]
-	isConfigured := configuredResult.Exists && configuredResult.Value == "true"
+	isConfigured := (configuredResult.Exists && configuredResult.Value == "true") || isConfigOverridden
 
 	var storageType *string
 	var fileConfig *gql.FileStorageConfig
 	var s3Config *gql.S3StorageConfig
 	var isFileOverridden, isS3Overridden bool
 
-	if isConfigured {
-		if typeResult := resultMap["config.storage_type"]; typeResult.Exists {
-			storageType = &typeResult.Value
+	// Determine storage type and load configuration
+	if typeResult := resultMap["config.storage_type"]; typeResult.Exists {
+		storageType = &typeResult.Value
 
-			// Load type-specific configuration with override detection
-			switch typeResult.Value {
-			case "file", "filesystem":
-				fileConfig, isFileOverridden = r.getFileStorageConfig(ctx)
-			case "s3":
-				s3Config, isS3Overridden = r.getS3StorageConfig(ctx)
-			}
+		// Load type-specific configuration with override detection
+		switch typeResult.Value {
+		case "file", "filesystem":
+			fileConfig, isFileOverridden = r.getFileStorageConfig(ctx)
+		case "s3":
+			s3Config, isS3Overridden = r.getS3StorageConfig(ctx)
+		}
+	} else if isConfigOverridden {
+		// If no explicit type but config is overridden, try to detect from available config
+		if resultMap["config.file_storage_base_dir"].Exists {
+			fileType := "file"
+			storageType = &fileType
+			fileConfig, isFileOverridden = r.getFileStorageConfig(ctx)
+		} else if resultMap["config.s3_storage_bucket"].Exists {
+			s3Type := "s3"
+			storageType = &s3Type
+			s3Config, isS3Overridden = r.getS3StorageConfig(ctx)
 		}
 	}
 
-	// Top-level override: true if ANY storage config is overridden
-	isConfigOverridden := isFileOverridden || isS3Overridden
+	// Update override status based on type-specific checks
+	isConfigOverridden = isFileOverridden || isS3Overridden
 
 	// Check if restart is required
 	restartRequired := r.storageProvider.IsRestartRequired()

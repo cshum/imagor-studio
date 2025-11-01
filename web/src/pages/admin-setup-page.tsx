@@ -27,6 +27,7 @@ import {
   type MultiStepFormRef,
   type MultiStepFormStep,
 } from '@/components/ui/multi-step-form'
+import { useFormErrors } from '@/hooks/use-form-errors'
 import type { AdminSetupLoaderData } from '@/loaders/admin-setup-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
 import { setHomeTitle } from '@/stores/folder-tree-store'
@@ -258,6 +259,9 @@ export function AdminSetupPage() {
   const { authState } = useAuth()
   const multiStepFormRef = useRef<MultiStepFormRef>(null)
 
+  // Initialize form error handler
+  const { handleFormError } = useFormErrors<AdminSetupForm>()
+
   // Create translation-aware validation schema
   const adminSetupSchema = z
     .object({
@@ -323,7 +327,21 @@ export function AdminSetupPage() {
       await router.invalidate()
       return true
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('pages.admin.failedToCreateAccount'))
+      // Use the hook for simplified error handling
+      handleFormError(
+        err,
+        form.setError,
+        {
+          username: {
+            ALREADY_EXISTS: t('forms.validation.usernameExists'),
+            INVALID_INPUT: t('forms.validation.usernameInvalid'),
+          },
+          password: {
+            INVALID_INPUT: t('forms.validation.passwordInvalid'),
+          },
+        },
+        t('pages.admin.failedToCreateAccount'),
+      )
       return false
     }
   }
