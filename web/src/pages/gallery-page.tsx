@@ -25,7 +25,6 @@ import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
 import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
-import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -69,11 +68,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
   const [deleteImageDialog, setDeleteImageDialog] = useState<{
     open: boolean
-    image: GalleryImage | null
+    imageKey: string | null
     isDeleting: boolean
   }>({
     open: false,
-    image: null,
+    imageKey: null,
     isDeleting: false,
   })
   const [uploadState, setUploadState] = useState<{
@@ -186,27 +185,24 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   }
 
   const handleDeleteImageFromMenu = (imageKey: string) => {
-    // Find the full image object from the imageKey
-    const image = images.find((img) => img.imageKey === imageKey)
-    if (!image) return
-
+    // Since imageKey === imageName in the loader, no lookup needed
     setDeleteImageDialog({
       open: true,
-      image,
+      imageKey,
       isDeleting: false,
     })
   }
 
   const handleDeleteImage = async () => {
-    if (!deleteImageDialog.image) return
+    if (!deleteImageDialog.imageKey) return
 
     setDeleteImageDialog((prev) => ({ ...prev, isDeleting: true }))
 
     try {
       // Construct the full path for the image
       const imagePath = galleryKey
-        ? `${galleryKey}/${deleteImageDialog.image.imageName}`
-        : deleteImageDialog.image.imageName
+        ? `${galleryKey}/${deleteImageDialog.imageKey}`
+        : deleteImageDialog.imageKey
 
       await deleteFile(imagePath)
 
@@ -216,7 +212,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       // Close dialog
       setDeleteImageDialog({
         open: false,
-        image: null,
+        imageKey: null,
         isDeleting: false,
       })
 
@@ -232,7 +228,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     if (!deleteImageDialog.isDeleting) {
       setDeleteImageDialog({
         open,
-        image: null,
+        imageKey: null,
         isDeleting: false,
       })
     }
@@ -434,7 +430,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       <DeleteImageDialog
         open={deleteImageDialog.open}
         onOpenChange={handleDeleteDialogClose}
-        imageName={deleteImageDialog.image?.imageName || ''}
+        imageName={deleteImageDialog.imageKey || ''}
         isDeleting={deleteImageDialog.isDeleting}
         onConfirm={handleDeleteImage}
       />
