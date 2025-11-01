@@ -5,189 +5,258 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
-func TestWriteErrorResponse(t *testing.T) {
+func TestWriteHTTPErrorResponse_GraphQLError(t *testing.T) {
 	w := httptest.NewRecorder()
-	details := map[string]interface{}{
-		"field": "username",
-		"error": "invalid format",
+
+	// Create a GraphQL error with field information
+	err := Conflict("Username already exists", "username", "input.username")
+
+	WriteHTTPErrorResponse(w, err)
+
+	if w.Code != http.StatusConflict {
+		t.Errorf("Expected status %d, got %d", http.StatusConflict, w.Code)
 	}
-
-	WriteErrorResponse(w, http.StatusBadRequest, ErrInvalidInput, "Invalid username format", details)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 
 	var response ErrorResponse
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	require.NoError(t, err)
-
-	assert.Equal(t, ErrInvalidInput, response.Error.Code)
-	assert.Equal(t, "Invalid username format", response.Error.Message)
-	assert.Equal(t, "username", response.Error.Details["field"])
-	assert.Equal(t, "invalid format", response.Error.Details["error"])
-	assert.NotZero(t, response.Timestamp)
-}
-
-func TestWriteValidationErrorResponse(t *testing.T) {
-	w := httptest.NewRecorder()
-	validationErrors := []ValidationError{
-		{
-			Field:   "username",
-			Message: "Invalid username format",
-			Code:    "USERNAME_INVALID",
-		},
-		{
-			Field:   "password",
-			Message: "Password must be at least 8 characters",
-			Code:    "PASSWORD_TOO_SHORT",
-		},
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
 	}
 
-	WriteValidationErrorResponse(w, validationErrors)
+	if response.Code != "ALREADY_EXISTS" {
+		t.Errorf("Expected code 'ALREADY_EXISTS', got '%s'", response.Code)
+	}
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	if response.Error != "Username already exists" {
+		t.Errorf("Expected message 'Username already exists', got '%s'", response.Error)
+	}
+
+	if response.Details == nil {
+		t.Error("Expected details to be present")
+	} else {
+		if field, ok := response.Details["field"].(string); !ok || field != "username" {
+			t.Errorf("Expected field 'username', got %v", response.Details["field"])
+		}
+		if argName, ok := response.Details["argumentName"].(string); !ok || argName != "input.username" {
+			t.Errorf("Expected argumentName 'input.username', got %v", response.Details["argumentName"])
+		}
+	}
+}
+
+func TestWriteHTTPErrorResponse_BadRequest(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	err := BadRequest("Invalid input", map[string]interface{}{
+		"validation": "failed",
+	})
+
+	WriteHTTPErrorResponse(w, err)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Expected status %d, got %d", http.StatusBadRequest, w.Code)
+	}
 
 	var response ErrorResponse
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	require.NoError(t, err)
-
-	assert.Equal(t, ErrValidationFailed, response.Error.Code)
-	assert.Equal(t, "Validation failed", response.Error.Message)
-	assert.Len(t, response.Error.ValidationErrors, 2)
-
-	assert.Equal(t, "username", response.Error.ValidationErrors[0].Field)
-	assert.Equal(t, "Invalid username format", response.Error.ValidationErrors[0].Message)
-	assert.Equal(t, "USERNAME_INVALID", response.Error.ValidationErrors[0].Code)
-
-	assert.Equal(t, "password", response.Error.ValidationErrors[1].Field)
-	assert.Equal(t, "Password must be at least 8 characters", response.Error.ValidationErrors[1].Message)
-	assert.Equal(t, "PASSWORD_TOO_SHORT", response.Error.ValidationErrors[1].Code)
-}
-
-func TestNewAppError(t *testing.T) {
-	details := map[string]interface{}{
-		"resource": "user",
-		"id":       "123",
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
 	}
 
-	err := NewAppError(http.StatusNotFound, ErrNotFound, "User not found", details)
-
-	assert.Equal(t, http.StatusNotFound, err.StatusCode)
-	assert.Equal(t, ErrNotFound, err.Code)
-	assert.Equal(t, "User not found", err.Message)
-	assert.Equal(t, "user", err.Details["resource"])
-	assert.Equal(t, "123", err.Details["id"])
-}
-
-func TestAppError_Error(t *testing.T) {
-	err := NewAppError(http.StatusNotFound, ErrNotFound, "User not found", nil)
-	assert.Equal(t, "User not found", err.Error())
-}
-
-func TestUnauthorizedError(t *testing.T) {
-	err := UnauthorizedError("Invalid credentials")
-
-	assert.Equal(t, http.StatusUnauthorized, err.StatusCode)
-	assert.Equal(t, ErrUnauthorized, err.Code)
-	assert.Equal(t, "Invalid credentials", err.Message)
-	assert.Nil(t, err.Details)
-}
-
-func TestInvalidTokenError(t *testing.T) {
-	err := InvalidTokenError("Token is malformed")
-
-	assert.Equal(t, http.StatusUnauthorized, err.StatusCode)
-	assert.Equal(t, ErrInvalidToken, err.Code)
-	assert.Equal(t, "Token is malformed", err.Message)
-	assert.Nil(t, err.Details)
-}
-
-func TestTokenExpiredError(t *testing.T) {
-	err := TokenExpiredError()
-
-	assert.Equal(t, http.StatusUnauthorized, err.StatusCode)
-	assert.Equal(t, ErrTokenExpired, err.Code)
-	assert.Equal(t, "Token has expired", err.Message)
-	assert.Nil(t, err.Details)
-}
-
-func TestNotFoundError(t *testing.T) {
-	err := NotFoundError("User")
-
-	assert.Equal(t, http.StatusNotFound, err.StatusCode)
-	assert.Equal(t, ErrNotFound, err.Code)
-	assert.Equal(t, "User not found", err.Message)
-	assert.Nil(t, err.Details)
-}
-
-func TestInternalServerError(t *testing.T) {
-	err := InternalServerError("Database connection failed")
-
-	assert.Equal(t, http.StatusInternalServerError, err.StatusCode)
-	assert.Equal(t, ErrInternalServer, err.Code)
-	assert.Equal(t, "Database connection failed", err.Message)
-	assert.Nil(t, err.Details)
-}
-
-func TestStorageError(t *testing.T) {
-	err := StorageError("Failed to save file")
-
-	assert.Equal(t, http.StatusInternalServerError, err.StatusCode)
-	assert.Equal(t, ErrStorageFailure, err.Code)
-	assert.Equal(t, "Failed to save file", err.Message)
-	assert.Nil(t, err.Details)
-}
-
-func TestPermissionDeniedError(t *testing.T) {
-	err := PermissionDeniedError("Insufficient permissions to access resource")
-
-	assert.Equal(t, http.StatusForbidden, err.StatusCode)
-	assert.Equal(t, ErrPermissionDenied, err.Code)
-	assert.Equal(t, "Insufficient permissions to access resource", err.Message)
-	assert.Nil(t, err.Details)
-}
-
-func TestErrorResponseJSON(t *testing.T) {
-	response := ErrorResponse{
-		Error: &APIError{
-			Code:    ErrInvalidInput,
-			Message: "Invalid input",
-			Details: map[string]interface{}{
-				"field": "username",
-			},
-			ValidationErrors: []ValidationError{
-				{
-					Field:   "username",
-					Message: "Invalid format",
-					Code:    "INVALID_FORMAT",
-				},
-			},
-		},
-		TraceID:   "trace-123",
-		Timestamp: time.Now().UnixMilli(),
+	if response.Code != "INVALID_INPUT" {
+		t.Errorf("Expected code 'INVALID_INPUT', got '%s'", response.Code)
 	}
 
-	// Marshal to JSON
-	jsonData, err := json.Marshal(response)
-	require.NoError(t, err)
+	if response.Error != "Invalid input" {
+		t.Errorf("Expected message 'Invalid input', got '%s'", response.Error)
+	}
 
-	// Unmarshal back
-	var unmarshaled ErrorResponse
-	err = json.Unmarshal(jsonData, &unmarshaled)
-	require.NoError(t, err)
+	if validation, ok := response.Details["validation"].(string); !ok || validation != "failed" {
+		t.Errorf("Expected validation 'failed', got %v", response.Details["validation"])
+	}
+}
 
-	assert.Equal(t, response.Error.Code, unmarshaled.Error.Code)
-	assert.Equal(t, response.Error.Message, unmarshaled.Error.Message)
-	assert.Equal(t, response.Error.Details["field"], unmarshaled.Error.Details["field"])
-	assert.Len(t, unmarshaled.Error.ValidationErrors, 1)
-	assert.Equal(t, response.Error.ValidationErrors[0].Field, unmarshaled.Error.ValidationErrors[0].Field)
-	assert.Equal(t, response.TraceID, unmarshaled.TraceID)
-	assert.Equal(t, response.Timestamp, unmarshaled.Timestamp)
+func TestWriteHTTPErrorResponse_InternalServerError(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	err := InternalServerError("Something went wrong")
+
+	WriteHTTPErrorResponse(w, err)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Expected status %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+
+	var response ErrorResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	if response.Code != "INTERNAL_SERVER_ERROR" {
+		t.Errorf("Expected code 'INTERNAL_SERVER_ERROR', got '%s'", response.Code)
+	}
+
+	if response.Error != "Something went wrong" {
+		t.Errorf("Expected message 'Something went wrong', got '%s'", response.Error)
+	}
+}
+
+func TestWriteHTTPErrorResponse_Unauthorized(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	err := Unauthorized("Access denied")
+
+	WriteHTTPErrorResponse(w, err)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("Expected status %d, got %d", http.StatusUnauthorized, w.Code)
+	}
+
+	var response ErrorResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	if response.Code != "UNAUTHORIZED" {
+		t.Errorf("Expected code 'UNAUTHORIZED', got '%s'", response.Code)
+	}
+
+	if response.Error != "Access denied" {
+		t.Errorf("Expected message 'Access denied', got '%s'", response.Error)
+	}
+}
+
+func TestWriteHTTPErrorResponse_InvalidCredentials(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	err := InvalidCredentials("Invalid username or password")
+
+	WriteHTTPErrorResponse(w, err)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("Expected status %d, got %d", http.StatusUnauthorized, w.Code)
+	}
+
+	var response ErrorResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	if response.Code != "INVALID_CREDENTIALS" {
+		t.Errorf("Expected code 'INVALID_CREDENTIALS', got '%s'", response.Code)
+	}
+
+	if response.Error != "Invalid username or password" {
+		t.Errorf("Expected message 'Invalid username or password', got '%s'", response.Error)
+	}
+}
+
+func TestWriteHTTPErrorResponse_NotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	err := NotFound("Resource not found")
+
+	WriteHTTPErrorResponse(w, err)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("Expected status %d, got %d", http.StatusNotFound, w.Code)
+	}
+
+	var response ErrorResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	if response.Code != "NOT_FOUND" {
+		t.Errorf("Expected code 'NOT_FOUND', got '%s'", response.Code)
+	}
+
+	if response.Error != "Resource not found" {
+		t.Errorf("Expected message 'Resource not found', got '%s'", response.Error)
+	}
+}
+
+func TestWriteHTTPErrorResponse_Forbidden(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	err := Forbidden("Access forbidden")
+
+	WriteHTTPErrorResponse(w, err)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("Expected status %d, got %d", http.StatusForbidden, w.Code)
+	}
+
+	var response ErrorResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	if response.Code != "FORBIDDEN" {
+		t.Errorf("Expected code 'FORBIDDEN', got '%s'", response.Code)
+	}
+
+	if response.Error != "Access forbidden" {
+		t.Errorf("Expected message 'Access forbidden', got '%s'", response.Error)
+	}
+}
+
+func TestWriteHTTPErrorResponse_GenericError(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	// Test with a generic error (not a gqlerror.Error)
+	err := &gqlerror.Error{
+		Message: "Generic error",
+	}
+
+	WriteHTTPErrorResponse(w, err)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Expected status %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+
+	var response ErrorResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	if response.Code != "INTERNAL_SERVER_ERROR" {
+		t.Errorf("Expected code 'INTERNAL_SERVER_ERROR', got '%s'", response.Code)
+	}
+
+	if response.Error != "Generic error" {
+		t.Errorf("Expected message 'Generic error', got '%s'", response.Error)
+	}
+}
+
+func TestErrorInfo_Methods(t *testing.T) {
+	errInfo := ErrInvalidInput
+
+	if errInfo.Code() != "INVALID_INPUT" {
+		t.Errorf("Expected code 'INVALID_INPUT', got '%s'", errInfo.Code())
+	}
+
+	if errInfo.Status() != http.StatusBadRequest {
+		t.Errorf("Expected status %d, got %d", http.StatusBadRequest, errInfo.Status())
+	}
+
+	if errInfo.String() != "INVALID_INPUT" {
+		t.Errorf("Expected string 'INVALID_INPUT', got '%s'", errInfo.String())
+	}
+
+	// Test JSON marshaling
+	jsonBytes, err := json.Marshal(errInfo)
+	if err != nil {
+		t.Fatalf("Failed to marshal ErrorInfo: %v", err)
+	}
+
+	var result string
+	if err := json.Unmarshal(jsonBytes, &result); err != nil {
+		t.Fatalf("Failed to unmarshal ErrorInfo: %v", err)
+	}
+
+	if result != "INVALID_INPUT" {
+		t.Errorf("Expected JSON result 'INVALID_INPUT', got '%s'", result)
+	}
 }

@@ -21,10 +21,8 @@ func ErrorMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 					)
 
 					// Return standardized error response
-					apperror.WriteErrorResponse(w, http.StatusInternalServerError,
-						apperror.ErrInternalServer,
-						"An unexpected error occurred",
-						nil)
+					internalErr := apperror.InternalServerError("An unexpected error occurred")
+					apperror.WriteHTTPErrorResponse(w, internalErr)
 				}
 			}()
 

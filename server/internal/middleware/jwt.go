@@ -18,12 +18,8 @@ func JWTMiddleware(tokenManager *auth.TokenManager) func(http.Handler) http.Hand
 
 			token, err := auth.ExtractTokenFromHeader(authHeader)
 			if err != nil {
-				apperror.WriteErrorResponse(w, http.StatusUnauthorized,
-					apperror.ErrInvalidToken,
-					"Authorization header is missing or invalid",
-					map[string]interface{}{
-						"error": err.Error(),
-					})
+				unauthorizedErr := apperror.Unauthorized("Authorization header is missing or invalid")
+				apperror.WriteHTTPErrorResponse(w, unauthorizedErr)
 				return
 			}
 
@@ -32,19 +28,13 @@ func JWTMiddleware(tokenManager *auth.TokenManager) func(http.Handler) http.Hand
 			if err != nil {
 				// Check if it's a token expired error
 				if strings.Contains(err.Error(), "token is expired") {
-					apperror.WriteErrorResponse(w, http.StatusUnauthorized,
-						apperror.ErrTokenExpired,
-						"Token has expired",
-						nil)
+					expiredErr := apperror.Unauthorized("Token has expired")
+					apperror.WriteHTTPErrorResponse(w, expiredErr)
 					return
 				}
 
-				apperror.WriteErrorResponse(w, http.StatusUnauthorized,
-					apperror.ErrInvalidToken,
-					"Invalid or expired token",
-					map[string]interface{}{
-						"error": err.Error(),
-					})
+				invalidErr := apperror.Unauthorized("Invalid or expired token")
+				apperror.WriteHTTPErrorResponse(w, invalidErr)
 				return
 			}
 
@@ -66,10 +56,8 @@ func AuthorizationMiddleware(requiredScope string) func(http.Handler) http.Handl
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			claims, err := auth.GetClaimsFromContext(r.Context())
 			if err != nil {
-				apperror.WriteErrorResponse(w, http.StatusUnauthorized,
-					apperror.ErrUnauthorized,
-					"Unauthorized access",
-					nil)
+				unauthorizedErr := apperror.Unauthorized("Unauthorized access")
+				apperror.WriteHTTPErrorResponse(w, unauthorizedErr)
 				return
 			}
 
@@ -83,13 +71,8 @@ func AuthorizationMiddleware(requiredScope string) func(http.Handler) http.Handl
 			}
 
 			if !hasScope {
-				apperror.WriteErrorResponse(w, http.StatusForbidden,
-					apperror.ErrPermissionDenied,
-					"insufficient permission",
-					map[string]interface{}{
-						"requiredScope": requiredScope,
-						"userScopes":    claims.Scopes,
-					})
+				forbiddenErr := apperror.Forbidden("Insufficient permission")
+				apperror.WriteHTTPErrorResponse(w, forbiddenErr)
 				return
 			}
 

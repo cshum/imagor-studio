@@ -26,7 +26,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { extractErrorMessage } from '@/lib/error-utils'
+import { useFormErrors } from '@/hooks/use-form-errors'
 import type { ProfileLoaderData } from '@/loaders/account-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
 
@@ -40,6 +40,10 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
+
+  // Initialize form error handlers
+  const { handleFormError } = useFormErrors<ProfileForm>()
+  const { handleFormError: handlePasswordError } = useFormErrors<PasswordForm>()
 
   // Create translation-aware validation schemas
   const profileSchema = z.object({
@@ -105,22 +109,17 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       await initAuth()
       toast.success(t('pages.profile.profileUpdatedSuccess'))
     } catch (err) {
-      const errorMessage = extractErrorMessage(err)
-
-      // Check if it's a validation error that should highlight a field
-      if (
-        errorMessage.toLowerCase().includes('username') &&
-        errorMessage.toLowerCase().includes('already')
-      ) {
-        profileForm.setError('username', { message: t('pages.profile.usernameAlreadyInUse') })
-      } else if (errorMessage.toLowerCase().includes('username')) {
-        profileForm.setError('username', { message: errorMessage })
-      } else if (errorMessage.toLowerCase().includes('display name')) {
-        profileForm.setError('displayName', { message: errorMessage })
-      } else {
-        // Unexpected error - show toast
-        toast.error(`${t('pages.profile.updateProfileFailed')}: ${errorMessage}`)
-      }
+      // Use the hook for simplified error handling
+      handleFormError(
+        err,
+        profileForm.setError,
+        {
+          username: {
+            ALREADY_EXISTS: 'pages.profile.usernameAlreadyInUse',
+          },
+        },
+        t('pages.profile.updateProfileFailed'),
+      )
     } finally {
       setIsUpdatingProfile(false)
     }
@@ -135,19 +134,18 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       passwordForm.reset()
       setPasswordDialogOpen(false)
     } catch (err) {
-      const errorMessage = extractErrorMessage(err)
-
-      // Check if it's a validation error that should highlight a field
-      if (errorMessage.toLowerCase().includes('current password')) {
-        passwordForm.setError('currentPassword', {
-          message: t('pages.profile.currentPasswordIncorrect'),
-        })
-      } else if (errorMessage.toLowerCase().includes('password')) {
-        passwordForm.setError('newPassword', { message: errorMessage })
-      } else {
-        // Unexpected error - show toast
-        toast.error(`${t('pages.profile.updatePasswordFailed')}: ${errorMessage}`)
-      }
+      // Use the hook for simplified error handling
+      handlePasswordError(
+        err,
+        passwordForm.setError,
+        {
+          currentPassword: {
+            // Map any error on currentPassword to the translated message
+            '*': 'pages.profile.currentPasswordIncorrect',
+          },
+        },
+        t('pages.profile.updatePasswordFailed'),
+      )
     } finally {
       setIsUpdatingPassword(false)
     }

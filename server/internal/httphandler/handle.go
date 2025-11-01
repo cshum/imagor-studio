@@ -2,7 +2,6 @@ package httphandler
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
@@ -16,17 +15,25 @@ func Handle(method string, handler HTTPHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Method validation
 		if r.Method != method {
-			apperror.WriteErrorResponse(w, http.StatusMethodNotAllowed,
-				apperror.ErrInvalidInput, "Method not allowed", nil)
+			// Create a method not allowed error with 405 status
+			w.Header().Set("Allow", method)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusMethodNotAllowed)
+
+			response := apperror.ErrorResponse{
+				Error: "Method not allowed",
+				Code:  "METHOD_NOT_ALLOWED",
+				Details: map[string]interface{}{
+					"allowedMethod":  method,
+					"receivedMethod": r.Method,
+				},
+			}
+			json.NewEncoder(w).Encode(response)
 			return
 		}
 
-		// Execute handler and handle errors
 		if err := handler(w, r); err != nil {
-			var appErr *apperror.AppError
-			if errors.As(err, &appErr) {
-				apperror.WriteErrorResponse(w, appErr.StatusCode, appErr.Code, appErr.Message, appErr.Details)
-			}
+			apperror.WriteHTTPErrorResponse(w, err)
 		}
 	}
 }
@@ -34,8 +41,7 @@ func Handle(method string, handler HTTPHandler) http.HandlerFunc {
 // DecodeJSON decodes JSON request body into the provided struct
 func DecodeJSON(r *http.Request, dest interface{}) error {
 	if err := json.NewDecoder(r.Body).Decode(dest); err != nil {
-		return apperror.NewAppError(http.StatusBadRequest, apperror.ErrInvalidInput,
-			"Invalid request body", map[string]interface{}{"error": err.Error()})
+		return apperror.BadRequest("Invalid request body", map[string]interface{}{"error": err.Error()})
 	}
 	return nil
 }

@@ -30,11 +30,6 @@ export function LoginPage() {
   const navigate = useNavigate()
   const search = useSearch({ from: '/login' })
 
-  // Redirect embedded guests to homepage to avoid login UI
-  if (authState.isEmbedded) {
-    return <Navigate to='/' replace />
-  }
-
   // Helper function to validate redirect URL for security
   const isValidRedirectUrl = (url: string): boolean => {
     // Only allow relative URLs that start with /
@@ -58,6 +53,11 @@ export function LoginPage() {
       password: '',
     },
   })
+
+  // Redirect embedded guests to homepage to avoid login UI
+  if (authState.isEmbedded) {
+    return <Navigate to='/' replace />
+  }
 
   // If already authenticated, redirect to intended destination or gallery
   if (authState.state === 'authenticated') {
@@ -88,8 +88,21 @@ export function LoginPage() {
       // Default redirect to home if no valid redirect parameter
       navigate({ to: '/' })
     } catch (err) {
+      // Map specific error messages to translations
+      let errorMessage = t('auth.login.loginFailed') // Default fallback
+
+      if (err instanceof Error) {
+        // Check if this is a login credential error
+        if (err.message === 'LOGIN_FAILED') {
+          errorMessage = t('auth.login.loginFailed')
+        } else {
+          // For system errors, show the technical message
+          errorMessage = err.message
+        }
+      }
+
       form.setError('root', {
-        message: err instanceof Error ? err.message : t('auth.login.loginFailed'),
+        message: errorMessage,
       })
     }
   }

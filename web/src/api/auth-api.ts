@@ -100,7 +100,7 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
   }
 
   return response.json()
