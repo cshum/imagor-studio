@@ -253,7 +253,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
     return (
       <>
-        <ContextMenuLabel>{contextData.imageName}</ContextMenuLabel>
+        <ContextMenuLabel className="break-all">{contextData.imageName}</ContextMenuLabel>
         <ContextMenuSeparatorComponent />
         <ContextMenuItem
           onClick={() => handleImageClick(contextData.imageKey!, contextData.position)}
