@@ -498,7 +498,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         open={copyUrlDialog.open}
         onOpenChange={(open) => setCopyUrlDialog({ open, url: copyUrlDialog.url })}
         url={copyUrlDialog.url}
-        title='Copy Image URL'
       />
 
       {/* Hidden file input for traditional upload */}
