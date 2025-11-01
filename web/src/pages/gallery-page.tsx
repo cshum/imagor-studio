@@ -2,14 +2,17 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 import { Check, Clock, FileText, FolderPlus, SortAsc, SortDesc, Upload } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
+import { deleteFile } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
+import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialog'
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
-import { ImageGrid } from '@/components/image-gallery/image-grid'
+import { ContextMenuData, ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Card, CardContent } from '@/components/ui/card'
@@ -47,6 +50,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const { isLoading, pendingMatches } = useRouterState()
   const { authState } = useAuth()
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
+  const [deleteImageDialog, setDeleteImageDialog] = useState<{
+    open: boolean
+    image: GalleryImage | null
+    isDeleting: boolean
+  }>({
+    open: false,
+    image: null,
+    isDeleting: false,
+  })
   const [uploadState, setUploadState] = useState<{
     files: DragDropFile[]
     isUploading: boolean
@@ -139,6 +151,95 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const handleFileSelectHandler = (handler: (fileList: FileList | null) => void) => {
     fileSelectHandlerRef.current = handler
+  }
+
+  const handleContextMenu = (data: ContextMenuData) => {
+    const { action, image, position } = data
+
+    switch (action) {
+      case 'open':
+        if (position) {
+          setPosition(galleryKey, image.imageKey, position)
+        }
+        // Handle navigation for root gallery vs sub-galleries
+        if (galleryKey === '') {
+          navigate({
+            to: '/$imageKey',
+            params: { imageKey: image.imageKey },
+          })
+        } else {
+          navigate({
+            to: '/gallery/$galleryKey/$imageKey',
+            params: { galleryKey, imageKey: image.imageKey },
+          })
+        }
+        break
+
+      case 'edit':
+        // Navigate to image editor using the same logic as in image-view.tsx
+        if (galleryKey) {
+          navigate({
+            to: '/gallery/$galleryKey/$imageKey/editor',
+            params: { galleryKey, imageKey: image.imageKey },
+          })
+        } else {
+          navigate({
+            to: '/$imageKey/editor',
+            params: { imageKey: image.imageKey },
+          })
+        }
+        break
+
+      case 'delete':
+        setDeleteImageDialog({
+          open: true,
+          image,
+          isDeleting: false,
+        })
+        break
+    }
+  }
+
+  const handleDeleteImage = async () => {
+    if (!deleteImageDialog.image) return
+
+    setDeleteImageDialog((prev) => ({ ...prev, isDeleting: true }))
+
+    try {
+      // Construct the full path for the image
+      const imagePath = galleryKey
+        ? `${galleryKey}/${deleteImageDialog.image.imageName}`
+        : deleteImageDialog.image.imageName
+
+      await deleteFile(imagePath)
+
+      // Show success message
+      toast.success(t('pages.gallery.deleteImage.success'))
+
+      // Close dialog
+      setDeleteImageDialog({
+        open: false,
+        image: null,
+        isDeleting: false,
+      })
+
+      // Refresh gallery data
+      router.invalidate()
+    } catch (error) {
+      console.error('Failed to delete image:', error)
+      toast.error(t('pages.gallery.deleteImage.error'))
+      setDeleteImageDialog((prev) => ({ ...prev, isDeleting: false }))
+    }
+  }
+
+  const handleDeleteDialogClose = (open: boolean) => {
+    if (!deleteImageDialog.isDeleting) {
+      setDeleteImageDialog({
+        open,
+        image: null,
+        isDeleting: false,
+      })
+    }
   }
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 48 : 38)
@@ -278,6 +379,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                         scrollTop={scrollPosition}
                         maxImageWidth={maxItemWidth}
                         onImageClick={handleImageClick}
+                        onContextMenu={handleContextMenu}
                       />
                     </>
                   )}
@@ -292,6 +394,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
         currentPath={galleryKey}
+      />
+
+      <DeleteImageDialog
+        open={deleteImageDialog.open}
+        onOpenChange={handleDeleteDialogClose}
+        imageName={deleteImageDialog.image?.imageName || ''}
+        isDeleting={deleteImageDialog.isDeleting}
+        onConfirm={handleDeleteImage}
       />
 
       {/* Hidden file input for traditional upload */}
