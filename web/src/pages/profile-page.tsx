@@ -26,7 +26,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { extractErrorInfo, extractFieldErrors } from '@/lib/error-utils'
+import { useFormErrors } from '@/hooks/use-form-errors'
 import type { ProfileLoaderData } from '@/loaders/account-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
 
@@ -40,6 +40,10 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
+
+  // Initialize form error handlers
+  const { handleFormError } = useFormErrors<ProfileForm>()
+  const { handleFormError: handlePasswordError } = useFormErrors<PasswordForm>()
 
   // Create translation-aware validation schemas
   const profileSchema = z.object({
@@ -105,33 +109,17 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       await initAuth()
       toast.success(t('pages.profile.profileUpdatedSuccess'))
     } catch (err) {
-      // Use field-based error handling instead of string parsing
-      const errorInfo = extractErrorInfo(err)
-      const fieldErrors = extractFieldErrors(err)
-
-      // Check for field-specific errors first
-      if (fieldErrors.username) {
-        // Use translated message for username conflicts
-        if (errorInfo.code === 'ALREADY_EXISTS') {
-          profileForm.setError('username', { message: t('pages.profile.usernameAlreadyInUse') })
-        } else {
-          profileForm.setError('username', { message: fieldErrors.username })
-        }
-      } else if (fieldErrors.displayName) {
-        profileForm.setError('displayName', { message: fieldErrors.displayName })
-      } else if (errorInfo.field === 'username') {
-        // Fallback to single error with field targeting
-        if (errorInfo.code === 'ALREADY_EXISTS') {
-          profileForm.setError('username', { message: t('pages.profile.usernameAlreadyInUse') })
-        } else {
-          profileForm.setError('username', { message: errorInfo.message })
-        }
-      } else if (errorInfo.field === 'displayName') {
-        profileForm.setError('displayName', { message: errorInfo.message })
-      } else {
-        // No field targeting - show general error
-        toast.error(`${t('pages.profile.updateProfileFailed')}: ${errorInfo.message}`)
-      }
+      // Use the hook for simplified error handling
+      handleFormError(
+        err,
+        profileForm.setError,
+        {
+          username: {
+            ALREADY_EXISTS: 'pages.profile.usernameAlreadyInUse',
+          },
+        },
+        t('pages.profile.updateProfileFailed'),
+      )
     } finally {
       setIsUpdatingProfile(false)
     }
@@ -146,27 +134,18 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       passwordForm.reset()
       setPasswordDialogOpen(false)
     } catch (err) {
-      // Use field-based error handling instead of string parsing
-      const errorInfo = extractErrorInfo(err)
-      const fieldErrors = extractFieldErrors(err)
-
-      // Check for field-specific errors first
-      if (fieldErrors.currentPassword) {
-        passwordForm.setError('currentPassword', {
-          message: t('pages.profile.currentPasswordIncorrect'),
-        })
-      } else if (fieldErrors.newPassword) {
-        passwordForm.setError('newPassword', { message: fieldErrors.newPassword })
-      } else if (errorInfo.field === 'currentPassword') {
-        passwordForm.setError('currentPassword', {
-          message: t('pages.profile.currentPasswordIncorrect'),
-        })
-      } else if (errorInfo.field === 'newPassword') {
-        passwordForm.setError('newPassword', { message: errorInfo.message })
-      } else {
-        // No field targeting - show general error
-        toast.error(`${t('pages.profile.updatePasswordFailed')}: ${errorInfo.message}`)
-      }
+      // Use the hook for simplified error handling
+      handlePasswordError(
+        err,
+        passwordForm.setError,
+        {
+          currentPassword: {
+            // Map any error on currentPassword to the translated message
+            '*': 'pages.profile.currentPasswordIncorrect',
+          },
+        },
+        t('pages.profile.updatePasswordFailed'),
+      )
     } finally {
       setIsUpdatingPassword(false)
     }
