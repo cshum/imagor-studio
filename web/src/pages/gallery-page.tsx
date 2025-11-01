@@ -12,7 +12,8 @@ import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialo
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
-import { ContextMenuData, ImageGrid } from '@/components/image-gallery/image-grid'
+import { ImageContextMenu } from '@/components/image-gallery/image-context-menu'
+import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Card, CardContent } from '@/components/ui/card'
@@ -151,53 +152,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const handleFileSelectHandler = (handler: (fileList: FileList | null) => void) => {
     fileSelectHandlerRef.current = handler
-  }
-
-  const handleContextMenu = (data: ContextMenuData) => {
-    const { action, image, position } = data
-
-    switch (action) {
-      case 'open':
-        if (position) {
-          setPosition(galleryKey, image.imageKey, position)
-        }
-        // Handle navigation for root gallery vs sub-galleries
-        if (galleryKey === '') {
-          navigate({
-            to: '/$imageKey',
-            params: { imageKey: image.imageKey },
-          })
-        } else {
-          navigate({
-            to: '/gallery/$galleryKey/$imageKey',
-            params: { galleryKey, imageKey: image.imageKey },
-          })
-        }
-        break
-
-      case 'edit':
-        // Navigate to image editor using the same logic as in image-view.tsx
-        if (galleryKey) {
-          navigate({
-            to: '/gallery/$galleryKey/$imageKey/editor',
-            params: { galleryKey, imageKey: image.imageKey },
-          })
-        } else {
-          navigate({
-            to: '/$imageKey/editor',
-            params: { imageKey: image.imageKey },
-          })
-        }
-        break
-
-      case 'delete':
-        setDeleteImageDialog({
-          open: true,
-          image,
-          isDeleting: false,
-        })
-        break
-    }
   }
 
   const handleDeleteImage = async () => {
@@ -379,7 +333,33 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                         scrollTop={scrollPosition}
                         maxImageWidth={maxItemWidth}
                         onImageClick={handleImageClick}
-                        onContextMenu={handleContextMenu}
+                        contextMenuComponent={(image) => (
+                          <ImageContextMenu
+                            image={image}
+                            onImageClick={handleImageClick}
+                            onEdit={(image) => {
+                              // Navigate to image editor
+                              if (galleryKey) {
+                                navigate({
+                                  to: '/gallery/$galleryKey/$imageKey/editor',
+                                  params: { galleryKey, imageKey: image.imageKey },
+                                })
+                              } else {
+                                navigate({
+                                  to: '/$imageKey/editor',
+                                  params: { imageKey: image.imageKey },
+                                })
+                              }
+                            }}
+                            onDelete={(image) => {
+                              setDeleteImageDialog({
+                                open: true,
+                                image,
+                                isDeleting: false,
+                              })
+                            }}
+                          />
+                        )}
                       />
                     </>
                   )}
