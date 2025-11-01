@@ -26,7 +26,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { extractErrorMessage } from '@/lib/error-utils'
+import { extractErrorInfo, extractFieldErrors } from '@/lib/error-utils'
 import type { ProfileLoaderData } from '@/loaders/account-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
 
@@ -105,21 +105,32 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       await initAuth()
       toast.success(t('pages.profile.profileUpdatedSuccess'))
     } catch (err) {
-      const errorMessage = extractErrorMessage(err)
+      // Use field-based error handling instead of string parsing
+      const errorInfo = extractErrorInfo(err)
+      const fieldErrors = extractFieldErrors(err)
 
-      // Check if it's a validation error that should highlight a field
-      if (
-        errorMessage.toLowerCase().includes('username') &&
-        errorMessage.toLowerCase().includes('already')
-      ) {
-        profileForm.setError('username', { message: t('pages.profile.usernameAlreadyInUse') })
-      } else if (errorMessage.toLowerCase().includes('username')) {
-        profileForm.setError('username', { message: errorMessage })
-      } else if (errorMessage.toLowerCase().includes('display name')) {
-        profileForm.setError('displayName', { message: errorMessage })
+      // Check for field-specific errors first
+      if (fieldErrors.username) {
+        // Use translated message for username conflicts
+        if (errorInfo.code === 'ALREADY_EXISTS') {
+          profileForm.setError('username', { message: t('pages.profile.usernameAlreadyInUse') })
+        } else {
+          profileForm.setError('username', { message: fieldErrors.username })
+        }
+      } else if (fieldErrors.displayName) {
+        profileForm.setError('displayName', { message: fieldErrors.displayName })
+      } else if (errorInfo.field === 'username') {
+        // Fallback to single error with field targeting
+        if (errorInfo.code === 'ALREADY_EXISTS') {
+          profileForm.setError('username', { message: t('pages.profile.usernameAlreadyInUse') })
+        } else {
+          profileForm.setError('username', { message: errorInfo.message })
+        }
+      } else if (errorInfo.field === 'displayName') {
+        profileForm.setError('displayName', { message: errorInfo.message })
       } else {
-        // Unexpected error - show toast
-        toast.error(`${t('pages.profile.updateProfileFailed')}: ${errorMessage}`)
+        // No field targeting - show general error
+        toast.error(`${t('pages.profile.updateProfileFailed')}: ${errorInfo.message}`)
       }
     } finally {
       setIsUpdatingProfile(false)
@@ -135,18 +146,26 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       passwordForm.reset()
       setPasswordDialogOpen(false)
     } catch (err) {
-      const errorMessage = extractErrorMessage(err)
+      // Use field-based error handling instead of string parsing
+      const errorInfo = extractErrorInfo(err)
+      const fieldErrors = extractFieldErrors(err)
 
-      // Check if it's a validation error that should highlight a field
-      if (errorMessage.toLowerCase().includes('current password')) {
+      // Check for field-specific errors first
+      if (fieldErrors.currentPassword) {
         passwordForm.setError('currentPassword', {
           message: t('pages.profile.currentPasswordIncorrect'),
         })
-      } else if (errorMessage.toLowerCase().includes('password')) {
-        passwordForm.setError('newPassword', { message: errorMessage })
+      } else if (fieldErrors.newPassword) {
+        passwordForm.setError('newPassword', { message: fieldErrors.newPassword })
+      } else if (errorInfo.field === 'currentPassword') {
+        passwordForm.setError('currentPassword', {
+          message: t('pages.profile.currentPasswordIncorrect'),
+        })
+      } else if (errorInfo.field === 'newPassword') {
+        passwordForm.setError('newPassword', { message: errorInfo.message })
       } else {
-        // Unexpected error - show toast
-        toast.error(`${t('pages.profile.updatePasswordFailed')}: ${errorMessage}`)
+        // No field targeting - show general error
+        toast.error(`${t('pages.profile.updatePasswordFailed')}: ${errorInfo.message}`)
       }
     } finally {
       setIsUpdatingPassword(false)
