@@ -328,9 +328,6 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserI
 		if strings.Contains(err.Error(), "username already exists") {
 			return nil, apperror.Conflict("Username already exists", "username", "input.username")
 		}
-		if strings.Contains(err.Error(), "displayName already exists") {
-			return nil, apperror.Conflict("Display name already exists", "displayName", "input.displayName")
-		}
 		r.logger.Error("Failed to create user", zap.Error(err))
 		return nil, apperror.InternalServerError("Failed to create user")
 	}

@@ -172,9 +172,12 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			return err
 		}
 
-		// Validate input - return generic login failed for missing credentials
-		if strings.TrimSpace(req.Username) == "" || strings.TrimSpace(req.Password) == "" {
-			return apperror.InvalidCredentials("LOGIN_FAILED")
+		// Validate input - return validation error for missing credentials
+		if strings.TrimSpace(req.Username) == "" {
+			return apperror.BadRequest("Username is required", nil)
+		}
+		if strings.TrimSpace(req.Password) == "" {
+			return apperror.BadRequest("Password is required", nil)
 		}
 
 		// Normalize username
@@ -396,9 +399,6 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	if err != nil {
 		if strings.Contains(err.Error(), "username already exists") {
 			return nil, apperror.Conflict("Username already exists", "username")
-		}
-		if strings.Contains(err.Error(), "displayName already exists") {
-			return nil, apperror.Conflict("Display name already exists", "displayName")
 		}
 		if strings.Contains(err.Error(), "already exists") {
 			return nil, apperror.Conflict(err.Error())

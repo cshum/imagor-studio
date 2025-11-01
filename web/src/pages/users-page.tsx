@@ -36,7 +36,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ListUsersQuery, User } from '@/generated/graphql'
-import { extractErrorMessage } from '@/lib/error-utils'
+import { useFormErrors } from '@/hooks/use-form-errors'
 
 interface UsersPageProps {
   loaderData?: ListUsersQuery['users']
@@ -92,6 +92,10 @@ export function UsersPage({ loaderData }: UsersPageProps) {
   const [isDeactivating, setIsDeactivating] = useState<string | null>(null)
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
 
+  // Initialize form error handlers
+  const { handleFormError: handleCreateError } = useFormErrors<CreateUserFormData>()
+  const { handleFormError: handleEditError } = useFormErrors<EditUserFormData>()
+
   // Use loader data directly
   const users = loaderData?.items || []
   const totalCount = loaderData?.totalCount || 0
@@ -124,22 +128,16 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       createForm.reset()
       await router.invalidate()
     } catch (err) {
-      const errorMessage = extractErrorMessage(err)
-
-      // Check if it's a validation error that should highlight a field
-      if (
-        errorMessage.toLowerCase().includes('username') &&
-        errorMessage.toLowerCase().includes('already')
-      ) {
-        createForm.setError('username', { message: 'This username is already in use' })
-      } else if (errorMessage.toLowerCase().includes('username')) {
-        createForm.setError('username', { message: errorMessage })
-      } else if (errorMessage.toLowerCase().includes('display name')) {
-        createForm.setError('displayName', { message: errorMessage })
-      } else {
-        // Unexpected error - show toast
-        toast.error(`Failed to create user: ${errorMessage}`)
-      }
+      handleCreateError(
+        err,
+        createForm.setError,
+        {
+          username: {
+            ALREADY_EXISTS: 'This username is already in use',
+          },
+        },
+        'Failed to create user',
+      )
     } finally {
       setIsCreating(false)
     }
@@ -159,22 +157,16 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       setSelectedUser(null)
       await router.invalidate()
     } catch (err) {
-      const errorMessage = extractErrorMessage(err)
-
-      // Check if it's a validation error that should highlight a field
-      if (
-        errorMessage.toLowerCase().includes('username') &&
-        errorMessage.toLowerCase().includes('already')
-      ) {
-        editForm.setError('username', { message: 'This username is already in use' })
-      } else if (errorMessage.toLowerCase().includes('username')) {
-        editForm.setError('username', { message: errorMessage })
-      } else if (errorMessage.toLowerCase().includes('display name')) {
-        editForm.setError('displayName', { message: errorMessage })
-      } else {
-        // Unexpected error - show toast
-        toast.error(`Failed to update user: ${errorMessage}`)
-      }
+      handleEditError(
+        err,
+        editForm.setError,
+        {
+          username: {
+            ALREADY_EXISTS: 'This username is already in use',
+          },
+        },
+        'Failed to update user',
+      )
     } finally {
       setIsUpdating(false)
     }
@@ -189,7 +181,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       setSelectedUser(null)
       await router.invalidate()
     } catch (err) {
-      const errorMessage = extractErrorMessage(err)
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       toast.error(`Failed to ${isActive ? 'deactivate' : 'reactivate'} user: ${errorMessage}`)
     } finally {
       setIsDeactivating(null)
