@@ -1,18 +1,37 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
-import { Check, Clock, FileText, FolderPlus, SortAsc, SortDesc, Upload } from 'lucide-react'
+import {
+  Check,
+  Clock,
+  Eye,
+  FileText,
+  FolderPlus,
+  Pencil,
+  SortAsc,
+  SortDesc,
+  Trash2,
+  Upload,
+} from 'lucide-react'
+import { toast } from 'sonner'
 
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
+import { deleteFile } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
+import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialog'
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
+import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
-import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator as ContextMenuSeparatorComponent,
+} from '@/components/ui/context-menu'
 import {
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -47,6 +66,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const { isLoading, pendingMatches } = useRouterState()
   const { authState } = useAuth()
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
+  const [deleteImageDialog, setDeleteImageDialog] = useState<{
+    open: boolean
+    imageKey: string | null
+    isDeleting: boolean
+  }>({
+    open: false,
+    imageKey: null,
+    isDeleting: false,
+  })
   const [uploadState, setUploadState] = useState<{
     files: DragDropFile[]
     isUploading: boolean
@@ -97,7 +125,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     requestAnimationFrame(() => restoreScrollPosition(galleryKey))
   }, [galleryKey])
 
-  const handleImageClick = ({ imageKey }: GalleryImage, position: ImagePosition | null) => {
+  const handleImageClick = (imageKey: string, position?: ImagePosition | null) => {
     if (position) {
       setPosition(galleryKey, imageKey, position)
     }
@@ -139,6 +167,101 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const handleFileSelectHandler = (handler: (fileList: FileList | null) => void) => {
     fileSelectHandlerRef.current = handler
+  }
+
+  const handleEditImage = (imageKey: string) => {
+    if (galleryKey) {
+      navigate({
+        to: '/gallery/$galleryKey/$imageKey/editor',
+        params: { galleryKey, imageKey },
+      })
+    } else {
+      navigate({
+        to: '/$imageKey/editor',
+        params: { imageKey },
+      })
+    }
+  }
+
+  const handleDeleteImageFromMenu = (imageKey: string) => {
+    setDeleteImageDialog({
+      open: true,
+      imageKey,
+      isDeleting: false,
+    })
+  }
+
+  const handleDeleteImage = async () => {
+    if (!deleteImageDialog.imageKey) return
+
+    setDeleteImageDialog((prev) => ({ ...prev, isDeleting: true }))
+
+    try {
+      const imagePath = galleryKey
+        ? `${galleryKey}/${deleteImageDialog.imageKey}`
+        : deleteImageDialog.imageKey
+
+      await deleteFile(imagePath)
+
+      toast.success(t('pages.gallery.deleteImage.success'))
+
+      setDeleteImageDialog({
+        open: false,
+        imageKey: null,
+        isDeleting: false,
+      })
+
+      router.invalidate()
+    } catch {
+      toast.error(t('pages.gallery.deleteImage.error'))
+      setDeleteImageDialog((prev) => ({ ...prev, isDeleting: false }))
+    }
+  }
+
+  const handleDeleteDialogClose = (open: boolean) => {
+    if (!deleteImageDialog.isDeleting) {
+      setDeleteImageDialog({
+        open,
+        imageKey: null,
+        isDeleting: false,
+      })
+    }
+  }
+
+  const renderContextMenuItems = ({ imageName, imageKey, position, isVideo }: ImageContextData) => {
+    const isAuthenticated = authState.state === 'authenticated'
+    const canEdit = (isAuthenticated || authState.isEmbedded) && !isVideo
+
+    if (!imageKey) return null
+
+    return (
+      <>
+        <ContextMenuLabel className='break-all'>{imageName}</ContextMenuLabel>
+        <ContextMenuSeparatorComponent />
+        <ContextMenuItem onClick={() => handleImageClick(imageKey, position)}>
+          <Eye className='mr-2 h-4 w-4' />
+          {t('pages.gallery.contextMenu.open')}
+        </ContextMenuItem>
+        {canEdit && (
+          <ContextMenuItem onClick={() => handleEditImage(imageKey)}>
+            <Pencil className='mr-2 h-4 w-4' />
+            {t('pages.gallery.contextMenu.edit')}
+          </ContextMenuItem>
+        )}
+        {isAuthenticated && (
+          <ContextMenuItem
+            onClick={() => {
+              // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
+              setTimeout(() => handleDeleteImageFromMenu(imageKey), 0)
+            }}
+            className='text-destructive focus:text-destructive'
+          >
+            <Trash2 className='mr-2 h-4 w-4' />
+            {t('pages.gallery.contextMenu.delete')}
+          </ContextMenuItem>
+        )}
+      </>
+    )
   }
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 48 : 38)
@@ -271,14 +394,16 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                         width={contentWidth}
                         maxFolderWidth={maxItemWidth}
                       />
-                      <ImageGrid
-                        images={images}
-                        aspectRatio={4 / 3}
-                        width={contentWidth}
-                        scrollTop={scrollPosition}
-                        maxImageWidth={maxItemWidth}
-                        onImageClick={handleImageClick}
-                      />
+                      <ImageContextMenu renderMenuItems={renderContextMenuItems}>
+                        <ImageGrid
+                          images={images}
+                          aspectRatio={4 / 3}
+                          width={contentWidth}
+                          scrollTop={scrollPosition}
+                          maxImageWidth={maxItemWidth}
+                          onImageClick={handleImageClick}
+                        />
+                      </ImageContextMenu>
                     </>
                   )}
                 </>
@@ -292,6 +417,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
         currentPath={galleryKey}
+      />
+
+      <DeleteImageDialog
+        open={deleteImageDialog.open}
+        onOpenChange={handleDeleteDialogClose}
+        imageName={deleteImageDialog.imageKey || ''}
+        isDeleting={deleteImageDialog.isDeleting}
+        onConfirm={handleDeleteImage}
       />
 
       {/* Hidden file input for traditional upload */}

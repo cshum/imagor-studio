@@ -157,6 +157,18 @@
           "uploadFailedAll": "Failed to upload {{count}} file",
           "uploadFailedAllPlural": "Failed to upload {{count}} files"
         }
+      },
+      "contextMenu": {
+        "open": "Open",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "deleteImage": {
+        "title": "Delete Image",
+        "description": "Are you sure you want to delete this image?",
+        "warning": "This action cannot be undone.",
+        "success": "Image deleted successfully",
+        "error": "Failed to delete image"
       }
     },
     "profile": {
