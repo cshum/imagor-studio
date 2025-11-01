@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import {
   Dialog,
   DialogContent,
@@ -50,9 +51,9 @@ export function DeleteImageDialog({
           <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isDeleting}>
             {t('common.buttons.cancel')}
           </Button>
-          <Button variant='destructive' onClick={onConfirm} disabled={isDeleting}>
-            {isDeleting ? t('pages.gallery.deleteImage.deleting') : t('common.buttons.delete')}
-          </Button>
+          <ButtonWithLoading variant='destructive' onClick={onConfirm} isLoading={isDeleting}>
+            {t('common.buttons.delete')}
+          </ButtonWithLoading>
         </DialogFooter>
       </DialogContent>
     </Dialog>
