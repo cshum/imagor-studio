@@ -42,25 +42,34 @@ interface UsersPageProps {
   loaderData?: ListUsersQuery['users']
 }
 
-const createUserSchema = z.object({
-  displayName: z
-    .string()
-    .min(3, 'Display name must be at least 3 characters long')
-    .max(100, 'Display name must be less than 100 characters'),
-  username: z
-    .string()
-    .min(3, 'Username must be at least 3 characters')
-    .max(30, 'Username must be at most 30 characters')
-    .regex(
-      /^[a-zA-Z0-9_-]+$/,
-      'Username can only contain letters, numbers, underscores, and hyphens',
-    ),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters long')
-    .max(72, 'Password must be less than 72 characters'),
-  role: z.enum(['user', 'admin']),
-})
+const createUserSchema = z
+  .object({
+    displayName: z
+      .string()
+      .min(3, 'Display name must be at least 3 characters long')
+      .max(100, 'Display name must be less than 100 characters'),
+    username: z
+      .string()
+      .min(3, 'Username must be at least 3 characters')
+      .max(30, 'Username must be at most 30 characters')
+      .regex(
+        /^[a-zA-Z0-9_-]+$/,
+        'Username can only contain letters, numbers, underscores, and hyphens',
+      ),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters long')
+      .max(72, 'Password must be less than 72 characters'),
+    confirmPassword: z
+      .string()
+      .min(8, 'Password must be at least 8 characters long')
+      .max(72, 'Password must be less than 72 characters'),
+    role: z.enum(['user', 'admin']),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
 
 const editUserSchema = z.object({
   displayName: z
@@ -106,6 +115,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       displayName: '',
       username: '',
       password: '',
+      confirmPassword: '',
       role: 'user',
     },
   })
@@ -122,7 +132,13 @@ export function UsersPage({ loaderData }: UsersPageProps) {
   const handleCreateUser = async (values: CreateUserFormData) => {
     setIsCreating(true)
     try {
-      await createUser(values)
+      const createUserData = {
+        displayName: values.displayName,
+        username: values.username,
+        password: values.password,
+        role: values.role,
+      }
+      await createUser(createUserData)
       toast.success('User created successfully!')
       setIsCreateDialogOpen(false)
       createForm.reset()
@@ -272,6 +288,25 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                             <Input
                               type='password'
                               placeholder='Enter password'
+                              {...field}
+                              disabled={isCreating}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={createForm.control}
+                      name='confirmPassword'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirm Password</FormLabel>
+                          <FormControl>
+                            <Input
+                              type='password'
+                              placeholder='Confirm password'
                               {...field}
                               disabled={isCreating}
                             />
