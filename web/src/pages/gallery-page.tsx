@@ -1,7 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
-import { Check, Clock, FileText, FolderPlus, SortAsc, SortDesc, Upload } from 'lucide-react'
+import {
+  Check,
+  Clock,
+  Eye,
+  FileText,
+  FolderPlus,
+  Pencil,
+  SortAsc,
+  SortDesc,
+  Trash2,
+  Upload,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
@@ -12,11 +23,19 @@ import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialo
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
-import { ContextMenuData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
+import {
+  ImageContextData,
+  ImageContextMenu,
+} from '@/components/image-gallery/image-context-menu'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator as ContextMenuSeparatorComponent,
+} from '@/components/ui/context-menu'
 import {
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -154,55 +173,63 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     fileSelectHandlerRef.current = handler
   }
 
-  const handleContextMenu = (data: ContextMenuData) => {
-    const { action, imageKey, position } = data
+  const handleOpenImage = (imageKey: string) => {
+    // Get position from DOM element
+    const rect = document
+      .querySelector(`[data-image-key="${imageKey}"]`)
+      ?.getBoundingClientRect()
+    const position = rect
+      ? {
+          top: Math.round(rect.top),
+          left: Math.round(rect.left),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        }
+      : null
 
+    if (position) {
+      setPosition(galleryKey, imageKey, position)
+    }
+
+    // Handle navigation for root gallery vs sub-galleries
+    if (galleryKey === '') {
+      navigate({
+        to: '/$imageKey',
+        params: { imageKey },
+      })
+    } else {
+      navigate({
+        to: '/gallery/$galleryKey/$imageKey',
+        params: { galleryKey, imageKey },
+      })
+    }
+  }
+
+  const handleEditImage = (imageKey: string) => {
+    // Navigate to image editor using the same logic as in image-view.tsx
+    if (galleryKey) {
+      navigate({
+        to: '/gallery/$galleryKey/$imageKey/editor',
+        params: { galleryKey, imageKey },
+      })
+    } else {
+      navigate({
+        to: '/$imageKey/editor',
+        params: { imageKey },
+      })
+    }
+  }
+
+  const handleDeleteImageFromMenu = (imageKey: string) => {
     // Find the full image object from the imageKey
     const image = images.find((img) => img.imageKey === imageKey)
     if (!image) return
 
-    switch (action) {
-      case 'open':
-        if (position) {
-          setPosition(galleryKey, imageKey, position)
-        }
-        // Handle navigation for root gallery vs sub-galleries
-        if (galleryKey === '') {
-          navigate({
-            to: '/$imageKey',
-            params: { imageKey },
-          })
-        } else {
-          navigate({
-            to: '/gallery/$galleryKey/$imageKey',
-            params: { galleryKey, imageKey },
-          })
-        }
-        break
-
-      case 'edit':
-        // Navigate to image editor using the same logic as in image-view.tsx
-        if (galleryKey) {
-          navigate({
-            to: '/gallery/$galleryKey/$imageKey/editor',
-            params: { galleryKey, imageKey },
-          })
-        } else {
-          navigate({
-            to: '/$imageKey/editor',
-            params: { imageKey },
-          })
-        }
-        break
-
-      case 'delete':
-        setDeleteImageDialog({
-          open: true,
-          image,
-          isDeleting: false,
-        })
-        break
-    }
+    setDeleteImageDialog({
+      open: true,
+      image,
+      isDeleting: false,
+    })
   }
 
   const handleDeleteImage = async () => {
@@ -244,6 +271,42 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         isDeleting: false,
       })
     }
+  }
+
+  const renderContextMenuItems = (contextData: ImageContextData) => {
+    const isAuthenticated = authState.state === 'authenticated' || authState.isEmbedded
+    const canEdit = isAuthenticated && !contextData.isVideo
+
+    if (!contextData.imageKey) return null
+
+    return (
+      <>
+        <ContextMenuLabel>{contextData.imageName}</ContextMenuLabel>
+        <ContextMenuSeparatorComponent />
+        <ContextMenuItem onClick={() => handleOpenImage(contextData.imageKey!)}>
+          <Eye className='mr-2 h-4 w-4' />
+          {t('pages.gallery.contextMenu.open')}
+        </ContextMenuItem>
+        {canEdit && (
+          <ContextMenuItem onClick={() => handleEditImage(contextData.imageKey!)}>
+            <Pencil className='mr-2 h-4 w-4' />
+            {t('pages.gallery.contextMenu.edit')}
+          </ContextMenuItem>
+        )}
+        {isAuthenticated && (
+          <ContextMenuItem
+            onClick={() => {
+              // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
+              setTimeout(() => handleDeleteImageFromMenu(contextData.imageKey!), 0)
+            }}
+            className='text-destructive focus:text-destructive'
+          >
+            <Trash2 className='mr-2 h-4 w-4' />
+            {t('pages.gallery.contextMenu.delete')}
+          </ContextMenuItem>
+        )}
+      </>
+    )
   }
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 48 : 38)
@@ -376,7 +439,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                         width={contentWidth}
                         maxFolderWidth={maxItemWidth}
                       />
-                      <ImageContextMenu onContextMenu={handleContextMenu}>
+                      <ImageContextMenu renderMenuItems={renderContextMenuItems}>
                         <ImageGrid
                           images={images}
                           aspectRatio={4 / 3}
