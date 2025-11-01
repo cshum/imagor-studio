@@ -53,6 +53,7 @@ const ImageCell = ({
           src={getFullImageUrl(image.imageSrc)}
           alt={image.imageName}
           className='h-full w-full object-cover'
+          draggable={false}
         />
         {image.isVideo && (
           <div className='absolute right-3 bottom-2 rounded-full bg-black/60 p-1 p-2 transition-opacity group-hover:bg-black/75'>
