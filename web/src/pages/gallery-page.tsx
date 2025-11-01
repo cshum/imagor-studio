@@ -170,7 +170,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   }
 
   const handleEditImage = (imageKey: string) => {
-    // Navigate to image editor using the same logic as in image-view.tsx
     if (galleryKey) {
       navigate({
         to: '/gallery/$galleryKey/$imageKey/editor',
@@ -185,7 +184,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   }
 
   const handleDeleteImageFromMenu = (imageKey: string) => {
-    // Since imageKey === imageName in the loader, no lookup needed
     setDeleteImageDialog({
       open: true,
       imageKey,
@@ -199,24 +197,20 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     setDeleteImageDialog((prev) => ({ ...prev, isDeleting: true }))
 
     try {
-      // Construct the full path for the image
       const imagePath = galleryKey
         ? `${galleryKey}/${deleteImageDialog.imageKey}`
         : deleteImageDialog.imageKey
 
       await deleteFile(imagePath)
 
-      // Show success message
       toast.success(t('pages.gallery.deleteImage.success'))
 
-      // Close dialog
       setDeleteImageDialog({
         open: false,
         imageKey: null,
         isDeleting: false,
       })
 
-      // Refresh gallery data
       router.invalidate()
     } catch {
       toast.error(t('pages.gallery.deleteImage.error'))
