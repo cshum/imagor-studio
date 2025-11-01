@@ -4,6 +4,8 @@ import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 import {
   Check,
   Clock,
+  Copy,
+  Download,
   Eye,
   FileText,
   FolderPlus,
@@ -15,6 +17,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { generateImagorUrl } from '@/api/imagor-api'
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { deleteFile } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
@@ -32,18 +35,20 @@ import {
   ContextMenuLabel,
   ContextMenuSeparator as ContextMenuSeparatorComponent,
 } from '@/components/ui/context-menu'
+import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
 import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { UploadProgress } from '@/components/upload/upload-progress.tsx'
-import { SortOption, SortOrder } from '@/generated/graphql'
+import { ImagorParamsInput, SortOption, SortOrder } from '@/generated/graphql'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
 import { DragDropFile } from '@/hooks/use-drag-drop.ts'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
+import { getFullImageUrl } from '@/lib/api-utils'
 import { ContentLayout } from '@/layouts/content-layout'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
@@ -83,6 +88,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     retryFile: (id: string) => Promise<void>
     clearFiles: () => void
   } | null>(null)
+  const [copyUrlDialog, setCopyUrlDialog] = useState<{
+    open: boolean
+    url: string
+  }>({
+    open: false,
+    url: '',
+  })
 
   const {
     galleryName,
@@ -228,6 +240,44 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
+  const handleCopyUrl = async (imageKey: string) => {
+    try {
+      // Generate original image URL (no transformations)
+      const url = await generateImagorUrl({
+        galleryKey,
+        imageKey,
+        params: {} as ImagorParamsInput, // Empty params for original image
+      })
+      
+      const fullUrl = getFullImageUrl(url)
+      setCopyUrlDialog({
+        open: true,
+        url: fullUrl,
+      })
+    } catch (error) {
+      toast.error(t('pages.gallery.contextMenu.copyUrlError'))
+    }
+  }
+
+  const handleDownload = async (imageKey: string) => {
+    try {
+      // Generate download URL with attachment filter
+      const url = await generateImagorUrl({
+        galleryKey,
+        imageKey,
+        params: {
+          filters: [{ name: 'attachment', args: '' }], // Empty args for default filename
+        } as ImagorParamsInput,
+      })
+      
+      const fullUrl = getFullImageUrl(url)
+      // Use location.href for reliable downloads across all browsers
+      window.location.href = fullUrl
+    } catch (error) {
+      toast.error(t('pages.gallery.contextMenu.downloadError'))
+    }
+  }
+
   const renderContextMenuItems = ({ imageName, imageKey, position, isVideo }: ImageContextData) => {
     const isAuthenticated = authState.state === 'authenticated'
     const canEdit = (isAuthenticated || authState.isEmbedded) && !isVideo
@@ -248,17 +298,28 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             {t('pages.gallery.contextMenu.edit')}
           </ContextMenuItem>
         )}
+        <ContextMenuItem onClick={() => handleCopyUrl(imageKey)}>
+          <Copy className='mr-2 h-4 w-4' />
+          Copy URL
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => handleDownload(imageKey)}>
+          <Download className='mr-2 h-4 w-4' />
+          Download
+        </ContextMenuItem>
         {isAuthenticated && (
-          <ContextMenuItem
-            onClick={() => {
-              // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
-              setTimeout(() => handleDeleteImageFromMenu(imageKey), 0)
-            }}
-            className='text-destructive focus:text-destructive'
-          >
-            <Trash2 className='mr-2 h-4 w-4' />
-            {t('pages.gallery.contextMenu.delete')}
-          </ContextMenuItem>
+          <>
+            <ContextMenuSeparatorComponent />
+            <ContextMenuItem
+              onClick={() => {
+                // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
+                setTimeout(() => handleDeleteImageFromMenu(imageKey), 0)
+              }}
+              className='text-destructive focus:text-destructive'
+            >
+              <Trash2 className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.delete')}
+            </ContextMenuItem>
+          </>
         )}
       </>
     )
@@ -425,6 +486,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         imageName={deleteImageDialog.imageKey || ''}
         isDeleting={deleteImageDialog.isDeleting}
         onConfirm={handleDeleteImage}
+      />
+
+      <CopyUrlDialog
+        open={copyUrlDialog.open}
+        onOpenChange={(open) => setCopyUrlDialog({ open, url: copyUrlDialog.url })}
+        url={copyUrlDialog.url}
+        title='Copy Image URL'
       />
 
       {/* Hidden file input for traditional upload */}
