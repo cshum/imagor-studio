@@ -234,24 +234,22 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
-  const renderContextMenuItems = (contextData: ImageContextData) => {
-    const isAuthenticated = authState.state === 'authenticated' || authState.isEmbedded
-    const canEdit = isAuthenticated && !contextData.isVideo
+  const renderContextMenuItems = ({ imageName, imageKey, position, isVideo }: ImageContextData) => {
+    const isAuthenticated = authState.state === 'authenticated'
+    const canEdit = (isAuthenticated || authState.isEmbedded) && !isVideo
 
-    if (!contextData.imageKey) return null
+    if (!imageKey) return null
 
     return (
       <>
-        <ContextMenuLabel className='break-all'>{contextData.imageName}</ContextMenuLabel>
+        <ContextMenuLabel className='break-all'>{imageName}</ContextMenuLabel>
         <ContextMenuSeparatorComponent />
-        <ContextMenuItem
-          onClick={() => handleImageClick(contextData.imageKey!, contextData.position)}
-        >
+        <ContextMenuItem onClick={() => handleImageClick(imageKey, position)}>
           <Eye className='mr-2 h-4 w-4' />
           {t('pages.gallery.contextMenu.open')}
         </ContextMenuItem>
         {canEdit && (
-          <ContextMenuItem onClick={() => handleEditImage(contextData.imageKey!)}>
+          <ContextMenuItem onClick={() => handleEditImage(imageKey)}>
             <Pencil className='mr-2 h-4 w-4' />
             {t('pages.gallery.contextMenu.edit')}
           </ContextMenuItem>
@@ -260,7 +258,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           <ContextMenuItem
             onClick={() => {
               // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
-              setTimeout(() => handleDeleteImageFromMenu(contextData.imageKey!), 0)
+              setTimeout(() => handleDeleteImageFromMenu(imageKey), 0)
             }}
             className='text-destructive focus:text-destructive'
           >
