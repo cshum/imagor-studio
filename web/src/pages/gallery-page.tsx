@@ -1,18 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
-import {
-  Check,
-  Clock,
-  Eye,
-  FileText,
-  FolderPlus,
-  Pencil,
-  SortAsc,
-  SortDesc,
-  Trash2,
-  Upload,
-} from 'lucide-react'
+import { Check, Clock, FileText, FolderPlus, SortAsc, SortDesc, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
@@ -23,15 +12,10 @@ import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialo
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
-import { ImageGrid } from '@/components/image-gallery/image-grid'
+import { ContextMenuData, ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  ContextMenuItem,
-  ContextMenuLabel,
-  ContextMenuSeparator,
-} from '@/components/ui/context-menu'
 import {
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -169,6 +153,53 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     fileSelectHandlerRef.current = handler
   }
 
+  const handleContextMenu = (data: ContextMenuData) => {
+    const { action, image, position } = data
+
+    switch (action) {
+      case 'open':
+        if (position) {
+          setPosition(galleryKey, image.imageKey, position)
+        }
+        // Handle navigation for root gallery vs sub-galleries
+        if (galleryKey === '') {
+          navigate({
+            to: '/$imageKey',
+            params: { imageKey: image.imageKey },
+          })
+        } else {
+          navigate({
+            to: '/gallery/$galleryKey/$imageKey',
+            params: { galleryKey, imageKey: image.imageKey },
+          })
+        }
+        break
+
+      case 'edit':
+        // Navigate to image editor using the same logic as in image-view.tsx
+        if (galleryKey) {
+          navigate({
+            to: '/gallery/$galleryKey/$imageKey/editor',
+            params: { galleryKey, imageKey: image.imageKey },
+          })
+        } else {
+          navigate({
+            to: '/$imageKey/editor',
+            params: { imageKey: image.imageKey },
+          })
+        }
+        break
+
+      case 'delete':
+        setDeleteImageDialog({
+          open: true,
+          image,
+          isDeleting: false,
+        })
+        break
+    }
+  }
+
   const handleDeleteImage = async () => {
     if (!deleteImageDialog.image) return
 
@@ -210,52 +241,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       })
     }
   }
-
-  const ContextMenuContent = (image: GalleryImage, position: ImagePosition) => (
-    <>
-      <ContextMenuLabel>{image.imageName}</ContextMenuLabel>
-      <ContextMenuSeparator />
-      <ContextMenuItem onClick={() => handleImageClick(image, position)}>
-        <Eye className='mr-2 h-4 w-4' />
-        {t('pages.gallery.contextMenu.open')}
-      </ContextMenuItem>
-      {authState.state === 'authenticated' && !image.isVideo && (
-        <ContextMenuItem
-          onClick={() => {
-            // Navigate to image editor
-            if (galleryKey) {
-              navigate({
-                to: '/gallery/$galleryKey/$imageKey/editor',
-                params: { galleryKey, imageKey: image.imageKey },
-              })
-            } else {
-              navigate({
-                to: '/$imageKey/editor',
-                params: { imageKey: image.imageKey },
-              })
-            }
-          }}
-        >
-          <Pencil className='mr-2 h-4 w-4' />
-          {t('pages.gallery.contextMenu.edit')}
-        </ContextMenuItem>
-      )}
-      {authState.state === 'authenticated' && (
-        <ContextMenuItem
-          onClick={() => {
-            setDeleteImageDialog({
-              open: true,
-              image,
-              isDeleting: false,
-            })
-          }}
-        >
-          <Trash2 className='mr-2 h-4 w-4' />
-          {t('pages.gallery.contextMenu.delete')}
-        </ContextMenuItem>
-      )}
-    </>
-  )
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 48 : 38)
   const isEmpty = images.length === 0 && folders.length === 0
@@ -394,7 +379,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                         scrollTop={scrollPosition}
                         maxImageWidth={maxItemWidth}
                         onImageClick={handleImageClick}
-                        contextMenuContent={ContextMenuContent}
+                        onContextMenu={handleContextMenu}
                       />
                     </>
                   )}

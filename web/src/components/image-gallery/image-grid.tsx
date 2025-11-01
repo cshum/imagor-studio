@@ -1,12 +1,26 @@
-import React, { useState } from 'react'
-import { Play } from 'lucide-react'
+import React from 'react'
+import { useTranslation } from 'react-i18next'
+import { Eye, Pencil, Play, Trash2 } from 'lucide-react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
-import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from '@/components/ui/context-menu'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu'
 import { getFullImageUrl } from '@/lib/api-utils'
+import { useAuth } from '@/stores/auth-store'
 
-// Re-export for backward compatibility
-export type { ContextMenuData } from '@/components/image-gallery/image-context-menu'
+export type ContextMenuAction = 'open' | 'edit' | 'delete'
+
+export interface ContextMenuData {
+  action: ContextMenuAction
+  image: GalleryImage
+  position?: Position
+}
 
 interface ImageCellProps {
   image: GalleryImage
@@ -15,7 +29,7 @@ interface ImageCellProps {
   rowIndex: number
   columnIndex: number
   onImageClick?: (image: GalleryImage, position: Position) => void
-  onContextMenu?: (image: GalleryImage, position: Position) => void
+  onContextMenu?: (data: ContextMenuData) => void
 }
 
 const ImageCell = ({
@@ -27,6 +41,9 @@ const ImageCell = ({
   onImageClick,
   onContextMenu,
 }: ImageCellProps) => {
+  const { t } = useTranslation()
+  const { authState } = useAuth()
+
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (onImageClick) {
       const rect = e.currentTarget.getBoundingClientRect()
@@ -39,45 +56,87 @@ const ImageCell = ({
     }
   }
 
-  const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (onContextMenu) {
-      const rect = e.currentTarget.getBoundingClientRect()
-      onContextMenu(image, {
-        top: Math.round(rect.top),
-        left: Math.round(rect.left),
-        width: Math.round(rect.width),
-        height: Math.round(rect.height),
-      })
+  const handleContextMenuAction = (action: ContextMenuAction) => {
+    if (!onContextMenu) return
+
+    if (action === 'open') {
+      const rect = document
+        .querySelector(`[data-image-key="${image.imageKey}"]`)
+        ?.getBoundingClientRect()
+      const position = rect
+        ? {
+            top: Math.round(rect.top),
+            left: Math.round(rect.left),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+          }
+        : undefined
+
+      onContextMenu({ action, image, position })
+    } else {
+      // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
+      setTimeout(() => {
+        onContextMenu({ action, image })
+      }, 0)
     }
   }
 
+  const isAuthenticated = authState.state === 'authenticated' || authState.isEmbedded
+  const canEdit = isAuthenticated && !image.isVideo
+
   return (
-    <div
-      key={image.imageKey}
-      data-image-key={image.imageKey}
-      className='absolute box-border cursor-pointer p-1 md:p-1.5'
-      style={{
-        width: `${columnWidth}px`,
-        height: `${rowHeight}px`,
-        transform: `translate3d(${columnIndex * columnWidth}px, ${rowIndex * rowHeight}px, 0)`,
-        willChange: 'transform',
-      }}
-      onClick={handleClick}
-      onContextMenu={handleContextMenu}
-    >
-      <div className='relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700'>
-        <img
-          src={getFullImageUrl(image.imageSrc)}
-          alt={image.imageName}
-          className='h-full w-full object-cover'
-        />
-        {image.isVideo && (
-          <div className='absolute right-3 bottom-2 rounded-full bg-black/60 p-1 p-2 transition-opacity group-hover:bg-black/75'>
-            <Play className='h-4 w-4 fill-white text-white' />
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          key={image.imageKey}
+          data-image-key={image.imageKey}
+          className='absolute box-border cursor-pointer p-1 md:p-1.5'
+          style={{
+            width: `${columnWidth}px`,
+            height: `${rowHeight}px`,
+            transform: `translate3d(${columnIndex * columnWidth}px, ${rowIndex * rowHeight}px, 0)`,
+            willChange: 'transform',
+          }}
+          onClick={handleClick}
+        >
+          <div className='relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700'>
+            <img
+              src={getFullImageUrl(image.imageSrc)}
+              alt={image.imageName}
+              className='h-full w-full object-cover'
+            />
+            {image.isVideo && (
+              <div className='absolute right-3 bottom-2 rounded-full bg-black/60 p-1 p-2 transition-opacity group-hover:bg-black/75'>
+                <Play className='h-4 w-4 fill-white text-white' />
+              </div>
+            )}
           </div>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent className='w-56'>
+        <ContextMenuLabel>{image.imageName}</ContextMenuLabel>
+        <ContextMenuSeparator />
+        <ContextMenuItem onClick={() => handleContextMenuAction('open')}>
+          <Eye className='mr-2 h-4 w-4' />
+          {t('pages.gallery.contextMenu.open')}
+        </ContextMenuItem>
+        {canEdit && (
+          <ContextMenuItem onClick={() => handleContextMenuAction('edit')}>
+            <Pencil className='mr-2 h-4 w-4' />
+            {t('pages.gallery.contextMenu.edit')}
+          </ContextMenuItem>
         )}
-      </div>
-    </div>
+        {isAuthenticated && (
+          <ContextMenuItem
+            onClick={() => handleContextMenuAction('delete')}
+            className='text-destructive focus:text-destructive'
+          >
+            <Trash2 className='mr-2 h-4 w-4' />
+            {t('pages.gallery.contextMenu.delete')}
+          </ContextMenuItem>
+        )}
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }
 
@@ -88,7 +147,7 @@ export interface ImageGridProps {
   scrollTop: number
   maxImageWidth: number
   onImageClick?: (image: GalleryImage, position: Position) => void
-  contextMenuContent?: (image: GalleryImage, position: Position) => React.ReactNode
+  onContextMenu?: (data: ContextMenuData) => void
 }
 
 export const ImageGrid = ({
@@ -98,17 +157,8 @@ export const ImageGrid = ({
   scrollTop,
   maxImageWidth,
   onImageClick,
-  contextMenuContent,
+  onContextMenu,
 }: ImageGridProps) => {
-  const [selectedImage, setSelectedImage] = useState<{
-    image: GalleryImage
-    position: Position
-  } | null>(null)
-
-  const handleContextMenu = (image: GalleryImage, position: Position) => {
-    setSelectedImage({ image, position })
-  }
-
   // Dynamically calculate the number of columns based on maxImageWidth prop
   const columnCount = Math.max(3, Math.floor(width / maxImageWidth))
   const columnWidth = width / columnCount
@@ -143,30 +193,15 @@ export const ImageGrid = ({
           rowIndex={rowIndex}
           columnIndex={columnIndex}
           onImageClick={onImageClick}
-          onContextMenu={handleContextMenu}
+          onContextMenu={onContextMenu}
         />,
       )
     }
   }
 
-  const gridContent = (
+  return (
     <div className={`group relative w-full overflow-hidden`} style={{ height: `${totalHeight}px` }}>
       {visibleImages}
     </div>
-  )
-
-  // If no context menu content provided, return grid without context menu
-  if (!contextMenuContent) {
-    return gridContent
-  }
-
-  // Wrap with ContextMenu when contextMenuContent is provided
-  return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>{gridContent}</ContextMenuTrigger>
-      <ContextMenuContent>
-        {selectedImage && contextMenuContent(selectedImage.image, selectedImage.position)}
-      </ContextMenuContent>
-    </ContextMenu>
   )
 }
