@@ -36,8 +36,14 @@ export function DeleteImageDialog({
             <Trash2 className='text-destructive h-5 w-5' />
             {t('pages.gallery.deleteImage.title')}
           </DialogTitle>
-          <DialogDescription>
-            {t('pages.gallery.deleteImage.description', { imageName })}
+          <DialogDescription className='space-y-3'>
+            <p>{t('pages.gallery.deleteImage.description')}</p>
+            <div className='bg-muted rounded-md p-3'>
+              <p className='text-foreground font-mono text-sm break-all'>{imageName}</p>
+            </div>
+            <p className='text-muted-foreground text-sm'>
+              {t('pages.gallery.deleteImage.warning')}
+            </p>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

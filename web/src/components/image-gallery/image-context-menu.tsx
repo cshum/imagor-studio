@@ -6,6 +6,7 @@ export interface ImageContextData {
   imageKey: string | null
   imageName: string
   isVideo: boolean
+  position?: { top: number; left: number; width: number; height: number }
 }
 
 interface ImageContextMenuProps {
@@ -20,6 +21,9 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
   const [contextImageKey, setContextImageKey] = useState<string | null>(null)
   const [contextImageName, setContextImageName] = useState<string>('')
   const [contextIsVideo, setContextIsVideo] = useState<boolean>(false)
+  const [contextPosition, setContextPosition] = useState<
+    { top: number; left: number; width: number; height: number } | undefined
+  >(undefined)
 
   const handleContextMenuOpen = (e: React.MouseEvent) => {
     // Find the closest image element using event delegation
@@ -29,9 +33,19 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
       const imageName = imageElement.getAttribute('data-image-name') || ''
       const isVideo = imageElement.getAttribute('data-is-video') === 'true'
 
+      // Calculate position once here
+      const rect = imageElement.getBoundingClientRect()
+      const position = {
+        top: Math.round(rect.top),
+        left: Math.round(rect.left),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      }
+
       setContextImageKey(imageKey)
       setContextImageName(imageName)
       setContextIsVideo(isVideo)
+      setContextPosition(position)
     }
   }
 
@@ -39,6 +53,7 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
     imageKey: contextImageKey,
     imageName: contextImageName,
     isVideo: contextIsVideo,
+    position: contextPosition,
   }
 
   return (
@@ -46,9 +61,7 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
       <ContextMenuTrigger asChild>
         <div onContextMenu={handleContextMenuOpen}>{children}</div>
       </ContextMenuTrigger>
-      <ContextMenuContent className='w-56'>
-        {renderMenuItems?.(contextData)}
-      </ContextMenuContent>
+      <ContextMenuContent className='w-56'>{renderMenuItems?.(contextData)}</ContextMenuContent>
     </ContextMenu>
   )
 }

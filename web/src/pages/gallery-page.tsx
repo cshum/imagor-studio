@@ -23,10 +23,7 @@ import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialo
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
-import {
-  ImageContextData,
-  ImageContextMenu,
-} from '@/components/image-gallery/image-context-menu'
+import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
@@ -129,7 +126,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     requestAnimationFrame(() => restoreScrollPosition(galleryKey))
   }, [galleryKey])
 
-  const handleImageClick = ({ imageKey }: GalleryImage, position: ImagePosition | null) => {
+  const handleImageClick = (
+    imageKeyOrImage: string | GalleryImage,
+    position?: ImagePosition | null,
+  ) => {
+    // Handle both string imageKey and GalleryImage object for backward compatibility
+    const imageKey =
+      typeof imageKeyOrImage === 'string' ? imageKeyOrImage : imageKeyOrImage.imageKey
+
     if (position) {
       setPosition(galleryKey, imageKey, position)
     }
@@ -171,38 +175,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const handleFileSelectHandler = (handler: (fileList: FileList | null) => void) => {
     fileSelectHandlerRef.current = handler
-  }
-
-  const handleOpenImage = (imageKey: string) => {
-    // Get position from DOM element
-    const rect = document
-      .querySelector(`[data-image-key="${imageKey}"]`)
-      ?.getBoundingClientRect()
-    const position = rect
-      ? {
-          top: Math.round(rect.top),
-          left: Math.round(rect.left),
-          width: Math.round(rect.width),
-          height: Math.round(rect.height),
-        }
-      : null
-
-    if (position) {
-      setPosition(galleryKey, imageKey, position)
-    }
-
-    // Handle navigation for root gallery vs sub-galleries
-    if (galleryKey === '') {
-      navigate({
-        to: '/$imageKey',
-        params: { imageKey },
-      })
-    } else {
-      navigate({
-        to: '/gallery/$galleryKey/$imageKey',
-        params: { galleryKey, imageKey },
-      })
-    }
   }
 
   const handleEditImage = (imageKey: string) => {
@@ -283,7 +255,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       <>
         <ContextMenuLabel>{contextData.imageName}</ContextMenuLabel>
         <ContextMenuSeparatorComponent />
-        <ContextMenuItem onClick={() => handleOpenImage(contextData.imageKey!)}>
+        <ContextMenuItem
+          onClick={() => handleImageClick(contextData.imageKey!, contextData.position)}
+        >
           <Eye className='mr-2 h-4 w-4' />
           {t('pages.gallery.contextMenu.open')}
         </ContextMenuItem>
