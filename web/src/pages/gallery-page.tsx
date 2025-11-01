@@ -230,8 +230,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
       // Refresh gallery data
       router.invalidate()
-    } catch (error) {
-      console.error('Failed to delete image:', error)
+    } catch {
       toast.error(t('pages.gallery.deleteImage.error'))
       setDeleteImageDialog((prev) => ({ ...prev, isDeleting: false }))
     }
