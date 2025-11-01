@@ -1,7 +1,6 @@
 import React from 'react'
 import { Play } from 'lucide-react'
 
-import { ContextMenuData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
 import { getFullImageUrl } from '@/lib/api-utils'
 
@@ -12,7 +11,6 @@ interface ImageCellProps {
   rowIndex: number
   columnIndex: number
   onImageClick?: (image: GalleryImage, position: Position) => void
-  onContextMenu?: (data: ContextMenuData) => void
 }
 
 const ImageCell = ({
@@ -22,7 +20,6 @@ const ImageCell = ({
   rowIndex,
   columnIndex,
   onImageClick,
-  onContextMenu,
 }: ImageCellProps) => {
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (onImageClick) {
@@ -37,33 +34,33 @@ const ImageCell = ({
   }
 
   return (
-    <ImageContextMenu image={image} onContextMenu={onContextMenu}>
-      <div
-        key={image.imageKey}
-        data-image-key={image.imageKey}
-        className='absolute box-border cursor-pointer p-1 md:p-1.5'
-        style={{
-          width: `${columnWidth}px`,
-          height: `${rowHeight}px`,
-          transform: `translate3d(${columnIndex * columnWidth}px, ${rowIndex * rowHeight}px, 0)`,
-          willChange: 'transform',
-        }}
-        onClick={handleClick}
-      >
-        <div className='relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700'>
-          <img
-            src={getFullImageUrl(image.imageSrc)}
-            alt={image.imageName}
-            className='h-full w-full object-cover'
-          />
-          {image.isVideo && (
-            <div className='absolute right-3 bottom-2 rounded-full bg-black/60 p-1 p-2 transition-opacity group-hover:bg-black/75'>
-              <Play className='h-4 w-4 fill-white text-white' />
-            </div>
-          )}
-        </div>
+    <div
+      key={image.imageKey}
+      data-image-key={image.imageKey}
+      data-image-name={image.imageName}
+      data-is-video={image.isVideo}
+      className='absolute box-border cursor-pointer p-1 md:p-1.5'
+      style={{
+        width: `${columnWidth}px`,
+        height: `${rowHeight}px`,
+        transform: `translate3d(${columnIndex * columnWidth}px, ${rowIndex * rowHeight}px, 0)`,
+        willChange: 'transform',
+      }}
+      onClick={handleClick}
+    >
+      <div className='relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700'>
+        <img
+          src={getFullImageUrl(image.imageSrc)}
+          alt={image.imageName}
+          className='h-full w-full object-cover'
+        />
+        {image.isVideo && (
+          <div className='absolute right-3 bottom-2 rounded-full bg-black/60 p-1 p-2 transition-opacity group-hover:bg-black/75'>
+            <Play className='h-4 w-4 fill-white text-white' />
+          </div>
+        )}
       </div>
-    </ImageContextMenu>
+    </div>
   )
 }
 
@@ -74,7 +71,6 @@ export interface ImageGridProps {
   scrollTop: number
   maxImageWidth: number
   onImageClick?: (image: GalleryImage, position: Position) => void
-  onContextMenu?: (data: ContextMenuData) => void
 }
 
 export const ImageGrid = ({
@@ -84,7 +80,6 @@ export const ImageGrid = ({
   scrollTop,
   maxImageWidth,
   onImageClick,
-  onContextMenu,
 }: ImageGridProps) => {
   // Dynamically calculate the number of columns based on maxImageWidth prop
   const columnCount = Math.max(3, Math.floor(width / maxImageWidth))
@@ -120,7 +115,6 @@ export const ImageGrid = ({
           rowIndex={rowIndex}
           columnIndex={columnIndex}
           onImageClick={onImageClick}
-          onContextMenu={onContextMenu}
         />,
       )
     }

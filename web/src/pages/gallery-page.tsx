@@ -12,7 +12,7 @@ import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialo
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
-import { ContextMenuData } from '@/components/image-gallery/image-context-menu'
+import { ContextMenuData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
@@ -155,23 +155,27 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   }
 
   const handleContextMenu = (data: ContextMenuData) => {
-    const { action, image, position } = data
+    const { action, imageKey, position } = data
+
+    // Find the full image object from the imageKey
+    const image = images.find((img) => img.imageKey === imageKey)
+    if (!image) return
 
     switch (action) {
       case 'open':
         if (position) {
-          setPosition(galleryKey, image.imageKey, position)
+          setPosition(galleryKey, imageKey, position)
         }
         // Handle navigation for root gallery vs sub-galleries
         if (galleryKey === '') {
           navigate({
             to: '/$imageKey',
-            params: { imageKey: image.imageKey },
+            params: { imageKey },
           })
         } else {
           navigate({
             to: '/gallery/$galleryKey/$imageKey',
-            params: { galleryKey, imageKey: image.imageKey },
+            params: { galleryKey, imageKey },
           })
         }
         break
@@ -181,12 +185,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         if (galleryKey) {
           navigate({
             to: '/gallery/$galleryKey/$imageKey/editor',
-            params: { galleryKey, imageKey: image.imageKey },
+            params: { galleryKey, imageKey },
           })
         } else {
           navigate({
             to: '/$imageKey/editor',
-            params: { imageKey: image.imageKey },
+            params: { imageKey },
           })
         }
         break
@@ -373,15 +377,16 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                         width={contentWidth}
                         maxFolderWidth={maxItemWidth}
                       />
-                      <ImageGrid
-                        images={images}
-                        aspectRatio={4 / 3}
-                        width={contentWidth}
-                        scrollTop={scrollPosition}
-                        maxImageWidth={maxItemWidth}
-                        onImageClick={handleImageClick}
-                        onContextMenu={handleContextMenu}
-                      />
+                      <ImageContextMenu onContextMenu={handleContextMenu}>
+                        <ImageGrid
+                          images={images}
+                          aspectRatio={4 / 3}
+                          width={contentWidth}
+                          scrollTop={scrollPosition}
+                          maxImageWidth={maxItemWidth}
+                          onImageClick={handleImageClick}
+                        />
+                      </ImageContextMenu>
                     </>
                   )}
                 </>
