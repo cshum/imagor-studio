@@ -394,7 +394,9 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                   </div>
                 ))
               ) : filteredUsers.length === 0 ? (
-                <div className='text-muted-foreground p-8 text-center'>{t('pages.users.noUsersFound')}</div>
+                <div className='text-muted-foreground p-8 text-center'>
+                  {t('pages.users.noUsersFound')}
+                </div>
               ) : (
                 filteredUsers.map((user) => (
                   <div key={user.id} className='grid grid-cols-5 items-center gap-4 border-b p-4'>
