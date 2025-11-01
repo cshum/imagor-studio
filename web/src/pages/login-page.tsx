@@ -88,8 +88,21 @@ export function LoginPage() {
       // Default redirect to home if no valid redirect parameter
       navigate({ to: '/' })
     } catch (err) {
+      // Map specific error messages to translations
+      let errorMessage = t('auth.login.loginFailed') // Default fallback
+
+      if (err instanceof Error) {
+        // Check if this is a login credential error
+        if (err.message === 'LOGIN_FAILED') {
+          errorMessage = t('auth.login.loginFailed')
+        } else {
+          // For system errors, show the technical message
+          errorMessage = err.message
+        }
+      }
+
       form.setError('root', {
-        message: err instanceof Error ? err.message : t('auth.login.loginFailed'),
+        message: errorMessage,
       })
     }
   }

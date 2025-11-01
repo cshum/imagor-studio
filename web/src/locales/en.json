@@ -45,7 +45,7 @@
       "title": "Welcome back",
       "subtitle": "Enter your credentials to access Imagor Studio",
       "signIn": "Sign In",
-      "loginFailed": "Login failed"
+      "loginFailed": "Invalid username or password. Please try again."
     },
     "validation": {
       "usernameRequired": "Please enter a valid username",

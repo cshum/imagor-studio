@@ -172,9 +172,9 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			return err
 		}
 
-		// Validate input
+		// Validate input - return generic login failed for missing credentials
 		if strings.TrimSpace(req.Username) == "" || strings.TrimSpace(req.Password) == "" {
-			return apperror.BadRequest("Username and password are required", nil)
+			return apperror.InvalidCredentials("LOGIN_FAILED")
 		}
 
 		// Normalize username
@@ -184,16 +184,17 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 		user, err := h.userStore.GetByUsername(r.Context(), username)
 		if err != nil {
 			h.logger.Error("Failed to get user", zap.Error(err))
-			return apperror.InternalServerError("Login failed")
+			return apperror.InternalServerError("Database connection failed")
 		}
 
+		// Return generic login failed for user not found or inactive account
 		if user == nil || !user.IsActive {
-			return apperror.InvalidCredentials("Invalid credentials")
+			return apperror.InvalidCredentials("LOGIN_FAILED")
 		}
 
-		// Check password
+		// Check password - return generic login failed for wrong password
 		if err := auth.CheckPassword(user.HashedPassword, req.Password); err != nil {
-			return apperror.InvalidCredentials("Invalid credentials")
+			return apperror.InvalidCredentials("LOGIN_FAILED")
 		}
 
 		// Update last login
@@ -374,9 +375,9 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 }
 
 func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role string) (*LoginResponse, error) {
-	// Validate input
+	// Validate input with field-specific errors
 	if err := h.validateRegisterRequest(&req); err != nil {
-		return nil, apperror.BadRequest(err.Error(), nil)
+		return nil, err
 	}
 
 	// Normalize inputs
@@ -393,6 +394,12 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	// Create user
 	user, err := h.userStore.Create(ctx, normalizedDisplayName, normalizedUsername, hashedPassword, role)
 	if err != nil {
+		if strings.Contains(err.Error(), "username already exists") {
+			return nil, apperror.Conflict("Username already exists", "username")
+		}
+		if strings.Contains(err.Error(), "displayName already exists") {
+			return nil, apperror.Conflict("Display name already exists", "displayName")
+		}
 		if strings.Contains(err.Error(), "already exists") {
 			return nil, apperror.Conflict(err.Error())
 		}
@@ -432,17 +439,23 @@ func (h *AuthHandler) generateAuthResponse(userID, displayName, username, role s
 func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest) error {
 	// Validate displayName
 	if err := validation.ValidateDisplayName(req.DisplayName); err != nil {
-		return err
+		return apperror.BadRequest("Invalid display name", map[string]interface{}{
+			"field": "displayName",
+		})
 	}
 
 	// Validate username
 	if err := validation.ValidateUsername(req.Username); err != nil {
-		return err
+		return apperror.BadRequest("Invalid username", map[string]interface{}{
+			"field": "username",
+		})
 	}
 
 	// Validate password
 	if err := validation.ValidatePassword(req.Password); err != nil {
-		return err
+		return apperror.BadRequest("Invalid password", map[string]interface{}{
+			"field": "password",
+		})
 	}
 
 	return nil
