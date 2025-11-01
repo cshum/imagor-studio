@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Play } from 'lucide-react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
+import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { getFullImageUrl } from '@/lib/api-utils'
 
 // Re-export for backward compatibility
@@ -39,7 +40,6 @@ const ImageCell = ({
   }
 
   const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault() // Prevent browser context menu
     if (onContextMenu) {
       const rect = e.currentTarget.getBoundingClientRect()
       onContextMenu(image, {
@@ -88,7 +88,7 @@ export interface ImageGridProps {
   scrollTop: number
   maxImageWidth: number
   onImageClick?: (image: GalleryImage, position: Position) => void
-  onContextMenu?: (image: GalleryImage, position: Position) => void
+  contextMenuContent?: (image: GalleryImage, position: Position) => React.ReactNode
 }
 
 export const ImageGrid = ({
@@ -98,8 +98,17 @@ export const ImageGrid = ({
   scrollTop,
   maxImageWidth,
   onImageClick,
-  onContextMenu,
+  contextMenuContent,
 }: ImageGridProps) => {
+  const [selectedImage, setSelectedImage] = useState<{
+    image: GalleryImage
+    position: Position
+  } | null>(null)
+
+  const handleContextMenu = (image: GalleryImage, position: Position) => {
+    setSelectedImage({ image, position })
+  }
+
   // Dynamically calculate the number of columns based on maxImageWidth prop
   const columnCount = Math.max(3, Math.floor(width / maxImageWidth))
   const columnWidth = width / columnCount
@@ -134,15 +143,30 @@ export const ImageGrid = ({
           rowIndex={rowIndex}
           columnIndex={columnIndex}
           onImageClick={onImageClick}
-          onContextMenu={onContextMenu}
+          onContextMenu={handleContextMenu}
         />,
       )
     }
   }
 
-  return (
+  const gridContent = (
     <div className={`group relative w-full overflow-hidden`} style={{ height: `${totalHeight}px` }}>
       {visibleImages}
     </div>
+  )
+
+  // If no context menu content provided, return grid without context menu
+  if (!contextMenuContent) {
+    return gridContent
+  }
+
+  // Wrap with ContextMenu when contextMenuContent is provided
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>{gridContent}</ContextMenuTrigger>
+      <ContextMenuContent>
+        {selectedImage && contextMenuContent(selectedImage.image, selectedImage.position)}
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }
