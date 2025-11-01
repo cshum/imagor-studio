@@ -48,8 +48,8 @@ import { DragDropFile } from '@/hooks/use-drag-drop.ts'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
-import { getFullImageUrl } from '@/lib/api-utils'
 import { ContentLayout } from '@/layouts/content-layout'
+import { getFullImageUrl } from '@/lib/api-utils'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { setCurrentPath } from '@/stores/folder-tree-store.ts'
@@ -240,40 +240,46 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
-  const handleCopyUrl = async (imageKey: string) => {
+  const handleCopyUrl = async (imageKey: string, isVideo: boolean = false) => {
     try {
-      // Generate original image URL (no transformations)
+      // Generate original image URL (no transformations for images, raw filter for videos)
+      const params = isVideo ? { filters: [{ name: 'raw', args: '' }] } : {}
+
       const url = await generateImagorUrl({
         galleryKey,
         imageKey,
-        params: {} as ImagorParamsInput, // Empty params for original image
+        params: params as ImagorParamsInput,
       })
-      
       const fullUrl = getFullImageUrl(url)
       setCopyUrlDialog({
         open: true,
         url: fullUrl,
       })
-    } catch (error) {
+    } catch {
       toast.error(t('pages.gallery.contextMenu.copyUrlError'))
     }
   }
 
-  const handleDownload = async (imageKey: string) => {
+  const handleDownload = async (imageKey: string, isVideo: boolean = false) => {
     try {
-      // Generate download URL with attachment filter
+      // Generate download URL with attachment filter (and raw filter for videos)
+      const filters = isVideo
+        ? [
+            { name: 'raw', args: '' },
+            { name: 'attachment', args: '' },
+          ]
+        : [{ name: 'attachment', args: '' }]
+
       const url = await generateImagorUrl({
         galleryKey,
         imageKey,
         params: {
-          filters: [{ name: 'attachment', args: '' }], // Empty args for default filename
+          filters,
         } as ImagorParamsInput,
       })
-      
-      const fullUrl = getFullImageUrl(url)
       // Use location.href for reliable downloads across all browsers
-      window.location.href = fullUrl
-    } catch (error) {
+      window.location.href = getFullImageUrl(url)
+    } catch {
       toast.error(t('pages.gallery.contextMenu.downloadError'))
     }
   }
@@ -298,11 +304,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             {t('pages.gallery.contextMenu.edit')}
           </ContextMenuItem>
         )}
-        <ContextMenuItem onClick={() => handleCopyUrl(imageKey)}>
+        <ContextMenuItem onClick={() => handleCopyUrl(imageKey, isVideo)}>
           <Copy className='mr-2 h-4 w-4' />
           Copy URL
         </ContextMenuItem>
-        <ContextMenuItem onClick={() => handleDownload(imageKey)}>
+        <ContextMenuItem onClick={() => handleDownload(imageKey, isVideo)}>
           <Download className='mr-2 h-4 w-4' />
           Download
         </ContextMenuItem>
