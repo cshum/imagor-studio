@@ -445,7 +445,6 @@
       "resetAll": "Reset All",
       "download": "Download",
       "copyUrl": "Copy URL",
-      "copyImageUrl": "Copy Image URL",
       "retry": "Retry",
       "failedToDownload": "Failed to download image"
     },

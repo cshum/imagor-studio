@@ -309,12 +309,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       )}
 
       {/* Copy URL Dialog */}
-      <CopyUrlDialog
-        open={copyUrlDialogOpen}
-        onOpenChange={setCopyUrlDialogOpen}
-        url={copyUrl}
-        title={t('imageEditor.page.copyImageUrl')}
-      />
+      <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
     </div>
   )
 }
