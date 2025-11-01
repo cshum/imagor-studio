@@ -82,7 +82,9 @@
       "currentPasswordRequired": "Current password is required",
       "passwordMinLength": "Password must be at least 8 characters long",
       "passwordMaxLength": "Password must be less than 72 characters",
-      "passwordsDoNotMatch": "Passwords don't match"
+      "passwordsDoNotMatch": "Passwords do not match",
+      "confirmPasswordMinLength": "Password must be at least 8 characters long",
+      "confirmPasswordMaxLength": "Password must be less than 72 characters"
     }
   },
   "navigation": {
@@ -332,6 +334,59 @@
         "personal": "Personal",
         "commercial": "Commercial",
         "enterprise": "Enterprise"
+      }
+    },
+    "users": {
+      "title": "Users",
+      "createUser": "Create User",
+      "createNewUser": "Create New User",
+      "createUserDescription": "Add a new user to the system. They will be able to log in with the provided credentials.",
+      "editUser": "Edit User",
+      "editUserDescription": "Update user information. Changes will be applied immediately.",
+      "deactivateUser": "Deactivate User",
+      "reactivateUser": "Reactivate User",
+      "deactivateUserDescription": "Are you sure you want to deactivate",
+      "deactivateUserWarning": "This will prevent the user from logging in",
+      "reactivateUserWarning": "This will allow the user to log in again",
+      "searchPlaceholder": "Search users by name or username...",
+      "noUsersFound": "No users found",
+      "showingUsers": "Showing {{filtered}} of {{total}} users",
+      "tableHeaders": {
+        "name": "Name",
+        "username": "Username",
+        "role": "Role",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "roles": {
+        "user": "User",
+        "admin": "Admin"
+      },
+      "actions": {
+        "edit": "Edit",
+        "deactivate": "Deactivate",
+        "reactivate": "Reactivate"
+      },
+      "messages": {
+        "userCreatedSuccess": "User created successfully!",
+        "userUpdatedSuccess": "User updated successfully!",
+        "userDeactivatedSuccess": "User deactivated successfully!",
+        "userReactivatedSuccess": "User reactivated successfully!",
+        "createUserFailed": "Failed to create user",
+        "updateUserFailed": "Failed to update user",
+        "deactivateUserFailed": "Failed to deactivate user",
+        "reactivateUserFailed": "Failed to reactivate user",
+        "usernameAlreadyExists": "This username is already in use"
+      },
+      "placeholders": {
+        "enterDisplayName": "Enter display name",
+        "enterUsername": "Enter username",
+        "enterPassword": "Enter password",
+        "confirmPassword": "Confirm password"
       }
     }
   },

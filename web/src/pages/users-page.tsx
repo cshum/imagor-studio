@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from '@tanstack/react-router'
 import { Edit, MoreHorizontal, Plus, Search, UserCheck, UserX } from 'lucide-react'
@@ -42,55 +43,8 @@ interface UsersPageProps {
   loaderData?: ListUsersQuery['users']
 }
 
-const createUserSchema = z
-  .object({
-    displayName: z
-      .string()
-      .min(3, 'Display name must be at least 3 characters long')
-      .max(100, 'Display name must be less than 100 characters'),
-    username: z
-      .string()
-      .min(3, 'Username must be at least 3 characters')
-      .max(30, 'Username must be at most 30 characters')
-      .regex(
-        /^[a-zA-Z0-9_-]+$/,
-        'Username can only contain letters, numbers, underscores, and hyphens',
-      ),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters long')
-      .max(72, 'Password must be less than 72 characters'),
-    confirmPassword: z
-      .string()
-      .min(8, 'Password must be at least 8 characters long')
-      .max(72, 'Password must be less than 72 characters'),
-    role: z.enum(['user', 'admin']),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  })
-
-const editUserSchema = z.object({
-  displayName: z
-    .string()
-    .min(3, 'Display name must be at least 3 characters long')
-    .max(100, 'Display name must be less than 100 characters'),
-  username: z
-    .string()
-    .min(3, 'Username must be at least 3 characters')
-    .max(30, 'Username must be at most 30 characters')
-    .regex(
-      /^[a-zA-Z0-9_-]+$/,
-      'Username can only contain letters, numbers, underscores, and hyphens',
-    ),
-  role: z.enum(['user', 'admin']),
-})
-
-type CreateUserFormData = z.infer<typeof createUserSchema>
-type EditUserFormData = z.infer<typeof editUserSchema>
-
 export function UsersPage({ loaderData }: UsersPageProps) {
+  const { t } = useTranslation()
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -100,6 +54,49 @@ export function UsersPage({ loaderData }: UsersPageProps) {
   const [isUpdating, setIsUpdating] = useState(false)
   const [isDeactivating, setIsDeactivating] = useState<string | null>(null)
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
+
+  // Create translation-aware validation schemas
+  const createUserSchema = z
+    .object({
+      displayName: z
+        .string()
+        .min(3, t('forms.validation.displayNameMinLength'))
+        .max(100, t('forms.validation.displayNameMaxLength')),
+      username: z
+        .string()
+        .min(3, t('forms.validation.usernameMinLength'))
+        .max(30, t('forms.validation.usernameMaxLength'))
+        .regex(/^[a-zA-Z0-9_-]+$/, t('forms.validation.usernamePattern')),
+      password: z
+        .string()
+        .min(8, t('forms.validation.passwordMinLength'))
+        .max(72, t('forms.validation.passwordMaxLength')),
+      confirmPassword: z
+        .string()
+        .min(8, t('forms.validation.confirmPasswordMinLength'))
+        .max(72, t('forms.validation.confirmPasswordMaxLength')),
+      role: z.enum(['user', 'admin']),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('forms.validation.passwordsDoNotMatch'),
+      path: ['confirmPassword'],
+    })
+
+  const editUserSchema = z.object({
+    displayName: z
+      .string()
+      .min(3, t('forms.validation.displayNameMinLength'))
+      .max(100, t('forms.validation.displayNameMaxLength')),
+    username: z
+      .string()
+      .min(3, t('forms.validation.usernameMinLength'))
+      .max(30, t('forms.validation.usernameMaxLength'))
+      .regex(/^[a-zA-Z0-9_-]+$/, t('forms.validation.usernamePattern')),
+    role: z.enum(['user', 'admin']),
+  })
+
+  type CreateUserFormData = z.infer<typeof createUserSchema>
+  type EditUserFormData = z.infer<typeof editUserSchema>
 
   // Initialize form error handlers
   const { handleFormError: handleCreateError } = useFormErrors<CreateUserFormData>()
@@ -139,7 +136,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
         role: values.role,
       }
       await createUser(createUserData)
-      toast.success('User created successfully!')
+      toast.success(t('pages.users.messages.userCreatedSuccess'))
       setIsCreateDialogOpen(false)
       createForm.reset()
       await router.invalidate()
@@ -149,10 +146,10 @@ export function UsersPage({ loaderData }: UsersPageProps) {
         createForm.setError,
         {
           username: {
-            ALREADY_EXISTS: 'This username is already in use',
+            ALREADY_EXISTS: t('pages.users.messages.usernameAlreadyExists'),
           },
         },
-        'Failed to create user',
+        t('pages.users.messages.createUserFailed'),
       )
     } finally {
       setIsCreating(false)
@@ -168,7 +165,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
         { displayName: values.displayName, username: values.username },
         selectedUser.id,
       )
-      toast.success('User updated successfully!')
+      toast.success(t('pages.users.messages.userUpdatedSuccess'))
       setIsEditDialogOpen(false)
       setSelectedUser(null)
       await router.invalidate()
@@ -178,10 +175,10 @@ export function UsersPage({ loaderData }: UsersPageProps) {
         editForm.setError,
         {
           username: {
-            ALREADY_EXISTS: 'This username is already in use',
+            ALREADY_EXISTS: t('pages.users.messages.usernameAlreadyExists'),
           },
         },
-        'Failed to update user',
+        t('pages.users.messages.updateUserFailed'),
       )
     } finally {
       setIsUpdating(false)
@@ -192,13 +189,19 @@ export function UsersPage({ loaderData }: UsersPageProps) {
     setIsDeactivating(userId)
     try {
       await deactivateAccount(userId)
-      toast.success(`User ${isActive ? 'deactivated' : 'reactivated'} successfully!`)
+      const successMessage = isActive
+        ? t('pages.users.messages.userDeactivatedSuccess')
+        : t('pages.users.messages.userReactivatedSuccess')
+      toast.success(successMessage)
       setIsEditDialogOpen(false)
       setSelectedUser(null)
       await router.invalidate()
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      toast.error(`Failed to ${isActive ? 'deactivate' : 'reactivate'} user: ${errorMessage}`)
+      const failedMessage = isActive
+        ? t('pages.users.messages.deactivateUserFailed')
+        : t('pages.users.messages.reactivateUserFailed')
+      toast.error(`${failedMessage}: ${errorMessage}`)
     } finally {
       setIsDeactivating(null)
     }
@@ -228,21 +231,18 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       <Card>
         <CardHeader>
           <div className='flex items-center justify-between'>
-            <CardTitle>Users</CardTitle>
+            <CardTitle>{t('pages.users.title')}</CardTitle>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className='mr-2 h-4 w-4' />
-                  Create User
+                  {t('pages.users.createUser')}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Create New User</DialogTitle>
-                  <DialogDescription>
-                    Add a new user to the system. They will be able to log in with the provided
-                    credentials.
-                  </DialogDescription>
+                  <DialogTitle>{t('pages.users.createNewUser')}</DialogTitle>
+                  <DialogDescription>{t('pages.users.createUserDescription')}</DialogDescription>
                 </DialogHeader>
                 <Form {...createForm}>
                   <form onSubmit={createForm.handleSubmit(handleCreateUser)} className='space-y-4'>
@@ -254,7 +254,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                           <FormLabel>Display Name</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder='Enter display name'
+                              placeholder={t('pages.users.placeholders.enterDisplayName')}
                               {...field}
                               disabled={isCreating}
                             />
@@ -271,7 +271,11 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                         <FormItem>
                           <FormLabel>Username</FormLabel>
                           <FormControl>
-                            <Input placeholder='Enter username' {...field} disabled={isCreating} />
+                            <Input
+                              placeholder={t('pages.users.placeholders.enterUsername')}
+                              {...field}
+                              disabled={isCreating}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -287,7 +291,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                           <FormControl>
                             <Input
                               type='password'
-                              placeholder='Enter password'
+                              placeholder={t('pages.users.placeholders.enterPassword')}
                               {...field}
                               disabled={isCreating}
                             />
@@ -306,7 +310,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                           <FormControl>
                             <Input
                               type='password'
-                              placeholder='Confirm password'
+                              placeholder={t('pages.users.placeholders.confirmPassword')}
                               {...field}
                               disabled={isCreating}
                             />
@@ -362,7 +366,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
             <div className='relative'>
               <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
               <Input
-                placeholder='Search users by name or username...'
+                placeholder={t('pages.users.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className='pl-10'
@@ -372,11 +376,11 @@ export function UsersPage({ loaderData }: UsersPageProps) {
             {/* Users Table - Desktop */}
             <div className='hidden rounded-lg border md:block'>
               <div className='bg-muted/50 grid grid-cols-5 gap-4 border-b p-4 font-medium'>
-                <div>Name</div>
-                <div>Username</div>
-                <div>Role</div>
-                <div>Status</div>
-                <div>Actions</div>
+                <div>{t('pages.users.tableHeaders.name')}</div>
+                <div>{t('pages.users.tableHeaders.username')}</div>
+                <div>{t('pages.users.tableHeaders.role')}</div>
+                <div>{t('pages.users.tableHeaders.status')}</div>
+                <div>{t('pages.users.tableHeaders.actions')}</div>
               </div>
 
               {!loaderData ? (
@@ -390,7 +394,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                   </div>
                 ))
               ) : filteredUsers.length === 0 ? (
-                <div className='text-muted-foreground p-8 text-center'>No users found</div>
+                <div className='text-muted-foreground p-8 text-center'>{t('pages.users.noUsersFound')}</div>
               ) : (
                 filteredUsers.map((user) => (
                   <div key={user.id} className='grid grid-cols-5 items-center gap-4 border-b p-4'>
@@ -415,7 +419,9 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                             : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
                         }`}
                       >
-                        {user.isActive ? 'Active' : 'Inactive'}
+                        {user.isActive
+                          ? t('pages.users.status.active')
+                          : t('pages.users.status.inactive')}
                       </span>
                     </div>
                     <div>
@@ -459,7 +465,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                 ))
               ) : filteredUsers.length === 0 ? (
                 <div className='text-muted-foreground rounded-lg border p-8 text-center'>
-                  No users found
+                  {t('pages.users.noUsersFound')}
                 </div>
               ) : (
                 filteredUsers.map((user) => (
@@ -474,7 +480,9 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                             : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
                         }`}
                       >
-                        {user.isActive ? 'Active' : 'Inactive'}
+                        {user.isActive
+                          ? t('pages.users.status.active')
+                          : t('pages.users.status.inactive')}
                       </span>
                     </div>
 
@@ -513,7 +521,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
 
             {/* Pagination Info */}
             <div className='text-muted-foreground text-sm'>
-              Showing {filteredUsers.length} of {totalCount} users
+              {t('pages.users.showingUsers', { filtered: filteredUsers.length, total: totalCount })}
             </div>
           </div>
         </CardContent>
