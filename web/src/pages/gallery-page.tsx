@@ -304,16 +304,16 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             {t('pages.gallery.contextMenu.edit')}
           </ContextMenuItem>
         )}
-        <ContextMenuItem onClick={() => handleCopyUrl(imageKey, isVideo)}>
-          <Copy className='mr-2 h-4 w-4' />
-          {t('pages.gallery.contextMenu.copyUrl')}
-        </ContextMenuItem>
-        <ContextMenuItem onClick={() => handleDownload(imageKey, isVideo)}>
-          <Download className='mr-2 h-4 w-4' />
-          {t('pages.gallery.contextMenu.download')}
-        </ContextMenuItem>
         {isAuthenticated && (
           <>
+            <ContextMenuItem onClick={() => handleCopyUrl(imageKey, isVideo)}>
+              <Copy className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.copyUrl')}
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => handleDownload(imageKey, isVideo)}>
+              <Download className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.download')}
+            </ContextMenuItem>
             <ContextMenuSeparatorComponent />
             <ContextMenuItem
               onClick={() => {
