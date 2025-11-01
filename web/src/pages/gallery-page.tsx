@@ -260,15 +260,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
-  const handleDownload = async (imageKey: string, isVideo: boolean = false) => {
+  const handleDownload = async (imageKey: string) => {
     try {
-      // Generate download URL with attachment filter (and raw filter for videos)
-      const filters = isVideo
-        ? [
-            { name: 'raw', args: '' },
-            { name: 'attachment', args: '' },
-          ]
-        : [{ name: 'attachment', args: '' }]
+      const filters = [
+        { name: 'raw', args: '' },
+        { name: 'attachment', args: '' },
+      ]
 
       const url = await generateImagorUrl({
         galleryKey,
@@ -310,7 +307,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
               <Copy className='mr-2 h-4 w-4' />
               {t('pages.gallery.contextMenu.copyUrl')}
             </ContextMenuItem>
-            <ContextMenuItem onClick={() => handleDownload(imageKey, isVideo)}>
+            <ContextMenuItem onClick={() => handleDownload(imageKey)}>
               <Download className='mr-2 h-4 w-4' />
               {t('pages.gallery.contextMenu.download')}
             </ContextMenuItem>
