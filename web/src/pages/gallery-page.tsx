@@ -60,6 +60,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     image: null,
     isDeleting: false,
   })
+  const [contextMenuState, setContextMenuState] = useState<{
+    open: boolean
+    image: GalleryImage | null
+    position: ImagePosition | null
+  }>({
+    open: false,
+    image: null,
+    position: null,
+  })
   const [uploadState, setUploadState] = useState<{
     files: DragDropFile[]
     isUploading: boolean
@@ -194,6 +203,58 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         isDeleting: false,
       })
     }
+  }
+
+  const handleContextMenu = (image: GalleryImage, position: ImagePosition) => {
+    setContextMenuState({
+      open: true,
+      image,
+      position,
+    })
+  }
+
+  const handleContextMenuClose = () => {
+    setContextMenuState({
+      open: false,
+      image: null,
+      position: null,
+    })
+  }
+
+  const handleContextMenuEdit = () => {
+    if (!contextMenuState.image) return
+
+    // Navigate to image editor
+    if (galleryKey) {
+      navigate({
+        to: '/gallery/$galleryKey/$imageKey/editor',
+        params: { galleryKey, imageKey: contextMenuState.image.imageKey },
+      })
+    } else {
+      navigate({
+        to: '/$imageKey/editor',
+        params: { imageKey: contextMenuState.image.imageKey },
+      })
+    }
+    handleContextMenuClose()
+  }
+
+  const handleContextMenuDelete = () => {
+    if (!contextMenuState.image) return
+
+    setDeleteImageDialog({
+      open: true,
+      image: contextMenuState.image,
+      isDeleting: false,
+    })
+    handleContextMenuClose()
+  }
+
+  const handleContextMenuOpen = () => {
+    if (!contextMenuState.image || !contextMenuState.position) return
+
+    handleImageClick(contextMenuState.image, contextMenuState.position)
+    handleContextMenuClose()
   }
 
   const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 48 : 38)
@@ -333,33 +394,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                         scrollTop={scrollPosition}
                         maxImageWidth={maxItemWidth}
                         onImageClick={handleImageClick}
-                        contextMenuComponent={(image) => (
-                          <ImageContextMenu
-                            image={image}
-                            onImageClick={handleImageClick}
-                            onEdit={(image) => {
-                              // Navigate to image editor
-                              if (galleryKey) {
-                                navigate({
-                                  to: '/gallery/$galleryKey/$imageKey/editor',
-                                  params: { galleryKey, imageKey: image.imageKey },
-                                })
-                              } else {
-                                navigate({
-                                  to: '/$imageKey/editor',
-                                  params: { imageKey: image.imageKey },
-                                })
-                              }
-                            }}
-                            onDelete={(image) => {
-                              setDeleteImageDialog({
-                                open: true,
-                                image,
-                                isDeleting: false,
-                              })
-                            }}
-                          />
-                        )}
+                        onContextMenu={handleContextMenu}
                       />
                     </>
                   )}
@@ -383,6 +418,19 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         isDeleting={deleteImageDialog.isDeleting}
         onConfirm={handleDeleteImage}
       />
+
+      {/* Single Context Menu - Only rendered when needed */}
+      {contextMenuState.open && contextMenuState.image && (
+        <ImageContextMenu
+          image={contextMenuState.image}
+          onImageClick={handleContextMenuOpen}
+          onEdit={handleContextMenuEdit}
+          onDelete={handleContextMenuDelete}
+        >
+          {/* This will be positioned by the context menu library */}
+          <div />
+        </ImageContextMenu>
+      )}
 
       {/* Hidden file input for traditional upload */}
       <input

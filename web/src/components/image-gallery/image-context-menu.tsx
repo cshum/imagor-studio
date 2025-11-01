@@ -24,9 +24,9 @@ export interface ContextMenuData {
 interface ImageContextMenuProps {
   image: GalleryImage
   children?: React.ReactNode
-  onImageClick?: (image: GalleryImage, position: Position) => void
-  onEdit?: (image: GalleryImage, position: Position) => void
-  onDelete?: (image: GalleryImage, position: Position) => void
+  onImageClick?: () => void
+  onEdit?: () => void
+  onDelete?: () => void
 }
 
 export const ImageContextMenu = ({
@@ -40,34 +40,17 @@ export const ImageContextMenu = ({
   const { authState } = useAuth()
 
   const handleContextMenuAction = (action: ContextMenuAction) => {
-    const rect = document
-      .querySelector(`[data-image-key="${image.imageKey}"]`)
-      ?.getBoundingClientRect()
-    const position = rect
-      ? {
-          top: Math.round(rect.top),
-          left: Math.round(rect.left),
-          width: Math.round(rect.width),
-          height: Math.round(rect.height),
-        }
-      : {
-          top: 0,
-          left: 0,
-          width: 0,
-          height: 0,
-        }
-
     if (action === 'open' && onImageClick) {
-      onImageClick(image, position)
+      onImageClick()
     } else if (action === 'edit' && onEdit) {
       // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
       setTimeout(() => {
-        onEdit(image, position)
+        onEdit()
       }, 0)
     } else if (action === 'delete' && onDelete) {
       // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
       setTimeout(() => {
-        onDelete(image, position)
+        onDelete()
       }, 0)
     }
   }

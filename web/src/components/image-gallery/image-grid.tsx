@@ -14,7 +14,7 @@ interface ImageCellProps {
   rowIndex: number
   columnIndex: number
   onImageClick?: (image: GalleryImage, position: Position) => void
-  contextMenu?: React.ReactNode
+  onContextMenu?: (image: GalleryImage, position: Position) => void
 }
 
 const ImageCell = ({
@@ -24,7 +24,7 @@ const ImageCell = ({
   rowIndex,
   columnIndex,
   onImageClick,
-  contextMenu,
+  onContextMenu,
 }: ImageCellProps) => {
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (onImageClick) {
@@ -38,7 +38,20 @@ const ImageCell = ({
     }
   }
 
-  const imageElement = (
+  const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault() // Prevent browser context menu
+    if (onContextMenu) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      onContextMenu(image, {
+        top: Math.round(rect.top),
+        left: Math.round(rect.left),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      })
+    }
+  }
+
+  return (
     <div
       key={image.imageKey}
       data-image-key={image.imageKey}
@@ -50,6 +63,7 @@ const ImageCell = ({
         willChange: 'transform',
       }}
       onClick={handleClick}
+      onContextMenu={handleContextMenu}
     >
       <div className='relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700'>
         <img
@@ -65,14 +79,6 @@ const ImageCell = ({
       </div>
     </div>
   )
-
-  // If contextMenu is provided, wrap the image element with it
-  if (contextMenu) {
-    return React.cloneElement(contextMenu as React.ReactElement, {}, imageElement)
-  }
-
-  // Otherwise, return the image element directly
-  return imageElement
 }
 
 export interface ImageGridProps {
@@ -82,7 +88,7 @@ export interface ImageGridProps {
   scrollTop: number
   maxImageWidth: number
   onImageClick?: (image: GalleryImage, position: Position) => void
-  contextMenuComponent?: (image: GalleryImage) => React.ReactNode
+  onContextMenu?: (image: GalleryImage, position: Position) => void
 }
 
 export const ImageGrid = ({
@@ -92,7 +98,7 @@ export const ImageGrid = ({
   scrollTop,
   maxImageWidth,
   onImageClick,
-  contextMenuComponent,
+  onContextMenu,
 }: ImageGridProps) => {
   // Dynamically calculate the number of columns based on maxImageWidth prop
   const columnCount = Math.max(3, Math.floor(width / maxImageWidth))
@@ -128,7 +134,7 @@ export const ImageGrid = ({
           rowIndex={rowIndex}
           columnIndex={columnIndex}
           onImageClick={onImageClick}
-          contextMenu={contextMenuComponent ? contextMenuComponent(image) : null}
+          onContextMenu={onContextMenu}
         />,
       )
     }
