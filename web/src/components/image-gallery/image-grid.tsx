@@ -10,7 +10,7 @@ interface ImageCellProps {
   rowHeight: number
   rowIndex: number
   columnIndex: number
-  onImageClick?: (image: GalleryImage, position: Position) => void
+  onImageClick?: (imageKey: string, position: Position) => void
 }
 
 const ImageCell = ({
@@ -24,7 +24,7 @@ const ImageCell = ({
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (onImageClick) {
       const rect = e.currentTarget.getBoundingClientRect()
-      onImageClick(image, {
+      onImageClick(image.imageKey, {
         top: Math.round(rect.top),
         left: Math.round(rect.left),
         width: Math.round(rect.width),
@@ -70,7 +70,7 @@ export interface ImageGridProps {
   width: number
   scrollTop: number
   maxImageWidth: number
-  onImageClick?: (image: GalleryImage, position: Position) => void
+  onImageClick?: (imageKey: string, position: Position) => void
 }
 
 export const ImageGrid = ({

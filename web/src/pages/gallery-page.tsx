@@ -126,14 +126,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     requestAnimationFrame(() => restoreScrollPosition(galleryKey))
   }, [galleryKey])
 
-  const handleImageClick = (
-    imageKeyOrImage: string | GalleryImage,
-    position?: ImagePosition | null,
-  ) => {
-    // Handle both string imageKey and GalleryImage object for backward compatibility
-    const imageKey =
-      typeof imageKeyOrImage === 'string' ? imageKeyOrImage : imageKeyOrImage.imageKey
-
+  const handleImageClick = (imageKey: string, position?: ImagePosition | null) => {
     if (position) {
       setPosition(galleryKey, imageKey, position)
     }
