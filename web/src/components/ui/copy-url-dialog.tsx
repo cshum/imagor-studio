@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -15,15 +16,10 @@ interface CopyUrlDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   url: string
-  title?: string
 }
 
-export function CopyUrlDialog({
-  open,
-  onOpenChange,
-  url,
-  title = 'Copy Image URL',
-}: CopyUrlDialogProps) {
+export function CopyUrlDialog({ open, onOpenChange, url }: CopyUrlDialogProps) {
+  const { t } = useTranslation()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -53,11 +49,8 @@ export function CopyUrlDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='sm:max-w-md'>
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
-            Copy the URL below. We attempted to copy it automatically, but you may need to copy it
-            manually.
-          </DialogDescription>
+          <DialogTitle>{t('pages.gallery.copyUrlDialog.title')}</DialogTitle>
+          <DialogDescription>{t('pages.gallery.copyUrlDialog.description')}</DialogDescription>
         </DialogHeader>
         <div className='flex flex-col space-y-4'>
           <Textarea
@@ -69,9 +62,9 @@ export function CopyUrlDialog({
           />
           <div className='flex justify-between'>
             <Button variant='outline' onClick={() => onOpenChange(false)}>
-              Close
+              {t('pages.gallery.copyUrlDialog.closeButton')}
             </Button>
-            <Button onClick={handleCopyClick}>Select & Copy</Button>
+            <Button onClick={handleCopyClick}>{t('pages.gallery.copyUrlDialog.copyButton')}</Button>
           </div>
         </div>
       </DialogContent>
