@@ -33,10 +33,6 @@ export interface ImageEditorState {
   quality?: number // e.g., 80, 90, 95, undefined (default)
   maxBytes?: number // e.g., 100000 (100KB), undefined (no limit)
 
-  // Auto trim
-  autoTrim?: boolean // Remove whitespace/transparent edges
-  trimTolerance?: number // Edge detection sensitivity (1-50, default 1)
-
   // Crop (crops after resize)
   cropLeft?: number
   cropTop?: number
@@ -211,15 +207,6 @@ export class ImageEditor {
     }
     if (state.grayscale) {
       filters.push({ name: 'grayscale', args: '' })
-    }
-
-    // Auto trim handling
-    if (state.autoTrim) {
-      const trimArgs: string[] = []
-      if (state.trimTolerance && state.trimTolerance !== 1) {
-        trimArgs.push(state.trimTolerance.toString())
-      }
-      filters.push({ name: 'trim', args: trimArgs.join(',') })
     }
 
     // Crop handling (crops after resize, before rotation)
@@ -420,8 +407,6 @@ export class ImageEditor {
       format: undefined,
       quality: undefined,
       maxBytes: undefined,
-      autoTrim: undefined,
-      trimTolerance: undefined,
     }
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
