@@ -66,7 +66,7 @@ export function ImageEditorControls({
           <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
             <div className='flex items-center gap-2'>
               <Scissors className='h-4 w-4' />
-              <span className='font-medium'>{t('imageEditor.controls.crop')}</span>
+              <span className='font-medium'>{t('imageEditor.controls.cropAspect')}</span>
             </div>
             <CollapsibleIcon isOpen={openSections.crop} />
           </CollapsibleTrigger>
