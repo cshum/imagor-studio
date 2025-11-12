@@ -25,6 +25,8 @@ interface ImageEditorControlsProps {
   onToggleAspectLock: () => void
   onVisualCropToggle?: (enabled: boolean) => Promise<void>
   isVisualCropEnabled?: boolean
+  outputWidth: number
+  outputHeight: number
 }
 
 export function ImageEditorControls({
@@ -37,6 +39,8 @@ export function ImageEditorControls({
   onToggleAspectLock,
   onVisualCropToggle,
   isVisualCropEnabled,
+  outputWidth,
+  outputHeight,
 }: ImageEditorControlsProps) {
   const { t } = useTranslation()
 
@@ -72,6 +76,8 @@ export function ImageEditorControls({
               onUpdateParams={onUpdateParams}
               onVisualCropToggle={onVisualCropToggle}
               isVisualCropEnabled={isVisualCropEnabled}
+              outputWidth={outputWidth}
+              outputHeight={outputHeight}
             />
           </CollapsibleContent>
         </Collapsible>

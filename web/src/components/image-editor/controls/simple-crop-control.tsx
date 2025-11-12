@@ -7,6 +7,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
 
+// Define aspect ratio presets
+const ASPECT_RATIO_PRESETS = [
+  { key: 'square', label: '1:1', ratio: 1 },
+  { key: 'portrait', label: '4:5', ratio: 4 / 5 },
+  { key: 'landscape', label: '16:9', ratio: 16 / 9 },
+  { key: 'photo', label: '3:2', ratio: 3 / 2 },
+]
+
 interface SimpleCropControlProps {
   params: ImageEditorState
   onUpdateParams: (
@@ -15,6 +23,8 @@ interface SimpleCropControlProps {
   ) => void
   onVisualCropToggle?: (enabled: boolean) => Promise<void>
   isVisualCropEnabled?: boolean
+  outputWidth: number
+  outputHeight: number
 }
 
 export function SimpleCropControl({
@@ -22,9 +32,12 @@ export function SimpleCropControl({
   onUpdateParams,
   onVisualCropToggle,
   isVisualCropEnabled = false,
+  outputWidth,
+  outputHeight,
 }: SimpleCropControlProps) {
   const { t } = useTranslation()
   const [isToggling, setIsToggling] = useState(false)
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>('free')
 
   // Filter crop handlers
   const getFilterCropValue = (
@@ -60,8 +73,72 @@ export function SimpleCropControl({
     }
   }
 
+  const handleAspectRatioPreset = async (preset: typeof ASPECT_RATIO_PRESETS[0]) => {
+    setSelectedAspectRatio(preset.key)
+    
+    // Calculate crop dimensions based on aspect ratio
+    const targetRatio = preset.ratio
+    const imageWidth = outputWidth
+    const imageHeight = outputHeight
+    
+    let cropWidth: number
+    let cropHeight: number
+    
+    // Calculate the largest crop area that fits the aspect ratio
+    if (imageWidth / imageHeight > targetRatio) {
+      // Image is wider than target ratio - constrain by height
+      cropHeight = imageHeight
+      cropWidth = Math.round(cropHeight * targetRatio)
+    } else {
+      // Image is taller than target ratio - constrain by width
+      cropWidth = imageWidth
+      cropHeight = Math.round(cropWidth / targetRatio)
+    }
+    
+    // Center the crop area
+    const cropLeft = Math.round((imageWidth - cropWidth) / 2)
+    const cropTop = Math.round((imageHeight - cropHeight) / 2)
+    
+    // If visual crop is not enabled, enable it first
+    if (!isVisualCropEnabled && onVisualCropToggle) {
+      setIsToggling(true)
+      try {
+        await onVisualCropToggle(true)
+      } finally {
+        setIsToggling(false)
+      }
+    }
+    
+    // Apply the calculated crop values
+    onUpdateParams({
+      filterCropLeft: cropLeft,
+      filterCropTop: cropTop,
+      filterCropWidth: cropWidth,
+      filterCropHeight: cropHeight,
+    })
+  }
+
   return (
     <div className='space-y-4'>
+      {/* Aspect Ratio Presets */}
+      <div className='space-y-3'>
+        <Label className='text-sm font-medium'>{t('imageEditor.dimensions.aspectRatios')}</Label>
+        <div className='grid grid-cols-3 gap-2'>
+          {ASPECT_RATIO_PRESETS.map((preset) => (
+            <Button
+              key={preset.key}
+              variant={selectedAspectRatio === preset.key ? 'default' : 'outline'}
+              size='sm'
+              onClick={() => handleAspectRatioPreset(preset)}
+              disabled={isToggling}
+              className='h-8 text-xs'
+            >
+              {preset.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
       <div className='flex items-center justify-between'>
         <Label className='text-sm font-medium'>{t('imageEditor.crop.cropTitle')}</Label>
         {onVisualCropToggle && (
@@ -85,6 +162,10 @@ export function SimpleCropControl({
           </Button>
         )}
       </div>
+
+      <p className='text-muted-foreground text-xs'>
+        {t('imageEditor.crop.filterCropDescription')}
+      </p>
 
       <div className='grid grid-cols-2 gap-3'>
         <div className='space-y-2'>

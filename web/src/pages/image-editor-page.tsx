@@ -347,6 +347,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               onToggleAspectLock={toggleAspectLock}
               onVisualCropToggle={handleVisualCropToggle}
               isVisualCropEnabled={visualCropEnabled}
+              outputWidth={params.width || loaderData.originalDimensions.width}
+              outputHeight={params.height || loaderData.originalDimensions.height}
             />
           </div>
 
