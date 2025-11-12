@@ -12,9 +12,9 @@ export interface EditorOpenSections {
 }
 
 const defaultOpenSections: EditorOpenSections = {
-  dimensions: true,
+  dimensions: false,
   output: false,
-  crop: false,
+  crop: true,
   effects: false,
   transform: false,
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Eye, EyeOff, LoaderCircle } from 'lucide-react'
+import { Check, Crop, LoaderCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -26,28 +26,6 @@ export function SimpleCropControl({
 }: SimpleCropControlProps) {
   const { t } = useTranslation()
   const [isToggling, setIsToggling] = useState(false)
-
-  // Display coordinate values directly
-  const getDisplayValue = (side: 'cropLeft' | 'cropTop' | 'cropRight' | 'cropBottom'): string => {
-    const value = params[side]
-    if (value === undefined) return ''
-    return value.toString()
-  }
-
-  const handleCropChange = (
-    side: 'cropLeft' | 'cropTop' | 'cropRight' | 'cropBottom',
-    value: string,
-  ) => {
-    const numValue = parseInt(value, 10)
-
-    if (isNaN(numValue) || numValue < 0) {
-      onUpdateParams({ [side]: undefined })
-      return
-    }
-
-    // Use the coordinate value directly
-    onUpdateParams({ [side]: numValue })
-  }
 
   const handleAutoTrimChange = (checked: boolean) => {
     onUpdateParams({ autoTrim: checked })
@@ -102,98 +80,10 @@ export function SimpleCropControl({
 
   return (
     <div className='space-y-6'>
-      {/* Auto Trim */}
-      <div className='space-y-3'>
-        <div className='flex items-center space-x-2'>
-          <Checkbox
-            id='auto-trim'
-            checked={!!params.autoTrim}
-            onCheckedChange={handleAutoTrimChange}
-          />
-          <Label htmlFor='auto-trim' className='text-sm font-medium'>
-            {t('imageEditor.crop.autoTrim')}
-          </Label>
-        </div>
-
-        <p className='text-muted-foreground text-xs'>{t('imageEditor.crop.autoTrimDescription')}</p>
-
-        {/* Trim Tolerance */}
-        <div className='space-y-2'>
-          <Label className='text-muted-foreground text-xs'>
-            {t('imageEditor.crop.trimTolerance')}
-          </Label>
-          <Input
-            type='number'
-            placeholder='1'
-            value={params.trimTolerance?.toString() || ''}
-            onChange={(e) => handleTrimToleranceChange(e.target.value)}
-            min='1'
-            max='50'
-            className='w-20'
-          />
-          <p className='text-muted-foreground text-xs'>
-            {t('imageEditor.crop.trimToleranceDescription')}
-          </p>
-        </div>
-      </div>
-
-      {/* Manual Crop */}
-      <div className='space-y-4'>
-        <Label className='text-sm font-medium'>{t('imageEditor.crop.manualCrop')}</Label>
-
-        <div className='grid grid-cols-2 gap-3'>
-          <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.left')}</Label>
-            <Input
-              type='number'
-              placeholder='0'
-              value={getDisplayValue('cropLeft')}
-              onChange={(e) => handleCropChange('cropLeft', e.target.value)}
-              min='0'
-            />
-          </div>
-
-          <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.top')}</Label>
-            <Input
-              type='number'
-              placeholder='0'
-              value={getDisplayValue('cropTop')}
-              onChange={(e) => handleCropChange('cropTop', e.target.value)}
-              min='0'
-            />
-          </div>
-
-          <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.right')}</Label>
-            <Input
-              type='number'
-              placeholder='0'
-              value={getDisplayValue('cropRight')}
-              onChange={(e) => handleCropChange('cropRight', e.target.value)}
-              min='0'
-            />
-          </div>
-
-          <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.bottom')}</Label>
-            <Input
-              type='number'
-              placeholder='0'
-              value={getDisplayValue('cropBottom')}
-              onChange={(e) => handleCropChange('cropBottom', e.target.value)}
-              min='0'
-            />
-          </div>
-        </div>
-
-        <p className='text-muted-foreground text-xs'>{t('imageEditor.crop.cropDescription')}</p>
-      </div>
-
-      {/* Filter Crop (crops after resize) */}
+      {/* Crop (visual cropping after resize) */}
       <div className='space-y-4'>
         <div className='flex items-center justify-between'>
-          <Label className='text-sm font-medium'>{t('imageEditor.crop.filterCrop')}</Label>
+          <Label className='text-sm font-medium'>{t('imageEditor.crop.cropTitle')}</Label>
           {onVisualCropToggle && (
             <Button
               variant='outline'
@@ -202,25 +92,16 @@ export function SimpleCropControl({
               disabled={isToggling}
               className='h-8'
             >
-              {isVisualCropEnabled ? (
-                <>
-                  {isToggling ? (
-                    <LoaderCircle className='mr-1 h-4 w-4 animate-spin' />
-                  ) : (
-                    <EyeOff className='mr-1 h-4 w-4' />
-                  )}
-                  {t('imageEditor.crop.hideVisual')}
-                </>
+              {isToggling ? (
+                <LoaderCircle className='mr-1 h-4 w-4 animate-spin' />
+              ) : isVisualCropEnabled ? (
+                <Check className='mr-1 h-4 w-4' />
               ) : (
-                <>
-                  {isToggling ? (
-                    <LoaderCircle className='mr-1 h-4 w-4 animate-spin' />
-                  ) : (
-                    <Eye className='mr-1 h-4 w-4' />
-                  )}
-                  {t('imageEditor.crop.showVisual')}
-                </>
+                <Crop className='mr-1 h-4 w-4' />
               )}
+              {isVisualCropEnabled
+                ? t('imageEditor.crop.applyCrop')
+                : t('imageEditor.crop.startCrop')}
             </Button>
           )}
         </div>
@@ -277,6 +158,41 @@ export function SimpleCropControl({
               step='0.01'
             />
           </div>
+        </div>
+      </div>
+
+      {/* Auto Trim */}
+      <div className='space-y-3'>
+        <div className='flex items-center space-x-2'>
+          <Checkbox
+            id='auto-trim'
+            checked={!!params.autoTrim}
+            onCheckedChange={handleAutoTrimChange}
+          />
+          <Label htmlFor='auto-trim' className='text-sm font-medium'>
+            {t('imageEditor.crop.autoTrim')}
+          </Label>
+        </div>
+
+        <p className='text-muted-foreground text-xs'>{t('imageEditor.crop.autoTrimDescription')}</p>
+
+        {/* Trim Tolerance */}
+        <div className='space-y-2'>
+          <Label className='text-muted-foreground text-xs'>
+            {t('imageEditor.crop.trimTolerance')}
+          </Label>
+          <Input
+            type='number'
+            placeholder='1'
+            value={params.trimTolerance?.toString() || ''}
+            onChange={(e) => handleTrimToleranceChange(e.target.value)}
+            min='1'
+            max='50'
+            className='w-20'
+          />
+          <p className='text-muted-foreground text-xs'>
+            {t('imageEditor.crop.trimToleranceDescription')}
+          </p>
         </div>
       </div>
     </div>

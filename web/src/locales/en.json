@@ -453,7 +453,7 @@
       "outputCompression": "Output & Compression",
       "colorEffects": "Color & Effects",
       "transformRotate": "Transform & Rotate",
-      "cropTrim": "Crop & Trim"
+      "crop": "Crop & Trim"
     },
     "transform": {
       "flipControls": "Flip Controls",
@@ -538,22 +538,18 @@
       }
     },
     "crop": {
-      "manualCrop": "Manual Crop",
       "left": "Left (px)",
       "top": "Top (px)",
-      "right": "Right (px)",
-      "bottom": "Bottom (px)",
       "width": "Width",
       "height": "Height",
-      "cropDescription": "Define crop area using coordinates: left-top to right-bottom in pixel",
       "autoTrim": "Auto Trim",
       "autoTrimDescription": "Automatically remove whitespace and transparent edges",
       "trimTolerance": "Trim Tolerance",
       "trimToleranceDescription": "Edge detection sensitivity (1-50, higher = more aggressive)",
-      "filterCrop": "Filter Crop (After Resize)",
+      "cropTitle": "Crop",
       "filterCropDescription": "Crop image after resizing. Supports absolute pixels or relative coordinates (0.0-1.0)",
-      "showVisual": "Show Visual",
-      "hideVisual": "Hide Visual"
+      "startCrop": "Crop",
+      "applyCrop": "Apply Crop"
     },
     "preview": {
       "previewError": "Preview Error",

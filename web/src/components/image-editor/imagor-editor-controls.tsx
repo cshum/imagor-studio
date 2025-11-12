@@ -53,6 +53,30 @@ export function ImageEditorControls({
 
   return (
     <div className='space-y-4'>
+      {/* Crop */}
+      <Card>
+        <Collapsible
+          open={openSections.crop}
+          onOpenChange={(open) => handleSectionToggle('crop', open)}
+        >
+          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
+            <div className='flex items-center gap-2'>
+              <Scissors className='h-4 w-4' />
+              <span className='font-medium'>{t('imageEditor.controls.crop')}</span>
+            </div>
+            <CollapsibleIcon isOpen={openSections.crop} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className='px-4 pb-4'>
+            <SimpleCropControl
+              params={params}
+              onUpdateParams={onUpdateParams}
+              onVisualCropToggle={onVisualCropToggle}
+              isVisualCropEnabled={isVisualCropEnabled}
+            />
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+
       {/* Dimensions & Resize */}
       <Card>
         <Collapsible
@@ -135,29 +159,6 @@ export function ImageEditorControls({
         </Collapsible>
       </Card>
 
-      {/* Crop & Trim */}
-      <Card>
-        <Collapsible
-          open={openSections.crop}
-          onOpenChange={(open) => handleSectionToggle('crop', open)}
-        >
-          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
-            <div className='flex items-center gap-2'>
-              <Scissors className='h-4 w-4' />
-              <span className='font-medium'>{t('imageEditor.controls.cropTrim')}</span>
-            </div>
-            <CollapsibleIcon isOpen={openSections.crop} />
-          </CollapsibleTrigger>
-          <CollapsibleContent className='px-4 pb-4'>
-            <SimpleCropControl
-              params={params}
-              onUpdateParams={onUpdateParams}
-              onVisualCropToggle={onVisualCropToggle}
-              isVisualCropEnabled={isVisualCropEnabled}
-            />
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
     </div>
   )
 }
