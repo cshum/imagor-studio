@@ -353,8 +353,8 @@ export function CropOverlay({
             onMouseDown={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
             onTouchStart={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
           >
-            {/* Visual handle: 16px */}
-            <div className='h-4 w-4 rounded-full border-2 border-white bg-blue-500' />
+            {/* Visual handle: 12px */}
+            <div className='h-3 w-3 rounded-full border-2 border-white bg-blue-500' />
           </div>
         ))}
       </div>
