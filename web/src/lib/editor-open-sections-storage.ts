@@ -15,7 +15,7 @@ const defaultOpenSections: EditorOpenSections = {
   dimensions: false,
   output: false,
   crop: true,
-  effects: false,
+  effects: true,
   transform: false,
 }
 

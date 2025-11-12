@@ -333,9 +333,9 @@ export function CropResizeControl({
         </div>
       </div>
 
-      {/* Size Slider */}
+      {/* Resize Slider */}
       <div className='space-y-3'>
-        <Label className='text-sm font-medium'>Scale</Label>
+        <Label className='text-sm font-medium'>Resize</Label>
         <div className='space-y-2'>
           <Slider
             value={sizeScale}
@@ -362,9 +362,9 @@ export function CropResizeControl({
             className='w-full'
           />
           <div className='text-muted-foreground flex justify-between text-xs'>
-            <span>Small</span>
+            <span>0.1x</span>
             <span>{sizeScale[0].toFixed(2)}x</span>
-            <span>Large</span>
+            <span>2.0x</span>
           </div>
         </div>
       </div>

@@ -57,7 +57,7 @@ export function ImageEditorControls({
 
   return (
     <div className='space-y-4'>
-      {/* Crop */}
+      {/* Crop & Resize */}
       <Card>
         <Collapsible
           open={openSections.crop}
@@ -82,25 +82,6 @@ export function ImageEditorControls({
               outputHeight={outputHeight}
               onAspectRatioChange={onCropAspectRatioChange}
             />
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-
-      {/* Output & Compression */}
-      <Card>
-        <Collapsible
-          open={openSections.output}
-          onOpenChange={(open) => handleSectionToggle('output', open)}
-        >
-          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
-            <div className='flex items-center gap-2'>
-              <FileImage className='h-4 w-4' />
-              <span className='font-medium'>{t('imageEditor.controls.outputCompression')}</span>
-            </div>
-            <CollapsibleIcon isOpen={openSections.output} />
-          </CollapsibleTrigger>
-          <CollapsibleContent className='px-4 pb-4'>
-            <OutputControl params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
@@ -139,6 +120,25 @@ export function ImageEditorControls({
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
             <TransformControl params={params} onUpdateParams={onUpdateParams} />
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+
+      {/* Output & Compression */}
+      <Card>
+        <Collapsible
+          open={openSections.output}
+          onOpenChange={(open) => handleSectionToggle('output', open)}
+        >
+          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
+            <div className='flex items-center gap-2'>
+              <FileImage className='h-4 w-4' />
+              <span className='font-medium'>{t('imageEditor.controls.outputCompression')}</span>
+            </div>
+            <CollapsibleIcon isOpen={openSections.output} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className='px-4 pb-4'>
+            <OutputControl params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
