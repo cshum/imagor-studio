@@ -277,6 +277,13 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 	// Set the image path in params
 	params.Image = imagePath
 
+	// Auto-enable base64 encoding if path contains spaces or special characters
+	// that would interfere with URL parsing (?, #, &)
+	if strings.Contains(imagePath, " ") ||
+		strings.ContainsAny(imagePath, "?#&") {
+		params.Base64Image = true
+	}
+
 	// Generate path using imagorpath
 	var path string
 	var signer imagorpath.Signer
