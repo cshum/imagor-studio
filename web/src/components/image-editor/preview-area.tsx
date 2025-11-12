@@ -50,7 +50,6 @@ export function PreviewArea({
   cropHeight = 0,
   onCropChange,
   outputWidth,
-  outputHeight,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -137,7 +136,7 @@ export function PreviewArea({
               onLoad={handleImageLoad}
               className={cn(
                 'h-auto w-auto object-contain',
-                'max-h-[calc(100vh-200px)]',
+                'max-h-[calc(100vh-170px)]',
                 isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
               )}
             />
