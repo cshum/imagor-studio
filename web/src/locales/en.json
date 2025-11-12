@@ -543,7 +543,6 @@
       "width": "Width",
       "height": "Height",
       "cropTitle": "Crop",
-      "filterCropDescription": "Crop image after resizing. Supports absolute pixels or relative coordinates (0.0-1.0)",
       "startCrop": "Crop",
       "applyCrop": "Apply Crop"
     },

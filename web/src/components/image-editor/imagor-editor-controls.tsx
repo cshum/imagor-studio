@@ -158,7 +158,6 @@ export function ImageEditorControls({
           </CollapsibleContent>
         </Collapsible>
       </Card>
-
     </div>
   )
 }
