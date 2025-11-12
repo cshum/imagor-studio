@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link2, Link2Off } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -28,14 +27,6 @@ interface DimensionControlProps {
   onToggleAspectLock: () => void
 }
 
-// Define aspect ratio presets
-const ASPECT_RATIO_PRESETS = [
-  { key: 'square', label: '1:1', ratio: 1 },
-  { key: 'portrait', label: '4:5', ratio: 4 / 5 },
-  { key: 'landscape', label: '16:9', ratio: 16 / 9 },
-  { key: 'photo', label: '3:2', ratio: 3 / 2 },
-]
-
 export function DimensionControl({
   params,
   aspectLocked,
@@ -44,33 +35,18 @@ export function DimensionControl({
   onToggleAspectLock,
 }: DimensionControlProps) {
   const { t } = useTranslation()
-  const [selectedPreset, setSelectedPreset] = useState<string | null>(null)
   const [sizeScale, setSizeScale] = useState([1])
   const [baseDimensions, setBaseDimensions] = useState<{ width: number; height: number } | null>(
     null,
   )
 
-  // Initialize base dimensions when component loads
+  // Initialize base dimensions when component loads or dimensions change manually
   useEffect(() => {
     if (params.width && params.height && !baseDimensions) {
       setBaseDimensions({ width: params.width, height: params.height })
     }
   }, [params.width, params.height, baseDimensions])
 
-  // Reset preset when dimensions are manually changed
-  useEffect(() => {
-    if (params.width && params.height && selectedPreset) {
-      const preset = ASPECT_RATIO_PRESETS.find((p) => p.key === selectedPreset)
-      if (preset) {
-        const currentRatio = params.width / params.height
-        const presetRatio = preset.ratio
-        // If the ratio doesn't match the preset (with some tolerance), reset
-        if (Math.abs(currentRatio - presetRatio) > 0.01) {
-          setSelectedPreset(null)
-        }
-      }
-    }
-  }, [params.width, params.height, selectedPreset])
   const handleWidthChange = (value: string) => {
     // Allow any input during typing - no validation
     const width = parseInt(value) || undefined
@@ -157,35 +133,6 @@ export function DimensionControl({
     } else {
       onUpdateParams({ vAlign: value === 'middle' ? undefined : value })
     }
-  }
-
-  const handlePresetClick = (preset: (typeof ASPECT_RATIO_PRESETS)[0]) => {
-    if (!aspectLocked) {
-      onToggleAspectLock()
-    }
-    setSelectedPreset(preset.key)
-    setSizeScale([1])
-
-    // Calculate dimensions based on aspect ratio and current size
-    const currentWidth = params.width || 1080
-    const currentHeight = params.height || 1080
-    const currentSize = Math.max(currentWidth, currentHeight)
-
-    let newWidth: number
-    let newHeight: number
-
-    if (preset.ratio >= 1) {
-      // Landscape or square - width is the larger dimension
-      newWidth = currentSize
-      newHeight = Math.round(currentSize / preset.ratio)
-    } else {
-      // Portrait - height is the larger dimension
-      newHeight = currentSize
-      newWidth = Math.round(currentSize * preset.ratio)
-    }
-
-    setBaseDimensions({ width: newWidth, height: newHeight })
-    onUpdateParams({ width: newWidth, height: newHeight })
   }
 
   const handleSizeScaleChange = (value: number[]) => {
@@ -357,25 +304,7 @@ export function DimensionControl({
         </div>
       )}
 
-      {/* Aspect Ratio Presets */}
-      <div className='space-y-3'>
-        <Label className='text-sm font-medium'>{t('imageEditor.dimensions.aspectRatios')}</Label>
-        <div className='grid grid-cols-2 gap-2'>
-          {ASPECT_RATIO_PRESETS.map((preset) => (
-            <Button
-              key={preset.key}
-              variant={selectedPreset === preset.key ? 'default' : 'outline'}
-              size='sm'
-              onClick={() => handlePresetClick(preset)}
-              className='h-8 text-xs'
-            >
-              {preset.label}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Size Slider - Always available */}
+      {/* Size Slider */}
       <div className='space-y-3'>
         <Label className='text-sm font-medium'>Size</Label>
         <div className='space-y-2'>
@@ -389,6 +318,7 @@ export function DimensionControl({
           />
           <div className='text-muted-foreground flex justify-between text-xs'>
             <span>0.1x</span>
+            <span>{sizeScale[0].toFixed(2)}x</span>
             <span>2x</span>
           </div>
         </div>

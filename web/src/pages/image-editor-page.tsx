@@ -71,6 +71,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     height: number
   } | null>(null)
   const [resetCounter, setResetCounter] = useState(0)
+  const [visualCropEnabled, setVisualCropEnabled] = useState(false)
+  const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
 
   const transformRef = useRef<ImageEditor | undefined>(undefined)
 
@@ -107,6 +109,16 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
   const resetParams = () => {
     transformRef.current?.resetParams()
+
+    // Reset dimension lock to initial locked state
+    if (!transformRef.current?.isAspectLocked()) {
+      transformRef.current?.toggleAspectLock()
+    }
+    setAspectLocked(true)
+
+    // Reset crop aspect ratio to free-form
+    setCropAspectRatio(null)
+
     setResetCounter((prev) => prev + 1)
   }
 
@@ -154,6 +166,45 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       toast.error(result.error || t('imageEditor.page.failedToDownload'))
     }
     // No success toast for download as it's obvious when it works
+  }
+
+  const handleVisualCropToggle = async (enabled: boolean) => {
+    // Update ImageEditor to control crop filter in preview
+    // This will wait for the new preview to load before resolving
+    await transformRef.current?.setVisualCropEnabled(enabled)
+
+    // Only update state after preview has loaded
+    setVisualCropEnabled(enabled)
+
+    // Initialize crop dimensions if enabling for the first time
+    if (enabled && !params.cropLeft && !params.cropTop && !params.cropWidth && !params.cropHeight) {
+      // Get current image dimensions (after resize)
+      const width = params.width || loaderData.originalDimensions.width
+      const height = params.height || loaderData.originalDimensions.height
+
+      // Set initial crop to full dimensions (100%)
+      updateParams({
+        cropLeft: 0,
+        cropTop: 0,
+        cropWidth: width,
+        cropHeight: height,
+      })
+    }
+  }
+
+  const handlePreviewLoad = () => {
+    setIsLoading(false)
+    // Notify ImageEditor that preview has loaded
+    transformRef.current?.notifyPreviewLoaded()
+  }
+
+  const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {
+    updateParams({
+      cropLeft: crop.left,
+      cropTop: crop.top,
+      cropWidth: crop.width,
+      cropHeight: crop.height,
+    })
   }
 
   return (
@@ -242,6 +293,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                       onOpenSectionsChange={handleOpenSectionsChange}
                       onUpdateParams={updateParams}
                       onToggleAspectLock={toggleAspectLock}
+                      onVisualCropToggle={handleVisualCropToggle}
+                      isVisualCropEnabled={visualCropEnabled}
+                      outputWidth={params.width || loaderData.originalDimensions.width}
+                      outputHeight={params.height || loaderData.originalDimensions.height}
+                      onCropAspectRatioChange={setCropAspectRatio}
                     />
                   </div>
                 </SheetContent>
@@ -257,10 +313,19 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           galleryKey={galleryKey}
           imageKey={imageKey}
           originalDimensions={loaderData.originalDimensions}
-          onLoad={() => setIsLoading(false)}
+          onLoad={handlePreviewLoad}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}
           onPreviewDimensionsChange={setPreviewMaxDimensions}
+          visualCropEnabled={visualCropEnabled}
+          cropLeft={params.cropLeft || 0}
+          cropTop={params.cropTop || 0}
+          cropWidth={params.cropWidth || 0}
+          cropHeight={params.cropHeight || 0}
+          onCropChange={handleCropChange}
+          outputWidth={params.width || loaderData.originalDimensions.width}
+          outputHeight={params.height || loaderData.originalDimensions.height}
+          cropAspectRatio={cropAspectRatio}
         />
       </div>
 
@@ -289,6 +354,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               onOpenSectionsChange={handleOpenSectionsChange}
               onUpdateParams={updateParams}
               onToggleAspectLock={toggleAspectLock}
+              onVisualCropToggle={handleVisualCropToggle}
+              isVisualCropEnabled={visualCropEnabled}
+              outputWidth={params.width || loaderData.originalDimensions.width}
+              outputHeight={params.height || loaderData.originalDimensions.height}
+              onCropAspectRatioChange={setCropAspectRatio}
             />
           </div>
 

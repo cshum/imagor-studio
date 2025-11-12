@@ -7,18 +7,10 @@ export interface ImageEditorState {
   width?: number
   height?: number
 
-  // Cropping
-  cropLeft?: number
-  cropTop?: number
-  cropRight?: number
-  cropBottom?: number
-
   // Fitting
-  fitIn?: boolean
   stretch?: boolean
+  fitIn?: boolean
   smart?: boolean
-
-  // Alignment
   hAlign?: string
   vAlign?: string
 
@@ -44,6 +36,12 @@ export interface ImageEditorState {
   // Auto trim
   autoTrim?: boolean // Remove whitespace/transparent edges
   trimTolerance?: number // Edge detection sensitivity (1-50, default 1)
+
+  // Crop (crops after resize)
+  cropLeft?: number
+  cropTop?: number
+  cropWidth?: number
+  cropHeight?: number
 }
 
 export interface ImageEditorConfig {
@@ -79,6 +77,8 @@ export class ImageEditor {
   private aspectLocked = true
   private lockedAspectRatio: number | null = null
   private lastPreviewUrl: string | null = null
+  private visualCropEnabled = false
+  private previewLoadResolvers: Array<() => void> = []
 
   constructor(config: ImageEditorConfig, callbacks: ImageEditorCallbacks = {}) {
     this.config = config
@@ -111,6 +111,18 @@ export class ImageEditor {
   }
 
   /**
+   * Check if all crop parameters are defined
+   */
+  private hasCropParams(state: ImageEditorState): boolean {
+    return (
+      state.cropLeft !== undefined &&
+      state.cropTop !== undefined &&
+      state.cropWidth !== undefined &&
+      state.cropHeight !== undefined
+    )
+  }
+
+  /**
    * Check if preview optimization should be applied
    */
   private shouldOptimizePreview(state: ImageEditorState, forPreview: boolean): boolean {
@@ -119,6 +131,12 @@ export class ImageEditor {
     // Automatically disable for resolution-dependent filters that need full detail
     if (state.blur !== undefined && state.blur !== 0) return false
     if (state.sharpen !== undefined && state.sharpen !== 0) return false
+
+    // Disable when crop filter will be applied (visual crop OFF + crop params exist)
+    // This ensures crop coordinates match the image dimensions
+    if (!this.visualCropEnabled && this.hasCropParams(state)) {
+      return false
+    }
 
     // Future filters that need full resolution can be added here
     // Example: if (state.someDetailFilter !== undefined) return false
@@ -163,20 +181,8 @@ export class ImageEditor {
     if (width !== undefined) graphqlParams.width = width
     if (height !== undefined) graphqlParams.height = height
 
-    // Cropping
-    if (state.cropLeft !== undefined) graphqlParams.cropLeft = state.cropLeft
-    if (state.cropTop !== undefined) graphqlParams.cropTop = state.cropTop
-    if (state.cropRight !== undefined) graphqlParams.cropRight = state.cropRight
-    if (state.cropBottom !== undefined) graphqlParams.cropBottom = state.cropBottom
-
     // Fitting
-    if (state.fitIn !== undefined) graphqlParams.fitIn = state.fitIn
     if (state.stretch !== undefined) graphqlParams.stretch = state.stretch
-    if (state.smart !== undefined) graphqlParams.smart = state.smart
-
-    // Alignment
-    if (state.hAlign) graphqlParams.hAlign = state.hAlign
-    if (state.vAlign) graphqlParams.vAlign = state.vAlign
 
     // Transform (for Phase 5)
     if (state.hFlip !== undefined) graphqlParams.hFlip = state.hFlip
@@ -217,6 +223,21 @@ export class ImageEditor {
         trimArgs.push(state.trimTolerance.toString())
       }
       filters.push({ name: 'trim', args: trimArgs.join(',') })
+    }
+
+    // Crop handling (crops after resize)
+    // Skip crop filter in preview when visual cropping is enabled (so user can see full image)
+    // Always include crop filter for Copy URL and Download
+    const shouldApplyCropFilter = !forPreview || (forPreview && !this.visualCropEnabled)
+
+    if (shouldApplyCropFilter && this.hasCropParams(state)) {
+      const cropArgs = [
+        state.cropLeft!.toString(),
+        state.cropTop!.toString(),
+        state.cropWidth!.toString(),
+        state.cropHeight!.toString(),
+      ].join(',')
+      filters.push({ name: 'crop', args: cropArgs })
     }
 
     // Format handling
@@ -276,6 +297,8 @@ export class ImageEditor {
         } else {
           // Same URL - image is already loaded, clear loading immediately
           this.callbacks.onLoadingChange?.(false)
+          // Resolve any pending preview load promises
+          this.notifyPreviewLoaded()
         }
       }
     } catch (error) {
@@ -330,9 +353,42 @@ export class ImageEditor {
       }
     }
 
+    // Handle crop when dimensions change
+    if (
+      (updates.width !== undefined || updates.height !== undefined) &&
+      this.hasCropParams(this.state)
+    ) {
+      const oldWidth = this.state.width ?? this.config.originalDimensions.width
+      const oldHeight = this.state.height ?? this.config.originalDimensions.height
+      const newWidth = newState.width ?? this.config.originalDimensions.width
+      const newHeight = newState.height ?? this.config.originalDimensions.height
+
+      // Always scale crop proportionally when dimensions change
+      const scaleX = newWidth / oldWidth
+      const scaleY = newHeight / oldHeight
+
+      newState.cropLeft = Math.round(this.state.cropLeft! * scaleX)
+      newState.cropTop = Math.round(this.state.cropTop! * scaleY)
+      newState.cropWidth = Math.round(this.state.cropWidth! * scaleX)
+      newState.cropHeight = Math.round(this.state.cropHeight! * scaleY)
+    }
+
     this.state = newState
     this.callbacks.onStateChange?.(this.getState())
-    this.schedulePreviewUpdate()
+
+    // Skip preview reload if only crop params changed during visual crop
+    // (crop filter is skipped in visual mode, so preview URL won't change)
+    const onlyCropParamsChanged =
+      this.visualCropEnabled &&
+      Object.keys(updates).length > 0 &&
+      Object.keys(updates).every(
+        (key) =>
+          key === 'cropLeft' || key === 'cropTop' || key === 'cropWidth' || key === 'cropHeight',
+      )
+
+    if (!onlyCropParamsChanged) {
+      this.schedulePreviewUpdate()
+    }
   }
 
   /**
@@ -344,15 +400,7 @@ export class ImageEditor {
       width: this.config.originalDimensions?.width,
       height: this.config.originalDimensions?.height,
       // Clear all other transforms
-      cropLeft: undefined,
-      cropTop: undefined,
-      cropRight: undefined,
-      cropBottom: undefined,
-      fitIn: undefined,
       stretch: undefined,
-      smart: undefined,
-      hAlign: undefined,
-      vAlign: undefined,
       brightness: undefined,
       contrast: undefined,
       saturation: undefined,
@@ -385,6 +433,42 @@ export class ImageEditor {
     } else if (!this.aspectLocked) {
       // When unlocking, clear the locked aspect ratio
       this.lockedAspectRatio = null
+    }
+  }
+
+  /**
+   * Notify that preview has loaded
+   * Called by parent when preview image finishes loading
+   */
+  notifyPreviewLoaded(): void {
+    // Resolve all pending promises
+    this.previewLoadResolvers.forEach((resolve) => resolve())
+    this.previewLoadResolvers = []
+  }
+
+  /**
+   * Wait for the next preview to load
+   * Returns a promise that resolves when the preview image loads
+   */
+  private waitForPreviewLoad(): Promise<void> {
+    return new Promise((resolve) => {
+      this.previewLoadResolvers.push(resolve)
+    })
+  }
+
+  /**
+   * Set visual crop enabled state
+   * When enabled, preview shows uncropped image for visual cropping
+   * When disabled, preview shows cropped result
+   * Returns a promise that resolves when the new preview has loaded
+   */
+  async setVisualCropEnabled(enabled: boolean): Promise<void> {
+    if (this.visualCropEnabled !== enabled) {
+      this.visualCropEnabled = enabled
+      // Regenerate preview with new crop filter state
+      this.schedulePreviewUpdate()
+      // Wait for the new preview to load
+      await this.waitForPreviewLoad()
     }
   }
 
