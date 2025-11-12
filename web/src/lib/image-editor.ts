@@ -371,22 +371,40 @@ export class ImageEditor {
       }
     }
 
-    // Reset filter crop when dimensions change (crop coordinates become invalid)
+    // Handle filter crop when dimensions change
     if (
       (updates.width !== undefined || updates.height !== undefined) &&
-      (newState.filterCropLeft !== undefined ||
-        newState.filterCropTop !== undefined ||
-        newState.filterCropWidth !== undefined ||
-        newState.filterCropHeight !== undefined)
+      this.state.filterCropLeft !== undefined &&
+      this.state.filterCropTop !== undefined &&
+      this.state.filterCropWidth !== undefined &&
+      this.state.filterCropHeight !== undefined
     ) {
-      const finalWidth = newState.width ?? this.config.originalDimensions.width
-      const finalHeight = newState.height ?? this.config.originalDimensions.height
+      const oldWidth = this.state.width ?? this.config.originalDimensions.width
+      const oldHeight = this.state.height ?? this.config.originalDimensions.height
+      const newWidth = newState.width ?? this.config.originalDimensions.width
+      const newHeight = newState.height ?? this.config.originalDimensions.height
 
-      // Reset crop to full dimensions
-      newState.filterCropLeft = 0
-      newState.filterCropTop = 0
-      newState.filterCropWidth = finalWidth
-      newState.filterCropHeight = finalHeight
+      // Check if aspect ratio changed (with small tolerance for floating point)
+      const oldAspect = oldWidth / oldHeight
+      const newAspect = newWidth / newHeight
+      const aspectChanged = Math.abs(oldAspect - newAspect) > 0.001
+
+      if (aspectChanged) {
+        // Aspect ratio changed - reset crop to full dimensions
+        newState.filterCropLeft = 0
+        newState.filterCropTop = 0
+        newState.filterCropWidth = newWidth
+        newState.filterCropHeight = newHeight
+      } else {
+        // Aspect ratio same - scale crop proportionally
+        const scaleX = newWidth / oldWidth
+        const scaleY = newHeight / oldHeight
+
+        newState.filterCropLeft = Math.round(this.state.filterCropLeft * scaleX)
+        newState.filterCropTop = Math.round(this.state.filterCropTop * scaleY)
+        newState.filterCropWidth = Math.round(this.state.filterCropWidth * scaleX)
+        newState.filterCropHeight = Math.round(this.state.filterCropHeight * scaleY)
+      }
     }
 
     this.state = newState
