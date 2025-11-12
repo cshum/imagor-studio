@@ -109,6 +109,16 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
   const resetParams = () => {
     transformRef.current?.resetParams()
+
+    // Reset dimension lock to initial locked state
+    if (!transformRef.current?.isAspectLocked()) {
+      transformRef.current?.toggleAspectLock()
+    }
+    setAspectLocked(true)
+
+    // Reset crop aspect ratio to free-form
+    setCropAspectRatio(null)
+
     setResetCounter((prev) => prev + 1)
   }
 
