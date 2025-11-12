@@ -481,32 +481,10 @@
       "width": "Width",
       "height": "Height",
       "auto": "Auto",
-      "originalRatio": "Original ratio: {{ratio}}:1",
-      "resizeMode": "Resize Mode",
-      "modes": {
-        "fitIn": "Fit In",
-        "fill": "Fill",
-        "stretch": "Stretch",
-        "smart": "Smart"
-      },
-      "modeDescriptions": {
-        "fitIn": "Scale to fit within dimensions",
-        "fill": "Scale to fill dimensions with crop",
-        "stretch": "Stretch to exact dimensions",
-        "smart": "Content-aware crop preserving important areas"
-      },
-      "alignment": "Alignment",
-      "horizontal": "Horizontal",
-      "vertical": "Vertical",
-      "alignments": {
-        "left": "Left",
-        "center": "Center",
-        "right": "Right",
-        "top": "Top",
-        "middle": "Middle",
-        "bottom": "Bottom"
-      },
       "aspectRatios": "Aspect Ratios"
+    },
+    "resize": {
+      "title": "Resize"
     },
     "output": {
       "outputFormat": "Format",

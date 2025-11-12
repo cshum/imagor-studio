@@ -335,7 +335,7 @@ export function CropResizeControl({
 
       {/* Resize Slider */}
       <div className='space-y-3'>
-        <Label className='text-sm font-medium'>Resize</Label>
+        <Label className='text-sm font-medium'>{t('imageEditor.resize.title')}</Label>
         <div className='space-y-2'>
           <Slider
             value={sizeScale}
