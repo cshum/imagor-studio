@@ -119,7 +119,7 @@ export function SimpleCropControl({
               value={getFilterCropValue('filterCropLeft')}
               onChange={(e) => handleFilterCropChange('filterCropLeft', e.target.value)}
               min='0'
-              step='0.01'
+              step='1'
             />
           </div>
 
@@ -131,7 +131,7 @@ export function SimpleCropControl({
               value={getFilterCropValue('filterCropTop')}
               onChange={(e) => handleFilterCropChange('filterCropTop', e.target.value)}
               min='0'
-              step='0.01'
+              step='1'
             />
           </div>
 
@@ -143,7 +143,7 @@ export function SimpleCropControl({
               value={getFilterCropValue('filterCropWidth')}
               onChange={(e) => handleFilterCropChange('filterCropWidth', e.target.value)}
               min='0'
-              step='0.01'
+              step='1'
             />
           </div>
 
@@ -155,7 +155,7 @@ export function SimpleCropControl({
               value={getFilterCropValue('filterCropHeight')}
               onChange={(e) => handleFilterCropChange('filterCropHeight', e.target.value)}
               min='0'
-              step='0.01'
+              step='1'
             />
           </div>
         </div>
