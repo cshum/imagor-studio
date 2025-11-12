@@ -194,55 +194,61 @@ export function CropResizeControl({
         </div>
       </div>
 
-      <div className='grid grid-cols-2 gap-3'>
-        <div className='space-y-2'>
-          <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.left')}</Label>
-          <Input
-            type='number'
-            placeholder='0'
-            value={getFilterCropValue('filterCropLeft')}
-            onChange={(e) => handleFilterCropChange('filterCropLeft', e.target.value)}
-            min='0'
-            step='1'
-          />
-        </div>
+      {/* Only show crop inputs if crop parameters are set */}
+      {(params.filterCropLeft !== undefined ||
+        params.filterCropTop !== undefined ||
+        params.filterCropWidth !== undefined ||
+        params.filterCropHeight !== undefined) && (
+        <div className='grid grid-cols-2 gap-3'>
+          <div className='space-y-2'>
+            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.left')}</Label>
+            <Input
+              type='number'
+              placeholder='0'
+              value={getFilterCropValue('filterCropLeft')}
+              onChange={(e) => handleFilterCropChange('filterCropLeft', e.target.value)}
+              min='0'
+              step='1'
+            />
+          </div>
 
-        <div className='space-y-2'>
-          <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.top')}</Label>
-          <Input
-            type='number'
-            placeholder='0'
-            value={getFilterCropValue('filterCropTop')}
-            onChange={(e) => handleFilterCropChange('filterCropTop', e.target.value)}
-            min='0'
-            step='1'
-          />
-        </div>
+          <div className='space-y-2'>
+            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.top')}</Label>
+            <Input
+              type='number'
+              placeholder='0'
+              value={getFilterCropValue('filterCropTop')}
+              onChange={(e) => handleFilterCropChange('filterCropTop', e.target.value)}
+              min='0'
+              step='1'
+            />
+          </div>
 
-        <div className='space-y-2'>
-          <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.width')}</Label>
-          <Input
-            type='number'
-            placeholder='0'
-            value={getFilterCropValue('filterCropWidth')}
-            onChange={(e) => handleFilterCropChange('filterCropWidth', e.target.value)}
-            min='0'
-            step='1'
-          />
-        </div>
+          <div className='space-y-2'>
+            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.width')}</Label>
+            <Input
+              type='number'
+              placeholder='0'
+              value={getFilterCropValue('filterCropWidth')}
+              onChange={(e) => handleFilterCropChange('filterCropWidth', e.target.value)}
+              min='0'
+              step='1'
+            />
+          </div>
 
-        <div className='space-y-2'>
-          <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.height')}</Label>
-          <Input
-            type='number'
-            placeholder='0'
-            value={getFilterCropValue('filterCropHeight')}
-            onChange={(e) => handleFilterCropChange('filterCropHeight', e.target.value)}
-            min='0'
-            step='1'
-          />
+          <div className='space-y-2'>
+            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.height')}</Label>
+            <Input
+              type='number'
+              placeholder='0'
+              value={getFilterCropValue('filterCropHeight')}
+              onChange={(e) => handleFilterCropChange('filterCropHeight', e.target.value)}
+              min='0'
+              step='1'
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Divider */}
       <div className='border-t' />
