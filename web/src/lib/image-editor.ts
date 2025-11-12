@@ -33,10 +33,6 @@ export interface ImageEditorState {
   quality?: number // e.g., 80, 90, 95, undefined (default)
   maxBytes?: number // e.g., 100000 (100KB), undefined (no limit)
 
-  // Auto trim
-  autoTrim?: boolean // Remove whitespace/transparent edges
-  trimTolerance?: number // Edge detection sensitivity (1-50, default 1)
-
   // Crop (crops after resize)
   cropLeft?: number
   cropTop?: number
@@ -212,20 +208,8 @@ export class ImageEditor {
     if (state.grayscale) {
       filters.push({ name: 'grayscale', args: '' })
     }
-    if (state.rotation !== undefined && state.rotation !== 0) {
-      filters.push({ name: 'rotate', args: state.rotation.toString() })
-    }
 
-    // Auto trim handling
-    if (state.autoTrim) {
-      const trimArgs: string[] = []
-      if (state.trimTolerance && state.trimTolerance !== 1) {
-        trimArgs.push(state.trimTolerance.toString())
-      }
-      filters.push({ name: 'trim', args: trimArgs.join(',') })
-    }
-
-    // Crop handling (crops after resize)
+    // Crop handling (crops after resize, before rotation)
     // Skip crop filter in preview when visual cropping is enabled (so user can see full image)
     // Always include crop filter for Copy URL and Download
     const shouldApplyCropFilter = !forPreview || (forPreview && !this.visualCropEnabled)
@@ -238,6 +222,15 @@ export class ImageEditor {
         state.cropHeight!.toString(),
       ].join(',')
       filters.push({ name: 'crop', args: cropArgs })
+    }
+
+    // Rotation handling (applied AFTER crop)
+    // Skip rotation in preview when visual cropping is enabled
+    // (so user can crop on unrotated image, rotation applied after crop in final URL)
+    const shouldApplyRotation = !forPreview || (forPreview && !this.visualCropEnabled)
+
+    if (shouldApplyRotation && state.rotation !== undefined && state.rotation !== 0) {
+      filters.push({ name: 'rotate', args: state.rotation.toString() })
     }
 
     // Format handling
@@ -414,8 +407,6 @@ export class ImageEditor {
       format: undefined,
       quality: undefined,
       maxBytes: undefined,
-      autoTrim: undefined,
-      trimTolerance: undefined,
     }
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
