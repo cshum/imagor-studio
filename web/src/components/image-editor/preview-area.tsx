@@ -66,12 +66,17 @@ export function PreviewArea({
     onLoad?.(width, height)
   }
 
-  // Calculate scale factor (preview / original)
-  // Crop works on original dimensions, so we scale from original to preview
+  // Calculate scale factor for crop overlay
+  // Crop coordinates are in original image space, but preview shows resized image
+  // So we need to scale: original → cropped → resized → preview
   const getScale = () => {
     if (!imageDimensions) {
       return 1
     }
+    
+    // When visual crop is enabled, preview shows the uncropped resized image
+    // The crop overlay needs to scale from original dimensions to preview dimensions
+    // Scale = (preview width) / (original width)
     return imageDimensions.width / originalDimensions.width
   }
 

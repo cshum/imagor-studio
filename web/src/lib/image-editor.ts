@@ -128,11 +128,9 @@ export class ImageEditor {
     if (state.blur !== undefined && state.blur !== 0) return false
     if (state.sharpen !== undefined && state.sharpen !== 0) return false
 
-    // Disable when crop filter will be applied (visual crop OFF + crop params exist)
-    // This ensures crop coordinates match the image dimensions
-    if (!this.visualCropEnabled && this.hasCropParams(state)) {
-      return false
-    }
+    // Since crop is now independent from resize (crop happens before resize),
+    // we can always optimize the preview. The crop overlay will scale accordingly.
+    // No need to disable optimization when crop params exist.
 
     // Future filters that need full resolution can be added here
     // Example: if (state.someDetailFilter !== undefined) return false
