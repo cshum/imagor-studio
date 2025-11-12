@@ -38,8 +38,16 @@ export class EditorOpenSectionsStorage {
       const value = await this.storage.get()
       if (value) {
         const savedSections = JSON.parse(value) as Partial<EditorOpenSections>
+
         // Merge with defaults to ensure all properties exist
-        return { ...defaultOpenSections, ...savedSections }
+        const merged = { ...defaultOpenSections, ...savedSections }
+
+        // Filter to only keep valid keys (removes deprecated fields)
+        const validKeys = Object.keys(defaultOpenSections) as Array<keyof EditorOpenSections>
+        return validKeys.reduce((acc, key) => {
+          acc[key] = merged[key]
+          return acc
+        }, {} as EditorOpenSections)
       }
     } catch {
       // Silently fall back to defaults if parsing fails
