@@ -453,7 +453,7 @@
       "outputCompression": "Output & Compression",
       "colorEffects": "Color & Effects",
       "transformRotate": "Transform & Rotate",
-      "crop": "Crop & Trim"
+      "crop": "Crop"
     },
     "transform": {
       "flipControls": "Flip Controls",
@@ -542,10 +542,6 @@
       "top": "Top (px)",
       "width": "Width",
       "height": "Height",
-      "autoTrim": "Auto Trim",
-      "autoTrimDescription": "Automatically remove whitespace and transparent edges",
-      "trimTolerance": "Trim Tolerance",
-      "trimToleranceDescription": "Edge detection sensitivity (1-50, higher = more aggressive)",
       "cropTitle": "Crop",
       "filterCropDescription": "Crop image after resizing. Supports absolute pixels or relative coordinates (0.0-1.0)",
       "startCrop": "Crop",
