@@ -284,80 +284,91 @@ export function CropOverlay({
   ])
 
   return (
-    <div
-      ref={overlayRef}
-      className='pointer-events-none absolute inset-0'
-      style={{
-        width: previewWidth,
-        height: previewHeight,
-      }}
-    >
-      {/* Darkened overlay outside crop area */}
-      <svg className='absolute inset-0 h-full w-full'>
-        <defs>
-          <mask id='crop-mask'>
-            <rect width='100%' height='100%' fill='white' />
-            <rect
-              x={displayLeft}
-              y={displayTop}
-              width={displayWidth}
-              height={displayHeight}
-              fill='black'
-            />
-          </mask>
-        </defs>
-        <rect width='100%' height='100%' fill='black' fillOpacity='0.5' mask='url(#crop-mask)' />
-      </svg>
-
-      {/* Crop box */}
+    <>
+      {/* Darkened overlay outside crop area - UNDER license badge */}
       <div
-        className={cn(
-          'crop-box pointer-events-auto absolute cursor-move border-2 border-white',
-          (isDragging || isResizing) && 'cursor-grabbing',
-        )}
+        className='pointer-events-none absolute inset-0 z-40'
         style={{
-          left: displayLeft,
-          top: displayTop,
-          width: displayWidth,
-          height: displayHeight,
+          width: previewWidth,
+          height: previewHeight,
         }}
-        onMouseDown={handleCropMouseDown}
-        onTouchStart={handleCropMouseDown}
       >
-        {/* Grid lines */}
-        <div className='pointer-events-none absolute inset-0'>
-          <div className='absolute top-0 left-1/3 h-full w-px bg-white/50' />
-          <div className='absolute top-0 left-2/3 h-full w-px bg-white/50' />
-          <div className='absolute top-1/3 left-0 h-px w-full bg-white/50' />
-          <div className='absolute top-2/3 left-0 h-px w-full bg-white/50' />
-        </div>
-
-        {/* Resize handles */}
-        {['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map((handle) => (
-          <div
-            key={handle}
-            className={cn(
-              'absolute flex items-center justify-center',
-              // Touch-friendly size: 44px (h-11 w-11)
-              'h-11 w-11',
-              // Position the touch area
-              handle === 'nw' && '-top-5.5 -left-5.5 cursor-nw-resize',
-              handle === 'n' && '-top-5.5 left-1/2 -translate-x-1/2 cursor-n-resize',
-              handle === 'ne' && '-top-5.5 -right-5.5 cursor-ne-resize',
-              handle === 'e' && 'top-1/2 -right-5.5 -translate-y-1/2 cursor-e-resize',
-              handle === 'se' && '-right-5.5 -bottom-5.5 cursor-se-resize',
-              handle === 's' && '-bottom-5.5 left-1/2 -translate-x-1/2 cursor-s-resize',
-              handle === 'sw' && '-bottom-5.5 -left-5.5 cursor-sw-resize',
-              handle === 'w' && 'top-1/2 -left-5.5 -translate-y-1/2 cursor-w-resize',
-            )}
-            onMouseDown={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
-            onTouchStart={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
-          >
-            {/* Visual handle: 12px */}
-            <div className='h-3 w-3 rounded-full border-2 border-white bg-blue-500' />
-          </div>
-        ))}
+        <svg className='absolute inset-0 h-full w-full'>
+          <defs>
+            <mask id='crop-mask'>
+              <rect width='100%' height='100%' fill='white' />
+              <rect
+                x={displayLeft}
+                y={displayTop}
+                width={displayWidth}
+                height={displayHeight}
+                fill='black'
+              />
+            </mask>
+          </defs>
+          <rect width='100%' height='100%' fill='black' fillOpacity='0.5' mask='url(#crop-mask)' />
+        </svg>
       </div>
-    </div>
+
+      {/* Crop box and handles - ABOVE license badge */}
+      <div
+        ref={overlayRef}
+        className='pointer-events-none absolute inset-0 z-[60]'
+        style={{
+          width: previewWidth,
+          height: previewHeight,
+        }}
+      >
+        {/* Crop box */}
+        <div
+          className={cn(
+            'crop-box pointer-events-auto absolute cursor-move border-2 border-white',
+            (isDragging || isResizing) && 'cursor-grabbing',
+          )}
+          style={{
+            left: displayLeft,
+            top: displayTop,
+            width: displayWidth,
+            height: displayHeight,
+          }}
+          onMouseDown={handleCropMouseDown}
+          onTouchStart={handleCropMouseDown}
+        >
+          {/* Grid lines */}
+          <div className='pointer-events-none absolute inset-0'>
+            <div className='absolute top-0 left-1/3 h-full w-px bg-white/50' />
+            <div className='absolute top-0 left-2/3 h-full w-px bg-white/50' />
+            <div className='absolute top-1/3 left-0 h-px w-full bg-white/50' />
+            <div className='absolute top-2/3 left-0 h-px w-full bg-white/50' />
+          </div>
+
+          {/* Resize handles */}
+          {['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map((handle) => (
+            <div
+              key={handle}
+              className={cn(
+                'absolute flex items-center justify-center',
+                // Touch-friendly size: 44px (h-11 w-11)
+                'h-11 w-11',
+                // Position the touch area
+                handle === 'nw' && '-top-5.5 -left-5.5 cursor-nw-resize',
+                handle === 'n' && '-top-5.5 left-1/2 -translate-x-1/2 cursor-n-resize',
+                handle === 'ne' && '-top-5.5 -right-5.5 cursor-ne-resize',
+                handle === 'e' && 'top-1/2 -right-5.5 -translate-y-1/2 cursor-e-resize',
+                handle === 'se' && '-right-5.5 -bottom-5.5 cursor-se-resize',
+                handle === 's' && '-bottom-5.5 left-1/2 -translate-x-1/2 cursor-s-resize',
+                handle === 'sw' && '-bottom-5.5 -left-5.5 cursor-sw-resize',
+                handle === 'w' && 'top-1/2 -left-5.5 -translate-y-1/2 cursor-w-resize',
+              )}
+              onMouseDown={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
+              onTouchStart={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
+            >
+              {/* Visual handle: 12px */}
+              <div className='h-3 w-3 rounded-full border-2 border-white bg-blue-500' />
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
   )
 }
