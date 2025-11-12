@@ -212,9 +212,6 @@ export class ImageEditor {
     if (state.grayscale) {
       filters.push({ name: 'grayscale', args: '' })
     }
-    if (state.rotation !== undefined && state.rotation !== 0) {
-      filters.push({ name: 'rotate', args: state.rotation.toString() })
-    }
 
     // Auto trim handling
     if (state.autoTrim) {
@@ -225,7 +222,7 @@ export class ImageEditor {
       filters.push({ name: 'trim', args: trimArgs.join(',') })
     }
 
-    // Crop handling (crops after resize)
+    // Crop handling (crops after resize, before rotation)
     // Skip crop filter in preview when visual cropping is enabled (so user can see full image)
     // Always include crop filter for Copy URL and Download
     const shouldApplyCropFilter = !forPreview || (forPreview && !this.visualCropEnabled)
@@ -238,6 +235,15 @@ export class ImageEditor {
         state.cropHeight!.toString(),
       ].join(',')
       filters.push({ name: 'crop', args: cropArgs })
+    }
+
+    // Rotation handling (applied AFTER crop)
+    // Skip rotation in preview when visual cropping is enabled
+    // (so user can crop on unrotated image, rotation applied after crop in final URL)
+    const shouldApplyRotation = !forPreview || (forPreview && !this.visualCropEnabled)
+
+    if (shouldApplyRotation && state.rotation !== undefined && state.rotation !== 0) {
+      filters.push({ name: 'rotate', args: state.rotation.toString() })
     }
 
     // Format handling
