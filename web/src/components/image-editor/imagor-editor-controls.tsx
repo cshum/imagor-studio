@@ -27,6 +27,7 @@ interface ImageEditorControlsProps {
   isVisualCropEnabled?: boolean
   outputWidth: number
   outputHeight: number
+  onCropAspectRatioChange?: (aspectRatio: number | null) => void
 }
 
 export function ImageEditorControls({
@@ -41,6 +42,7 @@ export function ImageEditorControls({
   isVisualCropEnabled,
   outputWidth,
   outputHeight,
+  onCropAspectRatioChange,
 }: ImageEditorControlsProps) {
   const { t } = useTranslation()
 
@@ -78,6 +80,7 @@ export function ImageEditorControls({
               isVisualCropEnabled={isVisualCropEnabled}
               outputWidth={outputWidth}
               outputHeight={outputHeight}
+              onAspectRatioChange={onCropAspectRatioChange}
             />
           </CollapsibleContent>
         </Collapsible>

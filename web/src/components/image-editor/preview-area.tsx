@@ -31,6 +31,7 @@ interface PreviewAreaProps {
   onCropChange?: (crop: { left: number; top: number; width: number; height: number }) => void
   outputWidth?: number
   outputHeight?: number
+  cropAspectRatio?: number | null
 }
 
 export function PreviewArea({
@@ -50,6 +51,7 @@ export function PreviewArea({
   cropHeight = 0,
   onCropChange,
   outputWidth,
+  cropAspectRatio = null,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -154,6 +156,7 @@ export function PreviewArea({
                   cropHeight={cropHeight}
                   scale={getScale()}
                   onCropChange={onCropChange}
+                  lockedAspectRatio={cropAspectRatio}
                 />
               )}
           </div>

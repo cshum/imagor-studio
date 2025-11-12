@@ -72,6 +72,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   } | null>(null)
   const [resetCounter, setResetCounter] = useState(0)
   const [visualCropEnabled, setVisualCropEnabled] = useState(false)
+  const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
 
   const transformRef = useRef<ImageEditor | undefined>(undefined)
 
@@ -290,6 +291,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                       onToggleAspectLock={toggleAspectLock}
                       onVisualCropToggle={handleVisualCropToggle}
                       isVisualCropEnabled={visualCropEnabled}
+                      outputWidth={params.width || loaderData.originalDimensions.width}
+                      outputHeight={params.height || loaderData.originalDimensions.height}
+                      onCropAspectRatioChange={setCropAspectRatio}
                     />
                   </div>
                 </SheetContent>
@@ -317,6 +321,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           onCropChange={handleCropChange}
           outputWidth={params.width || loaderData.originalDimensions.width}
           outputHeight={params.height || loaderData.originalDimensions.height}
+          cropAspectRatio={cropAspectRatio}
         />
       </div>
 
@@ -349,6 +354,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               isVisualCropEnabled={visualCropEnabled}
               outputWidth={params.width || loaderData.originalDimensions.width}
               outputHeight={params.height || loaderData.originalDimensions.height}
+              onCropAspectRatioChange={setCropAspectRatio}
             />
           </div>
 

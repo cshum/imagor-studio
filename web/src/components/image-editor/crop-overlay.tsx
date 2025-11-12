@@ -11,6 +11,7 @@ interface CropOverlayProps {
   cropHeight: number
   scale: number
   onCropChange: (crop: { left: number; top: number; width: number; height: number }) => void
+  lockedAspectRatio?: number | null
 }
 
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | null
@@ -24,6 +25,7 @@ export function CropOverlay({
   cropHeight,
   scale,
   onCropChange,
+  lockedAspectRatio = null,
 }: CropOverlayProps) {
   // Calculate display coordinates (scaled for preview)
   const displayLeft = cropLeft * scale
@@ -153,18 +155,70 @@ export function CropOverlay({
             break
         }
 
+        // Apply aspect ratio lock if set
+        if (lockedAspectRatio) {
+          // Determine which dimension to constrain based on the handle
+          if (activeHandle === 'e' || activeHandle === 'w') {
+            // Horizontal resize: adjust height to maintain ratio
+            newHeight = newWidth / lockedAspectRatio
+            if (activeHandle === 'w') {
+              // Adjust top to keep bottom edge fixed
+              newTop = initialCrop.top + initialCrop.height - newHeight
+            }
+          } else if (activeHandle === 'n' || activeHandle === 's') {
+            // Vertical resize: adjust width to maintain ratio
+            newWidth = newHeight * lockedAspectRatio
+            if (activeHandle === 'n') {
+              // Adjust left to keep right edge fixed
+              newLeft = initialCrop.left + initialCrop.width - newWidth
+            }
+          } else {
+            // Corner resize: maintain aspect ratio based on the larger delta
+            const widthChange = Math.abs(newWidth - initialCrop.width)
+            const heightChange = Math.abs(newHeight - initialCrop.height)
+
+            if (widthChange > heightChange) {
+              // Width changed more, adjust height
+              newHeight = newWidth / lockedAspectRatio
+            } else {
+              // Height changed more, adjust width
+              newWidth = newHeight * lockedAspectRatio
+            }
+
+            // Adjust position for top-left handles
+            if (activeHandle?.includes('n')) {
+              newTop = initialCrop.top + initialCrop.height - newHeight
+            }
+            if (activeHandle?.includes('w')) {
+              newLeft = initialCrop.left + initialCrop.width - newWidth
+            }
+          }
+        }
+
         // Enforce minimum size (in display coordinates)
         const minSize = 20
         if (newWidth < minSize) {
           newWidth = minSize
+          if (lockedAspectRatio) {
+            newHeight = newWidth / lockedAspectRatio
+          }
           if (activeHandle?.includes('w')) {
             newLeft = initialCrop.left + initialCrop.width - minSize
+          }
+          if (activeHandle?.includes('n') && lockedAspectRatio) {
+            newTop = initialCrop.top + initialCrop.height - newHeight
           }
         }
         if (newHeight < minSize) {
           newHeight = minSize
+          if (lockedAspectRatio) {
+            newWidth = newHeight * lockedAspectRatio
+          }
           if (activeHandle?.includes('n')) {
             newTop = initialCrop.top + initialCrop.height - minSize
+          }
+          if (activeHandle?.includes('w') && lockedAspectRatio) {
+            newLeft = initialCrop.left + initialCrop.width - newWidth
           }
         }
 
@@ -226,6 +280,7 @@ export function CropOverlay({
     cropHeight,
     scale,
     onCropChange,
+    lockedAspectRatio,
   ])
 
   return (

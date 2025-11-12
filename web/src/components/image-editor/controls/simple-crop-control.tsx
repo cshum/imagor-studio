@@ -27,6 +27,7 @@ interface SimpleCropControlProps {
   isVisualCropEnabled?: boolean
   outputWidth: number
   outputHeight: number
+  onAspectRatioChange?: (aspectRatio: number | null) => void
 }
 
 export function SimpleCropControl({
@@ -36,39 +37,11 @@ export function SimpleCropControl({
   isVisualCropEnabled = false,
   outputWidth,
   outputHeight,
+  onAspectRatioChange,
 }: SimpleCropControlProps) {
   const { t } = useTranslation()
   const [isToggling, setIsToggling] = useState(false)
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>('free')
-
-  // Auto-deselect aspect ratio if crop dimensions change and no longer match
-  useEffect(() => {
-    // Only check if an aspect ratio is selected
-    if (selectedAspectRatio === 'free') return
-
-    const cropWidth = params.filterCropWidth
-    const cropHeight = params.filterCropHeight
-
-    // If crop dimensions are not set, don't deselect
-    if (!cropWidth || !cropHeight) return
-
-    // Find the selected preset
-    const selectedPreset = ASPECT_RATIO_PRESETS.find((p) => p.key === selectedAspectRatio)
-    if (!selectedPreset) return
-
-    // Calculate current crop aspect ratio
-    const currentRatio = cropWidth / cropHeight
-    const targetRatio = selectedPreset.ratio
-
-    // Allow small tolerance for rounding errors (±1%)
-    const tolerance = 0.01
-    const ratioMatches = Math.abs(currentRatio - targetRatio) / targetRatio < tolerance
-
-    // If ratio doesn't match, deselect
-    if (!ratioMatches) {
-      setSelectedAspectRatio('free')
-    }
-  }, [params.filterCropWidth, params.filterCropHeight, selectedAspectRatio])
 
   // Filter crop handlers
   const getFilterCropValue = (
@@ -105,7 +78,15 @@ export function SimpleCropControl({
   }
 
   const handleAspectRatioPreset = async (preset: (typeof ASPECT_RATIO_PRESETS)[0]) => {
+    // Toggle: if already selected, deselect it
+    if (selectedAspectRatio === preset.key) {
+      setSelectedAspectRatio('free')
+      onAspectRatioChange?.(null)
+      return
+    }
+
     setSelectedAspectRatio(preset.key)
+    onAspectRatioChange?.(preset.ratio)
 
     // Calculate crop dimensions based on aspect ratio
     const targetRatio = preset.ratio
