@@ -53,7 +53,7 @@ export function DimensionControl({
     // Reset size slider when manually changing dimensions
     setSizeScale([1])
     onUpdateParams({ width }, { respectAspectLock: true })
-    
+
     // Update base dimensions after the change
     if (width && params.height) {
       setBaseDimensions({ width, height: params.height })
@@ -66,7 +66,7 @@ export function DimensionControl({
     // Reset size slider when manually changing dimensions
     setSizeScale([1])
     onUpdateParams({ height }, { respectAspectLock: true })
-    
+
     // Update base dimensions after the change
     if (height && params.width) {
       setBaseDimensions({ width: params.width, height })

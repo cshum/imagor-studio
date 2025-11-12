@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, Crop, LoaderCircle } from 'lucide-react'
 
@@ -10,9 +10,11 @@ import type { ImageEditorState } from '@/lib/image-editor.ts'
 // Define aspect ratio presets
 const ASPECT_RATIO_PRESETS = [
   { key: 'square', label: '1:1', ratio: 1 },
-  { key: 'portrait', label: '4:5', ratio: 4 / 5 },
-  { key: 'landscape', label: '16:9', ratio: 16 / 9 },
+  { key: 'classic', label: '4:3', ratio: 4 / 3 },
   { key: 'photo', label: '3:2', ratio: 3 / 2 },
+  { key: 'landscape', label: '16:9', ratio: 16 / 9 },
+  { key: 'vertical', label: '9:16', ratio: 9 / 16 },
+  { key: 'portrait', label: '4:5', ratio: 4 / 5 },
 ]
 
 interface SimpleCropControlProps {
@@ -38,6 +40,35 @@ export function SimpleCropControl({
   const { t } = useTranslation()
   const [isToggling, setIsToggling] = useState(false)
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>('free')
+
+  // Auto-deselect aspect ratio if crop dimensions change and no longer match
+  useEffect(() => {
+    // Only check if an aspect ratio is selected
+    if (selectedAspectRatio === 'free') return
+
+    const cropWidth = params.filterCropWidth
+    const cropHeight = params.filterCropHeight
+
+    // If crop dimensions are not set, don't deselect
+    if (!cropWidth || !cropHeight) return
+
+    // Find the selected preset
+    const selectedPreset = ASPECT_RATIO_PRESETS.find((p) => p.key === selectedAspectRatio)
+    if (!selectedPreset) return
+
+    // Calculate current crop aspect ratio
+    const currentRatio = cropWidth / cropHeight
+    const targetRatio = selectedPreset.ratio
+
+    // Allow small tolerance for rounding errors (±1%)
+    const tolerance = 0.01
+    const ratioMatches = Math.abs(currentRatio - targetRatio) / targetRatio < tolerance
+
+    // If ratio doesn't match, deselect
+    if (!ratioMatches) {
+      setSelectedAspectRatio('free')
+    }
+  }, [params.filterCropWidth, params.filterCropHeight, selectedAspectRatio])
 
   // Filter crop handlers
   const getFilterCropValue = (
@@ -148,7 +179,7 @@ export function SimpleCropControl({
       {/* Aspect Ratio Presets */}
       <div className='space-y-3'>
         <Label className='text-sm font-medium'>{t('imageEditor.dimensions.aspectRatios')}</Label>
-        <div className='grid grid-cols-2 gap-2'>
+        <div className='grid grid-cols-3 gap-2'>
           {ASPECT_RATIO_PRESETS.map((preset) => (
             <Button
               key={preset.key}
