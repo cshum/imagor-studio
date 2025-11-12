@@ -449,11 +449,9 @@
       "failedToDownload": "Failed to download image"
     },
     "controls": {
-      "dimensionsResize": "Dimensions & Resize",
       "outputCompression": "Output & Compression",
       "colorEffects": "Color & Effects",
       "transformRotate": "Transform & Rotate",
-      "cropAspect": "Crop & Aspect",
       "cropResize": "Crop & Resize"
     },
     "transform": {

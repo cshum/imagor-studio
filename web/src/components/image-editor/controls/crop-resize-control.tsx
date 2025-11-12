@@ -19,7 +19,7 @@ const ASPECT_RATIO_PRESETS = [
   { key: 'portrait', label: '4:5', ratio: 4 / 5 },
 ]
 
-interface SimpleCropControlProps {
+interface CropResizeControlProps {
   params: ImageEditorState
   aspectLocked: boolean
   onUpdateParams: (
@@ -34,7 +34,7 @@ interface SimpleCropControlProps {
   onAspectRatioChange?: (aspectRatio: number | null) => void
 }
 
-export function SimpleCropControl({
+export function CropResizeControl({
   params,
   aspectLocked,
   onUpdateParams,
@@ -44,7 +44,7 @@ export function SimpleCropControl({
   outputWidth,
   outputHeight,
   onAspectRatioChange,
-}: SimpleCropControlProps) {
+}: CropResizeControlProps) {
   const { t } = useTranslation()
   const [isToggling, setIsToggling] = useState(false)
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>('free')

@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, FileImage, Palette, RotateCw, Scissors } from 'lucide-react'
 
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
+import { CropResizeControl } from '@/components/image-editor/controls/crop-resize-control.tsx'
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
-import { SimpleCropControl } from '@/components/image-editor/controls/simple-crop-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -71,7 +71,7 @@ export function ImageEditorControls({
             <CollapsibleIcon isOpen={openSections.crop} />
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
-            <SimpleCropControl
+            <CropResizeControl
               params={params}
               aspectLocked={aspectLocked}
               onUpdateParams={onUpdateParams}
