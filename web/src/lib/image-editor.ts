@@ -15,6 +15,10 @@ export interface ImageEditorState {
 
   // Fitting
   stretch?: boolean
+  fitIn?: boolean
+  smart?: boolean
+  hAlign?: string
+  vAlign?: string
 
   // Filters
   brightness?: number

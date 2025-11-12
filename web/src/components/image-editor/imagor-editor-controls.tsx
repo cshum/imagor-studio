@@ -32,7 +32,6 @@ interface ImageEditorControlsProps {
 export function ImageEditorControls({
   params,
   aspectLocked,
-  originalAspectRatio,
   openSections,
   onOpenSectionsChange,
   onUpdateParams,
