@@ -68,41 +68,13 @@ export function PreviewArea({
     onLoad?.(width, height)
   }
 
-  // Calculate scale factor between output and preview dimensions
-  const getScaleFactor = () => {
-    if (!imageDimensions || !outputWidth || !outputHeight) {
-      return { scaleX: 1, scaleY: 1 }
+  // Calculate single uniform scale factor (preview / output)
+  // Since preview and output have same aspect ratio, we only need one scale value
+  const getScale = () => {
+    if (!imageDimensions || !outputWidth) {
+      return 1
     }
-    return {
-      scaleX: imageDimensions.width / outputWidth,
-      scaleY: imageDimensions.height / outputHeight,
-    }
-  }
-
-  // Scale crop coordinates from output dimensions to preview dimensions for display
-  const getScaledCropForDisplay = () => {
-    const { scaleX, scaleY } = getScaleFactor()
-    return {
-      left: cropLeft * scaleX,
-      top: cropTop * scaleY,
-      width: cropWidth * scaleX,
-      height: cropHeight * scaleY,
-    }
-  }
-
-  // Handle crop changes from overlay and scale back to output dimensions
-  const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {
-    if (!onCropChange) return
-    
-    const { scaleX, scaleY } = getScaleFactor()
-    
-    // Scale from preview dimensions back to output dimensions
-    onCropChange({
-      left: Math.round(crop.left / scaleX),
-      top: Math.round(crop.top / scaleY),
-      width: Math.round(crop.width / scaleX),
-      height: Math.round(crop.height / scaleY),
-    })
+    return imageDimensions.width / outputWidth
   }
 
   // Calculate and report preview area dimensions
@@ -169,20 +141,18 @@ export function PreviewArea({
                 isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
               )}
             />
-            {visualCropEnabled && imageDimensions && onCropChange && (() => {
-              const scaledCrop = getScaledCropForDisplay()
-              return (
-                <CropOverlay
-                  imageWidth={imageDimensions.width}
-                  imageHeight={imageDimensions.height}
-                  cropLeft={scaledCrop.left}
-                  cropTop={scaledCrop.top}
-                  cropWidth={scaledCrop.width}
-                  cropHeight={scaledCrop.height}
-                  onCropChange={handleCropChange}
-                />
-              )
-            })()}
+            {visualCropEnabled && imageDimensions && onCropChange && (
+              <CropOverlay
+                previewWidth={imageDimensions.width}
+                previewHeight={imageDimensions.height}
+                cropLeft={cropLeft}
+                cropTop={cropTop}
+                cropWidth={cropWidth}
+                cropHeight={cropHeight}
+                scale={getScale()}
+                onCropChange={onCropChange}
+              />
+            )}
           </div>
         ) : (
           <div className='flex flex-col items-center gap-4 text-center'>

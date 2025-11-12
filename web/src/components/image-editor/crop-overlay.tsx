@@ -3,26 +3,33 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 
 interface CropOverlayProps {
-  imageWidth: number
-  imageHeight: number
+  previewWidth: number
+  previewHeight: number
   cropLeft: number
   cropTop: number
   cropWidth: number
   cropHeight: number
+  scale: number
   onCropChange: (crop: { left: number; top: number; width: number; height: number }) => void
 }
 
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | null
 
 export function CropOverlay({
-  imageWidth,
-  imageHeight,
+  previewWidth,
+  previewHeight,
   cropLeft,
   cropTop,
   cropWidth,
   cropHeight,
+  scale,
   onCropChange,
 }: CropOverlayProps) {
+  // Calculate display coordinates (scaled for preview)
+  const displayLeft = cropLeft * scale
+  const displayTop = cropTop * scale
+  const displayWidth = cropWidth * scale
+  const displayHeight = cropHeight * scale
   const overlayRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
@@ -43,10 +50,10 @@ export function CropOverlay({
         e.stopPropagation()
         setIsDragging(true)
         setDragStart({ x: e.clientX, y: e.clientY })
-        setInitialCrop({ left: cropLeft, top: cropTop, width: cropWidth, height: cropHeight })
+        setInitialCrop({ left: displayLeft, top: displayTop, width: displayWidth, height: displayHeight })
       }
     },
-    [cropLeft, cropTop, cropWidth, cropHeight],
+    [displayLeft, displayTop, displayWidth, displayHeight],
   )
 
   // Handle mouse down on resize handles
@@ -57,9 +64,9 @@ export function CropOverlay({
       setIsResizing(true)
       setActiveHandle(handle)
       setDragStart({ x: e.clientX, y: e.clientY })
-      setInitialCrop({ left: cropLeft, top: cropTop, width: cropWidth, height: cropHeight })
+      setInitialCrop({ left: displayLeft, top: displayTop, width: displayWidth, height: displayHeight })
     },
-    [cropLeft, cropTop, cropWidth, cropHeight],
+    [displayLeft, displayTop, displayWidth, displayHeight],
   )
 
   // Handle mouse move
@@ -69,16 +76,17 @@ export function CropOverlay({
         const deltaX = e.clientX - dragStart.x
         const deltaY = e.clientY - dragStart.y
 
-        let newLeft = initialCrop.left + deltaX
-        let newTop = initialCrop.top + deltaY
+        let newDisplayLeft = initialCrop.left + deltaX
+        let newDisplayTop = initialCrop.top + deltaY
 
-        // Constrain to image bounds
-        newLeft = Math.max(0, Math.min(newLeft, imageWidth - cropWidth))
-        newTop = Math.max(0, Math.min(newTop, imageHeight - cropHeight))
+        // Constrain to preview bounds (in display coordinates)
+        newDisplayLeft = Math.max(0, Math.min(newDisplayLeft, previewWidth - displayWidth))
+        newDisplayTop = Math.max(0, Math.min(newDisplayTop, previewHeight - displayHeight))
 
+        // Convert back to output coordinates
         onCropChange({
-          left: Math.round(newLeft),
-          top: Math.round(newTop),
+          left: Math.round(newDisplayLeft / scale),
+          top: Math.round(newDisplayTop / scale),
           width: cropWidth,
           height: cropHeight,
         })
@@ -129,7 +137,7 @@ export function CropOverlay({
             break
         }
 
-        // Enforce minimum size
+        // Enforce minimum size (in display coordinates)
         const minSize = 20
         if (newWidth < minSize) {
           newWidth = minSize
@@ -144,7 +152,7 @@ export function CropOverlay({
           }
         }
 
-        // Constrain to image bounds
+        // Constrain to preview bounds (in display coordinates)
         if (newLeft < 0) {
           newWidth += newLeft
           newLeft = 0
@@ -153,18 +161,19 @@ export function CropOverlay({
           newHeight += newTop
           newTop = 0
         }
-        if (newLeft + newWidth > imageWidth) {
-          newWidth = imageWidth - newLeft
+        if (newLeft + newWidth > previewWidth) {
+          newWidth = previewWidth - newLeft
         }
-        if (newTop + newHeight > imageHeight) {
-          newHeight = imageHeight - newTop
+        if (newTop + newHeight > previewHeight) {
+          newHeight = previewHeight - newTop
         }
 
+        // Convert back to output coordinates
         onCropChange({
-          left: Math.round(newLeft),
-          top: Math.round(newTop),
-          width: Math.round(newWidth),
-          height: Math.round(newHeight),
+          left: Math.round(newLeft / scale),
+          top: Math.round(newTop / scale),
+          width: Math.round(newWidth / scale),
+          height: Math.round(newHeight / scale),
         })
       }
     }
@@ -189,10 +198,13 @@ export function CropOverlay({
     activeHandle,
     dragStart,
     initialCrop,
-    imageWidth,
-    imageHeight,
+    previewWidth,
+    previewHeight,
+    displayWidth,
+    displayHeight,
     cropWidth,
     cropHeight,
+    scale,
     onCropChange,
   ])
 
@@ -201,8 +213,8 @@ export function CropOverlay({
       ref={overlayRef}
       className='pointer-events-none absolute inset-0'
       style={{
-        width: imageWidth,
-        height: imageHeight,
+        width: previewWidth,
+        height: previewHeight,
       }}
     >
       {/* Darkened overlay outside crop area */}
@@ -210,7 +222,7 @@ export function CropOverlay({
         <defs>
           <mask id='crop-mask'>
             <rect width='100%' height='100%' fill='white' />
-            <rect x={cropLeft} y={cropTop} width={cropWidth} height={cropHeight} fill='black' />
+            <rect x={displayLeft} y={displayTop} width={displayWidth} height={displayHeight} fill='black' />
           </mask>
         </defs>
         <rect width='100%' height='100%' fill='black' fillOpacity='0.5' mask='url(#crop-mask)' />
@@ -223,10 +235,10 @@ export function CropOverlay({
           (isDragging || isResizing) && 'cursor-grabbing',
         )}
         style={{
-          left: cropLeft,
-          top: cropTop,
-          width: cropWidth,
-          height: cropHeight,
+          left: displayLeft,
+          top: displayTop,
+          width: displayWidth,
+          height: displayHeight,
         }}
         onMouseDown={handleCropMouseDown}
       >
