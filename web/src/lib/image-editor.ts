@@ -127,6 +127,18 @@ export class ImageEditor {
     if (state.blur !== undefined && state.blur !== 0) return false
     if (state.sharpen !== undefined && state.sharpen !== 0) return false
 
+    // Disable when crop filter will be applied (visual crop OFF + crop params exist)
+    // This ensures crop coordinates match the image dimensions
+    if (
+      !this.visualCropEnabled &&
+      state.filterCropLeft !== undefined &&
+      state.filterCropTop !== undefined &&
+      state.filterCropWidth !== undefined &&
+      state.filterCropHeight !== undefined
+    ) {
+      return false
+    }
+
     // Future filters that need full resolution can be added here
     // Example: if (state.someDetailFilter !== undefined) return false
 
@@ -246,7 +258,6 @@ export class ImageEditor {
         state.filterCropHeight.toString(),
       ].join(',')
       filters.push({ name: 'crop', args: cropArgs })
-      console.log(filters)
     }
 
     // Format handling
