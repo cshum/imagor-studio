@@ -178,16 +178,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
     // Initialize crop dimensions if enabling for the first time
     if (enabled && !params.cropLeft && !params.cropTop && !params.cropWidth && !params.cropHeight) {
-      // Get current image dimensions (after resize)
-      const width = params.width || loaderData.originalDimensions.width
-      const height = params.height || loaderData.originalDimensions.height
-
-      // Set initial crop to full dimensions (100%)
+      // Crop works on original dimensions (before resize)
+      // Set initial crop to full original dimensions (100%)
       updateParams({
         cropLeft: 0,
         cropTop: 0,
-        cropWidth: width,
-        cropHeight: height,
+        cropWidth: loaderData.originalDimensions.width,
+        cropHeight: loaderData.originalDimensions.height,
       })
     }
   }
@@ -323,8 +320,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           cropWidth={params.cropWidth || 0}
           cropHeight={params.cropHeight || 0}
           onCropChange={handleCropChange}
-          outputWidth={params.width || loaderData.originalDimensions.width}
-          outputHeight={params.height || loaderData.originalDimensions.height}
           cropAspectRatio={cropAspectRatio}
         />
       </div>

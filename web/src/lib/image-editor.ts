@@ -33,7 +33,7 @@ export interface ImageEditorState {
   quality?: number // e.g., 80, 90, 95, undefined (default)
   maxBytes?: number // e.g., 100000 (100KB), undefined (no limit)
 
-  // Crop (crops after resize)
+  // Crop (crops before resize, in original image coordinates)
   cropLeft?: number
   cropTop?: number
   cropWidth?: number
@@ -149,6 +149,18 @@ export class ImageEditor {
   ): Partial<ImagorParamsInput> {
     const graphqlParams: Partial<ImagorParamsInput> = {}
 
+    // Crop handling (crops BEFORE resize in URL path)
+    // Convert from left/top/width/height to left/top/right/bottom
+    // Skip crop in preview when visual cropping is enabled (so user can see full image)
+    const shouldApplyCrop = !forPreview || (forPreview && !this.visualCropEnabled)
+    
+    if (shouldApplyCrop && this.hasCropParams(state)) {
+      graphqlParams.cropLeft = state.cropLeft
+      graphqlParams.cropTop = state.cropTop
+      graphqlParams.cropRight = state.cropLeft! + state.cropWidth!
+      graphqlParams.cropBottom = state.cropTop! + state.cropHeight!
+    }
+
     // Dimensions - apply preview constraints if needed
     let width = state.width
     let height = state.height
@@ -209,22 +221,7 @@ export class ImageEditor {
       filters.push({ name: 'grayscale', args: '' })
     }
 
-    // Crop handling (crops after resize, before rotation)
-    // Skip crop filter in preview when visual cropping is enabled (so user can see full image)
-    // Always include crop filter for Copy URL and Download
-    const shouldApplyCropFilter = !forPreview || (forPreview && !this.visualCropEnabled)
-
-    if (shouldApplyCropFilter && this.hasCropParams(state)) {
-      const cropArgs = [
-        state.cropLeft!.toString(),
-        state.cropTop!.toString(),
-        state.cropWidth!.toString(),
-        state.cropHeight!.toString(),
-      ].join(',')
-      filters.push({ name: 'crop', args: cropArgs })
-    }
-
-    // Rotation handling (applied AFTER crop)
+    // Rotation handling
     // Skip rotation in preview when visual cropping is enabled
     // (so user can crop on unrotated image, rotation applied after crop in final URL)
     const shouldApplyRotation = !forPreview || (forPreview && !this.visualCropEnabled)
@@ -346,25 +343,8 @@ export class ImageEditor {
       }
     }
 
-    // Handle crop when dimensions change
-    if (
-      (updates.width !== undefined || updates.height !== undefined) &&
-      this.hasCropParams(this.state)
-    ) {
-      const oldWidth = this.state.width ?? this.config.originalDimensions.width
-      const oldHeight = this.state.height ?? this.config.originalDimensions.height
-      const newWidth = newState.width ?? this.config.originalDimensions.width
-      const newHeight = newState.height ?? this.config.originalDimensions.height
-
-      // Always scale crop proportionally when dimensions change
-      const scaleX = newWidth / oldWidth
-      const scaleY = newHeight / oldHeight
-
-      newState.cropLeft = Math.round(this.state.cropLeft! * scaleX)
-      newState.cropTop = Math.round(this.state.cropTop! * scaleY)
-      newState.cropWidth = Math.round(this.state.cropWidth! * scaleX)
-      newState.cropHeight = Math.round(this.state.cropHeight! * scaleY)
-    }
+    // Crop and resize are now independent - no scaling needed
+    // Crop works on original dimensions, resize works on cropped result
 
     this.state = newState
     this.callbacks.onStateChange?.(this.getState())

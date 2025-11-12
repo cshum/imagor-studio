@@ -29,8 +29,6 @@ interface PreviewAreaProps {
   cropWidth?: number
   cropHeight?: number
   onCropChange?: (crop: { left: number; top: number; width: number; height: number }) => void
-  outputWidth?: number
-  outputHeight?: number
   cropAspectRatio?: number | null
 }
 
@@ -50,7 +48,6 @@ export function PreviewArea({
   cropWidth = 0,
   cropHeight = 0,
   onCropChange,
-  outputWidth,
   cropAspectRatio = null,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
@@ -69,13 +66,13 @@ export function PreviewArea({
     onLoad?.(width, height)
   }
 
-  // Calculate single uniform scale factor (preview / output)
-  // Since preview and output have same aspect ratio, we only need one scale value
+  // Calculate scale factor (preview / original)
+  // Crop works on original dimensions, so we scale from original to preview
   const getScale = () => {
-    if (!imageDimensions || !outputWidth) {
+    if (!imageDimensions) {
       return 1
     }
-    return imageDimensions.width / outputWidth
+    return imageDimensions.width / originalDimensions.width
   }
 
   // Calculate and report preview area dimensions
