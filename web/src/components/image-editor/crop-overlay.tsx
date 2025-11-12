@@ -284,11 +284,6 @@ export function CropOverlay({
             onMouseDown={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
           />
         ))}
-
-        {/* Dimensions display */}
-        <div className='pointer-events-none absolute -top-8 left-0 rounded bg-black/75 px-2 py-1 text-xs text-white'>
-          {cropWidth} × {cropHeight}
-        </div>
       </div>
     </div>
   )
