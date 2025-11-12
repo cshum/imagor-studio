@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, Copy, Download } from 'lucide-react'
 
+import { CropOverlay } from '@/components/image-editor/crop-overlay'
 import { LicenseBadge } from '@/components/license-badge.tsx'
 import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
@@ -22,6 +23,14 @@ interface PreviewAreaProps {
   onCopyUrl: () => void
   onDownload: () => void
   onPreviewDimensionsChange?: (dimensions: { width: number; height: number }) => void
+  visualCropEnabled?: boolean
+  cropLeft?: number
+  cropTop?: number
+  cropWidth?: number
+  cropHeight?: number
+  onCropChange?: (crop: { left: number; top: number; width: number; height: number }) => void
+  outputWidth?: number
+  outputHeight?: number
 }
 
 export function PreviewArea({
@@ -34,12 +43,67 @@ export function PreviewArea({
   onCopyUrl,
   onDownload,
   onPreviewDimensionsChange,
+  visualCropEnabled = false,
+  cropLeft = 0,
+  cropTop = 0,
+  cropWidth = 0,
+  cropHeight = 0,
+  onCropChange,
+  outputWidth,
+  outputHeight,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
   const previewContainerRef = useRef<HTMLDivElement>(null)
+  const [imageDimensions, setImageDimensions] = useState<{
+    width: number
+    height: number
+  } | null>(null)
 
   const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
+
+  // Track image dimensions when loaded
+  const handleImageLoad = (width: number, height: number) => {
+    setImageDimensions({ width, height })
+    onLoad?.(width, height)
+  }
+
+  // Calculate scale factor between output and preview dimensions
+  const getScaleFactor = () => {
+    if (!imageDimensions || !outputWidth || !outputHeight) {
+      return { scaleX: 1, scaleY: 1 }
+    }
+    return {
+      scaleX: imageDimensions.width / outputWidth,
+      scaleY: imageDimensions.height / outputHeight,
+    }
+  }
+
+  // Scale crop coordinates from output dimensions to preview dimensions for display
+  const getScaledCropForDisplay = () => {
+    const { scaleX, scaleY } = getScaleFactor()
+    return {
+      left: cropLeft * scaleX,
+      top: cropTop * scaleY,
+      width: cropWidth * scaleX,
+      height: cropHeight * scaleY,
+    }
+  }
+
+  // Handle crop changes from overlay and scale back to output dimensions
+  const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {
+    if (!onCropChange) return
+    
+    const { scaleX, scaleY } = getScaleFactor()
+    
+    // Scale from preview dimensions back to output dimensions
+    onCropChange({
+      left: Math.round(crop.left / scaleX),
+      top: Math.round(crop.top / scaleY),
+      width: Math.round(crop.width / scaleX),
+      height: Math.round(crop.height / scaleY),
+    })
+  }
 
   // Calculate and report preview area dimensions
   useEffect(() => {
@@ -94,16 +158,32 @@ export function PreviewArea({
             </Button>
           </div>
         ) : previewUrl ? (
-          <PreloadImage
-            src={getFullImageUrl(previewUrl)}
-            alt={`Preview of ${imagePath}`}
-            onLoad={onLoad}
-            className={cn(
-              'h-auto w-auto object-contain',
-              'max-h-[calc(100vh-200px)]',
-              isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
-            )}
-          />
+          <div className='relative'>
+            <PreloadImage
+              src={getFullImageUrl(previewUrl)}
+              alt={`Preview of ${imagePath}`}
+              onLoad={handleImageLoad}
+              className={cn(
+                'h-auto w-auto object-contain',
+                'max-h-[calc(100vh-200px)]',
+                isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
+              )}
+            />
+            {visualCropEnabled && imageDimensions && onCropChange && (() => {
+              const scaledCrop = getScaledCropForDisplay()
+              return (
+                <CropOverlay
+                  imageWidth={imageDimensions.width}
+                  imageHeight={imageDimensions.height}
+                  cropLeft={scaledCrop.left}
+                  cropTop={scaledCrop.top}
+                  cropWidth={scaledCrop.width}
+                  cropHeight={scaledCrop.height}
+                  onCropChange={handleCropChange}
+                />
+              )
+            })()}
+          </div>
         ) : (
           <div className='flex flex-col items-center gap-4 text-center'>
             <div className='bg-muted border-muted-foreground/25 flex h-64 w-96 items-center justify-center rounded-lg border-2 border-dashed'>

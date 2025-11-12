@@ -23,6 +23,8 @@ interface ImageEditorControlsProps {
     options?: { respectAspectLock?: boolean },
   ) => void
   onToggleAspectLock: () => void
+  onVisualCropToggle?: (enabled: boolean) => void
+  isVisualCropEnabled?: boolean
 }
 
 export function ImageEditorControls({
@@ -33,6 +35,8 @@ export function ImageEditorControls({
   onOpenSectionsChange,
   onUpdateParams,
   onToggleAspectLock,
+  onVisualCropToggle,
+  isVisualCropEnabled,
 }: ImageEditorControlsProps) {
   const { t } = useTranslation()
 
@@ -145,7 +149,12 @@ export function ImageEditorControls({
             <CollapsibleIcon isOpen={openSections.crop} />
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
-            <SimpleCropControl params={params} onUpdateParams={onUpdateParams} />
+            <SimpleCropControl
+              params={params}
+              onUpdateParams={onUpdateParams}
+              onVisualCropToggle={onVisualCropToggle}
+              isVisualCropEnabled={isVisualCropEnabled}
+            />
           </CollapsibleContent>
         </Collapsible>
       </Card>

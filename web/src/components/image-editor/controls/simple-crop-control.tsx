@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Eye, EyeOff } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,9 +14,16 @@ interface SimpleCropControlProps {
     updates: Partial<ImageEditorState>,
     options?: { respectAspectLock?: boolean },
   ) => void
+  onVisualCropToggle?: (enabled: boolean) => void
+  isVisualCropEnabled?: boolean
 }
 
-export function SimpleCropControl({ params, onUpdateParams }: SimpleCropControlProps) {
+export function SimpleCropControl({
+  params,
+  onUpdateParams,
+  onVisualCropToggle,
+  isVisualCropEnabled = false,
+}: SimpleCropControlProps) {
   const { t } = useTranslation()
 
   // Display coordinate values directly
@@ -53,6 +63,33 @@ export function SimpleCropControl({ params, onUpdateParams }: SimpleCropControlP
     // Clamp value between 1 and 50
     const clampedValue = Math.min(Math.max(numValue, 1), 50)
     onUpdateParams({ trimTolerance: clampedValue })
+  }
+
+  // Filter crop handlers
+  const getFilterCropValue = (
+    field: 'filterCropLeft' | 'filterCropTop' | 'filterCropWidth' | 'filterCropHeight',
+  ): string => {
+    const value = params[field]
+    if (value === undefined) return ''
+    return value.toString()
+  }
+
+  const handleFilterCropChange = (
+    field: 'filterCropLeft' | 'filterCropTop' | 'filterCropWidth' | 'filterCropHeight',
+    value: string,
+  ) => {
+    const numValue = parseFloat(value)
+
+    if (isNaN(numValue) || numValue < 0) {
+      onUpdateParams({ [field]: undefined })
+      return
+    }
+
+    onUpdateParams({ [field]: numValue })
+  }
+
+  const handleVisualCropToggle = () => {
+    onVisualCropToggle?.(!isVisualCropEnabled)
   }
 
   return (
@@ -143,6 +180,82 @@ export function SimpleCropControl({ params, onUpdateParams }: SimpleCropControlP
         </div>
 
         <p className='text-muted-foreground text-xs'>{t('imageEditor.crop.cropDescription')}</p>
+      </div>
+
+      {/* Filter Crop (crops after resize) */}
+      <div className='space-y-4'>
+        <div className='flex items-center justify-between'>
+          <Label className='text-sm font-medium'>{t('imageEditor.crop.filterCrop')}</Label>
+          {onVisualCropToggle && (
+            <Button variant='outline' size='sm' onClick={handleVisualCropToggle} className='h-8'>
+              {isVisualCropEnabled ? (
+                <>
+                  <EyeOff className='mr-1 h-4 w-4' />
+                  {t('imageEditor.crop.hideVisual')}
+                </>
+              ) : (
+                <>
+                  <Eye className='mr-1 h-4 w-4' />
+                  {t('imageEditor.crop.showVisual')}
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+
+        <p className='text-muted-foreground text-xs'>
+          {t('imageEditor.crop.filterCropDescription')}
+        </p>
+
+        <div className='grid grid-cols-2 gap-3'>
+          <div className='space-y-2'>
+            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.left')}</Label>
+            <Input
+              type='number'
+              placeholder='0'
+              value={getFilterCropValue('filterCropLeft')}
+              onChange={(e) => handleFilterCropChange('filterCropLeft', e.target.value)}
+              min='0'
+              step='0.01'
+            />
+          </div>
+
+          <div className='space-y-2'>
+            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.top')}</Label>
+            <Input
+              type='number'
+              placeholder='0'
+              value={getFilterCropValue('filterCropTop')}
+              onChange={(e) => handleFilterCropChange('filterCropTop', e.target.value)}
+              min='0'
+              step='0.01'
+            />
+          </div>
+
+          <div className='space-y-2'>
+            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.width')}</Label>
+            <Input
+              type='number'
+              placeholder='0'
+              value={getFilterCropValue('filterCropWidth')}
+              onChange={(e) => handleFilterCropChange('filterCropWidth', e.target.value)}
+              min='0'
+              step='0.01'
+            />
+          </div>
+
+          <div className='space-y-2'>
+            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.height')}</Label>
+            <Input
+              type='number'
+              placeholder='0'
+              value={getFilterCropValue('filterCropHeight')}
+              onChange={(e) => handleFilterCropChange('filterCropHeight', e.target.value)}
+              min='0'
+              step='0.01'
+            />
+          </div>
+        </div>
       </div>
     </div>
   )

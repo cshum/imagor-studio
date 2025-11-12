@@ -44,6 +44,12 @@ export interface ImageEditorState {
   // Auto trim
   autoTrim?: boolean // Remove whitespace/transparent edges
   trimTolerance?: number // Edge detection sensitivity (1-50, default 1)
+
+  // Filter crop (crops after resize)
+  filterCropLeft?: number
+  filterCropTop?: number
+  filterCropWidth?: number
+  filterCropHeight?: number
 }
 
 export interface ImageEditorConfig {
@@ -217,6 +223,24 @@ export class ImageEditor {
         trimArgs.push(state.trimTolerance.toString())
       }
       filters.push({ name: 'trim', args: trimArgs.join(',') })
+    }
+
+    // Filter crop handling (crops after resize)
+    // Only apply crop filter for Copy URL and Download, not for preview
+    if (
+      !forPreview &&
+      state.filterCropLeft !== undefined &&
+      state.filterCropTop !== undefined &&
+      state.filterCropWidth !== undefined &&
+      state.filterCropHeight !== undefined
+    ) {
+      const cropArgs = [
+        state.filterCropLeft.toString(),
+        state.filterCropTop.toString(),
+        state.filterCropWidth.toString(),
+        state.filterCropHeight.toString(),
+      ].join(',')
+      filters.push({ name: 'crop', args: cropArgs })
     }
 
     // Format handling
