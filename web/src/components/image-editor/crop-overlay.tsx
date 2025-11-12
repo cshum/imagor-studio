@@ -42,14 +42,16 @@ export function CropOverlay({
     height: 0,
   })
 
-  // Handle mouse down on crop box (for dragging)
+  // Handle mouse/touch down on crop box (for dragging)
   const handleCropMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.MouseEvent | React.TouchEvent) => {
       if ((e.target as HTMLElement).classList.contains('crop-box')) {
         e.preventDefault()
         e.stopPropagation()
         setIsDragging(true)
-        setDragStart({ x: e.clientX, y: e.clientY })
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+        setDragStart({ x: clientX, y: clientY })
         setInitialCrop({
           left: displayLeft,
           top: displayTop,
@@ -61,14 +63,16 @@ export function CropOverlay({
     [displayLeft, displayTop, displayWidth, displayHeight],
   )
 
-  // Handle mouse down on resize handles
+  // Handle mouse/touch down on resize handles
   const handleResizeMouseDown = useCallback(
-    (e: React.MouseEvent, handle: ResizeHandle) => {
+    (e: React.MouseEvent | React.TouchEvent, handle: ResizeHandle) => {
       e.preventDefault()
       e.stopPropagation()
       setIsResizing(true)
       setActiveHandle(handle)
-      setDragStart({ x: e.clientX, y: e.clientY })
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+      setDragStart({ x: clientX, y: clientY })
       setInitialCrop({
         left: displayLeft,
         top: displayTop,
@@ -79,12 +83,14 @@ export function CropOverlay({
     [displayLeft, displayTop, displayWidth, displayHeight],
   )
 
-  // Handle mouse move
+  // Handle mouse/touch move
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMouseMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
       if (isDragging) {
-        const deltaX = e.clientX - dragStart.x
-        const deltaY = e.clientY - dragStart.y
+        const deltaX = clientX - dragStart.x
+        const deltaY = clientY - dragStart.y
 
         let newDisplayLeft = initialCrop.left + deltaX
         let newDisplayTop = initialCrop.top + deltaY
@@ -101,8 +107,8 @@ export function CropOverlay({
           height: cropHeight,
         })
       } else if (isResizing && activeHandle) {
-        const deltaX = e.clientX - dragStart.x
-        const deltaY = e.clientY - dragStart.y
+        const deltaX = clientX - dragStart.x
+        const deltaY = clientY - dragStart.y
 
         let newLeft = initialCrop.left
         let newTop = initialCrop.top
@@ -197,9 +203,13 @@ export function CropOverlay({
     if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
+      document.addEventListener('touchmove', handleMouseMove)
+      document.addEventListener('touchend', handleMouseUp)
       return () => {
         document.removeEventListener('mousemove', handleMouseMove)
         document.removeEventListener('mouseup', handleMouseUp)
+        document.removeEventListener('touchmove', handleMouseMove)
+        document.removeEventListener('touchend', handleMouseUp)
       }
     }
   }, [
@@ -257,6 +267,7 @@ export function CropOverlay({
           height: displayHeight,
         }}
         onMouseDown={handleCropMouseDown}
+        onTouchStart={handleCropMouseDown}
       >
         {/* Grid lines */}
         <div className='pointer-events-none absolute inset-0'>
@@ -271,18 +282,25 @@ export function CropOverlay({
           <div
             key={handle}
             className={cn(
-              'absolute h-3 w-3 rounded-full border-2 border-white bg-blue-500',
-              handle === 'nw' && '-top-1.5 -left-1.5 cursor-nw-resize',
-              handle === 'n' && '-top-1.5 left-1/2 -translate-x-1/2 cursor-n-resize',
-              handle === 'ne' && '-top-1.5 -right-1.5 cursor-ne-resize',
-              handle === 'e' && 'top-1/2 -right-1.5 -translate-y-1/2 cursor-e-resize',
-              handle === 'se' && '-right-1.5 -bottom-1.5 cursor-se-resize',
-              handle === 's' && '-bottom-1.5 left-1/2 -translate-x-1/2 cursor-s-resize',
-              handle === 'sw' && '-bottom-1.5 -left-1.5 cursor-sw-resize',
-              handle === 'w' && 'top-1/2 -left-1.5 -translate-y-1/2 cursor-w-resize',
+              'absolute flex items-center justify-center',
+              // Touch-friendly size: 44px (h-11 w-11)
+              'h-11 w-11',
+              // Position the touch area
+              handle === 'nw' && '-top-5.5 -left-5.5 cursor-nw-resize',
+              handle === 'n' && '-top-5.5 left-1/2 -translate-x-1/2 cursor-n-resize',
+              handle === 'ne' && '-top-5.5 -right-5.5 cursor-ne-resize',
+              handle === 'e' && 'top-1/2 -right-5.5 -translate-y-1/2 cursor-e-resize',
+              handle === 'se' && '-right-5.5 -bottom-5.5 cursor-se-resize',
+              handle === 's' && '-bottom-5.5 left-1/2 -translate-x-1/2 cursor-s-resize',
+              handle === 'sw' && '-bottom-5.5 -left-5.5 cursor-sw-resize',
+              handle === 'w' && 'top-1/2 -left-5.5 -translate-y-1/2 cursor-w-resize',
             )}
             onMouseDown={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
-          />
+            onTouchStart={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
+          >
+            {/* Visual handle: 16px */}
+            <div className='h-4 w-4 rounded-full border-2 border-white bg-blue-500' />
+          </div>
         ))}
       </div>
     </div>
