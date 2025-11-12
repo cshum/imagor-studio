@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, LoaderCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -14,7 +14,7 @@ interface SimpleCropControlProps {
     updates: Partial<ImageEditorState>,
     options?: { respectAspectLock?: boolean },
   ) => void
-  onVisualCropToggle?: (enabled: boolean) => void
+  onVisualCropToggle?: (enabled: boolean) => Promise<void>
   isVisualCropEnabled?: boolean
 }
 
@@ -25,6 +25,7 @@ export function SimpleCropControl({
   isVisualCropEnabled = false,
 }: SimpleCropControlProps) {
   const { t } = useTranslation()
+  const [isToggling, setIsToggling] = useState(false)
 
   // Display coordinate values directly
   const getDisplayValue = (side: 'cropLeft' | 'cropTop' | 'cropRight' | 'cropBottom'): string => {
@@ -88,8 +89,15 @@ export function SimpleCropControl({
     onUpdateParams({ [field]: numValue })
   }
 
-  const handleVisualCropToggle = () => {
-    onVisualCropToggle?.(!isVisualCropEnabled)
+  const handleVisualCropToggle = async () => {
+    if (!onVisualCropToggle) return
+
+    setIsToggling(true)
+    try {
+      await onVisualCropToggle(!isVisualCropEnabled)
+    } finally {
+      setIsToggling(false)
+    }
   }
 
   return (
@@ -187,15 +195,29 @@ export function SimpleCropControl({
         <div className='flex items-center justify-between'>
           <Label className='text-sm font-medium'>{t('imageEditor.crop.filterCrop')}</Label>
           {onVisualCropToggle && (
-            <Button variant='outline' size='sm' onClick={handleVisualCropToggle} className='h-8'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={handleVisualCropToggle}
+              disabled={isToggling}
+              className='h-8'
+            >
               {isVisualCropEnabled ? (
                 <>
-                  <EyeOff className='mr-1 h-4 w-4' />
+                  {isToggling ? (
+                    <LoaderCircle className='mr-1 h-4 w-4 animate-spin' />
+                  ) : (
+                    <EyeOff className='mr-1 h-4 w-4' />
+                  )}
                   {t('imageEditor.crop.hideVisual')}
                 </>
               ) : (
                 <>
-                  <Eye className='mr-1 h-4 w-4' />
+                  {isToggling ? (
+                    <LoaderCircle className='mr-1 h-4 w-4 animate-spin' />
+                  ) : (
+                    <Eye className='mr-1 h-4 w-4' />
+                  )}
                   {t('imageEditor.crop.showVisual')}
                 </>
               )}

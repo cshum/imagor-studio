@@ -86,6 +86,7 @@ export class ImageEditor {
   private lockedAspectRatio: number | null = null
   private lastPreviewUrl: string | null = null
   private visualCropEnabled = false
+  private previewLoadResolvers: Array<() => void> = []
 
   constructor(config: ImageEditorConfig, callbacks: ImageEditorCallbacks = {}) {
     this.config = config
@@ -478,15 +479,38 @@ export class ImageEditor {
   }
 
   /**
+   * Notify that preview has loaded
+   * Called by parent when preview image finishes loading
+   */
+  notifyPreviewLoaded(): void {
+    // Resolve all pending promises
+    this.previewLoadResolvers.forEach((resolve) => resolve())
+    this.previewLoadResolvers = []
+  }
+
+  /**
+   * Wait for the next preview to load
+   * Returns a promise that resolves when the preview image loads
+   */
+  private waitForPreviewLoad(): Promise<void> {
+    return new Promise((resolve) => {
+      this.previewLoadResolvers.push(resolve)
+    })
+  }
+
+  /**
    * Set visual crop enabled state
    * When enabled, preview shows uncropped image for visual cropping
    * When disabled, preview shows cropped result
+   * Returns a promise that resolves when the new preview has loaded
    */
-  setVisualCropEnabled(enabled: boolean): void {
+  async setVisualCropEnabled(enabled: boolean): Promise<void> {
     if (this.visualCropEnabled !== enabled) {
       this.visualCropEnabled = enabled
       // Regenerate preview with new crop filter state
       this.schedulePreviewUpdate()
+      // Wait for the new preview to load
+      await this.waitForPreviewLoad()
     }
   }
 

@@ -23,7 +23,7 @@ interface ImageEditorControlsProps {
     options?: { respectAspectLock?: boolean },
   ) => void
   onToggleAspectLock: () => void
-  onVisualCropToggle?: (enabled: boolean) => void
+  onVisualCropToggle?: (enabled: boolean) => Promise<void>
   isVisualCropEnabled?: boolean
 }
 

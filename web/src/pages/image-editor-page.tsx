@@ -157,11 +157,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     // No success toast for download as it's obvious when it works
   }
 
-  const handleVisualCropToggle = (enabled: boolean) => {
-    setVisualCropEnabled(enabled)
-
+  const handleVisualCropToggle = async (enabled: boolean) => {
     // Update ImageEditor to control crop filter in preview
-    transformRef.current?.setVisualCropEnabled(enabled)
+    // This will wait for the new preview to load before resolving
+    await transformRef.current?.setVisualCropEnabled(enabled)
+
+    // Only update state after preview has loaded
+    setVisualCropEnabled(enabled)
 
     // Initialize crop dimensions if enabling for the first time
     if (
@@ -183,6 +185,12 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         filterCropHeight: height,
       })
     }
+  }
+
+  const handlePreviewLoad = () => {
+    setIsLoading(false)
+    // Notify ImageEditor that preview has loaded
+    transformRef.current?.notifyPreviewLoaded()
   }
 
   const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {
@@ -297,7 +305,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           galleryKey={galleryKey}
           imageKey={imageKey}
           originalDimensions={loaderData.originalDimensions}
-          onLoad={() => setIsLoading(false)}
+          onLoad={handlePreviewLoad}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}
           onPreviewDimensionsChange={setPreviewMaxDimensions}
