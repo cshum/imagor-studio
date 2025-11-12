@@ -85,6 +85,7 @@ export class ImageEditor {
   private aspectLocked = true
   private lockedAspectRatio: number | null = null
   private lastPreviewUrl: string | null = null
+  private visualCropEnabled = false
 
   constructor(config: ImageEditorConfig, callbacks: ImageEditorCallbacks = {}) {
     this.config = config
@@ -226,9 +227,13 @@ export class ImageEditor {
     }
 
     // Filter crop handling (crops after resize)
-    // Only apply crop filter for Copy URL and Download, not for preview
+    // Skip crop filter in preview when visual cropping is enabled (so user can see full image)
+    // Always include crop filter for Copy URL and Download
+    const shouldApplyCropFilter =
+      !forPreview || (forPreview && !this.visualCropEnabled)
+
     if (
-      !forPreview &&
+      shouldApplyCropFilter &&
       state.filterCropLeft !== undefined &&
       state.filterCropTop !== undefined &&
       state.filterCropWidth !== undefined &&
@@ -241,6 +246,7 @@ export class ImageEditor {
         state.filterCropHeight.toString(),
       ].join(',')
       filters.push({ name: 'crop', args: cropArgs })
+      console.log(filters)
     }
 
     // Format handling
@@ -409,6 +415,19 @@ export class ImageEditor {
     } else if (!this.aspectLocked) {
       // When unlocking, clear the locked aspect ratio
       this.lockedAspectRatio = null
+    }
+  }
+
+  /**
+   * Set visual crop enabled state
+   * When enabled, preview shows uncropped image for visual cropping
+   * When disabled, preview shows cropped result
+   */
+  setVisualCropEnabled(enabled: boolean): void {
+    if (this.visualCropEnabled !== enabled) {
+      this.visualCropEnabled = enabled
+      // Regenerate preview with new crop filter state
+      this.schedulePreviewUpdate()
     }
   }
 
