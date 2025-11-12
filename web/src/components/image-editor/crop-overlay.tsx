@@ -50,7 +50,12 @@ export function CropOverlay({
         e.stopPropagation()
         setIsDragging(true)
         setDragStart({ x: e.clientX, y: e.clientY })
-        setInitialCrop({ left: displayLeft, top: displayTop, width: displayWidth, height: displayHeight })
+        setInitialCrop({
+          left: displayLeft,
+          top: displayTop,
+          width: displayWidth,
+          height: displayHeight,
+        })
       }
     },
     [displayLeft, displayTop, displayWidth, displayHeight],
@@ -64,7 +69,12 @@ export function CropOverlay({
       setIsResizing(true)
       setActiveHandle(handle)
       setDragStart({ x: e.clientX, y: e.clientY })
-      setInitialCrop({ left: displayLeft, top: displayTop, width: displayWidth, height: displayHeight })
+      setInitialCrop({
+        left: displayLeft,
+        top: displayTop,
+        width: displayWidth,
+        height: displayHeight,
+      })
     },
     [displayLeft, displayTop, displayWidth, displayHeight],
   )
@@ -222,7 +232,13 @@ export function CropOverlay({
         <defs>
           <mask id='crop-mask'>
             <rect width='100%' height='100%' fill='white' />
-            <rect x={displayLeft} y={displayTop} width={displayWidth} height={displayHeight} fill='black' />
+            <rect
+              x={displayLeft}
+              y={displayTop}
+              width={displayWidth}
+              height={displayHeight}
+              fill='black'
+            />
           </mask>
         </defs>
         <rect width='100%' height='100%' fill='black' fillOpacity='0.5' mask='url(#crop-mask)' />

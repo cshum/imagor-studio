@@ -118,6 +118,18 @@ export class ImageEditor {
   }
 
   /**
+   * Check if all crop filter parameters are defined
+   */
+  private hasCropParams(state: ImageEditorState): boolean {
+    return (
+      state.filterCropLeft !== undefined &&
+      state.filterCropTop !== undefined &&
+      state.filterCropWidth !== undefined &&
+      state.filterCropHeight !== undefined
+    )
+  }
+
+  /**
    * Check if preview optimization should be applied
    */
   private shouldOptimizePreview(state: ImageEditorState, forPreview: boolean): boolean {
@@ -129,13 +141,7 @@ export class ImageEditor {
 
     // Disable when crop filter will be applied (visual crop OFF + crop params exist)
     // This ensures crop coordinates match the image dimensions
-    if (
-      !this.visualCropEnabled &&
-      state.filterCropLeft !== undefined &&
-      state.filterCropTop !== undefined &&
-      state.filterCropWidth !== undefined &&
-      state.filterCropHeight !== undefined
-    ) {
+    if (!this.visualCropEnabled && this.hasCropParams(state)) {
       return false
     }
 
@@ -241,21 +247,14 @@ export class ImageEditor {
     // Filter crop handling (crops after resize)
     // Skip crop filter in preview when visual cropping is enabled (so user can see full image)
     // Always include crop filter for Copy URL and Download
-    const shouldApplyCropFilter =
-      !forPreview || (forPreview && !this.visualCropEnabled)
+    const shouldApplyCropFilter = !forPreview || (forPreview && !this.visualCropEnabled)
 
-    if (
-      shouldApplyCropFilter &&
-      state.filterCropLeft !== undefined &&
-      state.filterCropTop !== undefined &&
-      state.filterCropWidth !== undefined &&
-      state.filterCropHeight !== undefined
-    ) {
+    if (shouldApplyCropFilter && this.hasCropParams(state)) {
       const cropArgs = [
-        state.filterCropLeft.toString(),
-        state.filterCropTop.toString(),
-        state.filterCropWidth.toString(),
-        state.filterCropHeight.toString(),
+        state.filterCropLeft!.toString(),
+        state.filterCropTop!.toString(),
+        state.filterCropWidth!.toString(),
+        state.filterCropHeight!.toString(),
       ].join(',')
       filters.push({ name: 'crop', args: cropArgs })
     }
@@ -374,10 +373,7 @@ export class ImageEditor {
     // Handle filter crop when dimensions change
     if (
       (updates.width !== undefined || updates.height !== undefined) &&
-      this.state.filterCropLeft !== undefined &&
-      this.state.filterCropTop !== undefined &&
-      this.state.filterCropWidth !== undefined &&
-      this.state.filterCropHeight !== undefined
+      this.hasCropParams(this.state)
     ) {
       const oldWidth = this.state.width ?? this.config.originalDimensions.width
       const oldHeight = this.state.height ?? this.config.originalDimensions.height
@@ -400,16 +396,16 @@ export class ImageEditor {
         const scaleX = newWidth / oldWidth
         const scaleY = newHeight / oldHeight
 
-        newState.filterCropLeft = Math.round(this.state.filterCropLeft * scaleX)
-        newState.filterCropTop = Math.round(this.state.filterCropTop * scaleY)
-        newState.filterCropWidth = Math.round(this.state.filterCropWidth * scaleX)
-        newState.filterCropHeight = Math.round(this.state.filterCropHeight * scaleY)
+        newState.filterCropLeft = Math.round(this.state.filterCropLeft! * scaleX)
+        newState.filterCropTop = Math.round(this.state.filterCropTop! * scaleY)
+        newState.filterCropWidth = Math.round(this.state.filterCropWidth! * scaleX)
+        newState.filterCropHeight = Math.round(this.state.filterCropHeight! * scaleY)
       }
     }
 
     this.state = newState
     this.callbacks.onStateChange?.(this.getState())
-    
+
     // Skip preview reload if only crop params changed during visual crop
     // (crop filter is skipped in visual mode, so preview URL won't change)
     const onlyCropParamsChanged =

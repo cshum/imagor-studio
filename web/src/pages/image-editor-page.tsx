@@ -159,10 +159,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
   const handleVisualCropToggle = (enabled: boolean) => {
     setVisualCropEnabled(enabled)
-    
+
     // Update ImageEditor to control crop filter in preview
     transformRef.current?.setVisualCropEnabled(enabled)
-    
+
     // Initialize crop dimensions if enabling for the first time
     if (
       enabled &&
