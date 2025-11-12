@@ -140,18 +140,22 @@ export function PreviewArea({
                 isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
               )}
             />
-            {visualCropEnabled && imageDimensions && onCropChange && (
-              <CropOverlay
-                previewWidth={imageDimensions.width}
-                previewHeight={imageDimensions.height}
-                cropLeft={cropLeft}
-                cropTop={cropTop}
-                cropWidth={cropWidth}
-                cropHeight={cropHeight}
-                scale={getScale()}
-                onCropChange={onCropChange}
-              />
-            )}
+            {visualCropEnabled &&
+              imageDimensions &&
+              onCropChange &&
+              cropWidth > 0 &&
+              cropHeight > 0 && (
+                <CropOverlay
+                  previewWidth={imageDimensions.width}
+                  previewHeight={imageDimensions.height}
+                  cropLeft={cropLeft}
+                  cropTop={cropTop}
+                  cropWidth={cropWidth}
+                  cropHeight={cropHeight}
+                  scale={getScale()}
+                  onCropChange={onCropChange}
+                />
+              )}
           </div>
         ) : (
           <div className='flex flex-col items-center gap-4 text-center'>

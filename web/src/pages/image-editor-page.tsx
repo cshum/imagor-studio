@@ -171,17 +171,12 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       const width = params.width || loaderData.originalDimensions.width
       const height = params.height || loaderData.originalDimensions.height
 
-      // Set initial crop to center 80% of image
-      const cropWidth = Math.round(width * 0.8)
-      const cropHeight = Math.round(height * 0.8)
-      const cropLeft = Math.round((width - cropWidth) / 2)
-      const cropTop = Math.round((height - cropHeight) / 2)
-
+      // Set initial crop to full dimensions (100%)
       updateParams({
-        filterCropLeft: cropLeft,
-        filterCropTop: cropTop,
-        filterCropWidth: cropWidth,
-        filterCropHeight: cropHeight,
+        filterCropLeft: 0,
+        filterCropTop: 0,
+        filterCropWidth: width,
+        filterCropHeight: height,
       })
     }
   }
