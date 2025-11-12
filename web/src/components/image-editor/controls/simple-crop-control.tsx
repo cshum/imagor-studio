@@ -118,16 +118,16 @@ export function SimpleCropControl({
     if (imageWidth / imageHeight > targetRatio) {
       // Image is wider than target ratio - constrain by height
       cropHeight = imageHeight
-      cropWidth = Math.round(cropHeight * targetRatio)
+      cropWidth = Math.floor(cropHeight * targetRatio)
     } else {
       // Image is taller than target ratio - constrain by width
       cropWidth = imageWidth
-      cropHeight = Math.round(cropWidth / targetRatio)
+      cropHeight = Math.floor(cropWidth / targetRatio)
     }
 
     // Center the crop area
-    const cropLeft = Math.round((imageWidth - cropWidth) / 2)
-    const cropTop = Math.round((imageHeight - cropHeight) / 2)
+    const cropLeft = Math.floor((imageWidth - cropWidth) / 2)
+    const cropTop = Math.floor((imageHeight - cropHeight) / 2)
 
     // If visual crop is not enabled, enable it first
     if (!isVisualCropEnabled && onVisualCropToggle) {
