@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, Crop, LoaderCircle } from 'lucide-react'
+import { Check, Crop, Link2, Link2Off, LoaderCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Slider } from '@/components/ui/slider'
+import { Toggle } from '@/components/ui/toggle'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
 
 // Define aspect ratio presets
@@ -19,10 +21,12 @@ const ASPECT_RATIO_PRESETS = [
 
 interface SimpleCropControlProps {
   params: ImageEditorState
+  aspectLocked: boolean
   onUpdateParams: (
     updates: Partial<ImageEditorState>,
     options?: { respectAspectLock?: boolean },
   ) => void
+  onToggleAspectLock: () => void
   onVisualCropToggle?: (enabled: boolean) => Promise<void>
   isVisualCropEnabled?: boolean
   outputWidth: number
@@ -32,7 +36,9 @@ interface SimpleCropControlProps {
 
 export function SimpleCropControl({
   params,
+  aspectLocked,
   onUpdateParams,
+  onToggleAspectLock,
   onVisualCropToggle,
   isVisualCropEnabled = false,
   outputWidth,
@@ -42,6 +48,17 @@ export function SimpleCropControl({
   const { t } = useTranslation()
   const [isToggling, setIsToggling] = useState(false)
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>('free')
+  const [sizeScale, setSizeScale] = useState([1])
+  const [baseDimensions, setBaseDimensions] = useState<{ width: number; height: number } | null>(
+    null,
+  )
+
+  // Initialize base dimensions when component loads or dimensions change manually
+  useEffect(() => {
+    if (params.width && params.height && !baseDimensions) {
+      setBaseDimensions({ width: params.width, height: params.height })
+    }
+  }, [params.width, params.height, baseDimensions])
 
   // Filter crop handlers
   const getFilterCropValue = (
@@ -90,8 +107,9 @@ export function SimpleCropControl({
 
     // Calculate crop dimensions based on aspect ratio
     const targetRatio = preset.ratio
-    const imageWidth = outputWidth
-    const imageHeight = outputHeight
+    // Use current params dimensions instead of stale props
+    const imageWidth = params.width || outputWidth
+    const imageHeight = params.height || outputHeight
 
     let cropWidth: number
     let cropHeight: number
@@ -223,6 +241,125 @@ export function SimpleCropControl({
             min='0'
             step='1'
           />
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className='border-t' />
+
+      {/* Resize Section */}
+      <div className='space-y-3'>
+        <Label className='text-sm font-medium'>{t('imageEditor.dimensions.title')}</Label>
+        <div className='flex items-center gap-2'>
+          <div className='flex-1'>
+            <Label htmlFor='width' className='text-muted-foreground text-xs'>
+              {t('imageEditor.dimensions.width')}
+            </Label>
+            <Input
+              id='width'
+              type='number'
+              value={params.width || ''}
+              onChange={(e) => {
+                const width = parseInt(e.target.value) || undefined
+                setSizeScale([1])
+                onUpdateParams({ width, stretch: !aspectLocked }, { respectAspectLock: true })
+                if (width && params.height) {
+                  setBaseDimensions({ width, height: params.height })
+                }
+              }}
+              onBlur={(e) => {
+                const width = parseInt(e.target.value) || 0
+                if (width <= 0) {
+                  onUpdateParams({ width: undefined })
+                }
+              }}
+              placeholder={t('imageEditor.dimensions.auto')}
+              min='1'
+              max='10000'
+              className='h-8'
+            />
+          </div>
+
+          <div className='flex items-center justify-center pt-5'>
+            <Toggle
+              pressed={aspectLocked}
+              onPressedChange={() => {
+                onToggleAspectLock()
+                // Update stretch parameter based on new lock state
+                onUpdateParams({ stretch: aspectLocked }) // Will be opposite after toggle
+              }}
+              size='sm'
+              aria-label='Lock aspect ratio'
+              className='h-8 w-8 p-0'
+            >
+              {aspectLocked ? <Link2 className='h-3 w-3' /> : <Link2Off className='h-3 w-3' />}
+            </Toggle>
+          </div>
+
+          <div className='flex-1'>
+            <Label htmlFor='height' className='text-muted-foreground text-xs'>
+              {t('imageEditor.dimensions.height')}
+            </Label>
+            <Input
+              id='height'
+              type='number'
+              value={params.height || ''}
+              onChange={(e) => {
+                const height = parseInt(e.target.value) || undefined
+                setSizeScale([1])
+                onUpdateParams({ height, stretch: !aspectLocked }, { respectAspectLock: true })
+                if (height && params.width) {
+                  setBaseDimensions({ width: params.width, height })
+                }
+              }}
+              onBlur={(e) => {
+                const height = parseInt(e.target.value) || 0
+                if (height <= 0) {
+                  onUpdateParams({ height: undefined })
+                }
+              }}
+              placeholder={t('imageEditor.dimensions.auto')}
+              min='1'
+              max='10000'
+              className='h-8'
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Size Slider */}
+      <div className='space-y-3'>
+        <Label className='text-sm font-medium'>Scale</Label>
+        <div className='space-y-2'>
+          <Slider
+            value={sizeScale}
+            onValueChange={(value) => {
+              setSizeScale(value)
+              const scale = value[0]
+              if (baseDimensions) {
+                onUpdateParams({
+                  width: Math.round(baseDimensions.width * scale),
+                  height: Math.round(baseDimensions.height * scale),
+                  stretch: !aspectLocked,
+                })
+              } else if (params.width && params.height) {
+                onUpdateParams({
+                  width: Math.round(params.width * scale),
+                  height: Math.round(params.height * scale),
+                  stretch: !aspectLocked,
+                })
+              }
+            }}
+            min={0.1}
+            max={2}
+            step={0.01}
+            className='w-full'
+          />
+          <div className='text-muted-foreground flex justify-between text-xs'>
+            <span>Small</span>
+            <span>{sizeScale[0].toFixed(2)}x</span>
+            <span>Large</span>
+          </div>
         </div>
       </div>
     </div>

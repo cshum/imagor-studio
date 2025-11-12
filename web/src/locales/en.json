@@ -453,7 +453,8 @@
       "outputCompression": "Output & Compression",
       "colorEffects": "Color & Effects",
       "transformRotate": "Transform & Rotate",
-      "cropAspect": "Crop & Aspect"
+      "cropAspect": "Crop & Aspect",
+      "cropResize": "Crop & Resize"
     },
     "transform": {
       "flipControls": "Flip Controls",
