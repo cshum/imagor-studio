@@ -60,17 +60,15 @@ export function CropResizeControl({
     }
   }, [params.width, params.height, baseDimensions])
 
-  // Filter crop handlers
-  const getFilterCropValue = (
-    field: 'filterCropLeft' | 'filterCropTop' | 'filterCropWidth' | 'filterCropHeight',
-  ): string => {
+  // Crop handlers
+  const getCropValue = (field: 'cropLeft' | 'cropTop' | 'cropWidth' | 'cropHeight'): string => {
     const value = params[field]
     if (value === undefined) return ''
     return value.toString()
   }
 
-  const handleFilterCropChange = (
-    field: 'filterCropLeft' | 'filterCropTop' | 'filterCropWidth' | 'filterCropHeight',
+  const handleCropChange = (
+    field: 'cropLeft' | 'cropTop' | 'cropWidth' | 'cropHeight',
     value: string,
   ) => {
     const numValue = parseFloat(value)
@@ -141,10 +139,10 @@ export function CropResizeControl({
 
     // Apply the calculated crop values
     onUpdateParams({
-      filterCropLeft: cropLeft,
-      filterCropTop: cropTop,
-      filterCropWidth: cropWidth,
-      filterCropHeight: cropHeight,
+      cropLeft: cropLeft,
+      cropTop: cropTop,
+      cropWidth: cropWidth,
+      cropHeight: cropHeight,
     })
   }
 
@@ -195,18 +193,18 @@ export function CropResizeControl({
       </div>
 
       {/* Only show crop inputs if crop parameters are set */}
-      {(params.filterCropLeft !== undefined ||
-        params.filterCropTop !== undefined ||
-        params.filterCropWidth !== undefined ||
-        params.filterCropHeight !== undefined) && (
+      {(params.cropLeft !== undefined ||
+        params.cropTop !== undefined ||
+        params.cropWidth !== undefined ||
+        params.cropHeight !== undefined) && (
         <div className='grid grid-cols-2 gap-3'>
           <div className='space-y-2'>
             <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.left')}</Label>
             <Input
               type='number'
               placeholder='0'
-              value={getFilterCropValue('filterCropLeft')}
-              onChange={(e) => handleFilterCropChange('filterCropLeft', e.target.value)}
+              value={getCropValue('cropLeft')}
+              onChange={(e) => handleCropChange('cropLeft', e.target.value)}
               min='0'
               step='1'
             />
@@ -217,8 +215,8 @@ export function CropResizeControl({
             <Input
               type='number'
               placeholder='0'
-              value={getFilterCropValue('filterCropTop')}
-              onChange={(e) => handleFilterCropChange('filterCropTop', e.target.value)}
+              value={getCropValue('cropTop')}
+              onChange={(e) => handleCropChange('cropTop', e.target.value)}
               min='0'
               step='1'
             />
@@ -229,8 +227,8 @@ export function CropResizeControl({
             <Input
               type='number'
               placeholder='0'
-              value={getFilterCropValue('filterCropWidth')}
-              onChange={(e) => handleFilterCropChange('filterCropWidth', e.target.value)}
+              value={getCropValue('cropWidth')}
+              onChange={(e) => handleCropChange('cropWidth', e.target.value)}
               min='0'
               step='1'
             />
@@ -241,8 +239,8 @@ export function CropResizeControl({
             <Input
               type='number'
               placeholder='0'
-              value={getFilterCropValue('filterCropHeight')}
-              onChange={(e) => handleFilterCropChange('filterCropHeight', e.target.value)}
+              value={getCropValue('cropHeight')}
+              onChange={(e) => handleCropChange('cropHeight', e.target.value)}
               min='0'
               step='1'
             />

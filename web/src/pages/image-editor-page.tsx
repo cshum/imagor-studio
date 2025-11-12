@@ -177,23 +177,17 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     setVisualCropEnabled(enabled)
 
     // Initialize crop dimensions if enabling for the first time
-    if (
-      enabled &&
-      !params.filterCropLeft &&
-      !params.filterCropTop &&
-      !params.filterCropWidth &&
-      !params.filterCropHeight
-    ) {
+    if (enabled && !params.cropLeft && !params.cropTop && !params.cropWidth && !params.cropHeight) {
       // Get current image dimensions (after resize)
       const width = params.width || loaderData.originalDimensions.width
       const height = params.height || loaderData.originalDimensions.height
 
       // Set initial crop to full dimensions (100%)
       updateParams({
-        filterCropLeft: 0,
-        filterCropTop: 0,
-        filterCropWidth: width,
-        filterCropHeight: height,
+        cropLeft: 0,
+        cropTop: 0,
+        cropWidth: width,
+        cropHeight: height,
       })
     }
   }
@@ -206,10 +200,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
   const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {
     updateParams({
-      filterCropLeft: crop.left,
-      filterCropTop: crop.top,
-      filterCropWidth: crop.width,
-      filterCropHeight: crop.height,
+      cropLeft: crop.left,
+      cropTop: crop.top,
+      cropWidth: crop.width,
+      cropHeight: crop.height,
     })
   }
 
@@ -324,10 +318,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           onDownload={handleDownloadClick}
           onPreviewDimensionsChange={setPreviewMaxDimensions}
           visualCropEnabled={visualCropEnabled}
-          cropLeft={params.filterCropLeft || 0}
-          cropTop={params.filterCropTop || 0}
-          cropWidth={params.filterCropWidth || 0}
-          cropHeight={params.filterCropHeight || 0}
+          cropLeft={params.cropLeft || 0}
+          cropTop={params.cropTop || 0}
+          cropWidth={params.cropWidth || 0}
+          cropHeight={params.cropHeight || 0}
           onCropChange={handleCropChange}
           outputWidth={params.width || loaderData.originalDimensions.width}
           outputHeight={params.height || loaderData.originalDimensions.height}

@@ -7,12 +7,6 @@ export interface ImageEditorState {
   width?: number
   height?: number
 
-  // Cropping
-  cropLeft?: number
-  cropTop?: number
-  cropRight?: number
-  cropBottom?: number
-
   // Fitting
   stretch?: boolean
   fitIn?: boolean
@@ -43,11 +37,11 @@ export interface ImageEditorState {
   autoTrim?: boolean // Remove whitespace/transparent edges
   trimTolerance?: number // Edge detection sensitivity (1-50, default 1)
 
-  // Filter crop (crops after resize)
-  filterCropLeft?: number
-  filterCropTop?: number
-  filterCropWidth?: number
-  filterCropHeight?: number
+  // Crop (crops after resize)
+  cropLeft?: number
+  cropTop?: number
+  cropWidth?: number
+  cropHeight?: number
 }
 
 export interface ImageEditorConfig {
@@ -117,14 +111,14 @@ export class ImageEditor {
   }
 
   /**
-   * Check if all crop filter parameters are defined
+   * Check if all crop parameters are defined
    */
   private hasCropParams(state: ImageEditorState): boolean {
     return (
-      state.filterCropLeft !== undefined &&
-      state.filterCropTop !== undefined &&
-      state.filterCropWidth !== undefined &&
-      state.filterCropHeight !== undefined
+      state.cropLeft !== undefined &&
+      state.cropTop !== undefined &&
+      state.cropWidth !== undefined &&
+      state.cropHeight !== undefined
     )
   }
 
@@ -187,12 +181,6 @@ export class ImageEditor {
     if (width !== undefined) graphqlParams.width = width
     if (height !== undefined) graphqlParams.height = height
 
-    // Cropping
-    if (state.cropLeft !== undefined) graphqlParams.cropLeft = state.cropLeft
-    if (state.cropTop !== undefined) graphqlParams.cropTop = state.cropTop
-    if (state.cropRight !== undefined) graphqlParams.cropRight = state.cropRight
-    if (state.cropBottom !== undefined) graphqlParams.cropBottom = state.cropBottom
-
     // Fitting
     if (state.stretch !== undefined) graphqlParams.stretch = state.stretch
 
@@ -237,17 +225,17 @@ export class ImageEditor {
       filters.push({ name: 'trim', args: trimArgs.join(',') })
     }
 
-    // Filter crop handling (crops after resize)
+    // Crop handling (crops after resize)
     // Skip crop filter in preview when visual cropping is enabled (so user can see full image)
     // Always include crop filter for Copy URL and Download
     const shouldApplyCropFilter = !forPreview || (forPreview && !this.visualCropEnabled)
 
     if (shouldApplyCropFilter && this.hasCropParams(state)) {
       const cropArgs = [
-        state.filterCropLeft!.toString(),
-        state.filterCropTop!.toString(),
-        state.filterCropWidth!.toString(),
-        state.filterCropHeight!.toString(),
+        state.cropLeft!.toString(),
+        state.cropTop!.toString(),
+        state.cropWidth!.toString(),
+        state.cropHeight!.toString(),
       ].join(',')
       filters.push({ name: 'crop', args: cropArgs })
     }
@@ -365,7 +353,7 @@ export class ImageEditor {
       }
     }
 
-    // Handle filter crop when dimensions change
+    // Handle crop when dimensions change
     if (
       (updates.width !== undefined || updates.height !== undefined) &&
       this.hasCropParams(this.state)
@@ -379,10 +367,10 @@ export class ImageEditor {
       const scaleX = newWidth / oldWidth
       const scaleY = newHeight / oldHeight
 
-      newState.filterCropLeft = Math.round(this.state.filterCropLeft! * scaleX)
-      newState.filterCropTop = Math.round(this.state.filterCropTop! * scaleY)
-      newState.filterCropWidth = Math.round(this.state.filterCropWidth! * scaleX)
-      newState.filterCropHeight = Math.round(this.state.filterCropHeight! * scaleY)
+      newState.cropLeft = Math.round(this.state.cropLeft! * scaleX)
+      newState.cropTop = Math.round(this.state.cropTop! * scaleY)
+      newState.cropWidth = Math.round(this.state.cropWidth! * scaleX)
+      newState.cropHeight = Math.round(this.state.cropHeight! * scaleY)
     }
 
     this.state = newState
@@ -395,10 +383,7 @@ export class ImageEditor {
       Object.keys(updates).length > 0 &&
       Object.keys(updates).every(
         (key) =>
-          key === 'filterCropLeft' ||
-          key === 'filterCropTop' ||
-          key === 'filterCropWidth' ||
-          key === 'filterCropHeight',
+          key === 'cropLeft' || key === 'cropTop' || key === 'cropWidth' || key === 'cropHeight',
       )
 
     if (!onlyCropParamsChanged) {
@@ -415,10 +400,6 @@ export class ImageEditor {
       width: this.config.originalDimensions?.width,
       height: this.config.originalDimensions?.height,
       // Clear all other transforms
-      cropLeft: undefined,
-      cropTop: undefined,
-      cropRight: undefined,
-      cropBottom: undefined,
       stretch: undefined,
       brightness: undefined,
       contrast: undefined,
