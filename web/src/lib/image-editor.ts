@@ -409,7 +409,23 @@ export class ImageEditor {
 
     this.state = newState
     this.callbacks.onStateChange?.(this.getState())
-    this.schedulePreviewUpdate()
+    
+    // Skip preview reload if only crop params changed during visual crop
+    // (crop filter is skipped in visual mode, so preview URL won't change)
+    const onlyCropParamsChanged =
+      this.visualCropEnabled &&
+      Object.keys(updates).length > 0 &&
+      Object.keys(updates).every(
+        (key) =>
+          key === 'filterCropLeft' ||
+          key === 'filterCropTop' ||
+          key === 'filterCropWidth' ||
+          key === 'filterCropHeight',
+      )
+
+    if (!onlyCropParamsChanged) {
+      this.schedulePreviewUpdate()
+    }
   }
 
   /**
