@@ -371,6 +371,24 @@ export class ImageEditor {
       }
     }
 
+    // Reset filter crop when dimensions change (crop coordinates become invalid)
+    if (
+      (updates.width !== undefined || updates.height !== undefined) &&
+      (newState.filterCropLeft !== undefined ||
+        newState.filterCropTop !== undefined ||
+        newState.filterCropWidth !== undefined ||
+        newState.filterCropHeight !== undefined)
+    ) {
+      const finalWidth = newState.width ?? this.config.originalDimensions.width
+      const finalHeight = newState.height ?? this.config.originalDimensions.height
+
+      // Reset crop to full dimensions
+      newState.filterCropLeft = 0
+      newState.filterCropTop = 0
+      newState.filterCropWidth = finalWidth
+      newState.filterCropHeight = finalHeight
+    }
+
     this.state = newState
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
