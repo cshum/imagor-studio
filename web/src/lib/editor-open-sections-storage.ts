@@ -4,19 +4,19 @@ import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-co
 import type { Auth } from '@/stores/auth-store'
 
 export interface EditorOpenSections {
-  dimensions: boolean
-  output: boolean
   crop: boolean
   effects: boolean
   transform: boolean
+  dimensions: boolean
+  output: boolean
 }
 
 const defaultOpenSections: EditorOpenSections = {
-  dimensions: false,
-  output: false,
   crop: true,
   effects: true,
   transform: false,
+  dimensions: false,
+  output: false,
 }
 
 export class EditorOpenSectionsStorage {
