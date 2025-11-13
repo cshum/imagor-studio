@@ -323,13 +323,14 @@ export class ImageEditor {
     const updatingBoth = updates.width !== undefined && updates.height !== undefined
 
     if (!updatingBoth) {
-      // Always maintain aspect ratio when updating dimensions individually
-      if (updates.width !== undefined && this.state.height && this.state.width) {
-        const ratio = this.state.width / this.state.height
-        newState.height = Math.round(updates.width / ratio)
-      } else if (updates.height !== undefined && this.state.width && this.state.height) {
-        const ratio = this.state.width / this.state.height
-        newState.width = Math.round(updates.height * ratio)
+      // Always maintain aspect ratio based on ORIGINAL image dimensions
+      const originalRatio =
+        this.config.originalDimensions.width / this.config.originalDimensions.height
+
+      if (updates.width !== undefined) {
+        newState.height = Math.round(updates.width / originalRatio)
+      } else if (updates.height !== undefined) {
+        newState.width = Math.round(updates.height * originalRatio)
       }
     }
 
