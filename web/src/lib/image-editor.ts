@@ -111,16 +111,9 @@ export class ImageEditor {
   private shouldOptimizePreview(state: ImageEditorState, forPreview: boolean): boolean {
     if (!forPreview || !this.config.previewMaxDimensions) return false
 
-    // Automatically disable for resolution-dependent filters that need full detail
-    if (state.blur !== undefined && state.blur !== 0) return false
-    if (state.sharpen !== undefined && state.sharpen !== 0) return false
-
     // Since crop is now independent from resize (crop happens before resize),
     // we can always optimize the preview. The crop overlay will scale accordingly.
-    // No need to disable optimization when crop params exist.
-
-    // Future filters that need full resolution can be added here
-    // Example: if (state.someDetailFilter !== undefined) return false
+    // Blur/sharpen are skipped during visual crop mode, so no need to check them here.
 
     return true
   }
@@ -209,22 +202,21 @@ export class ImageEditor {
     if (state.hue !== undefined && state.hue !== 0) {
       filters.push({ name: 'hue', args: state.hue.toString() })
     }
-    if (state.blur !== undefined && state.blur !== 0) {
-      filters.push({ name: 'blur', args: state.blur.toString() })
-    }
-    if (state.sharpen !== undefined && state.sharpen !== 0) {
-      filters.push({ name: 'sharpen', args: state.sharpen.toString() })
-    }
     if (state.grayscale) {
       filters.push({ name: 'grayscale', args: '' })
     }
 
-    // Rotation handling
-    // Skip rotation in preview when visual cropping is enabled
-    // (so user can crop on unrotated image, rotation applied after crop in final URL)
-    const shouldApplyRotation = !forPreview || (forPreview && !this.visualCropEnabled)
+    // Skip resolution-dependent filters and rotation in preview when visual cropping is enabled
+    // (so user can crop on clean, unrotated image)
+    const shouldApplyFilters = !forPreview || (forPreview && !this.visualCropEnabled)
 
-    if (shouldApplyRotation && state.rotation !== undefined && state.rotation !== 0) {
+    if (shouldApplyFilters && state.blur !== undefined && state.blur !== 0) {
+      filters.push({ name: 'blur', args: state.blur.toString() })
+    }
+    if (shouldApplyFilters && state.sharpen !== undefined && state.sharpen !== 0) {
+      filters.push({ name: 'sharpen', args: state.sharpen.toString() })
+    }
+    if (shouldApplyFilters && state.rotation !== undefined && state.rotation !== 0) {
       filters.push({ name: 'rotate', args: state.rotation.toString() })
     }
 
