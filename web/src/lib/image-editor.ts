@@ -317,25 +317,7 @@ export class ImageEditor {
    * Update transformation parameters
    */
   updateParams(updates: Partial<ImageEditorState>): void {
-    const newState = { ...this.state, ...updates }
-
-    // Skip aspect ratio when both dimensions are provided (slider case)
-    // Only maintain aspect ratio when updating one dimension at a time (manual input case)
-    const updatingBoth = updates.width !== undefined && updates.height !== undefined
-
-    if (!updatingBoth) {
-      // Always maintain aspect ratio based on ORIGINAL image dimensions
-      const originalRatio =
-        this.config.originalDimensions.width / this.config.originalDimensions.height
-
-      if (updates.width !== undefined) {
-        newState.height = Math.round(updates.width / originalRatio)
-      } else if (updates.height !== undefined) {
-        newState.width = Math.round(updates.height * originalRatio)
-      }
-    }
-
-    this.state = newState
+    this.state = { ...this.state, ...updates }
     this.callbacks.onStateChange?.(this.getState())
 
     // Skip preview reload if only crop params changed during visual crop
