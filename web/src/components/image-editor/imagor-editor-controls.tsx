@@ -13,15 +13,10 @@ import type { ImageEditorState } from '@/lib/image-editor.ts'
 
 interface ImageEditorControlsProps {
   params: ImageEditorState
-  aspectLocked: boolean
   originalAspectRatio: number | null
   openSections: EditorOpenSections
   onOpenSectionsChange: (sections: EditorOpenSections) => void
-  onUpdateParams: (
-    updates: Partial<ImageEditorState>,
-    options?: { respectAspectLock?: boolean },
-  ) => void
-  onToggleAspectLock: () => void
+  onUpdateParams: (updates: Partial<ImageEditorState>) => void
   onVisualCropToggle?: (enabled: boolean) => Promise<void>
   isVisualCropEnabled?: boolean
   outputWidth: number
@@ -31,11 +26,9 @@ interface ImageEditorControlsProps {
 
 export function ImageEditorControls({
   params,
-  aspectLocked,
   openSections,
   onOpenSectionsChange,
   onUpdateParams,
-  onToggleAspectLock,
   onVisualCropToggle,
   isVisualCropEnabled,
   outputWidth,
@@ -73,9 +66,7 @@ export function ImageEditorControls({
           <CollapsibleContent className='px-4 pb-4'>
             <CropResizeControl
               params={params}
-              aspectLocked={aspectLocked}
               onUpdateParams={onUpdateParams}
-              onToggleAspectLock={onToggleAspectLock}
               onVisualCropToggle={onVisualCropToggle}
               isVisualCropEnabled={isVisualCropEnabled}
               outputWidth={outputWidth}

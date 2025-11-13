@@ -70,8 +70,6 @@ export class ImageEditor {
   private callbacks: ImageEditorCallbacks
   private debounceTimer: number | null = null
   private abortController: AbortController | null = null
-  private aspectLocked = true
-  private lockedAspectRatio: number | null = null
   private lastPreviewUrl: string | null = null
   private visualCropEnabled = false
   private previewLoadResolvers: Array<() => void> = []
@@ -85,11 +83,6 @@ export class ImageEditor {
       width: config.originalDimensions.width,
       height: config.originalDimensions.height,
     }
-
-    // Initialize locked aspect ratio since aspectLocked starts as true
-    if (this.state.width && this.state.height) {
-      this.lockedAspectRatio = this.state.width / this.state.height
-    }
   }
 
   /**
@@ -97,13 +90,6 @@ export class ImageEditor {
    */
   getState(): ImageEditorState {
     return { ...this.state }
-  }
-
-  /**
-   * Check if aspect ratio is locked
-   */
-  isAspectLocked(): boolean {
-    return this.aspectLocked
   }
 
   /**
@@ -146,6 +132,7 @@ export class ImageEditor {
     forPreview = false,
   ): Partial<ImagorParamsInput> {
     const graphqlParams: Partial<ImagorParamsInput> = {}
+    graphqlParams.fitIn = true
 
     // Crop handling (crops BEFORE resize in URL path)
     // Convert from left/top/width/height to left/top/right/bottom
@@ -162,6 +149,13 @@ export class ImageEditor {
     // Dimensions - apply preview constraints if needed
     let width = state.width
     let height = state.height
+
+    // When visual crop is enabled in preview, use original dimensions
+    // so the crop overlay can work with the full original image
+    if (forPreview && this.visualCropEnabled) {
+      width = this.config.originalDimensions.width
+      height = this.config.originalDimensions.height
+    }
 
     // Apply preview dimension constraints when generating preview URLs
     if (this.shouldOptimizePreview(state, forPreview)) {
@@ -321,39 +315,21 @@ export class ImageEditor {
   /**
    * Update transformation parameters
    */
-  updateParams(
-    updates: Partial<ImageEditorState>,
-    options?: { respectAspectLock?: boolean },
-  ): void {
+  updateParams(updates: Partial<ImageEditorState>): void {
     const newState = { ...this.state, ...updates }
 
-    // Check if crop parameters are being updated
-    const cropParamsUpdated =
-      updates.cropLeft !== undefined ||
-      updates.cropTop !== undefined ||
-      updates.cropWidth !== undefined ||
-      updates.cropHeight !== undefined
+    // Skip aspect ratio when both dimensions are provided (slider case)
+    // Only maintain aspect ratio when updating one dimension at a time (manual input case)
+    const updatingBoth = updates.width !== undefined && updates.height !== undefined
 
-    // If crop params changed and we have complete crop info, update resize dimensions
-    if (cropParamsUpdated && this.hasCropParams(newState)) {
-      // Update resize dimensions to match cropped area
-      newState.width = newState.cropWidth
-      newState.height = newState.cropHeight
-
-      // Don't update locked aspect ratio - let it stay independent
-      // This allows users to freely resize after cropping (or unlock for stretch)
-    }
-    // Apply aspect ratio logic if enabled and we're updating dimensions (but not crop)
-    else if (
-      options?.respectAspectLock &&
-      this.aspectLocked &&
-      this.lockedAspectRatio &&
-      (updates.width !== undefined || updates.height !== undefined)
-    ) {
-      if (updates.width !== undefined) {
-        newState.height = Math.round(updates.width / this.lockedAspectRatio)
-      } else if (updates.height !== undefined) {
-        newState.width = Math.round(updates.height * this.lockedAspectRatio)
+    if (!updatingBoth) {
+      // Always maintain aspect ratio when updating dimensions individually
+      if (updates.width !== undefined && this.state.height && this.state.width) {
+        const ratio = this.state.width / this.state.height
+        newState.height = Math.round(updates.width / ratio)
+      } else if (updates.height !== undefined && this.state.width && this.state.height) {
+        const ratio = this.state.width / this.state.height
+        newState.width = Math.round(updates.height * ratio)
       }
     }
 
@@ -403,20 +379,6 @@ export class ImageEditor {
     this.schedulePreviewUpdate()
   }
 
-  /**
-   * Toggle aspect ratio lock
-   */
-  toggleAspectLock(): void {
-    this.aspectLocked = !this.aspectLocked
-
-    // When locking is enabled, capture the current aspect ratio
-    if (this.aspectLocked && this.state.width && this.state.height) {
-      this.lockedAspectRatio = this.state.width / this.state.height
-    } else if (!this.aspectLocked) {
-      // When unlocking, clear the locked aspect ratio
-      this.lockedAspectRatio = null
-    }
-  }
 
   /**
    * Notify that preview has loaded

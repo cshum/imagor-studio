@@ -64,7 +64,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     height: loaderData.originalDimensions.height,
   }))
   const [previewUrl, setPreviewUrl] = useState<string>()
-  const [aspectLocked, setAspectLocked] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [previewMaxDimensions, setPreviewMaxDimensions] = useState<{
     width: number
@@ -100,31 +99,17 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const originalAspectRatio =
     loaderData.originalDimensions.width / loaderData.originalDimensions.height
 
-  const updateParams = (
-    updates: Partial<ImageEditorState>,
-    options?: { respectAspectLock?: boolean },
-  ) => {
-    transformRef.current?.updateParams(updates, options)
+  const updateParams = (updates: Partial<ImageEditorState>) => {
+    transformRef.current?.updateParams(updates)
   }
 
   const resetParams = () => {
     transformRef.current?.resetParams()
 
-    // Reset dimension lock to initial locked state
-    if (!transformRef.current?.isAspectLocked()) {
-      transformRef.current?.toggleAspectLock()
-    }
-    setAspectLocked(true)
-
     // Reset crop aspect ratio to free-form
     setCropAspectRatio(null)
 
     setResetCounter((prev) => prev + 1)
-  }
-
-  const toggleAspectLock = () => {
-    transformRef.current?.toggleAspectLock()
-    setAspectLocked(transformRef.current?.isAspectLocked() ?? true)
   }
 
   const getCopyUrl = async () => {
@@ -284,12 +269,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                     <ImageEditorControls
                       key={resetCounter}
                       params={params}
-                      aspectLocked={aspectLocked}
                       originalAspectRatio={originalAspectRatio}
                       openSections={editorOpenSections}
                       onOpenSectionsChange={handleOpenSectionsChange}
                       onUpdateParams={updateParams}
-                      onToggleAspectLock={toggleAspectLock}
                       onVisualCropToggle={handleVisualCropToggle}
                       isVisualCropEnabled={visualCropEnabled}
                       outputWidth={params.width || loaderData.originalDimensions.width}
@@ -343,12 +326,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             <ImageEditorControls
               key={resetCounter}
               params={params}
-              aspectLocked={aspectLocked}
               originalAspectRatio={originalAspectRatio}
               openSections={editorOpenSections}
               onOpenSectionsChange={handleOpenSectionsChange}
               onUpdateParams={updateParams}
-              onToggleAspectLock={toggleAspectLock}
               onVisualCropToggle={handleVisualCropToggle}
               isVisualCropEnabled={visualCropEnabled}
               outputWidth={params.width || loaderData.originalDimensions.width}
