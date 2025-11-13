@@ -78,10 +78,11 @@ export class ImageEditor {
     this.config = config
     this.callbacks = callbacks
 
-    // Initialize state with original dimensions
+    // Initialize state with original dimensions and fit-in mode
     this.state = {
       width: config.originalDimensions.width,
       height: config.originalDimensions.height,
+      fitIn: true,
     }
   }
 
@@ -132,7 +133,6 @@ export class ImageEditor {
     forPreview = false,
   ): Partial<ImagorParamsInput> {
     const graphqlParams: Partial<ImagorParamsInput> = {}
-    graphqlParams.fitIn = true
 
     // Crop handling (crops BEFORE resize in URL path)
     // Convert from left/top/width/height to left/top/right/bottom
@@ -182,6 +182,7 @@ export class ImageEditor {
     if (height !== undefined) graphqlParams.height = height
 
     // Fitting
+    if (state.fitIn !== undefined) graphqlParams.fitIn = state.fitIn
     if (state.stretch !== undefined) graphqlParams.stretch = state.stretch
 
     // Transform (for Phase 5)
@@ -360,6 +361,7 @@ export class ImageEditor {
       // Reset to original dimensions if available
       width: this.config.originalDimensions?.width,
       height: this.config.originalDimensions?.height,
+      fitIn: true,
       // Clear all other transforms
       stretch: undefined,
       brightness: undefined,
