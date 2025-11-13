@@ -105,18 +105,6 @@ export class ImageEditor {
     )
   }
 
-  /**
-   * Check if preview optimization should be applied
-   */
-  private shouldOptimizePreview(state: ImageEditorState, forPreview: boolean): boolean {
-    if (!forPreview || !this.config.previewMaxDimensions) return false
-
-    // Since crop is now independent from resize (crop happens before resize),
-    // we can always optimize the preview. The crop overlay will scale accordingly.
-    // Blur/sharpen are skipped during visual crop mode, so no need to check them here.
-
-    return true
-  }
 
   /**
    * Convert state to GraphQL input format
@@ -151,9 +139,9 @@ export class ImageEditor {
     }
 
     // Apply preview dimension constraints when generating preview URLs
-    if (this.shouldOptimizePreview(state, forPreview)) {
-      const maxWidth = this.config.previewMaxDimensions!.width
-      const maxHeight = this.config.previewMaxDimensions!.height
+    if (forPreview && this.config.previewMaxDimensions) {
+      const maxWidth = this.config.previewMaxDimensions.width
+      const maxHeight = this.config.previewMaxDimensions.height
 
       // Use original dimensions if user hasn't set explicit dimensions
       const targetWidth = width ?? this.config.originalDimensions.width
@@ -206,17 +194,18 @@ export class ImageEditor {
       filters.push({ name: 'grayscale', args: '' })
     }
 
-    // Skip resolution-dependent filters and rotation in preview when visual cropping is enabled
-    // (so user can crop on clean, unrotated image)
-    const shouldApplyFilters = !forPreview || (forPreview && !this.visualCropEnabled)
-
-    if (shouldApplyFilters && state.blur !== undefined && state.blur !== 0) {
+    // Blur and sharpen don't affect dimensions, so apply them even during crop mode
+    if (state.blur !== undefined && state.blur !== 0) {
       filters.push({ name: 'blur', args: state.blur.toString() })
     }
-    if (shouldApplyFilters && state.sharpen !== undefined && state.sharpen !== 0) {
+    if (state.sharpen !== undefined && state.sharpen !== 0) {
       filters.push({ name: 'sharpen', args: state.sharpen.toString() })
     }
-    if (shouldApplyFilters && state.rotation !== undefined && state.rotation !== 0) {
+
+    // Skip rotation in preview when visual cropping is enabled
+    // (so user can crop on unrotated image, rotation applied after crop in final URL)
+    const shouldApplyRotation = !forPreview || (forPreview && !this.visualCropEnabled)
+    if (shouldApplyRotation && state.rotation !== undefined && state.rotation !== 0) {
       filters.push({ name: 'rotate', args: state.rotation.toString() })
     }
 
