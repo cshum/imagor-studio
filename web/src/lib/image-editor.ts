@@ -184,6 +184,11 @@ export class ImageEditor {
     // Fitting
     if (state.fitIn !== undefined) graphqlParams.fitIn = state.fitIn
     if (state.stretch !== undefined) graphqlParams.stretch = state.stretch
+    if (state.smart !== undefined) graphqlParams.smart = state.smart
+
+    // Alignment (for Fill mode)
+    if (state.hAlign) graphqlParams.hAlign = state.hAlign
+    if (state.vAlign) graphqlParams.vAlign = state.vAlign
 
     // Transform (for Phase 5)
     if (state.hFlip !== undefined) graphqlParams.hFlip = state.hFlip
