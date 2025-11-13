@@ -151,7 +151,7 @@ export class ImageEditor {
     // Convert from left/top/width/height to left/top/right/bottom
     // Skip crop in preview when visual cropping is enabled (so user can see full image)
     const shouldApplyCrop = !forPreview || (forPreview && !this.visualCropEnabled)
-    
+
     if (shouldApplyCrop && this.hasCropParams(state)) {
       graphqlParams.cropLeft = state.cropLeft
       graphqlParams.cropTop = state.cropTop
@@ -327,8 +327,24 @@ export class ImageEditor {
   ): void {
     const newState = { ...this.state, ...updates }
 
-    // Apply aspect ratio logic if enabled and we're updating dimensions
-    if (
+    // Check if crop parameters are being updated
+    const cropParamsUpdated =
+      updates.cropLeft !== undefined ||
+      updates.cropTop !== undefined ||
+      updates.cropWidth !== undefined ||
+      updates.cropHeight !== undefined
+
+    // If crop params changed and we have complete crop info, update resize dimensions
+    if (cropParamsUpdated && this.hasCropParams(newState)) {
+      // Update resize dimensions to match cropped area
+      newState.width = newState.cropWidth
+      newState.height = newState.cropHeight
+
+      // Don't update locked aspect ratio - let it stay independent
+      // This allows users to freely resize after cropping (or unlock for stretch)
+    }
+    // Apply aspect ratio logic if enabled and we're updating dimensions (but not crop)
+    else if (
       options?.respectAspectLock &&
       this.aspectLocked &&
       this.lockedAspectRatio &&
@@ -340,9 +356,6 @@ export class ImageEditor {
         newState.width = Math.round(updates.height * this.lockedAspectRatio)
       }
     }
-
-    // Crop and resize are now independent - no scaling needed
-    // Crop works on original dimensions, resize works on cropped result
 
     this.state = newState
     this.callbacks.onStateChange?.(this.getState())

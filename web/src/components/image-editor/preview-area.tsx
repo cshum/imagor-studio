@@ -66,18 +66,20 @@ export function PreviewArea({
     onLoad?.(width, height)
   }
 
-  // Calculate scale factor for crop overlay
+  // Calculate scale factors for crop overlay
   // Crop coordinates are in original image space, but preview shows resized image
-  // So we need to scale: original → cropped → resized → preview
-  const getScale = () => {
+  // When stretch is enabled, we need separate X and Y scales
+  const getScales = () => {
     if (!imageDimensions) {
-      return 1
+      return { scaleX: 1, scaleY: 1 }
     }
-    
-    // When visual crop is enabled, preview shows the uncropped resized image
-    // The crop overlay needs to scale from original dimensions to preview dimensions
-    // Scale = (preview width) / (original width)
-    return imageDimensions.width / originalDimensions.width
+
+    // Calculate separate scales for X and Y
+    // This handles stretch mode where aspect ratio changes
+    const scaleX = imageDimensions.width / originalDimensions.width
+    const scaleY = imageDimensions.height / originalDimensions.height
+
+    return { scaleX, scaleY }
   }
 
   // Calculate and report preview area dimensions
@@ -148,19 +150,24 @@ export function PreviewArea({
               imageDimensions &&
               onCropChange &&
               cropWidth > 0 &&
-              cropHeight > 0 && (
-                <CropOverlay
-                  previewWidth={imageDimensions.width}
-                  previewHeight={imageDimensions.height}
-                  cropLeft={cropLeft}
-                  cropTop={cropTop}
-                  cropWidth={cropWidth}
-                  cropHeight={cropHeight}
-                  scale={getScale()}
-                  onCropChange={onCropChange}
-                  lockedAspectRatio={cropAspectRatio}
-                />
-              )}
+              cropHeight > 0 &&
+              (() => {
+                const { scaleX, scaleY } = getScales()
+                return (
+                  <CropOverlay
+                    previewWidth={imageDimensions.width}
+                    previewHeight={imageDimensions.height}
+                    cropLeft={cropLeft}
+                    cropTop={cropTop}
+                    cropWidth={cropWidth}
+                    cropHeight={cropHeight}
+                    scale={scaleX}
+                    scaleY={scaleY}
+                    onCropChange={onCropChange}
+                    lockedAspectRatio={cropAspectRatio}
+                  />
+                )
+              })()}
           </div>
         ) : (
           <div className='flex flex-col items-center gap-4 text-center'>

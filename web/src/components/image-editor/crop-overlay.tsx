@@ -10,6 +10,7 @@ interface CropOverlayProps {
   cropWidth: number
   cropHeight: number
   scale: number
+  scaleY?: number // Optional separate Y scale for stretch mode
   onCropChange: (crop: { left: number; top: number; width: number; height: number }) => void
   lockedAspectRatio?: number | null
 }
@@ -24,14 +25,19 @@ export function CropOverlay({
   cropWidth,
   cropHeight,
   scale,
+  scaleY,
   onCropChange,
   lockedAspectRatio = null,
 }: CropOverlayProps) {
+  // Use separate scales for X and Y (for stretch mode support)
+  const scaleX = scale
+  const actualScaleY = scaleY ?? scale // Use scaleY if provided, otherwise use scale
+
   // Calculate display coordinates (scaled for preview)
-  const displayLeft = cropLeft * scale
-  const displayTop = cropTop * scale
-  const displayWidth = cropWidth * scale
-  const displayHeight = cropHeight * scale
+  const displayLeft = cropLeft * scaleX
+  const displayTop = cropTop * actualScaleY
+  const displayWidth = cropWidth * scaleX
+  const displayHeight = cropHeight * actualScaleY
   const overlayRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
@@ -101,10 +107,10 @@ export function CropOverlay({
         newDisplayLeft = Math.max(0, Math.min(newDisplayLeft, previewWidth - displayWidth))
         newDisplayTop = Math.max(0, Math.min(newDisplayTop, previewHeight - displayHeight))
 
-        // Convert back to output coordinates
+        // Convert back to original coordinates using separate scales
         onCropChange({
-          left: Math.round(newDisplayLeft / scale),
-          top: Math.round(newDisplayTop / scale),
+          left: Math.round(newDisplayLeft / scaleX),
+          top: Math.round(newDisplayTop / actualScaleY),
           width: cropWidth,
           height: cropHeight,
         })
@@ -238,12 +244,12 @@ export function CropOverlay({
           newHeight = previewHeight - newTop
         }
 
-        // Convert back to output coordinates
+        // Convert back to original coordinates using separate scales
         onCropChange({
-          left: Math.round(newLeft / scale),
-          top: Math.round(newTop / scale),
-          width: Math.round(newWidth / scale),
-          height: Math.round(newHeight / scale),
+          left: Math.round(newLeft / scaleX),
+          top: Math.round(newTop / actualScaleY),
+          width: Math.round(newWidth / scaleX),
+          height: Math.round(newHeight / actualScaleY),
         })
       }
     }
@@ -278,7 +284,8 @@ export function CropOverlay({
     displayHeight,
     cropWidth,
     cropHeight,
-    scale,
+    scaleX,
+    actualScaleY,
     onCropChange,
     lockedAspectRatio,
   ])
