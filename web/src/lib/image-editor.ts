@@ -382,7 +382,6 @@ export class ImageEditor {
     this.schedulePreviewUpdate()
   }
 
-
   /**
    * Notify that preview has loaded
    * Called by parent when preview image finishes loading

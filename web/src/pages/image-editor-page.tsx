@@ -96,9 +96,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     }
   }, [galleryKey, imageKey, loaderData.originalDimensions, previewMaxDimensions])
 
-  const originalAspectRatio =
-    loaderData.originalDimensions.width / loaderData.originalDimensions.height
-
   const updateParams = (updates: Partial<ImageEditorState>) => {
     transformRef.current?.updateParams(updates)
   }
