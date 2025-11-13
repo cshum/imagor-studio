@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, FileImage, Palette, RotateCw, Scissors } from 'lucide-react'
 
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
-import { CropResizeControl } from '@/components/image-editor/controls/crop-resize-control.tsx'
+import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
+import { DimensionControl } from '@/components/image-editor/controls/dimension-control.tsx'
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { Card } from '@/components/ui/card'
@@ -13,15 +14,9 @@ import type { ImageEditorState } from '@/lib/image-editor.ts'
 
 interface ImageEditorControlsProps {
   params: ImageEditorState
-  aspectLocked: boolean
-  originalAspectRatio: number | null
   openSections: EditorOpenSections
   onOpenSectionsChange: (sections: EditorOpenSections) => void
-  onUpdateParams: (
-    updates: Partial<ImageEditorState>,
-    options?: { respectAspectLock?: boolean },
-  ) => void
-  onToggleAspectLock: () => void
+  onUpdateParams: (updates: Partial<ImageEditorState>) => void
   onVisualCropToggle?: (enabled: boolean) => Promise<void>
   isVisualCropEnabled?: boolean
   outputWidth: number
@@ -31,11 +26,9 @@ interface ImageEditorControlsProps {
 
 export function ImageEditorControls({
   params,
-  aspectLocked,
   openSections,
   onOpenSectionsChange,
   onUpdateParams,
-  onToggleAspectLock,
   onVisualCropToggle,
   isVisualCropEnabled,
   outputWidth,
@@ -57,7 +50,7 @@ export function ImageEditorControls({
 
   return (
     <div className='space-y-4'>
-      {/* Crop & Resize */}
+      {/* Crop & Aspect */}
       <Card>
         <Collapsible
           open={openSections.crop}
@@ -66,16 +59,14 @@ export function ImageEditorControls({
           <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
             <div className='flex items-center gap-2'>
               <Scissors className='h-4 w-4' />
-              <span className='font-medium'>{t('imageEditor.controls.cropResize')}</span>
+              <span className='font-medium'>{t('imageEditor.controls.cropAspect')}</span>
             </div>
             <CollapsibleIcon isOpen={openSections.crop} />
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
-            <CropResizeControl
+            <CropAspectControl
               params={params}
-              aspectLocked={aspectLocked}
               onUpdateParams={onUpdateParams}
-              onToggleAspectLock={onToggleAspectLock}
               onVisualCropToggle={onVisualCropToggle}
               isVisualCropEnabled={isVisualCropEnabled}
               outputWidth={outputWidth}
@@ -105,7 +96,7 @@ export function ImageEditorControls({
         </Collapsible>
       </Card>
 
-      {/* Flip & Rotate */}
+      {/* Transform & Rotate */}
       <Card>
         <Collapsible
           open={openSections.transform}
@@ -120,6 +111,25 @@ export function ImageEditorControls({
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
             <TransformControl params={params} onUpdateParams={onUpdateParams} />
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+
+      {/* Dimensions & Resize */}
+      <Card>
+        <Collapsible
+          open={openSections.dimensions}
+          onOpenChange={(open) => handleSectionToggle('dimensions', open)}
+        >
+          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
+            <div className='flex items-center gap-2'>
+              <Scissors className='h-4 w-4' />
+              <span className='font-medium'>{t('imageEditor.controls.dimensionsResize')}</span>
+            </div>
+            <CollapsibleIcon isOpen={openSections.dimensions} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className='px-4 pb-4'>
+            <DimensionControl params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>

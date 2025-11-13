@@ -29,8 +29,6 @@ interface PreviewAreaProps {
   cropWidth?: number
   cropHeight?: number
   onCropChange?: (crop: { left: number; top: number; width: number; height: number }) => void
-  outputWidth?: number
-  outputHeight?: number
   cropAspectRatio?: number | null
 }
 
@@ -50,7 +48,6 @@ export function PreviewArea({
   cropWidth = 0,
   cropHeight = 0,
   onCropChange,
-  outputWidth,
   cropAspectRatio = null,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
@@ -69,13 +66,20 @@ export function PreviewArea({
     onLoad?.(width, height)
   }
 
-  // Calculate single uniform scale factor (preview / output)
-  // Since preview and output have same aspect ratio, we only need one scale value
-  const getScale = () => {
-    if (!imageDimensions || !outputWidth) {
-      return 1
+  // Calculate scale factors for crop overlay
+  // Crop coordinates are in original image space, but preview shows resized image
+  // When stretch is enabled, we need separate X and Y scales
+  const getScales = () => {
+    if (!imageDimensions) {
+      return { scaleX: 1, scaleY: 1 }
     }
-    return imageDimensions.width / outputWidth
+
+    // Calculate separate scales for X and Y
+    // This handles stretch mode where aspect ratio changes
+    const scaleX = imageDimensions.width / originalDimensions.width
+    const scaleY = imageDimensions.height / originalDimensions.height
+
+    return { scaleX, scaleY }
   }
 
   // Calculate and report preview area dimensions
@@ -104,7 +108,7 @@ export function PreviewArea({
 
   return (
     <div className='relative flex h-full flex-col'>
-      <LicenseBadge />
+      {!visualCropEnabled && <LicenseBadge />}
       {/* Preview Content */}
       <div
         ref={previewContainerRef}
@@ -146,19 +150,24 @@ export function PreviewArea({
               imageDimensions &&
               onCropChange &&
               cropWidth > 0 &&
-              cropHeight > 0 && (
-                <CropOverlay
-                  previewWidth={imageDimensions.width}
-                  previewHeight={imageDimensions.height}
-                  cropLeft={cropLeft}
-                  cropTop={cropTop}
-                  cropWidth={cropWidth}
-                  cropHeight={cropHeight}
-                  scale={getScale()}
-                  onCropChange={onCropChange}
-                  lockedAspectRatio={cropAspectRatio}
-                />
-              )}
+              cropHeight > 0 &&
+              (() => {
+                const { scaleX, scaleY } = getScales()
+                return (
+                  <CropOverlay
+                    previewWidth={imageDimensions.width}
+                    previewHeight={imageDimensions.height}
+                    cropLeft={cropLeft}
+                    cropTop={cropTop}
+                    cropWidth={cropWidth}
+                    cropHeight={cropHeight}
+                    scale={scaleX}
+                    scaleY={scaleY}
+                    onCropChange={onCropChange}
+                    lockedAspectRatio={cropAspectRatio}
+                  />
+                )
+              })()}
           </div>
         ) : (
           <div className='flex flex-col items-center gap-4 text-center'>

@@ -10,6 +10,7 @@ interface CropOverlayProps {
   cropWidth: number
   cropHeight: number
   scale: number
+  scaleY?: number // Optional separate Y scale for stretch mode
   onCropChange: (crop: { left: number; top: number; width: number; height: number }) => void
   lockedAspectRatio?: number | null
 }
@@ -24,14 +25,19 @@ export function CropOverlay({
   cropWidth,
   cropHeight,
   scale,
+  scaleY,
   onCropChange,
   lockedAspectRatio = null,
 }: CropOverlayProps) {
+  // Use separate scales for X and Y (for stretch mode support)
+  const scaleX = scale
+  const actualScaleY = scaleY ?? scale // Use scaleY if provided, otherwise use scale
+
   // Calculate display coordinates (scaled for preview)
-  const displayLeft = cropLeft * scale
-  const displayTop = cropTop * scale
-  const displayWidth = cropWidth * scale
-  const displayHeight = cropHeight * scale
+  const displayLeft = cropLeft * scaleX
+  const displayTop = cropTop * actualScaleY
+  const displayWidth = cropWidth * scaleX
+  const displayHeight = cropHeight * actualScaleY
   const overlayRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
@@ -101,10 +107,10 @@ export function CropOverlay({
         newDisplayLeft = Math.max(0, Math.min(newDisplayLeft, previewWidth - displayWidth))
         newDisplayTop = Math.max(0, Math.min(newDisplayTop, previewHeight - displayHeight))
 
-        // Convert back to output coordinates
+        // Convert back to original coordinates using separate scales
         onCropChange({
-          left: Math.round(newDisplayLeft / scale),
-          top: Math.round(newDisplayTop / scale),
+          left: Math.round(newDisplayLeft / scaleX),
+          top: Math.round(newDisplayTop / actualScaleY),
           width: cropWidth,
           height: cropHeight,
         })
@@ -238,12 +244,12 @@ export function CropOverlay({
           newHeight = previewHeight - newTop
         }
 
-        // Convert back to output coordinates
+        // Convert back to original coordinates using separate scales
         onCropChange({
-          left: Math.round(newLeft / scale),
-          top: Math.round(newTop / scale),
-          width: Math.round(newWidth / scale),
-          height: Math.round(newHeight / scale),
+          left: Math.round(newLeft / scaleX),
+          top: Math.round(newTop / actualScaleY),
+          width: Math.round(newWidth / scaleX),
+          height: Math.round(newHeight / actualScaleY),
         })
       }
     }
@@ -278,47 +284,39 @@ export function CropOverlay({
     displayHeight,
     cropWidth,
     cropHeight,
-    scale,
+    scaleX,
+    actualScaleY,
     onCropChange,
     lockedAspectRatio,
   ])
 
   return (
-    <>
-      {/* Darkened overlay outside crop area - UNDER license badge */}
-      <div
-        className='pointer-events-none absolute inset-0 z-40'
-        style={{
-          width: previewWidth,
-          height: previewHeight,
-        }}
-      >
-        <svg className='absolute inset-0 h-full w-full'>
-          <defs>
-            <mask id='crop-mask'>
-              <rect width='100%' height='100%' fill='white' />
-              <rect
-                x={displayLeft}
-                y={displayTop}
-                width={displayWidth}
-                height={displayHeight}
-                fill='black'
-              />
-            </mask>
-          </defs>
-          <rect width='100%' height='100%' fill='black' fillOpacity='0.5' mask='url(#crop-mask)' />
-        </svg>
-      </div>
+    <div
+      ref={overlayRef}
+      className='pointer-events-none absolute inset-0 z-20'
+      style={{
+        width: previewWidth,
+        height: previewHeight,
+      }}
+    >
+      {/* Darkened overlay outside crop area */}
+      <svg className='absolute inset-0 h-full w-full'>
+        <defs>
+          <mask id='crop-mask'>
+            <rect width='100%' height='100%' fill='white' />
+            <rect
+              x={displayLeft}
+              y={displayTop}
+              width={displayWidth}
+              height={displayHeight}
+              fill='black'
+            />
+          </mask>
+        </defs>
+        <rect width='100%' height='100%' fill='black' fillOpacity='0.5' mask='url(#crop-mask)' />
+      </svg>
 
-      {/* Crop box and handles - ABOVE license badge */}
-      <div
-        ref={overlayRef}
-        className='pointer-events-none absolute inset-0 z-[60]'
-        style={{
-          width: previewWidth,
-          height: previewHeight,
-        }}
-      >
+      {/* Crop box and handles */}
         {/* Crop box */}
         <div
           className={cn(
@@ -367,8 +365,7 @@ export function CropOverlay({
               <div className='h-3 w-3 rounded-full border-2 border-white bg-blue-500' />
             </div>
           ))}
-        </div>
       </div>
-    </>
+    </div>
   )
 }

@@ -449,6 +449,8 @@
       "failedToDownload": "Failed to download image"
     },
     "controls": {
+      "cropAspect": "Crop & Aspect",
+      "dimensionsResize": "Dimensions & Resize",
       "outputCompression": "Output & Compression",
       "colorEffects": "Color & Effects",
       "transformRotate": "Transform & Rotate",
@@ -481,7 +483,32 @@
       "width": "Width",
       "height": "Height",
       "auto": "Auto",
-      "aspectRatios": "Aspect Ratios"
+      "aspectRatios": "Aspect Ratios",
+      "resizeMode": "Resize Mode",
+      "modes": {
+        "fitIn": "Fit In",
+        "fill": "Fill",
+        "stretch": "Stretch",
+        "smart": "Smart"
+      },
+      "modeDescriptions": {
+        "fitIn": "Resize to fit within dimensions, maintaining aspect ratio",
+        "fill": "Resize and crop to fill dimensions exactly",
+        "stretch": "Resize to exact dimensions, ignoring aspect ratio",
+        "smart": "Smart crop to fill dimensions with content detection"
+      },
+      "alignment": "Alignment",
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "alignments": {
+        "left": "Left",
+        "center": "Center",
+        "right": "Right",
+        "top": "Top",
+        "middle": "Middle",
+        "bottom": "Bottom"
+      },
+      "originalRatio": "Original: {{ratio}}"
     },
     "resize": {
       "title": "Resize"

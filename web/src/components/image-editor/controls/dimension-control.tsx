@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link2, Link2Off } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,27 +12,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
-import { Toggle } from '@/components/ui/toggle'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
 
 interface DimensionControlProps {
   params: ImageEditorState
-  aspectLocked: boolean
-  originalAspectRatio: number | null
-  onUpdateParams: (
-    updates: Partial<ImageEditorState>,
-    options?: { respectAspectLock?: boolean },
-  ) => void
-  onToggleAspectLock: () => void
+  onUpdateParams: (updates: Partial<ImageEditorState>) => void
 }
 
-export function DimensionControl({
-  params,
-  aspectLocked,
-  originalAspectRatio,
-  onUpdateParams,
-  onToggleAspectLock,
-}: DimensionControlProps) {
+export function DimensionControl({ params, onUpdateParams }: DimensionControlProps) {
   const { t } = useTranslation()
   const [sizeScale, setSizeScale] = useState([1])
   const [baseDimensions, setBaseDimensions] = useState<{ width: number; height: number } | null>(
@@ -52,7 +38,7 @@ export function DimensionControl({
     const width = parseInt(value) || undefined
     // Reset size slider when manually changing dimensions
     setSizeScale([1])
-    onUpdateParams({ width }, { respectAspectLock: true })
+    onUpdateParams({ width })
 
     // Update base dimensions after the change
     if (width && params.height) {
@@ -65,7 +51,7 @@ export function DimensionControl({
     const height = parseInt(value) || undefined
     // Reset size slider when manually changing dimensions
     setSizeScale([1])
-    onUpdateParams({ height }, { respectAspectLock: true })
+    onUpdateParams({ height })
 
     // Update base dimensions after the change
     if (height && params.width) {
@@ -158,8 +144,8 @@ export function DimensionControl({
       {/* Dimensions */}
       <div className='space-y-3'>
         <Label className='text-sm font-medium'>{t('imageEditor.dimensions.title')}</Label>
-        <div className='flex items-center gap-2'>
-          <div className='flex-1'>
+        <div className='grid grid-cols-2 gap-3'>
+          <div>
             <Label htmlFor='width' className='text-muted-foreground text-xs'>
               {t('imageEditor.dimensions.width')}
             </Label>
@@ -176,19 +162,7 @@ export function DimensionControl({
             />
           </div>
 
-          <div className='flex items-center justify-center pt-5'>
-            <Toggle
-              pressed={aspectLocked}
-              onPressedChange={onToggleAspectLock}
-              size='sm'
-              aria-label='Lock aspect ratio'
-              className='h-8 w-8 p-0'
-            >
-              {aspectLocked ? <Link2 className='h-3 w-3' /> : <Link2Off className='h-3 w-3' />}
-            </Toggle>
-          </div>
-
-          <div className='flex-1'>
+          <div>
             <Label htmlFor='height' className='text-muted-foreground text-xs'>
               {t('imageEditor.dimensions.height')}
             </Label>
@@ -205,12 +179,6 @@ export function DimensionControl({
             />
           </div>
         </div>
-
-        {originalAspectRatio && (
-          <div className='text-muted-foreground text-xs'>
-            {t('imageEditor.dimensions.originalRatio', { ratio: originalAspectRatio.toFixed(2) })}
-          </div>
-        )}
       </div>
 
       {/* Resize Mode */}
