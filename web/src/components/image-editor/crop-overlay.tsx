@@ -291,41 +291,32 @@ export function CropOverlay({
   ])
 
   return (
-    <>
-      {/* Darkened overlay outside crop area - UNDER license badge */}
-      <div
-        className='pointer-events-none absolute inset-0 z-40'
-        style={{
-          width: previewWidth,
-          height: previewHeight,
-        }}
-      >
-        <svg className='absolute inset-0 h-full w-full'>
-          <defs>
-            <mask id='crop-mask'>
-              <rect width='100%' height='100%' fill='white' />
-              <rect
-                x={displayLeft}
-                y={displayTop}
-                width={displayWidth}
-                height={displayHeight}
-                fill='black'
-              />
-            </mask>
-          </defs>
-          <rect width='100%' height='100%' fill='black' fillOpacity='0.5' mask='url(#crop-mask)' />
-        </svg>
-      </div>
+    <div
+      ref={overlayRef}
+      className='pointer-events-none absolute inset-0 z-20'
+      style={{
+        width: previewWidth,
+        height: previewHeight,
+      }}
+    >
+      {/* Darkened overlay outside crop area */}
+      <svg className='absolute inset-0 h-full w-full'>
+        <defs>
+          <mask id='crop-mask'>
+            <rect width='100%' height='100%' fill='white' />
+            <rect
+              x={displayLeft}
+              y={displayTop}
+              width={displayWidth}
+              height={displayHeight}
+              fill='black'
+            />
+          </mask>
+        </defs>
+        <rect width='100%' height='100%' fill='black' fillOpacity='0.5' mask='url(#crop-mask)' />
+      </svg>
 
-      {/* Crop box and handles - ABOVE license badge */}
-      <div
-        ref={overlayRef}
-        className='pointer-events-none absolute inset-0 z-[60]'
-        style={{
-          width: previewWidth,
-          height: previewHeight,
-        }}
-      >
+      {/* Crop box and handles */}
         {/* Crop box */}
         <div
           className={cn(
@@ -374,8 +365,7 @@ export function CropOverlay({
               <div className='h-3 w-3 rounded-full border-2 border-white bg-blue-500' />
             </div>
           ))}
-        </div>
       </div>
-    </>
+    </div>
   )
 }

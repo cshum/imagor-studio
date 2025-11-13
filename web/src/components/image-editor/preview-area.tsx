@@ -108,7 +108,7 @@ export function PreviewArea({
 
   return (
     <div className='relative flex h-full flex-col'>
-      <LicenseBadge />
+      {!visualCropEnabled && <LicenseBadge />}
       {/* Preview Content */}
       <div
         ref={previewContainerRef}
