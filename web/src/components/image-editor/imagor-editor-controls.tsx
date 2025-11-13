@@ -14,7 +14,6 @@ import type { ImageEditorState } from '@/lib/image-editor.ts'
 
 interface ImageEditorControlsProps {
   params: ImageEditorState
-  originalAspectRatio: number | null
   openSections: EditorOpenSections
   onOpenSectionsChange: (sections: EditorOpenSections) => void
   onUpdateParams: (updates: Partial<ImageEditorState>) => void
@@ -130,13 +129,7 @@ export function ImageEditorControls({
             <CollapsibleIcon isOpen={openSections.dimensions} />
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
-            <DimensionControl
-              params={params}
-              aspectLocked={false}
-              originalAspectRatio={null}
-              onUpdateParams={onUpdateParams}
-              onToggleAspectLock={() => {}}
-            />
+            <DimensionControl params={params} onUpdateParams={onUpdateParams} />
           </CollapsibleContent>
         </Collapsible>
       </Card>

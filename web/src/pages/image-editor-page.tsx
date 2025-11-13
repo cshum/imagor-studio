@@ -269,7 +269,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                     <ImageEditorControls
                       key={resetCounter}
                       params={params}
-                      originalAspectRatio={originalAspectRatio}
                       openSections={editorOpenSections}
                       onOpenSectionsChange={handleOpenSectionsChange}
                       onUpdateParams={updateParams}
@@ -326,7 +325,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             <ImageEditorControls
               key={resetCounter}
               params={params}
-              originalAspectRatio={originalAspectRatio}
               openSections={editorOpenSections}
               onOpenSectionsChange={handleOpenSectionsChange}
               onUpdateParams={updateParams}
