@@ -129,22 +129,22 @@ export function CropAspectControl({
   return (
     <div className='space-y-4'>
       {/* Crop Button */}
-      <div className='flex items-center justify-between'>
+      <div className='space-y-2'>
         <Label className='text-sm font-medium'>{t('imageEditor.crop.cropTitle')}</Label>
         {onVisualCropToggle && (
           <Button
             variant='outline'
-            size='sm'
+            size='default'
             onClick={handleVisualCropToggle}
             disabled={isToggling}
-            className='h-8'
+            className='w-full'
           >
             {isToggling ? (
-              <LoaderCircle className='mr-1 h-4 w-4 animate-spin' />
+              <LoaderCircle className='mr-2 h-4 w-4 animate-spin' />
             ) : isVisualCropEnabled ? (
-              <Check className='mr-1 h-4 w-4' />
+              <Check className='mr-2 h-4 w-4' />
             ) : (
-              <Crop className='mr-1 h-4 w-4' />
+              <Crop className='mr-2 h-4 w-4' />
             )}
             {isVisualCropEnabled
               ? t('imageEditor.crop.applyCrop')
