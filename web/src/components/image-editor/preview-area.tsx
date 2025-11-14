@@ -73,7 +73,7 @@ export function PreviewArea({
     }
     onLoad?.(width, height)
   }
-  
+
   // Use ResizeObserver to track actual rendered image size
   // This ensures crop overlay follows the image when window resizes
   useEffect(() => {
@@ -122,7 +122,7 @@ export function PreviewArea({
       if (visualCropEnabled) {
         return
       }
-      
+
       if (previewContainerRef.current && onPreviewDimensionsChange) {
         const rect = previewContainerRef.current.getBoundingClientRect()
         // Account for padding (16px on each side = 32px total)

@@ -91,6 +91,15 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       },
     )
     transformRef.current = transform
+
+    // Restore all parameters when ImageEditor is recreated
+    // This preserves filters (hue, brightness, etc.) and crop values
+    // Skip width and height as they're already set in the constructor
+    const { width, height, ...restParams } = params
+    if (Object.keys(restParams).length > 0) {
+      transform.updateParams(restParams)
+    }
+
     return () => {
       transform.destroy()
     }
