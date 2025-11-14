@@ -58,6 +58,7 @@ export function PreviewArea({
     width: number
     height: number
   } | null>(null)
+  const lastReportedDimensionsRef = useRef<{ width: number; height: number } | null>(null)
 
   const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
 
@@ -129,10 +130,16 @@ export function PreviewArea({
         const maxWidth = Math.floor(rect.width - 32)
         const maxHeight = Math.floor(rect.height - 32)
 
-        onPreviewDimensionsChange({
-          width: maxWidth,
-          height: maxHeight,
-        })
+        // Only report if dimensions have actually changed
+        // This prevents unnecessary ImageEditor recreations when visualCropEnabled toggles
+        const lastReported = lastReportedDimensionsRef.current
+        if (!lastReported || lastReported.width !== maxWidth || lastReported.height !== maxHeight) {
+          lastReportedDimensionsRef.current = { width: maxWidth, height: maxHeight }
+          onPreviewDimensionsChange({
+            width: maxWidth,
+            height: maxHeight,
+          })
+        }
       }
     }
 
