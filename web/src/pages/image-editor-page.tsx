@@ -75,6 +75,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
   const transformRef = useRef<ImageEditor | undefined>(undefined)
   const prevPreviewMaxDimensionsRef = useRef<{ width: number; height: number } | null>(null)
+  const isInitialMountRef = useRef(true)
 
   useEffect(() => {
     const transform = new ImageEditor(
@@ -92,32 +93,34 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       },
     )
     transformRef.current = transform
-
-    // Only restore parameters when previewMaxDimensions actually changes
-    // This prevents double image loads when visual crop is toggled
+    
+    // Check if previewMaxDimensions actually changed
     const prevDims = prevPreviewMaxDimensionsRef.current
     const currentDims = previewMaxDimensions
-
+    
     const dimensionsChanged =
       (prevDims === null && currentDims !== null) ||
       (prevDims !== null && currentDims === null) ||
       (prevDims !== null &&
         currentDims !== null &&
         (prevDims.width !== currentDims.width || prevDims.height !== currentDims.height))
-
-    if (dimensionsChanged) {
-      // Restore all parameters when ImageEditor is recreated due to dimension changes
+    
+    // Restore parameters on initial mount OR when dimensions change
+    // This prevents double image loads while ensuring parameters persist
+    if (isInitialMountRef.current || dimensionsChanged) {
+      // Restore all parameters when ImageEditor is recreated
       // This preserves filters (hue, brightness, etc.) and crop values
       // Skip width and height as they're already set in the constructor
       const { width, height, ...restParams } = params
       if (Object.keys(restParams).length > 0) {
         transform.updateParams(restParams)
       }
-
-      // Update the ref for next comparison
+      
+      // Update refs
       prevPreviewMaxDimensionsRef.current = currentDims
+      isInitialMountRef.current = false
     }
-
+    
     return () => {
       transform.destroy()
     }
