@@ -53,6 +53,7 @@ export function PreviewArea({
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
   const previewContainerRef = useRef<HTMLDivElement>(null)
+  const previewImageRef = useRef<HTMLImageElement>(null)
   const [imageDimensions, setImageDimensions] = useState<{
     width: number
     height: number
@@ -62,9 +63,39 @@ export function PreviewArea({
 
   // Track image dimensions when loaded
   const handleImageLoad = (width: number, height: number) => {
-    setImageDimensions({ width, height })
+    // During visual crop mode, use the actual rendered size instead of natural size
+    // This ensures the crop overlay stays aligned even when filters are applied
+    if (visualCropEnabled && previewImageRef.current) {
+      const rect = previewImageRef.current.getBoundingClientRect()
+      setImageDimensions({ width: rect.width, height: rect.height })
+    } else {
+      setImageDimensions({ width, height })
+    }
     onLoad?.(width, height)
   }
+
+  // Use ResizeObserver to track actual rendered image size
+  // This ensures crop overlay follows the image when window resizes
+  useEffect(() => {
+    if (!visualCropEnabled || !previewImageRef.current) {
+      return
+    }
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        if (width > 0 && height > 0) {
+          setImageDimensions({ width, height })
+        }
+      }
+    })
+
+    resizeObserver.observe(previewImageRef.current)
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [visualCropEnabled])
 
   // Calculate scale factors for crop overlay
   // Crop coordinates are in original image space, but preview shows resized image
@@ -85,6 +116,13 @@ export function PreviewArea({
   // Calculate and report preview area dimensions
   useEffect(() => {
     const calculatePreviewDimensions = () => {
+      // Skip dimension updates during visual crop mode to keep preview stable
+      // This prevents the preview from being regenerated when window resizes,
+      // which would cause the crop overlay to become misaligned
+      if (visualCropEnabled) {
+        return
+      }
+
       if (previewContainerRef.current && onPreviewDimensionsChange) {
         const rect = previewContainerRef.current.getBoundingClientRect()
         // Account for padding (16px on each side = 32px total)
@@ -104,7 +142,7 @@ export function PreviewArea({
     // Recalculate on window resize
     window.addEventListener('resize', calculatePreviewDimensions)
     return () => window.removeEventListener('resize', calculatePreviewDimensions)
-  }, [isMobile, onPreviewDimensionsChange])
+  }, [isMobile, onPreviewDimensionsChange, visualCropEnabled])
 
   return (
     <div className='relative flex h-full flex-col'>
@@ -137,6 +175,7 @@ export function PreviewArea({
         ) : previewUrl ? (
           <div className='relative'>
             <PreloadImage
+              ref={previewImageRef}
               src={getFullImageUrl(previewUrl)}
               alt={`Preview of ${imagePath}`}
               onLoad={handleImageLoad}
