@@ -138,6 +138,9 @@ export class ImageEditor {
       height = this.config.originalDimensions.height
     }
 
+    // Calculate scale factor for blur/sharpen adjustments
+    let scaleFactor = 1
+    
     // Apply preview dimension constraints when generating preview URLs
     if (forPreview && this.config.previewMaxDimensions) {
       const maxWidth = this.config.previewMaxDimensions.width
@@ -156,6 +159,9 @@ export class ImageEditor {
         // Apply proportional scaling
         width = Math.round(targetWidth * scale)
         height = Math.round(targetHeight * scale)
+        
+        // Store scale factor for blur/sharpen adjustments
+        scaleFactor = scale
       }
     }
 
@@ -195,11 +201,14 @@ export class ImageEditor {
     }
 
     // Blur and sharpen don't affect dimensions, so apply them even during crop mode
+    // Scale blur/sharpen values for preview to match visual appearance with actual output
     if (state.blur !== undefined && state.blur !== 0) {
-      filters.push({ name: 'blur', args: state.blur.toString() })
+      const blurValue = forPreview ? state.blur * scaleFactor : state.blur
+      filters.push({ name: 'blur', args: blurValue.toString() })
     }
     if (state.sharpen !== undefined && state.sharpen !== 0) {
-      filters.push({ name: 'sharpen', args: state.sharpen.toString() })
+      const sharpenValue = forPreview ? state.sharpen * scaleFactor : state.sharpen
+      filters.push({ name: 'sharpen', args: sharpenValue.toString() })
     }
 
     // Skip rotation in preview when visual cropping is enabled
