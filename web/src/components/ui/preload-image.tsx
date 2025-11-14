@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { forwardRef, useEffect, useRef, useState } from 'react'
 
 import { cn } from '@/lib/utils'
 
@@ -16,7 +16,8 @@ interface PreloadImageProps {
   onError?: () => void
 }
 
-export function PreloadImage({ src, alt, className, onLoad, onError }: PreloadImageProps) {
+export const PreloadImage = forwardRef<HTMLImageElement, PreloadImageProps>(
+  ({ src, alt, className, onLoad, onError }, forwardedRef) => {
   const [imageStack, setImageStack] = useState<ImageStackItem[]>([])
 
   // Handle src changes - add new image to stack
@@ -112,6 +113,7 @@ export function PreloadImage({ src, alt, className, onLoad, onError }: PreloadIm
       {imageStack.map((image, index) => (
         <img
           key={image.id}
+          ref={index === visibleIndex ? forwardedRef : null}
           src={image.src}
           alt={alt}
           className={cn(
@@ -126,4 +128,7 @@ export function PreloadImage({ src, alt, className, onLoad, onError }: PreloadIm
       ))}
     </>
   )
-}
+  },
+)
+
+PreloadImage.displayName = 'PreloadImage'
