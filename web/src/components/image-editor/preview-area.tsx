@@ -85,6 +85,13 @@ export function PreviewArea({
   // Calculate and report preview area dimensions
   useEffect(() => {
     const calculatePreviewDimensions = () => {
+      // Skip dimension updates during visual crop mode to keep preview stable
+      // This prevents the preview from being regenerated when window resizes,
+      // which would cause the crop overlay to become misaligned
+      if (visualCropEnabled) {
+        return
+      }
+      
       if (previewContainerRef.current && onPreviewDimensionsChange) {
         const rect = previewContainerRef.current.getBoundingClientRect()
         // Account for padding (16px on each side = 32px total)
@@ -104,7 +111,7 @@ export function PreviewArea({
     // Recalculate on window resize
     window.addEventListener('resize', calculatePreviewDimensions)
     return () => window.removeEventListener('resize', calculatePreviewDimensions)
-  }, [isMobile, onPreviewDimensionsChange])
+  }, [isMobile, onPreviewDimensionsChange, visualCropEnabled])
 
   return (
     <div className='relative flex h-full flex-col'>
