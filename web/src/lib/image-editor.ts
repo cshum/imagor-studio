@@ -105,7 +105,6 @@ export class ImageEditor {
     )
   }
 
-
   /**
    * Convert state to GraphQL input format
    */
@@ -140,7 +139,7 @@ export class ImageEditor {
 
     // Calculate scale factor for blur/sharpen adjustments
     let scaleFactor = 1
-    
+
     // Apply preview dimension constraints when generating preview URLs
     if (forPreview && this.config.previewMaxDimensions) {
       const maxWidth = this.config.previewMaxDimensions.width
@@ -159,7 +158,7 @@ export class ImageEditor {
         // Apply proportional scaling
         width = Math.round(targetWidth * scale)
         height = Math.round(targetHeight * scale)
-        
+
         // Store scale factor for blur/sharpen adjustments
         scaleFactor = scale
       }
@@ -203,11 +202,13 @@ export class ImageEditor {
     // Blur and sharpen don't affect dimensions, so apply them even during crop mode
     // Scale blur/sharpen values for preview to match visual appearance with actual output
     if (state.blur !== undefined && state.blur !== 0) {
-      const blurValue = forPreview ? state.blur * scaleFactor : state.blur
+      const blurValue = forPreview ? Math.round(state.blur * scaleFactor * 100) / 100 : state.blur
       filters.push({ name: 'blur', args: blurValue.toString() })
     }
     if (state.sharpen !== undefined && state.sharpen !== 0) {
-      const sharpenValue = forPreview ? state.sharpen * scaleFactor : state.sharpen
+      const sharpenValue = forPreview
+        ? Math.round(state.sharpen * scaleFactor * 100) / 100
+        : state.sharpen
       filters.push({ name: 'sharpen', args: sharpenValue.toString() })
     }
 
