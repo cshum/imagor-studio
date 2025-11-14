@@ -75,6 +75,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
   const transformRef = useRef<ImageEditor | undefined>(undefined)
   const lastEditorStateRef = useRef<ImageEditorState | null>(null)
+  const isRestoringRef = useRef(false)
 
   useEffect(() => {
     const transform = new ImageEditor(
@@ -92,20 +93,19 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       },
     )
 
-    // Restore state from previous ImageEditor instance (if exists)
-    // This preserves crop and filter parameters when ImageEditor is recreated
-    if (lastEditorStateRef.current) {
-      const { width, height, ...restParams } = lastEditorStateRef.current
-      if (Object.keys(restParams).length > 0) {
-        transform.updateParams(restParams)
-      }
+    // Only restore state if we have a saved state AND we're not already in the middle of restoring
+    // This prevents unnecessary updateParams calls that would trigger preview regeneration
+    // We restore ALL parameters including width/height to preserve user's resize slider settings
+    if (lastEditorStateRef.current && !isRestoringRef.current) {
+      isRestoringRef.current = true
+      transform.updateParams(lastEditorStateRef.current)
+      isRestoringRef.current = false
     }
 
     transformRef.current = transform
 
     return () => {
       // Save current state before destroying
-      // This ensures we can restore it if ImageEditor is recreated
       lastEditorStateRef.current = transform.getState()
       transform.destroy()
     }
