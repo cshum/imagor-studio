@@ -74,6 +74,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
 
   const transformRef = useRef<ImageEditor | undefined>(undefined)
+  const prevPreviewMaxDimensionsRef = useRef<{ width: number; height: number } | null>(null)
 
   useEffect(() => {
     const transform = new ImageEditor(
@@ -92,12 +93,29 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     )
     transformRef.current = transform
 
-    // Restore all parameters when ImageEditor is recreated
-    // This preserves filters (hue, brightness, etc.) and crop values
-    // Skip width and height as they're already set in the constructor
-    const { width, height, ...restParams } = params
-    if (Object.keys(restParams).length > 0) {
-      transform.updateParams(restParams)
+    // Only restore parameters when previewMaxDimensions actually changes
+    // This prevents double image loads when visual crop is toggled
+    const prevDims = prevPreviewMaxDimensionsRef.current
+    const currentDims = previewMaxDimensions
+
+    const dimensionsChanged =
+      (prevDims === null && currentDims !== null) ||
+      (prevDims !== null && currentDims === null) ||
+      (prevDims !== null &&
+        currentDims !== null &&
+        (prevDims.width !== currentDims.width || prevDims.height !== currentDims.height))
+
+    if (dimensionsChanged) {
+      // Restore all parameters when ImageEditor is recreated due to dimension changes
+      // This preserves filters (hue, brightness, etc.) and crop values
+      // Skip width and height as they're already set in the constructor
+      const { width, height, ...restParams } = params
+      if (Object.keys(restParams).length > 0) {
+        transform.updateParams(restParams)
+      }
+
+      // Update the ref for next comparison
+      prevPreviewMaxDimensionsRef.current = currentDims
     }
 
     return () => {
