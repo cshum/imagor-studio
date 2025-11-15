@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
@@ -16,7 +16,7 @@ import {
   EditorOpenSectionsStorage,
   type EditorOpenSections,
 } from '@/lib/editor-open-sections-storage'
-import { ImageEditor, type ImageEditorState } from '@/lib/image-editor.ts'
+import { type ImageEditorState } from '@/lib/image-editor.ts'
 import { cn, debounce } from '@/lib/utils.ts'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 import { useAuth } from '@/stores/auth-store'
@@ -73,17 +73,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [visualCropEnabled, setVisualCropEnabled] = useState(false)
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
 
-  // Get ImageEditor from loader
-  const transformRef = useRef<ImageEditor>(loaderData.imageEditor)
-
   // Set up callbacks and cleanup
   // Re-run when imageEditor changes (when navigating to different image)
   useEffect(() => {
-    const transform = loaderData.imageEditor
-    transformRef.current = transform
+    const editor = loaderData.imageEditor
 
     // Set callbacks that depend on component state
-    transform.setCallbacks({
+    editor.setCallbacks({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
       onStateChange: setParams,
@@ -91,21 +87,21 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     })
 
     return () => {
-      transform.destroy()
+      editor.destroy()
     }
   }, [loaderData.imageEditor])
 
   // Update preview dimensions dynamically when they change
   useEffect(() => {
-    transformRef.current.updatePreviewMaxDimensions(previewMaxDimensions ?? undefined)
-  }, [previewMaxDimensions])
+    loaderData.imageEditor.updatePreviewMaxDimensions(previewMaxDimensions ?? undefined)
+  }, [loaderData.imageEditor, previewMaxDimensions])
 
   const updateParams = (updates: Partial<ImageEditorState>) => {
-    transformRef.current?.updateParams(updates)
+    loaderData.imageEditor.updateParams(updates)
   }
 
   const resetParams = () => {
-    transformRef.current?.resetParams()
+    loaderData.imageEditor.resetParams()
 
     // Reset crop aspect ratio to free-form
     setCropAspectRatio(null)
@@ -114,16 +110,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }
 
   const getCopyUrl = async () => {
-    return transformRef.current?.getCopyUrl() ?? ''
+    return await loaderData.imageEditor.getCopyUrl()
   }
 
   const handleDownload = async () => {
-    return (
-      transformRef.current?.handleDownload() ?? {
-        success: false,
-        error: 'Transform not initialized',
-      }
-    )
+    return await loaderData.imageEditor.handleDownload()
   }
 
   const handleBack = () => {
@@ -157,7 +148,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const handleVisualCropToggle = async (enabled: boolean) => {
     // Update ImageEditor to control crop filter in preview
     // This will wait for the new preview to load before resolving
-    await transformRef.current?.setVisualCropEnabled(enabled)
+    await loaderData.imageEditor.setVisualCropEnabled(enabled)
 
     // Only update state after preview has loaded
     setVisualCropEnabled(enabled)
@@ -178,7 +169,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const handlePreviewLoad = () => {
     setIsLoading(false)
     // Notify ImageEditor that preview has loaded
-    transformRef.current?.notifyPreviewLoaded()
+    loaderData.imageEditor.notifyPreviewLoaded()
   }
 
   const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {
