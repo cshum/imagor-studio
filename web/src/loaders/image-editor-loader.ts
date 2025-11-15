@@ -79,7 +79,6 @@ export const imageEditorLoader = async ({
   clearPosition(galleryKey, imageKey)
 
   // Create ImageEditor instance
-  // Callbacks will be set up in the component
   const imageEditor = new ImageEditor({
     galleryKey,
     imageKey,
