@@ -74,16 +74,14 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
 
   const transformRef = useRef<ImageEditor | undefined>(undefined)
-  const lastEditorStateRef = useRef<ImageEditorState | null>(null)
-  const isRestoringRef = useRef(false)
 
+  // Create ImageEditor once on mount
   useEffect(() => {
     const transform = new ImageEditor(
       {
         galleryKey,
         imageKey,
         originalDimensions: loaderData.originalDimensions,
-        previewMaxDimensions: previewMaxDimensions ?? undefined,
       },
       {
         onPreviewUpdate: setPreviewUrl,
@@ -93,23 +91,17 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       },
     )
 
-    // Only restore state if we have a saved state AND we're not already in the middle of restoring
-    // This prevents unnecessary updateParams calls that would trigger preview regeneration
-    // We restore ALL parameters including width/height to preserve user's resize slider settings
-    if (lastEditorStateRef.current && !isRestoringRef.current) {
-      isRestoringRef.current = true
-      transform.updateParams(lastEditorStateRef.current)
-      isRestoringRef.current = false
-    }
-
     transformRef.current = transform
 
     return () => {
-      // Save current state before destroying
-      lastEditorStateRef.current = transform.getState()
       transform.destroy()
     }
-  }, [galleryKey, imageKey, loaderData.originalDimensions, previewMaxDimensions])
+  }, [galleryKey, imageKey, loaderData.originalDimensions])
+
+  // Update preview dimensions dynamically when they change
+  useEffect(() => {
+    transformRef.current?.updatePreviewMaxDimensions(previewMaxDimensions ?? undefined)
+  }, [previewMaxDimensions])
 
   const updateParams = (updates: Partial<ImageEditorState>) => {
     transformRef.current?.updateParams(updates)

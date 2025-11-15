@@ -453,6 +453,26 @@ export class ImageEditor {
   }
 
   /**
+   * Update preview max dimensions without recreating the editor
+   * This allows dynamic updates when the preview area resizes
+   */
+  updatePreviewMaxDimensions(dimensions: { width: number; height: number } | undefined): void {
+    // Only update if dimensions actually changed
+    const current = this.config.previewMaxDimensions
+    const hasChanged =
+      !current !== !dimensions ||
+      (current &&
+        dimensions &&
+        (current.width !== dimensions.width || current.height !== dimensions.height))
+
+    if (hasChanged) {
+      this.config.previewMaxDimensions = dimensions
+      // Regenerate preview with new constraints
+      this.schedulePreviewUpdate()
+    }
+  }
+
+  /**
    * Clean up resources
    */
   destroy(): void {
