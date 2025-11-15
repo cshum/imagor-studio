@@ -56,7 +56,7 @@ export interface ImageEditorConfig {
 export interface ImageEditorCallbacks {
   onPreviewUpdate?: (url: string) => void
   onError?: (error: Error) => void
-  onStateChange?: (state: ImageEditorState) => void
+  onStateChange?: (state: ImageEditorState, fromHash?: boolean) => void
   onLoadingChange?: (isLoading: boolean) => void
 }
 
@@ -319,10 +319,12 @@ export class ImageEditor {
 
   /**
    * Update transformation parameters
+   * @param updates - Partial state to update
+   * @param fromHash - If true, this update is from hash restoration (prevents loop)
    */
-  updateParams(updates: Partial<ImageEditorState>): void {
+  updateParams(updates: Partial<ImageEditorState>, fromHash = false): void {
     this.state = { ...this.state, ...updates }
-    this.callbacks.onStateChange?.(this.getState())
+    this.callbacks.onStateChange?.(this.getState(), fromHash)
 
     // Skip preview reload if only crop params changed during visual crop
     // (crop filter is skipped in visual mode, so preview URL won't change)

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
@@ -16,6 +16,12 @@ import {
   EditorOpenSectionsStorage,
   type EditorOpenSections,
 } from '@/lib/editor-open-sections-storage'
+import {
+  deserializeStateFromHash,
+  getHashFromLocation,
+  serializeStateToHash,
+  updateLocationHash,
+} from '@/lib/editor-state-hash'
 import { type ImageEditorState } from '@/lib/image-editor.ts'
 import { cn, debounce } from '@/lib/utils.ts'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
@@ -74,6 +80,16 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [visualCropEnabled, setVisualCropEnabled] = useState(false)
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
 
+  // Debounced hash update function
+  const debouncedUpdateHash = useMemo(
+    () =>
+      debounce((state: ImageEditorState) => {
+        const hash = serializeStateToHash(state)
+        updateLocationHash(hash)
+      }, 500),
+    [],
+  )
+
   // Set up callbacks and cleanup
   // Re-run when imageEditor changes (when navigating to different image)
   useEffect(() => {
@@ -81,12 +97,32 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     imageEditor.setCallbacks({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
-      onStateChange: setParams,
+      onStateChange: (state, fromHash) => {
+        setParams(state)
+        // Only update hash if change is NOT from hash restoration (prevents loop)
+        if (!fromHash) {
+          debouncedUpdateHash(state)
+        }
+      },
       onLoadingChange: setIsLoading,
     })
 
     return () => {
       imageEditor.destroy()
+    }
+  }, [imageEditor, debouncedUpdateHash])
+
+  // Restore state from hash once on mount (when imageEditor changes)
+  // Since we use replaceState (not pushState), hash changes don't add to history
+  // so we don't need hashchange listener - just read once, write always
+  useEffect(() => {
+    const hash = getHashFromLocation()
+    if (hash) {
+      const hashState = deserializeStateFromHash(hash)
+      if (hashState) {
+        // Restore state from hash with fromHash=true to prevent loop
+        imageEditor.updateParams(hashState, true)
+      }
     }
   }, [imageEditor])
 
