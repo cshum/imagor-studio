@@ -20,7 +20,7 @@ export interface ImageEditorLoaderData {
   }
   galleryKey: string
   imageKey: string
-  editorOpenSections: EditorOpenSections
+  initialEditorOpenSections: EditorOpenSections
   breadcrumb: BreadcrumbItem
   imageEditor: ImageEditor
 }
@@ -92,7 +92,7 @@ export const imageEditorLoader = async ({
     originalDimensions,
     galleryKey,
     imageKey,
-    editorOpenSections,
+    initialEditorOpenSections: editorOpenSections,
     breadcrumb: { label: 'Imagor Studio' },
     imageEditor,
   }

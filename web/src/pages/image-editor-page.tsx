@@ -28,6 +28,8 @@ interface ImageEditorPageProps {
 }
 
 export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
+  const { imageEditor, originalDimensions, initialEditorOpenSections, imageElement } = loaderData
+
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { authState } = useAuth()
@@ -35,9 +37,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
   const [copyUrl, setCopyUrl] = useState('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [editorOpenSections, setEditorOpenSections] = useState<EditorOpenSections>(
-    loaderData.editorOpenSections,
-  )
+  const [editorOpenSections, setEditorOpenSections] =
+    useState<EditorOpenSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
 
   // Storage service for editor open sections
@@ -60,8 +61,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
   // Image transform state
   const [params, setParams] = useState<ImageEditorState>(() => ({
-    width: loaderData.originalDimensions.width,
-    height: loaderData.originalDimensions.height,
+    width: originalDimensions.width,
+    height: originalDimensions.height,
   }))
   const [previewUrl, setPreviewUrl] = useState<string>()
   const [error, setError] = useState<Error | null>(null)
@@ -76,10 +77,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   // Set up callbacks and cleanup
   // Re-run when imageEditor changes (when navigating to different image)
   useEffect(() => {
-    const editor = loaderData.imageEditor
-
     // Set callbacks that depend on component state
-    editor.setCallbacks({
+    imageEditor.setCallbacks({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
       onStateChange: setParams,
@@ -87,21 +86,21 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     })
 
     return () => {
-      editor.destroy()
+      imageEditor.destroy()
     }
-  }, [loaderData.imageEditor])
+  }, [imageEditor])
 
   // Update preview dimensions dynamically when they change
   useEffect(() => {
-    loaderData.imageEditor.updatePreviewMaxDimensions(previewMaxDimensions ?? undefined)
-  }, [loaderData.imageEditor, previewMaxDimensions])
+    imageEditor.updatePreviewMaxDimensions(previewMaxDimensions ?? undefined)
+  }, [imageEditor, previewMaxDimensions])
 
   const updateParams = (updates: Partial<ImageEditorState>) => {
-    loaderData.imageEditor.updateParams(updates)
+    imageEditor.updateParams(updates)
   }
 
   const resetParams = () => {
-    loaderData.imageEditor.resetParams()
+    imageEditor.resetParams()
 
     // Reset crop aspect ratio to free-form
     setCropAspectRatio(null)
@@ -110,11 +109,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }
 
   const getCopyUrl = async () => {
-    return await loaderData.imageEditor.getCopyUrl()
+    return await imageEditor.getCopyUrl()
   }
 
   const handleDownload = async () => {
-    return await loaderData.imageEditor.handleDownload()
+    return await imageEditor.handleDownload()
   }
 
   const handleBack = () => {
@@ -148,7 +147,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const handleVisualCropToggle = async (enabled: boolean) => {
     // Update ImageEditor to control crop filter in preview
     // This will wait for the new preview to load before resolving
-    await loaderData.imageEditor.setVisualCropEnabled(enabled)
+    await imageEditor.setVisualCropEnabled(enabled)
 
     // Only update state after preview has loaded
     setVisualCropEnabled(enabled)
@@ -160,8 +159,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       updateParams({
         cropLeft: 0,
         cropTop: 0,
-        cropWidth: loaderData.originalDimensions.width,
-        cropHeight: loaderData.originalDimensions.height,
+        cropWidth: originalDimensions.width,
+        cropHeight: originalDimensions.height,
       })
     }
   }
@@ -169,7 +168,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const handlePreviewLoad = () => {
     setIsLoading(false)
     // Notify ImageEditor that preview has loaded
-    loaderData.imageEditor.notifyPreviewLoaded()
+    imageEditor.notifyPreviewLoaded()
   }
 
   const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {
@@ -266,8 +265,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                       onUpdateParams={updateParams}
                       onVisualCropToggle={handleVisualCropToggle}
                       isVisualCropEnabled={visualCropEnabled}
-                      outputWidth={params.width || loaderData.originalDimensions.width}
-                      outputHeight={params.height || loaderData.originalDimensions.height}
+                      outputWidth={params.width || originalDimensions.width}
+                      outputHeight={params.height || originalDimensions.height}
                       onCropAspectRatioChange={setCropAspectRatio}
                     />
                   </div>
@@ -279,11 +278,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
         {/* Preview Content */}
         <PreviewArea
-          previewUrl={previewUrl || loaderData.imageElement.src}
+          previewUrl={previewUrl || imageElement.src}
           error={error}
           galleryKey={galleryKey}
           imageKey={imageKey}
-          originalDimensions={loaderData.originalDimensions}
+          originalDimensions={originalDimensions}
           onLoad={handlePreviewLoad}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}
@@ -322,8 +321,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               onUpdateParams={updateParams}
               onVisualCropToggle={handleVisualCropToggle}
               isVisualCropEnabled={visualCropEnabled}
-              outputWidth={params.width || loaderData.originalDimensions.width}
-              outputHeight={params.height || loaderData.originalDimensions.height}
+              outputWidth={params.width || originalDimensions.width}
+              outputHeight={params.height || originalDimensions.height}
               onCropAspectRatioChange={setCropAspectRatio}
             />
           </div>
