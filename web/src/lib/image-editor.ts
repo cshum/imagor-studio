@@ -74,9 +74,9 @@ export class ImageEditor {
   private visualCropEnabled = false
   private previewLoadResolvers: Array<() => void> = []
 
-  constructor(config: ImageEditorConfig, callbacks: ImageEditorCallbacks = {}) {
+  constructor(config: ImageEditorConfig) {
     this.config = config
-    this.callbacks = callbacks
+    this.callbacks = {}
 
     // Initialize state with original dimensions and fit-in mode
     this.state = {
@@ -84,6 +84,14 @@ export class ImageEditor {
       height: config.originalDimensions.height,
       fitIn: true,
     }
+  }
+
+  /**
+   * Set callbacks for preview updates, errors, state changes, and loading states.
+   * Required to enable editor functionality.
+   */
+  setCallbacks(callbacks: ImageEditorCallbacks): void {
+    this.callbacks = callbacks
   }
 
   /**
@@ -449,6 +457,26 @@ export class ImageEditor {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to download image',
       }
+    }
+  }
+
+  /**
+   * Update preview max dimensions without recreating the editor
+   * This allows dynamic updates when the preview area resizes
+   */
+  updatePreviewMaxDimensions(dimensions: { width: number; height: number } | undefined): void {
+    // Only update if dimensions actually changed
+    const current = this.config.previewMaxDimensions
+    const hasChanged =
+      !current !== !dimensions ||
+      (current &&
+        dimensions &&
+        (current.width !== dimensions.width || current.height !== dimensions.height))
+
+    if (hasChanged) {
+      this.config.previewMaxDimensions = dimensions
+      // Regenerate preview with new constraints
+      this.schedulePreviewUpdate()
     }
   }
 
