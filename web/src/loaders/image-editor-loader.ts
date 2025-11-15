@@ -6,6 +6,7 @@ import {
   type EditorOpenSections,
 } from '@/lib/editor-open-sections-storage'
 import { fetchImageMetadata } from '@/lib/exif-utils'
+import { ImageEditor } from '@/lib/image-editor'
 import { preloadImage } from '@/lib/preload-image'
 import { getAuth } from '@/stores/auth-store'
 import { clearPosition } from '@/stores/image-position-store.ts'
@@ -21,6 +22,7 @@ export interface ImageEditorLoaderData {
   imageKey: string
   editorOpenSections: EditorOpenSections
   breadcrumb: BreadcrumbItem
+  imageEditor: ImageEditor
 }
 
 /**
@@ -76,6 +78,14 @@ export const imageEditorLoader = async ({
   // clear image position for better transition
   clearPosition(galleryKey, imageKey)
 
+  // Create ImageEditor instance
+  // Callbacks will be set up in the component
+  const imageEditor = new ImageEditor({
+    galleryKey,
+    imageKey,
+    originalDimensions,
+  })
+
   return {
     imageElement,
     fullSizeSrc,
@@ -84,5 +94,6 @@ export const imageEditorLoader = async ({
     imageKey,
     editorOpenSections,
     breadcrumb: { label: 'Imagor Studio' },
+    imageEditor,
   }
 }

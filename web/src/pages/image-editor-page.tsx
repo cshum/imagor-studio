@@ -73,34 +73,31 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [visualCropEnabled, setVisualCropEnabled] = useState(false)
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
 
-  const transformRef = useRef<ImageEditor | undefined>(undefined)
+  // Get ImageEditor from loader
+  const transformRef = useRef<ImageEditor>(loaderData.imageEditor)
 
-  // Create ImageEditor once on mount
+  // Set up callbacks and cleanup
+  // Re-run when imageEditor changes (when navigating to different image)
   useEffect(() => {
-    const transform = new ImageEditor(
-      {
-        galleryKey,
-        imageKey,
-        originalDimensions: loaderData.originalDimensions,
-      },
-      {
-        onPreviewUpdate: setPreviewUrl,
-        onError: setError,
-        onStateChange: setParams,
-        onLoadingChange: setIsLoading,
-      },
-    )
-
+    const transform = loaderData.imageEditor
     transformRef.current = transform
+
+    // Set callbacks that depend on component state
+    transform.setCallbacks({
+      onPreviewUpdate: setPreviewUrl,
+      onError: setError,
+      onStateChange: setParams,
+      onLoadingChange: setIsLoading,
+    })
 
     return () => {
       transform.destroy()
     }
-  }, [galleryKey, imageKey, loaderData.originalDimensions])
+  }, [loaderData.imageEditor])
 
   // Update preview dimensions dynamically when they change
   useEffect(() => {
-    transformRef.current?.updatePreviewMaxDimensions(previewMaxDimensions ?? undefined)
+    transformRef.current.updatePreviewMaxDimensions(previewMaxDimensions ?? undefined)
   }, [previewMaxDimensions])
 
   const updateParams = (updates: Partial<ImageEditorState>) => {
