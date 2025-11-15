@@ -38,6 +38,9 @@ export interface ImageEditorState {
   cropTop?: number
   cropWidth?: number
   cropHeight?: number
+
+  // Visual crop mode (UI state that affects preview generation)
+  visualCropEnabled?: boolean
 }
 
 export interface ImageEditorConfig {
@@ -56,7 +59,7 @@ export interface ImageEditorConfig {
 export interface ImageEditorCallbacks {
   onPreviewUpdate?: (url: string) => void
   onError?: (error: Error) => void
-  onStateChange?: (state: ImageEditorState, fromHash?: boolean) => void
+  onStateChange?: (state: ImageEditorState, fromHash?: boolean, onlyCropChanged?: boolean) => void
   onLoadingChange?: (isLoading: boolean) => void
 }
 
@@ -324,9 +327,13 @@ export class ImageEditor {
    */
   updateParams(updates: Partial<ImageEditorState>, fromHash = false): void {
     this.state = { ...this.state, ...updates }
-    this.callbacks.onStateChange?.(this.getState(), fromHash)
 
-    // Skip preview reload if only crop params changed during visual crop
+    // Sync visualCropEnabled from state to internal flag
+    if (updates.visualCropEnabled !== undefined) {
+      this.visualCropEnabled = updates.visualCropEnabled
+    }
+
+    // Check if only crop params changed during visual crop
     // (crop filter is skipped in visual mode, so preview URL won't change)
     const onlyCropParamsChanged =
       this.visualCropEnabled &&
@@ -335,6 +342,9 @@ export class ImageEditor {
         (key) =>
           key === 'cropLeft' || key === 'cropTop' || key === 'cropWidth' || key === 'cropHeight',
       )
+
+    // Pass onlyCropParamsChanged flag to callback so page can skip hash update
+    this.callbacks.onStateChange?.(this.getState(), fromHash, onlyCropParamsChanged)
 
     if (!onlyCropParamsChanged) {
       this.schedulePreviewUpdate()
@@ -398,11 +408,17 @@ export class ImageEditor {
    */
   async setVisualCropEnabled(enabled: boolean): Promise<void> {
     if (this.visualCropEnabled !== enabled) {
+      // Update internal flag first (affects preview URL generation)
       this.visualCropEnabled = enabled
-      // Regenerate preview with new crop filter state
+      // Trigger preview generation with new crop mode
       this.schedulePreviewUpdate()
       // Wait for the new preview to load
       await this.waitForPreviewLoad()
+      // Only now update the state (triggers UI update and hash)
+      this.state = { ...this.state, visualCropEnabled: enabled }
+      // Pass true for onlyCropChanged to prevent additional preview generation
+      // (we've already generated the preview above)
+      this.callbacks.onStateChange?.(this.getState(), false, true)
     }
   }
 

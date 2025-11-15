@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
@@ -77,8 +77,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     height: number
   } | null>(null)
   const [resetCounter, setResetCounter] = useState(0)
-  const [visualCropEnabled, setVisualCropEnabled] = useState(false)
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
+
+  // Derive visualCropEnabled from params state (single source of truth)
+  const visualCropEnabled = params.visualCropEnabled ?? false
 
   // Debounced hash update function
   const debouncedUpdateHash = useMemo(
@@ -97,10 +99,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     imageEditor.setCallbacks({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
-      onStateChange: (state, fromHash) => {
+      onStateChange: (state, fromHash, onlyCropChanged) => {
         setParams(state)
-        // Only update hash if change is NOT from hash restoration (prevents loop)
-        if (!fromHash) {
+        // Skip hash update if from hash restoration OR if only crop changed during visual crop
+        if (!fromHash && !onlyCropChanged) {
           debouncedUpdateHash(state)
         }
       },
@@ -182,11 +184,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
   const handleVisualCropToggle = async (enabled: boolean) => {
     // Update ImageEditor to control crop filter in preview
-    // This will wait for the new preview to load before resolving
+    // This will update the state and wait for the new preview to load
     await imageEditor.setVisualCropEnabled(enabled)
-
-    // Only update state after preview has loaded
-    setVisualCropEnabled(enabled)
 
     // Initialize crop dimensions if enabling for the first time
     if (enabled && !params.cropLeft && !params.cropTop && !params.cropWidth && !params.cropHeight) {

@@ -1,65 +1,13 @@
 import type { ImageEditorState } from './image-editor'
 
 /**
- * Default values for ImageEditorState
- * Used to filter out defaults when serializing to keep hash short
- */
-const DEFAULT_VALUES: Partial<ImageEditorState> = {
-  fitIn: true,
-  stretch: false,
-  smart: false,
-  brightness: 0,
-  contrast: 0,
-  saturation: 0,
-  hue: 0,
-  blur: 0,
-  sharpen: 0,
-  grayscale: false,
-  hFlip: false,
-  vFlip: false,
-  rotation: 0,
-}
-
-/**
- * Check if a value is the default value for a given key
- */
-function isDefaultValue(key: string, value: unknown): boolean {
-  // Width and height are always included (not defaults)
-  if (key === 'width' || key === 'height') {
-    return false
-  }
-
-  // Check against default values
-  if (key in DEFAULT_VALUES) {
-    return DEFAULT_VALUES[key as keyof typeof DEFAULT_VALUES] === value
-  }
-
-  // Undefined values are considered defaults
-  return value === undefined
-}
-
-/**
  * Serialize ImageEditorState to URL-safe base64 hash
- * Only includes non-default values to keep hash short
+ * Serializes the entire state for simplicity and future-proofing
  */
 export function serializeStateToHash(state: ImageEditorState): string {
-  // Filter out default/undefined values
-  const filtered: Partial<ImageEditorState> = {}
-
-  for (const [key, value] of Object.entries(state)) {
-    if (value !== undefined && !isDefaultValue(key, value)) {
-      filtered[key as keyof ImageEditorState] = value as never
-    }
-  }
-
-  // If no non-default values, return empty string
-  if (Object.keys(filtered).length === 0) {
-    return ''
-  }
-
   try {
     // JSON → base64 → URL-safe
-    const json = JSON.stringify(filtered)
+    const json = JSON.stringify(state)
     const base64 = btoa(json)
     // Make URL-safe: replace +/= with -_
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
