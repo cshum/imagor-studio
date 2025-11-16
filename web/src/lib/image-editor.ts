@@ -59,7 +59,7 @@ export interface ImageEditorConfig {
 export interface ImageEditorCallbacks {
   onPreviewUpdate?: (url: string) => void
   onError?: (error: Error) => void
-  onStateChange?: (state: ImageEditorState, fromHash?: boolean, isVisualCrop?: boolean) => void
+  onStateChange?: (state: ImageEditorState, fromHash?: boolean, visualCrop?: boolean) => void
   onLoadingChange?: (isLoading: boolean) => void
 }
 
