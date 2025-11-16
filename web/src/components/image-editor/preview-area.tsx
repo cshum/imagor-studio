@@ -179,51 +179,44 @@ export function PreviewArea({
               {t('imageEditor.page.retry')}
             </Button>
           </div>
-        ) : previewUrl ? (
-          <div className='relative'>
-            <PreloadImage
-              ref={previewImageRef}
-              src={getFullImageUrl(previewUrl)}
-              alt={`Preview of ${imagePath}`}
-              onLoad={handleImageLoad}
-              className={cn(
-                'h-auto w-auto object-contain',
-                'max-h-[calc(100vh-170px)]',
-                isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
-              )}
-            />
-            {visualCropEnabled &&
-              imageDimensions &&
-              onCropChange &&
-              cropWidth > 0 &&
-              cropHeight > 0 &&
-              (() => {
-                const { scaleX, scaleY } = getScales()
-                return (
-                  <CropOverlay
-                    previewWidth={imageDimensions.width}
-                    previewHeight={imageDimensions.height}
-                    cropLeft={cropLeft}
-                    cropTop={cropTop}
-                    cropWidth={cropWidth}
-                    cropHeight={cropHeight}
-                    scale={scaleX}
-                    scaleY={scaleY}
-                    onCropChange={onCropChange}
-                    lockedAspectRatio={cropAspectRatio}
-                  />
-                )
-              })()}
-          </div>
         ) : (
-          <div className='flex flex-col items-center gap-4 text-center'>
-            <div className='bg-muted border-muted-foreground/25 flex h-64 w-96 items-center justify-center rounded-lg border-2 border-dashed'>
-              <div className='text-muted-foreground'>
-                <div className='text-lg font-medium'>{t('imageEditor.preview.noPreview')}</div>
-                <div className='text-sm'>{t('imageEditor.preview.adjustParameters')}</div>
-              </div>
+          previewUrl && (
+            <div className='relative'>
+              <PreloadImage
+                ref={previewImageRef}
+                src={getFullImageUrl(previewUrl)}
+                alt={`Preview of ${imagePath}`}
+                onLoad={handleImageLoad}
+                className={cn(
+                  'h-auto w-auto object-contain',
+                  'max-h-[calc(100vh-170px)]',
+                  isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
+                )}
+              />
+              {visualCropEnabled &&
+                imageDimensions &&
+                onCropChange &&
+                cropWidth > 0 &&
+                cropHeight > 0 &&
+                (() => {
+                  const { scaleX, scaleY } = getScales()
+                  return (
+                    <CropOverlay
+                      previewWidth={imageDimensions.width}
+                      previewHeight={imageDimensions.height}
+                      cropLeft={cropLeft}
+                      cropTop={cropTop}
+                      cropWidth={cropWidth}
+                      cropHeight={cropHeight}
+                      scale={scaleX}
+                      scaleY={scaleY}
+                      onCropChange={onCropChange}
+                      lockedAspectRatio={cropAspectRatio}
+                    />
+                  )
+                })()}
             </div>
-          </div>
+          )
         )}
       </div>
 

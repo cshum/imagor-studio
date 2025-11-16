@@ -42,10 +42,16 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
   const [copyUrl, setCopyUrl] = useState('')
-  const [isLoading, setIsLoading] = useState<boolean>(false)
   const [editorOpenSections, setEditorOpenSections] =
     useState<EditorOpenSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
+
+  // Read hash fresh on mount (single source of truth, won't change during component lifetime)
+  const initialHash = useMemo(() => getHashFromLocation(), [])
+  const hasInitialHash = !!initialHash
+
+  // Initialize loading state based on whether hash exists
+  const [isLoading, setIsLoading] = useState<boolean>(hasInitialHash)
 
   // Storage service for editor open sections
   const storage = useMemo(() => new EditorOpenSectionsStorage(authState), [authState])
@@ -305,7 +311,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
         {/* Preview Content */}
         <PreviewArea
-          previewUrl={previewUrl || imageElement.src}
+          previewUrl={previewUrl || (!hasInitialHash ? imageElement.src : '')}
           error={error}
           galleryKey={galleryKey}
           imageKey={imageKey}
