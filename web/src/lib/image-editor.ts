@@ -97,6 +97,13 @@ export class ImageEditor {
     // Reset lastPreviewUrl when callbacks are set (component remounted)
     // This ensures preview updates work correctly when navigating back
     this.lastPreviewUrl = null
+    // Reset state to defaults when component remounts
+    // The page will restore from URL if there's a ?state= parameter
+    this.state = {
+      width: this.config.originalDimensions.width,
+      height: this.config.originalDimensions.height,
+      fitIn: true,
+    }
   }
 
   /**
