@@ -408,9 +408,10 @@ export class ImageEditor {
       this.schedulePreviewUpdate()
       // Wait for the new preview to load
       await this.waitForPreviewLoad()
-      // Notify state change
-      // Pass enabled as isVisualCrop to prevent additional preview generation
-      this.callbacks.onStateChange?.(this.getState(), false, enabled)
+      // Notify state change AFTER preview loads
+      // Always pass true for isVisualCrop to skip hash update during visual crop toggle
+      // This prevents race conditions where hash update triggers another preview generation
+      this.callbacks.onStateChange?.(this.getState(), false, true)
     }
   }
 
