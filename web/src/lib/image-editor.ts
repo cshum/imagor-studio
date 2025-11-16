@@ -271,31 +271,38 @@ export class ImageEditor {
 
     try {
       const graphqlParams = this.convertToGraphQLParams(this.state, true)
-      const url = await generateImagorUrl({
-        galleryKey: this.config.galleryKey,
-        imageKey: this.config.imageKey,
-        params: graphqlParams as ImagorParamsInput,
-      })
+      const url = await generateImagorUrl(
+        {
+          galleryKey: this.config.galleryKey,
+          imageKey: this.config.imageKey,
+          params: graphqlParams as ImagorParamsInput,
+        },
+        this.abortController.signal,
+      )
+      console.log(this.lastPreviewUrl)
 
-      if (!this.abortController.signal.aborted) {
-        // Only update if URL actually changed
-        if (url !== this.lastPreviewUrl) {
-          this.lastPreviewUrl = url
-          this.callbacks.onPreviewUpdate?.(url)
-          // Don't clear loading here - let PreviewArea clear it when image actually loads
-        } else {
-          // Same URL - image is already loaded, clear loading immediately
-          this.callbacks.onLoadingChange?.(false)
-          // Resolve any pending preview load promises
-          this.notifyPreviewLoaded()
-        }
+      // Only update if URL actually changed
+      if (url !== this.lastPreviewUrl) {
+        this.lastPreviewUrl = url
+        this.callbacks.onPreviewUpdate?.(url)
+        // Don't clear loading here - let PreviewArea clear it when image actually loads
+      } else {
+        // Same URL - image is already loaded, clear loading immediately
+        this.callbacks.onLoadingChange?.(false)
+        // Resolve any pending preview load promises
+        this.notifyPreviewLoaded()
       }
     } catch (error) {
-      if (!this.abortController.signal.aborted) {
+      // Check if error is due to abort
+      const isAbortError =
+        error instanceof Error && (error.name === 'AbortError' || error.name === 'CancelError')
+
+      if (!isAbortError) {
         this.callbacks.onError?.(error as Error)
         // Clear loading on error
         this.callbacks.onLoadingChange?.(false)
       }
+      // If aborted, do nothing - a new request is already in progress
     }
   }
 

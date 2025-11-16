@@ -82,19 +82,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   // Derive visualCropEnabled from params state (single source of truth)
   const visualCropEnabled = params.visualCropEnabled ?? false
 
-  // Debounced hash update function
-  const debouncedUpdateHash = useMemo(
-    () =>
-      debounce((state: ImageEditorState) => {
-        const hash = serializeStateToHash(state)
-        updateLocationHash(hash)
-      }, 500),
-    [],
-  )
-
   // Set up callbacks and cleanup
   // Re-run when imageEditor changes (when navigating to different image)
   useEffect(() => {
+    const debouncedUpdateHash = debounce((state: ImageEditorState) => {
+      const hash = serializeStateToHash(state)
+      updateLocationHash(hash)
+    }, 500)
     // Set callbacks that depend on component state
     imageEditor.setCallbacks({
       onPreviewUpdate: setPreviewUrl,
@@ -112,7 +106,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     return () => {
       imageEditor.destroy()
     }
-  }, [imageEditor, debouncedUpdateHash])
+  }, [imageEditor])
 
   // Restore state from hash once on mount (when imageEditor changes)
   // Since we use replaceState (not pushState), hash changes don't add to history
