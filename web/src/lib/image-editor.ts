@@ -74,7 +74,6 @@ export class ImageEditor {
   private debounceTimer: number | null = null
   private abortController: AbortController | null = null
   private lastPreviewUrl: string | null = null
-  private visualCropEnabled = false
   private previewLoadResolvers: Array<() => void> = []
 
   constructor(config: ImageEditorConfig) {
@@ -128,7 +127,7 @@ export class ImageEditor {
     // Crop handling (crops BEFORE resize in URL path)
     // Convert from left/top/width/height to left/top/right/bottom
     // Skip crop in preview when visual cropping is enabled (so user can see full image)
-    const shouldApplyCrop = !forPreview || (forPreview && !this.visualCropEnabled)
+    const shouldApplyCrop = !forPreview || (forPreview && !(this.state.visualCropEnabled ?? false))
 
     if (shouldApplyCrop && this.hasCropParams(state)) {
       graphqlParams.cropLeft = state.cropLeft
@@ -143,7 +142,7 @@ export class ImageEditor {
 
     // When visual crop is enabled in preview, use original dimensions
     // so the crop overlay can work with the full original image
-    if (forPreview && this.visualCropEnabled) {
+    if (forPreview && (this.state.visualCropEnabled ?? false)) {
       width = this.config.originalDimensions.width
       height = this.config.originalDimensions.height
     }
@@ -225,7 +224,8 @@ export class ImageEditor {
 
     // Skip rotation in preview when visual cropping is enabled
     // (so user can crop on unrotated image, rotation applied after crop in final URL)
-    const shouldApplyRotation = !forPreview || (forPreview && !this.visualCropEnabled)
+    const shouldApplyRotation =
+      !forPreview || (forPreview && !(this.state.visualCropEnabled ?? false))
     if (shouldApplyRotation && state.rotation !== undefined && state.rotation !== 0) {
       filters.push({ name: 'rotate', args: state.rotation.toString() })
     }
@@ -328,15 +328,10 @@ export class ImageEditor {
   updateParams(updates: Partial<ImageEditorState>, fromHash = false): void {
     this.state = { ...this.state, ...updates }
 
-    // Sync visualCropEnabled from state to internal flag
-    if (updates.visualCropEnabled !== undefined) {
-      this.visualCropEnabled = updates.visualCropEnabled
-    }
-
     // Check if only crop params changed during visual crop
     // (crop filter is skipped in visual mode, so preview URL won't change)
     const onlyCropParamsChanged =
-      this.visualCropEnabled &&
+      (this.state.visualCropEnabled ?? false) &&
       Object.keys(updates).length > 0 &&
       Object.keys(updates).every(
         (key) =>
@@ -407,17 +402,15 @@ export class ImageEditor {
    * Returns a promise that resolves when the new preview has loaded
    */
   async setVisualCropEnabled(enabled: boolean): Promise<void> {
-    if (this.visualCropEnabled !== enabled) {
-      // Update internal flag first (affects preview URL generation)
-      this.visualCropEnabled = enabled
+    if ((this.state.visualCropEnabled ?? false) !== enabled) {
+      // Update state first (affects preview URL generation)
+      this.state = { ...this.state, visualCropEnabled: enabled }
       // Trigger preview generation with new crop mode
       this.schedulePreviewUpdate()
       // Wait for the new preview to load
       await this.waitForPreviewLoad()
-      // Only now update the state (triggers UI update and hash)
-      this.state = { ...this.state, visualCropEnabled: enabled }
-      // Pass true for onlyCropChanged to prevent additional preview generation
-      // (we've already generated the preview above)
+      // Notify state change
+      // Pass enabled as isVisualCrop to prevent additional preview generation
       this.callbacks.onStateChange?.(this.getState(), false, enabled)
     }
   }
