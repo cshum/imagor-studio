@@ -94,6 +94,9 @@ export class ImageEditor {
    */
   setCallbacks(callbacks: ImageEditorCallbacks): void {
     this.callbacks = callbacks
+    // Reset lastPreviewUrl when callbacks are set (component remounted)
+    // This ensures preview updates work correctly when navigating back
+    this.lastPreviewUrl = null
   }
 
   /**
