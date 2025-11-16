@@ -103,15 +103,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       onLoadingChange: setIsLoading,
     })
 
-    return () => {
-      imageEditor.destroy()
-    }
-  }, [imageEditor])
-
-  // Restore state from hash once on mount (when imageEditor changes)
-  // Since we use replaceState (not pushState), hash changes don't add to history
-  // so we don't need hashchange listener - just read once, write always
-  useEffect(() => {
+    // Restore state from hash once on mount (when imageEditor changes)
+    // Since we use replaceState (not pushState), hash changes don't add to history
+    // so we don't need hashchange listener - just read once, write always
     const hash = getHashFromLocation()
     if (hash) {
       const hashState = deserializeStateFromHash(hash)
@@ -119,6 +113,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         // Restore state from hash with fromHash=true to prevent loop
         imageEditor.updateParams(hashState, true)
       }
+    }
+
+    return () => {
+      imageEditor.destroy()
     }
   }, [imageEditor])
 
