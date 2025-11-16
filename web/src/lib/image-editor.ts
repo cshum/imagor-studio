@@ -279,7 +279,6 @@ export class ImageEditor {
         },
         this.abortController.signal,
       )
-      console.log(this.lastPreviewUrl)
 
       // Only update if URL actually changed
       if (url !== this.lastPreviewUrl) {
