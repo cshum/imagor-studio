@@ -99,10 +99,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     imageEditor.setCallbacks({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
-      onStateChange: (state, fromHash, onlyCropChanged) => {
+      onStateChange: (state, fromHash, isVisualCrop) => {
         setParams(state)
-        // Skip hash update if from hash restoration OR if only crop changed during visual crop
-        if (!fromHash && !onlyCropChanged) {
+        // Skip hash update if from hash restoration OR not visual crop
+        if (!fromHash && !isVisualCrop) {
           debouncedUpdateHash(state)
         }
       },

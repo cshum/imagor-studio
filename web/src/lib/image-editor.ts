@@ -59,7 +59,7 @@ export interface ImageEditorConfig {
 export interface ImageEditorCallbacks {
   onPreviewUpdate?: (url: string) => void
   onError?: (error: Error) => void
-  onStateChange?: (state: ImageEditorState, fromHash?: boolean, onlyCropChanged?: boolean) => void
+  onStateChange?: (state: ImageEditorState, fromHash?: boolean, isVisualCrop?: boolean) => void
   onLoadingChange?: (isLoading: boolean) => void
 }
 
@@ -418,7 +418,7 @@ export class ImageEditor {
       this.state = { ...this.state, visualCropEnabled: enabled }
       // Pass true for onlyCropChanged to prevent additional preview generation
       // (we've already generated the preview above)
-      this.callbacks.onStateChange?.(this.getState(), false, true)
+      this.callbacks.onStateChange?.(this.getState(), false, enabled)
     }
   }
 
