@@ -16,6 +16,12 @@ import {
   EditorOpenSectionsStorage,
   type EditorOpenSections,
 } from '@/lib/editor-open-sections-storage'
+import {
+  deserializeStateFromUrl,
+  getStateFromLocation,
+  serializeStateToUrl,
+  updateLocationState,
+} from '@/lib/editor-state-url'
 import { type ImageEditorState } from '@/lib/image-editor.ts'
 import { cn, debounce } from '@/lib/utils.ts'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
@@ -36,10 +42,16 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
   const [copyUrl, setCopyUrl] = useState('')
-  const [isLoading, setIsLoading] = useState<boolean>(false)
   const [editorOpenSections, setEditorOpenSections] =
     useState<EditorOpenSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
+
+  // Read state from URL on mount (single source of truth, won't change during component lifetime)
+  const initialState = useMemo(() => getStateFromLocation(), [])
+  const hasInitialState = !!initialState
+
+  // Initialize loading state based on whether state exists
+  const [isLoading, setIsLoading] = useState<boolean>(hasInitialState)
 
   // Storage service for editor open sections
   const storage = useMemo(() => new EditorOpenSectionsStorage(authState), [authState])
@@ -71,19 +83,42 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     height: number
   } | null>(null)
   const [resetCounter, setResetCounter] = useState(0)
-  const [visualCropEnabled, setVisualCropEnabled] = useState(false)
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
+
+  // Derive visualCropEnabled from params state (single source of truth)
+  const visualCropEnabled = params.visualCropEnabled ?? false
 
   // Set up callbacks and cleanup
   // Re-run when imageEditor changes (when navigating to different image)
   useEffect(() => {
+    const debouncedUpdateState = debounce((state: ImageEditorState) => {
+      const encoded = serializeStateToUrl(state)
+      updateLocationState(encoded)
+    }, 500)
     // Set callbacks that depend on component state
     imageEditor.setCallbacks({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
-      onStateChange: setParams,
+      onStateChange: (state, fromUrl, visualCrop) => {
+        setParams(state)
+        // Skip URL update if from URL restoration OR visual crop only
+        if (!fromUrl && !visualCrop) {
+          debouncedUpdateState(state)
+        }
+      },
       onLoadingChange: setIsLoading,
     })
+
+    // Restore state from URL once on mount (when imageEditor changes)
+    // Since we use replaceState (not pushState), URL changes don't add to history
+    const encoded = getStateFromLocation()
+    if (encoded) {
+      const urlState = deserializeStateFromUrl(encoded)
+      if (urlState) {
+        // Restore state from URL with fromUrl=true to prevent loop
+        imageEditor.updateParams(urlState, true)
+      }
+    }
 
     return () => {
       imageEditor.destroy()
@@ -146,11 +181,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
   const handleVisualCropToggle = async (enabled: boolean) => {
     // Update ImageEditor to control crop filter in preview
-    // This will wait for the new preview to load before resolving
+    // This will update the state and wait for the new preview to load
     await imageEditor.setVisualCropEnabled(enabled)
-
-    // Only update state after preview has loaded
-    setVisualCropEnabled(enabled)
 
     // Initialize crop dimensions if enabling for the first time
     if (enabled && !params.cropLeft && !params.cropTop && !params.cropWidth && !params.cropHeight) {
@@ -278,7 +310,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
         {/* Preview Content */}
         <PreviewArea
-          previewUrl={previewUrl || imageElement.src}
+          previewUrl={previewUrl || (!hasInitialState ? imageElement.src : '')}
           error={error}
           galleryKey={galleryKey}
           imageKey={imageKey}

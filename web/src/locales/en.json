@@ -552,11 +552,7 @@
     },
     "preview": {
       "previewError": "Preview Error",
-      "failedToGenerate": "Failed to generate preview",
-      "generatingPreview": "Generating preview...",
-      "applyingTransformations": "Applying transformations to {{imagePath}}",
-      "noPreview": "No Preview",
-      "adjustParameters": "Adjust parameters to generate preview"
+      "failedToGenerate": "Failed to generate preview"
     }
   }
 }

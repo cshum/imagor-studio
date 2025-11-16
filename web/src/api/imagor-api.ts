@@ -45,8 +45,9 @@ export async function configureExternalImagor(
  */
 export async function generateImagorUrl(
   variables: GenerateImagorUrlMutationVariables,
+  signal?: AbortSignal,
 ): Promise<GenerateImagorUrlMutation['generateImagorUrl']> {
   const sdk = getSdk(getGraphQLClient())
-  const result = await sdk.GenerateImagorUrl(variables)
+  const result = await sdk.GenerateImagorUrl(variables, undefined, signal)
   return result.generateImagorUrl
 }

@@ -136,6 +136,7 @@ const rootImageEditorRoute = createRoute({
   path: '/$imageKey/editor',
   beforeLoad: requireImageEditorAuth,
   loader: ({ params }) => imageEditorLoader({ params: { ...params, galleryKey: '' } }),
+  shouldReload: false,
   component: () => {
     const loaderData = rootImageEditorRoute.useLoaderData()
     const { imageKey } = rootImageEditorRoute.useParams()
@@ -183,6 +184,7 @@ const galleryImageEditorRoute = createRoute({
   path: '/gallery/$galleryKey/$imageKey/editor',
   beforeLoad: requireImageEditorAuth,
   loader: ({ params }) => imageEditorLoader({ params }),
+  shouldReload: false,
   component: () => {
     const loaderData = galleryImageEditorRoute.useLoaderData()
     const { galleryKey, imageKey } = galleryImageEditorRoute.useParams()
