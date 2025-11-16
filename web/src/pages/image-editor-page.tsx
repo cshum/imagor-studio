@@ -17,11 +17,11 @@ import {
   type EditorOpenSections,
 } from '@/lib/editor-open-sections-storage'
 import {
-  deserializeStateFromHash,
-  getHashFromLocation,
-  serializeStateToHash,
-  updateLocationHash,
-} from '@/lib/editor-state-hash'
+  deserializeStateFromUrl,
+  getStateFromLocation,
+  serializeStateToUrl,
+  updateLocationState,
+} from '@/lib/editor-state-url'
 import { type ImageEditorState } from '@/lib/image-editor.ts'
 import { cn, debounce } from '@/lib/utils.ts'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
@@ -46,12 +46,12 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     useState<EditorOpenSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
 
-  // Read hash fresh on mount (single source of truth, won't change during component lifetime)
-  const initialHash = useMemo(() => getHashFromLocation(), [])
-  const hasInitialHash = !!initialHash
+  // Read state from URL on mount (single source of truth, won't change during component lifetime)
+  const initialState = useMemo(() => getStateFromLocation(), [])
+  const hasInitialState = !!initialState
 
-  // Initialize loading state based on whether hash exists
-  const [isLoading, setIsLoading] = useState<boolean>(hasInitialHash)
+  // Initialize loading state based on whether state exists
+  const [isLoading, setIsLoading] = useState<boolean>(hasInitialState)
 
   // Storage service for editor open sections
   const storage = useMemo(() => new EditorOpenSectionsStorage(authState), [authState])
@@ -91,33 +91,32 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   // Set up callbacks and cleanup
   // Re-run when imageEditor changes (when navigating to different image)
   useEffect(() => {
-    const debouncedUpdateHash = debounce((state: ImageEditorState) => {
-      const hash = serializeStateToHash(state)
-      updateLocationHash(hash)
+    const debouncedUpdateState = debounce((state: ImageEditorState) => {
+      const encoded = serializeStateToUrl(state)
+      updateLocationState(encoded)
     }, 500)
     // Set callbacks that depend on component state
     imageEditor.setCallbacks({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
-      onStateChange: (state, fromHash, visualCrop) => {
+      onStateChange: (state, fromUrl, visualCrop) => {
         setParams(state)
-        // Skip hash update if from hash restoration OR not visual crop
-        if (!fromHash && !visualCrop) {
-          debouncedUpdateHash(state)
+        // Skip URL update if from URL restoration OR visual crop only
+        if (!fromUrl && !visualCrop) {
+          debouncedUpdateState(state)
         }
       },
       onLoadingChange: setIsLoading,
     })
 
-    // Restore state from hash once on mount (when imageEditor changes)
-    // Since we use replaceState (not pushState), hash changes don't add to history
-    // so we don't need hashchange listener - just read once, write always
-    const hash = getHashFromLocation()
-    if (hash) {
-      const hashState = deserializeStateFromHash(hash)
-      if (hashState) {
-        // Restore state from hash with fromHash=true to prevent loop
-        imageEditor.updateParams(hashState, true)
+    // Restore state from URL once on mount (when imageEditor changes)
+    // Since we use replaceState (not pushState), URL changes don't add to history
+    const encoded = getStateFromLocation()
+    if (encoded) {
+      const urlState = deserializeStateFromUrl(encoded)
+      if (urlState) {
+        // Restore state from URL with fromUrl=true to prevent loop
+        imageEditor.updateParams(urlState, true)
       }
     }
 
@@ -311,7 +310,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
         {/* Preview Content */}
         <PreviewArea
-          previewUrl={previewUrl || (!hasInitialHash ? imageElement.src : '')}
+          previewUrl={previewUrl || (!hasInitialState ? imageElement.src : '')}
           error={error}
           galleryKey={galleryKey}
           imageKey={imageKey}
