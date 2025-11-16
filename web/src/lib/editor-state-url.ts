@@ -1,4 +1,4 @@
-import type { ImageEditorState } from './image-editor'
+import type { ImageEditorState } from '@/lib/image-editor'
 
 /**
  * Serialize ImageEditorState to URL-safe base64 string
