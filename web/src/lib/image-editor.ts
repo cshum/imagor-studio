@@ -390,10 +390,33 @@ export class ImageEditor {
   }
 
   /**
+   * Check if two states are equal (shallow comparison)
+   * @param a - First state
+   * @param b - Second state
+   * @returns true if states are equal
+   */
+  private statesEqual(a: ImageEditorState, b: ImageEditorState): boolean {
+    const keysA = Object.keys(a) as Array<keyof ImageEditorState>
+    const keysB = Object.keys(b) as Array<keyof ImageEditorState>
+
+    if (keysA.length !== keysB.length) return false
+
+    return keysA.every((key) => a[key] === b[key])
+  }
+
+  /**
    * Save a state snapshot to history immediately
    * @param state - The state to save (without visualCropEnabled)
    */
   private saveHistorySnapshot(state: ImageEditorState): void {
+    // Don't save if state is identical to the last saved state
+    if (this.undoStack.length > 0) {
+      const lastState = this.undoStack[this.undoStack.length - 1]
+      if (this.statesEqual(state, lastState)) {
+        return // Skip duplicate
+      }
+    }
+
     this.undoStack.push(state)
     this.redoStack = []
 
@@ -494,9 +517,13 @@ export class ImageEditor {
   async setVisualCropEnabled(enabled: boolean): Promise<void> {
     if (this.state.visualCropEnabled === enabled) return
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { visualCropEnabled, ...transformState } = this.state
-    this.saveHistorySnapshot({ ...transformState })
+    // Only save to history when ENTERING crop mode (not when exiting/applying)
+    // This ensures undo goes back to the state before entering crop mode
+    if (enabled) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { visualCropEnabled, ...transformState } = this.state
+      this.saveHistorySnapshot({ ...transformState })
+    }
 
     // Update state first (affects preview URL generation)
     this.state = { ...this.state, visualCropEnabled: enabled }
@@ -509,6 +536,12 @@ export class ImageEditor {
 
     // Notify state change AFTER preview loads (good UX!)
     this.callbacks.onStateChange?.(this.getState())
+
+    // When EXITING crop mode (applying), notify history change to update URL
+    // (When entering, saveHistorySnapshot already calls onHistoryChange)
+    if (!enabled) {
+      this.callbacks.onHistoryChange?.()
+    }
   }
 
   /**
