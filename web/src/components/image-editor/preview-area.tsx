@@ -189,7 +189,7 @@ export function PreviewArea({
                 onLoad={handleImageLoad}
                 className={cn(
                   'h-auto w-auto object-contain',
-                  'max-h-[calc(100vh-170px)]',
+                  'max-h-[calc(100vh-162px)]',
                   isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
                 )}
               />
