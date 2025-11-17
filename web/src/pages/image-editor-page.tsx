@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
-import { ChevronLeft, Copy, Download, RotateCcw, Settings, Undo2, Redo2 } from 'lucide-react'
+import { ChevronLeft, Copy, Download, Redo2, RotateCcw, Settings, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { ImageEditorControls } from '@/components/image-editor/imagor-editor-controls.tsx'

@@ -422,6 +422,19 @@ export class ImageEditor {
   }
 
   /**
+   * Flush any pending history snapshot to the undo stack
+   * Called before undo/redo operations to ensure all changes are captured
+   */
+  private flushPendingHistorySnapshot(): void {
+    if (this.pendingHistorySnapshot && this.historyDebounceTimer) {
+      clearTimeout(this.historyDebounceTimer)
+      this.undoStack.push(this.pendingHistorySnapshot)
+      this.pendingHistorySnapshot = null
+      this.historyDebounceTimer = null
+    }
+  }
+
+  /**
    * Reset all parameters to original state
    */
   resetParams(): void {
@@ -607,12 +620,7 @@ export class ImageEditor {
     if (!this.canUndo()) return
 
     // Flush any pending history snapshot first
-    if (this.pendingHistorySnapshot && this.historyDebounceTimer) {
-      clearTimeout(this.historyDebounceTimer)
-      this.undoStack.push(this.pendingHistorySnapshot)
-      this.pendingHistorySnapshot = null
-      this.historyDebounceTimer = null
-    }
+    this.flushPendingHistorySnapshot()
 
     // Push current state to redo stack WITHOUT visualCropEnabled
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -635,12 +643,7 @@ export class ImageEditor {
     if (!this.canRedo()) return
 
     // Flush any pending history snapshot first
-    if (this.pendingHistorySnapshot && this.historyDebounceTimer) {
-      clearTimeout(this.historyDebounceTimer)
-      this.undoStack.push(this.pendingHistorySnapshot)
-      this.pendingHistorySnapshot = null
-      this.historyDebounceTimer = null
-    }
+    this.flushPendingHistorySnapshot()
 
     // Push current state to undo stack WITHOUT visualCropEnabled
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
