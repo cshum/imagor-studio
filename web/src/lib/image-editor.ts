@@ -351,8 +351,8 @@ export class ImageEditor {
    * @param updates - Partial state to update
    */
   updateParams(updates: Partial<ImageEditorState>): void {
-    // Check if only crop params changed during visual crop
-    // (crop filter is skipped in visual mode, so preview URL won't change)
+    // Only skip history/preview when dragging crop overlay
+    // (changing ONLY crop parameters while in visual crop mode)
     const onlyCropParamsChanged =
       this.state.visualCropEnabled &&
       Object.keys(updates).length > 0 &&
@@ -361,14 +361,11 @@ export class ImageEditor {
           key === 'cropLeft' || key === 'cropTop' || key === 'cropWidth' || key === 'cropHeight',
       )
 
-    // Schedule debounced history snapshot unless dragging crop overlay
     if (!onlyCropParamsChanged) {
       this.scheduleHistorySnapshot()
     }
 
     this.state = { ...this.state, ...updates }
-
-    // Notify state change
     this.callbacks.onStateChange?.(this.getState())
 
     if (!onlyCropParamsChanged) {
@@ -393,12 +390,26 @@ export class ImageEditor {
   }
 
   /**
-   * Debounced history snapshot
-   * Synchronized with preview debounce (300ms) to ensure history is saved
-   * when the user sees the preview result
+   * Save a state snapshot to history immediately
+   * @param state - The state to save (without visualCropEnabled)
+   */
+  private saveHistorySnapshot(state: ImageEditorState): void {
+    this.undoStack.push(state)
+    this.redoStack = []
+
+    if (this.undoStack.length > this.MAX_HISTORY_SIZE) {
+      this.undoStack.shift()
+    }
+
+    this.callbacks.onHistoryChange?.()
+  }
+
+  /**
+   * Schedule a debounced history snapshot
+   * Captures current state and saves after 300ms of inactivity
    */
   private scheduleHistorySnapshot(): void {
-    // Save current state as pending snapshot (before update)
+    // Capture current state as pending snapshot (before update)
     // Only capture the first state in a sequence of rapid changes
     // Exclude UI-only state like visualCropEnabled
     if (!this.pendingHistorySnapshot) {
@@ -412,36 +423,24 @@ export class ImageEditor {
       clearTimeout(this.historyDebounceTimer)
     }
 
-    // Schedule snapshot after 300ms of inactivity (same as preview)
+    // Schedule snapshot after 300ms of inactivity
     this.historyDebounceTimer = window.setTimeout(() => {
       if (this.pendingHistorySnapshot) {
-        // Push to undo stack
-        this.undoStack.push(this.pendingHistorySnapshot)
-
-        // Clear redo stack on new change
-        this.redoStack = []
-
-        // Limit stack size
-        if (this.undoStack.length > this.MAX_HISTORY_SIZE) {
-          this.undoStack.shift()
-        }
-
+        this.saveHistorySnapshot(this.pendingHistorySnapshot)
         this.pendingHistorySnapshot = null
-
-        this.callbacks.onHistoryChange?.()
       }
       this.historyDebounceTimer = null
     }, 300)
   }
 
   /**
-   * Flush any pending history snapshot to the undo stack
+   * Flush any pending history snapshot immediately
    * Called before undo/redo operations to ensure all changes are captured
    */
   private flushPendingHistorySnapshot(): void {
     if (this.pendingHistorySnapshot && this.historyDebounceTimer) {
       clearTimeout(this.historyDebounceTimer)
-      this.undoStack.push(this.pendingHistorySnapshot)
+      this.saveHistorySnapshot(this.pendingHistorySnapshot)
       this.pendingHistorySnapshot = null
       this.historyDebounceTimer = null
     }
@@ -493,31 +492,23 @@ export class ImageEditor {
    * Returns a promise that resolves when the new preview has loaded
    */
   async setVisualCropEnabled(enabled: boolean): Promise<void> {
-    if (this.state.visualCropEnabled !== enabled) {
-      // When ENABLING (entering crop mode), save current state to history
-      // This captures the state BEFORE cropping so undo can restore it
-      if (enabled && !this.state.visualCropEnabled) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { visualCropEnabled, ...transformState } = this.state
-        this.undoStack.push({ ...transformState })
-        this.redoStack = []
-        if (this.undoStack.length > this.MAX_HISTORY_SIZE) {
-          this.undoStack.shift()
-        }
+    if (this.state.visualCropEnabled === enabled) return
 
-        // Notify that history changed
-        this.callbacks.onHistoryChange?.()
-      }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { visualCropEnabled, ...transformState } = this.state
+    this.saveHistorySnapshot({ ...transformState })
 
-      // Update state first (affects preview URL generation)
-      this.state = { ...this.state, visualCropEnabled: enabled }
-      // Trigger preview generation with new crop mode
-      this.schedulePreviewUpdate()
-      // Wait for the new preview to load
-      await this.waitForPreviewLoad()
-      // Notify state change AFTER preview loads
-      this.callbacks.onStateChange?.(this.getState())
-    }
+    // Update state first (affects preview URL generation)
+    this.state = { ...this.state, visualCropEnabled: enabled }
+
+    // Trigger preview generation with new crop mode
+    this.schedulePreviewUpdate()
+
+    // Wait for the new preview to load
+    await this.waitForPreviewLoad()
+
+    // Notify state change AFTER preview loads (good UX!)
+    this.callbacks.onStateChange?.(this.getState())
   }
 
   /**
