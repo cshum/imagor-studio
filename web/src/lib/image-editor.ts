@@ -389,8 +389,11 @@ export class ImageEditor {
   private scheduleHistorySnapshot(): void {
     // Save current state as pending snapshot (before update)
     // Only capture the first state in a sequence of rapid changes
+    // Exclude UI-only state like visualCropEnabled
     if (!this.pendingHistorySnapshot) {
-      this.pendingHistorySnapshot = { ...this.state }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { visualCropEnabled, ...transformState } = this.state
+      this.pendingHistorySnapshot = { ...transformState }
     }
 
     // Clear existing timer
@@ -484,6 +487,18 @@ export class ImageEditor {
    */
   async setVisualCropEnabled(enabled: boolean): Promise<void> {
     if (this.state.visualCropEnabled !== enabled) {
+      // When ENABLING (entering crop mode), save current state to history
+      // This captures the state BEFORE cropping so undo can restore it
+      if (enabled && !this.state.visualCropEnabled) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { visualCropEnabled, ...transformState } = this.state
+        this.undoStack.push({ ...transformState })
+        this.redoStack = []
+        if (this.undoStack.length > this.MAX_HISTORY_SIZE) {
+          this.undoStack.shift()
+        }
+      }
+
       // Update state first (affects preview URL generation)
       this.state = { ...this.state, visualCropEnabled: enabled }
       // Trigger preview generation with new crop mode
