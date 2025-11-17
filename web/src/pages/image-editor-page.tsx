@@ -101,10 +101,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     imageEditor.setCallbacks({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
-      onStateChange: (state, fromUrl, visualCrop) => {
+      onStateChange: (state, fromRestore, visualCrop) => {
         setParams(state)
-        // Skip URL update if from URL restoration OR visual crop only
-        if (!fromUrl && !visualCrop) {
+        // Skip URL update if from state restoration OR visual crop only
+        if (!fromRestore && !visualCrop) {
           debouncedUpdateState(state)
         }
         // Update undo/redo button states
@@ -120,8 +120,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     if (encoded) {
       const urlState = deserializeStateFromUrl(encoded)
       if (urlState) {
-        // Restore state from URL with fromUrl=true to prevent loop
-        imageEditor.updateParams(urlState, true)
+        // Restore state from URL (does not save to history or trigger URL update)
+        imageEditor.restoreState(urlState)
       }
     }
 

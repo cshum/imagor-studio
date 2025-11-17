@@ -59,7 +59,7 @@ export interface ImageEditorConfig {
 export interface ImageEditorCallbacks {
   onPreviewUpdate?: (url: string) => void
   onError?: (error: Error) => void
-  onStateChange?: (state: ImageEditorState, fromHash?: boolean, visualCrop?: boolean) => void
+  onStateChange?: (state: ImageEditorState, fromRestore?: boolean, visualCrop?: boolean) => void
   onLoadingChange?: (isLoading: boolean) => void
 }
 
@@ -349,11 +349,11 @@ export class ImageEditor {
   }
 
   /**
-   * Update transformation parameters
+   * Update transformation parameters (for user interactions)
+   * This method saves to history and triggers URL updates
    * @param updates - Partial state to update
-   * @param fromHash - If true, this update is from hash restoration (prevents loop)
    */
-  updateParams(updates: Partial<ImageEditorState>, fromHash = false): void {
+  updateParams(updates: Partial<ImageEditorState>): void {
     // Check if only crop params changed during visual crop
     // (crop filter is skipped in visual mode, so preview URL won't change)
     const onlyCropParamsChanged =
@@ -364,21 +364,35 @@ export class ImageEditor {
           key === 'cropLeft' || key === 'cropTop' || key === 'cropWidth' || key === 'cropHeight',
       )
 
-    // Schedule debounced history snapshot unless:
-    // - From URL restoration (fromHash = true)
-    // - OR dragging crop overlay (onlyCropParamsChanged = true)
-    if (!fromHash && !onlyCropParamsChanged) {
+    // Schedule debounced history snapshot unless dragging crop overlay
+    if (!onlyCropParamsChanged) {
       this.scheduleHistorySnapshot()
     }
 
     this.state = { ...this.state, ...updates }
 
-    // Pass onlyCropParamsChanged flag to callback so page can skip hash update
-    this.callbacks.onStateChange?.(this.getState(), fromHash, onlyCropParamsChanged)
+    // Pass onlyCropParamsChanged flag to callback so page can skip URL update
+    this.callbacks.onStateChange?.(this.getState(), false, onlyCropParamsChanged)
 
     if (!onlyCropParamsChanged) {
       this.schedulePreviewUpdate()
     }
+  }
+
+  /**
+   * Restore state from external source (e.g., URL, localStorage)
+   * This method does NOT save to history or trigger URL updates
+   * @param state - Complete or partial state to restore
+   */
+  restoreState(state: Partial<ImageEditorState>): void {
+    // Directly update state without history
+    this.state = { ...this.state, ...state }
+
+    // Notify with fromRestore=true to prevent URL update loop
+    this.callbacks.onStateChange?.(this.getState(), true, false)
+
+    // Always update preview when restoring state
+    this.schedulePreviewUpdate()
   }
 
   /**
