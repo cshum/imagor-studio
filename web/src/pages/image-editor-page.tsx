@@ -91,8 +91,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const visualCropEnabled = params.visualCropEnabled ?? false
 
   useEffect(() => {
-    // Set callbacks FIRST (this resets state to defaults)
-    imageEditor.setCallbacks({
+    // Initialize editor FIRST (this resets state to defaults)
+    imageEditor.initialize({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
       onStateChange: setParams,
