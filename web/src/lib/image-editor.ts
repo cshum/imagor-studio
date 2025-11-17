@@ -406,18 +406,23 @@ export class ImageEditor {
 
   /**
    * Save a state snapshot to history immediately
-   * @param state - The state to save (without visualCropEnabled)
+   * Automatically strips visualCropEnabled (UI-only state)
+   * @param state - The state to save (visualCropEnabled will be stripped)
    */
   private saveHistorySnapshot(state: ImageEditorState): void {
+    // Strip visualCropEnabled (UI-only state, not part of transform history)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { visualCropEnabled, ...transformState } = state
+
     // Don't save if state is identical to the last saved state
     if (this.undoStack.length > 0) {
       const lastState = this.undoStack[this.undoStack.length - 1]
-      if (this.statesEqual(state, lastState)) {
+      if (this.statesEqual(transformState, lastState)) {
         return // Skip duplicate
       }
     }
 
-    this.undoStack.push(state)
+    this.undoStack.push(transformState)
     this.redoStack = []
 
     if (this.undoStack.length > this.MAX_HISTORY_SIZE) {
@@ -434,11 +439,8 @@ export class ImageEditor {
   private scheduleHistorySnapshot(): void {
     // Capture current state as pending snapshot (before update)
     // Only capture the first state in a sequence of rapid changes
-    // Exclude UI-only state like visualCropEnabled
     if (!this.pendingHistorySnapshot) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { visualCropEnabled, ...transformState } = this.state
-      this.pendingHistorySnapshot = { ...transformState }
+      this.pendingHistorySnapshot = { ...this.state }
     }
 
     // Clear existing timer
@@ -474,8 +476,11 @@ export class ImageEditor {
    * Preserves history so user can undo the reset
    */
   resetParams(): void {
+    // Flush any pending history snapshot first
+    this.flushPendingHistorySnapshot()
+
     // Save current state to history before resetting (so reset can be undone)
-    this.scheduleHistorySnapshot()
+    this.saveHistorySnapshot(this.state)
 
     // Reset to initial state (same as constructor)
     this.state = {
@@ -520,9 +525,7 @@ export class ImageEditor {
     // Only save to history when ENTERING crop mode (not when exiting/applying)
     // This ensures undo goes back to the state before entering crop mode
     if (enabled) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { visualCropEnabled, ...transformState } = this.state
-      this.saveHistorySnapshot({ ...transformState })
+      this.saveHistorySnapshot(this.state)
     }
 
     // Update state first (affects preview URL generation)
