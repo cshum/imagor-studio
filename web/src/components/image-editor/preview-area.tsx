@@ -195,6 +195,8 @@ export function PreviewArea({
               />
               {visualCropEnabled &&
                 imageDimensions &&
+                imageDimensions.width > 0 &&
+                imageDimensions.height > 0 &&
                 onCropChange &&
                 cropWidth > 0 &&
                 cropHeight > 0 &&
