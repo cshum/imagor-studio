@@ -614,8 +614,10 @@ export class ImageEditor {
       this.historyDebounceTimer = null
     }
 
-    // Push current state to redo stack
-    this.redoStack.push({ ...this.state })
+    // Push current state to redo stack WITHOUT visualCropEnabled
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { visualCropEnabled, ...currentState } = this.state
+    this.redoStack.push({ ...currentState })
 
     // Pop from undo stack and restore
     const previousState = this.undoStack.pop()!
@@ -640,8 +642,10 @@ export class ImageEditor {
       this.historyDebounceTimer = null
     }
 
-    // Push current state to undo stack
-    this.undoStack.push({ ...this.state })
+    // Push current state to undo stack WITHOUT visualCropEnabled
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { visualCropEnabled, ...currentState } = this.state
+    this.undoStack.push({ ...currentState })
 
     // Pop from redo stack and restore
     const nextState = this.redoStack.pop()!
