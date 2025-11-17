@@ -90,18 +90,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   // Derive visualCropEnabled from params state (single source of truth)
   const visualCropEnabled = params.visualCropEnabled ?? false
 
-  // Set up callbacks and cleanup
-  // Re-run when imageEditor changes (when navigating to different image)
   useEffect(() => {
-    // Restore state from URL once on mount (when imageEditor changes)
-    const encoded = getStateFromLocation()
-    if (encoded) {
-      const urlState = deserializeStateFromUrl(encoded)
-      if (urlState) {
-        imageEditor.restoreState(urlState)
-      }
-    }
-
+    // Set callbacks FIRST (this resets state to defaults)
     imageEditor.setCallbacks({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
@@ -117,6 +107,15 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         updateLocationState(encoded)
       },
     })
+
+    // restore state from URL, after callbacks are set
+    const encoded = getStateFromLocation()
+    if (encoded) {
+      const urlState = deserializeStateFromUrl(encoded)
+      if (urlState) {
+        imageEditor.restoreState(urlState)
+      }
+    }
 
     return () => {
       imageEditor.destroy()
