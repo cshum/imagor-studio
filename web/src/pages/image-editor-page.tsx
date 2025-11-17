@@ -244,7 +244,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       {/* Preview Area  */}
       <div className='ios-preview-container-fix flex flex-1 flex-col'>
         {/* Header */}
-        <div className='flex items-center gap-2 border-b p-4'>
+        <div className='flex items-center gap-2 border-b p-3'>
           {/* Back button - hidden in embedded mode */}
           <Button
             variant='ghost'
@@ -307,7 +307,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   hideClose={true}
                   className='flex w-full flex-col gap-0 p-0 sm:w-96'
                 >
-                  <SheetHeader className='border-b p-4'>
+                  <SheetHeader className='border-b p-3'>
                     <div className='flex items-center justify-between'>
                       <Button variant='ghost' size='sm' onClick={() => setMobileSheetOpen(false)}>
                         <ChevronLeft className='mr-1 h-4 w-4' />
@@ -324,7 +324,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   </SheetHeader>
 
                   {/* Scrollable Controls */}
-                  <div className='flex-1 touch-pan-y overflow-y-auto p-4 select-text'>
+                  <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-text'>
                     <ImageEditorControls
                       key={resetCounter}
                       params={params}
@@ -369,7 +369,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       {!isMobile && (
         <div className='bg-background flex w-100 flex-col border-l'>
           {/* Panel Header */}
-          <div className='border-b p-4'>
+          <div className='border-b p-3'>
             <div className='flex items-center justify-between'>
               <h2 className='font-semibold'>{t('imageEditor.page.controls')}</h2>
               <Button variant='outline' size='sm' onClick={resetParams}>
@@ -380,7 +380,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           </div>
 
           {/* Controls */}
-          <div className='flex-1 touch-pan-y overflow-y-auto p-4 select-text'>
+          <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-text'>
             <ImageEditorControls
               key={resetCounter}
               params={params}
@@ -396,7 +396,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           </div>
 
           {/* Action Buttons */}
-          <div className='bg-background border-t p-4'>
+          <div className='bg-background border-t p-3'>
             <div className='flex gap-2'>
               <Button variant='outline' size='sm' onClick={handleDownloadClick} className='flex-1'>
                 <Download className='mr-1 h-4 w-4' />
