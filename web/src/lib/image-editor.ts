@@ -172,25 +172,36 @@ export class ImageEditor {
 
     // Apply preview dimension constraints when generating preview URLs
     if (forPreview && this.config.previewMaxDimensions) {
-      const maxWidth = this.config.previewMaxDimensions.width
-      const maxHeight = this.config.previewMaxDimensions.height
+      const previewWidth = this.config.previewMaxDimensions.width
+      const previewHeight = this.config.previewMaxDimensions.height
 
-      // Use original dimensions if user hasn't set explicit dimensions
+      // Calculate target dimensions (what the output will be)
       const targetWidth = width ?? this.config.originalDimensions.width
       const targetHeight = height ?? this.config.originalDimensions.height
 
-      // Calculate if we need to scale down
-      if (targetWidth > maxWidth || targetHeight > maxHeight) {
-        const widthScale = maxWidth / targetWidth
-        const heightScale = maxHeight / targetHeight
-        const scale = Math.min(widthScale, heightScale)
+      // If fitIn is enabled (default), use container dimensions
+      // Imagor will fit the image inside while preserving aspect ratio
+      if (state.fitIn !== false) {
+        const widthScale = previewWidth / targetWidth
+        const heightScale = previewHeight / targetHeight
+        scaleFactor = Math.min(widthScale, heightScale)
 
-        // Apply proportional scaling
-        width = Math.round(targetWidth * scale)
-        height = Math.round(targetHeight * scale)
+        // Use preview area dimensions directly - fitIn handles aspect ratio
+        width = previewWidth
+        height = previewHeight
+      } else {
+        // If fitIn is disabled (stretch/fill mode), calculate proportional preview size
+        // This ensures preview matches output aspect ratio
+        if (targetWidth > previewWidth || targetHeight > previewHeight) {
+          const widthScale = previewWidth / targetWidth
+          const heightScale = previewHeight / targetHeight
+          const scale = Math.min(widthScale, heightScale)
 
-        // Store scale factor for blur/sharpen adjustments
-        scaleFactor = scale
+          // Apply proportional scaling to match output aspect ratio
+          width = Math.round(targetWidth * scale)
+          height = Math.round(targetHeight * scale)
+          scaleFactor = scale
+        }
       }
     }
 
