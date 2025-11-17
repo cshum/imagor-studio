@@ -125,7 +125,6 @@ export class ImageEditor {
 
   /**
    * Check if all crop parameters are defined
-   * Private static helper for convertStateToGraphQLParams
    */
   private static hasCropParams(state: ImageEditorState): boolean {
     return (
