@@ -178,30 +178,32 @@ export class ImageEditor {
       // Calculate target dimensions (what the output will be)
       const targetWidth = width ?? this.config.originalDimensions.width
       const targetHeight = height ?? this.config.originalDimensions.height
-
-      // If fitIn is enabled (default), use container dimensions
-      // Imagor will fit the image inside while preserving aspect ratio
-      if (state.fitIn !== false) {
-        const widthScale = previewWidth / targetWidth
-        const heightScale = previewHeight / targetHeight
-        scaleFactor = Math.min(widthScale, heightScale)
-
-        // Use preview area dimensions directly - fitIn handles aspect ratio
-        width = previewWidth
-        height = previewHeight
-      } else {
-        // If fitIn is disabled (stretch/fill mode), calculate proportional preview size
-        // This ensures preview matches output aspect ratio
-        if (targetWidth > previewWidth || targetHeight > previewHeight) {
-          const widthScale = previewWidth / targetWidth
-          const heightScale = previewHeight / targetHeight
-          const scale = Math.min(widthScale, heightScale)
-
-          // Apply proportional scaling to match output aspect ratio
+      
+      // Calculate scale factor
+      const widthScale = previewWidth / targetWidth
+      const heightScale = previewHeight / targetHeight
+      const scale = Math.min(widthScale, heightScale)
+      
+      // Only scale if output is larger than preview area (scale < 1)
+      // Never upscale small images - preview should match actual output size
+      if (scale < 1) {
+        scaleFactor = scale
+        
+        if (state.fitIn !== false) {
+          // fitIn mode: use container dimensions, Imagor will fit inside
+          width = previewWidth
+          height = previewHeight
+        } else {
+          // Stretch/fill mode: calculate exact scaled dimensions
           width = Math.round(targetWidth * scale)
           height = Math.round(targetHeight * scale)
-          scaleFactor = scale
         }
+      } else {
+        // Output is smaller than or equal to preview area
+        // Use actual output dimensions (no scaling)
+        width = targetWidth
+        height = targetHeight
+        scaleFactor = 1
       }
     }
 
