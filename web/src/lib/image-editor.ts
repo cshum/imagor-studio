@@ -107,10 +107,6 @@ export class ImageEditor {
     this.undoStack = []
     this.redoStack = []
     this.pendingHistorySnapshot = null
-    if (this.historyDebounceTimer) {
-      clearTimeout(this.historyDebounceTimer)
-      this.historyDebounceTimer = null
-    }
     // Reset state to defaults when component remounts
     // The page will restore from URL if there's a ?state= parameter
     this.state = {
