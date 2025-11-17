@@ -125,8 +125,9 @@ export class ImageEditor {
 
   /**
    * Check if all crop parameters are defined
+   * Private static helper for convertStateToGraphQLParams
    */
-  private hasCropParams(state: ImageEditorState): boolean {
+  private static hasCropParams(state: ImageEditorState): boolean {
     return (
       state.cropLeft !== undefined &&
       state.cropTop !== undefined &&
@@ -137,9 +138,15 @@ export class ImageEditor {
 
   /**
    * Convert state to GraphQL input format
+   * Public static method for external use (e.g., generating custom URLs)
+   * @param state - Image editor state with all transformation parameters
+   * @param config - Editor configuration (dimensions, keys)
+   * @param forPreview - Whether to generate preview URL (adds preview filter, WebP format)
+   * @returns GraphQL parameters for Imagor URL generation
    */
-  private convertToGraphQLParams(
+  public static convertStateToGraphQLParams(
     state: ImageEditorState,
+    config: ImageEditorConfig,
     forPreview = false,
   ): Partial<ImagorParamsInput> {
     const graphqlParams: Partial<ImagorParamsInput> = {}
@@ -147,9 +154,9 @@ export class ImageEditor {
     // Crop handling (crops BEFORE resize in URL path)
     // Convert from left/top/width/height to left/top/right/bottom
     // Skip crop in preview when visual cropping is enabled (so user can see full image)
-    const shouldApplyCrop = !forPreview || (forPreview && !this.state.visualCropEnabled)
+    const shouldApplyCrop = !forPreview || (forPreview && !state.visualCropEnabled)
 
-    if (shouldApplyCrop && this.hasCropParams(state)) {
+    if (shouldApplyCrop && ImageEditor.hasCropParams(state)) {
       graphqlParams.cropLeft = state.cropLeft
       graphqlParams.cropTop = state.cropTop
       graphqlParams.cropRight = state.cropLeft! + state.cropWidth!
@@ -162,18 +169,18 @@ export class ImageEditor {
 
     // When visual crop is enabled in preview, use original dimensions
     // so the crop overlay can work with the full original image
-    if (forPreview && this.state.visualCropEnabled) {
-      width = this.config.originalDimensions.width
-      height = this.config.originalDimensions.height
+    if (forPreview && state.visualCropEnabled) {
+      width = config.originalDimensions.width
+      height = config.originalDimensions.height
     }
 
     // Calculate scale factor for blur/sharpen adjustments
     let scaleFactor = 1
 
     // Apply preview dimension constraints when generating preview URLs
-    if (forPreview && this.config.previewMaxDimensions) {
-      const previewWidth = this.config.previewMaxDimensions.width
-      const previewHeight = this.config.previewMaxDimensions.height
+    if (forPreview && config.previewMaxDimensions) {
+      const previewWidth = config.previewMaxDimensions.width
+      const previewHeight = config.previewMaxDimensions.height
 
       // Determine the source dimensions (what goes INTO the resize operation)
       // If there's a crop, use the cropped dimensions
@@ -181,14 +188,14 @@ export class ImageEditor {
       let sourceWidth: number
       let sourceHeight: number
 
-      if (shouldApplyCrop && this.hasCropParams(state)) {
+      if (shouldApplyCrop && ImageEditor.hasCropParams(state)) {
         // Use cropped dimensions as the source
         sourceWidth = state.cropWidth!
         sourceHeight = state.cropHeight!
       } else {
         // Use original dimensions
-        sourceWidth = this.config.originalDimensions.width
-        sourceHeight = this.config.originalDimensions.height
+        sourceWidth = config.originalDimensions.width
+        sourceHeight = config.originalDimensions.height
       }
 
       // Calculate what the ACTUAL output will be after resize
@@ -280,7 +287,7 @@ export class ImageEditor {
 
     // Skip rotation in preview when visual cropping is enabled
     // (so user can crop on unrotated image, rotation applied after crop in final URL)
-    const shouldApplyRotation = !forPreview || (forPreview && !this.state.visualCropEnabled)
+    const shouldApplyRotation = !forPreview || (forPreview && !state.visualCropEnabled)
     if (shouldApplyRotation && state.rotation !== undefined && state.rotation !== 0) {
       filters.push({ name: 'rotate', args: state.rotation.toString() })
     }
@@ -315,6 +322,14 @@ export class ImageEditor {
   }
 
   /**
+   * Private instance method wrapper for internal use
+   * Delegates to static method with instance state and config
+   */
+  private convertToGraphQLParams(forPreview = false): Partial<ImagorParamsInput> {
+    return ImageEditor.convertStateToGraphQLParams(this.state, this.config, forPreview)
+  }
+
+  /**
    * Generate preview URL and trigger callbacks
    */
   private async generatePreview(): Promise<void> {
@@ -326,7 +341,7 @@ export class ImageEditor {
     this.abortController = new AbortController()
 
     try {
-      const graphqlParams = this.convertToGraphQLParams(this.state, true)
+      const graphqlParams = this.convertToGraphQLParams(true)
       const url = await generateImagorUrl(
         {
           galleryKey: this.config.galleryKey,
@@ -587,7 +602,7 @@ export class ImageEditor {
    * Generate copy URL with user-selected format (not WebP)
    */
   async generateCopyUrl(): Promise<string> {
-    const copyParams = this.convertToGraphQLParams(this.state, false) // false = no WebP override
+    const copyParams = this.convertToGraphQLParams(false) // false = no WebP override
     return await generateImagorUrl({
       galleryKey: this.config.galleryKey,
       imageKey: this.config.imageKey,
@@ -600,9 +615,9 @@ export class ImageEditor {
    */
   async generateDownloadUrl(): Promise<string> {
     const downloadParams = {
-      ...this.convertToGraphQLParams(this.state, false), // false = no WebP override
+      ...this.convertToGraphQLParams(false), // false = no WebP override
       filters: [
-        ...(this.convertToGraphQLParams(this.state, false).filters || []),
+        ...(this.convertToGraphQLParams(false).filters || []),
         { name: 'attachment', args: '' }, // Empty args for default filename
       ],
     }
