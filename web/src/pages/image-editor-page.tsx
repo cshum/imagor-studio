@@ -96,7 +96,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     const debouncedUpdateState = debounce((state: ImageEditorState) => {
       const encoded = serializeStateToUrl(state)
       updateLocationState(encoded)
-    }, 500)
+    }, 300)
     // Set callbacks that depend on component state
     imageEditor.setCallbacks({
       onPreviewUpdate: setPreviewUrl,

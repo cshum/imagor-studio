@@ -345,7 +345,7 @@ export class ImageEditor {
     this.debounceTimer = window.setTimeout(() => {
       this.debounceTimer = null
       this.generatePreview()
-    }, 500)
+    }, 300)
   }
 
   /**
@@ -397,7 +397,7 @@ export class ImageEditor {
 
   /**
    * Debounced history snapshot
-   * Synchronized with preview debounce (500ms) to ensure history is saved
+   * Synchronized with preview debounce (300ms) to ensure history is saved
    * when the user sees the preview result
    */
   private scheduleHistorySnapshot(): void {
@@ -415,7 +415,7 @@ export class ImageEditor {
       clearTimeout(this.historyDebounceTimer)
     }
 
-    // Schedule snapshot after 500ms of inactivity (same as preview)
+    // Schedule snapshot after 300ms of inactivity (same as preview)
     this.historyDebounceTimer = window.setTimeout(() => {
       if (this.pendingHistorySnapshot) {
         // Push to undo stack
@@ -432,7 +432,7 @@ export class ImageEditor {
         this.pendingHistorySnapshot = null
       }
       this.historyDebounceTimer = null
-    }, 500)
+    }, 300)
   }
 
   /**
