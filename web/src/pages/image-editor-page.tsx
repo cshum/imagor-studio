@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
-import { ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
+import { ChevronLeft, Copy, Download, Redo2, RotateCcw, Settings, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { ImageEditorControls } from '@/components/image-editor/imagor-editor-controls.tsx'
@@ -84,39 +84,36 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   } | null>(null)
   const [resetCounter, setResetCounter] = useState(0)
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
+  const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
 
   // Derive visualCropEnabled from params state (single source of truth)
   const visualCropEnabled = params.visualCropEnabled ?? false
 
-  // Set up callbacks and cleanup
-  // Re-run when imageEditor changes (when navigating to different image)
   useEffect(() => {
-    const debouncedUpdateState = debounce((state: ImageEditorState) => {
-      const encoded = serializeStateToUrl(state)
-      updateLocationState(encoded)
-    }, 500)
-    // Set callbacks that depend on component state
+    // Set callbacks FIRST (this resets state to defaults)
     imageEditor.setCallbacks({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
-      onStateChange: (state, fromUrl, visualCrop) => {
-        setParams(state)
-        // Skip URL update if from URL restoration OR visual crop only
-        if (!fromUrl && !visualCrop) {
-          debouncedUpdateState(state)
-        }
-      },
+      onStateChange: setParams,
       onLoadingChange: setIsLoading,
+      onHistoryChange: () => {
+        // Update undo/redo button states
+        setCanUndo(imageEditor.canUndo())
+        setCanRedo(imageEditor.canRedo())
+
+        const state = imageEditor.getState()
+        const encoded = serializeStateToUrl(state)
+        updateLocationState(encoded)
+      },
     })
 
-    // Restore state from URL once on mount (when imageEditor changes)
-    // Since we use replaceState (not pushState), URL changes don't add to history
+    // restore state from URL, after callbacks are set
     const encoded = getStateFromLocation()
     if (encoded) {
       const urlState = deserializeStateFromUrl(encoded)
       if (urlState) {
-        // Restore state from URL with fromUrl=true to prevent loop
-        imageEditor.updateParams(urlState, true)
+        imageEditor.restoreState(urlState)
       }
     }
 
@@ -129,6 +126,27 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   useEffect(() => {
     imageEditor.updatePreviewMaxDimensions(previewMaxDimensions ?? undefined)
   }, [imageEditor, previewMaxDimensions])
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+Z (Mac) or Ctrl+Z (Windows/Linux)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        e.preventDefault()
+
+        if (e.shiftKey) {
+          // Cmd+Shift+Z = Redo
+          imageEditor.redo()
+        } else {
+          // Cmd+Z = Undo
+          imageEditor.undo()
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [imageEditor])
 
   const updateParams = (updates: Partial<ImageEditorState>) => {
     imageEditor.updateParams(updates)
@@ -226,7 +244,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       {/* Preview Area  */}
       <div className='ios-preview-container-fix flex flex-1 flex-col'>
         {/* Header */}
-        <div className='flex items-center gap-2 border-b p-4'>
+        <div className='flex items-center gap-2 border-b p-3'>
           {/* Back button - hidden in embedded mode */}
           <Button
             variant='ghost'
@@ -249,9 +267,27 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             </a>
           </div>
 
-          {/* Desktop Theme Toggle */}
+          {/* Desktop Undo/Redo + Theme Toggle */}
           {!isMobile && (
-            <div className='ml-auto'>
+            <div className='ml-auto flex items-center gap-2'>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => imageEditor.undo()}
+                disabled={!canUndo}
+                title={t('imageEditor.page.undo')}
+              >
+                <Undo2 className='h-4 w-4' />
+              </Button>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => imageEditor.redo()}
+                disabled={!canRedo}
+                title={t('imageEditor.page.redo')}
+              >
+                <Redo2 className='h-4 w-4' />
+              </Button>
               <ModeToggle />
             </div>
           )}
@@ -271,7 +307,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   hideClose={true}
                   className='flex w-full flex-col gap-0 p-0 sm:w-96'
                 >
-                  <SheetHeader className='border-b p-4'>
+                  <SheetHeader className='border-b p-3'>
                     <div className='flex items-center justify-between'>
                       <Button variant='ghost' size='sm' onClick={() => setMobileSheetOpen(false)}>
                         <ChevronLeft className='mr-1 h-4 w-4' />
@@ -288,7 +324,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   </SheetHeader>
 
                   {/* Scrollable Controls */}
-                  <div className='flex-1 touch-pan-y overflow-y-auto p-4 select-text'>
+                  <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-text'>
                     <ImageEditorControls
                       key={resetCounter}
                       params={params}
@@ -333,7 +369,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       {!isMobile && (
         <div className='bg-background flex w-100 flex-col border-l'>
           {/* Panel Header */}
-          <div className='border-b p-4'>
+          <div className='border-b p-3'>
             <div className='flex items-center justify-between'>
               <h2 className='font-semibold'>{t('imageEditor.page.controls')}</h2>
               <Button variant='outline' size='sm' onClick={resetParams}>
@@ -344,7 +380,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           </div>
 
           {/* Controls */}
-          <div className='flex-1 touch-pan-y overflow-y-auto p-4 select-text'>
+          <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-text'>
             <ImageEditorControls
               key={resetCounter}
               params={params}
@@ -360,7 +396,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           </div>
 
           {/* Action Buttons */}
-          <div className='bg-background border-t p-4'>
+          <div className='bg-background border-t p-3'>
             <div className='flex gap-2'>
               <Button variant='outline' size='sm' onClick={handleDownloadClick} className='flex-1'>
                 <Download className='mr-1 h-4 w-4' />
