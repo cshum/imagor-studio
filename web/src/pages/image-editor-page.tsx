@@ -107,11 +107,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         if (!fromRestore && !visualCrop) {
           debouncedUpdateState(state)
         }
-        // Update undo/redo button states
+      },
+      onLoadingChange: setIsLoading,
+      onHistoryChange: () => {
+        // Update undo/redo button states when history changes
         setCanUndo(imageEditor.canUndo())
         setCanRedo(imageEditor.canRedo())
       },
-      onLoadingChange: setIsLoading,
     })
 
     // Restore state from URL once on mount (when imageEditor changes)

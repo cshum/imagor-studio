@@ -61,6 +61,7 @@ export interface ImageEditorCallbacks {
   onError?: (error: Error) => void
   onStateChange?: (state: ImageEditorState, fromRestore?: boolean, visualCrop?: boolean) => void
   onLoadingChange?: (isLoading: boolean) => void
+  onHistoryChange?: () => void
 }
 
 /**
@@ -430,6 +431,8 @@ export class ImageEditor {
         }
 
         this.pendingHistorySnapshot = null
+
+        this.callbacks.onHistoryChange?.()
       }
       this.historyDebounceTimer = null
     }, 300)
@@ -505,6 +508,9 @@ export class ImageEditor {
         if (this.undoStack.length > this.MAX_HISTORY_SIZE) {
           this.undoStack.shift()
         }
+
+        // Notify that history changed
+        this.callbacks.onHistoryChange?.()
       }
 
       // Update state first (affects preview URL generation)
@@ -629,6 +635,9 @@ export class ImageEditor {
     // Notify and update preview
     this.callbacks.onStateChange?.(this.getState(), false, false)
     this.schedulePreviewUpdate()
+
+    // Notify that history changed
+    this.callbacks.onHistoryChange?.()
   }
 
   /**
@@ -652,6 +661,9 @@ export class ImageEditor {
     // Notify and update preview
     this.callbacks.onStateChange?.(this.getState(), false, false)
     this.schedulePreviewUpdate()
+
+    // Notify that history changed
+    this.callbacks.onHistoryChange?.()
   }
 
   /**
