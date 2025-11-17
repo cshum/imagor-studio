@@ -95,12 +95,13 @@ export class ImageEditor {
   }
 
   /**
-   * Set callbacks for preview updates, errors, state changes, and loading states.
-   * Required to enable editor functionality.
+   * Initialize the editor with callbacks
+   * Resets all state, history, and preview tracking
+   * Should be called when the component mounts or remounts
    */
-  setCallbacks(callbacks: ImageEditorCallbacks): void {
+  initialize(callbacks: ImageEditorCallbacks): void {
     this.callbacks = callbacks
-    // Reset lastPreviewUrl when callbacks are set (component remounted)
+    // Reset lastPreviewUrl when component mounts/remounts
     // This ensures preview updates work correctly when navigating back
     this.lastPreviewUrl = null
     // Reset history when component remounts
@@ -125,8 +126,9 @@ export class ImageEditor {
 
   /**
    * Check if all crop parameters are defined
+   * Pure utility function - can be used from any context
    */
-  private hasCropParams(state: ImageEditorState): boolean {
+  private static hasCropParams(state: ImageEditorState): boolean {
     return (
       state.cropLeft !== undefined &&
       state.cropTop !== undefined &&
@@ -137,8 +139,12 @@ export class ImageEditor {
 
   /**
    * Convert state to GraphQL input format
+   * Can be called with custom state for generating URLs with different parameters
+   * @param state - Image editor state with all transformation parameters
+   * @param forPreview - Whether to generate preview URL (adds preview filter, WebP format)
+   * @returns GraphQL parameters for Imagor URL generation
    */
-  private convertToGraphQLParams(
+  convertStateToGraphQLParams(
     state: ImageEditorState,
     forPreview = false,
   ): Partial<ImagorParamsInput> {
@@ -147,9 +153,9 @@ export class ImageEditor {
     // Crop handling (crops BEFORE resize in URL path)
     // Convert from left/top/width/height to left/top/right/bottom
     // Skip crop in preview when visual cropping is enabled (so user can see full image)
-    const shouldApplyCrop = !forPreview || (forPreview && !this.state.visualCropEnabled)
+    const shouldApplyCrop = !forPreview || (forPreview && !state.visualCropEnabled)
 
-    if (shouldApplyCrop && this.hasCropParams(state)) {
+    if (shouldApplyCrop && ImageEditor.hasCropParams(state)) {
       graphqlParams.cropLeft = state.cropLeft
       graphqlParams.cropTop = state.cropTop
       graphqlParams.cropRight = state.cropLeft! + state.cropWidth!
@@ -162,7 +168,7 @@ export class ImageEditor {
 
     // When visual crop is enabled in preview, use original dimensions
     // so the crop overlay can work with the full original image
-    if (forPreview && this.state.visualCropEnabled) {
+    if (forPreview && state.visualCropEnabled) {
       width = this.config.originalDimensions.width
       height = this.config.originalDimensions.height
     }
@@ -181,7 +187,7 @@ export class ImageEditor {
       let sourceWidth: number
       let sourceHeight: number
 
-      if (shouldApplyCrop && this.hasCropParams(state)) {
+      if (shouldApplyCrop && ImageEditor.hasCropParams(state)) {
         // Use cropped dimensions as the source
         sourceWidth = state.cropWidth!
         sourceHeight = state.cropHeight!
@@ -280,7 +286,7 @@ export class ImageEditor {
 
     // Skip rotation in preview when visual cropping is enabled
     // (so user can crop on unrotated image, rotation applied after crop in final URL)
-    const shouldApplyRotation = !forPreview || (forPreview && !this.state.visualCropEnabled)
+    const shouldApplyRotation = !forPreview || (forPreview && !state.visualCropEnabled)
     if (shouldApplyRotation && state.rotation !== undefined && state.rotation !== 0) {
       filters.push({ name: 'rotate', args: state.rotation.toString() })
     }
@@ -326,7 +332,7 @@ export class ImageEditor {
     this.abortController = new AbortController()
 
     try {
-      const graphqlParams = this.convertToGraphQLParams(this.state, true)
+      const graphqlParams = this.convertStateToGraphQLParams(this.state, true)
       const url = await generateImagorUrl(
         {
           galleryKey: this.config.galleryKey,
@@ -587,7 +593,7 @@ export class ImageEditor {
    * Generate copy URL with user-selected format (not WebP)
    */
   async generateCopyUrl(): Promise<string> {
-    const copyParams = this.convertToGraphQLParams(this.state, false) // false = no WebP override
+    const copyParams = this.convertStateToGraphQLParams(this.state, false) // false = no WebP override
     return await generateImagorUrl({
       galleryKey: this.config.galleryKey,
       imageKey: this.config.imageKey,
@@ -600,9 +606,9 @@ export class ImageEditor {
    */
   async generateDownloadUrl(): Promise<string> {
     const downloadParams = {
-      ...this.convertToGraphQLParams(this.state, false), // false = no WebP override
+      ...this.convertStateToGraphQLParams(this.state, false), // false = no WebP override
       filters: [
-        ...(this.convertToGraphQLParams(this.state, false).filters || []),
+        ...(this.convertStateToGraphQLParams(this.state, false).filters || []),
         { name: 'attachment', args: '' }, // Empty args for default filename
       ],
     }
