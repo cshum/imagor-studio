@@ -450,38 +450,19 @@ export class ImageEditor {
 
   /**
    * Reset all parameters to original state
+   * Preserves history so user can undo the reset
    */
   resetParams(): void {
-    // Clear history on reset
-    this.undoStack = []
-    this.redoStack = []
-    this.pendingHistorySnapshot = null
-    if (this.historyDebounceTimer) {
-      clearTimeout(this.historyDebounceTimer)
-      this.historyDebounceTimer = null
+    // Save current state to history before resetting (so reset can be undone)
+    this.scheduleHistorySnapshot()
+
+    // Reset to initial state (same as constructor)
+    this.state = {
+      width: this.config.originalDimensions.width,
+      height: this.config.originalDimensions.height,
+      fitIn: true,
     }
 
-    this.state = {
-      // Reset to original dimensions if available
-      width: this.config.originalDimensions?.width,
-      height: this.config.originalDimensions?.height,
-      fitIn: true,
-      // Clear all other transforms
-      stretch: undefined,
-      brightness: undefined,
-      contrast: undefined,
-      saturation: undefined,
-      hue: undefined,
-      blur: undefined,
-      sharpen: undefined,
-      grayscale: undefined,
-      hFlip: undefined,
-      vFlip: undefined,
-      rotation: undefined,
-      format: undefined,
-      quality: undefined,
-      maxBytes: undefined,
-    }
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
   }
