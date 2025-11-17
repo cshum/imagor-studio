@@ -446,7 +446,9 @@
       "download": "Download",
       "copyUrl": "Copy URL",
       "retry": "Retry",
-      "failedToDownload": "Failed to download image"
+      "failedToDownload": "Failed to download image",
+      "undo": "Undo",
+      "redo": "Redo"
     },
     "controls": {
       "cropAspect": "Crop & Aspect",

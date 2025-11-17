@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
-import { ChevronLeft, Copy, Download, RotateCcw, Settings } from 'lucide-react'
+import { ChevronLeft, Copy, Download, RotateCcw, Settings, Undo2, Redo2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { ImageEditorControls } from '@/components/image-editor/imagor-editor-controls.tsx'
@@ -84,6 +84,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   } | null>(null)
   const [resetCounter, setResetCounter] = useState(0)
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
+  const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
 
   // Derive visualCropEnabled from params state (single source of truth)
   const visualCropEnabled = params.visualCropEnabled ?? false
@@ -105,6 +107,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         if (!fromUrl && !visualCrop) {
           debouncedUpdateState(state)
         }
+        // Update undo/redo button states
+        setCanUndo(imageEditor.canUndo())
+        setCanRedo(imageEditor.canRedo())
       },
       onLoadingChange: setIsLoading,
     })
@@ -129,6 +134,27 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   useEffect(() => {
     imageEditor.updatePreviewMaxDimensions(previewMaxDimensions ?? undefined)
   }, [imageEditor, previewMaxDimensions])
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+Z (Mac) or Ctrl+Z (Windows/Linux)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        e.preventDefault()
+
+        if (e.shiftKey) {
+          // Cmd+Shift+Z = Redo
+          imageEditor.redo()
+        } else {
+          // Cmd+Z = Undo
+          imageEditor.undo()
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [imageEditor])
 
   const updateParams = (updates: Partial<ImageEditorState>) => {
     imageEditor.updateParams(updates)
@@ -249,9 +275,27 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             </a>
           </div>
 
-          {/* Desktop Theme Toggle */}
+          {/* Desktop Undo/Redo + Theme Toggle */}
           {!isMobile && (
-            <div className='ml-auto'>
+            <div className='ml-auto flex items-center gap-2'>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => imageEditor.undo()}
+                disabled={!canUndo}
+                title={t('imageEditor.page.undo')}
+              >
+                <Undo2 className='h-4 w-4' />
+              </Button>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => imageEditor.redo()}
+                disabled={!canRedo}
+                title={t('imageEditor.page.redo')}
+              >
+                <Redo2 className='h-4 w-4' />
+              </Button>
               <ModeToggle />
             </div>
           )}

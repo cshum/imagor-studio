@@ -75,6 +75,11 @@ export class ImageEditor {
   private abortController: AbortController | null = null
   private lastPreviewUrl: string | null = null
   private previewLoadResolvers: Array<() => void> = []
+  private undoStack: ImageEditorState[] = []
+  private redoStack: ImageEditorState[] = []
+  private readonly MAX_HISTORY_SIZE = 50
+  private historyDebounceTimer: number | null = null
+  private pendingHistorySnapshot: ImageEditorState | null = null
 
   constructor(config: ImageEditorConfig) {
     this.config = config
@@ -97,6 +102,14 @@ export class ImageEditor {
     // Reset lastPreviewUrl when callbacks are set (component remounted)
     // This ensures preview updates work correctly when navigating back
     this.lastPreviewUrl = null
+    // Reset history when component remounts
+    this.undoStack = []
+    this.redoStack = []
+    this.pendingHistorySnapshot = null
+    if (this.historyDebounceTimer) {
+      clearTimeout(this.historyDebounceTimer)
+      this.historyDebounceTimer = null
+    }
     // Reset state to defaults when component remounts
     // The page will restore from URL if there's a ?state= parameter
     this.state = {
@@ -341,8 +354,6 @@ export class ImageEditor {
    * @param fromHash - If true, this update is from hash restoration (prevents loop)
    */
   updateParams(updates: Partial<ImageEditorState>, fromHash = false): void {
-    this.state = { ...this.state, ...updates }
-
     // Check if only crop params changed during visual crop
     // (crop filter is skipped in visual mode, so preview URL won't change)
     const onlyCropParamsChanged =
@@ -353,6 +364,15 @@ export class ImageEditor {
           key === 'cropLeft' || key === 'cropTop' || key === 'cropWidth' || key === 'cropHeight',
       )
 
+    // Schedule debounced history snapshot unless:
+    // - From URL restoration (fromHash = true)
+    // - OR dragging crop overlay (onlyCropParamsChanged = true)
+    if (!fromHash && !onlyCropParamsChanged) {
+      this.scheduleHistorySnapshot()
+    }
+
+    this.state = { ...this.state, ...updates }
+
     // Pass onlyCropParamsChanged flag to callback so page can skip hash update
     this.callbacks.onStateChange?.(this.getState(), fromHash, onlyCropParamsChanged)
 
@@ -362,9 +382,55 @@ export class ImageEditor {
   }
 
   /**
+   * Debounced history snapshot
+   * Synchronized with preview debounce (500ms) to ensure history is saved
+   * when the user sees the preview result
+   */
+  private scheduleHistorySnapshot(): void {
+    // Save current state as pending snapshot (before update)
+    // Only capture the first state in a sequence of rapid changes
+    if (!this.pendingHistorySnapshot) {
+      this.pendingHistorySnapshot = { ...this.state }
+    }
+
+    // Clear existing timer
+    if (this.historyDebounceTimer) {
+      clearTimeout(this.historyDebounceTimer)
+    }
+
+    // Schedule snapshot after 500ms of inactivity (same as preview)
+    this.historyDebounceTimer = window.setTimeout(() => {
+      if (this.pendingHistorySnapshot) {
+        // Push to undo stack
+        this.undoStack.push(this.pendingHistorySnapshot)
+
+        // Clear redo stack on new change
+        this.redoStack = []
+
+        // Limit stack size
+        if (this.undoStack.length > this.MAX_HISTORY_SIZE) {
+          this.undoStack.shift()
+        }
+
+        this.pendingHistorySnapshot = null
+      }
+      this.historyDebounceTimer = null
+    }, 500)
+  }
+
+  /**
    * Reset all parameters to original state
    */
   resetParams(): void {
+    // Clear history on reset
+    this.undoStack = []
+    this.redoStack = []
+    this.pendingHistorySnapshot = null
+    if (this.historyDebounceTimer) {
+      clearTimeout(this.historyDebounceTimer)
+      this.historyDebounceTimer = null
+    }
+
     this.state = {
       // Reset to original dimensions if available
       width: this.config.originalDimensions?.width,
@@ -506,12 +572,83 @@ export class ImageEditor {
   }
 
   /**
+   * Check if undo is available
+   */
+  canUndo(): boolean {
+    return this.undoStack.length > 0
+  }
+
+  /**
+   * Check if redo is available
+   */
+  canRedo(): boolean {
+    return this.redoStack.length > 0
+  }
+
+  /**
+   * Undo the last change
+   */
+  undo(): void {
+    if (!this.canUndo()) return
+
+    // Flush any pending history snapshot first
+    if (this.pendingHistorySnapshot && this.historyDebounceTimer) {
+      clearTimeout(this.historyDebounceTimer)
+      this.undoStack.push(this.pendingHistorySnapshot)
+      this.pendingHistorySnapshot = null
+      this.historyDebounceTimer = null
+    }
+
+    // Push current state to redo stack
+    this.redoStack.push({ ...this.state })
+
+    // Pop from undo stack and restore
+    const previousState = this.undoStack.pop()!
+    this.state = { ...previousState }
+
+    // Notify and update preview
+    this.callbacks.onStateChange?.(this.getState(), false, false)
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Redo the last undone change
+   */
+  redo(): void {
+    if (!this.canRedo()) return
+
+    // Flush any pending history snapshot first
+    if (this.pendingHistorySnapshot && this.historyDebounceTimer) {
+      clearTimeout(this.historyDebounceTimer)
+      this.undoStack.push(this.pendingHistorySnapshot)
+      this.pendingHistorySnapshot = null
+      this.historyDebounceTimer = null
+    }
+
+    // Push current state to undo stack
+    this.undoStack.push({ ...this.state })
+
+    // Pop from redo stack and restore
+    const nextState = this.redoStack.pop()!
+    this.state = { ...nextState }
+
+    // Notify and update preview
+    this.callbacks.onStateChange?.(this.getState(), false, false)
+    this.schedulePreviewUpdate()
+  }
+
+  /**
    * Clean up resources
    */
   destroy(): void {
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer)
       this.debounceTimer = null
+    }
+
+    if (this.historyDebounceTimer) {
+      clearTimeout(this.historyDebounceTimer)
+      this.historyDebounceTimer = null
     }
 
     if (this.abortController) {
