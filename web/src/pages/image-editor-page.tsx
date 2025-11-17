@@ -93,31 +93,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   // Set up callbacks and cleanup
   // Re-run when imageEditor changes (when navigating to different image)
   useEffect(() => {
-    const debouncedUpdateState = debounce((state: ImageEditorState) => {
-      const encoded = serializeStateToUrl(state)
-      updateLocationState(encoded)
-    }, 300)
-    // Set callbacks that depend on component state
-    imageEditor.setCallbacks({
-      onPreviewUpdate: setPreviewUrl,
-      onError: setError,
-      onStateChange: (state, fromRestore, visualCrop) => {
-        setParams(state)
-        // Skip URL update if from state restoration OR visual crop only
-        if (!fromRestore && !visualCrop) {
-          debouncedUpdateState(state)
-        }
-      },
-      onLoadingChange: setIsLoading,
-      onHistoryChange: () => {
-        // Update undo/redo button states when history changes
-        setCanUndo(imageEditor.canUndo())
-        setCanRedo(imageEditor.canRedo())
-      },
-    })
-
     // Restore state from URL once on mount (when imageEditor changes)
-    // Since we use replaceState (not pushState), URL changes don't add to history
     const encoded = getStateFromLocation()
     if (encoded) {
       const urlState = deserializeStateFromUrl(encoded)
@@ -126,6 +102,26 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         imageEditor.restoreState(urlState)
       }
     }
+
+    // Set callbacks that depend on component state
+    imageEditor.setCallbacks({
+      onPreviewUpdate: setPreviewUrl,
+      onError: setError,
+      onStateChange: (state) => {
+        setParams(state)
+      },
+      onLoadingChange: setIsLoading,
+      onHistoryChange: () => {
+        // Update undo/redo button states
+        setCanUndo(imageEditor.canUndo())
+        setCanRedo(imageEditor.canRedo())
+
+        // Sync state to URL (no debounce needed - history is already debounced)
+        const state = imageEditor.getState()
+        const encoded = serializeStateToUrl(state)
+        updateLocationState(encoded)
+      },
+    })
 
     return () => {
       imageEditor.destroy()
