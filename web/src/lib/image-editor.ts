@@ -59,7 +59,7 @@ export interface ImageEditorConfig {
 export interface ImageEditorCallbacks {
   onPreviewUpdate?: (url: string) => void
   onError?: (error: Error) => void
-  onStateChange?: (state: ImageEditorState, fromRestore?: boolean, visualCrop?: boolean) => void
+  onStateChange?: (state: ImageEditorState) => void
   onLoadingChange?: (isLoading: boolean) => void
   onHistoryChange?: () => void
 }
@@ -372,8 +372,8 @@ export class ImageEditor {
 
     this.state = { ...this.state, ...updates }
 
-    // Pass onlyCropParamsChanged flag to callback so page can skip URL update
-    this.callbacks.onStateChange?.(this.getState(), false, onlyCropParamsChanged)
+    // Notify state change
+    this.callbacks.onStateChange?.(this.getState())
 
     if (!onlyCropParamsChanged) {
       this.schedulePreviewUpdate()
@@ -389,8 +389,8 @@ export class ImageEditor {
     // Directly update state without history
     this.state = { ...this.state, ...state }
 
-    // Notify with fromRestore=true to prevent URL update loop
-    this.callbacks.onStateChange?.(this.getState(), true, false)
+    // Notify state change
+    this.callbacks.onStateChange?.(this.getState())
 
     // Always update preview when restoring state
     this.schedulePreviewUpdate()
@@ -520,7 +520,7 @@ export class ImageEditor {
       // Wait for the new preview to load
       await this.waitForPreviewLoad()
       // Notify state change AFTER preview loads
-      this.callbacks.onStateChange?.(this.getState(), false, enabled)
+      this.callbacks.onStateChange?.(this.getState())
     }
   }
 
@@ -633,7 +633,7 @@ export class ImageEditor {
     this.state = { ...previousState }
 
     // Notify and update preview
-    this.callbacks.onStateChange?.(this.getState(), false, false)
+    this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
 
     // Notify that history changed
@@ -659,7 +659,7 @@ export class ImageEditor {
     this.state = { ...nextState }
 
     // Notify and update preview
-    this.callbacks.onStateChange?.(this.getState(), false, false)
+    this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
 
     // Notify that history changed

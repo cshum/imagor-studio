@@ -98,25 +98,20 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     if (encoded) {
       const urlState = deserializeStateFromUrl(encoded)
       if (urlState) {
-        // Restore state from URL (does not save to history or trigger URL update)
         imageEditor.restoreState(urlState)
       }
     }
 
-    // Set callbacks that depend on component state
     imageEditor.setCallbacks({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
-      onStateChange: (state) => {
-        setParams(state)
-      },
+      onStateChange: setParams,
       onLoadingChange: setIsLoading,
       onHistoryChange: () => {
         // Update undo/redo button states
         setCanUndo(imageEditor.canUndo())
         setCanRedo(imageEditor.canRedo())
 
-        // Sync state to URL (no debounce needed - history is already debounced)
         const state = imageEditor.getState()
         const encoded = serializeStateToUrl(state)
         updateLocationState(encoded)
