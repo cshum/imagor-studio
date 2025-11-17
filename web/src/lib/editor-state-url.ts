@@ -2,12 +2,16 @@ import type { ImageEditorState } from '@/lib/image-editor'
 
 /**
  * Serialize ImageEditorState to URL-safe base64 string
- * Serializes the entire state for simplicity and future-proofing
+ * Strips UI-only state (visualCropEnabled) before serializing
  */
 export function serializeStateToUrl(state: ImageEditorState): string {
   try {
+    // Strip UI-only state (visualCropEnabled) before serializing
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { visualCropEnabled, ...transformState } = state
+
     // JSON → base64 → URL-safe
-    const json = JSON.stringify(state)
+    const json = JSON.stringify(transformState)
     const base64 = btoa(json)
     // Make URL-safe: replace +/= with -_
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
