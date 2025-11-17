@@ -172,25 +172,61 @@ export class ImageEditor {
 
     // Apply preview dimension constraints when generating preview URLs
     if (forPreview && this.config.previewMaxDimensions) {
-      const maxWidth = this.config.previewMaxDimensions.width
-      const maxHeight = this.config.previewMaxDimensions.height
+      const previewWidth = this.config.previewMaxDimensions.width
+      const previewHeight = this.config.previewMaxDimensions.height
 
-      // Use original dimensions if user hasn't set explicit dimensions
-      const targetWidth = width ?? this.config.originalDimensions.width
-      const targetHeight = height ?? this.config.originalDimensions.height
+      // Determine the source dimensions (what goes INTO the resize operation)
+      // If there's a crop, use the cropped dimensions
+      // Otherwise, use the original dimensions
+      let sourceWidth: number
+      let sourceHeight: number
 
-      // Calculate if we need to scale down
-      if (targetWidth > maxWidth || targetHeight > maxHeight) {
-        const widthScale = maxWidth / targetWidth
-        const heightScale = maxHeight / targetHeight
-        const scale = Math.min(widthScale, heightScale)
+      if (shouldApplyCrop && this.hasCropParams(state)) {
+        // Use cropped dimensions as the source
+        sourceWidth = state.cropWidth!
+        sourceHeight = state.cropHeight!
+      } else {
+        // Use original dimensions
+        sourceWidth = this.config.originalDimensions.width
+        sourceHeight = this.config.originalDimensions.height
+      }
 
-        // Apply proportional scaling
-        width = Math.round(targetWidth * scale)
-        height = Math.round(targetHeight * scale)
+      // Calculate what the ACTUAL output will be after resize
+      const outputWidth = width ?? sourceWidth
+      const outputHeight = height ?? sourceHeight
 
-        // Store scale factor for blur/sharpen adjustments
+      let actualOutputWidth: number
+      let actualOutputHeight: number
+
+      if (state.fitIn !== false) {
+        // fitIn mode: calculate what fitIn will produce
+        const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight)
+        actualOutputWidth = Math.round(sourceWidth * outputScale)
+        actualOutputHeight = Math.round(sourceHeight * outputScale)
+      } else {
+        // Stretch/fill mode: use exact dimensions
+        actualOutputWidth = outputWidth
+        actualOutputHeight = outputHeight
+      }
+
+      // Now compare ACTUAL output size vs preview area
+      const widthScale = previewWidth / actualOutputWidth
+      const heightScale = previewHeight / actualOutputHeight
+      const scale = Math.min(widthScale, heightScale)
+
+      // Only scale down if actual output is larger than preview area
+      // Never upscale small images - preview should match actual output size
+      if (scale < 1) {
         scaleFactor = scale
+        // Scale down the actual output dimensions
+        width = Math.round(actualOutputWidth * scale)
+        height = Math.round(actualOutputHeight * scale)
+      } else {
+        // Actual output is smaller than or equal to preview area
+        // Use actual output dimensions (no scaling)
+        width = actualOutputWidth
+        height = actualOutputHeight
+        scaleFactor = 1
       }
     }
 
