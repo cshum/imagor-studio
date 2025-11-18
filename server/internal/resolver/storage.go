@@ -134,7 +134,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int,
 
 	// Read video thumbnail position ONCE for this request
 	videoThumbnailResults := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
-		"config.video_thumbnail_position")
+		"config.app_video_thumbnail_position")
 
 	videoThumbnailPos := "first_frame"
 	if len(videoThumbnailResults) > 0 && videoThumbnailResults[0].Exists {
@@ -182,7 +182,7 @@ func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileSta
 
 	// Read video thumbnail position for this request
 	videoThumbnailResults := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
-		"config.video_thumbnail_position")
+		"config.app_video_thumbnail_position")
 
 	videoThumbnailPos := "first_frame"
 	if len(videoThumbnailResults) > 0 && videoThumbnailResults[0].Exists {

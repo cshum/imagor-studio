@@ -102,7 +102,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                       <BreadcrumbItem>
                         {breadcrumb.href && !breadcrumb.isActive ? (
                           <BreadcrumbLink asChild>
-                            <Link to={breadcrumb.href}>{breadcrumb.label}</Link>
+                            <Link to={breadcrumb.href} draggable={false}>
+                              {breadcrumb.label}
+                            </Link>
                           </BreadcrumbLink>
                         ) : (
                           <span className={breadcrumb.isActive ? 'font-medium' : ''}>

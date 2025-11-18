@@ -359,7 +359,7 @@ func TestListFiles_OnlyRequiresReadScope(t *testing.T) {
 			sortOrder := gql.SortOrderAsc
 
 			// Mock the registry call for video thumbnail position
-			mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.video_thumbnail_position"}).
+			mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.app_video_thumbnail_position"}).
 				Return([]*registrystore.Registry{}, nil).Once()
 
 			mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
@@ -396,7 +396,7 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 	path := "/test/file1.txt"
 
 	// Mock the registry call for video thumbnail position
-	mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.video_thumbnail_position"}).
+	mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.app_video_thumbnail_position"}).
 		Return([]*registrystore.Registry{}, nil).Once()
 
 	mockStorage.On("Stat", ctx, path).Return(storage.FileInfo{
@@ -850,7 +850,7 @@ func TestReadOperations_StillWork(t *testing.T) {
 		sortOrder := gql.SortOrderAsc
 
 		// Mock the registry call for video thumbnail position
-		mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.video_thumbnail_position"}).
+		mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.app_video_thumbnail_position"}).
 			Return([]*registrystore.Registry{}, nil).Once()
 
 		mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
@@ -876,7 +876,7 @@ func TestReadOperations_StillWork(t *testing.T) {
 		path := "/test/file1.txt"
 
 		// Mock the registry call for video thumbnail position
-		mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.video_thumbnail_position"}).
+		mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.app_video_thumbnail_position"}).
 			Return([]*registrystore.Registry{}, nil).Once()
 
 		mockStorage.On("Stat", ctx, path).Return(storage.FileInfo{
@@ -1232,7 +1232,7 @@ func TestListFiles(t *testing.T) {
 	sortOrder := gql.SortOrderAsc
 
 	// Mock the registry call for video thumbnail position
-	mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.video_thumbnail_position"}).
+	mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.app_video_thumbnail_position"}).
 		Return([]*registrystore.Registry{}, nil).Once()
 
 	mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
@@ -1271,7 +1271,7 @@ func TestStatFile(t *testing.T) {
 	path := "/test/file1.txt"
 
 	// Mock the registry call for video thumbnail position
-	mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.video_thumbnail_position"}).
+	mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.app_video_thumbnail_position"}).
 		Return([]*registrystore.Registry{}, nil).Once()
 
 	mockStorage.On("Stat", ctx, path).Return(storage.FileInfo{

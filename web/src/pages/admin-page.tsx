@@ -60,7 +60,7 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     defaultValue: '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg',
   },
   {
-    key: 'config.video_thumbnail_position',
+    key: 'config.app_video_thumbnail_position',
     type: 'select',
     label: 'Video Thumbnail Position',
     description:

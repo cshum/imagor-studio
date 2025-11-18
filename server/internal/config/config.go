@@ -59,13 +59,13 @@ type Config struct {
 	ImagorSignerTruncate int    // Signer truncation length
 
 	// Application Configuration
-	AppHomeTitle           string // Custom home page title
-	AppImageExtensions     string // Comma-separated list of image file extensions
-	AppVideoExtensions     string // Comma-separated list of video file extensions
-	AppShowHidden          bool   // Show hidden files starting with dot
-	AppDefaultSortBy       string // Default file sorting option
-	AppDefaultSortOrder    string // Default file sorting order
-	VideoThumbnailPosition string // Video thumbnail extraction position
+	AppHomeTitle              string // Custom home page title
+	AppImageExtensions        string // Comma-separated list of image file extensions
+	AppVideoExtensions        string // Comma-separated list of video file extensions
+	AppShowHidden             bool   // Show hidden files starting with dot
+	AppDefaultSortBy          string // Default file sorting option
+	AppDefaultSortOrder       string // Default file sorting order
+	AppVideoThumbnailPosition string // Video thumbnail extraction position
 
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
@@ -111,13 +111,13 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		imagorSignerType     = fs.String("imagor-signer-type", "sha1", "imagor signer algorithm: sha1, sha256, sha512")
 		imagorSignerTruncate = fs.Int("imagor-signer-truncate", 0, "imagor signer truncation length")
 
-		appHomeTitle           = fs.String("app-home-title", "", "custom home page title")
-		appImageExtensions     = fs.String("app-image-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif", "comma-separated list of image file extensions to show in application")
-		appVideoExtensions     = fs.String("app-video-extensions", ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", "comma-separated list of video file extensions to show in application")
-		appShowHidden          = fs.Bool("app-show-hidden", false, "show hidden files and folders starting with dot")
-		appDefaultSortBy       = fs.String("app-default-sort-by", "MODIFIED_TIME", "default file sorting option: NAME, MODIFIED_TIME, SIZE")
-		appDefaultSortOrder    = fs.String("app-default-sort-order", "DESC", "default file sorting order: ASC, DESC")
-		videoThumbnailPosition = fs.String("video-thumbnail-position", "first_frame", "video thumbnail extraction position: first_frame, seek_1s, seek_3s, seek_5s, seek_10pct, seek_25pct")
+		appHomeTitle              = fs.String("app-home-title", "", "custom home page title")
+		appImageExtensions        = fs.String("app-image-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif", "comma-separated list of image file extensions to show in application")
+		appVideoExtensions        = fs.String("app-video-extensions", ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", "comma-separated list of video file extensions to show in application")
+		appShowHidden             = fs.Bool("app-show-hidden", false, "show hidden files and folders starting with dot")
+		appDefaultSortBy          = fs.String("app-default-sort-by", "MODIFIED_TIME", "default file sorting option: NAME, MODIFIED_TIME, SIZE")
+		appDefaultSortOrder       = fs.String("app-default-sort-order", "DESC", "default file sorting order: ASC, DESC")
+		appVideoThumbnailPosition = fs.String("app-video-thumbnail-position", "first_frame", "video thumbnail extraction position: first_frame, seek_1s, seek_3s, seek_5s, seek_10pct, seek_25pct")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -218,7 +218,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		AppShowHidden:               *appShowHidden,
 		AppDefaultSortBy:            *appDefaultSortBy,
 		AppDefaultSortOrder:         *appDefaultSortOrder,
-		VideoThumbnailPosition:      *videoThumbnailPosition,
+		AppVideoThumbnailPosition:   *appVideoThumbnailPosition,
 		overriddenFlags:             overriddenFlags,
 		flagSet:                     fs, // Store the flagSet for later use
 	}
