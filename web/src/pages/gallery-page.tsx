@@ -108,6 +108,20 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   } = galleryLoaderData
   const sidebar = useSidebar()
 
+  const handleSortChange = async (sortBy: SortOption, sortOrder: SortOrder) => {
+    if (authState.profile?.id && authState.state === 'authenticated') {
+      await setUserRegistryMultiple(
+        [
+          { key: 'config.app_default_sort_by', value: sortBy, isEncrypted: false },
+          { key: 'config.app_default_sort_order', value: sortOrder, isEncrypted: false },
+        ],
+        authState.profile.id,
+      )
+      // Invalidate only the current gallery route to trigger loader reload
+      router.invalidate()
+    }
+  }
+
   const isDesktop = useBreakpoint('md')
   const maxItemWidth = 250
 
@@ -130,20 +144,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       images,
       isEmpty,
     })
-
-  const handleSortChange = async (sortBy: SortOption, sortOrder: SortOrder) => {
-    if (authState.profile?.id && authState.state === 'authenticated') {
-      await setUserRegistryMultiple(
-        [
-          { key: 'config.app_default_sort_by', value: sortBy, isEncrypted: false },
-          { key: 'config.app_default_sort_order', value: sortOrder, isEncrypted: false },
-        ],
-        authState.profile.id,
-      )
-      // Invalidate only the current gallery route to trigger loader reload
-      router.invalidate()
-    }
-  }
 
   useEffect(() => {
     setCurrentPath(galleryKey)
