@@ -96,6 +96,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     url: '',
   })
 
+  // Unified keyboard navigation state
+  const [focusedGrid, setFocusedGrid] = useState<'folder' | 'image' | null>(null)
+  const [focusedFolderIndex, setFocusedFolderIndex] = useState<number>(-1)
+  const [focusedImageIndex, setFocusedImageIndex] = useState<number>(-1)
+  const galleryContainerRef = useRef<HTMLDivElement>(null)
+
   const {
     galleryName,
     images,
@@ -161,6 +167,60 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       to: '/gallery/$galleryKey',
       params: { galleryKey },
     })
+  }
+
+  // Unified keyboard navigation handlers
+  const handleGalleryContainerFocus = () => {
+    // When gallery container receives focus, focus first folder or first image
+    if (focusedGrid === null) {
+      if (folders.length > 0) {
+        setFocusedGrid('folder')
+        setFocusedFolderIndex(0)
+      } else if (images.length > 0) {
+        setFocusedGrid('image')
+        setFocusedImageIndex(0)
+      }
+    }
+  }
+
+  const handleGalleryContainerKeyDown = (event: React.KeyboardEvent) => {
+    // If container has focus and no grid is focused, handle initial navigation
+    if (focusedGrid === null && ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', ' '].includes(event.key)) {
+      event.preventDefault()
+      if (folders.length > 0) {
+        setFocusedGrid('folder')
+        setFocusedFolderIndex(0)
+      } else if (images.length > 0) {
+        setFocusedGrid('image')
+        setFocusedImageIndex(0)
+      }
+    }
+  }
+
+  const handleFolderFocusChange = (index: number) => {
+    setFocusedGrid('folder')
+    setFocusedFolderIndex(index)
+  }
+
+  const handleImageFocusChange = (index: number) => {
+    setFocusedGrid('image')
+    setFocusedImageIndex(index)
+  }
+
+  const handleNavigateFromFoldersToImages = () => {
+    if (images.length > 0) {
+      setFocusedGrid('image')
+      setFocusedImageIndex(0)
+      setFocusedFolderIndex(-1)
+    }
+  }
+
+  const handleNavigateFromImagesToFolders = () => {
+    if (folders.length > 0) {
+      setFocusedGrid('folder')
+      setFocusedFolderIndex(folders.length - 1)
+      setFocusedImageIndex(-1)
+    }
   }
 
   const handleUploadFiles = () => {
@@ -336,6 +396,19 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     pendingMatches[pendingMatches.length - 1].routeId?.toString()?.includes('$imageKey')
   )
 
+  // Auto-focus first item when gallery becomes non-empty
+  useEffect(() => {
+    if (focusedGrid === null && !isEmpty) {
+      if (folders.length > 0) {
+        setFocusedGrid('folder')
+        setFocusedFolderIndex(0)
+      } else if (images.length > 0) {
+        setFocusedGrid('image')
+        setFocusedImageIndex(0)
+      }
+    }
+  }, [isEmpty, folders.length, images.length, focusedGrid])
+
   // Create menu items for authenticated users
   const customMenuItems =
     authState.state === 'authenticated' ? (
@@ -451,13 +524,24 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                   {isEmpty ? (
                     <EmptyGalleryState width={contentWidth} isRootGallery={isRootGallery} />
                   ) : (
-                    <>
-                      <FolderGrid
-                        folders={folders}
-                        onFolderClick={handleFolderClick}
-                        width={contentWidth}
-                        maxFolderWidth={maxItemWidth}
-                      />
+                    <div
+                      ref={galleryContainerRef}
+                      tabIndex={0}
+                      onFocus={handleGalleryContainerFocus}
+                      onKeyDown={handleGalleryContainerKeyDown}
+                      className='focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                    >
+                      {folders.length > 0 && (
+                        <FolderGrid
+                          folders={folders}
+                          onFolderClick={handleFolderClick}
+                          width={contentWidth}
+                          maxFolderWidth={maxItemWidth}
+                          focusedIndex={focusedGrid === 'folder' ? focusedFolderIndex : -1}
+                          onFocusChange={handleFolderFocusChange}
+                          onNavigateDown={handleNavigateFromFoldersToImages}
+                        />
+                      )}
                       <ImageContextMenu renderMenuItems={renderContextMenuItems}>
                         <ImageGrid
                           images={images}
@@ -466,9 +550,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           scrollTop={scrollPosition}
                           maxImageWidth={maxItemWidth}
                           onImageClick={handleImageClick}
+                          focusedIndex={focusedGrid === 'image' ? focusedImageIndex : -1}
+                          onFocusChange={handleImageFocusChange}
+                          onNavigateUp={handleNavigateFromImagesToFolders}
                         />
                       </ImageContextMenu>
-                    </>
+                    </div>
                   )}
                 </>
               )}
