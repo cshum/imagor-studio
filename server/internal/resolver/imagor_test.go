@@ -316,6 +316,184 @@ func TestGenerateThumbnailUrls(t *testing.T) {
 	})
 }
 
+func TestGenerateThumbnailUrls_WithVideoThumbnailPosition(t *testing.T) {
+	// Setup test resolver with mocked imagor provider
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockImagorProvider := new(MockImagorProvider)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+
+	tests := []struct {
+		name              string
+		videoThumbnailPos string
+		expectedFilter    string
+		description       string
+	}{
+		{
+			name:              "first_frame - no seek filter",
+			videoThumbnailPos: "first_frame",
+			expectedFilter:    "",
+			description:       "Should not include seek filter for first_frame",
+		},
+		{
+			name:              "seek_1s - includes seek filter",
+			videoThumbnailPos: "seek_1s",
+			expectedFilter:    "seek(1s)",
+			description:       "Should include seek(1s) filter in URL",
+		},
+		{
+			name:              "seek_3s - includes seek filter",
+			videoThumbnailPos: "seek_3s",
+			expectedFilter:    "seek(3s)",
+			description:       "Should include seek(3s) filter in URL",
+		},
+		{
+			name:              "seek_5s - includes seek filter",
+			videoThumbnailPos: "seek_5s",
+			expectedFilter:    "seek(5s)",
+			description:       "Should include seek(5s) filter in URL",
+		},
+		{
+			name:              "seek_10pct - includes seek filter",
+			videoThumbnailPos: "seek_10pct",
+			expectedFilter:    "seek(0.1)",
+			description:       "Should include seek(0.1) filter for 10%",
+		},
+		{
+			name:              "seek_25pct - includes seek filter",
+			videoThumbnailPos: "seek_25pct",
+			expectedFilter:    "seek(0.25)",
+			description:       "Should include seek(0.25) filter for 25%",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockImagorProvider.ExpectedCalls = nil
+			imagePath := "test/video.mp4"
+
+			// Build the expected filters based on video thumbnail position
+			// The seek filter is appended at the END by buildThumbnailFilters
+			var gridFilters imagorpath.Filters
+			if tt.expectedFilter != "" {
+				// Extract filter name and args from "seek(1s)" format
+				filterName := "seek"
+				filterArgs := tt.expectedFilter[5 : len(tt.expectedFilter)-1] // Extract "1s" from "seek(1s)"
+				gridFilters = imagorpath.Filters{
+					{Name: "quality", Args: "80"},
+					{Name: "format", Args: "webp"},
+					{Name: filterName, Args: filterArgs},
+				}
+			} else {
+				gridFilters = imagorpath.Filters{
+					{Name: "quality", Args: "80"},
+					{Name: "format", Args: "webp"},
+				}
+			}
+
+			var previewFilters imagorpath.Filters
+			if tt.expectedFilter != "" {
+				filterName := "seek"
+				filterArgs := tt.expectedFilter[5 : len(tt.expectedFilter)-1]
+				previewFilters = imagorpath.Filters{
+					{Name: "quality", Args: "90"},
+					{Name: "format", Args: "webp"},
+					{Name: filterName, Args: filterArgs},
+				}
+			} else {
+				previewFilters = imagorpath.Filters{
+					{Name: "quality", Args: "90"},
+					{Name: "format", Args: "webp"},
+				}
+			}
+
+			var fullFilters imagorpath.Filters
+			if tt.expectedFilter != "" {
+				filterName := "seek"
+				filterArgs := tt.expectedFilter[5 : len(tt.expectedFilter)-1]
+				fullFilters = imagorpath.Filters{
+					{Name: "quality", Args: "95"},
+					{Name: "format", Args: "webp"},
+					{Name: filterName, Args: filterArgs},
+				}
+			} else {
+				fullFilters = imagorpath.Filters{
+					{Name: "quality", Args: "95"},
+					{Name: "format", Args: "webp"},
+				}
+			}
+
+			// Mock all thumbnail sizes with correct filters
+			// Build the return URLs with the seek filter included
+			gridURL := "/imagor/300x225/filters:quality(80):format(webp)"
+			previewURL := "/imagor/fit-in/1200x900/filters:quality(90):format(webp)"
+			fullURL := "/imagor/fit-in/2400x1800/filters:quality(95):format(webp)"
+
+			if tt.expectedFilter != "" {
+				gridURL = "/imagor/300x225/filters:quality(80):format(webp):" + tt.expectedFilter
+				previewURL = "/imagor/fit-in/1200x900/filters:quality(90):format(webp):" + tt.expectedFilter
+				fullURL = "/imagor/fit-in/2400x1800/filters:quality(95):format(webp):" + tt.expectedFilter
+			}
+
+			gridURL += "/test/video.mp4"
+			previewURL += "/test/video.mp4"
+			fullURL += "/test/video.mp4"
+
+			mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+				Width:   300,
+				Height:  225,
+				Filters: gridFilters,
+			}).Return(gridURL, nil)
+
+			mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+				Width:   1200,
+				Height:  900,
+				FitIn:   true,
+				Filters: previewFilters,
+			}).Return(previewURL, nil)
+
+			mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+				Width:   2400,
+				Height:  1800,
+				FitIn:   true,
+				Filters: fullFilters,
+			}).Return(fullURL, nil)
+
+			mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+				Filters: imagorpath.Filters{
+					{Name: "raw"},
+				},
+			}).Return("/imagor/filters:raw()/test/video.mp4", nil)
+
+			mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+				Meta: true,
+			}).Return("/imagor/meta/test/video.mp4", nil)
+
+			// Generate thumbnail URLs with the position
+			result := resolver.generateThumbnailUrls(imagePath, tt.videoThumbnailPos)
+
+			// Verify result is not nil
+			require.NotNil(t, result, tt.description)
+			require.NotNil(t, result.Grid, tt.description)
+
+			// Check if the expected filter is in the URL
+			if tt.expectedFilter == "" {
+				// For first_frame, should not contain seek filter
+				assert.NotContains(t, *result.Grid, "seek(", tt.description)
+			} else {
+				// For seek options, should contain the seek filter
+				assert.Contains(t, *result.Grid, tt.expectedFilter, tt.description)
+			}
+
+			mockImagorProvider.AssertExpectations(t)
+		})
+	}
+}
+
 // Helper function for creating float pointers (intPtr and stringPtr already exist in resolver_test.go)
 func floatPtr(f float64) *float64 {
 	return &f
