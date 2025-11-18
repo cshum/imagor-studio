@@ -132,7 +132,7 @@ export function ImageView({
       const imageAspectRatio = img.width / img.height
       const windowAspectRatio = windowWidth / windowHeight
 
-      let newWidth, newHeight
+      let newWidth: number, newHeight: number
 
       if (img.width <= windowWidth && img.height <= windowHeight) {
         newWidth = img.width
@@ -255,25 +255,24 @@ export function ImageView({
     }
   }, [])
 
-  // Keyboard shortcuts for navigation
+  // Autofocus container on mount for keyboard navigation
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Left arrow key for previous image
-      if (event.key === 'ArrowLeft' && onPrevImage) {
-        event.preventDefault()
-        handlePrevImage()
-      }
-      // Right arrow key for next image
-      else if (event.key === 'ArrowRight' && onNextImage) {
-        event.preventDefault()
-        handleNextImage()
-      }
+    overlayRef.current?.focus()
+  }, [])
+
+  // Keyboard shortcuts handler
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      handleCloseFullView()
+    } else if (event.key === 'ArrowLeft' && onPrevImage) {
+      event.preventDefault()
+      handlePrevImage()
+    } else if (event.key === 'ArrowRight' && onNextImage) {
+      event.preventDefault()
+      handleNextImage()
     }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [onPrevImage, onNextImage, handlePrevImage, handleNextImage])
+  }
 
   const slideVariants = {
     enter: (direction: number) => ({
@@ -311,7 +310,12 @@ export function ImageView({
   return (
     <AnimatePresence onExitComplete={onClose}>
       {isVisible && image && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center' ref={overlayRef}>
+        <div
+          className='fixed inset-0 z-50 flex items-center justify-center outline-none'
+          ref={overlayRef}
+          tabIndex={-1}
+          onKeyDown={handleKeyDown}
+        >
           <div
             className={`relative flex h-full w-full transition-[padding-left] duration-500 ease-in-out ${isInfoOpen && isDesktop ? 'pl-[300px]' : 'pl-0'} `}
           >
