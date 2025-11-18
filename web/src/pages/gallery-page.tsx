@@ -525,6 +525,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         ref={fileInputRef}
         onChange={handleFileSelect}
         style={{ display: 'none' }}
+        tabIndex={-1}
       />
 
       {children}
