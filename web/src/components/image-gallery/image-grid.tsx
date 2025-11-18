@@ -81,7 +81,7 @@ const ImageCell = ({
           draggable={false}
         />
         {image.isVideo && (
-          <div className='absolute right-3 bottom-2 rounded-full bg-black/60 p-1 p-2 transition-opacity group-hover:bg-black/75'>
+          <div className='absolute right-3 bottom-2 rounded-full bg-black/60 p-2 transition-opacity group-hover:bg-black/75'>
             <Play className='h-4 w-4 fill-white text-white' />
           </div>
         )}
