@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { RefObject } from 'react'
 import { Folder } from 'lucide-react'
 
 import { Card, CardContent } from '@/components/ui/card'
@@ -10,102 +10,25 @@ export interface Gallery {
 
 export interface FolderGridProps {
   folders: Gallery[]
-  onFolderClick?: (folder: Gallery) => void
   width: number
   maxFolderWidth: number
   focusedIndex?: number
-  onFocusChange?: (index: number) => void
-  onNavigateDown?: () => void
+  folderRefs?: RefObject<(HTMLDivElement | null)[]>
+  onFolderKeyDown?: (event: React.KeyboardEvent, index: number) => void
+  onFolderClick?: (folder: Gallery, index: number) => void
 }
 
-export const FolderGrid = ({ 
-  folders, 
-  onFolderClick, 
-  width, 
+export const FolderGrid = ({
+  folders,
+  width,
   maxFolderWidth,
-  focusedIndex: externalFocusedIndex,
-  onFocusChange,
-  onNavigateDown
+  focusedIndex = -1,
+  folderRefs,
+  onFolderKeyDown,
+  onFolderClick,
 }: FolderGridProps) => {
   const columnCount = Math.max(2, Math.floor(width / maxFolderWidth))
   const folderWidth = width / columnCount
-  const focusedIndex = externalFocusedIndex ?? -1
-  const folderRefs = useRef<(HTMLDivElement | null)[]>([])
-
-  // Initialize refs array
-  useEffect(() => {
-    folderRefs.current = folderRefs.current.slice(0, folders.length)
-  }, [folders.length])
-
-  // Focus element when focusedIndex changes
-  useEffect(() => {
-    if (focusedIndex >= 0 && focusedIndex < folders.length) {
-      folderRefs.current[focusedIndex]?.focus()
-    }
-  }, [focusedIndex, folders.length])
-
-  const handleKeyDown = (event: React.KeyboardEvent, index: number) => {
-    const currentRow = Math.floor(index / columnCount)
-    const currentCol = index % columnCount
-    const lastRow = Math.floor((folders.length - 1) / columnCount)
-
-    let newIndex = index
-
-    switch (event.key) {
-      case 'Enter':
-      case ' ':
-        event.preventDefault()
-        onFolderClick?.(folders[index])
-        break
-
-      case 'ArrowRight':
-        event.preventDefault()
-        newIndex = Math.min(index + 1, folders.length - 1)
-        break
-
-      case 'ArrowLeft':
-        event.preventDefault()
-        newIndex = Math.max(index - 1, 0)
-        break
-
-      case 'ArrowDown':
-        event.preventDefault()
-        // If we're on the last row, navigate to images
-        if (currentRow === lastRow && onNavigateDown) {
-          onNavigateDown()
-          return
-        }
-        newIndex = Math.min(index + columnCount, folders.length - 1)
-        break
-
-      case 'ArrowUp':
-        event.preventDefault()
-        newIndex = Math.max(index - columnCount, 0)
-        break
-
-      case 'Home':
-        event.preventDefault()
-        newIndex = 0
-        break
-
-      case 'End':
-        event.preventDefault()
-        newIndex = folders.length - 1
-        break
-
-      default:
-        return
-    }
-
-    if (newIndex !== index && onFocusChange) {
-      onFocusChange(newIndex)
-    }
-  }
-
-  const handleClick = (folder: Gallery, index: number) => {
-    onFocusChange?.(index)
-    onFolderClick?.(folder)
-  }
 
   if (folders.length === 0) {
     return null
@@ -126,11 +49,13 @@ export const FolderGrid = ({
         <Card
           key={folder.galleryKey}
           ref={(el) => {
-            folderRefs.current[index] = el
+            if (folderRefs?.current) {
+              folderRefs.current[index] = el
+            }
           }}
-          className='hover-touch:bg-accent cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-          onClick={() => handleClick(folder, index)}
-          onKeyDown={(e) => handleKeyDown(e, index)}
+          className='hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+          onClick={() => onFolderClick?.(folder, index)}
+          onKeyDown={(e) => onFolderKeyDown?.(e, index)}
           tabIndex={index === 0 && focusedIndex === -1 ? 0 : focusedIndex === index ? 0 : -1}
           role='gridcell'
           aria-label={`Folder: ${folder.galleryName}`}

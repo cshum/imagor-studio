@@ -137,19 +137,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const isEmpty = images.length === 0 && folders.length === 0
   const isRootGallery = galleryKey === ''
 
-  // Keyboard navigation hook
-  const { galleryContainerRef, galleryContainerProps, folderGridProps, imageGridProps } =
-    useGalleryKeyboardNavigation({
-      folders,
-      images,
-      isEmpty,
-    })
+  // Calculate column counts for keyboard navigation
+  const folderColumnCount = Math.max(2, Math.floor(contentWidth / maxItemWidth))
+  const imageColumnCount = Math.max(3, Math.floor(contentWidth / maxItemWidth))
 
-  useEffect(() => {
-    setCurrentPath(galleryKey)
-    requestAnimationFrame(() => restoreScrollPosition(galleryKey))
-  }, [galleryKey])
-
+  // Define handlers before hook
   const handleImageClick = (imageKey: string, position?: ImagePosition | null) => {
     if (position) {
       setPosition(galleryKey, imageKey, position)
@@ -175,6 +167,22 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       params: { galleryKey },
     })
   }
+
+  // Keyboard navigation hook
+  const { galleryContainerRef, galleryContainerProps, folderGridProps, imageGridProps } =
+    useGalleryKeyboardNavigation({
+      folders,
+      images,
+      folderColumnCount,
+      imageColumnCount,
+      onFolderClick: handleFolderClick,
+      onImageClick: handleImageClick,
+    })
+
+  useEffect(() => {
+    setCurrentPath(galleryKey)
+    requestAnimationFrame(() => restoreScrollPosition(galleryKey))
+  }, [galleryKey])
 
   const handleUploadFiles = () => {
     fileInputRef.current?.click()
@@ -465,7 +473,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                       {folders.length > 0 && (
                         <FolderGrid
                           folders={folders}
-                          onFolderClick={handleFolderClick}
                           width={contentWidth}
                           maxFolderWidth={maxItemWidth}
                           {...folderGridProps}
@@ -478,7 +485,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           width={contentWidth}
                           scrollTop={scrollPosition}
                           maxImageWidth={maxItemWidth}
-                          onImageClick={handleImageClick}
                           {...imageGridProps}
                         />
                       </ImageContextMenu>
