@@ -132,6 +132,15 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int,
 		return nil, fmt.Errorf("failed to list files: %w", err)
 	}
 
+	// Read video thumbnail position ONCE for this request
+	videoThumbnailResults := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
+		"config.video_thumbnail_position")
+
+	videoThumbnailPos := "first_frame"
+	if len(videoThumbnailResults) > 0 && videoThumbnailResults[0].Exists {
+		videoThumbnailPos = videoThumbnailResults[0].Value
+	}
+
 	files := make([]*gql.FileItem, len(result.Items))
 	for i, item := range result.Items {
 		fileItem := &gql.FileItem{
@@ -143,7 +152,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int,
 
 		// Generate thumbnail URLs for image files
 		if !item.IsDir {
-			thumbnailUrls := r.generateThumbnailUrls(item.Path)
+			thumbnailUrls := r.generateThumbnailUrls(item.Path, videoThumbnailPos)
 			fileItem.ThumbnailUrls = thumbnailUrls
 		}
 
@@ -171,6 +180,15 @@ func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileSta
 		return nil, fmt.Errorf("failed to get file stats: %w", err)
 	}
 
+	// Read video thumbnail position for this request
+	videoThumbnailResults := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
+		"config.video_thumbnail_position")
+
+	videoThumbnailPos := "first_frame"
+	if len(videoThumbnailResults) > 0 && videoThumbnailResults[0].Exists {
+		videoThumbnailPos = videoThumbnailResults[0].Value
+	}
+
 	fileStat := &gql.FileStat{
 		Name:         fileInfo.Name,
 		Path:         fileInfo.Path,
@@ -182,7 +200,7 @@ func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileSta
 
 	// Generate thumbnail URLs for image files
 	if !fileInfo.IsDir {
-		thumbnailUrls := r.generateThumbnailUrls(fileInfo.Path)
+		thumbnailUrls := r.generateThumbnailUrls(fileInfo.Path, videoThumbnailPos)
 		fileStat.ThumbnailUrls = thumbnailUrls
 	}
 

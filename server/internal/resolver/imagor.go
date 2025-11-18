@@ -149,39 +149,50 @@ func convertToImagorParams(input gql.ImagorParamsInput) imagorpath.Params {
 }
 
 // generateThumbnailUrls generates thumbnail URLs using the imagor provider
-func (r *Resolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUrls {
+func (r *Resolver) generateThumbnailUrls(imagePath string, videoThumbnailPos string) *gql.ThumbnailUrls {
 	if r.imagorProvider == nil {
 		return nil
 	}
+
+	// Build filters with video thumbnail position
+	filters := r.buildThumbnailFilters(videoThumbnailPos)
+
 	// Generate different sized URLs using the imagor provider
 	gridURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
-		Width:  300,
-		Height: 225,
-		Filters: imagorpath.Filters{
-			{Name: "quality", Args: "80"},
-			{Name: "format", Args: "webp"},
-			{Name: "max_frames", Args: "1"},
-		},
+		Width:   300,
+		Height:  225,
+		Filters: filters,
 	})
+
+	// Use same filters for preview and full URLs
+	previewFilters := r.buildThumbnailFilters(videoThumbnailPos)
+	// Update quality for preview
+	for i := range previewFilters {
+		if previewFilters[i].Name == "quality" {
+			previewFilters[i].Args = "90"
+		}
+	}
 
 	previewURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
-		Width:  1200,
-		Height: 900,
-		FitIn:  true,
-		Filters: imagorpath.Filters{
-			{Name: "quality", Args: "90"},
-			{Name: "format", Args: "webp"},
-		},
+		Width:   1200,
+		Height:  900,
+		FitIn:   true,
+		Filters: previewFilters,
 	})
 
+	fullFilters := r.buildThumbnailFilters(videoThumbnailPos)
+	// Update quality for full
+	for i := range fullFilters {
+		if fullFilters[i].Name == "quality" {
+			fullFilters[i].Args = "95"
+		}
+	}
+
 	fullURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
-		Width:  2400,
-		Height: 1800,
-		FitIn:  true,
-		Filters: imagorpath.Filters{
-			{Name: "quality", Args: "95"},
-			{Name: "format", Args: "webp"},
-		},
+		Width:   2400,
+		Height:  1800,
+		FitIn:   true,
+		Filters: fullFilters,
 	})
 
 	// For original, use raw filter
@@ -203,6 +214,33 @@ func (r *Resolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUrls {
 		Original: &originalURL,
 		Meta:     &metaURL,
 	}
+}
+
+// buildThumbnailFilters builds imagor filters based on video thumbnail position
+// Video filters (frame/seek) are no-op for images, so safe to apply to all files
+func (r *Resolver) buildThumbnailFilters(position string) imagorpath.Filters {
+	filters := imagorpath.Filters{
+		{Name: "quality", Args: "80"},
+		{Name: "format", Args: "webp"},
+	}
+
+	// Add video thumbnail filter based on position
+	// Default ("default" or empty) = no filter added, imagorvideo uses its own default
+	switch position {
+	case "seek_1s":
+		filters = append(filters, imagorpath.Filter{Name: "seek", Args: "1s"})
+	case "seek_3s":
+		filters = append(filters, imagorpath.Filter{Name: "seek", Args: "3s"})
+	case "seek_5s":
+		filters = append(filters, imagorpath.Filter{Name: "seek", Args: "5s"})
+	case "seek_10pct":
+		filters = append(filters, imagorpath.Filter{Name: "seek", Args: "0.1"})
+	case "seek_25pct":
+		filters = append(filters, imagorpath.Filter{Name: "seek", Args: "0.25"})
+		// default: no video filter added - imagorvideo uses its default behavior
+	}
+
+	return filters
 }
 
 // ImagorStatus is the resolver for the imagorStatus field.

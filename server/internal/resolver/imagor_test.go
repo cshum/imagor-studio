@@ -262,9 +262,8 @@ func TestGenerateThumbnailUrls(t *testing.T) {
 			Filters: imagorpath.Filters{
 				{Name: "quality", Args: "80"},
 				{Name: "format", Args: "webp"},
-				{Name: "max_frames", Args: "1"},
 			},
-		}).Return("/imagor/300x225/filters:quality(80):format(webp):max_frames(1)/test/image.jpg", nil)
+		}).Return("/imagor/300x225/filters:quality(80):format(webp)/test/image.jpg", nil)
 
 		mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
 			Width:  1200,
@@ -296,7 +295,7 @@ func TestGenerateThumbnailUrls(t *testing.T) {
 			Meta: true,
 		}).Return("/imagor/meta/test/image.jpg", nil)
 
-		result := resolver.generateThumbnailUrls(imagePath)
+		result := resolver.generateThumbnailUrls(imagePath, "first_frame")
 
 		require.NotNil(t, result)
 		assert.NotNil(t, result.Grid)
@@ -312,7 +311,7 @@ func TestGenerateThumbnailUrls(t *testing.T) {
 		// Create resolver without imagor provider
 		resolverWithoutImagor := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
-		result := resolverWithoutImagor.generateThumbnailUrls("test/image.jpg")
+		result := resolverWithoutImagor.generateThumbnailUrls("test/image.jpg", "first_frame")
 		assert.Nil(t, result)
 	})
 }
