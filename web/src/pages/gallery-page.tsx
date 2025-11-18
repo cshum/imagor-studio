@@ -45,6 +45,7 @@ import { UploadProgress } from '@/components/upload/upload-progress.tsx'
 import { ImagorParamsInput, SortOption, SortOrder } from '@/generated/graphql'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
 import { DragDropFile } from '@/hooks/use-drag-drop.ts'
+import { useGalleryKeyboardNavigation } from '@/hooks/use-gallery-keyboard-navigation'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
@@ -132,11 +133,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   )
   useResizeHandler(updateWidth)
 
-  useEffect(() => {
-    setCurrentPath(galleryKey)
-    requestAnimationFrame(() => restoreScrollPosition(galleryKey))
-  }, [galleryKey])
+  const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 48 : 38)
+  const isEmpty = images.length === 0 && folders.length === 0
+  const isRootGallery = galleryKey === ''
 
+  // Calculate column counts for keyboard navigation
+  const folderColumnCount = Math.max(2, Math.floor(contentWidth / maxItemWidth))
+  const imageColumnCount = Math.max(3, Math.floor(contentWidth / maxItemWidth))
+
+  // Define handlers before hook
   const handleImageClick = (imageKey: string, position?: ImagePosition | null) => {
     if (position) {
       setPosition(galleryKey, imageKey, position)
@@ -162,6 +167,22 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       params: { galleryKey },
     })
   }
+
+  // Keyboard navigation hook
+  const { galleryContainerRef, galleryContainerProps, folderGridProps, imageGridProps } =
+    useGalleryKeyboardNavigation({
+      folders,
+      images,
+      folderColumnCount,
+      imageColumnCount,
+      onFolderClick: handleFolderClick,
+      onImageClick: handleImageClick,
+    })
+
+  useEffect(() => {
+    setCurrentPath(galleryKey)
+    requestAnimationFrame(() => restoreScrollPosition(galleryKey))
+  }, [galleryKey])
 
   const handleUploadFiles = () => {
     fileInputRef.current?.click()
@@ -328,9 +349,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     )
   }
 
-  const isScrolledDown = scrollPosition > 22 + 8 + (isDesktop ? 48 : 38)
-  const isEmpty = images.length === 0 && folders.length === 0
-  const isRootGallery = galleryKey === ''
   const isNavigateToImage = !!(
     pendingMatches?.length &&
     pendingMatches[pendingMatches.length - 1].routeId?.toString()?.includes('$imageKey')
@@ -451,13 +469,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                   {isEmpty ? (
                     <EmptyGalleryState width={contentWidth} isRootGallery={isRootGallery} />
                   ) : (
-                    <>
-                      <FolderGrid
-                        folders={folders}
-                        onFolderClick={handleFolderClick}
-                        width={contentWidth}
-                        maxFolderWidth={maxItemWidth}
-                      />
+                    <div ref={galleryContainerRef} {...galleryContainerProps}>
+                      {folders.length > 0 && (
+                        <FolderGrid
+                          folders={folders}
+                          width={contentWidth}
+                          maxFolderWidth={maxItemWidth}
+                          {...folderGridProps}
+                        />
+                      )}
                       <ImageContextMenu renderMenuItems={renderContextMenuItems}>
                         <ImageGrid
                           images={images}
@@ -465,10 +485,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           width={contentWidth}
                           scrollTop={scrollPosition}
                           maxImageWidth={maxItemWidth}
-                          onImageClick={handleImageClick}
+                          {...imageGridProps}
                         />
                       </ImageContextMenu>
-                    </>
+                    </div>
                   )}
                 </>
               )}
@@ -505,6 +525,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         ref={fileInputRef}
         onChange={handleFileSelect}
         style={{ display: 'none' }}
+        tabIndex={-1}
       />
 
       {children}
