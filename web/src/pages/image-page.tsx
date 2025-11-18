@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { FocusScope } from '@radix-ui/react-focus-scope'
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 
 import { GalleryImage, ImageView } from '@/components/image-gallery/image-view.tsx'
@@ -117,18 +118,20 @@ export function ImagePage({
     <>
       <LoadingBar isLoading={isLoading && !isSlideshow} theme='dark' />
       <SlideshowTimer isActive={isSlideshow} duration={5000} theme='dark' resetKey={imageKey} />
-      <ImageView
-        image={image}
-        imageElement={imageElement}
-        onClose={handleCloseFullView}
-        onPrevImage={handlePrevImage}
-        onNextImage={handleNextImage}
-        initialPosition={getPosition(galleryKey, imageKey) || undefined}
-        galleryKey={galleryKey}
-        imageKey={imageKey}
-        isSlideshow={isSlideshow}
-        onSlideshowChange={handleSlideshowChange}
-      />
+      <FocusScope trapped>
+        <ImageView
+          image={image}
+          imageElement={imageElement}
+          onClose={handleCloseFullView}
+          onPrevImage={handlePrevImage}
+          onNextImage={handleNextImage}
+          initialPosition={getPosition(galleryKey, imageKey) || undefined}
+          galleryKey={galleryKey}
+          imageKey={imageKey}
+          isSlideshow={isSlideshow}
+          onSlideshowChange={handleSlideshowChange}
+        />
+      </FocusScope>
     </>
   )
 }
