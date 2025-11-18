@@ -225,7 +225,6 @@ func (r *Resolver) buildThumbnailFilters(position string) imagorpath.Filters {
 	}
 
 	// Add video thumbnail filter based on position
-	// Default ("default" or empty) = no filter added, imagorvideo uses its own default
 	switch position {
 	case "seek_1s":
 		filters = append(filters, imagorpath.Filter{Name: "seek", Args: "1s"})
