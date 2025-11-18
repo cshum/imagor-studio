@@ -60,6 +60,7 @@ func TestLoadWithArgs(t *testing.T) {
 	assert.Equal(t, "s3", cfg.StorageType)
 	assert.Equal(t, "test-bucket", cfg.S3StorageBucket)
 	assert.Equal(t, "disabled", cfg.ImagorMode)
+	assert.Equal(t, "first_frame", cfg.AppVideoThumbnailPosition)
 }
 
 func TestLoadWithEnvVars(t *testing.T) {

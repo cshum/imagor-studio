@@ -60,6 +60,23 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     defaultValue: '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg',
   },
   {
+    key: 'config.app_video_thumbnail_position',
+    type: 'select',
+    label: 'Video Thumbnail Position',
+    description:
+      'Choose where to extract video thumbnails. First frame is fastest. Seek options help get a more representative frame and avoid black frames.',
+    defaultValue: 'first_frame',
+    options: ['first_frame', 'seek_1s', 'seek_3s', 'seek_5s', 'seek_10pct', 'seek_25pct'],
+    optionLabels: {
+      first_frame: 'First Frame',
+      seek_1s: 'Seek 1 Second',
+      seek_3s: 'Seek 3 Seconds',
+      seek_5s: 'Seek 5 Seconds',
+      seek_10pct: 'Seek 10% Position',
+      seek_25pct: 'Seek 25% Position',
+    },
+  },
+  {
     key: 'config.app_show_hidden',
     type: 'boolean',
     label: 'Show Hidden Files',

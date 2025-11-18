@@ -149,39 +149,54 @@ func convertToImagorParams(input gql.ImagorParamsInput) imagorpath.Params {
 }
 
 // generateThumbnailUrls generates thumbnail URLs using the imagor provider
-func (r *Resolver) generateThumbnailUrls(imagePath string) *gql.ThumbnailUrls {
+func (r *Resolver) generateThumbnailUrls(imagePath string, videoThumbnailPos string) *gql.ThumbnailUrls {
 	if r.imagorProvider == nil {
 		return nil
 	}
+
+	// Helper to build filters with specific quality
+	buildFilters := func(quality string) imagorpath.Filters {
+		filters := imagorpath.Filters{
+			{Name: "quality", Args: quality},
+			{Name: "format", Args: "webp"},
+		}
+
+		// Add video thumbnail filter based on position
+		switch videoThumbnailPos {
+		case "seek_1s":
+			filters = append(filters, imagorpath.Filter{Name: "seek", Args: "1s"})
+		case "seek_3s":
+			filters = append(filters, imagorpath.Filter{Name: "seek", Args: "3s"})
+		case "seek_5s":
+			filters = append(filters, imagorpath.Filter{Name: "seek", Args: "5s"})
+		case "seek_10pct":
+			filters = append(filters, imagorpath.Filter{Name: "seek", Args: "0.1"})
+		case "seek_25pct":
+			filters = append(filters, imagorpath.Filter{Name: "seek", Args: "0.25"})
+		}
+
+		return filters
+	}
+
 	// Generate different sized URLs using the imagor provider
 	gridURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
-		Width:  300,
-		Height: 225,
-		Filters: imagorpath.Filters{
-			{Name: "quality", Args: "80"},
-			{Name: "format", Args: "webp"},
-			{Name: "max_frames", Args: "1"},
-		},
+		Width:   300,
+		Height:  225,
+		Filters: buildFilters("80"),
 	})
 
 	previewURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
-		Width:  1200,
-		Height: 900,
-		FitIn:  true,
-		Filters: imagorpath.Filters{
-			{Name: "quality", Args: "90"},
-			{Name: "format", Args: "webp"},
-		},
+		Width:   1200,
+		Height:  900,
+		FitIn:   true,
+		Filters: buildFilters("90"),
 	})
 
 	fullURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
-		Width:  2400,
-		Height: 1800,
-		FitIn:  true,
-		Filters: imagorpath.Filters{
-			{Name: "quality", Args: "95"},
-			{Name: "format", Args: "webp"},
-		},
+		Width:   2400,
+		Height:  1800,
+		FitIn:   true,
+		Filters: buildFilters("95"),
 	})
 
 	// For original, use raw filter
