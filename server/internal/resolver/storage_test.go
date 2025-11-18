@@ -358,6 +358,10 @@ func TestListFiles_OnlyRequiresReadScope(t *testing.T) {
 			sortBy := gql.SortOptionName
 			sortOrder := gql.SortOrderAsc
 
+			// Mock the registry call for video thumbnail position
+			mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.video_thumbnail_position"}).
+				Return([]*registrystore.Registry{}, nil).Once()
+
 			mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
 				Items: []storage.FileInfo{
 					{Name: "file1.txt", Path: "/test/file1.txt", Size: 100, IsDir: false},
@@ -374,6 +378,7 @@ func TestListFiles_OnlyRequiresReadScope(t *testing.T) {
 			assert.Len(t, result.Items, 2)
 
 			mockStorage.AssertExpectations(t)
+			mockRegistryStore.AssertExpectations(t)
 		})
 	}
 }
@@ -389,6 +394,10 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 
 	ctx := createReadOnlyContext("test-user-id")
 	path := "/test/file1.txt"
+
+	// Mock the registry call for video thumbnail position
+	mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.video_thumbnail_position"}).
+		Return([]*registrystore.Registry{}, nil).Once()
 
 	mockStorage.On("Stat", ctx, path).Return(storage.FileInfo{
 		Name:         "file1.txt",
@@ -406,6 +415,7 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 	assert.Equal(t, "file1.txt", result.Name)
 
 	mockStorage.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
 }
 
 func TestTestStorageConfig_RequiresAdminPermission(t *testing.T) {
@@ -839,6 +849,10 @@ func TestReadOperations_StillWork(t *testing.T) {
 		sortBy := gql.SortOptionName
 		sortOrder := gql.SortOrderAsc
 
+		// Mock the registry call for video thumbnail position
+		mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.video_thumbnail_position"}).
+			Return([]*registrystore.Registry{}, nil).Once()
+
 		mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
 			Items: []storage.FileInfo{
 				{Name: "file1.txt", Path: "/test/file1.txt", Size: 100, IsDir: false},
@@ -853,11 +867,17 @@ func TestReadOperations_StillWork(t *testing.T) {
 		assert.Equal(t, 1, result.TotalCount)
 
 		mockStorage.AssertExpectations(t)
+		mockRegistryStore.AssertExpectations(t)
 	})
 
 	t.Run("StatFile works with read-only", func(t *testing.T) {
 		mockStorage.ExpectedCalls = nil
+		mockRegistryStore.ExpectedCalls = nil
 		path := "/test/file1.txt"
+
+		// Mock the registry call for video thumbnail position
+		mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.video_thumbnail_position"}).
+			Return([]*registrystore.Registry{}, nil).Once()
 
 		mockStorage.On("Stat", ctx, path).Return(storage.FileInfo{
 			Name:         "file1.txt",
@@ -875,6 +895,7 @@ func TestReadOperations_StillWork(t *testing.T) {
 		assert.Equal(t, "file1.txt", result.Name)
 
 		mockStorage.AssertExpectations(t)
+		mockRegistryStore.AssertExpectations(t)
 	})
 }
 
@@ -1210,6 +1231,10 @@ func TestListFiles(t *testing.T) {
 	sortBy := gql.SortOptionName
 	sortOrder := gql.SortOrderAsc
 
+	// Mock the registry call for video thumbnail position
+	mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.video_thumbnail_position"}).
+		Return([]*registrystore.Registry{}, nil).Once()
+
 	mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
 		Items: []storage.FileInfo{
 			{Name: "file1.txt", Path: "/test/file1.txt", Size: 100, IsDir: false},
@@ -1230,6 +1255,7 @@ func TestListFiles(t *testing.T) {
 	assert.False(t, result.Items[0].IsDirectory)
 
 	mockStorage.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
 }
 
 func TestStatFile(t *testing.T) {
@@ -1243,6 +1269,10 @@ func TestStatFile(t *testing.T) {
 
 	ctx := createReadOnlyContext("test-owner-id")
 	path := "/test/file1.txt"
+
+	// Mock the registry call for video thumbnail position
+	mockRegistryStore.On("GetMulti", mock.Anything, "system:global", []string{"config.video_thumbnail_position"}).
+		Return([]*registrystore.Registry{}, nil).Once()
 
 	mockStorage.On("Stat", ctx, path).Return(storage.FileInfo{
 		Name:         "file1.txt",
@@ -1265,4 +1295,5 @@ func TestStatFile(t *testing.T) {
 	assert.Equal(t, "abc123", *result.Etag)
 
 	mockStorage.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
 }
