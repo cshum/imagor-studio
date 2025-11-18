@@ -27,37 +27,6 @@ export function useGalleryKeyboardNavigation({
   const folderRefs = useRef<(HTMLDivElement | null)[]>([])
   const imageRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
-  // Unified keyboard navigation handlers
-  const handleGalleryContainerFocus = () => {
-    // When gallery container receives focus, focus first folder or first image
-    if (focusedGrid === null) {
-      if (folders.length > 0) {
-        setFocusedGrid('folder')
-        setFocusedFolderIndex(0)
-      } else if (images.length > 0) {
-        setFocusedGrid('image')
-        setFocusedImageIndex(0)
-      }
-    }
-  }
-
-  const handleGalleryContainerKeyDown = (event: React.KeyboardEvent) => {
-    // If container has focus and no grid is focused, handle initial navigation
-    if (
-      focusedGrid === null &&
-      ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', ' '].includes(event.key)
-    ) {
-      event.preventDefault()
-      if (folders.length > 0) {
-        setFocusedGrid('folder')
-        setFocusedFolderIndex(0)
-      } else if (images.length > 0) {
-        setFocusedGrid('image')
-        setFocusedImageIndex(0)
-      }
-    }
-  }
-
   // Initialize folder refs array
   useEffect(() => {
     folderRefs.current = folderRefs.current.slice(0, folders.length)
@@ -235,11 +204,7 @@ export function useGalleryKeyboardNavigation({
   return {
     galleryContainerRef,
     galleryContainerProps: {
-      tabIndex: 0 as const,
-      onFocus: handleGalleryContainerFocus,
-      onKeyDown: handleGalleryContainerKeyDown,
-      className:
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+      className: 'focus-visible:outline-none',
     },
     folderGridProps: {
       focusedIndex: focusedGrid === 'folder' ? focusedFolderIndex : -1,

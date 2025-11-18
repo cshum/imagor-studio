@@ -12,6 +12,7 @@ interface ImageCellProps {
   columnIndex: number
   index: number
   isFocused: boolean
+  focusedIndex: number
   onImageClick?: (imageKey: string, position: Position, index: number) => void
   onKeyDown?: (event: React.KeyboardEvent, index: number) => void
   imageRef?: (el: HTMLDivElement | null) => void
@@ -25,6 +26,7 @@ const ImageCell = ({
   columnIndex,
   index,
   isFocused,
+  focusedIndex,
   onImageClick,
   onKeyDown,
   imageRef,
@@ -58,7 +60,7 @@ const ImageCell = ({
       data-image-key={image.imageKey}
       data-image-name={image.imageName}
       data-is-video={image.isVideo}
-      className='focus-visible:ring-ring absolute box-border cursor-pointer rounded-md p-1 focus-visible:ring-2 focus-visible:ring-inset focus-visible:outline-none md:p-1.5'
+      className='focus-visible:ring-ring absolute box-border cursor-pointer rounded-md p-1 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:p-1.5'
       style={{
         width: `${columnWidth}px`,
         height: `${rowHeight}px`,
@@ -67,7 +69,7 @@ const ImageCell = ({
       }}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      tabIndex={isFocused ? 0 : -1}
+      tabIndex={index === 0 && focusedIndex === -1 ? 0 : isFocused ? 0 : -1}
       role='button'
       aria-label={`${image.isVideo ? 'Video' : 'Image'}: ${image.imageName}`}
     >
@@ -149,6 +151,7 @@ export const ImageGrid = ({
           columnIndex={columnIndex}
           index={i}
           isFocused={i === focusedIndex}
+          focusedIndex={focusedIndex}
           onImageClick={onImageClick}
           onKeyDown={onImageKeyDown}
           imageRef={(el) => {
