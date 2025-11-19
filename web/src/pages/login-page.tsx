@@ -127,7 +127,7 @@ export function LoginPage() {
       </div>
 
       {/* Content */}
-      <div className='relative flex flex-1 items-start justify-center py-6 md:items-center md:pt-0'>
+      <div className='relative flex flex-1 items-start justify-center py-6 md:items-center'>
         <LicenseBadge />
         <Card className='w-full max-w-md'>
           <CardHeader className='space-y-1 text-center'>
