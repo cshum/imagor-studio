@@ -263,7 +263,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               target='_blank'
               className='text-foreground hover:text-foreground/80 text-lg font-semibold transition-colors'
             >
-              {t('imageEditor.page.title')}
+              {t('common.navigation.title')}
             </a>
           </div>
 

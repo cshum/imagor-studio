@@ -12,6 +12,7 @@
       "switchTheme": "Switch Theme"
     },
     "navigation": {
+      "title": "Imagor Studio",
       "home": "Home",
       "account": "Account",
       "profile": "Profile",
@@ -439,7 +440,6 @@
   "noImageInfo": "No image information available.",
   "imageEditor": {
     "page": {
-      "title": "Imagor Studio",
       "back": "Back",
       "controls": "Controls",
       "resetAll": "Reset All",

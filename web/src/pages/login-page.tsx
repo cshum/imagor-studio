@@ -6,6 +6,7 @@ import { z } from 'zod'
 
 import { login } from '@/api/auth-api'
 import { LicenseBadge } from '@/components/license-badge'
+import { ModeToggle } from '@/components/mode-toggle'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -108,72 +109,91 @@ export function LoginPage() {
   }
 
   return (
-    <div className='min-h-screen-safe flex items-start justify-center pt-8 md:items-center md:pt-0'>
-      <LicenseBadge />
-      <Card className='w-full max-w-md'>
-        <CardHeader className='space-y-1 text-center'>
-          <CardTitle className='text-2xl font-semibold tracking-tight'>
-            {t('auth.login.title')}
-          </CardTitle>
-          <CardDescription className='text-muted-foreground'>
-            {t('auth.login.subtitle')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='username'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('common.labels.username')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='text'
-                        placeholder={t('forms.placeholders.enterUsername')}
-                        disabled={form.formState.isSubmitting}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+    <div className='min-h-screen-safe flex flex-col'>
+      <div className='flex items-center gap-2 border-b px-4 py-3'>
+        <div className='w-10' />
+        <div className='flex flex-1 justify-center'>
+          <a
+            href='https://imagor.net'
+            target='_blank'
+            className='text-foreground hover:text-foreground/80 text-lg font-semibold transition-colors'
+          >
+            {t('common.navigation.title')}
+          </a>
+        </div>
+        <div className='ml-auto'>
+          <ModeToggle />
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className='relative flex flex-1 items-start justify-center py-6 md:items-center md:pt-0'>
+        <LicenseBadge />
+        <Card className='w-full max-w-md'>
+          <CardHeader className='space-y-1 text-center'>
+            <CardTitle className='text-2xl font-semibold tracking-tight'>
+              {t('auth.login.title')}
+            </CardTitle>
+            <CardDescription className='text-muted-foreground'>
+              {t('auth.login.subtitle')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+                <FormField
+                  control={form.control}
+                  name='username'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('common.labels.username')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='text'
+                          placeholder={t('forms.placeholders.enterUsername')}
+                          disabled={form.formState.isSubmitting}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='password'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('common.labels.password')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='password'
+                          placeholder={t('forms.placeholders.enterPassword')}
+                          disabled={form.formState.isSubmitting}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {form.formState.errors.root && (
+                  <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
+                    {form.formState.errors.root.message}
+                  </div>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name='password'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('common.labels.password')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='password'
-                        placeholder={t('forms.placeholders.enterPassword')}
-                        disabled={form.formState.isSubmitting}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {form.formState.errors.root && (
-                <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
-                  {form.formState.errors.root.message}
-                </div>
-              )}
-              <ButtonWithLoading
-                type='submit'
-                className='w-full'
-                isLoading={form.formState.isSubmitting}
-              >
-                {t('auth.login.signIn')}
-              </ButtonWithLoading>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+                <ButtonWithLoading
+                  type='submit'
+                  className='w-full'
+                  isLoading={form.formState.isSubmitting}
+                >
+                  {t('auth.login.signIn')}
+                </ButtonWithLoading>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
