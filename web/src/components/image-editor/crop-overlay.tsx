@@ -13,6 +13,10 @@ interface CropOverlayProps {
   scaleY?: number // Optional separate Y scale for stretch mode
   onCropChange: (crop: { left: number; top: number; width: number; height: number }) => void
   lockedAspectRatio?: number | null
+  hFlip?: boolean
+  vFlip?: boolean
+  originalWidth: number
+  originalHeight: number
 }
 
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | null
@@ -28,14 +32,34 @@ export function CropOverlay({
   scaleY,
   onCropChange,
   lockedAspectRatio = null,
+  hFlip = false,
+  vFlip = false,
+  originalWidth,
+  originalHeight,
 }: CropOverlayProps) {
   // Use separate scales for X and Y (for stretch mode support)
   const scaleX = scale
   const actualScaleY = scaleY ?? scale // Use scaleY if provided, otherwise use scale
 
+  // Transform crop coordinates based on flip state
+  // Crop coordinates are stored in original (unflipped) space
+  // We need to transform them to display (flipped) space
+  let transformedLeft = cropLeft
+  let transformedTop = cropTop
+
+  if (hFlip) {
+    // Horizontal flip: mirror X coordinate
+    transformedLeft = originalWidth - cropLeft - cropWidth
+  }
+
+  if (vFlip) {
+    // Vertical flip: mirror Y coordinate
+    transformedTop = originalHeight - cropTop - cropHeight
+  }
+
   // Calculate display coordinates (scaled for preview)
-  const displayLeft = cropLeft * scaleX
-  const displayTop = cropTop * actualScaleY
+  const displayLeft = transformedLeft * scaleX
+  const displayTop = transformedTop * actualScaleY
   const displayWidth = cropWidth * scaleX
   const displayHeight = cropHeight * actualScaleY
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -49,6 +73,26 @@ export function CropOverlay({
     width: 0,
     height: 0,
   })
+
+  // Convert display coordinates back to original (unflipped) space
+  const convertToOriginalSpace = useCallback(
+    (displayX: number, displayY: number) => {
+      // Convert from display pixels to original image coordinates
+      let originalX = Math.round(displayX / scaleX)
+      let originalY = Math.round(displayY / actualScaleY)
+
+      // Reverse flip transformations
+      if (hFlip) {
+        originalX = originalWidth - originalX - cropWidth
+      }
+      if (vFlip) {
+        originalY = originalHeight - originalY - cropHeight
+      }
+
+      return { originalX, originalY }
+    },
+    [scaleX, actualScaleY, hFlip, vFlip, originalWidth, originalHeight, cropWidth, cropHeight],
+  )
 
   // Handle mouse/touch down on crop box (for dragging)
   const handleCropMouseDown = useCallback(
@@ -107,10 +151,11 @@ export function CropOverlay({
         newDisplayLeft = Math.max(0, Math.min(newDisplayLeft, previewWidth - displayWidth))
         newDisplayTop = Math.max(0, Math.min(newDisplayTop, previewHeight - displayHeight))
 
-        // Convert back to original coordinates using separate scales
+        // Convert back to original (unflipped) coordinates
+        const { originalX, originalY } = convertToOriginalSpace(newDisplayLeft, newDisplayTop)
         onCropChange({
-          left: Math.round(newDisplayLeft / scaleX),
-          top: Math.round(newDisplayTop / actualScaleY),
+          left: originalX,
+          top: originalY,
           width: cropWidth,
           height: cropHeight,
         })
@@ -244,12 +289,27 @@ export function CropOverlay({
           newHeight = previewHeight - newTop
         }
 
-        // Convert back to original coordinates using separate scales
+        // Convert dimensions back to original space
+        const newCropWidth = Math.round(newWidth / scaleX)
+        const newCropHeight = Math.round(newHeight / actualScaleY)
+
+        // Convert position back to original (unflipped) coordinates
+        let originalLeft = Math.round(newLeft / scaleX)
+        let originalTop = Math.round(newTop / actualScaleY)
+
+        // Reverse flip transformations
+        if (hFlip) {
+          originalLeft = originalWidth - originalLeft - newCropWidth
+        }
+        if (vFlip) {
+          originalTop = originalHeight - originalTop - newCropHeight
+        }
+
         onCropChange({
-          left: Math.round(newLeft / scaleX),
-          top: Math.round(newTop / actualScaleY),
-          width: Math.round(newWidth / scaleX),
-          height: Math.round(newHeight / actualScaleY),
+          left: originalLeft,
+          top: originalTop,
+          width: newCropWidth,
+          height: newCropHeight,
         })
       }
     }
@@ -288,6 +348,11 @@ export function CropOverlay({
     actualScaleY,
     onCropChange,
     lockedAspectRatio,
+    convertToOriginalSpace,
+    hFlip,
+    vFlip,
+    originalWidth,
+    originalHeight,
   ])
 
   return (

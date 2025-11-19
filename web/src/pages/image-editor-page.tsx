@@ -362,6 +362,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           cropHeight={params.cropHeight || 0}
           onCropChange={handleCropChange}
           cropAspectRatio={cropAspectRatio}
+          hFlip={params.hFlip}
+          vFlip={params.vFlip}
         />
       </div>
 

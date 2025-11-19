@@ -30,6 +30,8 @@ interface PreviewAreaProps {
   cropHeight?: number
   onCropChange?: (crop: { left: number; top: number; width: number; height: number }) => void
   cropAspectRatio?: number | null
+  hFlip?: boolean
+  vFlip?: boolean
 }
 
 export function PreviewArea({
@@ -49,6 +51,8 @@ export function PreviewArea({
   cropHeight = 0,
   onCropChange,
   cropAspectRatio = null,
+  hFlip = false,
+  vFlip = false,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -214,6 +218,10 @@ export function PreviewArea({
                       scaleY={scaleY}
                       onCropChange={onCropChange}
                       lockedAspectRatio={cropAspectRatio}
+                      hFlip={hFlip}
+                      vFlip={vFlip}
+                      originalWidth={originalDimensions.width}
+                      originalHeight={originalDimensions.height}
                     />
                   )
                 })()}
