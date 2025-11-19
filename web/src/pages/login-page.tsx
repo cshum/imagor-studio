@@ -110,13 +110,12 @@ export function LoginPage() {
 
   return (
     <div className='min-h-screen-safe flex flex-col'>
-      <div className='flex items-center gap-2 border-b px-4 py-3'>
-        <div className='w-10' />
-        <div className='flex flex-1 justify-center'>
+      <div className='flex items-center gap-2 border-b px-6 py-3'>
+        <div className='flex flex-1'>
           <a
             href='https://imagor.net'
             target='_blank'
-            className='text-foreground hover:text-foreground/80 text-lg font-semibold transition-colors'
+            className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
           >
             {t('common.navigation.title')}
           </a>
@@ -127,7 +126,7 @@ export function LoginPage() {
       </div>
 
       {/* Content */}
-      <div className='relative flex flex-1 items-start justify-center py-6 md:items-center'>
+      <div className='relative flex flex-1 items-start justify-center py-6'>
         <LicenseBadge />
         <Card className='w-full max-w-md'>
           <CardHeader className='space-y-1 text-center'>
