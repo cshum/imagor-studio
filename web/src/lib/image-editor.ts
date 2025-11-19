@@ -81,6 +81,8 @@ export class ImageEditor {
   private readonly MAX_HISTORY_SIZE = 50
   private historyDebounceTimer: number | null = null
   private pendingHistorySnapshot: ImageEditorState | null = null
+  private previewRequestId: number = 0
+  private loadingRequestId: number = 0
 
   constructor(config: ImageEditorConfig) {
     this.config = config
@@ -323,7 +325,7 @@ export class ImageEditor {
   /**
    * Generate preview URL and trigger callbacks
    */
-  private async generatePreview(): Promise<void> {
+  private async generatePreview(requestId: number): Promise<void> {
     // Cancel any existing request
     if (this.abortController) {
       this.abortController.abort()
@@ -349,7 +351,10 @@ export class ImageEditor {
         // Don't clear loading here - let PreviewArea clear it when image actually loads
       } else {
         // Same URL - image is already loaded, clear loading immediately
-        this.callbacks.onLoadingChange?.(false)
+        // Only clear if this is the request that set the loading state
+        if (requestId === this.loadingRequestId) {
+          this.callbacks.onLoadingChange?.(false)
+        }
         // Resolve any pending preview load promises
         this.notifyPreviewLoaded()
       }
@@ -360,8 +365,10 @@ export class ImageEditor {
 
       if (!isAbortError) {
         this.callbacks.onError?.(error as Error)
-        // Clear loading on error
-        this.callbacks.onLoadingChange?.(false)
+        // Clear loading on error, but only if this is the request that set it
+        if (requestId === this.loadingRequestId) {
+          this.callbacks.onLoadingChange?.(false)
+        }
       }
       // If aborted, do nothing - a new request is already in progress
     }
@@ -371,9 +378,12 @@ export class ImageEditor {
    * Debounced preview generation
    */
   private schedulePreviewUpdate(): void {
+    // Increment request ID to track this preview generation
+    const requestId = ++this.previewRequestId
+
     // Only set loading state if we're starting a new preview generation
-    // The loading state will be cleared in generatePreview's finally block
     if (!this.debounceTimer) {
+      this.loadingRequestId = requestId
       this.callbacks.onLoadingChange?.(true)
     }
 
@@ -383,7 +393,7 @@ export class ImageEditor {
 
     this.debounceTimer = window.setTimeout(() => {
       this.debounceTimer = null
-      this.generatePreview()
+      this.generatePreview(requestId)
     }, 300)
   }
 
@@ -540,6 +550,8 @@ export class ImageEditor {
    * Called by parent when preview image finishes loading
    */
   notifyPreviewLoaded(): void {
+    // Clear loading state when preview actually loads
+    this.callbacks.onLoadingChange?.(false)
     // Resolve all pending promises
     this.previewLoadResolvers.forEach((resolve) => resolve())
     this.previewLoadResolvers = []
