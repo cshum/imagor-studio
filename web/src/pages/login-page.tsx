@@ -115,7 +115,7 @@ export function LoginPage() {
           <a
             href='https://imagor.net'
             target='_blank'
-            className='text-foreground hover:text-foreground/80 text-lg font-semibold transition-colors'
+            className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
           >
             {t('common.navigation.title')}
           </a>
