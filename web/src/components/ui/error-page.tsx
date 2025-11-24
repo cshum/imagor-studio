@@ -30,9 +30,8 @@ export function ErrorPage({
 
   return (
     <div className='min-h-screen-safe flex flex-col'>
-      <div className='flex items-center gap-2 border-b px-4 py-3'>
-        <div className='w-10' />
-        <div className='flex flex-1 justify-center'>
+      <div className='flex items-center gap-2 border-b px-6 py-3'>
+        <div className='flex flex-1'>
           <a
             href='https://imagor.net'
             target='_blank'
