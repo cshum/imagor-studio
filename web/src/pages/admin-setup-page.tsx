@@ -8,6 +8,7 @@ import * as z from 'zod'
 
 import { registerAdmin } from '@/api/auth-api'
 import { setSystemRegistryObject } from '@/api/registry-api'
+import { ModeToggle } from '@/components/mode-toggle.tsx'
 import { StorageConfigurationWizard } from '@/components/storage/storage-configuration-wizard'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { Button } from '@/components/ui/button'
@@ -389,9 +390,9 @@ export function AdminSetupPage() {
 
   const handleStorageConfigured = (restartRequired: boolean) => {
     if (restartRequired) {
-      toast.success('Storage configured successfully! Please restart the server to apply changes.')
+      toast.success('Storage configured successfully Please restart the server to apply changes.')
     } else {
-      toast.success('Storage configured successfully!')
+      toast.success('Storage configured successfully')
     }
     // Use the exposed next method instead of hard navigation
     multiStepFormRef.current?.next()
@@ -450,17 +451,33 @@ export function AdminSetupPage() {
     : allSteps
 
   return (
-    <div className='bg-background min-h-screen-safe flex items-center justify-center p-4'>
-      <MultiStepForm
-        ref={multiStepFormRef}
-        steps={steps}
-        currentStep={currentStep}
-        onStepChange={setCurrentStep}
-        onComplete={() => navigate({ to: '/' })}
-        title={t('pages.admin.welcome')}
-        description={t('pages.admin.setupDescription')}
-        className='w-full max-w-2xl'
-      />
+    <div className='min-h-screen-safe flex flex-col'>
+      <div className='flex items-center gap-2 border-b px-6 py-3'>
+        <div className='flex flex-1'>
+          <a
+            href='https://imagor.net'
+            target='_blank'
+            className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
+          >
+            {t('common.navigation.title')}
+          </a>
+        </div>
+        <div className='ml-auto'>
+          <ModeToggle />
+        </div>
+      </div>
+      <div className='bg-background flex flex-1 items-start justify-center py-6 md:items-center'>
+        <MultiStepForm
+          ref={multiStepFormRef}
+          steps={steps}
+          currentStep={currentStep}
+          onStepChange={setCurrentStep}
+          onComplete={() => navigate({ to: '/' })}
+          title={t('pages.admin.welcome')}
+          description={t('pages.admin.setupDescription')}
+          className='w-full max-w-2xl'
+        />
+      </div>
     </div>
   )
 }

@@ -171,7 +171,7 @@ docker-build: ## Build Docker image
 	@echo "$(GREEN)Building Docker image...$(NC)"
 	@echo "$(YELLOW)Image: $(DOCKER_IMAGE):$(DOCKER_TAG)$(NC)"
 	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
-	@echo "$(GREEN)✓ Docker image built successfully!$(NC)"
+	@echo "$(GREEN)✓ Docker image built successfully$(NC)"
 	@echo "$(YELLOW)To run: make docker-run$(NC)"
 
 .PHONY: docker-run
@@ -228,7 +228,7 @@ docker-build-embedded: ## Build Docker image for embedded mode
 	@echo "$(GREEN)Building Docker image for embedded mode...$(NC)"
 	@echo "$(YELLOW)Image: $(DOCKER_IMAGE)-embedded:$(DOCKER_TAG)$(NC)"
 	docker build --build-arg EMBEDDED_MODE=true -t $(DOCKER_IMAGE)-embedded:$(DOCKER_TAG) .
-	@echo "$(GREEN)✓ Embedded Docker image built successfully!$(NC)"
+	@echo "$(GREEN)✓ Embedded Docker image built successfully$(NC)"
 	@echo "$(YELLOW)To run: make docker-run-embedded$(NC)"
 
 .PHONY: docker-run-embedded
