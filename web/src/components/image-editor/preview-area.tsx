@@ -63,7 +63,7 @@ export function PreviewArea({
     height: number
   } | null>(null)
   const lastReportedDimensionsRef = useRef<{ width: number; height: number } | null>(null)
-  
+
   // Delayed flip states for overlay - only update after preview loads
   const [overlayHFlip, setOverlayHFlip] = useState(hFlip)
   const [overlayVFlip, setOverlayVFlip] = useState(vFlip)
@@ -80,12 +80,12 @@ export function PreviewArea({
     } else {
       setImageDimensions({ width, height })
     }
-    
+
     // Update overlay flip states after preview loads
     // This ensures overlay position matches the displayed image
     setOverlayHFlip(hFlip)
     setOverlayVFlip(vFlip)
-    
+
     onLoad?.(width, height)
   }
 
