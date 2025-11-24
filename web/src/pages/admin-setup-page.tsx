@@ -390,9 +390,9 @@ export function AdminSetupPage() {
 
   const handleStorageConfigured = (restartRequired: boolean) => {
     if (restartRequired) {
-      toast.success('Storage configured successfully! Please restart the server to apply changes.')
+      toast.success('Storage configured successfully Please restart the server to apply changes.')
     } else {
-      toast.success('Storage configured successfully!')
+      toast.success('Storage configured successfully')
     }
     // Use the exposed next method instead of hard navigation
     multiStepFormRef.current?.next()

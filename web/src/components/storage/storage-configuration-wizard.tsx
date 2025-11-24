@@ -131,7 +131,7 @@ export function StorageConfigurationWizard({
       })
 
       if (result.success) {
-        toast.success(result.message || 'S3 storage configured successfully!')
+        toast.success(result.message || 'S3 storage configured successfully')
         // Load root folders if no restart is required
         if (!result.restartRequired) {
           await loadRootFolders()

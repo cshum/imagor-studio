@@ -157,7 +157,7 @@ export function SystemSettingsForm({
           setHomeTitle(changedValues['config.app_home_title'])
         }
 
-        toast.success('Settings updated successfully!')
+        toast.success('Settings updated successfully')
 
         // Invalidate the current route to refresh loader data
         await router.invalidate()
