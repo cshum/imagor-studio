@@ -111,91 +111,87 @@ export function LoginPage() {
   return (
     <div className='min-h-screen-safe flex flex-col'>
       <div className='flex items-center gap-2 border-b px-6 py-3'>
-        <div className='mx-auto flex w-full max-w-7xl items-center gap-2'>
-          <div className='flex flex-1'>
-            <a
-              href='https://imagor.net'
-              target='_blank'
-              className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
-            >
-              {t('common.navigation.title')}
-            </a>
-          </div>
-          <div className='ml-auto'>
-            <ModeToggle />
-          </div>
+        <div className='flex flex-1'>
+          <a
+            href='https://imagor.net'
+            target='_blank'
+            className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
+          >
+            {t('common.navigation.title')}
+          </a>
+        </div>
+        <div className='ml-auto'>
+          <ModeToggle />
         </div>
       </div>
 
       {/* Content */}
-      <div className='relative mx-auto w-full max-w-7xl py-6'>
+      <div className='relative flex flex-1 items-start justify-center py-6'>
         <LicenseBadge />
-        <div className='flex justify-center'>
-          <Card className='w-full max-w-md'>
-            <CardHeader className='space-y-1 text-center'>
-              <CardTitle className='text-2xl font-semibold tracking-tight'>
-                {t('auth.login.title')}
-              </CardTitle>
-              <CardDescription className='text-muted-foreground'>
-                {t('auth.login.subtitle')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-                  <FormField
-                    control={form.control}
-                    name='username'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('common.labels.username')}</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='text'
-                            placeholder={t('forms.placeholders.enterUsername')}
-                            disabled={form.formState.isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name='password'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('common.labels.password')}</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='password'
-                            placeholder={t('forms.placeholders.enterPassword')}
-                            disabled={form.formState.isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {form.formState.errors.root && (
-                    <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
-                      {form.formState.errors.root.message}
-                    </div>
+        <Card className='w-full max-w-md'>
+          <CardHeader className='space-y-1 text-center'>
+            <CardTitle className='text-2xl font-semibold tracking-tight'>
+              {t('auth.login.title')}
+            </CardTitle>
+            <CardDescription className='text-muted-foreground'>
+              {t('auth.login.subtitle')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+                <FormField
+                  control={form.control}
+                  name='username'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('common.labels.username')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='text'
+                          placeholder={t('forms.placeholders.enterUsername')}
+                          disabled={form.formState.isSubmitting}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                  <ButtonWithLoading
-                    type='submit'
-                    className='w-full'
-                    isLoading={form.formState.isSubmitting}
-                  >
-                    {t('auth.login.signIn')}
-                  </ButtonWithLoading>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
+                />
+                <FormField
+                  control={form.control}
+                  name='password'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('common.labels.password')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='password'
+                          placeholder={t('forms.placeholders.enterPassword')}
+                          disabled={form.formState.isSubmitting}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {form.formState.errors.root && (
+                  <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
+                    {form.formState.errors.root.message}
+                  </div>
+                )}
+                <ButtonWithLoading
+                  type='submit'
+                  className='w-full'
+                  isLoading={form.formState.isSubmitting}
+                >
+                  {t('auth.login.signIn')}
+                </ButtonWithLoading>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

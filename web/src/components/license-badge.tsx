@@ -25,7 +25,7 @@ export const LicenseBadge = ({ side = 'right', theme = 'auto' }: LicenseBadgePro
     return null
   }
 
-  const positionClasses = side === 'left' ? 'left-6' : 'right-6'
+  const positionClasses = side === 'left' ? 'left-4 md:left-6' : 'right-4 md:right-6'
 
   return (
     <Button
