@@ -343,19 +343,13 @@ export class ImageEditor {
         },
         this.abortController.signal,
       )
-
       // Only update if URL actually changed
       if (url !== this.lastPreviewUrl) {
         this.lastPreviewUrl = url
         this.callbacks.onPreviewUpdate?.(url)
         // Don't clear loading here - let PreviewArea clear it when image actually loads
       } else {
-        // Same URL - image is already loaded, clear loading immediately
-        // Only clear if this is the request that set the loading state
-        if (requestId === this.loadingRequestId) {
-          this.callbacks.onLoadingChange?.(false)
-        }
-        // Resolve any pending preview load promises
+        this.callbacks.onLoadingChange?.(false)
         this.notifyPreviewLoaded()
       }
     } catch (error) {
