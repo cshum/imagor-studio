@@ -14,6 +14,13 @@ extend type Mutation {
     imageKey: String!
     params: ImagorParamsInput!
   ): String!
+  
+  # Bulk Imagor URL Generation API
+  generateImagorUrls(
+    galleryKey: String!
+    imageKey: String!
+    paramsList: [ImagorParamsInput!]!
+  ): [String!]!
 }
 
 # Imagor URL Generation Input Types

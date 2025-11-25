@@ -45,6 +45,44 @@ func (r *mutationResolver) GenerateImagorURL(ctx context.Context, galleryKey str
 	return url, nil
 }
 
+// GenerateImagorUrls is the resolver for the generateImagorUrls field.
+func (r *mutationResolver) GenerateImagorUrls(ctx context.Context, galleryKey string, imageKey string, paramsList []*gql.ImagorParamsInput) ([]string, error) {
+	if err := RequireEditPermission(ctx); err != nil {
+		return nil, err
+	}
+
+	r.logger.Debug("Generating bulk imagor URLs",
+		zap.String("galleryKey", galleryKey),
+		zap.String("imageKey", imageKey),
+		zap.Int("count", len(paramsList)))
+
+	// Build image path from galleryKey and imageKey
+	imagePath := buildImagePath(galleryKey, imageKey)
+
+	urls := make([]string, len(paramsList))
+	for i, p := range paramsList {
+		// Convert GraphQL input to imagorpath.Params
+		imagorParams := convertToImagorParams(*p)
+
+		// Generate URL using the imagor provider
+		url, err := r.imagorProvider.GenerateURL(imagePath, imagorParams)
+		if err != nil {
+			r.logger.Error("Failed to generate imagor URL in bulk",
+				zap.Error(err),
+				zap.String("imagePath", imagePath),
+				zap.Int("index", i))
+			return nil, fmt.Errorf("failed to generate imagor URL at index %d: %w", i, err)
+		}
+		urls[i] = url
+	}
+
+	r.logger.Debug("Generated bulk imagor URLs",
+		zap.Int("count", len(urls)),
+		zap.String("imagePath", imagePath))
+
+	return urls, nil
+}
+
 // buildImagePath constructs the full image path from gallery and image keys
 func buildImagePath(galleryKey, imageKey string) string {
 	if galleryKey == "" {

@@ -4,6 +4,8 @@ import type {
   ConfigureExternalImagorMutationVariables,
   GenerateImagorUrlMutation,
   GenerateImagorUrlMutationVariables,
+  GenerateImagorUrlsMutation,
+  GenerateImagorUrlsMutationVariables,
   ImagorStatusQuery,
 } from '@/generated/graphql'
 import { getSdk } from '@/generated/graphql-request'
@@ -46,8 +48,20 @@ export async function configureExternalImagor(
 export async function generateImagorUrl(
   variables: GenerateImagorUrlMutationVariables,
   signal?: AbortSignal,
-): Promise<GenerateImagorUrlMutation['generateImagorUrl']> {
+): Promise<string> {
   const sdk = getSdk(getGraphQLClient())
   const result = await sdk.GenerateImagorUrl(variables, undefined, signal)
   return result.generateImagorUrl
+}
+
+/**
+ * Generate multiple Imagor URLs in bulk
+ */
+export async function generateImagorUrlsBulk(
+  variables: GenerateImagorUrlsMutationVariables,
+  signal?: AbortSignal,
+): Promise<string[]> {
+  const sdk = getSdk(getGraphQLClient())
+  const result = await sdk.GenerateImagorUrls(variables, undefined, signal)
+  return result.generateImagorUrls
 }
