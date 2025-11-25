@@ -19,6 +19,7 @@ type Documents = {
   '\n  mutation ConfigureEmbeddedImagor {\n    configureEmbeddedImagor {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureEmbeddedImagorDocument
   '\n  mutation ConfigureExternalImagor($input: ExternalImagorInput!) {\n    configureExternalImagor(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureExternalImagorDocument
   '\n  mutation GenerateImagorUrl(\n    $galleryKey: String!\n    $imageKey: String!\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      galleryKey: $galleryKey\n      imageKey: $imageKey\n      params: $params\n    )\n  }\n': typeof types.GenerateImagorUrlDocument
+  '\n  mutation GenerateImagorUrls(\n    $galleryKey: String!\n    $imageKey: String!\n    $paramsList: [ImagorParamsInput!]!\n  ) {\n    generateImagorUrls(\n      galleryKey: $galleryKey\n      imageKey: $imageKey\n      paramsList: $paramsList\n    )\n  }\n': typeof types.GenerateImagorUrlsDocument
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n': typeof types.SystemRegistryInfoFragmentDoc
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.ListUserRegistryDocument
@@ -59,6 +60,8 @@ const documents: Documents = {
     types.ConfigureExternalImagorDocument,
   '\n  mutation GenerateImagorUrl(\n    $galleryKey: String!\n    $imageKey: String!\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      galleryKey: $galleryKey\n      imageKey: $imageKey\n      params: $params\n    )\n  }\n':
     types.GenerateImagorUrlDocument,
+  '\n  mutation GenerateImagorUrls(\n    $galleryKey: String!\n    $imageKey: String!\n    $paramsList: [ImagorParamsInput!]!\n  ) {\n    generateImagorUrls(\n      galleryKey: $galleryKey\n      imageKey: $imageKey\n      paramsList: $paramsList\n    )\n  }\n':
+    types.GenerateImagorUrlsDocument,
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n':
     types.RegistryInfoFragmentDoc,
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n':
@@ -158,6 +161,12 @@ export function gql(
 export function gql(
   source: '\n  mutation GenerateImagorUrl(\n    $galleryKey: String!\n    $imageKey: String!\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      galleryKey: $galleryKey\n      imageKey: $imageKey\n      params: $params\n    )\n  }\n',
 ): (typeof documents)['\n  mutation GenerateImagorUrl(\n    $galleryKey: String!\n    $imageKey: String!\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      galleryKey: $galleryKey\n      imageKey: $imageKey\n      params: $params\n    )\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation GenerateImagorUrls(\n    $galleryKey: String!\n    $imageKey: String!\n    $paramsList: [ImagorParamsInput!]!\n  ) {\n    generateImagorUrls(\n      galleryKey: $galleryKey\n      imageKey: $imageKey\n      paramsList: $paramsList\n    )\n  }\n',
+): (typeof documents)['\n  mutation GenerateImagorUrls(\n    $galleryKey: String!\n    $imageKey: String!\n    $paramsList: [ImagorParamsInput!]!\n  ) {\n    generateImagorUrls(\n      galleryKey: $galleryKey\n      imageKey: $imageKey\n      paramsList: $paramsList\n    )\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

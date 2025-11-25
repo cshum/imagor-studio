@@ -634,6 +634,30 @@ export class ImageEditor {
   }
 
   /**
+   * Generate multiple URLs with different parameter sets
+   * Useful for generating multiple variations of the same image
+   * @param paramsList - Array of parameter sets to generate URLs for
+   * @returns Array of generated URLs
+   */
+  async generateBulkUrls(paramsList: Partial<ImageEditorState>[]): Promise<string[]> {
+    const { generateImagorUrlsBulk } = await import('@/api/imagor-api')
+    
+    // Convert each state to GraphQL params
+    const graphqlParamsList = paramsList.map((params) =>
+      this.convertStateToGraphQLParams(params, false),
+    )
+
+    // Generate URLs in bulk using the new separate mutation
+    const urls = await generateImagorUrlsBulk({
+      galleryKey: this.config.galleryKey,
+      imageKey: this.config.imageKey,
+      paramsList: graphqlParamsList as any,
+    })
+
+    return urls
+  }
+
+  /**
    * Handle download using location.href
    */
   async handleDownload(): Promise<{ success: boolean; error?: string }> {

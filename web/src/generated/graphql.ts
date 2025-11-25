@@ -167,6 +167,7 @@ export type Mutation = {
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
+  generateImagorUrls: Array<Scalars['String']['output']>
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
@@ -222,6 +223,12 @@ export type MutationGenerateImagorUrlArgs = {
   galleryKey: Scalars['String']['input']
   imageKey: Scalars['String']['input']
   params: ImagorParamsInput
+}
+
+export type MutationGenerateImagorUrlsArgs = {
+  galleryKey: Scalars['String']['input']
+  imageKey: Scalars['String']['input']
+  paramsList: Array<ImagorParamsInput>
 }
 
 export type MutationSetSystemRegistryArgs = {
@@ -477,6 +484,17 @@ export type GenerateImagorUrlMutationVariables = Exact<{
 }>
 
 export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImagorUrl: string }
+
+export type GenerateImagorUrlsMutationVariables = Exact<{
+  galleryKey: Scalars['String']['input']
+  imageKey: Scalars['String']['input']
+  paramsList: Array<ImagorParamsInput> | ImagorParamsInput
+}>
+
+export type GenerateImagorUrlsMutation = {
+  __typename?: 'Mutation'
+  generateImagorUrls: Array<string>
+}
 
 export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
@@ -1234,6 +1252,74 @@ export const GenerateImagorUrlDocument = {
     },
   ],
 } as unknown as DocumentNode<GenerateImagorUrlMutation, GenerateImagorUrlMutationVariables>
+export const GenerateImagorUrlsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'GenerateImagorUrls' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'galleryKey' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'imageKey' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'paramsList' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: { kind: 'NamedType', name: { kind: 'Name', value: 'ImagorParamsInput' } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'generateImagorUrls' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'galleryKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'galleryKey' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'imageKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'imageKey' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'paramsList' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'paramsList' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GenerateImagorUrlsMutation, GenerateImagorUrlsMutationVariables>
 export const ListUserRegistryDocument = {
   kind: 'Document',
   definitions: [
