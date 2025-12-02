@@ -12,6 +12,7 @@ export interface FolderGridProps {
   folders: Gallery[]
   width: number
   maxFolderWidth: number
+  foldersVisible?: boolean
   focusedIndex?: number
   folderRefs?: RefObject<(HTMLDivElement | null)[]>
   onFolderKeyDown?: (event: React.KeyboardEvent, index: number) => void
@@ -22,6 +23,7 @@ export const FolderGrid = ({
   folders,
   width,
   maxFolderWidth,
+  foldersVisible = true,
   focusedIndex = -1,
   folderRefs,
   onFolderKeyDown,
@@ -56,7 +58,9 @@ export const FolderGrid = ({
           className='hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
           onClick={() => onFolderClick?.(folder, index)}
           onKeyDown={(e) => onFolderKeyDown?.(e, index)}
-          tabIndex={index === 0 && focusedIndex === -1 ? 0 : focusedIndex === index ? 0 : -1}
+          tabIndex={
+            foldersVisible ? (index === 0 && focusedIndex === -1 ? 0 : focusedIndex === index ? 0 : -1) : -1
+          }
           role='gridcell'
           aria-label={`Folder: ${folder.galleryName}`}
           style={{ width: `${folderWidth - 8}px` }} // Subtracting 8px to account for the gap

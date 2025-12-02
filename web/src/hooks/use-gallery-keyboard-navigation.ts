@@ -59,7 +59,6 @@ export function useGalleryKeyboardNavigation({
         const element = imageRefs.current.get(focusedImageIndex)
         if (element) {
           element.focus()
-          element.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
         }
       })
     }

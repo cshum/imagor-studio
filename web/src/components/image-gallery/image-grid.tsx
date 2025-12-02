@@ -97,6 +97,7 @@ export interface ImageGridProps {
   aspectRatio: number
   width: number
   scrollTop: number
+  folderGridHeight?: number
   maxImageWidth: number
   focusedIndex?: number
   imageRefs?: RefObject<Map<number, HTMLDivElement>>
@@ -110,6 +111,7 @@ export const ImageGrid = ({
   aspectRatio,
   width,
   scrollTop,
+  folderGridHeight = 0,
   maxImageWidth,
   focusedIndex = -1,
   imageRefs,
@@ -131,16 +133,19 @@ export const ImageGrid = ({
   const overscanCount = visibleRowsCount
   const totalRenderedRows = visibleRowsCount + 2 * overscanCount
 
+  // Adjust scroll position to account for folder grid height
+  const adjustedScrollTop = Math.max(0, scrollTop - folderGridHeight)
+
   // Determine which images should be rendered based on scroll position
   const startImageIndex = Math.max(
     0,
-    Math.floor(scrollTop / rowHeight - overscanCount) * columnCount,
+    Math.floor(adjustedScrollTop / rowHeight - overscanCount) * columnCount,
   )
   const endImageIndex = Math.min(images.length, startImageIndex + totalRenderedRows * columnCount)
 
   // Calculate the first fully visible image (not in the overscan buffer)
   const firstVisibleImageIndex = Math.min(
-    Math.max(0, Math.floor(scrollTop / rowHeight) * columnCount),
+    Math.max(0, Math.floor(adjustedScrollTop / rowHeight) * columnCount),
     images.length - 1,
   )
 
