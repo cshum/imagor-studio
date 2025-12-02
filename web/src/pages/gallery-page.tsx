@@ -141,6 +141,17 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const folderColumnCount = Math.max(2, Math.floor(contentWidth / maxItemWidth))
   const imageColumnCount = Math.max(3, Math.floor(contentWidth / maxItemWidth))
 
+  // Calculate folder grid height for scroll calculations
+  const folderRowCount = folders.length > 0 ? Math.ceil(folders.length / folderColumnCount) : 0
+  const folderCardPadding = isDesktop ? 24 : 32 // py-3 (12*2) or py-4 (16*2)
+  const folderCardHeight = 20 + folderCardPadding // icon/text height + padding
+  const folderGap = 8 // gap-2
+  const folderGridHeight =
+    folders.length > 0 ? folderRowCount * (folderCardHeight + folderGap) + 16 : 0 // +16 for mb-4
+
+  // Determine if folders are visible
+  const foldersVisible = scrollPosition < folderGridHeight
+
   // Define handlers before hook
   const handleImageClick = (imageKey: string, position?: ImagePosition | null) => {
     if (position) {
@@ -475,6 +486,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           folders={folders}
                           width={contentWidth}
                           maxFolderWidth={maxItemWidth}
+                          foldersVisible={foldersVisible}
                           {...folderGridProps}
                         />
                       )}
@@ -484,6 +496,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           aspectRatio={4 / 3}
                           width={contentWidth}
                           scrollTop={scrollPosition}
+                          folderGridHeight={folderGridHeight}
                           maxImageWidth={maxItemWidth}
                           {...imageGridProps}
                         />

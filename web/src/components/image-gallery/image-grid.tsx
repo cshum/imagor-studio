@@ -1,4 +1,4 @@
-import React, { RefObject, useRef } from 'react'
+import React, { RefObject, useEffect, useRef } from 'react'
 import { Play } from 'lucide-react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
@@ -13,6 +13,7 @@ interface ImageCellProps {
   index: number
   isFocused: boolean
   focusedIndex: number
+  firstVisibleImageIndex: number
   onImageClick?: (imageKey: string, position: Position, index: number) => void
   onKeyDown?: (event: React.KeyboardEvent, index: number) => void
   imageRef?: (el: HTMLDivElement | null) => void
@@ -27,6 +28,7 @@ const ImageCell = ({
   index,
   isFocused,
   focusedIndex,
+  firstVisibleImageIndex,
   onImageClick,
   onKeyDown,
   imageRef,
@@ -69,7 +71,7 @@ const ImageCell = ({
       }}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      tabIndex={index === 0 && focusedIndex === -1 ? 0 : isFocused ? 0 : -1}
+      tabIndex={index === firstVisibleImageIndex && focusedIndex === -1 ? 0 : isFocused ? 0 : -1}
       role='button'
       aria-label={`${image.isVideo ? 'Video' : 'Image'}: ${image.imageName}`}
     >
@@ -95,11 +97,13 @@ export interface ImageGridProps {
   aspectRatio: number
   width: number
   scrollTop: number
+  folderGridHeight?: number
   maxImageWidth: number
   focusedIndex?: number
   imageRefs?: RefObject<Map<number, HTMLDivElement>>
   onImageKeyDown?: (event: React.KeyboardEvent, index: number) => void
   onImageClick?: (imageKey: string, position: Position, index: number) => void
+  onVisibleRangeChange?: (startIndex: number, endIndex: number, firstVisibleIndex: number) => void
 }
 
 export const ImageGrid = ({
@@ -107,11 +111,13 @@ export const ImageGrid = ({
   aspectRatio,
   width,
   scrollTop,
+  folderGridHeight = 0,
   maxImageWidth,
   focusedIndex = -1,
   imageRefs,
   onImageKeyDown,
   onImageClick,
+  onVisibleRangeChange,
 }: ImageGridProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -127,12 +133,34 @@ export const ImageGrid = ({
   const overscanCount = visibleRowsCount
   const totalRenderedRows = visibleRowsCount + 2 * overscanCount
 
+  // Adjust scroll position to account for folder grid height
+  const adjustedScrollTop = Math.max(0, scrollTop - folderGridHeight)
+
   // Determine which images should be rendered based on scroll position
   const startImageIndex = Math.max(
     0,
-    Math.floor(scrollTop / rowHeight - overscanCount) * columnCount,
+    Math.floor(adjustedScrollTop / rowHeight - overscanCount) * columnCount,
   )
   const endImageIndex = Math.min(images.length, startImageIndex + totalRenderedRows * columnCount)
+
+  // Calculate the first fully visible image (not in the overscan buffer)
+  const firstVisibleImageIndex = Math.min(
+    Math.max(0, Math.floor(adjustedScrollTop / rowHeight) * columnCount),
+    images.length - 1,
+  )
+
+  // Notify parent of visible range changes
+  // Use a ref to track the callback to avoid infinite loops
+  const onVisibleRangeChangeRef = useRef(onVisibleRangeChange)
+  useEffect(() => {
+    onVisibleRangeChangeRef.current = onVisibleRangeChange
+  }, [onVisibleRangeChange])
+
+  useEffect(() => {
+    if (onVisibleRangeChangeRef.current && images.length > 0) {
+      onVisibleRangeChangeRef.current(startImageIndex, endImageIndex, firstVisibleImageIndex)
+    }
+  }, [startImageIndex, endImageIndex, firstVisibleImageIndex, images.length])
 
   const visibleImages: React.ReactElement[] = []
   for (let i = startImageIndex; i < endImageIndex; i++) {
@@ -152,6 +180,7 @@ export const ImageGrid = ({
           index={i}
           isFocused={i === focusedIndex}
           focusedIndex={focusedIndex}
+          firstVisibleImageIndex={firstVisibleImageIndex}
           onImageClick={onImageClick}
           onKeyDown={onImageKeyDown}
           imageRef={(el) => {

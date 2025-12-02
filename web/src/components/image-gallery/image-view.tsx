@@ -326,6 +326,30 @@ export function ImageView({
               exit={{ opacity: 80 }}
               className='absolute top-0 right-0 bottom-0 left-0 bg-black/80'
             ></motion.div>
+            {onNextImage && scale <= 1 && !isSlideshow && !isFullscreen && (
+              <div
+                className={`absolute z-10 ${isDesktop ? 'top-1/2 right-4 -translate-y-1/2' : 'bottom-4 left-20'}`}
+              >
+                <button
+                  onClick={handleNextImage}
+                  className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </div>
+            )}
+            {onPrevImage && scale <= 1 && !isSlideshow && !isFullscreen && (
+              <div
+                className={`absolute z-10 ${isDesktop ? 'top-1/2 left-4 -translate-y-1/2' : 'bottom-4 left-8'}`}
+              >
+                <button
+                  onClick={handlePrevImage}
+                  className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
+                >
+                  <ChevronLeft size={24} />
+                </button>
+              </div>
+            )}
             <TransformWrapper
               disabled={image.isVideo}
               initialScale={1}
@@ -495,30 +519,6 @@ export function ImageView({
                 </>
               )}
             </TransformWrapper>
-            {onPrevImage && scale <= 1 && !isSlideshow && !isFullscreen && (
-              <div
-                className={`absolute z-10 ${isDesktop ? 'top-1/2 left-4 -translate-y-1/2' : 'bottom-4 left-8'}`}
-              >
-                <button
-                  onClick={handlePrevImage}
-                  className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
-                >
-                  <ChevronLeft size={24} />
-                </button>
-              </div>
-            )}
-            {onNextImage && scale <= 1 && !isSlideshow && !isFullscreen && (
-              <div
-                className={`absolute z-10 ${isDesktop ? 'top-1/2 right-4 -translate-y-1/2' : 'bottom-4 left-20'}`}
-              >
-                <button
-                  onClick={handleNextImage}
-                  className='rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75'
-                >
-                  <ChevronRight size={24} />
-                </button>
-              </div>
-            )}
 
             {!isFullscreen && (
               <div className='absolute top-4 right-6 z-60 flex space-x-2'>
