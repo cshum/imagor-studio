@@ -23,6 +23,15 @@ export function useGalleryKeyboardNavigation({
   const [focusedGrid, setFocusedGrid] = useState<'folder' | 'image' | null>(null)
   const [focusedFolderIndex, setFocusedFolderIndex] = useState<number>(-1)
   const [focusedImageIndex, setFocusedImageIndex] = useState<number>(-1)
+  const [visibleImageRange, setVisibleImageRange] = useState<{
+    start: number
+    end: number
+    firstVisible: number
+  }>({
+    start: 0,
+    end: 0,
+    firstVisible: 0,
+  })
   const galleryContainerRef = useRef<HTMLDivElement>(null)
   const folderRefs = useRef<(HTMLDivElement | null)[]>([])
   const imageRefs = useRef<Map<number, HTMLDivElement>>(new Map())
@@ -84,7 +93,8 @@ export function useGalleryKeyboardNavigation({
         // If we're on the last row, navigate to images
         if (currentRow === lastRow && images.length > 0) {
           setFocusedGrid('image')
-          setFocusedImageIndex(0)
+          // Focus on the first fully visible image
+          setFocusedImageIndex(visibleImageRange.firstVisible)
           setFocusedFolderIndex(-1)
           return
         }
@@ -201,10 +211,30 @@ export function useGalleryKeyboardNavigation({
     onImageClick?.(imageKey, position)
   }
 
+  // Handler for visible range updates from ImageGrid
+  const handleVisibleRangeChange = (
+    startIndex: number,
+    endIndex: number,
+    firstVisibleIndex: number,
+  ) => {
+    setVisibleImageRange({ start: startIndex, end: endIndex, firstVisible: firstVisibleIndex })
+  }
+
+  // Reset focus when gallery container loses focus
+  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    // Only reset if focus is leaving the gallery container entirely
+    if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+      setFocusedGrid(null)
+      setFocusedFolderIndex(-1)
+      setFocusedImageIndex(-1)
+    }
+  }
+
   return {
     galleryContainerRef,
     galleryContainerProps: {
       className: 'focus-visible:outline-none',
+      onBlur: handleBlur,
     },
     folderGridProps: {
       focusedIndex: focusedGrid === 'folder' ? focusedFolderIndex : -1,
@@ -217,6 +247,7 @@ export function useGalleryKeyboardNavigation({
       imageRefs,
       onImageKeyDown: handleImageKeyDown,
       onImageClick: handleImageClick,
+      onVisibleRangeChange: handleVisibleRangeChange,
     },
   }
 }
