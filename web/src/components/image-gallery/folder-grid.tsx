@@ -59,7 +59,13 @@ export const FolderGrid = ({
           onClick={() => onFolderClick?.(folder, index)}
           onKeyDown={(e) => onFolderKeyDown?.(e, index)}
           tabIndex={
-            foldersVisible ? (index === 0 && focusedIndex === -1 ? 0 : focusedIndex === index ? 0 : -1) : -1
+            foldersVisible
+              ? index === 0 && focusedIndex === -1
+                ? 0
+                : focusedIndex === index
+                  ? 0
+                  : -1
+              : -1
           }
           role='gridcell'
           aria-label={`Folder: ${folder.galleryName}`}
