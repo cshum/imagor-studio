@@ -33,6 +33,7 @@ export const LicenseBadge = ({ side = 'right', theme = 'auto' }: LicenseBadgePro
       size='sm'
       className={`absolute top-4 ${positionClasses} z-50 flex h-auto items-center gap-2 rounded-full px-4 py-2.5 text-sm shadow-lg backdrop-blur-sm transition-colors ${getThemeClasses(theme)}`}
       onClick={showSupportDialog}
+      tabIndex={-1}
     >
       <Key className='h-4 w-4' />
       <span>Unregistered</span>
