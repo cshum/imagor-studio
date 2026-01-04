@@ -112,7 +112,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		imagorSignerTruncate = fs.Int("imagor-signer-truncate", 0, "imagor signer truncation length")
 
 		appHomeTitle              = fs.String("app-home-title", "", "custom home page title")
-		appImageExtensions        = fs.String("app-image-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif", "comma-separated list of image file extensions to show in application")
+		appImageExtensions        = fs.String("app-image-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", "comma-separated list of image file extensions to show in application")
 		appVideoExtensions        = fs.String("app-video-extensions", ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", "comma-separated list of video file extensions to show in application")
 		appShowHidden             = fs.Bool("app-show-hidden", false, "show hidden files and folders starting with dot")
 		appDefaultSortBy          = fs.String("app-default-sort-by", "MODIFIED_TIME", "default file sorting option: NAME, MODIFIED_TIME, SIZE")

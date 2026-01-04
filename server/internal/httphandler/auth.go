@@ -122,7 +122,7 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 		defaultEntries := []*registrystore.Registry{
 			{
 				Key:   "config.app_image_extensions",
-				Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif",
+				Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2",
 			},
 			{
 				Key:         "config.app_video_extensions",

@@ -30,7 +30,7 @@ export interface ImageLoaderData {
 }
 
 const DEFAULT_IMAGE_EXTENSIONS =
-  '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif'
+  '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2'
 const DEFAULT_VIDEO_EXTENSIONS = '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg'
 /**
  * Gallery loader using imagor for thumbnail generation
