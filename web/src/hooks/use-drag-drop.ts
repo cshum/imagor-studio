@@ -44,7 +44,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     onFileUpload,
     onFilesDropped,
     existingFiles = [],
-    imageExtensions = '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif',
+    imageExtensions = '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2',
     videoExtensions = '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg',
     currentPath = '',
   } = options

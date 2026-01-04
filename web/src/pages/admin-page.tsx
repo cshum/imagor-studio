@@ -50,7 +50,7 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     type: 'text',
     label: 'Image File Extensions',
     description: 'Comma-separated list of image file extensions to show (e.g., .jpg,.png,.gif)',
-    defaultValue: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif',
+    defaultValue: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2',
   },
   {
     key: 'config.app_video_extensions',
