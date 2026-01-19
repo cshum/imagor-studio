@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { RotateCcw } from 'lucide-react'
+import { Lock, RotateCcw, Unlock } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,16 +31,38 @@ export function DimensionControl({
 }: DimensionControlProps) {
   const { t } = useTranslation()
 
+  // Calculate and store aspect ratio at start
+  const [aspectRatio] = useState<number>(() => {
+    const w = params.width || originalDimensions.width
+    const h = params.height || originalDimensions.height
+    return w / h
+  })
+
+  // Default to locked
+  const [aspectRatioLocked, setAspectRatioLocked] = useState(true)
+
   const handleWidthChange = (value: string) => {
-    // Allow any input during typing - no validation
     const width = parseInt(value) || undefined
-    onUpdateParams({ width })
+
+    if (aspectRatioLocked && width) {
+      // Use stored aspect ratio for calculation
+      const newHeight = Math.round(width / aspectRatio)
+      onUpdateParams({ width, height: newHeight })
+    } else {
+      onUpdateParams({ width })
+    }
   }
 
   const handleHeightChange = (value: string) => {
-    // Allow any input during typing - no validation
     const height = parseInt(value) || undefined
-    onUpdateParams({ height })
+
+    if (aspectRatioLocked && height) {
+      // Use stored aspect ratio for calculation
+      const newWidth = Math.round(height * aspectRatio)
+      onUpdateParams({ width: newWidth, height })
+    } else {
+      onUpdateParams({ height })
+    }
   }
 
   const handleWidthBlur = (value: string) => {
@@ -127,7 +150,7 @@ export function DimensionControl({
             <span className='text-xs'>{t('imageEditor.dimensions.reset')}</span>
           </Button>
         </div>
-        <div className='grid grid-cols-2 gap-3'>
+        <div className='grid grid-cols-[1fr_auto_1fr] items-end gap-2'>
           <div>
             <Label htmlFor='width' className='text-muted-foreground text-xs'>
               {t('imageEditor.dimensions.width')}
@@ -144,6 +167,21 @@ export function DimensionControl({
               className='h-8'
             />
           </div>
+
+          {/* Lock Button */}
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => setAspectRatioLocked(!aspectRatioLocked)}
+            className='h-8 w-8 p-0'
+            title={
+              aspectRatioLocked
+                ? t('imageEditor.dimensions.unlockAspectRatio')
+                : t('imageEditor.dimensions.lockAspectRatio')
+            }
+          >
+            {aspectRatioLocked ? <Lock className='h-4 w-4' /> : <Unlock className='h-4 w-4' />}
+          </Button>
 
           <div>
             <Label htmlFor='height' className='text-muted-foreground text-xs'>

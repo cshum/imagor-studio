@@ -131,7 +131,7 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
           step={1}
           unit='%'
           onChange={handleQualityChange}
-          className={params.maxBytes ? 'opacity-50 pointer-events-none' : ''}
+          className={params.maxBytes ? 'pointer-events-none opacity-50' : ''}
         />
         <p className='text-muted-foreground text-xs'>
           {params.maxBytes

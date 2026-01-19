@@ -488,6 +488,8 @@
       "auto": "Auto",
       "reset": "Reset",
       "resetSize": "Reset to Original Size",
+      "lockAspectRatio": "Lock Aspect Ratio",
+      "unlockAspectRatio": "Unlock Aspect Ratio",
       "aspectRatios": "Aspect Ratios",
       "resizeMode": "Resize Mode",
       "modes": {
