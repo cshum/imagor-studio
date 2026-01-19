@@ -120,7 +120,6 @@ export function NumericControl({
 
       {showInput ? (
         <div className='flex items-center gap-3'>
-
           <Slider
             value={[value]}
             onValueChange={([newValue]) => onChange(newValue)}
