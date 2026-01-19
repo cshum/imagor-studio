@@ -534,15 +534,15 @@
       "qualityDescription": "Higher quality = larger file size",
       "qualityAutoOptimized": "Quality will be automatically optimized to meet size limit",
       "maxFileSize": "Max Size",
+      "maxSizeDescription": "Automatically adjusts quality to meet the target file size",
       "customSizeInBytes": "Custom size in bytes",
       "bytes": "bytes",
       "clear": "Clear",
       "targetSize": "Target: {{size}} - Quality will be automatically reduced to meet this limit",
-      "howItWorksItems": {
-        "format": "Format: Choose output format or keep original",
-        "quality": "Quality: Manual quality control",
-        "maxSize": "Max Size: Automatically adjusts quality to fit under the target file size"
-      }
+      "metadata": "Metadata",
+      "stripIcc": "Strip ICC Profile",
+      "stripExif": "Strip EXIF Data",
+      "metadataDescription": "Remove color profiles and metadata to reduce file size"
     },
     "crop": {
       "left": "Left (px)",

@@ -34,6 +34,10 @@ export interface ImageEditorState {
   quality?: number // e.g., 80, 90, 95, undefined (default)
   maxBytes?: number // e.g., 100000 (100KB), undefined (no limit)
 
+  // Metadata stripping
+  stripIcc?: boolean
+  stripExif?: boolean
+
   // Crop (crops before resize, in original image coordinates)
   cropLeft?: number
   cropTop?: number
@@ -322,6 +326,14 @@ export class ImageEditor {
     // Max bytes handling (automatic quality degradation)
     if (state.maxBytes && (forPreview || state.format || state.quality)) {
       filters.push({ name: 'max_bytes', args: state.maxBytes.toString() })
+    }
+
+    // Metadata stripping
+    if (state.stripIcc) {
+      filters.push({ name: 'strip_icc', args: '' })
+    }
+    if (state.stripExif) {
+      filters.push({ name: 'strip_exif', args: '' })
     }
 
     if (filters.length > 0) {

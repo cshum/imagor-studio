@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -179,6 +180,10 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
           <span className='text-muted-foreground text-sm'>{t('imageEditor.output.bytes')}</span>
         </div>
 
+        <p className='text-muted-foreground text-xs'>
+          {t('imageEditor.output.maxSizeDescription')}
+        </p>
+
         {maxBytesValue > 0 && (
           <p className='text-muted-foreground text-xs'>
             {t('imageEditor.output.targetSize', { size: formatBytes(maxBytesValue) })}
@@ -186,15 +191,37 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
         )}
       </div>
 
-      {/* Info Section */}
-      <div className='bg-muted/50 rounded-lg p-4'>
-        <div className='space-y-1 text-xs'>
-          <ul className='text-muted-foreground space-y-0.5'>
-            <li>• {t('imageEditor.output.howItWorksItems.format')}</li>
-            <li>• {t('imageEditor.output.howItWorksItems.quality')}</li>
-            <li>• {t('imageEditor.output.howItWorksItems.maxSize')}</li>
-          </ul>
+      {/* Metadata Stripping */}
+      <div className='space-y-3'>
+        <Label className='text-sm font-medium'>{t('imageEditor.output.metadata')}</Label>
+
+        <div className='flex items-center space-x-3'>
+          <Checkbox
+            id='stripIcc'
+            checked={params.stripIcc ?? false}
+            onCheckedChange={(checked) => onUpdateParams({ stripIcc: !!checked })}
+            className='h-4 w-4'
+          />
+          <Label htmlFor='stripIcc' className='cursor-pointer text-sm font-medium'>
+            {t('imageEditor.output.stripIcc')}
+          </Label>
         </div>
+
+        <div className='flex items-center space-x-3'>
+          <Checkbox
+            id='stripExif'
+            checked={params.stripExif ?? false}
+            onCheckedChange={(checked) => onUpdateParams({ stripExif: !!checked })}
+            className='h-4 w-4'
+          />
+          <Label htmlFor='stripExif' className='cursor-pointer text-sm font-medium'>
+            {t('imageEditor.output.stripExif')}
+          </Label>
+        </div>
+
+        <p className='text-muted-foreground text-xs'>
+          {t('imageEditor.output.metadataDescription')}
+        </p>
       </div>
     </div>
   )
