@@ -9,6 +9,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import {
   arrayMove,
   SortableContext,
@@ -260,6 +261,7 @@ export function ImageEditorControls({
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
+      modifiers={[restrictToVerticalAxis]}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
