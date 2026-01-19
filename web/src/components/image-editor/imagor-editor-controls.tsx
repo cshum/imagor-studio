@@ -84,25 +84,31 @@ function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
   const Icon = section.icon
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(isDragging && 'opacity-0', 'relative touch-none')}
-    >
+    <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0', 'relative')}>
       <Card>
         <Collapsible open={isOpen} onOpenChange={onToggle}>
-          <CollapsibleTrigger
-            className='flex w-full cursor-pointer touch-none items-center justify-between p-4 text-left'
-            {...attributes}
-            {...listeners}
-          >
-            <div className='flex items-center gap-2'>
+          <div className='flex w-full items-center'>
+            {/* Drag handle - spans left padding area */}
+            <button
+              className='cursor-grab touch-none py-4 pr-2 pl-4 active:cursor-grabbing'
+              {...attributes}
+              {...listeners}
+              onClick={(e) => e.stopPropagation()}
+              aria-label='Drag to reorder'
+              tabIndex={-1}
+            >
               <GripVertical className='h-4 w-4' />
-              <Icon className='h-4 w-4' />
-              <span className='font-medium'>{t(section.titleKey)}</span>
-            </div>
-            <CollapsibleIcon isOpen={isOpen} />
-          </CollapsibleTrigger>
+            </button>
+
+            {/* Toggle area - rest of header */}
+            <CollapsibleTrigger className='flex flex-1 cursor-pointer items-center justify-between py-4 pr-4 text-left'>
+              <div className='flex items-center gap-2'>
+                <Icon className='h-4 w-4' />
+                <span className='font-medium'>{t(section.titleKey)}</span>
+              </div>
+              <CollapsibleIcon isOpen={isOpen} />
+            </CollapsibleTrigger>
+          </div>
           <CollapsibleContent className='overflow-hidden px-4 pb-4'>
             {section.component}
           </CollapsibleContent>
@@ -268,17 +274,24 @@ export function ImageEditorControls({
         {activeSection ? (
           <Card className='w-full'>
             <Collapsible open={openSections[activeSection.key]}>
-              <div className='flex w-full items-center justify-between p-4'>
-                <div className='flex items-center gap-2'>
+              <div className='flex w-full items-center'>
+                {/* Drag handle - matching the actual layout */}
+                <div className='py-4 pr-2 pl-4'>
                   <GripVertical className='h-4 w-4' />
-                  <activeSection.icon className='h-4 w-4' />
-                  <span className='font-medium'>{t(activeSection.titleKey)}</span>
                 </div>
-                {openSections[activeSection.key] ? (
-                  <ChevronUp className='h-4 w-4' />
-                ) : (
-                  <ChevronDown className='h-4 w-4' />
-                )}
+
+                {/* Content area - matching the actual layout */}
+                <div className='flex flex-1 items-center justify-between py-4 pr-4'>
+                  <div className='flex items-center gap-2'>
+                    <activeSection.icon className='h-4 w-4' />
+                    <span className='font-medium'>{t(activeSection.titleKey)}</span>
+                  </div>
+                  {openSections[activeSection.key] ? (
+                    <ChevronUp className='h-4 w-4' />
+                  ) : (
+                    <ChevronDown className='h-4 w-4' />
+                  )}
+                </div>
               </div>
               <CollapsibleContent className='overflow-hidden px-4 pb-4'>
                 {activeSection.component}
