@@ -3,12 +3,15 @@ import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage'
 import type { Auth } from '@/stores/auth-store'
 
+export type SectionId = 'crop' | 'effects' | 'transform' | 'dimensions' | 'output'
+
 export interface EditorOpenSections {
   crop: boolean
   effects: boolean
   transform: boolean
   dimensions: boolean
   output: boolean
+  sectionOrder: SectionId[]
 }
 
 const defaultOpenSections: EditorOpenSections = {
@@ -17,6 +20,7 @@ const defaultOpenSections: EditorOpenSections = {
   transform: false,
   dimensions: false,
   output: false,
+  sectionOrder: ['crop', 'effects', 'transform', 'dimensions', 'output'],
 }
 
 export class EditorOpenSectionsStorage {
@@ -42,12 +46,33 @@ export class EditorOpenSectionsStorage {
         // Merge with defaults to ensure all properties exist
         const merged = { ...defaultOpenSections, ...savedSections }
 
-        // Filter to only keep valid keys (removes deprecated fields)
-        const validKeys = Object.keys(defaultOpenSections) as Array<keyof EditorOpenSections>
-        return validKeys.reduce((acc, key) => {
-          acc[key] = merged[key]
-          return acc
-        }, {} as EditorOpenSections)
+        // Ensure sectionOrder exists and contains valid sections
+        if (!merged.sectionOrder || !Array.isArray(merged.sectionOrder)) {
+          merged.sectionOrder = defaultOpenSections.sectionOrder
+        } else {
+          // Filter out any invalid section IDs and ensure all valid sections are present
+          const validSectionIds: SectionId[] = [
+            'crop',
+            'effects',
+            'transform',
+            'dimensions',
+            'output',
+          ]
+          const filteredOrder = merged.sectionOrder.filter((id): id is SectionId =>
+            validSectionIds.includes(id as SectionId),
+          )
+
+          // Add any missing sections to the end
+          validSectionIds.forEach((id) => {
+            if (!filteredOrder.includes(id)) {
+              filteredOrder.push(id)
+            }
+          })
+
+          merged.sectionOrder = filteredOrder
+        }
+
+        return merged as EditorOpenSections
       }
     } catch {
       // Silently fall back to defaults if parsing fails

@@ -1,6 +1,32 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronUp, FileImage, Palette, RotateCw, Scissors } from 'lucide-react'
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import {
+  ChevronDown,
+  ChevronUp,
+  FileImage,
+  GripVertical,
+  Maximize2,
+  Palette,
+  RotateCw,
+  Scissors,
+} from 'lucide-react'
 
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
 import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
@@ -9,8 +35,9 @@ import { OutputControl } from '@/components/image-editor/controls/output-control
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import type { EditorOpenSections } from '@/lib/editor-open-sections-storage'
+import type { EditorOpenSections, SectionId } from '@/lib/editor-open-sections-storage'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
+import { cn } from '@/lib/utils'
 
 interface ImageEditorControlsProps {
   params: ImageEditorState
@@ -24,6 +51,66 @@ interface ImageEditorControlsProps {
   onCropAspectRatioChange?: (aspectRatio: number | null) => void
 }
 
+interface SectionConfig {
+  id: SectionId
+  icon: React.ComponentType<{ className?: string }>
+  titleKey: string
+  component: React.ReactNode
+}
+
+interface SortableSectionProps {
+  section: SectionConfig
+  isOpen: boolean
+  onToggle: (open: boolean) => void
+}
+
+function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
+  const { t } = useTranslation()
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: section.id,
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  const CollapsibleIcon = ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <ChevronUp className='h-4 w-4' /> : <ChevronDown className='h-4 w-4' />
+
+  const Icon = section.icon
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(isDragging && 'z-50 opacity-50', 'relative touch-none')}
+    >
+      <Card>
+        <Collapsible open={isOpen} onOpenChange={onToggle}>
+          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
+            <div className='flex items-center gap-2'>
+              <button
+                className='hover:text-foreground/70 cursor-grab touch-none transition-colors active:cursor-grabbing'
+                {...attributes}
+                {...listeners}
+                onClick={(e) => e.stopPropagation()}
+                aria-label='Drag to reorder'
+              >
+                <GripVertical className='h-4 w-4' />
+              </button>
+              <Icon className='h-4 w-4' />
+              <span className='font-medium'>{t(section.titleKey)}</span>
+            </div>
+            <CollapsibleIcon isOpen={isOpen} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className='px-4 pb-4'>{section.component}</CollapsibleContent>
+        </Collapsible>
+      </Card>
+    </div>
+  )
+}
+
 export function ImageEditorControls({
   params,
   openSections,
@@ -35,127 +122,165 @@ export function ImageEditorControls({
   outputHeight,
   onCropAspectRatioChange,
 }: ImageEditorControlsProps) {
-  const { t } = useTranslation()
+  // Store the original open/closed state before dragging
+  const [preDragOpenState, setPreDragOpenState] = useState<EditorOpenSections | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px of movement required before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  )
 
   const handleSectionToggle = useCallback(
-    (section: keyof EditorOpenSections, open: boolean) => {
+    (section: SectionId, open: boolean) => {
       const newSections = { ...openSections, [section]: open }
       onOpenSectionsChange(newSections)
     },
     [openSections, onOpenSectionsChange],
   )
 
-  const CollapsibleIcon = ({ isOpen }: { isOpen: boolean }) =>
-    isOpen ? <ChevronUp className='h-4 w-4' /> : <ChevronDown className='h-4 w-4' />
+  const handleDragStart = useCallback(() => {
+    // Save current open/closed state
+    setPreDragOpenState(openSections)
+
+    // Collapse all sections for cleaner drag experience
+    onOpenSectionsChange({
+      ...openSections,
+      crop: false,
+      effects: false,
+      transform: false,
+      dimensions: false,
+      output: false,
+    })
+  }, [openSections, onOpenSectionsChange])
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+
+      let updatedSections = { ...openSections }
+
+      // Update section order if items were reordered
+      if (over && active.id !== over.id) {
+        const oldIndex = openSections.sectionOrder.indexOf(active.id as SectionId)
+        const newIndex = openSections.sectionOrder.indexOf(over.id as SectionId)
+
+        const newOrder = arrayMove(openSections.sectionOrder, oldIndex, newIndex)
+        updatedSections = {
+          ...updatedSections,
+          sectionOrder: newOrder,
+        }
+      }
+
+      // Restore original open/closed state
+      if (preDragOpenState) {
+        updatedSections = {
+          ...updatedSections,
+          crop: preDragOpenState.crop,
+          effects: preDragOpenState.effects,
+          transform: preDragOpenState.transform,
+          dimensions: preDragOpenState.dimensions,
+          output: preDragOpenState.output,
+        }
+        setPreDragOpenState(null)
+      }
+
+      onOpenSectionsChange(updatedSections)
+    },
+    [openSections, onOpenSectionsChange, preDragOpenState],
+  )
+
+  // Define all section configurations
+  const sectionConfigs: Record<SectionId, SectionConfig> = useMemo(
+    () => ({
+      crop: {
+        id: 'crop',
+        icon: Scissors,
+        titleKey: 'imageEditor.controls.cropAspect',
+        component: (
+          <CropAspectControl
+            params={params}
+            onUpdateParams={onUpdateParams}
+            onVisualCropToggle={onVisualCropToggle}
+            isVisualCropEnabled={isVisualCropEnabled}
+            outputWidth={outputWidth}
+            outputHeight={outputHeight}
+            onAspectRatioChange={onCropAspectRatioChange}
+          />
+        ),
+      },
+      effects: {
+        id: 'effects',
+        icon: Palette,
+        titleKey: 'imageEditor.controls.colorEffects',
+        component: <ColorControl params={params} onUpdateParams={onUpdateParams} />,
+      },
+      transform: {
+        id: 'transform',
+        icon: RotateCw,
+        titleKey: 'imageEditor.controls.transformRotate',
+        component: <TransformControl params={params} onUpdateParams={onUpdateParams} />,
+      },
+      dimensions: {
+        id: 'dimensions',
+        icon: Maximize2,
+        titleKey: 'imageEditor.controls.dimensionsResize',
+        component: (
+          <DimensionControl
+            params={params}
+            onUpdateParams={onUpdateParams}
+            originalDimensions={{ width: outputWidth, height: outputHeight }}
+          />
+        ),
+      },
+      output: {
+        id: 'output',
+        icon: FileImage,
+        titleKey: 'imageEditor.controls.outputCompression',
+        component: <OutputControl params={params} onUpdateParams={onUpdateParams} />,
+      },
+    }),
+    [
+      params,
+      onUpdateParams,
+      onVisualCropToggle,
+      isVisualCropEnabled,
+      outputWidth,
+      outputHeight,
+      onCropAspectRatioChange,
+    ],
+  )
+
+  // Get ordered sections based on sectionOrder
+  const orderedSections = useMemo(
+    () => openSections.sectionOrder.map((id) => sectionConfigs[id]),
+    [openSections.sectionOrder, sectionConfigs],
+  )
 
   return (
-    <div className='space-y-4'>
-      {/* Crop & Aspect */}
-      <Card>
-        <Collapsible
-          open={openSections.crop}
-          onOpenChange={(open) => handleSectionToggle('crop', open)}
-        >
-          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
-            <div className='flex items-center gap-2'>
-              <Scissors className='h-4 w-4' />
-              <span className='font-medium'>{t('imageEditor.controls.cropAspect')}</span>
-            </div>
-            <CollapsibleIcon isOpen={openSections.crop} />
-          </CollapsibleTrigger>
-          <CollapsibleContent className='px-4 pb-4'>
-            <CropAspectControl
-              params={params}
-              onUpdateParams={onUpdateParams}
-              onVisualCropToggle={onVisualCropToggle}
-              isVisualCropEnabled={isVisualCropEnabled}
-              outputWidth={outputWidth}
-              outputHeight={outputHeight}
-              onAspectRatioChange={onCropAspectRatioChange}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext items={openSections.sectionOrder} strategy={verticalListSortingStrategy}>
+        <div className='space-y-4'>
+          {orderedSections.map((section) => (
+            <SortableSection
+              key={section.id}
+              section={section}
+              isOpen={openSections[section.id]}
+              onToggle={(open) => handleSectionToggle(section.id, open)}
             />
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-
-      {/* Color & Effects */}
-      <Card>
-        <Collapsible
-          open={openSections.effects}
-          onOpenChange={(open) => handleSectionToggle('effects', open)}
-        >
-          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
-            <div className='flex items-center gap-2'>
-              <Palette className='h-4 w-4' />
-              <span className='font-medium'>{t('imageEditor.controls.colorEffects')}</span>
-            </div>
-            <CollapsibleIcon isOpen={openSections.effects} />
-          </CollapsibleTrigger>
-          <CollapsibleContent className='px-4 pb-4'>
-            <ColorControl params={params} onUpdateParams={onUpdateParams} />
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-
-      {/* Transform & Rotate */}
-      <Card>
-        <Collapsible
-          open={openSections.transform}
-          onOpenChange={(open) => handleSectionToggle('transform', open)}
-        >
-          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
-            <div className='flex items-center gap-2'>
-              <RotateCw className='h-4 w-4' />
-              <span className='font-medium'>{t('imageEditor.controls.transformRotate')}</span>
-            </div>
-            <CollapsibleIcon isOpen={openSections.transform} />
-          </CollapsibleTrigger>
-          <CollapsibleContent className='px-4 pb-4'>
-            <TransformControl params={params} onUpdateParams={onUpdateParams} />
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-
-      {/* Dimensions & Resize */}
-      <Card>
-        <Collapsible
-          open={openSections.dimensions}
-          onOpenChange={(open) => handleSectionToggle('dimensions', open)}
-        >
-          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
-            <div className='flex items-center gap-2'>
-              <Scissors className='h-4 w-4' />
-              <span className='font-medium'>{t('imageEditor.controls.dimensionsResize')}</span>
-            </div>
-            <CollapsibleIcon isOpen={openSections.dimensions} />
-          </CollapsibleTrigger>
-          <CollapsibleContent className='px-4 pb-4'>
-            <DimensionControl
-              params={params}
-              onUpdateParams={onUpdateParams}
-              originalDimensions={{ width: outputWidth, height: outputHeight }}
-            />
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-
-      {/* Output & Compression */}
-      <Card>
-        <Collapsible
-          open={openSections.output}
-          onOpenChange={(open) => handleSectionToggle('output', open)}
-        >
-          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
-            <div className='flex items-center gap-2'>
-              <FileImage className='h-4 w-4' />
-              <span className='font-medium'>{t('imageEditor.controls.outputCompression')}</span>
-            </div>
-            <CollapsibleIcon isOpen={openSections.output} />
-          </CollapsibleTrigger>
-          <CollapsibleContent className='px-4 pb-4'>
-            <OutputControl params={params} onUpdateParams={onUpdateParams} />
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-    </div>
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
   )
 }
