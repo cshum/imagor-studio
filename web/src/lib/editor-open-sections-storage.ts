@@ -3,26 +3,27 @@ import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage'
 import type { Auth } from '@/stores/auth-store'
 
-// Define sections as a const array (single source of truth)
-const EDITOR_SECTIONS = ['crop', 'effects', 'transform', 'dimensions', 'output'] as const
-
-// Derive SectionId from the array
-export type SectionId = (typeof EDITOR_SECTIONS)[number]
-
-// Use mapped type for type safety
-export type EditorOpenSections = {
-  [K in SectionId]: boolean
-} & {
-  sectionOrder: SectionId[]
-}
-
-const defaultOpenSections: EditorOpenSections = {
+// Define sections as a const object (single source of truth with default states)
+const EDITOR_SECTIONS = {
   crop: true,
   effects: true,
   transform: false,
   dimensions: false,
   output: false,
-  sectionOrder: [...EDITOR_SECTIONS],
+} as const
+
+// Derive SectionKey from the object keys
+export type SectionKey = keyof typeof EDITOR_SECTIONS
+
+// Use Record type for better type safety
+export interface EditorOpenSections extends Record<SectionKey, boolean> {
+  sectionOrder: SectionKey[]
+}
+
+// Default sections with proper typing
+const defaultOpenSections: EditorOpenSections = {
+  ...EDITOR_SECTIONS,
+  sectionOrder: Object.keys(EDITOR_SECTIONS) as SectionKey[],
 }
 
 export class EditorOpenSectionsStorage {
@@ -52,16 +53,16 @@ export class EditorOpenSectionsStorage {
         if (!merged.sectionOrder || !Array.isArray(merged.sectionOrder)) {
           merged.sectionOrder = defaultOpenSections.sectionOrder
         } else {
-          // Filter out any invalid section IDs and ensure all valid sections are present
-          const validSectionIds = [...EDITOR_SECTIONS]
-          const filteredOrder = merged.sectionOrder.filter((id): id is SectionId =>
-            validSectionIds.includes(id as SectionId),
+          // Filter out any invalid section keys and ensure all valid sections are present
+          const validSectionKeys = Object.keys(EDITOR_SECTIONS) as SectionKey[]
+          const filteredOrder = merged.sectionOrder.filter((key): key is SectionKey =>
+            validSectionKeys.includes(key as SectionKey),
           )
 
           // Add any missing sections to the end
-          validSectionIds.forEach((id) => {
-            if (!filteredOrder.includes(id)) {
-              filteredOrder.push(id)
+          validSectionKeys.forEach((key) => {
+            if (!filteredOrder.includes(key)) {
+              filteredOrder.push(key)
             }
           })
 

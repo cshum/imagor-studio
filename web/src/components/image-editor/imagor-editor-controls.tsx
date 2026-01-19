@@ -35,7 +35,7 @@ import { OutputControl } from '@/components/image-editor/controls/output-control
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import type { EditorOpenSections, SectionId } from '@/lib/editor-open-sections-storage'
+import type { EditorOpenSections, SectionKey } from '@/lib/editor-open-sections-storage'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
 import { cn } from '@/lib/utils'
 
@@ -52,7 +52,7 @@ interface ImageEditorControlsProps {
 }
 
 interface SectionConfig {
-  id: SectionId
+  id: SectionKey
   icon: React.ComponentType<{ className?: string }>
   titleKey: string
   component: React.ReactNode
@@ -137,7 +137,7 @@ export function ImageEditorControls({
   )
 
   const handleSectionToggle = useCallback(
-    (section: SectionId, open: boolean) => {
+    (section: SectionKey, open: boolean) => {
       const newSections = { ...openSections, [section]: open }
       onOpenSectionsChange(newSections)
     },
@@ -167,8 +167,8 @@ export function ImageEditorControls({
 
       // Update section order if items were reordered
       if (over && active.id !== over.id) {
-        const oldIndex = openSections.sectionOrder.indexOf(active.id as SectionId)
-        const newIndex = openSections.sectionOrder.indexOf(over.id as SectionId)
+        const oldIndex = openSections.sectionOrder.indexOf(active.id as SectionKey)
+        const newIndex = openSections.sectionOrder.indexOf(over.id as SectionKey)
 
         const newOrder = arrayMove(openSections.sectionOrder, oldIndex, newIndex)
         updatedSections = {
@@ -196,7 +196,7 @@ export function ImageEditorControls({
   )
 
   // Define all section configurations
-  const sectionConfigs: Record<SectionId, SectionConfig> = useMemo(
+  const sectionConfigs: Record<SectionKey, SectionConfig> = useMemo(
     () => ({
       crop: {
         id: 'crop',
