@@ -84,23 +84,21 @@ function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'z-50', 'relative touch-none')}>
       <Card>
         <Collapsible open={isOpen} onOpenChange={onToggle}>
-          <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
+          <CollapsibleTrigger
+            className='flex w-full cursor-pointer items-center justify-between p-4 text-left touch-none'
+            {...attributes}
+            {...listeners}
+          >
             <div className='flex items-center gap-2'>
-              <button
-                className='hover:text-foreground/70 cursor-grab touch-none transition-colors active:cursor-grabbing'
-                {...attributes}
-                {...listeners}
-                onClick={(e) => e.stopPropagation()}
-                aria-label='Drag to reorder'
-              >
-                <GripVertical className='h-4 w-4' />
-              </button>
+              <GripVertical className='h-4 w-4' />
               <Icon className='h-4 w-4' />
               <span className='font-medium'>{t(section.titleKey)}</span>
             </div>
             <CollapsibleIcon isOpen={isOpen} />
           </CollapsibleTrigger>
-          <CollapsibleContent className='px-4 pb-4'>{section.component}</CollapsibleContent>
+          <CollapsibleContent className='overflow-hidden px-4 pb-4'>
+            {section.component}
+          </CollapsibleContent>
         </Collapsible>
       </Card>
     </div>
