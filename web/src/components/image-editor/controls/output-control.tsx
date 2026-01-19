@@ -38,7 +38,6 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
   ]
 
   const sizePresets = [
-    { label: '50 KB', value: 50000 },
     { label: '100 KB', value: 100000 },
     { label: '250 KB', value: 250000 },
     { label: '500 KB', value: 500000 },
@@ -144,6 +143,39 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
         </p>
       </div>
 
+      {/* Metadata Stripping */}
+      <div className='space-y-3'>
+        <Label className='text-sm font-medium'>{t('imageEditor.output.metadata')}</Label>
+
+        <div className='flex items-center space-x-3'>
+          <Checkbox
+            id='stripIcc'
+            checked={params.stripIcc ?? false}
+            onCheckedChange={(checked) => onUpdateParams({ stripIcc: !!checked })}
+            className='h-4 w-4'
+          />
+          <Label htmlFor='stripIcc' className='cursor-pointer text-sm font-medium'>
+            {t('imageEditor.output.stripIcc')}
+          </Label>
+        </div>
+
+        <div className='flex items-center space-x-3'>
+          <Checkbox
+            id='stripExif'
+            checked={params.stripExif ?? false}
+            onCheckedChange={(checked) => onUpdateParams({ stripExif: !!checked })}
+            className='h-4 w-4'
+          />
+          <Label htmlFor='stripExif' className='cursor-pointer text-sm font-medium'>
+            {t('imageEditor.output.stripExif')}
+          </Label>
+        </div>
+
+        <p className='text-muted-foreground text-xs'>
+          {t('imageEditor.output.metadataDescription')}
+        </p>
+      </div>
+
       {/* Max File Size */}
       <div className='space-y-3'>
         <Label className='text-sm font-medium'>{t('imageEditor.output.maxFileSize')}</Label>
@@ -189,39 +221,6 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
             {t('imageEditor.output.targetSize', { size: formatBytes(maxBytesValue) })}
           </p>
         )}
-      </div>
-
-      {/* Metadata Stripping */}
-      <div className='space-y-3'>
-        <Label className='text-sm font-medium'>{t('imageEditor.output.metadata')}</Label>
-
-        <div className='flex items-center space-x-3'>
-          <Checkbox
-            id='stripIcc'
-            checked={params.stripIcc ?? false}
-            onCheckedChange={(checked) => onUpdateParams({ stripIcc: !!checked })}
-            className='h-4 w-4'
-          />
-          <Label htmlFor='stripIcc' className='cursor-pointer text-sm font-medium'>
-            {t('imageEditor.output.stripIcc')}
-          </Label>
-        </div>
-
-        <div className='flex items-center space-x-3'>
-          <Checkbox
-            id='stripExif'
-            checked={params.stripExif ?? false}
-            onCheckedChange={(checked) => onUpdateParams({ stripExif: !!checked })}
-            className='h-4 w-4'
-          />
-          <Label htmlFor='stripExif' className='cursor-pointer text-sm font-medium'>
-            {t('imageEditor.output.stripExif')}
-          </Label>
-        </div>
-
-        <p className='text-muted-foreground text-xs'>
-          {t('imageEditor.output.metadataDescription')}
-        </p>
       </div>
     </div>
   )
