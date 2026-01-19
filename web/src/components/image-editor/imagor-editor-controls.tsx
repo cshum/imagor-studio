@@ -85,7 +85,7 @@ function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
       <Card>
         <Collapsible open={isOpen} onOpenChange={onToggle}>
           <CollapsibleTrigger
-            className='flex w-full cursor-pointer items-center justify-between p-4 text-left touch-none'
+            className='flex w-full cursor-pointer touch-none items-center justify-between p-4 text-left'
             {...attributes}
             {...listeners}
           >
