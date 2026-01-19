@@ -486,6 +486,8 @@
       "width": "Width",
       "height": "Height",
       "auto": "Auto",
+      "reset": "Reset",
+      "resetSize": "Reset to Original Size",
       "aspectRatios": "Aspect Ratios",
       "resizeMode": "Resize Mode",
       "modes": {

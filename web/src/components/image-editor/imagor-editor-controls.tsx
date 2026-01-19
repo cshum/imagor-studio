@@ -129,7 +129,11 @@ export function ImageEditorControls({
             <CollapsibleIcon isOpen={openSections.dimensions} />
           </CollapsibleTrigger>
           <CollapsibleContent className='px-4 pb-4'>
-            <DimensionControl params={params} onUpdateParams={onUpdateParams} />
+            <DimensionControl
+              params={params}
+              onUpdateParams={onUpdateParams}
+              originalDimensions={{ width: outputWidth, height: outputHeight }}
+            />
           </CollapsibleContent>
         </Collapsible>
       </Card>

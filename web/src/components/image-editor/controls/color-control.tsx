@@ -14,7 +14,7 @@ export function ColorControl({ params, onUpdateParams }: ColorControlProps) {
   const { t } = useTranslation()
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-4'>
       {/* Color Adjustments */}
       <div className='space-y-4'>
         <h4 className='text-muted-foreground text-sm font-medium'>
