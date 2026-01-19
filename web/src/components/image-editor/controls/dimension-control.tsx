@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Lock, RotateCcw, Unlock } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -11,51 +13,55 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Slider } from '@/components/ui/slider'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
 
 interface DimensionControlProps {
   params: ImageEditorState
   onUpdateParams: (updates: Partial<ImageEditorState>) => void
+  originalDimensions: {
+    width: number
+    height: number
+  }
 }
 
-export function DimensionControl({ params, onUpdateParams }: DimensionControlProps) {
+export function DimensionControl({
+  params,
+  onUpdateParams,
+  originalDimensions,
+}: DimensionControlProps) {
   const { t } = useTranslation()
-  const [sizeScale, setSizeScale] = useState([1])
-  const [baseDimensions, setBaseDimensions] = useState<{ width: number; height: number } | null>(
-    null,
-  )
 
-  // Initialize base dimensions when component loads or dimensions change manually
-  useEffect(() => {
-    if (params.width && params.height && !baseDimensions) {
-      setBaseDimensions({ width: params.width, height: params.height })
-    }
-  }, [params.width, params.height, baseDimensions])
+  // Calculate and store aspect ratio at start
+  const [aspectRatio] = useState<number>(() => {
+    const w = params.width || originalDimensions.width
+    const h = params.height || originalDimensions.height
+    return w / h
+  })
+
+  // Default to locked
+  const [aspectRatioLocked, setAspectRatioLocked] = useState(true)
 
   const handleWidthChange = (value: string) => {
-    // Allow any input during typing - no validation
     const width = parseInt(value) || undefined
-    // Reset size slider when manually changing dimensions
-    setSizeScale([1])
-    onUpdateParams({ width })
 
-    // Update base dimensions after the change
-    if (width && params.height) {
-      setBaseDimensions({ width, height: params.height })
+    if (aspectRatioLocked && width) {
+      // Use stored aspect ratio for calculation
+      const newHeight = Math.round(width / aspectRatio)
+      onUpdateParams({ width, height: newHeight })
+    } else {
+      onUpdateParams({ width })
     }
   }
 
   const handleHeightChange = (value: string) => {
-    // Allow any input during typing - no validation
     const height = parseInt(value) || undefined
-    // Reset size slider when manually changing dimensions
-    setSizeScale([1])
-    onUpdateParams({ height })
 
-    // Update base dimensions after the change
-    if (height && params.width) {
-      setBaseDimensions({ width: params.width, height })
+    if (aspectRatioLocked && height) {
+      // Use stored aspect ratio for calculation
+      const newWidth = Math.round(height * aspectRatio)
+      onUpdateParams({ width: newWidth, height })
+    } else {
+      onUpdateParams({ height })
     }
   }
 
@@ -121,30 +127,30 @@ export function DimensionControl({ params, onUpdateParams }: DimensionControlPro
     }
   }
 
-  const handleSizeScaleChange = (value: number[]) => {
-    setSizeScale(value)
-    const scale = value[0]
-
-    if (baseDimensions) {
-      onUpdateParams({
-        width: Math.round(baseDimensions.width * scale),
-        height: Math.round(baseDimensions.height * scale),
-      })
-    } else if (params.width && params.height) {
-      // Fallback to current dimensions if no base dimensions set
-      onUpdateParams({
-        width: Math.round(params.width * scale),
-        height: Math.round(params.height * scale),
-      })
-    }
+  const handleResetSize = () => {
+    onUpdateParams({
+      width: originalDimensions.width,
+      height: originalDimensions.height,
+    })
   }
 
   return (
     <div className='space-y-4'>
       {/* Dimensions */}
       <div className='space-y-3'>
-        <Label className='text-sm font-medium'>{t('imageEditor.dimensions.title')}</Label>
-        <div className='grid grid-cols-2 gap-3'>
+        <div className='flex items-center justify-between'>
+          <Label className='text-sm font-medium'>{t('imageEditor.dimensions.title')}</Label>
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={handleResetSize}
+            className='text-muted-foreground hover:text-foreground h-6 px-2'
+          >
+            <RotateCcw className='mr-1 h-3 w-3' />
+            <span className='text-xs'>{t('imageEditor.dimensions.reset')}</span>
+          </Button>
+        </div>
+        <div className='grid grid-cols-[1fr_auto_1fr] items-end gap-2'>
           <div>
             <Label htmlFor='width' className='text-muted-foreground text-xs'>
               {t('imageEditor.dimensions.width')}
@@ -161,6 +167,21 @@ export function DimensionControl({ params, onUpdateParams }: DimensionControlPro
               className='h-8'
             />
           </div>
+
+          {/* Lock Button */}
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => setAspectRatioLocked(!aspectRatioLocked)}
+            className='h-8 w-8 p-0'
+            title={
+              aspectRatioLocked
+                ? t('imageEditor.dimensions.unlockAspectRatio')
+                : t('imageEditor.dimensions.lockAspectRatio')
+            }
+          >
+            {aspectRatioLocked ? <Lock className='h-4 w-4' /> : <Unlock className='h-4 w-4' />}
+          </Button>
 
           <div>
             <Label htmlFor='height' className='text-muted-foreground text-xs'>
@@ -271,26 +292,6 @@ export function DimensionControl({ params, onUpdateParams }: DimensionControlPro
           </div>
         </div>
       )}
-
-      {/* Size Slider */}
-      <div className='space-y-3'>
-        <Label className='text-sm font-medium'>Size</Label>
-        <div className='space-y-2'>
-          <Slider
-            value={sizeScale}
-            onValueChange={handleSizeScaleChange}
-            min={0.1}
-            max={2}
-            step={0.01}
-            className='w-full'
-          />
-          <div className='text-muted-foreground flex justify-between text-xs'>
-            <span>0.1x</span>
-            <span>{sizeScale[0].toFixed(2)}x</span>
-            <span>2x</span>
-          </div>
-        </div>
-      </div>
 
       {/* How it works section - at the bottom of resize block */}
       <div className='bg-muted/50 space-y-3 rounded-lg p-3'>

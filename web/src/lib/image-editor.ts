@@ -22,6 +22,7 @@ export interface ImageEditorState {
   blur?: number
   sharpen?: number
   grayscale?: boolean
+  roundCornerRadius?: number
 
   // Transform
   hFlip?: boolean
@@ -32,6 +33,10 @@ export interface ImageEditorState {
   format?: string // e.g., 'webp', 'jpeg', 'png', undefined (original)
   quality?: number // e.g., 80, 90, 95, undefined (default)
   maxBytes?: number // e.g., 100000 (100KB), undefined (no limit)
+
+  // Metadata stripping
+  stripIcc?: boolean
+  stripExif?: boolean
 
   // Crop (crops before resize, in original image coordinates)
   cropLeft?: number
@@ -286,6 +291,14 @@ export class ImageEditor {
       filters.push({ name: 'sharpen', args: sharpenValue.toString() })
     }
 
+    // Round corner filter - scale for preview to match visual appearance
+    if (state.roundCornerRadius !== undefined && state.roundCornerRadius > 0) {
+      const cornerValue = forPreview
+        ? Math.round(state.roundCornerRadius * scaleFactor)
+        : state.roundCornerRadius
+      filters.push({ name: 'round_corner', args: cornerValue.toString() })
+    }
+
     // Skip rotation in preview when visual cropping is enabled
     // (so user can crop on unrotated image, rotation applied after crop in final URL)
     const shouldApplyRotation = !forPreview || (forPreview && !state.visualCropEnabled)
@@ -313,6 +326,14 @@ export class ImageEditor {
     // Max bytes handling (automatic quality degradation)
     if (state.maxBytes && (forPreview || state.format || state.quality)) {
       filters.push({ name: 'max_bytes', args: state.maxBytes.toString() })
+    }
+
+    // Metadata stripping
+    if (state.stripIcc) {
+      filters.push({ name: 'strip_icc', args: '' })
+    }
+    if (state.stripExif) {
+      filters.push({ name: 'strip_exif', args: '' })
     }
 
     if (filters.length > 0) {

@@ -333,8 +333,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                       onUpdateParams={updateParams}
                       onVisualCropToggle={handleVisualCropToggle}
                       isVisualCropEnabled={visualCropEnabled}
-                      outputWidth={params.width || originalDimensions.width}
-                      outputHeight={params.height || originalDimensions.height}
+                      outputWidth={originalDimensions.width}
+                      outputHeight={originalDimensions.height}
                       onCropAspectRatioChange={setCropAspectRatio}
                     />
                   </div>
@@ -391,8 +391,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               onUpdateParams={updateParams}
               onVisualCropToggle={handleVisualCropToggle}
               isVisualCropEnabled={visualCropEnabled}
-              outputWidth={params.width || originalDimensions.width}
-              outputHeight={params.height || originalDimensions.height}
+              outputWidth={originalDimensions.width}
+              outputHeight={originalDimensions.height}
               onCropAspectRatioChange={setCropAspectRatio}
             />
           </div>
