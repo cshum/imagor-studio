@@ -100,14 +100,16 @@ export function NumericControl({
       <div className='flex items-center justify-between'>
         <Label className='text-sm'>{label}</Label>
         <div className='flex items-center gap-2'>
-          <span className='text-muted-foreground text-xs'>
-            {value}
-            {unit}
-          </span>
+          {!showInput && (
+            <span className='text-muted-foreground text-xs'>
+              {value}
+              {unit}
+            </span>
+          )}
           <Button
             variant='ghost'
             size='icon'
-            className={cn('h-6 w-6', showInput && 'text-primary')}
+            className='h-6 w-6'
             onClick={toggleInput}
             type='button'
           >
@@ -118,6 +120,15 @@ export function NumericControl({
 
       {showInput ? (
         <div className='flex items-center gap-3'>
+
+          <Slider
+            value={[value]}
+            onValueChange={([newValue]) => onChange(newValue)}
+            min={min}
+            max={max}
+            step={step}
+            className='flex-1'
+          />
           <Input
             type='number'
             value={value}
@@ -128,14 +139,6 @@ export function NumericControl({
             max={max}
             step={step}
             className='h-8 w-20 text-center'
-          />
-          <Slider
-            value={[value]}
-            onValueChange={([newValue]) => onChange(newValue)}
-            min={min}
-            max={max}
-            step={step}
-            className='flex-1'
           />
         </div>
       ) : (
