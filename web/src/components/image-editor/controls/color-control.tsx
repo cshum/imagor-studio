@@ -84,6 +84,21 @@ export function ColorControl({ params, onUpdateParams }: ColorControlProps) {
             className='w-full'
           />
         </div>
+
+        {/* Grayscale */}
+        <div className='space-y-2'>
+          <div className='flex items-center space-x-3 py-3'>
+            <Checkbox
+              id='grayscale'
+              checked={params.grayscale ?? false}
+              onCheckedChange={(checked) => onUpdateParams({ grayscale: !!checked })}
+              className='h-4 w-4'
+            />
+            <Label htmlFor='grayscale' className='cursor-pointer text-sm font-medium'>
+              {t('imageEditor.effects.grayscale')}
+            </Label>
+          </div>
+        </div>
       </div>
 
       {/* Effects */}
@@ -138,21 +153,6 @@ export function ColorControl({ params, onUpdateParams }: ColorControlProps) {
             step={1}
             className='w-full'
           />
-        </div>
-
-        {/* Grayscale */}
-        <div className='space-y-2'>
-          <div className='flex items-center space-x-3 py-3'>
-            <Checkbox
-              id='grayscale'
-              checked={params.grayscale ?? false}
-              onCheckedChange={(checked) => onUpdateParams({ grayscale: !!checked })}
-              className='h-4 w-4'
-            />
-            <Label htmlFor='grayscale' className='cursor-pointer text-sm font-medium'>
-              {t('imageEditor.effects.grayscale')}
-            </Label>
-          </div>
         </div>
       </div>
     </div>
