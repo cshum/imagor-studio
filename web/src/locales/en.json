@@ -551,8 +551,8 @@
     "crop": {
       "left": "Left (px)",
       "top": "Top (px)",
-      "width": "Width",
-      "height": "Height",
+      "width": "Width (px)",
+      "height": "Height (px)",
       "cropTitle": "Crop",
       "startCrop": "Crop",
       "applyCrop": "Apply Crop"
