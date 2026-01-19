@@ -3,14 +3,16 @@ import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage'
 import type { Auth } from '@/stores/auth-store'
 
-export type SectionId = 'crop' | 'effects' | 'transform' | 'dimensions' | 'output'
+// Define sections as a const array (single source of truth)
+const EDITOR_SECTIONS = ['crop', 'effects', 'transform', 'dimensions', 'output'] as const
 
-export interface EditorOpenSections {
-  crop: boolean
-  effects: boolean
-  transform: boolean
-  dimensions: boolean
-  output: boolean
+// Derive SectionId from the array
+export type SectionId = (typeof EDITOR_SECTIONS)[number]
+
+// Use mapped type for type safety
+export type EditorOpenSections = {
+  [K in SectionId]: boolean
+} & {
   sectionOrder: SectionId[]
 }
 
@@ -20,7 +22,7 @@ const defaultOpenSections: EditorOpenSections = {
   transform: false,
   dimensions: false,
   output: false,
-  sectionOrder: ['crop', 'effects', 'transform', 'dimensions', 'output'],
+  sectionOrder: [...EDITOR_SECTIONS],
 }
 
 export class EditorOpenSectionsStorage {
@@ -51,13 +53,7 @@ export class EditorOpenSectionsStorage {
           merged.sectionOrder = defaultOpenSections.sectionOrder
         } else {
           // Filter out any invalid section IDs and ensure all valid sections are present
-          const validSectionIds: SectionId[] = [
-            'crop',
-            'effects',
-            'transform',
-            'dimensions',
-            'output',
-          ]
+          const validSectionIds = [...EDITOR_SECTIONS]
           const filteredOrder = merged.sectionOrder.filter((id): id is SectionId =>
             validSectionIds.includes(id as SectionId),
           )
