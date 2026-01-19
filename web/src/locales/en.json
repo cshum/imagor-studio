@@ -478,6 +478,7 @@
       "effects": "Effects",
       "blur": "Blur",
       "sharpen": "Sharpen",
+      "roundCorner": "Round Corner",
       "grayscale": "Grayscale"
     },
     "dimensions": {

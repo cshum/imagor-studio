@@ -124,6 +124,22 @@ export function ColorControl({ params, onUpdateParams }: ColorControlProps) {
           />
         </div>
 
+        {/* Round Corner */}
+        <div className='space-y-2'>
+          <div className='flex items-center justify-between'>
+            <Label className='text-sm'>{t('imageEditor.effects.roundCorner')}</Label>
+            <span className='text-muted-foreground text-xs'>{params.roundCornerRadius ?? 0}px</span>
+          </div>
+          <Slider
+            value={[params.roundCornerRadius ?? 0]}
+            onValueChange={([value]) => onUpdateParams({ roundCornerRadius: value })}
+            min={0}
+            max={params.width ? Math.floor(params.width / 2) : 100}
+            step={1}
+            className='w-full'
+          />
+        </div>
+
         {/* Grayscale */}
         <div className='space-y-2'>
           <div className='flex items-center space-x-3 py-3'>

@@ -22,6 +22,7 @@ export interface ImageEditorState {
   blur?: number
   sharpen?: number
   grayscale?: boolean
+  roundCornerRadius?: number
 
   // Transform
   hFlip?: boolean
@@ -284,6 +285,14 @@ export class ImageEditor {
         ? Math.round(state.sharpen * scaleFactor * 100) / 100
         : state.sharpen
       filters.push({ name: 'sharpen', args: sharpenValue.toString() })
+    }
+
+    // Round corner filter - scale for preview to match visual appearance
+    if (state.roundCornerRadius !== undefined && state.roundCornerRadius > 0) {
+      const cornerValue = forPreview
+        ? Math.round(state.roundCornerRadius * scaleFactor)
+        : state.roundCornerRadius
+      filters.push({ name: 'round_corner', args: cornerValue.toString() })
     }
 
     // Skip rotation in preview when visual cropping is enabled
