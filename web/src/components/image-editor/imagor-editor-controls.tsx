@@ -52,7 +52,7 @@ interface ImageEditorControlsProps {
 }
 
 interface SectionConfig {
-  id: SectionKey
+  key: SectionKey
   icon: React.ComponentType<{ className?: string }>
   titleKey: string
   component: React.ReactNode
@@ -67,7 +67,7 @@ interface SortableSectionProps {
 function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
   const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: section.id,
+    id: section.key,
   })
 
   const style = {
@@ -193,7 +193,7 @@ export function ImageEditorControls({
   const sectionConfigs: Record<SectionKey, SectionConfig> = useMemo(
     () => ({
       crop: {
-        id: 'crop',
+        key: 'crop',
         icon: Scissors,
         titleKey: 'imageEditor.controls.cropAspect',
         component: (
@@ -209,19 +209,19 @@ export function ImageEditorControls({
         ),
       },
       effects: {
-        id: 'effects',
+        key: 'effects',
         icon: Palette,
         titleKey: 'imageEditor.controls.colorEffects',
         component: <ColorControl params={params} onUpdateParams={onUpdateParams} />,
       },
       transform: {
-        id: 'transform',
+        key: 'transform',
         icon: RotateCw,
         titleKey: 'imageEditor.controls.transformRotate',
         component: <TransformControl params={params} onUpdateParams={onUpdateParams} />,
       },
       dimensions: {
-        id: 'dimensions',
+        key: 'dimensions',
         icon: Maximize2,
         titleKey: 'imageEditor.controls.dimensionsResize',
         component: (
@@ -233,7 +233,7 @@ export function ImageEditorControls({
         ),
       },
       output: {
-        id: 'output',
+        key: 'output',
         icon: FileImage,
         titleKey: 'imageEditor.controls.outputCompression',
         component: <OutputControl params={params} onUpdateParams={onUpdateParams} />,
@@ -267,10 +267,10 @@ export function ImageEditorControls({
         <div className='space-y-4'>
           {orderedSections.map((section) => (
             <SortableSection
-              key={section.id}
+              key={section.key}
               section={section}
-              isOpen={openSections[section.id]}
-              onToggle={(open) => handleSectionToggle(section.id, open)}
+              isOpen={openSections[section.key]}
+              onToggle={(open) => handleSectionToggle(section.key, open)}
             />
           ))}
         </div>
