@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Hash, Minus, Plus, SlidersHorizontal } from 'lucide-react'
+import { SlidersHorizontal } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,17 +28,7 @@ export function NumericControl({
   onChange,
   className,
 }: NumericControlProps) {
-  const [mode, setMode] = useState<'slider' | 'stepper'>('slider')
-
-  const handleIncrement = () => {
-    const newValue = Math.min(value + step, max)
-    onChange(newValue)
-  }
-
-  const handleDecrement = () => {
-    const newValue = Math.max(value - step, min)
-    onChange(newValue)
-  }
+  const [showInput, setShowInput] = useState(false)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = parseFloat(e.target.value)
@@ -56,8 +46,53 @@ export function NumericControl({
     }
   }
 
-  const toggleMode = () => {
-    setMode((prev) => (prev === 'slider' ? 'stepper' : 'slider'))
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Allow: backspace, delete, tab, escape, enter, arrows
+    const allowedKeys = [
+      'Backspace',
+      'Delete',
+      'Tab',
+      'Escape',
+      'Enter',
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowUp',
+      'ArrowDown',
+      'Home',
+      'End',
+    ]
+
+    // Allow Ctrl/Cmd shortcuts (copy, paste, select all, etc.)
+    if (e.ctrlKey || e.metaKey) {
+      return
+    }
+
+    // Check if it's an allowed key
+    if (allowedKeys.includes(e.key)) {
+      return
+    }
+
+    // Allow numbers
+    if (/^[0-9]$/.test(e.key)) {
+      return
+    }
+
+    // Allow decimal point if step allows decimals
+    if (e.key === '.' && step % 1 !== 0 && !e.currentTarget.value.includes('.')) {
+      return
+    }
+
+    // Allow minus sign at the beginning if min is negative
+    if (e.key === '-' && min < 0 && e.currentTarget.selectionStart === 0) {
+      return
+    }
+
+    // Block everything else
+    e.preventDefault()
+  }
+
+  const toggleInput = () => {
+    setShowInput((prev) => !prev)
   }
 
   return (
@@ -72,20 +107,38 @@ export function NumericControl({
           <Button
             variant='ghost'
             size='icon'
-            className='h-6 w-6'
-            onClick={toggleMode}
+            className={cn('h-6 w-6', showInput && 'text-primary')}
+            onClick={toggleInput}
             type='button'
           >
-            {mode === 'slider' ? (
-              <Hash className='h-3.5 w-3.5' />
-            ) : (
-              <SlidersHorizontal className='h-3.5 w-3.5' />
-            )}
+            <SlidersHorizontal className='h-3.5 w-3.5' />
           </Button>
         </div>
       </div>
 
-      {mode === 'slider' ? (
+      {showInput ? (
+        <div className='flex items-center gap-3'>
+          <Input
+            type='number'
+            value={value}
+            onChange={handleInputChange}
+            onBlur={handleInputBlur}
+            onKeyDown={handleKeyDown}
+            min={min}
+            max={max}
+            step={step}
+            className='h-8 w-20 text-center'
+          />
+          <Slider
+            value={[value]}
+            onValueChange={([newValue]) => onChange(newValue)}
+            min={min}
+            max={max}
+            step={step}
+            className='flex-1'
+          />
+        </div>
+      ) : (
         <Slider
           value={[value]}
           onValueChange={([newValue]) => onChange(newValue)}
@@ -94,39 +147,6 @@ export function NumericControl({
           step={step}
           className='w-full'
         />
-      ) : (
-        <div className='flex items-center gap-2'>
-          <Button
-            variant='outline'
-            size='icon'
-            className='h-8 w-8 shrink-0'
-            onClick={handleDecrement}
-            disabled={value <= min}
-            type='button'
-          >
-            <Minus className='h-3.5 w-3.5' />
-          </Button>
-          <Input
-            type='number'
-            value={value}
-            onChange={handleInputChange}
-            onBlur={handleInputBlur}
-            min={min}
-            max={max}
-            step={step}
-            className='h-8 text-center'
-          />
-          <Button
-            variant='outline'
-            size='icon'
-            className='h-8 w-8 shrink-0'
-            onClick={handleIncrement}
-            disabled={value >= max}
-            type='button'
-          >
-            <Plus className='h-3.5 w-3.5' />
-          </Button>
-        </div>
       )}
     </div>
   )
