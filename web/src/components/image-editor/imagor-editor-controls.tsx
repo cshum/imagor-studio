@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next'
 import {
   closestCenter,
   DndContext,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core'
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import {
@@ -82,7 +84,11 @@ function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
   const Icon = section.icon
 
   return (
-    <div ref={setNodeRef} style={style} className={cn(isDragging && 'z-50', 'relative touch-none')}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(isDragging && 'opacity-0', 'relative touch-none')}
+    >
       <Card>
         <Collapsible open={isOpen} onOpenChange={onToggle}>
           <CollapsibleTrigger
@@ -117,8 +123,8 @@ export function ImageEditorControls({
   outputHeight,
   onCropAspectRatioChange,
 }: ImageEditorControlsProps) {
-  // Store the original open/closed state before dragging
-  const [preDragOpenState, setPreDragOpenState] = useState<EditorOpenSections | null>(null)
+  // Track the active dragged section for DragOverlay
+  const [activeId, setActiveId] = useState<SectionKey | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -139,26 +145,17 @@ export function ImageEditorControls({
     [openSections, onOpenSectionsChange],
   )
 
-  const handleDragStart = useCallback(() => {
-    // Save current open/closed state
-    setPreDragOpenState(openSections)
-
-    // Collapse all sections for cleaner drag experience
-    onOpenSectionsChange({
-      ...openSections,
-      crop: false,
-      effects: false,
-      transform: false,
-      dimensions: false,
-      output: false,
-    })
-  }, [openSections, onOpenSectionsChange])
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    // Track which section is being dragged for DragOverlay
+    setActiveId(event.active.id as SectionKey)
+  }, [])
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event
 
-      let updatedSections = { ...openSections }
+      // Clear active dragged item
+      setActiveId(null)
 
       // Update section order if items were reordered
       if (over && active.id !== over.id) {
@@ -166,28 +163,13 @@ export function ImageEditorControls({
         const newIndex = openSections.sectionOrder.indexOf(over.id as SectionKey)
 
         const newOrder = arrayMove(openSections.sectionOrder, oldIndex, newIndex)
-        updatedSections = {
-          ...updatedSections,
+        onOpenSectionsChange({
+          ...openSections,
           sectionOrder: newOrder,
-        }
+        })
       }
-
-      // Restore original open/closed state
-      if (preDragOpenState) {
-        updatedSections = {
-          ...updatedSections,
-          crop: preDragOpenState.crop,
-          effects: preDragOpenState.effects,
-          transform: preDragOpenState.transform,
-          dimensions: preDragOpenState.dimensions,
-          output: preDragOpenState.output,
-        }
-        setPreDragOpenState(null)
-      }
-
-      onOpenSectionsChange(updatedSections)
     },
-    [openSections, onOpenSectionsChange, preDragOpenState],
+    [openSections, onOpenSectionsChange],
   )
 
   // Define all section configurations
@@ -257,6 +239,11 @@ export function ImageEditorControls({
     [openSections.sectionOrder, sectionConfigs],
   )
 
+  const { t } = useTranslation()
+
+  // Get the active section for DragOverlay
+  const activeSection = activeId ? sectionConfigs[activeId] : null
+
   return (
     <DndContext
       sensors={sensors}
@@ -277,6 +264,29 @@ export function ImageEditorControls({
           ))}
         </div>
       </SortableContext>
+      <DragOverlay>
+        {activeSection ? (
+          <Card className='w-full'>
+            <Collapsible open={openSections[activeSection.key]}>
+              <div className='flex w-full items-center justify-between p-4'>
+                <div className='flex items-center gap-2'>
+                  <GripVertical className='h-4 w-4' />
+                  <activeSection.icon className='h-4 w-4' />
+                  <span className='font-medium'>{t(activeSection.titleKey)}</span>
+                </div>
+                {openSections[activeSection.key] ? (
+                  <ChevronUp className='h-4 w-4' />
+                ) : (
+                  <ChevronDown className='h-4 w-4' />
+                )}
+              </div>
+              <CollapsibleContent className='overflow-hidden px-4 pb-4'>
+                {activeSection.component}
+              </CollapsibleContent>
+            </Collapsible>
+          </Card>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   )
 }
