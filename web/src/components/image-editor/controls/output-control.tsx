@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { NumericControl } from '@/components/ui/numeric-control'
 import {
   Select,
   SelectContent,
@@ -11,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Slider } from '@/components/ui/slider'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
 
 interface OutputControlProps {
@@ -60,8 +60,8 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
     onUpdateParams({ format: value === 'original' ? undefined : value })
   }
 
-  const handleQualityChange = (value: number[]) => {
-    const updates: Partial<ImageEditorState> = { quality: value[0] }
+  const handleQualityChange = (value: number) => {
+    const updates: Partial<ImageEditorState> = { quality: value }
     // Clear max_bytes when quality is set manually
     if (params.maxBytes) {
       updates.maxBytes = undefined
@@ -121,20 +121,17 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
         <p className='text-muted-foreground text-xs'>{t('imageEditor.output.formatDescription')}</p>
       </div>
 
-      {/* Quality Slider - Always show when format is selected */}
+      {/* Quality Control */}
       <div className='space-y-3'>
-        <div className='flex items-center justify-between'>
-          <Label className='text-sm font-medium'>{t('imageEditor.output.quality')}</Label>
-          <span className='text-muted-foreground text-sm'>{qualityValue}%</span>
-        </div>
-        <Slider
-          value={[qualityValue]}
-          onValueChange={handleQualityChange}
-          disabled={!!params.maxBytes}
+        <NumericControl
+          label={t('imageEditor.output.quality')}
+          value={qualityValue}
           min={1}
           max={100}
           step={1}
-          className={`w-full ${params.maxBytes ? 'opacity-50' : ''}`}
+          unit='%'
+          onChange={handleQualityChange}
+          className={params.maxBytes ? 'opacity-50 pointer-events-none' : ''}
         />
         <p className='text-muted-foreground text-xs'>
           {params.maxBytes
