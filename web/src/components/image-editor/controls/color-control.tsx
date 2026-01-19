@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { Slider } from '@/components/ui/slider'
+import { NumericControl } from '@/components/ui/numeric-control'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
 
 interface ColorControlProps {
@@ -22,68 +22,45 @@ export function ColorControl({ params, onUpdateParams }: ColorControlProps) {
         </h4>
 
         {/* Brightness */}
-        <div className='space-y-2'>
-          <div className='flex items-center justify-between'>
-            <Label className='text-sm'>{t('imageEditor.effects.brightness')}</Label>
-            <span className='text-muted-foreground text-xs'>{params.brightness ?? 0}</span>
-          </div>
-          <Slider
-            value={[params.brightness ?? 0]}
-            onValueChange={([value]) => onUpdateParams({ brightness: value })}
-            min={-100}
-            max={100}
-            step={1}
-            className='w-full'
-          />
-        </div>
+        <NumericControl
+          label={t('imageEditor.effects.brightness')}
+          value={params.brightness ?? 0}
+          min={-100}
+          max={100}
+          step={1}
+          onChange={(value) => onUpdateParams({ brightness: value })}
+        />
 
         {/* Contrast */}
-        <div className='space-y-2'>
-          <div className='flex items-center justify-between'>
-            <Label className='text-sm'>{t('imageEditor.effects.contrast')}</Label>
-            <span className='text-muted-foreground text-xs'>{params.contrast ?? 0}</span>
-          </div>
-          <Slider
-            value={[params.contrast ?? 0]}
-            onValueChange={([value]) => onUpdateParams({ contrast: value })}
-            min={-100}
-            max={100}
-            step={1}
-            className='w-full'
-          />
-        </div>
+        <NumericControl
+          label={t('imageEditor.effects.contrast')}
+          value={params.contrast ?? 0}
+          min={-100}
+          max={100}
+          step={1}
+          onChange={(value) => onUpdateParams({ contrast: value })}
+        />
 
         {/* Saturation */}
-        <div className='space-y-2'>
-          <div className='flex items-center justify-between'>
-            <Label className='text-sm'>{t('imageEditor.effects.saturation')}</Label>
-            <span className='text-muted-foreground text-xs'>{params.saturation ?? 0}</span>
-          </div>
-          <Slider
-            value={[params.saturation ?? 0]}
-            onValueChange={([value]) => onUpdateParams({ saturation: value })}
-            min={-100}
-            max={100}
-            step={1}
-            className='w-full'
-          />
-        </div>
+        <NumericControl
+          label={t('imageEditor.effects.saturation')}
+          value={params.saturation ?? 0}
+          min={-100}
+          max={100}
+          step={1}
+          onChange={(value) => onUpdateParams({ saturation: value })}
+        />
 
         {/* Hue */}
-        <div className='space-y-2'>
-          <div className='flex items-center justify-between'>
-            <Label className='text-sm'>{t('imageEditor.effects.hue')}</Label>
-            <span className='text-muted-foreground text-xs'>{params.hue ?? 0}°</span>
-          </div>
-          <Slider
-            value={[params.hue ?? 0]}
-            onValueChange={([value]) => onUpdateParams({ hue: value })}
-            min={0}
-            max={360}
-            step={1}
-            className='w-full'
-          />
-        </div>
+        <NumericControl
+          label={t('imageEditor.effects.hue')}
+          value={params.hue ?? 0}
+          min={0}
+          max={360}
+          step={1}
+          unit='°'
+          onChange={(value) => onUpdateParams({ hue: value })}
+        />
 
         {/* Grayscale */}
         <div className='space-y-2'>
@@ -108,52 +85,35 @@ export function ColorControl({ params, onUpdateParams }: ColorControlProps) {
         </h4>
 
         {/* Blur */}
-        <div className='space-y-2'>
-          <div className='flex items-center justify-between'>
-            <Label className='text-sm'>{t('imageEditor.effects.blur')}</Label>
-            <span className='text-muted-foreground text-xs'>{params.blur ?? 0}</span>
-          </div>
-          <Slider
-            value={[params.blur ?? 0]}
-            onValueChange={([value]) => onUpdateParams({ blur: value })}
-            min={0}
-            max={10}
-            step={0.1}
-            className='w-full'
-          />
-        </div>
+        <NumericControl
+          label={t('imageEditor.effects.blur')}
+          value={params.blur ?? 0}
+          min={0}
+          max={10}
+          step={0.1}
+          onChange={(value) => onUpdateParams({ blur: value })}
+        />
 
         {/* Sharpen */}
-        <div className='space-y-2'>
-          <div className='flex items-center justify-between'>
-            <Label className='text-sm'>{t('imageEditor.effects.sharpen')}</Label>
-            <span className='text-muted-foreground text-xs'>{params.sharpen ?? 0}</span>
-          </div>
-          <Slider
-            value={[params.sharpen ?? 0]}
-            onValueChange={([value]) => onUpdateParams({ sharpen: value })}
-            min={0}
-            max={10}
-            step={0.1}
-            className='w-full'
-          />
-        </div>
+        <NumericControl
+          label={t('imageEditor.effects.sharpen')}
+          value={params.sharpen ?? 0}
+          min={0}
+          max={10}
+          step={0.1}
+          onChange={(value) => onUpdateParams({ sharpen: value })}
+        />
 
         {/* Round Corner */}
-        <div className='space-y-2'>
-          <div className='flex items-center justify-between'>
-            <Label className='text-sm'>{t('imageEditor.effects.roundCorner')}</Label>
-            <span className='text-muted-foreground text-xs'>{params.roundCornerRadius ?? 0}px</span>
-          </div>
-          <Slider
-            value={[params.roundCornerRadius ?? 0]}
-            onValueChange={([value]) => onUpdateParams({ roundCornerRadius: value })}
-            min={0}
-            max={params.width ? Math.floor(params.width / 2) : 100}
-            step={1}
-            className='w-full'
-          />
-        </div>
+        <NumericControl
+          label={t('imageEditor.effects.roundCorner')}
+          value={params.roundCornerRadius ?? 0}
+          min={0}
+          max={params.width ? Math.floor(params.width / 2) : 100}
+          step={1}
+          unit='px'
+          onChange={(value) => onUpdateParams({ roundCornerRadius: value })}
+        />
       </div>
     </div>
   )
