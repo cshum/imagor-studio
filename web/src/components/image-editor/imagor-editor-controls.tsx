@@ -81,11 +81,7 @@ function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
   const Icon = section.icon
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(isDragging && 'z-50 opacity-50', 'relative touch-none')}
-    >
+    <div ref={setNodeRef} style={style} className={cn(isDragging && 'z-50', 'relative touch-none')}>
       <Card>
         <Collapsible open={isOpen} onOpenChange={onToggle}>
           <CollapsibleTrigger className='flex w-full items-center justify-between p-4 text-left'>
