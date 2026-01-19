@@ -84,11 +84,7 @@ function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
   const Icon = section.icon
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(isDragging && 'opacity-0', 'relative touch-none')}
-    >
+    <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0', 'relative')}>
       <Card>
         <Collapsible open={isOpen} onOpenChange={onToggle}>
           <CollapsibleTrigger
