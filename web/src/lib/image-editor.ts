@@ -291,8 +291,14 @@ export class ImageEditor {
       filters.push({ name: 'sharpen', args: sharpenValue.toString() })
     }
 
-    // Round corner filter - scale for preview to match visual appearance
-    if (state.roundCornerRadius !== undefined && state.roundCornerRadius > 0) {
+    // Skip round corner in preview when visual cropping is enabled
+    // (so user can crop without round corner, applied after crop in final URL)
+    const shouldApplyRoundCorner = !forPreview || (forPreview && !state.visualCropEnabled)
+    if (
+      shouldApplyRoundCorner &&
+      state.roundCornerRadius !== undefined &&
+      state.roundCornerRadius > 0
+    ) {
       const cornerValue = forPreview
         ? Math.round(state.roundCornerRadius * scaleFactor)
         : state.roundCornerRadius
