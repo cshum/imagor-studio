@@ -58,3 +58,18 @@ export const GENERATE_IMAGOR_URL_MUTATION = gql(`
     )
   }
 `)
+
+// Mutation to generate multiple imagor URLs in bulk
+export const GENERATE_IMAGOR_URLS_MUTATION = gql(`
+  mutation GenerateImagorUrls(
+    $galleryKey: String!
+    $imageKey: String!
+    $paramsList: [ImagorParamsInput!]!
+  ) {
+    generateImagorUrls(
+      galleryKey: $galleryKey
+      imageKey: $imageKey
+      paramsList: $paramsList
+    )
+  }
+`)

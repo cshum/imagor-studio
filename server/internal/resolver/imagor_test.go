@@ -80,6 +80,91 @@ func TestGenerateImagorURL(t *testing.T) {
 	})
 }
 
+func TestGenerateImagorUrls(t *testing.T) {
+	// Setup test resolver with mocked imagor provider
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockImagorProvider := new(MockImagorProvider)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+
+	// Use authenticated context with write permissions
+	ctx := createReadWriteContext("test-user")
+
+	t.Run("BulkMode", func(t *testing.T) {
+		mockImagorProvider.ExpectedCalls = nil
+		paramsList := []*gql.ImagorParamsInput{
+			{
+				Width:  intPtr(800),
+				Height: intPtr(600),
+				FitIn:  boolPtr(true),
+			},
+			{
+				Width:  intPtr(400),
+				Height: intPtr(300),
+				Filters: []*gql.ImagorFilterInput{
+					{Name: "grayscale", Args: ""},
+				},
+			},
+			{
+				Width: intPtr(200),
+				Filters: []*gql.ImagorFilterInput{
+					{Name: "quality", Args: "80"},
+				},
+			},
+		}
+
+		expectedURLs := []string{
+			"/imagor/fit-in/800x600/gallery1/image.jpg",
+			"/imagor/400x300/filters:grayscale()/gallery1/image.jpg",
+			"/imagor/200x0/filters:quality(80)/gallery1/image.jpg",
+		}
+
+		// Mock all three URL generations
+		mockImagorProvider.On("GenerateURL", "gallery1/image.jpg", imagorpath.Params{
+			Width:  800,
+			Height: 600,
+			FitIn:  true,
+		}).Return(expectedURLs[0], nil)
+
+		mockImagorProvider.On("GenerateURL", "gallery1/image.jpg", imagorpath.Params{
+			Width:  400,
+			Height: 300,
+			Filters: imagorpath.Filters{
+				{Name: "grayscale", Args: ""},
+			},
+		}).Return(expectedURLs[1], nil)
+
+		mockImagorProvider.On("GenerateURL", "gallery1/image.jpg", imagorpath.Params{
+			Width: 200,
+			Filters: imagorpath.Filters{
+				{Name: "quality", Args: "80"},
+			},
+		}).Return(expectedURLs[2], nil)
+
+		urls, err := resolver.Mutation().GenerateImagorUrls(ctx, "gallery1", "image.jpg", paramsList)
+		require.NoError(t, err)
+		require.Len(t, urls, 3)
+		assert.Equal(t, expectedURLs[0], urls[0])
+		assert.Equal(t, expectedURLs[1], urls[1])
+		assert.Equal(t, expectedURLs[2], urls[2])
+
+		mockImagorProvider.AssertExpectations(t)
+	})
+
+	t.Run("BulkModeEmpty", func(t *testing.T) {
+		mockImagorProvider.ExpectedCalls = nil
+		paramsList := []*gql.ImagorParamsInput{}
+
+		urls, err := resolver.Mutation().GenerateImagorUrls(ctx, "gallery1", "image.jpg", paramsList)
+		require.NoError(t, err)
+		require.Len(t, urls, 0)
+	})
+}
+
 func TestBuildImagePath(t *testing.T) {
 	tests := []struct {
 		name       string

@@ -168,6 +168,7 @@ export type Mutation = {
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
+  generateImagorUrls: Array<Scalars['String']['output']>
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
@@ -223,6 +224,12 @@ export type MutationGenerateImagorUrlArgs = {
   galleryKey: Scalars['String']['input']
   imageKey: Scalars['String']['input']
   params: ImagorParamsInput
+}
+
+export type MutationGenerateImagorUrlsArgs = {
+  galleryKey: Scalars['String']['input']
+  imageKey: Scalars['String']['input']
+  paramsList: Array<ImagorParamsInput>
 }
 
 export type MutationSetSystemRegistryArgs = {
@@ -478,6 +485,17 @@ export type GenerateImagorUrlMutationVariables = Exact<{
 }>
 
 export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImagorUrl: string }
+
+export type GenerateImagorUrlsMutationVariables = Exact<{
+  galleryKey: Scalars['String']['input']
+  imageKey: Scalars['String']['input']
+  paramsList: Array<ImagorParamsInput> | ImagorParamsInput
+}>
+
+export type GenerateImagorUrlsMutation = {
+  __typename?: 'Mutation'
+  generateImagorUrls: Array<string>
+}
 
 export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
@@ -1029,6 +1047,15 @@ export const GenerateImagorUrlDocument = gql`
     generateImagorUrl(galleryKey: $galleryKey, imageKey: $imageKey, params: $params)
   }
 `
+export const GenerateImagorUrlsDocument = gql`
+  mutation GenerateImagorUrls(
+    $galleryKey: String!
+    $imageKey: String!
+    $paramsList: [ImagorParamsInput!]!
+  ) {
+    generateImagorUrls(galleryKey: $galleryKey, imageKey: $imageKey, paramsList: $paramsList)
+  }
+`
 export const ListUserRegistryDocument = gql`
   query ListUserRegistry($prefix: String, $ownerID: String) {
     listUserRegistry(prefix: $prefix, ownerID: $ownerID) {
@@ -1345,6 +1372,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'GenerateImagorUrl',
+        'mutation',
+        variables,
+      )
+    },
+    GenerateImagorUrls(
+      variables: GenerateImagorUrlsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<GenerateImagorUrlsMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<GenerateImagorUrlsMutation>({
+            document: GenerateImagorUrlsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'GenerateImagorUrls',
         'mutation',
         variables,
       )
