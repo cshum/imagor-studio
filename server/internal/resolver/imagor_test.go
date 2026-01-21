@@ -494,6 +494,172 @@ func TestGenerateThumbnailUrls_WithVideoThumbnailPosition(t *testing.T) {
 	}
 }
 
+func TestGenerateThumbnailUrls_WithSvgAndPdf(t *testing.T) {
+	// Setup test resolver with mocked imagor provider
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockImagorProvider := new(MockImagorProvider)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+
+	tests := []struct {
+		name          string
+		imagePath     string
+		shouldHaveDpi bool
+		description   string
+	}{
+		{
+			name:          "SVG file - lowercase",
+			imagePath:     "test/image.svg",
+			shouldHaveDpi: true,
+			description:   "Should include dpi(144) filter for .svg files",
+		},
+		{
+			name:          "SVG file - uppercase",
+			imagePath:     "test/IMAGE.SVG",
+			shouldHaveDpi: true,
+			description:   "Should include dpi(144) filter for .SVG files (case-insensitive)",
+		},
+		{
+			name:          "PDF file - lowercase",
+			imagePath:     "test/document.pdf",
+			shouldHaveDpi: true,
+			description:   "Should include dpi(144) filter for .pdf files",
+		},
+		{
+			name:          "PDF file - uppercase",
+			imagePath:     "test/DOCUMENT.PDF",
+			shouldHaveDpi: true,
+			description:   "Should include dpi(144) filter for .PDF files (case-insensitive)",
+		},
+		{
+			name:          "Regular image - JPG",
+			imagePath:     "test/image.jpg",
+			shouldHaveDpi: false,
+			description:   "Should NOT include dpi filter for regular image formats",
+		},
+		{
+			name:          "Regular image - PNG",
+			imagePath:     "test/image.png",
+			shouldHaveDpi: false,
+			description:   "Should NOT include dpi filter for PNG files",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockImagorProvider.ExpectedCalls = nil
+
+			// Build expected filters based on whether DPI should be included
+			var gridFilters, previewFilters, fullFilters imagorpath.Filters
+
+			if tt.shouldHaveDpi {
+				gridFilters = imagorpath.Filters{
+					{Name: "quality", Args: "80"},
+					{Name: "format", Args: "webp"},
+					{Name: "dpi", Args: "144"},
+				}
+				previewFilters = imagorpath.Filters{
+					{Name: "quality", Args: "90"},
+					{Name: "format", Args: "webp"},
+					{Name: "dpi", Args: "144"},
+				}
+				fullFilters = imagorpath.Filters{
+					{Name: "quality", Args: "95"},
+					{Name: "format", Args: "webp"},
+					{Name: "dpi", Args: "144"},
+				}
+			} else {
+				gridFilters = imagorpath.Filters{
+					{Name: "quality", Args: "80"},
+					{Name: "format", Args: "webp"},
+				}
+				previewFilters = imagorpath.Filters{
+					{Name: "quality", Args: "90"},
+					{Name: "format", Args: "webp"},
+				}
+				fullFilters = imagorpath.Filters{
+					{Name: "quality", Args: "95"},
+					{Name: "format", Args: "webp"},
+				}
+			}
+
+			// Mock all thumbnail sizes
+			gridURL := "/imagor/300x225/filters:quality(80):format(webp)"
+			previewURL := "/imagor/fit-in/1200x900/filters:quality(90):format(webp)"
+			fullURL := "/imagor/fit-in/2400x1800/filters:quality(95):format(webp)"
+
+			if tt.shouldHaveDpi {
+				gridURL += ":dpi(144)"
+				previewURL += ":dpi(144)"
+				fullURL += ":dpi(144)"
+			}
+
+			gridURL += "/" + tt.imagePath
+			previewURL += "/" + tt.imagePath
+			fullURL += "/" + tt.imagePath
+
+			mockImagorProvider.On("GenerateURL", tt.imagePath, imagorpath.Params{
+				Width:   300,
+				Height:  225,
+				Filters: gridFilters,
+			}).Return(gridURL, nil)
+
+			mockImagorProvider.On("GenerateURL", tt.imagePath, imagorpath.Params{
+				Width:   1200,
+				Height:  900,
+				FitIn:   true,
+				Filters: previewFilters,
+			}).Return(previewURL, nil)
+
+			mockImagorProvider.On("GenerateURL", tt.imagePath, imagorpath.Params{
+				Width:   2400,
+				Height:  1800,
+				FitIn:   true,
+				Filters: fullFilters,
+			}).Return(fullURL, nil)
+
+			mockImagorProvider.On("GenerateURL", tt.imagePath, imagorpath.Params{
+				Filters: imagorpath.Filters{
+					{Name: "raw"},
+				},
+			}).Return("/imagor/filters:raw()/"+tt.imagePath, nil)
+
+			mockImagorProvider.On("GenerateURL", tt.imagePath, imagorpath.Params{
+				Meta: true,
+			}).Return("/imagor/meta/"+tt.imagePath, nil)
+
+			// Generate thumbnail URLs
+			result := resolver.generateThumbnailUrls(tt.imagePath, "first_frame")
+
+			// Verify result is not nil
+			require.NotNil(t, result, tt.description)
+			require.NotNil(t, result.Grid, tt.description)
+			require.NotNil(t, result.Preview, tt.description)
+			require.NotNil(t, result.Full, tt.description)
+
+			// Check if DPI filter is present in URLs
+			if tt.shouldHaveDpi {
+				assert.Contains(t, *result.Grid, "dpi(144)", tt.description)
+				assert.Contains(t, *result.Preview, "dpi(144)", tt.description)
+				assert.Contains(t, *result.Full, "dpi(144)", tt.description)
+			} else {
+				assert.NotContains(t, *result.Grid, "dpi(144)", tt.description)
+				assert.NotContains(t, *result.Preview, "dpi(144)", tt.description)
+				assert.NotContains(t, *result.Full, "dpi(144)", tt.description)
+			}
+
+			// Original URL should never have DPI filter (uses raw filter)
+			assert.NotContains(t, *result.Original, "dpi(144)", "Original URL should not have DPI filter")
+
+			mockImagorProvider.AssertExpectations(t)
+		})
+	}
+}
+
 // Helper function for creating float pointers (intPtr and stringPtr already exist in resolver_test.go)
 func floatPtr(f float64) *float64 {
 	return &f
