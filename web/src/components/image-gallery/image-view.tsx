@@ -322,9 +322,9 @@ export function ImageView({
             <LicenseBadge side='left' theme='dark' />
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 80 }}
-              exit={{ opacity: 80 }}
-              className='absolute top-0 right-0 bottom-0 left-0 bg-black/80'
+              animate={{ opacity: isFullscreen ? 1 : 0.8 }}
+              exit={{ opacity: 0.7 }}
+              className='absolute top-0 right-0 bottom-0 left-0 bg-black'
             ></motion.div>
             {onNextImage && scale <= 1 && !isSlideshow && !isFullscreen && (
               <div
