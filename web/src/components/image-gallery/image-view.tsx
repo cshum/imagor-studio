@@ -19,6 +19,7 @@ import { ImageInfo, ImageViewInfo } from '@/components/image-gallery/image-view-
 import { LicenseBadge } from '@/components/license-badge.tsx'
 import { Sheet } from '@/components/ui/sheet'
 import { FileInfoFragment } from '@/generated/graphql'
+import { useAutoHideControls } from '@/hooks/use-auto-hide-controls'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useAuth } from '@/stores/auth-store'
 
@@ -91,8 +92,13 @@ export function ImageView({
   const [isVisible, setIsVisible] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [showControls, setShowControls] = useState(true)
-  const hideControlsTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Auto-hide controls on desktop after inactivity
+  const { showControls } = useAutoHideControls({
+    enabled: isDesktop,
+    hideDelay: 3000,
+    elementRef: overlayRef,
+  })
 
   useEffect(() => {
     const overlay = overlayRef.current
@@ -261,52 +267,6 @@ export function ImageView({
   useEffect(() => {
     overlayRef.current?.focus()
   }, [])
-
-  // Auto-hide controls on desktop after inactivity
-  useEffect(() => {
-    if (!isDesktop) {
-      setShowControls(true)
-      return
-    }
-
-    const resetHideTimer = () => {
-      // Clear existing timer
-      if (hideControlsTimerRef.current) {
-        clearTimeout(hideControlsTimerRef.current)
-      }
-
-      // Show controls
-      setShowControls(true)
-
-      // Set new timer to hide controls after 3 seconds
-      hideControlsTimerRef.current = setTimeout(() => {
-        setShowControls(false)
-      }, 3000)
-    }
-
-    const handleMouseMove = () => {
-      resetHideTimer()
-    }
-
-    // Start initial timer
-    resetHideTimer()
-
-    // Add mouse move listener
-    const overlay = overlayRef.current
-    if (overlay) {
-      overlay.addEventListener('mousemove', handleMouseMove)
-    }
-
-    // Cleanup
-    return () => {
-      if (hideControlsTimerRef.current) {
-        clearTimeout(hideControlsTimerRef.current)
-      }
-      if (overlay) {
-        overlay.removeEventListener('mousemove', handleMouseMove)
-      }
-    }
-  }, [isDesktop])
 
   // Keyboard shortcuts handler
   const handleKeyDown = (event: React.KeyboardEvent) => {
