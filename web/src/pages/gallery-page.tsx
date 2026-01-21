@@ -265,9 +265,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         : deleteImageDialog.imageKey
 
       await deleteFile(imagePath)
-
-      toast.success(t('pages.gallery.deleteImage.success'))
-
       setDeleteImageDialog({
         open: false,
         imageKey: null,
