@@ -212,7 +212,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   useEffect(() => {
     setCurrentPath(galleryKey)
     requestAnimationFrame(() => restoreScrollPosition(galleryKey))
-    setFilterText('') // Clear filter when navigating to a different folder
+    setFilterText('')
   }, [galleryKey])
 
   const handleUploadFiles = () => {
