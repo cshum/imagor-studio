@@ -100,7 +100,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     url: '',
   })
   const [filterText, setFilterText] = useState('')
-  const [showFileNames, setShowFileNames] = useState(galleryLoaderData.showFileNames)
 
   const {
     galleryName,
@@ -110,6 +109,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     currentSortOrder,
     imageExtensions,
     videoExtensions,
+    showFileNames,
   } = galleryLoaderData
   const sidebar = useSidebar()
 
@@ -385,12 +385,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   // Handler for toggling show file names
   const handleToggleShowFileNames = async () => {
     const newValue = !showFileNames
-    setShowFileNames(newValue)
     if (authState.profile?.id) {
       await setUserRegistryMultiple(
         [{ key: 'config.app_show_file_names', value: newValue.toString(), isEncrypted: false }],
         authState.profile.id,
       )
+      // Invalidate the router to reload loader data with new value
+      router.invalidate()
     }
   }
 
