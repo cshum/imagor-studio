@@ -20,7 +20,7 @@ import {
 import { toast } from 'sonner'
 
 import { generateImagorUrl } from '@/api/imagor-api'
-import { getUserRegistry, setUserRegistryMultiple } from '@/api/registry-api.ts'
+import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { deleteFile } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
@@ -100,7 +100,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     url: '',
   })
   const [filterText, setFilterText] = useState('')
-  const [showFileNames, setShowFileNames] = useState(false)
+  const [showFileNames, setShowFileNames] = useState(galleryLoaderData.showFileNames)
 
   const {
     galleryName,
@@ -213,23 +213,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     setCurrentPath(galleryKey)
     requestAnimationFrame(() => restoreScrollPosition(galleryKey))
   }, [galleryKey])
-
-  // Load showFileNames preference from user registry
-  useEffect(() => {
-    const loadShowFileNamesPreference = async () => {
-      if (authState.profile?.id && authState.state === 'authenticated') {
-        try {
-          const result = await getUserRegistry('config.app_show_file_names', authState.profile.id)
-          if (result && result.length > 0 && result[0]?.value) {
-            setShowFileNames(result[0].value === 'true')
-          }
-        } catch {
-          // Ignore errors, use default value
-        }
-      }
-    }
-    loadShowFileNamesPreference()
-  }, [authState.profile?.id, authState.state])
 
   const handleUploadFiles = () => {
     fileInputRef.current?.click()
