@@ -112,7 +112,8 @@
         "modifiedTime": "Modified Time"
       },
       "filter": {
-        "placeholder": "Search files and folders...",
+        "filter": "Filter",
+        "placeholder": "Filter",
         "showingFiltered": "Showing {{count}} of {{total}} items",
         "clearFilter": "Clear filter"
       },

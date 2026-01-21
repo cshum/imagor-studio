@@ -400,7 +400,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const customMenuItems =
     authState.state === 'authenticated' ? (
       <>
-        {/* Filter Input */}
+        {/* Filter Section */}
         <div className='px-2 py-1.5'>
           <div className='relative'>
             <Search className='text-muted-foreground absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2' />
@@ -435,6 +435,17 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             </p>
           )}
         </div>
+        <DropdownMenuItem
+          className='hover:cursor-pointer'
+          onSelect={(event) => {
+            event.preventDefault()
+            handleToggleShowFileNames()
+          }}
+        >
+          <FileText className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.gallery.showFileNames')}
+          {showFileNames && <Check className='ml-auto h-4 w-4' />}
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
@@ -501,20 +512,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             ) : (
               <ArrowDown className='ml-auto h-4 w-4' />
             ))}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-
-        {/* Show File Names Toggle */}
-        <DropdownMenuItem
-          className='hover:cursor-pointer'
-          onSelect={(event) => {
-            event.preventDefault()
-            handleToggleShowFileNames()
-          }}
-        >
-          <FileText className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.showFileNames')}
-          {showFileNames && <Check className='ml-auto h-4 w-4' />}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
       </>
