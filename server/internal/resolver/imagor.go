@@ -154,11 +154,20 @@ func (r *Resolver) generateThumbnailUrls(imagePath string, videoThumbnailPos str
 		return nil
 	}
 
+	// Check if the image is SVG or PDF (case-insensitive)
+	lowerPath := strings.ToLower(imagePath)
+	isSvgOrPdf := strings.HasSuffix(lowerPath, ".svg") || strings.HasSuffix(lowerPath, ".pdf")
+
 	// Helper to build filters with specific quality
 	buildFilters := func(quality string) imagorpath.Filters {
 		filters := imagorpath.Filters{
 			{Name: "quality", Args: quality},
 			{Name: "format", Args: "webp"},
+		}
+
+		// Add DPI filter for SVG and PDF files for higher quality rendering
+		if isSvgOrPdf {
+			filters = append(filters, imagorpath.Filter{Name: "dpi", Args: "144"})
 		}
 
 		// Add video thumbnail filter based on position
