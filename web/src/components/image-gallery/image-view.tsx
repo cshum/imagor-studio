@@ -91,6 +91,8 @@ export function ImageView({
   const [isVisible, setIsVisible] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showControls, setShowControls] = useState(true)
+  const hideControlsTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const overlay = overlayRef.current
@@ -260,6 +262,52 @@ export function ImageView({
     overlayRef.current?.focus()
   }, [])
 
+  // Auto-hide controls on desktop after inactivity
+  useEffect(() => {
+    if (!isDesktop) {
+      setShowControls(true)
+      return
+    }
+
+    const resetHideTimer = () => {
+      // Clear existing timer
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current)
+      }
+
+      // Show controls
+      setShowControls(true)
+
+      // Set new timer to hide controls after 3 seconds
+      hideControlsTimerRef.current = setTimeout(() => {
+        setShowControls(false)
+      }, 3000)
+    }
+
+    const handleMouseMove = () => {
+      resetHideTimer()
+    }
+
+    // Start initial timer
+    resetHideTimer()
+
+    // Add mouse move listener
+    const overlay = overlayRef.current
+    if (overlay) {
+      overlay.addEventListener('mousemove', handleMouseMove)
+    }
+
+    // Cleanup
+    return () => {
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current)
+      }
+      if (overlay) {
+        overlay.removeEventListener('mousemove', handleMouseMove)
+      }
+    }
+  }, [isDesktop])
+
   // Keyboard shortcuts handler
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Escape') {
@@ -327,8 +375,11 @@ export function ImageView({
               className='absolute top-0 right-0 bottom-0 left-0 bg-black'
             ></motion.div>
             {onNextImage && scale <= 1 && !isSlideshow && !isFullscreen && (
-              <div
+              <motion.div
                 className={`absolute z-10 ${isDesktop ? 'top-1/2 right-4 -translate-y-1/2' : 'bottom-4 left-20'}`}
+                initial={{ opacity: 1 }}
+                animate={{ opacity: isDesktop && !showControls ? 0 : 1 }}
+                transition={{ duration: 0.3 }}
               >
                 <button
                   onClick={handleNextImage}
@@ -336,11 +387,14 @@ export function ImageView({
                 >
                   <ChevronRight size={24} />
                 </button>
-              </div>
+              </motion.div>
             )}
             {onPrevImage && scale <= 1 && !isSlideshow && !isFullscreen && (
-              <div
+              <motion.div
                 className={`absolute z-10 ${isDesktop ? 'top-1/2 left-4 -translate-y-1/2' : 'bottom-4 left-8'}`}
+                initial={{ opacity: 1 }}
+                animate={{ opacity: isDesktop && !showControls ? 0 : 1 }}
+                transition={{ duration: 0.3 }}
               >
                 <button
                   onClick={handlePrevImage}
@@ -348,7 +402,7 @@ export function ImageView({
                 >
                   <ChevronLeft size={24} />
                 </button>
-              </div>
+              </motion.div>
             )}
             <TransformWrapper
               disabled={image.isVideo}
@@ -499,7 +553,12 @@ export function ImageView({
                     )}
                   </TransformComponent>
                   {!isSlideshow && !image.isVideo && !isFullscreen && (
-                    <div className='absolute right-6 bottom-4 z-10 flex space-x-4'>
+                    <motion.div
+                      className='absolute right-6 bottom-4 z-10 flex space-x-4'
+                      initial={{ opacity: 1 }}
+                      animate={{ opacity: isDesktop && !showControls ? 0 : 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
                       {scale > 1 && (
                         <button
                           onClick={() => resetTransform()}
@@ -514,14 +573,19 @@ export function ImageView({
                       >
                         <ZoomIn size={24} />
                       </button>
-                    </div>
+                    </motion.div>
                   )}
                 </>
               )}
             </TransformWrapper>
 
             {!isFullscreen && (
-              <div className='absolute top-4 right-6 z-60 flex space-x-2'>
+              <motion.div
+                className='absolute top-4 right-6 z-60 flex space-x-2'
+                initial={{ opacity: 1 }}
+                animate={{ opacity: isDesktop && !showControls ? 0 : 1 }}
+                transition={{ duration: 0.3 }}
+              >
                 {(authState.state === 'authenticated' || authState.isEmbedded) &&
                   !image.isVideo && (
                     <button
@@ -563,7 +627,7 @@ export function ImageView({
                 >
                   <X size={24} />
                 </button>
-              </div>
+              </motion.div>
             )}
 
             {scale <= 1 && !image.isVideo && overlayHandler}
