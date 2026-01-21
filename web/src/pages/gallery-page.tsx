@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 import {
-  Check,
   Clock,
   Copy,
   Download,
@@ -396,47 +395,45 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           className='hover:cursor-pointer'
           onSelect={(event) => {
             event.preventDefault()
-            handleSortChange('NAME', currentSortOrder)
+            // If already selected, toggle sort order; otherwise switch to this sort option
+            if (currentSortBy === 'NAME') {
+              handleSortChange('NAME', currentSortOrder === 'ASC' ? 'DESC' : 'ASC')
+            } else {
+              handleSortChange('NAME', currentSortOrder)
+            }
           }}
         >
           <FileText className='text-muted-foreground mr-3 h-4 w-4' />
           {t('pages.gallery.sorting.name')}
-          {currentSortBy === 'NAME' && <Check className='ml-auto h-4 w-4' />}
+          {currentSortBy === 'NAME' && (
+            currentSortOrder === 'ASC' ? (
+              <SortAsc className='ml-auto h-4 w-4' />
+            ) : (
+              <SortDesc className='ml-auto h-4 w-4' />
+            )
+          )}
         </DropdownMenuItem>
         <DropdownMenuItem
           className='hover:cursor-pointer'
           onSelect={(event) => {
             event.preventDefault()
-            handleSortChange('MODIFIED_TIME', currentSortOrder)
+            // If already selected, toggle sort order; otherwise switch to this sort option
+            if (currentSortBy === 'MODIFIED_TIME') {
+              handleSortChange('MODIFIED_TIME', currentSortOrder === 'ASC' ? 'DESC' : 'ASC')
+            } else {
+              handleSortChange('MODIFIED_TIME', currentSortOrder)
+            }
           }}
         >
           <Clock className='text-muted-foreground mr-3 h-4 w-4' />
           {t('pages.gallery.sorting.modifiedTime')}
-          {currentSortBy === 'MODIFIED_TIME' && <Check className='ml-auto h-4 w-4' />}
-        </DropdownMenuItem>
-
-        <DropdownMenuLabel>{t('pages.gallery.sorting.sortOrder')}</DropdownMenuLabel>
-        <DropdownMenuItem
-          className='hover:cursor-pointer'
-          onSelect={(event) => {
-            event.preventDefault()
-            handleSortChange(currentSortBy, 'ASC')
-          }}
-        >
-          <SortAsc className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.sorting.ascending')}
-          {currentSortOrder === 'ASC' && <Check className='ml-auto h-4 w-4' />}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className='hover:cursor-pointer'
-          onSelect={(event) => {
-            event.preventDefault()
-            handleSortChange(currentSortBy, 'DESC')
-          }}
-        >
-          <SortDesc className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.sorting.descending')}
-          {currentSortOrder === 'DESC' && <Check className='ml-auto h-4 w-4' />}
+          {currentSortBy === 'MODIFIED_TIME' && (
+            currentSortOrder === 'ASC' ? (
+              <SortAsc className='ml-auto h-4 w-4' />
+            ) : (
+              <SortDesc className='ml-auto h-4 w-4' />
+            )
+          )}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
       </>
