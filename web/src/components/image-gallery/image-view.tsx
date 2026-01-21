@@ -19,6 +19,7 @@ import { ImageInfo, ImageViewInfo } from '@/components/image-gallery/image-view-
 import { LicenseBadge } from '@/components/license-badge.tsx'
 import { Sheet } from '@/components/ui/sheet'
 import { FileInfoFragment } from '@/generated/graphql'
+import { useAutoHideControls } from '@/hooks/use-auto-hide-controls'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useAuth } from '@/stores/auth-store'
 
@@ -91,6 +92,13 @@ export function ImageView({
   const [isVisible, setIsVisible] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+
+  // Auto-hide controls on desktop after inactivity
+  const { showControls } = useAutoHideControls({
+    enabled: isDesktop,
+    hideDelay: 3000,
+    elementRef: overlayRef,
+  })
 
   useEffect(() => {
     const overlay = overlayRef.current
@@ -327,8 +335,11 @@ export function ImageView({
               className='absolute top-0 right-0 bottom-0 left-0 bg-black'
             ></motion.div>
             {onNextImage && scale <= 1 && !isSlideshow && !isFullscreen && (
-              <div
+              <motion.div
                 className={`absolute z-10 ${isDesktop ? 'top-1/2 right-4 -translate-y-1/2' : 'bottom-4 left-20'}`}
+                initial={{ opacity: 1 }}
+                animate={{ opacity: isDesktop && !showControls ? 0 : 1 }}
+                transition={{ duration: 0.3 }}
               >
                 <button
                   onClick={handleNextImage}
@@ -336,11 +347,14 @@ export function ImageView({
                 >
                   <ChevronRight size={24} />
                 </button>
-              </div>
+              </motion.div>
             )}
             {onPrevImage && scale <= 1 && !isSlideshow && !isFullscreen && (
-              <div
+              <motion.div
                 className={`absolute z-10 ${isDesktop ? 'top-1/2 left-4 -translate-y-1/2' : 'bottom-4 left-8'}`}
+                initial={{ opacity: 1 }}
+                animate={{ opacity: isDesktop && !showControls ? 0 : 1 }}
+                transition={{ duration: 0.3 }}
               >
                 <button
                   onClick={handlePrevImage}
@@ -348,7 +362,7 @@ export function ImageView({
                 >
                   <ChevronLeft size={24} />
                 </button>
-              </div>
+              </motion.div>
             )}
             <TransformWrapper
               disabled={image.isVideo}
@@ -499,7 +513,12 @@ export function ImageView({
                     )}
                   </TransformComponent>
                   {!isSlideshow && !image.isVideo && !isFullscreen && (
-                    <div className='absolute right-6 bottom-4 z-10 flex space-x-4'>
+                    <motion.div
+                      className='absolute right-6 bottom-4 z-10 flex space-x-4'
+                      initial={{ opacity: 1 }}
+                      animate={{ opacity: isDesktop && !showControls ? 0 : 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
                       {scale > 1 && (
                         <button
                           onClick={() => resetTransform()}
@@ -514,14 +533,19 @@ export function ImageView({
                       >
                         <ZoomIn size={24} />
                       </button>
-                    </div>
+                    </motion.div>
                   )}
                 </>
               )}
             </TransformWrapper>
 
             {!isFullscreen && (
-              <div className='absolute top-4 right-6 z-60 flex space-x-2'>
+              <motion.div
+                className='absolute top-4 right-6 z-60 flex space-x-2'
+                initial={{ opacity: 1 }}
+                animate={{ opacity: isDesktop && !showControls ? 0 : 1 }}
+                transition={{ duration: 0.3 }}
+              >
                 {(authState.state === 'authenticated' || authState.isEmbedded) &&
                   !image.isVideo && (
                     <button
@@ -563,7 +587,7 @@ export function ImageView({
                 >
                   <X size={24} />
                 </button>
-              </div>
+              </motion.div>
             )}
 
             {scale <= 1 && !image.isVideo && overlayHandler}
