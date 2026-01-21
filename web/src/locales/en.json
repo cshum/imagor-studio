@@ -107,12 +107,9 @@
       "noImagesInGallery": "No images in your gallery",
       "folderEmpty": "This folder is empty",
       "sorting": {
-        "sortBy": "Sort by",
-        "sortOrder": "Sort order",
+        "sort": "Sort",
         "name": "Name",
-        "modifiedTime": "Modified Time",
-        "ascending": "Ascending",
-        "descending": "Descending"
+        "modifiedTime": "Modified Time"
       },
       "createFolder": {
         "newFolder": "New Folder",
