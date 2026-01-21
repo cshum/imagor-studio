@@ -21,6 +21,7 @@ export interface GalleryLoaderData {
   videoExtensions: string
   currentSortBy: SortOption
   currentSortOrder: SortOrder
+  showFileNames: boolean
 }
 
 export interface ImageLoaderData {
@@ -52,6 +53,7 @@ export const galleryLoader = async ({
   let showHidden: boolean
   let sortBy: SortOption
   let sortOrder: SortOrder
+  let showFileNames: boolean
 
   try {
     // Get current user for user registry lookup
@@ -61,10 +63,15 @@ export const galleryLoader = async ({
     // Try user registry first (if authenticated and not guest)
     let userSortBy: string | undefined
     let userSortOrder: string | undefined
+    let userShowFileNames: string | undefined
     if (userId && auth.state === 'authenticated') {
       try {
         const userRegistryResult = await getUserRegistryMultiple(
-          ['config.app_default_sort_by', 'config.app_default_sort_order'],
+          [
+            'config.app_default_sort_by',
+            'config.app_default_sort_order',
+            'config.app_show_file_names',
+          ],
           userId,
         )
 
@@ -74,9 +81,13 @@ export const galleryLoader = async ({
         const userSortOrderEntry = userRegistryResult.find(
           (r) => r.key === 'config.app_default_sort_order',
         )
+        const userShowFileNamesEntry = userRegistryResult.find(
+          (r) => r.key === 'config.app_show_file_names',
+        )
 
         userSortBy = userSortByEntry?.value
         userSortOrder = userSortOrderEntry?.value
+        userShowFileNames = userShowFileNamesEntry?.value
       } catch {
         // User registry fetch failed, will fall back to system registry
       }
@@ -89,6 +100,7 @@ export const galleryLoader = async ({
       'config.app_show_hidden',
       'config.app_default_sort_by',
       'config.app_default_sort_order',
+      'config.app_show_file_names',
     ])
 
     const imageExtensionsEntry = systemRegistryResult.find(
@@ -114,9 +126,13 @@ export const galleryLoader = async ({
     const systemSortOrderEntry = systemRegistryResult.find(
       (r) => r.key === 'config.app_default_sort_order',
     )
+    const systemShowFileNamesEntry = systemRegistryResult.find(
+      (r) => r.key === 'config.app_show_file_names',
+    )
 
     sortBy = (userSortBy || systemSortByEntry?.value || 'MODIFIED_TIME') as SortOption
     sortOrder = (userSortOrder || systemSortOrderEntry?.value || 'DESC') as SortOrder
+    showFileNames = (userShowFileNames || systemShowFileNamesEntry?.value || 'false') === 'true'
   } catch {
     // If registry fetch fails, use defaults
     extensionsString = `${DEFAULT_IMAGE_EXTENSIONS},${DEFAULT_VIDEO_EXTENSIONS}`
@@ -125,6 +141,7 @@ export const galleryLoader = async ({
     showHidden = false
     sortBy = 'MODIFIED_TIME'
     sortOrder = 'DESC'
+    showFileNames = false
   }
 
   // Fetch files from storage API with registry settings
@@ -211,6 +228,7 @@ export const galleryLoader = async ({
     videoExtensions,
     currentSortBy: sortBy,
     currentSortOrder: sortOrder,
+    showFileNames,
   }
 }
 

@@ -46,6 +46,13 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     secondaryLabel: 'Order',
   },
   {
+    key: 'config.app_show_file_names',
+    type: 'boolean',
+    label: 'Show File Names',
+    description: 'Display file names on image thumbnails in the gallery by default',
+    defaultValue: false,
+  },
+  {
     key: 'config.app_image_extensions',
     type: 'text',
     label: 'Image File Extensions',

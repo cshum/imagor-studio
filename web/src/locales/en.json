@@ -111,6 +111,13 @@
         "name": "Name",
         "modifiedTime": "Modified Time"
       },
+      "filter": {
+        "filter": "Filter",
+        "placeholder": "Filter",
+        "showingFiltered": "Showing {{count}} of {{total}} items",
+        "clearFilter": "Clear filter"
+      },
+      "showFileNames": "Show File Names",
       "createFolder": {
         "newFolder": "New Folder",
         "title": "Create New Folder",
@@ -175,7 +182,6 @@
         "title": "Delete Image",
         "description": "Are you sure you want to delete this image?",
         "warning": "This action cannot be undone.",
-        "success": "Image deleted successfully",
         "error": "Failed to delete image"
       }
     },
