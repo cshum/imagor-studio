@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 import {
+  ArrowDown,
+  ArrowUp,
   Clock,
   Copy,
   Download,
@@ -9,8 +11,6 @@ import {
   FileText,
   FolderPlus,
   Pencil,
-  SortAsc,
-  SortDesc,
   Trash2,
   Upload,
 } from 'lucide-react'
@@ -390,7 +390,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>{t('pages.gallery.sorting.sortBy')}</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('pages.gallery.sorting.sort')}</DropdownMenuLabel>
         <DropdownMenuItem
           className='hover:cursor-pointer'
           onSelect={(event) => {
@@ -405,13 +405,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         >
           <FileText className='text-muted-foreground mr-3 h-4 w-4' />
           {t('pages.gallery.sorting.name')}
-          {currentSortBy === 'NAME' && (
-            currentSortOrder === 'ASC' ? (
-              <SortAsc className='ml-auto h-4 w-4' />
+          {currentSortBy === 'NAME' &&
+            (currentSortOrder === 'ASC' ? (
+              <ArrowUp className='ml-auto h-4 w-4' />
             ) : (
-              <SortDesc className='ml-auto h-4 w-4' />
-            )
-          )}
+              <ArrowDown className='ml-auto h-4 w-4' />
+            ))}
         </DropdownMenuItem>
         <DropdownMenuItem
           className='hover:cursor-pointer'
@@ -427,13 +426,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         >
           <Clock className='text-muted-foreground mr-3 h-4 w-4' />
           {t('pages.gallery.sorting.modifiedTime')}
-          {currentSortBy === 'MODIFIED_TIME' && (
-            currentSortOrder === 'ASC' ? (
-              <SortAsc className='ml-auto h-4 w-4' />
+          {currentSortBy === 'MODIFIED_TIME' &&
+            (currentSortOrder === 'ASC' ? (
+              <ArrowUp className='ml-auto h-4 w-4' />
             ) : (
-              <SortDesc className='ml-auto h-4 w-4' />
-            )
-          )}
+              <ArrowDown className='ml-auto h-4 w-4' />
+            ))}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
       </>
