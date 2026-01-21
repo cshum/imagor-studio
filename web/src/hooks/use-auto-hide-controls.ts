@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, RefObject } from 'react'
+import { RefObject, useEffect, useRef, useState } from 'react'
 
 export interface UseAutoHideControlsOptions {
   enabled?: boolean
