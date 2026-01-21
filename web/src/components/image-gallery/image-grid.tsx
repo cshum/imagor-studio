@@ -14,6 +14,7 @@ interface ImageCellProps {
   isFocused: boolean
   focusedIndex: number
   firstVisibleImageIndex: number
+  showFileName?: boolean
   onImageClick?: (imageKey: string, position: Position, index: number) => void
   onKeyDown?: (event: React.KeyboardEvent, index: number) => void
   imageRef?: (el: HTMLDivElement | null) => void
@@ -29,6 +30,7 @@ const ImageCell = ({
   isFocused,
   focusedIndex,
   firstVisibleImageIndex,
+  showFileName = false,
   onImageClick,
   onKeyDown,
   imageRef,
@@ -83,8 +85,15 @@ const ImageCell = ({
           draggable={false}
         />
         {image.isVideo && (
-          <div className='absolute right-3 bottom-2 rounded-full bg-black/60 p-2 transition-opacity group-hover:bg-black/75'>
+          <div className='absolute top-2 right-2 rounded-full bg-black/60 p-2 transition-opacity group-hover:bg-black/75'>
             <Play className='h-4 w-4 fill-white text-white' />
+          </div>
+        )}
+        {showFileName && (
+          <div className='absolute right-0 bottom-0 left-0 bg-black/60 px-2 py-1.5 text-xs text-white'>
+            <div className='truncate' title={image.imageName}>
+              {image.imageName}
+            </div>
           </div>
         )}
       </div>
@@ -99,6 +108,7 @@ export interface ImageGridProps {
   scrollTop: number
   folderGridHeight?: number
   maxImageWidth: number
+  showFileName?: boolean
   focusedIndex?: number
   imageRefs?: RefObject<Map<number, HTMLDivElement>>
   onImageKeyDown?: (event: React.KeyboardEvent, index: number) => void
@@ -113,6 +123,7 @@ export const ImageGrid = ({
   scrollTop,
   folderGridHeight = 0,
   maxImageWidth,
+  showFileName = false,
   focusedIndex = -1,
   imageRefs,
   onImageKeyDown,
@@ -181,6 +192,7 @@ export const ImageGrid = ({
           isFocused={i === focusedIndex}
           focusedIndex={focusedIndex}
           firstVisibleImageIndex={firstVisibleImageIndex}
+          showFileName={showFileName}
           onImageClick={onImageClick}
           onKeyDown={onImageKeyDown}
           imageRef={(el) => {

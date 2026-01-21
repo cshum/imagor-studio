@@ -4,6 +4,7 @@ import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 import {
   ArrowDown,
   ArrowUp,
+  Check,
   Clock,
   Copy,
   Download,
@@ -11,13 +12,15 @@ import {
   FileText,
   FolderPlus,
   Pencil,
+  Search,
   Trash2,
   Upload,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { generateImagorUrl } from '@/api/imagor-api'
-import { setUserRegistryMultiple } from '@/api/registry-api.ts'
+import { getUserRegistry, setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { deleteFile } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
@@ -40,6 +43,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
 import { UploadProgress } from '@/components/upload/upload-progress.tsx'
 import { ImagorParamsInput, SortOption, SortOrder } from '@/generated/graphql'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
@@ -95,6 +99,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     open: false,
     url: '',
   })
+  const [filterText, setFilterText] = useState('')
+  const [showFileNames, setShowFileNames] = useState(false)
 
   const {
     galleryName,
@@ -106,6 +112,20 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     videoExtensions,
   } = galleryLoaderData
   const sidebar = useSidebar()
+
+  // Filter images and folders based on search text
+  const filteredFolders = filterText
+    ? folders.filter((folder) =>
+        folder.galleryName.toLowerCase().includes(filterText.toLowerCase()),
+      )
+    : folders
+
+  const filteredImages = filterText
+    ? images.filter((image) => image.imageName.toLowerCase().includes(filterText.toLowerCase()))
+    : images
+
+  const totalItems = folders.length + images.length
+  const filteredCount = filteredFolders.length + filteredImages.length
 
   const handleSortChange = async (sortBy: SortOption, sortOrder: SortOrder) => {
     if (authState.profile?.id && authState.state === 'authenticated') {
@@ -193,6 +213,23 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     setCurrentPath(galleryKey)
     requestAnimationFrame(() => restoreScrollPosition(galleryKey))
   }, [galleryKey])
+
+  // Load showFileNames preference from user registry
+  useEffect(() => {
+    const loadShowFileNamesPreference = async () => {
+      if (authState.profile?.id && authState.state === 'authenticated') {
+        try {
+          const result = await getUserRegistry('config.app_show_file_names', authState.profile.id)
+          if (result && result.length > 0 && result[0]?.value) {
+            setShowFileNames(result[0].value === 'true')
+          }
+        } catch {
+          // Ignore errors, use default value
+        }
+      }
+    }
+    loadShowFileNamesPreference()
+  }, [authState.profile?.id, authState.state])
 
   const handleUploadFiles = () => {
     fileInputRef.current?.click()
@@ -364,10 +401,59 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     pendingMatches[pendingMatches.length - 1].routeId?.toString()?.includes('$imageKey')
   )
 
+  // Handler for toggling show file names
+  const handleToggleShowFileNames = async () => {
+    const newValue = !showFileNames
+    setShowFileNames(newValue)
+    if (authState.profile?.id) {
+      await setUserRegistryMultiple(
+        [{ key: 'config.app_show_file_names', value: newValue.toString(), isEncrypted: false }],
+        authState.profile.id,
+      )
+    }
+  }
+
   // Create menu items for authenticated users
   const customMenuItems =
     authState.state === 'authenticated' ? (
       <>
+        {/* Filter Input */}
+        <div className='px-2 py-1.5'>
+          <div className='relative'>
+            <Search className='text-muted-foreground absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2' />
+            <Input
+              type='text'
+              placeholder={t('pages.gallery.filter.placeholder')}
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              className='h-8 pr-8 pl-8'
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            />
+            {filterText && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setFilterText('')
+                }}
+                className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2'
+                aria-label={t('pages.gallery.filter.clearFilter')}
+              >
+                <X className='h-4 w-4' />
+              </button>
+            )}
+          </div>
+          {filterText && (
+            <p className='text-muted-foreground mt-1 text-xs'>
+              {t('pages.gallery.filter.showingFiltered', {
+                count: filteredCount,
+                total: totalItems,
+              })}
+            </p>
+          )}
+        </div>
+        <DropdownMenuSeparator />
+
         <DropdownMenuItem
           className='hover:cursor-pointer'
           onSelect={() => {
@@ -434,6 +520,20 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             ))}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+
+        {/* Show File Names Toggle */}
+        <DropdownMenuItem
+          className='hover:cursor-pointer'
+          onSelect={(event) => {
+            event.preventDefault()
+            handleToggleShowFileNames()
+          }}
+        >
+          <FileText className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.gallery.showFileNames')}
+          {showFileNames && <Check className='ml-auto h-4 w-4' />}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
       </>
     ) : null
 
@@ -476,9 +576,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                     <EmptyGalleryState width={contentWidth} isRootGallery={isRootGallery} />
                   ) : (
                     <div ref={galleryContainerRef} {...galleryContainerProps}>
-                      {folders.length > 0 && (
+                      {filteredFolders.length > 0 && (
                         <FolderGrid
-                          folders={folders}
+                          folders={filteredFolders}
                           width={contentWidth}
                           maxFolderWidth={maxItemWidth}
                           foldersVisible={foldersVisible}
@@ -487,12 +587,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                       )}
                       <ImageContextMenu renderMenuItems={renderContextMenuItems}>
                         <ImageGrid
-                          images={images}
+                          images={filteredImages}
                           aspectRatio={4 / 3}
                           width={contentWidth}
                           scrollTop={scrollPosition}
                           folderGridHeight={folderGridHeight}
                           maxImageWidth={maxItemWidth}
+                          showFileName={showFileNames}
                           {...imageGridProps}
                         />
                       </ImageContextMenu>
