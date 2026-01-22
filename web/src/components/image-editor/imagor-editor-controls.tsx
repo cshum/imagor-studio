@@ -222,8 +222,8 @@ export function ImageEditorControls({
           />
         ),
       },
-      fillPadding: {
-        key: 'fillPadding',
+      fill: {
+        key: 'fill',
         icon: Frame,
         titleKey: 'imageEditor.controls.fillPadding',
         component: <FillPaddingControl params={params} onUpdateParams={onUpdateParams} />,
