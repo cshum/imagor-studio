@@ -95,8 +95,10 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='none'>{t('imageEditor.fillPadding.noFill')}</SelectItem>
-              <SelectItem value='transparent'>{t('imageEditor.fillPadding.transparent')}</SelectItem>
               <SelectItem value='color'>{t('imageEditor.fillPadding.customColor')}</SelectItem>
+              <SelectItem value='transparent'>
+                {t('imageEditor.fillPadding.transparent')}
+              </SelectItem>
             </SelectContent>
           </Select>
           {fillMode === 'color' && (
