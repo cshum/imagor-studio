@@ -324,7 +324,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   </SheetHeader>
 
                   {/* Scrollable Controls */}
-                  <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-text'>
+                  <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
                     <ImageEditorControls
                       key={resetCounter}
                       params={params}
@@ -382,7 +382,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           </div>
 
           {/* Controls */}
-          <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-text'>
+          <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
             <ImageEditorControls
               key={resetCounter}
               params={params}
