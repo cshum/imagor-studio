@@ -46,6 +46,15 @@ export interface ImageEditorState {
 
   // Visual crop mode (UI state that affects preview generation)
   visualCropEnabled?: boolean
+
+  // Fill color for padding/transparent areas
+  fillColor?: string // hex color without #, or "none" for transparent
+
+  // Padding (adds space around the image)
+  paddingTop?: number
+  paddingRight?: number
+  paddingBottom?: number
+  paddingLeft?: number
 }
 
 export interface ImageEditorConfig {
@@ -180,49 +189,51 @@ export class ImageEditor {
       height = this.config.originalDimensions.height
     }
 
-    // Calculate scale factor for blur/sharpen adjustments
+    // Calculate scale factor for blur/sharpen/padding adjustments
     let scaleFactor = 1
+
+    // Calculate actual output dimensions (after crop + resize) for padding calculations
+    // This is needed for both preview and actual URLs
+    let actualOutputWidth: number
+    let actualOutputHeight: number
+
+    // Determine the source dimensions (what goes INTO the resize operation)
+    let sourceWidth: number
+    let sourceHeight: number
+
+    if (shouldApplyCrop && ImageEditor.hasCropParams(state)) {
+      // Use cropped dimensions as the source
+      sourceWidth = state.cropWidth!
+      sourceHeight = state.cropHeight!
+    } else {
+      // Use original dimensions
+      sourceWidth = this.config.originalDimensions.width
+      sourceHeight = this.config.originalDimensions.height
+    }
+
+    // Calculate what the ACTUAL output will be after resize
+    const outputWidth = width ?? sourceWidth
+    const outputHeight = height ?? sourceHeight
+
+    if (state.fitIn !== false) {
+      // fitIn mode: calculate what fitIn will produce
+      // fit-in doesn't upscale by default, so cap the scale at 1.0
+      const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight, 1.0)
+      actualOutputWidth = Math.round(sourceWidth * outputScale)
+      actualOutputHeight = Math.round(sourceHeight * outputScale)
+    } else {
+      // Stretch/fill mode: use exact dimensions
+      actualOutputWidth = outputWidth
+      actualOutputHeight = outputHeight
+    }
 
     // Apply preview dimension constraints when generating preview URLs
     if (forPreview && this.config.previewMaxDimensions) {
       const previewWidth = this.config.previewMaxDimensions.width
       const previewHeight = this.config.previewMaxDimensions.height
 
-      // Determine the source dimensions (what goes INTO the resize operation)
-      // If there's a crop, use the cropped dimensions
-      // Otherwise, use the original dimensions
-      let sourceWidth: number
-      let sourceHeight: number
-
-      if (shouldApplyCrop && ImageEditor.hasCropParams(state)) {
-        // Use cropped dimensions as the source
-        sourceWidth = state.cropWidth!
-        sourceHeight = state.cropHeight!
-      } else {
-        // Use original dimensions
-        sourceWidth = this.config.originalDimensions.width
-        sourceHeight = this.config.originalDimensions.height
-      }
-
-      // Calculate what the ACTUAL output will be after resize
-      const outputWidth = width ?? sourceWidth
-      const outputHeight = height ?? sourceHeight
-
-      let actualOutputWidth: number
-      let actualOutputHeight: number
-
-      if (state.fitIn !== false) {
-        // fitIn mode: calculate what fitIn will produce
-        const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight)
-        actualOutputWidth = Math.round(sourceWidth * outputScale)
-        actualOutputHeight = Math.round(sourceHeight * outputScale)
-      } else {
-        // Stretch/fill mode: use exact dimensions
-        actualOutputWidth = outputWidth
-        actualOutputHeight = outputHeight
-      }
-
-      // Now compare ACTUAL output size vs preview area
+      // Compare ACTUAL output size vs preview area (without padding)
+      // Padding will be scaled by the same factor as the image
       const widthScale = previewWidth / actualOutputWidth
       const heightScale = previewHeight / actualOutputHeight
       const scale = Math.min(widthScale, heightScale)
@@ -243,6 +254,13 @@ export class ImageEditor {
       }
     }
 
+    // For non-preview URLs, use actual output dimensions instead of original dimensions
+    // This ensures padding is relative to the correct output size
+    if (!forPreview) {
+      width = actualOutputWidth
+      height = actualOutputHeight
+    }
+
     if (width !== undefined) graphqlParams.width = width
     if (height !== undefined) graphqlParams.height = height
 
@@ -255,13 +273,48 @@ export class ImageEditor {
     if (state.hAlign) graphqlParams.hAlign = state.hAlign
     if (state.vAlign) graphqlParams.vAlign = state.vAlign
 
+    // Skip padding in preview when visual cropping is enabled
+    // (so user can crop without padding, padding applied after crop in final URL)
+    const shouldApplyPadding = !forPreview || (forPreview && !state.visualCropEnabled)
+
+    // Padding (adds space around the image)
+    // Scale padding values for preview to match visual appearance with actual output
+    if (shouldApplyPadding) {
+      if (state.paddingLeft !== undefined && state.paddingLeft > 0) {
+        const paddingValue = forPreview
+          ? Math.round(state.paddingLeft * scaleFactor)
+          : state.paddingLeft
+        graphqlParams.paddingLeft = paddingValue
+      }
+      if (state.paddingTop !== undefined && state.paddingTop > 0) {
+        const paddingValue = forPreview
+          ? Math.round(state.paddingTop * scaleFactor)
+          : state.paddingTop
+        graphqlParams.paddingTop = paddingValue
+      }
+      if (state.paddingRight !== undefined && state.paddingRight > 0) {
+        const paddingValue = forPreview
+          ? Math.round(state.paddingRight * scaleFactor)
+          : state.paddingRight
+        graphqlParams.paddingRight = paddingValue
+      }
+      if (state.paddingBottom !== undefined && state.paddingBottom > 0) {
+        const paddingValue = forPreview
+          ? Math.round(state.paddingBottom * scaleFactor)
+          : state.paddingBottom
+        graphqlParams.paddingBottom = paddingValue
+      }
+    }
+
     // Transform (for Phase 5)
     if (state.hFlip !== undefined) graphqlParams.hFlip = state.hFlip
     if (state.vFlip !== undefined) graphqlParams.vFlip = state.vFlip
 
     // Filters (for Phase 4)
+    // Order: color adjustments → blur/sharpen → round_corner → fill
     const filters: Array<{ name: string; args: string }> = []
 
+    // Color adjustments first
     if (state.brightness !== undefined && state.brightness !== 0) {
       filters.push({ name: 'brightness', args: state.brightness.toString() })
     }
@@ -278,7 +331,7 @@ export class ImageEditor {
       filters.push({ name: 'grayscale', args: '' })
     }
 
-    // Blur and sharpen don't affect dimensions, so apply them even during crop mode
+    // Blur and sharpen
     // Scale blur/sharpen values for preview to match visual appearance with actual output
     if (state.blur !== undefined && state.blur !== 0) {
       const blurValue = forPreview ? Math.round(state.blur * scaleFactor * 100) / 100 : state.blur
@@ -291,6 +344,7 @@ export class ImageEditor {
       filters.push({ name: 'sharpen', args: sharpenValue.toString() })
     }
 
+    // Round corner (applied before fill so fill can fill the rounded areas)
     // Skip round corner in preview when visual cropping is enabled
     // (so user can crop without round corner, applied after crop in final URL)
     const shouldApplyRoundCorner = !forPreview || (forPreview && !state.visualCropEnabled)
@@ -303,6 +357,11 @@ export class ImageEditor {
         ? Math.round(state.roundCornerRadius * scaleFactor)
         : state.roundCornerRadius
       filters.push({ name: 'round_corner', args: cornerValue.toString() })
+    }
+
+    // Fill color (for padding/transparent areas) - applied last
+    if (state.fillColor) {
+      filters.push({ name: 'fill', args: state.fillColor })
     }
 
     // Skip rotation in preview when visual cropping is enabled

@@ -23,6 +23,7 @@ import {
   ChevronDown,
   ChevronUp,
   FileImage,
+  Frame,
   GripVertical,
   Maximize2,
   Palette,
@@ -33,6 +34,7 @@ import {
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
 import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
 import { DimensionControl } from '@/components/image-editor/controls/dimension-control.tsx'
+import { FillPaddingControl } from '@/components/image-editor/controls/fill-padding-control.tsx'
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { Card } from '@/components/ui/card'
@@ -219,6 +221,12 @@ export function ImageEditorControls({
             originalDimensions={{ width: outputWidth, height: outputHeight }}
           />
         ),
+      },
+      fill: {
+        key: 'fill',
+        icon: Frame,
+        titleKey: 'imageEditor.controls.fillPadding',
+        component: <FillPaddingControl params={params} onUpdateParams={onUpdateParams} />,
       },
       output: {
         key: 'output',
