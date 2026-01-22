@@ -80,6 +80,9 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
     onUpdateParams(updates)
   }
 
+  // Determine if padding should be enabled
+  const isPaddingEnabled = fillMode === 'transparent' || fillMode === 'color'
+
   return (
     <div className='space-y-4'>
       {/* Fill Color Section - Compact */}
@@ -107,69 +110,6 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
         </div>
       </div>
 
-      {/* Padding Section */}
-      <div className='space-y-3'>
-        <Label className='text-sm font-medium'>{t('imageEditor.fillPadding.padding')}</Label>
-        <div className='grid grid-cols-2 gap-3'>
-          <div>
-            <Label htmlFor='padding-top' className='text-muted-foreground text-xs'>
-              {t('imageEditor.fillPadding.top')}
-            </Label>
-            <Input
-              id='padding-top'
-              type='number'
-              value={params.paddingTop || 0}
-              onChange={(e) => handlePaddingChange('top', e.target.value)}
-              min='0'
-              max='1000'
-              className='h-8'
-            />
-          </div>
-          <div>
-            <Label htmlFor='padding-right' className='text-muted-foreground text-xs'>
-              {t('imageEditor.fillPadding.right')}
-            </Label>
-            <Input
-              id='padding-right'
-              type='number'
-              value={params.paddingRight || 0}
-              onChange={(e) => handlePaddingChange('right', e.target.value)}
-              min='0'
-              max='1000'
-              className='h-8'
-            />
-          </div>
-          <div>
-            <Label htmlFor='padding-bottom' className='text-muted-foreground text-xs'>
-              {t('imageEditor.fillPadding.bottom')}
-            </Label>
-            <Input
-              id='padding-bottom'
-              type='number'
-              value={params.paddingBottom || 0}
-              onChange={(e) => handlePaddingChange('bottom', e.target.value)}
-              min='0'
-              max='1000'
-              className='h-8'
-            />
-          </div>
-          <div>
-            <Label htmlFor='padding-left' className='text-muted-foreground text-xs'>
-              {t('imageEditor.fillPadding.left')}
-            </Label>
-            <Input
-              id='padding-left'
-              type='number'
-              value={params.paddingLeft || 0}
-              onChange={(e) => handlePaddingChange('left', e.target.value)}
-              min='0'
-              max='1000'
-              className='h-8'
-            />
-          </div>
-        </div>
-      </div>
-
       {/* Round Corner Section */}
       <div className='space-y-2'>
         <NumericControl
@@ -181,6 +121,73 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
           unit='px'
           onChange={(value) => onUpdateParams({ roundCornerRadius: value })}
         />
+      </div>
+
+      {/* Padding Section */}
+      <div className={`space-y-3 ${!isPaddingEnabled ? 'pointer-events-none opacity-50' : ''}`}>
+        <Label className='text-sm font-medium'>{t('imageEditor.fillPadding.padding')}</Label>
+        <div className='grid grid-cols-2 gap-3'>
+          <div>
+            <Label htmlFor='padding-top' className='text-muted-foreground text-xs'>
+              {t('imageEditor.fillPadding.top')} (px)
+            </Label>
+            <Input
+              id='padding-top'
+              type='number'
+              value={params.paddingTop || 0}
+              onChange={(e) => handlePaddingChange('top', e.target.value)}
+              min='0'
+              max='1000'
+              className='h-8'
+              disabled={!isPaddingEnabled}
+            />
+          </div>
+          <div>
+            <Label htmlFor='padding-right' className='text-muted-foreground text-xs'>
+              {t('imageEditor.fillPadding.right')} (px)
+            </Label>
+            <Input
+              id='padding-right'
+              type='number'
+              value={params.paddingRight || 0}
+              onChange={(e) => handlePaddingChange('right', e.target.value)}
+              min='0'
+              max='1000'
+              className='h-8'
+              disabled={!isPaddingEnabled}
+            />
+          </div>
+          <div>
+            <Label htmlFor='padding-left' className='text-muted-foreground text-xs'>
+              {t('imageEditor.fillPadding.left')} (px)
+            </Label>
+            <Input
+              id='padding-left'
+              type='number'
+              value={params.paddingLeft || 0}
+              onChange={(e) => handlePaddingChange('left', e.target.value)}
+              min='0'
+              max='1000'
+              className='h-8'
+              disabled={!isPaddingEnabled}
+            />
+          </div>
+          <div>
+            <Label htmlFor='padding-bottom' className='text-muted-foreground text-xs'>
+              {t('imageEditor.fillPadding.bottom')} (px)
+            </Label>
+            <Input
+              id='padding-bottom'
+              type='number'
+              value={params.paddingBottom || 0}
+              onChange={(e) => handlePaddingChange('bottom', e.target.value)}
+              min='0'
+              max='1000'
+              className='h-8'
+              disabled={!isPaddingEnabled}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Info section */}
