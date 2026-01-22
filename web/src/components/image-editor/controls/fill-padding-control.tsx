@@ -4,7 +4,13 @@ import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { NumericControl } from '@/components/ui/numeric-control'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
 
 interface FillPaddingControlProps {
@@ -76,50 +82,29 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
 
   return (
     <div className='space-y-4'>
-      {/* Fill Color Section */}
-      <div className='space-y-3'>
+      {/* Fill Color Section - Compact */}
+      <div className='space-y-2'>
         <Label className='text-sm font-medium'>{t('imageEditor.fillPadding.fillColor')}</Label>
-        <RadioGroup value={fillMode} onValueChange={handleFillModeChange} className='space-y-2'>
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='none' id='fill-none' />
-            <Label htmlFor='fill-none' className='text-sm font-normal'>
-              {t('imageEditor.fillPadding.noFill')}
-            </Label>
-          </div>
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='transparent' id='fill-transparent' />
-            <Label htmlFor='fill-transparent' className='text-sm font-normal'>
-              {t('imageEditor.fillPadding.transparent')}
-            </Label>
-          </div>
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='color' id='fill-color' />
-            <Label htmlFor='fill-color' className='text-sm font-normal'>
-              {t('imageEditor.fillPadding.customColor')}
-            </Label>
-            {fillMode === 'color' && (
-              <input
-                type='color'
-                value={customColor}
-                onChange={handleColorChange}
-                className='ml-2 h-8 w-16 cursor-pointer rounded border'
-              />
-            )}
-          </div>
-        </RadioGroup>
-      </div>
-
-      {/* Round Corner Section */}
-      <div className='space-y-3'>
-        <NumericControl
-          label={t('imageEditor.effects.roundCorner')}
-          value={params.roundCornerRadius ?? 0}
-          min={0}
-          max={params.width ? Math.floor(params.width / 2) : 100}
-          step={1}
-          unit='px'
-          onChange={(value) => onUpdateParams({ roundCornerRadius: value })}
-        />
+        <div className='flex items-center gap-2'>
+          <Select value={fillMode} onValueChange={handleFillModeChange}>
+            <SelectTrigger className='h-8 flex-1'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='none'>{t('imageEditor.fillPadding.noFill')}</SelectItem>
+              <SelectItem value='transparent'>{t('imageEditor.fillPadding.transparent')}</SelectItem>
+              <SelectItem value='color'>{t('imageEditor.fillPadding.customColor')}</SelectItem>
+            </SelectContent>
+          </Select>
+          {fillMode === 'color' && (
+            <input
+              type='color'
+              value={customColor}
+              onChange={handleColorChange}
+              className='h-8 w-16 cursor-pointer rounded border'
+            />
+          )}
+        </div>
       </div>
 
       {/* Padding Section */}
@@ -185,10 +170,21 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
         </div>
       </div>
 
-      {/* Info section */}
-      <div className='bg-muted/50 space-y-1 rounded-lg p-3 text-xs'>
-        <p className='text-muted-foreground'>{t('imageEditor.fillPadding.description')}</p>
+      {/* Round Corner Section */}
+      <div className='space-y-2'>
+        <NumericControl
+          label={t('imageEditor.effects.roundCorner')}
+          value={params.roundCornerRadius ?? 0}
+          min={0}
+          max={params.width ? Math.floor(params.width / 2) : 100}
+          step={1}
+          unit='px'
+          onChange={(value) => onUpdateParams({ roundCornerRadius: value })}
+        />
       </div>
+
+      {/* Info section */}
+      <p className='text-muted-foreground text-xs'>{t('imageEditor.fillPadding.description')}</p>
     </div>
   )
 }

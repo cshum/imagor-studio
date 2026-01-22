@@ -23,12 +23,12 @@ import {
   ChevronDown,
   ChevronUp,
   FileImage,
+  Frame,
   GripVertical,
   Maximize2,
   Palette,
   RotateCw,
   Scissors,
-  Square,
 } from 'lucide-react'
 
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
@@ -224,7 +224,7 @@ export function ImageEditorControls({
       },
       fillPadding: {
         key: 'fillPadding',
-        icon: Square,
+        icon: Frame,
         titleKey: 'imageEditor.controls.fillPadding',
         component: <FillPaddingControl params={params} onUpdateParams={onUpdateParams} />,
       },
