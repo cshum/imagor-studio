@@ -191,12 +191,12 @@ export class ImageEditor {
 
     // Calculate scale factor for blur/sharpen/padding adjustments
     let scaleFactor = 1
-    
+
     // Calculate actual output dimensions (after crop + resize) for padding calculations
     // This is needed for both preview and actual URLs
     let actualOutputWidth: number
     let actualOutputHeight: number
-    
+
     // Determine the source dimensions (what goes INTO the resize operation)
     let sourceWidth: number
     let sourceHeight: number
@@ -260,7 +260,7 @@ export class ImageEditor {
       width = actualOutputWidth
       height = actualOutputHeight
     }
-    
+
     if (width !== undefined) graphqlParams.width = width
     if (height !== undefined) graphqlParams.height = height
 
@@ -311,13 +311,10 @@ export class ImageEditor {
     if (state.vFlip !== undefined) graphqlParams.vFlip = state.vFlip
 
     // Filters (for Phase 4)
+    // Order: color adjustments → blur/sharpen → round_corner → fill
     const filters: Array<{ name: string; args: string }> = []
 
-    // Fill color (for padding/transparent areas)
-    if (state.fillColor) {
-      filters.push({ name: 'fill', args: state.fillColor })
-    }
-
+    // Color adjustments first
     if (state.brightness !== undefined && state.brightness !== 0) {
       filters.push({ name: 'brightness', args: state.brightness.toString() })
     }
@@ -334,7 +331,7 @@ export class ImageEditor {
       filters.push({ name: 'grayscale', args: '' })
     }
 
-    // Blur and sharpen don't affect dimensions, so apply them even during crop mode
+    // Blur and sharpen
     // Scale blur/sharpen values for preview to match visual appearance with actual output
     if (state.blur !== undefined && state.blur !== 0) {
       const blurValue = forPreview ? Math.round(state.blur * scaleFactor * 100) / 100 : state.blur
@@ -347,6 +344,7 @@ export class ImageEditor {
       filters.push({ name: 'sharpen', args: sharpenValue.toString() })
     }
 
+    // Round corner (applied before fill so fill can fill the rounded areas)
     // Skip round corner in preview when visual cropping is enabled
     // (so user can crop without round corner, applied after crop in final URL)
     const shouldApplyRoundCorner = !forPreview || (forPreview && !state.visualCropEnabled)
@@ -359,6 +357,11 @@ export class ImageEditor {
         ? Math.round(state.roundCornerRadius * scaleFactor)
         : state.roundCornerRadius
       filters.push({ name: 'round_corner', args: cornerValue.toString() })
+    }
+
+    // Fill color (for padding/transparent areas) - applied last
+    if (state.fillColor) {
+      filters.push({ name: 'fill', args: state.fillColor })
     }
 
     // Skip rotation in preview when visual cropping is enabled
