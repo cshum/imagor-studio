@@ -9,6 +9,7 @@ const EDITOR_SECTIONS = {
   effects: true,
   transform: false,
   dimensions: false,
+  fillPadding: false,
   output: false,
 } as const
 

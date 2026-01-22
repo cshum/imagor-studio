@@ -459,7 +459,8 @@
       "outputCompression": "Output & Compression",
       "colorEffects": "Color & Effects",
       "transformRotate": "Transform & Rotate",
-      "cropResize": "Crop & Resize"
+      "cropResize": "Crop & Resize",
+      "fillPadding": "Fill & Padding"
     },
     "transform": {
       "flipControls": "Flip Controls",
@@ -563,6 +564,18 @@
     "preview": {
       "previewError": "Preview Error",
       "failedToGenerate": "Failed to generate preview"
+    },
+    "fillPadding": {
+      "fillColor": "Fill Color",
+      "noFill": "No Fill",
+      "transparent": "Transparent",
+      "customColor": "Custom Color",
+      "padding": "Padding (pixels)",
+      "top": "Top",
+      "right": "Right",
+      "bottom": "Bottom",
+      "left": "Left",
+      "description": "Add padding around the image and fill transparent or padded areas with a color"
     }
   }
 }
