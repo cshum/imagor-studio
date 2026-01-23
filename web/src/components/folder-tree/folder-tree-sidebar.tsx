@@ -102,6 +102,12 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
     handleRename: handleRenameFolderOperation,
     handleDelete: handleDeleteFolderOperation,
   } = useFolderContextMenu({
+    onOpen: () => {
+      // Close mobile sidebar when navigating on mobile
+      if (isMobile) {
+        setOpenMobile(false)
+      }
+    },
     onRename: handleRenameFromMenu,
     onDelete: handleDeleteFromMenu,
   })

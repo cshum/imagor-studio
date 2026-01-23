@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter } from '@tanstack/react-router'
-import { Pencil, Trash2 } from 'lucide-react'
+import { FolderOpen, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { deleteFile, moveFile } from '@/api/storage-api'
@@ -20,6 +20,10 @@ interface UseFolderContextMenuProps {
    * If not provided, menu items always show (for sidebar use case).
    */
   isAuthenticated?: () => boolean
+  /**
+   * Optional callback to handle opening/navigating to a folder.
+   */
+  onOpen?: (folderKey: string) => void
   /**
    * Optional callbacks to trigger rename/delete dialogs from context menu.
    * If not provided, menu items won't trigger dialogs (for components that handle dialogs themselves).
@@ -40,6 +44,7 @@ function isPathAffected(folderPath: string, currentPath: string): boolean {
 
 export function useFolderContextMenu({
   isAuthenticated,
+  onOpen,
   onRename,
   onDelete,
 }: UseFolderContextMenuProps) {
@@ -130,6 +135,17 @@ export function useFolderContextMenu({
   }
 
   /**
+   * Handle opening/navigating to a folder
+   */
+  const handleOpen = (folderKey: string) => {
+    // Navigate to the folder
+    navigate({ to: '/gallery/$galleryKey', params: { galleryKey: folderKey } })
+
+    // Call optional callback for additional actions (e.g., close mobile sidebar)
+    onOpen?.(folderKey)
+  }
+
+  /**
    * Render context menu items
    */
   const renderMenuItems = ({ folderName, folderKey }: FolderContextData) => {
@@ -142,8 +158,13 @@ export function useFolderContextMenu({
       <>
         <ContextMenuLabel className='break-all'>{folderName}</ContextMenuLabel>
         <ContextMenuSeparator />
+        <ContextMenuItem onClick={() => handleOpen(folderKey)}>
+          <FolderOpen className='mr-2 h-4 w-4' />
+          {t('pages.gallery.contextMenu.open')}
+        </ContextMenuItem>
         {showActions && (
           <>
+            <ContextMenuSeparator />
             <ContextMenuItem
               onClick={() => {
                 // Trigger rename dialog in component
