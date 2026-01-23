@@ -216,14 +216,15 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
 
     case 'INVALIDATE_FOLDER_CACHE': {
       // Invalidate cache for a specific folder path
-      // This clears isLoaded and children for the specified folder
+      // This clears isLoaded, children, and collapses the folder
       const invalidateFolder = (folders: FolderNode[]): FolderNode[] =>
         folders.map((folder) => {
           if (folder.path === action.path) {
-            // Found the folder to invalidate - clear its cache
+            // Found the folder to invalidate - clear its cache and collapse it
             return {
               ...folder,
               isLoaded: false,
+              isExpanded: false,
               children: undefined,
             }
           }
