@@ -27,7 +27,10 @@ import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dia
 import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
 import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialog'
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
-import { FolderContextData, FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
+import {
+  FolderContextData,
+  FolderContextMenu,
+} from '@/components/image-gallery/folder-context-menu'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
 import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
@@ -310,6 +313,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       })
 
       router.invalidate()
+      toast.success(
+        t('pages.gallery.deleteImage.success', { fileName: deleteImageDialog.imageKey }),
+      )
     } catch {
       toast.error(t('pages.gallery.deleteImage.error'))
       setDeleteImageDialog((prev) => ({ ...prev, isDeleting: false }))
@@ -346,6 +352,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         : deleteFolderDialog.folderKey
 
       await deleteFile(folderPath)
+
+      const folderName = deleteFolderDialog.folderName
+
       setDeleteFolderDialog({
         open: false,
         folderKey: null,
@@ -354,7 +363,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       })
 
       router.invalidate()
-      toast.success(t('pages.gallery.deleteFolder.success'))
+      toast.success(t('pages.gallery.deleteFolder.success', { folderName }))
     } catch {
       toast.error(t('pages.gallery.deleteFolder.error'))
       setDeleteFolderDialog((prev) => ({ ...prev, isDeleting: false }))
@@ -374,11 +383,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const handleRenameFromMenu = (itemKey: string, itemName: string, itemType: 'file' | 'folder') => {
     const itemPath = galleryKey ? `${galleryKey}/${itemKey}` : itemKey
-    
+
     // For files, extract extension and show only the name without extension
     let nameWithoutExt = itemName
     let extension = ''
-    
+
     if (itemType === 'file') {
       const lastDot = itemName.lastIndexOf('.')
       if (lastDot > 0) {
@@ -386,7 +395,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         extension = itemName.substring(lastDot) // includes the dot
       }
     }
-    
+
     setRenameDialog({
       open: true,
       itemPath,
@@ -407,14 +416,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       // Extract directory path and construct new path
       const pathParts = renameDialog.itemPath.split('/')
       // For files, append the extension back; for folders, use as-is
-      const newName = renameDialog.itemType === 'file' 
-        ? renameInput.trim() + renameFileExtension
-        : renameInput.trim()
+      const newName =
+        renameDialog.itemType === 'file'
+          ? renameInput.trim() + renameFileExtension
+          : renameInput.trim()
       pathParts[pathParts.length - 1] = newName
       const newPath = pathParts.join('/')
 
       await moveFile(renameDialog.itemPath, newPath)
-      
+
       setRenameDialog({
         open: false,
         itemPath: null,
@@ -426,7 +436,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       setRenameFileExtension('')
 
       router.invalidate()
-      toast.success(`"${newName}" renamed successfully`)
+      toast.success(t('pages.gallery.renameItem.success', { name: newName }))
     } catch {
       toast.error(t('pages.gallery.renameItem.error', { type: renameDialog.itemType }))
       setRenameDialog((prev) => ({ ...prev, isRenaming: false }))

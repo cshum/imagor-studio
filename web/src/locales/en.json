@@ -183,6 +183,7 @@
         "title": "Delete Image",
         "description": "Are you sure you want to delete this image?",
         "warning": "This action cannot be undone.",
+        "success": "\"{{fileName}}\" deleted successfully",
         "error": "Failed to delete image"
       },
       "folderContextMenu": {
@@ -192,7 +193,7 @@
         "title": "Delete Folder",
         "description": "Are you sure you want to delete this folder?",
         "warning": "This will permanently delete the folder and all its contents. This action cannot be undone.",
-        "success": "Folder deleted successfully",
+        "success": "\"{{folderName}}\" deleted successfully",
         "error": "Failed to delete folder"
       },
       "renameItem": {
@@ -201,7 +202,7 @@
         "newName": "New Name",
         "placeholder": "Enter new name",
         "rename": "Rename",
-        "success": "{{type}} renamed successfully",
+        "success": "\"{{name}}\" renamed successfully",
         "error": "Failed to rename {{type}}",
         "errors": {
           "nameRequired": "Name is required",
