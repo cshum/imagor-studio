@@ -633,40 +633,6 @@ export type LicenseStatusQuery = {
   }
 }
 
-export type FileInfoFragment = {
-  __typename?: 'FileItem'
-  name: string
-  path: string
-  size: number
-  isDirectory: boolean
-  thumbnailUrls: {
-    __typename?: 'ThumbnailUrls'
-    grid: string | null
-    preview: string | null
-    full: string | null
-    original: string | null
-    meta: string | null
-  } | null
-}
-
-export type FileStatInfoFragment = {
-  __typename?: 'FileStat'
-  name: string
-  path: string
-  size: number
-  isDirectory: boolean
-  modifiedTime: string
-  etag: string | null
-  thumbnailUrls: {
-    __typename?: 'ThumbnailUrls'
-    grid: string | null
-    preview: string | null
-    full: string | null
-    original: string | null
-    meta: string | null
-  } | null
-}
-
 export type ListFilesQueryVariables = Exact<{
   path: Scalars['String']['input']
   offset?: InputMaybe<Scalars['Int']['input']>
@@ -745,6 +711,20 @@ export type CreateFolderMutationVariables = Exact<{
 }>
 
 export type CreateFolderMutation = { __typename?: 'Mutation'; createFolder: boolean }
+
+export type CopyFileMutationVariables = Exact<{
+  sourcePath: Scalars['String']['input']
+  destPath: Scalars['String']['input']
+}>
+
+export type CopyFileMutation = { __typename?: 'Mutation'; copyFile: boolean }
+
+export type MoveFileMutationVariables = Exact<{
+  sourcePath: Scalars['String']['input']
+  destPath: Scalars['String']['input']
+}>
+
+export type MoveFileMutation = { __typename?: 'Mutation'; moveFile: boolean }
 
 export type StorageStatusQueryVariables = Exact<{ [key: string]: never }>
 
@@ -951,38 +931,6 @@ export const SystemRegistryInfoFragmentDoc = gql`
     isOverriddenByConfig
   }
 `
-export const FileInfoFragmentDoc = gql`
-  fragment FileInfo on FileItem {
-    name
-    path
-    size
-    isDirectory
-    thumbnailUrls {
-      grid
-      preview
-      full
-      original
-      meta
-    }
-  }
-`
-export const FileStatInfoFragmentDoc = gql`
-  fragment FileStatInfo on FileStat {
-    name
-    path
-    size
-    isDirectory
-    modifiedTime
-    etag
-    thumbnailUrls {
-      grid
-      preview
-      full
-      original
-      meta
-    }
-  }
-`
 export const UserInfoFragmentDoc = gql`
   fragment UserInfo on User {
     id
@@ -1141,20 +1089,40 @@ export const ListFilesDocument = gql`
       sortOrder: $sortOrder
     ) {
       items {
-        ...FileInfo
+        name
+        path
+        size
+        isDirectory
+        thumbnailUrls {
+          grid
+          preview
+          full
+          original
+          meta
+        }
       }
       totalCount
     }
   }
-  ${FileInfoFragmentDoc}
 `
 export const StatFileDocument = gql`
   query StatFile($path: String!) {
     statFile(path: $path) {
-      ...FileStatInfo
+      name
+      path
+      size
+      isDirectory
+      modifiedTime
+      etag
+      thumbnailUrls {
+        grid
+        preview
+        full
+        original
+        meta
+      }
     }
   }
-  ${FileStatInfoFragmentDoc}
 `
 export const UploadFileDocument = gql`
   mutation UploadFile($path: String!, $content: Upload!) {
@@ -1169,6 +1137,16 @@ export const DeleteFileDocument = gql`
 export const CreateFolderDocument = gql`
   mutation CreateFolder($path: String!) {
     createFolder(path: $path)
+  }
+`
+export const CopyFileDocument = gql`
+  mutation CopyFile($sourcePath: String!, $destPath: String!) {
+    copyFile(sourcePath: $sourcePath, destPath: $destPath)
+  }
+`
+export const MoveFileDocument = gql`
+  mutation MoveFile($sourcePath: String!, $destPath: String!) {
+    moveFile(sourcePath: $sourcePath, destPath: $destPath)
   }
 `
 export const StorageStatusDocument = gql`
@@ -1609,6 +1587,42 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'CreateFolder',
+        'mutation',
+        variables,
+      )
+    },
+    CopyFile(
+      variables: CopyFileMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<CopyFileMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<CopyFileMutation>({
+            document: CopyFileDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'CopyFile',
+        'mutation',
+        variables,
+      )
+    },
+    MoveFile(
+      variables: MoveFileMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<MoveFileMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<MoveFileMutation>({
+            document: MoveFileDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'MoveFile',
         'mutation',
         variables,
       )

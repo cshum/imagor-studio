@@ -3,12 +3,16 @@ import type {
   ConfigureFileStorageMutationVariables,
   ConfigureS3StorageMutation,
   ConfigureS3StorageMutationVariables,
+  CopyFileMutation,
+  CopyFileMutationVariables,
   CreateFolderMutation,
   CreateFolderMutationVariables,
   DeleteFileMutation,
   DeleteFileMutationVariables,
   ListFilesQuery,
   ListFilesQueryVariables,
+  MoveFileMutation,
+  MoveFileMutationVariables,
   SortOption,
   SortOrder,
   StatFileQuery,
@@ -167,4 +171,30 @@ export async function testStorageConfig(
   const sdk = getSdk(getGraphQLClient())
   const result = await sdk.TestStorageConfig(variables)
   return result.testStorageConfig
+}
+
+/**
+ * Copy a file or folder
+ */
+export async function copyFile(
+  sourcePath: string,
+  destPath: string,
+): Promise<CopyFileMutation['copyFile']> {
+  const sdk = getSdk(getGraphQLClient())
+  const variables: CopyFileMutationVariables = { sourcePath, destPath }
+  const result = await sdk.CopyFile(variables)
+  return result.copyFile
+}
+
+/**
+ * Move/rename a file or folder
+ */
+export async function moveFile(
+  sourcePath: string,
+  destPath: string,
+): Promise<MoveFileMutation['moveFile']> {
+  const sdk = getSdk(getGraphQLClient())
+  const variables: MoveFileMutationVariables = { sourcePath, destPath }
+  const result = await sdk.MoveFile(variables)
+  return result.moveFile
 }
