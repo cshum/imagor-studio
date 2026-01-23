@@ -120,6 +120,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     isRenaming: false,
   })
   const [renameInput, setRenameInput] = useState('')
+  const [renameFileExtension, setRenameFileExtension] = useState('')
   const [uploadState, setUploadState] = useState<{
     files: DragDropFile[]
     isUploading: boolean
@@ -373,6 +374,19 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const handleRenameFromMenu = (itemKey: string, itemName: string, itemType: 'file' | 'folder') => {
     const itemPath = galleryKey ? `${galleryKey}/${itemKey}` : itemKey
+    
+    // For files, extract extension and show only the name without extension
+    let nameWithoutExt = itemName
+    let extension = ''
+    
+    if (itemType === 'file') {
+      const lastDot = itemName.lastIndexOf('.')
+      if (lastDot > 0) {
+        nameWithoutExt = itemName.substring(0, lastDot)
+        extension = itemName.substring(lastDot) // includes the dot
+      }
+    }
+    
     setRenameDialog({
       open: true,
       itemPath,
@@ -380,7 +394,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       itemType,
       isRenaming: false,
     })
-    setRenameInput(itemName)
+    setRenameInput(nameWithoutExt)
+    setRenameFileExtension(extension)
   }
 
   const handleRename = async () => {
@@ -391,7 +406,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     try {
       // Extract directory path and construct new path
       const pathParts = renameDialog.itemPath.split('/')
-      pathParts[pathParts.length - 1] = renameInput.trim()
+      // For files, append the extension back; for folders, use as-is
+      const newName = renameDialog.itemType === 'file' 
+        ? renameInput.trim() + renameFileExtension
+        : renameInput.trim()
+      pathParts[pathParts.length - 1] = newName
       const newPath = pathParts.join('/')
 
       await moveFile(renameDialog.itemPath, newPath)
@@ -404,6 +423,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         isRenaming: false,
       })
       setRenameInput('')
+      setRenameFileExtension('')
 
       router.invalidate()
       toast.success(t('pages.gallery.renameItem.success', { type: renameDialog.itemType }))
@@ -423,6 +443,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         isRenaming: false,
       })
       setRenameInput('')
+      setRenameFileExtension('')
     }
   }
 
