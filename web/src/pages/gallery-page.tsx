@@ -426,7 +426,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       setRenameFileExtension('')
 
       router.invalidate()
-      toast.success(t('pages.gallery.renameItem.success', { type: renameDialog.itemType }))
+      toast.success(`"${newName}" renamed successfully`)
     } catch {
       toast.error(t('pages.gallery.renameItem.error', { type: renameDialog.itemType }))
       setRenameDialog((prev) => ({ ...prev, isRenaming: false }))
