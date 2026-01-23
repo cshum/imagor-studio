@@ -84,11 +84,9 @@ export function useFolderContextMenu({
       // Check if operation affects current view
       if (isPathAffected(folderPath, currentPath)) {
         // Current route is affected - redirect to home
-        navigate({ to: '/' })
-      } else {
-        // Current route not affected - just refresh
-        router.invalidate()
+        await navigate({ to: '/' })
       }
+      await router.invalidate()
     } catch {
       toast.error(t('pages.gallery.renameItem.error', { type: 'folder' }))
     } finally {
