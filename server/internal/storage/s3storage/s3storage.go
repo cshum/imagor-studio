@@ -340,3 +340,124 @@ func (s *S3Storage) deleteFolder(ctx context.Context, prefix string) error {
 
 	return nil
 }
+
+func (s *S3Storage) Copy(ctx context.Context, sourcePath string, destPath string) error {
+	sourceFullPath := s.fullPath(sourcePath)
+	destFullPath := s.fullPath(destPath)
+
+	// Check if source exists
+	_, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(sourceFullPath),
+	})
+
+	// If HeadObject fails, check if it's a folder
+	isFolder := false
+	if err != nil {
+		// Check if it's a folder by listing objects with this prefix
+		listResult, listErr := s.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+			Bucket:  aws.String(s.bucket),
+			Prefix:  aws.String(sourceFullPath + "/"),
+			MaxKeys: aws.Int32(1),
+		})
+		if listErr != nil {
+			return err // Return original error
+		}
+		if len(listResult.Contents) == 0 {
+			return err // Source doesn't exist
+		}
+		isFolder = true
+	}
+
+	// Check if destination already exists (file or folder)
+	_, err = s.client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(destFullPath),
+	})
+	if err == nil {
+		return io.ErrClosedPipe // Use as "already exists" error
+	}
+
+	// Also check if destination exists as a folder
+	listResult, err := s.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+		Bucket:  aws.String(s.bucket),
+		Prefix:  aws.String(destFullPath + "/"),
+		MaxKeys: aws.Int32(1),
+	})
+	if err == nil && len(listResult.Contents) > 0 {
+		return io.ErrClosedPipe // Destination folder exists
+	}
+
+	// Copy based on whether source is a file or folder
+	if isFolder {
+		return s.copyFolder(ctx, sourceFullPath+"/", destFullPath+"/")
+	}
+
+	// Copy single file
+	return s.copyFile(ctx, sourceFullPath, destFullPath)
+}
+
+func (s *S3Storage) Move(ctx context.Context, sourcePath string, destPath string) error {
+	// Copy to destination
+	if err := s.Copy(ctx, sourcePath, destPath); err != nil {
+		return err
+	}
+
+	// Delete source
+	return s.Delete(ctx, sourcePath)
+}
+
+// copyFile copies a single S3 object
+func (s *S3Storage) copyFile(ctx context.Context, sourceKey string, destKey string) error {
+	copySource := s.bucket + "/" + sourceKey
+	_, err := s.client.CopyObject(ctx, &s3.CopyObjectInput{
+		Bucket:     aws.String(s.bucket),
+		CopySource: aws.String(copySource),
+		Key:        aws.String(destKey),
+	})
+	return err
+}
+
+// copyFolder recursively copies all objects with a given prefix
+func (s *S3Storage) copyFolder(ctx context.Context, sourcePrefix string, destPrefix string) error {
+	var continuationToken *string
+
+	for {
+		listObjectsInput := &s3.ListObjectsV2Input{
+			Bucket: aws.String(s.bucket),
+			Prefix: aws.String(sourcePrefix),
+		}
+		if continuationToken != nil {
+			listObjectsInput.ContinuationToken = continuationToken
+		}
+
+		listResult, err := s.client.ListObjectsV2(ctx, listObjectsInput)
+		if err != nil {
+			return err
+		}
+
+		// Copy each object
+		for _, object := range listResult.Contents {
+			// Skip folder placeholders
+			if strings.HasSuffix(*object.Key, folderSuffix) {
+				continue
+			}
+
+			// Calculate destination key by replacing source prefix with dest prefix
+			relativePath := strings.TrimPrefix(*object.Key, sourcePrefix)
+			destKey := destPrefix + relativePath
+
+			// Copy the object
+			if err := s.copyFile(ctx, *object.Key, destKey); err != nil {
+				return err
+			}
+		}
+
+		if !*listResult.IsTruncated {
+			break
+		}
+		continuationToken = listResult.NextContinuationToken
+	}
+
+	return nil
+}

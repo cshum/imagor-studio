@@ -447,3 +447,159 @@ func TestS3Storage_WithForcePathStyleOption(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, s3Storage2.forcePathStyle)
 }
+
+func TestS3Storage_CopyFile(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Create a source file
+	content := "Hello, Copy!"
+	err := s3Storage.Put(ctx, "source.txt", bytes.NewReader([]byte(content)))
+	require.NoError(t, err)
+
+	// Copy the file
+	err = s3Storage.Copy(ctx, "source.txt", "dest.txt")
+	assert.NoError(t, err)
+
+	// Verify both files exist
+	sourceData, err := s3Storage.Get(ctx, "source.txt")
+	assert.NoError(t, err)
+	defer sourceData.Close()
+	sourceContent, _ := io.ReadAll(sourceData)
+	assert.Equal(t, content, string(sourceContent))
+
+	destData, err := s3Storage.Get(ctx, "dest.txt")
+	assert.NoError(t, err)
+	defer destData.Close()
+	destContent, _ := io.ReadAll(destData)
+	assert.Equal(t, content, string(destContent))
+}
+
+func TestS3Storage_CopyFolder(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Create a source folder with files
+	err := s3Storage.CreateFolder(ctx, "source_folder")
+	require.NoError(t, err)
+	err = s3Storage.Put(ctx, "source_folder/file1.txt", bytes.NewReader([]byte("content1")))
+	require.NoError(t, err)
+	err = s3Storage.Put(ctx, "source_folder/file2.txt", bytes.NewReader([]byte("content2")))
+	require.NoError(t, err)
+
+	// Copy the folder
+	err = s3Storage.Copy(ctx, "source_folder", "dest_folder")
+	assert.NoError(t, err)
+
+	// Verify destination folder and files exist
+	result, err := s3Storage.List(ctx, "dest_folder", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 2, result.TotalCount)
+
+	// Verify file contents
+	file1Data, err := s3Storage.Get(ctx, "dest_folder/file1.txt")
+	assert.NoError(t, err)
+	defer file1Data.Close()
+	content1, _ := io.ReadAll(file1Data)
+	assert.Equal(t, "content1", string(content1))
+}
+
+func TestS3Storage_CopyNonExistent(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Try to copy a non-existent file
+	err := s3Storage.Copy(ctx, "non_existent.txt", "dest.txt")
+	assert.Error(t, err)
+}
+
+func TestS3Storage_CopyDestinationExists(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Create source and destination files
+	err := s3Storage.Put(ctx, "source.txt", bytes.NewReader([]byte("source")))
+	require.NoError(t, err)
+	err = s3Storage.Put(ctx, "dest.txt", bytes.NewReader([]byte("dest")))
+	require.NoError(t, err)
+
+	// Try to copy when destination exists
+	err = s3Storage.Copy(ctx, "source.txt", "dest.txt")
+	assert.Error(t, err)
+}
+
+func TestS3Storage_MoveFile(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Create a source file
+	content := "Hello, Move!"
+	err := s3Storage.Put(ctx, "source.txt", bytes.NewReader([]byte(content)))
+	require.NoError(t, err)
+
+	// Move the file
+	err = s3Storage.Move(ctx, "source.txt", "dest.txt")
+	assert.NoError(t, err)
+
+	// Verify source no longer exists
+	_, err = s3Storage.Get(ctx, "source.txt")
+	assert.Error(t, err)
+
+	// Verify destination exists with correct content
+	destData, err := s3Storage.Get(ctx, "dest.txt")
+	assert.NoError(t, err)
+	defer destData.Close()
+	destContent, _ := io.ReadAll(destData)
+	assert.Equal(t, content, string(destContent))
+}
+
+func TestS3Storage_MoveFolder(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Create a source folder with files
+	err := s3Storage.CreateFolder(ctx, "source_folder")
+	require.NoError(t, err)
+	err = s3Storage.Put(ctx, "source_folder/file1.txt", bytes.NewReader([]byte("content1")))
+	require.NoError(t, err)
+	err = s3Storage.Put(ctx, "source_folder/file2.txt", bytes.NewReader([]byte("content2")))
+	require.NoError(t, err)
+
+	// Move the folder
+	err = s3Storage.Move(ctx, "source_folder", "dest_folder")
+	assert.NoError(t, err)
+
+	// Verify source folder no longer exists
+	sourceResult, err := s3Storage.List(ctx, "source_folder", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 0, sourceResult.TotalCount)
+
+	// Verify destination folder and files exist
+	result, err := s3Storage.List(ctx, "dest_folder", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 2, result.TotalCount)
+}
+
+func TestS3Storage_MoveNonExistent(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Try to move a non-existent file
+	err := s3Storage.Move(ctx, "non_existent.txt", "dest.txt")
+	assert.Error(t, err)
+}
+
+func TestS3Storage_MoveDestinationExists(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Create source and destination files
+	err := s3Storage.Put(ctx, "source.txt", bytes.NewReader([]byte("source")))
+	require.NoError(t, err)
+	err = s3Storage.Put(ctx, "dest.txt", bytes.NewReader([]byte("dest")))
+	require.NoError(t, err)
+
+	// Try to move when destination exists
+	err = s3Storage.Move(ctx, "source.txt", "dest.txt")
+	assert.Error(t, err)
+}

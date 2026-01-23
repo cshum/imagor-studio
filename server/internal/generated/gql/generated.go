@@ -115,6 +115,7 @@ type ComplexityRoot struct {
 		ConfigureExternalImagor func(childComplexity int, input ExternalImagorInput) int
 		ConfigureFileStorage    func(childComplexity int, input FileStorageInput) int
 		ConfigureS3Storage      func(childComplexity int, input S3StorageInput) int
+		CopyFile                func(childComplexity int, sourcePath string, destPath string) int
 		CreateFolder            func(childComplexity int, path string) int
 		CreateUser              func(childComplexity int, input CreateUserInput) int
 		DeactivateAccount       func(childComplexity int, userID *string) int
@@ -122,6 +123,7 @@ type ComplexityRoot struct {
 		DeleteSystemRegistry    func(childComplexity int, key *string, keys []string) int
 		DeleteUserRegistry      func(childComplexity int, key *string, keys []string, ownerID *string) int
 		GenerateImagorURL       func(childComplexity int, galleryKey string, imageKey string, params ImagorParamsInput) int
+		MoveFile                func(childComplexity int, sourcePath string, destPath string) int
 		SetSystemRegistry       func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
 		SetUserRegistry         func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
 		TestStorageConfig       func(childComplexity int, input StorageConfigInput) int
@@ -216,6 +218,8 @@ type MutationResolver interface {
 	UploadFile(ctx context.Context, path string, content graphql.Upload) (bool, error)
 	DeleteFile(ctx context.Context, path string) (bool, error)
 	CreateFolder(ctx context.Context, path string) (bool, error)
+	CopyFile(ctx context.Context, sourcePath string, destPath string) (bool, error)
+	MoveFile(ctx context.Context, sourcePath string, destPath string) (bool, error)
 	ConfigureFileStorage(ctx context.Context, input FileStorageInput) (*StorageConfigResult, error)
 	ConfigureS3Storage(ctx context.Context, input S3StorageInput) (*StorageConfigResult, error)
 	TestStorageConfig(ctx context.Context, input StorageConfigInput) (*StorageTestResult, error)
@@ -563,6 +567,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ConfigureS3Storage(childComplexity, args["input"].(S3StorageInput)), true
+	case "Mutation.copyFile":
+		if e.complexity.Mutation.CopyFile == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_copyFile_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CopyFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string)), true
 	case "Mutation.createFolder":
 		if e.complexity.Mutation.CreateFolder == nil {
 			break
@@ -640,6 +655,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.GenerateImagorURL(childComplexity, args["galleryKey"].(string), args["imageKey"].(string), args["params"].(ImagorParamsInput)), true
+	case "Mutation.moveFile":
+		if e.complexity.Mutation.MoveFile == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_moveFile_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.MoveFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string)), true
 	case "Mutation.setSystemRegistry":
 		if e.complexity.Mutation.SetSystemRegistry == nil {
 			break
@@ -1367,6 +1393,8 @@ type Mutation {
   uploadFile(path: String!, content: Upload!): Boolean!
   deleteFile(path: String!): Boolean!
   createFolder(path: String!): Boolean!
+  copyFile(sourcePath: String!, destPath: String!): Boolean!
+  moveFile(sourcePath: String!, destPath: String!): Boolean!
 
   # Storage Configuration APIs (admin only)
   configureFileStorage(input: FileStorageInput!): StorageConfigResult!
@@ -1590,6 +1618,22 @@ func (ec *executionContext) field_Mutation_configureS3Storage_args(ctx context.C
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_copyFile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "sourcePath", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["sourcePath"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "destPath", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["destPath"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createFolder_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1689,6 +1733,22 @@ func (ec *executionContext) field_Mutation_generateImagorUrl_args(ctx context.Co
 		return nil, err
 	}
 	args["params"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_moveFile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "sourcePath", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["sourcePath"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "destPath", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["destPath"] = arg1
 	return args, nil
 }
 
@@ -1994,7 +2054,9 @@ func (ec *executionContext) _ExternalImagorConfig_baseUrl(ctx context.Context, f
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ExternalImagorConfig_baseUrl,
-		func(ctx context.Context) (any, error) { return obj.BaseURL, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.BaseURL, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -2021,7 +2083,9 @@ func (ec *executionContext) _ExternalImagorConfig_hasSecret(ctx context.Context,
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ExternalImagorConfig_hasSecret,
-		func(ctx context.Context) (any, error) { return obj.HasSecret, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.HasSecret, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -2048,7 +2112,9 @@ func (ec *executionContext) _ExternalImagorConfig_unsafe(ctx context.Context, fi
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ExternalImagorConfig_unsafe,
-		func(ctx context.Context) (any, error) { return obj.Unsafe, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Unsafe, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -2075,7 +2141,9 @@ func (ec *executionContext) _ExternalImagorConfig_signerType(ctx context.Context
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ExternalImagorConfig_signerType,
-		func(ctx context.Context) (any, error) { return obj.SignerType, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.SignerType, nil
+		},
 		nil,
 		ec.marshalNImagorSignerType2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorSignerType,
 		true,
@@ -2102,7 +2170,9 @@ func (ec *executionContext) _ExternalImagorConfig_signerTruncate(ctx context.Con
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ExternalImagorConfig_signerTruncate,
-		func(ctx context.Context) (any, error) { return obj.SignerTruncate, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.SignerTruncate, nil
+		},
 		nil,
 		ec.marshalNInt2int,
 		true,
@@ -2129,7 +2199,9 @@ func (ec *executionContext) _FileItem_name(ctx context.Context, field graphql.Co
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileItem_name,
-		func(ctx context.Context) (any, error) { return obj.Name, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -2156,7 +2228,9 @@ func (ec *executionContext) _FileItem_path(ctx context.Context, field graphql.Co
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileItem_path,
-		func(ctx context.Context) (any, error) { return obj.Path, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Path, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -2183,7 +2257,9 @@ func (ec *executionContext) _FileItem_size(ctx context.Context, field graphql.Co
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileItem_size,
-		func(ctx context.Context) (any, error) { return obj.Size, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Size, nil
+		},
 		nil,
 		ec.marshalNInt2int,
 		true,
@@ -2210,7 +2286,9 @@ func (ec *executionContext) _FileItem_isDirectory(ctx context.Context, field gra
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileItem_isDirectory,
-		func(ctx context.Context) (any, error) { return obj.IsDirectory, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.IsDirectory, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -2237,7 +2315,9 @@ func (ec *executionContext) _FileItem_thumbnailUrls(ctx context.Context, field g
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileItem_thumbnailUrls,
-		func(ctx context.Context) (any, error) { return obj.ThumbnailUrls, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.ThumbnailUrls, nil
+		},
 		nil,
 		ec.marshalOThumbnailUrls2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐThumbnailUrls,
 		true,
@@ -2276,7 +2356,9 @@ func (ec *executionContext) _FileList_items(ctx context.Context, field graphql.C
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileList_items,
-		func(ctx context.Context) (any, error) { return obj.Items, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
 		nil,
 		ec.marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileItemᚄ,
 		true,
@@ -2315,7 +2397,9 @@ func (ec *executionContext) _FileList_totalCount(ctx context.Context, field grap
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileList_totalCount,
-		func(ctx context.Context) (any, error) { return obj.TotalCount, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
 		nil,
 		ec.marshalNInt2int,
 		true,
@@ -2342,7 +2426,9 @@ func (ec *executionContext) _FileStat_name(ctx context.Context, field graphql.Co
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileStat_name,
-		func(ctx context.Context) (any, error) { return obj.Name, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -2369,7 +2455,9 @@ func (ec *executionContext) _FileStat_path(ctx context.Context, field graphql.Co
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileStat_path,
-		func(ctx context.Context) (any, error) { return obj.Path, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Path, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -2396,7 +2484,9 @@ func (ec *executionContext) _FileStat_size(ctx context.Context, field graphql.Co
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileStat_size,
-		func(ctx context.Context) (any, error) { return obj.Size, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Size, nil
+		},
 		nil,
 		ec.marshalNInt2int,
 		true,
@@ -2423,7 +2513,9 @@ func (ec *executionContext) _FileStat_isDirectory(ctx context.Context, field gra
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileStat_isDirectory,
-		func(ctx context.Context) (any, error) { return obj.IsDirectory, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.IsDirectory, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -2450,7 +2542,9 @@ func (ec *executionContext) _FileStat_modifiedTime(ctx context.Context, field gr
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileStat_modifiedTime,
-		func(ctx context.Context) (any, error) { return obj.ModifiedTime, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.ModifiedTime, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -2477,7 +2571,9 @@ func (ec *executionContext) _FileStat_etag(ctx context.Context, field graphql.Co
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileStat_etag,
-		func(ctx context.Context) (any, error) { return obj.Etag, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Etag, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -2504,7 +2600,9 @@ func (ec *executionContext) _FileStat_thumbnailUrls(ctx context.Context, field g
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileStat_thumbnailUrls,
-		func(ctx context.Context) (any, error) { return obj.ThumbnailUrls, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.ThumbnailUrls, nil
+		},
 		nil,
 		ec.marshalOThumbnailUrls2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐThumbnailUrls,
 		true,
@@ -2543,7 +2641,9 @@ func (ec *executionContext) _FileStorageConfig_baseDir(ctx context.Context, fiel
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileStorageConfig_baseDir,
-		func(ctx context.Context) (any, error) { return obj.BaseDir, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.BaseDir, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -2570,7 +2670,9 @@ func (ec *executionContext) _FileStorageConfig_mkdirPermissions(ctx context.Cont
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileStorageConfig_mkdirPermissions,
-		func(ctx context.Context) (any, error) { return obj.MkdirPermissions, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.MkdirPermissions, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -2597,7 +2699,9 @@ func (ec *executionContext) _FileStorageConfig_writePermissions(ctx context.Cont
 		ec.OperationContext,
 		field,
 		ec.fieldContext_FileStorageConfig_writePermissions,
-		func(ctx context.Context) (any, error) { return obj.WritePermissions, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.WritePermissions, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -2624,7 +2728,9 @@ func (ec *executionContext) _ImagorConfigResult_success(ctx context.Context, fie
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ImagorConfigResult_success,
-		func(ctx context.Context) (any, error) { return obj.Success, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -2651,7 +2757,9 @@ func (ec *executionContext) _ImagorConfigResult_restartRequired(ctx context.Cont
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ImagorConfigResult_restartRequired,
-		func(ctx context.Context) (any, error) { return obj.RestartRequired, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.RestartRequired, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -2678,7 +2786,9 @@ func (ec *executionContext) _ImagorConfigResult_timestamp(ctx context.Context, f
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ImagorConfigResult_timestamp,
-		func(ctx context.Context) (any, error) { return obj.Timestamp, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Timestamp, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -2705,7 +2815,9 @@ func (ec *executionContext) _ImagorConfigResult_message(ctx context.Context, fie
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ImagorConfigResult_message,
-		func(ctx context.Context) (any, error) { return obj.Message, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -2732,7 +2844,9 @@ func (ec *executionContext) _ImagorStatus_configured(ctx context.Context, field 
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ImagorStatus_configured,
-		func(ctx context.Context) (any, error) { return obj.Configured, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Configured, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -2759,7 +2873,9 @@ func (ec *executionContext) _ImagorStatus_mode(ctx context.Context, field graphq
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ImagorStatus_mode,
-		func(ctx context.Context) (any, error) { return obj.Mode, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Mode, nil
+		},
 		nil,
 		ec.marshalOImagorMode2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorMode,
 		true,
@@ -2786,7 +2902,9 @@ func (ec *executionContext) _ImagorStatus_restartRequired(ctx context.Context, f
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ImagorStatus_restartRequired,
-		func(ctx context.Context) (any, error) { return obj.RestartRequired, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.RestartRequired, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -2813,7 +2931,9 @@ func (ec *executionContext) _ImagorStatus_lastUpdated(ctx context.Context, field
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ImagorStatus_lastUpdated,
-		func(ctx context.Context) (any, error) { return obj.LastUpdated, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.LastUpdated, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -2840,7 +2960,9 @@ func (ec *executionContext) _ImagorStatus_isOverriddenByConfig(ctx context.Conte
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ImagorStatus_isOverriddenByConfig,
-		func(ctx context.Context) (any, error) { return obj.IsOverriddenByConfig, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.IsOverriddenByConfig, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -2867,7 +2989,9 @@ func (ec *executionContext) _ImagorStatus_externalConfig(ctx context.Context, fi
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ImagorStatus_externalConfig,
-		func(ctx context.Context) (any, error) { return obj.ExternalConfig, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.ExternalConfig, nil
+		},
 		nil,
 		ec.marshalOExternalImagorConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐExternalImagorConfig,
 		true,
@@ -2906,7 +3030,9 @@ func (ec *executionContext) _LicenseStatus_isLicensed(ctx context.Context, field
 		ec.OperationContext,
 		field,
 		ec.fieldContext_LicenseStatus_isLicensed,
-		func(ctx context.Context) (any, error) { return obj.IsLicensed, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.IsLicensed, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -2933,7 +3059,9 @@ func (ec *executionContext) _LicenseStatus_licenseType(ctx context.Context, fiel
 		ec.OperationContext,
 		field,
 		ec.fieldContext_LicenseStatus_licenseType,
-		func(ctx context.Context) (any, error) { return obj.LicenseType, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.LicenseType, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -2960,7 +3088,9 @@ func (ec *executionContext) _LicenseStatus_email(ctx context.Context, field grap
 		ec.OperationContext,
 		field,
 		ec.fieldContext_LicenseStatus_email,
-		func(ctx context.Context) (any, error) { return obj.Email, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -2987,7 +3117,9 @@ func (ec *executionContext) _LicenseStatus_message(ctx context.Context, field gr
 		ec.OperationContext,
 		field,
 		ec.fieldContext_LicenseStatus_message,
-		func(ctx context.Context) (any, error) { return obj.Message, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -3014,7 +3146,9 @@ func (ec *executionContext) _LicenseStatus_isOverriddenByConfig(ctx context.Cont
 		ec.OperationContext,
 		field,
 		ec.fieldContext_LicenseStatus_isOverriddenByConfig,
-		func(ctx context.Context) (any, error) { return obj.IsOverriddenByConfig, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.IsOverriddenByConfig, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -3041,7 +3175,9 @@ func (ec *executionContext) _LicenseStatus_supportMessage(ctx context.Context, f
 		ec.OperationContext,
 		field,
 		ec.fieldContext_LicenseStatus_supportMessage,
-		func(ctx context.Context) (any, error) { return obj.SupportMessage, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.SupportMessage, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -3068,7 +3204,9 @@ func (ec *executionContext) _LicenseStatus_maskedLicenseKey(ctx context.Context,
 		ec.OperationContext,
 		field,
 		ec.fieldContext_LicenseStatus_maskedLicenseKey,
-		func(ctx context.Context) (any, error) { return obj.MaskedLicenseKey, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.MaskedLicenseKey, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -3095,7 +3233,9 @@ func (ec *executionContext) _LicenseStatus_activatedAt(ctx context.Context, fiel
 		ec.OperationContext,
 		field,
 		ec.fieldContext_LicenseStatus_activatedAt,
-		func(ctx context.Context) (any, error) { return obj.ActivatedAt, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.ActivatedAt, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -3233,6 +3373,88 @@ func (ec *executionContext) fieldContext_Mutation_createFolder(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createFolder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_copyFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_copyFile,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CopyFile(ctx, fc.Args["sourcePath"].(string), fc.Args["destPath"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_copyFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_copyFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_moveFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_moveFile,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().MoveFile(ctx, fc.Args["sourcePath"].(string), fc.Args["destPath"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_moveFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_moveFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4601,7 +4823,9 @@ func (ec *executionContext) _S3StorageConfig_bucket(ctx context.Context, field g
 		ec.OperationContext,
 		field,
 		ec.fieldContext_S3StorageConfig_bucket,
-		func(ctx context.Context) (any, error) { return obj.Bucket, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Bucket, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -4628,7 +4852,9 @@ func (ec *executionContext) _S3StorageConfig_region(ctx context.Context, field g
 		ec.OperationContext,
 		field,
 		ec.fieldContext_S3StorageConfig_region,
-		func(ctx context.Context) (any, error) { return obj.Region, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Region, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -4655,7 +4881,9 @@ func (ec *executionContext) _S3StorageConfig_endpoint(ctx context.Context, field
 		ec.OperationContext,
 		field,
 		ec.fieldContext_S3StorageConfig_endpoint,
-		func(ctx context.Context) (any, error) { return obj.Endpoint, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Endpoint, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -4682,7 +4910,9 @@ func (ec *executionContext) _S3StorageConfig_forcePathStyle(ctx context.Context,
 		ec.OperationContext,
 		field,
 		ec.fieldContext_S3StorageConfig_forcePathStyle,
-		func(ctx context.Context) (any, error) { return obj.ForcePathStyle, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.ForcePathStyle, nil
+		},
 		nil,
 		ec.marshalOBoolean2ᚖbool,
 		true,
@@ -4709,7 +4939,9 @@ func (ec *executionContext) _S3StorageConfig_baseDir(ctx context.Context, field 
 		ec.OperationContext,
 		field,
 		ec.fieldContext_S3StorageConfig_baseDir,
-		func(ctx context.Context) (any, error) { return obj.BaseDir, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.BaseDir, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -4736,7 +4968,9 @@ func (ec *executionContext) _StorageConfigResult_success(ctx context.Context, fi
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageConfigResult_success,
-		func(ctx context.Context) (any, error) { return obj.Success, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -4763,7 +4997,9 @@ func (ec *executionContext) _StorageConfigResult_restartRequired(ctx context.Con
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageConfigResult_restartRequired,
-		func(ctx context.Context) (any, error) { return obj.RestartRequired, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.RestartRequired, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -4790,7 +5026,9 @@ func (ec *executionContext) _StorageConfigResult_timestamp(ctx context.Context, 
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageConfigResult_timestamp,
-		func(ctx context.Context) (any, error) { return obj.Timestamp, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Timestamp, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -4817,7 +5055,9 @@ func (ec *executionContext) _StorageConfigResult_message(ctx context.Context, fi
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageConfigResult_message,
-		func(ctx context.Context) (any, error) { return obj.Message, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -4844,7 +5084,9 @@ func (ec *executionContext) _StorageStatus_configured(ctx context.Context, field
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageStatus_configured,
-		func(ctx context.Context) (any, error) { return obj.Configured, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Configured, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -4871,7 +5113,9 @@ func (ec *executionContext) _StorageStatus_type(ctx context.Context, field graph
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageStatus_type,
-		func(ctx context.Context) (any, error) { return obj.Type, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -4898,7 +5142,9 @@ func (ec *executionContext) _StorageStatus_restartRequired(ctx context.Context, 
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageStatus_restartRequired,
-		func(ctx context.Context) (any, error) { return obj.RestartRequired, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.RestartRequired, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -4925,7 +5171,9 @@ func (ec *executionContext) _StorageStatus_lastUpdated(ctx context.Context, fiel
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageStatus_lastUpdated,
-		func(ctx context.Context) (any, error) { return obj.LastUpdated, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.LastUpdated, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -4952,7 +5200,9 @@ func (ec *executionContext) _StorageStatus_isOverriddenByConfig(ctx context.Cont
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageStatus_isOverriddenByConfig,
-		func(ctx context.Context) (any, error) { return obj.IsOverriddenByConfig, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.IsOverriddenByConfig, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -4979,7 +5229,9 @@ func (ec *executionContext) _StorageStatus_fileConfig(ctx context.Context, field
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageStatus_fileConfig,
-		func(ctx context.Context) (any, error) { return obj.FileConfig, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.FileConfig, nil
+		},
 		nil,
 		ec.marshalOFileStorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileStorageConfig,
 		true,
@@ -5014,7 +5266,9 @@ func (ec *executionContext) _StorageStatus_s3Config(ctx context.Context, field g
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageStatus_s3Config,
-		func(ctx context.Context) (any, error) { return obj.S3Config, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.S3Config, nil
+		},
 		nil,
 		ec.marshalOS3StorageConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐS3StorageConfig,
 		true,
@@ -5053,7 +5307,9 @@ func (ec *executionContext) _StorageTestResult_success(ctx context.Context, fiel
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageTestResult_success,
-		func(ctx context.Context) (any, error) { return obj.Success, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -5080,7 +5336,9 @@ func (ec *executionContext) _StorageTestResult_message(ctx context.Context, fiel
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageTestResult_message,
-		func(ctx context.Context) (any, error) { return obj.Message, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -5107,7 +5365,9 @@ func (ec *executionContext) _StorageTestResult_details(ctx context.Context, fiel
 		ec.OperationContext,
 		field,
 		ec.fieldContext_StorageTestResult_details,
-		func(ctx context.Context) (any, error) { return obj.Details, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Details, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -5134,7 +5394,9 @@ func (ec *executionContext) _SystemRegistry_key(ctx context.Context, field graph
 		ec.OperationContext,
 		field,
 		ec.fieldContext_SystemRegistry_key,
-		func(ctx context.Context) (any, error) { return obj.Key, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -5161,7 +5423,9 @@ func (ec *executionContext) _SystemRegistry_value(ctx context.Context, field gra
 		ec.OperationContext,
 		field,
 		ec.fieldContext_SystemRegistry_value,
-		func(ctx context.Context) (any, error) { return obj.Value, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Value, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -5188,7 +5452,9 @@ func (ec *executionContext) _SystemRegistry_isEncrypted(ctx context.Context, fie
 		ec.OperationContext,
 		field,
 		ec.fieldContext_SystemRegistry_isEncrypted,
-		func(ctx context.Context) (any, error) { return obj.IsEncrypted, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.IsEncrypted, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -5215,7 +5481,9 @@ func (ec *executionContext) _SystemRegistry_isOverriddenByConfig(ctx context.Con
 		ec.OperationContext,
 		field,
 		ec.fieldContext_SystemRegistry_isOverriddenByConfig,
-		func(ctx context.Context) (any, error) { return obj.IsOverriddenByConfig, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.IsOverriddenByConfig, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -5242,7 +5510,9 @@ func (ec *executionContext) _ThumbnailUrls_grid(ctx context.Context, field graph
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ThumbnailUrls_grid,
-		func(ctx context.Context) (any, error) { return obj.Grid, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Grid, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -5269,7 +5539,9 @@ func (ec *executionContext) _ThumbnailUrls_preview(ctx context.Context, field gr
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ThumbnailUrls_preview,
-		func(ctx context.Context) (any, error) { return obj.Preview, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Preview, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -5296,7 +5568,9 @@ func (ec *executionContext) _ThumbnailUrls_full(ctx context.Context, field graph
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ThumbnailUrls_full,
-		func(ctx context.Context) (any, error) { return obj.Full, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Full, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -5323,7 +5597,9 @@ func (ec *executionContext) _ThumbnailUrls_original(ctx context.Context, field g
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ThumbnailUrls_original,
-		func(ctx context.Context) (any, error) { return obj.Original, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Original, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -5350,7 +5626,9 @@ func (ec *executionContext) _ThumbnailUrls_meta(ctx context.Context, field graph
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ThumbnailUrls_meta,
-		func(ctx context.Context) (any, error) { return obj.Meta, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Meta, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -5377,7 +5655,9 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 		ec.OperationContext,
 		field,
 		ec.fieldContext_User_id,
-		func(ctx context.Context) (any, error) { return obj.ID, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
 		nil,
 		ec.marshalNID2string,
 		true,
@@ -5404,7 +5684,9 @@ func (ec *executionContext) _User_displayName(ctx context.Context, field graphql
 		ec.OperationContext,
 		field,
 		ec.fieldContext_User_displayName,
-		func(ctx context.Context) (any, error) { return obj.DisplayName, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.DisplayName, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -5431,7 +5713,9 @@ func (ec *executionContext) _User_username(ctx context.Context, field graphql.Co
 		ec.OperationContext,
 		field,
 		ec.fieldContext_User_username,
-		func(ctx context.Context) (any, error) { return obj.Username, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Username, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -5458,7 +5742,9 @@ func (ec *executionContext) _User_role(ctx context.Context, field graphql.Collec
 		ec.OperationContext,
 		field,
 		ec.fieldContext_User_role,
-		func(ctx context.Context) (any, error) { return obj.Role, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Role, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -5485,7 +5771,9 @@ func (ec *executionContext) _User_isActive(ctx context.Context, field graphql.Co
 		ec.OperationContext,
 		field,
 		ec.fieldContext_User_isActive,
-		func(ctx context.Context) (any, error) { return obj.IsActive, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.IsActive, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -5512,7 +5800,9 @@ func (ec *executionContext) _User_createdAt(ctx context.Context, field graphql.C
 		ec.OperationContext,
 		field,
 		ec.fieldContext_User_createdAt,
-		func(ctx context.Context) (any, error) { return obj.CreatedAt, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -5539,7 +5829,9 @@ func (ec *executionContext) _User_updatedAt(ctx context.Context, field graphql.C
 		ec.OperationContext,
 		field,
 		ec.fieldContext_User_updatedAt,
-		func(ctx context.Context) (any, error) { return obj.UpdatedAt, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -5566,7 +5858,9 @@ func (ec *executionContext) _UserList_items(ctx context.Context, field graphql.C
 		ec.OperationContext,
 		field,
 		ec.fieldContext_UserList_items,
-		func(ctx context.Context) (any, error) { return obj.Items, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
 		nil,
 		ec.marshalNUser2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserᚄ,
 		true,
@@ -5609,7 +5903,9 @@ func (ec *executionContext) _UserList_totalCount(ctx context.Context, field grap
 		ec.OperationContext,
 		field,
 		ec.fieldContext_UserList_totalCount,
-		func(ctx context.Context) (any, error) { return obj.TotalCount, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
 		nil,
 		ec.marshalNInt2int,
 		true,
@@ -5636,7 +5932,9 @@ func (ec *executionContext) _UserRegistry_key(ctx context.Context, field graphql
 		ec.OperationContext,
 		field,
 		ec.fieldContext_UserRegistry_key,
-		func(ctx context.Context) (any, error) { return obj.Key, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -5663,7 +5961,9 @@ func (ec *executionContext) _UserRegistry_value(ctx context.Context, field graph
 		ec.OperationContext,
 		field,
 		ec.fieldContext_UserRegistry_value,
-		func(ctx context.Context) (any, error) { return obj.Value, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Value, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -5690,7 +5990,9 @@ func (ec *executionContext) _UserRegistry_isEncrypted(ctx context.Context, field
 		ec.OperationContext,
 		field,
 		ec.fieldContext_UserRegistry_isEncrypted,
-		func(ctx context.Context) (any, error) { return obj.IsEncrypted, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.IsEncrypted, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -5717,7 +6019,9 @@ func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql
 		ec.OperationContext,
 		field,
 		ec.fieldContext___Directive_name,
-		func(ctx context.Context) (any, error) { return obj.Name, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -5773,7 +6077,9 @@ func (ec *executionContext) ___Directive_isRepeatable(ctx context.Context, field
 		ec.OperationContext,
 		field,
 		ec.fieldContext___Directive_isRepeatable,
-		func(ctx context.Context) (any, error) { return obj.IsRepeatable, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.IsRepeatable, nil
+		},
 		nil,
 		ec.marshalNBoolean2bool,
 		true,
@@ -5800,7 +6106,9 @@ func (ec *executionContext) ___Directive_locations(ctx context.Context, field gr
 		ec.OperationContext,
 		field,
 		ec.fieldContext___Directive_locations,
-		func(ctx context.Context) (any, error) { return obj.Locations, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Locations, nil
+		},
 		nil,
 		ec.marshalN__DirectiveLocation2ᚕstringᚄ,
 		true,
@@ -5827,7 +6135,9 @@ func (ec *executionContext) ___Directive_args(ctx context.Context, field graphql
 		ec.OperationContext,
 		field,
 		ec.fieldContext___Directive_args,
-		func(ctx context.Context) (any, error) { return obj.Args, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Args, nil
+		},
 		nil,
 		ec.marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ,
 		true,
@@ -5879,7 +6189,9 @@ func (ec *executionContext) ___EnumValue_name(ctx context.Context, field graphql
 		ec.OperationContext,
 		field,
 		ec.fieldContext___EnumValue_name,
-		func(ctx context.Context) (any, error) { return obj.Name, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -5993,7 +6305,9 @@ func (ec *executionContext) ___Field_name(ctx context.Context, field graphql.Col
 		ec.OperationContext,
 		field,
 		ec.fieldContext___Field_name,
-		func(ctx context.Context) (any, error) { return obj.Name, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -6049,7 +6363,9 @@ func (ec *executionContext) ___Field_args(ctx context.Context, field graphql.Col
 		ec.OperationContext,
 		field,
 		ec.fieldContext___Field_args,
-		func(ctx context.Context) (any, error) { return obj.Args, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Args, nil
+		},
 		nil,
 		ec.marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ,
 		true,
@@ -6101,7 +6417,9 @@ func (ec *executionContext) ___Field_type(ctx context.Context, field graphql.Col
 		ec.OperationContext,
 		field,
 		ec.fieldContext___Field_type,
-		func(ctx context.Context) (any, error) { return obj.Type, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
 		nil,
 		ec.marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType,
 		true,
@@ -6210,7 +6528,9 @@ func (ec *executionContext) ___InputValue_name(ctx context.Context, field graphq
 		ec.OperationContext,
 		field,
 		ec.fieldContext___InputValue_name,
-		func(ctx context.Context) (any, error) { return obj.Name, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
 		nil,
 		ec.marshalNString2string,
 		true,
@@ -6266,7 +6586,9 @@ func (ec *executionContext) ___InputValue_type(ctx context.Context, field graphq
 		ec.OperationContext,
 		field,
 		ec.fieldContext___InputValue_type,
-		func(ctx context.Context) (any, error) { return obj.Type, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
 		nil,
 		ec.marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType,
 		true,
@@ -6317,7 +6639,9 @@ func (ec *executionContext) ___InputValue_defaultValue(ctx context.Context, fiel
 		ec.OperationContext,
 		field,
 		ec.fieldContext___InputValue_defaultValue,
-		func(ctx context.Context) (any, error) { return obj.DefaultValue, nil },
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultValue, nil
+		},
 		nil,
 		ec.marshalOString2ᚖstring,
 		true,
@@ -8196,6 +8520,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "copyFile":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_copyFile(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "moveFile":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_moveFile(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "configureFileStorage":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_configureFileStorage(ctx, field)
@@ -9428,7 +9766,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -9496,7 +9834,7 @@ func (ec *executionContext) marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagor
 func (ec *executionContext) marshalNFileItem2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileItem(ctx context.Context, sel ast.SelectionSet, v *FileItem) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -9510,7 +9848,7 @@ func (ec *executionContext) marshalNFileList2githubᚗcomᚋcshumᚋimagorᚑstu
 func (ec *executionContext) marshalNFileList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileList(ctx context.Context, sel ast.SelectionSet, v *FileList) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -9532,7 +9870,7 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	res := graphql.MarshalID(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -9545,7 +9883,7 @@ func (ec *executionContext) marshalNImagorConfigResult2githubᚗcomᚋcshumᚋim
 func (ec *executionContext) marshalNImagorConfigResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorConfigResult(ctx context.Context, sel ast.SelectionSet, v *ImagorConfigResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -9579,7 +9917,7 @@ func (ec *executionContext) marshalNImagorStatus2githubᚗcomᚋcshumᚋimagor�
 func (ec *executionContext) marshalNImagorStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorStatus(ctx context.Context, sel ast.SelectionSet, v *ImagorStatus) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -9596,7 +9934,7 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -9609,7 +9947,7 @@ func (ec *executionContext) marshalNLicenseStatus2githubᚗcomᚋcshumᚋimagor�
 func (ec *executionContext) marshalNLicenseStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐLicenseStatus(ctx context.Context, sel ast.SelectionSet, v *LicenseStatus) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -9638,7 +9976,7 @@ func (ec *executionContext) marshalNStorageConfigResult2githubᚗcomᚋcshumᚋi
 func (ec *executionContext) marshalNStorageConfigResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageConfigResult(ctx context.Context, sel ast.SelectionSet, v *StorageConfigResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -9652,7 +9990,7 @@ func (ec *executionContext) marshalNStorageStatus2githubᚗcomᚋcshumᚋimagor�
 func (ec *executionContext) marshalNStorageStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageStatus(ctx context.Context, sel ast.SelectionSet, v *StorageStatus) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -9666,7 +10004,7 @@ func (ec *executionContext) marshalNStorageTestResult2githubᚗcomᚋcshumᚋima
 func (ec *executionContext) marshalNStorageTestResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageTestResult(ctx context.Context, sel ast.SelectionSet, v *StorageTestResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -9693,7 +10031,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -9746,7 +10084,7 @@ func (ec *executionContext) marshalNSystemRegistry2ᚕᚖgithubᚗcomᚋcshumᚋ
 func (ec *executionContext) marshalNSystemRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistry(ctx context.Context, sel ast.SelectionSet, v *SystemRegistry) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -9768,7 +10106,7 @@ func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋg
 	res := graphql.MarshalUpload(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -9825,7 +10163,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑs
 func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx context.Context, sel ast.SelectionSet, v *User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -9839,7 +10177,7 @@ func (ec *executionContext) marshalNUserList2githubᚗcomᚋcshumᚋimagorᚑstu
 func (ec *executionContext) marshalNUserList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserList(ctx context.Context, sel ast.SelectionSet, v *UserList) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -9893,7 +10231,7 @@ func (ec *executionContext) marshalNUserRegistry2ᚕᚖgithubᚗcomᚋcshumᚋim
 func (ec *executionContext) marshalNUserRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistry(ctx context.Context, sel ast.SelectionSet, v *UserRegistry) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -9958,7 +10296,7 @@ func (ec *executionContext) marshalN__DirectiveLocation2string(ctx context.Conte
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -10130,7 +10468,7 @@ func (ec *executionContext) marshalN__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgen�
 func (ec *executionContext) marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx context.Context, sel ast.SelectionSet, v *introspection.Type) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -10147,7 +10485,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res

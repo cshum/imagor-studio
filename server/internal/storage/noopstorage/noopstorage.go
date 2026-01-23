@@ -49,3 +49,13 @@ func (s *NoOpStorage) CreateFolder(ctx context.Context, folder string) error {
 func (s *NoOpStorage) Stat(ctx context.Context, key string) (storage.FileInfo, error) {
 	return storage.FileInfo{}, fmt.Errorf("storage not configured - please configure storage in admin settings")
 }
+
+// Copy returns an error indicating storage is not configured
+func (s *NoOpStorage) Copy(ctx context.Context, sourcePath string, destPath string) error {
+	return fmt.Errorf("storage not configured - please configure storage in admin settings")
+}
+
+// Move returns an error indicating storage is not configured
+func (s *NoOpStorage) Move(ctx context.Context, sourcePath string, destPath string) error {
+	return fmt.Errorf("storage not configured - please configure storage in admin settings")
+}

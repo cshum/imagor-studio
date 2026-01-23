@@ -418,6 +418,138 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 	mockRegistryStore.AssertExpectations(t)
 }
 
+func TestCopyFile(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-owner-id")
+	sourcePath := "/test/source.txt"
+	destPath := "/test/dest.txt"
+
+	mockStorage.On("Copy", ctx, sourcePath, destPath).Return(nil)
+
+	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath)
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+	mockStorage.AssertExpectations(t)
+}
+
+func TestCopyFile_NoWritePermission(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadOnlyContext("test-owner-id")
+	sourcePath := "/test/source.txt"
+	destPath := "/test/dest.txt"
+
+	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath)
+
+	assert.Error(t, err)
+	assert.False(t, result)
+	assert.Contains(t, err.Error(), "write access required")
+	mockStorage.AssertNotCalled(t, "Copy")
+}
+
+func TestCopyFile_StorageError(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-owner-id")
+	sourcePath := "/test/source.txt"
+	destPath := "/test/dest.txt"
+
+	mockStorage.On("Copy", ctx, sourcePath, destPath).Return(assert.AnError)
+
+	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath)
+
+	assert.Error(t, err)
+	assert.False(t, result)
+	assert.Contains(t, err.Error(), "failed to copy file")
+	mockStorage.AssertExpectations(t)
+}
+
+func TestMoveFile(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-owner-id")
+	sourcePath := "/test/source.txt"
+	destPath := "/test/dest.txt"
+
+	mockStorage.On("Move", ctx, sourcePath, destPath).Return(nil)
+
+	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath)
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+	mockStorage.AssertExpectations(t)
+}
+
+func TestMoveFile_NoWritePermission(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadOnlyContext("test-owner-id")
+	sourcePath := "/test/source.txt"
+	destPath := "/test/dest.txt"
+
+	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath)
+
+	assert.Error(t, err)
+	assert.False(t, result)
+	assert.Contains(t, err.Error(), "write access required")
+	mockStorage.AssertNotCalled(t, "Move")
+}
+
+func TestMoveFile_StorageError(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-owner-id")
+	sourcePath := "/test/source.txt"
+	destPath := "/test/dest.txt"
+
+	mockStorage.On("Move", ctx, sourcePath, destPath).Return(assert.AnError)
+
+	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath)
+
+	assert.Error(t, err)
+	assert.False(t, result)
+	assert.Contains(t, err.Error(), "failed to move file")
+	mockStorage.AssertExpectations(t)
+}
+
 func TestTestStorageConfig_RequiresAdminPermission(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockRegistryStore := new(MockRegistryStore)

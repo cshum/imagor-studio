@@ -166,6 +166,16 @@ func (m *MockStorage) Stat(ctx context.Context, path string) (storage.FileInfo, 
 	return args.Get(0).(storage.FileInfo), args.Error(1)
 }
 
+func (m *MockStorage) Copy(ctx context.Context, sourcePath string, destPath string) error {
+	args := m.Called(ctx, sourcePath, destPath)
+	return args.Error(0)
+}
+
+func (m *MockStorage) Move(ctx context.Context, sourcePath string, destPath string) error {
+	args := m.Called(ctx, sourcePath, destPath)
+	return args.Error(0)
+}
+
 type MockStorageProvider struct {
 	mock.Mock
 	storage storage.Storage

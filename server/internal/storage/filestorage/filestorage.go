@@ -203,3 +203,116 @@ func (fs *FileStorage) Stat(ctx context.Context, path string) (storage.FileInfo,
 		ModifiedTime: info.ModTime(),
 	}, nil
 }
+
+func (fs *FileStorage) Copy(ctx context.Context, sourcePath string, destPath string) error {
+	sourceFullPath := filepath.Join(fs.baseDir, sourcePath)
+	destFullPath := filepath.Join(fs.baseDir, destPath)
+
+	// Check if source exists
+	sourceInfo, err := os.Stat(sourceFullPath)
+	if err != nil {
+		return err
+	}
+
+	// Check if destination already exists
+	if _, err := os.Stat(destFullPath); err == nil {
+		return os.ErrExist
+	}
+
+	// If source is a directory, copy recursively
+	if sourceInfo.IsDir() {
+		return fs.copyDir(sourceFullPath, destFullPath)
+	}
+
+	// Copy file
+	return fs.copyFile(sourceFullPath, destFullPath)
+}
+
+func (fs *FileStorage) Move(ctx context.Context, sourcePath string, destPath string) error {
+	sourceFullPath := filepath.Join(fs.baseDir, sourcePath)
+	destFullPath := filepath.Join(fs.baseDir, destPath)
+
+	// Check if source exists
+	if _, err := os.Stat(sourceFullPath); err != nil {
+		return err
+	}
+
+	// Check if destination already exists
+	if _, err := os.Stat(destFullPath); err == nil {
+		return os.ErrExist
+	}
+
+	// Try to rename (fast if on same filesystem)
+	err := os.Rename(sourceFullPath, destFullPath)
+	if err == nil {
+		return nil
+	}
+
+	// If rename fails (e.g., cross-filesystem), fall back to copy + delete
+	if err := fs.Copy(ctx, sourcePath, destPath); err != nil {
+		return err
+	}
+
+	return fs.Delete(ctx, sourcePath)
+}
+
+// copyFile copies a single file from source to destination
+func (fs *FileStorage) copyFile(sourcePath string, destPath string) error {
+	// Create destination directory if needed
+	destDir := filepath.Dir(destPath)
+	if err := os.MkdirAll(destDir, fs.mkdirPermission); err != nil {
+		return err
+	}
+
+	// Open source file
+	sourceFile, err := os.Open(sourcePath)
+	if err != nil {
+		return err
+	}
+	defer sourceFile.Close()
+
+	// Create destination file
+	destFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fs.writePermission)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	// Copy contents
+	_, err = io.Copy(destFile, sourceFile)
+	return err
+}
+
+// copyDir recursively copies a directory from source to destination
+func (fs *FileStorage) copyDir(sourcePath string, destPath string) error {
+	// Create destination directory
+	if err := os.MkdirAll(destPath, fs.mkdirPermission); err != nil {
+		return err
+	}
+
+	// Read source directory
+	entries, err := os.ReadDir(sourcePath)
+	if err != nil {
+		return err
+	}
+
+	// Copy each entry
+	for _, entry := range entries {
+		sourceEntryPath := filepath.Join(sourcePath, entry.Name())
+		destEntryPath := filepath.Join(destPath, entry.Name())
+
+		if entry.IsDir() {
+			// Recursively copy subdirectory
+			if err := fs.copyDir(sourceEntryPath, destEntryPath); err != nil {
+				return err
+			}
+		} else {
+			// Copy file
+			if err := fs.copyFile(sourceEntryPath, destEntryPath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}

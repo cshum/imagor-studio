@@ -53,6 +53,8 @@ type Storage interface {
 	Delete(ctx context.Context, key string) error
 	CreateFolder(ctx context.Context, folder string) error
 	Stat(ctx context.Context, key string) (FileInfo, error)
+	Copy(ctx context.Context, sourcePath string, destPath string) error
+	Move(ctx context.Context, sourcePath string, destPath string) error
 }
 
 // Helper functions for common filtering logic
