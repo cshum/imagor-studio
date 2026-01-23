@@ -161,6 +161,7 @@ export type Mutation = {
   configureExternalImagor: ImagorConfigResult
   configureFileStorage: StorageConfigResult
   configureS3Storage: StorageConfigResult
+  copyFile: Scalars['Boolean']['output']
   createFolder: Scalars['Boolean']['output']
   createUser: User
   deactivateAccount: Scalars['Boolean']['output']
@@ -168,6 +169,7 @@ export type Mutation = {
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
+  moveFile: Scalars['Boolean']['output']
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
@@ -190,6 +192,11 @@ export type MutationConfigureFileStorageArgs = {
 
 export type MutationConfigureS3StorageArgs = {
   input: S3StorageInput
+}
+
+export type MutationCopyFileArgs = {
+  destPath: Scalars['String']['input']
+  sourcePath: Scalars['String']['input']
 }
 
 export type MutationCreateFolderArgs = {
@@ -223,6 +230,11 @@ export type MutationGenerateImagorUrlArgs = {
   galleryKey: Scalars['String']['input']
   imageKey: Scalars['String']['input']
   params: ImagorParamsInput
+}
+
+export type MutationMoveFileArgs = {
+  destPath: Scalars['String']['input']
+  sourcePath: Scalars['String']['input']
 }
 
 export type MutationSetSystemRegistryArgs = {

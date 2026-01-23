@@ -70,6 +70,8 @@ export const FolderGrid = ({
           role='gridcell'
           aria-label={`Folder: ${folder.galleryName}`}
           style={{ width: `${folderWidth - 8}px` }} // Subtracting 8px to account for the gap
+          data-folder-key={folder.galleryKey}
+          data-folder-name={folder.galleryName}
         >
           <CardContent className='flex items-center px-4 py-4 sm:py-3'>
             <Folder className='text-primary mr-2 h-5 w-5 flex-shrink-0' />

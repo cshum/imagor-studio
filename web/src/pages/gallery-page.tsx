@@ -24,8 +24,10 @@ import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { deleteFile } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
+import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
 import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialog'
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
+import { FolderContextData, FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
 import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
@@ -82,6 +84,17 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   }>({
     open: false,
     imageKey: null,
+    isDeleting: false,
+  })
+  const [deleteFolderDialog, setDeleteFolderDialog] = useState<{
+    open: boolean
+    folderKey: string | null
+    folderName: string | null
+    isDeleting: boolean
+  }>({
+    open: false,
+    folderKey: null,
+    folderName: null,
     isDeleting: false,
   })
   const [uploadState, setUploadState] = useState<{
@@ -289,6 +302,52 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
+  const handleDeleteFolderFromMenu = (folderKey: string, folderName: string) => {
+    setDeleteFolderDialog({
+      open: true,
+      folderKey,
+      folderName,
+      isDeleting: false,
+    })
+  }
+
+  const handleDeleteFolder = async () => {
+    if (!deleteFolderDialog.folderKey) return
+
+    setDeleteFolderDialog((prev) => ({ ...prev, isDeleting: true }))
+
+    try {
+      const folderPath = galleryKey
+        ? `${galleryKey}/${deleteFolderDialog.folderKey}`
+        : deleteFolderDialog.folderKey
+
+      await deleteFile(folderPath)
+      setDeleteFolderDialog({
+        open: false,
+        folderKey: null,
+        folderName: null,
+        isDeleting: false,
+      })
+
+      router.invalidate()
+      toast.success(t('pages.gallery.deleteFolder.success'))
+    } catch {
+      toast.error(t('pages.gallery.deleteFolder.error'))
+      setDeleteFolderDialog((prev) => ({ ...prev, isDeleting: false }))
+    }
+  }
+
+  const handleDeleteFolderDialogClose = (open: boolean) => {
+    if (!deleteFolderDialog.isDeleting) {
+      setDeleteFolderDialog({
+        open,
+        folderKey: null,
+        folderName: null,
+        isDeleting: false,
+      })
+    }
+  }
+
   const handleCopyUrl = async (imageKey: string, isVideo: boolean = false) => {
     try {
       // Generate original image URL (no transformations for images, raw filter for videos)
@@ -372,6 +431,31 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
               {t('pages.gallery.contextMenu.delete')}
             </ContextMenuItem>
           </>
+        )}
+      </>
+    )
+  }
+
+  const renderFolderContextMenuItems = ({ folderName, folderKey }: FolderContextData) => {
+    const isAuthenticated = authState.state === 'authenticated'
+
+    if (!folderKey) return null
+
+    return (
+      <>
+        <ContextMenuLabel className='break-all'>{folderName}</ContextMenuLabel>
+        <ContextMenuSeparatorComponent />
+        {isAuthenticated && (
+          <ContextMenuItem
+            onClick={() => {
+              // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
+              setTimeout(() => handleDeleteFolderFromMenu(folderKey, folderName), 0)
+            }}
+            className='text-destructive focus:text-destructive'
+          >
+            <Trash2 className='mr-2 h-4 w-4' />
+            {t('pages.gallery.folderContextMenu.delete')}
+          </ContextMenuItem>
         )}
       </>
     )
@@ -556,13 +640,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                   ) : (
                     <div ref={galleryContainerRef} {...galleryContainerProps}>
                       {filteredFolders.length > 0 && (
-                        <FolderGrid
-                          folders={filteredFolders}
-                          width={contentWidth}
-                          maxFolderWidth={maxItemWidth}
-                          foldersVisible={foldersVisible}
-                          {...folderGridProps}
-                        />
+                        <FolderContextMenu renderMenuItems={renderFolderContextMenuItems}>
+                          <FolderGrid
+                            folders={filteredFolders}
+                            width={contentWidth}
+                            maxFolderWidth={maxItemWidth}
+                            foldersVisible={foldersVisible}
+                            {...folderGridProps}
+                          />
+                        </FolderContextMenu>
                       )}
                       <ImageContextMenu renderMenuItems={renderContextMenuItems}>
                         <ImageGrid
@@ -597,6 +683,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         imageName={deleteImageDialog.imageKey || ''}
         isDeleting={deleteImageDialog.isDeleting}
         onConfirm={handleDeleteImage}
+      />
+
+      <DeleteFolderDialog
+        open={deleteFolderDialog.open}
+        onOpenChange={handleDeleteFolderDialogClose}
+        folderName={deleteFolderDialog.folderName || ''}
+        isDeleting={deleteFolderDialog.isDeleting}
+        onConfirm={handleDeleteFolder}
       />
 
       <CopyUrlDialog
