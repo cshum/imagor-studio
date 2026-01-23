@@ -168,6 +168,7 @@
         "edit": "Edit",
         "copyUrl": "Copy URL",
         "download": "Download",
+        "rename": "Rename",
         "delete": "Delete",
         "copyUrlError": "Failed to copy URL",
         "downloadError": "Failed to download"
@@ -193,6 +194,20 @@
         "warning": "This will permanently delete the folder and all its contents. This action cannot be undone.",
         "success": "Folder deleted successfully",
         "error": "Failed to delete folder"
+      },
+      "renameItem": {
+        "title": "Rename {{type}}",
+        "description": "Enter a new name for this {{type}}.",
+        "newName": "New Name",
+        "placeholder": "Enter new name",
+        "rename": "Rename",
+        "success": "{{type}} renamed successfully",
+        "error": "Failed to rename {{type}}",
+        "errors": {
+          "nameRequired": "Name is required",
+          "invalidCharacters": "Name contains invalid characters",
+          "alreadyExists": "A {{type}} with this name already exists"
+        }
       }
     },
     "profile": {

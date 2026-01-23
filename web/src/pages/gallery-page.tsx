@@ -21,7 +21,7 @@ import { toast } from 'sonner'
 
 import { generateImagorUrl } from '@/api/imagor-api'
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
-import { deleteFile } from '@/api/storage-api.ts'
+import { deleteFile, moveFile } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
 import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
@@ -33,6 +33,7 @@ import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
 import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { LoadingBar } from '@/components/loading-bar.tsx'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   ContextMenuItem,
@@ -40,6 +41,14 @@ import {
   ContextMenuSeparator as ContextMenuSeparatorComponent,
 } from '@/components/ui/context-menu'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -97,6 +106,20 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     folderName: null,
     isDeleting: false,
   })
+  const [renameDialog, setRenameDialog] = useState<{
+    open: boolean
+    itemPath: string | null
+    itemName: string | null
+    itemType: 'file' | 'folder'
+    isRenaming: boolean
+  }>({
+    open: false,
+    itemPath: null,
+    itemName: null,
+    itemType: 'file',
+    isRenaming: false,
+  })
+  const [renameInput, setRenameInput] = useState('')
   const [uploadState, setUploadState] = useState<{
     files: DragDropFile[]
     isUploading: boolean
@@ -348,6 +371,61 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
+  const handleRenameFromMenu = (itemKey: string, itemName: string, itemType: 'file' | 'folder') => {
+    const itemPath = galleryKey ? `${galleryKey}/${itemKey}` : itemKey
+    setRenameDialog({
+      open: true,
+      itemPath,
+      itemName,
+      itemType,
+      isRenaming: false,
+    })
+    setRenameInput(itemName)
+  }
+
+  const handleRename = async () => {
+    if (!renameDialog.itemPath || !renameInput.trim()) return
+
+    setRenameDialog((prev) => ({ ...prev, isRenaming: true }))
+
+    try {
+      // Extract directory path and construct new path
+      const pathParts = renameDialog.itemPath.split('/')
+      pathParts[pathParts.length - 1] = renameInput.trim()
+      const newPath = pathParts.join('/')
+
+      await moveFile(renameDialog.itemPath, newPath)
+      
+      setRenameDialog({
+        open: false,
+        itemPath: null,
+        itemName: null,
+        itemType: 'file',
+        isRenaming: false,
+      })
+      setRenameInput('')
+
+      router.invalidate()
+      toast.success(t('pages.gallery.renameItem.success', { type: renameDialog.itemType }))
+    } catch {
+      toast.error(t('pages.gallery.renameItem.error', { type: renameDialog.itemType }))
+      setRenameDialog((prev) => ({ ...prev, isRenaming: false }))
+    }
+  }
+
+  const handleRenameDialogClose = (open: boolean) => {
+    if (!renameDialog.isRenaming) {
+      setRenameDialog({
+        open,
+        itemPath: null,
+        itemName: null,
+        itemType: 'file',
+        isRenaming: false,
+      })
+      setRenameInput('')
+    }
+  }
+
   const handleCopyUrl = async (imageKey: string, isVideo: boolean = false) => {
     try {
       // Generate original image URL (no transformations for images, raw filter for videos)
@@ -423,6 +501,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             <ContextMenuItem
               onClick={() => {
                 // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
+                setTimeout(() => handleRenameFromMenu(imageKey, imageName, 'file'), 0)
+              }}
+            >
+              <Pencil className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.rename')}
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => {
+                // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
                 setTimeout(() => handleDeleteImageFromMenu(imageKey), 0)
               }}
               className='text-destructive focus:text-destructive'
@@ -446,16 +533,27 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         <ContextMenuLabel className='break-all'>{folderName}</ContextMenuLabel>
         <ContextMenuSeparatorComponent />
         {isAuthenticated && (
-          <ContextMenuItem
-            onClick={() => {
-              // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
-              setTimeout(() => handleDeleteFolderFromMenu(folderKey, folderName), 0)
-            }}
-            className='text-destructive focus:text-destructive'
-          >
-            <Trash2 className='mr-2 h-4 w-4' />
-            {t('pages.gallery.folderContextMenu.delete')}
-          </ContextMenuItem>
+          <>
+            <ContextMenuItem
+              onClick={() => {
+                // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
+                setTimeout(() => handleRenameFromMenu(folderKey, folderName, 'folder'), 0)
+              }}
+            >
+              <Pencil className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.rename')}
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => {
+                // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
+                setTimeout(() => handleDeleteFolderFromMenu(folderKey, folderName), 0)
+              }}
+              className='text-destructive focus:text-destructive'
+            >
+              <Trash2 className='mr-2 h-4 w-4' />
+              {t('pages.gallery.folderContextMenu.delete')}
+            </ContextMenuItem>
+          </>
         )}
       </>
     )
@@ -698,6 +796,49 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         onOpenChange={(open) => setCopyUrlDialog({ open, url: copyUrlDialog.url })}
         url={copyUrlDialog.url}
       />
+
+      <Dialog open={renameDialog.open} onOpenChange={handleRenameDialogClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {t('pages.gallery.renameItem.title', { type: renameDialog.itemType })}
+            </DialogTitle>
+            <DialogDescription>
+              {t('pages.gallery.renameItem.description', { type: renameDialog.itemType })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className='grid gap-4 py-4'>
+            <Input
+              value={renameInput}
+              onChange={(e) => setRenameInput(e.target.value)}
+              placeholder={t('pages.gallery.renameItem.placeholder')}
+              disabled={renameDialog.isRenaming}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && renameInput.trim()) {
+                  handleRename()
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => handleRenameDialogClose(false)}
+              disabled={renameDialog.isRenaming}
+            >
+              {t('common.buttons.cancel')}
+            </Button>
+            <Button
+              onClick={handleRename}
+              disabled={!renameInput.trim() || renameDialog.isRenaming}
+            >
+              {renameDialog.isRenaming
+                ? t('common.status.loading')
+                : t('pages.gallery.renameItem.rename')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Hidden file input for traditional upload */}
       <input
