@@ -1,42 +1,6 @@
 import { gql } from '@/generated/gql'
 
-// Fragments
-export const FileFragment = gql(`
-  fragment FileInfo on FileItem {
-    name
-    path
-    size
-    isDirectory
-    thumbnailUrls {
-      grid
-      preview
-      full
-      original
-      meta
-    }
-  }
-`)
-
-export const FileStatFragment = gql(`
-  fragment FileStatInfo on FileStat {
-    name
-    path
-    size
-    isDirectory
-    modifiedTime
-    etag
-    thumbnailUrls {
-      grid
-      preview
-      full
-      original
-      meta
-    }
-  }
-`)
-
-// Queries
-export const ListFilesQuery = gql(`
+export const LIST_FILES = gql(`
   query ListFiles(
     $path: String!
     $offset: Int
@@ -60,41 +24,73 @@ export const ListFilesQuery = gql(`
       sortOrder: $sortOrder
     ) {
       items {
-        ...FileInfo
+        name
+        path
+        size
+        isDirectory
+        thumbnailUrls {
+          grid
+          preview
+          full
+          original
+          meta
+        }
       }
       totalCount
     }
   }
 `)
 
-export const StatFileQuery = gql(`
+export const STAT_FILE = gql(`
   query StatFile($path: String!) {
     statFile(path: $path) {
-      ...FileStatInfo
+      name
+      path
+      size
+      isDirectory
+      modifiedTime
+      etag
+      thumbnailUrls {
+        grid
+        preview
+        full
+        original
+        meta
+      }
     }
   }
 `)
 
-// Mutations
 export const UploadFileMutation = gql(`
   mutation UploadFile($path: String!, $content: Upload!) {
     uploadFile(path: $path, content: $content)
   }
 `)
 
-export const DeleteFileMutation = gql(`
+export const DELETE_FILE = gql(`
   mutation DeleteFile($path: String!) {
     deleteFile(path: $path)
   }
 `)
 
-export const CreateFolderMutation = gql(`
+export const CREATE_FOLDER = gql(`
   mutation CreateFolder($path: String!) {
     createFolder(path: $path)
   }
 `)
 
-// Storage Status Query
+export const COPY_FILE = gql(`
+  mutation CopyFile($sourcePath: String!, $destPath: String!) {
+    copyFile(sourcePath: $sourcePath, destPath: $destPath)
+  }
+`)
+
+export const MOVE_FILE = gql(`
+  mutation MoveFile($sourcePath: String!, $destPath: String!) {
+    moveFile(sourcePath: $sourcePath, destPath: $destPath)
+  }
+`)
+
 export const STORAGE_STATUS = gql(`
   query StorageStatus {
     storageStatus {
@@ -119,7 +115,6 @@ export const STORAGE_STATUS = gql(`
   }
 `)
 
-// Configure File Storage Mutation
 export const CONFIGURE_FILE_STORAGE = gql(`
   mutation ConfigureFileStorage($input: FileStorageInput!) {
     configureFileStorage(input: $input) {
@@ -131,7 +126,6 @@ export const CONFIGURE_FILE_STORAGE = gql(`
   }
 `)
 
-// Configure S3 Storage Mutation
 export const CONFIGURE_S3_STORAGE = gql(`
   mutation ConfigureS3Storage($input: S3StorageInput!) {
     configureS3Storage(input: $input) {
@@ -143,7 +137,6 @@ export const CONFIGURE_S3_STORAGE = gql(`
   }
 `)
 
-// Test Storage Configuration Mutation
 export const TEST_STORAGE_CONFIG = gql(`
   mutation TestStorageConfig($input: StorageConfigInput!) {
     testStorageConfig(input: $input) {

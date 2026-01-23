@@ -443,3 +443,166 @@ func TestFileStorage_ListEmptyDirectoryWithLogger(t *testing.T) {
 	assert.Equal(t, 0, result.TotalCount)
 	assert.Len(t, result.Items, 0)
 }
+
+func TestFileStorage_CopyFile(t *testing.T) {
+	fs, tempDir := setupTestFileStorage(t)
+	defer os.RemoveAll(tempDir)
+	ctx := context.Background()
+
+	// Create a source file
+	content := "Hello, Copy!"
+	err := fs.Put(ctx, "source.txt", bytes.NewReader([]byte(content)))
+	require.NoError(t, err)
+
+	// Copy the file
+	err = fs.Copy(ctx, "source.txt", "dest.txt")
+	assert.NoError(t, err)
+
+	// Verify both files exist
+	sourceData, err := fs.Get(ctx, "source.txt")
+	assert.NoError(t, err)
+	defer sourceData.Close()
+	sourceContent, _ := io.ReadAll(sourceData)
+	assert.Equal(t, content, string(sourceContent))
+
+	destData, err := fs.Get(ctx, "dest.txt")
+	assert.NoError(t, err)
+	defer destData.Close()
+	destContent, _ := io.ReadAll(destData)
+	assert.Equal(t, content, string(destContent))
+}
+
+func TestFileStorage_CopyFolder(t *testing.T) {
+	fs, tempDir := setupTestFileStorage(t)
+	defer os.RemoveAll(tempDir)
+	ctx := context.Background()
+
+	// Create a source folder with files
+	err := fs.CreateFolder(ctx, "source_folder")
+	require.NoError(t, err)
+	err = fs.Put(ctx, "source_folder/file1.txt", bytes.NewReader([]byte("content1")))
+	require.NoError(t, err)
+	err = fs.Put(ctx, "source_folder/file2.txt", bytes.NewReader([]byte("content2")))
+	require.NoError(t, err)
+
+	// Copy the folder
+	err = fs.Copy(ctx, "source_folder", "dest_folder")
+	assert.NoError(t, err)
+
+	// Verify destination folder and files exist
+	result, err := fs.List(ctx, "dest_folder", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 2, result.TotalCount)
+
+	// Verify file contents
+	file1Data, err := fs.Get(ctx, "dest_folder/file1.txt")
+	assert.NoError(t, err)
+	defer file1Data.Close()
+	content1, _ := io.ReadAll(file1Data)
+	assert.Equal(t, "content1", string(content1))
+}
+
+func TestFileStorage_CopyNonExistent(t *testing.T) {
+	fs, tempDir := setupTestFileStorage(t)
+	defer os.RemoveAll(tempDir)
+	ctx := context.Background()
+
+	// Try to copy a non-existent file
+	err := fs.Copy(ctx, "non_existent.txt", "dest.txt")
+	assert.Error(t, err)
+}
+
+func TestFileStorage_CopyDestinationExists(t *testing.T) {
+	fs, tempDir := setupTestFileStorage(t)
+	defer os.RemoveAll(tempDir)
+	ctx := context.Background()
+
+	// Create source and destination files
+	err := fs.Put(ctx, "source.txt", bytes.NewReader([]byte("source")))
+	require.NoError(t, err)
+	err = fs.Put(ctx, "dest.txt", bytes.NewReader([]byte("dest")))
+	require.NoError(t, err)
+
+	// Try to copy when destination exists
+	err = fs.Copy(ctx, "source.txt", "dest.txt")
+	assert.ErrorIs(t, err, os.ErrExist)
+}
+
+func TestFileStorage_MoveFile(t *testing.T) {
+	fs, tempDir := setupTestFileStorage(t)
+	defer os.RemoveAll(tempDir)
+	ctx := context.Background()
+
+	// Create a source file
+	content := "Hello, Move!"
+	err := fs.Put(ctx, "source.txt", bytes.NewReader([]byte(content)))
+	require.NoError(t, err)
+
+	// Move the file
+	err = fs.Move(ctx, "source.txt", "dest.txt")
+	assert.NoError(t, err)
+
+	// Verify source no longer exists
+	_, err = fs.Get(ctx, "source.txt")
+	assert.Error(t, err)
+
+	// Verify destination exists with correct content
+	destData, err := fs.Get(ctx, "dest.txt")
+	assert.NoError(t, err)
+	defer destData.Close()
+	destContent, _ := io.ReadAll(destData)
+	assert.Equal(t, content, string(destContent))
+}
+
+func TestFileStorage_MoveFolder(t *testing.T) {
+	fs, tempDir := setupTestFileStorage(t)
+	defer os.RemoveAll(tempDir)
+	ctx := context.Background()
+
+	// Create a source folder with files
+	err := fs.CreateFolder(ctx, "source_folder")
+	require.NoError(t, err)
+	err = fs.Put(ctx, "source_folder/file1.txt", bytes.NewReader([]byte("content1")))
+	require.NoError(t, err)
+	err = fs.Put(ctx, "source_folder/file2.txt", bytes.NewReader([]byte("content2")))
+	require.NoError(t, err)
+
+	// Move the folder
+	err = fs.Move(ctx, "source_folder", "dest_folder")
+	assert.NoError(t, err)
+
+	// Verify source folder no longer exists
+	_, err = fs.List(ctx, "source_folder", storage.ListOptions{})
+	assert.Error(t, err)
+
+	// Verify destination folder and files exist
+	result, err := fs.List(ctx, "dest_folder", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 2, result.TotalCount)
+}
+
+func TestFileStorage_MoveNonExistent(t *testing.T) {
+	fs, tempDir := setupTestFileStorage(t)
+	defer os.RemoveAll(tempDir)
+	ctx := context.Background()
+
+	// Try to move a non-existent file
+	err := fs.Move(ctx, "non_existent.txt", "dest.txt")
+	assert.Error(t, err)
+}
+
+func TestFileStorage_MoveDestinationExists(t *testing.T) {
+	fs, tempDir := setupTestFileStorage(t)
+	defer os.RemoveAll(tempDir)
+	ctx := context.Background()
+
+	// Create source and destination files
+	err := fs.Put(ctx, "source.txt", bytes.NewReader([]byte("source")))
+	require.NoError(t, err)
+	err = fs.Put(ctx, "dest.txt", bytes.NewReader([]byte("dest")))
+	require.NoError(t, err)
+
+	// Try to move when destination exists
+	err = fs.Move(ctx, "source.txt", "dest.txt")
+	assert.ErrorIs(t, err, os.ErrExist)
+}

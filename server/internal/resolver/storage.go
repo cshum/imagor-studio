@@ -66,6 +66,46 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool,
 	return true, nil
 }
 
+// CopyFile is the resolver for the copyFile field.
+func (r *mutationResolver) CopyFile(ctx context.Context, sourcePath string, destPath string) (bool, error) {
+	// Check write permissions for both source and destination paths
+	if err := RequireWritePermission(ctx, sourcePath); err != nil {
+		return false, err
+	}
+	if err := RequireWritePermission(ctx, destPath); err != nil {
+		return false, err
+	}
+
+	r.logger.Debug("Copying file", zap.String("sourcePath", sourcePath), zap.String("destPath", destPath))
+
+	if err := r.getStorage().Copy(ctx, sourcePath, destPath); err != nil {
+		r.logger.Error("Failed to copy file", zap.Error(err))
+		return false, fmt.Errorf("failed to copy file: %w", err)
+	}
+
+	return true, nil
+}
+
+// MoveFile is the resolver for the moveFile field.
+func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, destPath string) (bool, error) {
+	// Check write permissions for both source and destination paths
+	if err := RequireWritePermission(ctx, sourcePath); err != nil {
+		return false, err
+	}
+	if err := RequireWritePermission(ctx, destPath); err != nil {
+		return false, err
+	}
+
+	r.logger.Debug("Moving file", zap.String("sourcePath", sourcePath), zap.String("destPath", destPath))
+
+	if err := r.getStorage().Move(ctx, sourcePath, destPath); err != nil {
+		r.logger.Error("Failed to move file", zap.Error(err))
+		return false, fmt.Errorf("failed to move file: %w", err)
+	}
+
+	return true, nil
+}
+
 // ListFiles is the resolver for the listFiles field.
 func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
 	// Check read permissions and path access

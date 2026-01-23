@@ -22,6 +22,8 @@ type Mutation {
   uploadFile(path: String!, content: Upload!): Boolean!
   deleteFile(path: String!): Boolean!
   createFolder(path: String!): Boolean!
+  copyFile(sourcePath: String!, destPath: String!): Boolean!
+  moveFile(sourcePath: String!, destPath: String!): Boolean!
 
   # Storage Configuration APIs (admin only)
   configureFileStorage(input: FileStorageInput!): StorageConfigResult!

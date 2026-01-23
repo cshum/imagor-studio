@@ -62,7 +62,12 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
   if (!canExpand) {
     return (
       <SidebarMenuItem>
-        <SidebarMenuButton onClick={handleFolderClick} isActive={isActive}>
+        <SidebarMenuButton
+          onClick={handleFolderClick}
+          isActive={isActive}
+          data-folder-key={folder.path}
+          data-folder-name={folder.name || 'Root'}
+        >
           <span className='-m-2 p-4 md:p-2'>
             <div className='size-4' />
           </span>
@@ -81,7 +86,12 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
         className='group/collapsible [&[data-state=open]>button>span>svg:first-child]:rotate-90'
       >
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton onClick={handleFolderClick} isActive={isActive}>
+          <SidebarMenuButton
+            onClick={handleFolderClick}
+            isActive={isActive}
+            data-folder-key={folder.path}
+            data-folder-name={folder.name || 'Root'}
+          >
             <span onClick={handleExpandClick} className='-m-2 p-4 md:p-2'>
               <ChevronRight className='size-4 transition-transform' />
             </span>

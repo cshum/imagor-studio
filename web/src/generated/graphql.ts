@@ -160,6 +160,7 @@ export type Mutation = {
   configureExternalImagor: ImagorConfigResult
   configureFileStorage: StorageConfigResult
   configureS3Storage: StorageConfigResult
+  copyFile: Scalars['Boolean']['output']
   createFolder: Scalars['Boolean']['output']
   createUser: User
   deactivateAccount: Scalars['Boolean']['output']
@@ -167,6 +168,7 @@ export type Mutation = {
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
+  moveFile: Scalars['Boolean']['output']
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
@@ -189,6 +191,11 @@ export type MutationConfigureFileStorageArgs = {
 
 export type MutationConfigureS3StorageArgs = {
   input: S3StorageInput
+}
+
+export type MutationCopyFileArgs = {
+  destPath: Scalars['String']['input']
+  sourcePath: Scalars['String']['input']
 }
 
 export type MutationCreateFolderArgs = {
@@ -222,6 +229,11 @@ export type MutationGenerateImagorUrlArgs = {
   galleryKey: Scalars['String']['input']
   imageKey: Scalars['String']['input']
   params: ImagorParamsInput
+}
+
+export type MutationMoveFileArgs = {
+  destPath: Scalars['String']['input']
+  sourcePath: Scalars['String']['input']
 }
 
 export type MutationSetSystemRegistryArgs = {
@@ -620,40 +632,6 @@ export type LicenseStatusQuery = {
   }
 }
 
-export type FileInfoFragment = {
-  __typename?: 'FileItem'
-  name: string
-  path: string
-  size: number
-  isDirectory: boolean
-  thumbnailUrls: {
-    __typename?: 'ThumbnailUrls'
-    grid: string | null
-    preview: string | null
-    full: string | null
-    original: string | null
-    meta: string | null
-  } | null
-}
-
-export type FileStatInfoFragment = {
-  __typename?: 'FileStat'
-  name: string
-  path: string
-  size: number
-  isDirectory: boolean
-  modifiedTime: string
-  etag: string | null
-  thumbnailUrls: {
-    __typename?: 'ThumbnailUrls'
-    grid: string | null
-    preview: string | null
-    full: string | null
-    original: string | null
-    meta: string | null
-  } | null
-}
-
 export type ListFilesQueryVariables = Exact<{
   path: Scalars['String']['input']
   offset?: InputMaybe<Scalars['Int']['input']>
@@ -732,6 +710,20 @@ export type CreateFolderMutationVariables = Exact<{
 }>
 
 export type CreateFolderMutation = { __typename?: 'Mutation'; createFolder: boolean }
+
+export type CopyFileMutationVariables = Exact<{
+  sourcePath: Scalars['String']['input']
+  destPath: Scalars['String']['input']
+}>
+
+export type CopyFileMutation = { __typename?: 'Mutation'; copyFile: boolean }
+
+export type MoveFileMutationVariables = Exact<{
+  sourcePath: Scalars['String']['input']
+  destPath: Scalars['String']['input']
+}>
+
+export type MoveFileMutation = { __typename?: 'Mutation'; moveFile: boolean }
 
 export type StorageStatusQueryVariables = Exact<{ [key: string]: never }>
 
@@ -960,74 +952,6 @@ export const SystemRegistryInfoFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<SystemRegistryInfoFragment, unknown>
-export const FileInfoFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'FileInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'FileItem' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'path' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'size' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'isDirectory' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'thumbnailUrls' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'grid' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'preview' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'full' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'original' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'meta' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<FileInfoFragment, unknown>
-export const FileStatInfoFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'FileStatInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'FileStat' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'path' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'size' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'isDirectory' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'modifiedTime' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'etag' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'thumbnailUrls' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'grid' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'preview' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'full' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'original' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'meta' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<FileStatInfoFragment, unknown>
 export const UserInfoFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -1876,39 +1800,28 @@ export const ListFilesDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'FileInfo' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'isDirectory' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'thumbnailUrls' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'grid' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'preview' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'full' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'original' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'meta' } },
+                          ],
+                        },
+                      },
                     ],
                   },
                 },
                 { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'FileInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'FileItem' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'path' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'size' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'isDirectory' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'thumbnailUrls' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'grid' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'preview' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'full' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'original' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'meta' } },
               ],
             },
           },
@@ -1950,37 +1863,26 @@ export const StatFileDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'FileStatInfo' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'FileStatInfo' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'FileStat' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'path' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'size' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'isDirectory' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'modifiedTime' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'etag' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'thumbnailUrls' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'grid' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'preview' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'full' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'original' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'meta' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isDirectory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'modifiedTime' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'etag' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'thumbnailUrls' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'grid' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'preview' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'full' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'original' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'meta' } },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -2110,6 +2012,104 @@ export const CreateFolderDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateFolderMutation, CreateFolderMutationVariables>
+export const CopyFileDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CopyFile' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'sourcePath' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'destPath' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'copyFile' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'sourcePath' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'sourcePath' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'destPath' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'destPath' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CopyFileMutation, CopyFileMutationVariables>
+export const MoveFileDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'MoveFile' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'sourcePath' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'destPath' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'moveFile' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'sourcePath' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'sourcePath' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'destPath' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'destPath' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MoveFileMutation, MoveFileMutationVariables>
 export const StorageStatusDocument = {
   kind: 'Document',
   definitions: [

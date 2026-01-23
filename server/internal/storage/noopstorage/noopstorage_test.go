@@ -121,3 +121,33 @@ func TestNoOpStorage_Stat(t *testing.T) {
 func TestNoOpStorage_ImplementsInterface(t *testing.T) {
 	var _ storage.Storage = (*NoOpStorage)(nil)
 }
+
+func TestNoOpStorage_Copy(t *testing.T) {
+	s := New()
+	ctx := context.Background()
+
+	err := s.Copy(ctx, "source.txt", "dest.txt")
+	if err == nil {
+		t.Fatal("Copy() should return error for NoOp storage")
+	}
+
+	expectedMsg := "storage not configured"
+	if !strings.Contains(err.Error(), expectedMsg) {
+		t.Errorf("Expected error to contain '%s', got: %v", expectedMsg, err)
+	}
+}
+
+func TestNoOpStorage_Move(t *testing.T) {
+	s := New()
+	ctx := context.Background()
+
+	err := s.Move(ctx, "source.txt", "dest.txt")
+	if err == nil {
+		t.Fatal("Move() should return error for NoOp storage")
+	}
+
+	expectedMsg := "storage not configured"
+	if !strings.Contains(err.Error(), expectedMsg) {
+		t.Errorf("Expected error to contain '%s', got: %v", expectedMsg, err)
+	}
+}

@@ -18,12 +18,11 @@ import {
 import { ImageInfo, ImageViewInfo } from '@/components/image-gallery/image-view-info.tsx'
 import { LicenseBadge } from '@/components/license-badge.tsx'
 import { Sheet } from '@/components/ui/sheet'
-import { FileInfoFragment } from '@/generated/graphql'
 import { useAutoHideControls } from '@/hooks/use-auto-hide-controls'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useAuth } from '@/stores/auth-store'
 
-export interface GalleryImage extends Omit<FileInfoFragment, 'path' | 'size' | 'isDirectory'> {
+export interface GalleryImage {
   imageSrc: string
   imageName: string
   imageKey: string
