@@ -330,17 +330,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
-  const handleDeleteFolderFromMenu = (folderKey: string, folderName: string) => {
-    setDeleteFolderDialog({
-      open: true,
-      folderKey,
-      folderName,
-      isDeleting: false,
-    })
-  }
-
   const handleDeleteFolder = async () => {
-    if (!deleteFolderDialog.folderKey) return
+    if (!deleteFolderDialog.folderKey || !deleteFolderDialog.folderName) return
 
     setDeleteFolderDialog((prev) => ({ ...prev, isDeleting: true }))
 
@@ -349,9 +340,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         ? `${galleryKey}/${deleteFolderDialog.folderKey}`
         : deleteFolderDialog.folderKey
 
-      await deleteFile(folderPath)
-
-      const folderName = deleteFolderDialog.folderName
+      // Use centralized folder delete handler from hook
+      await handleDeleteFolderOperation(folderPath, deleteFolderDialog.folderName)
 
       setDeleteFolderDialog({
         open: false,
@@ -359,11 +349,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         folderName: null,
         isDeleting: false,
       })
-
-      router.invalidate()
-      toast.success(t('pages.gallery.deleteFolder.success', { folderName }))
     } catch {
-      toast.error(t('pages.gallery.deleteFolder.error'))
       setDeleteFolderDialog((prev) => ({ ...prev, isDeleting: false }))
     }
   }
@@ -411,17 +397,24 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     setRenameDialog((prev) => ({ ...prev, isRenaming: true }))
 
     try {
-      // Extract directory path and construct new path
-      const pathParts = renameDialog.itemPath.split('/')
-      // For files, append the extension back; for folders, use as-is
       const newName =
         renameDialog.itemType === 'file'
           ? renameInput.trim() + renameFileExtension
           : renameInput.trim()
-      pathParts[pathParts.length - 1] = newName
-      const newPath = pathParts.join('/')
 
-      await moveFile(renameDialog.itemPath, newPath)
+      if (renameDialog.itemType === 'folder') {
+        // Use centralized folder rename handler from hook
+        await handleRenameFolderOperation(renameDialog.itemPath, newName)
+      } else {
+        // Handle file rename locally
+        const pathParts = renameDialog.itemPath.split('/')
+        pathParts[pathParts.length - 1] = newName
+        const newPath = pathParts.join('/')
+
+        await moveFile(renameDialog.itemPath, newPath)
+        router.invalidate()
+        toast.success(t('pages.gallery.renameItem.success', { name: newName }))
+      }
 
       setRenameDialog({
         open: false,
@@ -432,9 +425,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       })
       setRenameInput('')
       setRenameFileExtension('')
-
-      router.invalidate()
-      toast.success(t('pages.gallery.renameItem.success', { name: newName }))
     } catch {
       toast.error(t('pages.gallery.renameItem.error', { type: renameDialog.itemType }))
       setRenameDialog((prev) => ({ ...prev, isRenaming: false }))
@@ -552,11 +542,23 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     )
   }
 
-  // Use the shared folder context menu hook with authentication check
-  const { renderMenuItems: renderFolderContextMenuItems } = useFolderContextMenu({
-    onRename: (folderKey, folderName) => handleRenameFromMenu(folderKey, folderName, 'folder'),
-    onDelete: handleDeleteFolderFromMenu,
+  // Use the shared folder context menu hook with centralized logic
+  const {
+    renderMenuItems: renderFolderContextMenuItems,
+    handleRename: handleRenameFolderOperation,
+    handleDelete: handleDeleteFolderOperation,
+  } = useFolderContextMenu({
+    currentPath: galleryKey,
     isAuthenticated: () => authState.state === 'authenticated',
+    onRename: (folderKey, folderName) => handleRenameFromMenu(folderKey, folderName, 'folder'),
+    onDelete: (folderKey, folderName) => {
+      setDeleteFolderDialog({
+        open: true,
+        folderKey,
+        folderName,
+        isDeleting: false,
+      })
+    },
   })
 
   const isNavigateToImage = !!(

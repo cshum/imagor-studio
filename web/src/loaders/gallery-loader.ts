@@ -177,10 +177,6 @@ export const galleryLoader = async ({
   const images: GalleryImage[] = result.items
     .filter((item) => !item.isDirectory && item.thumbnailUrls)
     .map((item) => ({
-      // Required fields from FileInfoFragment
-      name: item.name,
-      thumbnailUrls: item.thumbnailUrls,
-      // Additional GalleryImage fields
       imageKey: item.name,
       imageSrc: item.thumbnailUrls?.grid || '',
       imageName: item.name,
@@ -280,8 +276,6 @@ export const imageLoader = async ({
   }
 
   const image: GalleryImage = {
-    name: fileStat.name,
-    thumbnailUrls: fileStat.thumbnailUrls,
     imageKey: fileStat.name,
     imageSrc: fullSizeSrc,
     originalSrc: getFullImageUrl(fileStat.thumbnailUrls.original || ''),

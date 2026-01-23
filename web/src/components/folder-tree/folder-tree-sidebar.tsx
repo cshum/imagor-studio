@@ -2,9 +2,7 @@ import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { Home } from 'lucide-react'
-import { toast } from 'sonner'
 
-import { deleteFile, moveFile } from '@/api/storage-api'
 import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
 import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
 import { Button } from '@/components/ui/button'
@@ -30,7 +28,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
-import { invalidateFolderCache, loadRootFolders, useFolderTree } from '@/stores/folder-tree-store'
+import { useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 import { FolderTreeNode } from './folder-tree-node'
@@ -77,6 +75,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
     }
   }
 
+  // Trigger rename dialog from context menu
   const handleRenameFromMenu = (folderKey: string, folderName: string) => {
     setRenameDialog({
       open: true,
@@ -87,17 +86,24 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
     setRenameInput(folderName)
   }
 
+  // Trigger delete dialog from context menu
+  const handleDeleteFromMenu = (folderKey: string, folderName: string) => {
+    setDeleteFolderDialog({
+      open: true,
+      folderKey,
+      folderName,
+      isDeleting: false,
+    })
+  }
+
   const handleRename = async () => {
     if (!renameDialog.folderPath || !renameInput.trim()) return
 
     setRenameDialog((prev) => ({ ...prev, isRenaming: true }))
 
     try {
-      const pathParts = renameDialog.folderPath.split('/')
-      pathParts[pathParts.length - 1] = renameInput.trim()
-      const newPath = pathParts.join('/')
-
-      await moveFile(renameDialog.folderPath, newPath)
+      // Use centralized handler from hook
+      await handleRenameFolder(renameDialog.folderPath, renameInput.trim())
 
       setRenameDialog({
         open: false,
@@ -106,18 +112,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
         isRenaming: false,
       })
       setRenameInput('')
-
-      // Invalidate parent folder cache to force refresh
-      const parentPath = renameDialog.folderPath.split('/').slice(0, -1).join('/')
-      if (parentPath) {
-        invalidateFolderCache(parentPath)
-      }
-
-      // Refresh folder tree
-      await loadRootFolders()
-      toast.success(t('pages.gallery.renameItem.success', { name: renameInput.trim() }))
     } catch {
-      toast.error(t('pages.gallery.renameItem.error', { type: 'folder' }))
       setRenameDialog((prev) => ({ ...prev, isRenaming: false }))
     }
   }
@@ -134,25 +129,14 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
     }
   }
 
-  const handleDeleteFolderFromMenu = (folderKey: string, folderName: string) => {
-    setDeleteFolderDialog({
-      open: true,
-      folderKey,
-      folderName,
-      isDeleting: false,
-    })
-  }
-
   const handleDeleteFolder = async () => {
-    if (!deleteFolderDialog.folderKey) return
+    if (!deleteFolderDialog.folderKey || !deleteFolderDialog.folderName) return
 
     setDeleteFolderDialog((prev) => ({ ...prev, isDeleting: true }))
 
     try {
-      await deleteFile(deleteFolderDialog.folderKey)
-
-      const folderName = deleteFolderDialog.folderName
-      const folderKey = deleteFolderDialog.folderKey
+      // Use centralized handler from hook
+      await handleDeleteFolderOperation(deleteFolderDialog.folderKey, deleteFolderDialog.folderName)
 
       setDeleteFolderDialog({
         open: false,
@@ -160,18 +144,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
         folderName: null,
         isDeleting: false,
       })
-
-      // Invalidate parent folder cache to force refresh
-      const parentPath = folderKey.split('/').slice(0, -1).join('/')
-      if (parentPath) {
-        invalidateFolderCache(parentPath)
-      }
-
-      // Refresh folder tree
-      await loadRootFolders()
-      toast.success(t('pages.gallery.deleteFolder.success', { folderName }))
     } catch {
-      toast.error(t('pages.gallery.deleteFolder.error'))
       setDeleteFolderDialog((prev) => ({ ...prev, isDeleting: false }))
     }
   }
@@ -187,10 +160,15 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
     }
   }
 
-  // Use the shared folder context menu hook
-  const { renderMenuItems } = useFolderContextMenu({
+  // Use the shared folder context menu hook with centralized logic
+  const {
+    renderMenuItems,
+    handleRename: handleRenameFolder,
+    handleDelete: handleDeleteFolderOperation,
+  } = useFolderContextMenu({
+    currentPath: '', // Sidebar never on current path
     onRename: handleRenameFromMenu,
-    onDelete: handleDeleteFolderFromMenu,
+    onDelete: handleDeleteFromMenu,
   })
 
   return (
