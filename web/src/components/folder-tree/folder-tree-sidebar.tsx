@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
-import { loadRootFolders, useFolderTree } from '@/stores/folder-tree-store'
+import { invalidateFolderCache, loadRootFolders, useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 import { FolderTreeNode } from './folder-tree-node'
@@ -107,6 +107,12 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
       })
       setRenameInput('')
 
+      // Invalidate parent folder cache to force refresh
+      const parentPath = renameDialog.folderPath.split('/').slice(0, -1).join('/')
+      if (parentPath) {
+        invalidateFolderCache(parentPath)
+      }
+
       // Refresh folder tree
       await loadRootFolders()
       toast.success(t('pages.gallery.renameItem.success', { name: renameInput.trim() }))
@@ -146,6 +152,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
       await deleteFile(deleteFolderDialog.folderKey)
 
       const folderName = deleteFolderDialog.folderName
+      const folderKey = deleteFolderDialog.folderKey
 
       setDeleteFolderDialog({
         open: false,
@@ -153,6 +160,12 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
         folderName: null,
         isDeleting: false,
       })
+
+      // Invalidate parent folder cache to force refresh
+      const parentPath = folderKey.split('/').slice(0, -1).join('/')
+      if (parentPath) {
+        invalidateFolderCache(parentPath)
+      }
 
       // Refresh folder tree
       await loadRootFolders()

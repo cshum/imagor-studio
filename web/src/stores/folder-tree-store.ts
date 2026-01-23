@@ -34,6 +34,7 @@ export type FolderTreeAction =
   | { type: 'LOAD_ROOT_FOLDERS' }
   | { type: 'SET_HOME_TITLE'; title: string }
   | { type: 'LOAD_HOME_TITLE' }
+  | { type: 'INVALIDATE_FOLDER_CACHE'; path: string }
 
 const initialState: FolderTreeState = {
   rootFolders: [],
@@ -213,6 +214,35 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
     case 'LOAD_HOME_TITLE':
       return state // This will be handled by the async action
 
+    case 'INVALIDATE_FOLDER_CACHE': {
+      // Invalidate cache for a specific folder path
+      // This clears isLoaded and children for the specified folder
+      const invalidateFolder = (folders: FolderNode[]): FolderNode[] =>
+        folders.map((folder) => {
+          if (folder.path === action.path) {
+            // Found the folder to invalidate - clear its cache
+            return {
+              ...folder,
+              isLoaded: false,
+              children: undefined,
+            }
+          }
+          // Recursively check children
+          if (folder.children) {
+            return {
+              ...folder,
+              children: invalidateFolder(folder.children),
+            }
+          }
+          return folder
+        })
+
+      return {
+        ...state,
+        rootFolders: invalidateFolder(state.rootFolders),
+      }
+    }
+
     default:
       return state
   }
@@ -373,6 +403,15 @@ export const setCurrentPath = (path: string) => {
 
 export const updateTreeData = (path: string, folders: FolderNode[]) => {
   folderTreeStore.dispatch({ type: 'UPDATE_TREE_DATA', path, folders })
+}
+
+/**
+ * Invalidate cache for a specific folder path
+ * This clears the isLoaded flag and children for the specified folder,
+ * forcing it to re-fetch when next expanded
+ */
+export const invalidateFolderCache = (path: string) => {
+  folderTreeStore.dispatch({ type: 'INVALIDATE_FOLDER_CACHE', path })
 }
 
 /**
