@@ -11,14 +11,9 @@ import {
   ContextMenuLabel,
   ContextMenuSeparator,
 } from '@/components/ui/context-menu'
-import { invalidateFolderCache, loadRootFolders } from '@/stores/folder-tree-store'
+import { folderTreeStore, invalidateFolderCache, loadRootFolders } from '@/stores/folder-tree-store'
 
 interface UseFolderContextMenuProps {
-  /**
-   * Current path being viewed (for redirect detection).
-   * Empty string for sidebar (never on current path).
-   */
-  currentPath: string
   /**
    * Optional function to check if user is authenticated.
    * If provided, menu items will only show when this returns true.
@@ -33,8 +28,17 @@ interface UseFolderContextMenuProps {
   onDelete?: (folderKey: string, folderName: string) => void
 }
 
+/**
+ * Check if a folder path affects the current viewing path.
+ * Returns true if folderPath is the current path or a parent of it.
+ */
+function isPathAffected(folderPath: string, currentPath: string): boolean {
+  if (!currentPath) return false // Not viewing any folder
+  if (currentPath === folderPath) return true // Exact match
+  return currentPath.startsWith(`${folderPath}/`) // Parent folder
+}
+
 export function useFolderContextMenu({
-  currentPath,
   isAuthenticated,
   onRename,
   onDelete,
@@ -66,17 +70,19 @@ export function useFolderContextMenu({
       // Refresh folder tree
       await loadRootFolders()
 
-      // Redirect if we renamed the current folder
-      if (folderPath === currentPath) {
-        toast.success(t('pages.gallery.renameItem.success', { name: newName }))
-        navigate({
-          to: '/gallery/$galleryKey',
-          params: { galleryKey: newPath },
-        })
+      // Show success toast
+      toast.success(t('pages.gallery.renameItem.success', { name: newName }))
+
+      // Get current path from folder tree store
+      const { currentPath } = folderTreeStore.getState()
+
+      // Check if operation affects current view
+      if (isPathAffected(folderPath, currentPath)) {
+        // Current route is affected - redirect to home
+        navigate({ to: '/' })
       } else {
-        // Invalidate router to refresh gallery-page loader
+        // Current route not affected - just refresh
         router.invalidate()
-        toast.success(t('pages.gallery.renameItem.success', { name: newName }))
       }
     } catch {
       toast.error(t('pages.gallery.renameItem.error', { type: 'folder' }))
@@ -102,23 +108,19 @@ export function useFolderContextMenu({
       // Refresh folder tree
       await loadRootFolders()
 
-      // Redirect if we deleted the current folder
-      if (folderPath === currentPath) {
-        toast.success(t('pages.gallery.deleteFolder.success', { folderName }))
-        // Navigate to parent folder
-        if (parentPath) {
-          navigate({
-            to: '/gallery/$galleryKey',
-            params: { galleryKey: parentPath },
-          })
-        } else {
-          // Deleted a root folder, go to home
-          navigate({ to: '/' })
-        }
+      // Show success toast
+      toast.success(t('pages.gallery.deleteFolder.success', { folderName }))
+
+      // Get current path from folder tree store
+      const { currentPath } = folderTreeStore.getState()
+
+      // Check if operation affects current view
+      if (isPathAffected(folderPath, currentPath)) {
+        // Current route is affected - redirect to home
+        navigate({ to: '/' })
       } else {
-        // Invalidate router to refresh gallery-page loader
+        // Current route not affected - just refresh
         router.invalidate()
-        toast.success(t('pages.gallery.deleteFolder.success', { folderName }))
       }
     } catch {
       toast.error(t('pages.gallery.deleteFolder.error'))

@@ -336,9 +336,21 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     setDeleteFolderDialog((prev) => ({ ...prev, isDeleting: true }))
 
     try {
-      const folderPath = galleryKey
-        ? `${galleryKey}/${deleteFolderDialog.folderKey}`
-        : deleteFolderDialog.folderKey
+      // Check if this is the current folder or a subfolder
+      let folderPath: string
+      if (galleryKey) {
+        const currentFolderName = galleryKey.split('/').pop()
+        if (currentFolderName === deleteFolderDialog.folderKey) {
+          // This IS the current folder - use galleryKey as-is
+          folderPath = galleryKey
+        } else {
+          // This is a subfolder - append to galleryKey
+          folderPath = `${galleryKey}/${deleteFolderDialog.folderKey}`
+        }
+      } else {
+        // Root folder
+        folderPath = deleteFolderDialog.folderKey
+      }
 
       // Use centralized folder delete handler from hook
       await handleDeleteFolderOperation(folderPath, deleteFolderDialog.folderName)
@@ -366,7 +378,22 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   }
 
   const handleRenameFromMenu = (itemKey: string, itemName: string, itemType: 'file' | 'folder') => {
-    const itemPath = galleryKey ? `${galleryKey}/${itemKey}` : itemKey
+    // For folders: check if this is the current folder or a subfolder
+    // If itemKey matches the last segment of galleryKey, it's the current folder
+    let itemPath: string
+    if (itemType === 'folder' && galleryKey) {
+      const currentFolderName = galleryKey.split('/').pop()
+      if (currentFolderName === itemKey) {
+        // This IS the current folder - use galleryKey as-is
+        itemPath = galleryKey
+      } else {
+        // This is a subfolder - append to galleryKey
+        itemPath = `${galleryKey}/${itemKey}`
+      }
+    } else {
+      // For files or root folders
+      itemPath = galleryKey ? `${galleryKey}/${itemKey}` : itemKey
+    }
 
     // For files, extract extension and show only the name without extension
     let nameWithoutExt = itemName
@@ -548,7 +575,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     handleRename: handleRenameFolderOperation,
     handleDelete: handleDeleteFolderOperation,
   } = useFolderContextMenu({
-    currentPath: galleryKey,
     isAuthenticated: () => authState.state === 'authenticated',
     onRename: (folderKey, folderName) => handleRenameFromMenu(folderKey, folderName, 'folder'),
     onDelete: (folderKey, folderName) => {

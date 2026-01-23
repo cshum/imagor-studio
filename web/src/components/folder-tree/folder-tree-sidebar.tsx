@@ -96,6 +96,16 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
     })
   }
 
+  // Use the shared folder context menu hook with centralized logic
+  const {
+    renderMenuItems,
+    handleRename: handleRenameFolderOperation,
+    handleDelete: handleDeleteFolderOperation,
+  } = useFolderContextMenu({
+    onRename: handleRenameFromMenu,
+    onDelete: handleDeleteFromMenu,
+  })
+
   const handleRename = async () => {
     if (!renameDialog.folderPath || !renameInput.trim()) return
 
@@ -103,7 +113,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
 
     try {
       // Use centralized handler from hook
-      await handleRenameFolder(renameDialog.folderPath, renameInput.trim())
+      await handleRenameFolderOperation(renameDialog.folderPath, renameInput.trim())
 
       setRenameDialog({
         open: false,
@@ -159,17 +169,6 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
       })
     }
   }
-
-  // Use the shared folder context menu hook with centralized logic
-  const {
-    renderMenuItems,
-    handleRename: handleRenameFolder,
-    handleDelete: handleDeleteFolderOperation,
-  } = useFolderContextMenu({
-    currentPath: '', // Sidebar never on current path
-    onRename: handleRenameFromMenu,
-    onDelete: handleDeleteFromMenu,
-  })
 
   return (
     <Sidebar {...props}>
