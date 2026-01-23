@@ -27,10 +27,7 @@ import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dia
 import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
 import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialog'
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
-import {
-  FolderContextData,
-  FolderContextMenu,
-} from '@/components/image-gallery/folder-context-menu'
+import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
 import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
@@ -62,6 +59,7 @@ import { UploadProgress } from '@/components/upload/upload-progress.tsx'
 import { ImagorParamsInput, SortOption, SortOrder } from '@/generated/graphql'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
 import { DragDropFile } from '@/hooks/use-drag-drop.ts'
+import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
 import { useGalleryKeyboardNavigation } from '@/hooks/use-gallery-keyboard-navigation'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
@@ -554,41 +552,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     )
   }
 
-  const renderFolderContextMenuItems = ({ folderName, folderKey }: FolderContextData) => {
-    const isAuthenticated = authState.state === 'authenticated'
-
-    if (!folderKey) return null
-
-    return (
-      <>
-        <ContextMenuLabel className='break-all'>{folderName}</ContextMenuLabel>
-        <ContextMenuSeparatorComponent />
-        {isAuthenticated && (
-          <>
-            <ContextMenuItem
-              onClick={() => {
-                // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
-                setTimeout(() => handleRenameFromMenu(folderKey, folderName, 'folder'), 0)
-              }}
-            >
-              <Pencil className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.rename')}
-            </ContextMenuItem>
-            <ContextMenuItem
-              onClick={() => {
-                // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
-                setTimeout(() => handleDeleteFolderFromMenu(folderKey, folderName), 0)
-              }}
-              className='text-destructive focus:text-destructive'
-            >
-              <Trash2 className='mr-2 h-4 w-4' />
-              {t('pages.gallery.folderContextMenu.delete')}
-            </ContextMenuItem>
-          </>
-        )}
-      </>
-    )
-  }
+  // Use the shared folder context menu hook with authentication check
+  const { renderMenuItems: renderFolderContextMenuItems } = useFolderContextMenu({
+    onRename: (folderKey, folderName) => handleRenameFromMenu(folderKey, folderName, 'folder'),
+    onDelete: handleDeleteFolderFromMenu,
+    isAuthenticated: () => authState.state === 'authenticated',
+  })
 
   const isNavigateToImage = !!(
     pendingMatches?.length &&

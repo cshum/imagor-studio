@@ -1,21 +1,13 @@
 import React, { useState } from 'react'
-import { Link, useRouterState } from '@tanstack/react-router'
-import { Home, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Link, useRouterState } from '@tanstack/react-router'
+import { Home } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { deleteFile, moveFile } from '@/api/storage-api'
 import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
-import {
-  FolderContextData,
-  FolderContextMenu,
-} from '@/components/image-gallery/folder-context-menu'
+import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
 import { Button } from '@/components/ui/button'
-import {
-  ContextMenuItem,
-  ContextMenuLabel,
-  ContextMenuSeparator,
-} from '@/components/ui/context-menu'
 import {
   Dialog,
   DialogContent,
@@ -37,6 +29,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
 import { loadRootFolders, useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
@@ -181,33 +174,11 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
     }
   }
 
-  const renderFolderContextMenuItems = ({ folderName, folderKey }: FolderContextData) => {
-    if (!folderKey) return null
-
-    return (
-      <>
-        <ContextMenuLabel className='break-all'>{folderName}</ContextMenuLabel>
-        <ContextMenuSeparator />
-        <ContextMenuItem
-          onClick={() => {
-            setTimeout(() => handleRenameFromMenu(folderKey, folderName), 0)
-          }}
-        >
-          <Pencil className='mr-2 h-4 w-4' />
-          {t('pages.gallery.contextMenu.rename')}
-        </ContextMenuItem>
-        <ContextMenuItem
-          onClick={() => {
-            setTimeout(() => handleDeleteFolderFromMenu(folderKey, folderName), 0)
-          }}
-          className='text-destructive focus:text-destructive'
-        >
-          <Trash2 className='mr-2 h-4 w-4' />
-          {t('pages.gallery.folderContextMenu.delete')}
-        </ContextMenuItem>
-      </>
-    )
-  }
+  // Use the shared folder context menu hook
+  const { renderMenuItems } = useFolderContextMenu({
+    onRename: handleRenameFromMenu,
+    onDelete: handleDeleteFolderFromMenu,
+  })
 
   return (
     <Sidebar {...props}>
@@ -241,7 +212,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
                 </div>
               ) : (
                 // Render folder tree with context menu
-                <FolderContextMenu renderMenuItems={renderFolderContextMenuItems}>
+                <FolderContextMenu renderMenuItems={renderMenuItems}>
                   {rootFolders.map((folder, index) => (
                     <FolderTreeNode key={`${folder.path}-${index}`} folder={folder} />
                   ))}
