@@ -155,6 +155,7 @@ export function useFolderContextMenu({
     return (
       <>
         <ContextMenuLabel className='break-all'>{folderName}</ContextMenuLabel>
+        <ContextMenuSeparator />
         <ContextMenuItem onClick={() => handleOpen(folderKey)}>
           <FolderOpen className='mr-2 h-4 w-4' />
           {t('pages.gallery.contextMenu.open')}
