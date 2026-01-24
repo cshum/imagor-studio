@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
+import { useAuth } from '@/stores/auth-store'
 import { useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
@@ -35,6 +36,7 @@ import { FolderTreeNode } from './folder-tree-node'
 
 export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { t } = useTranslation()
+  const { authState } = useAuth()
   const { rootFolders, loadingPaths, homeTitle } = useFolderTree()
   const { isMobile, setOpenMobile } = useSidebar()
   const routerState = useRouterState()
@@ -102,6 +104,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
     handleRename: handleRenameFolderOperation,
     handleDelete: handleDeleteFolderOperation,
   } = useFolderContextMenu({
+    isAuthenticated: () => authState.state === 'authenticated',
     onOpen: () => {
       // Close mobile sidebar when navigating on mobile
       if (isMobile) {
