@@ -75,17 +75,12 @@ const FolderCard = ({
         <span className='truncate text-sm font-medium'>{folder.galleryName}</span>
         {renderMenuItems && (
           <div
-            className='absolute right-2 opacity-0 transition-opacity group-hover/folder:opacity-100 group-hover/folder:pointer-events-auto pointer-events-none'
+            className='pointer-events-none absolute right-2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100'
             onClick={(e) => e.stopPropagation()}
           >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  className='h-6 w-6 p-0'
-                  aria-label='More options'
-                >
+                <Button variant='ghost' size='sm' className='h-6 w-6 p-0' aria-label='More options'>
                   <MoreVertical className='h-3 w-3' />
                 </Button>
               </DropdownMenuTrigger>
