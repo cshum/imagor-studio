@@ -2,7 +2,6 @@ import React, { RefObject, useEffect, useRef } from 'react'
 import { MoreVertical, Play } from 'lucide-react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
-import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,19 +93,19 @@ const ImageCell = ({
         />
         {renderMenuItems && (
           <div
-            className='absolute top-1 right-1 opacity-0 transition-opacity group-hover/image:opacity-100 group-hover/image:pointer-events-auto pointer-events-none'
+            className='pointer-events-none absolute top-2 right-2 opacity-0 transition-opacity group-hover/image:pointer-events-auto group-hover/image:opacity-100'
             onClick={(e) => e.stopPropagation()}
           >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  className='h-6 w-6 p-0'
+                <div
+                  className='cursor-pointer rounded-full bg-black/30 p-1.5 transition-all hover:bg-black/60'
+                  role='button'
                   aria-label='More options'
+                  tabIndex={0}
                 >
-                  <MoreVertical className='h-3 w-3' />
-                </Button>
+                  <MoreVertical className='h-4 w-4 text-white' />
+                </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end' className='min-w-[8rem]'>
                 {renderMenuItems(image)}

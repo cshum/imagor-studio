@@ -601,7 +601,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       <>
         <DropdownMenuLabel className='break-all'>{folderName}</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => handleFolderClick({ galleryKey: folderKey, galleryName: folderName })}>
+        <DropdownMenuItem
+          onClick={() => handleFolderClick({ galleryKey: folderKey, galleryName: folderName })}
+        >
           <Eye className='mr-2 h-4 w-4' />
           {t('pages.gallery.contextMenu.open')}
         </DropdownMenuItem>
