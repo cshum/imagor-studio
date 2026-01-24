@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter } from '@tanstack/react-router'
-import { FolderOpen, Pencil, Trash2 } from 'lucide-react'
+import { FolderOpen, Trash2, Type } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { deleteFile, moveFile } from '@/api/storage-api'
@@ -155,14 +155,12 @@ export function useFolderContextMenu({
     return (
       <>
         <ContextMenuLabel className='break-all'>{folderName}</ContextMenuLabel>
-        <ContextMenuSeparator />
         <ContextMenuItem onClick={() => handleOpen(folderKey)}>
           <FolderOpen className='mr-2 h-4 w-4' />
           {t('pages.gallery.contextMenu.open')}
         </ContextMenuItem>
         {showActions && (
           <>
-            <ContextMenuSeparator />
             <ContextMenuItem
               onClick={() => {
                 // Trigger rename dialog in component
@@ -170,9 +168,10 @@ export function useFolderContextMenu({
               }}
               disabled={isRenaming || isDeleting}
             >
-              <Pencil className='mr-2 h-4 w-4' />
+              <Type className='mr-2 h-4 w-4' />
               {t('pages.gallery.contextMenu.rename')}
             </ContextMenuItem>
+            <ContextMenuSeparator />
             <ContextMenuItem
               onClick={() => {
                 // Trigger delete dialog in component

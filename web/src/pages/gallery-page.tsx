@@ -14,6 +14,7 @@ import {
   Pencil,
   Search,
   Trash2,
+  Type,
   Upload,
   X,
 } from 'lucide-react'
@@ -515,16 +516,16 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
               <Download className='mr-2 h-4 w-4' />
               {t('pages.gallery.contextMenu.download')}
             </ContextMenuItem>
-            <ContextMenuSeparatorComponent />
             <ContextMenuItem
               onClick={() => {
                 // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
                 setTimeout(() => handleRenameFromMenu(imageKey, imageName, 'file'), 0)
               }}
             >
-              <Pencil className='mr-2 h-4 w-4' />
+              <Type className='mr-2 h-4 w-4' />
               {t('pages.gallery.contextMenu.rename')}
             </ContextMenuItem>
+            <ContextMenuSeparatorComponent />
             <ContextMenuItem
               onClick={() => {
                 // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
