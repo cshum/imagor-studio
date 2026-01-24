@@ -84,7 +84,7 @@ const FolderCard = ({
                   <MoreVertical className='h-3 w-3' />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' className='min-w-[8rem]'>
+              <DropdownMenuContent align='end' className='w-56'>
                 {renderMenuItems(folder)}
               </DropdownMenuContent>
             </DropdownMenu>

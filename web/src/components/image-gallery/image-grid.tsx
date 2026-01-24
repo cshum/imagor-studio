@@ -107,14 +107,14 @@ const ImageCell = ({
                   <MoreVertical className='h-4 w-4 text-white' />
                 </div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' className='min-w-[8rem]'>
+              <DropdownMenuContent align='end' className='w-56'>
                 {renderMenuItems(image)}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         )}
         {image.isVideo && (
-          <div className='absolute top-2 left-2 rounded-full bg-black/60 p-2 transition-opacity group-hover:bg-black/75'>
+          <div className='absolute top-2 left-2 rounded-full bg-black/60 p-2 transition-opacity'>
             <Play className='h-4 w-4 fill-white text-white' />
           </div>
         )}
