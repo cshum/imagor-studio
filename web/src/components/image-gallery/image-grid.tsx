@@ -108,7 +108,9 @@ const ImageCell = ({
                   <MoreVertical className='h-3 w-3' />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>{renderMenuItems(image)}</DropdownMenuContent>
+              <DropdownMenuContent align='end' className='min-w-[8rem]'>
+                {renderMenuItems(image)}
+              </DropdownMenuContent>
             </DropdownMenu>
           </div>
         )}

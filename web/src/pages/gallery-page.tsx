@@ -591,6 +591,47 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     )
   }
 
+  // Render function for folder dropdown menus
+  const renderFolderDropdownMenuItems = (folderKey: string, folderName: string) => {
+    const isAuthenticated = authState.state === 'authenticated'
+
+    if (!folderKey) return null
+
+    return (
+      <>
+        <DropdownMenuLabel className='break-all'>{folderName}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => handleFolderClick({ galleryKey: folderKey, galleryName: folderName })}>
+          <Eye className='mr-2 h-4 w-4' />
+          {t('pages.gallery.contextMenu.open')}
+        </DropdownMenuItem>
+        {isAuthenticated && (
+          <>
+            <DropdownMenuItem onClick={() => handleRenameFromMenu(folderKey, folderName, 'folder')}>
+              <Type className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.rename')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => {
+                setDeleteFolderDialog({
+                  open: true,
+                  folderKey,
+                  folderName,
+                  isDeleting: false,
+                })
+              }}
+              className='text-destructive focus:text-destructive'
+            >
+              <Trash2 className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.delete')}
+            </DropdownMenuItem>
+          </>
+        )}
+      </>
+    )
+  }
+
   // Use the shared folder context menu hook with centralized logic
   const {
     renderMenuItems: renderFolderContextMenuItems,
@@ -794,10 +835,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                             width={contentWidth}
                             maxFolderWidth={maxItemWidth}
                             foldersVisible={foldersVisible}
-                            onFolderMenuClick={(folder) => {
-                              // TODO: Open dropdown menu for folder
-                              console.log('Folder menu clicked:', folder)
-                            }}
+                            renderMenuItems={(folder) =>
+                              renderFolderDropdownMenuItems(folder.galleryKey, folder.galleryName)
+                            }
                             {...folderGridProps}
                           />
                         </FolderContextMenu>

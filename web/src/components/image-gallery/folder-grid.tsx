@@ -1,8 +1,13 @@
-import { RefObject, useState } from 'react'
+import { RefObject } from 'react'
 import { Folder, MoreVertical } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export interface Gallery {
   galleryKey: string
@@ -18,7 +23,7 @@ export interface FolderGridProps {
   folderRefs?: RefObject<(HTMLDivElement | null)[]>
   onFolderKeyDown?: (event: React.KeyboardEvent, index: number) => void
   onFolderClick?: (folder: Gallery, index: number) => void
-  onFolderMenuClick?: (folder: Gallery, event: React.MouseEvent) => void
+  renderMenuItems?: (folder: Gallery) => React.ReactNode
 }
 
 interface FolderCardProps {
@@ -30,7 +35,7 @@ interface FolderCardProps {
   folderRef?: (el: HTMLDivElement | null) => void
   onFolderKeyDown?: (event: React.KeyboardEvent, index: number) => void
   onFolderClick?: (folder: Gallery, index: number) => void
-  onFolderMenuClick?: (folder: Gallery, event: React.MouseEvent) => void
+  renderMenuItems?: (folder: Gallery) => React.ReactNode
 }
 
 const FolderCard = ({
@@ -42,18 +47,14 @@ const FolderCard = ({
   folderRef,
   onFolderKeyDown,
   onFolderClick,
-  onFolderMenuClick,
+  renderMenuItems,
 }: FolderCardProps) => {
-  const [isHovered, setIsHovered] = useState(false)
-
   return (
     <Card
       ref={folderRef}
-      className='hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+      className='group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
       onClick={() => onFolderClick?.(folder, index)}
       onKeyDown={(e) => onFolderKeyDown?.(e, index)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       tabIndex={
         foldersVisible
           ? index === 0 && focusedIndex === -1
@@ -72,19 +73,27 @@ const FolderCard = ({
       <CardContent className='relative flex items-center px-4 py-4 sm:py-3'>
         <Folder className='text-primary mr-2 h-5 w-5 flex-shrink-0' />
         <span className='truncate text-sm font-medium'>{folder.galleryName}</span>
-        {onFolderMenuClick && isHovered && (
-          <Button
-            variant='ghost'
-            size='sm'
-            className='absolute right-2 h-6 w-6 p-0'
-            onClick={(e) => {
-              e.stopPropagation()
-              onFolderMenuClick(folder, e)
-            }}
-            aria-label='More options'
+        {renderMenuItems && (
+          <div
+            className='absolute right-2 opacity-0 transition-opacity group-hover/folder:opacity-100 group-hover/folder:pointer-events-auto pointer-events-none'
+            onClick={(e) => e.stopPropagation()}
           >
-            <MoreVertical className='h-3 w-3' />
-          </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  className='h-6 w-6 p-0'
+                  aria-label='More options'
+                >
+                  <MoreVertical className='h-3 w-3' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end' className='min-w-[8rem]'>
+                {renderMenuItems(folder)}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -100,7 +109,7 @@ export const FolderGrid = ({
   folderRefs,
   onFolderKeyDown,
   onFolderClick,
-  onFolderMenuClick,
+  renderMenuItems,
 }: FolderGridProps) => {
   const columnCount = Math.max(2, Math.floor(width / maxFolderWidth))
   const folderWidth = width / columnCount
@@ -135,7 +144,7 @@ export const FolderGrid = ({
           }}
           onFolderKeyDown={onFolderKeyDown}
           onFolderClick={onFolderClick}
-          onFolderMenuClick={onFolderMenuClick}
+          renderMenuItems={renderMenuItems}
         />
       ))}
     </div>
