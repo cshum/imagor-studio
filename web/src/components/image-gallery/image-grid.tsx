@@ -1,7 +1,13 @@
 import React, { RefObject, useEffect, useRef } from 'react'
-import { Play } from 'lucide-react'
+import { MoreVertical, Play } from 'lucide-react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { getFullImageUrl } from '@/lib/api-utils'
 
 interface ImageCellProps {
@@ -16,6 +22,7 @@ interface ImageCellProps {
   firstVisibleImageIndex: number
   showFileName?: boolean
   onImageClick?: (imageKey: string, position: Position, index: number) => void
+  renderMenuItems?: (image: GalleryImage) => React.ReactNode
   onKeyDown?: (event: React.KeyboardEvent, index: number) => void
   imageRef?: (el: HTMLDivElement | null) => void
 }
@@ -32,6 +39,7 @@ const ImageCell = ({
   firstVisibleImageIndex,
   showFileName = false,
   onImageClick,
+  renderMenuItems,
   onKeyDown,
   imageRef,
 }: ImageCellProps) => {
@@ -64,7 +72,7 @@ const ImageCell = ({
       data-image-key={image.imageKey}
       data-image-name={image.imageName}
       data-is-video={image.isVideo}
-      className='focus-visible:ring-ring absolute box-border cursor-pointer rounded-xl p-1 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:p-1.5'
+      className='group/image focus-visible:ring-ring absolute box-border cursor-pointer rounded-xl p-1 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:p-1.5'
       style={{
         width: `${columnWidth}px`,
         height: `${rowHeight}px`,
@@ -84,8 +92,28 @@ const ImageCell = ({
           className='h-full w-full object-cover'
           draggable={false}
         />
+        {renderMenuItems && (
+          <div
+            className='absolute top-1 right-1 opacity-0 transition-opacity group-hover/image:opacity-100 group-hover/image:pointer-events-auto pointer-events-none'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  className='h-6 w-6 p-0'
+                  aria-label='More options'
+                >
+                  <MoreVertical className='h-3 w-3' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>{renderMenuItems(image)}</DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
         {image.isVideo && (
-          <div className='absolute top-2 right-2 rounded-full bg-black/60 p-2 transition-opacity group-hover:bg-black/75'>
+          <div className='absolute top-2 left-2 rounded-full bg-black/60 p-2 transition-opacity group-hover:bg-black/75'>
             <Play className='h-4 w-4 fill-white text-white' />
           </div>
         )}
@@ -113,6 +141,7 @@ export interface ImageGridProps {
   imageRefs?: RefObject<Map<number, HTMLDivElement>>
   onImageKeyDown?: (event: React.KeyboardEvent, index: number) => void
   onImageClick?: (imageKey: string, position: Position, index: number) => void
+  renderMenuItems?: (image: GalleryImage) => React.ReactNode
   onVisibleRangeChange?: (startIndex: number, endIndex: number, firstVisibleIndex: number) => void
 }
 
@@ -128,6 +157,7 @@ export const ImageGrid = ({
   imageRefs,
   onImageKeyDown,
   onImageClick,
+  renderMenuItems,
   onVisibleRangeChange,
 }: ImageGridProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -194,6 +224,7 @@ export const ImageGrid = ({
           firstVisibleImageIndex={firstVisibleImageIndex}
           showFileName={showFileName}
           onImageClick={onImageClick}
+          renderMenuItems={renderMenuItems}
           onKeyDown={onImageKeyDown}
           imageRef={(el) => {
             if (imageRefs?.current) {

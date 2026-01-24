@@ -542,6 +542,55 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     )
   }
 
+  // Render function for dropdown menus (uses DropdownMenuItem instead of ContextMenuItem)
+  const renderDropdownMenuItems = (imageName: string, imageKey: string, isVideo: boolean) => {
+    const isAuthenticated = authState.state === 'authenticated'
+    const canEdit = (isAuthenticated || authState.isEmbedded) && !isVideo
+
+    if (!imageKey) return null
+
+    return (
+      <>
+        <DropdownMenuLabel className='break-all'>{imageName}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => handleImageClick(imageKey)}>
+          <Eye className='mr-2 h-4 w-4' />
+          {t('pages.gallery.contextMenu.open')}
+        </DropdownMenuItem>
+        {canEdit && (
+          <DropdownMenuItem onClick={() => handleEditImage(imageKey)}>
+            <Pencil className='mr-2 h-4 w-4' />
+            {t('pages.gallery.contextMenu.edit')}
+          </DropdownMenuItem>
+        )}
+        {isAuthenticated && (
+          <>
+            <DropdownMenuItem onClick={() => handleCopyUrl(imageKey, isVideo)}>
+              <Copy className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.copyUrl')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleDownload(imageKey)}>
+              <Download className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.download')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleRenameFromMenu(imageKey, imageName, 'file')}>
+              <Type className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.rename')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => handleDeleteImageFromMenu(imageKey)}
+              className='text-destructive focus:text-destructive'
+            >
+              <Trash2 className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.delete')}
+            </DropdownMenuItem>
+          </>
+        )}
+      </>
+    )
+  }
+
   // Use the shared folder context menu hook with centralized logic
   const {
     renderMenuItems: renderFolderContextMenuItems,
@@ -745,6 +794,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                             width={contentWidth}
                             maxFolderWidth={maxItemWidth}
                             foldersVisible={foldersVisible}
+                            onFolderMenuClick={(folder) => {
+                              // TODO: Open dropdown menu for folder
+                              console.log('Folder menu clicked:', folder)
+                            }}
                             {...folderGridProps}
                           />
                         </FolderContextMenu>
@@ -758,6 +811,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           folderGridHeight={folderGridHeight}
                           maxImageWidth={maxItemWidth}
                           showFileName={showFileNames}
+                          renderMenuItems={(image) =>
+                            renderDropdownMenuItems(
+                              image.imageName,
+                              image.imageKey,
+                              image.isVideo || false,
+                            )
+                          }
                           {...imageGridProps}
                         />
                       </ImageContextMenu>
