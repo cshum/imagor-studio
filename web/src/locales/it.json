@@ -1,0 +1,607 @@
+{  
+  "common": {  
+    "buttons": {  
+      "save": "Salva",  
+      "cancel": "Annulla",  
+      "delete": "Elimina",  
+      "edit": "Modifica",  
+      "create": "Crea",  
+      "update": "Aggiorna",  
+      "close": "Chiudi",  
+      "more": "Altro",  
+      "switchTheme": "Cambia Tema"  
+    },  
+    "navigation": {  
+      "title": "Imagor Studio",  
+      "home": "Home",  
+      "account": "Account",  
+      "profile": "Profilo",  
+      "dashboard": "Cruscotto",  
+      "users": "Utenti",  
+      "signOut": "Esci",  
+      "login": "Accedi",  
+      "accountSettings": "Impostazioni Account"  
+    },  
+    "status": {  
+      "loading": "Caricamento...",  
+      "error": "Errore",  
+      "success": "Successo",  
+      "guest": "Ospite",  
+      "user": "Utente",  
+      "yes": "Sì",  
+      "no": "No",  
+      "enabled": "Abilitato",  
+      "disabled": "Disabilitato",  
+      "creating": "Creazione..."  
+    },  
+    "labels": {  
+      "username": "Nome utente",  
+      "password": "Password",  
+      "name": "Nome",  
+      "role": "Ruolo"  
+    }  
+  },  
+  "auth": {  
+    "login": {  
+      "title": "Bentornato",  
+      "subtitle": "Inserisci le tue credenziali per accedere a Imagor Studio",  
+      "signIn": "Accedi",  
+      "loginFailed": "Nome utente o password non validi. Riprova."  
+    },  
+    "validation": {  
+      "usernameRequired": "Inserisci un nome utente valido",  
+      "usernameMinLength": "Il nome utente deve contenere almeno 3 caratteri",  
+      "usernameMaxLength": "Il nome utente deve contenere al massimo 30 caratteri",  
+      "passwordRequired": "La password è obbligatoria",  
+      "invalidUsername": "Inserisci un nome utente valido"  
+    },  
+    "embedded": {  
+      "tokenMissing": "Token di autenticazione mancante. La modalità embedded richiede un token JWT nell'URL. Formato previsto: /?token=YOUR_JWT_TOKEN&path=image.jpg",  
+      "tokenInvalid": "Token di autenticazione non valido o scaduto. Controlla il tuo token JWT e riprova.",  
+      "authenticationFailed": "Autenticazione embedded fallita. Verifica che il tuo token sia valido e non sia scaduto.",  
+      "pathMissing": "Il parametro path è obbligatorio. Formato previsto: /?token=YOUR_JWT_TOKEN&path=image.jpg",  
+      "pathInvalid": "Formato del percorso non valido. Previsto: gallery/folder/image.jpg o image.jpg"  
+    }  
+  },  
+  "forms": {  
+    "placeholders": {  
+      "enterUsername": "Inserisci il tuo nome utente",  
+      "enterPassword": "Inserisci la tua password",  
+      "confirmPassword": "Conferma la tua password",  
+      "enterName": "Inserisci il tuo nome"  
+    },  
+    "validation": {  
+      "required": "Questo campo è obbligatorio",  
+      "invalidUsername": "Inserisci un nome utente valido",  
+      "passwordTooShort": "La password deve contenere almeno {{min}} caratteri",  
+      "usernameInvalid": "Inserisci un nome utente valido",  
+      "displayNameMinLength": "Il nome visualizzato deve essere lungo almeno 3 caratteri",  
+      "displayNameMaxLength": "Il nome visualizzato non deve superare i 100 caratteri",  
+      "usernameMinLength": "Il nome utente deve contenere almeno 3 caratteri",  
+      "usernameMaxLength": "Il nome utente deve contenere al massimo 30 caratteri",  
+      "usernamePattern": "Il nome utente può contenere solo lettere, numeri, trattini bassi e trattini",  
+      "currentPasswordRequired": "La password attuale è obbligatoria",  
+      "passwordMinLength": "La password deve essere lunga almeno 8 caratteri",  
+      "passwordMaxLength": "La password non deve superare i 72 caratteri",  
+      "passwordsDoNotMatch": "Le password non corrispondono",  
+      "confirmPasswordMinLength": "La password deve essere lunga almeno 8 caratteri",  
+      "confirmPasswordMaxLength": "La password non deve superare i 72 caratteri"  
+    }  
+  },  
+  "navigation": {  
+    "breadcrumbs": {  
+      "home": "Home",  
+      "gallery": "Galleria",  
+      "profile": "Profilo",  
+      "account": "Account",  
+      "settings": "Impostazioni",  
+      "users": "Utenti",  
+      "admin": "Sistema",  
+      "adminSetup": "Configurazione Amministratore"  
+    }  
+  },  
+  "pages": {  
+    "gallery": {  
+      "title": "Galleria",  
+      "noImages": "Nessuna immagine trovata",  
+      "noImagesInGallery": "Nessuna immagine nella tua galleria",  
+      "folderEmpty": "Questa cartella è vuota",  
+      "sorting": {  
+        "sort": "Ordina",  
+        "name": "Nome",  
+        "modifiedTime": "Data di Modifica"  
+      },  
+      "filter": {  
+        "filter": "Filtra",  
+        "placeholder": "Filtra",  
+        "showingFiltered": "Visualizzati {{count}} elementi su {{total}}",  
+        "clearFilter": "Cancella filtro"  
+      },  
+      "showFileNames": "Mostra i Nomi dei File",  
+      "createFolder": {  
+        "newFolder": "Nuova Cartella",  
+        "title": "Crea Nuova Cartella",  
+        "description": "Inserisci un nome per la nuova cartella.",  
+        "folderName": "Nome Cartella",  
+        "placeholder": "Inserisci il nome della cartella",  
+        "success": "Cartella {{folderName}} creata correttamente",  
+        "errors": {  
+          "nameRequired": "Il nome della cartella è obbligatorio",  
+          "invalidCharacters": "Il nome della cartella contiene caratteri non validi",  
+          "createFailed": "Impossibile creare la cartella"  
+        }  
+      },  
+      "upload": {  
+        "dropZone": {  
+          "dropToUpload": "Trascina i file per caricarli",  
+          "releaseToAdd": "Rilascia per aggiungere i file alla tua galleria"  
+        },  
+        "progress": {  
+          "uploadProgress": "Progresso di Caricamento",  
+          "filesCompleted": "{{completed}} di {{total}} file completati",  
+          "failed": "{{count}} non riusciti",  
+          "uploading": "{{count}} in caricamento",  
+          "completed": "{{count}} completati"  
+        },  
+        "summary": {  
+          "fileReady": "{{count}} file pronto",  
+          "filesReady": "{{count}} file pronti",  
+          "allFilesProcessed": "Tutti i file elaborati",  
+          "pendingUpload": "{{count}} caricamento pendente",  
+          "clear": "Cancella",  
+          "upload": "Carica {{count}} file",  
+          "uploadFiles": "Carica {{count}} file",  
+          "uploading": "Caricamento..."  
+        },  
+        "uploadFiles": "Carica File",  
+        "messages": {  
+          "uploadSuccess": "File caricati correttamente",  
+          "uploadFailed": "Impossibile caricare {{fileName}}",  
+          "uploadSuccessPartial": "{{count}} file caricati correttamente",  
+          "uploadFailedPartial": "{{count}} file non caricati",  
+          "uploadFailedAll": "Impossibile caricare {{count}} file",  
+          "uploadFailedAllPlural": "Impossibile caricare {{count}} file"  
+        }  
+      },  
+      "contextMenu": {  
+        "open": "Apri",  
+        "edit": "Modifica",  
+        "copyUrl": "Copia URL",  
+        "download": "Scarica",  
+        "rename": "Rinomina",  
+        "delete": "Elimina",  
+        "copyUrlError": "Impossibile copiare l'URL",  
+        "downloadError": "Impossibile scaricare"  
+      },  
+      "copyUrlDialog": {  
+        "title": "Copia URL",  
+        "description": "Copia l'URL qui sotto. Abbiamo provato a copiarlo automaticamente, ma potresti doverlo copiare manualmente.",  
+        "closeButton": "Chiudi",  
+        "copyButton": "Seleziona e Copia"  
+      },  
+      "deleteImage": {  
+        "title": "Elimina Immagine",  
+        "description": "Sei sicuro di voler eliminare questa immagine?",  
+        "warning": "Questa azione non può essere annullata.",  
+        "success": "\"{{fileName}}\" eliminata correttamente",  
+        "error": "Impossibile eliminare l'immagine"  
+      },  
+      "folderContextMenu": {  
+        "delete": "Elimina Cartella"  
+      },  
+      "deleteFolder": {  
+        "title": "Elimina Cartella",  
+        "description": "Sei sicuro di voler eliminare questa cartella?",  
+        "warning": "Questo eliminerà permanentemente la cartella e tutto il suo contenuto. Questa azione non può essere annullata.",  
+        "success": "\"{{folderName}}\" eliminata correttamente",  
+        "error": "Impossibile eliminare la cartella"  
+      },  
+      "renameItem": {  
+        "title": "Rinomina {{type}}",  
+        "description": "Inserisci un nuovo nome per questo/a {{type}}.",  
+        "newName": "Nuovo Nome",  
+        "placeholder": "Inserisci il nuovo nome",  
+        "rename": "Rinomina",  
+        "success": "\"{{name}}\" rinominato correttamente",  
+        "error": "Impossibile rinominare {{type}}",  
+        "errors": {  
+          "nameRequired": "Il nome è obbligatorio",  
+          "invalidCharacters": "Il nome contiene caratteri non validi",  
+          "alreadyExists": "Esiste già un/una {{type}} con questo nome"  
+        }  
+      }  
+    },  
+    "profile": {  
+      "title": "Profilo",  
+      "profileInformation": "Informazioni Profilo",  
+      "profileInformationDescription": "Aggiorna le informazioni del tuo account.",  
+      "displayName": "Nome Visualizzato",  
+      "displayNamePlaceholder": "Inserisci il tuo nome visualizzato",  
+      "usernamePlaceholder": "Inserisci il tuo nome utente",  
+      "updateProfile": "Aggiorna Profilo",  
+      "securitySettings": "Impostazioni di Sicurezza",  
+      "securitySettingsDescription": "Gestisci la sicurezza e la password del tuo account.",  
+      "password": "Password",  
+      "passwordDescription": "Cambia la password del tuo account",  
+      "changePassword": "Cambia Password",  
+      "changePasswordTitle": "Cambia Password",  
+      "changePasswordDescription": "Inserisci la tua password attuale e scegli una nuova password.",  
+      "currentPassword": "Password Attuale",  
+      "currentPasswordPlaceholder": "Inserisci la tua password attuale",  
+      "newPassword": "Nuova Password",  
+      "newPasswordPlaceholder": "Inserisci la tua nuova password",  
+      "confirmPassword": "Conferma Nuova Password",  
+      "confirmPasswordPlaceholder": "Conferma la tua nuova password",  
+      "updatePassword": "Aggiorna Password",  
+      "profileUpdatedSuccess": "Profilo aggiornato correttamente",  
+      "passwordUpdatedSuccess": "Password aggiornata correttamente",  
+      "updateProfileFailed": "Impossibile aggiornare il profilo",  
+      "updatePasswordFailed": "Impossibile aggiornare la password",  
+      "usernameAlreadyInUse": "Questo nome utente è già in uso",  
+      "currentPasswordIncorrect": "La password attuale non è corretta"  
+    },  
+    "admin": {  
+      "title": "Amministrazione",  
+      "setup": "Configurazione Amministratore",  
+      "welcome": "Benvenuto in Imagor Studio",  
+      "setupDescription": "Configuriamo la tua galleria di immagini in pochi passaggi",  
+      "createAdminAccount": "Crea Account Amministratore",  
+      "systemConfiguration": "Configurazione Sistema",  
+      "storageConfiguration": "Configurazione Archiviazione",  
+      "username": "Nome utente",  
+      "password": "Password",  
+      "confirmPassword": "Conferma Password",  
+      "createAccount": "Crea Account",  
+      "skipForNow": "Salta per ora",  
+      "next": "Avanti",  
+      "guestMode": "Modalità Ospite",  
+      "guestModeDescription": "Consenti agli utenti di navigare nella galleria senza creare un account",  
+      "homeTitle": "Titolo Home",  
+      "homeTitleDescription": "Personalizza il titolo visualizzato per la cartella home/root nella galleria",  
+      "systemSettingsDescription": "Queste impostazioni possono essere modificate successivamente nel pannello di amministrazione",  
+      "storageDescription": "Configura dove verranno archiviate le tue immagini",  
+      "failedToCreateAccount": "Impossibile creare l'account amministratore",  
+      "failedToSaveSettings": "Impossibile salvare le impostazioni",  
+      "storageConfiguredSuccess": "Archiviazione configurata correttamente",  
+      "storageConfiguredRestart": "Archiviazione configurata correttamente. Riavvia il server per applicare le modifiche."  
+    },  
+    "storage": {  
+      "fileStorage": "Configurazione Archiviazione File",  
+      "s3Storage": "Configurazione Archiviazione S3",  
+      "bucketName": "Nome Bucket",  
+      "bucketNameRequired": "Il nome del bucket è obbligatorio",  
+      "bucketDescription": "Il nome del tuo bucket S3 dove verranno archiviate le immagini",  
+      "region": "Regione",  
+      "regionDescription": "Regione AWS dove si trova il tuo bucket (es. us-east-1, eu-west-1)",  
+      "customEndpoint": "Endpoint Personalizzato",  
+      "customEndpointDescription": "Endpoint S3 personalizzato per servizi compatibili con S3 (lascia vuoto per AWS S3)",  
+      "forcePathStyle": "Forza Stile Percorso",  
+      "forcePathStyleDescription": "Abilita per MinIO e LocalStack. La maggior parte degli altri servizi compatibili con S3 funzionano meglio con questa opzione disabilitata.",  
+      "accessKeyId": "ID Chiave di Accesso",  
+      "accessKeyIdDescription": "ID chiave di accesso AWS (lascia vuoto per utilizzare ruoli IAM o variabili d'ambiente)",  
+      "secretAccessKey": "Chiave di Accesso Segreta",  
+      "secretAccessKeyDescription": "Chiave di accesso segreta AWS (lascia vuoto per utilizzare ruoli IAM o variabili d'ambiente)",  
+      "sessionToken": "Token di Sessione",  
+      "sessionTokenDescription": "Token di sessione AWS (richiesto solo per credenziali temporanee)",  
+      "baseDirectory": "Directory Base",  
+      "baseDirectoryDescription": "Prefisso opzionale per tutte le chiavi degli oggetti nel bucket (es. \"images/\")",  
+      "testConfiguration": "Test Configurazione",  
+      "configureStorage": "Configura Archiviazione",  
+      "testConfigurationFirst": "Compila prima la configurazione di archiviazione {{storageType}}",  
+      "testPassed": "Test configurazione archiviazione superato",  
+      "testFailed": "Test configurazione archiviazione fallito",  
+      "testError": "Impossibile testare la configurazione di archiviazione",  
+      "configurationSuccess": "Archiviazione {{storageType}} configurata correttamente",  
+      "configurationError": "Impossibile configurare l'archiviazione {{storageType}}",  
+      "configurationOverridden": "La configurazione dell'archiviazione è gestita da una configurazione esterna"  
+    },  
+    "systemSettings": {  
+      "settingOverridden": "Questa impostazione è sovrascritta dal file di configurazione o dalla variabile d'ambiente"  
+    },  
+    "imagor": {  
+      "imagorConfiguration": "Configurazione Imagor",  
+      "imagorConfigurationDescription": "Configura le impostazioni di elaborazione delle immagini. Imagor gestisce le trasformazioni e le ottimizzazioni delle immagini.",  
+      "selectMode": "Seleziona Modalità Imagor",  
+      "selectModeDescription": "Scegli come Imagor elaborerà le tue immagini",  
+      "embeddedMode": "Integrata",  
+      "embeddedModeDescription": "Esegui Imagor come parte di questa applicazione (consigliato per la maggior parte degli utenti)",  
+      "externalMode": "Esterna",  
+      "externalModeDescription": "Connettiti a un servizio Imagor esterno (configurazione avanzata)",  
+      "embeddedConfiguration": "Configurazione Imagor Integrata",  
+      "externalConfiguration": "Configurazione Imagor Esterna",  
+      "secret": "Chiave Segreta",  
+      "secretPlaceholder": "",  
+      "secretDescription": "Chiave segreta opzionale per la firma degli URL delle immagini. Lascia vuoto per usare il segreto JWT.",  
+      "externalSecretDescription": "Chiave segreta utilizzata dal servizio Imagor esterno per la firma degli URL.",  
+      "embeddedModeSimplified": "La modalità integrata utilizza una configurazione fissa con impostazioni predefinite sicure. Non è richiesta alcuna configurazione aggiuntiva.",  
+      "enableEmbeddedMode": "Abilita Modalità Integrata",  
+      "baseUrl": "URL Base",  
+      "baseUrlRequired": "L'URL base è obbligatorio",  
+      "baseUrlInvalid": "Inserisci un URL valido che inizi con http:// o https://",  
+      "baseUrlDescription": "L'URL base del tuo servizio Imagor esterno",  
+      "unsafeMode": "Modalità Non Sicura",  
+      "unsafeModeDescription": "Consenti l'elaborazione delle immagini senza la firma degli URL (non raccomandato per la produzione)",  
+      "signerType": "Tipo di Firmatario",  
+      "selectSignerType": "Seleziona il tipo di firmatario",  
+      "signerTypeDescription": "Algoritmo hash utilizzato per la firma degli URL",  
+      "signerTruncate": "Troncamento Firmatario",  
+      "signerTruncateMin": "Il valore deve essere 0 o maggiore",  
+      "signerTruncateDescription": "Numero di caratteri da troncare dalla firma (0 = nessun troncamento)",  
+      "configureImagor": "Configura Imagor",  
+      "configurationSuccess": "Imagor configurato correttamente",  
+      "configurationError": "Impossibile configurare Imagor",  
+      "configurationOverridden": "La configurazione di Imagor è gestita da una configurazione esterna",  
+      "configuredSuccess": "Imagor configurato correttamente",  
+      "configuredSuccessRestart": "Imagor configurato correttamente. Riavvia il server per applicare le modifiche.",  
+      "mode": "Modalità",  
+      "status": "Stato",  
+      "notConfigured": "Non Configurato",  
+      "restartRequired": "Riavvio Richiesto",  
+      "active": "Attivo",  
+      "configurationDetails": "Dettagli Configurazione",  
+      "secretSource": "Origine Segreto",  
+      "hasSecret": "Ha Segreto",  
+      "serverRestartRequired": "È richiesto il riavvio del server",  
+      "serverRestartDescription": "Le modifiche alla configurazione di Imagor avranno effetto dopo il riavvio del server.",  
+      "noCache": "Nessuna Cache",  
+      "externalRequirements": "Requisiti per la modalità esterna:",  
+      "externalRequirement1": "Il loader/storage di imagor esterno deve corrispondere alle impostazioni di archiviazione di Imagor Studio",  
+      "externalRequirement2": "CORS deve essere abilitato per l'accesso ai metadati/EXIF"  
+    },  
+    "license": {  
+      "licenseManagement": "Gestione Licenza",  
+      "licenseManagementDescription": "Gestisci la tua licenza Imagor Studio e visualizza le informazioni sulla licenza.",  
+      "licenseType": "Tipo di Licenza",  
+      "status": "Stato",  
+      "notLicensed": "Senza Licenza",  
+      "licensed": "Con Licenza",  
+      "configurationDetails": "Dettagli Licenza",  
+      "licensedTo": "Licenza Intestata A",  
+      "activatedOn": "Attivata Il",  
+      "licenseKey": "Codice di Licenza",  
+      "updateLicense": "Aggiorna Licenza",  
+      "activateLicense": "Attiva Licenza",  
+      "configurationOverridden": "La configurazione della licenza è gestita da una configurazione esterna",  
+      "purchaseLicense": "Acquista Licenza",  
+      "supportDevelopment": "Supporta lo Sviluppo",  
+      "activationSuccess": "Grazie per il tuo supporto! Licenza attivata correttamente.",  
+      "updateSuccess": "Licenza aggiornata correttamente. Grazie per il tuo continuo supporto.",  
+      "registerForLicense": "Registra Imagor Studio",  
+      "registerDescription": "Inserisci il tuo codice di licenza per attivare Imagor Studio.",  
+      "supportTitle": "💝 Supporta Imagor Studio - dal creatore di imagor",  
+      "creatorStory": "Da vipsgen a imagor, ho costruito l'intera pipeline di elaborazione delle immagini da zero. Imagor Studio è una galleria di immagini e un'applicazione web di editing live che riunisce anni di sviluppo continuo.",  
+      "features": {  
+        "highPerformance": "Galleria a scorrimento virtuale ad alte prestazioni",  
+        "realTimeEditing": "Editing di immagini in tempo reale con generazione istantanea di URL",  
+        "zeroConfiguration": "Configurazione zero con supporto di archiviazione universale",  
+        "flexibleStorage": "Flusso di lavoro non distruttivo che preserva i file originali",  
+        "nonDestructive": "Elaborazione di immagini di livello professionale basata su imagor"  
+      },  
+      "supportOngoingDevelopment": "Il tuo supporto consente lo sviluppo continuo di Imagor Studio.",  
+      "getEarlyBirdLicense": "Ottieni la licenza Early Bird ($39)",  
+      "licenseKeyLabel": "Codice di Licenza",  
+      "licenseKeyDescription": "Incolla qui il tuo codice di licenza completo per attivare Imagor Studio.",  
+      "licenseTypes": {  
+        "early_bird": "Early Bird",  
+        "personal": "Personale",  
+        "commercial": "Commerciale",  
+        "enterprise": "Enterprise"  
+      }  
+    },  
+    "users": {  
+      "title": "Utenti",  
+      "createUser": "Crea Utente",  
+      "createNewUser": "Crea Nuovo Utente",  
+      "createUserDescription": "Aggiungi un nuovo utente al sistema. Potrà accedere con le credenziali fornite.",  
+      "editUser": "Modifica Utente",  
+      "editUserDescription": "Aggiorna le informazioni dell'utente. Le modifiche verranno applicate immediatamente.",  
+      "deactivateUser": "Disattiva Utente",  
+      "reactivateUser": "Riattiva Utente",  
+      "deactivateUserDescription": "Sei sicuro di voler disattivare",  
+      "deactivateUserWarning": "Questo impedirà all'utente di accedere",  
+      "reactivateUserWarning": "Questo consentirà all'utente di accedere di nuovo",  
+      "searchPlaceholder": "Cerca utenti per nome o nome utente...",  
+      "noUsersFound": "Nessun utente trovato",  
+      "showingUsers": "Visualizzati {{filtered}} di {{total}} utenti",  
+      "tableHeaders": {  
+        "name": "Nome",  
+        "username": "Nome utente",  
+        "role": "Ruolo",  
+        "status": "Stato",  
+        "actions": "Azioni"  
+      },  
+      "status": {  
+        "active": "Attivo",  
+        "inactive": "Inattivo"  
+      },  
+      "roles": {  
+        "user": "Utente",  
+        "admin": "Amministratore"  
+      },  
+      "actions": {  
+        "edit": "Modifica",  
+        "deactivate": "Disattiva",  
+        "reactivate": "Riattiva"  
+      },  
+      "messages": {  
+        "userCreatedSuccess": "Utente creato correttamente",  
+        "userUpdatedSuccess": "Utente aggiornato correttamente",  
+        "userDeactivatedSuccess": "Utente disattivato correttamente",  
+        "userReactivatedSuccess": "Utente riattivato correttamente",  
+        "createUserFailed": "Impossibile creare l'utente",  
+        "updateUserFailed": "Impossibile aggiornare l'utente",  
+        "deactivateUserFailed": "Impossibile disattivare l'utente",  
+        "reactivateUserFailed": "Impossibile riattivare l'utente",  
+        "usernameAlreadyExists": "Questo nome utente è già in uso"  
+      },  
+      "placeholders": {  
+        "enterDisplayName": "Inserisci il nome visualizzato",  
+        "enterUsername": "Inserisci il nome utente",  
+        "enterPassword": "Inserisci la password",  
+        "confirmPassword": "Conferma password"  
+      }  
+    }  
+  },  
+  "home": "Home",  
+  "posts": "Articoli",  
+  "categories": "Categorie",  
+  "tags": "Tag",  
+  "users": "Utenti",  
+  "account": "Account",  
+  "signOut": "Esci",  
+  "allPosts": "Tutti gli Articoli",  
+  "newPost": "Nuovo Articolo",  
+  "profile": "Profilo",  
+  "dashboard": "Cruscotto",  
+  "footerText": "Realizzato con {{uiLink}}. Il codice sorgente è disponibile su {{githubLink}}.",  
+  "placeholderImageAttribution": "Progettato da Freepik",  
+  "switchTheme": "Cambia Tema",  
+  "close": "Chiudi",  
+  "snooze": "Posticipa",  
+  "replyAll": "Rispondi a tutti",  
+  "forward": "Inoltra",  
+  "more": "Altro",  
+  "markAsUnread": "Segna come non letto",  
+  "starThread": "Aggiungi la discussione ai preferiti",  
+  "addLabel": "Aggiungi etichetta",  
+  "muteThread": "Silenzia discussione",  
+  "imageInformation": "Informazioni Immagine",  
+  "noImageInfo": "Nessuna informazione sull'immagine disponibile.",  
+  "imageEditor": {  
+    "page": {  
+      "back": "Indietro",  
+      "controls": "Controlli",  
+      "resetAll": "Reimposta Tutto",  
+      "download": "Scarica",  
+      "copyUrl": "Copia URL",  
+      "retry": "Riprova",  
+      "failedToDownload": "Impossibile scaricare l'immagine",  
+      "undo": "Annulla",  
+      "redo": "Ripeti"  
+    },  
+    "controls": {  
+      "cropAspect": "Ritaglia e Aspetto",  
+      "dimensionsResize": "Dimensioni e Ridimensiona",  
+      "outputCompression": "Output e Compressione",  
+      "colorEffects": "Colore ed Effetti",  
+      "transformRotate": "Trasforma e Ruota",  
+      "cropResize": "Ritaglia e Ridimensiona",  
+      "fillPadding": "Riempimento e Spaziatura"  
+    },  
+    "transform": {  
+      "flipControls": "Controlli di Ribaltamento",  
+      "horizontalFlip": "Ribaltamento Orizzontale",  
+      "verticalFlip": "Ribaltamento Verticale",  
+      "horizontal": "Orizzontale",  
+      "vertical": "Verticale",  
+      "normal": "Normale",  
+      "flipped": "Ribaltato",  
+      "rotationControls": "Controlli di Rotazione",  
+      "currentRotation": "Rotazione Attuale"  
+    },  
+    "effects": {  
+      "colorAdjustments": "Regolazioni Colore",  
+      "brightness": "Luminosità",  
+      "contrast": "Contrasto",  
+      "saturation": "Saturazione",  
+      "hue": "Tonalità",  
+      "effects": "Effetti",  
+      "blur": "Sfocatura",  
+      "sharpen": "Nitidezza",  
+      "roundCorner": "Angoli Arrotondati",  
+      "grayscale": "Scala di Grigi"  
+    },  
+    "dimensions": {  
+      "title": "Dimensioni",  
+      "width": "Larghezza",  
+      "height": "Altezza",  
+      "auto": "Auto",  
+      "reset": "Reimposta",  
+      "resetSize": "Reimposta alla Dimensione Originale",  
+      "lockAspectRatio": "Blocca Proporzioni",  
+      "unlockAspectRatio": "Sblocca Proporzioni",  
+      "aspectRatios": "Proporzioni",  
+      "resizeMode": "Modalità di Ridimensionamento",  
+      "modes": {  
+        "fitIn": "Adatta a",  
+        "fill": "Riempi",  
+        "stretch": "Allunga",  
+        "smart": "Intelligente"  
+      },  
+      "modeDescriptions": {  
+        "fitIn": "Ridimensiona per adattarsi alle dimensioni, mantenendo le proporzioni",  
+        "fill": "Ridimensiona e ritaglia per riempire esattamente le dimensioni",  
+        "stretch": "Ridimensiona alle dimensioni esatte, ignorando le proporzioni",  
+        "smart": "Ritaglio intelligente per riempire le dimensioni con il rilevamento del contenuto"  
+      },  
+      "alignment": "Allineamento",  
+      "horizontal": "Orizzontale",  
+      "vertical": "Verticale",  
+      "alignments": {  
+        "left": "Sinistra",  
+        "center": "Centro",  
+        "right": "Destra",  
+        "top": "Alto",  
+        "middle": "Mezzo",  
+        "bottom": "Basso"  
+      },  
+      "originalRatio": "Originale: {{ratio}}"  
+    },  
+    "resize": {  
+      "title": "Ridimensiona"  
+    },  
+    "output": {  
+      "outputFormat": "Formato",  
+      "formatOptions": {  
+        "original": "Formato Originale",  
+        "jpeg": "JPEG",  
+        "png": "PNG",  
+        "gif": "GIF",  
+        "webp": "WebP",  
+        "avif": "AVIF",  
+        "jxl": "JPEG XL",  
+        "tiff": "TIFF",  
+        "jp2": "JPEG 2000"  
+      },  
+      "formatDescription": "Scegli il formato di output o mantieni l'originale",  
+      "quality": "Qualità",  
+      "qualityDescription": "Qualità superiore = file più grande",  
+      "qualityAutoOptimized": "La qualità sarà ottimizzata automaticamente per rispettare il limite di dimensione",  
+      "maxFileSize": "Dim. Max",  
+      "maxSizeDescription": "Regola automaticamente la qualità per rispettare la dimensione del file di destinazione",  
+      "customSizeInBytes": "Dimensione personalizzata in byte",  
+      "bytes": "byte",  
+      "clear": "Cancella",  
+      "targetSize": "Obiettivo: {{size}} - La qualità verrà ridotta automaticamente per rispettare questo limite",  
+      "metadata": "Metadati",  
+      "stripIcc": "Rimuovi Profilo ICC",  
+      "stripExif": "Rimuovi Dati EXIF",  
+      "metadataDescription": "Rimuovi profili colore e metadati per ridurre le dimensioni del file"  
+    },  
+    "crop": {  
+      "left": "Sinistra (px)",  
+      "top": "Alto (px)",  
+      "width": "Larghezza (px)",  
+      "height": "Altezza (px)",  
+      "cropTitle": "Ritaglia",  
+      "startCrop": "Ritaglia",  
+      "applyCrop": "Applica Ritaglio"  
+    },  
+    "preview": {  
+      "previewError": "Errore Anteprima",  
+      "failedToGenerate": "Impossibile generare l'anteprima"  
+    },  
+    "fillPadding": {  
+      "fillColor": "Colore di Riempimento",  
+      "noFill": "Nessun Riempimento",  
+      "transparent": "Trasparente",  
+      "customColor": "Colore Personalizzato",  
+      "padding": "Spaziatura",  
+      "top": "Alto",  
+      "right": "Destra",  
+      "bottom": "Basso",  
+      "left": "Sinistra",  
+      "description": "Aggiungi spaziatura attorno all'immagine e riempi le aree trasparenti o con spaziatura con un colore"  
+    }  
+  }  
+}  
