@@ -1,7 +1,13 @@
 import { RefObject } from 'react'
-import { Folder } from 'lucide-react'
+import { Folder, MoreVertical } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export interface Gallery {
   galleryKey: string
@@ -17,6 +23,80 @@ export interface FolderGridProps {
   folderRefs?: RefObject<(HTMLDivElement | null)[]>
   onFolderKeyDown?: (event: React.KeyboardEvent, index: number) => void
   onFolderClick?: (folder: Gallery, index: number) => void
+  renderMenuItems?: (folder: Gallery) => React.ReactNode
+}
+
+interface FolderCardProps {
+  folder: Gallery
+  index: number
+  folderWidth: number
+  foldersVisible: boolean
+  focusedIndex: number
+  folderRef?: (el: HTMLDivElement | null) => void
+  onFolderKeyDown?: (event: React.KeyboardEvent, index: number) => void
+  onFolderClick?: (folder: Gallery, index: number) => void
+  renderMenuItems?: (folder: Gallery) => React.ReactNode
+}
+
+const FolderCard = ({
+  folder,
+  index,
+  folderWidth,
+  foldersVisible,
+  focusedIndex,
+  folderRef,
+  onFolderKeyDown,
+  onFolderClick,
+  renderMenuItems,
+}: FolderCardProps) => {
+  return (
+    <Card
+      ref={folderRef}
+      className='group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+      onClick={() => onFolderClick?.(folder, index)}
+      onKeyDown={(e) => onFolderKeyDown?.(e, index)}
+      tabIndex={
+        foldersVisible
+          ? index === 0 && focusedIndex === -1
+            ? 0
+            : focusedIndex === index
+              ? 0
+              : -1
+          : -1
+      }
+      role='gridcell'
+      aria-label={`Folder: ${folder.galleryName}`}
+      style={{ width: `${folderWidth - 8}px` }}
+      data-folder-key={folder.galleryKey}
+      data-folder-name={folder.galleryName}
+    >
+      <CardContent className='relative flex items-center px-4 py-4 sm:py-3'>
+        <Folder className='text-primary mr-2 h-5 w-5 flex-shrink-0' />
+        <span className='truncate text-sm font-medium'>{folder.galleryName}</span>
+        {renderMenuItems && (
+          <div
+            className='pointer-events-none absolute right-2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button variant='ghost' size='sm' className='h-6 w-6 p-0' aria-label='More options'>
+                  <MoreVertical className='h-3 w-3' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align='end'
+                className='w-56'
+                onClick={(e) => e.stopPropagation()}
+              >
+                {renderMenuItems(folder)}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
 }
 
 export const FolderGrid = ({
@@ -28,6 +108,7 @@ export const FolderGrid = ({
   folderRefs,
   onFolderKeyDown,
   onFolderClick,
+  renderMenuItems,
 }: FolderGridProps) => {
   const columnCount = Math.max(2, Math.floor(width / maxFolderWidth))
   const folderWidth = width / columnCount
@@ -48,36 +129,22 @@ export const FolderGrid = ({
       tabIndex={-1}
     >
       {folders.map((folder, index) => (
-        <Card
+        <FolderCard
           key={folder.galleryKey}
-          ref={(el) => {
+          folder={folder}
+          index={index}
+          folderWidth={folderWidth}
+          foldersVisible={foldersVisible}
+          focusedIndex={focusedIndex}
+          folderRef={(el) => {
             if (folderRefs?.current) {
               folderRefs.current[index] = el
             }
           }}
-          className='hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
-          onClick={() => onFolderClick?.(folder, index)}
-          onKeyDown={(e) => onFolderKeyDown?.(e, index)}
-          tabIndex={
-            foldersVisible
-              ? index === 0 && focusedIndex === -1
-                ? 0
-                : focusedIndex === index
-                  ? 0
-                  : -1
-              : -1
-          }
-          role='gridcell'
-          aria-label={`Folder: ${folder.galleryName}`}
-          style={{ width: `${folderWidth - 8}px` }} // Subtracting 8px to account for the gap
-          data-folder-key={folder.galleryKey}
-          data-folder-name={folder.galleryName}
-        >
-          <CardContent className='flex items-center px-4 py-4 sm:py-3'>
-            <Folder className='text-primary mr-2 h-5 w-5 flex-shrink-0' />
-            <span className='truncate text-sm font-medium'>{folder.galleryName}</span>
-          </CardContent>
-        </Card>
+          onFolderKeyDown={onFolderKeyDown}
+          onFolderClick={onFolderClick}
+          renderMenuItems={renderMenuItems}
+        />
       ))}
     </div>
   )

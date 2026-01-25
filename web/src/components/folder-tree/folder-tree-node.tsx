@@ -1,20 +1,30 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { ChevronRight, Folder } from 'lucide-react'
+import { ChevronRight, Folder, MoreVertical } from 'lucide-react'
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSub } from '@/components/ui/sidebar'
+import { useAuth } from '@/stores/auth-store'
 import { FolderNode, useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 interface FolderTreeNodeProps {
   folder: FolderNode
+  renderMenuItems?: (folderKey: string, folderName: string) => React.ReactNode
 }
 
-export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
+export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps) {
   const navigate = useNavigate()
   const { currentPath, dispatch, loadFolderChildren } = useFolderTree()
   const { isMobile, setOpenMobile } = useSidebar()
+  const { authState } = useAuth()
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
   const isActive = currentPath === folder.path
   const hasChildren = folder.children && folder.children.length > 0
@@ -58,22 +68,51 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
     }
   }
 
+  // Check if user is authenticated to show dropdown
+  const showDropdown = renderMenuItems && authState.state === 'authenticated' && folder.path
+
   // If this is a leaf folder (no children), render as a simple button
   if (!canExpand) {
     return (
       <SidebarMenuItem>
-        <SidebarMenuButton
-          onClick={handleFolderClick}
-          isActive={isActive}
-          data-folder-key={folder.path}
-          data-folder-name={folder.name || 'Root'}
+        <div
+          className='group/folder relative'
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
-          <span className='-m-2 p-4 md:p-2'>
-            <div className='size-4' />
-          </span>
-          <Folder className='h-4 w-4' />
-          <span className='truncate'>{folder.name || 'Root'}</span>
-        </SidebarMenuButton>
+          <SidebarMenuButton
+            onClick={handleFolderClick}
+            isActive={isActive}
+            data-folder-key={folder.path}
+            data-folder-name={folder.name || 'Root'}
+          >
+            <span className='-m-2 p-4 md:p-2'>
+              <div className='size-4' />
+            </span>
+            <Folder className='h-4 w-4' />
+            <span className='truncate'>{folder.name || 'Root'}</span>
+          </SidebarMenuButton>
+          {showDropdown && (isHovered || isDropdownOpen) && (
+            <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen} modal={false}>
+              <div
+                className={`pointer-events-none absolute top-1/2 right-1 hidden -translate-y-1/2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100 md:block ${isDropdownOpen ? 'pointer-events-auto opacity-100' : ''}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className='bg-accent flex h-6 w-6 cursor-pointer items-center justify-center rounded-md transition-colors'
+                    aria-label='More options'
+                  >
+                    <MoreVertical className='h-3.5 w-3.5' />
+                  </button>
+                </DropdownMenuTrigger>
+              </div>
+              <DropdownMenuContent align='end' className='w-56'>
+                {renderMenuItems(folder.path, folder.name || 'Root')}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </SidebarMenuItem>
     )
   }
@@ -83,27 +122,57 @@ export function FolderTreeNode({ folder }: FolderTreeNodeProps) {
     <SidebarMenuItem>
       <Collapsible
         open={folder.isExpanded}
-        className='group/collapsible [&[data-state=open]>button>span>svg:first-child]:rotate-90'
+        className='group/collapsible [&[data-state=open]>div>button>span>svg:first-child]:rotate-90'
       >
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton
-            onClick={handleFolderClick}
-            isActive={isActive}
-            data-folder-key={folder.path}
-            data-folder-name={folder.name || 'Root'}
-          >
-            <span onClick={handleExpandClick} className='-m-2 p-4 md:p-2'>
-              <ChevronRight className='size-4 transition-transform' />
-            </span>
-            <Folder className='h-4 w-4' />
-            <span className='truncate'>{folder.name || 'Root'}</span>
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
+        <div
+          className='group/folder relative'
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton
+              onClick={handleFolderClick}
+              isActive={isActive}
+              data-folder-key={folder.path}
+              data-folder-name={folder.name || 'Root'}
+            >
+              <span onClick={handleExpandClick} className='-m-2 p-4 md:p-2'>
+                <ChevronRight className='size-4 transition-transform' />
+              </span>
+              <Folder className='h-4 w-4' />
+              <span className='truncate'>{folder.name || 'Root'}</span>
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
+          {showDropdown && (isHovered || isDropdownOpen) && (
+            <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen} modal={false}>
+              <div
+                className={`pointer-events-none absolute top-1/2 right-1 hidden -translate-y-1/2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100 md:block ${isDropdownOpen ? 'pointer-events-auto opacity-100' : ''}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className='bg-accent flex h-6 w-6 cursor-pointer items-center justify-center rounded-md transition-colors'
+                    aria-label='More options'
+                  >
+                    <MoreVertical className='h-3.5 w-3.5' />
+                  </button>
+                </DropdownMenuTrigger>
+              </div>
+              <DropdownMenuContent align='end' className='w-56'>
+                {renderMenuItems(folder.path, folder.name || 'Root')}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
 
         <CollapsibleContent>
           <SidebarMenuSub>
             {folder.children?.map((child, index) => (
-              <FolderTreeNode key={`${child.path}-${index}`} folder={child} />
+              <FolderTreeNode
+                key={`${child.path}-${index}`}
+                folder={child}
+                renderMenuItems={renderMenuItems}
+              />
             ))}
           </SidebarMenuSub>
         </CollapsibleContent>

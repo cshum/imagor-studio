@@ -1,7 +1,12 @@
-import React, { RefObject, useEffect, useRef } from 'react'
-import { Play } from 'lucide-react'
+import React, { RefObject, useEffect, useRef, useState } from 'react'
+import { MoreVertical, Play } from 'lucide-react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { getFullImageUrl } from '@/lib/api-utils'
 
 interface ImageCellProps {
@@ -16,6 +21,7 @@ interface ImageCellProps {
   firstVisibleImageIndex: number
   showFileName?: boolean
   onImageClick?: (imageKey: string, position: Position, index: number) => void
+  renderMenuItems?: (image: GalleryImage) => React.ReactNode
   onKeyDown?: (event: React.KeyboardEvent, index: number) => void
   imageRef?: (el: HTMLDivElement | null) => void
 }
@@ -32,9 +38,12 @@ const ImageCell = ({
   firstVisibleImageIndex,
   showFileName = false,
   onImageClick,
+  renderMenuItems,
   onKeyDown,
   imageRef,
 }: ImageCellProps) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (onImageClick) {
       const rect = e.currentTarget.getBoundingClientRect()
@@ -64,7 +73,7 @@ const ImageCell = ({
       data-image-key={image.imageKey}
       data-image-name={image.imageName}
       data-is-video={image.isVideo}
-      className='focus-visible:ring-ring absolute box-border cursor-pointer rounded-xl p-1 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:p-1.5'
+      className='group/image focus-visible:ring-ring absolute box-border cursor-pointer rounded-xl p-1 select-none focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:p-1.5'
       style={{
         width: `${columnWidth}px`,
         height: `${rowHeight}px`,
@@ -84,9 +93,31 @@ const ImageCell = ({
           className='h-full w-full object-cover'
           draggable={false}
         />
+        {renderMenuItems && (
+          <DropdownMenu onOpenChange={setIsDropdownOpen} modal={false}>
+            <div
+              className={`pointer-events-none absolute top-2 right-2 opacity-0 transition-opacity group-hover/image:pointer-events-auto group-hover/image:opacity-100 ${isDropdownOpen ? 'pointer-events-auto opacity-100' : ''}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <DropdownMenuTrigger asChild>
+                <div
+                  className='cursor-pointer rounded-full bg-black/30 p-1.5 transition-all hover:bg-black/60'
+                  role='button'
+                  aria-label='More options'
+                  tabIndex={0}
+                >
+                  <MoreVertical className='h-4 w-4 text-white' />
+                </div>
+              </DropdownMenuTrigger>
+            </div>
+            <DropdownMenuContent align='end' className='w-56' onClick={(e) => e.stopPropagation()}>
+              {renderMenuItems(image)}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         {image.isVideo && (
-          <div className='absolute top-2 right-2 rounded-full bg-black/60 p-2 transition-opacity group-hover:bg-black/75'>
-            <Play className='h-4 w-4 fill-white text-white' />
+          <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/60 p-3 opacity-80 transition-opacity'>
+            <Play className='h-6 w-6 fill-white text-white' />
           </div>
         )}
         {showFileName && (
@@ -113,6 +144,7 @@ export interface ImageGridProps {
   imageRefs?: RefObject<Map<number, HTMLDivElement>>
   onImageKeyDown?: (event: React.KeyboardEvent, index: number) => void
   onImageClick?: (imageKey: string, position: Position, index: number) => void
+  renderMenuItems?: (image: GalleryImage) => React.ReactNode
   onVisibleRangeChange?: (startIndex: number, endIndex: number, firstVisibleIndex: number) => void
 }
 
@@ -128,12 +160,13 @@ export const ImageGrid = ({
   imageRefs,
   onImageKeyDown,
   onImageClick,
+  renderMenuItems,
   onVisibleRangeChange,
 }: ImageGridProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Dynamically calculate the number of columns based on maxImageWidth prop
-  const columnCount = Math.max(3, Math.floor(width / maxImageWidth))
+  const columnCount = Math.max(2, Math.floor(width / maxImageWidth))
   const columnWidth = width / columnCount
   const rowHeight = columnWidth / aspectRatio
 
@@ -194,6 +227,7 @@ export const ImageGrid = ({
           firstVisibleImageIndex={firstVisibleImageIndex}
           showFileName={showFileName}
           onImageClick={onImageClick}
+          renderMenuItems={renderMenuItems}
           onKeyDown={onImageKeyDown}
           imageRef={(el) => {
             if (imageRefs?.current) {
