@@ -10,7 +10,6 @@ import {
   Download,
   Eye,
   FileText,
-  FolderOpen,
   FolderPlus,
   Pencil,
   Search,
