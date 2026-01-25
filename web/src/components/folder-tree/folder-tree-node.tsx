@@ -9,8 +9,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSub } from '@/components/ui/sidebar'
-import { FolderNode, useFolderTree } from '@/stores/folder-tree-store'
 import { useAuth } from '@/stores/auth-store'
+import { FolderNode, useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 interface FolderTreeNodeProps {
@@ -90,7 +90,7 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
           {showDropdown && (
             <DropdownMenu onOpenChange={setIsDropdownOpen} modal={false}>
               <div
-                className={`pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100 ${isDropdownOpen ? 'opacity-100 pointer-events-auto' : ''}`}
+                className={`pointer-events-none absolute top-1/2 right-1 hidden -translate-y-1/2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100 md:block ${isDropdownOpen ? 'pointer-events-auto opacity-100' : ''}`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <DropdownMenuTrigger asChild>
@@ -102,7 +102,11 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
                   </button>
                 </DropdownMenuTrigger>
               </div>
-              <DropdownMenuContent align='end' className='w-56' onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuContent
+                align='end'
+                className='w-56'
+                onClick={(e) => e.stopPropagation()}
+              >
                 {renderMenuItems(folder.path, folder.name || 'Root')}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -137,7 +141,7 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
           {showDropdown && (
             <DropdownMenu onOpenChange={setIsDropdownOpen} modal={false}>
               <div
-                className={`pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100 ${isDropdownOpen ? 'opacity-100 pointer-events-auto' : ''}`}
+                className={`pointer-events-none absolute top-1/2 right-1 hidden -translate-y-1/2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100 md:block ${isDropdownOpen ? 'pointer-events-auto opacity-100' : ''}`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <DropdownMenuTrigger asChild>
@@ -149,7 +153,11 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
                   </button>
                 </DropdownMenuTrigger>
               </div>
-              <DropdownMenuContent align='end' className='w-56' onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuContent
+                align='end'
+                className='w-56'
+                onClick={(e) => e.stopPropagation()}
+              >
                 {renderMenuItems(folder.path, folder.name || 'Root')}
               </DropdownMenuContent>
             </DropdownMenu>
