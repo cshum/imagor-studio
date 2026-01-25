@@ -264,7 +264,16 @@ export function ImageView({
 
   // Global keyboard event listener for reliable keyboard navigation
   useEffect(() => {
+    // Only add listener when image view is visible
+    if (!isVisible) return
+
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't intercept keyboard events when user is typing in an input/textarea
+      const target = event.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return
+      }
+
       if (event.key === 'Escape') {
         event.preventDefault()
         handleCloseFullView()
@@ -281,7 +290,7 @@ export function ImageView({
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [onPrevImage, onNextImage])
+  }, [onPrevImage, onNextImage, isVisible])
 
   const slideVariants = {
     enter: (direction: number) => ({
