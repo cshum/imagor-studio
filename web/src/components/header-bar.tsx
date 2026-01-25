@@ -17,7 +17,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { MobileBreadcrumb } from '@/components/ui/mobile-breadcrumb'
@@ -165,22 +169,33 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                     ) : (
                       // Authenticated user menu
                       <>
-                        {/* Language Selector */}
-                        <DropdownMenuLabel>{t('common.language.title')}</DropdownMenuLabel>
-                        {availableLanguages.map((lang) => (
-                          <DropdownMenuItem
-                            key={lang.code}
-                            className='hover:cursor-pointer'
-                            onSelect={(event) => {
-                              event.preventDefault()
-                              handleLanguageChange(lang.code)
-                            }}
-                          >
+                        {/* Language Selector Submenu */}
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>
                             <Languages className='text-muted-foreground mr-3 h-4 w-4' />
-                            {lang.name}
-                            {i18n.language === lang.code && <Check className='ml-auto h-4 w-4' />}
-                          </DropdownMenuItem>
-                        ))}
+                            {t('common.language.title')}
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                              {availableLanguages.map((lang) => (
+                                <DropdownMenuItem
+                                  key={lang.code}
+                                  className='hover:cursor-pointer'
+                                  onSelect={(event) => {
+                                    event.preventDefault()
+                                    handleLanguageChange(lang.code)
+                                  }}
+                                >
+                                  {lang.name}
+                                  {i18n.language === lang.code && (
+                                    <Check className='ml-auto h-4 w-4' />
+                                  )}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
+                        </DropdownMenuSub>
+
                         <DropdownMenuSeparator />
 
                         <DropdownMenuItem
