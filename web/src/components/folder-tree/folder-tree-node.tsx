@@ -88,7 +88,7 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
             <span className='truncate'>{folder.name || 'Root'}</span>
           </SidebarMenuButton>
           {showDropdown && (
-            <DropdownMenu onOpenChange={setIsDropdownOpen}>
+            <DropdownMenu onOpenChange={setIsDropdownOpen} modal={false}>
               <div
                 className={`pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100 ${isDropdownOpen ? 'opacity-100 pointer-events-auto' : ''}`}
                 onClick={(e) => e.stopPropagation()}
@@ -135,7 +135,7 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
             </SidebarMenuButton>
           </CollapsibleTrigger>
           {showDropdown && (
-            <DropdownMenu onOpenChange={setIsDropdownOpen}>
+            <DropdownMenu onOpenChange={setIsDropdownOpen} modal={false}>
               <div
                 className={`pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100 ${isDropdownOpen ? 'opacity-100 pointer-events-auto' : ''}`}
                 onClick={(e) => e.stopPropagation()}

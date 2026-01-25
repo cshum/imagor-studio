@@ -94,7 +94,7 @@ const ImageCell = ({
           draggable={false}
         />
         {renderMenuItems && (
-          <DropdownMenu onOpenChange={setIsDropdownOpen}>
+          <DropdownMenu onOpenChange={setIsDropdownOpen} modal={false}>
             <div
               className={`pointer-events-none absolute top-2 right-2 opacity-0 transition-opacity group-hover/image:pointer-events-auto group-hover/image:opacity-100 ${isDropdownOpen ? 'opacity-100 pointer-events-auto' : ''}`}
               onClick={(e) => e.stopPropagation()}
