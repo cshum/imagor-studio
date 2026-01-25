@@ -592,50 +592,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     )
   }
 
-  // Render function for folder dropdown menus
-  const renderFolderDropdownMenuItems = (folderKey: string, folderName: string) => {
-    const isAuthenticated = authState.state === 'authenticated'
-
-    if (!folderKey) return null
-
-    return (
-      <>
-        <DropdownMenuLabel className='break-all'>{folderName}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => handleFolderClick({ galleryKey: folderKey, galleryName: folderName })}
-        >
-          <FolderOpen className='mr-2 h-4 w-4' />
-          {t('pages.gallery.contextMenu.open')}
-        </DropdownMenuItem>
-        {isAuthenticated && (
-          <>
-            <DropdownMenuItem onClick={() => handleRenameFromMenu(folderKey, folderName, 'folder')}>
-              <Type className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.rename')}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                setDeleteFolderDialog({
-                  open: true,
-                  folderKey,
-                  folderName,
-                  isDeleting: false,
-                })
-              }}
-              className='text-destructive focus:text-destructive'
-            >
-              <Trash2 className='mr-2 h-4 w-4' />
-              Delete Folder
-            </DropdownMenuItem>
-          </>
-        )}
-      </>
-    )
-  }
-
-  // Use the shared folder context menu hook with centralized logic
+  // Use the shared folder context menu hook for context menus (right-click)
   const {
     renderMenuItems: renderFolderContextMenuItems,
     handleRename: handleRenameFolderOperation,
@@ -651,6 +608,21 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         isDeleting: false,
       })
     },
+  })
+
+  // Use the shared folder context menu hook for dropdown menus (three-dots)
+  const { renderMenuItems: renderFolderDropdownMenuItems } = useFolderContextMenu({
+    isAuthenticated: () => authState.state === 'authenticated',
+    onRename: (folderKey, folderName) => handleRenameFromMenu(folderKey, folderName, 'folder'),
+    onDelete: (folderKey, folderName) => {
+      setDeleteFolderDialog({
+        open: true,
+        folderKey,
+        folderName,
+        isDeleting: false,
+      })
+    },
+    useDropdownItems: true,
   })
 
   const isNavigateToImage = !!(
@@ -839,7 +811,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                             maxFolderWidth={maxItemWidth}
                             foldersVisible={foldersVisible}
                             renderMenuItems={(folder) =>
-                              renderFolderDropdownMenuItems(folder.galleryKey, folder.galleryName)
+                              renderFolderDropdownMenuItems({
+                                folderKey: folder.galleryKey,
+                                folderName: folder.galleryName,
+                              })
                             }
                             {...folderGridProps}
                           />

@@ -11,6 +11,11 @@ import {
   ContextMenuLabel,
   ContextMenuSeparator,
 } from '@/components/ui/context-menu'
+import {
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
 import { folderTreeStore, invalidateFolderCache, loadRootFolders } from '@/stores/folder-tree-store'
 
 interface UseFolderContextMenuProps {
@@ -30,6 +35,11 @@ interface UseFolderContextMenuProps {
    */
   onRename?: (folderKey: string, folderName: string) => void
   onDelete?: (folderKey: string, folderName: string) => void
+  /**
+   * If true, returns renderDropdownMenuItems instead of renderMenuItems.
+   * Use this for dropdown menus (three-dots) instead of context menus (right-click).
+   */
+  useDropdownItems?: boolean
 }
 
 /**
@@ -47,6 +57,7 @@ export function useFolderContextMenu({
   onOpen,
   onRename,
   onDelete,
+  useDropdownItems = false,
 }: UseFolderContextMenuProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -190,8 +201,47 @@ export function useFolderContextMenu({
     )
   }
 
+  /**
+   * Render dropdown menu items (for three-dots menus)
+   */
+  const renderDropdownMenuItems = ({ folderName, folderKey }: FolderContextData) => {
+    if (!folderKey) return null
+
+    // If authentication check is provided and user is not authenticated, show only label
+    const showActions = !isAuthenticated || isAuthenticated()
+
+    return (
+      <>
+        <DropdownMenuLabel className='break-all'>{folderName}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => handleOpen(folderKey)}>
+          <FolderOpen className='mr-2 h-4 w-4' />
+          {t('pages.gallery.contextMenu.open')}
+        </DropdownMenuItem>
+        {showActions && (
+          <>
+            <DropdownMenuItem onClick={() => onRename?.(folderKey, folderName)}>
+              <Type className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.rename')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => {
+                onDelete?.(folderKey, folderName)
+              }}
+              className='text-destructive focus:text-destructive'
+            >
+              <Trash2 className='mr-2 h-4 w-4' />
+              {t('pages.gallery.folderContextMenu.delete')}
+            </DropdownMenuItem>
+          </>
+        )}
+      </>
+    )
+  }
+
   return {
-    renderMenuItems,
+    renderMenuItems: useDropdownItems ? renderDropdownMenuItems : renderMenuItems,
     handleRename,
     handleDelete,
     isRenaming,

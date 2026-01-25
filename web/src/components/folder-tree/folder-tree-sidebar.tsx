@@ -163,7 +163,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
           disabled={isRenaming || isDeleting}
         >
           <Trash2 className='mr-2 h-4 w-4' />
-          Delete Folder
+          {t('pages.gallery.folderContextMenu.delete')}
         </DropdownMenuItem>
       </>
     )
