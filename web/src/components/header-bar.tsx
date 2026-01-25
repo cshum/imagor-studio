@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { LogOut, MoreVertical, Settings } from 'lucide-react'
+import { Check, Languages, LogOut, MoreVertical, Settings } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
@@ -24,7 +24,9 @@ import { MobileBreadcrumb } from '@/components/ui/mobile-breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useBreadcrumb } from '@/hooks/use-breadcrumb'
+import { availableLanguages } from '@/i18n'
 import { useAuth } from '@/stores/auth-store'
+import { setLocale } from '@/stores/locale-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 interface HeaderBarProps {
@@ -36,7 +38,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   isScrolled: isScrolledDown = false,
   customMenuItems,
 }) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
   const breadcrumbs = useBreadcrumb()
@@ -72,6 +74,12 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   // Handle account settings navigation
   const handleAccountClick = () => {
     navigate({ to: '/account/profile' })
+  }
+
+  // Handle language change
+  const handleLanguageChange = async (languageCode: string) => {
+    // Use the locale store to save and apply the language
+    await setLocale(languageCode)
   }
 
   return (
@@ -157,6 +165,24 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                     ) : (
                       // Authenticated user menu
                       <>
+                        {/* Language Selector */}
+                        <DropdownMenuLabel>{t('common.language.title')}</DropdownMenuLabel>
+                        {availableLanguages.map((lang) => (
+                          <DropdownMenuItem
+                            key={lang.code}
+                            className='hover:cursor-pointer'
+                            onSelect={(event) => {
+                              event.preventDefault()
+                              handleLanguageChange(lang.code)
+                            }}
+                          >
+                            <Languages className='text-muted-foreground mr-3 h-4 w-4' />
+                            {lang.name}
+                            {i18n.language === lang.code && <Check className='ml-auto h-4 w-4' />}
+                          </DropdownMenuItem>
+                        ))}
+                        <DropdownMenuSeparator />
+
                         <DropdownMenuItem
                           className='interactive:cursor-pointer'
                           onClick={handleAccountClick}

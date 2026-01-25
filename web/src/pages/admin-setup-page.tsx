@@ -49,6 +49,19 @@ const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
     defaultValue: 'Home',
   },
   {
+    key: 'config.app_default_language',
+    type: 'select',
+    label: 'Default Language',
+    description: 'Set the default language for the application',
+    defaultValue: 'en',
+    options: ['en', 'zh-CN', 'zh-TW'],
+    optionLabels: {
+      en: 'English',
+      'zh-CN': '简体中文 (Simplified Chinese)',
+      'zh-TW': '繁體中文 (Traditional Chinese)',
+    },
+  },
+  {
     key: 'config.allow_guest_mode',
     type: 'boolean',
     label: t('pages.admin.guestMode'),
