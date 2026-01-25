@@ -24,6 +24,7 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
   const { isMobile, setOpenMobile } = useSidebar()
   const { authState } = useAuth()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
   const isActive = currentPath === folder.path
   const hasChildren = folder.children && folder.children.length > 0
@@ -74,7 +75,11 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
   if (!canExpand) {
     return (
       <SidebarMenuItem>
-        <div className='group/folder relative'>
+        <div
+          className='group/folder relative'
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           <SidebarMenuButton
             onClick={handleFolderClick}
             isActive={isActive}
@@ -87,8 +92,8 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
             <Folder className='h-4 w-4' />
             <span className='truncate'>{folder.name || 'Root'}</span>
           </SidebarMenuButton>
-          {showDropdown && (
-            <DropdownMenu onOpenChange={setIsDropdownOpen} modal={false}>
+          {showDropdown && (isHovered || isDropdownOpen) && (
+            <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen} modal={false}>
               <div
                 className={`pointer-events-none absolute top-1/2 right-1 hidden -translate-y-1/2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100 md:block ${isDropdownOpen ? 'pointer-events-auto opacity-100' : ''}`}
                 onClick={(e) => e.stopPropagation()}
@@ -102,11 +107,7 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
                   </button>
                 </DropdownMenuTrigger>
               </div>
-              <DropdownMenuContent
-                align='end'
-                className='w-56'
-                onClick={(e) => e.stopPropagation()}
-              >
+              <DropdownMenuContent align='end' className='w-56'>
                 {renderMenuItems(folder.path, folder.name || 'Root')}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -123,7 +124,11 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
         open={folder.isExpanded}
         className='group/collapsible [&[data-state=open]>div>button>span>svg:first-child]:rotate-90'
       >
-        <div className='group/folder relative'>
+        <div
+          className='group/folder relative'
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           <CollapsibleTrigger asChild>
             <SidebarMenuButton
               onClick={handleFolderClick}
@@ -138,8 +143,8 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
               <span className='truncate'>{folder.name || 'Root'}</span>
             </SidebarMenuButton>
           </CollapsibleTrigger>
-          {showDropdown && (
-            <DropdownMenu onOpenChange={setIsDropdownOpen} modal={false}>
+          {showDropdown && (isHovered || isDropdownOpen) && (
+            <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen} modal={false}>
               <div
                 className={`pointer-events-none absolute top-1/2 right-1 hidden -translate-y-1/2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100 md:block ${isDropdownOpen ? 'pointer-events-auto opacity-100' : ''}`}
                 onClick={(e) => e.stopPropagation()}
@@ -153,11 +158,7 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
                   </button>
                 </DropdownMenuTrigger>
               </div>
-              <DropdownMenuContent
-                align='end'
-                className='w-56'
-                onClick={(e) => e.stopPropagation()}
-              >
+              <DropdownMenuContent align='end' className='w-56'>
                 {renderMenuItems(folder.path, folder.name || 'Root')}
               </DropdownMenuContent>
             </DropdownMenu>

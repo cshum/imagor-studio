@@ -73,7 +73,7 @@ const ImageCell = ({
       data-image-key={image.imageKey}
       data-image-name={image.imageName}
       data-is-video={image.isVideo}
-      className='group/image focus-visible:ring-ring absolute box-border cursor-pointer rounded-xl p-1 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset select-none md:p-1.5'
+      className='group/image focus-visible:ring-ring absolute box-border cursor-pointer rounded-xl p-1 select-none focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:p-1.5'
       style={{
         width: `${columnWidth}px`,
         height: `${rowHeight}px`,
@@ -96,7 +96,7 @@ const ImageCell = ({
         {renderMenuItems && (
           <DropdownMenu onOpenChange={setIsDropdownOpen} modal={false}>
             <div
-              className={`pointer-events-none absolute top-2 right-2 opacity-0 transition-opacity group-hover/image:pointer-events-auto group-hover/image:opacity-100 ${isDropdownOpen ? 'opacity-100 pointer-events-auto' : ''}`}
+              className={`pointer-events-none absolute top-2 right-2 opacity-0 transition-opacity group-hover/image:pointer-events-auto group-hover/image:opacity-100 ${isDropdownOpen ? 'pointer-events-auto opacity-100' : ''}`}
               onClick={(e) => e.stopPropagation()}
             >
               <DropdownMenuTrigger asChild>
@@ -166,7 +166,7 @@ export const ImageGrid = ({
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Dynamically calculate the number of columns based on maxImageWidth prop
-  const columnCount = Math.max(3, Math.floor(width / maxImageWidth))
+  const columnCount = Math.max(2, Math.floor(width / maxImageWidth))
   const columnWidth = width / columnCount
   const rowHeight = columnWidth / aspectRatio
 
