@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useRouterState } from '@tanstack/react-router'
-import { Home } from 'lucide-react'
+import { FolderOpen, Home, Trash2, Type } from 'lucide-react'
 
 import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
 import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
@@ -14,6 +14,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import {
   Sidebar,
@@ -100,9 +105,11 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
 
   // Use the shared folder context menu hook with centralized logic
   const {
-    renderMenuItems,
+    renderMenuItems: renderContextMenuItems,
     handleRename: handleRenameFolderOperation,
     handleDelete: handleDeleteFolderOperation,
+    isRenaming,
+    isDeleting,
   } = useFolderContextMenu({
     isAuthenticated: () => authState.state === 'authenticated',
     onOpen: () => {
@@ -114,6 +121,48 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
     onRename: handleRenameFromMenu,
     onDelete: handleDeleteFromMenu,
   })
+
+  // Render dropdown menu items (separate from context menu items)
+  const renderDropdownMenuItems = (folderKey: string, folderName: string) => {
+    const handleOpen = () => {
+      if (folderKey) {
+        if (isMobile) {
+          setOpenMobile(false)
+        }
+      }
+    }
+
+    return (
+      <>
+        <DropdownMenuLabel className='break-all'>{folderName}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleOpen}>
+          <FolderOpen className='mr-2 h-4 w-4' />
+          {t('pages.gallery.contextMenu.open')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => {
+            setTimeout(() => handleRenameFromMenu(folderKey, folderName), 0)
+          }}
+          disabled={isRenaming || isDeleting}
+        >
+          <Type className='mr-2 h-4 w-4' />
+          {t('pages.gallery.contextMenu.rename')}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => {
+            setTimeout(() => handleDeleteFromMenu(folderKey, folderName), 0)
+          }}
+          className='text-destructive focus:text-destructive'
+          disabled={isRenaming || isDeleting}
+        >
+          <Trash2 className='mr-2 h-4 w-4' />
+          {t('pages.gallery.folderContextMenu.delete')}
+        </DropdownMenuItem>
+      </>
+    )
+  }
 
   const handleRename = async () => {
     if (!renameDialog.folderPath || !renameInput.trim()) return
@@ -211,9 +260,13 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
                 </div>
               ) : (
                 // Render folder tree with context menu
-                <FolderContextMenu renderMenuItems={renderMenuItems}>
+                <FolderContextMenu renderMenuItems={renderContextMenuItems}>
                   {rootFolders.map((folder, index) => (
-                    <FolderTreeNode key={`${folder.path}-${index}`} folder={folder} />
+                    <FolderTreeNode
+                      key={`${folder.path}-${index}`}
+                      folder={folder}
+                      renderMenuItems={renderDropdownMenuItems}
+                    />
                   ))}
                 </FolderContextMenu>
               )}

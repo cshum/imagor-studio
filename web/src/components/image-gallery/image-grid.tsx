@@ -110,7 +110,7 @@ const ImageCell = ({
                 </div>
               </DropdownMenuTrigger>
             </div>
-            <DropdownMenuContent align='end' className='w-56'>
+            <DropdownMenuContent align='end' className='w-56' onClick={(e) => e.stopPropagation()}>
               {renderMenuItems(image)}
             </DropdownMenuContent>
           </DropdownMenu>
