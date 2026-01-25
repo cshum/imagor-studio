@@ -80,7 +80,13 @@ const FolderCard = ({
           >
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <Button variant='ghost' size='sm' className='h-6 w-6 p-0' aria-label='More options'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  className='h-6 w-6 p-0'
+                  aria-label='More options'
+                  tabIndex={-1}
+                >
                   <MoreVertical className='h-3 w-3' />
                 </Button>
               </DropdownMenuTrigger>

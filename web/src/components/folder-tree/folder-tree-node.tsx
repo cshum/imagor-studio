@@ -102,6 +102,7 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
                   <button
                     className='bg-accent flex h-6 w-6 cursor-pointer items-center justify-center rounded-md transition-colors'
                     aria-label='More options'
+                    tabIndex={-1}
                   >
                     <MoreVertical className='h-3.5 w-3.5' />
                   </button>
@@ -153,6 +154,7 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
                   <button
                     className='bg-accent flex h-6 w-6 cursor-pointer items-center justify-center rounded-md transition-colors'
                     aria-label='More options'
+                    tabIndex={-1}
                   >
                     <MoreVertical className='h-3.5 w-3.5' />
                   </button>

@@ -262,24 +262,35 @@ export function ImageView({
     }
   }, [])
 
-  // Autofocus container on mount for keyboard navigation
+  // Global keyboard event listener for reliable keyboard navigation
   useEffect(() => {
-    overlayRef.current?.focus()
-  }, [])
+    // Only add listener when image view is visible
+    if (!isVisible) return
 
-  // Keyboard shortcuts handler
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      event.preventDefault()
-      handleCloseFullView()
-    } else if (event.key === 'ArrowLeft' && onPrevImage) {
-      event.preventDefault()
-      handlePrevImage()
-    } else if (event.key === 'ArrowRight' && onNextImage) {
-      event.preventDefault()
-      handleNextImage()
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't intercept keyboard events when user is typing in an input/textarea
+      const target = event.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        handleCloseFullView()
+      } else if (event.key === 'ArrowLeft' && onPrevImage) {
+        event.preventDefault()
+        handlePrevImage()
+      } else if (event.key === 'ArrowRight' && onNextImage) {
+        event.preventDefault()
+        handleNextImage()
+      }
     }
-  }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onPrevImage, onNextImage, isVisible])
 
   const slideVariants = {
     enter: (direction: number) => ({
@@ -320,8 +331,6 @@ export function ImageView({
         <div
           className='fixed inset-0 z-50 flex items-center justify-center outline-none'
           ref={overlayRef}
-          tabIndex={-1}
-          onKeyDown={handleKeyDown}
         >
           <div
             className={`relative flex h-full w-full transition-[padding-left] duration-500 ease-in-out ${isInfoOpen && isDesktop ? 'pl-[300px]' : 'pl-0'} `}

@@ -104,7 +104,7 @@ const ImageCell = ({
                   className='cursor-pointer rounded-full bg-black/30 p-1.5 transition-all hover:bg-black/60'
                   role='button'
                   aria-label='More options'
-                  tabIndex={0}
+                  tabIndex={-1}
                 >
                   <MoreVertical className='h-4 w-4 text-white' />
                 </div>
