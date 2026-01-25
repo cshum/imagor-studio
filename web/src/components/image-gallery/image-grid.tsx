@@ -114,7 +114,7 @@ const ImageCell = ({
           </div>
         )}
         {image.isVideo && (
-          <div className='absolute top-2 left-2 rounded-full bg-black/60 p-2 transition-opacity'>
+          <div className='absolute top-2 left-2 rounded-full bg-black/40 p-2 transition-opacity'>
             <Play className='h-4 w-4 fill-white text-white' />
           </div>
         )}
