@@ -1,4 +1,4 @@
-import React, { RefObject, useEffect, useRef } from 'react'
+import React, { RefObject, useEffect, useRef, useState } from 'react'
 import { MoreVertical, Play } from 'lucide-react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
@@ -42,6 +42,8 @@ const ImageCell = ({
   onKeyDown,
   imageRef,
 }: ImageCellProps) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (onImageClick) {
       const rect = e.currentTarget.getBoundingClientRect()
@@ -92,11 +94,11 @@ const ImageCell = ({
           draggable={false}
         />
         {renderMenuItems && (
-          <div
-            className='pointer-events-none absolute top-2 right-2 opacity-0 transition-opacity group-hover/image:pointer-events-auto group-hover/image:opacity-100'
-            onClick={(e) => e.stopPropagation()}
-          >
-            <DropdownMenu>
+          <DropdownMenu onOpenChange={setIsDropdownOpen}>
+            <div
+              className={`pointer-events-none absolute top-2 right-2 opacity-0 transition-opacity group-hover/image:pointer-events-auto group-hover/image:opacity-100 ${isDropdownOpen ? 'opacity-100 pointer-events-auto' : ''}`}
+              onClick={(e) => e.stopPropagation()}
+            >
               <DropdownMenuTrigger asChild>
                 <div
                   className='cursor-pointer rounded-full bg-black/30 p-1.5 transition-all hover:bg-black/60'
@@ -107,14 +109,14 @@ const ImageCell = ({
                   <MoreVertical className='h-4 w-4 text-white' />
                 </div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' className='w-56'>
-                {renderMenuItems(image)}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+            </div>
+            <DropdownMenuContent align='end' className='w-56'>
+              {renderMenuItems(image)}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
         {image.isVideo && (
-          <div className='absolute top-2 left-2 rounded-full bg-black/40 p-2 transition-opacity'>
+          <div className='absolute top-2 left-2 rounded-full bg-black/60 p-2 transition-opacity'>
             <Play className='h-4 w-4 fill-white text-white' />
           </div>
         )}
