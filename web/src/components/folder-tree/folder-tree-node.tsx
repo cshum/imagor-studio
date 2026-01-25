@@ -100,7 +100,7 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
               >
                 <DropdownMenuTrigger asChild>
                   <button
-                    className='hover:bg-accent flex h-6 w-6 cursor-pointer items-center justify-center rounded-md transition-colors'
+                    className='bg-accent flex h-6 w-6 cursor-pointer items-center justify-center rounded-md transition-colors'
                     aria-label='More options'
                   >
                     <MoreVertical className='h-3.5 w-3.5' />
@@ -151,7 +151,7 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
               >
                 <DropdownMenuTrigger asChild>
                   <button
-                    className='hover:bg-accent flex h-6 w-6 cursor-pointer items-center justify-center rounded-md transition-colors'
+                    className='bg-accent flex h-6 w-6 cursor-pointer items-center justify-center rounded-md transition-colors'
                     aria-label='More options'
                   >
                     <MoreVertical className='h-3.5 w-3.5' />
