@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useRouterState } from '@tanstack/react-router'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { FolderOpen, Home, Trash2, Type } from 'lucide-react'
 
 import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
@@ -41,6 +41,7 @@ import { FolderTreeNode } from './folder-tree-node'
 
 export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { authState } = useAuth()
   const { rootFolders, loadingPaths, homeTitle } = useFolderTree()
   const { isMobile, setOpenMobile } = useSidebar()
@@ -126,6 +127,10 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
   const renderDropdownMenuItems = (folderKey: string, folderName: string) => {
     const handleOpen = () => {
       if (folderKey) {
+        // Navigate to the folder
+        navigate({ to: '/gallery/$galleryKey', params: { galleryKey: folderKey } })
+
+        // Close mobile sidebar when navigating on mobile
         if (isMobile) {
           setOpenMobile(false)
         }
@@ -158,7 +163,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
           disabled={isRenaming || isDeleting}
         >
           <Trash2 className='mr-2 h-4 w-4' />
-          {t('pages.gallery.folderContextMenu.delete')}
+          Delete Folder
         </DropdownMenuItem>
       </>
     )
