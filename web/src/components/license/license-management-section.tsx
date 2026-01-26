@@ -43,7 +43,7 @@ export function LicenseManagementSection({ licenseStatus }: LicenseManagementSec
       <Card>
         <CardHeader>
           <CardTitle>{t('pages.license.licenseManagement')}</CardTitle>
-          <CardDescription>Unable to load license information</CardDescription>
+          <CardDescription>{t('pages.license.unableToLoad')}</CardDescription>
         </CardHeader>
       </Card>
     )

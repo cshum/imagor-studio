@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react'
 
-import { LicenseBadge } from '@/components/license-badge.tsx'
+import { LicenseBadge } from '@/components/license/license-badge.tsx'
 
 interface ContentLayoutProps {
   title: string
