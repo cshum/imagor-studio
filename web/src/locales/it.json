@@ -518,6 +518,15 @@
       }
     }
   },
+  "components": {
+    "folderTree": {
+      "folders": "Cartelle",
+      "noFoldersFound": "Nessuna cartella trovata"
+    },
+    "licenseBadge": {
+      "unregistered": "Non Registrato"
+    }
+  },
   "home": "Home",
   "posts": "Articoli",
   "categories": "Categorie",

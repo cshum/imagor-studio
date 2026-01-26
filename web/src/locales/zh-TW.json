@@ -521,6 +521,15 @@
       }
     }
   },
+  "components": {
+    "folderTree": {
+      "folders": "資料夾",
+      "noFoldersFound": "未找到資料夾"
+    },
+    "licenseBadge": {
+      "unregistered": "未註冊"
+    }
+  },
   "home": "首頁",
   "posts": "文章",
   "categories": "分類",

@@ -238,7 +238,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
     <Sidebar {...props}>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Folders</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('components.folderTree.folders')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {/* Home Link as first item */}
@@ -262,7 +262,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
               ) : rootFolders.length === 0 ? (
                 // Empty state (but still show Home link above)
                 <div className='text-muted-foreground p-4 text-center text-sm'>
-                  No folders found
+                  {t('components.folderTree.noFoldersFound')}
                 </div>
               ) : (
                 // Render folder tree with context menu

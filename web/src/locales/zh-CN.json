@@ -521,6 +521,15 @@
       }
     }
   },
+  "components": {
+    "folderTree": {
+      "folders": "文件夹",
+      "noFoldersFound": "未找到文件夹"
+    },
+    "licenseBadge": {
+      "unregistered": "未注册"
+    }
+  },
   "home": "首页",
   "posts": "文章",
   "categories": "分类",

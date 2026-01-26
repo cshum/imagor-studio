@@ -522,6 +522,15 @@
       }
     }
   },
+  "components": {
+    "folderTree": {
+      "folders": "Folders",
+      "noFoldersFound": "No folders found"
+    },
+    "licenseBadge": {
+      "unregistered": "Unregistered"
+    }
+  },
   "home": "Home",
   "posts": "Posts",
   "categories": "Categories",
