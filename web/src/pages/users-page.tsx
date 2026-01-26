@@ -534,9 +534,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('pages.users.editUser')}</DialogTitle>
-            <DialogDescription>
-              {t('pages.users.editUserDescription')}
-            </DialogDescription>
+            <DialogDescription>{t('pages.users.editUserDescription')}</DialogDescription>
           </DialogHeader>
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(handleEditUser)} className='space-y-4'>
@@ -547,7 +545,11 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                   <FormItem>
                     <FormLabel>{t('pages.users.formLabels.displayName')}</FormLabel>
                     <FormControl>
-                      <Input placeholder={t('pages.users.placeholders.enterDisplayName')} {...field} disabled={isUpdating} />
+                      <Input
+                        placeholder={t('pages.users.placeholders.enterDisplayName')}
+                        {...field}
+                        disabled={isUpdating}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -561,7 +563,11 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                   <FormItem>
                     <FormLabel>{t('pages.users.formLabels.username')}</FormLabel>
                     <FormControl>
-                      <Input placeholder={t('pages.users.placeholders.enterUsername')} {...field} disabled={isUpdating} />
+                      <Input
+                        placeholder={t('pages.users.placeholders.enterUsername')}
+                        {...field}
+                        disabled={isUpdating}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -594,7 +600,9 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                 <div className='bg-muted/50 flex items-center justify-between rounded-lg p-3'>
                   <div>
                     <h4 className='text-sm font-medium'>
-                      {selectedUser?.isActive ? t('pages.users.deactivateUser') : t('pages.users.reactivateUser')}
+                      {selectedUser?.isActive
+                        ? t('pages.users.deactivateUser')
+                        : t('pages.users.reactivateUser')}
                     </h4>
                     <p className='text-muted-foreground text-xs'>
                       {selectedUser?.isActive
@@ -664,7 +672,8 @@ export function UsersPage({ loaderData }: UsersPageProps) {
           <DialogHeader>
             <DialogTitle>{t('pages.users.deactivateUser')}</DialogTitle>
             <DialogDescription>
-              {t('pages.users.deactivateUserDescription')} <strong>{selectedUser?.displayName}</strong>?
+              {t('pages.users.deactivateUserDescription')}{' '}
+              <strong>{selectedUser?.displayName}</strong>?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>

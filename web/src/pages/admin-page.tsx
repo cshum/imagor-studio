@@ -89,7 +89,9 @@ export function AdminPage({ loaderData }: AdminPageProps) {
       defaultValue: 'first_frame',
       options: ['first_frame', 'seek_1s', 'seek_3s', 'seek_5s', 'seek_10pct', 'seek_25pct'],
       optionLabels: {
-        first_frame: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.firstFrame'),
+        first_frame: t(
+          'pages.admin.systemSettings.fields.videoThumbnailPosition.options.firstFrame',
+        ),
         seek_1s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek1s'),
         seek_3s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek3s'),
         seek_5s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek5s'),

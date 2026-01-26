@@ -15,7 +15,7 @@ interface StorageTypeSelectorProps {
 
 export function StorageTypeSelector({ value, onChange, disabled }: StorageTypeSelectorProps) {
   const { t } = useTranslation()
-  
+
   const options = [
     {
       value: 'file' as const,
