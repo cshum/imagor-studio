@@ -1,4 +1,14 @@
 {
+  "layouts": {
+    "account": {
+      "title": "Settings",
+      "tabs": {
+        "profile": "Profile",
+        "system": "System",
+        "users": "Users"
+      }
+    }
+  },
   "common": {
     "buttons": {
       "save": "Save",
@@ -7,9 +17,14 @@
       "edit": "Edit",
       "create": "Create",
       "update": "Update",
+      "updateSettings": "Update Settings",
       "close": "Close",
       "more": "More",
       "switchTheme": "Switch Theme"
+    },
+    "language": {
+      "title": "Language",
+      "changeLanguage": "Change Language"
     },
     "navigation": {
       "title": "Imagor Studio",
@@ -20,7 +35,7 @@
       "users": "Users",
       "signOut": "Sign Out",
       "login": "Login",
-      "accountSettings": "Account Settings"
+      "settings": "Settings"
     },
     "status": {
       "loading": "Loading...",
@@ -243,6 +258,72 @@
     "admin": {
       "title": "Admin",
       "setup": "Admin Setup",
+      "systemSettings": {
+        "title": "System Settings",
+        "description": "Configure system-wide settings. These options are only available to administrators.",
+        "fields": {
+          "homeTitle": {
+            "label": "Home Title",
+            "description": "Customize the title shown for the home page in navigation and breadcrumbs"
+          },
+          "defaultLanguage": {
+            "label": "Default Language",
+            "description": "Set the default language for the application"
+          },
+          "guestMode": {
+            "label": "Guest Mode",
+            "description": "Allow users to browse the gallery without creating an account"
+          },
+          "defaultSorting": {
+            "label": "Default File Sorting",
+            "description": "Choose how files and folders are sorted by default",
+            "sortBy": "Sort By",
+            "order": "Order",
+            "options": {
+              "name": "Name",
+              "modifiedTime": "Date Modified",
+              "ascending": "Ascending",
+              "descending": "Descending"
+            }
+          },
+          "showFileNames": {
+            "label": "Show File Names",
+            "description": "Display file names on image thumbnails in the gallery by default"
+          },
+          "imageExtensions": {
+            "label": "Image File Extensions",
+            "description": "Comma-separated list of image file extensions to show (e.g., .jpg,.png,.gif)"
+          },
+          "videoExtensions": {
+            "label": "Video File Extensions",
+            "description": "Comma-separated list of video file extensions to show (e.g., .mp4,.webm,.avi)"
+          },
+          "videoThumbnailPosition": {
+            "label": "Video Thumbnail Position",
+            "description": "Choose where to extract video thumbnails. First frame is fastest. Seek options help get a more representative frame and avoid black frames.",
+            "options": {
+              "firstFrame": "First Frame",
+              "seek1s": "Seek 1 Second",
+              "seek3s": "Seek 3 Seconds",
+              "seek5s": "Seek 5 Seconds",
+              "seek10pct": "Seek 10% Position",
+              "seek25pct": "Seek 25% Position"
+            }
+          },
+          "showHidden": {
+            "label": "Show Hidden Files",
+            "description": "Show files and folders that start with a dot (.)"
+          }
+        }
+      },
+      "storage": {
+        "title": "Storage Configuration",
+        "description": "Manage where your images and files are stored. Changes may require a server restart.",
+        "storageType": "Storage Type",
+        "status": "Status",
+        "configurationDetails": "Configuration Details",
+        "configureStorage": "Configure Storage"
+      },
       "welcome": "Welcome to Imagor Studio",
       "setupDescription": "Let's get your image gallery set up in just a few steps",
       "createAdminAccount": "Create Admin Account",
@@ -266,8 +347,23 @@
       "storageConfiguredRestart": "Storage configured successfully Please restart the server to apply changes."
     },
     "storage": {
-      "fileStorage": "File Storage Configuration",
-      "s3Storage": "S3 Storage Configuration",
+      "configureStorage": "Configure Storage",
+      "storageType": "Storage Type",
+      "storageTypeSelector": {
+        "fileStorageDescription": "Store images on the local file system",
+        "s3StorageDescription": "Store images in Amazon S3 or compatible cloud storage"
+      },
+      "advancedSettings": "Advanced Settings",
+      "dirPermissionsDescription": "Permissions for creating new directories (octal format, e.g., 0755)",
+      "filePermissionsDescription": "Permissions for writing new files (octal format, e.g., 0644)",
+      "fileStorage": "File Storage",
+      "s3Storage": "S3 Storage",
+      "fileStorageConfig": "File Storage Configuration",
+      "s3StorageConfig": "S3 Storage Configuration",
+      "baseDir": "Base Directory",
+      "baseDirDescription": "The directory where images will be stored on the file system",
+      "directoryPermissions": "Directory Permissions",
+      "filePermissions": "File Permissions",
       "bucketName": "Bucket Name",
       "bucketNameRequired": "Bucket name is required",
       "bucketDescription": "The name of your S3 bucket where images will be stored",
@@ -393,8 +489,17 @@
       "createUser": "Create User",
       "createNewUser": "Create New User",
       "createUserDescription": "Add a new user to the system. They will be able to log in with the provided credentials.",
+      "formLabels": {
+        "displayName": "Display Name",
+        "username": "Username",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "role": "Role"
+      },
       "editUser": "Edit User",
       "editUserDescription": "Update user information. Changes will be applied immediately.",
+      "updateUser": "Update User",
+      "createUserButton": "Create User",
       "deactivateUser": "Deactivate User",
       "reactivateUser": "Reactivate User",
       "deactivateUserDescription": "Are you sure you want to deactivate",
@@ -440,6 +545,15 @@
         "enterPassword": "Enter password",
         "confirmPassword": "Confirm password"
       }
+    }
+  },
+  "components": {
+    "folderTree": {
+      "folders": "Folders",
+      "noFoldersFound": "No folders found"
+    },
+    "licenseBadge": {
+      "unregistered": "Unregistered"
     }
   },
   "home": "Home",

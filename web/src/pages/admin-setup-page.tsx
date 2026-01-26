@@ -29,6 +29,7 @@ import {
   type MultiStepFormStep,
 } from '@/components/ui/multi-step-form'
 import { useFormErrors } from '@/hooks/use-form-errors'
+import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import type { AdminSetupLoaderData } from '@/loaders/admin-setup-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
 import { setHomeTitle } from '@/stores/folder-tree-store'
@@ -47,6 +48,15 @@ const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
     label: t('pages.admin.homeTitle'),
     description: t('pages.admin.homeTitleDescription'),
     defaultValue: 'Home',
+  },
+  {
+    key: 'config.app_default_language',
+    type: 'select',
+    label: 'Default Language',
+    description: 'Set the default language for the application',
+    defaultValue: 'en',
+    options: getLanguageCodes(),
+    optionLabels: getLanguageLabels(),
   },
   {
     key: 'config.allow_guest_mode',

@@ -1,4 +1,14 @@
 {
+  "layouts": {
+    "account": {
+      "title": "Impostazioni",
+      "tabs": {
+        "profile": "Profilo",
+        "system": "Sistema",
+        "users": "Utenti"
+      }
+    }
+  },
   "common": {
     "buttons": {
       "save": "Salva",
@@ -7,6 +17,7 @@
       "edit": "Modifica",
       "create": "Crea",
       "update": "Aggiorna",
+      "updateSettings": "Aggiorna Impostazioni",
       "close": "Chiudi",
       "more": "Altro",
       "switchTheme": "Cambia Tema"
@@ -20,7 +31,7 @@
       "users": "Utenti",
       "signOut": "Esci",
       "login": "Accedi",
-      "accountSettings": "Impostazioni Account"
+      "settings": "Impostazioni"
     },
     "status": {
       "loading": "Caricamento...",
@@ -243,6 +254,72 @@
     "admin": {
       "title": "Amministrazione",
       "setup": "Configurazione Amministratore",
+      "systemSettings": {
+        "title": "Impostazioni di Sistema",
+        "description": "Configura le impostazioni a livello di sistema. Queste opzioni sono disponibili solo per gli amministratori.",
+        "fields": {
+          "homeTitle": {
+            "label": "Titolo Home",
+            "description": "Personalizza il titolo mostrato per la home page nella navigazione e nei breadcrumb"
+          },
+          "defaultLanguage": {
+            "label": "Lingua Predefinita",
+            "description": "Imposta la lingua predefinita per l'applicazione"
+          },
+          "guestMode": {
+            "label": "Modalità Ospite",
+            "description": "Consenti agli utenti di navigare nella galleria senza creare un account"
+          },
+          "defaultSorting": {
+            "label": "Ordinamento File Predefinito",
+            "description": "Scegli come vengono ordinati file e cartelle per impostazione predefinita",
+            "sortBy": "Ordina Per",
+            "order": "Ordine",
+            "options": {
+              "name": "Nome",
+              "modifiedTime": "Data di Modifica",
+              "ascending": "Crescente",
+              "descending": "Decrescente"
+            }
+          },
+          "showFileNames": {
+            "label": "Mostra Nomi File",
+            "description": "Visualizza i nomi dei file sulle miniature delle immagini nella galleria per impostazione predefinita"
+          },
+          "imageExtensions": {
+            "label": "Estensioni File Immagine",
+            "description": "Elenco separato da virgole delle estensioni di file immagine da mostrare (es. .jpg,.png,.gif)"
+          },
+          "videoExtensions": {
+            "label": "Estensioni File Video",
+            "description": "Elenco separato da virgole delle estensioni di file video da mostrare (es. .mp4,.webm,.avi)"
+          },
+          "videoThumbnailPosition": {
+            "label": "Posizione Miniatura Video",
+            "description": "Scegli dove estrarre le miniature dei video. Il primo fotogramma è il più veloce. Le opzioni di ricerca aiutano a ottenere un fotogramma più rappresentativo ed evitare fotogrammi neri.",
+            "options": {
+              "firstFrame": "Primo Fotogramma",
+              "seek1s": "Cerca 1 Secondo",
+              "seek3s": "Cerca 3 Secondi",
+              "seek5s": "Cerca 5 Secondi",
+              "seek10pct": "Cerca Posizione 10%",
+              "seek25pct": "Cerca Posizione 25%"
+            }
+          },
+          "showHidden": {
+            "label": "Mostra File Nascosti",
+            "description": "Mostra file e cartelle che iniziano con un punto (.)"
+          }
+        }
+      },
+      "storage": {
+        "title": "Configurazione Archiviazione",
+        "description": "Gestisci dove vengono archiviate le tue immagini e i tuoi file. Le modifiche potrebbero richiedere un riavvio del server.",
+        "storageType": "Tipo di Archiviazione",
+        "status": "Stato",
+        "configurationDetails": "Dettagli Configurazione",
+        "configureStorage": "Configura Archiviazione"
+      },
       "welcome": "Benvenuto in Imagor Studio",
       "setupDescription": "Configuriamo la tua galleria di immagini in pochi passaggi",
       "createAdminAccount": "Crea Account Amministratore",
@@ -266,8 +343,23 @@
       "storageConfiguredRestart": "Archiviazione configurata correttamente. Riavvia il server per applicare le modifiche."
     },
     "storage": {
-      "fileStorage": "Configurazione Archiviazione File",
-      "s3Storage": "Configurazione Archiviazione S3",
+      "configureStorage": "Configura Archiviazione",
+      "storageType": "Tipo di Archiviazione",
+      "storageTypeSelector": {
+        "fileStorageDescription": "Archivia le immagini sul file system locale",
+        "s3StorageDescription": "Archivia le immagini in Amazon S3 o in un archivio cloud compatibile"
+      },
+      "advancedSettings": "Impostazioni Avanzate",
+      "dirPermissionsDescription": "Permessi per la creazione di nuove directory (formato ottale, es. 0755)",
+      "filePermissionsDescription": "Permessi per la scrittura di nuovi file (formato ottale, es. 0644)",
+      "fileStorage": "Archiviazione File",
+      "s3Storage": "Archiviazione S3",
+      "fileStorageConfig": "Configurazione Archiviazione File",
+      "s3StorageConfig": "Configurazione Archiviazione S3",
+      "baseDir": "Directory Base",
+      "baseDirDescription": "La directory dove verranno archiviate le immagini sul file system",
+      "directoryPermissions": "Permessi Directory",
+      "filePermissions": "Permessi File",
       "bucketName": "Nome Bucket",
       "bucketNameRequired": "Il nome del bucket è obbligatorio",
       "bucketDescription": "Il nome del tuo bucket S3 dove verranno archiviate le immagini",
@@ -393,8 +485,17 @@
       "createUser": "Crea Utente",
       "createNewUser": "Crea Nuovo Utente",
       "createUserDescription": "Aggiungi un nuovo utente al sistema. Potrà accedere con le credenziali fornite.",
+      "formLabels": {
+        "displayName": "Nome Visualizzato",
+        "username": "Nome utente",
+        "password": "Password",
+        "confirmPassword": "Conferma Password",
+        "role": "Ruolo"
+      },
       "editUser": "Modifica Utente",
       "editUserDescription": "Aggiorna le informazioni dell'utente. Le modifiche verranno applicate immediatamente.",
+      "updateUser": "Aggiorna Utente",
+      "createUserButton": "Crea Utente",
       "deactivateUser": "Disattiva Utente",
       "reactivateUser": "Riattiva Utente",
       "deactivateUserDescription": "Sei sicuro di voler disattivare",
@@ -440,6 +541,15 @@
         "enterPassword": "Inserisci la password",
         "confirmPassword": "Conferma password"
       }
+    }
+  },
+  "components": {
+    "folderTree": {
+      "folders": "Cartelle",
+      "noFoldersFound": "Nessuna cartella trovata"
+    },
+    "licenseBadge": {
+      "unregistered": "Non Registrato"
     }
   },
   "home": "Home",

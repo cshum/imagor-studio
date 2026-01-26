@@ -251,7 +251,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                       name='displayName'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Display Name</FormLabel>
+                          <FormLabel>{t('pages.users.formLabels.displayName')}</FormLabel>
                           <FormControl>
                             <Input
                               placeholder={t('pages.users.placeholders.enterDisplayName')}
@@ -269,7 +269,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                       name='username'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Username</FormLabel>
+                          <FormLabel>{t('pages.users.formLabels.username')}</FormLabel>
                           <FormControl>
                             <Input
                               placeholder={t('pages.users.placeholders.enterUsername')}
@@ -287,7 +287,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                       name='password'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
+                          <FormLabel>{t('pages.users.formLabels.password')}</FormLabel>
                           <FormControl>
                             <Input
                               type='password'
@@ -306,7 +306,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                       name='confirmPassword'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Confirm Password</FormLabel>
+                          <FormLabel>{t('pages.users.formLabels.confirmPassword')}</FormLabel>
                           <FormControl>
                             <Input
                               type='password'
@@ -325,15 +325,15 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                       name='role'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Role</FormLabel>
+                          <FormLabel>{t('pages.users.formLabels.role')}</FormLabel>
                           <FormControl>
                             <select
                               {...field}
                               disabled={isCreating}
                               className='border-input bg-background w-full rounded-md border p-2'
                             >
-                              <option value='user'>User</option>
-                              <option value='admin'>Admin</option>
+                              <option value='user'>{t('pages.users.roles.user')}</option>
+                              <option value='admin'>{t('pages.users.roles.admin')}</option>
                             </select>
                           </FormControl>
                           <FormMessage />
@@ -348,10 +348,10 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                         onClick={() => setIsCreateDialogOpen(false)}
                         disabled={isCreating}
                       >
-                        Cancel
+                        {t('common.buttons.cancel')}
                       </Button>
                       <ButtonWithLoading type='submit' isLoading={isCreating}>
-                        Create User
+                        {t('pages.users.createUserButton')}
                       </ButtonWithLoading>
                     </DialogFooter>
                   </form>
@@ -410,7 +410,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                             : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
                         }`}
                       >
-                        {user.role}
+                        {t(`pages.users.roles.${user.role}`)}
                       </span>
                     </div>
                     <div>
@@ -436,7 +436,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                         <DropdownMenuContent align='end'>
                           <DropdownMenuItem onClick={() => openEditDialog(user)}>
                             <Edit className='mr-2 h-4 w-4' />
-                            Edit
+                            {t('pages.users.actions.edit')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -500,7 +500,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                             : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
                         }`}
                       >
-                        {user.role}
+                        {t(`pages.users.roles.${user.role}`)}
                       </span>
 
                       {/* Mobile Action Buttons */}
@@ -512,7 +512,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                           className='px-3 py-2'
                         >
                           <Edit className='mr-1 h-4 w-4' />
-                          Edit
+                          {t('pages.users.actions.edit')}
                         </Button>
                       </div>
                     </div>
@@ -533,10 +533,8 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>
-              Update user information. Changes will be applied immediately.
-            </DialogDescription>
+            <DialogTitle>{t('pages.users.editUser')}</DialogTitle>
+            <DialogDescription>{t('pages.users.editUserDescription')}</DialogDescription>
           </DialogHeader>
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(handleEditUser)} className='space-y-4'>
@@ -545,9 +543,13 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                 name='displayName'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Display Name</FormLabel>
+                    <FormLabel>{t('pages.users.formLabels.displayName')}</FormLabel>
                     <FormControl>
-                      <Input placeholder='Enter display name' {...field} disabled={isUpdating} />
+                      <Input
+                        placeholder={t('pages.users.placeholders.enterDisplayName')}
+                        {...field}
+                        disabled={isUpdating}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -559,9 +561,13 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                 name='username'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>{t('pages.users.formLabels.username')}</FormLabel>
                     <FormControl>
-                      <Input placeholder='Enter username' {...field} disabled={isUpdating} />
+                      <Input
+                        placeholder={t('pages.users.placeholders.enterUsername')}
+                        {...field}
+                        disabled={isUpdating}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -573,15 +579,15 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                 name='role'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role</FormLabel>
+                    <FormLabel>{t('pages.users.formLabels.role')}</FormLabel>
                     <FormControl>
                       <select
                         {...field}
                         disabled={isUpdating}
                         className='border-input bg-background w-full rounded-md border p-2'
                       >
-                        <option value='user'>User</option>
-                        <option value='admin'>Admin</option>
+                        <option value='user'>{t('pages.users.roles.user')}</option>
+                        <option value='admin'>{t('pages.users.roles.admin')}</option>
                       </select>
                     </FormControl>
                     <FormMessage />
@@ -594,12 +600,14 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                 <div className='bg-muted/50 flex items-center justify-between rounded-lg p-3'>
                   <div>
                     <h4 className='text-sm font-medium'>
-                      {selectedUser?.isActive ? 'Deactivate User' : 'Reactivate User'}
+                      {selectedUser?.isActive
+                        ? t('pages.users.deactivateUser')
+                        : t('pages.users.reactivateUser')}
                     </h4>
                     <p className='text-muted-foreground text-xs'>
                       {selectedUser?.isActive
-                        ? 'This will prevent the user from logging in'
-                        : 'This will allow the user to log in again'}
+                        ? t('pages.users.deactivateUserWarning')
+                        : t('pages.users.reactivateUserWarning')}
                     </p>
                   </div>
                   <Button
@@ -623,12 +631,12 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                     {selectedUser?.isActive ? (
                       <>
                         <UserX className='mr-2 h-4 w-4' />
-                        Deactivate
+                        {t('pages.users.actions.deactivate')}
                       </>
                     ) : (
                       <>
                         <UserCheck className='mr-2 h-4 w-4' />
-                        Reactivate
+                        {t('pages.users.actions.reactivate')}
                       </>
                     )}
                   </Button>
@@ -643,14 +651,14 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                   disabled={isUpdating}
                   className='w-full sm:w-auto'
                 >
-                  Cancel
+                  {t('common.buttons.cancel')}
                 </Button>
                 <ButtonWithLoading
                   type='submit'
                   isLoading={isUpdating}
                   className='w-full sm:w-auto'
                 >
-                  Update User
+                  {t('pages.users.updateUser')}
                 </ButtonWithLoading>
               </DialogFooter>
             </form>
@@ -662,9 +670,10 @@ export function UsersPage({ loaderData }: UsersPageProps) {
       <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Deactivate User</DialogTitle>
+            <DialogTitle>{t('pages.users.deactivateUser')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to deactivate <strong>{selectedUser?.displayName}</strong>?
+              {t('pages.users.deactivateUserDescription')}{' '}
+              <strong>{selectedUser?.displayName}</strong>?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
@@ -674,7 +683,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
               disabled={isDeactivating === selectedUser?.id}
               className='w-full sm:w-auto'
             >
-              Cancel
+              {t('common.buttons.cancel')}
             </Button>
             <ButtonWithLoading
               variant='destructive'
@@ -687,7 +696,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
               isLoading={isDeactivating === selectedUser?.id}
               className='w-full sm:w-auto'
             >
-              Deactivate
+              {t('pages.users.actions.deactivate')}
             </ButtonWithLoading>
           </DialogFooter>
         </DialogContent>

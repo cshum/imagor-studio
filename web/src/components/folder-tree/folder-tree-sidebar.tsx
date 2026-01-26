@@ -6,6 +6,7 @@ import { FolderOpen, Home, Trash2, Type } from 'lucide-react'
 import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
 import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
 import { Button } from '@/components/ui/button'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import {
   Dialog,
   DialogContent,
@@ -38,7 +39,6 @@ import { useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 import { FolderTreeNode } from './folder-tree-node'
-import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 
 export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { t } = useTranslation()
@@ -238,7 +238,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
     <Sidebar {...props}>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Folders</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('components.folderTree.folders')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {/* Home Link as first item */}
@@ -262,7 +262,7 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
               ) : rootFolders.length === 0 ? (
                 // Empty state (but still show Home link above)
                 <div className='text-muted-foreground p-4 text-center text-sm'>
-                  No folders found
+                  {t('components.folderTree.noFoldersFound')}
                 </div>
               ) : (
                 // Render folder tree with context menu

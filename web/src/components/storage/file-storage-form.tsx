@@ -1,5 +1,6 @@
 import { forwardRef, useImperativeHandle, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import * as z from 'zod'
@@ -39,6 +40,7 @@ interface FileStorageFormProps {
 
 export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormProps>(
   ({ initialValues, onSubmit, disabled }, ref) => {
+    const { t } = useTranslation()
     const [showAdvanced, setShowAdvanced] = useState(false)
 
     const form = useForm<FileStorageFormData>({
@@ -69,13 +71,11 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
                 name='baseDir'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Base Directory</FormLabel>
+                    <FormLabel>{t('pages.storage.baseDir')}</FormLabel>
                     <FormControl>
                       <Input placeholder='/app/gallery' {...field} disabled={disabled} />
                     </FormControl>
-                    <FormDescription>
-                      The directory where images will be stored on the file system
-                    </FormDescription>
+                    <FormDescription>{t('pages.storage.baseDirDescription')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -95,7 +95,7 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
                     ) : (
                       <ChevronRight className='text-muted-foreground h-4 w-4' />
                     )}
-                    Advanced Settings
+                    {t('pages.storage.advancedSettings')}
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className='space-y-6 pt-4'>
@@ -104,12 +104,12 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
                     name='mkdirPermissions'
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Directory Permissions</FormLabel>
+                        <FormLabel>{t('pages.storage.directoryPermissions')}</FormLabel>
                         <FormControl>
                           <Input placeholder='0755' {...field} disabled={disabled} />
                         </FormControl>
                         <FormDescription>
-                          Permissions for creating new directories (octal format, e.g., 0755)
+                          {t('pages.storage.dirPermissionsDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -121,12 +121,12 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
                     name='writePermissions'
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>File Permissions</FormLabel>
+                        <FormLabel>{t('pages.storage.filePermissions')}</FormLabel>
                         <FormControl>
                           <Input placeholder='0644' {...field} disabled={disabled} />
                         </FormControl>
                         <FormDescription>
-                          Permissions for writing new files (octal format, e.g., 0644)
+                          {t('pages.storage.filePermissionsDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

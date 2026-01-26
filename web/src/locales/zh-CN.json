@@ -1,0 +1,720 @@
+{
+  "layouts": {
+    "account": {
+      "title": "设置",
+      "tabs": {
+        "profile": "个人资料",
+        "system": "系统",
+        "users": "用户"
+      }
+    }
+  },
+  "common": {
+    "buttons": {
+      "save": "保存",
+      "cancel": "取消",
+      "delete": "删除",
+      "edit": "编辑",
+      "create": "创建",
+      "update": "更新",
+      "updateSettings": "更新设置",
+      "close": "关闭",
+      "more": "更多",
+      "switchTheme": "切换主题"
+    },
+    "navigation": {
+      "title": "Imagor Studio",
+      "home": "首页",
+      "account": "账户",
+      "profile": "个人资料",
+      "dashboard": "仪表板",
+      "users": "用户",
+      "signOut": "退出登录",
+      "login": "登录",
+      "settings": "设置"
+    },
+    "status": {
+      "loading": "加载中...",
+      "error": "错误",
+      "success": "成功",
+      "guest": "访客",
+      "user": "用户",
+      "yes": "是",
+      "no": "否",
+      "enabled": "已启用",
+      "disabled": "已禁用",
+      "creating": "创建中..."
+    },
+    "labels": {
+      "username": "用户名",
+      "password": "密码",
+      "name": "名称",
+      "role": "角色"
+    },
+    "language": {
+      "title": "语言"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "欢迎回来",
+      "subtitle": "输入您的凭据以访问 Imagor Studio",
+      "signIn": "登录",
+      "loginFailed": "用户名或密码无效。请重试。"
+    },
+    "validation": {
+      "usernameRequired": "请输入有效的用户名",
+      "usernameMinLength": "用户名至少需要 3 个字符",
+      "usernameMaxLength": "用户名最多 30 个字符",
+      "passwordRequired": "密码为必填项",
+      "invalidUsername": "请输入有效的用户名"
+    },
+    "embedded": {
+      "tokenMissing": "缺少身份验证令牌。嵌入模式需要 URL 中的 JWT 令牌。预期格式：/?token=YOUR_JWT_TOKEN&path=image.jpg",
+      "tokenInvalid": "身份验证令牌无效或已过期。请检查您的 JWT 令牌并重试。",
+      "authenticationFailed": "嵌入式身份验证失败。请验证您的令牌有效且未过期。",
+      "pathMissing": "路径参数为必填项。预期格式：/?token=YOUR_JWT_TOKEN&path=image.jpg",
+      "pathInvalid": "路径格式无效。预期：gallery/folder/image.jpg 或 image.jpg"
+    }
+  },
+  "forms": {
+    "placeholders": {
+      "enterUsername": "输入您的用户名",
+      "enterPassword": "输入您的密码",
+      "confirmPassword": "确认您的密码",
+      "enterName": "输入您的名称"
+    },
+    "validation": {
+      "required": "此字段为必填项",
+      "invalidUsername": "请输入有效的用户名",
+      "passwordTooShort": "密码至少需要 {{min}} 个字符",
+      "usernameInvalid": "请输入有效的用户名",
+      "displayNameMinLength": "显示名称至少需要 3 个字符",
+      "displayNameMaxLength": "显示名称不得超过 100 个字符",
+      "usernameMinLength": "用户名至少需要 3 个字符",
+      "usernameMaxLength": "用户名最多 30 个字符",
+      "usernamePattern": "用户名只能包含字母、数字、下划线和连字符",
+      "currentPasswordRequired": "当前密码为必填项",
+      "passwordMinLength": "密码至少需要 8 个字符",
+      "passwordMaxLength": "密码不得超过 72 个字符",
+      "passwordsDoNotMatch": "密码不匹配",
+      "confirmPasswordMinLength": "密码至少需要 8 个字符",
+      "confirmPasswordMaxLength": "密码不得超过 72 个字符"
+    }
+  },
+  "navigation": {
+    "breadcrumbs": {
+      "home": "首页",
+      "gallery": "图库",
+      "profile": "个人资料",
+      "account": "账户",
+      "settings": "设置",
+      "users": "用户",
+      "admin": "系统",
+      "adminSetup": "管理员设置"
+    }
+  },
+  "pages": {
+    "gallery": {
+      "title": "图库",
+      "noImages": "未找到图片",
+      "noImagesInGallery": "您的图库中没有图片",
+      "folderEmpty": "此文件夹为空",
+      "sorting": {
+        "sort": "排序",
+        "name": "名称",
+        "modifiedTime": "修改时间"
+      },
+      "filter": {
+        "filter": "筛选",
+        "placeholder": "筛选",
+        "showingFiltered": "显示 {{total}} 项中的 {{count}} 项",
+        "clearFilter": "清除筛选"
+      },
+      "showFileNames": "显示文件名",
+      "createFolder": {
+        "newFolder": "新建文件夹",
+        "title": "创建新文件夹",
+        "description": "输入新文件夹的名称。",
+        "folderName": "文件夹名称",
+        "placeholder": "输入文件夹名称",
+        "success": "文件夹 {{folderName}} 创建成功",
+        "errors": {
+          "nameRequired": "文件夹名称为必填项",
+          "invalidCharacters": "文件夹名称包含无效字符",
+          "createFailed": "创建文件夹失败"
+        }
+      },
+      "upload": {
+        "dropZone": {
+          "dropToUpload": "拖放文件以上传",
+          "releaseToAdd": "释放以将文件添加到您的图库"
+        },
+        "progress": {
+          "uploadProgress": "上传进度",
+          "filesCompleted": "已完成 {{total}} 个文件中的 {{completed}} 个",
+          "failed": "{{count}} 个失败",
+          "uploading": "{{count}} 个正在上传",
+          "completed": "{{count}} 个已完成"
+        },
+        "summary": {
+          "fileReady": "{{count}} 个文件就绪",
+          "filesReady": "{{count}} 个文件就绪",
+          "allFilesProcessed": "所有文件已处理",
+          "pendingUpload": "{{count}} 个待上传",
+          "clear": "清除",
+          "upload": "上传 {{count}} 个文件",
+          "uploadFiles": "上传 {{count}} 个文件",
+          "uploading": "上传中..."
+        },
+        "uploadFiles": "上传文件",
+        "messages": {
+          "uploadSuccess": "文件上传成功",
+          "uploadFailed": "上传 {{fileName}} 失败",
+          "uploadSuccessPartial": "{{count}} 个文件上传成功",
+          "uploadFailedPartial": "{{count}} 个文件上传失败",
+          "uploadFailedAll": "上传 {{count}} 个文件失败",
+          "uploadFailedAllPlural": "上传 {{count}} 个文件失败"
+        }
+      },
+      "contextMenu": {
+        "open": "打开",
+        "edit": "编辑",
+        "copyUrl": "复制 URL",
+        "download": "下载",
+        "rename": "重命名",
+        "delete": "删除",
+        "copyUrlError": "复制 URL 失败",
+        "downloadError": "下载失败"
+      },
+      "copyUrlDialog": {
+        "title": "复制 URL",
+        "description": "复制下面的 URL。我们尝试自动复制，但您可能需要手动复制。",
+        "closeButton": "关闭",
+        "copyButton": "选择并复制"
+      },
+      "deleteImage": {
+        "title": "删除图片",
+        "description": "您确定要删除此图片吗？",
+        "warning": "此操作无法撤销。",
+        "success": "\"{{fileName}}\" 删除成功",
+        "error": "删除图片失败"
+      },
+      "folderContextMenu": {
+        "delete": "删除文件夹"
+      },
+      "deleteFolder": {
+        "title": "删除文件夹",
+        "description": "您确定要删除此文件夹吗？",
+        "warning": "这将永久删除该文件夹及其所有内容。此操作无法撤销。",
+        "success": "\"{{folderName}}\" 删除成功",
+        "error": "删除文件夹失败"
+      },
+      "renameItem": {
+        "title": "重命名{{type}}",
+        "description": "为此{{type}}输入新名称。",
+        "newName": "新名称",
+        "placeholder": "输入新名称",
+        "rename": "重命名",
+        "success": "\"{{name}}\" 重命名成功",
+        "error": "重命名{{type}}失败",
+        "errors": {
+          "nameRequired": "名称为必填项",
+          "invalidCharacters": "名称包含无效字符",
+          "alreadyExists": "已存在同名的{{type}}"
+        }
+      }
+    },
+    "profile": {
+      "title": "个人资料",
+      "profileInformation": "个人资料信息",
+      "profileInformationDescription": "更新您的账户个人资料信息。",
+      "displayName": "显示名称",
+      "displayNamePlaceholder": "输入您的显示名称",
+      "usernamePlaceholder": "输入您的用户名",
+      "updateProfile": "更新个人资料",
+      "securitySettings": "安全设置",
+      "securitySettingsDescription": "管理您的账户安全和密码。",
+      "password": "密码",
+      "passwordDescription": "更改您的账户密码",
+      "changePassword": "更改密码",
+      "changePasswordTitle": "更改密码",
+      "changePasswordDescription": "输入您的当前密码并选择新密码。",
+      "currentPassword": "当前密码",
+      "currentPasswordPlaceholder": "输入您的当前密码",
+      "newPassword": "新密码",
+      "newPasswordPlaceholder": "输入您的新密码",
+      "confirmPassword": "确认新密码",
+      "confirmPasswordPlaceholder": "确认您的新密码",
+      "updatePassword": "更新密码",
+      "profileUpdatedSuccess": "个人资料更新成功",
+      "passwordUpdatedSuccess": "密码更新成功",
+      "updateProfileFailed": "更新个人资料失败",
+      "updatePasswordFailed": "更新密码失败",
+      "usernameAlreadyInUse": "此用户名已被使用",
+      "currentPasswordIncorrect": "当前密码不正确"
+    },
+    "admin": {
+      "title": "管理",
+      "setup": "管理员设置",
+      "systemSettings": {
+        "title": "系统设置",
+        "description": "配置系统范围的设置。这些选项仅对管理员可用。",
+        "fields": {
+          "homeTitle": {
+            "label": "首页标题",
+            "description": "自定义导航和面包屑中显示的首页标题"
+          },
+          "defaultLanguage": {
+            "label": "默认语言",
+            "description": "设置应用程序的默认语言"
+          },
+          "guestMode": {
+            "label": "访客模式",
+            "description": "允许用户无需创建账户即可浏览图库"
+          },
+          "defaultSorting": {
+            "label": "默认文件排序",
+            "description": "选择文件和文件夹的默认排序方式",
+            "sortBy": "排序方式",
+            "order": "顺序",
+            "options": {
+              "name": "名称",
+              "modifiedTime": "修改日期",
+              "ascending": "升序",
+              "descending": "降序"
+            }
+          },
+          "showFileNames": {
+            "label": "显示文件名",
+            "description": "默认在图库的图片缩略图上显示文件名"
+          },
+          "imageExtensions": {
+            "label": "图片文件扩展名",
+            "description": "要显示的图片文件扩展名列表，用逗号分隔（例如：.jpg,.png,.gif）"
+          },
+          "videoExtensions": {
+            "label": "视频文件扩展名",
+            "description": "要显示的视频文件扩展名列表，用逗号分隔（例如：.mp4,.webm,.avi）"
+          },
+          "videoThumbnailPosition": {
+            "label": "视频缩略图位置",
+            "description": "选择提取视频缩略图的位置。第一帧最快。跳转选项有助于获得更具代表性的帧并避免黑屏。",
+            "options": {
+              "firstFrame": "第一帧",
+              "seek1s": "跳转 1 秒",
+              "seek3s": "跳转 3 秒",
+              "seek5s": "跳转 5 秒",
+              "seek10pct": "跳转 10% 位置",
+              "seek25pct": "跳转 25% 位置"
+            }
+          },
+          "showHidden": {
+            "label": "显示隐藏文件",
+            "description": "显示以点（.）开头的文件和文件夹"
+          }
+        }
+      },
+      "storage": {
+        "title": "存储配置",
+        "description": "管理图片和文件的存储位置。更改可能需要重启服务器。",
+        "storageType": "存储类型",
+        "status": "状态",
+        "configurationDetails": "配置详情",
+        "configureStorage": "配置存储"
+      },
+      "welcome": "欢迎使用 Imagor Studio",
+      "setupDescription": "让我们通过几个简单的步骤设置您的图库",
+      "createAdminAccount": "创建管理员账户",
+      "systemConfiguration": "系统配置",
+      "storageConfiguration": "存储配置",
+      "username": "用户名",
+      "password": "密码",
+      "confirmPassword": "确认密码",
+      "createAccount": "创建账户",
+      "skipForNow": "暂时跳过",
+      "next": "下一步",
+      "guestMode": "访客模式",
+      "guestModeDescription": "允许用户无需创建账户即可浏览图库",
+      "homeTitle": "首页标题",
+      "homeTitleDescription": "自定义图库中首页/根文件夹显示的标题",
+      "systemSettingsDescription": "这些设置稍后可以在管理面板中更改",
+      "storageDescription": "配置图片的存储位置",
+      "failedToCreateAccount": "创建管理员账户失败",
+      "failedToSaveSettings": "保存设置失败",
+      "storageConfiguredSuccess": "存储配置成功",
+      "storageConfiguredRestart": "存储配置成功。请重启服务器以应用更改。"
+    },
+    "storage": {
+      "configureStorage": "配置存储",
+      "storageType": "存储类型",
+      "storageTypeSelector": {
+        "fileStorageDescription": "在本地文件系统上存储图片",
+        "s3StorageDescription": "在 Amazon S3 或兼容的云存储中存储图片"
+      },
+      "advancedSettings": "高级设置",
+      "dirPermissionsDescription": "创建新目录的权限（八进制格式，例如 0755）",
+      "filePermissionsDescription": "写入新文件的权限（八进制格式，例如 0644）",
+      "fileStorage": "文件存储",
+      "s3Storage": "S3 存储",
+      "fileStorageConfig": "文件存储配置",
+      "s3StorageConfig": "S3 存储配置",
+      "baseDir": "基础目录",
+      "baseDirDescription": "图片将存储在文件系统上的目录",
+      "directoryPermissions": "目录权限",
+      "filePermissions": "文件权限",
+      "bucketName": "存储桶名称",
+      "bucketNameRequired": "存储桶名称为必填项",
+      "bucketDescription": "用于存储图片的 S3 存储桶名称",
+      "region": "区域",
+      "regionDescription": "存储桶所在的 AWS 区域（例如：us-east-1、eu-west-1）",
+      "customEndpoint": "自定义端点",
+      "customEndpointDescription": "S3 兼容服务的自定义端点（AWS S3 留空）",
+      "forcePathStyle": "强制路径样式",
+      "forcePathStyleDescription": "为 MinIO 和 LocalStack 启用。大多数其他 S3 兼容服务在禁用此选项时效果更好。",
+      "accessKeyId": "访问密钥 ID",
+      "accessKeyIdDescription": "AWS 访问密钥 ID（留空以使用 IAM 角色或环境变量）",
+      "secretAccessKey": "秘密访问密钥",
+      "secretAccessKeyDescription": "AWS 秘密访问密钥（留空以使用 IAM 角色或环境变量）",
+      "sessionToken": "会话令牌",
+      "sessionTokenDescription": "AWS 会话令牌（仅临时凭证需要）",
+      "baseDirectory": "基础目录",
+      "baseDirectoryDescription": "存储桶中所有对象键的可选前缀（例如：\"images/\"）",
+      "testConfiguration": "测试配置",
+      "configureStorage": "配置存储",
+      "testConfigurationFirst": "请先填写 {{storageType}} 存储配置",
+      "testPassed": "存储配置测试通过",
+      "testFailed": "存储配置测试失败",
+      "testError": "测试存储配置失败",
+      "configurationSuccess": "{{storageType}} 存储配置成功",
+      "configurationError": "配置 {{storageType}} 存储失败",
+      "configurationOverridden": "存储配置由外部配置管理"
+    },
+    "systemSettings": {
+      "settingOverridden": "此设置被配置文件或环境变量覆盖"
+    },
+    "imagor": {
+      "imagorConfiguration": "Imagor 配置",
+      "imagorConfigurationDescription": "配置图片处理设置。Imagor 处理图片转换和优化。",
+      "selectMode": "选择 Imagor 模式",
+      "selectModeDescription": "选择 Imagor 如何处理您的图片",
+      "embeddedMode": "嵌入式",
+      "embeddedModeDescription": "将 Imagor 作为此应用程序的一部分运行（推荐给大多数用户）",
+      "externalMode": "外部",
+      "externalModeDescription": "连接到外部 Imagor 服务（高级配置）",
+      "embeddedConfiguration": "嵌入式 Imagor 配置",
+      "externalConfiguration": "外部 Imagor 配置",
+      "secret": "密钥",
+      "secretPlaceholder": "",
+      "secretDescription": "用于签名图片 URL 的可选密钥。留空以使用 JWT 密钥。",
+      "externalSecretDescription": "外部 Imagor 服务用于 URL 签名的密钥。",
+      "embeddedModeSimplified": "嵌入式模式使用具有安全默认值的固定配置。无需额外配置。",
+      "enableEmbeddedMode": "启用嵌入式模式",
+      "baseUrl": "基础 URL",
+      "baseUrlRequired": "基础 URL 为必填项",
+      "baseUrlInvalid": "请输入以 http:// 或 https:// 开头的有效 URL",
+      "baseUrlDescription": "外部 Imagor 服务的基础 URL",
+      "unsafeMode": "非安全模式",
+      "unsafeModeDescription": "允许在不签名 URL 的情况下处理图片（不建议用于生产环境）",
+      "signerType": "签名类型",
+      "selectSignerType": "选择签名类型",
+      "signerTypeDescription": "用于 URL 签名的哈希算法",
+      "signerTruncate": "签名截断",
+      "signerTruncateMin": "值必须为 0 或更大",
+      "signerTruncateDescription": "从签名中截断的字符数（0 = 不截断）",
+      "configureImagor": "配置 Imagor",
+      "configurationSuccess": "Imagor 配置成功",
+      "configurationError": "配置 Imagor 失败",
+      "configurationOverridden": "Imagor 配置由外部配置管理",
+      "configuredSuccess": "Imagor 配置成功",
+      "configuredSuccessRestart": "Imagor 配置成功。请重启服务器以应用更改。",
+      "mode": "模式",
+      "status": "状态",
+      "notConfigured": "未配置",
+      "restartRequired": "需要重启",
+      "active": "活动",
+      "configurationDetails": "配置详情",
+      "secretSource": "密钥来源",
+      "hasSecret": "有密钥",
+      "serverRestartRequired": "需要重启服务器",
+      "serverRestartDescription": "Imagor 配置更改将在重启服务器后生效。",
+      "noCache": "无缓存",
+      "externalRequirements": "外部模式要求：",
+      "externalRequirement1": "外部 imagor 加载器/存储必须与 Imagor Studio 存储设置一致",
+      "externalRequirement2": "必须启用 CORS 以访问元数据/EXIF"
+    },
+    "license": {
+      "licenseManagement": "许可证管理",
+      "licenseManagementDescription": "管理您的 Imagor Studio 许可证并查看许可证信息。",
+      "licenseType": "许可证类型",
+      "status": "状态",
+      "notLicensed": "未授权",
+      "licensed": "已授权",
+      "configurationDetails": "许可证详情",
+      "licensedTo": "授权给",
+      "activatedOn": "激活于",
+      "licenseKey": "许可证密钥",
+      "updateLicense": "更新许可证",
+      "activateLicense": "激活许可证",
+      "configurationOverridden": "许可证配置由外部配置管理",
+      "purchaseLicense": "购买许可证",
+      "supportDevelopment": "支持开发",
+      "activationSuccess": "感谢您的支持！许可证激活成功。",
+      "updateSuccess": "许可证更新成功。感谢您的持续支持。",
+      "registerForLicense": "注册 Imagor Studio",
+      "registerDescription": "输入您的许可证密钥以激活 Imagor Studio。",
+      "supportTitle": "💝 支持 Imagor Studio - 来自 imagor 的创建者",
+      "creatorStory": "从 vipsgen 到 imagor，我从头开始构建了整个图片处理管道。Imagor Studio 是一个图库和实时编辑 Web 应用程序，汇集了多年的持续开发成果。",
+      "features": {
+        "highPerformance": "高性能虚拟滚动图库",
+        "realTimeEditing": "实时图片编辑，即时生成 URL",
+        "zeroConfiguration": "零配置设置，支持通用存储",
+        "flexibleStorage": "保留原始文件的非破坏性工作流程",
+        "nonDestructive": "由 imagor 提供支持的专业级图片处理"
+      },
+      "supportOngoingDevelopment": "您的支持使 Imagor Studio 能够持续开发。",
+      "getEarlyBirdLicense": "获取早鸟许可证（$39）",
+      "licenseKeyLabel": "许可证密钥",
+      "licenseKeyDescription": "在此处粘贴您的完整许可证密钥以激活 Imagor Studio。",
+      "licenseTypes": {
+        "early_bird": "早鸟",
+        "personal": "个人",
+        "commercial": "商业",
+        "enterprise": "企业"
+      }
+    },
+    "users": {
+      "title": "用户",
+      "createUser": "创建用户",
+      "createNewUser": "创建新用户",
+      "createUserDescription": "向系统添加新用户。他们将能够使用提供的凭据登录。",
+      "formLabels": {
+        "displayName": "显示名称",
+        "username": "用户名",
+        "password": "密码",
+        "confirmPassword": "确认密码",
+        "role": "角色"
+      },
+      "editUser": "编辑用户",
+      "editUserDescription": "更新用户信息。更改将立即应用。",
+      "updateUser": "更新用户",
+      "createUserButton": "创建用户",
+      "deactivateUser": "停用用户",
+      "reactivateUser": "重新激活用户",
+      "deactivateUserDescription": "您确定要停用",
+      "deactivateUserWarning": "这将阻止用户登录",
+      "reactivateUserWarning": "这将允许用户再次登录",
+      "searchPlaceholder": "按名称或用户名搜索用户...",
+      "noUsersFound": "未找到用户",
+      "showingUsers": "显示 {{total}} 个用户中的 {{filtered}} 个",
+      "tableHeaders": {
+        "name": "名称",
+        "username": "用户名",
+        "role": "角色",
+        "status": "状态",
+        "actions": "操作"
+      },
+      "status": {
+        "active": "活动",
+        "inactive": "非活动"
+      },
+      "roles": {
+        "user": "用户",
+        "admin": "管理员"
+      },
+      "actions": {
+        "edit": "编辑",
+        "deactivate": "停用",
+        "reactivate": "重新激活"
+      },
+      "messages": {
+        "userCreatedSuccess": "用户创建成功",
+        "userUpdatedSuccess": "用户更新成功",
+        "userDeactivatedSuccess": "用户停用成功",
+        "userReactivatedSuccess": "用户重新激活成功",
+        "createUserFailed": "创建用户失败",
+        "updateUserFailed": "更新用户失败",
+        "deactivateUserFailed": "停用用户失败",
+        "reactivateUserFailed": "重新激活用户失败",
+        "usernameAlreadyExists": "此用户名已被使用"
+      },
+      "placeholders": {
+        "enterDisplayName": "输入显示名称",
+        "enterUsername": "输入用户名",
+        "enterPassword": "输入密码",
+        "confirmPassword": "确认密码"
+      }
+    }
+  },
+  "components": {
+    "folderTree": {
+      "folders": "文件夹",
+      "noFoldersFound": "未找到文件夹"
+    },
+    "licenseBadge": {
+      "unregistered": "未注册"
+    }
+  },
+  "home": "首页",
+  "posts": "文章",
+  "categories": "分类",
+  "tags": "标签",
+  "users": "用户",
+  "account": "账户",
+  "signOut": "退出登录",
+  "allPosts": "所有文章",
+  "newPost": "新文章",
+  "profile": "个人资料",
+  "dashboard": "仪表板",
+  "footerText": "基于 {{uiLink}} 构建。源代码可在 {{githubLink}} 上获取。",
+  "placeholderImageAttribution": "由 Freepik 设计",
+  "switchTheme": "切换主题",
+  "close": "关闭",
+  "snooze": "稍后提醒",
+  "replyAll": "回复全部",
+  "forward": "转发",
+  "more": "更多",
+  "markAsUnread": "标记为未读",
+  "starThread": "收藏话题",
+  "addLabel": "添加标签",
+  "muteThread": "静音话题",
+  "imageInformation": "图片信息",
+  "noImageInfo": "无可用的图片信息。",
+  "imageEditor": {
+    "page": {
+      "back": "返回",
+      "controls": "控制",
+      "resetAll": "全部重置",
+      "download": "下载",
+      "copyUrl": "复制 URL",
+      "retry": "重试",
+      "failedToDownload": "下载图片失败",
+      "undo": "撤销",
+      "redo": "重做"
+    },
+    "controls": {
+      "cropAspect": "裁剪和比例",
+      "dimensionsResize": "尺寸和调整大小",
+      "outputCompression": "输出和压缩",
+      "colorEffects": "颜色和效果",
+      "transformRotate": "变换和旋转",
+      "cropResize": "裁剪和调整大小",
+      "fillPadding": "填充和边距"
+    },
+    "transform": {
+      "flipControls": "翻转控制",
+      "horizontalFlip": "水平翻转",
+      "verticalFlip": "垂直翻转",
+      "horizontal": "水平",
+      "vertical": "垂直",
+      "normal": "正常",
+      "flipped": "已翻转",
+      "rotationControls": "旋转控制",
+      "currentRotation": "当前旋转"
+    },
+    "effects": {
+      "colorAdjustments": "颜色调整",
+      "brightness": "亮度",
+      "contrast": "对比度",
+      "saturation": "饱和度",
+      "hue": "色调",
+      "effects": "效果",
+      "blur": "模糊",
+      "sharpen": "锐化",
+      "roundCorner": "圆角",
+      "grayscale": "灰度"
+    },
+    "dimensions": {
+      "title": "尺寸",
+      "width": "宽度",
+      "height": "高度",
+      "auto": "自动",
+      "reset": "重置",
+      "resetSize": "重置为原始大小",
+      "lockAspectRatio": "锁定纵横比",
+      "unlockAspectRatio": "解锁纵横比",
+      "aspectRatios": "纵横比",
+      "resizeMode": "调整大小模式",
+      "modes": {
+        "fitIn": "适应",
+        "fill": "填充",
+        "stretch": "拉伸",
+        "smart": "智能"
+      },
+      "modeDescriptions": {
+        "fitIn": "调整大小以适应尺寸，保持纵横比",
+        "fill": "调整大小并裁剪以完全填充尺寸",
+        "stretch": "调整为精确尺寸，忽略纵横比",
+        "smart": "智能裁剪以填充尺寸并检测内容"
+      },
+      "alignment": "对齐",
+      "horizontal": "水平",
+      "vertical": "垂直",
+      "alignments": {
+        "left": "左",
+        "center": "居中",
+        "right": "右",
+        "top": "上",
+        "middle": "中",
+        "bottom": "下"
+      },
+      "originalRatio": "原始：{{ratio}}"
+    },
+    "resize": {
+      "title": "调整大小"
+    },
+    "output": {
+      "outputFormat": "格式",
+      "formatOptions": {
+        "original": "原始格式",
+        "jpeg": "JPEG",
+        "png": "PNG",
+        "gif": "GIF",
+        "webp": "WebP",
+        "avif": "AVIF",
+        "jxl": "JPEG XL",
+        "tiff": "TIFF",
+        "jp2": "JPEG 2000"
+      },
+      "formatDescription": "选择输出格式或保持原始格式",
+      "quality": "质量",
+      "qualityDescription": "质量越高 = 文件越大",
+      "qualityAutoOptimized": "质量将自动优化以满足大小限制",
+      "maxFileSize": "最大大小",
+      "maxSizeDescription": "自动调整质量以满足目标文件大小",
+      "customSizeInBytes": "自定义大小（字节）",
+      "bytes": "字节",
+      "clear": "清除",
+      "targetSize": "目标：{{size}} - 质量将自动降低以满足此限制",
+      "metadata": "元数据",
+      "stripIcc": "移除 ICC 配置文件",
+      "stripExif": "移除 EXIF 数据",
+      "metadataDescription": "移除颜色配置文件和元数据以减小文件大小"
+    },
+    "crop": {
+      "left": "左（像素）",
+      "top": "上（像素）",
+      "width": "宽度（像素）",
+      "height": "高度（像素）",
+      "cropTitle": "裁剪",
+      "startCrop": "裁剪",
+      "applyCrop": "应用裁剪"
+    },
+    "preview": {
+      "previewError": "预览错误",
+      "failedToGenerate": "生成预览失败"
+    },
+    "fillPadding": {
+      "fillColor": "填充颜色",
+      "noFill": "无填充",
+      "transparent": "透明",
+      "customColor": "自定义颜色",
+      "padding": "边距",
+      "top": "上",
+      "right": "右",
+      "bottom": "下",
+      "left": "左",
+      "description": "在图片周围添加边距，并用颜色填充透明或边距区域"
+    }
+  }
+}

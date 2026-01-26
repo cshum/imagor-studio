@@ -1,15 +1,30 @@
+import { getSystemRegistry } from '@/api/registry-api'
 import i18n from '@/i18n'
-import { ConfigStorage } from '@/lib/config-storage/config-storage'
+import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage'
 
-let storage: ConfigStorage | null = null
+const userLocaleStorage = new UserRegistryConfigStorage('app_default_language')
 
 /**
- * Initialize locale system with storage
+ * Initialize locale system
+ * Priority: User registry > System registry (read-only default) > Default ('en')
  */
-export const initializeLocale = async (configStorage: ConfigStorage) => {
-  storage = configStorage
+export const initializeLocale = async () => {
   try {
-    const storedLocale = await configStorage.get()
+    // Try to get from user registry first
+    let storedLocale = await userLocaleStorage.get()
+
+    // If not found in user registry, check system registry as a default
+    if (!storedLocale) {
+      try {
+        const systemRegistryEntries = await getSystemRegistry('config.app_default_language')
+        if (systemRegistryEntries && systemRegistryEntries.length > 0) {
+          storedLocale = systemRegistryEntries[0].value || null
+        }
+      } catch {
+        // System registry fetch failed, will use i18n default
+      }
+    }
+
     if (storedLocale && storedLocale !== i18n.language) {
       await i18n.changeLanguage(storedLocale)
     }
@@ -19,13 +34,13 @@ export const initializeLocale = async (configStorage: ConfigStorage) => {
 }
 
 /**
- * Set locale and save to storage
+ * Set locale and save to user registry
  */
 export const setLocale = async (locale: string) => {
   if (locale !== i18n.language) {
     await i18n.changeLanguage(locale)
   }
-  await storage?.set(locale)
+  await userLocaleStorage.set(locale)
 }
 
 /**

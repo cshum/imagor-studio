@@ -1,4 +1,5 @@
 import { PropsWithChildren, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 
 import { HeaderBar } from '@/components/header-bar'
@@ -8,6 +9,7 @@ import { ContentLayout } from '@/layouts/content-layout'
 import { useAuth } from '@/stores/auth-store'
 
 export function AccountLayout({ children }: PropsWithChildren) {
+  const { t } = useTranslation()
   const { authState } = useAuth()
   const location = useLocation()
   const isAdmin = authState.profile?.role == 'admin'
@@ -27,9 +29,9 @@ export function AccountLayout({ children }: PropsWithChildren) {
       : 'profile'
 
   return (
-    <ContentLayout title='Account Settings' isBounded={true}>
+    <ContentLayout title={t('layouts.account.title')} isBounded={true}>
       <div className='mx-4 my-2 grid'>
-        <h1 className='text-3xl md:text-4xl'>Account Settings</h1>
+        <h1 className='text-3xl md:text-4xl'>{t('layouts.account.title')}</h1>
       </div>
       <HeaderBar />
       {/* Tab Navigation - Only show for admins */}
@@ -37,13 +39,13 @@ export function AccountLayout({ children }: PropsWithChildren) {
         <Tabs value={currentTab} className='w-full'>
           <TabsList className='mb-4 grid w-full grid-cols-3'>
             <TabsTrigger value='profile' asChild>
-              <Link to='/account/profile'>Profile</Link>
+              <Link to='/account/profile'>{t('layouts.account.tabs.profile')}</Link>
             </TabsTrigger>
             <TabsTrigger value='admin' asChild>
-              <Link to='/account/admin'>System</Link>
+              <Link to='/account/admin'>{t('layouts.account.tabs.system')}</Link>
             </TabsTrigger>
             <TabsTrigger value='users' asChild>
-              <Link to='/account/users'>Users</Link>
+              <Link to='/account/users'>{t('layouts.account.tabs.users')}</Link>
             </TabsTrigger>
           </TabsList>
         </Tabs>

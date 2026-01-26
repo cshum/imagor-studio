@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { LogOut, MoreVertical, Settings } from 'lucide-react'
+import { Check, Languages, LogOut, MoreVertical, Settings } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
@@ -17,14 +17,20 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { MobileBreadcrumb } from '@/components/ui/mobile-breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useBreadcrumb } from '@/hooks/use-breadcrumb'
+import { availableLanguages } from '@/i18n'
 import { useAuth } from '@/stores/auth-store'
+import { setLocale } from '@/stores/locale-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 interface HeaderBarProps {
@@ -36,7 +42,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   isScrolled: isScrolledDown = false,
   customMenuItems,
 }) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
   const breadcrumbs = useBreadcrumb()
@@ -55,7 +61,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
     if (authState.state === 'guest') {
       return null // No role subtitle for guests
     }
-    return authState.profile?.role || null
+    const role = authState.profile?.role
+    return role ? t(`pages.users.roles.${role}`) : null
   }
 
   // Handle login navigation for guests
@@ -72,6 +79,12 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   // Handle account settings navigation
   const handleAccountClick = () => {
     navigate({ to: '/account/profile' })
+  }
+
+  // Handle language change
+  const handleLanguageChange = async (languageCode: string) => {
+    // Use the locale store to save and apply the language
+    await setLocale(languageCode)
   }
 
   return (
@@ -157,12 +170,41 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                     ) : (
                       // Authenticated user menu
                       <>
+                        {/* Language Selector Submenu */}
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>
+                            <Languages className='text-muted-foreground mr-3 h-4 w-4' />
+                            {t('common.language.title')}
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                              {availableLanguages.map((lang) => (
+                                <DropdownMenuItem
+                                  key={lang.code}
+                                  className='hover:cursor-pointer'
+                                  onSelect={(event) => {
+                                    event.preventDefault()
+                                    handleLanguageChange(lang.code)
+                                  }}
+                                >
+                                  {lang.name}
+                                  {i18n.language === lang.code && (
+                                    <Check className='ml-auto h-4 w-4' />
+                                  )}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
+                        </DropdownMenuSub>
+
+                        <DropdownMenuSeparator />
+
                         <DropdownMenuItem
                           className='interactive:cursor-pointer'
                           onClick={handleAccountClick}
                         >
                           <Settings className='text-muted-foreground mr-3 h-4 w-4' />
-                          {t('common.navigation.accountSettings')}
+                          {t('common.navigation.settings')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem

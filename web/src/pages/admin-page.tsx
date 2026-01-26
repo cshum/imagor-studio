@@ -1,103 +1,118 @@
+import { useTranslation } from 'react-i18next'
+
 import { ImagorManagementSection } from '@/components/imagor/imagor-management-section.tsx'
 import { LicenseManagementSection } from '@/components/license/license-management-section'
 import { StorageManagementSection } from '@/components/storage/storage-management-section.tsx'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
+import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import type { AdminLoaderData } from '@/loaders/account-loader'
 
 interface AdminPageProps {
   loaderData?: AdminLoaderData
 }
 
-// Define system settings configuration
-const SYSTEM_SETTINGS: SystemSetting[] = [
-  {
-    key: 'config.app_home_title',
-    type: 'text',
-    label: 'Home Title',
-    description: 'Customize the title shown for the home page in navigation and breadcrumbs',
-    defaultValue: 'Home',
-  },
-  {
-    key: 'config.allow_guest_mode',
-    type: 'boolean',
-    label: 'Guest Mode',
-    description: 'Allow users to browse the gallery without creating an account',
-    defaultValue: false,
-  },
-  {
-    key: 'config.app_default_sort_by',
-    type: 'dual-select',
-    label: 'Default File Sorting',
-    description: 'Choose how files and folders are sorted by default',
-    defaultValue: 'MODIFIED_TIME',
-    options: ['NAME', 'MODIFIED_TIME'],
-    optionLabels: {
-      NAME: 'Name',
-      MODIFIED_TIME: 'Date Modified',
-    },
-    primaryLabel: 'Sort By',
-    secondaryKey: 'config.app_default_sort_order',
-    secondaryDefaultValue: 'DESC',
-    secondaryOptions: ['ASC', 'DESC'],
-    secondaryOptionLabels: {
-      ASC: 'Ascending',
-      DESC: 'Descending',
-    },
-    secondaryLabel: 'Order',
-  },
-  {
-    key: 'config.app_show_file_names',
-    type: 'boolean',
-    label: 'Show File Names',
-    description: 'Display file names on image thumbnails in the gallery by default',
-    defaultValue: false,
-  },
-  {
-    key: 'config.app_image_extensions',
-    type: 'text',
-    label: 'Image File Extensions',
-    description: 'Comma-separated list of image file extensions to show (e.g., .jpg,.png,.gif)',
-    defaultValue: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2',
-  },
-  {
-    key: 'config.app_video_extensions',
-    type: 'text',
-    label: 'Video File Extensions',
-    description: 'Comma-separated list of video file extensions to show (e.g., .mp4,.webm,.avi)',
-    defaultValue: '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg',
-  },
-  {
-    key: 'config.app_video_thumbnail_position',
-    type: 'select',
-    label: 'Video Thumbnail Position',
-    description:
-      'Choose where to extract video thumbnails. First frame is fastest. Seek options help get a more representative frame and avoid black frames.',
-    defaultValue: 'first_frame',
-    options: ['first_frame', 'seek_1s', 'seek_3s', 'seek_5s', 'seek_10pct', 'seek_25pct'],
-    optionLabels: {
-      first_frame: 'First Frame',
-      seek_1s: 'Seek 1 Second',
-      seek_3s: 'Seek 3 Seconds',
-      seek_5s: 'Seek 5 Seconds',
-      seek_10pct: 'Seek 10% Position',
-      seek_25pct: 'Seek 25% Position',
-    },
-  },
-  {
-    key: 'config.app_show_hidden',
-    type: 'boolean',
-    label: 'Show Hidden Files',
-    description: 'Show files and folders that start with a dot (.)',
-    defaultValue: false,
-  },
-]
-
 export function AdminPage({ loaderData }: AdminPageProps) {
+  const { t } = useTranslation()
+
+  // Define system settings configuration with translations
+  const SYSTEM_SETTINGS: SystemSetting[] = [
+    {
+      key: 'config.app_home_title',
+      type: 'text',
+      label: t('pages.admin.systemSettings.fields.homeTitle.label'),
+      description: t('pages.admin.systemSettings.fields.homeTitle.description'),
+      defaultValue: 'Home',
+    },
+    {
+      key: 'config.app_default_language',
+      type: 'select',
+      label: t('pages.admin.systemSettings.fields.defaultLanguage.label'),
+      description: t('pages.admin.systemSettings.fields.defaultLanguage.description'),
+      defaultValue: 'en',
+      options: getLanguageCodes(),
+      optionLabels: getLanguageLabels(),
+    },
+    {
+      key: 'config.allow_guest_mode',
+      type: 'boolean',
+      label: t('pages.admin.systemSettings.fields.guestMode.label'),
+      description: t('pages.admin.systemSettings.fields.guestMode.description'),
+      defaultValue: false,
+    },
+    {
+      key: 'config.app_default_sort_by',
+      type: 'dual-select',
+      label: t('pages.admin.systemSettings.fields.defaultSorting.label'),
+      description: t('pages.admin.systemSettings.fields.defaultSorting.description'),
+      defaultValue: 'MODIFIED_TIME',
+      options: ['NAME', 'MODIFIED_TIME'],
+      optionLabels: {
+        NAME: t('pages.admin.systemSettings.fields.defaultSorting.options.name'),
+        MODIFIED_TIME: t('pages.admin.systemSettings.fields.defaultSorting.options.modifiedTime'),
+      },
+      primaryLabel: t('pages.admin.systemSettings.fields.defaultSorting.sortBy'),
+      secondaryKey: 'config.app_default_sort_order',
+      secondaryDefaultValue: 'DESC',
+      secondaryOptions: ['ASC', 'DESC'],
+      secondaryOptionLabels: {
+        ASC: t('pages.admin.systemSettings.fields.defaultSorting.options.ascending'),
+        DESC: t('pages.admin.systemSettings.fields.defaultSorting.options.descending'),
+      },
+      secondaryLabel: t('pages.admin.systemSettings.fields.defaultSorting.order'),
+    },
+    {
+      key: 'config.app_show_file_names',
+      type: 'boolean',
+      label: t('pages.admin.systemSettings.fields.showFileNames.label'),
+      description: t('pages.admin.systemSettings.fields.showFileNames.description'),
+      defaultValue: false,
+    },
+    {
+      key: 'config.app_image_extensions',
+      type: 'text',
+      label: t('pages.admin.systemSettings.fields.imageExtensions.label'),
+      description: t('pages.admin.systemSettings.fields.imageExtensions.description'),
+      defaultValue: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2',
+    },
+    {
+      key: 'config.app_video_extensions',
+      type: 'text',
+      label: t('pages.admin.systemSettings.fields.videoExtensions.label'),
+      description: t('pages.admin.systemSettings.fields.videoExtensions.description'),
+      defaultValue: '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg',
+    },
+    {
+      key: 'config.app_video_thumbnail_position',
+      type: 'select',
+      label: t('pages.admin.systemSettings.fields.videoThumbnailPosition.label'),
+      description: t('pages.admin.systemSettings.fields.videoThumbnailPosition.description'),
+      defaultValue: 'first_frame',
+      options: ['first_frame', 'seek_1s', 'seek_3s', 'seek_5s', 'seek_10pct', 'seek_25pct'],
+      optionLabels: {
+        first_frame: t(
+          'pages.admin.systemSettings.fields.videoThumbnailPosition.options.firstFrame',
+        ),
+        seek_1s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek1s'),
+        seek_3s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek3s'),
+        seek_5s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek5s'),
+        seek_10pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek10pct'),
+        seek_25pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek25pct'),
+      },
+    },
+    {
+      key: 'config.app_show_hidden',
+      type: 'boolean',
+      label: t('pages.admin.systemSettings.fields.showHidden.label'),
+      description: t('pages.admin.systemSettings.fields.showHidden.description'),
+      defaultValue: false,
+    },
+  ]
+
   return (
     <div className='space-y-6'>
       <SystemSettingsForm
-        title='System Settings'
-        description='Configure system-wide settings. These options are only available to administrators.'
+        title={t('pages.admin.systemSettings.title')}
+        description={t('pages.admin.systemSettings.description')}
         settings={SYSTEM_SETTINGS}
         initialValues={loaderData?.registry || {}}
         systemRegistryList={loaderData?.systemRegistryList || []}

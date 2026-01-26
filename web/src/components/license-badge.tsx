@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Key } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,7 @@ const getThemeClasses = (theme: string) => {
 }
 
 export const LicenseBadge = ({ side = 'right', theme = 'auto' }: LicenseBadgeProps) => {
+  const { t } = useTranslation()
   const { isLicensed, showSupportDialog } = useLicense()
 
   if (isLicensed) {
@@ -36,7 +38,7 @@ export const LicenseBadge = ({ side = 'right', theme = 'auto' }: LicenseBadgePro
       tabIndex={-1}
     >
       <Key className='h-4 w-4' />
-      <span>Unregistered</span>
+      <span>{t('components.licenseBadge.unregistered')}</span>
     </Button>
   )
 }

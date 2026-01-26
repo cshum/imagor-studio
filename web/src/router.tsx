@@ -198,7 +198,7 @@ const accountLayoutRoute = createRoute({
   beforeLoad: requireAccountAuth,
   loader: () => ({
     breadcrumb: {
-      label: 'Account',
+      translationKey: 'navigation.breadcrumbs.settings',
     },
   }),
   component: () => <AccountLayout />,

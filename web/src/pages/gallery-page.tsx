@@ -35,6 +35,7 @@ import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/i
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Button } from '@/components/ui/button'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   ContextMenuItem,
@@ -72,7 +73,6 @@ import { useAuth } from '@/stores/auth-store'
 import { setCurrentPath } from '@/stores/folder-tree-store.ts'
 import { ImagePosition, setPosition } from '@/stores/image-position-store.ts'
 import { useSidebar } from '@/stores/sidebar-store.ts'
-import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 
 export interface GalleryPageProps extends React.PropsWithChildren {
   galleryLoaderData: GalleryLoaderData

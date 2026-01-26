@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Cloudy, Folders } from 'lucide-react'
 
 import { Label } from '@/components/ui/label'
@@ -13,24 +14,26 @@ interface StorageTypeSelectorProps {
 }
 
 export function StorageTypeSelector({ value, onChange, disabled }: StorageTypeSelectorProps) {
+  const { t } = useTranslation()
+
   const options = [
     {
       value: 'file' as const,
-      label: 'File Storage',
-      description: 'Store images on the local file system',
+      label: t('pages.storage.fileStorage'),
+      description: t('pages.storage.storageTypeSelector.fileStorageDescription'),
       icon: <Folders />,
     },
     {
       value: 's3' as const,
-      label: 'S3 Storage',
-      description: 'Store images in Amazon S3 or compatible cloud storage',
+      label: t('pages.storage.s3Storage'),
+      description: t('pages.storage.storageTypeSelector.s3StorageDescription'),
       icon: <Cloudy />,
     },
   ]
 
   return (
     <div className='space-y-3'>
-      <Label className='text-base font-medium'>Storage Type</Label>
+      <Label className='text-base font-medium'>{t('pages.storage.storageType')}</Label>
       <RadioGroup
         value={value}
         onValueChange={(newValue) => onChange(newValue as StorageType)}

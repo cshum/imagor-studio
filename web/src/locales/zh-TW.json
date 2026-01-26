@@ -1,0 +1,720 @@
+{
+  "layouts": {
+    "account": {
+      "title": "設定",
+      "tabs": {
+        "profile": "個人資料",
+        "system": "系統",
+        "users": "使用者"
+      }
+    }
+  },
+  "common": {
+    "buttons": {
+      "save": "儲存",
+      "cancel": "取消",
+      "delete": "刪除",
+      "edit": "編輯",
+      "create": "建立",
+      "update": "更新",
+      "updateSettings": "更新設定",
+      "close": "關閉",
+      "more": "更多",
+      "switchTheme": "切換主題"
+    },
+    "navigation": {
+      "title": "Imagor Studio",
+      "home": "首頁",
+      "account": "賬戶",
+      "profile": "個人資料",
+      "dashboard": "儀表板",
+      "users": "使用者",
+      "signOut": "退出登入",
+      "login": "登入",
+      "settings": "設定"
+    },
+    "status": {
+      "loading": "載入中...",
+      "error": "錯誤",
+      "success": "成功",
+      "guest": "訪客",
+      "user": "使用者",
+      "yes": "是",
+      "no": "否",
+      "enabled": "已啟用",
+      "disabled": "已停用",
+      "creating": "建立中..."
+    },
+    "labels": {
+      "username": "使用者名稱",
+      "password": "密碼",
+      "name": "名稱",
+      "role": "角色"
+    },
+    "language": {
+      "title": "語言"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "歡迎回來",
+      "subtitle": "輸入您的憑據以訪問 Imagor Studio",
+      "signIn": "登入",
+      "loginFailed": "使用者名稱或密碼無效。請重試。"
+    },
+    "validation": {
+      "usernameRequired": "請輸入有效的使用者名稱",
+      "usernameMinLength": "使用者名稱至少需要 3 個字元",
+      "usernameMaxLength": "使用者名稱最多 30 個字元",
+      "passwordRequired": "密碼為必填項",
+      "invalidUsername": "請輸入有效的使用者名稱"
+    },
+    "embedded": {
+      "tokenMissing": "缺少身份驗證令牌。嵌入模式需要 URL 中的 JWT 令牌。預期格式：/?token=YOUR_JWT_TOKEN&path=image.jpg",
+      "tokenInvalid": "身份驗證令牌無效或已過期。請檢查您的 JWT 令牌並重試。",
+      "authenticationFailed": "嵌入式身份驗證失敗。請驗證您的令牌有效且未過期。",
+      "pathMissing": "路徑引數為必填項。預期格式：/?token=YOUR_JWT_TOKEN&path=image.jpg",
+      "pathInvalid": "路徑格式無效。預期：gallery/folder/image.jpg 或 image.jpg"
+    }
+  },
+  "forms": {
+    "placeholders": {
+      "enterUsername": "輸入您的使用者名稱",
+      "enterPassword": "輸入您的密碼",
+      "confirmPassword": "確認您的密碼",
+      "enterName": "輸入您的名稱"
+    },
+    "validation": {
+      "required": "此欄位為必填項",
+      "invalidUsername": "請輸入有效的使用者名稱",
+      "passwordTooShort": "密碼至少需要 {{min}} 個字元",
+      "usernameInvalid": "請輸入有效的使用者名稱",
+      "displayNameMinLength": "顯示名稱至少需要 3 個字元",
+      "displayNameMaxLength": "顯示名稱不得超過 100 個字元",
+      "usernameMinLength": "使用者名稱至少需要 3 個字元",
+      "usernameMaxLength": "使用者名稱最多 30 個字元",
+      "usernamePattern": "使用者名稱只能包含字母、數字、下劃線和連字元",
+      "currentPasswordRequired": "當前密碼為必填項",
+      "passwordMinLength": "密碼至少需要 8 個字元",
+      "passwordMaxLength": "密碼不得超過 72 個字元",
+      "passwordsDoNotMatch": "密碼不匹配",
+      "confirmPasswordMinLength": "密碼至少需要 8 個字元",
+      "confirmPasswordMaxLength": "密碼不得超過 72 個字元"
+    }
+  },
+  "navigation": {
+    "breadcrumbs": {
+      "home": "首頁",
+      "gallery": "相簿",
+      "profile": "個人資料",
+      "account": "賬戶",
+      "settings": "設定",
+      "users": "使用者",
+      "admin": "系統",
+      "adminSetup": "管理員設定"
+    }
+  },
+  "pages": {
+    "gallery": {
+      "title": "相簿",
+      "noImages": "未找到圖片",
+      "noImagesInGallery": "您的相簿中沒有圖片",
+      "folderEmpty": "此資料夾為空",
+      "sorting": {
+        "sort": "排序",
+        "name": "名稱",
+        "modifiedTime": "修改時間"
+      },
+      "filter": {
+        "filter": "篩選",
+        "placeholder": "篩選",
+        "showingFiltered": "顯示 {{total}} 項中的 {{count}} 項",
+        "clearFilter": "清除篩選"
+      },
+      "showFileNames": "顯示檔名",
+      "createFolder": {
+        "newFolder": "新建資料夾",
+        "title": "建立新資料夾",
+        "description": "輸入新資料夾的名稱。",
+        "folderName": "資料夾名稱",
+        "placeholder": "輸入資料夾名稱",
+        "success": "資料夾 {{folderName}} 建立成功",
+        "errors": {
+          "nameRequired": "資料夾名稱為必填項",
+          "invalidCharacters": "資料夾名稱包含無效字元",
+          "createFailed": "建立資料夾失敗"
+        }
+      },
+      "upload": {
+        "dropZone": {
+          "dropToUpload": "拖放檔案以上傳",
+          "releaseToAdd": "釋放以將檔案新增到您的相簿"
+        },
+        "progress": {
+          "uploadProgress": "上傳進度",
+          "filesCompleted": "已完成 {{total}} 個檔案中的 {{completed}} 個",
+          "failed": "{{count}} 個失敗",
+          "uploading": "{{count}} 個正在上傳",
+          "completed": "{{count}} 個已完成"
+        },
+        "summary": {
+          "fileReady": "{{count}} 個檔案就緒",
+          "filesReady": "{{count}} 個檔案就緒",
+          "allFilesProcessed": "所有檔案已處理",
+          "pendingUpload": "{{count}} 個待上傳",
+          "clear": "清除",
+          "upload": "上傳 {{count}} 個檔案",
+          "uploadFiles": "上傳 {{count}} 個檔案",
+          "uploading": "上傳中..."
+        },
+        "uploadFiles": "上傳檔案",
+        "messages": {
+          "uploadSuccess": "檔案上傳成功",
+          "uploadFailed": "上傳 {{fileName}} 失敗",
+          "uploadSuccessPartial": "{{count}} 個檔案上傳成功",
+          "uploadFailedPartial": "{{count}} 個檔案上傳失敗",
+          "uploadFailedAll": "上傳 {{count}} 個檔案失敗",
+          "uploadFailedAllPlural": "上傳 {{count}} 個檔案失敗"
+        }
+      },
+      "contextMenu": {
+        "open": "開啟",
+        "edit": "編輯",
+        "copyUrl": "複製 URL",
+        "download": "下載",
+        "rename": "重新命名",
+        "delete": "刪除",
+        "copyUrlError": "複製 URL 失敗",
+        "downloadError": "下載失敗"
+      },
+      "copyUrlDialog": {
+        "title": "複製 URL",
+        "description": "複製下面的 URL。我們嘗試自動複製，但您可能需要手動複製。",
+        "closeButton": "關閉",
+        "copyButton": "選擇並複製"
+      },
+      "deleteImage": {
+        "title": "刪除圖片",
+        "description": "您確定要刪除此圖片嗎？",
+        "warning": "此操作無法撤銷。",
+        "success": "\"{{fileName}}\" 刪除成功",
+        "error": "刪除圖片失敗"
+      },
+      "folderContextMenu": {
+        "delete": "刪除資料夾"
+      },
+      "deleteFolder": {
+        "title": "刪除資料夾",
+        "description": "您確定要刪除此資料夾嗎？",
+        "warning": "這將永久刪除該資料夾及其所有內容。此操作無法撤銷。",
+        "success": "\"{{folderName}}\" 刪除成功",
+        "error": "刪除資料夾失敗"
+      },
+      "renameItem": {
+        "title": "重新命名{{type}}",
+        "description": "為此{{type}}輸入新名稱。",
+        "newName": "新名稱",
+        "placeholder": "輸入新名稱",
+        "rename": "重新命名",
+        "success": "\"{{name}}\" 重新命名成功",
+        "error": "重新命名{{type}}失敗",
+        "errors": {
+          "nameRequired": "名稱為必填項",
+          "invalidCharacters": "名稱包含無效字元",
+          "alreadyExists": "已存在同名的{{type}}"
+        }
+      }
+    },
+    "profile": {
+      "title": "個人資料",
+      "profileInformation": "個人資料資訊",
+      "profileInformationDescription": "更新您的賬戶個人資料資訊。",
+      "displayName": "顯示名稱",
+      "displayNamePlaceholder": "輸入您的顯示名稱",
+      "usernamePlaceholder": "輸入您的使用者名稱",
+      "updateProfile": "更新個人資料",
+      "securitySettings": "安全設定",
+      "securitySettingsDescription": "管理您的賬戶安全和密碼。",
+      "password": "密碼",
+      "passwordDescription": "更改您的賬戶密碼",
+      "changePassword": "更改密碼",
+      "changePasswordTitle": "更改密碼",
+      "changePasswordDescription": "輸入您的當前密碼並選擇新密碼。",
+      "currentPassword": "當前密碼",
+      "currentPasswordPlaceholder": "輸入您的當前密碼",
+      "newPassword": "新密碼",
+      "newPasswordPlaceholder": "輸入您的新密碼",
+      "confirmPassword": "確認新密碼",
+      "confirmPasswordPlaceholder": "確認您的新密碼",
+      "updatePassword": "更新密碼",
+      "profileUpdatedSuccess": "個人資料更新成功",
+      "passwordUpdatedSuccess": "密碼更新成功",
+      "updateProfileFailed": "更新個人資料失敗",
+      "updatePasswordFailed": "更新密碼失敗",
+      "usernameAlreadyInUse": "此使用者名稱已被使用",
+      "currentPasswordIncorrect": "當前密碼不正確"
+    },
+    "admin": {
+      "title": "管理",
+      "setup": "管理員設定",
+      "systemSettings": {
+        "title": "系統設定",
+        "description": "配置系統範圍的設定。這些選項僅對管理員可用。",
+        "fields": {
+          "homeTitle": {
+            "label": "首頁標題",
+            "description": "自定義導航和麵包屑中顯示的首頁標題"
+          },
+          "defaultLanguage": {
+            "label": "預設語言",
+            "description": "設定應用程式的預設語言"
+          },
+          "guestMode": {
+            "label": "訪客模式",
+            "description": "允許使用者無需建立賬戶即可瀏覽相簿"
+          },
+          "defaultSorting": {
+            "label": "預設檔案排序",
+            "description": "選擇檔案和資料夾的預設排序方式",
+            "sortBy": "排序方式",
+            "order": "順序",
+            "options": {
+              "name": "名稱",
+              "modifiedTime": "修改日期",
+              "ascending": "升序",
+              "descending": "降序"
+            }
+          },
+          "showFileNames": {
+            "label": "顯示檔名",
+            "description": "預設在相簿的圖片縮圖上顯示檔名"
+          },
+          "imageExtensions": {
+            "label": "圖片副檔名",
+            "description": "要顯示的圖片副檔名列表，用逗號分隔（例如：.jpg,.png,.gif）"
+          },
+          "videoExtensions": {
+            "label": "影片副檔名",
+            "description": "要顯示的影片副檔名列表，用逗號分隔（例如：.mp4,.webm,.avi）"
+          },
+          "videoThumbnailPosition": {
+            "label": "影片縮圖位置",
+            "description": "選擇提取影片縮圖的位置。第一幀最快。跳轉選項有助於獲得更具代表性的幀並避免黑屏。",
+            "options": {
+              "firstFrame": "第一幀",
+              "seek1s": "跳轉 1 秒",
+              "seek3s": "跳轉 3 秒",
+              "seek5s": "跳轉 5 秒",
+              "seek10pct": "跳轉 10% 位置",
+              "seek25pct": "跳轉 25% 位置"
+            }
+          },
+          "showHidden": {
+            "label": "顯示隱藏檔案",
+            "description": "顯示以點（.）開頭的檔案和資料夾"
+          }
+        }
+      },
+      "storage": {
+        "title": "儲存配置",
+        "description": "管理圖片和檔案的儲存位置。更改可能需要重啟伺服器。",
+        "storageType": "儲存型別",
+        "status": "狀態",
+        "configurationDetails": "配置詳情",
+        "configureStorage": "配置儲存"
+      },
+      "welcome": "歡迎使用 Imagor Studio",
+      "setupDescription": "讓我們通過幾個簡單的步驟設定您的相簿",
+      "createAdminAccount": "建立管理員賬戶",
+      "systemConfiguration": "系統配置",
+      "storageConfiguration": "儲存配置",
+      "username": "使用者名稱",
+      "password": "密碼",
+      "confirmPassword": "確認密碼",
+      "createAccount": "建立賬戶",
+      "skipForNow": "暫時跳過",
+      "next": "下一步",
+      "guestMode": "訪客模式",
+      "guestModeDescription": "允許使用者無需建立賬戶即可瀏覽相簿",
+      "homeTitle": "首頁標題",
+      "homeTitleDescription": "自定義相簿中首頁/根資料夾顯示的標題",
+      "systemSettingsDescription": "這些設定稍後可以在管理面板中更改",
+      "storageDescription": "配置圖片的儲存位置",
+      "failedToCreateAccount": "建立管理員賬戶失敗",
+      "failedToSaveSettings": "儲存設定失敗",
+      "storageConfiguredSuccess": "儲存配置成功",
+      "storageConfiguredRestart": "儲存配置成功。請重啟伺服器以應用更改。"
+    },
+    "storage": {
+      "configureStorage": "配置儲存",
+      "storageType": "儲存型別",
+      "storageTypeSelector": {
+        "fileStorageDescription": "在本地檔案系統上儲存圖片",
+        "s3StorageDescription": "在 Amazon S3 或相容的雲端儲存中儲存圖片"
+      },
+      "advancedSettings": "高階設定",
+      "dirPermissionsDescription": "建立新目錄的許可權（八進位制格式，例如 0755）",
+      "filePermissionsDescription": "寫入新檔案的許可權（八進位制格式，例如 0644）",
+      "fileStorage": "檔案儲存",
+      "s3Storage": "S3 儲存",
+      "fileStorageConfig": "檔案儲存配置",
+      "s3StorageConfig": "S3 儲存配置",
+      "baseDir": "基礎目錄",
+      "baseDirDescription": "圖片將儲存在檔案系統上的目錄",
+      "directoryPermissions": "目錄許可權",
+      "filePermissions": "檔案許可權",
+      "bucketName": "儲存桶名稱",
+      "bucketNameRequired": "儲存桶名稱為必填項",
+      "bucketDescription": "用於儲存圖片的 S3 儲存桶名稱",
+      "region": "區域",
+      "regionDescription": "儲存桶所在的 AWS 區域（例如：us-east-1、eu-west-1）",
+      "customEndpoint": "自定義端點",
+      "customEndpointDescription": "S3 相容服務的自定義端點（AWS S3 留空）",
+      "forcePathStyle": "強制路徑樣式",
+      "forcePathStyleDescription": "為 MinIO 和 LocalStack 啟用。大多數其他 S3 相容服務在停用此選項時效果更好。",
+      "accessKeyId": "訪問金鑰 ID",
+      "accessKeyIdDescription": "AWS 訪問金鑰 ID（留空以使用 IAM 角色或環境變數）",
+      "secretAccessKey": "秘密訪問金鑰",
+      "secretAccessKeyDescription": "AWS 秘密訪問金鑰（留空以使用 IAM 角色或環境變數）",
+      "sessionToken": "會話令牌",
+      "sessionTokenDescription": "AWS 會話令牌（僅臨時憑證需要）",
+      "baseDirectory": "基礎目錄",
+      "baseDirectoryDescription": "儲存桶中所有物件鍵的可選字首（例如：\"images/\"）",
+      "testConfiguration": "測試配置",
+      "configureStorage": "配置儲存",
+      "testConfigurationFirst": "請先填寫 {{storageType}} 儲存配置",
+      "testPassed": "儲存配置測試透過",
+      "testFailed": "儲存配置測試失敗",
+      "testError": "測試儲存配置失敗",
+      "configurationSuccess": "{{storageType}} 儲存配置成功",
+      "configurationError": "配置 {{storageType}} 儲存失敗",
+      "configurationOverridden": "儲存配置由外部配置管理"
+    },
+    "systemSettings": {
+      "settingOverridden": "此設定被配置檔案或環境變數覆蓋"
+    },
+    "imagor": {
+      "imagorConfiguration": "Imagor 配置",
+      "imagorConfigurationDescription": "配置圖片處理設定。Imagor 處理圖片轉換和最佳化。",
+      "selectMode": "選擇 Imagor 模式",
+      "selectModeDescription": "選擇 Imagor 如何處理您的圖片",
+      "embeddedMode": "嵌入式",
+      "embeddedModeDescription": "將 Imagor 作為此應用程式的一部分執行（推薦給大多數使用者）",
+      "externalMode": "外部",
+      "externalModeDescription": "連線到外部 Imagor 服務（高階配置）",
+      "embeddedConfiguration": "嵌入式 Imagor 配置",
+      "externalConfiguration": "外部 Imagor 配置",
+      "secret": "金鑰",
+      "secretPlaceholder": "",
+      "secretDescription": "用於簽名圖片 URL 的可選金鑰。留空以使用 JWT 金鑰。",
+      "externalSecretDescription": "外部 Imagor 服務用於 URL 簽名的金鑰。",
+      "embeddedModeSimplified": "嵌入式模式使用具有安全預設值的固定配置。無需額外配置。",
+      "enableEmbeddedMode": "啟用嵌入式模式",
+      "baseUrl": "基礎 URL",
+      "baseUrlRequired": "基礎 URL 為必填項",
+      "baseUrlInvalid": "請輸入以 http:// 或 https:// 開頭的有效 URL",
+      "baseUrlDescription": "外部 Imagor 服務的基礎 URL",
+      "unsafeMode": "非安全模式",
+      "unsafeModeDescription": "允許在不簽名 URL 的情況下處理圖片（不建議用於生產環境）",
+      "signerType": "簽名型別",
+      "selectSignerType": "選擇簽名型別",
+      "signerTypeDescription": "用於 URL 簽名的雜湊演算法",
+      "signerTruncate": "簽名截斷",
+      "signerTruncateMin": "值必須為 0 或更大",
+      "signerTruncateDescription": "從簽名中截斷的字元數（0 = 不截斷）",
+      "configureImagor": "配置 Imagor",
+      "configurationSuccess": "Imagor 配置成功",
+      "configurationError": "配置 Imagor 失敗",
+      "configurationOverridden": "Imagor 配置由外部配置管理",
+      "configuredSuccess": "Imagor 配置成功",
+      "configuredSuccessRestart": "Imagor 配置成功。請重啟伺服器以應用更改。",
+      "mode": "模式",
+      "status": "狀態",
+      "notConfigured": "未配置",
+      "restartRequired": "需要重啟",
+      "active": "活動",
+      "configurationDetails": "配置詳情",
+      "secretSource": "金鑰來源",
+      "hasSecret": "有金鑰",
+      "serverRestartRequired": "需要重啟伺服器",
+      "serverRestartDescription": "Imagor 配置更改將在重啟伺服器後生效。",
+      "noCache": "無快取",
+      "externalRequirements": "外部模式要求：",
+      "externalRequirement1": "外部 imagor 載入器/儲存必須與 Imagor Studio 儲存設定一致",
+      "externalRequirement2": "必須啟用 CORS 以訪問後設資料/EXIF"
+    },
+    "license": {
+      "licenseManagement": "許可證管理",
+      "licenseManagementDescription": "管理您的 Imagor Studio 許可證並檢視許可證資訊。",
+      "licenseType": "許可證型別",
+      "status": "狀態",
+      "notLicensed": "未授權",
+      "licensed": "已授權",
+      "configurationDetails": "許可證詳情",
+      "licensedTo": "授權給",
+      "activatedOn": "啟用於",
+      "licenseKey": "許可證金鑰",
+      "updateLicense": "更新許可證",
+      "activateLicense": "啟用許可證",
+      "configurationOverridden": "許可證配置由外部配置管理",
+      "purchaseLicense": "購買許可證",
+      "supportDevelopment": "支援開發",
+      "activationSuccess": "感謝您的支援！許可證啟用成功。",
+      "updateSuccess": "許可證更新成功。感謝您的持續支援。",
+      "registerForLicense": "註冊 Imagor Studio",
+      "registerDescription": "輸入您的許可證金鑰以啟用 Imagor Studio。",
+      "supportTitle": "💝 支援 Imagor Studio - 來自 imagor 的建立者",
+      "creatorStory": "從 vipsgen 到 imagor，我從頭開始構建了整個圖片處理管道。Imagor Studio 是一個相簿和即時編輯 Web 應用程式，彙集了多年的持續開發成果。",
+      "features": {
+        "highPerformance": "高效能虛擬滾動相簿",
+        "realTimeEditing": "即時圖片編輯，即時生成 URL",
+        "zeroConfiguration": "零配置設定，支援通用儲存",
+        "flexibleStorage": "保留原始檔案的非破壞性工作流程",
+        "nonDestructive": "由 imagor 提供支援的專業級圖片處理"
+      },
+      "supportOngoingDevelopment": "您的支援使 Imagor Studio 能夠持續開發。",
+      "getEarlyBirdLicense": "獲取早鳥許可證（$39）",
+      "licenseKeyLabel": "許可證金鑰",
+      "licenseKeyDescription": "在此處貼上您的完整許可證金鑰以啟用 Imagor Studio。",
+      "licenseTypes": {
+        "early_bird": "早鳥",
+        "personal": "個人",
+        "commercial": "商業",
+        "enterprise": "企業"
+      }
+    },
+    "users": {
+      "title": "使用者",
+      "createUser": "建立使用者",
+      "createNewUser": "建立新使用者",
+      "createUserDescription": "向系統新增新使用者。他們將能夠使用提供的憑據登入。",
+      "formLabels": {
+        "displayName": "顯示名稱",
+        "username": "使用者名稱",
+        "password": "密碼",
+        "confirmPassword": "確認密碼",
+        "role": "角色"
+      },
+      "editUser": "編輯使用者",
+      "editUserDescription": "更新使用者資訊。更改將立即應用。",
+      "updateUser": "更新使用者",
+      "createUserButton": "建立使用者",
+      "deactivateUser": "停用使用者",
+      "reactivateUser": "重新啟用使用者",
+      "deactivateUserDescription": "您確定要停用",
+      "deactivateUserWarning": "這將阻止使用者登入",
+      "reactivateUserWarning": "這將允許使用者再次登入",
+      "searchPlaceholder": "按名稱或使用者名稱搜尋使用者...",
+      "noUsersFound": "未找到使用者",
+      "showingUsers": "顯示 {{total}} 個使用者中的 {{filtered}} 個",
+      "tableHeaders": {
+        "name": "名稱",
+        "username": "使用者名稱",
+        "role": "角色",
+        "status": "狀態",
+        "actions": "操作"
+      },
+      "status": {
+        "active": "活動",
+        "inactive": "非活動"
+      },
+      "roles": {
+        "user": "使用者",
+        "admin": "管理員"
+      },
+      "actions": {
+        "edit": "編輯",
+        "deactivate": "停用",
+        "reactivate": "重新啟用"
+      },
+      "messages": {
+        "userCreatedSuccess": "使用者建立成功",
+        "userUpdatedSuccess": "使用者更新成功",
+        "userDeactivatedSuccess": "使用者停用成功",
+        "userReactivatedSuccess": "使用者重新啟用成功",
+        "createUserFailed": "建立使用者失敗",
+        "updateUserFailed": "更新使用者失敗",
+        "deactivateUserFailed": "停用使用者失敗",
+        "reactivateUserFailed": "重新啟用使用者失敗",
+        "usernameAlreadyExists": "此使用者名稱已被使用"
+      },
+      "placeholders": {
+        "enterDisplayName": "輸入顯示名稱",
+        "enterUsername": "輸入使用者名稱",
+        "enterPassword": "輸入密碼",
+        "confirmPassword": "確認密碼"
+      }
+    }
+  },
+  "components": {
+    "folderTree": {
+      "folders": "資料夾",
+      "noFoldersFound": "未找到資料夾"
+    },
+    "licenseBadge": {
+      "unregistered": "未註冊"
+    }
+  },
+  "home": "首頁",
+  "posts": "文章",
+  "categories": "分類",
+  "tags": "標籤",
+  "users": "使用者",
+  "account": "賬戶",
+  "signOut": "退出登入",
+  "allPosts": "所有文章",
+  "newPost": "新文章",
+  "profile": "個人資料",
+  "dashboard": "儀表板",
+  "footerText": "基於 {{uiLink}} 構建。原始碼可在 {{githubLink}} 上獲取。",
+  "placeholderImageAttribution": "由 Freepik 設計",
+  "switchTheme": "切換主題",
+  "close": "關閉",
+  "snooze": "稍後提醒",
+  "replyAll": "回覆全部",
+  "forward": "轉發",
+  "more": "更多",
+  "markAsUnread": "標記為未讀",
+  "starThread": "收藏話題",
+  "addLabel": "新增標籤",
+  "muteThread": "靜音話題",
+  "imageInformation": "圖片資訊",
+  "noImageInfo": "無可用的圖片資訊。",
+  "imageEditor": {
+    "page": {
+      "back": "返回",
+      "controls": "控制",
+      "resetAll": "全部重置",
+      "download": "下載",
+      "copyUrl": "複製 URL",
+      "retry": "重試",
+      "failedToDownload": "下載圖片失敗",
+      "undo": "撤銷",
+      "redo": "重做"
+    },
+    "controls": {
+      "cropAspect": "裁剪和比例",
+      "dimensionsResize": "尺寸和調整大小",
+      "outputCompression": "輸出和壓縮",
+      "colorEffects": "顏色和效果",
+      "transformRotate": "變換和旋轉",
+      "cropResize": "裁剪和調整大小",
+      "fillPadding": "填充和邊距"
+    },
+    "transform": {
+      "flipControls": "翻轉控制",
+      "horizontalFlip": "水平翻轉",
+      "verticalFlip": "垂直翻轉",
+      "horizontal": "水平",
+      "vertical": "垂直",
+      "normal": "正常",
+      "flipped": "已翻轉",
+      "rotationControls": "旋轉控制",
+      "currentRotation": "當前旋轉"
+    },
+    "effects": {
+      "colorAdjustments": "顏色調整",
+      "brightness": "亮度",
+      "contrast": "對比度",
+      "saturation": "飽和度",
+      "hue": "色調",
+      "effects": "效果",
+      "blur": "模糊",
+      "sharpen": "銳化",
+      "roundCorner": "圓角",
+      "grayscale": "灰度"
+    },
+    "dimensions": {
+      "title": "尺寸",
+      "width": "寬度",
+      "height": "高度",
+      "auto": "自動",
+      "reset": "重置",
+      "resetSize": "重置為原始大小",
+      "lockAspectRatio": "鎖定縱橫比",
+      "unlockAspectRatio": "解鎖縱橫比",
+      "aspectRatios": "縱橫比",
+      "resizeMode": "調整大小模式",
+      "modes": {
+        "fitIn": "適應",
+        "fill": "填充",
+        "stretch": "拉伸",
+        "smart": "智慧"
+      },
+      "modeDescriptions": {
+        "fitIn": "調整大小以適應尺寸，保持縱橫比",
+        "fill": "調整大小並裁剪以完全填充尺寸",
+        "stretch": "調整為精確尺寸，忽略縱橫比",
+        "smart": "智慧裁剪以填充尺寸並檢測內容"
+      },
+      "alignment": "對齊",
+      "horizontal": "水平",
+      "vertical": "垂直",
+      "alignments": {
+        "left": "左",
+        "center": "居中",
+        "right": "右",
+        "top": "上",
+        "middle": "中",
+        "bottom": "下"
+      },
+      "originalRatio": "原始：{{ratio}}"
+    },
+    "resize": {
+      "title": "調整大小"
+    },
+    "output": {
+      "outputFormat": "格式",
+      "formatOptions": {
+        "original": "原始格式",
+        "jpeg": "JPEG",
+        "png": "PNG",
+        "gif": "GIF",
+        "webp": "WebP",
+        "avif": "AVIF",
+        "jxl": "JPEG XL",
+        "tiff": "TIFF",
+        "jp2": "JPEG 2000"
+      },
+      "formatDescription": "選擇輸出格式或保持原始格式",
+      "quality": "質量",
+      "qualityDescription": "質量越高 = 檔案越大",
+      "qualityAutoOptimized": "質量將自動最佳化以滿足大小限制",
+      "maxFileSize": "最大大小",
+      "maxSizeDescription": "自動調整質量以滿足目標檔案大小",
+      "customSizeInBytes": "自定義大小（位元組）",
+      "bytes": "位元組",
+      "clear": "清除",
+      "targetSize": "目標：{{size}} - 質量將自動降低以滿足此限制",
+      "metadata": "後設資料",
+      "stripIcc": "移除 ICC 配置檔案",
+      "stripExif": "移除 EXIF 資料",
+      "metadataDescription": "移除顏色配置檔案和後設資料以減小檔案大小"
+    },
+    "crop": {
+      "left": "左（畫素）",
+      "top": "上（畫素）",
+      "width": "寬度（畫素）",
+      "height": "高度（畫素）",
+      "cropTitle": "裁剪",
+      "startCrop": "裁剪",
+      "applyCrop": "應用裁剪"
+    },
+    "preview": {
+      "previewError": "預覽錯誤",
+      "failedToGenerate": "生成預覽失敗"
+    },
+    "fillPadding": {
+      "fillColor": "填充顏色",
+      "noFill": "無填充",
+      "transparent": "透明",
+      "customColor": "自定義顏色",
+      "padding": "邊距",
+      "top": "上",
+      "right": "右",
+      "bottom": "下",
+      "left": "左",
+      "description": "在圖片周圍新增邊距，並用顏色填充透明或邊距區域"
+    }
+  }
+}
