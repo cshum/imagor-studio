@@ -253,6 +253,18 @@
     "admin": {
       "title": "Amministrazione",
       "setup": "Configurazione Amministratore",
+      "systemSettings": {
+        "title": "Impostazioni di Sistema",
+        "description": "Configura le impostazioni a livello di sistema. Queste opzioni sono disponibili solo per gli amministratori."
+      },
+      "storage": {
+        "title": "Configurazione Archiviazione",
+        "description": "Gestisci dove vengono archiviate le tue immagini e i tuoi file. Le modifiche potrebbero richiedere un riavvio del server.",
+        "storageType": "Tipo di Archiviazione",
+        "status": "Stato",
+        "configurationDetails": "Dettagli Configurazione",
+        "configureStorage": "Configura Archiviazione"
+      },
       "welcome": "Benvenuto in Imagor Studio",
       "setupDescription": "Configuriamo la tua galleria di immagini in pochi passaggi",
       "createAdminAccount": "Crea Account Amministratore",

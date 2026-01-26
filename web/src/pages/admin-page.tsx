@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import { ImagorManagementSection } from '@/components/imagor/imagor-management-section.tsx'
 import { LicenseManagementSection } from '@/components/license/license-management-section'
 import { StorageManagementSection } from '@/components/storage/storage-management-section.tsx'
@@ -103,11 +105,13 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
 ]
 
 export function AdminPage({ loaderData }: AdminPageProps) {
+  const { t } = useTranslation()
+
   return (
     <div className='space-y-6'>
       <SystemSettingsForm
-        title='System Settings'
-        description='Configure system-wide settings. These options are only available to administrators.'
+        title={t('pages.admin.systemSettings.title')}
+        description={t('pages.admin.systemSettings.description')}
         settings={SYSTEM_SETTINGS}
         initialValues={loaderData?.registry || {}}
         systemRegistryList={loaderData?.systemRegistryList || []}

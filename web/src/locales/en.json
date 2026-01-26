@@ -257,6 +257,18 @@
     "admin": {
       "title": "Admin",
       "setup": "Admin Setup",
+      "systemSettings": {
+        "title": "System Settings",
+        "description": "Configure system-wide settings. These options are only available to administrators."
+      },
+      "storage": {
+        "title": "Storage Configuration",
+        "description": "Manage where your images and files are stored. Changes may require a server restart.",
+        "storageType": "Storage Type",
+        "status": "Status",
+        "configurationDetails": "Configuration Details",
+        "configureStorage": "Configure Storage"
+      },
       "welcome": "Welcome to Imagor Studio",
       "setupDescription": "Let's get your image gallery set up in just a few steps",
       "createAdminAccount": "Create Admin Account",

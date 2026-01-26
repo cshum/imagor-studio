@@ -256,6 +256,18 @@
     "admin": {
       "title": "管理",
       "setup": "管理員設定",
+      "systemSettings": {
+        "title": "系統設定",
+        "description": "配置系統範圍的設定。這些選項僅對管理員可用。"
+      },
+      "storage": {
+        "title": "儲存配置",
+        "description": "管理圖片和檔案的儲存位置。更改可能需要重啟伺服器。",
+        "storageType": "儲存型別",
+        "status": "狀態",
+        "configurationDetails": "配置詳情",
+        "configureStorage": "配置儲存"
+      },
       "welcome": "歡迎使用 Imagor Studio",
       "setupDescription": "讓我們通過幾個簡單的步驟設定您的相簿",
       "createAdminAccount": "建立管理員賬戶",

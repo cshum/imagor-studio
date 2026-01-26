@@ -256,6 +256,18 @@
     "admin": {
       "title": "管理",
       "setup": "管理员设置",
+      "systemSettings": {
+        "title": "系统设置",
+        "description": "配置系统范围的设置。这些选项仅对管理员可用。"
+      },
+      "storage": {
+        "title": "存储配置",
+        "description": "管理图片和文件的存储位置。更改可能需要重启服务器。",
+        "storageType": "存储类型",
+        "status": "状态",
+        "configurationDetails": "配置详情",
+        "configureStorage": "配置存储"
+      },
       "welcome": "欢迎使用 Imagor Studio",
       "setupDescription": "让我们通过几个简单的步骤设置您的图库",
       "createAdminAccount": "创建管理员账户",

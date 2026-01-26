@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
@@ -16,6 +17,7 @@ interface StorageManagementSectionProps {
 }
 
 export function StorageManagementSection({ storageStatus }: StorageManagementSectionProps) {
+  const { t } = useTranslation()
   const [showConfigDialog, setShowConfigDialog] = useState(false)
   const router = useRouter()
 
@@ -47,20 +49,22 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Storage Configuration</CardTitle>
-          <CardDescription>
-            Manage where your images and files are stored. Changes may require a server restart.
-          </CardDescription>
+          <CardTitle>{t('pages.admin.storage.title')}</CardTitle>
+          <CardDescription>{t('pages.admin.storage.description')}</CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <div className='space-y-2'>
-              <div className='text-muted-foreground text-sm font-medium'>Storage Type</div>
+              <div className='text-muted-foreground text-sm font-medium'>
+                {t('pages.admin.storage.storageType')}
+              </div>
               <div className='text-base'>{getStorageTypeDisplay(storageStatus?.type || null)}</div>
             </div>
 
             <div className='space-y-2'>
-              <div className='text-muted-foreground text-sm font-medium'>Status</div>
+              <div className='text-muted-foreground text-sm font-medium'>
+                {t('pages.admin.storage.status')}
+              </div>
               <div>{getStatusBadge()}</div>
             </div>
           </div>
@@ -68,7 +72,9 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
           {/* Display detailed configuration */}
           {storageStatus?.configured && (
             <div className='bg-muted/50 space-y-4 rounded-lg border p-4'>
-              <div className='text-sm font-medium'>Configuration Details</div>
+              <div className='text-sm font-medium'>
+                {t('pages.admin.storage.configurationDetails')}
+              </div>
 
               {storageStatus.fileConfig && (
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
@@ -147,7 +153,7 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
               isLoading={false}
               disabled={storageStatus?.isOverriddenByConfig || false}
             >
-              Configure Storage
+              {t('pages.admin.storage.configureStorage')}
             </ButtonWithLoading>
           </div>
         </CardContent>
