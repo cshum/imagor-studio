@@ -72,6 +72,7 @@ import { useAuth } from '@/stores/auth-store'
 import { setCurrentPath } from '@/stores/folder-tree-store.ts'
 import { ImagePosition, setPosition } from '@/stores/image-position-store.ts'
 import { useSidebar } from '@/stores/sidebar-store.ts'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 
 export interface GalleryPageProps extends React.PropsWithChildren {
   galleryLoaderData: GalleryLoaderData
@@ -906,14 +907,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             >
               {t('common.buttons.cancel')}
             </Button>
-            <Button
+            <ButtonWithLoading
               onClick={handleRename}
-              disabled={!renameInput.trim() || renameDialog.isRenaming}
+              disabled={!renameInput.trim()}
+              isLoading={renameDialog.isRenaming}
             >
-              {renameDialog.isRenaming
-                ? t('common.status.loading')
-                : t('pages.gallery.renameItem.rename')}
-            </Button>
+              {t('pages.gallery.renameItem.rename')}
+            </ButtonWithLoading>
           </DialogFooter>
         </DialogContent>
       </Dialog>
