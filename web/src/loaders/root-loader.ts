@@ -14,11 +14,12 @@ export interface RootLoaderData {
 }
 
 export const rootLoader = async (): Promise<RootLoaderData> => {
+  // Initialize locale for all users (guests and authenticated)
+  // This ensures system default language is respected
+  await initializeLocale()
+
   if (!getAuth().accessToken) {
     return {}
-  }
-  if (getAuth().state === 'authenticated') {
-    await initializeLocale()
   }
   // Get home title from the folder tree store
   const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
