@@ -258,7 +258,61 @@
       "setup": "管理员设置",
       "systemSettings": {
         "title": "系统设置",
-        "description": "配置系统范围的设置。这些选项仅对管理员可用。"
+        "description": "配置系统范围的设置。这些选项仅对管理员可用。",
+        "fields": {
+          "homeTitle": {
+            "label": "首页标题",
+            "description": "自定义导航和面包屑中显示的首页标题"
+          },
+          "defaultLanguage": {
+            "label": "默认语言",
+            "description": "设置应用程序的默认语言"
+          },
+          "guestMode": {
+            "label": "访客模式",
+            "description": "允许用户无需创建账户即可浏览图库"
+          },
+          "defaultSorting": {
+            "label": "默认文件排序",
+            "description": "选择文件和文件夹的默认排序方式",
+            "sortBy": "排序方式",
+            "order": "顺序",
+            "options": {
+              "name": "名称",
+              "modifiedTime": "修改日期",
+              "ascending": "升序",
+              "descending": "降序"
+            }
+          },
+          "showFileNames": {
+            "label": "显示文件名",
+            "description": "默认在图库的图片缩略图上显示文件名"
+          },
+          "imageExtensions": {
+            "label": "图片文件扩展名",
+            "description": "要显示的图片文件扩展名列表，用逗号分隔（例如：.jpg,.png,.gif）"
+          },
+          "videoExtensions": {
+            "label": "视频文件扩展名",
+            "description": "要显示的视频文件扩展名列表，用逗号分隔（例如：.mp4,.webm,.avi）"
+          },
+          "videoThumbnailPosition": {
+            "label": "视频缩略图位置",
+            "description": "选择提取视频缩略图的位置。第一帧最快。跳转选项有助于获得更具代表性的帧并避免黑屏。",
+            "options": {
+              "firstFrame": "第一帧",
+              "seek1s": "跳转 1 秒",
+              "seek3s": "跳转 3 秒",
+              "seek5s": "跳转 5 秒",
+              "seek10pct": "跳转 10% 位置",
+              "seek25pct": "跳转 25% 位置"
+            }
+          },
+          "showHidden": {
+            "label": "显示隐藏文件",
+            "description": "显示以点（.）开头的文件和文件夹"
+          }
+        }
       },
       "storage": {
         "title": "存储配置",

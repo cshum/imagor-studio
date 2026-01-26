@@ -61,7 +61,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
     if (authState.state === 'guest') {
       return null // No role subtitle for guests
     }
-    return authState.profile?.role || null
+    const role = authState.profile?.role
+    return role ? t(`pages.users.roles.${role}`) : null
   }
 
   // Handle login navigation for guests

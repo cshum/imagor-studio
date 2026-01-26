@@ -255,7 +255,61 @@
       "setup": "Configurazione Amministratore",
       "systemSettings": {
         "title": "Impostazioni di Sistema",
-        "description": "Configura le impostazioni a livello di sistema. Queste opzioni sono disponibili solo per gli amministratori."
+        "description": "Configura le impostazioni a livello di sistema. Queste opzioni sono disponibili solo per gli amministratori.",
+        "fields": {
+          "homeTitle": {
+            "label": "Titolo Home",
+            "description": "Personalizza il titolo mostrato per la home page nella navigazione e nei breadcrumb"
+          },
+          "defaultLanguage": {
+            "label": "Lingua Predefinita",
+            "description": "Imposta la lingua predefinita per l'applicazione"
+          },
+          "guestMode": {
+            "label": "Modalità Ospite",
+            "description": "Consenti agli utenti di navigare nella galleria senza creare un account"
+          },
+          "defaultSorting": {
+            "label": "Ordinamento File Predefinito",
+            "description": "Scegli come vengono ordinati file e cartelle per impostazione predefinita",
+            "sortBy": "Ordina Per",
+            "order": "Ordine",
+            "options": {
+              "name": "Nome",
+              "modifiedTime": "Data di Modifica",
+              "ascending": "Crescente",
+              "descending": "Decrescente"
+            }
+          },
+          "showFileNames": {
+            "label": "Mostra Nomi File",
+            "description": "Visualizza i nomi dei file sulle miniature delle immagini nella galleria per impostazione predefinita"
+          },
+          "imageExtensions": {
+            "label": "Estensioni File Immagine",
+            "description": "Elenco separato da virgole delle estensioni di file immagine da mostrare (es. .jpg,.png,.gif)"
+          },
+          "videoExtensions": {
+            "label": "Estensioni File Video",
+            "description": "Elenco separato da virgole delle estensioni di file video da mostrare (es. .mp4,.webm,.avi)"
+          },
+          "videoThumbnailPosition": {
+            "label": "Posizione Miniatura Video",
+            "description": "Scegli dove estrarre le miniature dei video. Il primo fotogramma è il più veloce. Le opzioni di ricerca aiutano a ottenere un fotogramma più rappresentativo ed evitare fotogrammi neri.",
+            "options": {
+              "firstFrame": "Primo Fotogramma",
+              "seek1s": "Cerca 1 Secondo",
+              "seek3s": "Cerca 3 Secondi",
+              "seek5s": "Cerca 5 Secondi",
+              "seek10pct": "Cerca Posizione 10%",
+              "seek25pct": "Cerca Posizione 25%"
+            }
+          },
+          "showHidden": {
+            "label": "Mostra File Nascosti",
+            "description": "Mostra file e cartelle che iniziano con un punto (.)"
+          }
+        }
       },
       "storage": {
         "title": "Configurazione Archiviazione",

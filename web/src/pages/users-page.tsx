@@ -332,8 +332,8 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                               disabled={isCreating}
                               className='border-input bg-background w-full rounded-md border p-2'
                             >
-                              <option value='user'>User</option>
-                              <option value='admin'>Admin</option>
+                              <option value='user'>{t('pages.users.roles.user')}</option>
+                              <option value='admin'>{t('pages.users.roles.admin')}</option>
                             </select>
                           </FormControl>
                           <FormMessage />
@@ -410,7 +410,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                             : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
                         }`}
                       >
-                        {user.role}
+                        {t(`pages.users.roles.${user.role}`)}
                       </span>
                     </div>
                     <div>
@@ -500,7 +500,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                             : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
                         }`}
                       >
-                        {user.role}
+                        {t(`pages.users.roles.${user.role}`)}
                       </span>
 
                       {/* Mobile Action Buttons */}
@@ -580,8 +580,8 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                         disabled={isUpdating}
                         className='border-input bg-background w-full rounded-md border p-2'
                       >
-                        <option value='user'>User</option>
-                        <option value='admin'>Admin</option>
+                        <option value='user'>{t('pages.users.roles.user')}</option>
+                        <option value='admin'>{t('pages.users.roles.admin')}</option>
                       </select>
                     </FormControl>
                     <FormMessage />

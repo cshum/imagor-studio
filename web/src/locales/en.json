@@ -259,7 +259,61 @@
       "setup": "Admin Setup",
       "systemSettings": {
         "title": "System Settings",
-        "description": "Configure system-wide settings. These options are only available to administrators."
+        "description": "Configure system-wide settings. These options are only available to administrators.",
+        "fields": {
+          "homeTitle": {
+            "label": "Home Title",
+            "description": "Customize the title shown for the home page in navigation and breadcrumbs"
+          },
+          "defaultLanguage": {
+            "label": "Default Language",
+            "description": "Set the default language for the application"
+          },
+          "guestMode": {
+            "label": "Guest Mode",
+            "description": "Allow users to browse the gallery without creating an account"
+          },
+          "defaultSorting": {
+            "label": "Default File Sorting",
+            "description": "Choose how files and folders are sorted by default",
+            "sortBy": "Sort By",
+            "order": "Order",
+            "options": {
+              "name": "Name",
+              "modifiedTime": "Date Modified",
+              "ascending": "Ascending",
+              "descending": "Descending"
+            }
+          },
+          "showFileNames": {
+            "label": "Show File Names",
+            "description": "Display file names on image thumbnails in the gallery by default"
+          },
+          "imageExtensions": {
+            "label": "Image File Extensions",
+            "description": "Comma-separated list of image file extensions to show (e.g., .jpg,.png,.gif)"
+          },
+          "videoExtensions": {
+            "label": "Video File Extensions",
+            "description": "Comma-separated list of video file extensions to show (e.g., .mp4,.webm,.avi)"
+          },
+          "videoThumbnailPosition": {
+            "label": "Video Thumbnail Position",
+            "description": "Choose where to extract video thumbnails. First frame is fastest. Seek options help get a more representative frame and avoid black frames.",
+            "options": {
+              "firstFrame": "First Frame",
+              "seek1s": "Seek 1 Second",
+              "seek3s": "Seek 3 Seconds",
+              "seek5s": "Seek 5 Seconds",
+              "seek10pct": "Seek 10% Position",
+              "seek25pct": "Seek 25% Position"
+            }
+          },
+          "showHidden": {
+            "label": "Show Hidden Files",
+            "description": "Show files and folders that start with a dot (.)"
+          }
+        }
       },
       "storage": {
         "title": "Storage Configuration",
