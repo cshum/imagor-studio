@@ -75,9 +75,7 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
                     <FormControl>
                       <Input placeholder='/app/gallery' {...field} disabled={disabled} />
                     </FormControl>
-                    <FormDescription>
-                      {t('pages.storage.baseDirDescription')}
-                    </FormDescription>
+                    <FormDescription>{t('pages.storage.baseDirDescription')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

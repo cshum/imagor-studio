@@ -12,7 +12,6 @@ import { LicenseActivationDialog } from '@/components/license-activation-dialog'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
-import i18n from '@/i18n'
 import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
@@ -199,7 +198,7 @@ const accountLayoutRoute = createRoute({
   beforeLoad: requireAccountAuth,
   loader: () => ({
     breadcrumb: {
-      label: i18n.t('navigation.breadcrumbs.settings'),
+      translationKey: 'navigation.breadcrumbs.settings',
     },
   }),
   component: () => <AccountLayout />,

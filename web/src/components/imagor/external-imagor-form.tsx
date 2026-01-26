@@ -151,7 +151,7 @@ export const ExternalImagorForm = forwardRef<ExternalImagorFormRef, ExternalImag
                   ) : (
                     <ChevronRight className='text-muted-foreground h-4 w-4' />
                   )}
-                  Advanced Settings
+                  {t('pages.storage.advancedSettings')}
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className='space-y-6 pt-4'>
