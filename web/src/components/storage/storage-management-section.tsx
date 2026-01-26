@@ -24,9 +24,9 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
   const handleStorageConfigured = async (restartRequired: boolean) => {
     setShowConfigDialog(false)
     if (restartRequired) {
-      toast.success('Storage configured successfully. Please restart the server to apply changes.')
+      toast.success(t('pages.storage.configurationSuccessRestart'))
     } else {
-      toast.success('Storage configured successfully')
+      toast.success(t('pages.storage.configurationSuccess', { storageType: '' }))
       // Load root folders to refresh the folder tree with new storage configuration
       await loadRootFolders()
     }
@@ -35,14 +35,18 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
   }
 
   const getStorageTypeDisplay = (type: string | null) => {
-    if (!type) return 'Not Configured'
-    return type.toLowerCase() === 'file' ? 'File Storage' : 'S3 Storage'
+    if (!type) return t('pages.storage.notConfigured')
+    return type.toLowerCase() === 'file'
+      ? t('pages.storage.fileStorage')
+      : t('pages.storage.s3Storage')
   }
 
   const getStatusBadge = () => {
-    if (!storageStatus?.configured) return <Badge variant='destructive'>Not Configured</Badge>
-    if (storageStatus.restartRequired) return <Badge variant='outline'>Restart Required</Badge>
-    return <Badge variant='default'>Active</Badge>
+    if (!storageStatus?.configured)
+      return <Badge variant='destructive'>{t('pages.storage.notConfigured')}</Badge>
+    if (storageStatus.restartRequired)
+      return <Badge variant='outline'>{t('pages.storage.restartRequired')}</Badge>
+    return <Badge variant='default'>{t('pages.storage.active')}</Badge>
   }
 
   return (
@@ -79,12 +83,14 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
               {storageStatus.fileConfig && (
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
                   <div className='space-y-1'>
-                    <div className='text-muted-foreground text-xs font-medium'>Base Directory</div>
+                    <div className='text-muted-foreground text-xs font-medium'>
+                      {t('pages.storage.baseDir')}
+                    </div>
                     <div className='font-mono text-sm'>{storageStatus.fileConfig.baseDir}</div>
                   </div>
                   <div className='space-y-1'>
                     <div className='text-muted-foreground text-xs font-medium'>
-                      Directory Permissions
+                      {t('pages.storage.directoryPermissions')}
                     </div>
                     <div className='font-mono text-sm'>
                       {storageStatus.fileConfig.mkdirPermissions}
@@ -92,7 +98,7 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
                   </div>
                   <div className='space-y-1'>
                     <div className='text-muted-foreground text-xs font-medium'>
-                      File Permissions
+                      {t('pages.storage.filePermissions')}
                     </div>
                     <div className='font-mono text-sm'>
                       {storageStatus.fileConfig.writePermissions}
@@ -104,25 +110,31 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
               {storageStatus.s3Config && (
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
                   <div className='space-y-1'>
-                    <div className='text-muted-foreground text-xs font-medium'>S3 Bucket</div>
+                    <div className='text-muted-foreground text-xs font-medium'>
+                      {t('pages.storage.s3Bucket')}
+                    </div>
                     <div className='font-mono text-sm'>{storageStatus.s3Config.bucket}</div>
                   </div>
                   {storageStatus.s3Config.region && (
                     <div className='space-y-1'>
-                      <div className='text-muted-foreground text-xs font-medium'>Region</div>
+                      <div className='text-muted-foreground text-xs font-medium'>
+                        {t('pages.storage.region')}
+                      </div>
                       <div className='font-mono text-sm'>{storageStatus.s3Config.region}</div>
                     </div>
                   )}
                   {storageStatus.s3Config.endpoint && (
                     <div className='space-y-1'>
-                      <div className='text-muted-foreground text-xs font-medium'>Endpoint</div>
+                      <div className='text-muted-foreground text-xs font-medium'>
+                        {t('pages.storage.endpoint')}
+                      </div>
                       <div className='font-mono text-sm'>{storageStatus.s3Config.endpoint}</div>
                     </div>
                   )}
                   {storageStatus.s3Config.baseDir && (
                     <div className='space-y-1'>
                       <div className='text-muted-foreground text-xs font-medium'>
-                        Base Directory
+                        {t('pages.storage.baseDirectory')}
                       </div>
                       <div className='font-mono text-sm'>{storageStatus.s3Config.baseDir}</div>
                     </div>
@@ -135,15 +147,15 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
           {storageStatus?.restartRequired && (
             <div className='rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-950'>
               <div className='text-sm text-orange-800 dark:text-orange-200'>
-                <strong>Server restart required:</strong> Storage configuration changes will take
-                effect after restarting the server.
+                <strong>{t('pages.storage.serverRestartRequired')}</strong>{' '}
+                {t('pages.storage.serverRestartMessage')}
               </div>
             </div>
           )}
 
           {storageStatus?.isOverriddenByConfig && (
             <div className='text-sm text-orange-600 dark:text-orange-400'>
-              This setting is overridden by configuration file or environment variable
+              {t('pages.storage.configurationOverridden')}
             </div>
           )}
 

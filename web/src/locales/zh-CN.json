@@ -387,8 +387,18 @@
       "testFailed": "存储配置测试失败",
       "testError": "测试存储配置失败",
       "configurationSuccess": "{{storageType}} 存储配置成功",
+      "configurationSuccessRestart": "存储配置成功。请重启服务器以应用更改。",
       "configurationError": "配置 {{storageType}} 存储失败",
-      "configurationOverridden": "存储配置由外部配置管理"
+      "configurationOverridden": "存储配置由外部配置管理",
+      "baseDirRequired": "基础目录是必需的",
+      "notConfigured": "未配置",
+      "restartRequired": "需要重启",
+      "active": "活动",
+      "s3Bucket": "S3 存储桶",
+      "endpoint": "端点",
+      "serverRestartRequired": "需要重启服务器：",
+      "serverRestartMessage": "存储配置更改将在重启服务器后生效。",
+      "testConfigFirst": "请先填写 {{storageType}} 存储配置"
     },
     "systemSettings": {
       "settingOverridden": "此设置被配置文件或环境变量覆盖"

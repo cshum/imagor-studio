@@ -384,8 +384,18 @@
       "testFailed": "Test configurazione archiviazione fallito",
       "testError": "Impossibile testare la configurazione di archiviazione",
       "configurationSuccess": "Archiviazione {{storageType}} configurata correttamente",
+      "configurationSuccessRestart": "Archiviazione configurata correttamente. Riavviare il server per applicare le modifiche.",
       "configurationError": "Impossibile configurare l'archiviazione {{storageType}}",
-      "configurationOverridden": "La configurazione dell'archiviazione è gestita da una configurazione esterna"
+      "configurationOverridden": "La configurazione dell'archiviazione è gestita da una configurazione esterna",
+      "baseDirRequired": "La directory base è obbligatoria",
+      "notConfigured": "Non Configurato",
+      "restartRequired": "Riavvio Richiesto",
+      "active": "Attivo",
+      "s3Bucket": "Bucket S3",
+      "endpoint": "Endpoint",
+      "serverRestartRequired": "Riavvio del server richiesto:",
+      "serverRestartMessage": "Le modifiche alla configurazione dell'archiviazione avranno effetto dopo il riavvio del server.",
+      "testConfigFirst": "Compila prima la configurazione di archiviazione {{storageType}}"
     },
     "systemSettings": {
       "settingOverridden": "Questa impostazione è sovrascritta dal file di configurazione o dalla variabile d'ambiente"

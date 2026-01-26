@@ -19,13 +19,15 @@ import {
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
-const fileStorageSchema = z.object({
-  baseDir: z.string().min(1, 'Base directory is required'),
-  mkdirPermissions: z.string().optional(),
-  writePermissions: z.string().optional(),
-})
+const createFileStorageSchema = (t: (key: string) => string) =>
+  z.object({
+    baseDir: z.string().min(1, t('pages.storage.baseDirRequired')),
+    mkdirPermissions: z.string().optional(),
+    writePermissions: z.string().optional(),
+  })
 
-export type FileStorageFormData = z.infer<typeof fileStorageSchema>
+type FileStorageSchema = ReturnType<typeof createFileStorageSchema>
+export type FileStorageFormData = z.infer<FileStorageSchema>
 
 export interface FileStorageFormRef {
   getValues: () => FileStorageFormData
@@ -44,7 +46,7 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
     const [showAdvanced, setShowAdvanced] = useState(false)
 
     const form = useForm<FileStorageFormData>({
-      resolver: zodResolver(fileStorageSchema),
+      resolver: zodResolver(createFileStorageSchema(t)),
       defaultValues: {
         baseDir: initialValues?.baseDir || '/app/gallery',
         mkdirPermissions: initialValues?.mkdirPermissions || '0755',

@@ -20,18 +20,20 @@ import {
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
-const s3StorageSchema = z.object({
-  bucket: z.string().min(1, 'Bucket name is required'),
-  region: z.string().optional(),
-  endpoint: z.string().optional(),
-  forcePathStyle: z.boolean().optional(),
-  accessKeyId: z.string().optional(),
-  secretAccessKey: z.string().optional(),
-  sessionToken: z.string().optional(),
-  baseDir: z.string().optional(),
-})
+const createS3StorageSchema = (t: (key: string) => string) =>
+  z.object({
+    bucket: z.string().min(1, t('pages.storage.bucketNameRequired')),
+    region: z.string().optional(),
+    endpoint: z.string().optional(),
+    forcePathStyle: z.boolean().optional(),
+    accessKeyId: z.string().optional(),
+    secretAccessKey: z.string().optional(),
+    sessionToken: z.string().optional(),
+    baseDir: z.string().optional(),
+  })
 
-export type S3StorageFormData = z.infer<typeof s3StorageSchema>
+type S3StorageSchema = ReturnType<typeof createS3StorageSchema>
+export type S3StorageFormData = z.infer<S3StorageSchema>
 
 export interface S3StorageFormRef {
   getValues: () => S3StorageFormData
@@ -50,7 +52,7 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
     const [showAdvanced, setShowAdvanced] = useState(false)
 
     const form = useForm<S3StorageFormData>({
-      resolver: zodResolver(s3StorageSchema),
+      resolver: zodResolver(createS3StorageSchema(t)),
       defaultValues: {
         bucket: initialValues?.bucket || '',
         region: initialValues?.region || '',
