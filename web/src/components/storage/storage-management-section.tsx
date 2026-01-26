@@ -162,7 +162,7 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
       <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
         <DialogContent className='max-h-[90vh] max-w-4xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Configure Storage</DialogTitle>
+            <DialogTitle>{t('pages.storage.configureStorage')}</DialogTitle>
           </DialogHeader>
           <StorageConfigurationWizard
             onSuccess={handleStorageConfigured}

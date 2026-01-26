@@ -346,6 +346,14 @@
       "storageConfiguredRestart": "Storage configured successfully Please restart the server to apply changes."
     },
     "storage": {
+      "configureStorage": "Configure Storage",
+      "storageTypeSelector": {
+        "fileStorageDescription": "Store images on the local file system",
+        "s3StorageDescription": "Store images in Amazon S3 or compatible cloud storage"
+      },
+      "advancedSettings": "Advanced Settings",
+      "dirPermissionsDescription": "Permissions for creating new directories (octal format, e.g., 0755)",
+      "filePermissionsDescription": "Permissions for writing new files (octal format, e.g., 0644)",
       "fileStorage": "File Storage Configuration",
       "s3Storage": "S3 Storage Configuration",
       "bucketName": "Bucket Name",
@@ -473,8 +481,17 @@
       "createUser": "Create User",
       "createNewUser": "Create New User",
       "createUserDescription": "Add a new user to the system. They will be able to log in with the provided credentials.",
+      "formLabels": {
+        "displayName": "Display Name",
+        "username": "Username",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "role": "Role"
+      },
       "editUser": "Edit User",
       "editUserDescription": "Update user information. Changes will be applied immediately.",
+      "updateUser": "Update User",
+      "createUserButton": "Create User",
       "deactivateUser": "Deactivate User",
       "reactivateUser": "Reactivate User",
       "deactivateUserDescription": "Are you sure you want to deactivate",

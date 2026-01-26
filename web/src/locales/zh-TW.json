@@ -345,6 +345,14 @@
       "storageConfiguredRestart": "儲存配置成功。請重啟伺服器以應用更改。"
     },
     "storage": {
+      "configureStorage": "配置儲存",
+      "storageTypeSelector": {
+        "fileStorageDescription": "在本地檔案系統上儲存圖片",
+        "s3StorageDescription": "在 Amazon S3 或相容的雲端儲存中儲存圖片"
+      },
+      "advancedSettings": "高階設定",
+      "dirPermissionsDescription": "建立新目錄的許可權（八進位制格式，例如 0755）",
+      "filePermissionsDescription": "寫入新檔案的許可權（八進位制格式，例如 0644）",
       "fileStorage": "檔案儲存配置",
       "s3Storage": "S3 儲存配置",
       "bucketName": "儲存桶名稱",
@@ -472,8 +480,17 @@
       "createUser": "建立使用者",
       "createNewUser": "建立新使用者",
       "createUserDescription": "向系統新增新使用者。他們將能夠使用提供的憑據登入。",
+      "formLabels": {
+        "displayName": "顯示名稱",
+        "username": "使用者名稱",
+        "password": "密碼",
+        "confirmPassword": "確認密碼",
+        "role": "角色"
+      },
       "editUser": "編輯使用者",
       "editUserDescription": "更新使用者資訊。更改將立即應用。",
+      "updateUser": "更新使用者",
+      "createUserButton": "建立使用者",
       "deactivateUser": "停用使用者",
       "reactivateUser": "重新啟用使用者",
       "deactivateUserDescription": "您確定要停用",

@@ -342,6 +342,14 @@
       "storageConfiguredRestart": "Archiviazione configurata correttamente. Riavvia il server per applicare le modifiche."
     },
     "storage": {
+      "configureStorage": "Configura Archiviazione",
+      "storageTypeSelector": {
+        "fileStorageDescription": "Archivia le immagini sul file system locale",
+        "s3StorageDescription": "Archivia le immagini in Amazon S3 o in un archivio cloud compatibile"
+      },
+      "advancedSettings": "Impostazioni Avanzate",
+      "dirPermissionsDescription": "Permessi per la creazione di nuove directory (formato ottale, es. 0755)",
+      "filePermissionsDescription": "Permessi per la scrittura di nuovi file (formato ottale, es. 0644)",
       "fileStorage": "Configurazione Archiviazione File",
       "s3Storage": "Configurazione Archiviazione S3",
       "bucketName": "Nome Bucket",
@@ -469,8 +477,17 @@
       "createUser": "Crea Utente",
       "createNewUser": "Crea Nuovo Utente",
       "createUserDescription": "Aggiungi un nuovo utente al sistema. Potrà accedere con le credenziali fornite.",
+      "formLabels": {
+        "displayName": "Nome Visualizzato",
+        "username": "Nome utente",
+        "password": "Password",
+        "confirmPassword": "Conferma Password",
+        "role": "Ruolo"
+      },
       "editUser": "Modifica Utente",
       "editUserDescription": "Aggiorna le informazioni dell'utente. Le modifiche verranno applicate immediatamente.",
+      "updateUser": "Aggiorna Utente",
+      "createUserButton": "Crea Utente",
       "deactivateUser": "Disattiva Utente",
       "reactivateUser": "Riattiva Utente",
       "deactivateUserDescription": "Sei sicuro di voler disattivare",

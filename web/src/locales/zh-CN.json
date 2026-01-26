@@ -345,6 +345,14 @@
       "storageConfiguredRestart": "存储配置成功。请重启服务器以应用更改。"
     },
     "storage": {
+      "configureStorage": "配置存储",
+      "storageTypeSelector": {
+        "fileStorageDescription": "在本地文件系统上存储图片",
+        "s3StorageDescription": "在 Amazon S3 或兼容的云存储中存储图片"
+      },
+      "advancedSettings": "高级设置",
+      "dirPermissionsDescription": "创建新目录的权限（八进制格式，例如 0755）",
+      "filePermissionsDescription": "写入新文件的权限（八进制格式，例如 0644）",
       "fileStorage": "文件存储配置",
       "s3Storage": "S3 存储配置",
       "bucketName": "存储桶名称",
@@ -472,8 +480,17 @@
       "createUser": "创建用户",
       "createNewUser": "创建新用户",
       "createUserDescription": "向系统添加新用户。他们将能够使用提供的凭据登录。",
+      "formLabels": {
+        "displayName": "显示名称",
+        "username": "用户名",
+        "password": "密码",
+        "confirmPassword": "确认密码",
+        "role": "角色"
+      },
       "editUser": "编辑用户",
       "editUserDescription": "更新用户信息。更改将立即应用。",
+      "updateUser": "更新用户",
+      "createUserButton": "创建用户",
       "deactivateUser": "停用用户",
       "reactivateUser": "重新激活用户",
       "deactivateUserDescription": "您确定要停用",

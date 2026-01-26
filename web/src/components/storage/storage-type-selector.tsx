@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Cloudy, Folders } from 'lucide-react'
 
 import { Label } from '@/components/ui/label'
@@ -13,17 +14,19 @@ interface StorageTypeSelectorProps {
 }
 
 export function StorageTypeSelector({ value, onChange, disabled }: StorageTypeSelectorProps) {
+  const { t } = useTranslation()
+  
   const options = [
     {
       value: 'file' as const,
       label: 'File Storage',
-      description: 'Store images on the local file system',
+      description: t('pages.storage.storageTypeSelector.fileStorageDescription'),
       icon: <Folders />,
     },
     {
       value: 's3' as const,
       label: 'S3 Storage',
-      description: 'Store images in Amazon S3 or compatible cloud storage',
+      description: t('pages.storage.storageTypeSelector.s3StorageDescription'),
       icon: <Cloudy />,
     },
   ]
