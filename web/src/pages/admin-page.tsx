@@ -2,6 +2,7 @@ import { ImagorManagementSection } from '@/components/imagor/imagor-management-s
 import { LicenseManagementSection } from '@/components/license/license-management-section'
 import { StorageManagementSection } from '@/components/storage/storage-management-section.tsx'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
+import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import type { AdminLoaderData } from '@/loaders/account-loader'
 
 interface AdminPageProps {
@@ -23,12 +24,8 @@ const SYSTEM_SETTINGS: SystemSetting[] = [
     label: 'Default Language',
     description: 'Set the default language for the application',
     defaultValue: 'en',
-    options: ['en', 'zh-CN', 'zh-TW'],
-    optionLabels: {
-      en: 'English',
-      'zh-CN': '简体中文 (Simplified Chinese)',
-      'zh-TW': '繁體中文 (Traditional Chinese)',
-    },
+    options: getLanguageCodes(),
+    optionLabels: getLanguageLabels(),
   },
   {
     key: 'config.allow_guest_mode',

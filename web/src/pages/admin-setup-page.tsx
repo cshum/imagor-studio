@@ -29,6 +29,7 @@ import {
   type MultiStepFormStep,
 } from '@/components/ui/multi-step-form'
 import { useFormErrors } from '@/hooks/use-form-errors'
+import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import type { AdminSetupLoaderData } from '@/loaders/admin-setup-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
 import { setHomeTitle } from '@/stores/folder-tree-store'
@@ -54,12 +55,8 @@ const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
     label: 'Default Language',
     description: 'Set the default language for the application',
     defaultValue: 'en',
-    options: ['en', 'zh-CN', 'zh-TW'],
-    optionLabels: {
-      en: 'English',
-      'zh-CN': '简体中文 (Simplified Chinese)',
-      'zh-TW': '繁體中文 (Traditional Chinese)',
-    },
+    options: getLanguageCodes(),
+    optionLabels: getLanguageLabels(),
   },
   {
     key: 'config.allow_guest_mode',

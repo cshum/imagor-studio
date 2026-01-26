@@ -31,6 +31,20 @@ export const availableLanguages = [
 
 export type LanguageCode = (typeof availableLanguages)[number]['code']
 
+/**
+ * Get array of language codes for use in select options
+ */
+export const getLanguageCodes = (): string[] => {
+  return availableLanguages.map((lang) => lang.code)
+}
+
+/**
+ * Get language labels object for use in select option labels
+ */
+export const getLanguageLabels = (): Record<string, string> => {
+  return Object.fromEntries(availableLanguages.map((lang) => [lang.code, lang.name]))
+}
+
 i18n.use(initReactI18next).init({
   resources,
   fallbackLng: 'en',
