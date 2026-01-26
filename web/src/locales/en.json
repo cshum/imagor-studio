@@ -343,6 +343,7 @@
       "storageDescription": "Configure where your images will be stored",
       "failedToCreateAccount": "Failed to create admin account",
       "failedToSaveSettings": "Failed to save settings",
+      "settingsUpdatedSuccess": "Settings updated successfully",
       "storageConfiguredSuccess": "Storage configured successfully",
       "storageConfiguredRestart": "Storage configured successfully Please restart the server to apply changes."
     },

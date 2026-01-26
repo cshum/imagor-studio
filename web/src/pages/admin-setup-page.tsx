@@ -271,20 +271,17 @@ export function AdminSetupPage() {
     .object({
       username: z
         .string()
-        .min(3, 'Username must be at least 3 characters')
-        .max(30, 'Username must be at most 30 characters')
-        .regex(
-          /^[a-zA-Z0-9_-]+$/,
-          'Username can only contain letters, numbers, underscores, and hyphens',
-        ),
+        .min(3, t('forms.validation.usernameMinLength'))
+        .max(30, t('forms.validation.usernameMaxLength'))
+        .regex(/^[a-zA-Z0-9_-]+$/, t('forms.validation.usernamePattern')),
       password: z
         .string()
         .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
-        .max(72, 'Password must be less than 72 characters'),
+        .max(72, t('forms.validation.passwordMaxLength')),
       confirmPassword: z
         .string()
         .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
-        .max(72, 'Password must be less than 72 characters'),
+        .max(72, t('forms.validation.passwordMaxLength')),
     })
     .refine((data) => data.password === data.confirmPassword, {
       message: t('forms.validation.passwordsDoNotMatch'),
@@ -383,7 +380,7 @@ export function AdminSetupPage() {
 
       return true
     } catch {
-      toast.error('Failed to save settings')
+      toast.error(t('pages.admin.failedToSaveSettings'))
       return false
     }
   }
