@@ -71,12 +71,12 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
                 name='baseDir'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Base Directory</FormLabel>
+                    <FormLabel>{t('pages.storage.baseDir')}</FormLabel>
                     <FormControl>
                       <Input placeholder='/app/gallery' {...field} disabled={disabled} />
                     </FormControl>
                     <FormDescription>
-                      The directory where images will be stored on the file system
+                      {t('pages.storage.baseDirDescription')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -106,7 +106,7 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
                     name='mkdirPermissions'
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Directory Permissions</FormLabel>
+                        <FormLabel>{t('pages.storage.directoryPermissions')}</FormLabel>
                         <FormControl>
                           <Input placeholder='0755' {...field} disabled={disabled} />
                         </FormControl>
@@ -123,7 +123,7 @@ export const FileStorageForm = forwardRef<FileStorageFormRef, FileStorageFormPro
                     name='writePermissions'
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>File Permissions</FormLabel>
+                        <FormLabel>{t('pages.storage.filePermissions')}</FormLabel>
                         <FormControl>
                           <Input placeholder='0644' {...field} disabled={disabled} />
                         </FormControl>

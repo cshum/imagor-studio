@@ -17,6 +17,7 @@
       "edit": "編輯",
       "create": "建立",
       "update": "更新",
+      "updateSettings": "更新設定",
       "close": "關閉",
       "more": "更多",
       "switchTheme": "切換主題"
@@ -346,6 +347,7 @@
     },
     "storage": {
       "configureStorage": "配置儲存",
+      "storageType": "儲存型別",
       "storageTypeSelector": {
         "fileStorageDescription": "在本地檔案系統上儲存圖片",
         "s3StorageDescription": "在 Amazon S3 或相容的雲端儲存中儲存圖片"
@@ -353,8 +355,14 @@
       "advancedSettings": "高階設定",
       "dirPermissionsDescription": "建立新目錄的許可權（八進位制格式，例如 0755）",
       "filePermissionsDescription": "寫入新檔案的許可權（八進位制格式，例如 0644）",
-      "fileStorage": "檔案儲存配置",
-      "s3Storage": "S3 儲存配置",
+      "fileStorage": "檔案儲存",
+      "s3Storage": "S3 儲存",
+      "fileStorageConfig": "檔案儲存配置",
+      "s3StorageConfig": "S3 儲存配置",
+      "baseDir": "基礎目錄",
+      "baseDirDescription": "圖片將儲存在檔案系統上的目錄",
+      "directoryPermissions": "目錄許可權",
+      "filePermissions": "檔案許可權",
       "bucketName": "儲存桶名稱",
       "bucketNameRequired": "儲存桶名稱為必填項",
       "bucketDescription": "用於儲存圖片的 S3 儲存桶名稱",

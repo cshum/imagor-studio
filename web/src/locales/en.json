@@ -17,6 +17,7 @@
       "edit": "Edit",
       "create": "Create",
       "update": "Update",
+      "updateSettings": "Update Settings",
       "close": "Close",
       "more": "More",
       "switchTheme": "Switch Theme"
@@ -347,6 +348,7 @@
     },
     "storage": {
       "configureStorage": "Configure Storage",
+      "storageType": "Storage Type",
       "storageTypeSelector": {
         "fileStorageDescription": "Store images on the local file system",
         "s3StorageDescription": "Store images in Amazon S3 or compatible cloud storage"
@@ -354,8 +356,14 @@
       "advancedSettings": "Advanced Settings",
       "dirPermissionsDescription": "Permissions for creating new directories (octal format, e.g., 0755)",
       "filePermissionsDescription": "Permissions for writing new files (octal format, e.g., 0644)",
-      "fileStorage": "File Storage Configuration",
-      "s3Storage": "S3 Storage Configuration",
+      "fileStorage": "File Storage",
+      "s3Storage": "S3 Storage",
+      "fileStorageConfig": "File Storage Configuration",
+      "s3StorageConfig": "S3 Storage Configuration",
+      "baseDir": "Base Directory",
+      "baseDirDescription": "The directory where images will be stored on the file system",
+      "directoryPermissions": "Directory Permissions",
+      "filePermissions": "File Permissions",
       "bucketName": "Bucket Name",
       "bucketNameRequired": "Bucket name is required",
       "bucketDescription": "The name of your S3 bucket where images will be stored",

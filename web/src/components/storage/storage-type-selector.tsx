@@ -19,13 +19,13 @@ export function StorageTypeSelector({ value, onChange, disabled }: StorageTypeSe
   const options = [
     {
       value: 'file' as const,
-      label: 'File Storage',
+      label: t('pages.storage.fileStorage'),
       description: t('pages.storage.storageTypeSelector.fileStorageDescription'),
       icon: <Folders />,
     },
     {
       value: 's3' as const,
-      label: 'S3 Storage',
+      label: t('pages.storage.s3Storage'),
       description: t('pages.storage.storageTypeSelector.s3StorageDescription'),
       icon: <Cloudy />,
     },
@@ -33,7 +33,7 @@ export function StorageTypeSelector({ value, onChange, disabled }: StorageTypeSe
 
   return (
     <div className='space-y-3'>
-      <Label className='text-base font-medium'>Storage Type</Label>
+      <Label className='text-base font-medium'>{t('pages.storage.storageType')}</Label>
       <RadioGroup
         value={value}
         onValueChange={(newValue) => onChange(newValue as StorageType)}

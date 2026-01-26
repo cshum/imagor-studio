@@ -17,6 +17,7 @@
       "edit": "编辑",
       "create": "创建",
       "update": "更新",
+      "updateSettings": "更新设置",
       "close": "关闭",
       "more": "更多",
       "switchTheme": "切换主题"
@@ -346,6 +347,7 @@
     },
     "storage": {
       "configureStorage": "配置存储",
+      "storageType": "存储类型",
       "storageTypeSelector": {
         "fileStorageDescription": "在本地文件系统上存储图片",
         "s3StorageDescription": "在 Amazon S3 或兼容的云存储中存储图片"
@@ -353,8 +355,14 @@
       "advancedSettings": "高级设置",
       "dirPermissionsDescription": "创建新目录的权限（八进制格式，例如 0755）",
       "filePermissionsDescription": "写入新文件的权限（八进制格式，例如 0644）",
-      "fileStorage": "文件存储配置",
-      "s3Storage": "S3 存储配置",
+      "fileStorage": "文件存储",
+      "s3Storage": "S3 存储",
+      "fileStorageConfig": "文件存储配置",
+      "s3StorageConfig": "S3 存储配置",
+      "baseDir": "基础目录",
+      "baseDirDescription": "图片将存储在文件系统上的目录",
+      "directoryPermissions": "目录权限",
+      "filePermissions": "文件权限",
       "bucketName": "存储桶名称",
       "bucketNameRequired": "存储桶名称为必填项",
       "bucketDescription": "用于存储图片的 S3 存储桶名称",

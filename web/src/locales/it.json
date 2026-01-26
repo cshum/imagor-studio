@@ -17,6 +17,7 @@
       "edit": "Modifica",
       "create": "Crea",
       "update": "Aggiorna",
+      "updateSettings": "Aggiorna Impostazioni",
       "close": "Chiudi",
       "more": "Altro",
       "switchTheme": "Cambia Tema"
@@ -343,6 +344,7 @@
     },
     "storage": {
       "configureStorage": "Configura Archiviazione",
+      "storageType": "Tipo di Archiviazione",
       "storageTypeSelector": {
         "fileStorageDescription": "Archivia le immagini sul file system locale",
         "s3StorageDescription": "Archivia le immagini in Amazon S3 o in un archivio cloud compatibile"
@@ -350,8 +352,14 @@
       "advancedSettings": "Impostazioni Avanzate",
       "dirPermissionsDescription": "Permessi per la creazione di nuove directory (formato ottale, es. 0755)",
       "filePermissionsDescription": "Permessi per la scrittura di nuovi file (formato ottale, es. 0644)",
-      "fileStorage": "Configurazione Archiviazione File",
-      "s3Storage": "Configurazione Archiviazione S3",
+      "fileStorage": "Archiviazione File",
+      "s3Storage": "Archiviazione S3",
+      "fileStorageConfig": "Configurazione Archiviazione File",
+      "s3StorageConfig": "Configurazione Archiviazione S3",
+      "baseDir": "Directory Base",
+      "baseDirDescription": "La directory dove verranno archiviate le immagini sul file system",
+      "directoryPermissions": "Permessi Directory",
+      "filePermissions": "Permessi File",
       "bucketName": "Nome Bucket",
       "bucketNameRequired": "Il nome del bucket è obbligatorio",
       "bucketDescription": "Il nome del tuo bucket S3 dove verranno archiviate le immagini",

@@ -413,7 +413,7 @@ export function SystemSettingsForm({
             isLoading={isUpdating}
             disabled={!hasUnsavedChanges}
           >
-            Update Settings
+            {t('common.buttons.updateSettings')}
           </ButtonWithLoading>
         </div>
       )}
