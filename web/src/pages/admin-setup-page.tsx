@@ -8,6 +8,7 @@ import * as z from 'zod'
 
 import { registerAdmin } from '@/api/auth-api'
 import { setSystemRegistryObject } from '@/api/registry-api'
+import { LanguageSelector } from '@/components/language-selector'
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import { StorageConfigurationWizard } from '@/components/storage/storage-configuration-wizard'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
@@ -29,7 +30,6 @@ import {
   type MultiStepFormStep,
 } from '@/components/ui/multi-step-form'
 import { useFormErrors } from '@/hooks/use-form-errors'
-import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import type { AdminSetupLoaderData } from '@/loaders/admin-setup-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
 import { setHomeTitle } from '@/stores/folder-tree-store'
@@ -40,7 +40,8 @@ type AdminSetupForm = {
   confirmPassword: string
 }
 
-// Define system settings for step 2 - will be translated in component
+// Define system settings for step 3 - will be translated in component
+// Note: Language is now set during admin registration (step 1), not here
 const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
   {
     key: 'config.app_home_title',
@@ -48,15 +49,6 @@ const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
     label: t('pages.admin.homeTitle'),
     description: t('pages.admin.homeTitleDescription'),
     defaultValue: 'Home',
-  },
-  {
-    key: 'config.app_default_language',
-    type: 'select',
-    label: 'Default Language',
-    description: 'Set the default language for the application',
-    defaultValue: 'en',
-    options: getLanguageCodes(),
-    optionLabels: getLanguageLabels(),
   },
   {
     key: 'config.allow_guest_mode',
@@ -261,10 +253,11 @@ function StorageStepContent({ onStorageConfigured }: StorageStepContentProps) {
 }
 
 export function AdminSetupPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [settingsFormValues, setSettingsFormValues] = useState<Record<string, string>>({})
+  const [selectedLanguage, setSelectedLanguage] = useState(i18n.language)
   const navigate = useNavigate()
   const router = useRouter()
   const { authState } = useAuth()
@@ -278,20 +271,17 @@ export function AdminSetupPage() {
     .object({
       username: z
         .string()
-        .min(3, 'Username must be at least 3 characters')
-        .max(30, 'Username must be at most 30 characters')
-        .regex(
-          /^[a-zA-Z0-9_-]+$/,
-          'Username can only contain letters, numbers, underscores, and hyphens',
-        ),
+        .min(3, t('forms.validation.usernameMinLength'))
+        .max(30, t('forms.validation.usernameMaxLength'))
+        .regex(/^[a-zA-Z0-9_-]+$/, t('forms.validation.usernamePattern')),
       password: z
         .string()
         .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
-        .max(72, 'Password must be less than 72 characters'),
+        .max(72, t('forms.validation.passwordMaxLength')),
       confirmPassword: z
         .string()
         .min(8, t('forms.validation.passwordTooShort', { min: 8 }))
-        .max(72, 'Password must be less than 72 characters'),
+        .max(72, t('forms.validation.passwordMaxLength')),
     })
     .refine((data) => data.password === data.confirmPassword, {
       message: t('forms.validation.passwordsDoNotMatch'),
@@ -331,6 +321,7 @@ export function AdminSetupPage() {
         displayName,
         username: values.username,
         password: values.password,
+        defaultLanguage: selectedLanguage,
       })
 
       // Initialize auth with the new token
@@ -389,7 +380,7 @@ export function AdminSetupPage() {
 
       return true
     } catch {
-      toast.error('Failed to save settings')
+      toast.error(t('pages.admin.failedToSaveSettings'))
       return false
     }
   }
@@ -400,9 +391,9 @@ export function AdminSetupPage() {
 
   const handleStorageConfigured = (restartRequired: boolean) => {
     if (restartRequired) {
-      toast.success('Storage configured successfully Please restart the server to apply changes.')
+      toast.success(t('pages.admin.storageConfiguredRestart'))
     } else {
-      toast.success('Storage configured successfully')
+      toast.success(t('pages.admin.storageConfiguredSuccess'))
     }
     // Use the exposed next method instead of hard navigation
     multiStepFormRef.current?.next()
@@ -462,21 +453,22 @@ export function AdminSetupPage() {
 
   return (
     <div className='min-h-screen-safe flex flex-col'>
-      <div className='flex items-center gap-2 border-b px-6 py-3'>
+      <div className='flex items-center gap-2 border-b px-3 py-2 sm:px-6 sm:py-3'>
         <div className='flex flex-1'>
           <a
             href='https://imagor.net'
             target='_blank'
-            className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
+            className='text-foreground hover:text-foreground/80 text-base font-bold transition-colors sm:text-lg md:text-xl'
           >
             {t('common.navigation.title')}
           </a>
         </div>
-        <div className='ml-auto'>
+        <div className='ml-auto flex items-center gap-1 sm:gap-2'>
+          <LanguageSelector onLanguageChange={setSelectedLanguage} />
           <ModeToggle />
         </div>
       </div>
-      <div className='bg-background flex flex-1 items-start justify-center py-6 md:items-center'>
+      <div className='bg-background flex flex-1 items-start justify-center px-4 py-4 sm:px-6 sm:py-6 md:items-center'>
         <MultiStepForm
           ref={multiStepFormRef}
           steps={steps}

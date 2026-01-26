@@ -117,6 +117,7 @@
       "noImages": "Nessuna immagine trovata",
       "noImagesInGallery": "Nessuna immagine nella tua galleria",
       "folderEmpty": "Questa cartella è vuota",
+      "dragAndDropHint": "Trascina e rilascia i file qui per caricarli nella tua galleria",
       "sorting": {
         "sort": "Ordina",
         "name": "Nome",

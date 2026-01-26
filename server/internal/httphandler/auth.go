@@ -40,9 +40,10 @@ type RegisterRequest struct {
 }
 
 type RegisterAdminRequest struct {
-	DisplayName string `json:"displayName"`
-	Username    string `json:"username"`
-	Password    string `json:"password"`
+	DisplayName     string `json:"displayName"`
+	Username        string `json:"username"`
+	Password        string `json:"password"`
+	DefaultLanguage string `json:"defaultLanguage"` // Optional - defaults to "en" if not provided
 }
 
 type LoginRequest struct {
@@ -118,6 +119,12 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 			return err
 		}
 
+		// Determine default language (fallback to "en" if not provided)
+		defaultLanguage := req.DefaultLanguage
+		if defaultLanguage == "" {
+			defaultLanguage = "en"
+		}
+
 		// Populate default app settings for first admin
 		defaultEntries := []*registrystore.Registry{
 			{
@@ -132,6 +139,11 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 			{
 				Key:         "config.app_show_hidden",
 				Value:       "false",
+				IsEncrypted: false,
+			},
+			{
+				Key:         "config.app_default_language",
+				Value:       defaultLanguage,
 				IsEncrypted: false,
 			},
 		}

@@ -32,9 +32,7 @@ export function EmptyGalleryState({ width, isRootGallery }: EmptyGalleryStatePro
       </div>
       <p className='text-muted-foreground mb-2 text-lg'>{message}</p>
       {canUpload && (
-        <p className='text-muted-foreground text-sm'>
-          Drag and drop files here to upload them to your gallery
-        </p>
+        <p className='text-muted-foreground text-sm'>{t('pages.gallery.dragAndDropHint')}</p>
       )}
     </div>
   )

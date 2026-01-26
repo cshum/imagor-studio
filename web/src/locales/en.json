@@ -121,6 +121,7 @@
       "noImages": "No images found",
       "noImagesInGallery": "No images in your gallery",
       "folderEmpty": "This folder is empty",
+      "dragAndDropHint": "Drag and drop files here to upload them to your gallery",
       "sorting": {
         "sort": "Sort",
         "name": "Name",
@@ -343,6 +344,7 @@
       "storageDescription": "Configure where your images will be stored",
       "failedToCreateAccount": "Failed to create admin account",
       "failedToSaveSettings": "Failed to save settings",
+      "settingsUpdatedSuccess": "Settings updated successfully",
       "storageConfiguredSuccess": "Storage configured successfully",
       "storageConfiguredRestart": "Storage configured successfully Please restart the server to apply changes."
     },

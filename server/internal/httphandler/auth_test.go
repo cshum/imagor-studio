@@ -791,7 +791,7 @@ func TestRegisterAdmin(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		body           RegisterRequest
+		body           RegisterAdminRequest
 		existingUsers  int
 		expectedStatus int
 		expectError    bool
@@ -799,8 +799,8 @@ func TestRegisterAdmin(t *testing.T) {
 		setupMocks     func()
 	}{
 		{
-			name: "Valid admin registration with registry population",
-			body: RegisterRequest{
+			name: "Valid admin registration with registry population (no language - defaults to en)",
+			body: RegisterAdminRequest{
 				DisplayName: "administrator",
 				Username:    "administrator",
 				Password:    "securepassword123",
@@ -817,15 +817,16 @@ func TestRegisterAdmin(t *testing.T) {
 					IsActive:    true,
 				}, nil)
 
-				// Expect registry population with correct values
+				// Expect registry population with 4 entries including default language
 				mockRegistryStore.On("SetMulti", mock.Anything, registrystore.SystemOwnerID, mock.MatchedBy(func(entries []*registrystore.Registry) bool {
-					if len(entries) != 3 {
+					if len(entries) != 4 {
 						return false
 					}
-					// Verify all three entries
+					// Verify all four entries
 					imageExtensionsFound := false
 					videoExtensionsFound := false
 					hiddenFound := false
+					languageFound := false
 					for _, entry := range entries {
 						if entry.Key == "config.app_image_extensions" &&
 							entry.Value == ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2" &&
@@ -842,18 +843,141 @@ func TestRegisterAdmin(t *testing.T) {
 							!entry.IsEncrypted {
 							hiddenFound = true
 						}
+						if entry.Key == "config.app_default_language" &&
+							entry.Value == "en" &&
+							!entry.IsEncrypted {
+							languageFound = true
+						}
 					}
-					return imageExtensionsFound && videoExtensionsFound && hiddenFound
+					return imageExtensionsFound && videoExtensionsFound && hiddenFound && languageFound
 				})).Return([]*registrystore.Registry{
 					{Key: "config.app_image_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", IsEncrypted: false},
 					{Key: "config.app_video_extensions", Value: ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", IsEncrypted: false},
 					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
+					{Key: "config.app_default_language", Value: "en", IsEncrypted: false},
+				}, nil)
+			},
+		},
+		{
+			name: "Admin registration with Chinese language",
+			body: RegisterAdminRequest{
+				DisplayName:     "administrator",
+				Username:        "administrator",
+				Password:        "securepassword123",
+				DefaultLanguage: "zh-CN",
+			},
+			existingUsers:  0,
+			expectedStatus: http.StatusCreated,
+			expectError:    false,
+			setupMocks: func() {
+				mockUserStore.On("Create", mock.Anything, "administrator", "administrator", mock.AnythingOfType("string"), "admin").Return(&userstore.User{
+					ID:          "admin-123",
+					DisplayName: "administrator",
+					Username:    "administrator",
+					Role:        "admin",
+					IsActive:    true,
+				}, nil)
+
+				// Expect registry population with zh-CN language
+				mockRegistryStore.On("SetMulti", mock.Anything, registrystore.SystemOwnerID, mock.MatchedBy(func(entries []*registrystore.Registry) bool {
+					languageFound := false
+					for _, entry := range entries {
+						if entry.Key == "config.app_default_language" &&
+							entry.Value == "zh-CN" &&
+							!entry.IsEncrypted {
+							languageFound = true
+						}
+					}
+					return languageFound && len(entries) == 4
+				})).Return([]*registrystore.Registry{
+					{Key: "config.app_image_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", IsEncrypted: false},
+					{Key: "config.app_video_extensions", Value: ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", IsEncrypted: false},
+					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
+					{Key: "config.app_default_language", Value: "zh-CN", IsEncrypted: false},
+				}, nil)
+			},
+		},
+		{
+			name: "Admin registration with Italian language",
+			body: RegisterAdminRequest{
+				DisplayName:     "administrator",
+				Username:        "administrator",
+				Password:        "securepassword123",
+				DefaultLanguage: "it",
+			},
+			existingUsers:  0,
+			expectedStatus: http.StatusCreated,
+			expectError:    false,
+			setupMocks: func() {
+				mockUserStore.On("Create", mock.Anything, "administrator", "administrator", mock.AnythingOfType("string"), "admin").Return(&userstore.User{
+					ID:          "admin-123",
+					DisplayName: "administrator",
+					Username:    "administrator",
+					Role:        "admin",
+					IsActive:    true,
+				}, nil)
+
+				// Expect registry population with it language
+				mockRegistryStore.On("SetMulti", mock.Anything, registrystore.SystemOwnerID, mock.MatchedBy(func(entries []*registrystore.Registry) bool {
+					languageFound := false
+					for _, entry := range entries {
+						if entry.Key == "config.app_default_language" &&
+							entry.Value == "it" &&
+							!entry.IsEncrypted {
+							languageFound = true
+						}
+					}
+					return languageFound && len(entries) == 4
+				})).Return([]*registrystore.Registry{
+					{Key: "config.app_image_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", IsEncrypted: false},
+					{Key: "config.app_video_extensions", Value: ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", IsEncrypted: false},
+					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
+					{Key: "config.app_default_language", Value: "it", IsEncrypted: false},
+				}, nil)
+			},
+		},
+		{
+			name: "Admin registration with empty language string (defaults to en)",
+			body: RegisterAdminRequest{
+				DisplayName:     "administrator",
+				Username:        "administrator",
+				Password:        "securepassword123",
+				DefaultLanguage: "",
+			},
+			existingUsers:  0,
+			expectedStatus: http.StatusCreated,
+			expectError:    false,
+			setupMocks: func() {
+				mockUserStore.On("Create", mock.Anything, "administrator", "administrator", mock.AnythingOfType("string"), "admin").Return(&userstore.User{
+					ID:          "admin-123",
+					DisplayName: "administrator",
+					Username:    "administrator",
+					Role:        "admin",
+					IsActive:    true,
+				}, nil)
+
+				// Expect registry population with default "en" language
+				mockRegistryStore.On("SetMulti", mock.Anything, registrystore.SystemOwnerID, mock.MatchedBy(func(entries []*registrystore.Registry) bool {
+					languageFound := false
+					for _, entry := range entries {
+						if entry.Key == "config.app_default_language" &&
+							entry.Value == "en" &&
+							!entry.IsEncrypted {
+							languageFound = true
+						}
+					}
+					return languageFound && len(entries) == 4
+				})).Return([]*registrystore.Registry{
+					{Key: "config.app_image_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", IsEncrypted: false},
+					{Key: "config.app_video_extensions", Value: ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", IsEncrypted: false},
+					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
+					{Key: "config.app_default_language", Value: "en", IsEncrypted: false},
 				}, nil)
 			},
 		},
 		{
 			name: "Admin registration succeeds even if registry population fails",
-			body: RegisterRequest{
+			body: RegisterAdminRequest{
 				DisplayName: "administrator",
 				Username:    "administrator",
 				Password:    "securepassword123",
@@ -876,7 +1000,7 @@ func TestRegisterAdmin(t *testing.T) {
 		},
 		{
 			name: "Admin registration when users already exist",
-			body: RegisterRequest{
+			body: RegisterAdminRequest{
 				DisplayName: "administrator",
 				Username:    "administrator",
 				Password:    "securepassword123",
