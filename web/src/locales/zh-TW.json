@@ -120,6 +120,7 @@
       "noImages": "未找到圖片",
       "noImagesInGallery": "您的相簿中沒有圖片",
       "folderEmpty": "此資料夾為空",
+      "dragAndDropHint": "拖放檔案到此處以上傳到您的圖庫",
       "sorting": {
         "sort": "排序",
         "name": "名稱",

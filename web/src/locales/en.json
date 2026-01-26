@@ -121,6 +121,7 @@
       "noImages": "No images found",
       "noImagesInGallery": "No images in your gallery",
       "folderEmpty": "This folder is empty",
+      "dragAndDropHint": "Drag and drop files here to upload them to your gallery",
       "sorting": {
         "sort": "Sort",
         "name": "Name",
