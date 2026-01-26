@@ -8,6 +8,7 @@ import * as z from 'zod'
 
 import { registerAdmin } from '@/api/auth-api'
 import { setSystemRegistryObject } from '@/api/registry-api'
+import { LanguageSelector } from '@/components/language-selector'
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import { StorageConfigurationWizard } from '@/components/storage/storage-configuration-wizard'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
@@ -29,7 +30,6 @@ import {
   type MultiStepFormStep,
 } from '@/components/ui/multi-step-form'
 import { useFormErrors } from '@/hooks/use-form-errors'
-import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import type { AdminSetupLoaderData } from '@/loaders/admin-setup-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
 import { setHomeTitle } from '@/stores/folder-tree-store'
@@ -40,7 +40,8 @@ type AdminSetupForm = {
   confirmPassword: string
 }
 
-// Define system settings for step 2 - will be translated in component
+// Define system settings for step 3 - will be translated in component
+// Note: Language is now set during admin registration (step 1), not here
 const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
   {
     key: 'config.app_home_title',
@@ -48,15 +49,6 @@ const createSystemSettings = (t: (key: string) => string): SystemSetting[] => [
     label: t('pages.admin.homeTitle'),
     description: t('pages.admin.homeTitleDescription'),
     defaultValue: 'Home',
-  },
-  {
-    key: 'config.app_default_language',
-    type: 'select',
-    label: 'Default Language',
-    description: 'Set the default language for the application',
-    defaultValue: 'en',
-    options: getLanguageCodes(),
-    optionLabels: getLanguageLabels(),
   },
   {
     key: 'config.allow_guest_mode',
@@ -261,10 +253,11 @@ function StorageStepContent({ onStorageConfigured }: StorageStepContentProps) {
 }
 
 export function AdminSetupPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [settingsFormValues, setSettingsFormValues] = useState<Record<string, string>>({})
+  const [selectedLanguage, setSelectedLanguage] = useState(i18n.language)
   const navigate = useNavigate()
   const router = useRouter()
   const { authState } = useAuth()
@@ -331,6 +324,7 @@ export function AdminSetupPage() {
         displayName,
         username: values.username,
         password: values.password,
+        defaultLanguage: selectedLanguage,
       })
 
       // Initialize auth with the new token
@@ -472,7 +466,8 @@ export function AdminSetupPage() {
             {t('common.navigation.title')}
           </a>
         </div>
-        <div className='ml-auto'>
+        <div className='ml-auto flex items-center gap-2'>
+          <LanguageSelector onLanguageChange={setSelectedLanguage} />
           <ModeToggle />
         </div>
       </div>

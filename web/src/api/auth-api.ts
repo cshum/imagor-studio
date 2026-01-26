@@ -15,6 +15,7 @@ export interface RegisterAdminRequest {
   displayName: string
   username: string
   password: string
+  defaultLanguage?: string
 }
 
 export interface LoginResponse {
