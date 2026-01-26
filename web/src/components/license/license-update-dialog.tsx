@@ -30,11 +30,13 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { checkLicense } from '@/stores/license-store'
 
-const licenseKeySchema = z.object({
-  licenseKey: z.string().min(1, 'License key is required').trim(),
-})
+const createLicenseKeySchema = (t: (key: string) => string) =>
+  z.object({
+    licenseKey: z.string().min(1, t('pages.license.licenseKeyRequired')).trim(),
+  })
 
-type LicenseKeyFormData = z.infer<typeof licenseKeySchema>
+type LicenseKeySchema = ReturnType<typeof createLicenseKeySchema>
+type LicenseKeyFormData = z.infer<LicenseKeySchema>
 
 interface LicenseUpdateDialogProps {
   open: boolean
@@ -57,7 +59,7 @@ export const LicenseUpdateDialog: React.FC<LicenseUpdateDialogProps> = ({
   const [error, setError] = useState<string | null>(null)
 
   const form = useForm<LicenseKeyFormData>({
-    resolver: zodResolver(licenseKeySchema),
+    resolver: zodResolver(createLicenseKeySchema(t)),
     defaultValues: {
       licenseKey: '',
     },
@@ -85,7 +87,8 @@ export const LicenseUpdateDialog: React.FC<LicenseUpdateDialogProps> = ({
         setError(result.message)
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to activate license'
+      const errorMessage =
+        error instanceof Error ? error.message : t('pages.license.activationError')
       setError(errorMessage)
     } finally {
       setIsLoading(false)
@@ -111,8 +114,8 @@ export const LicenseUpdateDialog: React.FC<LicenseUpdateDialogProps> = ({
           </DialogTitle>
           <DialogDescription>
             {isCurrentlyLicensed
-              ? 'Enter a new license key to update your current license.'
-              : 'Enter your license key to activate Imagor Studio.'}
+              ? t('pages.license.updateDialogDescription')
+              : t('pages.license.activateDialogDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -127,7 +130,9 @@ export const LicenseUpdateDialog: React.FC<LicenseUpdateDialogProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        {isCurrentlyLicensed ? 'New License Key' : 'License Key'}
+                        {isCurrentlyLicensed
+                          ? t('pages.license.newLicenseKeyLabel')
+                          : t('pages.license.licenseKeyLabel')}
                       </FormLabel>
                       <FormControl>
                         <Textarea
@@ -140,8 +145,8 @@ export const LicenseUpdateDialog: React.FC<LicenseUpdateDialogProps> = ({
                       </FormControl>
                       <FormDescription>
                         {isCurrentlyLicensed
-                          ? 'Paste your new license key here. This will replace your current license.'
-                          : 'Paste your license key here to activate Imagor Studio.'}
+                          ? t('pages.license.newLicenseKeyDescription')
+                          : t('pages.license.licenseKeyDescription')}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

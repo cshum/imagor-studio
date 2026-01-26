@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
@@ -11,10 +13,12 @@ export interface ImageViewInfoProps {
 }
 
 export const ImageViewInfo = ({ imageInfo }: ImageViewInfoProps) => {
+  const { t } = useTranslation()
+
   return (
     <SheetContent className='w-[300px] pr-0 sm:w-[300px]' side='left' hideOverlay>
       <SheetHeader className='text-left'>
-        <SheetTitle>Image Information</SheetTitle>
+        <SheetTitle>{t('imageInformation')}</SheetTitle>
       </SheetHeader>
       <ScrollArea className='mt-4 h-[calc(100vh-80px)] pr-6'>
         {imageInfo?.exif ? (
@@ -24,7 +28,7 @@ export const ImageViewInfo = ({ imageInfo }: ImageViewInfoProps) => {
             </div>
           ))
         ) : (
-          <p>No image information available.</p>
+          <p>{t('noImageInfo')}</p>
         )}
       </ScrollArea>
     </SheetContent>

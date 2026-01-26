@@ -168,7 +168,9 @@ export function StorageConfigurationWizard({
       if (storageType === 'file') {
         const formData = fileFormRef.current?.getValues()
         if (!formData) {
-          const errorMessage = 'Please fill in the file storage configuration first'
+          const errorMessage = t('pages.storage.testConfigFirst', {
+            storageType: t('pages.storage.fileStorage'),
+          })
           setError(errorMessage)
           return
         }
@@ -184,7 +186,9 @@ export function StorageConfigurationWizard({
       } else {
         const formData = s3FormRef.current?.getValues()
         if (!formData) {
-          const errorMessage = 'Please fill in the S3 storage configuration first'
+          const errorMessage = t('pages.storage.testConfigFirst', {
+            storageType: t('pages.storage.s3Storage'),
+          })
           setError(errorMessage)
           return
         }
@@ -207,14 +211,13 @@ export function StorageConfigurationWizard({
       const result = await testStorageConfig({ input: testInput })
 
       if (result.success) {
-        toast.success('Storage configuration test passed!')
+        toast.success(t('pages.storage.testPassed'))
       } else {
-        const errorMessage = result.message || 'Storage configuration test failed'
+        const errorMessage = result.message || t('pages.storage.testFailed')
         setError(errorMessage)
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to test storage configuration'
+      const errorMessage = error instanceof Error ? error.message : t('pages.storage.testError')
       setError(errorMessage)
     } finally {
       setIsTesting(false)

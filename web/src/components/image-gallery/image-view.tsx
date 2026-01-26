@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 
 import { ImageInfo, ImageViewInfo } from '@/components/image-gallery/image-view-info.tsx'
-import { LicenseBadge } from '@/components/license-badge.tsx'
+import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { Sheet } from '@/components/ui/sheet'
 import { useAutoHideControls } from '@/hooks/use-auto-hide-controls'
 import { useBreakpoint } from '@/hooks/use-breakpoint'

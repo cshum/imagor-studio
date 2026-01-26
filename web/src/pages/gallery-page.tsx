@@ -11,8 +11,8 @@ import {
   Eye,
   FileText,
   FolderPlus,
-  Pencil,
   Search,
+  SquarePen,
   Trash2,
   Type,
   Upload,
@@ -503,7 +503,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         </ContextMenuItem>
         {canEdit && (
           <ContextMenuItem onClick={() => handleEditImage(imageKey)}>
-            <Pencil className='mr-2 h-4 w-4' />
+            <SquarePen className='mr-2 h-4 w-4' />
             {t('pages.gallery.contextMenu.edit')}
           </ContextMenuItem>
         )}
@@ -560,7 +560,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         </DropdownMenuItem>
         {canEdit && (
           <DropdownMenuItem onClick={() => handleEditImage(imageKey)}>
-            <Pencil className='mr-2 h-4 w-4' />
+            <SquarePen className='mr-2 h-4 w-4' />
             {t('pages.gallery.contextMenu.edit')}
           </DropdownMenuItem>
         )}

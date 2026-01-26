@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Key } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
-import { useLicense } from '@/stores/license-store'
+import { Button } from '@/components/ui/button.tsx'
+import { useLicense } from '@/stores/license-store.ts'
 
 interface LicenseBadgeProps {
   side?: 'left' | 'right'

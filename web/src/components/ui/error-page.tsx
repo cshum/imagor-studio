@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { AlertTriangle, Home } from 'lucide-react'
 
-import { LicenseBadge } from '@/components/license-badge.tsx'
+import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { ModeToggle } from '@/components/mode-toggle'
 
 import { Button } from './button'

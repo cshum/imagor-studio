@@ -6,9 +6,9 @@ import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { activateLicense } from '@/api/license-api'
-import { Button } from '@/components/ui/button'
-import { ButtonWithLoading } from '@/components/ui/button-with-loading'
+import { activateLicense } from '@/api/license-api.ts'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
+import { Button } from '@/components/ui/button.tsx'
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@/components/ui/dialog.tsx'
 import {
   Form,
   FormControl,
@@ -25,10 +25,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
-import { checkLicense } from '@/stores/license-store'
+} from '@/components/ui/form.tsx'
+import { Textarea } from '@/components/ui/textarea.tsx'
+import { cn } from '@/lib/utils.ts'
+import { checkLicense } from '@/stores/license-store.ts'
 
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
 

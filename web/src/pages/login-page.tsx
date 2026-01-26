@@ -5,7 +5,7 @@ import { Navigate, useNavigate, useSearch } from '@tanstack/react-router'
 import { z } from 'zod'
 
 import { login } from '@/api/auth-api'
-import { LicenseBadge } from '@/components/license-badge'
+import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { ModeToggle } from '@/components/mode-toggle'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
