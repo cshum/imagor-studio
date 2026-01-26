@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect } from 'react'
-import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import { Link, Outlet, useLocation } from '@tanstack/react-router'
 
 import { HeaderBar } from '@/components/header-bar'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
