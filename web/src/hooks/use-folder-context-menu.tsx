@@ -161,7 +161,7 @@ export function useFolderContextMenu({
     if (!folderKey) return null
 
     // If authentication check is provided and user is not authenticated, show only label
-    const showActions = !isAuthenticated || isAuthenticated()
+    const showActions = isAuthenticated && isAuthenticated()
 
     return (
       <>
@@ -208,7 +208,7 @@ export function useFolderContextMenu({
     if (!folderKey) return null
 
     // If authentication check is provided and user is not authenticated, show only label
-    const showActions = !isAuthenticated || isAuthenticated()
+    const showActions = isAuthenticated && isAuthenticated()
 
     return (
       <>
