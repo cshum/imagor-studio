@@ -1,4 +1,14 @@
 {
+  "layouts": {
+    "account": {
+      "title": "Impostazioni",
+      "tabs": {
+        "profile": "Profilo",
+        "system": "Sistema",
+        "users": "Utenti"
+      }
+    }
+  },
   "common": {
     "buttons": {
       "save": "Salva",
@@ -20,7 +30,7 @@
       "users": "Utenti",
       "signOut": "Esci",
       "login": "Accedi",
-      "accountSettings": "Impostazioni Account"
+      "settings": "Impostazioni"
     },
     "status": {
       "loading": "Caricamento...",

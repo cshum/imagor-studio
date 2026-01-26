@@ -203,7 +203,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                           onClick={handleAccountClick}
                         >
                           <Settings className='text-muted-foreground mr-3 h-4 w-4' />
-                          {t('common.navigation.accountSettings')}
+                          {t('common.navigation.settings')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem

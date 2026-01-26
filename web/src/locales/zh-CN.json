@@ -1,4 +1,14 @@
 {
+  "layouts": {
+    "account": {
+      "title": "设置",
+      "tabs": {
+        "profile": "个人资料",
+        "system": "系统",
+        "users": "用户"
+      }
+    }
+  },
   "common": {
     "buttons": {
       "save": "保存",
@@ -20,7 +30,7 @@
       "users": "用户",
       "signOut": "退出登录",
       "login": "登录",
-      "accountSettings": "账户设置"
+      "settings": "设置"
     },
     "status": {
       "loading": "加载中...",

@@ -1,4 +1,14 @@
 {
+  "layouts": {
+    "account": {
+      "title": "Settings",
+      "tabs": {
+        "profile": "Profile",
+        "system": "System",
+        "users": "Users"
+      }
+    }
+  },
   "common": {
     "buttons": {
       "save": "Save",
@@ -24,7 +34,7 @@
       "users": "Users",
       "signOut": "Sign Out",
       "login": "Login",
-      "accountSettings": "Account Settings"
+      "settings": "Settings"
     },
     "status": {
       "loading": "Loading...",
