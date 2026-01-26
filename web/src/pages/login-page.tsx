@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { initAuth, useAuth } from '@/stores/auth-store'
+import { initializeLocale } from '@/stores/locale-store'
 
 type LoginFormValues = {
   username: string
@@ -78,6 +79,9 @@ export function LoginPage() {
     try {
       const response = await login(values)
       await initAuth(response.token)
+
+      // Reload user's language preference after login
+      await initializeLocale()
 
       // Handle redirect after successful login
       const redirectParam = search.redirect as string | undefined
