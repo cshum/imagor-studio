@@ -38,6 +38,7 @@ import { useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 import { FolderTreeNode } from './folder-tree-node'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 
 export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { t } = useTranslation()
@@ -311,14 +312,13 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
             >
               {t('common.buttons.cancel')}
             </Button>
-            <Button
+            <ButtonWithLoading
               onClick={handleRename}
-              disabled={!renameInput.trim() || renameDialog.isRenaming}
+              disabled={!renameInput.trim()}
+              isLoading={renameDialog.isRenaming}
             >
-              {renameDialog.isRenaming
-                ? t('common.status.loading')
-                : t('pages.gallery.renameItem.rename')}
-            </Button>
+              {t('pages.gallery.renameItem.rename')}
+            </ButtonWithLoading>
           </DialogFooter>
         </DialogContent>
       </Dialog>
