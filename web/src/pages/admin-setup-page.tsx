@@ -391,9 +391,9 @@ export function AdminSetupPage() {
 
   const handleStorageConfigured = (restartRequired: boolean) => {
     if (restartRequired) {
-      toast.success('Storage configured successfully Please restart the server to apply changes.')
+      toast.success(t('pages.admin.storageConfiguredRestart'))
     } else {
-      toast.success('Storage configured successfully')
+      toast.success(t('pages.admin.storageConfiguredSuccess'))
     }
     // Use the exposed next method instead of hard navigation
     multiStepFormRef.current?.next()
@@ -453,22 +453,22 @@ export function AdminSetupPage() {
 
   return (
     <div className='min-h-screen-safe flex flex-col'>
-      <div className='flex items-center gap-2 border-b px-6 py-3'>
+      <div className='flex items-center gap-2 border-b px-3 py-2 sm:px-6 sm:py-3'>
         <div className='flex flex-1'>
           <a
             href='https://imagor.net'
             target='_blank'
-            className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
+            className='text-foreground hover:text-foreground/80 text-base font-bold transition-colors sm:text-lg md:text-xl'
           >
             {t('common.navigation.title')}
           </a>
         </div>
-        <div className='ml-auto flex items-center gap-2'>
+        <div className='ml-auto flex items-center gap-1 sm:gap-2'>
           <LanguageSelector onLanguageChange={setSelectedLanguage} />
           <ModeToggle />
         </div>
       </div>
-      <div className='bg-background flex flex-1 items-start justify-center py-6 md:items-center'>
+      <div className='bg-background flex flex-1 items-start justify-center px-4 py-4 sm:px-6 sm:py-6 md:items-center'>
         <MultiStepForm
           ref={multiStepFormRef}
           steps={steps}

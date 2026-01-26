@@ -101,25 +101,31 @@ export const MultiStepForm = forwardRef<MultiStepFormRef, MultiStepFormProps>(
       <div className={cn('mx-auto w-full max-w-4xl', className)}>
         {/* Header */}
         {(title || description) && (
-          <div className='mb-8 text-center'>
-            {title && <h1 className='mb-2 text-3xl font-bold tracking-tight'>{title}</h1>}
-            {description && <p className='text-muted-foreground text-lg'>{description}</p>}
+          <div className='mb-6 text-center sm:mb-8'>
+            {title && (
+              <h1 className='mb-2 text-xl font-bold tracking-tight sm:text-2xl md:text-3xl'>
+                {title}
+              </h1>
+            )}
+            {description && (
+              <p className='text-muted-foreground text-sm sm:text-base md:text-lg'>{description}</p>
+            )}
           </div>
         )}
 
         {/* Rectangle Stepper */}
         {showStepper && (
-          <div className='mb-8'>
+          <div className='mb-4 sm:mb-8'>
             <RectangleStepper currentStep={currentStep} totalSteps={steps.length} />
           </div>
         )}
 
         {/* Step Content */}
-        <Card className='min-h-[400px] p-4'>
-          <CardHeader>
-            <CardTitle>{currentStepData?.title}</CardTitle>
+        <Card className='min-h-[400px] p-2 sm:p-4'>
+          <CardHeader className='px-4 pt-4 pb-4 sm:px-6 sm:pt-6 sm:pb-6'>
+            <CardTitle className='text-lg sm:text-xl'>{currentStepData?.title}</CardTitle>
             {currentStepData?.description && (
-              <CardDescription>{currentStepData.description}</CardDescription>
+              <CardDescription className='text-sm'>{currentStepData.description}</CardDescription>
             )}
           </CardHeader>
           <CardContent>
