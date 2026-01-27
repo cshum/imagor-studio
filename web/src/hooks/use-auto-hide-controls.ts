@@ -51,13 +51,21 @@ export function useAutoHideControls({
       resetHideTimer()
     }
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only reset timer on Tab key
+      if (event.key === 'Tab') {
+        resetHideTimer()
+      }
+    }
+
     // Start initial timer
     resetHideTimer()
 
-    // Add mouse move listener
+    // Add mouse move and keyboard listeners
     const element = elementRef.current
     if (element) {
       element.addEventListener('mousemove', handleMouseMove)
+      element.addEventListener('keydown', handleKeyDown)
     }
 
     // Cleanup
@@ -67,6 +75,7 @@ export function useAutoHideControls({
       }
       if (element) {
         element.removeEventListener('mousemove', handleMouseMove)
+        element.removeEventListener('keydown', handleKeyDown)
       }
     }
   }, [enabled, hideDelay, elementRef])
