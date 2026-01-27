@@ -1,5 +1,5 @@
 import { RefObject } from 'react'
-import { Folder, MoreVertical } from 'lucide-react'
+import { Check, Folder, MoreVertical } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -52,8 +52,16 @@ const FolderCard = ({
   folderRef,
   onFolderKeyDown,
   onFolderClick,
+  onSelectionToggle,
   renderMenuItems,
 }: FolderCardProps) => {
+  const handleIconClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onSelectionToggle) {
+      onSelectionToggle(folder.galleryKey, index, e)
+    }
+  }
+
   return (
     <Card
       ref={folderRef}
@@ -76,7 +84,27 @@ const FolderCard = ({
       data-folder-name={folder.galleryName}
     >
       <CardContent className='relative flex items-center px-4 py-4 sm:py-3'>
-        <Folder className='text-primary mr-2 h-5 w-5 flex-shrink-0' />
+        {onSelectionToggle ? (
+          <div
+            className='group/icon mr-2 flex h-5 w-5 flex-shrink-0 cursor-pointer items-center justify-center rounded transition-colors'
+            onClick={handleIconClick}
+            role='button'
+            aria-label={isSelected ? 'Deselect folder' : 'Select folder'}
+          >
+            {isSelected ? (
+              <div className='flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 p-1'>
+                <Check className='h-5 w-5 text-white' />
+              </div>
+            ) : (
+              <>
+                <Folder className='text-primary h-5 w-5 group-hover/icon:hidden' />
+                <Check className='text-primary hidden h-5 w-5 group-hover/icon:block' />
+              </>
+            )}
+          </div>
+        ) : (
+          <Folder className='text-primary mr-2 h-5 w-5 flex-shrink-0' />
+        )}
         <span className='truncate text-sm font-medium'>{folder.galleryName}</span>
         {renderMenuItems && (
           <div
