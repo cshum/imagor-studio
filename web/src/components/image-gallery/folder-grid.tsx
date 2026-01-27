@@ -20,9 +20,11 @@ export interface FolderGridProps {
   maxFolderWidth: number
   foldersVisible?: boolean
   focusedIndex?: number
+  selectedFolderKeys?: Set<string>
   folderRefs?: RefObject<(HTMLDivElement | null)[]>
   onFolderKeyDown?: (event: React.KeyboardEvent, index: number) => void
-  onFolderClick?: (folder: Gallery, index: number) => void
+  onFolderClick?: (folder: Gallery, index: number, event?: React.MouseEvent) => void
+  onFolderSelectionToggle?: (folderKey: string, index: number, event: React.MouseEvent) => void
   renderMenuItems?: (folder: Gallery) => React.ReactNode
 }
 
@@ -32,9 +34,11 @@ interface FolderCardProps {
   folderWidth: number
   foldersVisible: boolean
   focusedIndex: number
+  isSelected?: boolean
   folderRef?: (el: HTMLDivElement | null) => void
   onFolderKeyDown?: (event: React.KeyboardEvent, index: number) => void
-  onFolderClick?: (folder: Gallery, index: number) => void
+  onFolderClick?: (folder: Gallery, index: number, event?: React.MouseEvent) => void
+  onSelectionToggle?: (folderKey: string, index: number, event: React.MouseEvent) => void
   renderMenuItems?: (folder: Gallery) => React.ReactNode
 }
 
@@ -44,6 +48,7 @@ const FolderCard = ({
   folderWidth,
   foldersVisible,
   focusedIndex,
+  isSelected = false,
   folderRef,
   onFolderKeyDown,
   onFolderClick,
@@ -52,8 +57,8 @@ const FolderCard = ({
   return (
     <Card
       ref={folderRef}
-      className='group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
-      onClick={() => onFolderClick?.(folder, index)}
+      className={`group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${isSelected ? 'ring-primary ring-2' : ''}`}
+      onClick={(e) => onFolderClick?.(folder, index, e)}
       onKeyDown={(e) => onFolderKeyDown?.(e, index)}
       tabIndex={
         foldersVisible
@@ -111,9 +116,11 @@ export const FolderGrid = ({
   maxFolderWidth,
   foldersVisible = true,
   focusedIndex = -1,
+  selectedFolderKeys,
   folderRefs,
   onFolderKeyDown,
   onFolderClick,
+  onFolderSelectionToggle,
   renderMenuItems,
 }: FolderGridProps) => {
   const columnCount = Math.max(2, Math.floor(width / maxFolderWidth))
@@ -134,24 +141,33 @@ export const FolderGrid = ({
       aria-label='Folders'
       tabIndex={-1}
     >
-      {folders.map((folder, index) => (
-        <FolderCard
-          key={folder.galleryKey}
-          folder={folder}
-          index={index}
-          folderWidth={folderWidth}
-          foldersVisible={foldersVisible}
-          focusedIndex={focusedIndex}
-          folderRef={(el) => {
-            if (folderRefs?.current) {
-              folderRefs.current[index] = el
-            }
-          }}
-          onFolderKeyDown={onFolderKeyDown}
-          onFolderClick={onFolderClick}
-          renderMenuItems={renderMenuItems}
-        />
-      ))}
+      {folders.map((folder, index) => {
+        const folderKey = folder.galleryKey.endsWith('/')
+          ? folder.galleryKey
+          : `${folder.galleryKey}/`
+        const isSelected = selectedFolderKeys?.has(folderKey) || false
+
+        return (
+          <FolderCard
+            key={folder.galleryKey}
+            folder={folder}
+            index={index}
+            folderWidth={folderWidth}
+            foldersVisible={foldersVisible}
+            focusedIndex={focusedIndex}
+            isSelected={isSelected}
+            folderRef={(el) => {
+              if (folderRefs?.current) {
+                folderRefs.current[index] = el
+              }
+            }}
+            onFolderKeyDown={onFolderKeyDown}
+            onFolderClick={onFolderClick}
+            onSelectionToggle={onFolderSelectionToggle}
+            renderMenuItems={renderMenuItems}
+          />
+        )
+      })}
     </div>
   )
 }

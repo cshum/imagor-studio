@@ -1,5 +1,5 @@
 import React, { RefObject, useEffect, useRef, useState } from 'react'
-import { MoreVertical, Play } from 'lucide-react'
+import { Check, MoreVertical, Play } from 'lucide-react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
 import {
@@ -20,7 +20,9 @@ interface ImageCellProps {
   focusedIndex: number
   firstVisibleImageIndex: number
   showFileName?: boolean
+  isSelected?: boolean
   onImageClick?: (imageKey: string, position: Position, index: number) => void
+  onSelectionToggle?: (imageKey: string, index: number, event: React.MouseEvent) => void
   renderMenuItems?: (image: GalleryImage) => React.ReactNode
   onKeyDown?: (event: React.KeyboardEvent, index: number) => void
   imageRef?: (el: HTMLDivElement | null) => void
@@ -37,14 +39,32 @@ const ImageCell = ({
   focusedIndex,
   firstVisibleImageIndex,
   showFileName = false,
+  isSelected = false,
   onImageClick,
+  onSelectionToggle,
   renderMenuItems,
   onKeyDown,
   imageRef,
 }: ImageCellProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
+  const handleSelectionClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onSelectionToggle) {
+      onSelectionToggle(image.imageKey, index, e)
+    }
+  }
+
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Check for Cmd/Ctrl+Click for selection
+    if ((e.metaKey || e.ctrlKey) && onSelectionToggle) {
+      e.preventDefault()
+      e.stopPropagation()
+      onSelectionToggle(image.imageKey, index, e)
+      return
+    }
+
+    // Normal image click
     if (onImageClick) {
       const rect = e.currentTarget.getBoundingClientRect()
       onImageClick(
@@ -86,13 +106,31 @@ const ImageCell = ({
       role='button'
       aria-label={`${image.isVideo ? 'Video' : 'Image'}: ${image.imageName}`}
     >
-      <div className='relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700'>
+      <div
+        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-primary ring-2' : ''}`}
+      >
         <img
           src={getFullImageUrl(image.imageSrc)}
           alt={image.imageName}
           className='h-full w-full object-cover'
           draggable={false}
         />
+        {/* Selection checkbox - top left */}
+        {onSelectionToggle && (
+          <div
+            className={`pointer-events-none absolute top-2 left-2 opacity-0 transition-opacity group-hover/image:pointer-events-auto group-hover/image:opacity-100 md:opacity-0 md:group-hover/image:opacity-100 ${isSelected ? 'pointer-events-auto !opacity-100' : ''}`}
+            onClick={handleSelectionClick}
+          >
+            <div
+              className={`cursor-pointer rounded-full p-1.5 transition-all ${isSelected ? 'bg-black/80' : 'bg-black/30 hover:bg-black/60'}`}
+              role='button'
+              aria-label={isSelected ? 'Deselect' : 'Select'}
+              tabIndex={-1}
+            >
+              <Check className='h-4 w-4 text-white' />
+            </div>
+          </div>
+        )}
         {renderMenuItems && (
           <DropdownMenu onOpenChange={setIsDropdownOpen} modal={false}>
             <div
@@ -141,9 +179,11 @@ export interface ImageGridProps {
   maxImageWidth: number
   showFileName?: boolean
   focusedIndex?: number
+  selectedImageKeys?: Set<string>
   imageRefs?: RefObject<Map<number, HTMLDivElement>>
   onImageKeyDown?: (event: React.KeyboardEvent, index: number) => void
   onImageClick?: (imageKey: string, position: Position, index: number) => void
+  onImageSelectionToggle?: (imageKey: string, index: number, event: React.MouseEvent) => void
   renderMenuItems?: (image: GalleryImage) => React.ReactNode
   onVisibleRangeChange?: (startIndex: number, endIndex: number, firstVisibleIndex: number) => void
 }
@@ -157,9 +197,11 @@ export const ImageGrid = ({
   maxImageWidth,
   showFileName = false,
   focusedIndex = -1,
+  selectedImageKeys,
   imageRefs,
   onImageKeyDown,
   onImageClick,
+  onImageSelectionToggle,
   renderMenuItems,
   onVisibleRangeChange,
 }: ImageGridProps) => {
@@ -213,6 +255,9 @@ export const ImageGrid = ({
     const image = images[i]
 
     if (image) {
+      const imageKey = image.imageKey
+      const isSelected = selectedImageKeys?.has(imageKey) || false
+
       visibleImages.push(
         <ImageCell
           key={image.imageKey}
@@ -226,7 +271,9 @@ export const ImageGrid = ({
           focusedIndex={focusedIndex}
           firstVisibleImageIndex={firstVisibleImageIndex}
           showFileName={showFileName}
+          isSelected={isSelected}
           onImageClick={onImageClick}
+          onSelectionToggle={onImageSelectionToggle}
           renderMenuItems={renderMenuItems}
           onKeyDown={onImageKeyDown}
           imageRef={(el) => {

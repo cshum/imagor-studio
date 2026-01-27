@@ -72,6 +72,12 @@ import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { setCurrentPath } from '@/stores/folder-tree-store.ts'
 import { ImagePosition, setPosition } from '@/stores/image-position-store.ts'
+import {
+  createFolderKey,
+  createImageKey,
+  setGalleryContext,
+  useSelection,
+} from '@/stores/selection-store'
 import { useSidebar } from '@/stores/sidebar-store.ts'
 
 export interface GalleryPageProps extends React.PropsWithChildren {
@@ -140,6 +146,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     url: '',
   })
   const [filterText, setFilterText] = useState('')
+
+  // Selection store
+  const selection = useSelection()
 
   const {
     galleryName,
@@ -231,10 +240,23 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
-  const handleFolderClick = ({ galleryKey }: Gallery) => {
+  const handleFolderClick = (
+    { galleryKey: folderGalleryKey }: Gallery,
+    index: number,
+    event?: React.MouseEvent,
+  ) => {
+    // Check for Cmd/Ctrl+Click for selection
+    if (event && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault()
+      const fullFolderKey = createFolderKey(folderGalleryKey)
+      selection.toggleItem(fullFolderKey, index, 'folder')
+      return
+    }
+
+    // Normal navigation
     return navigate({
       to: '/gallery/$galleryKey',
-      params: { galleryKey },
+      params: { galleryKey: folderGalleryKey },
     })
   }
 
@@ -253,7 +275,42 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     setCurrentPath(galleryKey)
     requestAnimationFrame(() => restoreScrollPosition(galleryKey))
     setFilterText('')
+    // Initialize selection context for this gallery (clears selection)
+    setGalleryContext(galleryKey)
   }, [galleryKey])
+
+  // Selection handlers
+  const handleImageSelectionToggle = (
+    imageKey: string,
+    index: number,
+    _event: React.MouseEvent,
+  ) => {
+    const fullImageKey = createImageKey(galleryKey, imageKey)
+    selection.toggleItem(fullImageKey, index, 'image')
+  }
+
+  const handleFolderSelectionToggle = (
+    folderKey: string,
+    index: number,
+    _event: React.MouseEvent,
+  ) => {
+    const fullFolderKey = createFolderKey(folderKey)
+    selection.toggleItem(fullFolderKey, index, 'folder')
+  }
+
+  // Prepare selection keys for grids
+  const selectedImageKeys = new Set<string>()
+  const selectedFolderKeys = new Set<string>()
+
+  selection.selectedItems.forEach((key) => {
+    if (key.endsWith('/')) {
+      selectedFolderKeys.add(key)
+    } else {
+      // Extract just the image key (without gallery path) for comparison
+      const imageKey = galleryKey ? key.replace(`${galleryKey}/`, '') : key
+      selectedImageKeys.add(imageKey)
+    }
+  })
 
   const handleUploadFiles = () => {
     fileInputRef.current?.click()
@@ -810,6 +867,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                             width={contentWidth}
                             maxFolderWidth={maxItemWidth}
                             foldersVisible={foldersVisible}
+                            selectedFolderKeys={selectedFolderKeys}
+                            onFolderSelectionToggle={handleFolderSelectionToggle}
                             renderMenuItems={(folder) =>
                               renderFolderDropdownMenuItems({
                                 folderKey: folder.galleryKey,
@@ -829,6 +888,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           folderGridHeight={folderGridHeight}
                           maxImageWidth={maxItemWidth}
                           showFileName={showFileNames}
+                          selectedImageKeys={selectedImageKeys}
+                          onImageSelectionToggle={handleImageSelectionToggle}
                           renderMenuItems={(image) =>
                             renderDropdownMenuItems(
                               image.imageName,
