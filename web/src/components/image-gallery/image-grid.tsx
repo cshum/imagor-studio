@@ -122,7 +122,7 @@ const ImageCell = ({
             onClick={handleSelectionClick}
           >
             <div
-              className={`cursor-pointer rounded-full p-1.5 transition-all ${isSelected ? 'bg-black/80' : 'bg-black/30 hover:bg-black/60'}`}
+              className={`cursor-pointer rounded-full p-1.5 transition-all ${isSelected ? 'bg-black/60' : 'bg-black/10 hover:bg-black/40'}`}
               role='button'
               aria-label={isSelected ? 'Deselect' : 'Select'}
               tabIndex={-1}
