@@ -57,7 +57,7 @@ const FolderCard = ({
   return (
     <Card
       ref={folderRef}
-      className={`group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+      className={`group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${isSelected ? 'ring-2 ring-blue-600' : ''}`}
       onClick={(e) => onFolderClick?.(folder, index, e)}
       onKeyDown={(e) => onFolderKeyDown?.(e, index)}
       tabIndex={

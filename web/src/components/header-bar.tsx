@@ -134,7 +134,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
               </Breadcrumb>
             </div>
 
-            <div className='flex items-center space-x-1'>
+            <div className='flex items-center space-x-2'>
               {selectionMenu}
               <ModeToggle />
               {!authState.isEmbedded && (
