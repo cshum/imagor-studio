@@ -36,11 +36,13 @@ import { useSidebar } from '@/stores/sidebar-store'
 interface HeaderBarProps {
   isScrolled?: boolean
   customMenuItems?: React.ReactNode
+  selectionMenu?: React.ReactNode
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
   isScrolled: isScrolledDown = false,
   customMenuItems,
+  selectionMenu,
 }) => {
   const { t, i18n } = useTranslation()
   const { logout, authState } = useAuth()
@@ -133,6 +135,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             </div>
 
             <div className='flex items-center space-x-1'>
+              {selectionMenu}
               <ModeToggle />
               {!authState.isEmbedded && (
                 <DropdownMenu>

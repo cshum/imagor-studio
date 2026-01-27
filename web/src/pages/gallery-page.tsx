@@ -33,6 +33,7 @@ import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
 import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
+import { SelectionMenu } from '@/components/image-gallery/selection-menu'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
@@ -700,6 +701,21 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
+  // Bulk selection handlers
+  const handleBulkDownload = () => {
+    toast.info(t('pages.gallery.selection.downloadNotImplemented'))
+    // TODO: Implement bulk download
+  }
+
+  const handleBulkDelete = () => {
+    toast.info(t('pages.gallery.selection.deleteNotImplemented'))
+    // TODO: Implement bulk delete with confirmation dialog
+  }
+
+  const handleClearSelection = () => {
+    selection.clearSelection()
+  }
+
   // Create menu items for authenticated users
   const customMenuItems =
     authState.state === 'authenticated' ? (
@@ -837,7 +853,20 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           <div className='mx-4 my-2 grid'>
             <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
           </div>
-          <HeaderBar isScrolled={isScrolledDown} customMenuItems={customMenuItems} />
+          <HeaderBar
+            isScrolled={isScrolledDown}
+            customMenuItems={customMenuItems}
+            selectionMenu={
+              authState.state === 'authenticated' ? (
+                <SelectionMenu
+                  selectedCount={selection.selectedItems.size}
+                  onDownload={handleBulkDownload}
+                  onDelete={handleBulkDelete}
+                  onClear={handleClearSelection}
+                />
+              ) : null
+            }
+          />
 
           <Card className='rounded-lg border-none'>
             <CardContent className='overflow-hidden p-2 md:p-4' ref={contentRef}>

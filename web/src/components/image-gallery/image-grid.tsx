@@ -107,7 +107,7 @@ const ImageCell = ({
       aria-label={`${image.isVideo ? 'Video' : 'Image'}: ${image.imageName}`}
     >
       <div
-        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-primary ring-2' : ''}`}
+        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
       >
         <img
           src={getFullImageUrl(image.imageSrc)}
@@ -122,7 +122,7 @@ const ImageCell = ({
             onClick={handleSelectionClick}
           >
             <div
-              className={`cursor-pointer rounded-full p-1.5 transition-all ${isSelected ? 'bg-black/60' : 'bg-black/10 hover:bg-black/40'}`}
+              className={`cursor-pointer rounded-full p-1.5 transition-all ${isSelected ? 'bg-blue-600' : 'bg-black/10 hover:bg-black/40'}`}
               role='button'
               aria-label={isSelected ? 'Deselect' : 'Select'}
               tabIndex={-1}
