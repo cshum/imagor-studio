@@ -795,11 +795,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           className='hover:cursor-pointer'
           onSelect={(event) => {
             event.preventDefault()
-            // If already selected, toggle sort order; otherwise switch to this sort option
+            // If already selected, toggle sort order; otherwise switch to this sort option with ASC default
             if (currentSortBy === 'NAME') {
               handleSortChange('NAME', currentSortOrder === 'ASC' ? 'DESC' : 'ASC')
             } else {
-              handleSortChange('NAME', currentSortOrder)
+              handleSortChange('NAME', 'ASC')
             }
           }}
         >
@@ -816,11 +816,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           className='hover:cursor-pointer'
           onSelect={(event) => {
             event.preventDefault()
-            // If already selected, toggle sort order; otherwise switch to this sort option
+            // If already selected, toggle sort order; otherwise switch to this sort option with DESC default
             if (currentSortBy === 'MODIFIED_TIME') {
               handleSortChange('MODIFIED_TIME', currentSortOrder === 'ASC' ? 'DESC' : 'ASC')
             } else {
-              handleSortChange('MODIFIED_TIME', currentSortOrder)
+              handleSortChange('MODIFIED_TIME', 'DESC')
             }
           }}
         >
