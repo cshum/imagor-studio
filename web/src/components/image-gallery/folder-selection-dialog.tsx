@@ -247,7 +247,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
                 </div>
               </div>
             ) : (
-              <div className='w-full space-y-0.5 p-2'>
+              <div className='min-w-0 w-full space-y-0.5 p-2'>
                 {tree.map((folder) => (
                   <FolderPickerNode
                     key={folder.path}
