@@ -16,9 +16,23 @@ import { useSidebar } from '@/stores/sidebar-store'
 interface FolderTreeNodeProps {
   folder: FolderNode
   renderMenuItems?: (folderKey: string, folderName: string) => React.ReactNode
+  // Drag and drop props
+  onDragOver?: (e: React.DragEvent, targetFolderKey: string) => void
+  onDragEnter?: (e: React.DragEvent, targetFolderKey: string) => void
+  onDragLeave?: (e: React.DragEvent, targetFolderKey: string) => void
+  onDrop?: (e: React.DragEvent, targetFolderKey: string) => void
+  dragOverTarget?: string | null
 }
 
-export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps) {
+export function FolderTreeNode({
+  folder,
+  renderMenuItems,
+  onDragOver,
+  onDragEnter,
+  onDragLeave,
+  onDrop,
+  dragOverTarget,
+}: FolderTreeNodeProps) {
   const navigate = useNavigate()
   const { currentPath, dispatch, loadFolderChildren } = useFolderTree()
   const { isMobile, setOpenMobile } = useSidebar()
@@ -29,6 +43,7 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
   const isActive = currentPath === folder.path
   const hasChildren = folder.children && folder.children.length > 0
   const canExpand = folder.isDirectory && (!folder.isLoaded || hasChildren)
+  const isDragOver = dragOverTarget === folder.path
 
   const handleFolderClick = async () => {
     // Navigate to the folder
@@ -79,12 +94,17 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
           className='group/folder relative'
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
+          onDragOver={(e) => onDragOver?.(e, folder.path)}
+          onDragEnter={(e) => onDragEnter?.(e, folder.path)}
+          onDragLeave={(e) => onDragLeave?.(e, folder.path)}
+          onDrop={(e) => onDrop?.(e, folder.path)}
         >
           <SidebarMenuButton
             onClick={handleFolderClick}
             isActive={isActive}
             data-folder-key={folder.path}
             data-folder-name={folder.name || 'Root'}
+            className={isDragOver ? 'bg-blue-100 dark:bg-blue-950' : ''}
           >
             <span className='-m-2 p-4 md:p-2'>
               <div className='size-4' />
@@ -129,6 +149,10 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
           className='group/folder relative'
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
+          onDragOver={(e) => onDragOver?.(e, folder.path)}
+          onDragEnter={(e) => onDragEnter?.(e, folder.path)}
+          onDragLeave={(e) => onDragLeave?.(e, folder.path)}
+          onDrop={(e) => onDrop?.(e, folder.path)}
         >
           <CollapsibleTrigger asChild>
             <SidebarMenuButton
@@ -136,6 +160,7 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
               isActive={isActive}
               data-folder-key={folder.path}
               data-folder-name={folder.name || 'Root'}
+              className={isDragOver ? 'bg-blue-100 dark:bg-blue-950' : ''}
             >
               <span onClick={handleExpandClick} className='-m-2 p-4 md:p-2'>
                 <ChevronRight className='size-4 transition-transform' />
@@ -174,6 +199,11 @@ export function FolderTreeNode({ folder, renderMenuItems }: FolderTreeNodeProps)
                 key={`${child.path}-${index}`}
                 folder={child}
                 renderMenuItems={renderMenuItems}
+                onDragOver={onDragOver}
+                onDragEnter={onDragEnter}
+                onDragLeave={onDragLeave}
+                onDrop={onDrop}
+                dragOverTarget={dragOverTarget}
               />
             ))}
           </SidebarMenuSub>

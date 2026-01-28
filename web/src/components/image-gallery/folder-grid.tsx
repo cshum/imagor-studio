@@ -8,6 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { DragItem } from '@/hooks/use-item-drag-drop'
 
 export interface Gallery {
   galleryKey: string
@@ -26,6 +27,15 @@ export interface FolderGridProps {
   onFolderClick?: (folder: Gallery, index: number, event?: React.MouseEvent) => void
   onFolderSelectionToggle?: (folderKey: string, index: number, event: React.MouseEvent) => void
   renderMenuItems?: (folder: Gallery) => React.ReactNode
+  // Drag and drop props
+  onDragStart?: (e: React.DragEvent, items: DragItem[], sourceGalleryKey: string) => void
+  onDragEnd?: (e: React.DragEvent) => void
+  onDragOver?: (e: React.DragEvent, targetFolderKey: string) => void
+  onDragEnter?: (e: React.DragEvent, targetFolderKey: string) => void
+  onDragLeave?: (e: React.DragEvent, targetFolderKey: string) => void
+  onDrop?: (e: React.DragEvent, targetFolderKey: string) => void
+  dragOverTarget?: string | null
+  isDragging?: boolean
 }
 
 interface FolderCardProps {
@@ -40,6 +50,16 @@ interface FolderCardProps {
   onFolderClick?: (folder: Gallery, index: number, event?: React.MouseEvent) => void
   onSelectionToggle?: (folderKey: string, index: number, event: React.MouseEvent) => void
   renderMenuItems?: (folder: Gallery) => React.ReactNode
+  // Drag and drop props
+  onDragStart?: (e: React.DragEvent, items: DragItem[], sourceGalleryKey: string) => void
+  onDragEnd?: (e: React.DragEvent) => void
+  onDragOver?: (e: React.DragEvent, targetFolderKey: string) => void
+  onDragEnter?: (e: React.DragEvent, targetFolderKey: string) => void
+  onDragLeave?: (e: React.DragEvent, targetFolderKey: string) => void
+  onDrop?: (e: React.DragEvent, targetFolderKey: string) => void
+  isDragOver?: boolean
+  isDragging?: boolean
+  selectedFolderKeys?: Set<string>
 }
 
 const FolderCard = ({
@@ -54,6 +74,15 @@ const FolderCard = ({
   onFolderClick,
   onSelectionToggle,
   renderMenuItems,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragEnter,
+  onDragLeave,
+  onDrop,
+  isDragOver = false,
+  isDragging = false,
+  selectedFolderKeys,
 }: FolderCardProps) => {
   const handleIconClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -62,10 +91,47 @@ const FolderCard = ({
     }
   }
 
+  const handleDragStart = (e: React.DragEvent) => {
+    if (!onDragStart) return
+
+    // Determine what to drag
+    const folderKey = folder.galleryKey.endsWith('/') ? folder.galleryKey : `${folder.galleryKey}/`
+    const items: DragItem[] = []
+
+    // If this folder is selected, drag all selected folders
+    if (selectedFolderKeys?.has(folderKey)) {
+      selectedFolderKeys.forEach((key) => {
+        const name = key.split('/').filter(Boolean).pop() || 'Root'
+        items.push({ key, name, type: 'folder' })
+      })
+    } else {
+      // Otherwise, just drag this folder
+      items.push({
+        key: folderKey,
+        name: folder.galleryName,
+        type: 'folder',
+      })
+    }
+
+    // Extract source gallery key from folder path
+    const pathParts = folder.galleryKey.split('/')
+    pathParts.pop() // Remove folder name
+    const sourceGalleryKey = pathParts.join('/')
+
+    onDragStart(e, items, sourceGalleryKey)
+  }
+
   return (
     <Card
       ref={folderRef}
-      className={`group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${isSelected ? 'ring-2 ring-blue-600' : ''}`}
+      draggable={!!onDragStart}
+      onDragStart={handleDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={(e) => onDragOver?.(e, folder.galleryKey)}
+      onDragEnter={(e) => onDragEnter?.(e, folder.galleryKey)}
+      onDragLeave={(e) => onDragLeave?.(e, folder.galleryKey)}
+      onDrop={(e) => onDrop?.(e, folder.galleryKey)}
+      className={`group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${isSelected ? 'ring-2 ring-blue-600' : ''} ${isDragOver ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950' : ''} ${isDragging ? 'opacity-50' : ''}`}
       onClick={(e) => {
         // Check for Cmd/Ctrl+Click for selection
         if ((e.metaKey || e.ctrlKey) && onSelectionToggle) {
@@ -161,6 +227,14 @@ export const FolderGrid = ({
   onFolderClick,
   onFolderSelectionToggle,
   renderMenuItems,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragEnter,
+  onDragLeave,
+  onDrop,
+  dragOverTarget,
+  isDragging = false,
 }: FolderGridProps) => {
   const columnCount = Math.max(2, Math.floor(width / maxFolderWidth))
   const folderWidth = width / columnCount
@@ -185,6 +259,7 @@ export const FolderGrid = ({
           ? folder.galleryKey
           : `${folder.galleryKey}/`
         const isSelected = selectedFolderKeys?.has(folderKey) || false
+        const isDragOver = dragOverTarget === folder.galleryKey
 
         return (
           <FolderCard
@@ -204,6 +279,15 @@ export const FolderGrid = ({
             onFolderClick={onFolderClick}
             onSelectionToggle={onFolderSelectionToggle}
             renderMenuItems={renderMenuItems}
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+            onDragOver={onDragOver}
+            onDragEnter={onDragEnter}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
+            isDragOver={isDragOver}
+            isDragging={isDragging}
+            selectedFolderKeys={selectedFolderKeys}
           />
         )
       })}

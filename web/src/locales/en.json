@@ -262,6 +262,11 @@
         "error": "Failed to move items",
         "cannotMoveToSelf": "Cannot move a folder into itself",
         "cannotMoveToSubfolder": "Cannot move a folder into its own subfolder"
+      },
+      "dragDrop": {
+        "moveSuccess": "Successfully moved {{count}} items",
+        "partialSuccess": "Moved {{success}} items successfully, {{failed}} failed",
+        "moveError": "Failed to move items"
       }
     },
     "profile": {

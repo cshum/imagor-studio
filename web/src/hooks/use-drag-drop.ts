@@ -115,7 +115,9 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     e.stopPropagation()
     dragCounter.current++
 
-    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+    // Ignore internal drags (items being moved within the gallery)
+    const isInternalDrag = e.dataTransfer.types.includes('application/x-imagor-internal')
+    if (!isInternalDrag && e.dataTransfer.items && e.dataTransfer.items.length > 0) {
       setIsDragActive(true)
     }
   }, [])
@@ -133,6 +135,12 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
+
+    // Ignore internal drags
+    const isInternalDrag = e.dataTransfer.types.includes('application/x-imagor-internal')
+    if (isInternalDrag) {
+      e.dataTransfer.dropEffect = 'none'
+    }
   }, [])
 
   const handleDrop = useCallback(

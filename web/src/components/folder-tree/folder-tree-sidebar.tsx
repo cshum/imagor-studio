@@ -40,7 +40,23 @@ import { useSidebar } from '@/stores/sidebar-store'
 
 import { FolderTreeNode } from './folder-tree-node'
 
-export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export interface FolderTreeSidebarProps extends Omit<React.ComponentProps<typeof Sidebar>, 'onDragOver' | 'onDragEnter' | 'onDragLeave' | 'onDrop'> {
+  // Drag and drop props
+  onDragOverFolder?: (e: React.DragEvent, targetFolderKey: string) => void
+  onDragEnterFolder?: (e: React.DragEvent, targetFolderKey: string) => void
+  onDragLeaveFolder?: (e: React.DragEvent, targetFolderKey: string) => void
+  onDropFolder?: (e: React.DragEvent, targetFolderKey: string) => void
+  dragOverTarget?: string | null
+}
+
+export function FolderTreeSidebar({
+  onDragOverFolder,
+  onDragEnterFolder,
+  onDragLeaveFolder,
+  onDropFolder,
+  dragOverTarget,
+  ...props
+}: FolderTreeSidebarProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { authState } = useAuth()
@@ -272,6 +288,11 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
                       key={`${folder.path}-${index}`}
                       folder={folder}
                       renderMenuItems={renderDropdownMenuItems}
+                      onDragOver={onDragOverFolder}
+                      onDragEnter={onDragEnterFolder}
+                      onDragLeave={onDragLeaveFolder}
+                      onDrop={onDropFolder}
+                      dragOverTarget={dragOverTarget}
                     />
                   ))}
                 </FolderContextMenu>

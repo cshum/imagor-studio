@@ -23,6 +23,7 @@ import { toast } from 'sonner'
 import { generateImagorUrl } from '@/api/imagor-api'
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { deleteFile, moveFile } from '@/api/storage-api.ts'
+import { DragItem, useItemDragDrop } from '@/hooks/use-item-drag-drop'
 import { HeaderBar } from '@/components/header-bar'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
 import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
@@ -177,6 +178,67 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     showFileNames,
   } = galleryLoaderData
   const sidebar = useSidebar()
+
+  // Drag and drop functionality
+  const handleDropItems = async (items: DragItem[], targetFolderKey: string) => {
+    try {
+      let successCount = 0
+      let failCount = 0
+
+      // Move all items sequentially
+      for (const item of items) {
+        try {
+          const itemName = item.key.split('/').filter(Boolean).pop() || ''
+          const newPath = targetFolderKey ? `${targetFolderKey}/${itemName}` : itemName
+          
+          // Skip if source and destination are the same
+          if (item.key === newPath) {
+            continue
+          }
+
+          await moveFile(item.key, newPath)
+          successCount++
+        } catch {
+          failCount++
+        }
+      }
+
+      // Clear selection after move
+      selection.clearSelection()
+
+      // Refresh gallery
+      router.invalidate()
+
+      // Show result toast
+      if (failCount === 0 && successCount > 0) {
+        toast.success(t('pages.gallery.dragDrop.moveSuccess', { count: successCount }))
+      } else if (successCount > 0) {
+        toast.warning(
+          t('pages.gallery.dragDrop.partialSuccess', {
+            success: successCount,
+            failed: failCount,
+          }),
+        )
+      } else if (failCount > 0) {
+        toast.error(t('pages.gallery.dragDrop.moveError'))
+      }
+    } catch {
+      toast.error(t('pages.gallery.dragDrop.moveError'))
+    }
+  }
+
+  const {
+    dragState,
+    handleDragStart,
+    handleDragEnd,
+    handleDragOver,
+    handleDragEnter,
+    handleDragLeave,
+    handleDrop,
+  } = useItemDragDrop({
+    onDrop: handleDropItems,
+    isAuthenticated: authState.state === 'authenticated',
+  })
 
   // Filter images and folders based on search text
   const filteredFolders = filterText
@@ -1060,6 +1122,24 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                                 folderName: folder.galleryName,
                               })
                             }
+                            onDragStart={
+                              authState.state === 'authenticated' ? handleDragStart : undefined
+                            }
+                            onDragEnd={
+                              authState.state === 'authenticated' ? handleDragEnd : undefined
+                            }
+                            onDragOver={
+                              authState.state === 'authenticated' ? handleDragOver : undefined
+                            }
+                            onDragEnter={
+                              authState.state === 'authenticated' ? handleDragEnter : undefined
+                            }
+                            onDragLeave={
+                              authState.state === 'authenticated' ? handleDragLeave : undefined
+                            }
+                            onDrop={authState.state === 'authenticated' ? handleDrop : undefined}
+                            dragOverTarget={dragState.dragOverTarget}
+                            isDragging={dragState.isDragging}
                             {...folderGridProps}
                           />
                         </FolderContextMenu>
@@ -1086,6 +1166,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                               image.isVideo || false,
                             )
                           }
+                          onDragStart={
+                            authState.state === 'authenticated' ? handleDragStart : undefined
+                          }
+                          onDragEnd={
+                            authState.state === 'authenticated' ? handleDragEnd : undefined
+                          }
+                          isDragging={dragState.isDragging}
+                          galleryKey={galleryKey}
                           {...imageGridProps}
                         />
                       </ImageContextMenu>
