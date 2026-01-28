@@ -56,9 +56,9 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
 
       // Render the entire badge as a React component with Tailwind CSS
       const DragPreviewBadge = ({ icon, text }: { icon: React.ReactElement; text: string }) => (
-        <div className="absolute -top-[1000px] flex items-center gap-2 px-3.5 py-2.5 bg-blue-500/95 text-white rounded-lg text-sm font-semibold shadow-lg max-w-[200px] whitespace-nowrap overflow-hidden">
-          <span className="flex items-center flex-shrink-0">{icon}</span>
-          <span className="overflow-hidden text-ellipsis">{text}</span>
+        <div className='absolute -top-[1000px] flex max-w-[200px] items-center gap-2 overflow-hidden rounded-lg bg-blue-500/95 px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap text-white shadow-lg'>
+          <span className='flex flex-shrink-0 items-center'>{icon}</span>
+          <span className='overflow-hidden text-ellipsis'>{text}</span>
         </div>
       )
 
@@ -66,8 +66,7 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
         // Single item: Show Lucide icon + truncated name
         const item = items[0]
         const IconComponent = item.type === 'folder' ? Folder : Image
-        const truncatedName =
-          item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name
+        const truncatedName = item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name
         dragImage.innerHTML = renderToStaticMarkup(
           <DragPreviewBadge icon={<IconComponent size={16} />} text={truncatedName} />,
         )
@@ -107,9 +106,7 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
       for (const item of draggedItems) {
         if (item.type === 'folder') {
           const folderPath = item.key.endsWith('/') ? item.key : `${item.key}/`
-          const targetPath = targetFolderKey.endsWith('/')
-            ? targetFolderKey
-            : `${targetFolderKey}/`
+          const targetPath = targetFolderKey.endsWith('/') ? targetFolderKey : `${targetFolderKey}/`
 
           // Cannot drop folder into itself
           if (folderPath === targetPath) {

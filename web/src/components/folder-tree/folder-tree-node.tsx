@@ -104,7 +104,9 @@ export function FolderTreeNode({
             isActive={isActive}
             data-folder-key={folder.path}
             data-folder-name={folder.name || 'Root'}
-            className={isDragOver ? 'bg-blue-100 dark:bg-blue-950' : ''}
+            className={
+              isDragOver ? 'bg-blue-100 ring-4 ring-blue-500 ring-offset-2 dark:bg-blue-950' : ''
+            }
           >
             <span className='-m-2 p-4 md:p-2'>
               <div className='size-4' />
@@ -160,7 +162,9 @@ export function FolderTreeNode({
               isActive={isActive}
               data-folder-key={folder.path}
               data-folder-name={folder.name || 'Root'}
-              className={isDragOver ? 'bg-blue-100 dark:bg-blue-950' : ''}
+              className={
+                isDragOver ? 'bg-blue-100 ring-4 ring-blue-500 ring-offset-2 dark:bg-blue-950' : ''
+              }
             >
               <span onClick={handleExpandClick} className='-m-2 p-4 md:p-2'>
                 <ChevronRight className='size-4 transition-transform' />

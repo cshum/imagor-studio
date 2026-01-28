@@ -132,7 +132,7 @@ const ImageCell = ({
       data-image-key={image.imageKey}
       data-image-name={image.imageName}
       data-is-video={image.isVideo}
-      className={`group/image focus-visible:ring-ring absolute box-border cursor-pointer rounded-xl p-1 select-none focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:p-1.5 ${isDragging ? 'opacity-50' : ''}`}
+      className={`group/image focus-visible:ring-ring absolute box-border cursor-pointer rounded-xl p-1 select-none focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:p-1.5`}
       style={{
         width: `${columnWidth}px`,
         height: `${rowHeight}px`,

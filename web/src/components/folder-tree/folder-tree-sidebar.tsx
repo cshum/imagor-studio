@@ -40,7 +40,11 @@ import { useSidebar } from '@/stores/sidebar-store'
 
 import { FolderTreeNode } from './folder-tree-node'
 
-export interface FolderTreeSidebarProps extends Omit<React.ComponentProps<typeof Sidebar>, 'onDragOver' | 'onDragEnter' | 'onDragLeave' | 'onDrop'> {
+export interface FolderTreeSidebarProps
+  extends Omit<
+    React.ComponentProps<typeof Sidebar>,
+    'onDragOver' | 'onDragEnter' | 'onDragLeave' | 'onDrop'
+  > {
   // Drag and drop props
   onDragOverFolder?: (e: React.DragEvent, targetFolderKey: string) => void
   onDragEnterFolder?: (e: React.DragEvent, targetFolderKey: string) => void
