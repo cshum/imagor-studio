@@ -223,7 +223,8 @@
           "nameRequired": "名稱為必填項",
           "invalidCharacters": "名稱包含無效字元",
           "alreadyExists": "已存在同名的{{type}}"
-        }
+        },
+        "fileExists": "無法重新命名：已存在同名的檔案或資料夾"
       },
       "selection": {
         "menu": "選擇選單",
@@ -258,8 +259,15 @@
         "success_other": "成功移動 {{count}} 項目",
         "partialSuccess": "已移動 {{success}} 項目，{{failed}} 項目失敗",
         "error": "移動項目失敗",
+        "fileExists": "無法移動：目標位置已存在同名的檔案或資料夾",
         "cannotMoveToSelf": "無法將資料夾移動到自身",
         "cannotMoveToSubfolder": "無法將資料夾移動到其子資料夾"
+      },
+      "dragDrop": {
+        "moveSuccess": "成功移動 {{count}} 項目",
+        "partialSuccess": "成功移動 {{success}} 項目，{{failed}} 項目失敗",
+        "moveError": "移動項目失敗",
+        "fileExists": "無法移動：目標位置已存在同名的檔案或資料夾"
       }
     },
     "profile": {
@@ -418,7 +426,6 @@
       "baseDirectory": "基礎目錄",
       "baseDirectoryDescription": "儲存桶中所有物件鍵的可選字首（例如：\"images/\"）",
       "testConfiguration": "測試配置",
-      "configureStorage": "配置儲存",
       "testConfigurationFirst": "請先填寫 {{storageType}} 儲存配置",
       "testPassed": "儲存配置測試透過",
       "testFailed": "儲存配置測試失敗",
@@ -515,7 +522,7 @@
       "newLicenseKeyLabel": "新許可證金鑰",
       "licenseKeyLabel": "許可證金鑰",
       "newLicenseKeyDescription": "在此貼上您的新許可證金鑰。這將替換您當前的許可證。",
-      "licenseKeyDescription": "在此貼上您的許可證金鑰以啟用 Imagor Studio。",
+      "licenseKeyDescription": "在此處貼上您的完整許可證金鑰以啟用 Imagor Studio。",
       "licenseKeyRequired": "許可證金鑰為必填項",
       "registerForLicense": "註冊 Imagor Studio",
       "registerDescription": "輸入您的許可證金鑰以啟用 Imagor Studio。",
@@ -530,8 +537,6 @@
       },
       "supportOngoingDevelopment": "您的支援使 Imagor Studio 能夠持續開發。",
       "getEarlyBirdLicense": "獲取早鳥許可證（$39）",
-      "licenseKeyLabel": "許可證金鑰",
-      "licenseKeyDescription": "在此處貼上您的完整許可證金鑰以啟用 Imagor Studio。",
       "licenseTypes": {
         "early_bird": "早鳥",
         "personal": "個人",

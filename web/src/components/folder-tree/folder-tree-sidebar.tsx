@@ -34,13 +34,24 @@ import {
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
+import { useItemDragDrop } from '@/hooks/use-item-drag-drop'
 import { useAuth } from '@/stores/auth-store'
+import { useDragDrop } from '@/stores/drag-drop-store'
 import { useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 import { FolderTreeNode } from './folder-tree-node'
 
-export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export interface FolderTreeSidebarProps
+  extends Omit<
+    React.ComponentProps<typeof Sidebar>,
+    'onDragOver' | 'onDragEnter' | 'onDragLeave' | 'onDrop'
+  > {
+  // Drag and drop handler from gallery page
+  onDrop?: (items: any[], targetFolderKey: string) => void | Promise<void>
+}
+
+export function FolderTreeSidebar({ onDrop, ...props }: FolderTreeSidebarProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { authState } = useAuth()
@@ -73,6 +84,16 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
   })
 
   const [renameInput, setRenameInput] = useState('')
+
+  // Get drag state and drop handler from global store
+  const { dragOverTarget, onDropHandler } = useDragDrop()
+
+  // Get drag handlers from hook, using the handler from store
+  const { handleDragOver, handleDragEnter, handleDragLeave, handleContainerDragLeave, handleDrop } =
+    useItemDragDrop({
+      onDrop: onDropHandler || undefined,
+      isAuthenticated: authState.state === 'authenticated',
+    })
 
   const isLoadingRoot = loadingPaths.has('')
   const isOnHomePage = routerState.location.pathname === '/'
@@ -240,10 +261,21 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
         <SidebarGroup>
           <SidebarGroupLabel>{t('components.folderTree.folders')}</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {/* Home Link as first item */}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isOnHomePage}>
+            <SidebarMenu onDragLeave={handleContainerDragLeave}>
+              {/* Home Link as first item - droppable for moving items to root */}
+              <SidebarMenuItem
+                onDragOver={(e) => handleDragOver(e, '')}
+                onDragEnter={(e) => handleDragEnter(e, '')}
+                onDragLeave={(e) => handleDragLeave(e, '')}
+                onDrop={(e) => handleDrop(e, '')}
+              >
+                <SidebarMenuButton
+                  asChild
+                  isActive={isOnHomePage}
+                  className={
+                    dragOverTarget === '' ? 'bg-blue-100 ring-2 ring-blue-500 dark:bg-blue-950' : ''
+                  }
+                >
                   <Link to='/' onClick={handleHomeClick}>
                     <Home className='h-4 w-4' />
                     <span>{homeTitle}</span>
@@ -272,6 +304,11 @@ export function FolderTreeSidebar({ ...props }: React.ComponentProps<typeof Side
                       key={`${folder.path}-${index}`}
                       folder={folder}
                       renderMenuItems={renderDropdownMenuItems}
+                      onDragOver={handleDragOver}
+                      onDragEnter={handleDragEnter}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      dragOverTarget={dragOverTarget}
                     />
                   ))}
                 </FolderContextMenu>

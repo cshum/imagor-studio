@@ -220,7 +220,8 @@
           "nameRequired": "Il nome è obbligatorio",
           "invalidCharacters": "Il nome contiene caratteri non validi",
           "alreadyExists": "Esiste già un {{type}} con questo nome"
-        }
+        },
+        "fileExists": "Impossibile rinominare: esiste già un file o una cartella con questo nome"
       },
       "selection": {
         "menu": "Menu di selezione",
@@ -255,8 +256,15 @@
         "success_other": "{{count}} elementi spostati con successo",
         "partialSuccess": "{{success}} elementi spostati, {{failed}} non riusciti",
         "error": "Impossibile spostare gli elementi",
+        "fileExists": "Impossibile spostare: esiste già un file o una cartella con questo nome nella destinazione",
         "cannotMoveToSelf": "Impossibile spostare una cartella in se stessa",
         "cannotMoveToSubfolder": "Impossibile spostare una cartella nella propria sottocartella"
+      },
+      "dragDrop": {
+        "moveSuccess": "{{count}} elementi spostati con successo",
+        "partialSuccess": "{{success}} elementi spostati con successo, {{failed}} non riusciti",
+        "moveError": "Impossibile spostare gli elementi",
+        "fileExists": "Impossibile spostare: esiste già un file o una cartella con questo nome nella destinazione"
       }
     },
     "profile": {
@@ -415,7 +423,6 @@
       "baseDirectory": "Directory Base",
       "baseDirectoryDescription": "Prefisso opzionale per tutte le chiavi degli oggetti nel bucket (es. \"images/\")",
       "testConfiguration": "Test Configurazione",
-      "configureStorage": "Configura Archiviazione",
       "testConfigurationFirst": "Compila prima la configurazione di archiviazione {{storageType}}",
       "testPassed": "Test configurazione archiviazione superato",
       "testFailed": "Test configurazione archiviazione fallito",
@@ -512,7 +519,7 @@
       "newLicenseKeyLabel": "Nuovo Codice di Licenza",
       "licenseKeyLabel": "Codice di Licenza",
       "newLicenseKeyDescription": "Incolla qui il tuo nuovo codice di licenza. Questo sostituirà la tua licenza attuale.",
-      "licenseKeyDescription": "Incolla qui il tuo codice di licenza per attivare Imagor Studio.",
+      "licenseKeyDescription": "Incolla qui il tuo codice di licenza completo per attivare Imagor Studio.",
       "licenseKeyRequired": "Il codice di licenza è obbligatorio",
       "registerForLicense": "Registra Imagor Studio",
       "registerDescription": "Inserisci il tuo codice di licenza per attivare Imagor Studio.",
@@ -527,8 +534,6 @@
       },
       "supportOngoingDevelopment": "Il tuo supporto consente lo sviluppo continuo di Imagor Studio.",
       "getEarlyBirdLicense": "Ottieni la licenza Early Bird ($39)",
-      "licenseKeyLabel": "Codice di Licenza",
-      "licenseKeyDescription": "Incolla qui il tuo codice di licenza completo per attivare Imagor Studio.",
       "licenseTypes": {
         "early_bird": "Early Bird",
         "personal": "Personale",

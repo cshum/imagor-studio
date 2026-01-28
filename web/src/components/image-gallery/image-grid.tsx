@@ -7,6 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { DragItem } from '@/hooks/use-item-drag-drop'
 import { getFullImageUrl } from '@/lib/api-utils'
 
 interface ImageCellProps {
@@ -26,6 +27,11 @@ interface ImageCellProps {
   renderMenuItems?: (image: GalleryImage) => React.ReactNode
   onKeyDown?: (event: React.KeyboardEvent, index: number) => void
   imageRef?: (el: HTMLDivElement | null) => void
+  // Drag and drop props
+  onDragStart?: (e: React.DragEvent, items: DragItem[], sourceGalleryKey: string) => void
+  onDragEnd?: (e: React.DragEvent) => void
+  selectedImageKeys?: Set<string>
+  galleryKey?: string
 }
 
 const ImageCell = ({
@@ -45,6 +51,10 @@ const ImageCell = ({
   renderMenuItems,
   onKeyDown,
   imageRef,
+  onDragStart,
+  onDragEnd,
+  selectedImageKeys,
+  galleryKey = '',
 }: ImageCellProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
@@ -86,14 +96,41 @@ const ImageCell = ({
     }
   }
 
+  const handleDragStart = (e: React.DragEvent) => {
+    if (!onDragStart) return
+
+    const items: DragItem[] = []
+
+    // If this image is selected, drag all selected images
+    if (selectedImageKeys?.has(image.imageKey)) {
+      selectedImageKeys.forEach((key) => {
+        const name = key.split('/').pop() || key
+        items.push({ key: galleryKey ? `${galleryKey}/${key}` : key, name, type: 'image' })
+      })
+    } else {
+      // Otherwise, just drag this image
+      const fullKey = galleryKey ? `${galleryKey}/${image.imageKey}` : image.imageKey
+      items.push({
+        key: fullKey,
+        name: image.imageName,
+        type: 'image',
+      })
+    }
+
+    onDragStart(e, items, galleryKey)
+  }
+
   return (
     <div
       key={image.imageKey}
       ref={imageRef}
+      draggable={!!onDragStart}
+      onDragStart={handleDragStart}
+      onDragEnd={onDragEnd}
       data-image-key={image.imageKey}
       data-image-name={image.imageName}
       data-is-video={image.isVideo}
-      className='group/image focus-visible:ring-ring absolute box-border cursor-pointer rounded-xl p-1 select-none focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:p-1.5'
+      className={`group/image focus-visible:ring-ring absolute box-border cursor-pointer rounded-xl p-1 select-none focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:p-1.5`}
       style={{
         width: `${columnWidth}px`,
         height: `${rowHeight}px`,
@@ -107,7 +144,7 @@ const ImageCell = ({
       aria-label={`${image.isVideo ? 'Video' : 'Image'}: ${image.imageName}`}
     >
       <div
-        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-2 ring-blue-600' : ''}`}
+        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-3 ring-blue-600' : ''}`}
       >
         <img
           src={getFullImageUrl(image.imageSrc)}
@@ -186,6 +223,10 @@ export interface ImageGridProps {
   onImageSelectionToggle?: (imageKey: string, index: number, event: React.MouseEvent) => void
   renderMenuItems?: (image: GalleryImage) => React.ReactNode
   onVisibleRangeChange?: (startIndex: number, endIndex: number, firstVisibleIndex: number) => void
+  // Drag and drop props
+  onDragStart?: (e: React.DragEvent, items: DragItem[], sourceGalleryKey: string) => void
+  onDragEnd?: (e: React.DragEvent) => void
+  galleryKey?: string
 }
 
 export const ImageGrid = ({
@@ -204,6 +245,9 @@ export const ImageGrid = ({
   onImageSelectionToggle,
   renderMenuItems,
   onVisibleRangeChange,
+  onDragStart,
+  onDragEnd,
+  galleryKey = '',
 }: ImageGridProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -276,6 +320,10 @@ export const ImageGrid = ({
           onSelectionToggle={onImageSelectionToggle}
           renderMenuItems={renderMenuItems}
           onKeyDown={onImageKeyDown}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          selectedImageKeys={selectedImageKeys}
+          galleryKey={galleryKey}
           imageRef={(el) => {
             if (imageRefs?.current) {
               if (el) {

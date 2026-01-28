@@ -62,9 +62,10 @@ import { Input } from '@/components/ui/input'
 import { UploadProgress } from '@/components/upload/upload-progress.tsx'
 import { ImagorParamsInput, SortOption, SortOrder } from '@/generated/graphql'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
-import { DragDropFile } from '@/hooks/use-drag-drop.ts'
+import { DragDropFile } from '@/hooks/use-drag-drop'
 import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
 import { useGalleryKeyboardNavigation } from '@/hooks/use-gallery-keyboard-navigation'
+import { DragItem, useItemDragDrop } from '@/hooks/use-item-drag-drop'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useWidthHandler } from '@/hooks/use-width-handler'
@@ -72,6 +73,7 @@ import { ContentLayout } from '@/layouts/content-layout'
 import { getFullImageUrl } from '@/lib/api-utils'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
+import { registerDropHandler } from '@/stores/drag-drop-store'
 import { setCurrentPath } from '@/stores/folder-tree-store.ts'
 import { ImagePosition, setPosition } from '@/stores/image-position-store.ts'
 import {
@@ -177,6 +179,77 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     showFileNames,
   } = galleryLoaderData
   const sidebar = useSidebar()
+
+  // Drag and drop functionality
+  const handleDropItems = async (items: DragItem[], targetFolderKey: string) => {
+    try {
+      let successCount = 0
+      let failCount = 0
+      let hasFileExistsError = false
+
+      // Move all items sequentially
+      for (const item of items) {
+        try {
+          const itemName = item.key.split('/').filter(Boolean).pop() || ''
+          const newPath = targetFolderKey ? `${targetFolderKey}/${itemName}` : itemName
+
+          // Skip if source and destination are the same
+          if (item.key === newPath) {
+            continue
+          }
+
+          await moveFile(item.key, newPath)
+          successCount++
+        } catch (error: any) {
+          const errorCode = error?.response?.errors?.[0]?.extensions?.code
+          if (errorCode === 'FILE_ALREADY_EXISTS') {
+            hasFileExistsError = true
+          }
+          failCount++
+        }
+      }
+
+      // Clear selection after move
+      selection.clearSelection()
+
+      // Refresh gallery
+      router.invalidate()
+
+      // Show result toast
+      if (failCount === 0 && successCount > 0) {
+        toast.success(t('pages.gallery.dragDrop.moveSuccess', { count: successCount }))
+      } else if (successCount > 0) {
+        const message = hasFileExistsError
+          ? t('pages.gallery.dragDrop.fileExists')
+          : t('pages.gallery.dragDrop.partialSuccess', {
+              success: successCount,
+              failed: failCount,
+            })
+        toast.warning(message)
+      } else if (failCount > 0) {
+        const message = hasFileExistsError
+          ? t('pages.gallery.dragDrop.fileExists')
+          : t('pages.gallery.dragDrop.moveError')
+        toast.error(message)
+      }
+    } catch {
+      toast.error(t('pages.gallery.dragDrop.moveError'))
+    }
+  }
+
+  const {
+    dragState,
+    handleDragStart,
+    handleDragEnd,
+    handleDragOver,
+    handleDragEnter,
+    handleDragLeave,
+    handleContainerDragLeave,
+    handleDrop,
+  } = useItemDragDrop({
+    onDrop: handleDropItems,
+    isAuthenticated: authState.state === 'authenticated',
+  })
 
   // Filter images and folders based on search text
   const filteredFolders = filterText
@@ -293,6 +366,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     setFilterText('')
     // Initialize selection context for this gallery (clears selection)
     setGalleryContext(galleryKey)
+
+    // Register drop handler for drag and drop
+    registerDropHandler(handleDropItems)
+
+    // Cleanup: unregister handler when component unmounts
+    return () => {
+      registerDropHandler(null)
+    }
   }, [galleryKey])
 
   // Selection handlers
@@ -491,8 +572,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       })
       setRenameInput('')
       setRenameFileExtension('')
-    } catch {
-      toast.error(t('pages.gallery.renameItem.error', { type: renameDialog.itemType }))
+    } catch (error: any) {
+      const errorCode = error?.response?.errors?.[0]?.extensions?.code
+      if (errorCode === 'FILE_ALREADY_EXISTS') {
+        toast.error(t('pages.gallery.renameItem.fileExists'))
+      } else {
+        toast.error(t('pages.gallery.renameItem.error', { type: renameDialog.itemType }))
+      }
       setRenameDialog((prev) => ({ ...prev, isRenaming: false }))
     }
   }
@@ -815,6 +901,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       const { folders, images } = selection.splitSelections()
       let successCount = 0
       let failCount = 0
+      let hasFileExistsError = false
 
       // Move all items sequentially
       for (const folderKey of folders) {
@@ -823,7 +910,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           const newPath = destinationPath ? `${destinationPath}/${folderName}` : folderName
           await moveFile(folderKey, newPath)
           successCount++
-        } catch {
+        } catch (error: any) {
+          const errorCode = error?.response?.errors?.[0]?.extensions?.code
+          if (errorCode === 'FILE_ALREADY_EXISTS') {
+            hasFileExistsError = true
+          }
           failCount++
         }
       }
@@ -834,7 +925,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           const newPath = destinationPath ? `${destinationPath}/${imageName}` : imageName
           await moveFile(imageKey, newPath)
           successCount++
-        } catch {
+        } catch (error: any) {
+          const errorCode = error?.response?.errors?.[0]?.extensions?.code
+          if (errorCode === 'FILE_ALREADY_EXISTS') {
+            hasFileExistsError = true
+          }
           failCount++
         }
       }
@@ -853,14 +948,18 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       if (failCount === 0) {
         toast.success(t('pages.gallery.moveItems.success', { count: successCount }))
       } else if (successCount > 0) {
-        toast.warning(
-          t('pages.gallery.moveItems.partialSuccess', {
-            success: successCount,
-            failed: failCount,
-          }),
-        )
+        const message = hasFileExistsError
+          ? t('pages.gallery.moveItems.fileExists')
+          : t('pages.gallery.moveItems.partialSuccess', {
+              success: successCount,
+              failed: failCount,
+            })
+        toast.warning(message)
       } else {
-        toast.error(t('pages.gallery.moveItems.error'))
+        const message = hasFileExistsError
+          ? t('pages.gallery.moveItems.fileExists')
+          : t('pages.gallery.moveItems.error')
+        toast.error(message)
       }
     } catch {
       toast.error(t('pages.gallery.moveItems.error'))
@@ -1060,6 +1159,28 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                                 folderName: folder.galleryName,
                               })
                             }
+                            onDragStart={
+                              authState.state === 'authenticated' ? handleDragStart : undefined
+                            }
+                            onDragEnd={
+                              authState.state === 'authenticated' ? handleDragEnd : undefined
+                            }
+                            onDragOver={
+                              authState.state === 'authenticated' ? handleDragOver : undefined
+                            }
+                            onDragEnter={
+                              authState.state === 'authenticated' ? handleDragEnter : undefined
+                            }
+                            onDragLeave={
+                              authState.state === 'authenticated' ? handleDragLeave : undefined
+                            }
+                            onContainerDragLeave={
+                              authState.state === 'authenticated'
+                                ? handleContainerDragLeave
+                                : undefined
+                            }
+                            onDrop={authState.state === 'authenticated' ? handleDrop : undefined}
+                            dragOverTarget={dragState.dragOverTarget}
                             {...folderGridProps}
                           />
                         </FolderContextMenu>
@@ -1086,6 +1207,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                               image.isVideo || false,
                             )
                           }
+                          onDragStart={
+                            authState.state === 'authenticated' ? handleDragStart : undefined
+                          }
+                          onDragEnd={
+                            authState.state === 'authenticated' ? handleDragEnd : undefined
+                          }
+                          galleryKey={galleryKey}
                           {...imageGridProps}
                         />
                       </ImageContextMenu>
