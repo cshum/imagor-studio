@@ -200,7 +200,6 @@ export const galleryLoader = async ({
 
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i]
-      const capitalizedSegmentName = segment.charAt(0).toUpperCase() + segment.slice(1)
       const segmentPath = segments.slice(0, i + 1).join('/')
       const segmentHref = `/gallery/${encodeURIComponent(segmentPath)}`
 
@@ -208,7 +207,7 @@ export const galleryLoader = async ({
       const isLastSegment = i === segments.length - 1
 
       breadcrumbs.push({
-        label: capitalizedSegmentName,
+        label: segment,
         ...(isLastSegment ? {} : { href: segmentHref }),
       })
     }
