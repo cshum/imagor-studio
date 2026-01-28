@@ -261,8 +261,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     index: number,
     event?: React.MouseEvent,
   ) => {
-    // Check for Cmd/Ctrl+Click for selection
-    if (event && (event.metaKey || event.ctrlKey)) {
+    // Check for Cmd/Ctrl+Click for selection (only for authenticated users)
+    if (event && (event.metaKey || event.ctrlKey) && authState.state === 'authenticated') {
       event.preventDefault()
       const fullFolderKey = createFolderKey(folderGalleryKey)
       selection.toggleItem(fullFolderKey, index, 'folder')
@@ -1049,7 +1049,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                             maxFolderWidth={maxItemWidth}
                             foldersVisible={foldersVisible}
                             selectedFolderKeys={selectedFolderKeys}
-                            onFolderSelectionToggle={handleFolderSelectionToggle}
+                            onFolderSelectionToggle={
+                              authState.state === 'authenticated'
+                                ? handleFolderSelectionToggle
+                                : undefined
+                            }
                             renderMenuItems={(folder) =>
                               renderFolderDropdownMenuItems({
                                 folderKey: folder.galleryKey,
@@ -1070,7 +1074,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           maxImageWidth={maxItemWidth}
                           showFileName={showFileNames}
                           selectedImageKeys={selectedImageKeys}
-                          onImageSelectionToggle={handleImageSelectionToggle}
+                          onImageSelectionToggle={
+                            authState.state === 'authenticated'
+                              ? handleImageSelectionToggle
+                              : undefined
+                          }
                           renderMenuItems={(image) =>
                             renderDropdownMenuItems(
                               image.imageName,
