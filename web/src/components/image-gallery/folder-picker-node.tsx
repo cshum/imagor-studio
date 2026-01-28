@@ -81,7 +81,6 @@ export function FolderPickerNode({
           isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : 'hover:bg-accent'
         } ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
         onClick={handleFolderClick}
-        style={{ paddingLeft: `${level * 16 + 8}px` }}
       >
         <div className='w-4' />
         <Folder className={`h-4 w-4 flex-shrink-0 ${isSelected ? 'text-white' : 'text-primary'}`} />
@@ -102,7 +101,6 @@ export function FolderPickerNode({
           isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : 'hover:bg-accent'
         } ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
         onClick={handleFolderClick}
-        style={{ paddingLeft: `${level * 16 + 8}px` }}
       >
         <CollapsibleTrigger asChild>
           <div onClick={handleExpandClick} className='flex items-center'>
@@ -115,8 +113,8 @@ export function FolderPickerNode({
         <span className='flex-1 truncate'>{folder.name || 'Root'}</span>
       </div>
 
-      <CollapsibleContent>
-        <div className='space-y-0.5'>
+      <CollapsibleContent className='w-full'>
+        <div className='ml-3.5 min-w-0 space-y-0.5 pl-2.5'>
           {folder.children?.map((child) => (
             <FolderPickerNode
               key={child.path}
