@@ -204,7 +204,7 @@ export const BulkMoveDialog: React.FC<BulkMoveDialogProps> = ({
       <CreateFolderDialog
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
-        currentPath={currentPath}
+        currentPath={destinationPath}
         onFolderCreated={handleFolderCreated}
       />
     </>

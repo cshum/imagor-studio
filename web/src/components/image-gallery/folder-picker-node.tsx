@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { ChevronRight, Folder } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { listFiles } from '@/api/storage-api'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { loadFolderChildren } from '@/stores/folder-tree-store'
 
 export interface FolderNode {
   name: string
@@ -55,26 +55,11 @@ export function FolderPickerNode({
     evt?.stopPropagation()
 
     if (!folder.isLoaded && folder.isDirectory) {
-      // Load children if not loaded yet
+      // Load children using the store - this will cache the data
       try {
-        const result = await listFiles({
-          path: folder.path,
-          onlyFolders: true,
-        })
-
-        const children: FolderNode[] = result.items.map((item) => ({
-          name: item.name,
-          path: item.path,
-          isDirectory: item.isDirectory,
-          isLoaded: false,
-          isExpanded: false,
-        }))
-
-        onUpdateNode(folder.path, {
-          children,
-          isLoaded: true,
-          isExpanded: true,
-        })
+        await loadFolderChildren(folder.path)
+        // After loading, update local expand state
+        onUpdateNode(folder.path, { isExpanded: true })
       } catch {
         toast.error(t('components.folderTree.loadFolderError'))
       }
