@@ -8,7 +8,7 @@ export interface UseGalleryKeyboardNavigationProps {
   images: GalleryImage[]
   folderColumnCount: number
   imageColumnCount: number
-  onFolderClick?: (folder: Gallery) => void
+  onFolderClick?: (folder: Gallery, index: number, event?: React.MouseEvent) => void
   onImageClick?: (imageKey: string, position: Position) => void
 }
 
@@ -74,7 +74,7 @@ export function useGalleryKeyboardNavigation({
       case 'Enter':
       case ' ':
         event.preventDefault()
-        onFolderClick?.(folders[index])
+        onFolderClick?.(folders[index], index)
         break
 
       case 'ArrowRight':
@@ -197,10 +197,10 @@ export function useGalleryKeyboardNavigation({
   }
 
   // Handle folder click
-  const handleFolderClick = (folder: Gallery, index: number) => {
+  const handleFolderClick = (folder: Gallery, index: number, event?: React.MouseEvent) => {
     setFocusedGrid('folder')
     setFocusedFolderIndex(index)
-    onFolderClick?.(folder)
+    onFolderClick?.(folder, index, event)
   }
 
   // Handle image click

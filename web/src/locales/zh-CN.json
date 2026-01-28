@@ -224,6 +224,30 @@
           "invalidCharacters": "名称包含无效字符",
           "alreadyExists": "已存在同名的{{type}}"
         }
+      },
+      "selection": {
+        "menu": "选择菜单",
+        "count": "{{count}} 项",
+        "count_plural": "{{count}} 项",
+        "title": "已选择 {{count}} 项",
+        "title_plural": "已选择 {{count}} 项",
+        "downloadAll": "全部下载",
+        "deleteSelected": "删除所选",
+        "clearSelection": "清除选择",
+        "downloadNotImplemented": "批量下载功能即将推出",
+        "deleteNotImplemented": "批量删除功能即将推出"
+      },
+      "bulkDelete": {
+        "title": "删除所选项目",
+        "description_one": "您确定要删除 {{count}} 项吗？",
+        "description_other": "您确定要删除 {{count}} 项吗？",
+        "itemsToDelete": "要删除的项目",
+        "confirmButton_one": "删除 {{count}} 项",
+        "confirmButton_other": "删除 {{count}} 项",
+        "success_one": "成功删除 {{count}} 项",
+        "success_other": "成功删除 {{count}} 项",
+        "partialSuccess": "已删除 {{success}} 项，{{failed}} 项失败",
+        "error": "删除所选项目失败"
       }
     },
     "profile": {

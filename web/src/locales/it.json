@@ -210,17 +210,41 @@
       },
       "renameItem": {
         "title": "Rinomina {{type}}",
-        "description": "Inserisci un nuovo nome per questo/a {{type}}.",
+        "description": "Inserisci un nuovo nome per questo {{type}}.",
         "newName": "Nuovo Nome",
-        "placeholder": "Inserisci il nuovo nome",
+        "placeholder": "Inserisci nuovo nome",
         "rename": "Rinomina",
-        "success": "\"{{name}}\" rinominato correttamente",
+        "success": "\"{{name}}\" rinominato con successo",
         "error": "Impossibile rinominare {{type}}",
         "errors": {
           "nameRequired": "Il nome è obbligatorio",
           "invalidCharacters": "Il nome contiene caratteri non validi",
-          "alreadyExists": "Esiste già un/una {{type}} con questo nome"
+          "alreadyExists": "Esiste già un {{type}} con questo nome"
         }
+      },
+      "selection": {
+        "menu": "Menu di selezione",
+        "count": "{{count}} elemento",
+        "count_plural": "{{count}} elementi",
+        "title": "{{count}} elemento selezionato",
+        "title_plural": "{{count}} elementi selezionati",
+        "downloadAll": "Scarica tutto",
+        "deleteSelected": "Elimina selezionati",
+        "clearSelection": "Cancella selezione",
+        "downloadNotImplemented": "Funzione di download multiplo in arrivo",
+        "deleteNotImplemented": "Funzione di eliminazione multipla in arrivo"
+      },
+      "bulkDelete": {
+        "title": "Elimina elementi selezionati",
+        "description_one": "Sei sicuro di voler eliminare {{count}} elemento?",
+        "description_other": "Sei sicuro di voler eliminare {{count}} elementi?",
+        "itemsToDelete": "Elementi da eliminare",
+        "confirmButton_one": "Elimina {{count}} elemento",
+        "confirmButton_other": "Elimina {{count}} elementi",
+        "success_one": "{{count}} elemento eliminato con successo",
+        "success_other": "{{count}} elementi eliminati con successo",
+        "partialSuccess": "{{success}} elementi eliminati, {{failed}} non riusciti",
+        "error": "Impossibile eliminare gli elementi selezionati"
       }
     },
     "profile": {

@@ -24,6 +24,7 @@ import { generateImagorUrl } from '@/api/imagor-api'
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { deleteFile, moveFile } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
+import { BulkDeleteDialog } from '@/components/image-gallery/bulk-delete-dialog'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
 import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
 import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialog'
@@ -33,6 +34,7 @@ import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
 import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
+import { SelectionMenu } from '@/components/image-gallery/selection-menu'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
@@ -72,6 +74,12 @@ import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { setCurrentPath } from '@/stores/folder-tree-store.ts'
 import { ImagePosition, setPosition } from '@/stores/image-position-store.ts'
+import {
+  createFolderKey,
+  createImageKey,
+  setGalleryContext,
+  useSelection,
+} from '@/stores/selection-store'
 import { useSidebar } from '@/stores/sidebar-store.ts'
 
 export interface GalleryPageProps extends React.PropsWithChildren {
@@ -140,6 +148,16 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     url: '',
   })
   const [filterText, setFilterText] = useState('')
+  const [bulkDeleteDialog, setBulkDeleteDialog] = useState<{
+    open: boolean
+    isDeleting: boolean
+  }>({
+    open: false,
+    isDeleting: false,
+  })
+
+  // Selection store
+  const selection = useSelection()
 
   const {
     galleryName,
@@ -231,10 +249,23 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
-  const handleFolderClick = ({ galleryKey }: Gallery) => {
+  const handleFolderClick = (
+    { galleryKey: folderGalleryKey }: Gallery,
+    index: number,
+    event?: React.MouseEvent,
+  ) => {
+    // Check for Cmd/Ctrl+Click for selection
+    if (event && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault()
+      const fullFolderKey = createFolderKey(folderGalleryKey)
+      selection.toggleItem(fullFolderKey, index, 'folder')
+      return
+    }
+
+    // Normal navigation
     return navigate({
       to: '/gallery/$galleryKey',
-      params: { galleryKey },
+      params: { galleryKey: folderGalleryKey },
     })
   }
 
@@ -253,7 +284,42 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     setCurrentPath(galleryKey)
     requestAnimationFrame(() => restoreScrollPosition(galleryKey))
     setFilterText('')
+    // Initialize selection context for this gallery (clears selection)
+    setGalleryContext(galleryKey)
   }, [galleryKey])
+
+  // Selection handlers
+  const handleImageSelectionToggle = (
+    imageKey: string,
+    index: number,
+    _event: React.MouseEvent,
+  ) => {
+    const fullImageKey = createImageKey(galleryKey, imageKey)
+    selection.toggleItem(fullImageKey, index, 'image')
+  }
+
+  const handleFolderSelectionToggle = (
+    folderKey: string,
+    index: number,
+    _event: React.MouseEvent,
+  ) => {
+    const fullFolderKey = createFolderKey(folderKey)
+    selection.toggleItem(fullFolderKey, index, 'folder')
+  }
+
+  // Prepare selection keys for grids
+  const selectedImageKeys = new Set<string>()
+  const selectedFolderKeys = new Set<string>()
+
+  selection.selectedItems.forEach((key) => {
+    if (key.endsWith('/')) {
+      selectedFolderKeys.add(key)
+    } else {
+      // Extract just the image key (without gallery path) for comparison
+      const imageKey = galleryKey ? key.replace(`${galleryKey}/`, '') : key
+      selectedImageKeys.add(imageKey)
+    }
+  })
 
   const handleUploadFiles = () => {
     fileInputRef.current?.click()
@@ -643,6 +709,86 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
+  // Bulk selection handlers
+  const handleBulkDelete = () => {
+    // Use setTimeout to avoid Radix UI bug when opening dialog from dropdown menu
+    setTimeout(() => {
+      setBulkDeleteDialog({
+        open: true,
+        isDeleting: false,
+      })
+    }, 0)
+  }
+
+  const handleConfirmBulkDelete = async () => {
+    setBulkDeleteDialog((prev) => ({ ...prev, isDeleting: true }))
+
+    try {
+      const { folders, images } = selection.splitSelections()
+      let successCount = 0
+      let failCount = 0
+
+      // Delete all items sequentially
+      for (const folderKey of folders) {
+        try {
+          await deleteFile(folderKey)
+          successCount++
+        } catch {
+          failCount++
+        }
+      }
+
+      for (const imageKey of images) {
+        try {
+          await deleteFile(imageKey)
+          successCount++
+        } catch {
+          failCount++
+        }
+      }
+
+      // Close dialog and clear selection
+      setBulkDeleteDialog({
+        open: false,
+        isDeleting: false,
+      })
+      selection.clearSelection()
+
+      // Refresh gallery
+      router.invalidate()
+
+      // Show result toast
+      if (failCount === 0) {
+        toast.success(t('pages.gallery.bulkDelete.success', { count: successCount }))
+      } else if (successCount > 0) {
+        toast.warning(
+          t('pages.gallery.bulkDelete.partialSuccess', {
+            success: successCount,
+            failed: failCount,
+          }),
+        )
+      } else {
+        toast.error(t('pages.gallery.bulkDelete.error'))
+      }
+    } catch {
+      toast.error(t('pages.gallery.bulkDelete.error'))
+      setBulkDeleteDialog((prev) => ({ ...prev, isDeleting: false }))
+    }
+  }
+
+  const handleBulkDeleteDialogClose = (open: boolean) => {
+    if (!bulkDeleteDialog.isDeleting) {
+      setBulkDeleteDialog({
+        open,
+        isDeleting: false,
+      })
+    }
+  }
+
+  const handleClearSelection = () => {
+    selection.clearSelection()
+  }
+
   // Create menu items for authenticated users
   const customMenuItems =
     authState.state === 'authenticated' ? (
@@ -780,7 +926,19 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           <div className='mx-4 my-2 grid'>
             <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
           </div>
-          <HeaderBar isScrolled={isScrolledDown} customMenuItems={customMenuItems} />
+          <HeaderBar
+            isScrolled={isScrolledDown}
+            customMenuItems={customMenuItems}
+            selectionMenu={
+              authState.state === 'authenticated' ? (
+                <SelectionMenu
+                  selectedCount={selection.selectedItems.size}
+                  onDelete={handleBulkDelete}
+                  onClear={handleClearSelection}
+                />
+              ) : null
+            }
+          />
 
           <Card className='rounded-lg border-none'>
             <CardContent className='overflow-hidden p-2 md:p-4' ref={contentRef}>
@@ -810,6 +968,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                             width={contentWidth}
                             maxFolderWidth={maxItemWidth}
                             foldersVisible={foldersVisible}
+                            selectedFolderKeys={selectedFolderKeys}
+                            onFolderSelectionToggle={handleFolderSelectionToggle}
                             renderMenuItems={(folder) =>
                               renderFolderDropdownMenuItems({
                                 folderKey: folder.galleryKey,
@@ -829,6 +989,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           folderGridHeight={folderGridHeight}
                           maxImageWidth={maxItemWidth}
                           showFileName={showFileNames}
+                          selectedImageKeys={selectedImageKeys}
+                          onImageSelectionToggle={handleImageSelectionToggle}
                           renderMenuItems={(image) =>
                             renderDropdownMenuItems(
                               image.imageName,
@@ -868,6 +1030,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         folderName={deleteFolderDialog.folderName || ''}
         isDeleting={deleteFolderDialog.isDeleting}
         onConfirm={handleDeleteFolder}
+      />
+
+      <BulkDeleteDialog
+        open={bulkDeleteDialog.open}
+        onOpenChange={handleBulkDeleteDialogClose}
+        selectedItems={Array.from(selection.selectedItems)}
+        isDeleting={bulkDeleteDialog.isDeleting}
+        onConfirm={handleConfirmBulkDelete}
       />
 
       <CopyUrlDialog

@@ -1,5 +1,5 @@
 import { RefObject } from 'react'
-import { Folder, MoreVertical } from 'lucide-react'
+import { Check, Folder, MoreVertical } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -20,9 +20,11 @@ export interface FolderGridProps {
   maxFolderWidth: number
   foldersVisible?: boolean
   focusedIndex?: number
+  selectedFolderKeys?: Set<string>
   folderRefs?: RefObject<(HTMLDivElement | null)[]>
   onFolderKeyDown?: (event: React.KeyboardEvent, index: number) => void
-  onFolderClick?: (folder: Gallery, index: number) => void
+  onFolderClick?: (folder: Gallery, index: number, event?: React.MouseEvent) => void
+  onFolderSelectionToggle?: (folderKey: string, index: number, event: React.MouseEvent) => void
   renderMenuItems?: (folder: Gallery) => React.ReactNode
 }
 
@@ -32,9 +34,11 @@ interface FolderCardProps {
   folderWidth: number
   foldersVisible: boolean
   focusedIndex: number
+  isSelected?: boolean
   folderRef?: (el: HTMLDivElement | null) => void
   onFolderKeyDown?: (event: React.KeyboardEvent, index: number) => void
-  onFolderClick?: (folder: Gallery, index: number) => void
+  onFolderClick?: (folder: Gallery, index: number, event?: React.MouseEvent) => void
+  onSelectionToggle?: (folderKey: string, index: number, event: React.MouseEvent) => void
   renderMenuItems?: (folder: Gallery) => React.ReactNode
 }
 
@@ -44,16 +48,36 @@ const FolderCard = ({
   folderWidth,
   foldersVisible,
   focusedIndex,
+  isSelected = false,
   folderRef,
   onFolderKeyDown,
   onFolderClick,
+  onSelectionToggle,
   renderMenuItems,
 }: FolderCardProps) => {
+  const handleIconClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onSelectionToggle) {
+      onSelectionToggle(folder.galleryKey, index, e)
+    }
+  }
+
   return (
     <Card
       ref={folderRef}
-      className='group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
-      onClick={() => onFolderClick?.(folder, index)}
+      className={`group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${isSelected ? 'ring-2 ring-blue-600' : ''}`}
+      onClick={(e) => {
+        // Check for Cmd/Ctrl+Click for selection
+        if ((e.metaKey || e.ctrlKey) && onSelectionToggle) {
+          e.preventDefault()
+          e.stopPropagation()
+          onSelectionToggle(folder.galleryKey, index, e)
+          return
+        }
+
+        // Normal click: always navigate to folder
+        onFolderClick?.(folder, index, e)
+      }}
       onKeyDown={(e) => onFolderKeyDown?.(e, index)}
       tabIndex={
         foldersVisible
@@ -71,7 +95,27 @@ const FolderCard = ({
       data-folder-name={folder.galleryName}
     >
       <CardContent className='relative flex items-center px-4 py-4 sm:py-3'>
-        <Folder className='text-primary mr-2 h-5 w-5 flex-shrink-0' />
+        {onSelectionToggle ? (
+          <div
+            className='group/icon mr-2 flex h-5 w-5 flex-shrink-0 cursor-pointer items-center justify-center rounded transition-colors'
+            onClick={handleIconClick}
+            role='button'
+            aria-label={isSelected ? 'Deselect folder' : 'Select folder'}
+          >
+            {isSelected ? (
+              <div className='flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 p-1'>
+                <Check className='h-5 w-5 text-white' />
+              </div>
+            ) : (
+              <>
+                <Folder className='text-primary h-5 w-5 group-hover/icon:hidden' />
+                <Check className='text-primary hidden h-5 w-5 group-hover/icon:block' />
+              </>
+            )}
+          </div>
+        ) : (
+          <Folder className='text-primary mr-2 h-5 w-5 flex-shrink-0' />
+        )}
         <span className='truncate text-sm font-medium'>{folder.galleryName}</span>
         {renderMenuItems && (
           <div
@@ -111,9 +155,11 @@ export const FolderGrid = ({
   maxFolderWidth,
   foldersVisible = true,
   focusedIndex = -1,
+  selectedFolderKeys,
   folderRefs,
   onFolderKeyDown,
   onFolderClick,
+  onFolderSelectionToggle,
   renderMenuItems,
 }: FolderGridProps) => {
   const columnCount = Math.max(2, Math.floor(width / maxFolderWidth))
@@ -134,24 +180,33 @@ export const FolderGrid = ({
       aria-label='Folders'
       tabIndex={-1}
     >
-      {folders.map((folder, index) => (
-        <FolderCard
-          key={folder.galleryKey}
-          folder={folder}
-          index={index}
-          folderWidth={folderWidth}
-          foldersVisible={foldersVisible}
-          focusedIndex={focusedIndex}
-          folderRef={(el) => {
-            if (folderRefs?.current) {
-              folderRefs.current[index] = el
-            }
-          }}
-          onFolderKeyDown={onFolderKeyDown}
-          onFolderClick={onFolderClick}
-          renderMenuItems={renderMenuItems}
-        />
-      ))}
+      {folders.map((folder, index) => {
+        const folderKey = folder.galleryKey.endsWith('/')
+          ? folder.galleryKey
+          : `${folder.galleryKey}/`
+        const isSelected = selectedFolderKeys?.has(folderKey) || false
+
+        return (
+          <FolderCard
+            key={folder.galleryKey}
+            folder={folder}
+            index={index}
+            folderWidth={folderWidth}
+            foldersVisible={foldersVisible}
+            focusedIndex={focusedIndex}
+            isSelected={isSelected}
+            folderRef={(el) => {
+              if (folderRefs?.current) {
+                folderRefs.current[index] = el
+              }
+            }}
+            onFolderKeyDown={onFolderKeyDown}
+            onFolderClick={onFolderClick}
+            onSelectionToggle={onFolderSelectionToggle}
+            renderMenuItems={renderMenuItems}
+          />
+        )
+      })}
     </div>
   )
 }
