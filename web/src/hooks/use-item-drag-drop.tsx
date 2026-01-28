@@ -1,12 +1,12 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { Folder, Image, Layers } from 'lucide-react'
 
-export interface DragItem {
-  key: string // Full path
-  name: string
-  type: 'folder' | 'image'
-}
+import type { DragItem as StoreDragItem } from '@/stores/drag-drop-store'
+import { clearDragOver, endDrag, setDragOver, startDrag, useDragDrop } from '@/stores/drag-drop-store'
+
+// Re-export DragItem for backward compatibility
+export type DragItem = StoreDragItem
 
 export interface DragData {
   type: 'imagor-items'
@@ -26,11 +26,8 @@ export interface UseDragDropOptions {
 }
 
 export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions) {
-  const [dragState, setDragState] = useState<DragDropState>({
-    isDragging: false,
-    draggedItems: [],
-    dragOverTarget: null,
-  })
+  // Use the global drag drop store
+  const dragState = useDragDrop()
 
   // Start dragging items
   const handleDragStart = useCallback(
@@ -81,22 +78,15 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
       e.dataTransfer.setDragImage(dragImage, 0, 0)
       setTimeout(() => document.body.removeChild(dragImage), 0)
 
-      setDragState({
-        isDragging: true,
-        draggedItems: items,
-        dragOverTarget: null,
-      })
+      // Update global store
+      startDrag(items)
     },
     [isAuthenticated],
   )
 
   // End dragging
   const handleDragEnd = useCallback(() => {
-    setDragState({
-      isDragging: false,
-      draggedItems: [],
-      dragOverTarget: null,
-    })
+    endDrag()
   }, [])
 
   // Validate if drop is allowed
@@ -160,10 +150,7 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
 
       // Update drag over target if we're currently dragging and it's a valid target
       if (dragState.isDragging && isValidDropTarget(targetFolderKey, dragState.draggedItems)) {
-        setDragState((prev) => ({
-          ...prev,
-          dragOverTarget: targetFolderKey,
-        }))
+        setDragOver(targetFolderKey)
       }
     },
     [isAuthenticated, isValidDropTarget, dragState.isDragging, dragState.draggedItems],
@@ -190,15 +177,9 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
       }
 
       // Actually leaving the folder, clear the indicator
-      setDragState((prev) => {
-        if (prev.dragOverTarget === targetFolderKey) {
-          return {
-            ...prev,
-            dragOverTarget: null,
-          }
-        }
-        return prev
-      })
+      if (dragState.dragOverTarget === targetFolderKey) {
+        clearDragOver()
+      }
     },
     [isAuthenticated],
   )
@@ -231,11 +212,7 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
       } catch (error) {
         console.error('Drop error:', error)
       } finally {
-        setDragState({
-          isDragging: false,
-          draggedItems: [],
-          dragOverTarget: null,
-        })
+        endDrag()
       }
     },
     [isAuthenticated, isValidDropTarget, onDrop],

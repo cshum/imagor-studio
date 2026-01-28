@@ -73,6 +73,7 @@ import { ContentLayout } from '@/layouts/content-layout'
 import { getFullImageUrl } from '@/lib/api-utils'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
+import { registerDropHandler } from '@/stores/drag-drop-store'
 import { setCurrentPath } from '@/stores/folder-tree-store.ts'
 import { ImagePosition, setPosition } from '@/stores/image-position-store.ts'
 import {
@@ -355,6 +356,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     setFilterText('')
     // Initialize selection context for this gallery (clears selection)
     setGalleryContext(galleryKey)
+    
+    // Register drop handler for drag and drop
+    registerDropHandler(handleDropItems)
+    
+    // Cleanup: unregister handler when component unmounts
+    return () => {
+      registerDropHandler(null)
+    }
   }, [galleryKey])
 
   // Selection handlers

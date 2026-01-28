@@ -34,7 +34,9 @@ import {
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
+import { useItemDragDrop } from '@/hooks/use-item-drag-drop'
 import { useAuth } from '@/stores/auth-store'
+import { useDragDrop } from '@/stores/drag-drop-store'
 import { useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
@@ -45,22 +47,11 @@ export interface FolderTreeSidebarProps
     React.ComponentProps<typeof Sidebar>,
     'onDragOver' | 'onDragEnter' | 'onDragLeave' | 'onDrop'
   > {
-  // Drag and drop props
-  onDragOverFolder?: (e: React.DragEvent, targetFolderKey: string) => void
-  onDragEnterFolder?: (e: React.DragEvent, targetFolderKey: string) => void
-  onDragLeaveFolder?: (e: React.DragEvent, targetFolderKey: string) => void
-  onDropFolder?: (e: React.DragEvent, targetFolderKey: string) => void
-  dragOverTarget?: string | null
+  // Drag and drop handler from gallery page
+  onDrop?: (items: any[], targetFolderKey: string) => void | Promise<void>
 }
 
-export function FolderTreeSidebar({
-  onDragOverFolder,
-  onDragEnterFolder,
-  onDragLeaveFolder,
-  onDropFolder,
-  dragOverTarget,
-  ...props
-}: FolderTreeSidebarProps) {
+export function FolderTreeSidebar({ onDrop, ...props }: FolderTreeSidebarProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { authState } = useAuth()
@@ -93,6 +84,15 @@ export function FolderTreeSidebar({
   })
 
   const [renameInput, setRenameInput] = useState('')
+
+  // Get drag state and drop handler from global store
+  const { dragOverTarget, onDropHandler } = useDragDrop()
+
+  // Get drag handlers from hook, using the handler from store
+  const { handleDragOver, handleDragEnter, handleDragLeave, handleDrop } = useItemDragDrop({
+    onDrop: onDropHandler || undefined,
+    isAuthenticated: authState.state === 'authenticated',
+  })
 
   const isLoadingRoot = loadingPaths.has('')
   const isOnHomePage = routerState.location.pathname === '/'
@@ -292,10 +292,10 @@ export function FolderTreeSidebar({
                       key={`${folder.path}-${index}`}
                       folder={folder}
                       renderMenuItems={renderDropdownMenuItems}
-                      onDragOver={onDragOverFolder}
-                      onDragEnter={onDragEnterFolder}
-                      onDragLeave={onDragLeaveFolder}
-                      onDrop={onDropFolder}
+                      onDragOver={handleDragOver}
+                      onDragEnter={handleDragEnter}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
                       dragOverTarget={dragOverTarget}
                     />
                   ))}
