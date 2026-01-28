@@ -57,7 +57,7 @@ export function FolderPickerNode({
     if (!folder.isLoaded && folder.isDirectory) {
       // Load children using the store - this will cache the data
       try {
-        await loadFolderChildren(folder.path)
+        await loadFolderChildren(folder.path, false) // Don't auto-expand in store
         // After loading, update local expand state
         onUpdateNode(folder.path, { isExpanded: true })
       } catch {

@@ -121,7 +121,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
 
       // Load folder children using store
       try {
-        await loadFolderChildren(currentPath)
+        await loadFolderChildren(currentPath, false) // Don't auto-expand in store
         expandStates[currentPath] = true
 
         // Small delay to allow state to update
@@ -146,7 +146,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
 
       // Invalidate and reload the parent folder's children in the store
       invalidateFolderCache(parentPath)
-      await loadFolderChildren(parentPath)
+      await loadFolderChildren(parentPath, false) // Don't auto-expand in store
 
       // Expand the parent in local state
       setLocalExpandState((prev) => ({
