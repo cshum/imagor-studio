@@ -33,9 +33,9 @@ export interface FolderGridProps {
   onDragOver?: (e: React.DragEvent, targetFolderKey: string) => void
   onDragEnter?: (e: React.DragEvent, targetFolderKey: string) => void
   onDragLeave?: (e: React.DragEvent, targetFolderKey: string) => void
+  onContainerDragLeave?: (e: React.DragEvent) => void
   onDrop?: (e: React.DragEvent, targetFolderKey: string) => void
   dragOverTarget?: string | null
-  isDragging?: boolean
 }
 
 interface FolderCardProps {
@@ -58,7 +58,6 @@ interface FolderCardProps {
   onDragLeave?: (e: React.DragEvent, targetFolderKey: string) => void
   onDrop?: (e: React.DragEvent, targetFolderKey: string) => void
   isDragOver?: boolean
-  isDragging?: boolean
   selectedFolderKeys?: Set<string>
 }
 
@@ -81,7 +80,6 @@ const FolderCard = ({
   onDragLeave,
   onDrop,
   isDragOver = false,
-  isDragging = false,
   selectedFolderKeys,
 }: FolderCardProps) => {
   const handleIconClick = (e: React.MouseEvent) => {
@@ -232,9 +230,9 @@ export const FolderGrid = ({
   onDragOver,
   onDragEnter,
   onDragLeave,
+  onContainerDragLeave,
   onDrop,
   dragOverTarget,
-  isDragging = false,
 }: FolderGridProps) => {
   const columnCount = Math.max(2, Math.floor(width / maxFolderWidth))
   const folderWidth = width / columnCount
@@ -253,6 +251,7 @@ export const FolderGrid = ({
       role='grid'
       aria-label='Folders'
       tabIndex={-1}
+      onDragLeave={onContainerDragLeave}
     >
       {folders.map((folder, index) => {
         const folderKey = folder.galleryKey.endsWith('/')
@@ -286,7 +285,6 @@ export const FolderGrid = ({
             onDragLeave={onDragLeave}
             onDrop={onDrop}
             isDragOver={isDragOver}
-            isDragging={isDragging}
             selectedFolderKeys={selectedFolderKeys}
           />
         )

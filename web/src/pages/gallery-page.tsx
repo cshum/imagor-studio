@@ -235,6 +235,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     handleDragOver,
     handleDragEnter,
     handleDragLeave,
+    handleContainerDragLeave,
     handleDrop,
   } = useItemDragDrop({
     onDrop: handleDropItems,
@@ -356,10 +357,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     setFilterText('')
     // Initialize selection context for this gallery (clears selection)
     setGalleryContext(galleryKey)
-    
+
     // Register drop handler for drag and drop
     registerDropHandler(handleDropItems)
-    
+
     // Cleanup: unregister handler when component unmounts
     return () => {
       registerDropHandler(null)
@@ -1146,9 +1147,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                             onDragLeave={
                               authState.state === 'authenticated' ? handleDragLeave : undefined
                             }
+                            onContainerDragLeave={
+                              authState.state === 'authenticated'
+                                ? handleContainerDragLeave
+                                : undefined
+                            }
                             onDrop={authState.state === 'authenticated' ? handleDrop : undefined}
                             dragOverTarget={dragState.dragOverTarget}
-                            isDragging={dragState.isDragging}
                             {...folderGridProps}
                           />
                         </FolderContextMenu>
@@ -1181,7 +1186,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           onDragEnd={
                             authState.state === 'authenticated' ? handleDragEnd : undefined
                           }
-                          isDragging={dragState.isDragging}
                           galleryKey={galleryKey}
                           {...imageGridProps}
                         />

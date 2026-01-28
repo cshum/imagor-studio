@@ -20,7 +20,9 @@ export type DragDropAction =
   | { type: 'CLEAR_DRAG_OVER' }
   | {
       type: 'REGISTER_DROP_HANDLER'
-      payload: { handler: ((items: DragItem[], targetFolderKey: string) => void | Promise<void>) | null }
+      payload: {
+        handler: ((items: DragItem[], targetFolderKey: string) => void | Promise<void>) | null
+      }
     }
 
 const initialState: DragDropState = {

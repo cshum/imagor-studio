@@ -3,7 +3,13 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { Folder, Image, Layers } from 'lucide-react'
 
 import type { DragItem as StoreDragItem } from '@/stores/drag-drop-store'
-import { clearDragOver, endDrag, setDragOver, startDrag, useDragDrop } from '@/stores/drag-drop-store'
+import {
+  clearDragOver,
+  endDrag,
+  setDragOver,
+  startDrag,
+  useDragDrop,
+} from '@/stores/drag-drop-store'
 
 // Re-export DragItem for backward compatibility
 export type DragItem = StoreDragItem
@@ -86,6 +92,8 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
 
   // End dragging
   const handleDragEnd = useCallback(() => {
+    // Clear both drag state and drag-over target
+    clearDragOver()
     endDrag()
   }, [])
 
@@ -181,6 +189,29 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
         clearDragOver()
       }
     },
+    [isAuthenticated, dragState.dragOverTarget],
+  )
+
+  // Handle drag leave from container (when leaving entire grid/sidebar)
+  const handleContainerDragLeave = useCallback(
+    (e: React.DragEvent) => {
+      if (!isAuthenticated) {
+        return
+      }
+
+      // Check if we're actually leaving the container
+      const currentTarget = e.currentTarget as HTMLElement
+      const relatedTarget = e.relatedTarget as Node | null
+
+      // Only clear if we're leaving the container entirely
+      if (relatedTarget && currentTarget.contains(relatedTarget)) {
+        // Still inside the container, don't clear
+        return
+      }
+
+      // Leaving the container, clear any drag-over state
+      clearDragOver()
+    },
     [isAuthenticated],
   )
 
@@ -212,6 +243,8 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
       } catch (error) {
         console.error('Drop error:', error)
       } finally {
+        // Always clear drag-over and end drag
+        clearDragOver()
         endDrag()
       }
     },
@@ -225,6 +258,7 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
     handleDragOver,
     handleDragEnter,
     handleDragLeave,
+    handleContainerDragLeave,
     handleDrop,
     isValidDropTarget,
   }

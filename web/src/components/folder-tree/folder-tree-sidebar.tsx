@@ -89,10 +89,11 @@ export function FolderTreeSidebar({ onDrop, ...props }: FolderTreeSidebarProps) 
   const { dragOverTarget, onDropHandler } = useDragDrop()
 
   // Get drag handlers from hook, using the handler from store
-  const { handleDragOver, handleDragEnter, handleDragLeave, handleDrop } = useItemDragDrop({
-    onDrop: onDropHandler || undefined,
-    isAuthenticated: authState.state === 'authenticated',
-  })
+  const { handleDragOver, handleDragEnter, handleDragLeave, handleContainerDragLeave, handleDrop } =
+    useItemDragDrop({
+      onDrop: onDropHandler || undefined,
+      isAuthenticated: authState.state === 'authenticated',
+    })
 
   const isLoadingRoot = loadingPaths.has('')
   const isOnHomePage = routerState.location.pathname === '/'
@@ -260,7 +261,7 @@ export function FolderTreeSidebar({ onDrop, ...props }: FolderTreeSidebarProps) 
         <SidebarGroup>
           <SidebarGroupLabel>{t('components.folderTree.folders')}</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu onDragLeave={handleContainerDragLeave}>
               {/* Home Link as first item */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={isOnHomePage}>
