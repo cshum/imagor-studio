@@ -199,8 +199,7 @@
       },
       "deleteImage": {
         "title": "Delete Image",
-        "description": "Are you sure you want to delete this image?",
-        "warning": "This action cannot be undone.",
+        "description": "Are you sure you want to delete <1>{{imageName}}</1>?",
         "success": "\"{{fileName}}\" deleted successfully",
         "error": "Failed to delete image"
       },
@@ -209,8 +208,7 @@
       },
       "deleteFolder": {
         "title": "Delete Folder",
-        "description": "Are you sure you want to delete this folder?",
-        "warning": "This will permanently delete the folder and all its contents. This action cannot be undone.",
+        "description": "Are you sure you want to delete <1>{{folderName}}</1>?",
         "success": "\"{{folderName}}\" deleted successfully",
         "error": "Failed to delete folder"
       },
@@ -245,7 +243,6 @@
         "title": "Delete Selected Items",
         "description_one": "Are you sure you want to delete {{count}} item?",
         "description_other": "Are you sure you want to delete {{count}} items?",
-        "itemsToDelete": "Items to delete",
         "confirmButton_one": "Delete {{count}} Item",
         "confirmButton_other": "Delete {{count}} Items",
         "success_one": "Successfully deleted {{count}} item",
@@ -255,18 +252,10 @@
       },
       "moveItems": {
         "title": "Move Items",
-        "description_one": "Move {{count}} item to a new location",
-        "description_other": "Move {{count}} items to a new location",
-        "itemsToMove": "Items to move",
-        "destinationFolder": "Destination folder",
-        "browse": "Browse",
         "selectDestination": "Select Destination Folder",
         "selectDestinationDescription": "Choose where to move the selected items.",
-        "selected": "Selected",
         "select": "Select",
-        "moving": "Moving...",
-        "confirmButton_one": "Move {{count}} Item",
-        "confirmButton_other": "Move {{count}} Items",
+        "move": "Move",
         "success_one": "Successfully moved {{count}} item",
         "success_other": "Successfully moved {{count}} items",
         "partialSuccess": "{{success}} items moved, {{failed}} failed",

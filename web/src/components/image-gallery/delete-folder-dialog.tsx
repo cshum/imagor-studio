@@ -1,5 +1,4 @@
-import { useTranslation } from 'react-i18next'
-import { FolderX } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
@@ -31,20 +30,13 @@ export function DeleteFolderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className='flex items-center gap-2'>
-            <FolderX className='text-destructive h-5 w-5' />
-            {t('pages.gallery.deleteFolder.title')}
-          </DialogTitle>
-          <DialogDescription className='space-y-3'>
-            <p>{t('pages.gallery.deleteFolder.description')}</p>
-            <div className='bg-muted rounded-md p-3'>
-              <p className='text-foreground font-mono text-sm break-all'>{folderName}</p>
-            </div>
-            <p className='text-destructive text-sm font-semibold'>
-              {t('pages.gallery.deleteFolder.warning')}
-            </p>
+          <DialogTitle>{t('pages.gallery.deleteFolder.title')}</DialogTitle>
+          <DialogDescription>
+            <Trans i18nKey="pages.gallery.deleteFolder.description" values={{ folderName }}>
+              Are you sure you want to delete <strong>{{ folderName }}</strong>?
+            </Trans>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

@@ -30,6 +30,11 @@ export interface FolderSelectionDialogProps {
   showNewFolderButton?: boolean
   onCreateFolder?: (selectedPath: string | null) => void
   onFolderCreated?: (callback: (folderPath: string) => void) => void
+  // Customization props for reusability
+  title?: string
+  description?: string
+  confirmButtonText?: string
+  itemCount?: number
 }
 
 export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
@@ -42,9 +47,19 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   showNewFolderButton = false,
   onCreateFolder,
   onFolderCreated,
+  title,
+  description,
+  confirmButtonText,
+  itemCount,
 }) => {
   const { t } = useTranslation()
   const { homeTitle, rootFolders } = useFolderTree()
+
+  // Generate title with item count if provided
+  const dialogTitle = title || t('pages.gallery.moveItems.selectDestination')
+  const displayTitle = itemCount ? `${dialogTitle} (${itemCount})` : dialogTitle
+  const dialogDescription = description || t('pages.gallery.moveItems.selectDestinationDescription')
+  const buttonText = confirmButtonText || t('pages.gallery.moveItems.select')
 
   // Local state for picker-specific expand state (separate from sidebar)
   const [localExpandState, setLocalExpandState] = useState<Record<string, boolean>>({})
@@ -207,10 +222,8 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-lg'>
         <DialogHeader>
-          <DialogTitle>{t('pages.gallery.moveItems.selectDestination')}</DialogTitle>
-          <DialogDescription>
-            {t('pages.gallery.moveItems.selectDestinationDescription')}
-          </DialogDescription>
+          <DialogTitle>{displayTitle}</DialogTitle>
+          <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
 
         <div className='my-4'>
@@ -254,7 +267,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
               {t('common.buttons.cancel')}
             </Button>
             <Button onClick={handleSelect} disabled={selectedPath === null}>
-              {t('pages.gallery.moveItems.select')}
+              {buttonText}
             </Button>
           </div>
         </DialogFooter>
