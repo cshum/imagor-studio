@@ -81,7 +81,10 @@ export const BulkMoveDialog: React.FC<BulkMoveDialogProps> = ({
     setDestinationPath(path)
   }
 
-  const handleCreateFolder = () => {
+  const handleCreateFolder = (pickerSelectedPath: string | null) => {
+    // Use the path selected in the picker, not the destinationPath
+    // This ensures new folders are created under the currently selected folder in the picker
+    setDestinationPath(pickerSelectedPath || '')
     setIsCreateFolderDialogOpen(true)
   }
 

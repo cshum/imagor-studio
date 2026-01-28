@@ -28,7 +28,7 @@ export interface FolderSelectionDialogProps {
   excludePaths?: string[]
   currentPath?: string
   showNewFolderButton?: boolean
-  onCreateFolder?: () => void
+  onCreateFolder?: (selectedPath: string | null) => void
   onFolderCreated?: (callback: (folderPath: string) => void) => void
 }
 
@@ -90,23 +90,63 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
     }
   }, [])
 
-  // Handle folder creation - refresh the parent folder in the store
-  const handleFolderCreatedCallback = useCallback(async (folderPath: string) => {
-    // Get parent path
-    const pathParts = folderPath.split('/').filter(Boolean)
-    pathParts.pop() // Remove the new folder name
-    const parentPath = pathParts.join('/')
+  // Auto-expand folders to reveal the current path
+  const expandToPath = useCallback(async (targetPath: string) => {
+    if (!targetPath) return
 
-    // Invalidate and reload the parent folder's children in the store
-    invalidateFolderCache(parentPath)
-    await loadFolderChildren(parentPath)
+    // Split path into segments (e.g., "folder1/folder2/folder3" -> ["folder1", "folder2", "folder3"])
+    const segments = targetPath.split('/').filter(Boolean)
 
-    // Expand the parent in local state
-    setLocalExpandState((prev) => ({
-      ...prev,
-      [parentPath]: true,
-    }))
+    // Expand each parent folder sequentially
+    let currentPath = ''
+    const expandStates: Record<string, boolean> = { '': true } // Expand root
+
+    for (const segment of segments) {
+      currentPath = currentPath ? `${currentPath}/${segment}` : segment
+
+      // Load folder children using store
+      try {
+        await loadFolderChildren(currentPath)
+        expandStates[currentPath] = true
+
+        // Small delay to allow state to update
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      } catch (error) {
+        console.error(`Failed to load folder: ${currentPath}`, error)
+        break
+      }
+    }
+
+    // Update all expand states at once
+    setLocalExpandState((prev) => ({ ...prev, ...expandStates }))
   }, [])
+
+  // Handle folder creation - refresh the parent folder in the store
+  const handleFolderCreatedCallback = useCallback(
+    async (folderPath: string) => {
+      // Get parent path
+      const pathParts = folderPath.split('/').filter(Boolean)
+      pathParts.pop() // Remove the new folder name
+      const parentPath = pathParts.join('/')
+
+      // Invalidate and reload the parent folder's children in the store
+      invalidateFolderCache(parentPath)
+      await loadFolderChildren(parentPath)
+
+      // Expand the parent in local state
+      setLocalExpandState((prev) => ({
+        ...prev,
+        [parentPath]: true,
+      }))
+
+      // Auto-select the newly created folder
+      setSelectedPath(folderPath)
+
+      // Expand to show the new folder path (in case it's nested)
+      await expandToPath(folderPath)
+    },
+    [expandToPath],
+  )
 
   // Load root folders when dialog opens
   useEffect(() => {
@@ -142,37 +182,6 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
     }
   }, [onFolderCreated, handleFolderCreatedCallback])
 
-  // Auto-expand folders to reveal the current path
-  const expandToPath = useCallback(async (targetPath: string) => {
-    if (!targetPath) return
-
-    // Split path into segments (e.g., "folder1/folder2/folder3" -> ["folder1", "folder2", "folder3"])
-    const segments = targetPath.split('/').filter(Boolean)
-
-    // Expand each parent folder sequentially
-    let currentPath = ''
-    const expandStates: Record<string, boolean> = { '': true } // Expand root
-
-    for (const segment of segments) {
-      currentPath = currentPath ? `${currentPath}/${segment}` : segment
-
-      // Load folder children using store
-      try {
-        await loadFolderChildren(currentPath)
-        expandStates[currentPath] = true
-
-        // Small delay to allow state to update
-        await new Promise((resolve) => setTimeout(resolve, 50))
-      } catch (error) {
-        console.error(`Failed to load folder: ${currentPath}`, error)
-        break
-      }
-    }
-
-    // Update all expand states at once
-    setLocalExpandState((prev) => ({ ...prev, ...expandStates }))
-  }, [])
-
   const handleSelect = () => {
     if (selectedPath !== null) {
       onSelect(selectedPath)
@@ -181,8 +190,8 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   }
 
   const handleCreateFolder = () => {
-    // Call the create folder handler (don't close the dialog)
-    onCreateFolder?.()
+    // Call the create folder handler with the currently selected path
+    onCreateFolder?.(selectedPath)
 
     // Invalidate the folder tree cache for the selected path to force refresh
     // This ensures the new folder appears in the sidebar tree
