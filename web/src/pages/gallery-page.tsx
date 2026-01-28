@@ -25,12 +25,12 @@ import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { deleteFile, moveFile } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
 import { BulkDeleteDialog } from '@/components/image-gallery/bulk-delete-dialog'
+import { BulkMoveDialog } from '@/components/image-gallery/bulk-move-dialog'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
 import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
 import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialog'
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
-import { BulkMoveDialog } from '@/components/image-gallery/bulk-move-dialog'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
 import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
@@ -297,20 +297,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   }, [galleryKey])
 
   // Selection handlers
-  const handleImageSelectionToggle = (
-    imageKey: string,
-    index: number,
-    _event: React.MouseEvent,
-  ) => {
+  const handleImageSelectionToggle = (imageKey: string, index: number) => {
     const fullImageKey = createImageKey(galleryKey, imageKey)
     selection.toggleItem(fullImageKey, index, 'image')
   }
 
-  const handleFolderSelectionToggle = (
-    folderKey: string,
-    index: number,
-    _event: React.MouseEvent,
-  ) => {
+  const handleFolderSelectionToggle = (folderKey: string, index: number) => {
     const fullFolderKey = createFolderKey(folderKey)
     selection.toggleItem(fullFolderKey, index, 'folder')
   }

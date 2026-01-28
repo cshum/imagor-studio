@@ -118,6 +118,8 @@
   "pages": {
     "gallery": {
       "title": "Gallery",
+      "selectFolder": "Select Folder",
+      "selectFolderDescription": "Choose a folder from the tree below.",
       "noImages": "No images found",
       "noImagesInGallery": "No images in your gallery",
       "folderEmpty": "This folder is empty",
@@ -615,7 +617,8 @@
   "components": {
     "folderTree": {
       "folders": "Folders",
-      "noFoldersFound": "No folders found"
+      "noFoldersFound": "No folders found",
+      "loadFolderError": "Failed to load folder contents"
     },
     "licenseBadge": {
       "unregistered": "Unregistered"

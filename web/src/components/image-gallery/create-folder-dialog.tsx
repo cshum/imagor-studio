@@ -44,9 +44,15 @@ interface CreateFolderDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   currentPath: string
+  onFolderCreated?: (folderPath: string) => void
 }
 
-export function CreateFolderDialog({ open, onOpenChange, currentPath }: CreateFolderDialogProps) {
+export function CreateFolderDialog({
+  open,
+  onOpenChange,
+  currentPath,
+  onFolderCreated,
+}: CreateFolderDialogProps) {
   const { t } = useTranslation()
   const router = useRouter()
   const [isCreating, setIsCreating] = useState(false)
@@ -71,6 +77,10 @@ export function CreateFolderDialog({ open, onOpenChange, currentPath }: CreateFo
       toast.success(
         t('pages.gallery.createFolder.success', { folderName: values.folderName.trim() }),
       )
+
+      // Notify parent that folder was created
+      onFolderCreated?.(folderPath)
+
       onOpenChange(false)
       form.reset()
       await router.invalidate()

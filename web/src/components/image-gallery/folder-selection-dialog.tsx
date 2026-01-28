@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FolderPlus } from 'lucide-react'
 
 import { listFiles } from '@/api/storage-api'
+import { FolderNode, FolderPickerNode } from '@/components/image-gallery/folder-picker-node'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,8 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { FolderPickerNode, FolderNode } from '@/components/image-gallery/folder-picker-node'
-import { useFolderTree } from '@/stores/folder-tree-store'
+import { invalidateFolderCache, useFolderTree } from '@/stores/folder-tree-store'
 
 export interface FolderSelectionDialogProps {
   open: boolean
@@ -25,6 +25,7 @@ export interface FolderSelectionDialogProps {
   currentPath?: string
   showNewFolderButton?: boolean
   onCreateFolder?: () => void
+  onFolderCreated?: (folderPath: string) => void
 }
 
 export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
@@ -36,6 +37,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   currentPath,
   showNewFolderButton = false,
   onCreateFolder,
+  onFolderCreated,
 }) => {
   const { t } = useTranslation()
   const { homeTitle } = useFolderTree()
@@ -43,6 +45,65 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   const [selectedPath, setSelectedPath] = useState<string | null>(initialSelectedPath)
   const [isLoading, setIsLoading] = useState(false)
   const [excludePathsSet] = useState(() => new Set(excludePaths))
+
+  const updateNode = useCallback((path: string, updates: Partial<FolderNode>) => {
+    setTree((prevTree) => {
+      const updateNodeRecursive = (nodes: FolderNode[]): FolderNode[] => {
+        return nodes.map((node) => {
+          if (node.path === path) {
+            return { ...node, ...updates }
+          }
+          if (node.children) {
+            return {
+              ...node,
+              children: updateNodeRecursive(node.children),
+            }
+          }
+          return node
+        })
+      }
+      return updateNodeRecursive(prevTree)
+    })
+  }, [])
+
+  // Handle folder creation - refresh only the parent folder
+  const handleFolderCreatedCallback = useCallback(
+    async (folderPath: string) => {
+      // Get parent path
+      const pathParts = folderPath.split('/').filter(Boolean)
+      pathParts.pop() // Remove the new folder name
+      const parentPath = pathParts.join('/')
+
+      // Reload the parent folder's children
+      try {
+        const result = await listFiles({
+          path: parentPath,
+          onlyFolders: true,
+        })
+
+        const children: FolderNode[] = result.items.map((item) => ({
+          name: item.name,
+          path: item.path,
+          isDirectory: item.isDirectory,
+          isLoaded: false,
+          isExpanded: false,
+        }))
+
+        // Update the parent node with new children
+        updateNode(parentPath, {
+          children,
+          isLoaded: true,
+          isExpanded: true,
+        })
+
+        // Invalidate folder tree cache for sidebar
+        invalidateFolderCache(parentPath)
+      } catch (error) {
+        console.error('Failed to refresh parent folder:', error)
+      }
+    },
+    [updateNode],
+  )
 
   // Load root folders when dialog opens
   useEffect(() => {
@@ -56,6 +117,13 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
       })
     }
   }, [open, currentPath, initialSelectedPath])
+
+  // Call the onFolderCreated callback when provided
+  useEffect(() => {
+    if (onFolderCreated) {
+      onFolderCreated(handleFolderCreatedCallback as any)
+    }
+  }, [onFolderCreated, handleFolderCreatedCallback])
 
   const loadRootFolders = async () => {
     setIsLoading(true)
@@ -91,26 +159,6 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
       setIsLoading(false)
     }
   }
-
-  const updateNode = useCallback((path: string, updates: Partial<FolderNode>) => {
-    setTree((prevTree) => {
-      const updateNodeRecursive = (nodes: FolderNode[]): FolderNode[] => {
-        return nodes.map((node) => {
-          if (node.path === path) {
-            return { ...node, ...updates }
-          }
-          if (node.children) {
-            return {
-              ...node,
-              children: updateNodeRecursive(node.children),
-            }
-          }
-          return node
-        })
-      }
-      return updateNodeRecursive(prevTree)
-    })
-  }, [])
 
   // Auto-expand folders to reveal the current path
   const expandToPath = useCallback(
@@ -165,27 +213,28 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   }
 
   const handleCreateFolder = () => {
+    // Call the create folder handler (don't close the dialog)
     onCreateFolder?.()
+
+    // Invalidate the folder tree cache for the current path to force refresh
+    // This ensures the new folder appears in the sidebar tree
+    if (currentPath) {
+      invalidateFolderCache(currentPath)
+    } else {
+      // If at root, invalidate root by reloading
+      invalidateFolderCache('')
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-lg'>
         <DialogHeader>
-          <DialogTitle>{t('pages.gallery.moveItems.selectDestination')}</DialogTitle>
-          <DialogDescription>
-            {t('pages.gallery.moveItems.selectDestinationDescription')}
-          </DialogDescription>
+          <DialogTitle>{t('pages.gallery.selectFolder')}</DialogTitle>
+          <DialogDescription>{t('pages.gallery.selectFolderDescription')}</DialogDescription>
         </DialogHeader>
 
         <div className='my-4'>
-          {selectedPath !== null && (
-            <div className='bg-muted mb-3 rounded-md p-2 text-sm'>
-              <span className='text-muted-foreground'>{t('pages.gallery.moveItems.selected')}:</span>{' '}
-              <span className='font-medium'>{selectedPath === '' ? homeTitle : selectedPath}</span>
-            </div>
-          )}
-
           <ScrollArea className='border-muted h-96 w-full max-w-md overflow-x-hidden rounded-md border'>
             {isLoading ? (
               <div className='flex h-full items-center justify-center'>

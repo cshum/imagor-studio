@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { File, Folder, FolderOpen, MoveRight } from 'lucide-react'
 
+import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
+import { FolderSelectionDialog } from '@/components/image-gallery/folder-selection-dialog'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
@@ -14,9 +16,8 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { FolderSelectionDialog } from '@/components/image-gallery/folder-selection-dialog'
-import { isFolderKey } from '@/stores/selection-store'
 import { useFolderTree } from '@/stores/folder-tree-store'
+import { isFolderKey } from '@/stores/selection-store'
 
 export interface BulkMoveDialogProps {
   open: boolean
@@ -35,12 +36,15 @@ export const BulkMoveDialog: React.FC<BulkMoveDialogProps> = ({
   currentPath,
   isMoving,
   onConfirm,
-  onCreateFolder,
 }) => {
   const { t } = useTranslation()
   const { homeTitle } = useFolderTree()
   const [destinationPath, setDestinationPath] = useState<string>(currentPath || '')
   const [isFolderPickerOpen, setIsFolderPickerOpen] = useState(false)
+  const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
+  const [folderCreatedCallback, setFolderCreatedCallback] = useState<
+    ((path: string) => void) | null
+  >(null)
 
   // Split items into folders and files
   const folders = selectedItems.filter((key) => isFolderKey(key))
@@ -75,6 +79,17 @@ export const BulkMoveDialog: React.FC<BulkMoveDialogProps> = ({
 
   const handleFolderSelect = (path: string) => {
     setDestinationPath(path)
+  }
+
+  const handleCreateFolder = () => {
+    setIsCreateFolderDialogOpen(true)
+  }
+
+  const handleFolderCreated = (folderPath: string) => {
+    // Call the callback from FolderSelectionDialog to refresh its tree
+    if (folderCreatedCallback) {
+      folderCreatedCallback(folderPath)
+    }
   }
 
   // Reset destination when dialog opens
@@ -115,7 +130,7 @@ export const BulkMoveDialog: React.FC<BulkMoveDialogProps> = ({
                   {folders.map((folderKey) => (
                     <div
                       key={folderKey}
-                      className='bg-muted/50 flex min-w-0 items-center gap-2 rounded px-2 py-1.5 text-sm'
+                      className='flex min-w-0 items-center gap-2 px-2 py-1.5 text-sm'
                     >
                       <Folder className='text-primary h-4 w-4 flex-shrink-0' />
                       <span className='min-w-0 flex-1 truncate' title={getFolderName(folderKey)}>
@@ -126,7 +141,7 @@ export const BulkMoveDialog: React.FC<BulkMoveDialogProps> = ({
                   {files.map((fileKey) => (
                     <div
                       key={fileKey}
-                      className='bg-muted/50 flex min-w-0 items-center gap-2 rounded px-2 py-1.5 text-sm'
+                      className='flex min-w-0 items-center gap-2 px-2 py-1.5 text-sm'
                     >
                       <File className='text-muted-foreground h-4 w-4 flex-shrink-0' />
                       <span className='min-w-0 flex-1 truncate' title={getFileName(fileKey)}>
@@ -165,11 +180,7 @@ export const BulkMoveDialog: React.FC<BulkMoveDialogProps> = ({
             <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isMoving}>
               {t('common.buttons.cancel')}
             </Button>
-            <ButtonWithLoading
-              onClick={handleConfirm}
-              isLoading={isMoving}
-              disabled={isMoving}
-            >
+            <ButtonWithLoading onClick={handleConfirm} isLoading={isMoving} disabled={isMoving}>
               {t('pages.gallery.moveItems.confirmButton', { count: totalCount })}
             </ButtonWithLoading>
           </DialogFooter>
@@ -184,8 +195,17 @@ export const BulkMoveDialog: React.FC<BulkMoveDialogProps> = ({
         onSelect={handleFolderSelect}
         excludePaths={excludePaths}
         currentPath={currentPath}
-        showNewFolderButton={!!onCreateFolder}
-        onCreateFolder={onCreateFolder}
+        showNewFolderButton={true}
+        onCreateFolder={handleCreateFolder}
+        onFolderCreated={(callback) => setFolderCreatedCallback(() => callback)}
+      />
+
+      {/* Create Folder Dialog */}
+      <CreateFolderDialog
+        open={isCreateFolderDialogOpen}
+        onOpenChange={setIsCreateFolderDialogOpen}
+        currentPath={currentPath}
+        onFolderCreated={handleFolderCreated}
       />
     </>
   )

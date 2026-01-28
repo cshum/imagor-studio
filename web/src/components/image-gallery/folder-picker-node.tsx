@@ -1,8 +1,10 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronRight, Folder } from 'lucide-react'
+import { toast } from 'sonner'
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { listFiles } from '@/api/storage-api'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 
 export interface FolderNode {
   name: string
@@ -30,12 +32,12 @@ export function FolderPickerNode({
   onUpdateNode,
   level = 0,
 }: FolderPickerNodeProps) {
-  const [isLoading, setIsLoading] = useState(false)
-
+  const { t } = useTranslation()
   const isSelected = selectedPath === folder.path
   // Check if this folder is excluded or is a subfolder of an excluded folder
-  const isDisabled = excludePaths.has(folder.path) || 
-    Array.from(excludePaths).some(excludedPath => {
+  const isDisabled =
+    excludePaths.has(folder.path) ||
+    Array.from(excludePaths).some((excludedPath) => {
       // Check if current folder is a subfolder of any excluded path
       // e.g., if "folder1/" is excluded, "folder1/subfolder/" should also be disabled
       return excludedPath && folder.path.startsWith(excludedPath)
@@ -54,7 +56,6 @@ export function FolderPickerNode({
 
     if (!folder.isLoaded && folder.isDirectory) {
       // Load children if not loaded yet
-      setIsLoading(true)
       try {
         const result = await listFiles({
           path: folder.path,
@@ -74,10 +75,8 @@ export function FolderPickerNode({
           isLoaded: true,
           isExpanded: true,
         })
-      } catch (error) {
-        console.error('Failed to load folder children:', error)
-      } finally {
-        setIsLoading(false)
+      } catch {
+        toast.error(t('components.folderTree.loadFolderError'))
       }
     } else if (folder.isExpanded) {
       // Collapse if already expanded
@@ -92,14 +91,14 @@ export function FolderPickerNode({
   if (!canExpand) {
     return (
       <div
-        className={`hover:bg-accent flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-sm transition-colors ${
-          isSelected ? 'bg-accent' : ''
+        className={`flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-sm ${
+          isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : 'hover:bg-accent'
         } ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
         onClick={handleFolderClick}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
       >
         <div className='w-4' />
-        <Folder className='text-primary h-4 w-4 flex-shrink-0' />
+        <Folder className={`h-4 w-4 flex-shrink-0 ${isSelected ? 'text-white' : 'text-primary'}`} />
         <span className='flex-1 truncate'>{folder.name || 'Root'}</span>
       </div>
     )
@@ -112,18 +111,20 @@ export function FolderPickerNode({
       className='[&[data-state=open]>div>div>svg:first-child]:rotate-90'
     >
       <div
-        className={`hover:bg-accent flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-sm transition-colors ${
-          isSelected ? 'bg-accent' : ''
+        className={`flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-sm ${
+          isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : 'hover:bg-accent'
         } ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
         onClick={handleFolderClick}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
       >
         <CollapsibleTrigger asChild>
           <div onClick={handleExpandClick} className='flex items-center'>
-            <ChevronRight className='h-4 w-4 transition-transform' />
+            <ChevronRight
+              className={`h-4 w-4 transition-transform ${isSelected ? 'text-white' : ''}`}
+            />
           </div>
         </CollapsibleTrigger>
-        <Folder className='text-primary h-4 w-4 flex-shrink-0' />
+        <Folder className={`h-4 w-4 flex-shrink-0 ${isSelected ? 'text-white' : 'text-primary'}`} />
         <span className='flex-1 truncate'>{folder.name || 'Root'}</span>
       </div>
 
