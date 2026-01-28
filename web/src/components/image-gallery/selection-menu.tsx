@@ -45,7 +45,7 @@ export const SelectionMenu: React.FC<SelectionMenuProps> = ({
         {onMove && (
           <DropdownMenuItem onClick={onMove} className='hover:cursor-pointer'>
             <FolderInput className='mr-3 h-4 w-4' />
-            {t('pages.gallery.selection.moveSelected')}
+            {t('pages.gallery.moveItems.title')}
           </DropdownMenuItem>
         )}
         {onMove && onDelete && <DropdownMenuSeparator />}

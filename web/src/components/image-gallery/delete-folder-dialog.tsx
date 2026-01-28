@@ -34,7 +34,7 @@ export function DeleteFolderDialog({
         <DialogHeader>
           <DialogTitle>{t('pages.gallery.deleteFolder.title')}</DialogTitle>
           <DialogDescription>
-            <Trans i18nKey="pages.gallery.deleteFolder.description" values={{ folderName }}>
+            <Trans i18nKey='pages.gallery.deleteFolder.description' values={{ folderName }}>
               Are you sure you want to delete <strong>{{ folderName }}</strong>?
             </Trans>
           </DialogDescription>

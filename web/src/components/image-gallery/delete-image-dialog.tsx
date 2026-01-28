@@ -34,7 +34,7 @@ export function DeleteImageDialog({
         <DialogHeader>
           <DialogTitle>{t('pages.gallery.deleteImage.title')}</DialogTitle>
           <DialogDescription>
-            <Trans i18nKey="pages.gallery.deleteImage.description" values={{ imageName }}>
+            <Trans i18nKey='pages.gallery.deleteImage.description' values={{ imageName }}>
               Are you sure you want to delete <strong>{{ imageName }}</strong>?
             </Trans>
           </DialogDescription>
