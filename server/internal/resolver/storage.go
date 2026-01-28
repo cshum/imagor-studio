@@ -2,17 +2,21 @@ package resolver
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
 )
 
@@ -80,6 +84,17 @@ func (r *mutationResolver) CopyFile(ctx context.Context, sourcePath string, dest
 
 	if err := r.getStorage().Copy(ctx, sourcePath, destPath); err != nil {
 		r.logger.Error("Failed to copy file", zap.Error(err))
+
+		// Check if error is due to file already existing
+		if errors.Is(err, os.ErrExist) {
+			return false, &gqlerror.Error{
+				Message: "failed to copy file: file already exists",
+				Extensions: map[string]interface{}{
+					"code": apperror.ErrCodeFileAlreadyExists,
+				},
+			}
+		}
+
 		return false, fmt.Errorf("failed to copy file: %w", err)
 	}
 
@@ -100,6 +115,17 @@ func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, dest
 
 	if err := r.getStorage().Move(ctx, sourcePath, destPath); err != nil {
 		r.logger.Error("Failed to move file", zap.Error(err))
+
+		// Check if error is due to file already existing
+		if errors.Is(err, os.ErrExist) {
+			return false, &gqlerror.Error{
+				Message: "failed to move file: file already exists",
+				Extensions: map[string]interface{}{
+					"code": apperror.ErrCodeFileAlreadyExists,
+				},
+			}
+		}
+
 		return false, fmt.Errorf("failed to move file: %w", err)
 	}
 

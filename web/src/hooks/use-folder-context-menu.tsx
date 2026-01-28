@@ -98,8 +98,13 @@ export function useFolderContextMenu({
         await navigate({ to: '/' })
       }
       await router.invalidate()
-    } catch {
-      toast.error(t('pages.gallery.renameItem.error', { type: 'folder' }))
+    } catch (error: any) {
+      const errorCode = error?.response?.errors?.[0]?.extensions?.code
+      if (errorCode === 'FILE_ALREADY_EXISTS') {
+        toast.error(t('pages.gallery.renameItem.fileExists'))
+      } else {
+        toast.error(t('pages.gallery.renameItem.error', { type: 'folder' }))
+      }
     } finally {
       setIsRenaming(false)
     }

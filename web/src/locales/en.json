@@ -220,11 +220,32 @@
         "rename": "Rename",
         "success": "\"{{name}}\" renamed successfully",
         "error": "Failed to rename {{type}}",
+        "fileExists": "Cannot rename: A file or folder with this name already exists",
         "errors": {
           "nameRequired": "Name is required",
           "invalidCharacters": "Name contains invalid characters",
           "alreadyExists": "A {{type}} with this name already exists"
         }
+      },
+      "moveItems": {
+        "title": "Move Items",
+        "selectDestination": "Select Destination Folder",
+        "selectDestinationDescription": "Choose where to move the selected items.",
+        "select": "Select",
+        "move": "Move",
+        "success_one": "Successfully moved {{count}} item",
+        "success_other": "Successfully moved {{count}} items",
+        "partialSuccess": "{{success}} items moved, {{failed}} failed",
+        "error": "Failed to move items",
+        "fileExists": "Cannot move: A file or folder with this name already exists at the destination",
+        "cannotMoveToSelf": "Cannot move a folder into itself",
+        "cannotMoveToSubfolder": "Cannot move a folder into its own subfolder"
+      },
+      "dragDrop": {
+        "moveSuccess": "Successfully moved {{count}} items",
+        "partialSuccess": "Moved {{success}} items successfully, {{failed}} failed",
+        "moveError": "Failed to move items",
+        "fileExists": "Cannot move: A file or folder with this name already exists at the destination"
       },
       "selection": {
         "menu": "Selection Menu",
@@ -249,24 +270,6 @@
         "success_other": "Successfully deleted {{count}} items",
         "partialSuccess": "{{success}} items deleted, {{failed}} failed",
         "error": "Failed to delete selected items"
-      },
-      "moveItems": {
-        "title": "Move Items",
-        "selectDestination": "Select Destination Folder",
-        "selectDestinationDescription": "Choose where to move the selected items.",
-        "select": "Select",
-        "move": "Move",
-        "success_one": "Successfully moved {{count}} item",
-        "success_other": "Successfully moved {{count}} items",
-        "partialSuccess": "{{success}} items moved, {{failed}} failed",
-        "error": "Failed to move items",
-        "cannotMoveToSelf": "Cannot move a folder into itself",
-        "cannotMoveToSubfolder": "Cannot move a folder into its own subfolder"
-      },
-      "dragDrop": {
-        "moveSuccess": "Successfully moved {{count}} items",
-        "partialSuccess": "Moved {{success}} items successfully, {{failed}} failed",
-        "moveError": "Failed to move items"
       }
     },
     "profile": {

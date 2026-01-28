@@ -3,6 +3,7 @@ package resolver
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -547,6 +548,52 @@ func TestMoveFile_StorageError(t *testing.T) {
 	assert.Error(t, err)
 	assert.False(t, result)
 	assert.Contains(t, err.Error(), "failed to move file")
+	mockStorage.AssertExpectations(t)
+}
+
+func TestMoveFile_FileAlreadyExists(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-owner-id")
+	sourcePath := "/test/source.txt"
+	destPath := "/test/dest.txt"
+
+	mockStorage.On("Move", ctx, sourcePath, destPath).Return(os.ErrExist)
+
+	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath)
+
+	assert.Error(t, err)
+	assert.False(t, result)
+	assert.Contains(t, err.Error(), "file already exists")
+	mockStorage.AssertExpectations(t)
+}
+
+func TestCopyFile_FileAlreadyExists(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-owner-id")
+	sourcePath := "/test/source.txt"
+	destPath := "/test/dest.txt"
+
+	mockStorage.On("Copy", ctx, sourcePath, destPath).Return(os.ErrExist)
+
+	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath)
+
+	assert.Error(t, err)
+	assert.False(t, result)
+	assert.Contains(t, err.Error(), "file already exists")
 	mockStorage.AssertExpectations(t)
 }
 

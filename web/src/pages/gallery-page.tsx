@@ -185,6 +185,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     try {
       let successCount = 0
       let failCount = 0
+      let hasFileExistsError = false
 
       // Move all items sequentially
       for (const item of items) {
@@ -199,7 +200,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
           await moveFile(item.key, newPath)
           successCount++
-        } catch {
+        } catch (error: any) {
+          const errorCode = error?.response?.errors?.[0]?.extensions?.code
+          if (errorCode === 'FILE_ALREADY_EXISTS') {
+            hasFileExistsError = true
+          }
           failCount++
         }
       }
@@ -214,14 +219,18 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       if (failCount === 0 && successCount > 0) {
         toast.success(t('pages.gallery.dragDrop.moveSuccess', { count: successCount }))
       } else if (successCount > 0) {
-        toast.warning(
-          t('pages.gallery.dragDrop.partialSuccess', {
-            success: successCount,
-            failed: failCount,
-          }),
-        )
+        const message = hasFileExistsError
+          ? t('pages.gallery.dragDrop.fileExists')
+          : t('pages.gallery.dragDrop.partialSuccess', {
+              success: successCount,
+              failed: failCount,
+            })
+        toast.warning(message)
       } else if (failCount > 0) {
-        toast.error(t('pages.gallery.dragDrop.moveError'))
+        const message = hasFileExistsError
+          ? t('pages.gallery.dragDrop.fileExists')
+          : t('pages.gallery.dragDrop.moveError')
+        toast.error(message)
       }
     } catch {
       toast.error(t('pages.gallery.dragDrop.moveError'))
@@ -563,8 +572,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       })
       setRenameInput('')
       setRenameFileExtension('')
-    } catch {
-      toast.error(t('pages.gallery.renameItem.error', { type: renameDialog.itemType }))
+    } catch (error: any) {
+      const errorCode = error?.response?.errors?.[0]?.extensions?.code
+      if (errorCode === 'FILE_ALREADY_EXISTS') {
+        toast.error(t('pages.gallery.renameItem.fileExists'))
+      } else {
+        toast.error(t('pages.gallery.renameItem.error', { type: renameDialog.itemType }))
+      }
       setRenameDialog((prev) => ({ ...prev, isRenaming: false }))
     }
   }
@@ -887,6 +901,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       const { folders, images } = selection.splitSelections()
       let successCount = 0
       let failCount = 0
+      let hasFileExistsError = false
 
       // Move all items sequentially
       for (const folderKey of folders) {
@@ -895,7 +910,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           const newPath = destinationPath ? `${destinationPath}/${folderName}` : folderName
           await moveFile(folderKey, newPath)
           successCount++
-        } catch {
+        } catch (error: any) {
+          const errorCode = error?.response?.errors?.[0]?.extensions?.code
+          if (errorCode === 'FILE_ALREADY_EXISTS') {
+            hasFileExistsError = true
+          }
           failCount++
         }
       }
@@ -906,7 +925,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           const newPath = destinationPath ? `${destinationPath}/${imageName}` : imageName
           await moveFile(imageKey, newPath)
           successCount++
-        } catch {
+        } catch (error: any) {
+          const errorCode = error?.response?.errors?.[0]?.extensions?.code
+          if (errorCode === 'FILE_ALREADY_EXISTS') {
+            hasFileExistsError = true
+          }
           failCount++
         }
       }
@@ -925,14 +948,18 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       if (failCount === 0) {
         toast.success(t('pages.gallery.moveItems.success', { count: successCount }))
       } else if (successCount > 0) {
-        toast.warning(
-          t('pages.gallery.moveItems.partialSuccess', {
-            success: successCount,
-            failed: failCount,
-          }),
-        )
+        const message = hasFileExistsError
+          ? t('pages.gallery.moveItems.fileExists')
+          : t('pages.gallery.moveItems.partialSuccess', {
+              success: successCount,
+              failed: failCount,
+            })
+        toast.warning(message)
       } else {
-        toast.error(t('pages.gallery.moveItems.error'))
+        const message = hasFileExistsError
+          ? t('pages.gallery.moveItems.fileExists')
+          : t('pages.gallery.moveItems.error')
+        toast.error(message)
       }
     } catch {
       toast.error(t('pages.gallery.moveItems.error'))
