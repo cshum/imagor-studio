@@ -76,6 +76,7 @@ export function FolderPickerNode({
   if (!canExpand) {
     return (
       <div
+        data-folder-path={folder.path}
         className={`flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-sm ${
           isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : 'hover:bg-accent'
         } ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
@@ -96,6 +97,7 @@ export function FolderPickerNode({
       className='[&[data-state=open]>div>div>svg:first-child]:rotate-90'
     >
       <div
+        data-folder-path={folder.path}
         className={`flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-sm ${
           isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : 'hover:bg-accent'
         } ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}

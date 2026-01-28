@@ -177,6 +177,14 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
           // Auto-expand to show current path
           if (currentPath) {
             await expandToPath(currentPath)
+
+            // Scroll to the current folder after expansion
+            setTimeout(() => {
+              const element = document.querySelector(`[data-folder-path="${currentPath}"]`)
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              }
+            }, 150)
           } else {
             // Expand root by default
             setLocalExpandState((prev) => ({ ...prev, '': true }))
@@ -188,7 +196,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
 
       loadData()
     }
-  }, [open, currentPath, initialSelectedPath])
+  }, [open, currentPath, initialSelectedPath, expandToPath])
 
   // Call the onFolderCreated callback when provided
   useEffect(() => {
