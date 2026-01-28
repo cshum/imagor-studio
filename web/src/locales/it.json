@@ -238,13 +238,25 @@
         "title": "Elimina elementi selezionati",
         "description_one": "Sei sicuro di voler eliminare {{count}} elemento?",
         "description_other": "Sei sicuro di voler eliminare {{count}} elementi?",
-        "itemsToDelete": "Elementi da eliminare",
         "confirmButton_one": "Elimina {{count}} elemento",
         "confirmButton_other": "Elimina {{count}} elementi",
         "success_one": "{{count}} elemento eliminato con successo",
         "success_other": "{{count}} elementi eliminati con successo",
         "partialSuccess": "{{success}} elementi eliminati, {{failed}} non riusciti",
         "error": "Impossibile eliminare gli elementi selezionati"
+      },
+      "moveItems": {
+        "title": "Sposta elementi",
+        "selectDestination": "Seleziona cartella di destinazione",
+        "selectDestinationDescription": "Scegli dove spostare gli elementi selezionati.",
+        "select": "Seleziona",
+        "move": "Sposta",
+        "success_one": "{{count}} elemento spostato con successo",
+        "success_other": "{{count}} elementi spostati con successo",
+        "partialSuccess": "{{success}} elementi spostati, {{failed}} non riusciti",
+        "error": "Impossibile spostare gli elementi",
+        "cannotMoveToSelf": "Impossibile spostare una cartella in se stessa",
+        "cannotMoveToSubfolder": "Impossibile spostare una cartella nella propria sottocartella"
       }
     },
     "profile": {

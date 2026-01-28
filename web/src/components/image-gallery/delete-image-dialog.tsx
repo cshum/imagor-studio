@@ -1,5 +1,4 @@
-import { useTranslation } from 'react-i18next'
-import { Trash2 } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
@@ -31,20 +30,15 @@ export function DeleteImageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className='flex items-center gap-2'>
-            <Trash2 className='text-destructive h-5 w-5' />
-            {t('pages.gallery.deleteImage.title')}
-          </DialogTitle>
-          <DialogDescription className='space-y-3'>
-            <p>{t('pages.gallery.deleteImage.description')}</p>
-            <div className='bg-muted rounded-md p-3'>
-              <p className='text-foreground font-mono text-sm break-all'>{imageName}</p>
-            </div>
-            <p className='text-muted-foreground text-sm'>
-              {t('pages.gallery.deleteImage.warning')}
-            </p>
+          <DialogTitle>{t('pages.gallery.deleteImage.title')}</DialogTitle>
+          <DialogDescription>
+            <Trans
+              i18nKey='pages.gallery.deleteImage.description'
+              values={{ imageName }}
+              components={{ 1: <strong /> }}
+            />
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

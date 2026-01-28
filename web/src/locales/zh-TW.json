@@ -129,7 +129,7 @@
       "filter": {
         "filter": "篩選",
         "placeholder": "篩選",
-        "showingFiltered": "顯示 {{total}} 項中的 {{count}} 項",
+        "showingFiltered": "顯示 {{total}} 項目中的 {{count}} 項目",
         "clearFilter": "清除篩選"
       },
       "showFileNames": "顯示檔名",
@@ -227,10 +227,10 @@
       },
       "selection": {
         "menu": "選擇選單",
-        "count": "{{count}} 項",
-        "count_plural": "{{count}} 項",
-        "title": "已選擇 {{count}} 項",
-        "title_plural": "已選擇 {{count}} 項",
+        "count": "{{count}} 項目",
+        "count_plural": "{{count}} 項目",
+        "title": "已選擇 {{count}} 項目",
+        "title_plural": "已選擇 {{count}} 項目",
         "downloadAll": "全部下載",
         "deleteSelected": "刪除所選",
         "clearSelection": "清除選擇",
@@ -239,15 +239,27 @@
       },
       "bulkDelete": {
         "title": "刪除所選項目",
-        "description_one": "您確定要刪除 {{count}} 項嗎？",
-        "description_other": "您確定要刪除 {{count}} 項嗎？",
-        "itemsToDelete": "要刪除的項目",
-        "confirmButton_one": "刪除 {{count}} 項",
-        "confirmButton_other": "刪除 {{count}} 項",
-        "success_one": "成功刪除 {{count}} 項",
-        "success_other": "成功刪除 {{count}} 項",
-        "partialSuccess": "已刪除 {{success}} 項，{{failed}} 項失敗",
+        "description_one": "您確定要刪除 {{count}} 項目嗎？",
+        "description_other": "您確定要刪除 {{count}} 項目嗎？",
+        "confirmButton_one": "刪除 {{count}} 項目",
+        "confirmButton_other": "刪除 {{count}} 項目",
+        "success_one": "成功刪除 {{count}} 項目",
+        "success_other": "成功刪除 {{count}} 項目",
+        "partialSuccess": "已刪除 {{success}} 項目，{{failed}} 項目失敗",
         "error": "刪除所選項目失敗"
+      },
+      "moveItems": {
+        "title": "移動項目",
+        "selectDestination": "選擇目標資料夾",
+        "selectDestinationDescription": "選擇要移動所選項目的位置。",
+        "select": "選擇",
+        "move": "移動",
+        "success_one": "成功移動 {{count}} 項目",
+        "success_other": "成功移動 {{count}} 項目",
+        "partialSuccess": "已移動 {{success}} 項目，{{failed}} 項目失敗",
+        "error": "移動項目失敗",
+        "cannotMoveToSelf": "無法將資料夾移動到自身",
+        "cannotMoveToSubfolder": "無法將資料夾移動到其子資料夾"
       }
     },
     "profile": {

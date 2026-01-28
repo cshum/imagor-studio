@@ -25,7 +25,7 @@ export type FolderTreeAction =
   | { type: 'SET_ROOT_FOLDERS'; folders: FolderNode[] }
   | { type: 'EXPAND_FOLDER'; path: string }
   | { type: 'COLLAPSE_FOLDER'; path: string }
-  | { type: 'SET_FOLDER_CHILDREN'; path: string; children: FolderNode[] }
+  | { type: 'SET_FOLDER_CHILDREN'; path: string; children: FolderNode[]; autoExpand?: boolean }
   | { type: 'UPDATE_TREE_DATA'; path: string; folders: FolderNode[] }
   | { type: 'SET_LOADING'; path: string; loading: boolean }
   | { type: 'SET_CURRENT_PATH'; path: string }
@@ -95,6 +95,9 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
     }
 
     case 'SET_FOLDER_CHILDREN': {
+      // Default to true for backward compatibility
+      const shouldExpand = action.autoExpand !== false
+
       const updateFolder = (folders: FolderNode[]): FolderNode[] =>
         folders.map((folder) =>
           folder.path === action.path
@@ -106,7 +109,7 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
                   isExpanded: false,
                 })),
                 isLoaded: true,
-                isExpanded: true,
+                isExpanded: shouldExpand,
               }
             : folder.children
               ? { ...folder, children: updateFolder(folder.children) }
@@ -353,7 +356,7 @@ export const loadRootFolders = async () => {
   }
 }
 
-export const loadFolderChildren = async (path: string) => {
+export const loadFolderChildren = async (path: string, autoExpand: boolean = true) => {
   try {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path, loading: true })
 
@@ -370,7 +373,7 @@ export const loadFolderChildren = async (path: string) => {
       isExpanded: false,
     }))
 
-    folderTreeStore.dispatch({ type: 'SET_FOLDER_CHILDREN', path, children })
+    folderTreeStore.dispatch({ type: 'SET_FOLDER_CHILDREN', path, children, autoExpand })
   } catch {
     // Failed to load folder children - silently continue
   } finally {

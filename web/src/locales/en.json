@@ -118,6 +118,8 @@
   "pages": {
     "gallery": {
       "title": "Gallery",
+      "selectFolder": "Select Folder",
+      "selectFolderDescription": "Choose a folder from the tree below.",
       "noImages": "No images found",
       "noImagesInGallery": "No images in your gallery",
       "folderEmpty": "This folder is empty",
@@ -197,8 +199,7 @@
       },
       "deleteImage": {
         "title": "Delete Image",
-        "description": "Are you sure you want to delete this image?",
-        "warning": "This action cannot be undone.",
+        "description": "Are you sure you want to delete <1>{{imageName}}</1>?",
         "success": "\"{{fileName}}\" deleted successfully",
         "error": "Failed to delete image"
       },
@@ -207,8 +208,7 @@
       },
       "deleteFolder": {
         "title": "Delete Folder",
-        "description": "Are you sure you want to delete this folder?",
-        "warning": "This will permanently delete the folder and all its contents. This action cannot be undone.",
+        "description": "Are you sure you want to delete <1>{{folderName}}</1>?",
         "success": "\"{{folderName}}\" deleted successfully",
         "error": "Failed to delete folder"
       },
@@ -233,6 +233,7 @@
         "title": "{{count}} item selected",
         "title_plural": "{{count}} items selected",
         "downloadAll": "Download All",
+        "moveSelected": "Move to Folder",
         "deleteSelected": "Delete Selected",
         "clearSelection": "Clear Selection",
         "downloadNotImplemented": "Bulk download feature coming soon",
@@ -242,13 +243,25 @@
         "title": "Delete Selected Items",
         "description_one": "Are you sure you want to delete {{count}} item?",
         "description_other": "Are you sure you want to delete {{count}} items?",
-        "itemsToDelete": "Items to delete",
         "confirmButton_one": "Delete {{count}} Item",
         "confirmButton_other": "Delete {{count}} Items",
         "success_one": "Successfully deleted {{count}} item",
         "success_other": "Successfully deleted {{count}} items",
-        "partialSuccess": "Deleted {{success}} items, {{failed}} failed",
+        "partialSuccess": "{{success}} items deleted, {{failed}} failed",
         "error": "Failed to delete selected items"
+      },
+      "moveItems": {
+        "title": "Move Items",
+        "selectDestination": "Select Destination Folder",
+        "selectDestinationDescription": "Choose where to move the selected items.",
+        "select": "Select",
+        "move": "Move",
+        "success_one": "Successfully moved {{count}} item",
+        "success_other": "Successfully moved {{count}} items",
+        "partialSuccess": "{{success}} items moved, {{failed}} failed",
+        "error": "Failed to move items",
+        "cannotMoveToSelf": "Cannot move a folder into itself",
+        "cannotMoveToSubfolder": "Cannot move a folder into its own subfolder"
       }
     },
     "profile": {
@@ -593,7 +606,8 @@
   "components": {
     "folderTree": {
       "folders": "Folders",
-      "noFoldersFound": "No folders found"
+      "noFoldersFound": "No folders found",
+      "loadFolderError": "Failed to load folder contents"
     },
     "licenseBadge": {
       "unregistered": "Unregistered"
