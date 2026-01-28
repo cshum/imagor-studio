@@ -224,6 +224,30 @@
           "invalidCharacters": "名稱包含無效字元",
           "alreadyExists": "已存在同名的{{type}}"
         }
+      },
+      "selection": {
+        "menu": "選擇選單",
+        "count": "{{count}} 項",
+        "count_plural": "{{count}} 項",
+        "title": "已選擇 {{count}} 項",
+        "title_plural": "已選擇 {{count}} 項",
+        "downloadAll": "全部下載",
+        "deleteSelected": "刪除所選",
+        "clearSelection": "清除選擇",
+        "downloadNotImplemented": "批次下載功能即將推出",
+        "deleteNotImplemented": "批次刪除功能即將推出"
+      },
+      "bulkDelete": {
+        "title": "刪除所選項目",
+        "description_one": "您確定要刪除 {{count}} 項嗎？",
+        "description_other": "您確定要刪除 {{count}} 項嗎？",
+        "itemsToDelete": "要刪除的項目",
+        "confirmButton_one": "刪除 {{count}} 項",
+        "confirmButton_other": "刪除 {{count}} 項",
+        "success_one": "成功刪除 {{count}} 項",
+        "success_other": "成功刪除 {{count}} 項",
+        "partialSuccess": "已刪除 {{success}} 項，{{failed}} 項失敗",
+        "error": "刪除所選項目失敗"
       }
     },
     "profile": {

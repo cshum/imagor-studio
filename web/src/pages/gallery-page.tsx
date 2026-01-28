@@ -24,6 +24,7 @@ import { generateImagorUrl } from '@/api/imagor-api'
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { deleteFile, moveFile } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
+import { BulkDeleteDialog } from '@/components/image-gallery/bulk-delete-dialog'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
 import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
 import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialog'
@@ -147,6 +148,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     url: '',
   })
   const [filterText, setFilterText] = useState('')
+  const [bulkDeleteDialog, setBulkDeleteDialog] = useState<{
+    open: boolean
+    isDeleting: boolean
+  }>({
+    open: false,
+    isDeleting: false,
+  })
 
   // Selection store
   const selection = useSelection()
@@ -702,14 +710,79 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   }
 
   // Bulk selection handlers
-  const handleBulkDownload = () => {
-    toast.info(t('pages.gallery.selection.downloadNotImplemented'))
-    // TODO: Implement bulk download
+  const handleBulkDelete = () => {
+    // Use setTimeout to avoid Radix UI bug when opening dialog from dropdown menu
+    setTimeout(() => {
+      setBulkDeleteDialog({
+        open: true,
+        isDeleting: false,
+      })
+    }, 0)
   }
 
-  const handleBulkDelete = () => {
-    toast.info(t('pages.gallery.selection.deleteNotImplemented'))
-    // TODO: Implement bulk delete with confirmation dialog
+  const handleConfirmBulkDelete = async () => {
+    setBulkDeleteDialog((prev) => ({ ...prev, isDeleting: true }))
+
+    try {
+      const { folders, images } = selection.splitSelections()
+      let successCount = 0
+      let failCount = 0
+
+      // Delete all items sequentially
+      for (const folderKey of folders) {
+        try {
+          await deleteFile(folderKey)
+          successCount++
+        } catch {
+          failCount++
+        }
+      }
+
+      for (const imageKey of images) {
+        try {
+          await deleteFile(imageKey)
+          successCount++
+        } catch {
+          failCount++
+        }
+      }
+
+      // Close dialog and clear selection
+      setBulkDeleteDialog({
+        open: false,
+        isDeleting: false,
+      })
+      selection.clearSelection()
+
+      // Refresh gallery
+      router.invalidate()
+
+      // Show result toast
+      if (failCount === 0) {
+        toast.success(t('pages.gallery.bulkDelete.success', { count: successCount }))
+      } else if (successCount > 0) {
+        toast.warning(
+          t('pages.gallery.bulkDelete.partialSuccess', {
+            success: successCount,
+            failed: failCount,
+          }),
+        )
+      } else {
+        toast.error(t('pages.gallery.bulkDelete.error'))
+      }
+    } catch {
+      toast.error(t('pages.gallery.bulkDelete.error'))
+      setBulkDeleteDialog((prev) => ({ ...prev, isDeleting: false }))
+    }
+  }
+
+  const handleBulkDeleteDialogClose = (open: boolean) => {
+    if (!bulkDeleteDialog.isDeleting) {
+      setBulkDeleteDialog({
+        open,
+        isDeleting: false,
+      })
+    }
   }
 
   const handleClearSelection = () => {
@@ -860,7 +933,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
               authState.state === 'authenticated' ? (
                 <SelectionMenu
                   selectedCount={selection.selectedItems.size}
-                  onDownload={handleBulkDownload}
                   onDelete={handleBulkDelete}
                   onClear={handleClearSelection}
                 />
@@ -958,6 +1030,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         folderName={deleteFolderDialog.folderName || ''}
         isDeleting={deleteFolderDialog.isDeleting}
         onConfirm={handleDeleteFolder}
+      />
+
+      <BulkDeleteDialog
+        open={bulkDeleteDialog.open}
+        onOpenChange={handleBulkDeleteDialogClose}
+        selectedItems={Array.from(selection.selectedItems)}
+        isDeleting={bulkDeleteDialog.isDeleting}
+        onConfirm={handleConfirmBulkDelete}
       />
 
       <CopyUrlDialog

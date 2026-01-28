@@ -237,6 +237,18 @@
         "clearSelection": "Clear Selection",
         "downloadNotImplemented": "Bulk download feature coming soon",
         "deleteNotImplemented": "Bulk delete feature coming soon"
+      },
+      "bulkDelete": {
+        "title": "Delete Selected Items",
+        "description_one": "Are you sure you want to delete {{count}} item?",
+        "description_other": "Are you sure you want to delete {{count}} items?",
+        "itemsToDelete": "Items to delete",
+        "confirmButton_one": "Delete {{count}} Item",
+        "confirmButton_other": "Delete {{count}} Items",
+        "success_one": "Successfully deleted {{count}} item",
+        "success_other": "Successfully deleted {{count}} items",
+        "partialSuccess": "Deleted {{success}} items, {{failed}} failed",
+        "error": "Failed to delete selected items"
       }
     },
     "profile": {
