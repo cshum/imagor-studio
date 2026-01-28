@@ -62,7 +62,7 @@ export const BulkDeleteDialog: React.FC<BulkDeleteDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className='my-4'>
+        <div className='my-4 overflow-x-hidden'>
           <div className='text-muted-foreground mb-2 text-sm font-medium'>
             {t('pages.gallery.bulkDelete.itemsToDelete')}:
           </div>
@@ -71,19 +71,23 @@ export const BulkDeleteDialog: React.FC<BulkDeleteDialogProps> = ({
               {folders.map((folderKey) => (
                 <div
                   key={folderKey}
-                  className='bg-muted/50 flex items-center gap-2 rounded px-2 py-1.5 text-sm'
+                  className='bg-muted/50 flex min-w-0 items-center gap-2 rounded px-2 py-1.5 text-sm'
                 >
                   <Folder className='text-primary h-4 w-4 flex-shrink-0' />
-                  <span className='truncate'>{getFolderName(folderKey)}</span>
+                  <span className='min-w-0 flex-1 truncate' title={getFolderName(folderKey)}>
+                    {getFolderName(folderKey)}
+                  </span>
                 </div>
               ))}
               {files.map((fileKey) => (
                 <div
                   key={fileKey}
-                  className='bg-muted/50 flex items-center gap-2 rounded px-2 py-1.5 text-sm'
+                  className='bg-muted/50 flex min-w-0 items-center gap-2 rounded px-2 py-1.5 text-sm'
                 >
                   <File className='text-muted-foreground h-4 w-4 flex-shrink-0' />
-                  <span className='truncate'>{getFileName(fileKey)}</span>
+                  <span className='min-w-0 flex-1 truncate' title={getFileName(fileKey)}>
+                    {getFileName(fileKey)}
+                  </span>
                 </div>
               ))}
             </div>
