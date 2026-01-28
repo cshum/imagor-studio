@@ -234,8 +234,8 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
           <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
 
-        <div className='my-4'>
-          <ScrollArea className='border-muted h-96 w-full max-w-md overflow-x-hidden rounded-md border [&>div>div]:!block [&>div>div]:!min-w-0'>
+        <div>
+          <ScrollArea className='border-muted h-96 w-full max-w-[340px] overflow-x-hidden rounded-md border md:max-w-[460px] [&>div>div]:!block [&>div>div]:!min-w-0'>
             {isLoading ? (
               <div className='flex h-full items-center justify-center'>
                 <div className='text-muted-foreground text-sm'>{t('common.status.loading')}</div>
@@ -247,7 +247,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
                 </div>
               </div>
             ) : (
-              <div className='min-w-0 w-full space-y-0.5 p-2'>
+              <div className='w-full min-w-0 space-y-0.5 p-2'>
                 {tree.map((folder) => (
                   <FolderPickerNode
                     key={folder.path}
