@@ -29,7 +29,9 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useBreadcrumb } from '@/hooks/use-breadcrumb'
 import { availableLanguages } from '@/i18n'
+import { cn } from '@/lib/utils'
 import { useAuth } from '@/stores/auth-store'
+import { useDragDrop } from '@/stores/drag-drop-store'
 import { setLocale } from '@/stores/locale-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
@@ -37,18 +39,40 @@ interface HeaderBarProps {
   isScrolled?: boolean
   customMenuItems?: React.ReactNode
   selectionMenu?: React.ReactNode
+  dragDropHandlers?: {
+    handleDragOver: (e: React.DragEvent, folderKey: string) => void
+    handleDragEnter: (e: React.DragEvent, folderKey: string) => void
+    handleDragLeave: (e: React.DragEvent, folderKey: string) => void
+    handleDrop: (e: React.DragEvent, folderKey: string) => void
+  }
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
   isScrolled: isScrolledDown = false,
   customMenuItems,
   selectionMenu,
+  dragDropHandlers,
 }) => {
   const { t, i18n } = useTranslation()
   const { logout, authState } = useAuth()
   const navigate = useNavigate()
   const breadcrumbs = useBreadcrumb()
   const sidebar = useSidebar()
+  const dragState = useDragDrop()
+
+  // Extract folder key from breadcrumb href
+  // e.g., "/gallery/folder1/folder2" → "folder1/folder2"
+  // e.g., "/" → "" (root)
+  const getFolderKeyFromHref = (href: string): string => {
+    if (!href || href === '/') return ''
+
+    // Remove leading slash and "gallery/" prefix
+    const path = href.replace(/^\//, '')
+    if (path.startsWith('gallery/')) {
+      return path.substring(8) // Remove "gallery/"
+    }
+    return ''
+  }
 
   // Get user display name
   const getUserDisplayName = () => {
@@ -112,24 +136,59 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
               {/* Desktop: Dynamic breadcrumb */}
               <Breadcrumb className='hidden sm:block'>
                 <BreadcrumbList>
-                  {breadcrumbs.map((breadcrumb, index) => (
-                    <React.Fragment key={index}>
-                      <BreadcrumbItem>
-                        {breadcrumb.href && !breadcrumb.isActive ? (
-                          <BreadcrumbLink asChild>
-                            <Link to={breadcrumb.href} draggable={false}>
+                  {breadcrumbs.map((breadcrumb, index) => {
+                    const folderKey = breadcrumb.href ? getFolderKeyFromHref(breadcrumb.href) : ''
+                    const isDropTarget = dragState.dragOverTarget === folderKey
+                    const isDragging = dragState.isDragging
+                    const canDrop = dragDropHandlers && breadcrumb.href && !breadcrumb.isActive
+
+                    return (
+                      <React.Fragment key={index}>
+                        <BreadcrumbItem>
+                          {breadcrumb.href && !breadcrumb.isActive ? (
+                            <div
+                              className={cn(
+                                'rounded-md transition-all duration-150',
+                                canDrop && isDragging && 'px-2 py-1',
+                                isDropTarget && 'bg-blue-50 ring-2 ring-blue-500 dark:bg-blue-950',
+                              )}
+                              onDragOver={
+                                canDrop
+                                  ? (e) => dragDropHandlers.handleDragOver(e, folderKey)
+                                  : undefined
+                              }
+                              onDragEnter={
+                                canDrop
+                                  ? (e) => dragDropHandlers.handleDragEnter(e, folderKey)
+                                  : undefined
+                              }
+                              onDragLeave={
+                                canDrop
+                                  ? (e) => dragDropHandlers.handleDragLeave(e, folderKey)
+                                  : undefined
+                              }
+                              onDrop={
+                                canDrop
+                                  ? (e) => dragDropHandlers.handleDrop(e, folderKey)
+                                  : undefined
+                              }
+                            >
+                              <BreadcrumbLink asChild>
+                                <Link to={breadcrumb.href} draggable={false}>
+                                  {breadcrumb.label}
+                                </Link>
+                              </BreadcrumbLink>
+                            </div>
+                          ) : (
+                            <span className={breadcrumb.isActive ? 'font-medium' : ''}>
                               {breadcrumb.label}
-                            </Link>
-                          </BreadcrumbLink>
-                        ) : (
-                          <span className={breadcrumb.isActive ? 'font-medium' : ''}>
-                            {breadcrumb.label}
-                          </span>
-                        )}
-                      </BreadcrumbItem>
-                      {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
-                    </React.Fragment>
-                  ))}
+                            </span>
+                          )}
+                        </BreadcrumbItem>
+                        {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
+                      </React.Fragment>
+                    )
+                  })}
                 </BreadcrumbList>
               </Breadcrumb>
             </div>

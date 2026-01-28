@@ -1117,6 +1117,16 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                 />
               ) : null
             }
+            dragDropHandlers={
+              authState.state === 'authenticated'
+                ? {
+                    handleDragOver,
+                    handleDragEnter,
+                    handleDragLeave,
+                    handleDrop,
+                  }
+                : undefined
+            }
           />
 
           <Card className='rounded-lg border-none'>
