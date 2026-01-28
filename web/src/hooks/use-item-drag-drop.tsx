@@ -135,23 +135,17 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
       e.preventDefault()
       e.stopPropagation()
 
-      const data = e.dataTransfer.getData('application/json')
-      if (!data) return
-
-      try {
-        const dragData: DragData = JSON.parse(data)
-        if (dragData.type !== 'imagor-items') return
-
-        if (isValidDropTarget(targetFolderKey, dragData.items)) {
+      // Set drop effect based on whether we're currently dragging
+      // We can't read dataTransfer.getData during dragOver, so we rely on isDragging state
+      if (dragState.isDragging) {
+        if (isValidDropTarget(targetFolderKey, dragState.draggedItems)) {
           e.dataTransfer.dropEffect = 'move'
         } else {
           e.dataTransfer.dropEffect = 'none'
         }
-      } catch {
-        // Invalid drag data
       }
     },
-    [isAuthenticated, isValidDropTarget],
+    [isAuthenticated, isValidDropTarget, dragState.isDragging, dragState.draggedItems],
   )
 
   // Handle drag enter
@@ -164,24 +158,15 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
       e.preventDefault()
       e.stopPropagation()
 
-      const data = e.dataTransfer.getData('application/json')
-      if (!data) return
-
-      try {
-        const dragData: DragData = JSON.parse(data)
-        if (dragData.type !== 'imagor-items') return
-
-        if (isValidDropTarget(targetFolderKey, dragData.items)) {
-          setDragState((prev) => ({
-            ...prev,
-            dragOverTarget: targetFolderKey,
-          }))
-        }
-      } catch {
-        // Invalid drag data
+      // Update drag over target if we're currently dragging and it's a valid target
+      if (dragState.isDragging && isValidDropTarget(targetFolderKey, dragState.draggedItems)) {
+        setDragState((prev) => ({
+          ...prev,
+          dragOverTarget: targetFolderKey,
+        }))
       }
     },
-    [isAuthenticated, isValidDropTarget],
+    [isAuthenticated, isValidDropTarget, dragState.isDragging, dragState.draggedItems],
   )
 
   // Handle drag leave
@@ -194,7 +179,17 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
       e.preventDefault()
       e.stopPropagation()
 
-      // Only clear if leaving the current target
+      // Check if we're actually leaving the folder or just moving to a child element
+      const currentTarget = e.currentTarget as HTMLElement
+      const relatedTarget = e.relatedTarget as Node | null
+
+      // Only clear if we're actually leaving the folder (not moving to a child)
+      if (relatedTarget && currentTarget.contains(relatedTarget)) {
+        // Still inside the folder, don't clear
+        return
+      }
+
+      // Actually leaving the folder, clear the indicator
       setDragState((prev) => {
         if (prev.dragOverTarget === targetFolderKey) {
           return {
