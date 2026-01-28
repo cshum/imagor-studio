@@ -49,22 +49,45 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
       // Mark as internal drag to prevent GalleryDropZone from activating
       e.dataTransfer.setData('application/x-imagor-internal', 'true')
 
-      // Set drag image to show count if multiple items
-      if (items.length > 1) {
-        const dragImage = document.createElement('div')
-        dragImage.style.position = 'absolute'
-        dragImage.style.top = '-1000px'
-        dragImage.style.padding = '8px 12px'
-        dragImage.style.backgroundColor = '#3b82f6'
-        dragImage.style.color = 'white'
-        dragImage.style.borderRadius = '6px'
-        dragImage.style.fontSize = '14px'
-        dragImage.style.fontWeight = '600'
-        dragImage.textContent = `${items.length} items`
-        document.body.appendChild(dragImage)
-        e.dataTransfer.setDragImage(dragImage, 0, 0)
-        setTimeout(() => document.body.removeChild(dragImage), 0)
+      // Create unified drag preview badge for both single and multiple items
+      const dragImage = document.createElement('div')
+      dragImage.style.position = 'absolute'
+      dragImage.style.top = '-1000px'
+      dragImage.style.padding = '10px 14px'
+      dragImage.style.backgroundColor = 'rgba(59, 130, 246, 0.95)'
+      dragImage.style.color = 'white'
+      dragImage.style.borderRadius = '8px'
+      dragImage.style.fontSize = '13px'
+      dragImage.style.fontWeight = '600'
+      dragImage.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)'
+      dragImage.style.display = 'flex'
+      dragImage.style.alignItems = 'center'
+      dragImage.style.gap = '8px'
+      dragImage.style.maxWidth = '200px'
+      dragImage.style.whiteSpace = 'nowrap'
+      dragImage.style.overflow = 'hidden'
+
+      if (items.length === 1) {
+        // Single item: Show Lucide icon + truncated name
+        const item = items[0]
+        // Lucide Folder or Image icon SVG
+        const iconSvg =
+          item.type === 'folder'
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>'
+            : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>'
+        const truncatedName =
+          item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name
+        dragImage.innerHTML = `<span style="display: flex; align-items: center; flex-shrink: 0;">${iconSvg}</span><span style="overflow: hidden; text-overflow: ellipsis;">${truncatedName}</span>`
+      } else {
+        // Multiple items: Show Lucide Layers icon + count
+        const layersIconSvg =
+          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>'
+        dragImage.innerHTML = `<span style="display: flex; align-items: center; flex-shrink: 0;">${layersIconSvg}</span><span>${items.length} items</span>`
       }
+
+      document.body.appendChild(dragImage)
+      e.dataTransfer.setDragImage(dragImage, 0, 0)
+      setTimeout(() => document.body.removeChild(dragImage), 0)
 
       setDragState({
         isDragging: true,
