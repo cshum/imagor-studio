@@ -63,7 +63,7 @@ import { Input } from '@/components/ui/input'
 import { UploadProgress } from '@/components/upload/upload-progress.tsx'
 import { ImagorParamsInput, SortOption, SortOrder } from '@/generated/graphql'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
-import { DragDropFile } from '@/hooks/use-drag-drop.ts'
+import { DragDropFile } from '@/hooks/use-drag-drop'
 import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
 import { useGalleryKeyboardNavigation } from '@/hooks/use-gallery-keyboard-navigation'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
@@ -190,7 +190,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         try {
           const itemName = item.key.split('/').filter(Boolean).pop() || ''
           const newPath = targetFolderKey ? `${targetFolderKey}/${itemName}` : itemName
-          
+
           // Skip if source and destination are the same
           if (item.key === newPath) {
             continue

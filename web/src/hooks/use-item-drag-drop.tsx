@@ -1,4 +1,6 @@
-import { useCallback, useState } from 'react'
+import React, { useCallback, useState } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { Folder, Image, Layers } from 'lucide-react'
 
 export interface DragItem {
   key: string // Full path
@@ -49,40 +51,31 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
       // Mark as internal drag to prevent GalleryDropZone from activating
       e.dataTransfer.setData('application/x-imagor-internal', 'true')
 
-      // Create unified drag preview badge for both single and multiple items
+      // Create unified drag preview badge using React component with JSX
       const dragImage = document.createElement('div')
-      dragImage.style.position = 'absolute'
-      dragImage.style.top = '-1000px'
-      dragImage.style.padding = '10px 14px'
-      dragImage.style.backgroundColor = 'rgba(59, 130, 246, 0.95)'
-      dragImage.style.color = 'white'
-      dragImage.style.borderRadius = '8px'
-      dragImage.style.fontSize = '13px'
-      dragImage.style.fontWeight = '600'
-      dragImage.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)'
-      dragImage.style.display = 'flex'
-      dragImage.style.alignItems = 'center'
-      dragImage.style.gap = '8px'
-      dragImage.style.maxWidth = '200px'
-      dragImage.style.whiteSpace = 'nowrap'
-      dragImage.style.overflow = 'hidden'
+
+      // Render the entire badge as a React component with Tailwind CSS
+      const DragPreviewBadge = ({ icon, text }: { icon: React.ReactElement; text: string }) => (
+        <div className="absolute -top-[1000px] flex items-center gap-2 px-3.5 py-2.5 bg-blue-500/95 text-white rounded-lg text-sm font-semibold shadow-lg max-w-[200px] whitespace-nowrap overflow-hidden">
+          <span className="flex items-center flex-shrink-0">{icon}</span>
+          <span className="overflow-hidden text-ellipsis">{text}</span>
+        </div>
+      )
 
       if (items.length === 1) {
         // Single item: Show Lucide icon + truncated name
         const item = items[0]
-        // Lucide Folder or Image icon SVG
-        const iconSvg =
-          item.type === 'folder'
-            ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>'
-            : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>'
+        const IconComponent = item.type === 'folder' ? Folder : Image
         const truncatedName =
           item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name
-        dragImage.innerHTML = `<span style="display: flex; align-items: center; flex-shrink: 0;">${iconSvg}</span><span style="overflow: hidden; text-overflow: ellipsis;">${truncatedName}</span>`
+        dragImage.innerHTML = renderToStaticMarkup(
+          <DragPreviewBadge icon={<IconComponent size={16} />} text={truncatedName} />,
+        )
       } else {
         // Multiple items: Show Lucide Layers icon + count
-        const layersIconSvg =
-          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>'
-        dragImage.innerHTML = `<span style="display: flex; align-items: center; flex-shrink: 0;">${layersIconSvg}</span><span>${items.length} items</span>`
+        dragImage.innerHTML = renderToStaticMarkup(
+          <DragPreviewBadge icon={<Layers size={16} />} text={`${items.length} items`} />,
+        )
       }
 
       document.body.appendChild(dragImage)
