@@ -8,7 +8,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useSelection } from '@/stores/selection-store'
 
 export interface Gallery {
   galleryKey: string
@@ -36,7 +35,6 @@ interface FolderCardProps {
   foldersVisible: boolean
   focusedIndex: number
   isSelected?: boolean
-  hasAnySelection?: boolean
   folderRef?: (el: HTMLDivElement | null) => void
   onFolderKeyDown?: (event: React.KeyboardEvent, index: number) => void
   onFolderClick?: (folder: Gallery, index: number, event?: React.MouseEvent) => void
@@ -51,7 +49,6 @@ const FolderCard = ({
   foldersVisible,
   focusedIndex,
   isSelected = false,
-  hasAnySelection = false,
   folderRef,
   onFolderKeyDown,
   onFolderClick,
@@ -70,13 +67,16 @@ const FolderCard = ({
       ref={folderRef}
       className={`group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${isSelected ? 'ring-2 ring-blue-600' : ''}`}
       onClick={(e) => {
-        if (hasAnySelection && onSelectionToggle) {
-          // Selection mode active: toggle this folder's selection
+        // Check for Cmd/Ctrl+Click for selection
+        if ((e.metaKey || e.ctrlKey) && onSelectionToggle) {
+          e.preventDefault()
+          e.stopPropagation()
           onSelectionToggle(folder.galleryKey, index, e)
-        } else {
-          // Normal mode: navigate to folder
-          onFolderClick?.(folder, index, e)
+          return
         }
+
+        // Normal click: always navigate to folder
+        onFolderClick?.(folder, index, e)
       }}
       onKeyDown={(e) => onFolderKeyDown?.(e, index)}
       tabIndex={
@@ -162,9 +162,6 @@ export const FolderGrid = ({
   onFolderSelectionToggle,
   renderMenuItems,
 }: FolderGridProps) => {
-  const { selectedItems } = useSelection()
-  const hasAnySelection = selectedItems.size > 0
-
   const columnCount = Math.max(2, Math.floor(width / maxFolderWidth))
   const folderWidth = width / columnCount
 
@@ -206,7 +203,6 @@ export const FolderGrid = ({
             onFolderKeyDown={onFolderKeyDown}
             onFolderClick={onFolderClick}
             onSelectionToggle={onFolderSelectionToggle}
-            hasAnySelection={hasAnySelection}
             renderMenuItems={renderMenuItems}
           />
         )
