@@ -262,9 +262,20 @@ export function FolderTreeSidebar({ onDrop, ...props }: FolderTreeSidebarProps) 
           <SidebarGroupLabel>{t('components.folderTree.folders')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu onDragLeave={handleContainerDragLeave}>
-              {/* Home Link as first item */}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isOnHomePage}>
+              {/* Home Link as first item - droppable for moving items to root */}
+              <SidebarMenuItem
+                onDragOver={(e) => handleDragOver(e, '')}
+                onDragEnter={(e) => handleDragEnter(e, '')}
+                onDragLeave={(e) => handleDragLeave(e, '')}
+                onDrop={(e) => handleDrop(e, '')}
+              >
+                <SidebarMenuButton
+                  asChild
+                  isActive={isOnHomePage}
+                  className={
+                    dragOverTarget === '' ? 'bg-blue-100 ring-2 ring-blue-500 dark:bg-blue-950' : ''
+                  }
+                >
                   <Link to='/' onClick={handleHomeClick}>
                     <Home className='h-4 w-4' />
                     <span>{homeTitle}</span>
