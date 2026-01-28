@@ -129,7 +129,7 @@
       "filter": {
         "filter": "筛选",
         "placeholder": "筛选",
-        "showingFiltered": "显示 {{total}} 项中的 {{count}} 项",
+        "showingFiltered": "显示 {{total}} 项目中的 {{count}} 项目",
         "clearFilter": "清除筛选"
       },
       "showFileNames": "显示文件名",
@@ -227,10 +227,10 @@
       },
       "selection": {
         "menu": "选择菜单",
-        "count": "{{count}} 项",
-        "count_plural": "{{count}} 项",
-        "title": "已选择 {{count}} 项",
-        "title_plural": "已选择 {{count}} 项",
+        "count": "{{count}} 项目",
+        "count_plural": "{{count}} 项目",
+        "title": "已选择 {{count}} 项目",
+        "title_plural": "已选择 {{count}} 项目",
         "downloadAll": "全部下载",
         "deleteSelected": "删除所选",
         "clearSelection": "清除选择",
@@ -239,13 +239,13 @@
       },
       "bulkDelete": {
         "title": "删除所选项目",
-        "description_one": "您确定要删除 {{count}} 项吗？",
-        "description_other": "您确定要删除 {{count}} 项吗？",
-        "confirmButton_one": "删除 {{count}} 项",
-        "confirmButton_other": "删除 {{count}} 项",
-        "success_one": "成功删除 {{count}} 项",
-        "success_other": "成功删除 {{count}} 项",
-        "partialSuccess": "已删除 {{success}} 项，{{failed}} 项失败",
+        "description_one": "您确定要删除 {{count}} 项目吗？",
+        "description_other": "您确定要删除 {{count}} 项目吗？",
+        "confirmButton_one": "删除 {{count}} 项目",
+        "confirmButton_other": "删除 {{count}} 项目",
+        "success_one": "成功删除 {{count}} 项目",
+        "success_other": "成功删除 {{count}} 项目",
+        "partialSuccess": "已删除 {{success}} 项目，{{failed}} 项目失败",
         "error": "删除所选项目失败"
       },
       "moveItems": {
@@ -254,9 +254,9 @@
         "selectDestinationDescription": "选择要移动所选项目的位置。",
         "select": "选择",
         "move": "移动",
-        "success_one": "成功移动 {{count}} 项",
-        "success_other": "成功移动 {{count}} 项",
-        "partialSuccess": "已移动 {{success}} 项，{{failed}} 项失败",
+        "success_one": "成功移动 {{count}} 项目",
+        "success_other": "成功移动 {{count}} 项目",
+        "partialSuccess": "已移动 {{success}} 项目，{{failed}} 项目失败",
         "error": "移动项目失败",
         "cannotMoveToSelf": "无法将文件夹移动到自身",
         "cannotMoveToSubfolder": "无法将文件夹移动到其子文件夹"
