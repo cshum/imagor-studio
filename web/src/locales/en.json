@@ -233,6 +233,7 @@
         "title": "{{count}} item selected",
         "title_plural": "{{count}} items selected",
         "downloadAll": "Download All",
+        "moveSelected": "Move to Folder",
         "deleteSelected": "Delete Selected",
         "clearSelection": "Clear Selection",
         "downloadNotImplemented": "Bulk download feature coming soon",
@@ -247,8 +248,29 @@
         "confirmButton_other": "Delete {{count}} Items",
         "success_one": "Successfully deleted {{count}} item",
         "success_other": "Successfully deleted {{count}} items",
-        "partialSuccess": "Deleted {{success}} items, {{failed}} failed",
+        "partialSuccess": "{{success}} items deleted, {{failed}} failed",
         "error": "Failed to delete selected items"
+      },
+      "moveItems": {
+        "title": "Move Items",
+        "description_one": "Move {{count}} item to a new location",
+        "description_other": "Move {{count}} items to a new location",
+        "itemsToMove": "Items to move",
+        "destinationFolder": "Destination folder",
+        "browse": "Browse",
+        "selectDestination": "Select Destination Folder",
+        "selectDestinationDescription": "Choose where to move the selected items.",
+        "selected": "Selected",
+        "select": "Select",
+        "moving": "Moving...",
+        "confirmButton_one": "Move {{count}} Item",
+        "confirmButton_other": "Move {{count}} Items",
+        "success_one": "Successfully moved {{count}} item",
+        "success_other": "Successfully moved {{count}} items",
+        "partialSuccess": "{{success}} items moved, {{failed}} failed",
+        "error": "Failed to move items",
+        "cannotMoveToSelf": "Cannot move a folder into itself",
+        "cannotMoveToSubfolder": "Cannot move a folder into its own subfolder"
       }
     },
     "profile": {

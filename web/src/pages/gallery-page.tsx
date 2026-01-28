@@ -30,6 +30,7 @@ import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dia
 import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialog'
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
+import { BulkMoveDialog } from '@/components/image-gallery/bulk-move-dialog'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
 import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
@@ -154,6 +155,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   }>({
     open: false,
     isDeleting: false,
+  })
+  const [moveDialog, setMoveDialog] = useState<{
+    open: boolean
+    isMoving: boolean
+  }>({
+    open: false,
+    isMoving: false,
   })
 
   // Selection store
@@ -789,6 +797,86 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     selection.clearSelection()
   }
 
+  // Bulk move handlers
+  const handleBulkMove = () => {
+    // Use setTimeout to avoid Radix UI bug when opening dialog from dropdown menu
+    setTimeout(() => {
+      setMoveDialog({
+        open: true,
+        isMoving: false,
+      })
+    }, 0)
+  }
+
+  const handleMoveDialogClose = (open: boolean) => {
+    if (!moveDialog.isMoving) {
+      setMoveDialog({
+        open,
+        isMoving: false,
+      })
+    }
+  }
+
+  const handleConfirmMove = async (destinationPath: string) => {
+    setMoveDialog((prev) => ({ ...prev, isMoving: true }))
+
+    try {
+      const { folders, images } = selection.splitSelections()
+      let successCount = 0
+      let failCount = 0
+
+      // Move all items sequentially
+      for (const folderKey of folders) {
+        try {
+          const folderName = folderKey.split('/').filter(Boolean).pop() || ''
+          const newPath = destinationPath ? `${destinationPath}/${folderName}` : folderName
+          await moveFile(folderKey, newPath)
+          successCount++
+        } catch {
+          failCount++
+        }
+      }
+
+      for (const imageKey of images) {
+        try {
+          const imageName = imageKey.split('/').pop() || ''
+          const newPath = destinationPath ? `${destinationPath}/${imageName}` : imageName
+          await moveFile(imageKey, newPath)
+          successCount++
+        } catch {
+          failCount++
+        }
+      }
+
+      // Close dialog and clear selection
+      setMoveDialog({
+        open: false,
+        isMoving: false,
+      })
+      selection.clearSelection()
+
+      // Refresh gallery
+      router.invalidate()
+
+      // Show result toast
+      if (failCount === 0) {
+        toast.success(t('pages.gallery.moveItems.success', { count: successCount }))
+      } else if (successCount > 0) {
+        toast.warning(
+          t('pages.gallery.moveItems.partialSuccess', {
+            success: successCount,
+            failed: failCount,
+          }),
+        )
+      } else {
+        toast.error(t('pages.gallery.moveItems.error'))
+      }
+    } catch {
+      toast.error(t('pages.gallery.moveItems.error'))
+      setMoveDialog((prev) => ({ ...prev, isMoving: false }))
+    }
+  }
+
   // Create menu items for authenticated users
   const customMenuItems =
     authState.state === 'authenticated' ? (
@@ -933,6 +1021,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
               authState.state === 'authenticated' ? (
                 <SelectionMenu
                   selectedCount={selection.selectedItems.size}
+                  onMove={handleBulkMove}
                   onDelete={handleBulkDelete}
                   onClear={handleClearSelection}
                 />
@@ -1038,6 +1127,16 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         selectedItems={Array.from(selection.selectedItems)}
         isDeleting={bulkDeleteDialog.isDeleting}
         onConfirm={handleConfirmBulkDelete}
+      />
+
+      <BulkMoveDialog
+        open={moveDialog.open}
+        onOpenChange={handleMoveDialogClose}
+        selectedItems={Array.from(selection.selectedItems)}
+        currentPath={galleryKey}
+        isMoving={moveDialog.isMoving}
+        onConfirm={handleConfirmMove}
+        onCreateFolder={() => setIsCreateFolderDialogOpen(true)}
       />
 
       <CopyUrlDialog

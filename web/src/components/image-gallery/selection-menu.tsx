@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, ChevronDown, Trash2, X } from 'lucide-react'
+import { Check, ChevronDown, FolderInput, Trash2, X } from 'lucide-react'
 
 import {
   DropdownMenu,
@@ -12,12 +12,14 @@ import {
 
 export interface SelectionMenuProps {
   selectedCount: number
+  onMove?: () => void
   onDelete?: () => void
   onClear: () => void
 }
 
 export const SelectionMenu: React.FC<SelectionMenuProps> = ({
   selectedCount,
+  onMove,
   onDelete,
   onClear,
 }) => {
@@ -40,6 +42,13 @@ export const SelectionMenu: React.FC<SelectionMenuProps> = ({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end' className='w-56'>
+        {onMove && (
+          <DropdownMenuItem onClick={onMove} className='hover:cursor-pointer'>
+            <FolderInput className='mr-3 h-4 w-4' />
+            {t('pages.gallery.selection.moveSelected')}
+          </DropdownMenuItem>
+        )}
+        {onMove && onDelete && <DropdownMenuSeparator />}
         {onDelete && (
           <DropdownMenuItem
             onClick={onDelete}
