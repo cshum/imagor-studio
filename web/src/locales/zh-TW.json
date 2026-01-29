@@ -184,6 +184,7 @@
         "copyUrl": "複製 URL",
         "download": "下載",
         "rename": "重新命名",
+        "move": "移動",
         "delete": "刪除",
         "copyUrlError": "複製 URL 失敗",
         "downloadError": "下載失敗"
@@ -249,8 +250,13 @@
         "partialSuccess": "已刪除 {{success}} 項目，{{failed}} 項目失敗",
         "error": "刪除所選項目失敗"
       },
+      "moveItem": {
+        "title": "移動 {{name}}",
+        "success": "已成功移動 {{name}}"
+      },
       "moveItems": {
         "title": "移動項目",
+        "dialogTitle": "移動項目 ({{count}})",
         "selectDestination": "選擇目標資料夾",
         "selectDestinationDescription": "選擇要移動所選項目的位置。",
         "select": "選擇",

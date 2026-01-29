@@ -10,6 +10,7 @@ import {
   Download,
   Eye,
   FileText,
+  FolderInput,
   FolderPlus,
   Search,
   SquarePen,
@@ -30,10 +31,10 @@ import { DeleteItemDialog } from '@/components/image-gallery/delete-item-dialog'
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
-import { FolderSelectionDialog } from '@/components/image-gallery/folder-selection-dialog'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
 import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
+import { MoveItem, MoveItemsDialog } from '@/components/image-gallery/move-items-dialog'
 import { RenameItemDialog } from '@/components/image-gallery/rename-item-dialog'
 import { SelectionMenu } from '@/components/image-gallery/selection-menu'
 import { LoadingBar } from '@/components/loading-bar.tsx'
@@ -90,6 +91,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const { isLoading, pendingMatches } = useRouterState()
   const { authState } = useAuth()
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
+  const [createFolderPath, setCreateFolderPath] = useState<string | null>(null)
   const [deleteItemDialog, setDeleteItemDialog] = useState<{
     open: boolean
     itemKey: string | null
@@ -141,10 +143,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   })
   const [moveDialog, setMoveDialog] = useState<{
     open: boolean
-    isMoving: boolean
+    items: MoveItem[]
   }>({
     open: false,
-    isMoving: false,
+    items: [],
   })
 
   // Selection store
@@ -622,6 +624,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
               <Type className='mr-2 h-4 w-4' />
               {t('pages.gallery.contextMenu.rename')}
             </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => {
+                // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
+                setTimeout(() => handleMoveFromMenu(imageKey, imageName, 'file'), 0)
+              }}
+            >
+              <FolderInput className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.move')}
+            </ContextMenuItem>
             <ContextMenuSeparatorComponent />
             <ContextMenuItem
               onClick={() => {
@@ -674,6 +685,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
               <Type className='mr-2 h-4 w-4' />
               {t('pages.gallery.contextMenu.rename')}
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleMoveFromMenu(imageKey, imageName, 'file')}>
+              <FolderInput className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.move')}
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => handleDeleteItemFromMenu(imageKey, imageName, 'file')}
@@ -699,6 +714,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     onDelete: (folderKey, folderName) => {
       handleDeleteItemFromMenu(folderKey, folderName, 'folder')
     },
+    onMove: (folderKey, folderName) => {
+      // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
+      setTimeout(() => handleMoveFromMenu(folderKey, folderName, 'folder'), 0)
+    },
   })
 
   // Use the shared folder context menu hook for dropdown menus (three-dots)
@@ -708,6 +727,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     onDelete: (folderKey, folderName) => {
       handleDeleteItemFromMenu(folderKey, folderName, 'folder')
     },
+    onMove: (folderKey, folderName) => handleMoveFromMenu(folderKey, folderName, 'folder'),
     useDropdownItems: true,
   })
 
@@ -809,97 +829,52 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     selection.clearSelection()
   }
 
-  // Bulk move handlers
+  // Move handlers (single and bulk)
+  const handleMoveFromMenu = (itemKey: string, itemName: string, itemType: 'file' | 'folder') => {
+    // For files, construct the full path
+    const fullItemKey =
+      itemType === 'file' ? (galleryKey ? `${galleryKey}/${itemKey}` : itemKey) : itemKey
+
+    setMoveDialog({
+      open: true,
+      items: [{ key: fullItemKey, name: itemName, type: itemType }],
+    })
+  }
+
   const handleBulkMove = () => {
     // Use setTimeout to avoid Radix UI bug when opening dialog from dropdown menu
     setTimeout(() => {
+      const { folders, images } = selection.splitSelections()
+      const items: MoveItem[] = [
+        ...folders.map((key) => ({
+          key,
+          name: key.split('/').filter(Boolean).pop() || '',
+          type: 'folder' as const,
+        })),
+        ...images.map((key) => ({
+          key,
+          name: key.split('/').pop() || '',
+          type: 'file' as const,
+        })),
+      ]
+
       setMoveDialog({
         open: true,
-        isMoving: false,
+        items,
       })
     }, 0)
   }
 
   const handleMoveDialogClose = (open: boolean) => {
-    if (!moveDialog.isMoving) {
-      setMoveDialog({
-        open,
-        isMoving: false,
-      })
-    }
+    setMoveDialog({
+      open,
+      items: [],
+    })
   }
 
-  const handleConfirmMove = async (destinationPath: string) => {
-    setMoveDialog((prev) => ({ ...prev, isMoving: true }))
-
-    try {
-      const { folders, images } = selection.splitSelections()
-      let successCount = 0
-      let failCount = 0
-      let hasFileExistsError = false
-
-      // Move all items sequentially
-      for (const folderKey of folders) {
-        try {
-          const folderName = folderKey.split('/').filter(Boolean).pop() || ''
-          const newPath = destinationPath ? `${destinationPath}/${folderName}` : folderName
-          await moveFile(folderKey, newPath)
-          successCount++
-        } catch (error: any) {
-          const errorCode = error?.response?.errors?.[0]?.extensions?.code
-          if (errorCode === 'FILE_ALREADY_EXISTS') {
-            hasFileExistsError = true
-          }
-          failCount++
-        }
-      }
-
-      for (const imageKey of images) {
-        try {
-          const imageName = imageKey.split('/').pop() || ''
-          const newPath = destinationPath ? `${destinationPath}/${imageName}` : imageName
-          await moveFile(imageKey, newPath)
-          successCount++
-        } catch (error: any) {
-          const errorCode = error?.response?.errors?.[0]?.extensions?.code
-          if (errorCode === 'FILE_ALREADY_EXISTS') {
-            hasFileExistsError = true
-          }
-          failCount++
-        }
-      }
-
-      // Close dialog and clear selection
-      setMoveDialog({
-        open: false,
-        isMoving: false,
-      })
-      selection.clearSelection()
-
-      // Refresh gallery
-      router.invalidate()
-
-      // Show result toast
-      if (failCount === 0) {
-        toast.success(t('pages.gallery.moveItems.success', { count: successCount }))
-      } else if (successCount > 0) {
-        const message = hasFileExistsError
-          ? t('pages.gallery.moveItems.fileExists')
-          : t('pages.gallery.moveItems.partialSuccess', {
-              success: successCount,
-              failed: failCount,
-            })
-        toast.warning(message)
-      } else {
-        const message = hasFileExistsError
-          ? t('pages.gallery.moveItems.fileExists')
-          : t('pages.gallery.moveItems.error')
-        toast.error(message)
-      }
-    } catch {
-      toast.error(t('pages.gallery.moveItems.error'))
-      setMoveDialog((prev) => ({ ...prev, isMoving: false }))
-    }
+  const handleMoveComplete = () => {
+    // Clear selection after bulk move
+    selection.clearSelection()
   }
 
   // Create menu items for authenticated users
@@ -1179,7 +1154,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       <CreateFolderDialog
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
-        currentPath={galleryKey}
+        currentPath={createFolderPath !== null ? createFolderPath : galleryKey}
       />
 
       <DeleteItemDialog
@@ -1199,19 +1174,16 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         onConfirm={handleConfirmBulkDelete}
       />
 
-      <FolderSelectionDialog
+      <MoveItemsDialog
         open={moveDialog.open}
         onOpenChange={handleMoveDialogClose}
-        selectedPath={galleryKey}
-        onSelect={handleConfirmMove}
-        excludePaths={Array.from(selection.selectedItems).filter((key) => key.endsWith('/'))}
+        items={moveDialog.items}
         currentPath={galleryKey}
-        title={t('pages.gallery.moveItems.title')}
-        description={t('pages.gallery.moveItems.selectDestinationDescription')}
-        confirmButtonText={t('pages.gallery.moveItems.move')}
-        itemCount={selection.selectedItems.size}
-        showNewFolderButton={true}
-        onCreateFolder={() => setIsCreateFolderDialogOpen(true)}
+        onMoveComplete={handleMoveComplete}
+        onCreateFolder={(selectedPath) => {
+          setCreateFolderPath(selectedPath !== null ? selectedPath : galleryKey)
+          setIsCreateFolderDialogOpen(true)
+        }}
       />
 
       <CopyUrlDialog

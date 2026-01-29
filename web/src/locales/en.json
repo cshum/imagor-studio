@@ -187,6 +187,7 @@
         "copyUrl": "Copy URL",
         "download": "Download",
         "rename": "Rename",
+        "move": "Move",
         "delete": "Delete",
         "copyUrlError": "Failed to copy URL",
         "downloadError": "Failed to download"
@@ -227,14 +228,18 @@
           "alreadyExists": "A {{type}} with this name already exists"
         }
       },
+      "moveItem": {
+        "title": "Move {{name}}",
+        "success": "Moved {{name}} successfully"
+      },
       "moveItems": {
         "title": "Move Items",
+        "dialogTitle": "Move Items ({{count}})",
         "selectDestination": "Select Destination Folder",
         "selectDestinationDescription": "Choose where to move the selected items.",
         "select": "Select",
         "move": "Move",
-        "success_one": "Successfully moved {{count}} item",
-        "success_other": "Successfully moved {{count}} items",
+        "success": "Moved {{count}} items successfully",
         "partialSuccess": "{{success}} items moved, {{failed}} failed",
         "error": "Failed to move items",
         "fileExists": "Cannot move: A file or folder with this name already exists at the destination",
