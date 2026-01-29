@@ -1191,7 +1191,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                             }
                             onDrop={authState.state === 'authenticated' ? handleDrop : undefined}
                             dragOverTarget={dragState.dragOverTarget}
-                            isDragging={dragState.isDragging}
+                            draggedItems={dragState.draggedItems}
                             {...folderGridProps}
                           />
                         </FolderContextMenu>
@@ -1224,7 +1224,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           onDragEnd={
                             authState.state === 'authenticated' ? handleDragEnd : undefined
                           }
-                          isDragging={dragState.isDragging}
+                          draggedItems={dragState.draggedItems}
                           galleryKey={galleryKey}
                           {...imageGridProps}
                         />

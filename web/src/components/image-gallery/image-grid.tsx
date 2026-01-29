@@ -30,7 +30,7 @@ interface ImageCellProps {
   // Drag and drop props
   onDragStart?: (e: React.DragEvent, items: DragItem[], sourceGalleryKey: string) => void
   onDragEnd?: (e: React.DragEvent) => void
-  isDragging?: boolean
+  isBeingDragged?: boolean
   selectedImageKeys?: Set<string>
   galleryKey?: string
 }
@@ -54,7 +54,7 @@ const ImageCell = ({
   imageRef,
   onDragStart,
   onDragEnd,
-  isDragging = false,
+  isBeingDragged = false,
   selectedImageKeys,
   galleryKey = '',
 }: ImageCellProps) => {
@@ -146,7 +146,7 @@ const ImageCell = ({
       aria-label={`${image.isVideo ? 'Video' : 'Image'}: ${image.imageName}`}
     >
       <div
-        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-all duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-3 ring-blue-600' : ''} ${isSelected && isDragging ? '!opacity-50' : ''}`}
+        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-all duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-3 ring-blue-600' : ''} ${isBeingDragged ? '!opacity-50' : ''}`}
       >
         <img
           src={getFullImageUrl(image.imageSrc)}
@@ -228,7 +228,7 @@ export interface ImageGridProps {
   // Drag and drop props
   onDragStart?: (e: React.DragEvent, items: DragItem[], sourceGalleryKey: string) => void
   onDragEnd?: (e: React.DragEvent) => void
-  isDragging?: boolean
+  draggedItems?: DragItem[]
   galleryKey?: string
 }
 
@@ -250,7 +250,7 @@ export const ImageGrid = ({
   onVisibleRangeChange,
   onDragStart,
   onDragEnd,
-  isDragging = false,
+  draggedItems = [],
   galleryKey = '',
 }: ImageGridProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -305,6 +305,8 @@ export const ImageGrid = ({
     if (image) {
       const imageKey = image.imageKey
       const isSelected = selectedImageKeys?.has(imageKey) || false
+      const fullImageKey = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
+      const isBeingDragged = draggedItems.some((item) => item.key === fullImageKey)
 
       visibleImages.push(
         <ImageCell
@@ -326,7 +328,7 @@ export const ImageGrid = ({
           onKeyDown={onImageKeyDown}
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
-          isDragging={isDragging}
+          isBeingDragged={isBeingDragged}
           selectedImageKeys={selectedImageKeys}
           galleryKey={galleryKey}
           imageRef={(el) => {
