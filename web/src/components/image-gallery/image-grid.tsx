@@ -30,7 +30,9 @@ interface ImageCellProps {
   // Drag and drop props
   onDragStart?: (e: React.DragEvent, items: DragItem[], sourceGalleryKey: string) => void
   onDragEnd?: (e: React.DragEvent) => void
+  isBeingDragged?: boolean
   selectedImageKeys?: Set<string>
+  selectedFolderKeys?: Set<string>
   galleryKey?: string
 }
 
@@ -53,7 +55,9 @@ const ImageCell = ({
   imageRef,
   onDragStart,
   onDragEnd,
+  isBeingDragged = false,
   selectedImageKeys,
+  selectedFolderKeys,
   galleryKey = '',
 }: ImageCellProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -101,11 +105,18 @@ const ImageCell = ({
 
     const items: DragItem[] = []
 
-    // If this image is selected, drag all selected images
+    // If this image is selected, drag ALL selected items (images AND folders)
     if (selectedImageKeys?.has(image.imageKey)) {
+      // Add all selected images
       selectedImageKeys.forEach((key) => {
         const name = key.split('/').pop() || key
         items.push({ key: galleryKey ? `${galleryKey}/${key}` : key, name, type: 'image' })
+      })
+
+      // Add all selected folders
+      selectedFolderKeys?.forEach((folderKey) => {
+        const name = folderKey.split('/').filter(Boolean).pop() || 'Root'
+        items.push({ key: folderKey, name, type: 'folder' })
       })
     } else {
       // Otherwise, just drag this image
@@ -144,7 +155,7 @@ const ImageCell = ({
       aria-label={`${image.isVideo ? 'Video' : 'Image'}: ${image.imageName}`}
     >
       <div
-        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-3 ring-blue-600' : ''}`}
+        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-all duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-3 ring-blue-600' : ''} ${isBeingDragged ? '!opacity-50' : ''}`}
       >
         <img
           src={getFullImageUrl(image.imageSrc)}
@@ -217,6 +228,7 @@ export interface ImageGridProps {
   showFileName?: boolean
   focusedIndex?: number
   selectedImageKeys?: Set<string>
+  selectedFolderKeys?: Set<string>
   imageRefs?: RefObject<Map<number, HTMLDivElement>>
   onImageKeyDown?: (event: React.KeyboardEvent, index: number) => void
   onImageClick?: (imageKey: string, position: Position, index: number) => void
@@ -226,6 +238,7 @@ export interface ImageGridProps {
   // Drag and drop props
   onDragStart?: (e: React.DragEvent, items: DragItem[], sourceGalleryKey: string) => void
   onDragEnd?: (e: React.DragEvent) => void
+  draggedItems?: DragItem[]
   galleryKey?: string
 }
 
@@ -239,6 +252,7 @@ export const ImageGrid = ({
   showFileName = false,
   focusedIndex = -1,
   selectedImageKeys,
+  selectedFolderKeys,
   imageRefs,
   onImageKeyDown,
   onImageClick,
@@ -247,6 +261,7 @@ export const ImageGrid = ({
   onVisibleRangeChange,
   onDragStart,
   onDragEnd,
+  draggedItems = [],
   galleryKey = '',
 }: ImageGridProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -301,6 +316,8 @@ export const ImageGrid = ({
     if (image) {
       const imageKey = image.imageKey
       const isSelected = selectedImageKeys?.has(imageKey) || false
+      const fullImageKey = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
+      const isBeingDragged = draggedItems.some((item) => item.key === fullImageKey)
 
       visibleImages.push(
         <ImageCell
@@ -322,7 +339,9 @@ export const ImageGrid = ({
           onKeyDown={onImageKeyDown}
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
+          isBeingDragged={isBeingDragged}
           selectedImageKeys={selectedImageKeys}
+          selectedFolderKeys={selectedFolderKeys}
           galleryKey={galleryKey}
           imageRef={(el) => {
             if (imageRefs?.current) {
