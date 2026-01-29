@@ -228,7 +228,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-lg'>
+      <DialogContent className='w-sm md:w-lg'>
         <DialogHeader>
           <DialogTitle>{displayTitle}</DialogTitle>
           <DialogDescription>{dialogDescription}</DialogDescription>
