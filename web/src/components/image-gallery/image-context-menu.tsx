@@ -46,6 +46,10 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
       setContextImageName(imageName)
       setContextIsVideo(isVideo)
       setContextPosition(position)
+    } else {
+      // Prevent context menu from opening when clicking on empty space
+      e.preventDefault()
+      setContextImageKey(null)
     }
   }
 
@@ -61,7 +65,9 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
       <ContextMenuTrigger asChild>
         <div onContextMenu={handleContextMenuOpen}>{children}</div>
       </ContextMenuTrigger>
-      <ContextMenuContent className='w-56'>{renderMenuItems?.(contextData)}</ContextMenuContent>
+      {contextImageKey && (
+        <ContextMenuContent className='w-56'>{renderMenuItems?.(contextData)}</ContextMenuContent>
+      )}
     </ContextMenu>
   )
 }

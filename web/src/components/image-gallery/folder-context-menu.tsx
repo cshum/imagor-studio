@@ -22,6 +22,10 @@ export const FolderContextMenu = ({ children, renderMenuItems }: FolderContextMe
       const folderKey = target.getAttribute('data-folder-key') || ''
       const folderName = target.getAttribute('data-folder-name') || ''
       setContextData({ folderKey, folderName })
+    } else {
+      // Prevent context menu from opening when clicking on empty space
+      e.preventDefault()
+      setContextData(null)
     }
   }
 
@@ -30,9 +34,9 @@ export const FolderContextMenu = ({ children, renderMenuItems }: FolderContextMe
       <ContextMenuTrigger asChild>
         <div onContextMenu={handleContextMenuOpen}>{children}</div>
       </ContextMenuTrigger>
-      <ContextMenuContent className='w-56'>
-        {contextData && renderMenuItems(contextData)}
-      </ContextMenuContent>
+      {contextData && (
+        <ContextMenuContent className='w-56'>{renderMenuItems(contextData)}</ContextMenuContent>
+      )}
     </ContextMenu>
   )
 }
