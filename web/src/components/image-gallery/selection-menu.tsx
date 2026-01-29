@@ -60,7 +60,7 @@ export const SelectionMenu: React.FC<SelectionMenuProps> = ({
             className='text-destructive focus:text-destructive hover:cursor-pointer'
           >
             <Trash2 className='mr-3 h-4 w-4' />
-            {t('pages.gallery.selection.deleteSelected')}
+            {t('pages.gallery.selection.deleteSelected', { count: selectedCount })}
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

@@ -184,6 +184,7 @@
         "copyUrl": "复制 URL",
         "download": "下载",
         "rename": "重命名",
+        "move": "移动",
         "delete": "删除",
         "copyUrlError": "复制 URL 失败",
         "downloadError": "下载失败"
@@ -225,6 +226,10 @@
           "invalidCharacters": "名称包含无效字符",
           "alreadyExists": "已存在同名的{{type}}"
         }
+      },
+      "moveItem": {
+        "title": "移动 {{name}}",
+        "success": "已成功移动 {{name}}"
       },
       "moveItems": {
         "title": "移动项目",

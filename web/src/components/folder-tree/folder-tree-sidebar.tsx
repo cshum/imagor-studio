@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useRouterState } from '@tanstack/react-router'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { Home } from 'lucide-react'
 
+import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
 import { DeleteItemDialog } from '@/components/image-gallery/delete-item-dialog'
 import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
+import { MoveItem, MoveItemsDialog } from '@/components/image-gallery/move-items-dialog'
 import { RenameItemDialog } from '@/components/image-gallery/rename-item-dialog'
 import {
   Sidebar,
@@ -22,7 +24,7 @@ import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
 import { useItemDragDrop } from '@/hooks/use-item-drag-drop'
 import { useAuth } from '@/stores/auth-store'
 import { useDragDrop } from '@/stores/drag-drop-store'
-import { useFolderTree } from '@/stores/folder-tree-store'
+import { folderTreeStore, useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 import { FolderTreeNode } from './folder-tree-node'
@@ -32,12 +34,25 @@ export type FolderTreeSidebarProps = Omit<
   'onDragOver' | 'onDragEnter' | 'onDragLeave' | 'onDrop'
 >
 
+/**
+ * Check if a folder path affects the current viewing path.
+ * Returns true if folderPath is the current path or a parent of it.
+ */
+function isPathAffected(folderPath: string, currentPath: string): boolean {
+  if (!currentPath) return false // Not viewing any folder
+  if (currentPath === folderPath) return true // Exact match
+  return currentPath.startsWith(`${folderPath}/`) // Parent folder
+}
+
 export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { authState } = useAuth()
   const { rootFolders, loadingPaths, homeTitle } = useFolderTree()
   const { isMobile, setOpenMobile } = useSidebar()
   const routerState = useRouterState()
+  const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
+  const [createFolderPath, setCreateFolderPath] = useState<string>('')
 
   const [deleteItemDialog, setDeleteItemDialog] = useState<{
     open: boolean
@@ -63,6 +78,16 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     folderPath: null,
     folderName: null,
     isRenaming: false,
+  })
+
+  const [moveDialog, setMoveDialog] = useState<{
+    open: boolean
+    items: MoveItem[]
+    currentPath: string
+  }>({
+    open: false,
+    items: [],
+    currentPath: '',
   })
 
   // Get drag state and drop handler from global store
@@ -106,6 +131,20 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     })
   }
 
+  // Trigger move dialog from context menu
+  const handleMoveFromMenu = (folderKey: string, folderName: string) => {
+    // Calculate parent path to focus on in the folder picker
+    const pathParts = folderKey.split('/').filter(Boolean)
+    pathParts.pop() // Remove the folder name itself
+    const parentPath = pathParts.join('/')
+
+    setMoveDialog({
+      open: true,
+      items: [{ key: folderKey, name: folderName, type: 'folder' }],
+      currentPath: parentPath,
+    })
+  }
+
   const {
     renderMenuItems: renderContextMenuItems,
     handleRename: handleRenameFolderOperation,
@@ -120,6 +159,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     },
     onRename: handleRenameFromMenu,
     onDelete: handleDeleteFromMenu,
+    onMove: handleMoveFromMenu,
   })
 
   // Use the shared folder context menu hook for dropdown menus (three-dots)
@@ -133,6 +173,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     },
     onRename: handleRenameFromMenu,
     onDelete: handleDeleteFromMenu,
+    onMove: handleMoveFromMenu,
     useDropdownItems: true,
   })
 
@@ -284,6 +325,40 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
         itemType={deleteItemDialog.itemType}
         isDeleting={deleteItemDialog.isDeleting}
         onConfirm={handleDeleteItem}
+      />
+
+      {/* Create Folder Dialog */}
+      <CreateFolderDialog
+        open={isCreateFolderDialogOpen}
+        onOpenChange={setIsCreateFolderDialogOpen}
+        currentPath={createFolderPath}
+      />
+
+      {/* Move Items Dialog */}
+      <MoveItemsDialog
+        open={moveDialog.open}
+        onOpenChange={(open) => setMoveDialog({ open, items: [], currentPath: '' })}
+        items={moveDialog.items}
+        currentPath={moveDialog.currentPath}
+        onMoveComplete={() => {
+          // Check if current path is affected by the move
+          if (moveDialog.items.length > 0) {
+            const movedFolderKey = moveDialog.items[0].key
+
+            // Get current path from folder tree store
+            const { currentPath } = folderTreeStore.getState()
+
+            // Check if operation affects current view
+            if (isPathAffected(movedFolderKey, currentPath)) {
+              // Current route is affected - redirect to home
+              navigate({ to: '/' })
+            }
+          }
+        }}
+        onCreateFolder={(selectedPath) => {
+          setCreateFolderPath(selectedPath || '')
+          setIsCreateFolderDialogOpen(true)
+        }}
       />
     </Sidebar>
   )

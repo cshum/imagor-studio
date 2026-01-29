@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter } from '@tanstack/react-router'
-import { FolderOpen, Trash2, Type } from 'lucide-react'
+import { FolderInput, FolderOpen, Trash2, Type } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { deleteFile, moveFile } from '@/api/storage-api'
@@ -30,11 +30,12 @@ interface UseFolderContextMenuProps {
    */
   onOpen?: (folderKey: string) => void
   /**
-   * Optional callbacks to trigger rename/delete dialogs from context menu.
+   * Optional callbacks to trigger rename/delete/move dialogs from context menu.
    * If not provided, menu items won't trigger dialogs (for components that handle dialogs themselves).
    */
   onRename?: (folderKey: string, folderName: string) => void
   onDelete?: (folderKey: string, folderName: string) => void
+  onMove?: (folderKey: string, folderName: string) => void
   /**
    * If true, returns renderDropdownMenuItems instead of renderMenuItems.
    * Use this for dropdown menus (three-dots) instead of context menus (right-click).
@@ -57,6 +58,7 @@ export function useFolderContextMenu({
   onOpen,
   onRename,
   onDelete,
+  onMove,
   useDropdownItems = false,
 }: UseFolderContextMenuProps) {
   const { t } = useTranslation()
@@ -188,6 +190,16 @@ export function useFolderContextMenu({
               <Type className='mr-2 h-4 w-4' />
               {t('pages.gallery.contextMenu.rename')}
             </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => {
+                // Trigger move dialog in component
+                setTimeout(() => onMove?.(folderKey, folderName), 0)
+              }}
+              disabled={isRenaming || isDeleting}
+            >
+              <FolderInput className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.move')}
+            </ContextMenuItem>
             <ContextMenuSeparator />
             <ContextMenuItem
               onClick={() => {
@@ -228,6 +240,10 @@ export function useFolderContextMenu({
             <DropdownMenuItem onClick={() => onRename?.(folderKey, folderName)}>
               <Type className='mr-2 h-4 w-4' />
               {t('pages.gallery.contextMenu.rename')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onMove?.(folderKey, folderName)}>
+              <FolderInput className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.move')}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

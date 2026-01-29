@@ -181,6 +181,7 @@
         "copyUrl": "Copia URL",
         "download": "Scarica",
         "rename": "Rinomina",
+        "move": "Sposta",
         "delete": "Elimina",
         "copyUrlError": "Impossibile copiare l'URL",
         "downloadError": "Impossibile scaricare"
@@ -245,6 +246,10 @@
         "success_other": "{{count}} elementi eliminati con successo",
         "partialSuccess": "{{success}} elementi eliminati, {{failed}} non riusciti",
         "error": "Impossibile eliminare gli elementi selezionati"
+      },
+      "moveItem": {
+        "title": "Sposta {{name}}",
+        "success": "{{name}} spostato con successo"
       },
       "moveItems": {
         "title": "Sposta elementi",
