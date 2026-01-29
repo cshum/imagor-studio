@@ -1,16 +1,11 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { FolderOpen, Home, Trash2, Type } from 'lucide-react'
+import { Link, useRouterState } from '@tanstack/react-router'
+import { Home } from 'lucide-react'
 
 import { DeleteItemDialog } from '@/components/image-gallery/delete-item-dialog'
 import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
 import { RenameItemDialog } from '@/components/image-gallery/rename-item-dialog'
-import {
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu'
 import {
   Sidebar,
   SidebarContent,
@@ -39,7 +34,6 @@ export type FolderTreeSidebarProps = Omit<
 
 export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const { authState } = useAuth()
   const { rootFolders, loadingPaths, homeTitle } = useFolderTree()
   const { isMobile, setOpenMobile } = useSidebar()
@@ -112,13 +106,10 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     })
   }
 
-  // Use the shared folder context menu hook with centralized logic
   const {
     renderMenuItems: renderContextMenuItems,
     handleRename: handleRenameFolderOperation,
     handleDelete: handleDeleteFolderOperation,
-    isRenaming,
-    isDeleting,
   } = useFolderContextMenu({
     isAuthenticated: () => authState.state === 'authenticated',
     onOpen: () => {
@@ -131,50 +122,23 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     onDelete: handleDeleteFromMenu,
   })
 
-  // Render dropdown menu items (separate from context menu items)
-  const renderDropdownMenuItems = (folderKey: string, folderName: string) => {
-    const handleOpen = () => {
-      if (folderKey) {
-        // Navigate to the folder
-        navigate({ to: '/gallery/$galleryKey', params: { galleryKey: folderKey } })
-
-        // Close mobile sidebar when navigating on mobile
-        if (isMobile) {
-          setOpenMobile(false)
-        }
+  // Use the shared folder context menu hook for dropdown menus (three-dots)
+  const { renderMenuItems: renderDropdownMenuItemsFromHook } = useFolderContextMenu({
+    isAuthenticated: () => authState.state === 'authenticated',
+    onOpen: () => {
+      // Close mobile sidebar when navigating on mobile
+      if (isMobile) {
+        setOpenMobile(false)
       }
-    }
+    },
+    onRename: handleRenameFromMenu,
+    onDelete: handleDeleteFromMenu,
+    useDropdownItems: true,
+  })
 
-    return (
-      <>
-        <DropdownMenuLabel className='break-all'>{folderName}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleOpen}>
-          <FolderOpen className='mr-2 h-4 w-4' />
-          {t('pages.gallery.contextMenu.open')}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => {
-            setTimeout(() => handleRenameFromMenu(folderKey, folderName), 0)
-          }}
-          disabled={isRenaming || isDeleting}
-        >
-          <Type className='mr-2 h-4 w-4' />
-          {t('pages.gallery.contextMenu.rename')}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => {
-            setTimeout(() => handleDeleteFromMenu(folderKey, folderName), 0)
-          }}
-          className='text-destructive focus:text-destructive'
-          disabled={isRenaming || isDeleting}
-        >
-          <Trash2 className='mr-2 h-4 w-4' />
-          {t('pages.gallery.folderContextMenu.delete')}
-        </DropdownMenuItem>
-      </>
-    )
+  // Adapter function to match FolderTreeNode's expected signature
+  const renderDropdownMenuItems = (folderKey: string, folderName: string) => {
+    return renderDropdownMenuItemsFromHook({ folderKey, folderName })
   }
 
   const handleRename = async (newName: string) => {
@@ -183,7 +147,6 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     setRenameDialog((prev) => ({ ...prev, isRenaming: true }))
 
     try {
-      // Use centralized handler from hook
       await handleRenameFolderOperation(renameDialog.folderPath, newName)
 
       setRenameDialog({
