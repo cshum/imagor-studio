@@ -45,12 +45,25 @@ const initialState: FolderTreeState = {
   homeTitle: 'Home',
 }
 
+/**
+ * Sort folders alphabetically by name (case-insensitive, natural sort)
+ * This ensures consistent ordering regardless of data source
+ */
+const sortFoldersByName = (folders: FolderNode[]): FolderNode[] => {
+  return [...folders].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    }),
+  )
+}
+
 function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): FolderTreeState {
   switch (action.type) {
     case 'SET_ROOT_FOLDERS':
       return {
         ...state,
-        rootFolders: action.folders.map((folder) => {
+        rootFolders: sortFoldersByName(action.folders).map((folder) => {
           // Preserve expanded state from cache if it exists
           const existingFolder = state.rootFolders.find((f) => f.path === folder.path)
           return {
@@ -103,7 +116,7 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
           folder.path === action.path
             ? {
                 ...folder,
-                children: action.children.map((child) => ({
+                children: sortFoldersByName(action.children).map((child) => ({
                   ...child,
                   isLoaded: false,
                   isExpanded: false,
@@ -127,7 +140,7 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
       if (action.path === '' || action.path === 'default') {
         return {
           ...state,
-          rootFolders: action.folders.map((newFolder) => {
+          rootFolders: sortFoldersByName(action.folders).map((newFolder) => {
             // Preserve expanded state and children from existing folder if it exists
             const existingFolder = state.rootFolders.find((f) => f.path === newFolder.path)
             return {
@@ -147,7 +160,7 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
           folder.path === action.path
             ? {
                 ...folder,
-                children: action.folders.map((newChild) => {
+                children: sortFoldersByName(action.folders).map((newChild) => {
                   // Preserve expanded state and children from existing child if it exists
                   const existingChild = folder.children?.find((c) => c.path === newChild.path)
                   return {
@@ -196,13 +209,22 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
         isRootFoldersLoaded: action.payload.isLoaded,
       }
 
-    case 'LOAD_TREE_STATE':
+    case 'LOAD_TREE_STATE': {
+      // Recursively sort all folders in the tree when loading from cache
+      const sortTreeRecursively = (folders: FolderNode[]): FolderNode[] => {
+        return sortFoldersByName(folders).map((folder) => ({
+          ...folder,
+          children: folder.children ? sortTreeRecursively(folder.children) : undefined,
+        }))
+      }
+
       return {
         ...state,
-        rootFolders: action.payload.rootFolders,
+        rootFolders: sortTreeRecursively(action.payload.rootFolders),
         currentPath: action.payload.currentPath,
         isRootFoldersLoaded: true,
       }
+    }
 
     case 'LOAD_ROOT_FOLDERS':
       return state // This will be handled by the async action
@@ -338,6 +360,8 @@ export const loadRootFolders = async () => {
     const result = await listFiles({
       path: '',
       onlyFolders: true,
+      sortBy: 'NAME',
+      sortOrder: 'ASC',
     })
 
     const folders: FolderNode[] = result.items.map((item) => ({
@@ -363,6 +387,8 @@ export const loadFolderChildren = async (path: string, autoExpand: boolean = tru
     const result = await listFiles({
       path,
       onlyFolders: true,
+      sortBy: 'NAME',
+      sortOrder: 'ASC',
     })
 
     const children: FolderNode[] = result.items.map((item) => ({
