@@ -43,7 +43,33 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
   // Extract folder keys to exclude from destination selection
   const excludePaths = items.filter((item) => item.type === 'folder').map((item) => item.key)
 
+  /**
+   * Check if moving a folder to the destination would create a cyclic structure
+   */
+  const isMovingToSubfolder = (folderPath: string, destinationPath: string): boolean => {
+    // Check if destination is the folder itself
+    if (destinationPath === folderPath) return true
+
+    // Check if destination is a subfolder of the folder being moved
+    return destinationPath.startsWith(`${folderPath}/`)
+  }
+
   const handleConfirmMove = async (destinationPath: string) => {
+    // Validate no cyclic moves for folders before attempting
+    for (const item of items) {
+      if (item.type === 'folder') {
+        if (destinationPath === item.key) {
+          toast.error(t('pages.gallery.moveItems.cannotMoveToSelf'))
+          return
+        }
+
+        if (isMovingToSubfolder(item.key, destinationPath)) {
+          toast.error(t('pages.gallery.moveItems.cannotMoveToSubfolder'))
+          return
+        }
+      }
+    }
+
     setIsMoving(true)
 
     try {
