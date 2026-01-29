@@ -166,7 +166,7 @@ const ImageCell = ({
         {/* Selection checkbox - top left */}
         {onSelectionToggle && (
           <div
-            className={`pointer-events-none absolute top-2 left-2 opacity-0 transition-opacity group-hover/image:pointer-events-auto group-hover/image:opacity-100 md:opacity-0 md:group-hover/image:opacity-100 ${isSelected ? 'pointer-events-auto opacity-100' : ''}`}
+            className={`pointer-events-none absolute top-2 left-2 opacity-0 transition-opacity group-hover/image:pointer-events-auto group-hover/image:opacity-100 md:opacity-0 md:group-hover/image:opacity-100 ${isSelected ? 'pointer-events-auto !opacity-100' : ''}`}
             onClick={handleSelectionClick}
           >
             <div
