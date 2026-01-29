@@ -155,7 +155,7 @@ const ImageCell = ({
       aria-label={`${image.isVideo ? 'Video' : 'Image'}: ${image.imageName}`}
     >
       <div
-        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-opacity duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-3 ring-blue-600' : ''} ${isBeingDragged ? 'opacity-50' : ''}`}
+        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-opacity duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-2 ring-blue-600' : ''} ${isBeingDragged ? 'opacity-50' : ''}`}
       >
         <img
           src={getFullImageUrl(image.imageSrc)}
