@@ -256,6 +256,7 @@
       },
       "moveItems": {
         "title": "移動項目",
+        "dialogTitle": "移動項目 ({{count}})",
         "selectDestination": "選擇目標資料夾",
         "selectDestinationDescription": "選擇要移動所選項目的位置。",
         "select": "選擇",

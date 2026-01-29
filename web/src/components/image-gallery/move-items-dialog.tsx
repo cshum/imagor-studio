@@ -38,7 +38,7 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
   const dialogTitle =
     items.length === 1
       ? t('pages.gallery.moveItem.title', { name: items[0].name })
-      : t('pages.gallery.moveItems.title', { count: items.length })
+      : t('pages.gallery.moveItems.dialogTitle', { count: items.length })
 
   // Extract folder keys to exclude from destination selection
   const excludePaths = items.filter((item) => item.type === 'folder').map((item) => item.key)

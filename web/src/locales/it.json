@@ -253,6 +253,7 @@
       },
       "moveItems": {
         "title": "Sposta elementi",
+        "dialogTitle": "Sposta elementi ({{count}})",
         "selectDestination": "Seleziona cartella di destinazione",
         "selectDestinationDescription": "Scegli dove spostare gli elementi selezionati.",
         "select": "Seleziona",

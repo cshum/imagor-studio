@@ -234,6 +234,7 @@
       },
       "moveItems": {
         "title": "Move Items",
+        "dialogTitle": "Move Items ({{count}})",
         "selectDestination": "Select Destination Folder",
         "selectDestinationDescription": "Choose where to move the selected items.",
         "select": "Select",
