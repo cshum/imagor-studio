@@ -210,8 +210,14 @@
         "error": "Impossibile eliminare la cartella"
       },
       "renameItem": {
-        "title": "Rinomina {{type}}",
-        "description": "Inserisci un nuovo nome per questo {{type}}.",
+        "file": {
+          "title": "Rinomina File",
+          "description": "Inserisci un nuovo nome per questo file."
+        },
+        "folder": {
+          "title": "Rinomina Cartella",
+          "description": "Inserisci un nuovo nome per questa cartella."
+        },
         "newName": "Nuovo Nome",
         "placeholder": "Inserisci nuovo nome",
         "rename": "Rinomina",

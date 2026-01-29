@@ -81,9 +81,9 @@ export function RenameItemDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('pages.gallery.renameItem.title', { type: itemType })}</DialogTitle>
+          <DialogTitle>{t(`pages.gallery.renameItem.${itemType}.title`)}</DialogTitle>
           <DialogDescription>
-            {t('pages.gallery.renameItem.description', { type: itemType })}
+            {t(`pages.gallery.renameItem.${itemType}.description`)}
           </DialogDescription>
         </DialogHeader>
         <div className='grid gap-4 py-4'>

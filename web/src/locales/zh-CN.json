@@ -213,8 +213,14 @@
         "error": "删除文件夹失败"
       },
       "renameItem": {
-        "title": "重命名{{type}}",
-        "description": "为此{{type}}输入新名称。",
+        "file": {
+          "title": "重命名文件",
+          "description": "为此文件输入新名称。"
+        },
+        "folder": {
+          "title": "重命名文件夹",
+          "description": "为此文件夹输入新名称。"
+        },
         "newName": "新名称",
         "placeholder": "输入新名称",
         "rename": "重命名",

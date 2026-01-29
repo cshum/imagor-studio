@@ -214,8 +214,14 @@
         "error": "Failed to delete folder"
       },
       "renameItem": {
-        "title": "Rename {{type}}",
-        "description": "Enter a new name for this {{type}}.",
+        "file": {
+          "title": "Rename File",
+          "description": "Enter a new name for this file."
+        },
+        "folder": {
+          "title": "Rename Folder",
+          "description": "Enter a new name for this folder."
+        },
         "newName": "New Name",
         "placeholder": "Enter new name",
         "rename": "Rename",

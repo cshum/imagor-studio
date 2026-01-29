@@ -213,8 +213,14 @@
         "error": "刪除資料夾失敗"
       },
       "renameItem": {
-        "title": "重新命名{{type}}",
-        "description": "為此{{type}}輸入新名稱。",
+        "file": {
+          "title": "重新命名檔案",
+          "description": "為此檔案輸入新名稱。"
+        },
+        "folder": {
+          "title": "重新命名資料夾",
+          "description": "為此資料夾輸入新名稱。"
+        },
         "newName": "新名稱",
         "placeholder": "輸入新名稱",
         "rename": "重新命名",
