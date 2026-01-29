@@ -24,6 +24,7 @@ import { generateImagorUrl } from '@/api/imagor-api'
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { deleteFile, moveFile } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
+import { BulkDeleteDialog } from '@/components/image-gallery/bulk-delete-dialog'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
 import { DeleteItemDialog } from '@/components/image-gallery/delete-item-dialog'
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
@@ -36,8 +37,6 @@ import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { RenameItemDialog } from '@/components/image-gallery/rename-item-dialog'
 import { SelectionMenu } from '@/components/image-gallery/selection-menu'
 import { LoadingBar } from '@/components/loading-bar.tsx'
-import { Button } from '@/components/ui/button'
-import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   ContextMenuItem,
@@ -45,14 +44,6 @@ import {
   ContextMenuSeparator as ContextMenuSeparatorComponent,
 } from '@/components/ui/context-menu'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import {
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -1200,40 +1191,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         onConfirm={handleDeleteItem}
       />
 
-      {/* Simplified Bulk Delete - Simple confirmation dialog */}
-      <Dialog open={bulkDeleteDialog.open} onOpenChange={handleBulkDeleteDialogClose}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('pages.gallery.bulkDelete.title')}</DialogTitle>
-            <DialogDescription>
-              {t('pages.gallery.bulkDelete.description', {
-                count: selection.selectedItems.size,
-              })}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => handleBulkDeleteDialogClose(false)}
-              disabled={bulkDeleteDialog.isDeleting}
-            >
-              {t('common.buttons.cancel')}
-            </Button>
-            <ButtonWithLoading
-              onClick={handleConfirmBulkDelete}
-              isLoading={bulkDeleteDialog.isDeleting}
-              disabled={bulkDeleteDialog.isDeleting}
-              variant='destructive'
-            >
-              {t('pages.gallery.bulkDelete.confirmButton', {
-                count: selection.selectedItems.size,
-              })}
-            </ButtonWithLoading>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <BulkDeleteDialog
+        open={bulkDeleteDialog.open}
+        onOpenChange={handleBulkDeleteDialogClose}
+        itemCount={selection.selectedItems.size}
+        isDeleting={bulkDeleteDialog.isDeleting}
+        onConfirm={handleConfirmBulkDelete}
+      />
 
-      {/* Simplified Bulk Move - Direct folder selection */}
       <FolderSelectionDialog
         open={moveDialog.open}
         onOpenChange={handleMoveDialogClose}
