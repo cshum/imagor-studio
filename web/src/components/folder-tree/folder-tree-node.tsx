@@ -128,7 +128,7 @@ export function FolderTreeNode({
                   </button>
                 </DropdownMenuTrigger>
               </div>
-              <DropdownMenuContent align='end' className='w-56'>
+              <DropdownMenuContent align='start' className='w-56'>
                 {renderMenuItems(folder.path, folder.name || 'Root')}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -185,7 +185,7 @@ export function FolderTreeNode({
                   </button>
                 </DropdownMenuTrigger>
               </div>
-              <DropdownMenuContent align='end' className='w-56'>
+              <DropdownMenuContent align='start' className='w-56'>
                 {renderMenuItems(folder.path, folder.name || 'Root')}
               </DropdownMenuContent>
             </DropdownMenu>
