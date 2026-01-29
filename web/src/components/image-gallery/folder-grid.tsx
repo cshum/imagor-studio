@@ -36,6 +36,7 @@ export interface FolderGridProps {
   onContainerDragLeave?: (e: React.DragEvent) => void
   onDrop?: (e: React.DragEvent, targetFolderKey: string) => void
   dragOverTarget?: string | null
+  isDragging?: boolean
 }
 
 interface FolderCardProps {
@@ -58,6 +59,7 @@ interface FolderCardProps {
   onDragLeave?: (e: React.DragEvent, targetFolderKey: string) => void
   onDrop?: (e: React.DragEvent, targetFolderKey: string) => void
   isDragOver?: boolean
+  isDragging?: boolean
   selectedFolderKeys?: Set<string>
 }
 
@@ -80,6 +82,7 @@ const FolderCard = ({
   onDragLeave,
   onDrop,
   isDragOver = false,
+  isDragging = false,
   selectedFolderKeys,
 }: FolderCardProps) => {
   const handleIconClick = (e: React.MouseEvent) => {
@@ -129,7 +132,7 @@ const FolderCard = ({
       onDragEnter={(e) => onDragEnter?.(e, folder.galleryKey)}
       onDragLeave={(e) => onDragLeave?.(e, folder.galleryKey)}
       onDrop={(e) => onDrop?.(e, folder.galleryKey)}
-      className={`group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-colors select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${isSelected ? 'ring-2 ring-blue-600' : ''} ${isDragOver ? 'bg-blue-50 ring-2 ring-blue-500 dark:bg-blue-950' : ''}`}
+      className={`group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-all select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${isSelected ? 'ring-2 ring-blue-600' : ''} ${isDragOver ? 'bg-blue-50 ring-2 ring-blue-500 dark:bg-blue-950' : ''} ${isSelected && isDragging ? 'opacity-50' : ''}`}
       onClick={(e) => {
         // Check for Cmd/Ctrl+Click for selection
         if ((e.metaKey || e.ctrlKey) && onSelectionToggle) {
@@ -233,6 +236,7 @@ export const FolderGrid = ({
   onContainerDragLeave,
   onDrop,
   dragOverTarget,
+  isDragging = false,
 }: FolderGridProps) => {
   const columnCount = Math.max(2, Math.floor(width / maxFolderWidth))
   const folderWidth = width / columnCount
@@ -285,6 +289,7 @@ export const FolderGrid = ({
             onDragLeave={onDragLeave}
             onDrop={onDrop}
             isDragOver={isDragOver}
+            isDragging={isDragging}
             selectedFolderKeys={selectedFolderKeys}
           />
         )

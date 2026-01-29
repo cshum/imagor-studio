@@ -30,6 +30,7 @@ interface ImageCellProps {
   // Drag and drop props
   onDragStart?: (e: React.DragEvent, items: DragItem[], sourceGalleryKey: string) => void
   onDragEnd?: (e: React.DragEvent) => void
+  isDragging?: boolean
   selectedImageKeys?: Set<string>
   galleryKey?: string
 }
@@ -53,6 +54,7 @@ const ImageCell = ({
   imageRef,
   onDragStart,
   onDragEnd,
+  isDragging = false,
   selectedImageKeys,
   galleryKey = '',
 }: ImageCellProps) => {
@@ -144,7 +146,7 @@ const ImageCell = ({
       aria-label={`${image.isVideo ? 'Video' : 'Image'}: ${image.imageName}`}
     >
       <div
-        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-transform duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-3 ring-blue-600' : ''}`}
+        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-all duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-3 ring-blue-600' : ''} ${isSelected && isDragging ? '!opacity-50' : ''}`}
       >
         <img
           src={getFullImageUrl(image.imageSrc)}
@@ -226,6 +228,7 @@ export interface ImageGridProps {
   // Drag and drop props
   onDragStart?: (e: React.DragEvent, items: DragItem[], sourceGalleryKey: string) => void
   onDragEnd?: (e: React.DragEvent) => void
+  isDragging?: boolean
   galleryKey?: string
 }
 
@@ -247,6 +250,7 @@ export const ImageGrid = ({
   onVisibleRangeChange,
   onDragStart,
   onDragEnd,
+  isDragging = false,
   galleryKey = '',
 }: ImageGridProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -322,6 +326,7 @@ export const ImageGrid = ({
           onKeyDown={onImageKeyDown}
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
+          isDragging={isDragging}
           selectedImageKeys={selectedImageKeys}
           galleryKey={galleryKey}
           imageRef={(el) => {
