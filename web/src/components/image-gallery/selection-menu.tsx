@@ -42,6 +42,11 @@ export const SelectionMenu: React.FC<SelectionMenuProps> = ({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end' className='w-56'>
+        <DropdownMenuItem onClick={onClear} className='hover:cursor-pointer'>
+          <X className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.gallery.selection.clearSelection')}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         {onMove && (
           <DropdownMenuItem onClick={onMove} className='hover:cursor-pointer'>
             <FolderInput className='mr-3 h-4 w-4' />
@@ -58,11 +63,6 @@ export const SelectionMenu: React.FC<SelectionMenuProps> = ({
             {t('pages.gallery.selection.deleteSelected')}
           </DropdownMenuItem>
         )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={onClear} className='hover:cursor-pointer'>
-          <X className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.selection.clearSelection')}
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
