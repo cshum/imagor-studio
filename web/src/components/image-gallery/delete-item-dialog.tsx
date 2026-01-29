@@ -11,32 +11,38 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
-interface DeleteImageDialogProps {
+export interface DeleteItemDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  imageName: string
+  itemName: string
+  itemType: 'file' | 'folder'
   isDeleting: boolean
   onConfirm: () => void
 }
 
-export function DeleteImageDialog({
+export function DeleteItemDialog({
   open,
   onOpenChange,
-  imageName,
+  itemName,
+  itemType,
   isDeleting,
   onConfirm,
-}: DeleteImageDialogProps) {
+}: DeleteItemDialogProps) {
   const { t } = useTranslation()
+
+  // Use appropriate translation keys based on item type
+  const translationKey = itemType === 'file' ? 'deleteImage' : 'deleteFolder'
+  const valueKey = itemType === 'file' ? 'imageName' : 'folderName'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('pages.gallery.deleteImage.title')}</DialogTitle>
+          <DialogTitle>{t(`pages.gallery.${translationKey}.title`)}</DialogTitle>
           <DialogDescription>
             <Trans
-              i18nKey='pages.gallery.deleteImage.description'
-              values={{ imageName }}
+              i18nKey={`pages.gallery.${translationKey}.description`}
+              values={{ [valueKey]: itemName }}
               components={{ 1: <strong /> }}
             />
           </DialogDescription>

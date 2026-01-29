@@ -25,8 +25,7 @@ import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { deleteFile, moveFile } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
-import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
-import { DeleteImageDialog } from '@/components/image-gallery/delete-image-dialog'
+import { DeleteItemDialog } from '@/components/image-gallery/delete-item-dialog'
 import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-state'
 import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
@@ -100,24 +99,17 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const { isLoading, pendingMatches } = useRouterState()
   const { authState } = useAuth()
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
-  const [deleteImageDialog, setDeleteImageDialog] = useState<{
+  const [deleteItemDialog, setDeleteItemDialog] = useState<{
     open: boolean
-    imageKey: string | null
+    itemKey: string | null
+    itemName: string | null
+    itemType: 'file' | 'folder'
     isDeleting: boolean
   }>({
     open: false,
-    imageKey: null,
-    isDeleting: false,
-  })
-  const [deleteFolderDialog, setDeleteFolderDialog] = useState<{
-    open: boolean
-    folderKey: string | null
-    folderName: string | null
-    isDeleting: boolean
-  }>({
-    open: false,
-    folderKey: null,
-    folderName: null,
+    itemKey: null,
+    itemName: null,
+    itemType: 'file',
     isDeleting: false,
   })
   const [renameDialog, setRenameDialog] = useState<{
@@ -432,77 +424,63 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
-  const handleDeleteImageFromMenu = (imageKey: string) => {
-    setDeleteImageDialog({
+  const handleDeleteItemFromMenu = (
+    itemKey: string,
+    itemName: string,
+    itemType: 'file' | 'folder',
+  ) => {
+    setDeleteItemDialog({
       open: true,
-      imageKey,
+      itemKey,
+      itemName,
+      itemType,
       isDeleting: false,
     })
   }
 
-  const handleDeleteImage = async () => {
-    if (!deleteImageDialog.imageKey) return
+  const handleDeleteItem = async () => {
+    if (!deleteItemDialog.itemKey || !deleteItemDialog.itemName) return
 
-    setDeleteImageDialog((prev) => ({ ...prev, isDeleting: true }))
-
-    try {
-      const imagePath = galleryKey
-        ? `${galleryKey}/${deleteImageDialog.imageKey}`
-        : deleteImageDialog.imageKey
-
-      await deleteFile(imagePath)
-      setDeleteImageDialog({
-        open: false,
-        imageKey: null,
-        isDeleting: false,
-      })
-
-      router.invalidate()
-      toast.success(
-        t('pages.gallery.deleteImage.success', { fileName: deleteImageDialog.imageKey }),
-      )
-    } catch {
-      toast.error(t('pages.gallery.deleteImage.error'))
-      setDeleteImageDialog((prev) => ({ ...prev, isDeleting: false }))
-    }
-  }
-
-  const handleDeleteDialogClose = (open: boolean) => {
-    if (!deleteImageDialog.isDeleting) {
-      setDeleteImageDialog({
-        open,
-        imageKey: null,
-        isDeleting: false,
-      })
-    }
-  }
-
-  const handleDeleteFolder = async () => {
-    if (!deleteFolderDialog.folderKey || !deleteFolderDialog.folderName) return
-
-    setDeleteFolderDialog((prev) => ({ ...prev, isDeleting: true }))
+    setDeleteItemDialog((prev) => ({ ...prev, isDeleting: true }))
 
     try {
-      // folderKey is already the full path from the context menu
-      await handleDeleteFolderOperation(deleteFolderDialog.folderKey, deleteFolderDialog.folderName)
+      if (deleteItemDialog.itemType === 'folder') {
+        // folderKey is already the full path from the context menu
+        await handleDeleteFolderOperation(deleteItemDialog.itemKey, deleteItemDialog.itemName)
+      } else {
+        // For files, construct the full path
+        const itemPath = galleryKey
+          ? `${galleryKey}/${deleteItemDialog.itemKey}`
+          : deleteItemDialog.itemKey
 
-      setDeleteFolderDialog({
+        await deleteFile(itemPath)
+        router.invalidate()
+        toast.success(
+          t('pages.gallery.deleteImage.success', { fileName: deleteItemDialog.itemName }),
+        )
+      }
+
+      setDeleteItemDialog({
         open: false,
-        folderKey: null,
-        folderName: null,
+        itemKey: null,
+        itemName: null,
+        itemType: 'file',
         isDeleting: false,
       })
     } catch {
-      setDeleteFolderDialog((prev) => ({ ...prev, isDeleting: false }))
+      const errorKey = deleteItemDialog.itemType === 'file' ? 'deleteImage' : 'deleteFolder'
+      toast.error(t(`pages.gallery.${errorKey}.error`))
+      setDeleteItemDialog((prev) => ({ ...prev, isDeleting: false }))
     }
   }
 
-  const handleDeleteFolderDialogClose = (open: boolean) => {
-    if (!deleteFolderDialog.isDeleting) {
-      setDeleteFolderDialog({
+  const handleDeleteItemDialogClose = (open: boolean) => {
+    if (!deleteItemDialog.isDeleting) {
+      setDeleteItemDialog({
         open,
-        folderKey: null,
-        folderName: null,
+        itemKey: null,
+        itemName: null,
+        itemType: 'file',
         isDeleting: false,
       })
     }
@@ -657,7 +635,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             <ContextMenuItem
               onClick={() => {
                 // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
-                setTimeout(() => handleDeleteImageFromMenu(imageKey), 0)
+                setTimeout(() => handleDeleteItemFromMenu(imageKey, imageName, 'file'), 0)
               }}
               className='text-destructive focus:text-destructive'
             >
@@ -707,7 +685,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => handleDeleteImageFromMenu(imageKey)}
+              onClick={() => handleDeleteItemFromMenu(imageKey, imageName, 'file')}
               className='text-destructive focus:text-destructive'
             >
               <Trash2 className='mr-2 h-4 w-4' />
@@ -728,12 +706,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     isAuthenticated: () => authState.state === 'authenticated',
     onRename: (folderKey, folderName) => handleRenameFromMenu(folderKey, folderName, 'folder'),
     onDelete: (folderKey, folderName) => {
-      setDeleteFolderDialog({
-        open: true,
-        folderKey,
-        folderName,
-        isDeleting: false,
-      })
+      handleDeleteItemFromMenu(folderKey, folderName, 'folder')
     },
   })
 
@@ -742,12 +715,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     isAuthenticated: () => authState.state === 'authenticated',
     onRename: (folderKey, folderName) => handleRenameFromMenu(folderKey, folderName, 'folder'),
     onDelete: (folderKey, folderName) => {
-      setDeleteFolderDialog({
-        open: true,
-        folderKey,
-        folderName,
-        isDeleting: false,
-      })
+      handleDeleteItemFromMenu(folderKey, folderName, 'folder')
     },
     useDropdownItems: true,
   })
@@ -1223,20 +1191,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         currentPath={galleryKey}
       />
 
-      <DeleteImageDialog
-        open={deleteImageDialog.open}
-        onOpenChange={handleDeleteDialogClose}
-        imageName={deleteImageDialog.imageKey || ''}
-        isDeleting={deleteImageDialog.isDeleting}
-        onConfirm={handleDeleteImage}
-      />
-
-      <DeleteFolderDialog
-        open={deleteFolderDialog.open}
-        onOpenChange={handleDeleteFolderDialogClose}
-        folderName={deleteFolderDialog.folderName || ''}
-        isDeleting={deleteFolderDialog.isDeleting}
-        onConfirm={handleDeleteFolder}
+      <DeleteItemDialog
+        open={deleteItemDialog.open}
+        onOpenChange={handleDeleteItemDialogClose}
+        itemName={deleteItemDialog.itemName || ''}
+        itemType={deleteItemDialog.itemType}
+        isDeleting={deleteItemDialog.isDeleting}
+        onConfirm={handleDeleteItem}
       />
 
       {/* Simplified Bulk Delete - Simple confirmation dialog */}

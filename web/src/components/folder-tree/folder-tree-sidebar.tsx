@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { FolderOpen, Home, Trash2, Type } from 'lucide-react'
 
-import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
+import { DeleteItemDialog } from '@/components/image-gallery/delete-item-dialog'
 import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
 import { RenameItemDialog } from '@/components/image-gallery/rename-item-dialog'
 import {
@@ -45,15 +45,17 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
   const { isMobile, setOpenMobile } = useSidebar()
   const routerState = useRouterState()
 
-  const [deleteFolderDialog, setDeleteFolderDialog] = useState<{
+  const [deleteItemDialog, setDeleteItemDialog] = useState<{
     open: boolean
-    folderKey: string | null
-    folderName: string | null
+    itemKey: string | null
+    itemName: string | null
+    itemType: 'file' | 'folder'
     isDeleting: boolean
   }>({
     open: false,
-    folderKey: null,
-    folderName: null,
+    itemKey: null,
+    itemName: null,
+    itemType: 'folder',
     isDeleting: false,
   })
 
@@ -101,10 +103,11 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
 
   // Trigger delete dialog from context menu
   const handleDeleteFromMenu = (folderKey: string, folderName: string) => {
-    setDeleteFolderDialog({
+    setDeleteItemDialog({
       open: true,
-      folderKey,
-      folderName,
+      itemKey: folderKey,
+      itemName: folderName,
+      itemType: 'folder',
       isDeleting: false,
     })
   }
@@ -205,30 +208,32 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     }
   }
 
-  const handleDeleteFolder = async () => {
-    if (!deleteFolderDialog.folderKey || !deleteFolderDialog.folderName) return
+  const handleDeleteItem = async () => {
+    if (!deleteItemDialog.itemKey || !deleteItemDialog.itemName) return
 
-    setDeleteFolderDialog((prev) => ({ ...prev, isDeleting: true }))
+    setDeleteItemDialog((prev) => ({ ...prev, isDeleting: true }))
 
     try {
-      await handleDeleteFolderOperation(deleteFolderDialog.folderKey, deleteFolderDialog.folderName)
-      setDeleteFolderDialog({
+      await handleDeleteFolderOperation(deleteItemDialog.itemKey, deleteItemDialog.itemName)
+      setDeleteItemDialog({
         open: false,
-        folderKey: null,
-        folderName: null,
+        itemKey: null,
+        itemName: null,
+        itemType: 'folder',
         isDeleting: false,
       })
     } catch {
-      setDeleteFolderDialog((prev) => ({ ...prev, isDeleting: false }))
+      setDeleteItemDialog((prev) => ({ ...prev, isDeleting: false }))
     }
   }
 
-  const handleDeleteFolderDialogClose = (open: boolean) => {
-    if (!deleteFolderDialog.isDeleting) {
-      setDeleteFolderDialog({
+  const handleDeleteItemDialogClose = (open: boolean) => {
+    if (!deleteItemDialog.isDeleting) {
+      setDeleteItemDialog({
         open,
-        folderKey: null,
-        folderName: null,
+        itemKey: null,
+        itemName: null,
+        itemType: 'folder',
         isDeleting: false,
       })
     }
@@ -308,13 +313,14 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
         onConfirm={handleRename}
       />
 
-      {/* Delete Folder Dialog */}
-      <DeleteFolderDialog
-        open={deleteFolderDialog.open}
-        onOpenChange={handleDeleteFolderDialogClose}
-        folderName={deleteFolderDialog.folderName || ''}
-        isDeleting={deleteFolderDialog.isDeleting}
-        onConfirm={handleDeleteFolder}
+      {/* Delete Item Dialog */}
+      <DeleteItemDialog
+        open={deleteItemDialog.open}
+        onOpenChange={handleDeleteItemDialogClose}
+        itemName={deleteItemDialog.itemName || ''}
+        itemType={deleteItemDialog.itemType}
+        isDeleting={deleteItemDialog.isDeleting}
+        onConfirm={handleDeleteItem}
       />
     </Sidebar>
   )
