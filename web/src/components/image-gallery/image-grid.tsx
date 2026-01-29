@@ -155,7 +155,7 @@ const ImageCell = ({
       aria-label={`${image.isVideo ? 'Video' : 'Image'}: ${image.imageName}`}
     >
       <div
-        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-all duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-3 ring-blue-600' : ''} ${isBeingDragged ? '!opacity-50' : ''}`}
+        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-opacity duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-3 ring-blue-600' : ''} ${isBeingDragged ? 'opacity-50' : ''}`}
       >
         <img
           src={getFullImageUrl(image.imageSrc)}
@@ -166,7 +166,7 @@ const ImageCell = ({
         {/* Selection checkbox - top left */}
         {onSelectionToggle && (
           <div
-            className={`pointer-events-none absolute top-2 left-2 opacity-0 transition-opacity group-hover/image:pointer-events-auto group-hover/image:opacity-100 md:opacity-0 md:group-hover/image:opacity-100 ${isSelected ? 'pointer-events-auto !opacity-100' : ''}`}
+            className={`pointer-events-none absolute top-2 left-2 opacity-0 transition-opacity group-hover/image:pointer-events-auto group-hover/image:opacity-100 md:opacity-0 md:group-hover/image:opacity-100 ${isSelected ? 'pointer-events-auto opacity-100' : ''}`}
             onClick={handleSelectionClick}
           >
             <div
