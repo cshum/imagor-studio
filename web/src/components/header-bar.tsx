@@ -134,7 +134,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
               <MobileBreadcrumb breadcrumbs={breadcrumbs} className='block sm:hidden' />
 
               {/* Desktop: Dynamic breadcrumb */}
-              <Breadcrumb className='hidden sm:block'>
+              <Breadcrumb className='hidden select-none sm:block'>
                 <BreadcrumbList>
                   {breadcrumbs.map((breadcrumb, index) => {
                     const folderKey = breadcrumb.href ? getFolderKeyFromHref(breadcrumb.href) : ''
