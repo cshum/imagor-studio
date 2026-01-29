@@ -5,22 +5,12 @@ import { FolderOpen, Home, Trash2, Type } from 'lucide-react'
 
 import { DeleteFolderDialog } from '@/components/image-gallery/delete-folder-dialog'
 import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
-import { Button } from '@/components/ui/button'
-import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { RenameItemDialog } from '@/components/image-gallery/rename-item-dialog'
 import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
 import {
   Sidebar,
   SidebarContent,
@@ -79,8 +69,6 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     isRenaming: false,
   })
 
-  const [renameInput, setRenameInput] = useState('')
-
   // Get drag state and drop handler from global store
   const { dragOverTarget, onDropHandler } = useDragDrop()
 
@@ -109,7 +97,6 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
       folderName,
       isRenaming: false,
     })
-    setRenameInput(folderName)
   }
 
   // Trigger delete dialog from context menu
@@ -187,14 +174,14 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     )
   }
 
-  const handleRename = async () => {
-    if (!renameDialog.folderPath || !renameInput.trim()) return
+  const handleRename = async (newName: string) => {
+    if (!renameDialog.folderPath) return
 
     setRenameDialog((prev) => ({ ...prev, isRenaming: true }))
 
     try {
       // Use centralized handler from hook
-      await handleRenameFolderOperation(renameDialog.folderPath, renameInput.trim())
+      await handleRenameFolderOperation(renameDialog.folderPath, newName)
 
       setRenameDialog({
         open: false,
@@ -202,7 +189,6 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
         folderName: null,
         isRenaming: false,
       })
-      setRenameInput('')
     } catch {
       setRenameDialog((prev) => ({ ...prev, isRenaming: false }))
     }
@@ -216,7 +202,6 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
         folderName: null,
         isRenaming: false,
       })
-      setRenameInput('')
     }
   }
 
@@ -314,45 +299,14 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
       <SidebarRail />
 
       {/* Rename Dialog */}
-      <Dialog open={renameDialog.open} onOpenChange={handleRenameDialogClose}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('pages.gallery.renameItem.title', { type: 'folder' })}</DialogTitle>
-            <DialogDescription>
-              {t('pages.gallery.renameItem.description', { type: 'folder' })}
-            </DialogDescription>
-          </DialogHeader>
-          <div className='grid gap-4 py-4'>
-            <Input
-              value={renameInput}
-              onChange={(e) => setRenameInput(e.target.value)}
-              placeholder={t('pages.gallery.renameItem.placeholder')}
-              disabled={renameDialog.isRenaming}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && renameInput.trim()) {
-                  handleRename()
-                }
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => handleRenameDialogClose(false)}
-              disabled={renameDialog.isRenaming}
-            >
-              {t('common.buttons.cancel')}
-            </Button>
-            <ButtonWithLoading
-              onClick={handleRename}
-              disabled={!renameInput.trim()}
-              isLoading={renameDialog.isRenaming}
-            >
-              {t('pages.gallery.renameItem.rename')}
-            </ButtonWithLoading>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <RenameItemDialog
+        open={renameDialog.open}
+        onOpenChange={handleRenameDialogClose}
+        itemName={renameDialog.folderName || ''}
+        itemType='folder'
+        isRenaming={renameDialog.isRenaming}
+        onConfirm={handleRename}
+      />
 
       {/* Delete Folder Dialog */}
       <DeleteFolderDialog

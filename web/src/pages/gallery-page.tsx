@@ -34,6 +34,7 @@ import { FolderSelectionDialog } from '@/components/image-gallery/folder-selecti
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
 import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
+import { RenameItemDialog } from '@/components/image-gallery/rename-item-dialog'
 import { SelectionMenu } from '@/components/image-gallery/selection-menu'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Button } from '@/components/ui/button'
@@ -132,8 +133,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     itemType: 'file',
     isRenaming: false,
   })
-  const [renameInput, setRenameInput] = useState('')
-  const [renameFileExtension, setRenameFileExtension] = useState('')
   const [uploadState, setUploadState] = useState<{
     files: DragDropFile[]
     isUploading: boolean
@@ -515,18 +514,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     const itemPath =
       itemType === 'file' ? (galleryKey ? `${galleryKey}/${itemKey}` : itemKey) : itemKey // folderKey is already full path
 
-    // For files, extract extension and show only the name without extension
-    let nameWithoutExt = itemName
-    let extension = ''
-
-    if (itemType === 'file') {
-      const lastDot = itemName.lastIndexOf('.')
-      if (lastDot > 0) {
-        nameWithoutExt = itemName.substring(0, lastDot)
-        extension = itemName.substring(lastDot) // includes the dot
-      }
-    }
-
     setRenameDialog({
       open: true,
       itemPath,
@@ -534,21 +521,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       itemType,
       isRenaming: false,
     })
-    setRenameInput(nameWithoutExt)
-    setRenameFileExtension(extension)
   }
 
-  const handleRename = async () => {
-    if (!renameDialog.itemPath || !renameInput.trim()) return
+  const handleRename = async (newName: string) => {
+    if (!renameDialog.itemPath) return
 
     setRenameDialog((prev) => ({ ...prev, isRenaming: true }))
 
     try {
-      const newName =
-        renameDialog.itemType === 'file'
-          ? renameInput.trim() + renameFileExtension
-          : renameInput.trim()
-
       if (renameDialog.itemType === 'folder') {
         // Use centralized folder rename handler from hook
         await handleRenameFolderOperation(renameDialog.itemPath, newName)
@@ -570,8 +550,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         itemType: 'file',
         isRenaming: false,
       })
-      setRenameInput('')
-      setRenameFileExtension('')
     } catch (error: any) {
       const errorCode = error?.response?.errors?.[0]?.extensions?.code
       if (errorCode === 'FILE_ALREADY_EXISTS') {
@@ -592,8 +570,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         itemType: 'file',
         isRenaming: false,
       })
-      setRenameInput('')
-      setRenameFileExtension('')
     }
   }
 
@@ -1318,47 +1294,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         url={copyUrlDialog.url}
       />
 
-      <Dialog open={renameDialog.open} onOpenChange={handleRenameDialogClose}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {t('pages.gallery.renameItem.title', { type: renameDialog.itemType })}
-            </DialogTitle>
-            <DialogDescription>
-              {t('pages.gallery.renameItem.description', { type: renameDialog.itemType })}
-            </DialogDescription>
-          </DialogHeader>
-          <div className='grid gap-4 py-4'>
-            <Input
-              value={renameInput}
-              onChange={(e) => setRenameInput(e.target.value)}
-              placeholder={t('pages.gallery.renameItem.placeholder')}
-              disabled={renameDialog.isRenaming}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && renameInput.trim()) {
-                  handleRename()
-                }
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => handleRenameDialogClose(false)}
-              disabled={renameDialog.isRenaming}
-            >
-              {t('common.buttons.cancel')}
-            </Button>
-            <ButtonWithLoading
-              onClick={handleRename}
-              disabled={!renameInput.trim()}
-              isLoading={renameDialog.isRenaming}
-            >
-              {t('pages.gallery.renameItem.rename')}
-            </ButtonWithLoading>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <RenameItemDialog
+        open={renameDialog.open}
+        onOpenChange={handleRenameDialogClose}
+        itemName={renameDialog.itemName || ''}
+        itemType={renameDialog.itemType}
+        isRenaming={renameDialog.isRenaming}
+        onConfirm={handleRename}
+      />
 
       {/* Hidden file input for traditional upload */}
       <input
