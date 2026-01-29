@@ -146,7 +146,7 @@ const FolderCard = ({
       onDragEnter={(e) => onDragEnter?.(e, folder.galleryKey)}
       onDragLeave={(e) => onDragLeave?.(e, folder.galleryKey)}
       onDrop={(e) => onDrop?.(e, folder.galleryKey)}
-      className={`group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-opacity select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${isSelected ? 'ring-2 ring-blue-600' : ''} ${isDragOver ? 'bg-blue-50 ring-2 ring-blue-500 dark:bg-blue-950' : ''} ${isBeingDragged ? 'opacity-50' : ''}`}
+      className={`group/folder hover-touch:bg-accent focus-visible:ring-ring cursor-pointer transition-opacity select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${isSelected ? 'ring-3 ring-blue-600' : ''} ${isDragOver ? 'bg-blue-50 ring-2 ring-blue-500 dark:bg-blue-950' : ''} ${isBeingDragged ? 'opacity-50' : ''}`}
       onClick={(e) => {
         // Check for Cmd/Ctrl+Click for selection
         if ((e.metaKey || e.ctrlKey) && onSelectionToggle) {
