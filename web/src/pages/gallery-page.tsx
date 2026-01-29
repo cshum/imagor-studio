@@ -1158,6 +1158,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                             maxFolderWidth={maxItemWidth}
                             foldersVisible={foldersVisible}
                             selectedFolderKeys={selectedFolderKeys}
+                            selectedImageKeys={selectedImageKeys}
                             onFolderSelectionToggle={
                               authState.state === 'authenticated'
                                 ? handleFolderSelectionToggle
@@ -1192,6 +1193,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                             onDrop={authState.state === 'authenticated' ? handleDrop : undefined}
                             dragOverTarget={dragState.dragOverTarget}
                             draggedItems={dragState.draggedItems}
+                            galleryKey={galleryKey}
                             {...folderGridProps}
                           />
                         </FolderContextMenu>
@@ -1206,6 +1208,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           maxImageWidth={maxItemWidth}
                           showFileName={showFileNames}
                           selectedImageKeys={selectedImageKeys}
+                          selectedFolderKeys={selectedFolderKeys}
                           onImageSelectionToggle={
                             authState.state === 'authenticated'
                               ? handleImageSelectionToggle

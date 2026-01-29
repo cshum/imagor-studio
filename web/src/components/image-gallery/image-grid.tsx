@@ -32,6 +32,7 @@ interface ImageCellProps {
   onDragEnd?: (e: React.DragEvent) => void
   isBeingDragged?: boolean
   selectedImageKeys?: Set<string>
+  selectedFolderKeys?: Set<string>
   galleryKey?: string
 }
 
@@ -56,6 +57,7 @@ const ImageCell = ({
   onDragEnd,
   isBeingDragged = false,
   selectedImageKeys,
+  selectedFolderKeys,
   galleryKey = '',
 }: ImageCellProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -103,11 +105,18 @@ const ImageCell = ({
 
     const items: DragItem[] = []
 
-    // If this image is selected, drag all selected images
+    // If this image is selected, drag ALL selected items (images AND folders)
     if (selectedImageKeys?.has(image.imageKey)) {
+      // Add all selected images
       selectedImageKeys.forEach((key) => {
         const name = key.split('/').pop() || key
         items.push({ key: galleryKey ? `${galleryKey}/${key}` : key, name, type: 'image' })
+      })
+
+      // Add all selected folders
+      selectedFolderKeys?.forEach((folderKey) => {
+        const name = folderKey.split('/').filter(Boolean).pop() || 'Root'
+        items.push({ key: folderKey, name, type: 'folder' })
       })
     } else {
       // Otherwise, just drag this image
@@ -219,6 +228,7 @@ export interface ImageGridProps {
   showFileName?: boolean
   focusedIndex?: number
   selectedImageKeys?: Set<string>
+  selectedFolderKeys?: Set<string>
   imageRefs?: RefObject<Map<number, HTMLDivElement>>
   onImageKeyDown?: (event: React.KeyboardEvent, index: number) => void
   onImageClick?: (imageKey: string, position: Position, index: number) => void
@@ -242,6 +252,7 @@ export const ImageGrid = ({
   showFileName = false,
   focusedIndex = -1,
   selectedImageKeys,
+  selectedFolderKeys,
   imageRefs,
   onImageKeyDown,
   onImageClick,
@@ -330,6 +341,7 @@ export const ImageGrid = ({
           onDragEnd={onDragEnd}
           isBeingDragged={isBeingDragged}
           selectedImageKeys={selectedImageKeys}
+          selectedFolderKeys={selectedFolderKeys}
           galleryKey={galleryKey}
           imageRef={(el) => {
             if (imageRefs?.current) {

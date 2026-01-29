@@ -22,6 +22,7 @@ export interface FolderGridProps {
   foldersVisible?: boolean
   focusedIndex?: number
   selectedFolderKeys?: Set<string>
+  selectedImageKeys?: Set<string>
   folderRefs?: RefObject<(HTMLDivElement | null)[]>
   onFolderKeyDown?: (event: React.KeyboardEvent, index: number) => void
   onFolderClick?: (folder: Gallery, index: number, event?: React.MouseEvent) => void
@@ -37,6 +38,7 @@ export interface FolderGridProps {
   onDrop?: (e: React.DragEvent, targetFolderKey: string) => void
   dragOverTarget?: string | null
   draggedItems?: DragItem[]
+  galleryKey?: string
 }
 
 interface FolderCardProps {
@@ -61,6 +63,8 @@ interface FolderCardProps {
   isDragOver?: boolean
   isBeingDragged?: boolean
   selectedFolderKeys?: Set<string>
+  selectedImageKeys?: Set<string>
+  galleryKey?: string
 }
 
 const FolderCard = ({
@@ -84,6 +88,8 @@ const FolderCard = ({
   isDragOver = false,
   isBeingDragged = false,
   selectedFolderKeys,
+  selectedImageKeys,
+  galleryKey = '',
 }: FolderCardProps) => {
   const handleIconClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -99,11 +105,19 @@ const FolderCard = ({
     const folderKey = folder.galleryKey.endsWith('/') ? folder.galleryKey : `${folder.galleryKey}/`
     const items: DragItem[] = []
 
-    // If this folder is selected, drag all selected folders
+    // If this folder is selected, drag ALL selected items (folders AND images)
     if (selectedFolderKeys?.has(folderKey)) {
+      // Add all selected folders
       selectedFolderKeys.forEach((key) => {
         const name = key.split('/').filter(Boolean).pop() || 'Root'
         items.push({ key, name, type: 'folder' })
+      })
+
+      // Add all selected images
+      selectedImageKeys?.forEach((imageKey) => {
+        const fullKey = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
+        const name = imageKey.split('/').pop() || imageKey
+        items.push({ key: fullKey, name, type: 'image' })
       })
     } else {
       // Otherwise, just drag this folder
@@ -223,6 +237,7 @@ export const FolderGrid = ({
   foldersVisible = true,
   focusedIndex = -1,
   selectedFolderKeys,
+  selectedImageKeys,
   folderRefs,
   onFolderKeyDown,
   onFolderClick,
@@ -237,6 +252,7 @@ export const FolderGrid = ({
   onDrop,
   dragOverTarget,
   draggedItems = [],
+  galleryKey = '',
 }: FolderGridProps) => {
   const columnCount = Math.max(2, Math.floor(width / maxFolderWidth))
   const folderWidth = width / columnCount
@@ -292,6 +308,8 @@ export const FolderGrid = ({
             isDragOver={isDragOver}
             isBeingDragged={isBeingDragged}
             selectedFolderKeys={selectedFolderKeys}
+            selectedImageKeys={selectedImageKeys}
+            galleryKey={galleryKey}
           />
         )
       })}
