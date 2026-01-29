@@ -42,16 +42,12 @@ import { useSidebar } from '@/stores/sidebar-store'
 
 import { FolderTreeNode } from './folder-tree-node'
 
-export interface FolderTreeSidebarProps
-  extends Omit<
-    React.ComponentProps<typeof Sidebar>,
-    'onDragOver' | 'onDragEnter' | 'onDragLeave' | 'onDrop'
-  > {
-  // Drag and drop handler from gallery page
-  onDrop?: (items: any[], targetFolderKey: string) => void | Promise<void>
-}
+export type FolderTreeSidebarProps = Omit<
+  React.ComponentProps<typeof Sidebar>,
+  'onDragOver' | 'onDragEnter' | 'onDragLeave' | 'onDrop'
+>
 
-export function FolderTreeSidebar({ onDrop, ...props }: FolderTreeSidebarProps) {
+export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { authState } = useAuth()
@@ -230,9 +226,7 @@ export function FolderTreeSidebar({ onDrop, ...props }: FolderTreeSidebarProps) 
     setDeleteFolderDialog((prev) => ({ ...prev, isDeleting: true }))
 
     try {
-      // Use centralized handler from hook
       await handleDeleteFolderOperation(deleteFolderDialog.folderKey, deleteFolderDialog.folderName)
-
       setDeleteFolderDialog({
         open: false,
         folderKey: null,
