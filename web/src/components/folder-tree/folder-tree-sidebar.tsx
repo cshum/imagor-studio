@@ -24,7 +24,12 @@ import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
 import { useItemDragDrop } from '@/hooks/use-item-drag-drop'
 import { useAuth } from '@/stores/auth-store'
 import { useDragDrop } from '@/stores/drag-drop-store'
-import { folderTreeStore, useFolderTree } from '@/stores/folder-tree-store'
+import {
+  folderTreeStore,
+  invalidateFolderCache,
+  loadFolderChildren,
+  useFolderTree,
+} from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 import { FolderTreeNode } from './folder-tree-node'
@@ -243,6 +248,18 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     }
   }
 
+  // Handle folder creation - reload parent folder in tree
+  const handleFolderCreated = async (folderPath: string) => {
+    // Get parent path
+    const pathParts = folderPath.split('/').filter(Boolean)
+    pathParts.pop() // Remove the new folder name
+    const parentPath = pathParts.join('/')
+
+    // Invalidate and reload the parent folder's children in the store
+    invalidateFolderCache(parentPath)
+    await loadFolderChildren(parentPath, true) // Auto-expand to show new folder
+  }
+
   return (
     <Sidebar {...props}>
       <SidebarContent>
@@ -332,6 +349,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
         currentPath={createFolderPath}
+        onFolderCreated={handleFolderCreated}
       />
 
       {/* Move Items Dialog */}
