@@ -43,11 +43,21 @@ export function FolderPickerNode({
       return excludedPath && folder.path.startsWith(excludedPath)
     })
   const hasChildren = folder.children && folder.children.length > 0
+  // only show arrow if not loaded yet OR has children after loading
   const canExpand = folder.isDirectory && (!folder.isLoaded || hasChildren)
 
-  const handleFolderClick = () => {
+  const handleFolderClick = async () => {
     if (!isDisabled) {
       onSelect(folder.path)
+
+      // Auto-expand when selecting a folder
+      if (folder.isDirectory) {
+        if (!folder.isLoaded) {
+          await loadFolderChildren(folder.path)
+        } else if (!folder.isExpanded) {
+          onUpdateNode(folder.path, { isExpanded: true })
+        }
+      }
     }
   }
 
@@ -55,11 +65,9 @@ export function FolderPickerNode({
     evt?.stopPropagation()
 
     if (!folder.isLoaded && folder.isDirectory) {
-      // Load children using the store - this will cache the data
+      // Load children if not loaded yet
       try {
-        await loadFolderChildren(folder.path, false) // Don't auto-expand in store
-        // After loading, update local expand state
-        onUpdateNode(folder.path, { isExpanded: true })
+        await loadFolderChildren(folder.path)
       } catch {
         toast.error(t('components.folderTree.loadFolderError'))
       }

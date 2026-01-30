@@ -1,11 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Home } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  Clock,
+  FileText,
+  Home,
+  MoreVertical,
+  Search,
+  X,
+} from 'lucide-react'
 
 import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api'
 import { listFiles } from '@/api/storage-api'
 import { Gallery } from '@/components/image-gallery/folder-grid'
-import { FolderNode, FolderPickerNode } from '@/components/image-gallery/folder-picker-node'
+import { FolderPickerNode, FolderNode } from '@/components/image-gallery/folder-picker-node'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view'
 import {
@@ -16,6 +26,16 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SortOption, SortOrder } from '@/generated/graphql'
@@ -56,6 +76,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   const [imageExtensions, setImageExtensions] = useState('')
   const [videoExtensions, setVideoExtensions] = useState('')
   const [contentWidth, setContentWidth] = useState(800)
+  const [filterText, setFilterText] = useState('')
   const contentRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const { rootFolders, loadingPaths, homeTitle } = useFolderTree()
@@ -296,6 +317,11 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   // Generate breadcrumbs
   const breadcrumbSegments = currentPath ? currentPath.split('/').filter(Boolean) : []
 
+  // Apply filter to images
+  const filteredImages = filterText
+    ? images.filter((image) => image.imageName.toLowerCase().includes(filterText.toLowerCase()))
+    : images
+
   const isLoadingRoot = loadingPaths.has('')
 
   return (
@@ -349,49 +375,153 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
 
       {/* Right content - Breadcrumb + Grid */}
       <div className='flex flex-1 flex-col overflow-hidden'>
-        {/* Breadcrumb */}
+        {/* Breadcrumb with Dropdown Menu */}
         <div className='border-b p-4'>
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                {currentPath ? (
-                  <BreadcrumbLink
-                    onClick={() => onPathChange('')}
-                    className='flex cursor-pointer items-center gap-1'
-                  >
-                    <Home className='h-4 w-4' />
-                    {t('components.folderTree.home')}
-                  </BreadcrumbLink>
-                ) : (
-                  <BreadcrumbPage className='flex items-center gap-1'>
-                    <Home className='h-4 w-4' />
-                    {t('components.folderTree.home')}
-                  </BreadcrumbPage>
-                )}
-              </BreadcrumbItem>
-              {breadcrumbSegments.map((segment, index) => {
-                const isLast = index === breadcrumbSegments.length - 1
-                const segmentPath = breadcrumbSegments.slice(0, index + 1).join('/')
-                return (
-                  <React.Fragment key={segmentPath}>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                      {isLast ? (
-                        <BreadcrumbPage>{segment}</BreadcrumbPage>
-                      ) : (
-                        <BreadcrumbLink
-                          onClick={() => onPathChange(segmentPath)}
-                          className='cursor-pointer'
-                        >
-                          {segment}
-                        </BreadcrumbLink>
-                      )}
-                    </BreadcrumbItem>
-                  </React.Fragment>
-                )
-              })}
-            </BreadcrumbList>
-          </Breadcrumb>
+          <div className='flex items-center justify-between'>
+            {/* Left: Breadcrumb */}
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  {currentPath ? (
+                    <BreadcrumbLink
+                      onClick={() => onPathChange('')}
+                      className='flex cursor-pointer items-center gap-1'
+                    >
+                      <Home className='h-4 w-4' />
+                      {t('components.folderTree.home')}
+                    </BreadcrumbLink>
+                  ) : (
+                    <BreadcrumbPage className='flex items-center gap-1'>
+                      <Home className='h-4 w-4' />
+                      {t('components.folderTree.home')}
+                    </BreadcrumbPage>
+                  )}
+                </BreadcrumbItem>
+                {breadcrumbSegments.map((segment, index) => {
+                  const isLast = index === breadcrumbSegments.length - 1
+                  const segmentPath = breadcrumbSegments.slice(0, index + 1).join('/')
+                  return (
+                    <React.Fragment key={segmentPath}>
+                      <BreadcrumbSeparator />
+                      <BreadcrumbItem>
+                        {isLast ? (
+                          <BreadcrumbPage>{segment}</BreadcrumbPage>
+                        ) : (
+                          <BreadcrumbLink
+                            onClick={() => onPathChange(segmentPath)}
+                            className='cursor-pointer'
+                          >
+                            {segment}
+                          </BreadcrumbLink>
+                        )}
+                      </BreadcrumbItem>
+                    </React.Fragment>
+                  )
+                })}
+              </BreadcrumbList>
+            </Breadcrumb>
+
+            {/* Right: Dropdown Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='ghost' size='icon' className='h-8 w-8'>
+                  <MoreVertical className='h-4 w-4' />
+                  <span className='sr-only'>{t('common.buttons.more')}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end' className='w-56'>
+                {/* Filter Input */}
+                <div className='px-2 py-1.5'>
+                  <div className='relative'>
+                    <Search className='text-muted-foreground absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2' />
+                    <Input
+                      type='text'
+                      placeholder={t('pages.gallery.filter.placeholder')}
+                      value={filterText}
+                      onChange={(e) => setFilterText(e.target.value)}
+                      className='h-8 pr-8 pl-8'
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    />
+                    {filterText && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setFilterText('')
+                        }}
+                        className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2'
+                        aria-label={t('pages.gallery.filter.clearFilter')}
+                      >
+                        <X className='h-4 w-4' />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Show File Names Toggle */}
+                <DropdownMenuItem
+                  className='hover:cursor-pointer'
+                  onSelect={(event) => {
+                    event.preventDefault()
+                    setShowFileNames(!showFileNames)
+                  }}
+                >
+                  <FileText className='text-muted-foreground mr-3 h-4 w-4' />
+                  {t('pages.gallery.showFileNames')}
+                  {showFileNames && <Check className='ml-auto h-4 w-4' />}
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>{t('pages.gallery.sorting.sort')}</DropdownMenuLabel>
+
+                {/* Sort by Name */}
+                <DropdownMenuItem
+                  className='hover:cursor-pointer'
+                  onSelect={(event) => {
+                    event.preventDefault()
+                    if (sortBy === 'NAME') {
+                      setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC')
+                    } else {
+                      setSortBy('NAME')
+                      setSortOrder('ASC')
+                    }
+                  }}
+                >
+                  <FileText className='text-muted-foreground mr-3 h-4 w-4' />
+                  {t('pages.gallery.sorting.name')}
+                  {sortBy === 'NAME' &&
+                    (sortOrder === 'ASC' ? (
+                      <ArrowUp className='ml-auto h-4 w-4' />
+                    ) : (
+                      <ArrowDown className='ml-auto h-4 w-4' />
+                    ))}
+                </DropdownMenuItem>
+
+                {/* Sort by Modified Time */}
+                <DropdownMenuItem
+                  className='hover:cursor-pointer'
+                  onSelect={(event) => {
+                    event.preventDefault()
+                    if (sortBy === 'MODIFIED_TIME') {
+                      setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC')
+                    } else {
+                      setSortBy('MODIFIED_TIME')
+                      setSortOrder('DESC')
+                    }
+                  }}
+                >
+                  <Clock className='text-muted-foreground mr-3 h-4 w-4' />
+                  {t('pages.gallery.sorting.modifiedTime')}
+                  {sortBy === 'MODIFIED_TIME' &&
+                    (sortOrder === 'ASC' ? (
+                      <ArrowUp className='ml-auto h-4 w-4' />
+                    ) : (
+                      <ArrowDown className='ml-auto h-4 w-4' />
+                    ))}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Scrollable content area */}
@@ -404,14 +534,14 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
                   <Skeleton key={index} className='aspect-[4/3] w-full rounded-md' />
                 ))}
               </div>
-            ) : images.length === 0 ? (
+            ) : filteredImages.length === 0 ? (
               <div className='text-muted-foreground flex h-full items-center justify-center text-sm'>
                 {t('components.filePicker.noFiles')}
               </div>
             ) : (
               /* Image Grid - Folders navigated via sidebar tree only */
               <ImageGrid
-                images={images}
+                images={filteredImages}
                 aspectRatio={aspectRatio}
                 width={contentWidth}
                 scrollTop={scrollTop}
