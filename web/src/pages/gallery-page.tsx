@@ -1010,7 +1010,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           onUploadStateChange={setUploadState}
           className='min-h-screen'
         >
-          <div className='mx-4 my-2 flex items-center justify-between gap-4'>
+          <div className='mx-4 my-2 grid'>
             <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
           </div>
           <HeaderBar
