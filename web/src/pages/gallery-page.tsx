@@ -24,7 +24,6 @@ import { toast } from 'sonner'
 import { generateImagorUrl } from '@/api/imagor-api'
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { deleteFile, moveFile } from '@/api/storage-api.ts'
-import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog.tsx'
 import { HeaderBar } from '@/components/header-bar'
 import { BulkDeleteDialog } from '@/components/image-gallery/bulk-delete-dialog'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
@@ -39,7 +38,6 @@ import { MoveItem, MoveItemsDialog } from '@/components/image-gallery/move-items
 import { RenameItemDialog } from '@/components/image-gallery/rename-item-dialog'
 import { SelectionMenu } from '@/components/image-gallery/selection-menu'
 import { LoadingBar } from '@/components/loading-bar.tsx'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   ContextMenuItem,
@@ -150,8 +148,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     open: false,
     items: [],
   })
-  const [filePickerOpen, setFilePickerOpen] = useState(false)
-
   // Selection store
   const selection = useSelection()
 
@@ -1016,10 +1012,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         >
           <div className='mx-4 my-2 flex items-center justify-between gap-4'>
             <h1 className='text-3xl md:text-4xl'>{galleryName}</h1>
-            {/* Test button for file picker */}
-            <Button onClick={() => setFilePickerOpen(true)} variant='outline' size='sm'>
-              📁 Test File Picker
-            </Button>
           </div>
           <HeaderBar
             isScrolled={isScrolledDown}
@@ -1220,21 +1212,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       />
 
       {children}
-
-      {/* File Picker Dialog for Testing */}
-      <FilePickerDialog
-        open={filePickerOpen}
-        onOpenChange={setFilePickerOpen}
-        onSelect={(paths) => {
-          console.log('Selected files:', paths)
-          toast.success(`Selected ${paths.length} file(s): ${paths.join(', ')}`)
-        }}
-        selectionMode='multiple'
-        fileType='images'
-        currentPath={galleryKey}
-        title='Test File Picker'
-        description='Select one or more images from your gallery'
-      />
     </>
   )
 }
