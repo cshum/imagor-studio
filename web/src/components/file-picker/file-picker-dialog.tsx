@@ -39,7 +39,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   mode = 'file',
   currentPath: initialPath,
   fileExtensions,
-  maxItemWidth = 250,
+  maxItemWidth = 230,
   title,
   description,
   confirmButtonText,
