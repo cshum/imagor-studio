@@ -125,16 +125,20 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
           <DialogFooter className='flex-row justify-between p-4 sm:justify-between'>
             {/* Left side - Selection info */}
-            <div className='flex items-center gap-2'>
-              {selectedPaths.size === 1 ? (
+            <div className='flex items-center gap-4'>
+              {selectionMode === 'single' ? (
                 // Single selection: show filename
                 <span className='text-muted-foreground max-w-[200px] truncate text-sm'>
                   {Array.from(selectedPaths)[0].split('/').pop()}
                 </span>
-              ) : selectedPaths.size > 1 ? (
+              ) : selectionMode === 'multiple' ? (
                 // Multiple selection: reset button + counter
                 <>
-                  <Button variant='outline' onClick={() => setSelectedPaths(new Set())}>
+                  <Button
+                    variant='outline'
+                    disabled={selectedPaths.size === 0}
+                    onClick={() => setSelectedPaths(new Set())}
+                  >
                     {t('components.filePicker.resetSelection')}
                   </Button>
                   <span className='text-muted-foreground text-sm'>
