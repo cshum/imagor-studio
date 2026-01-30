@@ -39,7 +39,6 @@ import { useFolderTree } from '@/stores/folder-tree-store'
 export interface FilePickerContentProps {
   currentPath: string
   selectedPaths: Set<string>
-  selectionMode: 'single' | 'multiple'
   mode: 'file' | 'folder' | 'both'
   fileExtensions?: string[]
   maxItemWidth?: number
@@ -50,7 +49,6 @@ export interface FilePickerContentProps {
 export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   currentPath,
   selectedPaths,
-  selectionMode,
   mode,
   fileExtensions,
   maxItemWidth = 200,
@@ -511,9 +509,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
                 showFileName={showFileNames}
                 selectedImageKeys={selectedImageKeys}
                 onImageClick={handleImageClick}
-                onImageSelectionToggle={
-                  selectionMode === 'multiple' ? handleImageSelectionToggle : undefined
-                }
+                onImageSelectionToggle={handleImageSelectionToggle}
                 galleryKey={currentPath}
               />
             )}
