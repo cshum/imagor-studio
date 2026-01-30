@@ -1229,7 +1229,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           console.log('Selected files:', paths)
           toast.success(`Selected ${paths.length} file(s): ${paths.join(', ')}`)
         }}
-        selectionMode='single'
+        selectionMode='multiple'
         fileType='images'
         currentPath={galleryKey}
         title='Test File Picker'

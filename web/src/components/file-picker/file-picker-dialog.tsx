@@ -135,7 +135,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
             <div className='flex items-center gap-4'>
               {selectionMode === 'single' ? (
                 // Single selection: show filename
-                <span className='text-muted-foreground max-w-[200px] truncate text-sm md:max-w-sm'>
+                <span className='text-muted-foreground max-w-sm truncate text-sm md:inline'>
                   {Array.from(selectedPaths)[0]?.split('/').pop()}
                 </span>
               ) : selectionMode === 'multiple' ? (
@@ -148,7 +148,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
                   >
                     {t('components.filePicker.resetSelection')}
                   </Button>
-                  <span className='text-muted-foreground text-sm'>
+                  <span className='text-muted-foreground hidden text-sm md:inline'>
                     {t('components.filePicker.selectedCount', { count: selectedPaths.size })}
                   </span>
                 </>
