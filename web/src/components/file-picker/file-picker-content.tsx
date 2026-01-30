@@ -618,7 +618,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
 
             {/* Scrollable content area */}
             <ScrollArea ref={scrollAreaRef} className='flex-1' onScrollCapture={handleScroll}>
-              <div ref={contentRef} className='overflow-hidden p-2 pt-[45px]'>
+              <div ref={contentRef} className='overflow-hidden p-2 pt-[60px] md:pt-[45px]'>
                 {filteredImages.length > 0 && (
                   <ImageGrid
                     images={filteredImages}
