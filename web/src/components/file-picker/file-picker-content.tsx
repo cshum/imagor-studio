@@ -317,6 +317,9 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     ? images.filter((image) => image.imageName.toLowerCase().includes(filterText.toLowerCase()))
     : images
 
+  const totalItems = images.length
+  const filteredCount = filteredImages.length
+
   const isLoadingRoot = loadingPaths.has('')
 
   return (
@@ -415,6 +418,14 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
                       </button>
                     )}
                   </div>
+                  {filterText && (
+                    <p className='text-muted-foreground mt-1 text-xs'>
+                      {t('pages.gallery.filter.showingFiltered', {
+                        count: filteredCount,
+                        total: totalItems,
+                      })}
+                    </p>
+                  )}
                 </div>
 
                 {/* Show File Names Toggle */}
