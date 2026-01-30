@@ -41,6 +41,7 @@ import { useFolderTree } from '@/stores/folder-tree-store'
 export interface FilePickerContentProps {
   currentPath: string
   selectedPaths: Set<string>
+  fileType?: 'images' | 'videos' | 'both'
   fileExtensions?: string[]
   maxItemWidth?: number
   onPathChange: (path: string) => void
@@ -51,6 +52,7 @@ export interface FilePickerContentProps {
 export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   currentPath,
   selectedPaths,
+  fileType = 'both',
   fileExtensions,
   maxItemWidth = 200,
   onPathChange,
@@ -229,17 +231,26 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
             galleryName: item.name,
           }))
 
-        // Calculate baseline extensions (all allowed media types from config)
-        const baselineExtensions = [
-          ...imageExtensions.split(',').map((e) => e.trim()),
-          ...videoExtensions.split(',').map((e) => e.trim()),
-        ]
+        // Determine allowed extensions based on fileType and fileExtensions
+        let allowedExtensions: string[]
 
-        // If fileExtensions prop provided, filter baseline to only those
-        const allowedExtensions =
-          fileExtensions && fileExtensions.length > 0
-            ? baselineExtensions.filter((ext) => fileExtensions.includes(ext))
-            : baselineExtensions
+        if (fileExtensions && fileExtensions.length > 0) {
+          // Custom extensions provided - use them directly (highest priority)
+          allowedExtensions = fileExtensions
+        } else {
+          // Use fileType to determine which extensions to include
+          const imgExts = imageExtensions.split(',').map((e) => e.trim())
+          const vidExts = videoExtensions.split(',').map((e) => e.trim())
+
+          if (fileType === 'images') {
+            allowedExtensions = imgExts
+          } else if (fileType === 'videos') {
+            allowedExtensions = vidExts
+          } else {
+            // 'both' - include all media types
+            allowedExtensions = [...imgExts, ...vidExts]
+          }
+        }
 
         // Process images/files
         let imageItems: GalleryImage[] = result.items
@@ -269,7 +280,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     }
 
     loadFilesData()
-  }, [currentPath, fileExtensions, sortBy, sortOrder, videoExtensions, imageExtensions])
+  }, [currentPath, fileType, fileExtensions, sortBy, sortOrder, videoExtensions, imageExtensions])
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement

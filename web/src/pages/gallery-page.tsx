@@ -1230,10 +1230,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           toast.success(`Selected ${paths.length} file(s): ${paths.join(', ')}`)
         }}
         selectionMode='multiple'
-        fileExtensions={['.jpg']}
+        fileType='images'
         currentPath={galleryKey}
         title='Test File Picker'
-        description='Select one or more files from your gallery'
+        description='Select one or more images from your gallery'
       />
     </>
   )

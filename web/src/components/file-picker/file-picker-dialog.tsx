@@ -22,7 +22,8 @@ export interface FilePickerDialogProps {
   // Configuration
   selectionMode?: 'single' | 'multiple'
   currentPath?: string
-  fileExtensions?: string[]
+  fileType?: 'images' | 'videos' | 'both' // Filter by file type (uses system config)
+  fileExtensions?: string[] // Custom extensions (overrides fileType)
   maxItemWidth?: number // Default: 170 (for 3 columns)
 
   // Customization
@@ -37,6 +38,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   onSelect,
   selectionMode = 'single',
   currentPath: initialPath,
+  fileType = 'both',
   fileExtensions,
   maxItemWidth = 230,
   title,
@@ -115,6 +117,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
             <FilePickerContent
               currentPath={currentPath}
               selectedPaths={selectedPaths}
+              fileType={fileType}
               fileExtensions={fileExtensions}
               maxItemWidth={maxItemWidth}
               onPathChange={handlePathChange}
