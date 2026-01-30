@@ -376,7 +376,11 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         <div className='border-b px-4 py-2'>
           <div className='flex items-center justify-between'>
             {/* Left: Breadcrumb */}
-            <FilePickerBreadcrumb currentPath={currentPath} onNavigate={onPathChange} />
+            <FilePickerBreadcrumb
+              currentPath={currentPath}
+              homeTitle={homeTitle}
+              onNavigate={onPathChange}
+            />
 
             {/* Right: Dropdown Menu */}
             <DropdownMenu>

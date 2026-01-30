@@ -1,6 +1,5 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Home } from 'lucide-react'
 
 import {
   Breadcrumb,
@@ -13,11 +12,13 @@ import {
 
 export interface FilePickerBreadcrumbProps {
   currentPath: string
+  homeTitle?: string
   onNavigate: (path: string) => void
 }
 
 export const FilePickerBreadcrumb: React.FC<FilePickerBreadcrumbProps> = ({
   currentPath,
+  homeTitle,
   onNavigate,
 }) => {
   const { t } = useTranslation()
@@ -27,7 +28,7 @@ export const FilePickerBreadcrumb: React.FC<FilePickerBreadcrumbProps> = ({
 
   // Build breadcrumb items
   const breadcrumbItems: Array<{ name: string; path: string }> = [
-    { name: t('components.folderTree.home'), path: '' },
+    { name: homeTitle || t('components.folderTree.home'), path: '' },
   ]
 
   let accumulatedPath = ''
@@ -48,11 +49,7 @@ export const FilePickerBreadcrumb: React.FC<FilePickerBreadcrumbProps> = ({
                 {isLast ? (
                   <BreadcrumbPage>{item.name}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink
-                    onClick={() => onNavigate(item.path)}
-                    className='flex cursor-pointer items-center gap-1'
-                  >
-                    {index === 0 && <Home className='h-3.5 w-3.5' />}
+                  <BreadcrumbLink onClick={() => onNavigate(item.path)} className='cursor-pointer'>
                     {item.name}
                   </BreadcrumbLink>
                 )}
