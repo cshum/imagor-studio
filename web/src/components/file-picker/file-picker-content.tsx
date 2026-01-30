@@ -14,18 +14,11 @@ import {
 
 import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api'
 import { listFiles } from '@/api/storage-api'
+import { FilePickerBreadcrumb } from '@/components/file-picker/file-picker-breadcrumb'
 import { Gallery } from '@/components/image-gallery/folder-grid'
 import { FolderNode, FolderPickerNode } from '@/components/image-gallery/folder-picker-node'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -321,9 +314,6 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     }
   }
 
-  // Generate breadcrumbs
-  const breadcrumbSegments = currentPath ? currentPath.split('/').filter(Boolean) : []
-
   // Apply filter to images
   const filteredImages = filterText
     ? images.filter((image) => image.imageName.toLowerCase().includes(filterText.toLowerCase()))
@@ -383,50 +373,10 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
       {/* Right content - Breadcrumb + Grid */}
       <div className='flex flex-1 flex-col overflow-hidden'>
         {/* Breadcrumb with Dropdown Menu */}
-        <div className='border-b p-4'>
+        <div className='border-b px-4 py-2'>
           <div className='flex items-center justify-between'>
             {/* Left: Breadcrumb */}
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  {currentPath ? (
-                    <BreadcrumbLink
-                      onClick={() => onPathChange('')}
-                      className='flex cursor-pointer items-center gap-1'
-                    >
-                      <Home className='h-4 w-4' />
-                      {t('components.folderTree.home')}
-                    </BreadcrumbLink>
-                  ) : (
-                    <BreadcrumbPage className='flex items-center gap-1'>
-                      <Home className='h-4 w-4' />
-                      {t('components.folderTree.home')}
-                    </BreadcrumbPage>
-                  )}
-                </BreadcrumbItem>
-                {breadcrumbSegments.map((segment, index) => {
-                  const isLast = index === breadcrumbSegments.length - 1
-                  const segmentPath = breadcrumbSegments.slice(0, index + 1).join('/')
-                  return (
-                    <React.Fragment key={segmentPath}>
-                      <BreadcrumbSeparator />
-                      <BreadcrumbItem>
-                        {isLast ? (
-                          <BreadcrumbPage>{segment}</BreadcrumbPage>
-                        ) : (
-                          <BreadcrumbLink
-                            onClick={() => onPathChange(segmentPath)}
-                            className='cursor-pointer'
-                          >
-                            {segment}
-                          </BreadcrumbLink>
-                        )}
-                      </BreadcrumbItem>
-                    </React.Fragment>
-                  )
-                })}
-              </BreadcrumbList>
-            </Breadcrumb>
+            <FilePickerBreadcrumb currentPath={currentPath} onNavigate={onPathChange} />
 
             {/* Right: Dropdown Menu */}
             <DropdownMenu>
