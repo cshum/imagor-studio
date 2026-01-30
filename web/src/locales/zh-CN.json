@@ -627,6 +627,14 @@
       "folders": "文件夹",
       "noFoldersFound": "未找到文件夹"
     },
+    "filePicker": {
+      "title": "选择文件",
+      "description": "从图库中选择文件",
+      "select": "选择",
+      "resetSelection": "重置选择",
+      "selectedCount": "已选择 {{count}} 项",
+      "noFiles": "此文件夹中未找到文件"
+    },
     "licenseBadge": {
       "unregistered": "未注册"
     }

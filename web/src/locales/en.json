@@ -633,7 +633,8 @@
       "title": "Select File",
       "description": "Choose a file from your gallery",
       "select": "Select",
-      "selectMultiple": "Select ({{count}})",
+      "resetSelection": "Reset Selection",
+      "selectedCount": "{{count}} selected",
       "noFiles": "No files found in this folder"
     },
     "licenseBadge": {

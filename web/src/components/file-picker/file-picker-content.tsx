@@ -41,18 +41,16 @@ import { useFolderTree } from '@/stores/folder-tree-store'
 export interface FilePickerContentProps {
   currentPath: string
   selectedPaths: Set<string>
-  mode: 'file' | 'folder' | 'both'
   fileExtensions?: string[]
   maxItemWidth?: number
   onPathChange: (path: string) => void
-  onSelectionChange: (path: string, type: 'file' | 'folder') => void
+  onSelectionChange: (path: string) => void
   onLoadingChange?: (isLoading: boolean) => void
 }
 
 export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   currentPath,
   selectedPaths,
-  mode,
   fileExtensions,
   maxItemWidth = 200,
   onPathChange,
@@ -217,8 +215,8 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
           path: currentPath,
           offset: 0,
           limit: 1000,
-          onlyFiles: false, // Always load both to show folder grid for navigation
-          onlyFolders: mode === 'folder',
+          onlyFiles: false,
+          onlyFolders: false,
           sortBy,
           sortOrder,
         })
@@ -271,7 +269,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     }
 
     loadFilesData()
-  }, [currentPath, mode, fileExtensions, sortBy, sortOrder, videoExtensions, imageExtensions])
+  }, [currentPath, fileExtensions, sortBy, sortOrder, videoExtensions, imageExtensions])
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement
@@ -279,15 +277,13 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   }
 
   const handleImageClick = (imageKey: string) => {
-    if (mode === 'file' || mode === 'both') {
-      const fullPath = currentPath ? `${currentPath}/${imageKey}` : imageKey
-      onSelectionChange(fullPath, 'file')
-    }
+    const fullPath = currentPath ? `${currentPath}/${imageKey}` : imageKey
+    onSelectionChange(fullPath)
   }
 
   const handleImageSelectionToggle = (imageKey: string) => {
     const fullPath = currentPath ? `${currentPath}/${imageKey}` : imageKey
-    onSelectionChange(fullPath, 'file')
+    onSelectionChange(fullPath)
   }
 
   // Prepare selected keys

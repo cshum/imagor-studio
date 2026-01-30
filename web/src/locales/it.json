@@ -621,6 +621,14 @@
       "folders": "Cartelle",
       "noFoldersFound": "Nessuna cartella trovata"
     },
+    "filePicker": {
+      "title": "Seleziona File",
+      "description": "Scegli un file dalla tua galleria",
+      "select": "Seleziona",
+      "resetSelection": "Reimposta Selezione",
+      "selectedCount": "{{count}} selezionati",
+      "noFiles": "Nessun file trovato in questa cartella"
+    },
     "licenseBadge": {
       "unregistered": "Non Registrato"
     }

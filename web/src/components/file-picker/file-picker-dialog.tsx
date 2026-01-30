@@ -21,7 +21,6 @@ export interface FilePickerDialogProps {
 
   // Configuration
   selectionMode?: 'single' | 'multiple'
-  mode?: 'file' | 'folder' | 'both'
   currentPath?: string
   fileExtensions?: string[]
   maxItemWidth?: number // Default: 170 (for 3 columns)
@@ -37,7 +36,6 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   onOpenChange,
   onSelect,
   selectionMode = 'single',
-  mode = 'file',
   currentPath: initialPath,
   fileExtensions,
   maxItemWidth = 230,
@@ -52,11 +50,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
   const dialogTitle = title || t('components.filePicker.title')
   const dialogDescription = description || t('components.filePicker.description')
-  const buttonText =
-    confirmButtonText ||
-    (selectionMode === 'multiple' && selectedPaths.size > 1
-      ? t('components.filePicker.selectMultiple', { count: selectedPaths.size })
-      : t('components.filePicker.select'))
+  const buttonText = confirmButtonText || t('components.filePicker.select')
 
   // Load root folders when dialog opens
   useEffect(() => {
@@ -72,11 +66,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   }, [])
 
   const handleSelectionChange = useCallback(
-    (path: string, type: 'file' | 'folder') => {
-      // Check if this type is allowed
-      if (mode === 'file' && type === 'folder') return
-      if (mode === 'folder' && type === 'file') return
-
+    (path: string) => {
       setSelectedPaths((prev) => {
         const newSet = new Set(prev)
 
@@ -96,7 +86,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
         return newSet
       })
     },
-    [selectionMode, mode],
+    [selectionMode],
   )
 
   const handleConfirm = () => {
@@ -125,7 +115,6 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
             <FilePickerContent
               currentPath={currentPath}
               selectedPaths={selectedPaths}
-              mode={mode}
               fileExtensions={fileExtensions}
               maxItemWidth={maxItemWidth}
               onPathChange={handlePathChange}
@@ -134,13 +123,36 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
             />
           </div>
 
-          <DialogFooter className='p-4'>
-            <Button variant='outline' onClick={handleCancel}>
-              {t('common.buttons.cancel')}
-            </Button>
-            <Button onClick={handleConfirm} disabled={selectedPaths.size === 0}>
-              {buttonText}
-            </Button>
+          <DialogFooter className='flex-row justify-between p-4 sm:justify-between'>
+            {/* Left side - Selection info */}
+            <div className='flex items-center gap-2'>
+              {selectedPaths.size === 1 ? (
+                // Single selection: show filename
+                <span className='text-muted-foreground max-w-[200px] truncate text-sm'>
+                  {Array.from(selectedPaths)[0].split('/').pop()}
+                </span>
+              ) : selectedPaths.size > 1 ? (
+                // Multiple selection: reset button + counter
+                <>
+                  <Button variant='outline' onClick={() => setSelectedPaths(new Set())}>
+                    {t('components.filePicker.resetSelection')}
+                  </Button>
+                  <span className='text-muted-foreground text-sm'>
+                    {t('components.filePicker.selectedCount', { count: selectedPaths.size })}
+                  </span>
+                </>
+              ) : null}
+            </div>
+
+            {/* Right side - Action buttons */}
+            <div className='flex gap-2'>
+              <Button variant='outline' onClick={handleCancel}>
+                {t('common.buttons.cancel')}
+              </Button>
+              <Button onClick={handleConfirm} disabled={selectedPaths.size === 0}>
+                {buttonText}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
