@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowDown,
@@ -80,12 +80,25 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   const contentRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const { rootFolders, loadingPaths, homeTitle } = useFolderTree()
-  const [localFolderTree, setLocalFolderTree] = useState<FolderNode[]>([])
+  const [localExpandState, setLocalExpandState] = useState<Record<string, boolean>>({})
 
-  // Sync root folders from store to local state
-  useEffect(() => {
-    setLocalFolderTree(rootFolders)
-  }, [rootFolders])
+  // Build tree with local expand state (like move dialog)
+  const buildTreeWithLocalExpand = useCallback(
+    (storeFolders: FolderNode[]): FolderNode[] => {
+      return storeFolders.map((folder) => ({
+        ...folder, // Get fresh data from store (including children!)
+        isExpanded: localExpandState[folder.path] ?? false, // Override with local expand state
+        children: folder.children ? buildTreeWithLocalExpand(folder.children) : undefined,
+      }))
+    },
+    [localExpandState],
+  )
+
+  // Rebuild tree whenever rootFolders or localExpandState changes
+  const localFolderTree = useMemo(
+    () => buildTreeWithLocalExpand(rootFolders),
+    [rootFolders, buildTreeWithLocalExpand],
+  )
 
   // Track content width with ResizeObserver to prevent size jumps on scroll
   useEffect(() => {
@@ -262,7 +275,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     }
 
     loadFilesData()
-  }, [currentPath, mode, fileExtensions, sortBy, sortOrder, videoExtensions])
+  }, [currentPath, mode, fileExtensions, sortBy, sortOrder, videoExtensions, imageExtensions])
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement
@@ -298,20 +311,14 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     }
   })
 
-  // Handle folder tree node updates
+  // Handle folder tree node updates (update local expand state only)
   const handleUpdateNode = (path: string, updates: Partial<FolderNode>) => {
-    const updateNodeRecursive = (nodes: FolderNode[]): FolderNode[] => {
-      return nodes.map((node) => {
-        if (node.path === path) {
-          return { ...node, ...updates }
-        }
-        if (node.children) {
-          return { ...node, children: updateNodeRecursive(node.children) }
-        }
-        return node
-      })
+    if (updates.isExpanded !== undefined) {
+      setLocalExpandState((prev) => ({
+        ...prev,
+        [path]: updates.isExpanded!,
+      }))
     }
-    setLocalFolderTree(updateNodeRecursive(localFolderTree))
   }
 
   // Generate breadcrumbs
