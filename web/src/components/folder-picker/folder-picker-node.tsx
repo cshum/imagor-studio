@@ -3,8 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { ChevronRight, Folder } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { loadFolderChildren } from '@/stores/folder-tree-store'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible.tsx'
+import { loadFolderChildren } from '@/stores/folder-tree-store.ts'
 
 export interface FolderNode {
   name: string

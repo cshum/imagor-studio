@@ -4,7 +4,7 @@ import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 import { moveFile } from '@/api/storage-api'
-import { FolderSelectionDialog } from '@/components/image-gallery/folder-selection-dialog'
+import { FolderSelectionDialog } from '@/components/folder-picker/folder-selection-dialog.tsx'
 import { invalidateFolderCache } from '@/stores/folder-tree-store'
 
 export interface MoveItem {
