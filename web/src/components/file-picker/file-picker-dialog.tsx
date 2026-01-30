@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { FilePickerContent } from '@/components/file-picker/file-picker-content'
+import { LoadingBar } from '@/components/loading-bar'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -47,6 +48,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   const { t } = useTranslation()
   const [currentPath, setCurrentPath] = useState<string>(initialPath || '')
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set())
+  const [isLoading, setIsLoading] = useState(false)
 
   const dialogTitle = title || t('components.filePicker.title')
   const dialogDescription = description || t('components.filePicker.description')
@@ -110,34 +112,38 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='bg-sidebar flex h-[80vh] max-w-7xl flex-col gap-0 p-0'>
-        <DialogHeader className='p-6'>
-          <DialogTitle>{dialogTitle}</DialogTitle>
-          <DialogDescription>{dialogDescription}</DialogDescription>
-        </DialogHeader>
+    <>
+      <LoadingBar isLoading={isLoading} />
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className='bg-sidebar flex h-[80vh] max-w-7xl flex-col gap-0 p-0'>
+          <DialogHeader className='p-6'>
+            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogDescription>{dialogDescription}</DialogDescription>
+          </DialogHeader>
 
-        <div className='min-h-0 flex-1 overflow-hidden'>
-          <FilePickerContent
-            currentPath={currentPath}
-            selectedPaths={selectedPaths}
-            mode={mode}
-            fileExtensions={fileExtensions}
-            maxItemWidth={maxItemWidth}
-            onPathChange={handlePathChange}
-            onSelectionChange={handleSelectionChange}
-          />
-        </div>
+          <div className='min-h-0 flex-1 overflow-hidden'>
+            <FilePickerContent
+              currentPath={currentPath}
+              selectedPaths={selectedPaths}
+              mode={mode}
+              fileExtensions={fileExtensions}
+              maxItemWidth={maxItemWidth}
+              onPathChange={handlePathChange}
+              onSelectionChange={handleSelectionChange}
+              onLoadingChange={setIsLoading}
+            />
+          </div>
 
-        <DialogFooter className='p-4'>
-          <Button variant='outline' onClick={handleCancel}>
-            {t('common.buttons.cancel')}
-          </Button>
-          <Button onClick={handleConfirm} disabled={selectedPaths.size === 0}>
-            {buttonText}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter className='p-4'>
+            <Button variant='outline' onClick={handleCancel}>
+              {t('common.buttons.cancel')}
+            </Button>
+            <Button onClick={handleConfirm} disabled={selectedPaths.size === 0}>
+              {buttonText}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

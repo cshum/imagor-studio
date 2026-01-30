@@ -7,7 +7,6 @@ import {
   Clock,
   FileText,
   Home,
-  Loader2,
   MoreVertical,
   Search,
   X,
@@ -47,6 +46,7 @@ export interface FilePickerContentProps {
   maxItemWidth?: number
   onPathChange: (path: string) => void
   onSelectionChange: (path: string, type: 'file' | 'folder') => void
+  onLoadingChange?: (isLoading: boolean) => void
 }
 
 export const FilePickerContent: React.FC<FilePickerContentProps> = ({
@@ -57,6 +57,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   maxItemWidth = 200,
   onPathChange,
   onSelectionChange,
+  onLoadingChange,
 }) => {
   const { t } = useTranslation()
   const { authState } = useAuth()
@@ -191,6 +192,11 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
 
     loadPreferences()
   }, [authState.profile?.id, authState.state])
+
+  // Notify parent of loading state changes
+  useEffect(() => {
+    onLoadingChange?.(isLoading)
+  }, [isLoading, onLoadingChange])
 
   // Load files when path changes
   useEffect(() => {
@@ -380,9 +386,8 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
                   onNavigate={onPathChange}
                 />
 
-                {/* Right: Loading Spinner + Dropdown Menu */}
+                {/* Right: Dropdown Menu */}
                 <div className='flex items-center gap-2'>
-                  {isLoading && <Loader2 className='h-5 w-5 animate-spin' />}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant='ghost' size='icon' className='h-8 w-8'>
