@@ -111,7 +111,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='flex h-[80vh] max-w-7xl flex-col gap-0 p-0'>
+      <DialogContent className='bg-sidebar flex h-[80vh] max-w-7xl flex-col gap-0 p-0'>
         <DialogHeader className='p-6'>
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{dialogDescription}</DialogDescription>
