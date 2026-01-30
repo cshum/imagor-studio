@@ -230,6 +230,8 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     onLoadingChange?.(isLoading)
   }, [isLoading, onLoadingChange])
 
+  const loadFilesErrorRef = useRef(t('components.filePicker.loadFilesError'))
+
   // Load files when path changes - use configRef for all other values
   useEffect(() => {
     // Wait for config to be ready before loading files
@@ -308,7 +310,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         setFolders(folderItems)
         setImages(imageItems)
       } catch {
-        toast.error(t('components.filePicker.loadFilesError'))
+        toast.error(loadFilesErrorRef.current)
         setFolders([])
         setImages([])
       } finally {
