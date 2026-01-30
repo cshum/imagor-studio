@@ -320,9 +320,9 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   const isLoadingRoot = loadingPaths.has('')
 
   return (
-    <div className='flex h-full overflow-hidden'>
+    <div className='-mt-px flex h-full'>
       {/* Left sidebar - Folder tree */}
-      <div className='w-64 flex-shrink-0'>
+      <div className='w-64 flex-shrink-0 pl-2'>
         <ScrollArea className='h-full [&>div>div]:!block [&>div>div]:!min-w-0'>
           <div className='p-2'>
             {/* Home/Root folder */}
@@ -366,7 +366,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
       </div>
 
       {/* Right content - Card with Breadcrumb + Grid */}
-      <div className='-mt-px flex-1 px-2 md:px-4'>
+      <div className='flex-1 px-2 md:pr-4'>
         <Card className='relative flex h-full flex-col overflow-hidden rounded-lg border-none'>
           <CardContent className='flex h-full flex-col overflow-hidden p-0'>
             {/* Breadcrumb with Dropdown Menu - Absolute positioned, floats over content */}

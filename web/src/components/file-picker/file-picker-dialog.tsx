@@ -117,7 +117,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
           <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
 
-        <div className='min-h-0 flex-1'>
+        <div className='min-h-0 flex-1 overflow-hidden'>
           <FilePickerContent
             currentPath={currentPath}
             selectedPaths={selectedPaths}
