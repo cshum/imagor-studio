@@ -633,7 +633,8 @@
       "select": "选择",
       "resetSelection": "重置选择",
       "selectedCount": "已选择 {{count}} 项",
-      "noFiles": "此文件夹中未找到文件"
+      "noFiles": "此文件夹中未找到文件",
+      "loadFilesError": "加载文件失败"
     },
     "licenseBadge": {
       "unregistered": "未注册"

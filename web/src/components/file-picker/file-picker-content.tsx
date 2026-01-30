@@ -12,6 +12,7 @@ import {
   Search,
   X,
 } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api'
 import { listFiles } from '@/api/storage-api'
@@ -306,8 +307,8 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
 
         setFolders(folderItems)
         setImages(imageItems)
-      } catch (error) {
-        console.error('Failed to load files:', error)
+      } catch {
+        toast.error(t('components.filePicker.loadFilesError'))
         setFolders([])
         setImages([])
       } finally {

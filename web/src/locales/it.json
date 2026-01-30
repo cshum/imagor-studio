@@ -627,7 +627,8 @@
       "select": "Seleziona",
       "resetSelection": "Reimposta Selezione",
       "selectedCount": "{{count}} selezionati",
-      "noFiles": "Nessun file trovato in questa cartella"
+      "noFiles": "Nessun file trovato in questa cartella",
+      "loadFilesError": "Impossibile caricare i file"
     },
     "licenseBadge": {
       "unregistered": "Non Registrato"

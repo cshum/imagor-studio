@@ -630,7 +630,8 @@
       "select": "選擇",
       "resetSelection": "重置選擇",
       "selectedCount": "已選擇 {{count}} 項",
-      "noFiles": "此資料夾中未找到檔案"
+      "noFiles": "此資料夾中未找到檔案",
+      "loadFilesError": "載入檔案失敗"
     },
     "licenseBadge": {
       "unregistered": "未註冊"
