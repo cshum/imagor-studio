@@ -3,8 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { ChevronRight, Folder } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { loadFolderChildren } from '@/stores/folder-tree-store'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible.tsx'
+import { loadFolderChildren } from '@/stores/folder-tree-store.ts'
 
 export interface FolderNode {
   name: string
@@ -43,11 +47,23 @@ export function FolderPickerNode({
       return excludedPath && folder.path.startsWith(excludedPath)
     })
   const hasChildren = folder.children && folder.children.length > 0
+  // only show arrow if not loaded yet OR has children after loading
   const canExpand = folder.isDirectory && (!folder.isLoaded || hasChildren)
 
-  const handleFolderClick = () => {
+  const handleFolderClick = async () => {
     if (!isDisabled) {
       onSelect(folder.path)
+
+      // Auto-expand when selecting a folder (like sidebar)
+      if (folder.isDirectory) {
+        if (!folder.isLoaded) {
+          // Load data without auto-expanding in store, then update local state
+          await loadFolderChildren(folder.path, false)
+          onUpdateNode(folder.path, { isExpanded: true })
+        } else if (!folder.isExpanded) {
+          onUpdateNode(folder.path, { isExpanded: true })
+        }
+      }
     }
   }
 
@@ -55,10 +71,10 @@ export function FolderPickerNode({
     evt?.stopPropagation()
 
     if (!folder.isLoaded && folder.isDirectory) {
-      // Load children using the store - this will cache the data
+      // Load children if not loaded yet, don't auto-expand in store
       try {
-        await loadFolderChildren(folder.path, false) // Don't auto-expand in store
-        // After loading, update local expand state
+        await loadFolderChildren(folder.path, false)
+        // Update local expand state after loading
         onUpdateNode(folder.path, { isExpanded: true })
       } catch {
         toast.error(t('components.folderTree.loadFolderError'))
@@ -77,7 +93,7 @@ export function FolderPickerNode({
     return (
       <div
         data-folder-path={folder.path}
-        className={`flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-sm ${
+        className={`flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-2.5 text-sm md:py-1.5 ${
           isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : 'hover:bg-accent'
         } ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
         onClick={handleFolderClick}
@@ -97,7 +113,7 @@ export function FolderPickerNode({
     >
       <div
         data-folder-path={folder.path}
-        className={`flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-sm ${
+        className={`flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-2.5 text-sm md:py-1.5 ${
           isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : 'hover:bg-accent'
         } ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
         onClick={handleFolderClick}

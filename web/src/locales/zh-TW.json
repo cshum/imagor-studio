@@ -624,6 +624,15 @@
       "folders": "資料夾",
       "noFoldersFound": "未找到資料夾"
     },
+    "filePicker": {
+      "title": "選擇檔案",
+      "description": "從圖庫中選擇檔案",
+      "select": "選擇",
+      "resetSelection": "重置選擇",
+      "selectedCount": "已選擇 {{count}} 項",
+      "noFiles": "此資料夾中未找到檔案",
+      "loadFilesError": "載入檔案失敗"
+    },
     "licenseBadge": {
       "unregistered": "未註冊"
     }

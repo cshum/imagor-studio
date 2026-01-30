@@ -625,8 +625,18 @@
   "components": {
     "folderTree": {
       "folders": "Folders",
+      "home": "Home",
       "noFoldersFound": "No folders found",
       "loadFolderError": "Failed to load folder contents"
+    },
+    "filePicker": {
+      "title": "Select File",
+      "description": "Choose a file from your gallery",
+      "select": "Select",
+      "resetSelection": "Reset Selection",
+      "selectedCount": "{{count}} selected",
+      "noFiles": "No files found in this folder",
+      "loadFilesError": "Failed to load files"
     },
     "licenseBadge": {
       "unregistered": "Unregistered"

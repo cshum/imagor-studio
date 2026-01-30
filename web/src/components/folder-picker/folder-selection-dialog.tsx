@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FolderPlus } from 'lucide-react'
 
-import { FolderNode, FolderPickerNode } from '@/components/image-gallery/folder-picker-node'
-import { Button } from '@/components/ui/button'
+import { FolderNode, FolderPickerNode } from '@/components/folder-picker/folder-picker-node.tsx'
+import { Button } from '@/components/ui/button.tsx'
 import {
   Dialog,
   DialogContent,
@@ -11,14 +11,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
+} from '@/components/ui/dialog.tsx'
+import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import {
   invalidateFolderCache,
   loadFolderChildren,
   loadRootFolders,
   useFolderTree,
-} from '@/stores/folder-tree-store'
+} from '@/stores/folder-tree-store.ts'
 
 export interface FolderSelectionDialogProps {
   open: boolean

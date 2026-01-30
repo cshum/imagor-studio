@@ -395,6 +395,7 @@ export const loadFolderChildren = async (path: string, autoExpand: boolean = tru
       name: item.name,
       path: item.path,
       isDirectory: item.isDirectory,
+      children: [], // Initialize with empty array - will be populated when folder is expanded
       isLoaded: false,
       isExpanded: false,
     }))
