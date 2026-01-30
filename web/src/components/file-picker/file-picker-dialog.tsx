@@ -129,7 +129,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
           />
         </div>
 
-        <DialogFooter className='p-6'>
+        <DialogFooter className='p-4'>
           <Button variant='outline' onClick={handleCancel}>
             {t('common.buttons.cancel')}
           </Button>
