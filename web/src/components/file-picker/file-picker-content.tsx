@@ -324,16 +324,16 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     <div className='flex h-full overflow-hidden'>
       {/* Left sidebar - Folder tree */}
       <div className='w-64 flex-shrink-0'>
-        <ScrollArea className='h-full'>
+        <ScrollArea className='h-full [&>div>div]:!block [&>div>div]:!min-w-0'>
           <div className='p-2'>
             {/* Home/Root folder */}
             <div
-              className={`mb-1 flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
+              className={`mb-1 flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-sm ${
                 currentPath === '' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'hover:bg-accent'
               }`}
               onClick={() => onPathChange('')}
             >
-              <Home className={`h-4 w-4 ${currentPath === '' ? 'text-white' : ''}`} />
+              <Home className={`h-4 w-4 flex-shrink-0 ${currentPath === '' ? 'text-white' : ''}`} />
               <span className='flex-1 truncate'>{homeTitle}</span>
             </div>
 
