@@ -7,6 +7,8 @@ import {
   Clock,
   FileText,
   Home,
+  Images,
+  Loader2,
   MoreVertical,
   Search,
   X,
@@ -283,9 +285,6 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     onSelectionChange(fullPath, 'file')
   }
 
-  // Calculate dimensions for grids
-  const aspectRatio = 4 / 3
-
   // Prepare selected keys
   const selectedFolderKeys = new Set<string>()
   const selectedImageKeys = new Set<string>()
@@ -382,136 +381,140 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
                   onNavigate={onPathChange}
                 />
 
-                {/* Right: Dropdown Menu */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant='ghost' size='icon' className='h-8 w-8'>
-                      <MoreVertical className='h-4 w-4' />
-                      <span className='sr-only'>{t('common.buttons.more')}</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end' className='w-56'>
-                    {/* Filter Input */}
-                    <div className='px-2 py-1.5'>
-                      <div className='relative'>
-                        <Search className='text-muted-foreground absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2' />
-                        <Input
-                          type='text'
-                          placeholder={t('pages.gallery.filter.placeholder')}
-                          value={filterText}
-                          onChange={(e) => setFilterText(e.target.value)}
-                          className='h-8 pr-8 pl-8'
-                          onClick={(e) => e.stopPropagation()}
-                          onKeyDown={(e) => e.stopPropagation()}
-                        />
+                {/* Right: Loading Spinner + Dropdown Menu */}
+                <div className='flex items-center gap-2'>
+                  {isLoading && <Loader2 className='h-5 w-5 animate-spin' />}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant='ghost' size='icon' className='h-8 w-8'>
+                        <MoreVertical className='h-4 w-4' />
+                        <span className='sr-only'>{t('common.buttons.more')}</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end' className='w-56'>
+                      {/* Filter Input */}
+                      <div className='px-2 py-1.5'>
+                        <div className='relative'>
+                          <Search className='text-muted-foreground absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2' />
+                          <Input
+                            type='text'
+                            placeholder={t('pages.gallery.filter.placeholder')}
+                            value={filterText}
+                            onChange={(e) => setFilterText(e.target.value)}
+                            className='h-8 pr-8 pl-8'
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                          {filterText && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setFilterText('')
+                              }}
+                              className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2'
+                              aria-label={t('pages.gallery.filter.clearFilter')}
+                            >
+                              <X className='h-4 w-4' />
+                            </button>
+                          )}
+                        </div>
                         {filterText && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setFilterText('')
-                            }}
-                            className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2'
-                            aria-label={t('pages.gallery.filter.clearFilter')}
-                          >
-                            <X className='h-4 w-4' />
-                          </button>
+                          <p className='text-muted-foreground mt-1 text-xs'>
+                            {t('pages.gallery.filter.showingFiltered', {
+                              count: filteredCount,
+                              total: totalItems,
+                            })}
+                          </p>
                         )}
                       </div>
-                      {filterText && (
-                        <p className='text-muted-foreground mt-1 text-xs'>
-                          {t('pages.gallery.filter.showingFiltered', {
-                            count: filteredCount,
-                            total: totalItems,
-                          })}
-                        </p>
-                      )}
-                    </div>
 
-                    {/* Show File Names Toggle */}
-                    <DropdownMenuItem
-                      className='hover:cursor-pointer'
-                      onSelect={(event) => {
-                        event.preventDefault()
-                        setShowFileNames(!showFileNames)
-                      }}
-                    >
-                      <FileText className='text-muted-foreground mr-3 h-4 w-4' />
-                      {t('pages.gallery.showFileNames')}
-                      {showFileNames && <Check className='ml-auto h-4 w-4' />}
-                    </DropdownMenuItem>
+                      {/* Show File Names Toggle */}
+                      <DropdownMenuItem
+                        className='hover:cursor-pointer'
+                        onSelect={(event) => {
+                          event.preventDefault()
+                          setShowFileNames(!showFileNames)
+                        }}
+                      >
+                        <FileText className='text-muted-foreground mr-3 h-4 w-4' />
+                        {t('pages.gallery.showFileNames')}
+                        {showFileNames && <Check className='ml-auto h-4 w-4' />}
+                      </DropdownMenuItem>
 
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>{t('pages.gallery.sorting.sort')}</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel>{t('pages.gallery.sorting.sort')}</DropdownMenuLabel>
 
-                    {/* Sort by Name */}
-                    <DropdownMenuItem
-                      className='hover:cursor-pointer'
-                      onSelect={(event) => {
-                        event.preventDefault()
-                        if (sortBy === 'NAME') {
-                          setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC')
-                        } else {
-                          setSortBy('NAME')
-                          setSortOrder('ASC')
-                        }
-                      }}
-                    >
-                      <FileText className='text-muted-foreground mr-3 h-4 w-4' />
-                      {t('pages.gallery.sorting.name')}
-                      {sortBy === 'NAME' &&
-                        (sortOrder === 'ASC' ? (
-                          <ArrowUp className='ml-auto h-4 w-4' />
-                        ) : (
-                          <ArrowDown className='ml-auto h-4 w-4' />
-                        ))}
-                    </DropdownMenuItem>
+                      {/* Sort by Name */}
+                      <DropdownMenuItem
+                        className='hover:cursor-pointer'
+                        onSelect={(event) => {
+                          event.preventDefault()
+                          if (sortBy === 'NAME') {
+                            setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC')
+                          } else {
+                            setSortBy('NAME')
+                            setSortOrder('ASC')
+                          }
+                        }}
+                      >
+                        <FileText className='text-muted-foreground mr-3 h-4 w-4' />
+                        {t('pages.gallery.sorting.name')}
+                        {sortBy === 'NAME' &&
+                          (sortOrder === 'ASC' ? (
+                            <ArrowUp className='ml-auto h-4 w-4' />
+                          ) : (
+                            <ArrowDown className='ml-auto h-4 w-4' />
+                          ))}
+                      </DropdownMenuItem>
 
-                    {/* Sort by Modified Time */}
-                    <DropdownMenuItem
-                      className='hover:cursor-pointer'
-                      onSelect={(event) => {
-                        event.preventDefault()
-                        if (sortBy === 'MODIFIED_TIME') {
-                          setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC')
-                        } else {
-                          setSortBy('MODIFIED_TIME')
-                          setSortOrder('DESC')
-                        }
-                      }}
-                    >
-                      <Clock className='text-muted-foreground mr-3 h-4 w-4' />
-                      {t('pages.gallery.sorting.modifiedTime')}
-                      {sortBy === 'MODIFIED_TIME' &&
-                        (sortOrder === 'ASC' ? (
-                          <ArrowUp className='ml-auto h-4 w-4' />
-                        ) : (
-                          <ArrowDown className='ml-auto h-4 w-4' />
-                        ))}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      {/* Sort by Modified Time */}
+                      <DropdownMenuItem
+                        className='hover:cursor-pointer'
+                        onSelect={(event) => {
+                          event.preventDefault()
+                          if (sortBy === 'MODIFIED_TIME') {
+                            setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC')
+                          } else {
+                            setSortBy('MODIFIED_TIME')
+                            setSortOrder('DESC')
+                          }
+                        }}
+                      >
+                        <Clock className='text-muted-foreground mr-3 h-4 w-4' />
+                        {t('pages.gallery.sorting.modifiedTime')}
+                        {sortBy === 'MODIFIED_TIME' &&
+                          (sortOrder === 'ASC' ? (
+                            <ArrowUp className='ml-auto h-4 w-4' />
+                          ) : (
+                            <ArrowDown className='ml-auto h-4 w-4' />
+                          ))}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </div>
 
             {/* Scrollable content area */}
             <ScrollArea ref={scrollAreaRef} className='flex-1' onScrollCapture={handleScroll}>
               <div ref={contentRef} className='overflow-hidden p-2 pt-[45px]'>
-                {isLoading ? (
-                  // Loading skeleton - 3 column grid
-                  <div className='grid grid-cols-3 gap-2'>
-                    {Array.from({ length: 9 }).map((_, index) => (
-                      <Skeleton key={index} className='aspect-[4/3] w-full rounded-md' />
-                    ))}
-                  </div>
-                ) : filteredImages.length === 0 ? (
-                  <div className='text-muted-foreground flex h-full items-center justify-center text-sm'>
-                    {t('components.filePicker.noFiles')}
+                {filteredImages.length === 0 ? (
+                  <div
+                    className='flex min-h-[400px] flex-col items-center justify-center text-center'
+                    style={{ width: `${contentWidth}px` }}
+                  >
+                    <div className='bg-muted mb-4 rounded-full p-6'>
+                      <Images className='text-muted-foreground h-20 w-20' />
+                    </div>
+                    <p className='text-muted-foreground text-lg'>
+                      {t('components.filePicker.noFiles')}
+                    </p>
                   </div>
                 ) : (
                   /* Image Grid - Folders navigated via sidebar tree only */
                   <ImageGrid
                     images={filteredImages}
-                    aspectRatio={aspectRatio}
+                    aspectRatio={4 / 3}
                     width={contentWidth}
                     scrollTop={scrollTop}
                     folderGridHeight={0}
