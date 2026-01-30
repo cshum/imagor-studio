@@ -7,6 +7,7 @@ import {
   Clock,
   FileText,
   Home,
+  Menu,
   MoreVertical,
   Search,
   X,
@@ -30,9 +31,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { MobileBreadcrumb } from '@/components/ui/mobile-breadcrumb'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SortOption, SortOrder } from '@/generated/graphql'
+import { BreadcrumbItem } from '@/hooks/use-breadcrumb'
+import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { hasExtension } from '@/lib/file-extensions'
 import { DEFAULT_IMAGE_EXTENSIONS, DEFAULT_VIDEO_EXTENSIONS } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
@@ -77,6 +81,8 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const { rootFolders, loadingPaths, homeTitle } = useFolderTree()
   const [localExpandState, setLocalExpandState] = useState<Record<string, boolean>>({})
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const isMobile = !useBreakpoint('md')
 
   // Use a single ref object for all stable config/props to avoid triggering reloads
   const configRef = useRef({
@@ -361,6 +367,27 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     }
   }
 
+  // Build breadcrumb items from currentPath
+  const breadcrumbItems = useMemo((): BreadcrumbItem[] => {
+    if (!currentPath) {
+      return [{ label: homeTitle, href: undefined, isActive: true }]
+    }
+
+    const parts = currentPath.split('/').filter(Boolean)
+    const items: BreadcrumbItem[] = [{ label: homeTitle, href: undefined, isActive: false }]
+
+    parts.forEach((part, index) => {
+      const isLast = index === parts.length - 1
+      items.push({
+        label: part,
+        href: undefined,
+        isActive: isLast,
+      })
+    })
+
+    return items
+  }, [currentPath, homeTitle])
+
   // Apply filter to images
   const filteredImages = filterText
     ? images.filter((image) => image.imageName.toLowerCase().includes(filterText.toLowerCase()))
@@ -373,16 +400,29 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
 
   return (
     <div className='-mt-px flex h-full'>
+      {/* Mobile sidebar overlay backdrop */}
+      {isMobile && isMobileSidebarOpen && (
+        <div
+          className='bg-background/80 fixed inset-0 z-40 backdrop-blur-sm'
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
       {/* Left sidebar - Folder tree */}
-      <div className='w-64 flex-shrink-0 md:pl-2'>
+      <div
+        className={`w-64 flex-shrink-0 md:pl-2 ${isMobile ? 'bg-background fixed inset-y-0 left-0 z-50' : ''} ${isMobile && !isMobileSidebarOpen ? 'hidden' : ''} `}
+      >
         <ScrollArea className='h-full [&>div>div]:!block [&>div>div]:!min-w-0'>
           <div className='p-2'>
             {/* Home/Root folder */}
             <div
-              className={`mb-1 flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-sm ${
+              className={`mb-1 flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-2.5 text-sm md:py-1.5 ${
                 currentPath === '' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'hover:bg-accent'
               }`}
-              onClick={() => onPathChange('')}
+              onClick={() => {
+                onPathChange('')
+                if (isMobile) setIsMobileSidebarOpen(false)
+              }}
             >
               <Home className={`h-4 w-4 flex-shrink-0 ${currentPath === '' ? 'text-white' : ''}`} />
               <span className='flex-1 truncate'>{homeTitle}</span>
@@ -407,7 +447,10 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
                     folder={folder}
                     selectedPath={currentPath}
                     excludePaths={new Set()}
-                    onSelect={onPathChange}
+                    onSelect={(path) => {
+                      onPathChange(path)
+                      if (isMobile) setIsMobileSidebarOpen(false)
+                    }}
                     onUpdateNode={handleUpdateNode}
                   />
                 ))}
@@ -426,19 +469,46 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
               className={`bg-card/75 absolute top-0 right-0 left-0 z-10 px-5 py-2 backdrop-blur`}
             >
               <div className='flex items-center justify-between'>
-                {/* Left: Breadcrumb */}
-                <FilePickerBreadcrumb
-                  currentPath={currentPath}
-                  homeTitle={homeTitle}
-                  onNavigate={onPathChange}
-                />
+                {/* Left: Hamburger (mobile) + Breadcrumb */}
+                <div className='flex min-w-0 flex-1 items-center gap-2'>
+                  {/* Hamburger button - mobile only */}
+                  {isMobile && (
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      className='h-11 w-11 flex-shrink-0'
+                      onClick={() => setIsMobileSidebarOpen(true)}
+                    >
+                      <Menu className='h-5 w-5' />
+                      <span className='sr-only'>Open folder tree</span>
+                    </Button>
+                  )}
+
+                  {/* Desktop breadcrumb */}
+                  <div className='hidden min-w-0 md:block'>
+                    <FilePickerBreadcrumb
+                      currentPath={currentPath}
+                      homeTitle={homeTitle}
+                      onNavigate={onPathChange}
+                    />
+                  </div>
+
+                  {/* Mobile breadcrumb */}
+                  <div className='min-w-0 md:hidden'>
+                    <MobileBreadcrumb breadcrumbs={breadcrumbItems} />
+                  </div>
+                </div>
 
                 {/* Right: Dropdown Menu */}
-                <div className='flex items-center gap-2'>
+                <div className='flex flex-shrink-0 items-center gap-2'>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant='ghost' size='icon' className='h-8 w-8'>
-                        <MoreVertical className='h-4 w-4' />
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        className={isMobile ? 'h-11 w-11' : 'h-8 w-8'}
+                      >
+                        <MoreVertical className={isMobile ? 'h-5 w-5' : 'h-4 w-4'} />
                         <span className='sr-only'>{t('common.buttons.more')}</span>
                       </Button>
                     </DropdownMenuTrigger>
