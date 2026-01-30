@@ -311,6 +311,16 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         ...prev,
         [path]: updates.isExpanded!,
       }))
+
+      // Auto-scroll when expanding
+      if (updates.isExpanded) {
+        setTimeout(() => {
+          const element = document.querySelector(`[data-folder-path="${path}"]`)
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }, 150)
+      }
     }
   }
 
