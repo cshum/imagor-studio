@@ -15,7 +15,7 @@ import {
 import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api'
 import { listFiles } from '@/api/storage-api'
 import { Gallery } from '@/components/image-gallery/folder-grid'
-import { FolderPickerNode, FolderNode } from '@/components/image-gallery/folder-picker-node'
+import { FolderNode, FolderPickerNode } from '@/components/image-gallery/folder-picker-node'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { GalleryImage } from '@/components/image-gallery/image-view'
 import {

@@ -50,10 +50,12 @@ export function FolderPickerNode({
     if (!isDisabled) {
       onSelect(folder.path)
 
-      // Auto-expand when selecting a folder
+      // Auto-expand when selecting a folder (like sidebar)
       if (folder.isDirectory) {
         if (!folder.isLoaded) {
-          await loadFolderChildren(folder.path)
+          // Load data without auto-expanding in store, then update local state
+          await loadFolderChildren(folder.path, false)
+          onUpdateNode(folder.path, { isExpanded: true })
         } else if (!folder.isExpanded) {
           onUpdateNode(folder.path, { isExpanded: true })
         }
@@ -65,9 +67,11 @@ export function FolderPickerNode({
     evt?.stopPropagation()
 
     if (!folder.isLoaded && folder.isDirectory) {
-      // Load children if not loaded yet
+      // Load children if not loaded yet, don't auto-expand in store
       try {
-        await loadFolderChildren(folder.path)
+        await loadFolderChildren(folder.path, false)
+        // Update local expand state after loading
+        onUpdateNode(folder.path, { isExpanded: true })
       } catch {
         toast.error(t('components.folderTree.loadFolderError'))
       }
