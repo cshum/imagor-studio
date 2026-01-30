@@ -33,6 +33,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SortOption, SortOrder } from '@/generated/graphql'
 import { hasExtension } from '@/lib/file-extensions'
+import { DEFAULT_IMAGE_EXTENSIONS, DEFAULT_VIDEO_EXTENSIONS } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { useFolderTree } from '@/stores/folder-tree-store'
 
@@ -175,18 +176,14 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         setSortBy((userSortBy || systemSortBy || 'NAME') as SortOption)
         setSortOrder((userSortOrder || systemSortOrder || 'ASC') as SortOrder)
         setShowFileNames((userShowFileNames || systemShowFileNames || 'true') === 'true')
-        setImageExtensions(
-          systemImageExtensions || '.jpg,.jpeg,.png,.gif,.webp,.bmp,.svg,.tiff,.tif,.ico',
-        )
-        setVideoExtensions(
-          systemVideoExtensions || '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg',
-        )
+        setImageExtensions(systemImageExtensions || DEFAULT_IMAGE_EXTENSIONS)
+        setVideoExtensions(systemVideoExtensions || DEFAULT_VIDEO_EXTENSIONS)
       } catch {
         setSortBy('NAME')
         setSortOrder('ASC')
         setShowFileNames(true)
-        setImageExtensions('.jpg,.jpeg,.png,.gif,.webp,.bmp,.svg,.tiff,.tif,.ico')
-        setVideoExtensions('.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg')
+        setImageExtensions(DEFAULT_IMAGE_EXTENSIONS)
+        setVideoExtensions(DEFAULT_VIDEO_EXTENSIONS)
       }
     }
 
@@ -328,9 +325,6 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
       <div className='w-64 flex-shrink-0 border-r'>
         <ScrollArea className='h-full'>
           <div className='p-2'>
-            <div className='mb-2 px-2 py-1 text-sm font-semibold'>
-              {t('components.folderTree.folders')}
-            </div>
             {/* Home/Root folder */}
             <div
               className={`mb-1 flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
@@ -374,7 +368,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
       {/* Right content - Breadcrumb + Grid */}
       <div className='flex flex-1 flex-col overflow-hidden'>
         {/* Breadcrumb with Dropdown Menu */}
-        <div className='border-b px-4 py-2'>
+        <div className='border-b px-4 py-1'>
           <div className='flex items-center justify-between'>
             {/* Left: Breadcrumb */}
             <FilePickerBreadcrumb
