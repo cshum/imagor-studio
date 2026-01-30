@@ -72,10 +72,33 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   const [videoExtensions, setVideoExtensions] = useState('')
   const [contentWidth, setContentWidth] = useState(800)
   const [filterText, setFilterText] = useState('')
+  const [configReady, setConfigReady] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const { rootFolders, loadingPaths, homeTitle } = useFolderTree()
   const [localExpandState, setLocalExpandState] = useState<Record<string, boolean>>({})
+
+  // Use a single ref object for all stable config/props to avoid triggering reloads
+  const configRef = useRef({
+    fileType,
+    fileExtensions,
+    imageExtensions,
+    videoExtensions,
+    sortBy,
+    sortOrder,
+  })
+
+  // Keep ref synced with latest values
+  useEffect(() => {
+    configRef.current = {
+      fileType,
+      fileExtensions,
+      imageExtensions,
+      videoExtensions,
+      sortBy,
+      sortOrder,
+    }
+  }, [fileType, fileExtensions, imageExtensions, videoExtensions, sortBy, sortOrder])
 
   // Build tree with local expand state (like move dialog)
   const buildTreeWithLocalExpand = useCallback(
@@ -181,12 +204,14 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         setShowFileNames((userShowFileNames || systemShowFileNames || 'true') === 'true')
         setImageExtensions(systemImageExtensions || DEFAULT_IMAGE_EXTENSIONS)
         setVideoExtensions(systemVideoExtensions || DEFAULT_VIDEO_EXTENSIONS)
+        setConfigReady(true)
       } catch {
         setSortBy('NAME')
         setSortOrder('ASC')
         setShowFileNames(true)
         setImageExtensions(DEFAULT_IMAGE_EXTENSIONS)
         setVideoExtensions(DEFAULT_VIDEO_EXTENSIONS)
+        setConfigReady(true)
       }
     }
 
@@ -198,8 +223,11 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     onLoadingChange?.(isLoading)
   }, [isLoading, onLoadingChange])
 
-  // Load files when path changes
+  // Load files when path changes - use configRef for all other values
   useEffect(() => {
+    // Wait for config to be ready before loading files
+    if (!configReady) return
+
     const loadFilesData = async () => {
       setIsLoading(true)
       // Reset scroll position when path changes
@@ -213,14 +241,16 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         }
       }
       try {
+        const config = configRef.current
+
         const result = await listFiles({
           path: currentPath,
           offset: 0,
           limit: 1000,
           onlyFiles: false,
           onlyFolders: false,
-          sortBy,
-          sortOrder,
+          sortBy: config.sortBy,
+          sortOrder: config.sortOrder,
         })
 
         // Process folders
@@ -234,17 +264,17 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         // Determine allowed extensions based on fileType and fileExtensions
         let allowedExtensions: string[]
 
-        if (fileExtensions && fileExtensions.length > 0) {
+        if (config.fileExtensions && config.fileExtensions.length > 0) {
           // Custom extensions provided - use them directly (highest priority)
-          allowedExtensions = fileExtensions
+          allowedExtensions = config.fileExtensions
         } else {
           // Use fileType to determine which extensions to include
-          const imgExts = imageExtensions.split(',').map((e) => e.trim())
-          const vidExts = videoExtensions.split(',').map((e) => e.trim())
+          const imgExts = config.imageExtensions.split(',').map((e) => e.trim())
+          const vidExts = config.videoExtensions.split(',').map((e) => e.trim())
 
-          if (fileType === 'images') {
+          if (config.fileType === 'images') {
             allowedExtensions = imgExts
-          } else if (fileType === 'videos') {
+          } else if (config.fileType === 'videos') {
             allowedExtensions = vidExts
           } else {
             // 'both' - include all media types
@@ -259,10 +289,10 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
             imageKey: item.name,
             imageSrc: item.thumbnailUrls?.grid || '',
             imageName: item.name,
-            isVideo: hasExtension(item.name, videoExtensions), // Always use baseline for detection
+            isVideo: hasExtension(item.name, config.videoExtensions), // Always use baseline for detection
           }))
 
-        // Filter by allowed extensions (baseline + optional fileExtensions filter)
+        // Filter by allowed extensions
         imageItems = imageItems.filter((item) => {
           const ext = `.${item.imageName.split('.').pop()?.toLowerCase()}`
           return allowedExtensions.includes(ext)
@@ -280,7 +310,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     }
 
     loadFilesData()
-  }, [currentPath, fileType, fileExtensions, sortBy, sortOrder, videoExtensions, imageExtensions])
+  }, [currentPath, configReady])
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement

@@ -74,8 +74,12 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
         if (selectionMode === 'single') {
           // Single selection: replace with new selection
-          newSet.clear()
-          newSet.add(path)
+          if (newSet.has(path)) {
+            newSet.delete(path)
+          } else {
+            newSet.clear()
+            newSet.add(path)
+          }
         } else {
           // Multiple selection: toggle
           if (newSet.has(path)) {
@@ -132,7 +136,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
               {selectionMode === 'single' ? (
                 // Single selection: show filename
                 <span className='text-muted-foreground max-w-[200px] truncate text-sm'>
-                  {Array.from(selectedPaths)[0].split('/').pop()}
+                  {Array.from(selectedPaths)[0]?.split('/').pop()}
                 </span>
               ) : selectionMode === 'multiple' ? (
                 // Multiple selection: reset button + counter
