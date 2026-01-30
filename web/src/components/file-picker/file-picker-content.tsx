@@ -367,7 +367,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
       </div>
 
       {/* Right content - Card with Breadcrumb + Grid */}
-      <div className='flex-1 px-2 md:px-4'>
+      <div className='-mt-px flex-1 px-2 md:px-4'>
         <Card className='relative flex h-full flex-col overflow-hidden rounded-lg border-none'>
           <CardContent className='flex h-full flex-col overflow-hidden p-0'>
             {/* Breadcrumb with Dropdown Menu - Absolute positioned, floats over content */}
@@ -495,7 +495,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
 
             {/* Scrollable content area */}
             <ScrollArea ref={scrollAreaRef} className='flex-1' onScrollCapture={handleScroll}>
-              <div ref={contentRef} className='overflow-hidden p-2 pt-[42px]'>
+              <div ref={contentRef} className='overflow-hidden p-2 pt-[45px]'>
                 {isLoading ? (
                   // Loading skeleton - 3 column grid
                   <div className='grid grid-cols-3 gap-2'>
