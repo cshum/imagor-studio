@@ -372,7 +372,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
           <CardContent className='flex h-full flex-col overflow-hidden p-0'>
             {/* Breadcrumb with Dropdown Menu - Absolute positioned, floats over content */}
             <div
-              className={`bg-card/75 absolute top-0 right-0 left-0 z-10 px-6 py-2 shadow backdrop-blur`}
+              className={`bg-card/75 absolute top-0 right-0 left-0 z-10 px-5 py-2 shadow backdrop-blur`}
             >
               <div className='flex items-center justify-between'>
                 {/* Left: Breadcrumb */}
