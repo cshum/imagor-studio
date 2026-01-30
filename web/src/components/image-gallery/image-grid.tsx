@@ -22,6 +22,7 @@ interface ImageCellProps {
   firstVisibleImageIndex: number
   showFileName?: boolean
   isSelected?: boolean
+  boldSelection?: boolean
   onImageClick?: (imageKey: string, position: Position, index: number) => void
   onSelectionToggle?: (imageKey: string, index: number, event: React.MouseEvent) => void
   renderMenuItems?: (image: GalleryImage) => React.ReactNode
@@ -48,6 +49,7 @@ const ImageCell = ({
   firstVisibleImageIndex,
   showFileName = false,
   isSelected = false,
+  boldSelection = false,
   onImageClick,
   onSelectionToggle,
   renderMenuItems,
@@ -155,7 +157,7 @@ const ImageCell = ({
       aria-label={`${image.isVideo ? 'Video' : 'Image'}: ${image.imageName}`}
     >
       <div
-        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-opacity duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? 'ring-2 ring-blue-600' : ''} ${isBeingDragged ? 'opacity-50' : ''}`}
+        className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-opacity duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? `${boldSelection ? 'ring-[3px]' : 'ring-2'} ring-blue-600` : ''} ${isBeingDragged ? 'opacity-50' : ''}`}
       >
         <img
           src={getFullImageUrl(image.imageSrc)}
@@ -226,6 +228,7 @@ export interface ImageGridProps {
   folderGridHeight?: number
   maxImageWidth: number
   showFileName?: boolean
+  boldSelection?: boolean
   focusedIndex?: number
   selectedImageKeys?: Set<string>
   selectedFolderKeys?: Set<string>
@@ -250,6 +253,7 @@ export const ImageGrid = ({
   folderGridHeight = 0,
   maxImageWidth,
   showFileName = false,
+  boldSelection = false,
   focusedIndex = -1,
   selectedImageKeys,
   selectedFolderKeys,
@@ -333,6 +337,7 @@ export const ImageGrid = ({
           firstVisibleImageIndex={firstVisibleImageIndex}
           showFileName={showFileName}
           isSelected={isSelected}
+          boldSelection={boldSelection}
           onImageClick={onImageClick}
           onSelectionToggle={onImageSelectionToggle}
           renderMenuItems={renderMenuItems}
