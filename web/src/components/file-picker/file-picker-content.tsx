@@ -374,7 +374,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   return (
     <div className='-mt-px flex h-full'>
       {/* Left sidebar - Folder tree */}
-      <div className='w-64 flex-shrink-0 pl-2'>
+      <div className='w-64 flex-shrink-0 md:pl-2'>
         <ScrollArea className='h-full [&>div>div]:!block [&>div>div]:!min-w-0'>
           <div className='p-2'>
             {/* Home/Root folder */}
