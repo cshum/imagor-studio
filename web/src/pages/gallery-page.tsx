@@ -148,6 +148,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     open: false,
     items: [],
   })
+
   // Selection store
   const selection = useSelection()
 
