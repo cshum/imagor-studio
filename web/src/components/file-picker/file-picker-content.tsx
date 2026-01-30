@@ -7,7 +7,6 @@ import {
   Clock,
   FileText,
   Home,
-  Images,
   Loader2,
   MoreVertical,
   Search,
@@ -498,20 +497,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
             {/* Scrollable content area */}
             <ScrollArea ref={scrollAreaRef} className='flex-1' onScrollCapture={handleScroll}>
               <div ref={contentRef} className='overflow-hidden p-2 pt-[45px]'>
-                {filteredImages.length === 0 ? (
-                  <div
-                    className='flex min-h-[400px] flex-col items-center justify-center text-center'
-                    style={{ width: `${contentWidth}px` }}
-                  >
-                    <div className='bg-muted mb-4 rounded-full p-6'>
-                      <Images className='text-muted-foreground h-20 w-20' />
-                    </div>
-                    <p className='text-muted-foreground text-lg'>
-                      {t('components.filePicker.noFiles')}
-                    </p>
-                  </div>
-                ) : (
-                  /* Image Grid - Folders navigated via sidebar tree only */
+                {filteredImages.length > 0 && (
                   <ImageGrid
                     images={filteredImages}
                     aspectRatio={4 / 3}
