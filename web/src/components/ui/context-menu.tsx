@@ -78,7 +78,7 @@ const ContextMenuItem = React.forwardRef<
   <ContextMenuPrimitive.Item
     ref={ref}
     className={cn(
-      'focus:bg-accent focus:text-accent-foreground relative flex cursor-pointer items-center rounded-sm px-3 py-3 text-sm transition-colors outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 sm:px-2 sm:py-1.5',
+      'focus:bg-accent focus:text-accent-foreground relative flex cursor-pointer items-center rounded-sm px-3 py-2.5 text-sm transition-colors outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 sm:px-2 sm:py-1.5',
       inset && 'pl-8',
       className,
     )}
