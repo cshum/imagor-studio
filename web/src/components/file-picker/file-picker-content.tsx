@@ -373,17 +373,19 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   // Build breadcrumb items from currentPath
   const breadcrumbItems = useMemo((): BreadcrumbItem[] => {
     if (!currentPath) {
-      return [{ label: homeTitle, href: undefined, isActive: true }]
+      return [{ label: homeTitle, path: '', isActive: true }]
     }
 
     const parts = currentPath.split('/').filter(Boolean)
-    const items: BreadcrumbItem[] = [{ label: homeTitle, href: undefined, isActive: false }]
+    const items: BreadcrumbItem[] = [{ label: homeTitle, path: '', isActive: false }]
 
+    let accumulatedPath = ''
     parts.forEach((part, index) => {
+      accumulatedPath = accumulatedPath ? `${accumulatedPath}/${part}` : part
       const isLast = index === parts.length - 1
       items.push({
         label: part,
-        href: undefined,
+        path: accumulatedPath,
         isActive: isLast,
       })
     })
@@ -498,7 +500,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
 
                   {/* Mobile breadcrumb */}
                   <div className='min-w-0 md:hidden'>
-                    <MobileBreadcrumb breadcrumbs={breadcrumbItems} />
+                    <MobileBreadcrumb breadcrumbs={breadcrumbItems} onNavigate={onPathChange} />
                   </div>
                 </div>
 

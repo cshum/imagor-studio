@@ -14,11 +14,13 @@ import { BreadcrumbItem } from '@/hooks/use-breadcrumb'
 interface MobileBreadcrumbProps {
   breadcrumbs: BreadcrumbItem[]
   className?: string
+  onNavigate?: (path: string) => void // Optional callback for non-router navigation
 }
 
 export const MobileBreadcrumb: React.FC<MobileBreadcrumbProps> = ({
   breadcrumbs,
   className = '',
+  onNavigate,
 }) => {
   // Get the current page (last breadcrumb item)
   const currentPage = breadcrumbs[breadcrumbs.length - 1]
@@ -55,7 +57,12 @@ export const MobileBreadcrumb: React.FC<MobileBreadcrumbProps> = ({
         <DropdownMenuContent align='start' className='w-64'>
           {breadcrumbs.map((breadcrumb, index) => {
             const isLast = index === breadcrumbs.length - 1
-            const isClickable = breadcrumb.href && !breadcrumb.isActive
+            // If onNavigate is provided, use breadcrumb.path for navigation
+            // Otherwise, use breadcrumb.href for router navigation
+            const hasNavigation = onNavigate
+              ? breadcrumb.path !== undefined && !breadcrumb.isActive
+              : breadcrumb.href && !breadcrumb.isActive
+            const isClickable = hasNavigation
 
             return (
               <DropdownMenuItem
@@ -63,9 +70,14 @@ export const MobileBreadcrumb: React.FC<MobileBreadcrumbProps> = ({
                 className={`flex items-center ${isLast ? 'bg-accent/50' : ''} ${
                   isClickable ? 'interactive:cursor-pointer' : 'cursor-default'
                 }`}
-                asChild={isClickable ? true : undefined}
+                asChild={isClickable && !onNavigate ? true : undefined}
+                onClick={
+                  isClickable && onNavigate && breadcrumb.path !== undefined
+                    ? () => onNavigate(breadcrumb.path!)
+                    : undefined
+                }
               >
-                {isClickable ? (
+                {isClickable && !onNavigate ? (
                   <Link to={breadcrumb.href!} className='flex w-full items-center'>
                     <div
                       className='flex w-full items-center'

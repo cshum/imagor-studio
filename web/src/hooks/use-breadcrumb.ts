@@ -6,6 +6,7 @@ export interface BreadcrumbItem {
   label?: string
   translationKey?: string
   href?: string
+  path?: string
   isActive?: boolean
 }
 
