@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { useTranslation } from 'react-i18next'
 import { Folder, Image, Layers } from 'lucide-react'
 
 import type { DragItem as StoreDragItem } from '@/stores/drag-drop-store'
@@ -34,6 +35,7 @@ export interface UseDragDropOptions {
 export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions) {
   // Use the global drag drop store
   const dragState = useDragDrop()
+  const { t } = useTranslation()
 
   // Start dragging items
   const handleDragStart = useCallback(
@@ -76,7 +78,10 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
       } else {
         // Multiple items: Show Lucide Layers icon + count
         dragImage.innerHTML = renderToStaticMarkup(
-          <DragPreviewBadge icon={<Layers size={16} />} text={`${items.length} items`} />,
+          <DragPreviewBadge
+            icon={<Layers size={16} />}
+            text={t('pages.gallery.dragDrop.itemCount', { count: items.length })}
+          />,
         )
       }
 
@@ -87,7 +92,7 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
       // Update global store
       startDrag(items)
     },
-    [isAuthenticated],
+    [isAuthenticated, t],
   )
 
   // End dragging

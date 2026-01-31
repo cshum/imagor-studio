@@ -253,6 +253,7 @@
         "cannotMoveToSubfolder": "Cannot move a folder into its own subfolder"
       },
       "dragDrop": {
+        "itemCount": "{{count}} items",
         "moveSuccess": "Successfully moved {{count}} items",
         "partialSuccess": "Moved {{success}} items successfully, {{failed}} failed",
         "moveError": "Failed to move items",

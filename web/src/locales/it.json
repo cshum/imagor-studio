@@ -273,6 +273,7 @@
         "cannotMoveToSubfolder": "Impossibile spostare una cartella nella propria sottocartella"
       },
       "dragDrop": {
+        "itemCount": "{{count}} elementi",
         "moveSuccess": "{{count}} elementi spostati con successo",
         "partialSuccess": "{{success}} elementi spostati con successo, {{failed}} non riusciti",
         "moveError": "Impossibile spostare gli elementi",

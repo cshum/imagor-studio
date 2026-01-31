@@ -276,6 +276,7 @@
         "cannotMoveToSubfolder": "無法將資料夾移動到其子資料夾"
       },
       "dragDrop": {
+        "itemCount": "{{count}} 項目",
         "moveSuccess": "成功移動 {{count}} 項目",
         "partialSuccess": "成功移動 {{success}} 項目，{{failed}} 項目失敗",
         "moveError": "移動項目失敗",
