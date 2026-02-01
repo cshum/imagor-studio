@@ -269,6 +269,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
             <SidebarMenu onDragLeave={handleContainerDragLeave}>
               {/* Home Link as first item - droppable for moving items to root */}
               <SidebarMenuItem
+                className={dragOverTarget === '' ? 'relative z-10' : ''}
                 onDragOver={(e) => handleDragOver(e, '')}
                 onDragEnter={(e) => handleDragEnter(e, '')}
                 onDragLeave={(e) => handleDragLeave(e, '')}

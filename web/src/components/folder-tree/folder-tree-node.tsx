@@ -91,7 +91,7 @@ export function FolderTreeNode({
     return (
       <SidebarMenuItem>
         <div
-          className='group/folder relative'
+          className={`group/folder relative ${isDragOver ? 'z-10' : ''}`}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           onDragOver={(e) => onDragOver?.(e, folder.path)}
@@ -146,7 +146,7 @@ export function FolderTreeNode({
         className='group/collapsible [&[data-state=open]>div>button>span>svg:first-child]:rotate-90'
       >
         <div
-          className='group/folder relative'
+          className={`group/folder relative ${isDragOver ? 'z-10' : ''}`}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           onDragOver={(e) => onDragOver?.(e, folder.path)}
