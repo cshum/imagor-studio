@@ -25,6 +25,7 @@ import {
   FileImage,
   Frame,
   GripVertical,
+  Layers,
   Maximize2,
   Palette,
   RotateCw,
@@ -36,11 +37,12 @@ import { CropAspectControl } from '@/components/image-editor/controls/crop-aspec
 import { DimensionControl } from '@/components/image-editor/controls/dimension-control.tsx'
 import { FillPaddingControl } from '@/components/image-editor/controls/fill-padding-control.tsx'
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
+import { OverlayPropertiesControl } from '@/components/image-editor/controls/overlay-properties-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { EditorOpenSections, SectionKey } from '@/lib/editor-open-sections-storage'
-import type { ImageEditorState } from '@/lib/image-editor.ts'
+import type { ImageEditorState, ImageOverlay } from '@/lib/image-editor.ts'
 import { cn } from '@/lib/utils'
 
 interface ImageEditorControlsProps {
@@ -53,6 +55,10 @@ interface ImageEditorControlsProps {
   outputWidth: number
   outputHeight: number
   onCropAspectRatioChange?: (aspectRatio: number | null) => void
+  // Overlay props
+  selectedOverlay?: ImageOverlay
+  onUpdateOverlay?: (overlayId: string, updates: Partial<ImageOverlay>) => void
+  onDeleteOverlay?: (overlayId: string) => void
 }
 
 interface SectionConfig {
@@ -129,7 +135,12 @@ export function ImageEditorControls({
   outputWidth,
   outputHeight,
   onCropAspectRatioChange,
+  selectedOverlay,
+  onUpdateOverlay,
+  onDeleteOverlay,
 }: ImageEditorControlsProps) {
+  const { t } = useTranslation()
+  
   // Track the active dragged section for DragOverlay
   const [activeId, setActiveId] = useState<SectionKey | null>(null)
 
@@ -182,6 +193,23 @@ export function ImageEditorControls({
   // Define all section configurations
   const sectionConfigs: Record<SectionKey, SectionConfig> = useMemo(
     () => ({
+      overlay: {
+        key: 'overlay',
+        icon: Layers,
+        titleKey: 'imageEditor.controls.overlayProperties',
+        component:
+          selectedOverlay && onUpdateOverlay && onDeleteOverlay ? (
+            <OverlayPropertiesControl
+              overlay={selectedOverlay}
+              onUpdate={(updates) => onUpdateOverlay(selectedOverlay.id, updates)}
+              onDelete={() => onDeleteOverlay(selectedOverlay.id)}
+            />
+          ) : (
+            <div className='text-muted-foreground text-sm'>
+              {t('imageEditor.overlays.selectOverlayToEdit')}
+            </div>
+          ),
+      },
       crop: {
         key: 'crop',
         icon: Scissors,
@@ -243,6 +271,10 @@ export function ImageEditorControls({
       outputWidth,
       outputHeight,
       onCropAspectRatioChange,
+      selectedOverlay,
+      onUpdateOverlay,
+      onDeleteOverlay,
+      t,
     ],
   )
 
@@ -251,8 +283,6 @@ export function ImageEditorControls({
     () => openSections.sectionOrder.map((id) => sectionConfigs[id]),
     [openSections.sectionOrder, sectionConfigs],
   )
-
-  const { t } = useTranslation()
 
   // Get the active section for DragOverlay
   const activeSection = activeId ? sectionConfigs[activeId] : null

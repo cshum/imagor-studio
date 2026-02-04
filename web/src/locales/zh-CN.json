@@ -667,6 +667,54 @@
   "imageInformation": "图片信息",
   "noImageInfo": "无可用的图片信息。",
   "imageEditor": {
+    "overlays": {
+      "base": "基础",
+      "add": "添加",
+      "selectOverlay": "选择叠加图片",
+      "selectOverlayDescription": "选择要添加为叠加层的图片",
+      "addOverlay": "添加叠加层",
+      "overlayAdded": "叠加层添加成功",
+      "selectOverlayToEdit": "选择叠加层以编辑其属性",
+      "position": "位置",
+      "opacity": "不透明度",
+      "blendMode": "混合模式",
+      "visible": "可见",
+      "hidden": "隐藏",
+      "locked": "锁定",
+      "unlocked": "未锁定",
+      "xPosition": "X 位置",
+      "yPosition": "Y 位置",
+      "customValue": "自定义值",
+      "deleteOverlay": "删除叠加层",
+      "blendMode": "混合模式",
+      "blendMode": {
+        "label": "混合模式",
+        "normal": "正常",
+        "multiply": "正片叠底",
+        "screen": "滤色",
+        "overlay": "叠加",
+        "softLight": "柔光",
+        "hardLight": "强光",
+        "colorBurn": "颜色加深",
+        "colorDodge": "颜色减淡",
+        "darken": "变暗",
+        "lighten": "变亮",
+        "add": "添加",
+        "difference": "差值",
+        "exclusion": "排除",
+        "mask": "遮罩",
+        "maskOut": "反向遮罩"
+      },
+      "position": {
+        "left": "左",
+        "center": "居中",
+        "right": "右",
+        "top": "上",
+        "bottom": "下",
+        "repeat": "重复",
+        "custom": "自定义"
+      }
+    },
     "page": {
       "back": "返回",
       "controls": "控制",
@@ -679,6 +727,7 @@
       "redo": "重做"
     },
     "controls": {
+      "overlayProperties": "叠加层属性",
       "cropAspect": "裁剪和比例",
       "dimensionsResize": "尺寸和调整大小",
       "outputCompression": "输出和压缩",

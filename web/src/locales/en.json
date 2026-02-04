@@ -676,13 +676,45 @@
       "selectOverlayDescription": "Choose an image to add as an overlay to your composition",
       "addOverlay": "Add Overlay",
       "overlayAdded": "Overlay added successfully",
+      "selectOverlayToEdit": "Select an overlay to edit its properties",
       "position": "Position",
       "opacity": "Opacity",
       "blendMode": "Blend Mode",
       "visible": "Visible",
       "hidden": "Hidden",
       "locked": "Locked",
-      "unlocked": "Unlocked"
+      "unlocked": "Unlocked",
+      "xPosition": "X Position",
+      "yPosition": "Y Position",
+      "customValue": "Custom Value",
+      "deleteOverlay": "Delete Overlay",
+      "blendMode": {
+        "label": "Blend Mode",
+        "normal": "Normal",
+        "multiply": "Multiply",
+        "screen": "Screen",
+        "overlay": "Overlay",
+        "softLight": "Soft Light",
+        "hardLight": "Hard Light",
+        "colorBurn": "Color Burn",
+        "colorDodge": "Color Dodge",
+        "darken": "Darken",
+        "lighten": "Lighten",
+        "add": "Add",
+        "difference": "Difference",
+        "exclusion": "Exclusion",
+        "mask": "Mask",
+        "maskOut": "Mask Out"
+      },
+      "position": {
+        "left": "Left",
+        "center": "Center",
+        "right": "Right",
+        "top": "Top",
+        "bottom": "Bottom",
+        "repeat": "Repeat",
+        "custom": "Custom"
+      }
     },
     "page": {
       "back": "Back",
@@ -696,6 +728,7 @@
       "redo": "Redo"
     },
     "controls": {
+      "overlayProperties": "Overlay Properties",
       "cropAspect": "Crop & Aspect",
       "dimensionsResize": "Dimensions & Resize",
       "outputCompression": "Output & Compression",

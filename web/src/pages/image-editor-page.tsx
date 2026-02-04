@@ -307,6 +307,30 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const isBaseSelected = editorContext.type === 'base'
   const selectedOverlayId = editorContext.overlayId
 
+  // Get selected overlay for controls
+  const selectedOverlay = useMemo(() => {
+    if (selectedOverlayId && params.overlays) {
+      return params.overlays.find((o) => o.id === selectedOverlayId)
+    }
+    return undefined
+  }, [selectedOverlayId, params.overlays])
+
+  // Overlay update handler
+  const handleUpdateOverlay = useCallback(
+    (overlayId: string, updates: Partial<NonNullable<typeof selectedOverlay>>) => {
+      imageEditor.updateOverlay(overlayId, updates)
+    },
+    [imageEditor],
+  )
+
+  // Overlay delete handler
+  const handleDeleteOverlay = useCallback(
+    (overlayId: string) => {
+      imageEditor.removeOverlay(overlayId)
+    },
+    [imageEditor],
+  )
+
   return (
     <div
       className={cn(
@@ -413,6 +437,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                       outputWidth={originalDimensions.width}
                       outputHeight={originalDimensions.height}
                       onCropAspectRatioChange={setCropAspectRatio}
+                      selectedOverlay={selectedOverlay}
+                      onUpdateOverlay={handleUpdateOverlay}
+                      onDeleteOverlay={handleDeleteOverlay}
                     />
                   </div>
                 </SheetContent>
@@ -478,6 +505,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               outputWidth={originalDimensions.width}
               outputHeight={originalDimensions.height}
               onCropAspectRatioChange={setCropAspectRatio}
+              selectedOverlay={selectedOverlay}
+              onUpdateOverlay={handleUpdateOverlay}
+              onDeleteOverlay={handleDeleteOverlay}
             />
           </div>
 

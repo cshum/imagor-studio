@@ -5,6 +5,7 @@ import type { Auth } from '@/stores/auth-store'
 
 // Define sections as a const object (single source of truth with default states)
 const EDITOR_SECTIONS = {
+  overlay: true, // Overlay properties (only shown when overlay is selected)
   crop: true,
   effects: true,
   transform: false,
