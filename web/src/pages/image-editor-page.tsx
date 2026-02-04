@@ -246,10 +246,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     (imagePath: string) => {
       // Generate unique ID for overlay
       const overlayId = `overlay-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      
+
       // Extract filename from path for display name
       const fileName = imagePath.split('/').pop() || 'Overlay'
-      
+
       // Create new overlay with default settings
       imageEditor.addOverlay({
         id: overlayId,
@@ -266,7 +266,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
       // Auto-select the new overlay for editing
       imageEditor.enterOverlayContext(overlayId)
-      
+
       toast.success(t('imageEditor.overlays.overlayAdded'))
     },
     [imageEditor, t],

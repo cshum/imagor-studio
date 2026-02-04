@@ -6,19 +6,19 @@ import { getFullImageUrl } from '@/lib/api-utils'
 export interface ImageOverlay {
   id: string
   type: 'image'
-  
+
   // Source image
   imagePath: string
-  
+
   // Compositing properties (how it's applied to base)
   x: number | string // 0, 'center', '20p', 'repeat', etc.
   y: number | string // 0, 'top', '50p', 'repeat', etc.
   opacity?: number // 0-100
   blendMode?: string // 'normal', 'multiply', 'screen', etc.
-  
+
   // Transformations applied to overlay BEFORE compositing
   transformations?: Omit<ImageEditorState, 'overlays' | 'editorContext'>
-  
+
   // Metadata
   name?: string
   visible: boolean
@@ -447,9 +447,10 @@ export class ImageEditor {
 
         if (overlay.transformations) {
           // Recursively convert overlay transformations to imagor params
+          // Pass forPreview to ensure overlay transformations are scaled for preview
           const overlayParams = this.convertStateToGraphQLParams(
             overlay.transformations as ImageEditorState,
-            false
+            forPreview,
           )
 
           // Build the nested path with transformations
@@ -465,9 +466,7 @@ export class ImageEditor {
 
           // Add filters
           if (overlayParams.filters && overlayParams.filters.length > 0) {
-            const filterStr = overlayParams.filters
-              .map((f) => `${f.name}(${f.args})`)
-              .join(':')
+            const filterStr = overlayParams.filters.map((f) => `${f.name}(${f.args})`).join(':')
             parts.push(`filters:${filterStr}`)
           }
 
@@ -479,15 +478,44 @@ export class ImageEditor {
 
         // Build image() filter arguments
         // Format: image(path, x, y, alpha, blend_mode)
-        const args = [
-          nestedPath,
-          overlay.x ?? 0,
-          overlay.y ?? 0,
-          overlay.opacity ?? 0,
-          overlay.blendMode ?? 'normal',
-        ].join(',')
+        // Invert opacity to alpha: 100 opacity = 0 alpha (fully opaque)
+        const alpha = 100 - (overlay.opacity ?? 100)
+        const blendMode = overlay.blendMode ?? 'normal'
 
-        filters.push({ name: 'image', args })
+        // Scale numeric x/y positions for preview (string values like 'center', '20p', 'repeat' stay as-is)
+        let x = overlay.x ?? 0
+        let y = overlay.y ?? 0
+
+        if (forPreview && scaleFactor !== 1) {
+          if (typeof x === 'number') {
+            x = Math.round(x * scaleFactor)
+          }
+          if (typeof y === 'number') {
+            y = Math.round(y * scaleFactor)
+          }
+        }
+
+        // Build args array - only include non-default values to minimize URL length
+        const args: Array<string | number> = [nestedPath]
+
+        // Add position if not at origin, or if we need to specify alpha/blend
+        const needsAlpha = alpha !== 0
+        const needsBlend = blendMode !== 'normal'
+        const needsPosition = x !== 0 || y !== 0
+
+        if (needsPosition || needsAlpha || needsBlend) {
+          args.push(x, y)
+
+          if (needsAlpha || needsBlend) {
+            args.push(alpha)
+
+            if (needsBlend) {
+              args.push(blendMode)
+            }
+          }
+        }
+
+        filters.push({ name: 'image', args: args.join(',') })
       })
     }
 
@@ -975,9 +1003,7 @@ export class ImageEditor {
 
     this.state = {
       ...this.state,
-      overlays: this.state.overlays.map((o) =>
-        o.id === overlayId ? { ...o, ...updates } : o
-      ),
+      overlays: this.state.overlays.map((o) => (o.id === overlayId ? { ...o, ...updates } : o)),
     }
 
     this.callbacks.onStateChange?.(this.getState())
@@ -1069,7 +1095,7 @@ export class ImageEditor {
       this.state = {
         ...this.state,
         overlays: this.state.overlays.map((o) =>
-          o.id === overlayId ? { ...o, transformations } : o
+          o.id === overlayId ? { ...o, transformations } : o,
         ),
       }
     }

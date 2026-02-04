@@ -36,8 +36,8 @@ export function OverlayTimeline({
 
   return (
     <>
-      <div className="border-t bg-background">
-        <div className="flex items-center gap-2 overflow-x-auto p-2">
+      <div className='bg-background border-t'>
+        <div className='flex items-center gap-2 overflow-x-auto p-2'>
           {/* Base Image Card */}
           <button
             onClick={onSelectBase}
@@ -45,11 +45,11 @@ export function OverlayTimeline({
               'flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center gap-1 rounded border-2 transition-colors',
               isBaseSelected
                 ? 'border-primary bg-accent'
-                : 'border-border hover:border-primary/50 hover:bg-accent/50'
+                : 'border-border hover:border-primary/50 hover:bg-accent/50',
             )}
           >
-            <ImageIcon className="h-6 w-6" />
-            <span className="text-xs font-medium">{t('imageEditor.overlays.base')}</span>
+            <ImageIcon className='h-6 w-6' />
+            <span className='text-xs font-medium'>{t('imageEditor.overlays.base')}</span>
           </button>
 
           {/* Overlay Cards */}
@@ -62,27 +62,27 @@ export function OverlayTimeline({
                 selectedOverlayId === overlay.id
                   ? 'border-primary bg-accent'
                   : 'border-border hover:border-primary/50 hover:bg-accent/50',
-                !overlay.visible && 'opacity-50'
+                !overlay.visible && 'opacity-50',
               )}
             >
-              <ImageIcon className="h-6 w-6" />
-              <span className="max-w-16 truncate text-xs" title={overlay.name}>
+              <ImageIcon className='h-6 w-6' />
+              <span className='max-w-16 truncate text-xs' title={overlay.name}>
                 {overlay.name || 'Overlay'}
               </span>
-              <span className="text-xs text-muted-foreground">{overlay.opacity || 100}%</span>
+              <span className='text-muted-foreground text-xs'>{overlay.opacity || 100}%</span>
             </button>
           ))}
 
           {/* Add Overlay Button */}
           <Button
-            variant="outline"
-            size="sm"
+            variant='outline'
+            size='sm'
             onClick={() => setFilePickerOpen(true)}
-            className="h-20 w-20 flex-shrink-0"
+            className='h-20 w-20 flex-shrink-0'
           >
-            <div className="flex flex-col items-center gap-1">
-              <Plus className="h-6 w-6" />
-              <span className="text-xs">{t('imageEditor.overlays.add')}</span>
+            <div className='flex flex-col items-center gap-1'>
+              <Plus className='h-6 w-6' />
+              <span className='text-xs'>{t('imageEditor.overlays.add')}</span>
             </div>
           </Button>
         </div>
@@ -93,8 +93,8 @@ export function OverlayTimeline({
         open={filePickerOpen}
         onOpenChange={setFilePickerOpen}
         onSelect={handleOverlaySelect}
-        selectionMode="single"
-        fileType="images"
+        selectionMode='single'
+        fileType='images'
         title={t('imageEditor.overlays.selectOverlay')}
         description={t('imageEditor.overlays.selectOverlayDescription')}
         confirmButtonText={t('imageEditor.overlays.addOverlay')}
