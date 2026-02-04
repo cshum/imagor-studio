@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { AlertCircle, Copy, Download } from 'lucide-react'
 
 import { CropOverlay } from '@/components/image-editor/crop-overlay'
+import { OverlayTimeline } from '@/components/image-editor/overlay-timeline'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
+import type { ImageOverlay } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface PreviewAreaProps {
@@ -32,6 +34,14 @@ interface PreviewAreaProps {
   cropAspectRatio?: number | null
   hFlip?: boolean
   vFlip?: boolean
+  // Overlay support
+  overlays?: ImageOverlay[]
+  selectedOverlayId?: string
+  isBaseSelected?: boolean
+  onSelectBase?: () => void
+  onSelectOverlay?: (overlayId: string) => void
+  onAddOverlay?: (imagePath: string) => void
+  onToggleOverlayVisibility?: (overlayId: string) => void
 }
 
 export function PreviewArea({
@@ -53,6 +63,13 @@ export function PreviewArea({
   cropAspectRatio = null,
   hFlip = false,
   vFlip = false,
+  overlays = [],
+  selectedOverlayId,
+  isBaseSelected = true,
+  onSelectBase,
+  onSelectOverlay,
+  onAddOverlay,
+  onToggleOverlayVisibility,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -280,6 +297,19 @@ export function PreviewArea({
           </div>
         )}
       </div>
+
+      {/* Overlay Timeline */}
+      {onSelectBase && onSelectOverlay && onAddOverlay && onToggleOverlayVisibility && (
+        <OverlayTimeline
+          overlays={overlays}
+          selectedOverlayId={selectedOverlayId}
+          isBaseSelected={isBaseSelected}
+          onSelectBase={onSelectBase}
+          onSelectOverlay={onSelectOverlay}
+          onAddOverlay={onAddOverlay}
+          onToggleVisibility={onToggleOverlayVisibility}
+        />
+      )}
     </div>
   )
 }

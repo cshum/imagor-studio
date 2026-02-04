@@ -669,6 +669,21 @@
   "imageInformation": "Image Information",
   "noImageInfo": "No image information available.",
   "imageEditor": {
+    "overlays": {
+      "base": "Base",
+      "add": "Add",
+      "selectOverlay": "Select Overlay Image",
+      "selectOverlayDescription": "Choose an image to add as an overlay to your composition",
+      "addOverlay": "Add Overlay",
+      "overlayAdded": "Overlay added successfully",
+      "position": "Position",
+      "opacity": "Opacity",
+      "blendMode": "Blend Mode",
+      "visible": "Visible",
+      "hidden": "Hidden",
+      "locked": "Locked",
+      "unlocked": "Unlocked"
+    },
     "page": {
       "back": "Back",
       "controls": "Controls",
