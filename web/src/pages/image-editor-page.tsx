@@ -230,6 +230,60 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     })
   }
 
+  // Overlay handlers
+  const handleSelectBase = useCallback(() => {
+    imageEditor.exitOverlayContext()
+  }, [imageEditor])
+
+  const handleSelectOverlay = useCallback(
+    (overlayId: string) => {
+      imageEditor.enterOverlayContext(overlayId)
+    },
+    [imageEditor],
+  )
+
+  const handleAddOverlay = useCallback(
+    (imagePath: string) => {
+      // Generate unique ID for overlay
+      const overlayId = `overlay-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      
+      // Extract filename from path for display name
+      const fileName = imagePath.split('/').pop() || 'Overlay'
+      
+      // Create new overlay with default settings
+      imageEditor.addOverlay({
+        id: overlayId,
+        type: 'image',
+        imagePath: imagePath,
+        x: 'center',
+        y: 'center',
+        opacity: 100,
+        blendMode: 'normal',
+        visible: true,
+        locked: false,
+        name: fileName,
+      })
+
+      // Auto-select the new overlay for editing
+      imageEditor.enterOverlayContext(overlayId)
+      
+      toast.success(t('imageEditor.overlays.overlayAdded'))
+    },
+    [imageEditor, t],
+  )
+
+  const handleToggleOverlayVisibility = useCallback(
+    (overlayId: string) => {
+      imageEditor.toggleOverlayVisibility(overlayId)
+    },
+    [imageEditor],
+  )
+
+  // Get current editor context
+  const editorContext = imageEditor.getEditorContext()
+  const isBaseSelected = editorContext.type === 'base'
+  const selectedOverlayId = editorContext.overlayId
+
   return (
     <div
       className={cn(
@@ -364,6 +418,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           cropAspectRatio={cropAspectRatio}
           hFlip={params.hFlip}
           vFlip={params.vFlip}
+          overlays={params.overlays || []}
+          selectedOverlayId={selectedOverlayId}
+          isBaseSelected={isBaseSelected}
+          onSelectBase={handleSelectBase}
+          onSelectOverlay={handleSelectOverlay}
+          onAddOverlay={handleAddOverlay}
+          onToggleOverlayVisibility={handleToggleOverlayVisibility}
         />
       </div>
 
