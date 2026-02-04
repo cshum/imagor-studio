@@ -425,7 +425,9 @@ export class ImageEditor {
     }
 
     // Format handling
-    if (forPreview) {
+    // Skip preview() and format(webp) filters when generating nested overlay paths
+    // (inheritedScaleFactor indicates we're in a nested overlay)
+    if (forPreview && !inheritedScaleFactor) {
       // disable result storage on preview
       filters.push({ name: 'preview', args: '' })
       // Always WebP for preview
@@ -1107,8 +1109,14 @@ export class ImageEditor {
     }
 
     // Load overlay's transformations into main editor state
+    // If overlay has transformations, use them; otherwise initialize with overlay's original dimensions
     if (overlay.transformations) {
       Object.assign(this.state, overlay.transformations)
+    } else if (overlay.originalWidth && overlay.originalHeight) {
+      // Initialize with overlay's original dimensions (not base image dimensions)
+      this.state.width = overlay.originalWidth
+      this.state.height = overlay.originalHeight
+      this.state.fitIn = true
     }
 
     this.callbacks.onStateChange?.(this.getState())
