@@ -2,6 +2,36 @@ import { generateImagorUrl } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
 import { getFullImageUrl } from '@/lib/api-utils'
 
+// Image overlay that composites on top of base image
+export interface ImageOverlay {
+  id: string
+  type: 'image'
+  
+  // Source image
+  imagePath: string
+  
+  // Compositing properties (how it's applied to base)
+  x: number | string // 0, 'center', '20p', 'repeat', etc.
+  y: number | string // 0, 'top', '50p', 'repeat', etc.
+  opacity?: number // 0-100
+  blendMode?: string // 'normal', 'multiply', 'screen', etc.
+  
+  // Transformations applied to overlay BEFORE compositing
+  transformations?: Omit<ImageEditorState, 'overlays' | 'editorContext'>
+  
+  // Metadata
+  name?: string
+  visible: boolean
+  locked: boolean
+}
+
+// Editor context - tracks what user is currently editing
+export interface EditorContext {
+  type: 'base' | 'overlay'
+  overlayId?: string // undefined when editing base
+  path: string[] // breadcrumb path e.g., ['base', 'overlay-1']
+}
+
 export interface ImageEditorState {
   // Dimensions
   width?: number
@@ -55,6 +85,12 @@ export interface ImageEditorState {
   paddingRight?: number
   paddingBottom?: number
   paddingLeft?: number
+
+  // Overlays applied AFTER base transformations
+  overlays?: ImageOverlay[]
+
+  // Current editing context
+  editorContext?: EditorContext
 }
 
 export interface ImageEditorConfig {
@@ -399,6 +435,60 @@ export class ImageEditor {
     }
     if (state.stripExif) {
       filters.push({ name: 'strip_exif', args: '' })
+    }
+
+    // Apply overlays (image() filters) - applied AFTER base transformations
+    if (state.overlays && state.overlays.length > 0) {
+      state.overlays.forEach((overlay) => {
+        if (!overlay.visible) return
+
+        // Build nested imagor path from overlay transformations
+        let nestedPath = `/${overlay.imagePath}`
+
+        if (overlay.transformations) {
+          // Recursively convert overlay transformations to imagor params
+          const overlayParams = this.convertStateToGraphQLParams(
+            overlay.transformations as ImageEditorState,
+            false
+          )
+
+          // Build the nested path with transformations
+          // Format: /width x height/filters:filter1():filter2()/image.jpg
+          const parts: string[] = []
+
+          // Add dimensions
+          if (overlayParams.width || overlayParams.height) {
+            const w = overlayParams.width || 0
+            const h = overlayParams.height || 0
+            parts.push(`${w}x${h}`)
+          }
+
+          // Add filters
+          if (overlayParams.filters && overlayParams.filters.length > 0) {
+            const filterStr = overlayParams.filters
+              .map((f) => `${f.name}(${f.args})`)
+              .join(':')
+            parts.push(`filters:${filterStr}`)
+          }
+
+          // Combine parts with image path
+          if (parts.length > 0) {
+            nestedPath = `/${parts.join('/')}${nestedPath}`
+          }
+        }
+
+        // Build image() filter arguments
+        // Format: image(path, x, y, alpha, blend_mode)
+        const args = [
+          nestedPath,
+          overlay.x ?? 0,
+          overlay.y ?? 0,
+          overlay.opacity ?? 0,
+          overlay.blendMode ?? 'normal',
+        ].join(',')
+
+        filters.push({ name: 'image', args })
+      })
     }
 
     if (filters.length > 0) {
@@ -821,6 +911,185 @@ export class ImageEditor {
 
     // Notify that history changed
     this.callbacks.onHistoryChange?.()
+  }
+
+  // ============================================================================
+  // Overlay Management Methods
+  // ============================================================================
+
+  /**
+   * Find overlay by ID
+   */
+  private findOverlay(overlayId: string): ImageOverlay | undefined {
+    return this.state.overlays?.find((o) => o.id === overlayId)
+  }
+
+  /**
+   * Add a new overlay
+   */
+  addOverlay(overlay: ImageOverlay): void {
+    this.scheduleHistorySnapshot()
+
+    const overlays = this.state.overlays || []
+    this.state = {
+      ...this.state,
+      overlays: [...overlays, overlay],
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Remove an overlay by ID
+   */
+  removeOverlay(overlayId: string): void {
+    if (!this.state.overlays) return
+
+    this.scheduleHistorySnapshot()
+
+    this.state = {
+      ...this.state,
+      overlays: this.state.overlays.filter((o) => o.id !== overlayId),
+    }
+
+    // If we were editing this overlay, return to base context
+    if (this.state.editorContext?.overlayId === overlayId) {
+      this.state.editorContext = { type: 'base', path: ['base'] }
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Update an overlay's properties
+   */
+  updateOverlay(overlayId: string, updates: Partial<ImageOverlay>): void {
+    if (!this.state.overlays) return
+
+    const overlay = this.findOverlay(overlayId)
+    if (!overlay) return
+
+    this.scheduleHistorySnapshot()
+
+    this.state = {
+      ...this.state,
+      overlays: this.state.overlays.map((o) =>
+        o.id === overlayId ? { ...o, ...updates } : o
+      ),
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Reorder overlays (drag and drop)
+   */
+  reorderOverlays(fromIndex: number, toIndex: number): void {
+    if (!this.state.overlays) return
+
+    this.scheduleHistorySnapshot()
+
+    const overlays = [...this.state.overlays]
+    const [removed] = overlays.splice(fromIndex, 1)
+    overlays.splice(toIndex, 0, removed)
+
+    this.state = {
+      ...this.state,
+      overlays,
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Toggle overlay visibility
+   */
+  toggleOverlayVisibility(overlayId: string): void {
+    const overlay = this.findOverlay(overlayId)
+    if (!overlay) return
+
+    this.updateOverlay(overlayId, { visible: !overlay.visible })
+  }
+
+  /**
+   * Get current editor context
+   */
+  getEditorContext(): EditorContext {
+    return this.state.editorContext || { type: 'base', path: ['base'] }
+  }
+
+  /**
+   * Enter overlay editing context
+   * Switches the editor to edit the overlay's transformations
+   */
+  enterOverlayContext(overlayId: string): void {
+    const overlay = this.findOverlay(overlayId)
+    if (!overlay) return
+
+    // Save current state to history
+    this.saveHistorySnapshot(this.state)
+
+    // Switch context
+    this.state.editorContext = {
+      type: 'overlay',
+      overlayId: overlayId,
+      path: ['base', overlayId],
+    }
+
+    // Load overlay's transformations into main editor state
+    if (overlay.transformations) {
+      Object.assign(this.state, overlay.transformations)
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Exit overlay context and return to base
+   * Saves overlay transformations back to the overlay
+   */
+  exitOverlayContext(): void {
+    if (!this.state.editorContext || this.state.editorContext.type === 'base') {
+      return
+    }
+
+    const overlayId = this.state.editorContext.overlayId!
+    const overlay = this.findOverlay(overlayId)
+
+    if (overlay && this.state.overlays) {
+      // Extract current transformations (excluding overlay-specific fields)
+      const { overlays, editorContext, ...transformations } = this.state
+
+      // Save transformations back to overlay
+      this.state = {
+        ...this.state,
+        overlays: this.state.overlays.map((o) =>
+          o.id === overlayId ? { ...o, transformations } : o
+        ),
+      }
+    }
+
+    // Return to base context
+    this.state.editorContext = { type: 'base', path: ['base'] }
+
+    // Reset transformation state to base image defaults
+    // Keep overlays and context
+    const { overlays, editorContext } = this.state
+    this.state = {
+      width: this.config.originalDimensions.width,
+      height: this.config.originalDimensions.height,
+      fitIn: true,
+      overlays,
+      editorContext,
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
   }
 
   /**
