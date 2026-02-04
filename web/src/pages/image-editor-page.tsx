@@ -290,9 +290,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         name: fileName,
       })
 
-      // Don't auto-select the overlay - keep viewing base image with all overlays
-      // User can manually click the overlay in the timeline to edit it
-
       toast.success(t('imageEditor.overlays.overlayAdded'))
     },
     [imageEditor, t],
