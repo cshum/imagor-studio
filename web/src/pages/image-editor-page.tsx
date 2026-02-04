@@ -243,18 +243,44 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   )
 
   const handleAddOverlay = useCallback(
-    (imagePath: string) => {
+    async (imagePath: string) => {
       // Generate unique ID for overlay
       const overlayId = `overlay-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
       // Extract filename from path for display name
       const fileName = imagePath.split('/').pop() || 'Overlay'
 
-      // Create new overlay with default settings
+      // Fetch overlay dimensions from metadata (same approach as image-editor-loader)
+      let originalWidth: number | undefined
+      let originalHeight: number | undefined
+
+      try {
+        const { statFile } = await import('@/api/storage-api')
+        const { fetchImageMetadata } = await import('@/lib/exif-utils')
+        const { getFullImageUrl } = await import('@/lib/api-utils')
+
+        const fileStat = await statFile(imagePath)
+
+        if (fileStat?.thumbnailUrls?.meta) {
+          try {
+            const metadata = await fetchImageMetadata(getFullImageUrl(fileStat.thumbnailUrls.meta))
+            originalWidth = metadata?.width
+            originalHeight = metadata?.height
+          } catch {
+            // Metadata fetch failed, dimensions will be undefined
+          }
+        }
+      } catch {
+        // File stat failed, dimensions will be undefined
+      }
+
+      // Create new overlay with default settings and dimensions
       imageEditor.addOverlay({
         id: overlayId,
         type: 'image',
         imagePath: imagePath,
+        originalWidth,
+        originalHeight,
         x: 'center',
         y: 'center',
         opacity: 100,

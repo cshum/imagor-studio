@@ -10,6 +10,10 @@ export interface ImageOverlay {
   // Source image
   imagePath: string
 
+  // Original dimensions of the overlay image (for scaling)
+  originalWidth?: number
+  originalHeight?: number
+
   // Compositing properties (how it's applied to base)
   x: number | string // 0, 'center', '20p', 'repeat', etc.
   y: number | string // 0, 'top', '50p', 'repeat', etc.
@@ -194,11 +198,13 @@ export class ImageEditor {
    * Can be called with custom state for generating URLs with different parameters
    * @param state - Image editor state with all transformation parameters
    * @param forPreview - Whether to generate preview URL (adds preview filter, WebP format)
+   * @param inheritedScaleFactor - Scale factor inherited from parent transformation (for overlays)
    * @returns GraphQL parameters for Imagor URL generation
    */
   convertStateToGraphQLParams(
     state: ImageEditorState,
     forPreview = false,
+    inheritedScaleFactor?: number,
   ): Partial<ImagorParamsInput> {
     const graphqlParams: Partial<ImagorParamsInput> = {}
 
@@ -225,68 +231,79 @@ export class ImageEditor {
       height = this.config.originalDimensions.height
     }
 
-    // Calculate scale factor for blur/sharpen/padding adjustments
-    let scaleFactor = 1
+    // Use inherited scale factor if provided, otherwise calculate it
+    let scaleFactor = inheritedScaleFactor ?? 1
 
     // Calculate actual output dimensions (after crop + resize) for padding calculations
     // This is needed for both preview and actual URLs
-    let actualOutputWidth: number
-    let actualOutputHeight: number
+    let actualOutputWidth: number = 0
+    let actualOutputHeight: number = 0
 
-    // Determine the source dimensions (what goes INTO the resize operation)
-    let sourceWidth: number
-    let sourceHeight: number
+    // Only calculate scaleFactor if not inherited (i.e., this is the base image, not an overlay)
+    if (!inheritedScaleFactor) {
+      // Determine the source dimensions (what goes INTO the resize operation)
+      let sourceWidth: number
+      let sourceHeight: number
 
-    if (shouldApplyCrop && ImageEditor.hasCropParams(state)) {
-      // Use cropped dimensions as the source
-      sourceWidth = state.cropWidth!
-      sourceHeight = state.cropHeight!
-    } else {
-      // Use original dimensions
-      sourceWidth = this.config.originalDimensions.width
-      sourceHeight = this.config.originalDimensions.height
-    }
-
-    // Calculate what the ACTUAL output will be after resize
-    const outputWidth = width ?? sourceWidth
-    const outputHeight = height ?? sourceHeight
-
-    if (state.fitIn !== false) {
-      // fitIn mode: calculate what fitIn will produce
-      // fit-in doesn't upscale by default, so cap the scale at 1.0
-      const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight, 1.0)
-      actualOutputWidth = Math.round(sourceWidth * outputScale)
-      actualOutputHeight = Math.round(sourceHeight * outputScale)
-    } else {
-      // Stretch/fill mode: use exact dimensions
-      actualOutputWidth = outputWidth
-      actualOutputHeight = outputHeight
-    }
-
-    // Apply preview dimension constraints when generating preview URLs
-    if (forPreview && this.config.previewMaxDimensions) {
-      const previewWidth = this.config.previewMaxDimensions.width
-      const previewHeight = this.config.previewMaxDimensions.height
-
-      // Compare ACTUAL output size vs preview area (without padding)
-      // Padding will be scaled by the same factor as the image
-      const widthScale = previewWidth / actualOutputWidth
-      const heightScale = previewHeight / actualOutputHeight
-      const scale = Math.min(widthScale, heightScale)
-
-      // Only scale down if actual output is larger than preview area
-      // Never upscale small images - preview should match actual output size
-      if (scale < 1) {
-        scaleFactor = scale
-        // Scale down the actual output dimensions
-        width = Math.round(actualOutputWidth * scale)
-        height = Math.round(actualOutputHeight * scale)
+      if (shouldApplyCrop && ImageEditor.hasCropParams(state)) {
+        // Use cropped dimensions as the source
+        sourceWidth = state.cropWidth!
+        sourceHeight = state.cropHeight!
       } else {
-        // Actual output is smaller than or equal to preview area
-        // Use actual output dimensions (no scaling)
-        width = actualOutputWidth
-        height = actualOutputHeight
-        scaleFactor = 1
+        // Use original dimensions
+        sourceWidth = this.config.originalDimensions.width
+        sourceHeight = this.config.originalDimensions.height
+      }
+
+      // Calculate what the ACTUAL output will be after resize
+      const outputWidth = width ?? sourceWidth
+      const outputHeight = height ?? sourceHeight
+
+      if (state.fitIn !== false) {
+        // fitIn mode: calculate what fitIn will produce
+        // fit-in doesn't upscale by default, so cap the scale at 1.0
+        const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight, 1.0)
+        actualOutputWidth = Math.round(sourceWidth * outputScale)
+        actualOutputHeight = Math.round(sourceHeight * outputScale)
+      } else {
+        // Stretch/fill mode: use exact dimensions
+        actualOutputWidth = outputWidth
+        actualOutputHeight = outputHeight
+      }
+
+      // Apply preview dimension constraints when generating preview URLs
+      if (forPreview && this.config.previewMaxDimensions) {
+        const previewWidth = this.config.previewMaxDimensions.width
+        const previewHeight = this.config.previewMaxDimensions.height
+
+        // Compare ACTUAL output size vs preview area (without padding)
+        // Padding will be scaled by the same factor as the image
+        const widthScale = previewWidth / actualOutputWidth
+        const heightScale = previewHeight / actualOutputHeight
+        const scale = Math.min(widthScale, heightScale)
+
+        // Only scale down if actual output is larger than preview area
+        // Never upscale small images - preview should match actual output size
+        if (scale < 1) {
+          scaleFactor = scale
+          // Scale down the actual output dimensions
+          width = Math.round(actualOutputWidth * scale)
+          height = Math.round(actualOutputHeight * scale)
+        } else {
+          // Actual output is smaller than or equal to preview area
+          // Use actual output dimensions (no scaling)
+          width = actualOutputWidth
+          height = actualOutputHeight
+          scaleFactor = 1
+        }
+      }
+    } else {
+      // When using inherited scaleFactor, scale the dimensions directly
+      if (width !== undefined) {
+        width = Math.round(width * scaleFactor)
+      }
+      if (height !== undefined) {
+        height = Math.round(height * scaleFactor)
       }
     }
 
@@ -445,12 +462,17 @@ export class ImageEditor {
         // Build nested imagor path from overlay transformations
         let nestedPath = `/${overlay.imagePath}`
 
+        // Calculate overlay dimensions (from transformations OR original dimensions)
+        let overlayWidth: number | undefined
+        let overlayHeight: number | undefined
+
         if (overlay.transformations) {
           // Recursively convert overlay transformations to imagor params
-          // Pass forPreview to ensure overlay transformations are scaled for preview
+          // Pass forPreview and scaleFactor to ensure overlay transformations are scaled consistently
           const overlayParams = this.convertStateToGraphQLParams(
             overlay.transformations as ImageEditorState,
             forPreview,
+            scaleFactor, // Pass inherited scaleFactor so overlays scale with base
           )
 
           // Build the nested path with transformations
@@ -473,6 +495,24 @@ export class ImageEditor {
           // Combine parts with image path
           if (parts.length > 0) {
             nestedPath = `/${parts.join('/')}${nestedPath}`
+          }
+        } else if (overlay.originalWidth || overlay.originalHeight) {
+          // No transformations, but we have original dimensions
+          // Use them to generate scaled dimensions for preview
+          overlayWidth = overlay.originalWidth
+          overlayHeight = overlay.originalHeight
+
+          // Scale for preview
+          if (forPreview && scaleFactor !== 1) {
+            overlayWidth = overlayWidth ? Math.round(overlayWidth * scaleFactor) : undefined
+            overlayHeight = overlayHeight ? Math.round(overlayHeight * scaleFactor) : undefined
+          }
+
+          // Generate fit-in path with scaled dimensions
+          if (overlayWidth || overlayHeight) {
+            const w = overlayWidth || 0
+            const h = overlayHeight || 0
+            nestedPath = `/fit-in/${w}x${h}${nestedPath}`
           }
         }
 
