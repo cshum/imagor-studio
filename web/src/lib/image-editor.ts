@@ -2,6 +2,52 @@ import { generateImagorUrl } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
 import { getFullImageUrl } from '@/lib/api-utils'
 
+export interface ImageDimensions {
+  width: number
+  height: number
+}
+
+export type BlendMode =
+  | 'normal'
+  | 'multiply'
+  | 'screen'
+  | 'overlay'
+  | 'soft-light'
+  | 'hard-light'
+  | 'color-burn'
+  | 'color-dodge'
+  | 'darken'
+  | 'lighten'
+  | 'add'
+  | 'difference'
+  | 'exclusion'
+  | 'mask'
+  | 'mask-out'
+
+export interface ImageLayer {
+  id: string // Unique identifier (crypto.randomUUID())
+  imagePath: string // Path to overlay image
+
+  // Position (supports multiple formats)
+  x: string | number // "left", "center", "right", "repeat", "20p", 0.5, 100, -50
+  y: string | number // "top", "center", "bottom", "repeat", "20p", 0.5, 100, -50
+
+  // Compositing
+  alpha: number // 0-100 (0=opaque, 100=transparent)
+  blendMode: BlendMode // Compositing mode
+
+  // Dimensions (required - fetched when adding layer)
+  originalDimensions: ImageDimensions
+
+  // Nested transformations (optional - edited via context switching)
+  transforms?: Partial<ImageEditorState>
+
+  // UI state
+  visible: boolean // Toggle layer visibility
+  locked: boolean // Prevent editing
+  name: string // Display name (from filename)
+}
+
 export interface ImageEditorState {
   // Dimensions
   width?: number
@@ -55,6 +101,9 @@ export interface ImageEditorState {
   paddingRight?: number
   paddingBottom?: number
   paddingLeft?: number
+
+  // Layers (image overlays with transforms)
+  layers?: ImageLayer[]
 }
 
 export interface ImageEditorConfig {
@@ -158,6 +207,96 @@ export class ImageEditor {
       state.cropWidth !== undefined &&
       state.cropHeight !== undefined
     )
+  }
+
+  /**
+   * Convert editor state to imagor path string (synchronous)
+   * Builds path like: /fit-in/800x600/filters:blur(5):sharpen(2)/image.jpg
+   * @param state - Editor state with transformations
+   * @param imagePath - Image path
+   * @param scaleFactor - Scale factor for preview (1.0 for actual)
+   * @returns Imagor path string
+   */
+  private static editorStateToImagorPath(
+    state: Partial<ImageEditorState>,
+    imagePath: string,
+    scaleFactor: number,
+  ): string {
+    const parts: string[] = []
+
+    // Add crop if present (before resize)
+    if (
+      state.cropLeft !== undefined &&
+      state.cropTop !== undefined &&
+      state.cropWidth !== undefined &&
+      state.cropHeight !== undefined
+    ) {
+      const right = state.cropLeft + state.cropWidth
+      const bottom = state.cropTop + state.cropHeight
+      parts.push(`${state.cropLeft}x${state.cropTop}:${right}x${bottom}`)
+    }
+
+    // Add dimensions
+    if (state.width || state.height) {
+      const prefix = state.fitIn !== false ? 'fit-in/' : ''
+      const w = state.width || 0
+      const h = state.height || 0
+      parts.push(`${prefix}${w}x${h}`)
+    }
+
+    // Build filters array
+    const filters: string[] = []
+
+    // Color adjustments
+    if (state.brightness !== undefined && state.brightness !== 0) {
+      filters.push(`brightness(${state.brightness})`)
+    }
+    if (state.contrast !== undefined && state.contrast !== 0) {
+      filters.push(`contrast(${state.contrast})`)
+    }
+    if (state.saturation !== undefined && state.saturation !== 0) {
+      filters.push(`saturation(${state.saturation})`)
+    }
+    if (state.hue !== undefined && state.hue !== 0) {
+      filters.push(`hue(${state.hue})`)
+    }
+    if (state.grayscale) {
+      filters.push('grayscale()')
+    }
+
+    // Blur and sharpen (scaled)
+    if (state.blur !== undefined && state.blur !== 0) {
+      const value = Math.round(state.blur * scaleFactor * 100) / 100
+      filters.push(`blur(${value})`)
+    }
+    if (state.sharpen !== undefined && state.sharpen !== 0) {
+      const value = Math.round(state.sharpen * scaleFactor * 100) / 100
+      filters.push(`sharpen(${value})`)
+    }
+
+    // Round corner (scaled)
+    if (state.roundCornerRadius !== undefined && state.roundCornerRadius > 0) {
+      const value = Math.round(state.roundCornerRadius * scaleFactor)
+      filters.push(`round_corner(${value})`)
+    }
+
+    // Fill color
+    if (state.fillColor) {
+      filters.push(`fill(${state.fillColor})`)
+    }
+
+    // Rotation
+    if (state.rotation !== undefined && state.rotation !== 0) {
+      filters.push(`rotate(${state.rotation})`)
+    }
+
+    // Add filters to path
+    if (filters.length > 0) {
+      parts.push(`filters:${filters.join(':')}`)
+    }
+
+    // Combine parts with image path
+    return parts.length > 0 ? `/${parts.join('/')}/${imagePath}` : `/${imagePath}`
   }
 
   /**
@@ -402,6 +541,44 @@ export class ImageEditor {
     }
     if (state.stripExif) {
       filters.push({ name: 'strip_exif', args: '' })
+    }
+
+    // Layer processing - add image() filters for each visible layer
+    if (state.layers && state.layers.length > 0) {
+      for (const layer of state.layers) {
+        if (!layer.visible) continue
+
+        // Generate layer imagor path using static helper (synchronous)
+        let layerPath: string
+        if (layer.transforms && Object.keys(layer.transforms).length > 0) {
+          // Build nested imagor path from layer transforms
+          // Prevent nested layers (no recursion)
+          const layerState = { ...layer.transforms, layers: undefined }
+          layerPath = ImageEditor.editorStateToImagorPath(
+            layerState,
+            layer.imagePath,
+            forPreview ? scaleFactor : 1,
+          )
+        } else {
+          // No transforms - simple path
+          layerPath = `/${layer.imagePath}`
+        }
+
+        // Scale position if numeric pixels (for preview)
+        const x =
+          typeof layer.x === 'number'
+            ? (forPreview ? Math.round(layer.x * scaleFactor) : layer.x).toString()
+            : layer.x.toString()
+
+        const y =
+          typeof layer.y === 'number'
+            ? (forPreview ? Math.round(layer.y * scaleFactor) : layer.y).toString()
+            : layer.y.toString()
+
+        // Build image() filter args
+        const args = `${layerPath},${x},${y},${layer.alpha},${layer.blendMode}`
+        filters.push({ name: 'image', args })
+      }
     }
 
     if (filters.length > 0) {
@@ -698,10 +875,11 @@ export class ImageEditor {
    * Generate download URL with attachment filter
    */
   async generateDownloadUrl(): Promise<string> {
+    const baseParams = this.convertStateToGraphQLParams(this.state, false) // false = no WebP override
     const downloadParams = {
-      ...this.convertStateToGraphQLParams(this.state, false), // false = no WebP override
+      ...baseParams,
       filters: [
-        ...(this.convertStateToGraphQLParams(this.state, false).filters || []),
+        ...(baseParams.filters || []),
         { name: 'attachment', args: '' }, // Empty args for default filename
       ],
     }
