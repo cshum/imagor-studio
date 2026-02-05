@@ -25,6 +25,7 @@ import {
   FileImage,
   Frame,
   GripVertical,
+  Layers,
   Maximize2,
   Palette,
   RotateCw,
@@ -37,13 +38,16 @@ import { DimensionControl } from '@/components/image-editor/controls/dimension-c
 import { FillPaddingControl } from '@/components/image-editor/controls/fill-padding-control.tsx'
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
+import { LayerPanel } from '@/components/image-editor/layer-panel'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { EditorOpenSections, SectionKey } from '@/lib/editor-open-sections-storage'
-import type { ImageEditorState } from '@/lib/image-editor.ts'
+import type { ImageEditor, ImageEditorState } from '@/lib/image-editor.ts'
 import { cn } from '@/lib/utils'
 
 interface ImageEditorControlsProps {
+  imageEditor: ImageEditor
+  imagePath: string
   params: ImageEditorState
   openSections: EditorOpenSections
   onOpenSectionsChange: (sections: EditorOpenSections) => void
@@ -120,6 +124,8 @@ function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
 }
 
 export function ImageEditorControls({
+  imageEditor,
+  imagePath,
   params,
   openSections,
   onOpenSectionsChange,
@@ -234,8 +240,16 @@ export function ImageEditorControls({
         titleKey: 'imageEditor.controls.outputCompression',
         component: <OutputControl params={params} onUpdateParams={onUpdateParams} />,
       },
+      layers: {
+        key: 'layers',
+        icon: Layers,
+        titleKey: 'imageEditor.layers.title',
+        component: <LayerPanel imageEditor={imageEditor} imagePath={imagePath} />,
+      },
     }),
     [
+      imageEditor,
+      imagePath,
       params,
       onUpdateParams,
       onVisualCropToggle,
