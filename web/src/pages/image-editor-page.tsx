@@ -28,17 +28,13 @@ import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 import { useAuth } from '@/stores/auth-store'
 
 interface ImageEditorPageProps {
-  imagePath: string
+  galleryKey: string
+  imageKey: string
   loaderData: ImageEditorLoaderData
 }
 
-export function ImageEditorPage({ imagePath, loaderData }: ImageEditorPageProps) {
+export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
   const { imageEditor, originalDimensions, initialEditorOpenSections, imageElement } = loaderData
-
-  // Extract galleryKey and imageKey from imagePath for navigation
-  const lastSlashIndex = imagePath.lastIndexOf('/')
-  const galleryKey = lastSlashIndex >= 0 ? imagePath.substring(0, lastSlashIndex) : ''
-  const imageKey = lastSlashIndex >= 0 ? imagePath.substring(lastSlashIndex + 1) : imagePath
 
   const { t } = useTranslation()
   const navigate = useNavigate()

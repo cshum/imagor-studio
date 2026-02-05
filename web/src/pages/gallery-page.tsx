@@ -63,6 +63,7 @@ import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-hand
 import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { getFullImageUrl } from '@/lib/api-utils'
+import { joinImagePath } from '@/lib/path-utils'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { registerDropHandler } from '@/stores/drag-drop-store'
@@ -549,7 +550,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       // Generate original image URL (no transformations for images, raw filter for videos)
       const params = isVideo ? { filters: [{ name: 'raw', args: '' }] } : {}
 
-      const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
+      const imagePath = joinImagePath(galleryKey, imageKey)
       const url = await generateImagorUrl({
         imagePath,
         params: params as ImagorParamsInput,
@@ -571,7 +572,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         { name: 'attachment', args: '' },
       ]
 
-      const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
+      const imagePath = joinImagePath(galleryKey, imageKey)
       const url = await generateImagorUrl({
         imagePath,
         params: {

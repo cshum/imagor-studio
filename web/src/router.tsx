@@ -140,7 +140,7 @@ const rootImageEditorRoute = createRoute({
   component: () => {
     const loaderData = rootImageEditorRoute.useLoaderData()
     const { imageKey } = rootImageEditorRoute.useParams()
-    return <ImageEditorPage imagePath={imageKey} loaderData={loaderData} />
+    return <ImageEditorPage galleryKey='' imageKey={imageKey} loaderData={loaderData} />
   },
 })
 
@@ -188,8 +188,7 @@ const galleryImageEditorRoute = createRoute({
   component: () => {
     const loaderData = galleryImageEditorRoute.useLoaderData()
     const { galleryKey, imageKey } = galleryImageEditorRoute.useParams()
-    const imagePath = `${galleryKey}/${imageKey}`
-    return <ImageEditorPage imagePath={imagePath} loaderData={loaderData} />
+    return <ImageEditorPage galleryKey={galleryKey} imageKey={imageKey} loaderData={loaderData} />
   },
 })
 
@@ -256,10 +255,13 @@ const embeddedEditorRoute = createRoute({
   loader: embeddedLoader,
   component: () => {
     const loaderData = embeddedEditorRoute.useLoaderData()
-    const imagePath = loaderData.galleryKey
-      ? `${loaderData.galleryKey}/${loaderData.imageKey}`
-      : loaderData.imageKey
-    return <ImageEditorPage imagePath={imagePath} loaderData={loaderData.imageEditorData} />
+    return (
+      <ImageEditorPage
+        galleryKey={loaderData.galleryKey}
+        imageKey={loaderData.imageKey}
+        loaderData={loaderData.imageEditorData}
+      />
+    )
   },
 })
 
