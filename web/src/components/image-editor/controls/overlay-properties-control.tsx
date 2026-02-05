@@ -27,69 +27,49 @@ export function OverlayPropertiesControl({
 }: OverlayPropertiesControlProps) {
   const { t } = useTranslation()
 
-  // Position presets
-  const positionPresets = [
-    { value: 'custom', label: t('imageEditor.overlays.position.custom') },
-    { value: 'center', label: t('imageEditor.overlays.position.center') },
-    { value: 'top-left', label: t('imageEditor.overlays.position.topLeft') },
-    { value: 'top-center', label: t('imageEditor.overlays.position.topCenter') },
-    { value: 'top-right', label: t('imageEditor.overlays.position.topRight') },
-    { value: 'center-left', label: t('imageEditor.overlays.position.centerLeft') },
-    { value: 'center-right', label: t('imageEditor.overlays.position.centerRight') },
-    { value: 'bottom-left', label: t('imageEditor.overlays.position.bottomLeft') },
-    { value: 'bottom-center', label: t('imageEditor.overlays.position.bottomCenter') },
-    { value: 'bottom-right', label: t('imageEditor.overlays.position.bottomRight') },
-  ]
-
-  // Blend modes
+  // Blend modes with descriptions
   const blendModes = [
-    { value: 'normal', label: t('imageEditor.overlays.blendMode.normal') },
-    { value: 'multiply', label: t('imageEditor.overlays.blendMode.multiply') },
-    { value: 'screen', label: t('imageEditor.overlays.blendMode.screen') },
-    { value: 'overlay', label: t('imageEditor.overlays.blendMode.overlay') },
-    { value: 'soft-light', label: t('imageEditor.overlays.blendMode.softLight') },
-    { value: 'hard-light', label: t('imageEditor.overlays.blendMode.hardLight') },
-    { value: 'color-burn', label: t('imageEditor.overlays.blendMode.colorBurn') },
-    { value: 'color-dodge', label: t('imageEditor.overlays.blendMode.colorDodge') },
-    { value: 'darken', label: t('imageEditor.overlays.blendMode.darken') },
-    { value: 'lighten', label: t('imageEditor.overlays.blendMode.lighten') },
-    { value: 'add', label: t('imageEditor.overlays.blendMode.add') },
-    { value: 'difference', label: t('imageEditor.overlays.blendMode.difference') },
-    { value: 'exclusion', label: t('imageEditor.overlays.blendMode.exclusion') },
+    {
+      value: 'normal',
+      label: t('imageEditor.overlays.blendMode.normal'),
+      description: t('imageEditor.overlays.blendMode.normalDesc'),
+    },
+    {
+      value: 'multiply',
+      label: t('imageEditor.overlays.blendMode.multiply'),
+      description: t('imageEditor.overlays.blendMode.multiplyDesc'),
+    },
+    {
+      value: 'screen',
+      label: t('imageEditor.overlays.blendMode.screen'),
+      description: t('imageEditor.overlays.blendMode.screenDesc'),
+    },
+    {
+      value: 'overlay',
+      label: t('imageEditor.overlays.blendMode.overlay'),
+      description: t('imageEditor.overlays.blendMode.overlayDesc'),
+    },
+    {
+      value: 'soft-light',
+      label: t('imageEditor.overlays.blendMode.softLight'),
+      description: t('imageEditor.overlays.blendMode.softLightDesc'),
+    },
+    {
+      value: 'darken',
+      label: t('imageEditor.overlays.blendMode.darken'),
+      description: t('imageEditor.overlays.blendMode.darkenDesc'),
+    },
+    {
+      value: 'lighten',
+      label: t('imageEditor.overlays.blendMode.lighten'),
+      description: t('imageEditor.overlays.blendMode.lightenDesc'),
+    },
+    {
+      value: 'mask',
+      label: t('imageEditor.overlays.blendMode.mask'),
+      description: t('imageEditor.overlays.blendMode.maskDesc'),
+    },
   ]
-
-  // Determine current position preset
-  const getCurrentPositionPreset = (): string => {
-    const { x, y } = overlay
-    if (x === 'center' && y === 'center') return 'center'
-    if (x === 0 && y === 0) return 'top-left'
-    if (x === 'center' && y === 0) return 'top-center'
-    if (x === 'right' && y === 0) return 'top-right'
-    if (x === 0 && y === 'center') return 'center-left'
-    if (x === 'right' && y === 'center') return 'center-right'
-    if (x === 0 && y === 'bottom') return 'bottom-left'
-    if (x === 'center' && y === 'bottom') return 'bottom-center'
-    if (x === 'right' && y === 'bottom') return 'bottom-right'
-    return 'custom'
-  }
-
-  const handlePositionPresetChange = (preset: string) => {
-    const presetMap: Record<string, { x: string | number; y: string | number }> = {
-      center: { x: 'center', y: 'center' },
-      'top-left': { x: 0, y: 0 },
-      'top-center': { x: 'center', y: 0 },
-      'top-right': { x: 'right', y: 0 },
-      'center-left': { x: 0, y: 'center' },
-      'center-right': { x: 'right', y: 'center' },
-      'bottom-left': { x: 0, y: 'bottom' },
-      'bottom-center': { x: 'center', y: 'bottom' },
-      'bottom-right': { x: 'right', y: 'bottom' },
-    }
-
-    if (preset !== 'custom' && presetMap[preset]) {
-      onUpdate(presetMap[preset])
-    }
-  }
 
   return (
     <div className='space-y-4'>
@@ -104,46 +84,85 @@ export function OverlayPropertiesControl({
         />
       </div>
 
-      {/* Position Preset */}
+      {/* X Position */}
       <div className='space-y-2'>
-        <Label>{t('imageEditor.overlays.position.label')}</Label>
-        <Select value={getCurrentPositionPreset()} onValueChange={handlePositionPresetChange}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {positionPresets.map((preset) => (
-              <SelectItem key={preset.value} value={preset.value}>
-                {preset.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Custom Position (X, Y) - shown when custom */}
-      {getCurrentPositionPreset() === 'custom' && (
-        <div className='grid grid-cols-2 gap-2'>
-          <div className='space-y-2'>
-            <Label htmlFor='overlay-x'>X</Label>
+        <Label htmlFor='overlay-x'>{t('imageEditor.overlays.xPosition')}</Label>
+        <div className='flex gap-2'>
+          <Select
+            value={typeof overlay.x === 'number' ? 'custom' : (overlay.x || 'center')}
+            onValueChange={(value: string) => {
+              if (value === 'custom') {
+                onUpdate({ x: 0 })
+              } else {
+                onUpdate({ x: value })
+              }
+            }}
+          >
+            <SelectTrigger className='flex-1'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='left'>Left</SelectItem>
+              <SelectItem value='center'>Center</SelectItem>
+              <SelectItem value='right'>Right</SelectItem>
+              <SelectItem value='repeat'>Repeat</SelectItem>
+              <SelectItem value='custom'>Custom</SelectItem>
+            </SelectContent>
+          </Select>
+          {typeof overlay.x === 'number' && (
             <Input
               id='overlay-x'
               type='number'
-              value={typeof overlay.x === 'number' ? overlay.x : 0}
+              value={overlay.x}
               onChange={(e) => onUpdate({ x: parseInt(e.target.value) || 0 })}
+              className='w-24'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='overlay-y'>Y</Label>
+          )}
+        </div>
+        {typeof overlay.x === 'number' && (
+          <p className='text-muted-foreground text-xs'>{t('imageEditor.overlays.xPositionPlaceholder')}</p>
+        )}
+      </div>
+
+      {/* Y Position */}
+      <div className='space-y-2'>
+        <Label htmlFor='overlay-y'>{t('imageEditor.overlays.yPosition')}</Label>
+        <div className='flex gap-2'>
+          <Select
+            value={typeof overlay.y === 'number' ? 'custom' : (overlay.y || 'center')}
+            onValueChange={(value: string) => {
+              if (value === 'custom') {
+                onUpdate({ y: 0 })
+              } else {
+                onUpdate({ y: value })
+              }
+            }}
+          >
+            <SelectTrigger className='flex-1'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='top'>Top</SelectItem>
+              <SelectItem value='center'>Center</SelectItem>
+              <SelectItem value='bottom'>Bottom</SelectItem>
+              <SelectItem value='repeat'>Repeat</SelectItem>
+              <SelectItem value='custom'>Custom</SelectItem>
+            </SelectContent>
+          </Select>
+          {typeof overlay.y === 'number' && (
             <Input
               id='overlay-y'
               type='number'
-              value={typeof overlay.y === 'number' ? overlay.y : 0}
+              value={overlay.y}
               onChange={(e) => onUpdate({ y: parseInt(e.target.value) || 0 })}
+              className='w-24'
             />
-          </div>
+          )}
         </div>
-      )}
+        {typeof overlay.y === 'number' && (
+          <p className='text-muted-foreground text-xs'>{t('imageEditor.overlays.yPositionPlaceholder')}</p>
+        )}
+      </div>
 
       {/* Opacity */}
       <div className='space-y-2'>
@@ -170,10 +189,12 @@ export function OverlayPropertiesControl({
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className='max-h-none'>
             {blendModes.map((mode) => (
               <SelectItem key={mode.value} value={mode.value}>
-                {mode.label}
+                <span>
+                  {mode.label} <span className='text-muted-foreground'>- {mode.description}</span>
+                </span>
               </SelectItem>
             ))}
           </SelectContent>

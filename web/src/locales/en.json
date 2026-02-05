@@ -827,6 +827,10 @@
       "layerLocked": "Layer is locked",
       "name": "Name",
       "namePlaceholder": "Enter layer name",
+      "xPosition": "X Position",
+      "xPositionPlaceholder": "100, -50 (from right), left, center, right",
+      "yPosition": "Y Position",
+      "yPositionPlaceholder": "100, -50 (from bottom), top, center, bottom",
       "opacity": "Opacity",
       "deleteLayer": "Delete Layer",
       "position": {
@@ -845,18 +849,21 @@
       "blendMode": {
         "label": "Blend Mode",
         "normal": "Normal",
+        "normalDesc": "Standard overlay",
         "multiply": "Multiply",
+        "multiplyDesc": "Darkens for shadows and depth",
         "screen": "Screen",
+        "screenDesc": "Lightens for glows and highlights",
         "overlay": "Overlay",
+        "overlayDesc": "Boosts contrast dramatically",
         "softLight": "Soft Light",
-        "hardLight": "Hard Light",
-        "colorBurn": "Color Burn",
-        "colorDodge": "Color Dodge",
+        "softLightDesc": "Gentle lighting adjustments",
         "darken": "Darken",
+        "darkenDesc": "Keeps darker pixels only",
         "lighten": "Lighten",
-        "add": "Add",
-        "difference": "Difference",
-        "exclusion": "Exclusion"
+        "lightenDesc": "Keeps lighter pixels only",
+        "mask": "Mask",
+        "maskDesc": "Cuts out using transparency"
       }
     }
   }

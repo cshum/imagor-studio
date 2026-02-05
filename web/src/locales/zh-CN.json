@@ -822,6 +822,10 @@
       "layerLocked": "图层已锁定",
       "name": "名称",
       "namePlaceholder": "输入图层名称",
+      "xPosition": "X 位置",
+      "xPositionPlaceholder": "100, -50 (从右侧), left, center, right",
+      "yPosition": "Y 位置",
+      "yPositionPlaceholder": "100, -50 (从底部), top, center, bottom",
       "opacity": "不透明度",
       "deleteLayer": "删除图层",
       "position": {
@@ -840,18 +844,21 @@
       "blendMode": {
         "label": "混合模式",
         "normal": "正常",
+        "normalDesc": "标准叠加",
         "multiply": "正片叠底",
+        "multiplyDesc": "变暗以增加阴影和深度",
         "screen": "滤色",
+        "screenDesc": "变亮以增加光晕和高光",
         "overlay": "叠加",
+        "overlayDesc": "显著增强对比度",
         "softLight": "柔光",
-        "hardLight": "强光",
-        "colorBurn": "颜色加深",
-        "colorDodge": "颜色减淡",
+        "softLightDesc": "柔和的光照调整",
         "darken": "变暗",
+        "darkenDesc": "仅保留较暗的像素",
         "lighten": "变亮",
-        "add": "添加",
-        "difference": "差值",
-        "exclusion": "排除"
+        "lightenDesc": "仅保留较亮的像素",
+        "mask": "蒙版",
+        "maskDesc": "使用透明度进行裁剪"
       }
     }
   }
