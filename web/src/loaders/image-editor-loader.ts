@@ -80,8 +80,7 @@ export const imageEditorLoader = async ({
 
   // Create ImageEditor instance
   const imageEditor = new ImageEditor({
-    galleryKey,
-    imageKey,
+    imagePath,
     originalDimensions,
   })
 

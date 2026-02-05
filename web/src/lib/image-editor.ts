@@ -2,6 +2,34 @@ import { generateImagorUrl } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
 import { getFullImageUrl } from '@/lib/api-utils'
 
+// Image overlay that composites on top of base image using image() filter
+export interface ImageOverlay {
+  id: string
+  type: 'image'
+
+  // Source image
+  imagePath: string // Full path like "folder/image.jpg"
+
+  // Original dimensions of the overlay image (for scaling)
+  originalWidth?: number
+  originalHeight?: number
+
+  // Compositing properties (how it's applied to base)
+  x: number | string // 0, 'center', '20p', 'repeat', etc.
+  y: number | string // 0, 'top', '50p', 'repeat', etc.
+  opacity?: number // 0-100 (100 = fully opaque)
+  blendMode?: string // 'normal', 'multiply', 'screen', etc.
+
+  // Transformations applied to overlay BEFORE compositing
+  // Each overlay can have its own ImageEditor instance to manage these
+  transformations?: Omit<ImageEditorState, 'overlays'>
+
+  // Metadata
+  name?: string
+  visible: boolean
+  locked: boolean
+}
+
 export interface ImageEditorState {
   // Dimensions
   width?: number
@@ -55,11 +83,13 @@ export interface ImageEditorState {
   paddingRight?: number
   paddingBottom?: number
   paddingLeft?: number
+
+  // Overlays applied AFTER base transformations (using image() filter)
+  overlays?: ImageOverlay[]
 }
 
 export interface ImageEditorConfig {
-  galleryKey: string
-  imageKey: string
+  imagePath: string // Full path like "Google Photos/photo.jpg" or "photo.jpg"
   originalDimensions: {
     width: number
     height: number
@@ -138,6 +168,18 @@ export class ImageEditor {
    */
   getState(): ImageEditorState {
     return { ...this.state }
+  }
+
+  /**
+   * Parse imagePath into galleryKey and imageKey for API calls
+   * @param imagePath - Full path like "Google Photos/photo.jpg" or "photo.jpg"
+   * @returns Object with galleryKey and imageKey
+   */
+  private parseImagePath(imagePath: string): { galleryKey: string; imageKey: string } {
+    const pathParts = imagePath.split('/')
+    const imageKey = pathParts[pathParts.length - 1]
+    const galleryKey = pathParts.length > 1 ? pathParts.slice(0, -1).join('/') : ''
+    return { galleryKey, imageKey }
   }
 
   /**
@@ -371,6 +413,77 @@ export class ImageEditor {
       filters.push({ name: 'rotate', args: state.rotation.toString() })
     }
 
+    // Apply overlays (image() filters) - applied AFTER base transformations
+    if (state.overlays && state.overlays.length > 0) {
+      state.overlays.forEach((overlay) => {
+        if (!overlay.visible) return
+
+        // Build nested imagor path from overlay
+        // For now, just use the image path directly (no transformations)
+        // TODO: In Phase 6, we'll recursively convert overlay transformations
+        let nestedPath = `/${overlay.imagePath}`
+
+        // If overlay has dimensions, add fit-in sizing
+        if (overlay.originalWidth || overlay.originalHeight) {
+          let overlayWidth = overlay.originalWidth
+          let overlayHeight = overlay.originalHeight
+
+          // Scale overlay dimensions for preview
+          if (forPreview && scaleFactor !== 1) {
+            overlayWidth = overlayWidth ? Math.round(overlayWidth * scaleFactor) : undefined
+            overlayHeight = overlayHeight ? Math.round(overlayHeight * scaleFactor) : undefined
+          }
+
+          if (overlayWidth || overlayHeight) {
+            const w = overlayWidth || 0
+            const h = overlayHeight || 0
+            nestedPath = `/fit-in/${w}x${h}${nestedPath}`
+          }
+        }
+
+        // Build image() filter arguments
+        // Format: image(path, x, y, alpha, blend_mode)
+        // Invert opacity to alpha: 100 opacity = 0 alpha (fully opaque)
+        const alpha = 100 - (overlay.opacity ?? 100)
+        const blendMode = overlay.blendMode ?? 'normal'
+
+        // Scale numeric x/y positions for preview
+        let x = overlay.x ?? 0
+        let y = overlay.y ?? 0
+
+        if (forPreview && scaleFactor !== 1) {
+          if (typeof x === 'number') {
+            x = Math.round(x * scaleFactor)
+          }
+          if (typeof y === 'number') {
+            y = Math.round(y * scaleFactor)
+          }
+        }
+
+        // Build args array - only include non-default values to minimize URL length
+        const args: Array<string | number> = [nestedPath]
+
+        // Add position if not at origin, or if we need to specify alpha/blend
+        const needsAlpha = alpha !== 0
+        const needsBlend = blendMode !== 'normal'
+        const needsPosition = x !== 0 || y !== 0
+
+        if (needsPosition || needsAlpha || needsBlend) {
+          args.push(x, y)
+
+          if (needsAlpha || needsBlend) {
+            args.push(alpha)
+
+            if (needsBlend) {
+              args.push(blendMode)
+            }
+          }
+        }
+
+        filters.push({ name: 'image', args: args.join(',') })
+      })
+    }
+
     // Format handling
     if (forPreview) {
       // disable result storage on preview
@@ -421,10 +534,11 @@ export class ImageEditor {
 
     try {
       const graphqlParams = this.convertStateToGraphQLParams(this.state, true)
+      const { galleryKey, imageKey } = this.parseImagePath(this.config.imagePath)
       const url = await generateImagorUrl(
         {
-          galleryKey: this.config.galleryKey,
-          imageKey: this.config.imageKey,
+          galleryKey,
+          imageKey,
           params: graphqlParams as ImagorParamsInput,
         },
         this.abortController.signal,
@@ -686,9 +800,10 @@ export class ImageEditor {
    */
   async generateCopyUrl(): Promise<string> {
     const copyParams = this.convertStateToGraphQLParams(this.state, false) // false = no WebP override
+    const { galleryKey, imageKey } = this.parseImagePath(this.config.imagePath)
     return await generateImagorUrl({
-      galleryKey: this.config.galleryKey,
-      imageKey: this.config.imageKey,
+      galleryKey,
+      imageKey,
       params: copyParams as ImagorParamsInput,
     })
   }
@@ -704,9 +819,10 @@ export class ImageEditor {
         { name: 'attachment', args: '' }, // Empty args for default filename
       ],
     }
+    const { galleryKey, imageKey } = this.parseImagePath(this.config.imagePath)
     return await generateImagorUrl({
-      galleryKey: this.config.galleryKey,
-      imageKey: this.config.imageKey,
+      galleryKey,
+      imageKey,
       params: downloadParams as ImagorParamsInput,
     })
   }
