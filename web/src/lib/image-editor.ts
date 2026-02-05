@@ -1001,6 +1001,90 @@ export class ImageEditor {
     this.callbacks.onHistoryChange?.()
   }
 
+  // ============================================================================
+  // Layer Management Methods
+  // ============================================================================
+
+  /**
+   * Add a new layer to the editor
+   * @param layer - The layer to add
+   */
+  addLayer(layer: ImageLayer): void {
+    this.scheduleHistorySnapshot()
+
+    const layers = this.state.layers || []
+    this.state = {
+      ...this.state,
+      layers: [...layers, layer],
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Remove a layer by ID
+   * @param layerId - ID of the layer to remove
+   */
+  removeLayer(layerId: string): void {
+    if (!this.state.layers) return
+
+    this.scheduleHistorySnapshot()
+
+    this.state = {
+      ...this.state,
+      layers: this.state.layers.filter((layer) => layer.id !== layerId),
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Update a layer's properties
+   * @param layerId - ID of the layer to update
+   * @param updates - Partial layer properties to update
+   */
+  updateLayer(layerId: string, updates: Partial<ImageLayer>): void {
+    if (!this.state.layers) return
+
+    this.scheduleHistorySnapshot()
+
+    this.state = {
+      ...this.state,
+      layers: this.state.layers.map((layer) =>
+        layer.id === layerId ? { ...layer, ...updates } : layer,
+      ),
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Reorder layers (for drag-and-drop)
+   * @param newOrder - New array of layers in desired order
+   */
+  reorderLayers(newOrder: ImageLayer[]): void {
+    this.scheduleHistorySnapshot()
+
+    this.state = {
+      ...this.state,
+      layers: newOrder,
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Get all layers
+   * @returns Array of layers or empty array
+   */
+  getLayers(): ImageLayer[] {
+    return this.state.layers || []
+  }
+
   /**
    * Clean up resources
    */
