@@ -7,6 +7,7 @@ import {
 } from '@/lib/editor-open-sections-storage'
 import { fetchImageMetadata } from '@/lib/exif-utils'
 import { ImageEditor } from '@/lib/image-editor'
+import { joinImagePath } from '@/lib/path-utils'
 import { preloadImage } from '@/lib/preload-image'
 import { getAuth } from '@/stores/auth-store'
 import { clearPosition } from '@/stores/image-position-store.ts'
@@ -34,7 +35,7 @@ export const imageEditorLoader = async ({
   params: { galleryKey: string; imageKey: string }
 }): Promise<ImageEditorLoaderData> => {
   // Combine galleryKey and imageKey into imagePath
-  const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
+  const imagePath = joinImagePath(galleryKey, imageKey)
   const fileStat = await statFile(imagePath)
 
   if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
