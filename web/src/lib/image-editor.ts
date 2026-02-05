@@ -129,6 +129,7 @@ export class ImageEditor {
   private pendingHistorySnapshot: ImageEditorState | null = null
   private previewRequestId: number = 0
   private loadingRequestId: number = 0
+  private selectedOverlayId: string | null = null
 
   constructor(config: ImageEditorConfig) {
     this.config = config
@@ -329,12 +330,17 @@ export class ImageEditor {
    * Can be called with custom state for generating URLs with different parameters
    * @param state - Image editor state with all transformation parameters
    * @param forPreview - Whether to generate preview URL (adds preview filter, WebP format)
+   * @param originalDimensions - Original dimensions of the image (defaults to base image dimensions)
    * @returns GraphQL parameters for Imagor URL generation
    */
   convertStateToGraphQLParams(
     state: ImageEditorState,
     forPreview = false,
+    originalDimensions?: { width: number; height: number },
   ): Partial<ImagorParamsInput> {
+    // Use provided dimensions or fall back to config dimensions
+    const imageDimensions = originalDimensions ?? this.config.originalDimensions
+
     const graphqlParams: Partial<ImagorParamsInput> = {}
 
     // Crop handling (crops BEFORE resize in URL path)
@@ -347,6 +353,13 @@ export class ImageEditor {
       graphqlParams.cropTop = state.cropTop
       graphqlParams.cropRight = state.cropLeft! + state.cropWidth!
       graphqlParams.cropBottom = state.cropTop! + state.cropHeight!
+    } else {
+      // Explicitly ensure crop params are undefined when not applying crop
+      // This prevents leftover crop coordinates from being added to the URL
+      graphqlParams.cropLeft = undefined
+      graphqlParams.cropTop = undefined
+      graphqlParams.cropRight = undefined
+      graphqlParams.cropBottom = undefined
     }
 
     // Dimensions - apply preview constraints if needed
@@ -356,8 +369,8 @@ export class ImageEditor {
     // When visual crop is enabled in preview, use original dimensions
     // so the crop overlay can work with the full original image
     if (forPreview && state.visualCropEnabled) {
-      width = this.config.originalDimensions.width
-      height = this.config.originalDimensions.height
+      width = imageDimensions.width
+      height = imageDimensions.height
     }
 
     // Calculate scale factor for blur/sharpen/padding adjustments
@@ -378,8 +391,8 @@ export class ImageEditor {
       sourceHeight = state.cropHeight!
     } else {
       // Use original dimensions
-      sourceWidth = this.config.originalDimensions.width
-      sourceHeight = this.config.originalDimensions.height
+      sourceWidth = imageDimensions.width
+      sourceHeight = imageDimensions.height
     }
 
     // Calculate what the ACTUAL output will be after resize
@@ -638,7 +651,22 @@ export class ImageEditor {
   }
 
   /**
+   * Set the selected overlay ID for preview generation
+   * When an overlay is selected, preview will show that overlay's image
+   * When null, preview shows the full composition (base + overlays)
+   */
+  setSelectedOverlayId(overlayId: string | null): void {
+    if (this.selectedOverlayId === overlayId) return
+    
+    this.selectedOverlayId = overlayId
+    // Regenerate preview with new overlay selection
+    this.schedulePreviewUpdate()
+  }
+
+  /**
    * Generate preview URL and trigger callbacks
+   * When an overlay is selected, generates preview from that overlay's image and editorState
+   * Otherwise, generates preview from base image with full composition
    */
   private async generatePreview(requestId: number): Promise<void> {
     // Cancel any existing request
@@ -649,8 +677,39 @@ export class ImageEditor {
     this.abortController = new AbortController()
 
     try {
-      const graphqlParams = this.convertStateToGraphQLParams(this.state, true)
-      const { galleryKey, imageKey } = this.parseImagePath(this.config.imagePath)
+      // Determine which image path, state, and dimensions to use for preview
+      let imagePath: string
+      let previewState: ImageEditorState
+      let originalDimensions: { width: number; height: number } | undefined
+
+      if (this.selectedOverlayId) {
+        // Overlay is selected - generate preview from overlay's image and editorState
+        const overlay = this.state.overlays?.find((o) => o.id === this.selectedOverlayId)
+        if (overlay) {
+          imagePath = overlay.imagePath
+          previewState = overlay.editorState
+          // Pass overlay's original dimensions for correct scale calculation
+          if (overlay.originalWidth && overlay.originalHeight) {
+            originalDimensions = {
+              width: overlay.originalWidth,
+              height: overlay.originalHeight,
+            }
+          }
+        } else {
+          // Overlay not found, fall back to base image
+          imagePath = this.config.imagePath
+          previewState = this.state
+          originalDimensions = undefined // Use base image dimensions
+        }
+      } else {
+        // No overlay selected - use base image with full composition
+        imagePath = this.config.imagePath
+        previewState = this.state
+        originalDimensions = undefined // Use base image dimensions
+      }
+
+      const graphqlParams = this.convertStateToGraphQLParams(previewState, true, originalDimensions)
+      const { galleryKey, imageKey } = this.parseImagePath(imagePath)
       const url = await generateImagorUrl(
         {
           galleryKey,

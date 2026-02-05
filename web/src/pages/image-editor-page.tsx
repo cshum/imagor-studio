@@ -130,6 +130,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     imageEditor.updatePreviewMaxDimensions(previewMaxDimensions ?? undefined)
   }, [imageEditor, previewMaxDimensions])
 
+  // Sync selected overlay ID with ImageEditor for preview generation
+  useEffect(() => {
+    imageEditor.setSelectedOverlayId(selectedOverlayId)
+  }, [imageEditor, selectedOverlayId])
+
   // Keyboard shortcuts for undo/redo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -206,14 +211,15 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     await imageEditor.setVisualCropEnabled(enabled)
 
     // Initialize crop dimensions if enabling for the first time
-    if (enabled && !params.cropLeft && !params.cropTop && !params.cropWidth && !params.cropHeight) {
+    // Check active layer's crop params (not just base params)
+    if (enabled && !activeLayerState.cropLeft && !activeLayerState.cropTop && !activeLayerState.cropWidth && !activeLayerState.cropHeight) {
       // Crop works on original dimensions (before resize)
-      // Set initial crop to full original dimensions (100%)
-      updateParams({
+      // Set initial crop to full active layer dimensions (100%)
+      updateActiveLayerState({
         cropLeft: 0,
         cropTop: 0,
-        cropWidth: originalDimensions.width,
-        cropHeight: originalDimensions.height,
+        cropWidth: activeLayerDimensions.width,
+        cropHeight: activeLayerDimensions.height,
       })
     }
   }
@@ -225,7 +231,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }
 
   const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {
-    updateParams({
+    // Update active layer's crop (base image or selected overlay)
+    updateActiveLayerState({
       cropLeft: crop.left,
       cropTop: crop.top,
       cropWidth: crop.width,
@@ -434,6 +441,22 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   // ============================================================================
 
   /**
+   * Get the original dimensions for the currently active layer
+   * - If no overlay is selected: return base image dimensions
+   * - If overlay is selected: return that overlay's original dimensions
+   */
+  const activeLayerDimensions = useMemo(() => {
+    if (!selectedOverlayId) {
+      return originalDimensions // Base image
+    }
+    const overlay = params.overlays?.find((o) => o.id === selectedOverlayId)
+    return {
+      width: overlay?.originalWidth ?? originalDimensions.width,
+      height: overlay?.originalHeight ?? originalDimensions.height,
+    }
+  }, [selectedOverlayId, params.overlays, originalDimensions])
+
+  /**
    * Get the editor state for the currently active layer
    * - If no overlay is selected (selectedOverlayId === null): return base image state
    * - If overlay is selected: return that overlay's editorState
@@ -613,20 +636,20 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           error={error}
           galleryKey={galleryKey}
           imageKey={imageKey}
-          originalDimensions={originalDimensions}
+          originalDimensions={activeLayerDimensions}
           onLoad={handlePreviewLoad}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}
           onPreviewDimensionsChange={setPreviewMaxDimensions}
           visualCropEnabled={visualCropEnabled}
-          cropLeft={params.cropLeft || 0}
-          cropTop={params.cropTop || 0}
-          cropWidth={params.cropWidth || 0}
-          cropHeight={params.cropHeight || 0}
+          cropLeft={activeLayerState.cropLeft || 0}
+          cropTop={activeLayerState.cropTop || 0}
+          cropWidth={activeLayerState.cropWidth || 0}
+          cropHeight={activeLayerState.cropHeight || 0}
           onCropChange={handleCropChange}
           cropAspectRatio={cropAspectRatio}
-          hFlip={params.hFlip}
-          vFlip={params.vFlip}
+          hFlip={activeLayerState.hFlip}
+          vFlip={activeLayerState.vFlip}
         />
       </div>
 
