@@ -11,6 +11,7 @@ const EDITOR_SECTIONS = {
   dimensions: false,
   fill: false,
   output: false,
+  layers: false, // Overlay/layer management
 } as const
 
 // Derive SectionKey from the object keys

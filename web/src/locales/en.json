@@ -687,7 +687,8 @@
       "colorEffects": "Color & Effects",
       "transformRotate": "Transform & Rotate",
       "cropResize": "Crop & Resize",
-      "fillPadding": "Fill & Padding"
+      "fillPadding": "Fill & Padding",
+      "layers": "Layers & Overlays"
     },
     "transform": {
       "flipControls": "Flip Controls",
@@ -803,6 +804,14 @@
       "bottom": "Bottom",
       "left": "Left",
       "description": "Add padding around the image and fill transparent or padded areas with a color"
+    },
+    "overlays": {
+      "selectImages": "Select Images for Layers",
+      "selectImagesDescription": "Choose one or more images from your gallery to add as overlay layers",
+      "addLayers": "Add as Layers",
+      "overlayAdded": "Layer added successfully",
+      "overlayRemoved": "Layer removed successfully",
+      "overlayDuplicated": "Layer duplicated successfully"
     }
   }
 }

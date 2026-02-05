@@ -25,6 +25,7 @@ import {
   FileImage,
   Frame,
   GripVertical,
+  Layers,
   Maximize2,
   Palette,
   RotateCw,
@@ -36,6 +37,8 @@ import { CropAspectControl } from '@/components/image-editor/controls/crop-aspec
 import { DimensionControl } from '@/components/image-editor/controls/dimension-control.tsx'
 import { FillPaddingControl } from '@/components/image-editor/controls/fill-padding-control.tsx'
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
+import { OverlayPropertiesControl } from '@/components/image-editor/controls/overlay-properties-control.tsx'
+import { OverlayTimeline } from '@/components/image-editor/controls/overlay-timeline.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -53,6 +56,16 @@ interface ImageEditorControlsProps {
   outputWidth: number
   outputHeight: number
   onCropAspectRatioChange?: (aspectRatio: number | null) => void
+  // Overlay/Layer management
+  selectedOverlayId?: string | null
+  onSelectOverlay?: (overlayId: string | null) => void
+  onAddOverlay?: () => void
+  onRemoveOverlay?: (overlayId: string) => void
+  onUpdateOverlay?: (overlayId: string, updates: Partial<NonNullable<ImageEditorState['overlays']>[number]>) => void
+  onDuplicateOverlay?: (overlayId: string) => void
+  onToggleOverlayVisibility?: (overlayId: string) => void
+  onToggleOverlayLock?: (overlayId: string) => void
+  onReorderOverlays?: (fromIndex: number, toIndex: number) => void
 }
 
 interface SectionConfig {
@@ -129,6 +142,15 @@ export function ImageEditorControls({
   outputWidth,
   outputHeight,
   onCropAspectRatioChange,
+  selectedOverlayId,
+  onSelectOverlay,
+  onAddOverlay,
+  onRemoveOverlay,
+  onUpdateOverlay,
+  onDuplicateOverlay,
+  onToggleOverlayVisibility,
+  onToggleOverlayLock,
+  onReorderOverlays,
 }: ImageEditorControlsProps) {
   // Track the active dragged section for DragOverlay
   const [activeId, setActiveId] = useState<SectionKey | null>(null)
@@ -234,6 +256,43 @@ export function ImageEditorControls({
         titleKey: 'imageEditor.controls.outputCompression',
         component: <OutputControl params={params} onUpdateParams={onUpdateParams} />,
       },
+      layers: {
+        key: 'layers',
+        icon: Layers,
+        titleKey: 'imageEditor.controls.layers',
+        component: (
+          <div className='space-y-4'>
+            {/* Overlay Timeline - always shown */}
+            {onAddOverlay && onRemoveOverlay && onSelectOverlay && onDuplicateOverlay && onToggleOverlayVisibility && onToggleOverlayLock && onReorderOverlays && (
+              <OverlayTimeline
+                overlays={params.overlays || []}
+                selectedOverlayId={selectedOverlayId || null}
+                onSelectOverlay={onSelectOverlay}
+                onAddOverlay={onAddOverlay}
+                onRemoveOverlay={onRemoveOverlay}
+                onDuplicateOverlay={onDuplicateOverlay}
+                onToggleVisibility={onToggleOverlayVisibility}
+                onToggleLock={onToggleOverlayLock}
+                onReorder={onReorderOverlays}
+              />
+            )}
+
+            {/* Overlay Properties - shown when an overlay is selected */}
+            {selectedOverlayId && onUpdateOverlay && onRemoveOverlay && params.overlays && (
+              (() => {
+                const selectedOverlay = params.overlays.find((o) => o.id === selectedOverlayId)
+                return selectedOverlay ? (
+                  <OverlayPropertiesControl
+                    overlay={selectedOverlay}
+                    onUpdate={(updates) => onUpdateOverlay(selectedOverlayId, updates)}
+                    onDelete={() => onRemoveOverlay(selectedOverlayId)}
+                  />
+                ) : null
+              })()
+            )}
+          </div>
+        ),
+      },
     }),
     [
       params,
@@ -243,6 +302,15 @@ export function ImageEditorControls({
       outputWidth,
       outputHeight,
       onCropAspectRatioChange,
+      selectedOverlayId,
+      onSelectOverlay,
+      onAddOverlay,
+      onRemoveOverlay,
+      onUpdateOverlay,
+      onDuplicateOverlay,
+      onToggleOverlayVisibility,
+      onToggleOverlayLock,
+      onReorderOverlays,
     ],
   )
 

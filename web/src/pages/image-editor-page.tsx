@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, Copy, Download, Redo2, RotateCcw, Settings, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
 import { ImageEditorControls } from '@/components/image-editor/imagor-editor-controls.tsx'
 import { PreviewArea } from '@/components/image-editor/preview-area'
 import { LoadingBar } from '@/components/loading-bar'
@@ -86,6 +87,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
+  const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null)
+  const [filePickerOpen, setFilePickerOpen] = useState(false)
 
   // Derive visualCropEnabled from params state (single source of truth)
   const visualCropEnabled = params.visualCropEnabled ?? false
@@ -230,6 +233,196 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     })
   }
 
+  // ============================================================================
+  // Overlay Management Methods
+  // ============================================================================
+
+  /**
+   * Add a new overlay to the composition
+   */
+  const handleAddOverlay = useCallback(
+    async (imagePath: string) => {
+      // Generate unique ID for overlay
+      const overlayId = `overlay-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+      // Extract filename from path for display name
+      const fileName = imagePath.split('/').pop() || 'Overlay'
+
+      // Fetch overlay dimensions from metadata (same approach as image-editor-loader)
+      let originalWidth: number | undefined
+      let originalHeight: number | undefined
+
+      try {
+        const { statFile } = await import('@/api/storage-api')
+        const { fetchImageMetadata } = await import('@/lib/exif-utils')
+        const { getFullImageUrl } = await import('@/lib/api-utils')
+
+        const fileStat = await statFile(imagePath)
+
+        if (fileStat?.thumbnailUrls?.meta) {
+          try {
+            const metadata = await fetchImageMetadata(getFullImageUrl(fileStat.thumbnailUrls.meta))
+            originalWidth = metadata?.width
+            originalHeight = metadata?.height
+          } catch {
+            // Metadata fetch failed, dimensions will be undefined
+          }
+        }
+      } catch {
+        // File stat failed, dimensions will be undefined
+      }
+
+      // Create new overlay with default settings
+      const newOverlay = {
+        id: overlayId,
+        type: 'image' as const,
+        imagePath: imagePath,
+        originalWidth,
+        originalHeight,
+        x: 'center' as const,
+        y: 'center' as const,
+        opacity: 100,
+        blendMode: 'normal',
+        visible: true,
+        locked: false,
+        name: fileName,
+      }
+
+      // Add overlay to state
+      const currentOverlays = params.overlays || []
+      updateParams({
+        overlays: [...currentOverlays, newOverlay],
+      })
+
+      toast.success(t('imageEditor.overlays.overlayAdded'))
+    },
+    [params.overlays, updateParams, t],
+  )
+
+  /**
+   * Remove an overlay from the composition
+   */
+  const handleRemoveOverlay = useCallback(
+    (overlayId: string) => {
+      if (!params.overlays) return
+
+      updateParams({
+        overlays: params.overlays.filter((o) => o.id !== overlayId),
+      })
+
+      toast.success(t('imageEditor.overlays.overlayRemoved'))
+    },
+    [params.overlays, updateParams, t],
+  )
+
+  /**
+   * Update an overlay's properties
+   * TODO: Wire up to overlay properties panel
+   */
+  const handleUpdateOverlay = useCallback(
+    (overlayId: string, updates: Partial<NonNullable<typeof params.overlays>[number]>) => {
+      if (!params.overlays) return
+
+      updateParams({
+        overlays: params.overlays.map((o) => (o.id === overlayId ? { ...o, ...updates } : o)),
+      })
+    },
+    [params.overlays, updateParams],
+  )
+
+  /**
+   * Reorder overlays (drag and drop)
+   */
+  const handleReorderOverlays = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (!params.overlays) return
+
+      const overlays = [...params.overlays]
+      const [removed] = overlays.splice(fromIndex, 1)
+      overlays.splice(toIndex, 0, removed)
+
+      updateParams({ overlays })
+    },
+    [params.overlays, updateParams],
+  )
+
+  /**
+   * Toggle overlay visibility
+   */
+  const handleToggleOverlayVisibility = useCallback(
+    (overlayId: string) => {
+      if (!params.overlays) return
+
+      const overlay = params.overlays.find((o) => o.id === overlayId)
+      if (!overlay) return
+
+      handleUpdateOverlay(overlayId, { visible: !overlay.visible })
+    },
+    [params.overlays, handleUpdateOverlay],
+  )
+
+  /**
+   * Duplicate an overlay
+   */
+  const handleDuplicateOverlay = useCallback(
+    (overlayId: string) => {
+      if (!params.overlays) return
+
+      const overlay = params.overlays.find((o) => o.id === overlayId)
+      if (!overlay) return
+
+      // Create duplicate with new ID
+      const duplicateId = `overlay-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      const duplicate = {
+        ...overlay,
+        id: duplicateId,
+        name: `${overlay.name} (Copy)`,
+      }
+
+      updateParams({
+        overlays: [...params.overlays, duplicate],
+      })
+
+      toast.success(t('imageEditor.overlays.overlayDuplicated'))
+    },
+    [params.overlays, updateParams, t],
+  )
+
+  /**
+   * Toggle overlay lock state
+   */
+  const handleToggleOverlayLock = useCallback(
+    (overlayId: string) => {
+      if (!params.overlays) return
+
+      const overlay = params.overlays.find((o) => o.id === overlayId)
+      if (!overlay) return
+
+      handleUpdateOverlay(overlayId, { locked: !overlay.locked })
+    },
+    [params.overlays, handleUpdateOverlay],
+  )
+
+  /**
+   * Handle file picker selection for adding overlays
+   */
+  const handleFilePickerSelect = useCallback(
+    (paths: string[]) => {
+      // Add each selected image as an overlay
+      paths.forEach((path) => {
+        handleAddOverlay(path)
+      })
+    },
+    [handleAddOverlay],
+  )
+
+  /**
+   * Open file picker dialog
+   */
+  const handleOpenFilePicker = useCallback(() => {
+    setFilePickerOpen(true)
+  }, [])
+
   return (
     <div
       className={cn(
@@ -336,6 +529,15 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                       outputWidth={originalDimensions.width}
                       outputHeight={originalDimensions.height}
                       onCropAspectRatioChange={setCropAspectRatio}
+                      selectedOverlayId={selectedOverlayId}
+                      onSelectOverlay={setSelectedOverlayId}
+                      onAddOverlay={handleOpenFilePicker}
+                      onRemoveOverlay={handleRemoveOverlay}
+                      onUpdateOverlay={handleUpdateOverlay}
+                      onDuplicateOverlay={handleDuplicateOverlay}
+                      onToggleOverlayVisibility={handleToggleOverlayVisibility}
+                      onToggleOverlayLock={handleToggleOverlayLock}
+                      onReorderOverlays={handleReorderOverlays}
                     />
                   </div>
                 </SheetContent>
@@ -394,6 +596,15 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               outputWidth={originalDimensions.width}
               outputHeight={originalDimensions.height}
               onCropAspectRatioChange={setCropAspectRatio}
+              selectedOverlayId={selectedOverlayId}
+              onSelectOverlay={setSelectedOverlayId}
+              onAddOverlay={handleOpenFilePicker}
+              onRemoveOverlay={handleRemoveOverlay}
+              onUpdateOverlay={handleUpdateOverlay}
+              onDuplicateOverlay={handleDuplicateOverlay}
+              onToggleOverlayVisibility={handleToggleOverlayVisibility}
+              onToggleOverlayLock={handleToggleOverlayLock}
+              onReorderOverlays={handleReorderOverlays}
             />
           </div>
 
@@ -415,6 +626,18 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
       {/* Copy URL Dialog */}
       <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
+
+      {/* File Picker Dialog for Adding Overlays */}
+      <FilePickerDialog
+        open={filePickerOpen}
+        onOpenChange={setFilePickerOpen}
+        onSelect={handleFilePickerSelect}
+        selectionMode='multiple'
+        fileType='images'
+        title={t('imageEditor.overlays.selectImages')}
+        description={t('imageEditor.overlays.selectImagesDescription')}
+        confirmButtonText={t('imageEditor.overlays.addLayers')}
+      />
     </div>
   )
 }
