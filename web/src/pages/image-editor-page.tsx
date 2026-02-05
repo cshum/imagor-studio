@@ -286,6 +286,12 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         visible: true,
         locked: false,
         name: fileName,
+        // Initialize with default editor state (fit-in mode with original dimensions)
+        editorState: {
+          width: originalWidth,
+          height: originalHeight,
+          fitIn: true,
+        },
       }
 
       // Add overlay to state
@@ -423,6 +429,60 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     setFilePickerOpen(true)
   }, [])
 
+  // ============================================================================
+  // Multi-Editor Architecture: Active Layer State Management
+  // ============================================================================
+
+  /**
+   * Get the editor state for the currently active layer
+   * - If no overlay is selected (selectedOverlayId === null): return base image state
+   * - If overlay is selected: return that overlay's editorState
+   */
+  const activeLayerState = useMemo((): ImageEditorState => {
+    if (!selectedOverlayId) {
+      // Base image is active - return main params (excluding overlays to avoid recursion)
+      const { overlays, activeLayerId, ...baseState } = params
+      return baseState
+    }
+
+    // Overlay is active - return its editorState
+    const overlay = params.overlays?.find((o) => o.id === selectedOverlayId)
+    if (overlay) {
+      return overlay.editorState
+    }
+
+    // Fallback: if overlay not found, return base state
+    const { overlays, activeLayerId, ...baseState } = params
+    return baseState
+  }, [selectedOverlayId, params])
+
+  /**
+   * Update the active layer's editor state
+   * - If base image is active: update main params
+   * - If overlay is active: update that overlay's editorState
+   */
+  const updateActiveLayerState = useCallback(
+    (updates: Partial<ImageEditorState>) => {
+      if (!selectedOverlayId) {
+        // Update base image state
+        updateParams(updates)
+      } else {
+        // Update overlay's editorState
+        // Get the current overlay to ensure we have the latest state
+        const overlay = params.overlays?.find((o) => o.id === selectedOverlayId)
+        if (overlay) {
+          handleUpdateOverlay(selectedOverlayId, {
+            editorState: {
+              ...overlay.editorState,
+              ...updates,
+            },
+          })
+        }
+      }
+    },
+    [selectedOverlayId, params.overlays, handleUpdateOverlay],
+  )
+
   return (
     <div
       className={cn(
@@ -520,10 +580,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
                     <ImageEditorControls
                       key={resetCounter}
-                      params={params}
+                      params={activeLayerState}
+                      fullParams={params}
                       openSections={editorOpenSections}
                       onOpenSectionsChange={handleOpenSectionsChange}
-                      onUpdateParams={updateParams}
+                      onUpdateParams={updateActiveLayerState}
                       onVisualCropToggle={handleVisualCropToggle}
                       isVisualCropEnabled={visualCropEnabled}
                       outputWidth={originalDimensions.width}
@@ -587,10 +648,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
             <ImageEditorControls
               key={resetCounter}
-              params={params}
+              params={activeLayerState}
+              fullParams={params}
               openSections={editorOpenSections}
               onOpenSectionsChange={handleOpenSectionsChange}
-              onUpdateParams={updateParams}
+              onUpdateParams={updateActiveLayerState}
               onVisualCropToggle={handleVisualCropToggle}
               isVisualCropEnabled={visualCropEnabled}
               outputWidth={originalDimensions.width}

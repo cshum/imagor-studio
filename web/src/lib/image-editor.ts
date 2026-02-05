@@ -20,9 +20,9 @@ export interface ImageOverlay {
   opacity?: number // 0-100 (100 = fully opaque)
   blendMode?: string // 'normal', 'multiply', 'screen', etc.
 
-  // Transformations applied to overlay BEFORE compositing
-  // Each overlay can have its own ImageEditor instance to manage these
-  transformations?: Omit<ImageEditorState, 'overlays'>
+  // Full editor state for this overlay's transformations
+  // Each overlay has its own complete EditorState (crop, filters, dimensions, etc.)
+  editorState: Omit<ImageEditorState, 'overlays' | 'activeLayerId'>
 
   // Metadata
   name?: string
@@ -31,6 +31,8 @@ export interface ImageOverlay {
 }
 
 export interface ImageEditorState {
+  // Active layer tracking (null = base image, string = overlay id)
+  activeLayerId?: string | null
   // Dimensions
   width?: number
   height?: number
@@ -193,6 +195,133 @@ export class ImageEditor {
       state.cropWidth !== undefined &&
       state.cropHeight !== undefined
     )
+  }
+
+  /**
+   * Convert EditorState to imagor path string (for nested image() filters)
+   * Builds a complete imagor path like: /crop/dimensions/filters:filter1():filter2()/image.jpg
+   * @param state - Editor state to convert
+   * @param imagePath - Image path (e.g., "folder/image.jpg")
+   * @param scaleFactor - Optional scale factor for preview (scales dimensions, padding, blur, etc.)
+   * @returns Imagor path string
+   */
+  private static editorStateToImagorPath(
+    state: Omit<ImageEditorState, 'overlays' | 'activeLayerId'>,
+    imagePath: string,
+    scaleFactor = 1,
+  ): string {
+    const parts: string[] = []
+
+    // 1. Crop (if present) - format: /LEFTxTOP:RIGHTxBOTTOM/
+    if (ImageEditor.hasCropParams(state)) {
+      const right = state.cropLeft! + state.cropWidth!
+      const bottom = state.cropTop! + state.cropHeight!
+      parts.push(`${state.cropLeft}x${state.cropTop}:${right}x${bottom}`)
+    }
+
+    // 2. Fit-in or dimensions - format: /fit-in/WIDTHxHEIGHT/ or /WIDTHxHEIGHT/
+    const width = state.width ? Math.round(state.width * scaleFactor) : 0
+    const height = state.height ? Math.round(state.height * scaleFactor) : 0
+    
+    if (width || height) {
+      const fitInPrefix = state.fitIn !== false ? 'fit-in/' : ''
+      parts.push(`${fitInPrefix}${width}x${height}`)
+    }
+
+    // 3. H/V alignment (for fill mode)
+    const alignParts: string[] = []
+    if (state.hAlign) alignParts.push(state.hAlign)
+    if (state.vAlign) alignParts.push(state.vAlign)
+    if (alignParts.length > 0) {
+      parts.push(alignParts.join('-'))
+    }
+
+    // 4. Smart crop
+    if (state.smart) {
+      parts.push('smart')
+    }
+
+    // 5. Filters
+    const filters: string[] = []
+
+    // H/V flip
+    if (state.hFlip) filters.push('hflip()')
+    if (state.vFlip) filters.push('vflip()')
+
+    // Color adjustments
+    if (state.brightness !== undefined && state.brightness !== 0) {
+      filters.push(`brightness(${state.brightness})`)
+    }
+    if (state.contrast !== undefined && state.contrast !== 0) {
+      filters.push(`contrast(${state.contrast})`)
+    }
+    if (state.saturation !== undefined && state.saturation !== 0) {
+      filters.push(`saturation(${state.saturation})`)
+    }
+    if (state.hue !== undefined && state.hue !== 0) {
+      filters.push(`hue(${state.hue})`)
+    }
+    if (state.grayscale) {
+      filters.push('grayscale()')
+    }
+
+    // Blur/sharpen (scaled for preview)
+    if (state.blur !== undefined && state.blur !== 0) {
+      const blurValue = Math.round(state.blur * scaleFactor * 100) / 100
+      filters.push(`blur(${blurValue})`)
+    }
+    if (state.sharpen !== undefined && state.sharpen !== 0) {
+      const sharpenValue = Math.round(state.sharpen * scaleFactor * 100) / 100
+      filters.push(`sharpen(${sharpenValue})`)
+    }
+
+    // Round corner (scaled for preview)
+    if (state.roundCornerRadius !== undefined && state.roundCornerRadius > 0) {
+      const cornerValue = Math.round(state.roundCornerRadius * scaleFactor)
+      filters.push(`round_corner(${cornerValue})`)
+    }
+
+    // Fill color
+    if (state.fillColor) {
+      filters.push(`fill(${state.fillColor})`)
+    }
+
+    // Rotation
+    if (state.rotation !== undefined && state.rotation !== 0) {
+      filters.push(`rotate(${state.rotation})`)
+    }
+
+    // Padding (scaled for preview)
+    if (state.paddingTop !== undefined && state.paddingTop > 0) {
+      const value = Math.round(state.paddingTop * scaleFactor)
+      filters.push(`padding(${value},0,0,0)`)
+    }
+    if (state.paddingRight !== undefined && state.paddingRight > 0) {
+      const value = Math.round(state.paddingRight * scaleFactor)
+      filters.push(`padding(0,${value},0,0)`)
+    }
+    if (state.paddingBottom !== undefined && state.paddingBottom > 0) {
+      const value = Math.round(state.paddingBottom * scaleFactor)
+      filters.push(`padding(0,0,${value},0)`)
+    }
+    if (state.paddingLeft !== undefined && state.paddingLeft > 0) {
+      const value = Math.round(state.paddingLeft * scaleFactor)
+      filters.push(`padding(0,0,0,${value})`)
+    }
+
+    // Format/quality/compression (only for final output, not nested overlays)
+    // These are intentionally omitted for nested paths
+
+    // Combine filters
+    if (filters.length > 0) {
+      parts.push(`filters:${filters.join(':')}`)
+    }
+
+    // 6. Image path
+    parts.push(imagePath)
+
+    // Build final path
+    return '/' + parts.join('/')
   }
 
   /**
@@ -414,32 +543,19 @@ export class ImageEditor {
     }
 
     // Apply overlays (image() filters) - applied AFTER base transformations
-    if (state.overlays && state.overlays.length > 0) {
+    // Skip overlays in preview when visual cropping is enabled (so user can crop base image without overlays)
+    const shouldApplyOverlays = !forPreview || (forPreview && !state.visualCropEnabled)
+    if (shouldApplyOverlays && state.overlays && state.overlays.length > 0) {
       state.overlays.forEach((overlay) => {
         if (!overlay.visible) return
 
-        // Build nested imagor path from overlay
-        // For now, just use the image path directly (no transformations)
-        // TODO: In Phase 6, we'll recursively convert overlay transformations
-        let nestedPath = `/${overlay.imagePath}`
-
-        // If overlay has dimensions, add fit-in sizing
-        if (overlay.originalWidth || overlay.originalHeight) {
-          let overlayWidth = overlay.originalWidth
-          let overlayHeight = overlay.originalHeight
-
-          // Scale overlay dimensions for preview
-          if (forPreview && scaleFactor !== 1) {
-            overlayWidth = overlayWidth ? Math.round(overlayWidth * scaleFactor) : undefined
-            overlayHeight = overlayHeight ? Math.round(overlayHeight * scaleFactor) : undefined
-          }
-
-          if (overlayWidth || overlayHeight) {
-            const w = overlayWidth || 0
-            const h = overlayHeight || 0
-            nestedPath = `/fit-in/${w}x${h}${nestedPath}`
-          }
-        }
+        // Build nested imagor path from overlay's editorState
+        // This recursively applies all transformations (crop, filters, dimensions, etc.)
+        const nestedPath = ImageEditor.editorStateToImagorPath(
+          overlay.editorState,
+          overlay.imagePath,
+          scaleFactor,
+        )
 
         // Build image() filter arguments
         // Format: image(path, x, y, alpha, blend_mode)

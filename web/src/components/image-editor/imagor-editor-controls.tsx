@@ -57,6 +57,7 @@ interface ImageEditorControlsProps {
   outputHeight: number
   onCropAspectRatioChange?: (aspectRatio: number | null) => void
   // Overlay/Layer management
+  fullParams?: ImageEditorState // Full params with overlays array for layer list
   selectedOverlayId?: string | null
   onSelectOverlay?: (overlayId: string | null) => void
   onAddOverlay?: () => void
@@ -142,6 +143,7 @@ export function ImageEditorControls({
   outputWidth,
   outputHeight,
   onCropAspectRatioChange,
+  fullParams,
   selectedOverlayId,
   onSelectOverlay,
   onAddOverlay,
@@ -262,10 +264,10 @@ export function ImageEditorControls({
         titleKey: 'imageEditor.controls.layers',
         component: (
           <div className='space-y-4'>
-            {/* Overlay Timeline - always shown */}
+            {/* Overlay Timeline - always shown, uses fullParams for overlays list */}
             {onAddOverlay && onRemoveOverlay && onSelectOverlay && onDuplicateOverlay && onToggleOverlayVisibility && onToggleOverlayLock && onReorderOverlays && (
               <OverlayTimeline
-                overlays={params.overlays || []}
+                overlays={(fullParams || params).overlays || []}
                 selectedOverlayId={selectedOverlayId || null}
                 onSelectOverlay={onSelectOverlay}
                 onAddOverlay={onAddOverlay}
@@ -278,9 +280,9 @@ export function ImageEditorControls({
             )}
 
             {/* Overlay Properties - shown when an overlay is selected */}
-            {selectedOverlayId && onUpdateOverlay && onRemoveOverlay && params.overlays && (
+            {selectedOverlayId && onUpdateOverlay && onRemoveOverlay && (fullParams || params).overlays && (
               (() => {
-                const selectedOverlay = params.overlays.find((o) => o.id === selectedOverlayId)
+                const selectedOverlay = (fullParams || params).overlays!.find((o) => o.id === selectedOverlayId)
                 return selectedOverlay ? (
                   <OverlayPropertiesControl
                     overlay={selectedOverlay}
@@ -296,6 +298,7 @@ export function ImageEditorControls({
     }),
     [
       params,
+      fullParams,
       onUpdateParams,
       onVisualCropToggle,
       isVisualCropEnabled,

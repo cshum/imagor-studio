@@ -279,8 +279,9 @@ export function OverlayTimeline({
           {/* Base Layer (always at bottom, not draggable) */}
           <div
             className={cn(
-              'flex items-center gap-2 rounded-md border p-2',
-              !hasOverlays && selectedOverlayId === null && 'border-primary bg-accent',
+              'flex items-center gap-2 rounded-md border p-2 transition-colors cursor-pointer',
+              selectedOverlayId === null && 'border-primary bg-accent',
+              selectedOverlayId !== null && 'hover:bg-accent/50',
             )}
             onClick={() => onSelectOverlay(null)}
           >
