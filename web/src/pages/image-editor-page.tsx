@@ -34,7 +34,7 @@ interface ImageEditorPageProps {
 }
 
 export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
-  const { imageEditor, initialEditorOpenSections, imageElement } = loaderData
+  const { imageEditor, initialEditorOpenSections } = loaderData
 
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -350,7 +350,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
         {/* Preview Content */}
         <PreviewArea
-          previewUrl={previewUrl || (!hasInitialState ? imageElement.src : '')}
+          previewUrl={previewUrl || ''}
           error={error}
           galleryKey={galleryKey}
           imageKey={imageKey}

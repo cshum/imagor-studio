@@ -13,12 +13,6 @@ import { getAuth } from '@/stores/auth-store'
 import { clearPosition } from '@/stores/image-position-store.ts'
 
 export interface ImageEditorLoaderData {
-  imageElement: HTMLImageElement
-  fullSizeSrc: string
-  originalDimensions: {
-    width: number
-    height: number
-  }
   imagePath: string
   initialEditorOpenSections: EditorOpenSections
   breadcrumb: BreadcrumbItem
@@ -26,8 +20,8 @@ export interface ImageEditorLoaderData {
 }
 
 /**
- * Image editor loader - preloads image and generates initial preview
- * Eliminates the need for dimension detection and initial loading useEffects
+ * Image editor loader - fetches image dimensions and creates ImageEditor instance
+ * Dimensions are fetched from metadata API when available, otherwise by loading the image
  */
 export const imageEditorLoader = async ({
   params: { galleryKey, imageKey },
@@ -46,20 +40,10 @@ export const imageEditorLoader = async ({
   const storage = new EditorOpenSectionsStorage(authState)
   const editorOpenSections = await storage.get()
 
-  // Get full-size image URL
-  const fullSizeSrc = getFullImageUrl(
-    fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '',
-  )
+  // Fetch original dimensions - try metadata API first (fast), fallback to loading image
+  let originalDimensions: { width: number; height: number } | null = null
 
-  // Preload the actual image element
-  const imageElement = await preloadImage(fullSizeSrc)
-
-  // Fetch original dimensions from metadata if available
-  let originalDimensions = {
-    width: imageElement.naturalWidth,
-    height: imageElement.naturalHeight,
-  }
-
+  // Try metadata API first
   if (fileStat.thumbnailUrls?.meta) {
     try {
       const metadata = await fetchImageMetadata(getFullImageUrl(fileStat.thumbnailUrls.meta))
@@ -70,7 +54,19 @@ export const imageEditorLoader = async ({
         }
       }
     } catch {
-      // Fall back to image element dimensions
+      // Metadata API failed, will fallback to loading image below
+    }
+  }
+
+  // Fallback: load image if metadata didn't work
+  if (!originalDimensions) {
+    const fullSizeSrc = getFullImageUrl(
+      fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '',
+    )
+    const imageElement = await preloadImage(fullSizeSrc)
+    originalDimensions = {
+      width: imageElement.naturalWidth,
+      height: imageElement.naturalHeight,
     }
   }
 
@@ -84,9 +80,6 @@ export const imageEditorLoader = async ({
   })
 
   return {
-    imageElement,
-    fullSizeSrc,
-    originalDimensions,
     imagePath,
     initialEditorOpenSections: editorOpenSections,
     breadcrumb: { label: 'Imagor Studio' },
