@@ -34,7 +34,6 @@ export const imageEditorLoader = async ({
 }: {
   params: { galleryKey: string; imageKey: string }
 }): Promise<ImageEditorLoaderData> => {
-  // Combine galleryKey and imageKey into imagePath
   const imagePath = joinImagePath(galleryKey, imageKey)
   const fileStat = await statFile(imagePath)
 
