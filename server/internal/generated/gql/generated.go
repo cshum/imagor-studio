@@ -122,7 +122,7 @@ type ComplexityRoot struct {
 		DeleteFile              func(childComplexity int, path string) int
 		DeleteSystemRegistry    func(childComplexity int, key *string, keys []string) int
 		DeleteUserRegistry      func(childComplexity int, key *string, keys []string, ownerID *string) int
-		GenerateImagorURL       func(childComplexity int, galleryKey string, imageKey string, params ImagorParamsInput) int
+		GenerateImagorURL       func(childComplexity int, imagePath string, params ImagorParamsInput) int
 		MoveFile                func(childComplexity int, sourcePath string, destPath string) int
 		SetSystemRegistry       func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
 		SetUserRegistry         func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
@@ -225,7 +225,7 @@ type MutationResolver interface {
 	TestStorageConfig(ctx context.Context, input StorageConfigInput) (*StorageTestResult, error)
 	ConfigureEmbeddedImagor(ctx context.Context) (*ImagorConfigResult, error)
 	ConfigureExternalImagor(ctx context.Context, input ExternalImagorInput) (*ImagorConfigResult, error)
-	GenerateImagorURL(ctx context.Context, galleryKey string, imageKey string, params ImagorParamsInput) (string, error)
+	GenerateImagorURL(ctx context.Context, imagePath string, params ImagorParamsInput) (string, error)
 	SetUserRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) ([]*UserRegistry, error)
 	DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error)
 	SetSystemRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput) ([]*SystemRegistry, error)
@@ -654,7 +654,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.GenerateImagorURL(childComplexity, args["galleryKey"].(string), args["imageKey"].(string), args["params"].(ImagorParamsInput)), true
+		return e.complexity.Mutation.GenerateImagorURL(childComplexity, args["imagePath"].(string), args["params"].(ImagorParamsInput)), true
 	case "Mutation.moveFile":
 		if e.complexity.Mutation.MoveFile == nil {
 			break
@@ -1211,8 +1211,7 @@ extend type Mutation {
 
   # Imagor URL Generation API
   generateImagorUrl(
-    galleryKey: String!
-    imageKey: String!
+    imagePath: String!
     params: ImagorParamsInput!
   ): String!
 }
@@ -1718,21 +1717,16 @@ func (ec *executionContext) field_Mutation_deleteUserRegistry_args(ctx context.C
 func (ec *executionContext) field_Mutation_generateImagorUrl_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "galleryKey", ec.unmarshalNString2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "imagePath", ec.unmarshalNString2string)
 	if err != nil {
 		return nil, err
 	}
-	args["galleryKey"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "imageKey", ec.unmarshalNString2string)
+	args["imagePath"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "params", ec.unmarshalNImagorParamsInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorParamsInput)
 	if err != nil {
 		return nil, err
 	}
-	args["imageKey"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "params", ec.unmarshalNImagorParamsInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorParamsInput)
-	if err != nil {
-		return nil, err
-	}
-	args["params"] = arg2
+	args["params"] = arg1
 	return args, nil
 }
 
@@ -3710,7 +3704,7 @@ func (ec *executionContext) _Mutation_generateImagorUrl(ctx context.Context, fie
 		ec.fieldContext_Mutation_generateImagorUrl,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().GenerateImagorURL(ctx, fc.Args["galleryKey"].(string), fc.Args["imageKey"].(string), fc.Args["params"].(ImagorParamsInput))
+			return ec.resolvers.Mutation().GenerateImagorURL(ctx, fc.Args["imagePath"].(string), fc.Args["params"].(ImagorParamsInput))
 		},
 		nil,
 		ec.marshalNString2string,

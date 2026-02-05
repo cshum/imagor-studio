@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { DragItem } from '@/hooks/use-item-drag-drop'
+import { joinImagePath } from '@/lib/path-utils'
 
 export interface Gallery {
   galleryKey: string
@@ -115,7 +116,7 @@ const FolderCard = ({
 
       // Add all selected images
       selectedImageKeys?.forEach((imageKey) => {
-        const fullKey = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
+        const fullKey = joinImagePath(galleryKey, imageKey)
         const name = imageKey.split('/').pop() || imageKey
         items.push({ key: fullKey, name, type: 'image' })
       })

@@ -40,7 +40,7 @@ func TestGenerateImagorURL(t *testing.T) {
 			FitIn:  true,
 		}).Return(expectedURL, nil)
 
-		url, err := resolver.Mutation().GenerateImagorURL(ctx, "gallery1", "image.jpg", params)
+		url, err := resolver.Mutation().GenerateImagorURL(ctx, "gallery1/image.jpg", params)
 		require.NoError(t, err)
 		assert.Equal(t, expectedURL, url)
 
@@ -54,7 +54,7 @@ func TestGenerateImagorURL(t *testing.T) {
 		expectedURL := "/imagor/unsafe/gallery1/image.jpg"
 		mockImagorProvider.On("GenerateURL", "gallery1/image.jpg", imagorpath.Params{}).Return(expectedURL, nil)
 
-		url, err := resolver.Mutation().GenerateImagorURL(ctx, "gallery1", "image.jpg", params)
+		url, err := resolver.Mutation().GenerateImagorURL(ctx, "gallery1/image.jpg", params)
 		require.NoError(t, err)
 		assert.Equal(t, expectedURL, url)
 
@@ -72,7 +72,7 @@ func TestGenerateImagorURL(t *testing.T) {
 			Width: 400,
 		}).Return(expectedURL, nil)
 
-		url, err := resolver.Mutation().GenerateImagorURL(ctx, "", "root-image.jpg", params)
+		url, err := resolver.Mutation().GenerateImagorURL(ctx, "root-image.jpg", params)
 		require.NoError(t, err)
 		assert.Equal(t, expectedURL, url)
 

@@ -10,8 +10,7 @@ extend type Mutation {
 
   # Imagor URL Generation API
   generateImagorUrl(
-    galleryKey: String!
-    imageKey: String!
+    imagePath: String!
     params: ImagorParamsInput!
   ): String!
 }

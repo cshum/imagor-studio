@@ -1,4 +1,5 @@
 import { createStore } from '@/lib/create-store'
+import { joinImagePath } from '@/lib/path-utils'
 
 export interface SelectionState {
   // Single Set containing both folder and image keys
@@ -144,7 +145,7 @@ export const createFolderKey = (galleryKey: string): string => {
  * Create selection key for image
  */
 export const createImageKey = (galleryKey: string, imageKey: string): string => {
-  return galleryKey ? `${galleryKey}/${imageKey}` : imageKey
+  return joinImagePath(galleryKey, imageKey)
 }
 
 /**

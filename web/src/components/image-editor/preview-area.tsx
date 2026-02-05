@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
+import { joinImagePath } from '@/lib/path-utils'
 import { cn } from '@/lib/utils'
 
 interface PreviewAreaProps {
@@ -68,7 +69,7 @@ export function PreviewArea({
   const [overlayHFlip, setOverlayHFlip] = useState(hFlip)
   const [overlayVFlip, setOverlayVFlip] = useState(vFlip)
 
-  const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
+  const imagePath = joinImagePath(galleryKey, imageKey)
 
   // Track image dimensions when loaded
   const handleImageLoad = (width: number, height: number) => {

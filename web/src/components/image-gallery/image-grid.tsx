@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { DragItem } from '@/hooks/use-item-drag-drop'
 import { getFullImageUrl } from '@/lib/api-utils'
+import { joinImagePath } from '@/lib/path-utils'
 
 interface ImageCellProps {
   image: GalleryImage
@@ -112,7 +113,7 @@ const ImageCell = ({
       // Add all selected images
       selectedImageKeys.forEach((key) => {
         const name = key.split('/').pop() || key
-        items.push({ key: galleryKey ? `${galleryKey}/${key}` : key, name, type: 'image' })
+        items.push({ key: joinImagePath(galleryKey, key), name, type: 'image' })
       })
 
       // Add all selected folders
@@ -122,7 +123,7 @@ const ImageCell = ({
       })
     } else {
       // Otherwise, just drag this image
-      const fullKey = galleryKey ? `${galleryKey}/${image.imageKey}` : image.imageKey
+      const fullKey = joinImagePath(galleryKey, image.imageKey)
       items.push({
         key: fullKey,
         name: image.imageName,
@@ -320,7 +321,7 @@ export const ImageGrid = ({
     if (image) {
       const imageKey = image.imageKey
       const isSelected = selectedImageKeys?.has(imageKey) || false
-      const fullImageKey = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
+      const fullImageKey = joinImagePath(galleryKey, imageKey)
       const isBeingDragged = draggedItems.some((item) => item.key === fullImageKey)
 
       visibleImages.push(
