@@ -14,17 +14,13 @@ import (
 )
 
 // GenerateImagorURL is the resolver for the generateImagorUrl field.
-func (r *mutationResolver) GenerateImagorURL(ctx context.Context, galleryKey string, imageKey string, params gql.ImagorParamsInput) (string, error) {
+func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath string, params gql.ImagorParamsInput) (string, error) {
 	if err := RequireEditPermission(ctx); err != nil {
 		return "", err
 	}
 
 	r.logger.Debug("Generating imagor URL",
-		zap.String("galleryKey", galleryKey),
-		zap.String("imageKey", imageKey))
-
-	// Build image path from galleryKey and imageKey
-	imagePath := buildImagePath(galleryKey, imageKey)
+		zap.String("imagePath", imagePath))
 
 	// Convert GraphQL input to imagorpath.Params
 	imagorParams := convertToImagorParams(params)

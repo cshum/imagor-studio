@@ -1407,19 +1407,7 @@
             "description": null,
             "args": [
               {
-                "name": "galleryKey",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "imageKey",
+                "name": "imagePath",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",

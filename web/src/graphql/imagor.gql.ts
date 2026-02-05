@@ -47,13 +47,11 @@ export const CONFIGURE_EXTERNAL_IMAGOR_MUTATION = gql(`
 // Mutation to generate imagor URL for image transformations
 export const GENERATE_IMAGOR_URL_MUTATION = gql(`
   mutation GenerateImagorUrl(
-    $galleryKey: String!
-    $imageKey: String!
+    $imagePath: String!
     $params: ImagorParamsInput!
   ) {
     generateImagorUrl(
-      galleryKey: $galleryKey
-      imageKey: $imageKey
+      imagePath: $imagePath
       params: $params
     )
   }

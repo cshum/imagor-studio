@@ -58,8 +58,7 @@ export interface ImageEditorState {
 }
 
 export interface ImageEditorConfig {
-  galleryKey: string
-  imageKey: string
+  imagePath: string
   originalDimensions: {
     width: number
     height: number
@@ -423,8 +422,7 @@ export class ImageEditor {
       const graphqlParams = this.convertStateToGraphQLParams(this.state, true)
       const url = await generateImagorUrl(
         {
-          galleryKey: this.config.galleryKey,
-          imageKey: this.config.imageKey,
+          imagePath: this.config.imagePath,
           params: graphqlParams as ImagorParamsInput,
         },
         this.abortController.signal,
@@ -687,8 +685,7 @@ export class ImageEditor {
   async generateCopyUrl(): Promise<string> {
     const copyParams = this.convertStateToGraphQLParams(this.state, false) // false = no WebP override
     return await generateImagorUrl({
-      galleryKey: this.config.galleryKey,
-      imageKey: this.config.imageKey,
+      imagePath: this.config.imagePath,
       params: copyParams as ImagorParamsInput,
     })
   }
@@ -705,8 +702,7 @@ export class ImageEditor {
       ],
     }
     return await generateImagorUrl({
-      galleryKey: this.config.galleryKey,
-      imageKey: this.config.imageKey,
+      imagePath: this.config.imagePath,
       params: downloadParams as ImagorParamsInput,
     })
   }

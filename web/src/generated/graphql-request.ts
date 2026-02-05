@@ -227,8 +227,7 @@ export type MutationDeleteUserRegistryArgs = {
 }
 
 export type MutationGenerateImagorUrlArgs = {
-  galleryKey: Scalars['String']['input']
-  imageKey: Scalars['String']['input']
+  imagePath: Scalars['String']['input']
   params: ImagorParamsInput
 }
 
@@ -484,8 +483,7 @@ export type ConfigureExternalImagorMutation = {
 }
 
 export type GenerateImagorUrlMutationVariables = Exact<{
-  galleryKey: Scalars['String']['input']
-  imageKey: Scalars['String']['input']
+  imagePath: Scalars['String']['input']
   params: ImagorParamsInput
 }>
 
@@ -981,12 +979,8 @@ export const ConfigureExternalImagorDocument = gql`
   }
 `
 export const GenerateImagorUrlDocument = gql`
-  mutation GenerateImagorUrl(
-    $galleryKey: String!
-    $imageKey: String!
-    $params: ImagorParamsInput!
-  ) {
-    generateImagorUrl(galleryKey: $galleryKey, imageKey: $imageKey, params: $params)
+  mutation GenerateImagorUrl($imagePath: String!, $params: ImagorParamsInput!) {
+    generateImagorUrl(imagePath: $imagePath, params: $params)
   }
 `
 export const ListUserRegistryDocument = gql`

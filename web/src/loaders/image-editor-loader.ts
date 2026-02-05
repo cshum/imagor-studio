@@ -18,8 +18,7 @@ export interface ImageEditorLoaderData {
     width: number
     height: number
   }
-  galleryKey: string
-  imageKey: string
+  imagePath: string
   initialEditorOpenSections: EditorOpenSections
   breadcrumb: BreadcrumbItem
   imageEditor: ImageEditor
@@ -34,7 +33,7 @@ export const imageEditorLoader = async ({
 }: {
   params: { galleryKey: string; imageKey: string }
 }): Promise<ImageEditorLoaderData> => {
-  // Get file info (like image view does)
+  // Combine galleryKey and imageKey into imagePath
   const imagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
   const fileStat = await statFile(imagePath)
 
@@ -80,8 +79,7 @@ export const imageEditorLoader = async ({
 
   // Create ImageEditor instance
   const imageEditor = new ImageEditor({
-    galleryKey,
-    imageKey,
+    imagePath,
     originalDimensions,
   })
 
@@ -89,8 +87,7 @@ export const imageEditorLoader = async ({
     imageElement,
     fullSizeSrc,
     originalDimensions,
-    galleryKey,
-    imageKey,
+    imagePath,
     initialEditorOpenSections: editorOpenSections,
     breadcrumb: { label: 'Imagor Studio' },
     imageEditor,

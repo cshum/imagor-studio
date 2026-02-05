@@ -226,8 +226,7 @@ export type MutationDeleteUserRegistryArgs = {
 }
 
 export type MutationGenerateImagorUrlArgs = {
-  galleryKey: Scalars['String']['input']
-  imageKey: Scalars['String']['input']
+  imagePath: Scalars['String']['input']
   params: ImagorParamsInput
 }
 
@@ -483,8 +482,7 @@ export type ConfigureExternalImagorMutation = {
 }
 
 export type GenerateImagorUrlMutationVariables = Exact<{
-  galleryKey: Scalars['String']['input']
-  imageKey: Scalars['String']['input']
+  imagePath: Scalars['String']['input']
   params: ImagorParamsInput
 }>
 
@@ -1106,15 +1104,7 @@ export const GenerateImagorUrlDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'galleryKey' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'imageKey' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'imagePath' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -1138,13 +1128,8 @@ export const GenerateImagorUrlDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'galleryKey' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'galleryKey' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'imageKey' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'imageKey' } },
+                name: { kind: 'Name', value: 'imagePath' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'imagePath' } },
               },
               {
                 kind: 'Argument',
