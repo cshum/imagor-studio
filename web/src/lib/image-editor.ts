@@ -98,8 +98,7 @@ export interface ImageEditorState {
 }
 
 export interface ImageEditorConfig {
-  galleryKey: string
-  imageKey: string
+  imagePath: string // Full path including gallery folder, e.g., "Google Photos/photo.jpg" or "photo.jpg"
   originalDimensions: {
     width: number
     height: number
@@ -569,6 +568,26 @@ export class ImageEditor {
   }
 
   /**
+   * Parse imagePath into galleryKey and imageKey
+   * @param imagePath - Full path like "Google Photos/photo.jpg" or "photo.jpg"
+   * @returns Object with galleryKey and imageKey
+   */
+  private parseImagePath(imagePath: string): { galleryKey: string; imageKey: string } {
+    const pathParts = imagePath.split('/')
+    let galleryKey = ''
+    let imageKey = imagePath
+    
+    if (pathParts.length > 1) {
+      // Has folder: "folder/image.jpg" -> galleryKey="folder", imageKey="image.jpg"
+      imageKey = pathParts[pathParts.length - 1]
+      galleryKey = pathParts.slice(0, -1).join('/')
+    }
+    // else: No folder, image at root -> galleryKey="", imageKey="image.jpg"
+    
+    return { galleryKey, imageKey }
+  }
+
+  /**
    * Generate preview URL and trigger callbacks
    */
   private async generatePreview(requestId: number): Promise<void> {
@@ -580,15 +599,66 @@ export class ImageEditor {
     this.abortController = new AbortController()
 
     try {
-      const graphqlParams = this.convertStateToGraphQLParams(this.state, true)
-      const url = await generateImagorUrl(
-        {
-          galleryKey: this.config.galleryKey,
-          imageKey: this.config.imageKey,
-          params: graphqlParams as ImagorParamsInput,
-        },
-        this.abortController.signal,
-      )
+      let url: string
+      const context = this.getEditorContext()
+
+      // When editing an overlay, show ONLY that overlay (not the composite)
+      if (context.type === 'overlay' && context.overlayId) {
+        const overlay = this.findOverlay(context.overlayId)
+        if (overlay) {
+          // Generate preview URL for the overlay image with its transformations
+          // IMPORTANT: Exclude overlays array to prevent nested image() filters
+          const stateWithoutOverlays = { ...this.state, overlays: undefined }
+          const graphqlParams = this.convertStateToGraphQLParams(stateWithoutOverlays, true)
+          
+          // Parse overlay.imagePath to extract galleryKey and imageKey
+          // Format can be: "folder/image.jpg" or "image.jpg"
+          const pathParts = overlay.imagePath.split('/')
+          let overlayGalleryKey = ''
+          let overlayImageKey = overlay.imagePath
+          
+          if (pathParts.length > 1) {
+            // Has folder: "folder/image.jpg" -> galleryKey="folder", imageKey="image.jpg"
+            overlayImageKey = pathParts[pathParts.length - 1]
+            overlayGalleryKey = pathParts.slice(0, -1).join('/')
+          }
+          // else: No folder, image at root -> galleryKey="", imageKey="image.jpg"
+          
+          url = await generateImagorUrl(
+            {
+              galleryKey: overlayGalleryKey,
+              imageKey: overlayImageKey,
+              params: graphqlParams as ImagorParamsInput,
+            },
+            this.abortController.signal,
+          )
+        } else {
+          // Overlay not found, fall back to base image
+          const graphqlParams = this.convertStateToGraphQLParams(this.state, true)
+          const { galleryKey, imageKey } = this.parseImagePath(this.config.imagePath)
+          url = await generateImagorUrl(
+            {
+              galleryKey,
+              imageKey,
+              params: graphqlParams as ImagorParamsInput,
+            },
+            this.abortController.signal,
+          )
+        }
+      } else {
+        // Editing base image - show composite with all overlays
+        const graphqlParams = this.convertStateToGraphQLParams(this.state, true)
+        const { galleryKey, imageKey } = this.parseImagePath(this.config.imagePath)
+        url = await generateImagorUrl(
+          {
+            galleryKey,
+            imageKey,
+            params: graphqlParams as ImagorParamsInput,
+          },
+          this.abortController.signal,
+        )
+      }
+
       // Only update if URL actually changed
       if (url !== this.lastPreviewUrl) {
         this.lastPreviewUrl = url
@@ -846,9 +916,10 @@ export class ImageEditor {
    */
   async generateCopyUrl(): Promise<string> {
     const copyParams = this.convertStateToGraphQLParams(this.state, false) // false = no WebP override
+    const { galleryKey, imageKey } = this.parseImagePath(this.config.imagePath)
     return await generateImagorUrl({
-      galleryKey: this.config.galleryKey,
-      imageKey: this.config.imageKey,
+      galleryKey,
+      imageKey,
       params: copyParams as ImagorParamsInput,
     })
   }
@@ -864,9 +935,10 @@ export class ImageEditor {
         { name: 'attachment', args: '' }, // Empty args for default filename
       ],
     }
+    const { galleryKey, imageKey } = this.parseImagePath(this.config.imagePath)
     return await generateImagorUrl({
-      galleryKey: this.config.galleryKey,
-      imageKey: this.config.imageKey,
+      galleryKey,
+      imageKey,
       params: downloadParams as ImagorParamsInput,
     })
   }
