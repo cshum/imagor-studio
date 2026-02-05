@@ -236,11 +236,11 @@ export class ImageEditor {
       parts.push(`${state.cropLeft}x${state.cropTop}:${right}x${bottom}`)
     }
 
-    // Add dimensions
+    // Add dimensions (scaled by scaleFactor)
     if (state.width || state.height) {
       const prefix = state.fitIn !== false ? 'fit-in/' : ''
-      const w = state.width || 0
-      const h = state.height || 0
+      const w = state.width ? Math.round(state.width * scaleFactor) : 0
+      const h = state.height ? Math.round(state.height * scaleFactor) : 0
       parts.push(`${prefix}${w}x${h}`)
     }
 
