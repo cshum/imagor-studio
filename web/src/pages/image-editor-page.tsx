@@ -34,7 +34,7 @@ interface ImageEditorPageProps {
 }
 
 export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
-  const { imageEditor, originalDimensions, initialEditorOpenSections, imageElement } = loaderData
+  const { imageEditor, initialEditorOpenSections, imageElement } = loaderData
 
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -72,10 +72,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   )
 
   // Image transform state
-  const [params, setParams] = useState<ImageEditorState>(() => ({
-    width: originalDimensions.width,
-    height: originalDimensions.height,
-  }))
+  const [params, setParams] = useState<ImageEditorState>(() => {
+    const dims = imageEditor.getOriginalDimensions()
+    return {
+      width: dims.width,
+      height: dims.height,
+    }
+  })
   const [previewUrl, setPreviewUrl] = useState<string>()
   const [error, setError] = useState<Error | null>(null)
   const [previewMaxDimensions, setPreviewMaxDimensions] = useState<{
@@ -206,11 +209,12 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     if (enabled && !params.cropLeft && !params.cropTop && !params.cropWidth && !params.cropHeight) {
       // Crop works on original dimensions (before resize)
       // Set initial crop to full original dimensions (100%)
+      const dims = imageEditor.getOriginalDimensions()
       updateParams({
         cropLeft: 0,
         cropTop: 0,
-        cropWidth: originalDimensions.width,
-        cropHeight: originalDimensions.height,
+        cropWidth: dims.width,
+        cropHeight: dims.height,
       })
     }
   }
@@ -333,8 +337,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                       onUpdateParams={updateParams}
                       onVisualCropToggle={handleVisualCropToggle}
                       isVisualCropEnabled={visualCropEnabled}
-                      outputWidth={originalDimensions.width}
-                      outputHeight={originalDimensions.height}
+                      outputWidth={imageEditor.getOriginalDimensions().width}
+                      outputHeight={imageEditor.getOriginalDimensions().height}
                       onCropAspectRatioChange={setCropAspectRatio}
                     />
                   </div>
@@ -350,7 +354,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           error={error}
           galleryKey={galleryKey}
           imageKey={imageKey}
-          originalDimensions={originalDimensions}
+          originalDimensions={imageEditor.getOriginalDimensions()}
           onLoad={handlePreviewLoad}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}
@@ -391,8 +395,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               onUpdateParams={updateParams}
               onVisualCropToggle={handleVisualCropToggle}
               isVisualCropEnabled={visualCropEnabled}
-              outputWidth={originalDimensions.width}
-              outputHeight={originalDimensions.height}
+              outputWidth={imageEditor.getOriginalDimensions().width}
+              outputHeight={imageEditor.getOriginalDimensions().height}
               onCropAspectRatioChange={setCropAspectRatio}
             />
           </div>

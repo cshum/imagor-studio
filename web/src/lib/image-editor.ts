@@ -140,6 +140,14 @@ export class ImageEditor {
   }
 
   /**
+   * Get original dimensions of the current image
+   * Used by components to access dimensions without loader dependency
+   */
+  getOriginalDimensions(): { width: number; height: number } {
+    return { ...this.config.originalDimensions }
+  }
+
+  /**
    * Check if all crop parameters are defined
    * Pure utility function - can be used from any context
    */
@@ -280,28 +288,24 @@ export class ImageEditor {
     // Scale padding values for preview to match visual appearance with actual output
     if (shouldApplyPadding) {
       if (state.paddingLeft !== undefined && state.paddingLeft > 0) {
-        const paddingValue = forPreview
+        graphqlParams.paddingLeft = forPreview
           ? Math.round(state.paddingLeft * scaleFactor)
           : state.paddingLeft
-        graphqlParams.paddingLeft = paddingValue
       }
       if (state.paddingTop !== undefined && state.paddingTop > 0) {
-        const paddingValue = forPreview
+        graphqlParams.paddingTop = forPreview
           ? Math.round(state.paddingTop * scaleFactor)
           : state.paddingTop
-        graphqlParams.paddingTop = paddingValue
       }
       if (state.paddingRight !== undefined && state.paddingRight > 0) {
-        const paddingValue = forPreview
+        graphqlParams.paddingRight = forPreview
           ? Math.round(state.paddingRight * scaleFactor)
           : state.paddingRight
-        graphqlParams.paddingRight = paddingValue
       }
       if (state.paddingBottom !== undefined && state.paddingBottom > 0) {
-        const paddingValue = forPreview
+        graphqlParams.paddingBottom = forPreview
           ? Math.round(state.paddingBottom * scaleFactor)
           : state.paddingBottom
-        graphqlParams.paddingBottom = paddingValue
       }
     }
 
