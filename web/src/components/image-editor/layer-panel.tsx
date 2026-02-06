@@ -228,7 +228,7 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
       </span>
 
       {/* Badge */}
-      <Badge variant='secondary' className='shrink-0 text-xs'>
+      <Badge variant='default' className='shrink-0 text-xs'>
         {t('imageEditor.layers.baseImage')}
       </Badge>
     </div>
@@ -433,7 +433,7 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
 
       {/* Layer list (scrollable) */}
       <div className='flex-1 overflow-y-auto'>
-        <div className='space-y-1 px-2 pb-2'>
+        <div className='space-y-1 p-2 pb-2'>
           {layers.length === 0 ? (
             <Card className='p-6'>
               <div className='text-muted-foreground text-center text-sm'>
