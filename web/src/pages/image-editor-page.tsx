@@ -34,7 +34,7 @@ interface ImageEditorPageProps {
 }
 
 export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
-  const { imageEditor, initialEditorOpenSections } = loaderData
+  const { imageEditor, imagePath, initialEditorOpenSections } = loaderData
 
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -331,6 +331,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
                     <ImageEditorControls
                       key={resetCounter}
+                      imageEditor={imageEditor}
+                      imagePath={imagePath}
                       params={params}
                       openSections={editorOpenSections}
                       onOpenSectionsChange={handleOpenSectionsChange}
@@ -389,6 +391,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
             <ImageEditorControls
               key={resetCounter}
+              imageEditor={imageEditor}
+              imagePath={imagePath}
               params={params}
               openSections={editorOpenSections}
               onOpenSectionsChange={handleOpenSectionsChange}

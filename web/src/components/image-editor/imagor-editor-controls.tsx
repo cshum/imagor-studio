@@ -25,25 +25,30 @@ import {
   FileImage,
   Frame,
   GripVertical,
+  Layers,
   Maximize2,
   Palette,
   RotateCw,
   Scissors,
 } from 'lucide-react'
 
+import { ContextIndicator } from '@/components/image-editor/context-indicator'
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
 import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
 import { DimensionControl } from '@/components/image-editor/controls/dimension-control.tsx'
 import { FillPaddingControl } from '@/components/image-editor/controls/fill-padding-control.tsx'
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
+import { LayerPanel } from '@/components/image-editor/layer-panel'
 import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { EditorOpenSections, SectionKey } from '@/lib/editor-open-sections-storage'
-import type { ImageEditorState } from '@/lib/image-editor.ts'
+import type { ImageEditor, ImageEditorState } from '@/lib/image-editor.ts'
 import { cn } from '@/lib/utils'
 
 interface ImageEditorControlsProps {
+  imageEditor: ImageEditor
+  imagePath: string
   params: ImageEditorState
   openSections: EditorOpenSections
   onOpenSectionsChange: (sections: EditorOpenSections) => void
@@ -120,6 +125,8 @@ function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
 }
 
 export function ImageEditorControls({
+  imageEditor,
+  imagePath,
   params,
   openSections,
   onOpenSectionsChange,
@@ -132,6 +139,24 @@ export function ImageEditorControls({
 }: ImageEditorControlsProps) {
   // Track the active dragged section for DragOverlay
   const [activeId, setActiveId] = useState<SectionKey | null>(null)
+
+  // Track editing context (which layer is being edited)
+  const [editingContext, setEditingContext] = useState<string | null>(
+    imageEditor.getEditingContext(),
+  )
+
+  // Handler to exit layer editing context
+  const handleExitContext = useCallback(() => {
+    imageEditor.switchContext(null)
+    setEditingContext(null)
+  }, [imageEditor])
+
+  // Update editing context when params change (layer selection changes)
+  // This ensures the indicator stays in sync with the editor state
+  const currentContext = imageEditor.getEditingContext()
+  if (currentContext !== editingContext) {
+    setEditingContext(currentContext)
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -234,8 +259,16 @@ export function ImageEditorControls({
         titleKey: 'imageEditor.controls.outputCompression',
         component: <OutputControl params={params} onUpdateParams={onUpdateParams} />,
       },
+      layers: {
+        key: 'layers',
+        icon: Layers,
+        titleKey: 'imageEditor.layers.title',
+        component: <LayerPanel imageEditor={imageEditor} imagePath={imagePath} />,
+      },
     }),
     [
+      imageEditor,
+      imagePath,
       params,
       onUpdateParams,
       onVisualCropToggle,
@@ -258,54 +291,63 @@ export function ImageEditorControls({
   const activeSection = activeId ? sectionConfigs[activeId] : null
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext items={openSections.sectionOrder} strategy={verticalListSortingStrategy}>
-        <div className='space-y-4'>
-          {orderedSections.map((section) => (
-            <SortableSection
-              key={section.key}
-              section={section}
-              isOpen={openSections[section.key]}
-              onToggle={(open) => handleSectionToggle(section.key, open)}
-            />
-          ))}
-        </div>
-      </SortableContext>
-      <DragOverlay>
-        {activeSection ? (
-          <Card className='w-full'>
-            <Collapsible open={openSections[activeSection.key]}>
-              <div className='flex w-full items-center'>
-                {/* Drag handle - matching the actual layout */}
-                <div className='py-4 pr-2 pl-4'>
-                  <GripVertical className='h-4 w-4' />
-                </div>
+    <div className='space-y-4'>
+      {/* Context Indicator - shows when editing a layer */}
+      <ContextIndicator
+        imageEditor={imageEditor}
+        editingContext={editingContext}
+        onExitContext={handleExitContext}
+      />
 
-                {/* Content area - matching the actual layout */}
-                <div className='flex flex-1 items-center justify-between py-4 pr-4'>
-                  <div className='flex items-center gap-2'>
-                    <activeSection.icon className='h-4 w-4' />
-                    <span className='font-medium'>{t(activeSection.titleKey)}</span>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={openSections.sectionOrder} strategy={verticalListSortingStrategy}>
+          <div className='space-y-4'>
+            {orderedSections.map((section) => (
+              <SortableSection
+                key={section.key}
+                section={section}
+                isOpen={openSections[section.key]}
+                onToggle={(open) => handleSectionToggle(section.key, open)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+        <DragOverlay>
+          {activeSection ? (
+            <Card className='w-full'>
+              <Collapsible open={openSections[activeSection.key]}>
+                <div className='flex w-full items-center'>
+                  {/* Drag handle - matching the actual layout */}
+                  <div className='py-4 pr-2 pl-4'>
+                    <GripVertical className='h-4 w-4' />
                   </div>
-                  {openSections[activeSection.key] ? (
-                    <ChevronUp className='h-4 w-4' />
-                  ) : (
-                    <ChevronDown className='h-4 w-4' />
-                  )}
+
+                  {/* Content area - matching the actual layout */}
+                  <div className='flex flex-1 items-center justify-between py-4 pr-4'>
+                    <div className='flex items-center gap-2'>
+                      <activeSection.icon className='h-4 w-4' />
+                      <span className='font-medium'>{t(activeSection.titleKey)}</span>
+                    </div>
+                    {openSections[activeSection.key] ? (
+                      <ChevronUp className='h-4 w-4' />
+                    ) : (
+                      <ChevronDown className='h-4 w-4' />
+                    )}
+                  </div>
                 </div>
-              </div>
-              <CollapsibleContent className='overflow-hidden px-4 pb-4'>
-                {activeSection.component}
-              </CollapsibleContent>
-            </Collapsible>
-          </Card>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+                <CollapsibleContent className='overflow-hidden px-4 pb-4'>
+                  {activeSection.component}
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+    </div>
   )
 }

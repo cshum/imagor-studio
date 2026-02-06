@@ -2,6 +2,44 @@ import { generateImagorUrl } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
 import { getFullImageUrl } from '@/lib/api-utils'
 
+export interface ImageDimensions {
+  width: number
+  height: number
+}
+
+export type BlendMode =
+  | 'normal'
+  | 'multiply'
+  | 'screen'
+  | 'overlay'
+  | 'soft-light'
+  | 'darken'
+  | 'lighten'
+  | 'mask'
+
+export interface ImageLayer {
+  id: string // Unique identifier (crypto.randomUUID())
+  imagePath: string // Path to overlay image
+
+  // Position (supports multiple formats)
+  x: string | number // "left", "center", "right", "repeat", "20p", 0.5, 100, -50
+  y: string | number // "top", "center", "bottom", "repeat", "20p", 0.5, 100, -50
+
+  // Compositing
+  alpha: number // 0-100 (0=opaque, 100=transparent)
+  blendMode: BlendMode // Compositing mode
+
+  // Dimensions (required - fetched when adding layer)
+  originalDimensions: ImageDimensions
+
+  // Nested transformations (optional - edited via context switching)
+  transforms?: Partial<ImageEditorState>
+
+  // UI state
+  visible: boolean // Toggle layer visibility
+  name: string // Display name (from filename)
+}
+
 export interface ImageEditorState {
   // Dimensions
   width?: number
@@ -55,6 +93,9 @@ export interface ImageEditorState {
   paddingRight?: number
   paddingBottom?: number
   paddingLeft?: number
+
+  // Layers (image overlays with transforms)
+  layers?: ImageLayer[]
 }
 
 export interface ImageEditorConfig {
@@ -158,6 +199,207 @@ export class ImageEditor {
       state.cropWidth !== undefined &&
       state.cropHeight !== undefined
     )
+  }
+
+  /**
+   * Convert editor state to imagor path string (synchronous)
+   * Builds path like: /fit-in/800x600/filters:blur(5):sharpen(2)/image.jpg
+   * @param state - Editor state with transformations
+   * @param imagePath - Image path
+   * @param scaleFactor - Scale factor for preview (1.0 for actual)
+   * @param forPreview - Whether generating for preview (affects layer visibility in visual crop mode)
+   * @returns Imagor path string
+   */
+  private static editorStateToImagorPath(
+    state: Partial<ImageEditorState>,
+    imagePath: string,
+    scaleFactor: number,
+    forPreview = false,
+  ): string {
+    const parts: string[] = []
+
+    // Add crop if present (before resize)
+    // Crop coordinates are absolute to original image - never scale them
+    if (
+      state.cropLeft !== undefined &&
+      state.cropTop !== undefined &&
+      state.cropWidth !== undefined &&
+      state.cropHeight !== undefined
+    ) {
+      const right = state.cropLeft + state.cropWidth
+      const bottom = state.cropTop + state.cropHeight
+      parts.push(`${state.cropLeft}x${state.cropTop}:${right}x${bottom}`)
+    }
+
+    // Add dimensions with flip integration (scaled by scaleFactor)
+    // Format: /fit-in/-200x-300 where minus signs indicate flips
+    if (state.width || state.height) {
+      // Build dimension prefix
+      let prefix = ''
+
+      // Fitting mode
+      if (state.stretch) {
+        prefix = 'stretch/'
+      } else if (state.fitIn !== false) {
+        prefix = 'fit-in/'
+      }
+
+      // Calculate dimensions with flip integration
+      let w = state.width ? Math.round(state.width * scaleFactor) : 0
+      let h = state.height ? Math.round(state.height * scaleFactor) : 0
+
+      // Add minus sign for flips
+      const wStr = state.hFlip ? `-${w}` : `${w}`
+      const hStr = state.vFlip ? `-${h}` : `${h}`
+
+      parts.push(`${prefix}${wStr}x${hStr}`)
+    }
+
+    // Add padding (scaled by scaleFactor)
+    // Format: leftxtop:rightxbottom (GxH:IxJ in imagor spec)
+    const hasPadding =
+      (state.paddingTop !== undefined && state.paddingTop > 0) ||
+      (state.paddingRight !== undefined && state.paddingRight > 0) ||
+      (state.paddingBottom !== undefined && state.paddingBottom > 0) ||
+      (state.paddingLeft !== undefined && state.paddingLeft > 0)
+
+    if (hasPadding) {
+      const top = state.paddingTop ? Math.round(state.paddingTop * scaleFactor) : 0
+      const right = state.paddingRight ? Math.round(state.paddingRight * scaleFactor) : 0
+      const bottom = state.paddingBottom ? Math.round(state.paddingBottom * scaleFactor) : 0
+      const left = state.paddingLeft ? Math.round(state.paddingLeft * scaleFactor) : 0
+      // Correct format: left x top : right x bottom
+      parts.push(`${left}x${top}:${right}x${bottom}`)
+    }
+
+    // Add alignment (for Fill mode when fitIn is false)
+    if (state.fitIn === false) {
+      if (state.hAlign) parts.push(state.hAlign)
+      if (state.vAlign) parts.push(state.vAlign)
+    }
+
+    // Add smart crop (after alignment, before filters)
+    if (state.smart) {
+      parts.push('smart')
+    }
+
+    // Build filters array
+    const filters: string[] = []
+
+    // Color adjustments
+    if (state.brightness !== undefined && state.brightness !== 0) {
+      filters.push(`brightness(${state.brightness})`)
+    }
+    if (state.contrast !== undefined && state.contrast !== 0) {
+      filters.push(`contrast(${state.contrast})`)
+    }
+    if (state.saturation !== undefined && state.saturation !== 0) {
+      filters.push(`saturation(${state.saturation})`)
+    }
+    if (state.hue !== undefined && state.hue !== 0) {
+      filters.push(`hue(${state.hue})`)
+    }
+    if (state.grayscale) {
+      filters.push('grayscale()')
+    }
+
+    // Blur and sharpen (scaled)
+    if (state.blur !== undefined && state.blur !== 0) {
+      const value = Math.round(state.blur * scaleFactor * 100) / 100
+      filters.push(`blur(${value})`)
+    }
+    if (state.sharpen !== undefined && state.sharpen !== 0) {
+      const value = Math.round(state.sharpen * scaleFactor * 100) / 100
+      filters.push(`sharpen(${value})`)
+    }
+
+    // Round corner (scaled)
+    if (state.roundCornerRadius !== undefined && state.roundCornerRadius > 0) {
+      const value = Math.round(state.roundCornerRadius * scaleFactor)
+      filters.push(`round_corner(${value})`)
+    }
+
+    // Fill color
+    if (state.fillColor) {
+      filters.push(`fill(${state.fillColor})`)
+    }
+
+    // Rotation
+    if (state.rotation !== undefined && state.rotation !== 0) {
+      filters.push(`rotate(${state.rotation})`)
+    }
+
+    // Format/Quality/MaxBytes (only for non-preview layer paths)
+    if (!forPreview) {
+      if (state.format) {
+        filters.push(`format(${state.format})`)
+      }
+      if (state.quality && state.format) {
+        filters.push(`quality(${state.quality})`)
+      }
+      if (state.maxBytes && (state.format || state.quality)) {
+        filters.push(`max_bytes(${state.maxBytes})`)
+      }
+    }
+
+    // Metadata stripping
+    if (state.stripIcc) {
+      filters.push('strip_icc()')
+    }
+    if (state.stripExif) {
+      filters.push('strip_exif()')
+    }
+
+    // Layer processing - add image() filters for each visible layer
+    // Skip layers in visual crop mode (positions won't be accurate on uncropped image)
+    // Note: When editing a layer, state.layers is undefined, so this won't run
+    // The context switching architecture handles layer isolation automatically
+    const shouldApplyLayers = !forPreview || (forPreview && !state.visualCropEnabled)
+
+    if (shouldApplyLayers && state.layers && state.layers.length > 0) {
+      for (const layer of state.layers) {
+        if (!layer.visible) continue
+
+        // Generate layer path (simple image, no nested layers)
+        let layerPath: string
+        if (layer.transforms && Object.keys(layer.transforms).length > 0) {
+          // Build path from layer transforms (NO layers array - prevents recursion)
+          const layerState = { ...layer.transforms }
+          layerPath = ImageEditor.editorStateToImagorPath(
+            layerState,
+            layer.imagePath,
+            scaleFactor,
+            forPreview,
+          )
+        } else {
+          // No transforms - minimal state (NO layers array)
+          const layerState: Partial<ImageEditorState> = {
+            width: layer.originalDimensions.width,
+            height: layer.originalDimensions.height,
+            fitIn: true,
+          }
+          layerPath = ImageEditor.editorStateToImagorPath(
+            layerState,
+            layer.imagePath,
+            scaleFactor,
+            forPreview,
+          )
+        }
+
+        // Build image() filter
+        const x = typeof layer.x === 'number' ? Math.round(layer.x * scaleFactor) : layer.x
+        const y = typeof layer.y === 'number' ? Math.round(layer.y * scaleFactor) : layer.y
+        filters.push(`image(${layerPath},${x},${y},${layer.alpha},${layer.blendMode})`)
+      }
+    }
+
+    // Add filters to path
+    if (filters.length > 0) {
+      parts.push(`filters:${filters.join(':')}`)
+    }
+
+    // Combine parts with image path
+    return parts.length > 0 ? `/${parts.join('/')}/${imagePath}` : `/${imagePath}`
   }
 
   /**
@@ -402,6 +644,59 @@ export class ImageEditor {
     }
     if (state.stripExif) {
       filters.push({ name: 'strip_exif', args: '' })
+    }
+
+    // Layer processing - add image() filters for each visible layer
+    // Skip layers in visual crop mode (positions won't be accurate on uncropped image)
+    // Note: When editing a layer, state.layers is undefined, so this won't run
+    const shouldApplyLayers = !forPreview || (forPreview && !state.visualCropEnabled)
+
+    if (shouldApplyLayers && state.layers && state.layers.length > 0) {
+      for (const layer of state.layers) {
+        if (!layer.visible) continue
+
+        // Generate layer imagor path using static helper (synchronous)
+        // Each layer is a simple image (no nested layers - prevents recursion)
+        let layerPath: string
+        if (layer.transforms && Object.keys(layer.transforms).length > 0) {
+          // Build path from layer transforms (NO layers array - prevents recursion)
+          const layerState = { ...layer.transforms }
+          layerPath = ImageEditor.editorStateToImagorPath(
+            layerState,
+            layer.imagePath,
+            forPreview ? scaleFactor : 1,
+            forPreview,
+          )
+        } else {
+          // No transforms - minimal state (NO layers array)
+          const layerState: Partial<ImageEditorState> = {
+            width: layer.originalDimensions.width,
+            height: layer.originalDimensions.height,
+            fitIn: true,
+          }
+          layerPath = ImageEditor.editorStateToImagorPath(
+            layerState,
+            layer.imagePath,
+            forPreview ? scaleFactor : 1,
+            forPreview,
+          )
+        }
+
+        // Scale position if numeric pixels (for preview)
+        const x =
+          typeof layer.x === 'number'
+            ? (forPreview ? Math.round(layer.x * scaleFactor) : layer.x).toString()
+            : layer.x.toString()
+
+        const y =
+          typeof layer.y === 'number'
+            ? (forPreview ? Math.round(layer.y * scaleFactor) : layer.y).toString()
+            : layer.y.toString()
+
+        // Build image() filter args
+        const args = `${layerPath},${x},${y},${layer.alpha},${layer.blendMode}`
+        filters.push({ name: 'image', args })
+      }
     }
 
     if (filters.length > 0) {
@@ -698,10 +993,11 @@ export class ImageEditor {
    * Generate download URL with attachment filter
    */
   async generateDownloadUrl(): Promise<string> {
+    const baseParams = this.convertStateToGraphQLParams(this.state, false) // false = no WebP override
     const downloadParams = {
-      ...this.convertStateToGraphQLParams(this.state, false), // false = no WebP override
+      ...baseParams,
       filters: [
-        ...(this.convertStateToGraphQLParams(this.state, false).filters || []),
+        ...(baseParams.filters || []),
         { name: 'attachment', args: '' }, // Empty args for default filename
       ],
     }
@@ -821,6 +1117,260 @@ export class ImageEditor {
 
     // Notify that history changed
     this.callbacks.onHistoryChange?.()
+  }
+
+  // ============================================================================
+  // Layer Management Methods
+  // ============================================================================
+
+  /**
+   * Current editing context
+   * null = editing base image
+   * string = editing layer with this ID
+   */
+  private editingContext: string | null = null
+
+  /**
+   * Saved base image configuration (when editing a layer)
+   * Allows restoring the original config when switching back to base
+   */
+  private savedBaseImagePath: string | null = null
+  private savedBaseImageDimensions: ImageDimensions | null = null
+
+  /**
+   * Get the current editing context
+   * @returns null for base image, or layer ID for layer editing
+   */
+  getEditingContext(): string | null {
+    return this.editingContext
+  }
+
+  /**
+   * Switch editing context to a layer
+   * Loads the layer's transforms into the editor state
+   * Updates config to point to the layer's image and dimensions
+   * @param layerId - ID of the layer to edit, or null for base image
+   */
+  switchContext(layerId: string | null): void {
+    if (this.editingContext === layerId) return
+
+    // Save current context state before switching
+    // This updates this.state.layers with the saved transforms
+    if (this.editingContext !== null) {
+      // Save current state to the layer we're leaving
+      this.saveContextToLayer(this.editingContext)
+    } else {
+      // Save current state as base image state
+      this.saveContextToBase()
+    }
+
+    // Capture the updated layers array BEFORE switching context
+    // This is critical - saveContextToLayer() updated the layers, we must preserve them
+    const updatedLayers = this.state.layers
+
+    // Switch context
+    this.editingContext = layerId
+
+    // Update config and load new context
+    if (layerId !== null) {
+      // Switching TO a layer
+      const layer = updatedLayers?.find((l) => l.id === layerId)
+      if (layer) {
+        // Save base image config (first time only)
+        if (!this.savedBaseImagePath) {
+          this.savedBaseImagePath = this.config.imagePath
+          this.savedBaseImageDimensions = { ...this.config.originalDimensions }
+        }
+
+        // Point editor config to layer image
+        this.config.imagePath = layer.imagePath
+        this.config.originalDimensions = { ...layer.originalDimensions }
+      }
+      // Load layer context (sets state WITHOUT layers array)
+      // Pass updatedLayers so we can look up the layer with its saved transforms
+      if (updatedLayers) {
+        this.loadContextFromLayer(layerId, updatedLayers)
+      }
+      // DO NOT re-add layers array here - layer editing is isolated!
+    } else {
+      // Switching BACK to base image
+      if (this.savedBaseImagePath && this.savedBaseImageDimensions) {
+        // Restore base image config
+        this.config.imagePath = this.savedBaseImagePath
+        this.config.originalDimensions = { ...this.savedBaseImageDimensions }
+        // Clear saved config
+        this.savedBaseImagePath = null
+        this.savedBaseImageDimensions = null
+      }
+      // Load base context (includes layers array)
+      this.loadContextFromBase()
+    }
+
+    // Notify state change and update preview (now uses correct config!)
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Saved base image state (when editing a layer)
+   */
+  private savedBaseState: ImageEditorState | null = null
+
+  /**
+   * Save current editor state to base image storage
+   */
+  private saveContextToBase(): void {
+    this.savedBaseState = { ...this.state }
+  }
+
+  /**
+   * Load base image state from storage
+   */
+  private loadContextFromBase(): void {
+    if (this.savedBaseState) {
+      this.state = { ...this.savedBaseState }
+      this.savedBaseState = null
+    }
+  }
+
+  /**
+   * Save current editor state to a layer's transforms
+   * @param layerId - ID of the layer to save to
+   */
+  private saveContextToLayer(layerId: string): void {
+    // Get layers from savedBaseState (where they're stored during layer editing)
+    const layers = this.savedBaseState?.layers
+    if (!layers) return
+
+    const layer = layers.find((l) => l.id === layerId)
+    if (!layer) return
+
+    // Save current state (excluding layers) to layer transforms
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { layers: _, visualCropEnabled, ...transforms } = this.state
+
+    // Update the layer's transforms in the layers array
+    const updatedLayers = layers.map((l) =>
+      l.id === layerId ? { ...l, transforms: { ...transforms } } : l,
+    )
+
+    // Store updated layers back in savedBaseState
+    if (this.savedBaseState) {
+      this.savedBaseState = {
+        ...this.savedBaseState,
+        layers: updatedLayers,
+      }
+    }
+  }
+
+  /**
+   * Load a layer's transforms into editor state
+   * @param layerId - ID of the layer to load from
+   * @param layers - The layers array to look up from (passed as parameter since this.state.layers is undefined during layer editing)
+   */
+  private loadContextFromLayer(layerId: string, layers: ImageLayer[]): void {
+    const layer = layers.find((l) => l.id === layerId)
+    if (!layer) return
+
+    // Start with FRESH defaults based on layer's original dimensions
+    // This ensures no inheritance from base image or previous context
+    // NO layers array - layer editing is isolated!
+    const freshState: ImageEditorState = {
+      width: layer.originalDimensions.width,
+      height: layer.originalDimensions.height,
+      fitIn: true,
+    }
+
+    // If layer has saved transforms, apply them on top of fresh state
+    if (layer.transforms) {
+      this.state = {
+        ...freshState,
+        ...layer.transforms,
+        // NO layers array - layer editing is isolated!
+      }
+    } else {
+      this.state = freshState
+    }
+  }
+
+  /**
+   * Add a new layer to the editor
+   * @param layer - The layer to add
+   */
+  addLayer(layer: ImageLayer): void {
+    this.scheduleHistorySnapshot()
+
+    const layers = this.state.layers || []
+    this.state = {
+      ...this.state,
+      layers: [...layers, layer],
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Remove a layer by ID
+   * @param layerId - ID of the layer to remove
+   */
+  removeLayer(layerId: string): void {
+    if (!this.state.layers) return
+
+    this.scheduleHistorySnapshot()
+
+    this.state = {
+      ...this.state,
+      layers: this.state.layers.filter((layer) => layer.id !== layerId),
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Update a layer's properties
+   * @param layerId - ID of the layer to update
+   * @param updates - Partial layer properties to update
+   */
+  updateLayer(layerId: string, updates: Partial<ImageLayer>): void {
+    if (!this.state.layers) return
+
+    this.scheduleHistorySnapshot()
+
+    this.state = {
+      ...this.state,
+      layers: this.state.layers.map((layer) =>
+        layer.id === layerId ? { ...layer, ...updates } : layer,
+      ),
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Reorder layers (for drag-and-drop)
+   * @param newOrder - New array of layers in desired order
+   */
+  reorderLayers(newOrder: ImageLayer[]): void {
+    this.scheduleHistorySnapshot()
+
+    this.state = {
+      ...this.state,
+      layers: newOrder,
+    }
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Get all layers
+   * @returns Array of layers or empty array
+   */
+  getLayers(): ImageLayer[] {
+    return this.state.layers || []
   }
 
   /**

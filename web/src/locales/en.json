@@ -803,6 +803,58 @@
       "bottom": "Bottom",
       "left": "Left",
       "description": "Add padding around the image and fill transparent or padded areas with a color"
+    },
+    "layers": {
+      "title": "Layers",
+      "addLayer": "Add Layer",
+      "noLayers": "No layers added yet",
+      "layerNumber": "Layer {{number}}",
+      "dragToReorder": "Drag to reorder",
+      "hideLayer": "Hide layer",
+      "showLayer": "Show layer",
+      "deleteLayer": "Delete layer",
+      "layerAdded": "Layer added successfully",
+      "layerDeleted": "Layer deleted successfully",
+      "failedToAddLayer": "Failed to add layer",
+      "selectImage": "Select Image for Layer",
+      "selectImageDescription": "Choose an image to add as a new layer",
+      "baseImage": "Base",
+      "baseLayer": "Base image (bottom layer)",
+      "editing": "EDIT",
+      "editLayer": "Edit Layer",
+      "exitLayerEdit": "Apply Layer Edit",
+      "exitEditMode": "Apply",
+      "position": "Position",
+      "xOffset": "X Offset",
+      "yOffset": "Y Offset",
+      "transparency": "Opacity",
+      "blendMode": "Blend Mode",
+      "blendModes": {
+        "normal": "Normal",
+        "multiply": "Multiply",
+        "screen": "Screen",
+        "overlay": "Overlay",
+        "soft-light": "Soft Light",
+        "darken": "Darken",
+        "lighten": "Lighten",
+        "mask": "Mask"
+      },
+      "blendModeDescriptions": {
+        "normal": "Standard blending",
+        "multiply": "Add shadows and depth",
+        "screen": "Add glows and light",
+        "overlay": "Boost contrast",
+        "soft-light": "Subtle lighting",
+        "darken": "Show darker areas",
+        "lighten": "Show lighter areas",
+        "mask": "Transparency mask"
+      }
+    },
+    "context": {
+      "editing": "Editing",
+      "layerTransforms": "Layer Transforms",
+      "exitLayerEdit": "Exit Layer Edit",
+      "editingBaseImage": "Editing Base Image"
     }
   }
 }
