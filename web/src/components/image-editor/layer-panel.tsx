@@ -25,11 +25,9 @@ import {
   GripVertical,
   Image,
   Lock,
-  Pencil,
   Plus,
   Trash2,
   Unlock,
-  Zap,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -37,7 +35,6 @@ import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
 import { LayerControls } from '@/components/image-editor/controls/layer-controls'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
@@ -51,9 +48,7 @@ interface SortableLayerItemProps {
   layer: ImageLayer
   isSelected: boolean
   isEditing: boolean
-  editingContext: string | null
   onSelect: (layerId: string) => void
-  onEdit: (layerId: string) => void
   onToggleVisibility: (layerId: string) => void
   onToggleLock: (layerId: string) => void
   onDelete: (layerId: string) => void
@@ -63,9 +58,7 @@ function SortableLayerItem({
   layer,
   isSelected,
   isEditing,
-  editingContext,
   onSelect,
-  onEdit,
   onToggleVisibility,
   onToggleLock,
   onDelete,
@@ -87,38 +80,28 @@ function SortableLayerItem({
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
       <div
         className={cn(
-          'flex h-12 cursor-pointer items-center gap-2 rounded px-2',
+          'flex h-12 cursor-pointer items-center gap-2 rounded px-2 transition-all',
           'hover:bg-accent',
-          // Editing state - primary highlight with left border
-          isEditing && 'bg-primary/10 border-l-primary border-l-4 font-semibold',
-          // Selected but not editing - use ring style like base image
-          isSelected && !isEditing && 'ring-primary ring-2',
-          // Inactive during edit mode (other layers)
-          editingContext && !isEditing && 'opacity-60',
+          // Use ring style for both selected and editing
+          (isSelected || isEditing) && 'ring-primary ring-2',
         )}
         onClick={() => onSelect(layer.id)}
       >
-        {/* Lightning icon for editing layer */}
-        {isEditing && <Zap className='text-primary h-4 w-4 shrink-0' />}
-
         {/* Drag handle */}
-        {!editingContext && (
-          <button
-            className='shrink-0 cursor-grab touch-none active:cursor-grabbing'
-            {...attributes}
-            {...listeners}
-            onClick={(e) => e.stopPropagation()}
-            aria-label={t('imageEditor.layers.dragToReorder')}
-            tabIndex={-1}
-          >
-            <GripVertical className='h-4 w-4' />
-          </button>
-        )}
+        <button
+          className='shrink-0 cursor-grab touch-none active:cursor-grabbing'
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+          aria-label={t('imageEditor.layers.dragToReorder')}
+          tabIndex={-1}
+        >
+          <GripVertical className='h-4 w-4' />
+        </button>
 
         {/* Layer name */}
         <span className='flex-1 truncate text-sm' title={filename}>
           {filename}
-          {isEditing && <span className='ml-2 text-blue-500'>(EDITING)</span>}
         </span>
 
         {/* Action buttons (always visible, fixed width) */}
@@ -162,22 +145,6 @@ function SortableLayerItem({
               <Unlock className='text-muted-foreground h-4 w-4' />
             )}
           </Button>
-
-          {/* Edit button (hidden during edit mode) */}
-          {!editingContext && (
-            <Button
-              variant='ghost'
-              size='icon'
-              className='h-8 w-8'
-              onClick={(e) => {
-                e.stopPropagation()
-                onEdit(layer.id)
-              }}
-              title={t('imageEditor.layers.editLayer')}
-            >
-              <Pencil className='h-4 w-4' />
-            </Button>
-          )}
 
           {/* Delete button */}
           <Button
@@ -423,7 +390,7 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
           variant='outline'
           size='sm'
           onClick={() => setFilePickerOpen(true)}
-          disabled={isAddingLayer}
+          disabled={isAddingLayer || editingContext !== null}
           className='h-8'
         >
           <Plus className='mr-1 h-4 w-4' />
@@ -433,15 +400,8 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
 
       {/* Layer list (scrollable) */}
       <div className='flex-1 overflow-y-auto'>
-        <div className='space-y-1 p-2 pb-2'>
-          {layers.length === 0 ? (
-            <Card className='p-6'>
-              <div className='text-muted-foreground text-center text-sm'>
-                {t('imageEditor.layers.noLayers')}
-              </div>
-            </Card>
-          ) : (
-            <DndContext
+        <div className={cn('space-y-1 px-2 pb-2', editingContext && 'pointer-events-none opacity-50')}>
+          <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
               onDragStart={handleDragStart}
@@ -457,9 +417,7 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
                     layer={layer}
                     isSelected={selectedLayerId === layer.id}
                     isEditing={editingContext === layer.id}
-                    editingContext={editingContext}
                     onSelect={handleSelectLayer}
-                    onEdit={handleEditLayer}
                     onToggleVisibility={handleToggleVisibility}
                     onToggleLock={handleToggleLock}
                     onDelete={handleDelete}
@@ -489,7 +447,6 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
                 ) : null}
               </DragOverlay>
             </DndContext>
-          )}
 
           {/* Base Image - Always shown at bottom */}
           <BaseImageItem
