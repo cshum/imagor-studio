@@ -201,7 +201,7 @@ export function LayerControls({
 
             {/* Horizontal Alignment */}
             <div className='space-y-2'>
-              <Label className='text-muted-foreground text-xs'>X Offset</Label>
+              <Label className='text-muted-foreground text-xs'>{t('imageEditor.layers.xOffset')}</Label>
               <div className='flex items-center gap-2'>
                 <ToggleGroup
                   type='single'
@@ -247,7 +247,7 @@ export function LayerControls({
 
             {/* Vertical Alignment */}
             <div className='space-y-2'>
-              <Label className='text-muted-foreground text-xs'>Y Offset</Label>
+              <Label className='text-muted-foreground text-xs'>{t('imageEditor.layers.yOffset')}</Label>
               <div className='flex items-center gap-2'>
                 <ToggleGroup
                   type='single'

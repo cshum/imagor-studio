@@ -795,6 +795,60 @@
       "bottom": "Basso",
       "left": "Sinistra",
       "description": "Aggiungi spaziatura attorno all'immagine e riempi le aree trasparenti o con spaziatura con un colore"
+    },
+    "layers": {
+      "title": "Livelli",
+      "addLayer": "Aggiungi Livello",
+      "noLayers": "Nessun livello aggiunto ancora",
+      "layerNumber": "Livello {{number}}",
+      "dragToReorder": "Trascina per riordinare",
+      "hideLayer": "Nascondi livello",
+      "showLayer": "Mostra livello",
+      "lockLayer": "Blocca livello",
+      "unlockLayer": "Sblocca livello",
+      "deleteLayer": "Elimina livello",
+      "layerAdded": "Livello aggiunto correttamente",
+      "layerDeleted": "Livello eliminato correttamente",
+      "failedToAddLayer": "Impossibile aggiungere il livello",
+      "selectImage": "Seleziona Immagine per Livello",
+      "selectImageDescription": "Scegli un'immagine da aggiungere come nuovo livello",
+      "baseImage": "Base",
+      "baseLayer": "Immagine base (livello inferiore)",
+      "editing": "MODIFICA",
+      "editLayer": "Modifica Livello",
+      "exitLayerEdit": "Applica Modifica Livello",
+      "exitEditMode": "Applica",
+      "position": "Posizione",
+      "xOffset": "Offset X",
+      "yOffset": "Offset Y",
+      "transparency": "Opacità",
+      "blendMode": "Modalità di Fusione",
+      "blendModes": {
+        "normal": "Normale",
+        "multiply": "Moltiplica",
+        "screen": "Scolora",
+        "overlay": "Sovrapponi",
+        "soft-light": "Luce Soffusa",
+        "darken": "Scurisci",
+        "lighten": "Schiarisci",
+        "mask": "Maschera"
+      },
+      "blendModeDescriptions": {
+        "normal": "Fusione standard",
+        "multiply": "Aggiungi ombre e profondità",
+        "screen": "Aggiungi bagliori e luce",
+        "overlay": "Aumenta il contrasto",
+        "soft-light": "Illuminazione sottile",
+        "darken": "Mostra aree più scure",
+        "lighten": "Mostra aree più chiare",
+        "mask": "Maschera di trasparenza"
+      }
+    },
+    "context": {
+      "editing": "Modifica",
+      "layerTransforms": "Trasformazioni Livello",
+      "exitLayerEdit": "Esci da Modifica Livello",
+      "editingBaseImage": "Modifica Immagine Base"
     }
   }
 }
