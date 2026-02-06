@@ -19,7 +19,19 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Eye, EyeOff, GripVertical, Image, Lock, Plus, Trash2, Unlock } from 'lucide-react'
+import {
+  Eye,
+  EyeOff,
+  GripVertical,
+  Image,
+  Lock,
+  Paintbrush,
+  Pencil,
+  Plus,
+  Trash2,
+  Unlock,
+  Zap,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
@@ -40,7 +52,9 @@ interface SortableLayerItemProps {
   layer: ImageLayer
   isSelected: boolean
   isEditing: boolean
+  editingContext: string | null
   onSelect: (layerId: string) => void
+  onEdit: (layerId: string) => void
   onToggleVisibility: (layerId: string) => void
   onToggleLock: (layerId: string) => void
   onDelete: (layerId: string) => void
@@ -50,7 +64,9 @@ function SortableLayerItem({
   layer,
   isSelected,
   isEditing,
+  editingContext,
   onSelect,
+  onEdit,
   onToggleVisibility,
   onToggleLock,
   onDelete,
@@ -69,19 +85,27 @@ function SortableLayerItem({
   const filename = layer.imagePath.split('/').pop() || layer.imagePath
 
   return (
-    <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-50', 'relative')}>
-      <Card
+    <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-50')}>
+      <div
         className={cn(
-          'cursor-pointer p-2 transition-colors',
-          isSelected && 'ring-primary ring-2',
-          isEditing && 'bg-primary/5',
+          'flex h-12 cursor-pointer items-center gap-2 rounded px-2 transition-all',
+          'hover:bg-accent',
+          // Editing state - primary highlight with left border
+          isEditing && 'bg-primary/10 border-l-primary border-l-4 font-semibold',
+          // Selected but not editing
+          isSelected && !isEditing && 'bg-accent',
+          // Inactive during edit mode (other layers)
+          editingContext && !isEditing && 'opacity-60',
         )}
         onClick={() => onSelect(layer.id)}
       >
-        <div className='flex items-center gap-2'>
-          {/* Drag handle */}
+        {/* Lightning icon for editing layer */}
+        {isEditing && <Zap className='text-primary h-4 w-4 shrink-0' />}
+
+        {/* Drag handle */}
+        {!editingContext && (
           <button
-            className='cursor-grab touch-none active:cursor-grabbing'
+            className='shrink-0 cursor-grab touch-none active:cursor-grabbing'
             {...attributes}
             {...listeners}
             onClick={(e) => e.stopPropagation()}
@@ -90,74 +114,87 @@ function SortableLayerItem({
           >
             <GripVertical className='h-4 w-4' />
           </button>
+        )}
 
-          {/* Layer info */}
-          <div className='min-w-0 flex-1'>
-            <div className='flex items-center gap-2'>
-              <div className='truncate text-sm font-medium' title={filename}>
-                {filename}
-              </div>
-              {isEditing && (
-                <Badge variant='default' className='text-xs'>
-                  {t('imageEditor.layers.editing')}
-                </Badge>
-              )}
-            </div>
-          </div>
+        {/* Layer name */}
+        <span className='flex-1 truncate text-sm' title={filename}>
+          {filename}
+          {isEditing && <span className='ml-2 text-blue-500'>(EDITING)</span>}
+        </span>
 
-          {/* Controls */}
-          <div className='flex items-center gap-1'>
-            {/* Visibility toggle */}
+        {/* Action buttons (always visible, fixed width) */}
+        <div className='flex shrink-0 gap-1'>
+          {/* Visibility toggle */}
+          <Button
+            variant='ghost'
+            size='icon'
+            className='h-8 w-8'
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleVisibility(layer.id)
+            }}
+            title={
+              layer.visible ? t('imageEditor.layers.hideLayer') : t('imageEditor.layers.showLayer')
+            }
+          >
+            {layer.visible ? (
+              <Eye className='h-4 w-4' />
+            ) : (
+              <EyeOff className='text-muted-foreground h-4 w-4' />
+            )}
+          </Button>
+
+          {/* Lock toggle */}
+          <Button
+            variant='ghost'
+            size='icon'
+            className='h-8 w-8'
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleLock(layer.id)
+            }}
+            title={
+              layer.locked ? t('imageEditor.layers.unlockLayer') : t('imageEditor.layers.lockLayer')
+            }
+          >
+            {layer.locked ? (
+              <Lock className='h-4 w-4' />
+            ) : (
+              <Unlock className='text-muted-foreground h-4 w-4' />
+            )}
+          </Button>
+
+          {/* Edit button (hidden during edit mode) */}
+          {!editingContext && (
             <Button
               variant='ghost'
-              size='sm'
-              className='h-8 w-8 p-0'
-              onClick={() => onToggleVisibility(layer.id)}
-              title={
-                layer.visible
-                  ? t('imageEditor.layers.hideLayer')
-                  : t('imageEditor.layers.showLayer')
-              }
+              size='icon'
+              className='h-8 w-8'
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit(layer.id)
+              }}
+              title={t('imageEditor.layers.editLayer')}
             >
-              {layer.visible ? (
-                <Eye className='h-4 w-4' />
-              ) : (
-                <EyeOff className='text-muted-foreground h-4 w-4' />
-              )}
+              <Pencil className='h-4 w-4' />
             </Button>
+          )}
 
-            {/* Lock toggle */}
-            <Button
-              variant='ghost'
-              size='sm'
-              className='h-8 w-8 p-0'
-              onClick={() => onToggleLock(layer.id)}
-              title={
-                layer.locked
-                  ? t('imageEditor.layers.unlockLayer')
-                  : t('imageEditor.layers.lockLayer')
-              }
-            >
-              {layer.locked ? (
-                <Lock className='h-4 w-4' />
-              ) : (
-                <Unlock className='text-muted-foreground h-4 w-4' />
-              )}
-            </Button>
-
-            {/* Delete button */}
-            <Button
-              variant='ghost'
-              size='sm'
-              className='text-destructive hover:text-destructive h-8 w-8 p-0'
-              onClick={() => onDelete(layer.id)}
-              title={t('imageEditor.layers.deleteLayer')}
-            >
-              <Trash2 className='h-4 w-4' />
-            </Button>
-          </div>
+          {/* Delete button */}
+          <Button
+            variant='ghost'
+            size='icon'
+            className='text-destructive hover:text-destructive h-8 w-8'
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete(layer.id)
+            }}
+            title={t('imageEditor.layers.deleteLayer')}
+          >
+            <Trash2 className='h-4 w-4' />
+          </Button>
         </div>
-      </Card>
+      </div>
     </div>
   )
 }
@@ -173,32 +210,29 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
   const filename = imagePath.split('/').pop() || imagePath
 
   return (
-    <Card
+    <div
       className={cn(
-        'bg-muted/50 cursor-pointer p-2 transition-colors',
-        isSelected && 'ring-primary ring-2',
+        'flex h-12 cursor-pointer items-center gap-2 rounded px-2 transition-colors',
+        'bg-muted/50 hover:bg-muted',
+        isSelected && 'bg-muted ring-primary ring-2',
       )}
       onClick={onClick}
     >
-      <div className='flex items-center gap-2'>
-        {/* Icon instead of drag handle */}
-        <div className='flex h-4 w-4 items-center justify-center'>
-          <Image className='text-muted-foreground h-4 w-4' />
-        </div>
-
-        {/* Base image info */}
-        <div className='min-w-0 flex-1'>
-          <div className='flex items-center gap-2'>
-            <div className='truncate text-sm font-medium' title={filename}>
-              {filename}
-            </div>
-            <Badge variant='secondary' className='text-xs'>
-              {t('imageEditor.layers.baseImage')}
-            </Badge>
-          </div>
-        </div>
+      {/* Icon instead of drag handle */}
+      <div className='flex h-4 w-4 shrink-0 items-center justify-center'>
+        <Image className='text-muted-foreground h-4 w-4' />
       </div>
-    </Card>
+
+      {/* Base image name */}
+      <span className='flex-1 truncate text-sm font-medium' title={filename}>
+        {filename}
+      </span>
+
+      {/* Badge */}
+      <Badge variant='secondary' className='shrink-0 text-xs'>
+        {t('imageEditor.layers.baseImage')}
+      </Badge>
+    </div>
   )
 }
 
@@ -280,11 +314,16 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
       if (selectedLayerId === layerId) {
         setSelectedLayerId(null)
       }
+      // Exit edit mode if deleting the editing layer
+      if (editingContext === layerId) {
+        imageEditor.switchContext(null)
+        setEditingContext(null)
+      }
       imageEditor.removeLayer(layerId)
       updateLayers()
       toast.success(t('imageEditor.layers.layerDeleted'))
     },
-    [imageEditor, updateLayers, selectedLayerId, t],
+    [imageEditor, updateLayers, selectedLayerId, editingContext, t],
   )
 
   const handleSelectLayer = useCallback(
@@ -348,8 +387,8 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
           id: `layer-${Date.now()}`, // Simple unique ID
           imagePath,
           originalDimensions: dimensions,
-          x: 0,
-          y: 0,
+          x: 'center',
+          y: 'center',
           alpha: 0, // 0 = opaque (no transparency)
           blendMode: 'normal',
           visible: true,
@@ -373,75 +412,75 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
   // Get the active layer for DragOverlay
   const activeLayer = activeId ? layers.find((l) => l.id === activeId) : null
 
+  // Get selected layer for properties panel
+  const selectedLayer = selectedLayerId ? layers.find((l) => l.id === selectedLayerId) : null
+
+  // Get editing layer name for banner
+  const editingLayer = editingContext ? layers.find((l) => l.id === editingContext) : null
+  const editingLayerName = editingLayer
+    ? editingLayer.imagePath.split('/').pop() || editingLayer.imagePath
+    : ''
+
   return (
-    <div className='flex flex-col gap-3'>
+    <div className='flex h-full flex-col'>
       {/* Header with Add button */}
-      <div className='flex items-center justify-between'>
-        <h3 className='font-medium'>{t('imageEditor.layers.title')}</h3>
+      <div className='flex shrink-0 items-center justify-between px-2 py-2'>
+        <h3 className='text-sm font-medium'>{t('imageEditor.layers.title')}</h3>
         <Button
           variant='outline'
           size='sm'
           onClick={() => setFilePickerOpen(true)}
           disabled={isAddingLayer}
+          className='h-8'
         >
           <Plus className='mr-1 h-4 w-4' />
           {t('imageEditor.layers.addLayer')}
         </Button>
       </div>
 
-      {/* Layer list */}
-      <div className='space-y-2'>
-        {layers.length === 0 ? (
-          <Card className='p-6'>
-            <div className='text-muted-foreground text-center text-sm'>
-              {t('imageEditor.layers.noLayers')}
-            </div>
-          </Card>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={layers.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-              <div className='space-y-2'>
-                {[...layers].reverse().map((layer) => (
-                  <div key={layer.id} className='space-y-2'>
-                    <SortableLayerItem
-                      layer={layer}
-                      isSelected={selectedLayerId === layer.id}
-                      isEditing={editingContext === layer.id}
-                      onSelect={handleSelectLayer}
-                      onToggleVisibility={handleToggleVisibility}
-                      onToggleLock={handleToggleLock}
-                      onDelete={handleDelete}
-                    />
-                    {/* Show layer controls when selected */}
-                    {selectedLayerId === layer.id && (
-                      <LayerControls
-                        layer={layer}
-                        isEditing={editingContext === layer.id}
-                        onUpdate={(updates) => handleUpdateLayer(layer.id, updates)}
-                        onEditLayer={() => handleEditLayer(layer.id)}
-                        onExitEditMode={handleExitEditMode}
-                      />
-                    )}
-                  </div>
-                ))}
+      {/* Layer list (scrollable) */}
+      <div className='flex-1 overflow-y-auto'>
+        <div className='space-y-1 px-2 pb-2'>
+          {layers.length === 0 ? (
+            <Card className='p-6'>
+              <div className='text-muted-foreground text-center text-sm'>
+                {t('imageEditor.layers.noLayers')}
               </div>
-            </SortableContext>
-            <DragOverlay>
-              {activeLayer ? (
-                <Card className='p-2'>
-                  <div className='flex items-center gap-2'>
+            </Card>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={layers.map((l) => l.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {[...layers].reverse().map((layer) => (
+                  <SortableLayerItem
+                    key={layer.id}
+                    layer={layer}
+                    isSelected={selectedLayerId === layer.id}
+                    isEditing={editingContext === layer.id}
+                    editingContext={editingContext}
+                    onSelect={handleSelectLayer}
+                    onEdit={handleEditLayer}
+                    onToggleVisibility={handleToggleVisibility}
+                    onToggleLock={handleToggleLock}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </SortableContext>
+              <DragOverlay>
+                {activeLayer ? (
+                  <div className='bg-background flex h-12 items-center gap-2 rounded border px-2 shadow-lg'>
                     <GripVertical className='h-4 w-4' />
-                    <div className='min-w-0 flex-1'>
-                      <div className='truncate text-sm font-medium'>
-                        {activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
-                      </div>
-                    </div>
-                    <div className='flex items-center gap-1'>
+                    <span className='flex-1 truncate text-sm'>
+                      {activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
+                    </span>
+                    <div className='flex shrink-0 gap-1'>
                       {activeLayer.visible ? (
                         <Eye className='h-4 w-4' />
                       ) : (
@@ -452,22 +491,54 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
                       ) : (
                         <Unlock className='text-muted-foreground h-4 w-4' />
                       )}
-                      <Trash2 className='text-destructive h-4 w-4' />
                     </div>
                   </div>
-                </Card>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        )}
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          )}
 
-        {/* Base Image - Always shown at bottom */}
-        <BaseImageItem
-          imagePath={imagePath}
-          isSelected={selectedLayerId === null && editingContext === null}
-          onClick={handleSelectBase}
-        />
+          {/* Base Image - Always shown at bottom */}
+          <BaseImageItem
+            imagePath={imagePath}
+            isSelected={selectedLayerId === null && editingContext === null}
+            onClick={handleSelectBase}
+          />
+        </div>
       </div>
+
+      {/* Edit mode banner (below layer list to reduce content shift) */}
+      {editingContext && (
+        <div className='bg-accent flex shrink-0 items-center justify-between border-t px-3 py-2'>
+          <div className='flex items-center gap-2'>
+            <Paintbrush className='h-4 w-4' />
+            <span className='text-sm font-medium'>
+              {t('imageEditor.layers.editing')}: {editingLayerName}
+            </span>
+          </div>
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={handleExitEditMode}
+            className='hover:bg-accent-foreground/10 h-8'
+          >
+            {t('imageEditor.layers.exitEditMode')}
+          </Button>
+        </div>
+      )}
+
+      {/* Layer properties panel (only when NOT editing and layer selected) */}
+      {!editingContext && selectedLayer && (
+        <div className='shrink-0 border-t'>
+          <LayerControls
+            layer={selectedLayer}
+            isEditing={false}
+            onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
+            onEditLayer={() => handleEditLayer(selectedLayer.id)}
+            onExitEditMode={handleExitEditMode}
+          />
+        </div>
+      )}
 
       {/* File Picker Dialog */}
       <FilePickerDialog

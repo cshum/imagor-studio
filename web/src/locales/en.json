@@ -825,6 +825,7 @@
       "editing": "EDIT",
       "editLayer": "Edit Layer",
       "exitLayerEdit": "Exit Layer Edit",
+      "exitEditMode": "Exit",
       "position": "Position",
       "positionX": "X",
       "positionY": "Y",

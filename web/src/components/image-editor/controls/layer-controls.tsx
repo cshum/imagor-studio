@@ -89,7 +89,7 @@ export function LayerControls({
   )
 
   return (
-    <div className='bg-muted/30 space-y-4 rounded-lg border p-4'>
+    <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
       {/* Edit Layer Button */}
       {!isEditing ? (
         <Button variant='default' size='sm' onClick={onEditLayer} className='w-full'>
