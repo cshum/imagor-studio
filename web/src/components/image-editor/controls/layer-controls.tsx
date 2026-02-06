@@ -1,10 +1,11 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Edit, X } from 'lucide-react'
+import { Check, Edit } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { NumericControl } from '@/components/ui/numeric-control'
 import {
   Select,
   SelectContent,
@@ -12,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Slider } from '@/components/ui/slider'
 import type { BlendMode, ImageLayer } from '@/lib/image-editor'
 
 interface LayerControlsProps {
@@ -61,8 +61,10 @@ export function LayerControls({
   )
 
   const handleAlphaChange = useCallback(
-    (value: number[]) => {
-      onUpdate({ alpha: value[0] })
+    (value: number) => {
+      // Invert: UI shows 0=transparent, 100=opaque
+      // But imagor uses 0=opaque, 100=transparent
+      onUpdate({ alpha: 100 - value })
     },
     [onUpdate],
   )
@@ -92,7 +94,7 @@ export function LayerControls({
       >
         {isEditing ? (
           <>
-            <X className='mr-2 h-4 w-4' />
+            <Check className='mr-2 h-4 w-4' />
             {t('imageEditor.layers.exitLayerEdit')}
           </>
         ) : (
@@ -203,24 +205,15 @@ export function LayerControls({
           </div>
 
           {/* Alpha/Transparency Control */}
-          <div className='space-y-2'>
-            <div className='flex items-center justify-between'>
-              <Label className='text-sm font-medium'>{t('imageEditor.layers.transparency')}</Label>
-              <span className='text-muted-foreground text-xs'>{layer.alpha}%</span>
-            </div>
-            <Slider
-              value={[layer.alpha]}
-              onValueChange={handleAlphaChange}
-              min={0}
-              max={100}
-              step={1}
-              className='w-full'
-            />
-            <div className='text-muted-foreground flex justify-between text-xs'>
-              <span>{t('imageEditor.layers.opaque')}</span>
-              <span>{t('imageEditor.layers.transparent')}</span>
-            </div>
-          </div>
+          <NumericControl
+            label={t('imageEditor.layers.transparency')}
+            value={100 - layer.alpha}
+            min={0}
+            max={100}
+            step={1}
+            unit='%'
+            onChange={handleAlphaChange}
+          />
 
           {/* Blend Mode Control */}
           <div className='space-y-2'>
