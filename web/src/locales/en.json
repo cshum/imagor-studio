@@ -812,8 +812,6 @@
       "dragToReorder": "Drag to reorder",
       "hideLayer": "Hide layer",
       "showLayer": "Show layer",
-      "lockLayer": "Lock layer",
-      "unlockLayer": "Unlock layer",
       "deleteLayer": "Delete layer",
       "layerAdded": "Layer added successfully",
       "layerDeleted": "Layer deleted successfully",

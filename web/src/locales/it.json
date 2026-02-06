@@ -804,8 +804,6 @@
       "dragToReorder": "Trascina per riordinare",
       "hideLayer": "Nascondi livello",
       "showLayer": "Mostra livello",
-      "lockLayer": "Blocca livello",
-      "unlockLayer": "Sblocca livello",
       "deleteLayer": "Elimina livello",
       "layerAdded": "Livello aggiunto correttamente",
       "layerDeleted": "Livello eliminato correttamente",

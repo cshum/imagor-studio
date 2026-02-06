@@ -37,7 +37,6 @@ export interface ImageLayer {
 
   // UI state
   visible: boolean // Toggle layer visibility
-  locked: boolean // Prevent editing
   name: string // Display name (from filename)
 }
 

@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Eye, EyeOff, GripVertical, Image, Lock, Plus, Trash2, Unlock } from 'lucide-react'
+import { Eye, EyeOff, GripVertical, Image, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
@@ -41,7 +41,6 @@ interface SortableLayerItemProps {
   isEditing: boolean
   onSelect: (layerId: string) => void
   onToggleVisibility: (layerId: string) => void
-  onToggleLock: (layerId: string) => void
   onDelete: (layerId: string) => void
 }
 
@@ -51,7 +50,6 @@ function SortableLayerItem({
   isEditing,
   onSelect,
   onToggleVisibility,
-  onToggleLock,
   onDelete,
 }: SortableLayerItemProps) {
   const { t } = useTranslation()
@@ -114,26 +112,6 @@ function SortableLayerItem({
               <Eye className='h-4 w-4' />
             ) : (
               <EyeOff className='text-muted-foreground h-4 w-4' />
-            )}
-          </Button>
-
-          {/* Lock toggle */}
-          <Button
-            variant='ghost'
-            size='icon'
-            className='h-8 w-8'
-            onClick={(e) => {
-              e.stopPropagation()
-              onToggleLock(layer.id)
-            }}
-            title={
-              layer.locked ? t('imageEditor.layers.unlockLayer') : t('imageEditor.layers.lockLayer')
-            }
-          >
-            {layer.locked ? (
-              <Lock className='h-4 w-4' />
-            ) : (
-              <Unlock className='text-muted-foreground h-4 w-4' />
             )}
           </Button>
 
@@ -254,17 +232,6 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
     [imageEditor, layers, updateLayers],
   )
 
-  const handleToggleLock = useCallback(
-    (layerId: string) => {
-      const layer = layers.find((l) => l.id === layerId)
-      if (layer) {
-        imageEditor.updateLayer(layerId, { locked: !layer.locked })
-        updateLayers()
-      }
-    },
-    [imageEditor, layers, updateLayers],
-  )
-
   const handleDelete = useCallback(
     (layerId: string) => {
       // Deselect if deleting the selected layer
@@ -349,7 +316,6 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
           alpha: 0, // 0 = opaque (no transparency)
           blendMode: 'normal',
           visible: true,
-          locked: false,
           name: filename,
         }
 
@@ -407,7 +373,6 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
                   isEditing={editingContext === layer.id}
                   onSelect={handleSelectLayer}
                   onToggleVisibility={handleToggleVisibility}
-                  onToggleLock={handleToggleLock}
                   onDelete={handleDelete}
                 />
               ))}
@@ -426,13 +391,6 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
                         <Eye className='h-4 w-4' />
                       ) : (
                         <EyeOff className='text-muted-foreground h-4 w-4' />
-                      )}
-                    </div>
-                    <div className='flex h-8 w-8 items-center justify-center'>
-                      {activeLayer.locked ? (
-                        <Lock className='h-4 w-4' />
-                      ) : (
-                        <Unlock className='text-muted-foreground h-4 w-4' />
                       )}
                     </div>
                     <div className='text-destructive flex h-8 w-8 items-center justify-center'>

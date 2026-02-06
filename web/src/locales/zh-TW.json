@@ -807,8 +807,6 @@
       "dragToReorder": "拖動以重新排序",
       "hideLayer": "隱藏圖層",
       "showLayer": "顯示圖層",
-      "lockLayer": "鎖定圖層",
-      "unlockLayer": "解鎖圖層",
       "deleteLayer": "刪除圖層",
       "layerAdded": "圖層新增成功",
       "layerDeleted": "圖層刪除成功",
