@@ -176,7 +176,7 @@ export function LayerControls({
       {/* Edit Layer Button */}
       <Button
         variant='outline'
-        size='sm'
+        size='default'
         onClick={isEditing ? onExitEditMode : onEditLayer}
         className='w-full'
       >
@@ -201,7 +201,9 @@ export function LayerControls({
 
             {/* Horizontal Alignment */}
             <div className='space-y-2'>
-              <Label className='text-muted-foreground text-xs'>{t('imageEditor.layers.xOffset')}</Label>
+              <Label className='text-muted-foreground text-xs'>
+                {t('imageEditor.layers.xOffset')}
+              </Label>
               <div className='flex items-center gap-2'>
                 <ToggleGroup
                   type='single'
@@ -247,7 +249,9 @@ export function LayerControls({
 
             {/* Vertical Alignment */}
             <div className='space-y-2'>
-              <Label className='text-muted-foreground text-xs'>{t('imageEditor.layers.yOffset')}</Label>
+              <Label className='text-muted-foreground text-xs'>
+                {t('imageEditor.layers.yOffset')}
+              </Label>
               <div className='flex items-center gap-2'>
                 <ToggleGroup
                   type='single'

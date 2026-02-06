@@ -236,22 +236,22 @@ export class ImageEditor {
     if (state.width || state.height) {
       // Build dimension prefix
       let prefix = ''
-      
+
       // Fitting mode
       if (state.stretch) {
         prefix = 'stretch/'
       } else if (state.fitIn !== false) {
         prefix = 'fit-in/'
       }
-      
+
       // Calculate dimensions with flip integration
       let w = state.width ? Math.round(state.width * scaleFactor) : 0
       let h = state.height ? Math.round(state.height * scaleFactor) : 0
-      
+
       // Add minus sign for flips
       const wStr = state.hFlip ? `-${w}` : `${w}`
       const hStr = state.vFlip ? `-${h}` : `${h}`
-      
+
       parts.push(`${prefix}${wStr}x${hStr}`)
     }
 
@@ -264,18 +264,10 @@ export class ImageEditor {
       (state.paddingLeft !== undefined && state.paddingLeft > 0)
 
     if (hasPadding) {
-      const top = state.paddingTop
-        ? Math.round(state.paddingTop * scaleFactor)
-        : 0
-      const right = state.paddingRight
-        ? Math.round(state.paddingRight * scaleFactor)
-        : 0
-      const bottom = state.paddingBottom
-        ? Math.round(state.paddingBottom * scaleFactor)
-        : 0
-      const left = state.paddingLeft
-        ? Math.round(state.paddingLeft * scaleFactor)
-        : 0
+      const top = state.paddingTop ? Math.round(state.paddingTop * scaleFactor) : 0
+      const right = state.paddingRight ? Math.round(state.paddingRight * scaleFactor) : 0
+      const bottom = state.paddingBottom ? Math.round(state.paddingBottom * scaleFactor) : 0
+      const left = state.paddingLeft ? Math.round(state.paddingLeft * scaleFactor) : 0
       // Correct format: left x top : right x bottom
       parts.push(`${left}x${top}:${right}x${bottom}`)
     }
