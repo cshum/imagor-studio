@@ -1,9 +1,17 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, Edit } from 'lucide-react'
+import {
+  AlignHorizontalJustifyCenter,
+  AlignHorizontalJustifyEnd,
+  AlignHorizontalJustifyStart,
+  AlignVerticalJustifyCenter,
+  AlignVerticalJustifyEnd,
+  AlignVerticalJustifyStart,
+  Check,
+  Edit,
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { NumericControl } from '@/components/ui/numeric-control'
 import {
@@ -13,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { BlendMode, ImageLayer } from '@/lib/image-editor'
 
 interface LayerControlsProps {
@@ -43,19 +52,76 @@ export function LayerControls({
 }: LayerControlsProps) {
   const { t } = useTranslation()
 
-  const handleXChange = useCallback(
+  // Parse current alignment from x/y values
+  const { hAlign, vAlign, xOffset, yOffset } = useMemo(() => {
+    const x = layer.x
+    const y = layer.y
+
+    // Determine horizontal alignment
+    let hAlign: 'left' | 'center' | 'right' = 'center'
+    let xOffset = 0
+    if (typeof x === 'string') {
+      if (x === 'left') hAlign = 'left'
+      else if (x === 'right') hAlign = 'right'
+      else if (x === 'center') hAlign = 'center'
+    } else {
+      // Numeric value - treat as left-aligned with offset
+      hAlign = 'left'
+      xOffset = x
+    }
+
+    // Determine vertical alignment
+    let vAlign: 'top' | 'center' | 'bottom' = 'center'
+    let yOffset = 0
+    if (typeof y === 'string') {
+      if (y === 'top') vAlign = 'top'
+      else if (y === 'bottom') vAlign = 'bottom'
+      else if (y === 'center') vAlign = 'center'
+    } else {
+      // Numeric value - treat as top-aligned with offset
+      vAlign = 'top'
+      yOffset = y
+    }
+
+    return { hAlign, vAlign, xOffset, yOffset }
+  }, [layer.x, layer.y])
+
+  const handleHAlignChange = useCallback(
     (value: string) => {
-      // Parse as number if it's numeric, otherwise keep as string (for "left", "center", etc.)
-      const numValue = parseFloat(value)
-      onUpdate({ x: isNaN(numValue) ? value : numValue })
+      if (value === 'center') {
+        // Center alignment - no offset
+        onUpdate({ x: 'center' })
+      } else {
+        // Left/right alignment - preserve or reset offset
+        onUpdate({ x: xOffset !== 0 ? xOffset : value })
+      }
+    },
+    [onUpdate, xOffset],
+  )
+
+  const handleVAlignChange = useCallback(
+    (value: string) => {
+      if (value === 'center') {
+        // Center alignment - no offset
+        onUpdate({ y: 'center' })
+      } else {
+        // Top/bottom alignment - preserve or reset offset
+        onUpdate({ y: yOffset !== 0 ? yOffset : value })
+      }
+    },
+    [onUpdate, yOffset],
+  )
+
+  const handleXOffsetChange = useCallback(
+    (value: number) => {
+      onUpdate({ x: value })
     },
     [onUpdate],
   )
 
-  const handleYChange = useCallback(
-    (value: string) => {
-      const numValue = parseFloat(value)
-      onUpdate({ y: isNaN(numValue) ? value : numValue })
+  const handleYOffsetChange = useCallback(
+    (value: number) => {
+      onUpdate({ y: value })
     },
     [onUpdate],
   )
@@ -72,13 +138,6 @@ export function LayerControls({
   const handleBlendModeChange = useCallback(
     (value: string) => {
       onUpdate({ blendMode: value as BlendMode })
-    },
-    [onUpdate],
-  )
-
-  const setPositionPreset = useCallback(
-    (x: string | number, y: string | number) => {
-      onUpdate({ x, y })
     },
     [onUpdate],
   )
@@ -111,96 +170,68 @@ export function LayerControls({
           <div className='space-y-3'>
             <Label className='text-sm font-medium'>{t('imageEditor.layers.position')}</Label>
 
-            {/* X and Y inputs */}
-            <div className='grid grid-cols-2 gap-2'>
-              <div className='space-y-1'>
-                <Label className='text-muted-foreground text-xs'>
-                  {t('imageEditor.layers.positionX')}
-                </Label>
-                <Input
-                  type='text'
-                  value={layer.x}
-                  onChange={(e) => handleXChange(e.target.value)}
-                  placeholder='0'
-                  className='h-8'
+            {/* Horizontal Alignment */}
+            <div className='space-y-2'>
+              <Label className='text-muted-foreground text-xs'>Horizontal</Label>
+              <ToggleGroup
+                type='single'
+                value={hAlign}
+                onValueChange={handleHAlignChange}
+                className='justify-start'
+              >
+                <ToggleGroupItem value='left' aria-label='Align left' className='w-full'>
+                  <AlignHorizontalJustifyStart className='h-4 w-4' />
+                </ToggleGroupItem>
+                <ToggleGroupItem value='center' aria-label='Align center' className='w-full'>
+                  <AlignHorizontalJustifyCenter className='h-4 w-4' />
+                </ToggleGroupItem>
+                <ToggleGroupItem value='right' aria-label='Align right' className='w-full'>
+                  <AlignHorizontalJustifyEnd className='h-4 w-4' />
+                </ToggleGroupItem>
+              </ToggleGroup>
+              {hAlign !== 'center' && (
+                <NumericControl
+                  label='X Offset'
+                  value={xOffset}
+                  min={-9999}
+                  max={9999}
+                  step={1}
+                  unit='px'
+                  onChange={handleXOffsetChange}
                 />
-              </div>
-              <div className='space-y-1'>
-                <Label className='text-muted-foreground text-xs'>
-                  {t('imageEditor.layers.positionY')}
-                </Label>
-                <Input
-                  type='text'
-                  value={layer.y}
-                  onChange={(e) => handleYChange(e.target.value)}
-                  placeholder='0'
-                  className='h-8'
-                />
-              </div>
+              )}
             </div>
 
-            {/* Position presets */}
+            {/* Vertical Alignment */}
             <div className='space-y-2'>
-              <div className='grid grid-cols-3 gap-1'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setPositionPreset('left', layer.y)}
-                  className='h-7 text-xs'
-                >
-                  {t('imageEditor.layers.presetLeft')}
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setPositionPreset('center', layer.y)}
-                  className='h-7 text-xs'
-                >
-                  {t('imageEditor.layers.presetCenter')}
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setPositionPreset('right', layer.y)}
-                  className='h-7 text-xs'
-                >
-                  {t('imageEditor.layers.presetRight')}
-                </Button>
-              </div>
-              <div className='grid grid-cols-3 gap-1'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setPositionPreset(layer.x, 'top')}
-                  className='h-7 text-xs'
-                >
-                  {t('imageEditor.layers.presetTop')}
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setPositionPreset(layer.x, 'center')}
-                  className='h-7 text-xs'
-                >
-                  {t('imageEditor.layers.presetMiddle')}
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setPositionPreset(layer.x, 'bottom')}
-                  className='h-7 text-xs'
-                >
-                  {t('imageEditor.layers.presetBottom')}
-                </Button>
-              </div>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => setPositionPreset('repeat', 'repeat')}
-                className='h-7 w-full text-xs'
+              <Label className='text-muted-foreground text-xs'>Vertical</Label>
+              <ToggleGroup
+                type='single'
+                value={vAlign}
+                onValueChange={handleVAlignChange}
+                className='justify-start'
               >
-                {t('imageEditor.layers.presetRepeat')}
-              </Button>
+                <ToggleGroupItem value='top' aria-label='Align top' className='w-full'>
+                  <AlignVerticalJustifyStart className='h-4 w-4' />
+                </ToggleGroupItem>
+                <ToggleGroupItem value='center' aria-label='Align middle' className='w-full'>
+                  <AlignVerticalJustifyCenter className='h-4 w-4' />
+                </ToggleGroupItem>
+                <ToggleGroupItem value='bottom' aria-label='Align bottom' className='w-full'>
+                  <AlignVerticalJustifyEnd className='h-4 w-4' />
+                </ToggleGroupItem>
+              </ToggleGroup>
+              {vAlign !== 'center' && (
+                <NumericControl
+                  label='Y Offset'
+                  value={yOffset}
+                  min={-9999}
+                  max={9999}
+                  step={1}
+                  unit='px'
+                  onChange={handleYOffsetChange}
+                />
+              )}
             </div>
           </div>
 
