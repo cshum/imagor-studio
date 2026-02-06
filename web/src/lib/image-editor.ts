@@ -13,16 +13,9 @@ export type BlendMode =
   | 'screen'
   | 'overlay'
   | 'soft-light'
-  | 'hard-light'
-  | 'color-burn'
-  | 'color-dodge'
   | 'darken'
   | 'lighten'
-  | 'add'
-  | 'difference'
-  | 'exclusion'
   | 'mask'
-  | 'mask-out'
 
 export interface ImageLayer {
   id: string // Unique identifier (crypto.randomUUID())

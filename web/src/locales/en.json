@@ -846,16 +846,19 @@
         "screen": "Screen",
         "overlay": "Overlay",
         "soft-light": "Soft Light",
-        "hard-light": "Hard Light",
-        "color-burn": "Color Burn",
-        "color-dodge": "Color Dodge",
         "darken": "Darken",
         "lighten": "Lighten",
-        "add": "Add",
-        "difference": "Difference",
-        "exclusion": "Exclusion",
-        "mask": "Mask",
-        "mask-out": "Mask Out"
+        "mask": "Mask"
+      },
+      "blendModeDescriptions": {
+        "normal": "Standard blending",
+        "multiply": "Add shadows and depth",
+        "screen": "Add glows and light",
+        "overlay": "Boost contrast",
+        "soft-light": "Subtle lighting",
+        "darken": "Show darker areas",
+        "lighten": "Show lighter areas",
+        "mask": "Transparency mask"
       }
     },
     "context": {

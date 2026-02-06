@@ -29,16 +29,9 @@ const BLEND_MODES: BlendMode[] = [
   'screen',
   'overlay',
   'soft-light',
-  'hard-light',
-  'color-burn',
-  'color-dodge',
   'darken',
   'lighten',
-  'add',
-  'difference',
-  'exclusion',
   'mask',
-  'mask-out',
 ]
 
 export function LayerControls({
@@ -239,7 +232,15 @@ export function LayerControls({
               <SelectContent>
                 {BLEND_MODES.map((mode) => (
                   <SelectItem key={mode} value={mode}>
-                    {t(`imageEditor.layers.blendModes.${mode}`)}
+                    <div className='flex items-center gap-2'>
+                      <span className='font-medium'>
+                        {t(`imageEditor.layers.blendModes.${mode}`)}
+                      </span>
+                      <span className='text-muted-foreground'>-</span>
+                      <span className='text-muted-foreground text-sm'>
+                        {t(`imageEditor.layers.blendModeDescriptions.${mode}`)}
+                      </span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
