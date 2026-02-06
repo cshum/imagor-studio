@@ -232,12 +232,64 @@ export class ImageEditor {
       parts.push(`${state.cropLeft}x${state.cropTop}:${right}x${bottom}`)
     }
 
-    // Add dimensions (scaled by scaleFactor)
+    // Add dimensions with flip integration (scaled by scaleFactor)
+    // Format: /fit-in/-200x-300 where minus signs indicate flips
     if (state.width || state.height) {
-      const prefix = state.fitIn !== false ? 'fit-in/' : ''
-      const w = state.width ? Math.round(state.width * scaleFactor) : 0
-      const h = state.height ? Math.round(state.height * scaleFactor) : 0
-      parts.push(`${prefix}${w}x${h}`)
+      // Build dimension prefix
+      let prefix = ''
+      
+      // Fitting mode
+      if (state.stretch) {
+        prefix = 'stretch/'
+      } else if (state.fitIn !== false) {
+        prefix = 'fit-in/'
+      }
+      
+      // Calculate dimensions with flip integration
+      let w = state.width ? Math.round(state.width * scaleFactor) : 0
+      let h = state.height ? Math.round(state.height * scaleFactor) : 0
+      
+      // Add minus sign for flips
+      const wStr = state.hFlip ? `-${w}` : `${w}`
+      const hStr = state.vFlip ? `-${h}` : `${h}`
+      
+      parts.push(`${prefix}${wStr}x${hStr}`)
+    }
+
+    // Add padding (scaled by scaleFactor)
+    // Format: leftxtop:rightxbottom (GxH:IxJ in imagor spec)
+    const hasPadding =
+      (state.paddingTop !== undefined && state.paddingTop > 0) ||
+      (state.paddingRight !== undefined && state.paddingRight > 0) ||
+      (state.paddingBottom !== undefined && state.paddingBottom > 0) ||
+      (state.paddingLeft !== undefined && state.paddingLeft > 0)
+
+    if (hasPadding) {
+      const top = state.paddingTop
+        ? Math.round(state.paddingTop * scaleFactor)
+        : 0
+      const right = state.paddingRight
+        ? Math.round(state.paddingRight * scaleFactor)
+        : 0
+      const bottom = state.paddingBottom
+        ? Math.round(state.paddingBottom * scaleFactor)
+        : 0
+      const left = state.paddingLeft
+        ? Math.round(state.paddingLeft * scaleFactor)
+        : 0
+      // Correct format: left x top : right x bottom
+      parts.push(`${left}x${top}:${right}x${bottom}`)
+    }
+
+    // Add alignment (for Fill mode when fitIn is false)
+    if (state.fitIn === false) {
+      if (state.hAlign) parts.push(state.hAlign)
+      if (state.vAlign) parts.push(state.vAlign)
+    }
+
+    // Add smart crop (after alignment, before filters)
+    if (state.smart) {
+      parts.push('smart')
     }
 
     // Build filters array
@@ -284,6 +336,27 @@ export class ImageEditor {
     // Rotation
     if (state.rotation !== undefined && state.rotation !== 0) {
       filters.push(`rotate(${state.rotation})`)
+    }
+
+    // Format/Quality/MaxBytes (only for non-preview layer paths)
+    if (!forPreview) {
+      if (state.format) {
+        filters.push(`format(${state.format})`)
+      }
+      if (state.quality && state.format) {
+        filters.push(`quality(${state.quality})`)
+      }
+      if (state.maxBytes && (state.format || state.quality)) {
+        filters.push(`max_bytes(${state.maxBytes})`)
+      }
+    }
+
+    // Metadata stripping
+    if (state.stripIcc) {
+      filters.push('strip_icc()')
+    }
+    if (state.stripExif) {
+      filters.push('strip_exif()')
     }
 
     // Layer processing - add image() filters for each visible layer
