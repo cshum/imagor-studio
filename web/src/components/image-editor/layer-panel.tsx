@@ -71,10 +71,10 @@ function SortableLayerItem({
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
       <div
         className={cn(
-          'flex h-12 cursor-pointer items-center gap-2 rounded px-2 transition-all',
+          'flex h-12 cursor-pointer items-center gap-2 px-2 transition-all',
           'hover:bg-accent',
           // Use ring style for both selected and editing
-          (isSelected || isEditing) && 'ring-primary ring-2',
+          (isSelected || isEditing) && 'ring-primary ring-2 ring-inset',
         )}
         onClick={() => onSelect(layer.id)}
       >
@@ -169,9 +169,9 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
   return (
     <div
       className={cn(
-        'flex h-12 cursor-pointer items-center gap-2 rounded px-2 transition-colors',
-        'bg-muted/50 hover:bg-muted',
-        isSelected && 'bg-muted ring-primary ring-2',
+        'flex h-12 cursor-pointer items-center gap-2 px-2 transition-all',
+        'hover:bg-accent',
+        isSelected && 'ring-primary ring-2 ring-inset',
       )}
       onClick={onClick}
     >
@@ -181,12 +181,12 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
       </div>
 
       {/* Base image name */}
-      <span className='flex-1 truncate text-sm font-medium' title={filename}>
+      <span className='flex-1 truncate text-sm' title={filename}>
         {filename}
       </span>
 
       {/* Badge */}
-      <Badge variant='default' className='shrink-0 text-xs'>
+      <Badge variant='secondary' className='shrink-0 text-xs'>
         {t('imageEditor.layers.baseImage')}
       </Badge>
     </div>
@@ -390,9 +390,12 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
       </div>
 
       {/* Layer list (scrollable) */}
-      <div className='flex-1 overflow-y-auto'>
+      <div className='flex-1 overflow-y-auto px-2'>
         <div
-          className={cn('space-y-1 px-2 pb-2', editingContext && 'pointer-events-none opacity-50')}
+          className={cn(
+            'mb-2 divide-y rounded-md border',
+            editingContext && 'pointer-events-none opacity-50',
+          )}
         >
           <DndContext
             sensors={sensors}
@@ -449,7 +452,7 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
 
       {/* Layer properties panel (when layer selected and not dragging) */}
       {selectedLayer && !activeId && (
-        <div className='shrink-0 border-t'>
+        <div className='shrink-0'>
           <LayerControls
             layer={selectedLayer}
             isEditing={editingContext === selectedLayer.id}
