@@ -390,10 +390,8 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
       </div>
 
       {/* Layer list (scrollable) */}
-      <div className='flex-1 overflow-y-auto px-2'>
-        <div
-          className={cn('mb-2 space-y-0.5', editingContext && 'pointer-events-none opacity-50')}
-        >
+      <div className='flex-1 overflow-y-auto px-1'>
+        <div className={cn('mb-2 space-y-0.5', editingContext && 'pointer-events-none opacity-50')}>
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -421,17 +419,25 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
                   <span className='flex-1 truncate text-sm'>
                     {activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
                   </span>
+                  {/* Match layer item button structure */}
                   <div className='flex shrink-0 gap-1'>
-                    {activeLayer.visible ? (
-                      <Eye className='h-4 w-4' />
-                    ) : (
-                      <EyeOff className='text-muted-foreground h-4 w-4' />
-                    )}
-                    {activeLayer.locked ? (
-                      <Lock className='h-4 w-4' />
-                    ) : (
-                      <Unlock className='text-muted-foreground h-4 w-4' />
-                    )}
+                    <div className='flex h-8 w-8 items-center justify-center'>
+                      {activeLayer.visible ? (
+                        <Eye className='h-4 w-4' />
+                      ) : (
+                        <EyeOff className='text-muted-foreground h-4 w-4' />
+                      )}
+                    </div>
+                    <div className='flex h-8 w-8 items-center justify-center'>
+                      {activeLayer.locked ? (
+                        <Lock className='h-4 w-4' />
+                      ) : (
+                        <Unlock className='text-muted-foreground h-4 w-4' />
+                      )}
+                    </div>
+                    <div className='text-destructive flex h-8 w-8 items-center justify-center'>
+                      <Trash2 className='h-4 w-4' />
+                    </div>
                   </div>
                 </div>
               ) : null}
