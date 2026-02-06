@@ -38,8 +38,6 @@ interface LayerPanelProps {
 
 interface SortableLayerItemProps {
   layer: ImageLayer
-  index: number
-  totalLayers: number
   isSelected: boolean
   isEditing: boolean
   onSelect: (layerId: string) => void
@@ -50,8 +48,6 @@ interface SortableLayerItemProps {
 
 function SortableLayerItem({
   layer,
-  index,
-  totalLayers,
   isSelected,
   isEditing,
   onSelect,
@@ -76,7 +72,7 @@ function SortableLayerItem({
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-50', 'relative')}>
       <Card
         className={cn(
-          'cursor-pointer p-3 transition-colors',
+          'cursor-pointer p-2 transition-colors',
           isSelected && 'ring-primary ring-2',
           isEditing && 'bg-primary/5',
         )}
@@ -106,9 +102,6 @@ function SortableLayerItem({
                   {t('imageEditor.layers.editing')}
                 </Badge>
               )}
-            </div>
-            <div className='text-muted-foreground text-xs'>
-              {t('imageEditor.layers.layerNumber', { number: totalLayers - index })}
             </div>
           </div>
 
@@ -182,7 +175,7 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
   return (
     <Card
       className={cn(
-        'bg-muted/50 cursor-pointer p-3 transition-colors',
+        'bg-muted/50 cursor-pointer p-2 transition-colors',
         isSelected && 'ring-primary ring-2',
       )}
       onClick={onClick}
@@ -203,7 +196,6 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
               {t('imageEditor.layers.baseImage')}
             </Badge>
           </div>
-          <div className='text-muted-foreground text-xs'>{t('imageEditor.layers.baseLayer')}</div>
         </div>
       </div>
     </Card>
@@ -380,7 +372,6 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
 
   // Get the active layer for DragOverlay
   const activeLayer = activeId ? layers.find((l) => l.id === activeId) : null
-  const activeLayerIndex = activeLayer ? layers.indexOf(activeLayer) : -1
 
   return (
     <div className='flex flex-col gap-3'>
@@ -415,12 +406,10 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
           >
             <SortableContext items={layers.map((l) => l.id)} strategy={verticalListSortingStrategy}>
               <div className='space-y-2'>
-                {layers.map((layer, index) => (
+                {[...layers].reverse().map((layer) => (
                   <div key={layer.id} className='space-y-2'>
                     <SortableLayerItem
                       layer={layer}
-                      index={index}
-                      totalLayers={layers.length}
                       isSelected={selectedLayerId === layer.id}
                       isEditing={editingContext === layer.id}
                       onSelect={handleSelectLayer}
@@ -444,17 +433,12 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
             </SortableContext>
             <DragOverlay>
               {activeLayer ? (
-                <Card className='p-3'>
+                <Card className='p-2'>
                   <div className='flex items-center gap-2'>
                     <GripVertical className='h-4 w-4' />
                     <div className='min-w-0 flex-1'>
                       <div className='truncate text-sm font-medium'>
                         {activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
-                      </div>
-                      <div className='text-muted-foreground text-xs'>
-                        {t('imageEditor.layers.layerNumber', {
-                          number: layers.length - activeLayerIndex,
-                        })}
                       </div>
                     </div>
                     <div className='flex items-center gap-1'>
