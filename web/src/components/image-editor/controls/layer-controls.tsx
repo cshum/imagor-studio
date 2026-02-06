@@ -311,7 +311,7 @@ export function LayerControls({
           <div className='space-y-2'>
             <Label className='text-sm font-medium'>{t('imageEditor.layers.blendMode')}</Label>
             <Select value={layer.blendMode} onValueChange={handleBlendModeChange}>
-              <SelectTrigger className='h-8'>
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
