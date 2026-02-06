@@ -66,9 +66,14 @@ export function LayerControls({
       else if (x === 'right') hAlign = 'right'
       else if (x === 'center') hAlign = 'center'
     } else {
-      // Numeric value - treat as left-aligned with offset
-      hAlign = 'left'
-      xOffset = x
+      // Numeric value - negative means right-aligned, positive means left-aligned
+      if (x < 0) {
+        hAlign = 'right'
+        xOffset = Math.abs(x)
+      } else {
+        hAlign = 'left'
+        xOffset = x
+      }
     }
 
     // Determine vertical alignment
@@ -79,9 +84,14 @@ export function LayerControls({
       else if (y === 'bottom') vAlign = 'bottom'
       else if (y === 'center') vAlign = 'center'
     } else {
-      // Numeric value - treat as top-aligned with offset
-      vAlign = 'top'
-      yOffset = y
+      // Numeric value - negative means bottom-aligned, positive means top-aligned
+      if (y < 0) {
+        vAlign = 'bottom'
+        yOffset = Math.abs(y)
+      } else {
+        vAlign = 'top'
+        yOffset = y
+      }
     }
 
     return { hAlign, vAlign, xOffset, yOffset }
@@ -92,9 +102,12 @@ export function LayerControls({
       if (value === 'center') {
         // Center alignment - no offset
         onUpdate({ x: 'center' })
+      } else if (value === 'right') {
+        // Right alignment - use negative offset (or string if no offset)
+        onUpdate({ x: xOffset !== 0 ? -xOffset : 'right' })
       } else {
-        // Left/right alignment - preserve or reset offset
-        onUpdate({ x: xOffset !== 0 ? xOffset : value })
+        // Left alignment - use positive offset (or string if no offset)
+        onUpdate({ x: xOffset !== 0 ? xOffset : 'left' })
       }
     },
     [onUpdate, xOffset],
@@ -105,9 +118,12 @@ export function LayerControls({
       if (value === 'center') {
         // Center alignment - no offset
         onUpdate({ y: 'center' })
+      } else if (value === 'bottom') {
+        // Bottom alignment - use negative offset (or string if no offset)
+        onUpdate({ y: yOffset !== 0 ? -yOffset : 'bottom' })
       } else {
-        // Top/bottom alignment - preserve or reset offset
-        onUpdate({ y: yOffset !== 0 ? yOffset : value })
+        // Top alignment - use positive offset (or string if no offset)
+        onUpdate({ y: yOffset !== 0 ? yOffset : 'top' })
       }
     },
     [onUpdate, yOffset],
@@ -115,16 +131,18 @@ export function LayerControls({
 
   const handleXOffsetChange = useCallback(
     (value: number) => {
-      onUpdate({ x: value })
+      // Convert UI value (always positive) to imagor value (negative for right)
+      onUpdate({ x: hAlign === 'right' ? -value : value })
     },
-    [onUpdate],
+    [onUpdate, hAlign],
   )
 
   const handleYOffsetChange = useCallback(
     (value: number) => {
-      onUpdate({ y: value })
+      // Convert UI value (always positive) to imagor value (negative for bottom)
+      onUpdate({ y: vAlign === 'bottom' ? -value : value })
     },
-    [onUpdate],
+    [onUpdate, vAlign],
   )
 
   const handleAlphaChange = useCallback(
