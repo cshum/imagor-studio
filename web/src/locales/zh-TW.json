@@ -798,6 +798,60 @@
       "bottom": "下",
       "left": "左",
       "description": "在圖片周圍新增邊距，並用顏色填充透明或邊距區域"
+    },
+    "layers": {
+      "title": "圖層",
+      "addLayer": "新增圖層",
+      "noLayers": "尚未新增圖層",
+      "layerNumber": "圖層 {{number}}",
+      "dragToReorder": "拖動以重新排序",
+      "hideLayer": "隱藏圖層",
+      "showLayer": "顯示圖層",
+      "lockLayer": "鎖定圖層",
+      "unlockLayer": "解鎖圖層",
+      "deleteLayer": "刪除圖層",
+      "layerAdded": "圖層新增成功",
+      "layerDeleted": "圖層刪除成功",
+      "failedToAddLayer": "新增圖層失敗",
+      "selectImage": "選擇圖層圖片",
+      "selectImageDescription": "選擇要新增為新圖層的圖片",
+      "baseImage": "基礎",
+      "baseLayer": "基礎圖片（底層）",
+      "editing": "編輯",
+      "editLayer": "編輯圖層",
+      "exitLayerEdit": "應用圖層編輯",
+      "exitEditMode": "應用",
+      "position": "位置",
+      "xOffset": "X 偏移",
+      "yOffset": "Y 偏移",
+      "transparency": "不透明度",
+      "blendMode": "混合模式",
+      "blendModes": {
+        "normal": "正常",
+        "multiply": "色彩增值",
+        "screen": "濾色",
+        "overlay": "覆蓋",
+        "soft-light": "柔光",
+        "darken": "變暗",
+        "lighten": "變亮",
+        "mask": "遮罩"
+      },
+      "blendModeDescriptions": {
+        "normal": "標準混合",
+        "multiply": "新增陰影和深度",
+        "screen": "新增光暈和光線",
+        "overlay": "增強對比度",
+        "soft-light": "柔和照明",
+        "darken": "顯示較暗區域",
+        "lighten": "顯示較亮區域",
+        "mask": "透明遮罩"
+      }
+    },
+    "context": {
+      "editing": "編輯",
+      "layerTransforms": "圖層變換",
+      "exitLayerEdit": "退出圖層編輯",
+      "editingBaseImage": "編輯基礎圖片"
     }
   }
 }
