@@ -131,16 +131,26 @@ export function LayerControls({
 
   const handleXOffsetChange = useCallback(
     (value: number) => {
-      // Convert UI value (always positive) to imagor value (negative for right)
-      onUpdate({ x: hAlign === 'right' ? -value : value })
+      if (value === 0) {
+        // Zero offset - use alignment string to maintain alignment
+        onUpdate({ x: hAlign })
+      } else {
+        // Non-zero offset - convert UI value to imagor value (negative for right)
+        onUpdate({ x: hAlign === 'right' ? -value : value })
+      }
     },
     [onUpdate, hAlign],
   )
 
   const handleYOffsetChange = useCallback(
     (value: number) => {
-      // Convert UI value (always positive) to imagor value (negative for bottom)
-      onUpdate({ y: vAlign === 'bottom' ? -value : value })
+      if (value === 0) {
+        // Zero offset - use alignment string to maintain alignment
+        onUpdate({ y: vAlign })
+      } else {
+        // Non-zero offset - convert UI value to imagor value (negative for bottom)
+        onUpdate({ y: vAlign === 'bottom' ? -value : value })
+      }
     },
     [onUpdate, vAlign],
   )
