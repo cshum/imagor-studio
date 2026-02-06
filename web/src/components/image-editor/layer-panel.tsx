@@ -271,9 +271,16 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
     [imageEditor, updateLayers, selectedLayerId, t],
   )
 
-  const handleSelectLayer = useCallback((layerId: string) => {
-    setSelectedLayerId((prev) => (prev === layerId ? null : layerId))
-  }, [])
+  const handleSelectLayer = useCallback(
+    (layerId: string) => {
+      const newSelection = selectedLayerId === layerId ? null : layerId
+      setSelectedLayerId(newSelection)
+
+      // Switch editing context when selecting/deselecting a layer
+      imageEditor.switchContext(newSelection)
+    },
+    [selectedLayerId, imageEditor],
+  )
 
   const handleUpdateLayer = useCallback(
     (layerId: string, updates: Partial<ImageLayer>) => {

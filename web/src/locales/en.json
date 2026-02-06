@@ -853,6 +853,12 @@
         "mask": "Mask",
         "mask-out": "Mask Out"
       }
+    },
+    "context": {
+      "editing": "Editing",
+      "layerTransforms": "Layer Transforms",
+      "exitLayerEdit": "Exit Layer Edit",
+      "editingBaseImage": "Editing Base Image"
     }
   }
 }

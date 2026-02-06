@@ -225,6 +225,7 @@ export class ImageEditor {
     const parts: string[] = []
 
     // Add crop if present (before resize)
+    // Crop coordinates are absolute to original image - never scale them
     if (
       state.cropLeft !== undefined &&
       state.cropTop !== undefined &&
@@ -548,6 +549,9 @@ export class ImageEditor {
       for (const layer of state.layers) {
         if (!layer.visible) continue
 
+        // Skip the layer we're currently editing (avoid self-reference)
+        if (this.editingContext === layer.id) continue
+
         // Generate layer imagor path using static helper (synchronous)
         let layerPath: string
         if (layer.transforms && Object.keys(layer.transforms).length > 0) {
@@ -560,8 +564,18 @@ export class ImageEditor {
             forPreview ? scaleFactor : 1,
           )
         } else {
-          // No transforms - simple path
-          layerPath = `/${layer.imagePath}`
+          // No transforms - create minimal state with layer's dimensions
+          // Use the same helper to ensure consistent scaling logic
+          const layerState: Partial<ImageEditorState> = {
+            width: layer.originalDimensions.width,
+            height: layer.originalDimensions.height,
+            fitIn: true,
+          }
+          layerPath = ImageEditor.editorStateToImagorPath(
+            layerState,
+            layer.imagePath,
+            forPreview ? scaleFactor : 1,
+          )
         }
 
         // Scale position if numeric pixels (for preview)
@@ -1004,6 +1018,176 @@ export class ImageEditor {
   // ============================================================================
   // Layer Management Methods
   // ============================================================================
+
+  /**
+   * Current editing context
+   * null = editing base image
+   * string = editing layer with this ID
+   */
+  private editingContext: string | null = null
+
+  /**
+   * Saved base image configuration (when editing a layer)
+   * Allows restoring the original config when switching back to base
+   */
+  private savedBaseImagePath: string | null = null
+  private savedBaseImageDimensions: ImageDimensions | null = null
+
+  /**
+   * Get the current editing context
+   * @returns null for base image, or layer ID for layer editing
+   */
+  getEditingContext(): string | null {
+    return this.editingContext
+  }
+
+  /**
+   * Switch editing context to a layer
+   * Loads the layer's transforms into the editor state
+   * Updates config to point to the layer's image and dimensions
+   * @param layerId - ID of the layer to edit, or null for base image
+   */
+  switchContext(layerId: string | null): void {
+    if (this.editingContext === layerId) return
+
+    // Save current context state before switching
+    // This updates this.state.layers with the saved transforms
+    if (this.editingContext !== null) {
+      // Save current state to the layer we're leaving
+      this.saveContextToLayer(this.editingContext)
+    } else {
+      // Save current state as base image state
+      this.saveContextToBase()
+    }
+
+    // Capture the updated layers array BEFORE switching context
+    // This is critical - saveContextToLayer() updated the layers, we must preserve them
+    const updatedLayers = this.state.layers
+
+    // Switch context
+    this.editingContext = layerId
+
+    // Update config and load new context
+    if (layerId !== null) {
+      // Switching TO a layer
+      const layer = updatedLayers?.find((l) => l.id === layerId)
+      if (layer) {
+        // Save base image config (first time only)
+        if (!this.savedBaseImagePath) {
+          this.savedBaseImagePath = this.config.imagePath
+          this.savedBaseImageDimensions = { ...this.config.originalDimensions }
+        }
+
+        // Point editor config to layer image
+        this.config.imagePath = layer.imagePath
+        this.config.originalDimensions = { ...layer.originalDimensions }
+      }
+      this.loadContextFromLayer(layerId)
+    } else {
+      // Switching BACK to base image
+      if (this.savedBaseImagePath && this.savedBaseImageDimensions) {
+        // Restore base image config
+        this.config.imagePath = this.savedBaseImagePath
+        this.config.originalDimensions = { ...this.savedBaseImageDimensions }
+        // Clear saved config
+        this.savedBaseImagePath = null
+        this.savedBaseImageDimensions = null
+      }
+      this.loadContextFromBase()
+    }
+
+    // Ensure the updated layers array is preserved in the new state
+    // loadContextFromLayer/Base already preserves this.state.layers, but let's be explicit
+    if (updatedLayers) {
+      this.state = {
+        ...this.state,
+        layers: updatedLayers,
+      }
+    }
+
+    // Notify state change and update preview (now uses correct config!)
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Saved base image state (when editing a layer)
+   */
+  private savedBaseState: ImageEditorState | null = null
+
+  /**
+   * Save current editor state to base image storage
+   */
+  private saveContextToBase(): void {
+    this.savedBaseState = { ...this.state }
+  }
+
+  /**
+   * Load base image state from storage
+   */
+  private loadContextFromBase(): void {
+    if (this.savedBaseState) {
+      this.state = { ...this.savedBaseState }
+      this.savedBaseState = null
+    }
+  }
+
+  /**
+   * Save current editor state to a layer's transforms
+   * @param layerId - ID of the layer to save to
+   */
+  private saveContextToLayer(layerId: string): void {
+    if (!this.state.layers) return
+
+    const layer = this.state.layers.find((l) => l.id === layerId)
+    if (!layer) return
+
+    // Save current state (excluding layers) to layer transforms
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { layers, visualCropEnabled, ...transforms } = this.state
+
+    // Update the layer's transforms in the layers array
+    const updatedLayers = this.state.layers.map((l) =>
+      l.id === layerId ? { ...l, transforms: { ...transforms } } : l,
+    )
+
+    // Store updated layers for use after context switch
+    this.state = {
+      ...this.state,
+      layers: updatedLayers,
+    }
+  }
+
+  /**
+   * Load a layer's transforms into editor state
+   * @param layerId - ID of the layer to load from
+   */
+  private loadContextFromLayer(layerId: string): void {
+    if (!this.state.layers) return
+
+    const layer = this.state.layers.find((l) => l.id === layerId)
+    if (!layer) return
+
+    // Start with FRESH defaults based on layer's original dimensions
+    // This ensures no inheritance from base image or previous context
+    const freshState: ImageEditorState = {
+      width: layer.originalDimensions.width,
+      height: layer.originalDimensions.height,
+      fitIn: true,
+      layers: this.state.layers, // Preserve layers array
+    }
+
+    // If layer has saved transforms, apply them on top of fresh state
+    if (layer.transforms) {
+      this.state = {
+        ...freshState,
+        ...layer.transforms,
+        layers: this.state.layers, // Ensure layers array is always preserved
+      }
+    } else {
+      this.state = freshState
+    }
+  }
 
   /**
    * Add a new layer to the editor
