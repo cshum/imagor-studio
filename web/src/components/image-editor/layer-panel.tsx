@@ -19,16 +19,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import {
-  Eye,
-  EyeOff,
-  GripVertical,
-  Image,
-  Lock,
-  Plus,
-  Trash2,
-  Unlock,
-} from 'lucide-react'
+import { Eye, EyeOff, GripVertical, Image, Lock, Plus, Trash2, Unlock } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
@@ -400,53 +391,52 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
 
       {/* Layer list (scrollable) */}
       <div className='flex-1 overflow-y-auto'>
-        <div className={cn('space-y-1 px-2 pb-2', editingContext && 'pointer-events-none opacity-50')}>
+        <div
+          className={cn('space-y-1 px-2 pb-2', editingContext && 'pointer-events-none opacity-50')}
+        >
           <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={layers.map((l) => l.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {[...layers].reverse().map((layer) => (
-                  <SortableLayerItem
-                    key={layer.id}
-                    layer={layer}
-                    isSelected={selectedLayerId === layer.id}
-                    isEditing={editingContext === layer.id}
-                    onSelect={handleSelectLayer}
-                    onToggleVisibility={handleToggleVisibility}
-                    onToggleLock={handleToggleLock}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </SortableContext>
-              <DragOverlay>
-                {activeLayer ? (
-                  <div className='bg-background flex h-12 items-center gap-2 rounded border px-2 shadow-lg'>
-                    <GripVertical className='h-4 w-4' />
-                    <span className='flex-1 truncate text-sm'>
-                      {activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
-                    </span>
-                    <div className='flex shrink-0 gap-1'>
-                      {activeLayer.visible ? (
-                        <Eye className='h-4 w-4' />
-                      ) : (
-                        <EyeOff className='text-muted-foreground h-4 w-4' />
-                      )}
-                      {activeLayer.locked ? (
-                        <Lock className='h-4 w-4' />
-                      ) : (
-                        <Unlock className='text-muted-foreground h-4 w-4' />
-                      )}
-                    </div>
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={layers.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+              {[...layers].reverse().map((layer) => (
+                <SortableLayerItem
+                  key={layer.id}
+                  layer={layer}
+                  isSelected={selectedLayerId === layer.id}
+                  isEditing={editingContext === layer.id}
+                  onSelect={handleSelectLayer}
+                  onToggleVisibility={handleToggleVisibility}
+                  onToggleLock={handleToggleLock}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </SortableContext>
+            <DragOverlay>
+              {activeLayer ? (
+                <div className='bg-background flex h-12 items-center gap-2 rounded border px-2 shadow-lg'>
+                  <GripVertical className='h-4 w-4' />
+                  <span className='flex-1 truncate text-sm'>
+                    {activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
+                  </span>
+                  <div className='flex shrink-0 gap-1'>
+                    {activeLayer.visible ? (
+                      <Eye className='h-4 w-4' />
+                    ) : (
+                      <EyeOff className='text-muted-foreground h-4 w-4' />
+                    )}
+                    {activeLayer.locked ? (
+                      <Lock className='h-4 w-4' />
+                    ) : (
+                      <Unlock className='text-muted-foreground h-4 w-4' />
+                    )}
                   </div>
-                ) : null}
-              </DragOverlay>
-            </DndContext>
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
 
           {/* Base Image - Always shown at bottom */}
           <BaseImageItem
