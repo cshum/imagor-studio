@@ -25,7 +25,6 @@ import {
   GripVertical,
   Image,
   Lock,
-  Paintbrush,
   Pencil,
   Plus,
   Trash2,
@@ -85,15 +84,15 @@ function SortableLayerItem({
   const filename = layer.imagePath.split('/').pop() || layer.imagePath
 
   return (
-    <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-50')}>
+    <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
       <div
         className={cn(
-          'flex h-12 cursor-pointer items-center gap-2 rounded px-2 transition-all',
+          'flex h-12 cursor-pointer items-center gap-2 rounded px-2',
           'hover:bg-accent',
           // Editing state - primary highlight with left border
           isEditing && 'bg-primary/10 border-l-primary border-l-4 font-semibold',
-          // Selected but not editing
-          isSelected && !isEditing && 'bg-accent',
+          // Selected but not editing - use ring style like base image
+          isSelected && !isEditing && 'ring-primary ring-2',
           // Inactive during edit mode (other layers)
           editingContext && !isEditing && 'opacity-60',
         )}
@@ -415,12 +414,6 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
   // Get selected layer for properties panel
   const selectedLayer = selectedLayerId ? layers.find((l) => l.id === selectedLayerId) : null
 
-  // Get editing layer name for banner
-  const editingLayer = editingContext ? layers.find((l) => l.id === editingContext) : null
-  const editingLayerName = editingLayer
-    ? editingLayer.imagePath.split('/').pop() || editingLayer.imagePath
-    : ''
-
   return (
     <div className='flex h-full flex-col'>
       {/* Header with Add button */}
@@ -507,32 +500,12 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
         </div>
       </div>
 
-      {/* Edit mode banner (below layer list to reduce content shift) */}
-      {editingContext && (
-        <div className='bg-accent flex shrink-0 items-center justify-between border-t px-3 py-2'>
-          <div className='flex items-center gap-2'>
-            <Paintbrush className='h-4 w-4' />
-            <span className='text-sm font-medium'>
-              {t('imageEditor.layers.editing')}: {editingLayerName}
-            </span>
-          </div>
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={handleExitEditMode}
-            className='hover:bg-accent-foreground/10 h-8'
-          >
-            {t('imageEditor.layers.exitEditMode')}
-          </Button>
-        </div>
-      )}
-
-      {/* Layer properties panel (only when NOT editing and layer selected) */}
-      {!editingContext && selectedLayer && (
+      {/* Layer properties panel (when layer selected and not dragging) */}
+      {selectedLayer && !activeId && (
         <div className='shrink-0 border-t'>
           <LayerControls
             layer={selectedLayer}
-            isEditing={false}
+            isEditing={editingContext === selectedLayer.id}
             onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
             onEditLayer={() => handleEditLayer(selectedLayer.id)}
             onExitEditMode={handleExitEditMode}

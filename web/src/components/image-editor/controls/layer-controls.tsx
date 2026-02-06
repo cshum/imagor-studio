@@ -91,151 +91,162 @@ export function LayerControls({
   return (
     <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
       {/* Edit Layer Button */}
-      {!isEditing ? (
-        <Button variant='default' size='sm' onClick={onEditLayer} className='w-full'>
-          <Edit className='mr-2 h-4 w-4' />
-          {t('imageEditor.layers.editLayer')}
-        </Button>
-      ) : (
-        <Button variant='outline' size='sm' onClick={onExitEditMode} className='w-full'>
-          <X className='mr-2 h-4 w-4' />
-          {t('imageEditor.layers.exitLayerEdit')}
-        </Button>
+      <Button
+        variant='outline'
+        size='sm'
+        onClick={isEditing ? onExitEditMode : onEditLayer}
+        className='w-full'
+      >
+        {isEditing ? (
+          <>
+            <X className='mr-2 h-4 w-4' />
+            {t('imageEditor.layers.exitLayerEdit')}
+          </>
+        ) : (
+          <>
+            <Edit className='mr-2 h-4 w-4' />
+            {t('imageEditor.layers.editLayer')}
+          </>
+        )}
+      </Button>
+
+      {/* Position Controls (hidden during edit mode) */}
+      {!isEditing && (
+        <>
+          <div className='space-y-3'>
+            <Label className='text-sm font-medium'>{t('imageEditor.layers.position')}</Label>
+
+            {/* X and Y inputs */}
+            <div className='grid grid-cols-2 gap-2'>
+              <div className='space-y-1'>
+                <Label className='text-muted-foreground text-xs'>
+                  {t('imageEditor.layers.positionX')}
+                </Label>
+                <Input
+                  type='text'
+                  value={layer.x}
+                  onChange={(e) => handleXChange(e.target.value)}
+                  placeholder='0'
+                  className='h-8'
+                />
+              </div>
+              <div className='space-y-1'>
+                <Label className='text-muted-foreground text-xs'>
+                  {t('imageEditor.layers.positionY')}
+                </Label>
+                <Input
+                  type='text'
+                  value={layer.y}
+                  onChange={(e) => handleYChange(e.target.value)}
+                  placeholder='0'
+                  className='h-8'
+                />
+              </div>
+            </div>
+
+            {/* Position presets */}
+            <div className='space-y-2'>
+              <div className='grid grid-cols-3 gap-1'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setPositionPreset('left', layer.y)}
+                  className='h-7 text-xs'
+                >
+                  {t('imageEditor.layers.presetLeft')}
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setPositionPreset('center', layer.y)}
+                  className='h-7 text-xs'
+                >
+                  {t('imageEditor.layers.presetCenter')}
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setPositionPreset('right', layer.y)}
+                  className='h-7 text-xs'
+                >
+                  {t('imageEditor.layers.presetRight')}
+                </Button>
+              </div>
+              <div className='grid grid-cols-3 gap-1'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setPositionPreset(layer.x, 'top')}
+                  className='h-7 text-xs'
+                >
+                  {t('imageEditor.layers.presetTop')}
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setPositionPreset(layer.x, 'center')}
+                  className='h-7 text-xs'
+                >
+                  {t('imageEditor.layers.presetMiddle')}
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setPositionPreset(layer.x, 'bottom')}
+                  className='h-7 text-xs'
+                >
+                  {t('imageEditor.layers.presetBottom')}
+                </Button>
+              </div>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => setPositionPreset('repeat', 'repeat')}
+                className='h-7 w-full text-xs'
+              >
+                {t('imageEditor.layers.presetRepeat')}
+              </Button>
+            </div>
+          </div>
+
+          {/* Alpha/Transparency Control */}
+          <div className='space-y-2'>
+            <div className='flex items-center justify-between'>
+              <Label className='text-sm font-medium'>{t('imageEditor.layers.transparency')}</Label>
+              <span className='text-muted-foreground text-xs'>{layer.alpha}%</span>
+            </div>
+            <Slider
+              value={[layer.alpha]}
+              onValueChange={handleAlphaChange}
+              min={0}
+              max={100}
+              step={1}
+              className='w-full'
+            />
+            <div className='text-muted-foreground flex justify-between text-xs'>
+              <span>{t('imageEditor.layers.opaque')}</span>
+              <span>{t('imageEditor.layers.transparent')}</span>
+            </div>
+          </div>
+
+          {/* Blend Mode Control */}
+          <div className='space-y-2'>
+            <Label className='text-sm font-medium'>{t('imageEditor.layers.blendMode')}</Label>
+            <Select value={layer.blendMode} onValueChange={handleBlendModeChange}>
+              <SelectTrigger className='h-8'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {BLEND_MODES.map((mode) => (
+                  <SelectItem key={mode} value={mode}>
+                    {t(`imageEditor.layers.blendModes.${mode}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </>
       )}
-
-      {/* Position Controls */}
-      <div className='space-y-3'>
-        <Label className='text-sm font-medium'>{t('imageEditor.layers.position')}</Label>
-
-        {/* X and Y inputs */}
-        <div className='grid grid-cols-2 gap-2'>
-          <div className='space-y-1'>
-            <Label className='text-muted-foreground text-xs'>
-              {t('imageEditor.layers.positionX')}
-            </Label>
-            <Input
-              type='text'
-              value={layer.x}
-              onChange={(e) => handleXChange(e.target.value)}
-              placeholder='0'
-              className='h-8'
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-muted-foreground text-xs'>
-              {t('imageEditor.layers.positionY')}
-            </Label>
-            <Input
-              type='text'
-              value={layer.y}
-              onChange={(e) => handleYChange(e.target.value)}
-              placeholder='0'
-              className='h-8'
-            />
-          </div>
-        </div>
-
-        {/* Position presets */}
-        <div className='space-y-2'>
-          <div className='grid grid-cols-3 gap-1'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setPositionPreset('left', layer.y)}
-              className='h-7 text-xs'
-            >
-              {t('imageEditor.layers.presetLeft')}
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setPositionPreset('center', layer.y)}
-              className='h-7 text-xs'
-            >
-              {t('imageEditor.layers.presetCenter')}
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setPositionPreset('right', layer.y)}
-              className='h-7 text-xs'
-            >
-              {t('imageEditor.layers.presetRight')}
-            </Button>
-          </div>
-          <div className='grid grid-cols-3 gap-1'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setPositionPreset(layer.x, 'top')}
-              className='h-7 text-xs'
-            >
-              {t('imageEditor.layers.presetTop')}
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setPositionPreset(layer.x, 'center')}
-              className='h-7 text-xs'
-            >
-              {t('imageEditor.layers.presetMiddle')}
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setPositionPreset(layer.x, 'bottom')}
-              className='h-7 text-xs'
-            >
-              {t('imageEditor.layers.presetBottom')}
-            </Button>
-          </div>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => setPositionPreset('repeat', 'repeat')}
-            className='h-7 w-full text-xs'
-          >
-            {t('imageEditor.layers.presetRepeat')}
-          </Button>
-        </div>
-      </div>
-
-      {/* Alpha/Transparency Control */}
-      <div className='space-y-2'>
-        <div className='flex items-center justify-between'>
-          <Label className='text-sm font-medium'>{t('imageEditor.layers.transparency')}</Label>
-          <span className='text-muted-foreground text-xs'>{layer.alpha}%</span>
-        </div>
-        <Slider
-          value={[layer.alpha]}
-          onValueChange={handleAlphaChange}
-          min={0}
-          max={100}
-          step={1}
-          className='w-full'
-        />
-        <div className='text-muted-foreground flex justify-between text-xs'>
-          <span>{t('imageEditor.layers.opaque')}</span>
-          <span>{t('imageEditor.layers.transparent')}</span>
-        </div>
-      </div>
-
-      {/* Blend Mode Control */}
-      <div className='space-y-2'>
-        <Label className='text-sm font-medium'>{t('imageEditor.layers.blendMode')}</Label>
-        <Select value={layer.blendMode} onValueChange={handleBlendModeChange}>
-          <SelectTrigger className='h-8'>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {BLEND_MODES.map((mode) => (
-              <SelectItem key={mode} value={mode}>
-                {t(`imageEditor.layers.blendModes.${mode}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
     </div>
   )
 }
