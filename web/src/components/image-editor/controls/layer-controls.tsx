@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Edit, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,7 +17,10 @@ import type { BlendMode, ImageLayer } from '@/lib/image-editor'
 
 interface LayerControlsProps {
   layer: ImageLayer
+  isEditing: boolean
   onUpdate: (updates: Partial<ImageLayer>) => void
+  onEditLayer: () => void
+  onExitEditMode: () => void
 }
 
 const BLEND_MODES: BlendMode[] = [
@@ -37,7 +41,13 @@ const BLEND_MODES: BlendMode[] = [
   'mask-out',
 ]
 
-export function LayerControls({ layer, onUpdate }: LayerControlsProps) {
+export function LayerControls({
+  layer,
+  isEditing,
+  onUpdate,
+  onEditLayer,
+  onExitEditMode,
+}: LayerControlsProps) {
   const { t } = useTranslation()
 
   const handleXChange = useCallback(
@@ -80,6 +90,19 @@ export function LayerControls({ layer, onUpdate }: LayerControlsProps) {
 
   return (
     <div className='bg-muted/30 space-y-4 rounded-lg border p-4'>
+      {/* Edit Layer Button */}
+      {!isEditing ? (
+        <Button variant='default' size='sm' onClick={onEditLayer} className='w-full'>
+          <Edit className='mr-2 h-4 w-4' />
+          {t('imageEditor.layers.editLayer')}
+        </Button>
+      ) : (
+        <Button variant='outline' size='sm' onClick={onExitEditMode} className='w-full'>
+          <X className='mr-2 h-4 w-4' />
+          {t('imageEditor.layers.exitLayerEdit')}
+        </Button>
+      )}
+
       {/* Position Controls */}
       <div className='space-y-3'>
         <Label className='text-sm font-medium'>{t('imageEditor.layers.position')}</Label>

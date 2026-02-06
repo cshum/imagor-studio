@@ -41,6 +41,7 @@ interface SortableLayerItemProps {
   index: number
   totalLayers: number
   isSelected: boolean
+  isEditing: boolean
   onSelect: (layerId: string) => void
   onToggleVisibility: (layerId: string) => void
   onToggleLock: (layerId: string) => void
@@ -52,6 +53,7 @@ function SortableLayerItem({
   index,
   totalLayers,
   isSelected,
+  isEditing,
   onSelect,
   onToggleVisibility,
   onToggleLock,
@@ -73,7 +75,11 @@ function SortableLayerItem({
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-50', 'relative')}>
       <Card
-        className={cn('cursor-pointer p-3 transition-colors', isSelected && 'ring-primary ring-2')}
+        className={cn(
+          'cursor-pointer p-3 transition-colors',
+          isSelected && 'ring-primary ring-2',
+          isEditing && 'bg-primary/5',
+        )}
         onClick={() => onSelect(layer.id)}
       >
         <div className='flex items-center gap-2'>
@@ -91,8 +97,15 @@ function SortableLayerItem({
 
           {/* Layer info */}
           <div className='min-w-0 flex-1'>
-            <div className='truncate text-sm font-medium' title={filename}>
-              {filename}
+            <div className='flex items-center gap-2'>
+              <div className='truncate text-sm font-medium' title={filename}>
+                {filename}
+              </div>
+              {isEditing && (
+                <Badge variant='default' className='text-xs'>
+                  {t('imageEditor.layers.editing')}
+                </Badge>
+              )}
             </div>
             <div className='text-muted-foreground text-xs'>
               {t('imageEditor.layers.layerNumber', { number: totalLayers - index })}
@@ -158,14 +171,22 @@ function SortableLayerItem({
 
 interface BaseImageItemProps {
   imagePath: string
+  isSelected: boolean
+  onClick: () => void
 }
 
-function BaseImageItem({ imagePath }: BaseImageItemProps) {
+function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
   const { t } = useTranslation()
   const filename = imagePath.split('/').pop() || imagePath
 
   return (
-    <Card className='bg-muted/50 p-3'>
+    <Card
+      className={cn(
+        'bg-muted/50 cursor-pointer p-3 transition-colors',
+        isSelected && 'ring-primary ring-2',
+      )}
+      onClick={onClick}
+    >
       <div className='flex items-center gap-2'>
         {/* Icon instead of drag handle */}
         <div className='flex h-4 w-4 items-center justify-center'>
@@ -193,6 +214,9 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
   const { t } = useTranslation()
   const [layers, setLayers] = useState<ImageLayer[]>(imageEditor.getLayers())
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
+  const [editingContext, setEditingContext] = useState<string | null>(
+    imageEditor.getEditingContext(),
+  )
   const [activeId, setActiveId] = useState<string | null>(null)
   const [filePickerOpen, setFilePickerOpen] = useState(false)
   const [isAddingLayer, setIsAddingLayer] = useState(false)
@@ -273,14 +297,37 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
 
   const handleSelectLayer = useCallback(
     (layerId: string) => {
+      // Toggle selection without entering edit mode
       const newSelection = selectedLayerId === layerId ? null : layerId
       setSelectedLayerId(newSelection)
-
-      // Switch editing context when selecting/deselecting a layer
-      imageEditor.switchContext(newSelection)
     },
-    [selectedLayerId, imageEditor],
+    [selectedLayerId],
   )
+
+  const handleEditLayer = useCallback(
+    (layerId: string) => {
+      // Enter edit mode for this layer
+      setSelectedLayerId(layerId)
+      imageEditor.switchContext(layerId)
+      setEditingContext(layerId)
+    },
+    [imageEditor],
+  )
+
+  const handleExitEditMode = useCallback(() => {
+    // Exit edit mode, return to base
+    imageEditor.switchContext(null)
+    setEditingContext(null)
+  }, [imageEditor])
+
+  const handleSelectBase = useCallback(() => {
+    // Deselect all layers and return to base
+    setSelectedLayerId(null)
+    if (editingContext !== null) {
+      imageEditor.switchContext(null)
+      setEditingContext(null)
+    }
+  }, [editingContext, imageEditor])
 
   const handleUpdateLayer = useCallback(
     (layerId: string, updates: Partial<ImageLayer>) => {
@@ -375,6 +422,7 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
                       index={index}
                       totalLayers={layers.length}
                       isSelected={selectedLayerId === layer.id}
+                      isEditing={editingContext === layer.id}
                       onSelect={handleSelectLayer}
                       onToggleVisibility={handleToggleVisibility}
                       onToggleLock={handleToggleLock}
@@ -384,7 +432,10 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
                     {selectedLayerId === layer.id && (
                       <LayerControls
                         layer={layer}
+                        isEditing={editingContext === layer.id}
                         onUpdate={(updates) => handleUpdateLayer(layer.id, updates)}
+                        onEditLayer={() => handleEditLayer(layer.id)}
+                        onExitEditMode={handleExitEditMode}
                       />
                     )}
                   </div>
@@ -427,7 +478,11 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
         )}
 
         {/* Base Image - Always shown at bottom */}
-        <BaseImageItem imagePath={imagePath} />
+        <BaseImageItem
+          imagePath={imagePath}
+          isSelected={selectedLayerId === null && editingContext === null}
+          onClick={handleSelectBase}
+        />
       </div>
 
       {/* File Picker Dialog */}
