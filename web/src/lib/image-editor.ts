@@ -208,12 +208,14 @@ export class ImageEditor {
    * @param state - Editor state with transformations
    * @param imagePath - Image path
    * @param scaleFactor - Scale factor for preview (1.0 for actual)
+   * @param forPreview - Whether generating for preview (affects layer visibility in visual crop mode)
    * @returns Imagor path string
    */
   private static editorStateToImagorPath(
     state: Partial<ImageEditorState>,
     imagePath: string,
     scaleFactor: number,
+    forPreview = false,
   ): string {
     const parts: string[] = []
 
@@ -285,9 +287,12 @@ export class ImageEditor {
     }
 
     // Layer processing - add image() filters for each visible layer
+    // Skip layers in visual crop mode (positions won't be accurate on uncropped image)
     // Note: When editing a layer, state.layers is undefined, so this won't run
     // The context switching architecture handles layer isolation automatically
-    if (state.layers && state.layers.length > 0) {
+    const shouldApplyLayers = !forPreview || (forPreview && !state.visualCropEnabled)
+
+    if (shouldApplyLayers && state.layers && state.layers.length > 0) {
       for (const layer of state.layers) {
         if (!layer.visible) continue
 
@@ -296,7 +301,12 @@ export class ImageEditor {
         if (layer.transforms && Object.keys(layer.transforms).length > 0) {
           // Build path from layer transforms (NO layers array - prevents recursion)
           const layerState = { ...layer.transforms }
-          layerPath = ImageEditor.editorStateToImagorPath(layerState, layer.imagePath, scaleFactor)
+          layerPath = ImageEditor.editorStateToImagorPath(
+            layerState,
+            layer.imagePath,
+            scaleFactor,
+            forPreview,
+          )
         } else {
           // No transforms - minimal state (NO layers array)
           const layerState: Partial<ImageEditorState> = {
@@ -304,7 +314,12 @@ export class ImageEditor {
             height: layer.originalDimensions.height,
             fitIn: true,
           }
-          layerPath = ImageEditor.editorStateToImagorPath(layerState, layer.imagePath, scaleFactor)
+          layerPath = ImageEditor.editorStateToImagorPath(
+            layerState,
+            layer.imagePath,
+            scaleFactor,
+            forPreview,
+          )
         }
 
         // Build image() filter
@@ -568,8 +583,11 @@ export class ImageEditor {
     }
 
     // Layer processing - add image() filters for each visible layer
+    // Skip layers in visual crop mode (positions won't be accurate on uncropped image)
     // Note: When editing a layer, state.layers is undefined, so this won't run
-    if (state.layers && state.layers.length > 0) {
+    const shouldApplyLayers = !forPreview || (forPreview && !state.visualCropEnabled)
+
+    if (shouldApplyLayers && state.layers && state.layers.length > 0) {
       for (const layer of state.layers) {
         if (!layer.visible) continue
 
@@ -583,6 +601,7 @@ export class ImageEditor {
             layerState,
             layer.imagePath,
             forPreview ? scaleFactor : 1,
+            forPreview,
           )
         } else {
           // No transforms - minimal state (NO layers array)
@@ -595,6 +614,7 @@ export class ImageEditor {
             layerState,
             layer.imagePath,
             forPreview ? scaleFactor : 1,
+            forPreview,
           )
         }
 
