@@ -291,6 +291,36 @@ export class ImageEditor {
       filters.push(`rotate(${state.rotation})`)
     }
 
+    // Layer processing - add image() filters for each visible layer
+    // Note: When editing a layer, state.layers is undefined, so this won't run
+    // The context switching architecture handles layer isolation automatically
+    if (state.layers && state.layers.length > 0) {
+      for (const layer of state.layers) {
+        if (!layer.visible) continue
+
+        // Generate layer path (simple image, no nested layers)
+        let layerPath: string
+        if (layer.transforms && Object.keys(layer.transforms).length > 0) {
+          // Build path from layer transforms (NO layers array - prevents recursion)
+          const layerState = { ...layer.transforms }
+          layerPath = ImageEditor.editorStateToImagorPath(layerState, layer.imagePath, scaleFactor)
+        } else {
+          // No transforms - minimal state (NO layers array)
+          const layerState: Partial<ImageEditorState> = {
+            width: layer.originalDimensions.width,
+            height: layer.originalDimensions.height,
+            fitIn: true,
+          }
+          layerPath = ImageEditor.editorStateToImagorPath(layerState, layer.imagePath, scaleFactor)
+        }
+
+        // Build image() filter
+        const x = typeof layer.x === 'number' ? Math.round(layer.x * scaleFactor) : layer.x
+        const y = typeof layer.y === 'number' ? Math.round(layer.y * scaleFactor) : layer.y
+        filters.push(`image(${layerPath},${x},${y},${layer.alpha},${layer.blendMode})`)
+      }
+    }
+
     // Add filters to path
     if (filters.length > 0) {
       parts.push(`filters:${filters.join(':')}`)
@@ -545,27 +575,24 @@ export class ImageEditor {
     }
 
     // Layer processing - add image() filters for each visible layer
+    // Note: When editing a layer, state.layers is undefined, so this won't run
     if (state.layers && state.layers.length > 0) {
       for (const layer of state.layers) {
         if (!layer.visible) continue
 
-        // Skip the layer we're currently editing (avoid self-reference)
-        if (this.editingContext === layer.id) continue
-
         // Generate layer imagor path using static helper (synchronous)
+        // Each layer is a simple image (no nested layers - prevents recursion)
         let layerPath: string
         if (layer.transforms && Object.keys(layer.transforms).length > 0) {
-          // Build nested imagor path from layer transforms
-          // Prevent nested layers (no recursion)
-          const layerState = { ...layer.transforms, layers: undefined }
+          // Build path from layer transforms (NO layers array - prevents recursion)
+          const layerState = { ...layer.transforms }
           layerPath = ImageEditor.editorStateToImagorPath(
             layerState,
             layer.imagePath,
             forPreview ? scaleFactor : 1,
           )
         } else {
-          // No transforms - create minimal state with layer's dimensions
-          // Use the same helper to ensure consistent scaling logic
+          // No transforms - minimal state (NO layers array)
           const layerState: Partial<ImageEditorState> = {
             width: layer.originalDimensions.width,
             height: layer.originalDimensions.height,
@@ -1082,7 +1109,12 @@ export class ImageEditor {
         this.config.imagePath = layer.imagePath
         this.config.originalDimensions = { ...layer.originalDimensions }
       }
-      this.loadContextFromLayer(layerId)
+      // Load layer context (sets state WITHOUT layers array)
+      // Pass updatedLayers so we can look up the layer with its saved transforms
+      if (updatedLayers) {
+        this.loadContextFromLayer(layerId, updatedLayers)
+      }
+      // DO NOT re-add layers array here - layer editing is isolated!
     } else {
       // Switching BACK to base image
       if (this.savedBaseImagePath && this.savedBaseImageDimensions) {
@@ -1093,16 +1125,8 @@ export class ImageEditor {
         this.savedBaseImagePath = null
         this.savedBaseImageDimensions = null
       }
+      // Load base context (includes layers array)
       this.loadContextFromBase()
-    }
-
-    // Ensure the updated layers array is preserved in the new state
-    // loadContextFromLayer/Base already preserves this.state.layers, but let's be explicit
-    if (updatedLayers) {
-      this.state = {
-        ...this.state,
-        layers: updatedLayers,
-      }
     }
 
     // Notify state change and update preview (now uses correct config!)
@@ -1137,44 +1161,47 @@ export class ImageEditor {
    * @param layerId - ID of the layer to save to
    */
   private saveContextToLayer(layerId: string): void {
-    if (!this.state.layers) return
+    // Get layers from savedBaseState (where they're stored during layer editing)
+    const layers = this.savedBaseState?.layers
+    if (!layers) return
 
-    const layer = this.state.layers.find((l) => l.id === layerId)
+    const layer = layers.find((l) => l.id === layerId)
     if (!layer) return
 
     // Save current state (excluding layers) to layer transforms
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { layers, visualCropEnabled, ...transforms } = this.state
+    const { layers: _, visualCropEnabled, ...transforms } = this.state
 
     // Update the layer's transforms in the layers array
-    const updatedLayers = this.state.layers.map((l) =>
+    const updatedLayers = layers.map((l) =>
       l.id === layerId ? { ...l, transforms: { ...transforms } } : l,
     )
 
-    // Store updated layers for use after context switch
-    this.state = {
-      ...this.state,
-      layers: updatedLayers,
+    // Store updated layers back in savedBaseState
+    if (this.savedBaseState) {
+      this.savedBaseState = {
+        ...this.savedBaseState,
+        layers: updatedLayers,
+      }
     }
   }
 
   /**
    * Load a layer's transforms into editor state
    * @param layerId - ID of the layer to load from
+   * @param layers - The layers array to look up from (passed as parameter since this.state.layers is undefined during layer editing)
    */
-  private loadContextFromLayer(layerId: string): void {
-    if (!this.state.layers) return
-
-    const layer = this.state.layers.find((l) => l.id === layerId)
+  private loadContextFromLayer(layerId: string, layers: ImageLayer[]): void {
+    const layer = layers.find((l) => l.id === layerId)
     if (!layer) return
 
     // Start with FRESH defaults based on layer's original dimensions
     // This ensures no inheritance from base image or previous context
+    // NO layers array - layer editing is isolated!
     const freshState: ImageEditorState = {
       width: layer.originalDimensions.width,
       height: layer.originalDimensions.height,
       fitIn: true,
-      layers: this.state.layers, // Preserve layers array
     }
 
     // If layer has saved transforms, apply them on top of fresh state
@@ -1182,7 +1209,7 @@ export class ImageEditor {
       this.state = {
         ...freshState,
         ...layer.transforms,
-        layers: this.state.layers, // Ensure layers array is always preserved
+        // NO layers array - layer editing is isolated!
       }
     } else {
       this.state = freshState
