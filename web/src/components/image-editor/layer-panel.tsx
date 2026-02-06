@@ -71,7 +71,7 @@ function SortableLayerItem({
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
       <div
         className={cn(
-          'flex h-12 cursor-pointer items-center gap-2 px-2 transition-all',
+          'flex h-12 cursor-pointer items-center gap-2 rounded-md px-2',
           'hover:bg-accent',
           // Use ring style for both selected and editing
           (isSelected || isEditing) && 'ring-primary ring-2 ring-inset',
@@ -169,7 +169,7 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
   return (
     <div
       className={cn(
-        'flex h-12 cursor-pointer items-center gap-2 px-2 transition-all',
+        'flex h-12 cursor-pointer items-center gap-2 rounded-md px-2',
         'hover:bg-accent',
         isSelected && 'ring-primary ring-2 ring-inset',
       )}
@@ -392,10 +392,7 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
       {/* Layer list (scrollable) */}
       <div className='flex-1 overflow-y-auto px-2'>
         <div
-          className={cn(
-            'mb-2 divide-y rounded-md border',
-            editingContext && 'pointer-events-none opacity-50',
-          )}
+          className={cn('mb-2 space-y-0.5', editingContext && 'pointer-events-none opacity-50')}
         >
           <DndContext
             sensors={sensors}
@@ -419,7 +416,7 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
             </SortableContext>
             <DragOverlay>
               {activeLayer ? (
-                <div className='bg-background flex h-12 items-center gap-2 rounded border px-2 shadow-lg'>
+                <div className='bg-background flex h-12 items-center gap-2 rounded-md border px-2 shadow-lg'>
                   <GripVertical className='h-4 w-4' />
                   <span className='flex-1 truncate text-sm'>
                     {activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
