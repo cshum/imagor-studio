@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { NumericControl } from '@/components/ui/numeric-control'
 import {
@@ -172,66 +173,94 @@ export function LayerControls({
 
             {/* Horizontal Alignment */}
             <div className='space-y-2'>
-              <Label className='text-muted-foreground text-xs'>Horizontal</Label>
-              <ToggleGroup
-                type='single'
-                value={hAlign}
-                onValueChange={handleHAlignChange}
-                className='justify-start'
-              >
-                <ToggleGroupItem value='left' aria-label='Align left' className='w-full'>
-                  <AlignHorizontalJustifyStart className='h-4 w-4' />
-                </ToggleGroupItem>
-                <ToggleGroupItem value='center' aria-label='Align center' className='w-full'>
-                  <AlignHorizontalJustifyCenter className='h-4 w-4' />
-                </ToggleGroupItem>
-                <ToggleGroupItem value='right' aria-label='Align right' className='w-full'>
-                  <AlignHorizontalJustifyEnd className='h-4 w-4' />
-                </ToggleGroupItem>
-              </ToggleGroup>
-              {hAlign !== 'center' && (
-                <NumericControl
-                  label='X Offset'
-                  value={xOffset}
-                  min={-9999}
-                  max={9999}
+              <Label className='text-muted-foreground text-xs'>X Offset</Label>
+              <div className='flex items-center gap-2'>
+                <ToggleGroup
+                  type='single'
+                  value={hAlign}
+                  onValueChange={handleHAlignChange}
+                  variant='outline'
+                  className='flex-1 gap-0'
+                >
+                  <ToggleGroupItem
+                    value='left'
+                    aria-label='Align left'
+                    className='w-full rounded-r-none border-r-0'
+                  >
+                    <AlignHorizontalJustifyStart className='h-4 w-4' />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value='center'
+                    aria-label='Align center'
+                    className='w-full rounded-none border-r-0'
+                  >
+                    <AlignHorizontalJustifyCenter className='h-4 w-4' />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value='right'
+                    aria-label='Align right'
+                    className='w-full rounded-l-none'
+                  >
+                    <AlignHorizontalJustifyEnd className='h-4 w-4' />
+                  </ToggleGroupItem>
+                </ToggleGroup>
+                <Input
+                  type='number'
+                  value={hAlign === 'center' ? '' : xOffset}
+                  onChange={(e) => handleXOffsetChange(Number(e.target.value) || 0)}
+                  disabled={hAlign === 'center'}
+                  placeholder='—'
+                  min={0}
                   step={1}
-                  unit='px'
-                  onChange={handleXOffsetChange}
+                  className='h-9 w-20'
                 />
-              )}
+              </div>
             </div>
 
             {/* Vertical Alignment */}
             <div className='space-y-2'>
-              <Label className='text-muted-foreground text-xs'>Vertical</Label>
-              <ToggleGroup
-                type='single'
-                value={vAlign}
-                onValueChange={handleVAlignChange}
-                className='justify-start'
-              >
-                <ToggleGroupItem value='top' aria-label='Align top' className='w-full'>
-                  <AlignVerticalJustifyStart className='h-4 w-4' />
-                </ToggleGroupItem>
-                <ToggleGroupItem value='center' aria-label='Align middle' className='w-full'>
-                  <AlignVerticalJustifyCenter className='h-4 w-4' />
-                </ToggleGroupItem>
-                <ToggleGroupItem value='bottom' aria-label='Align bottom' className='w-full'>
-                  <AlignVerticalJustifyEnd className='h-4 w-4' />
-                </ToggleGroupItem>
-              </ToggleGroup>
-              {vAlign !== 'center' && (
-                <NumericControl
-                  label='Y Offset'
-                  value={yOffset}
-                  min={-9999}
-                  max={9999}
+              <Label className='text-muted-foreground text-xs'>Y Offset</Label>
+              <div className='flex items-center gap-2'>
+                <ToggleGroup
+                  type='single'
+                  value={vAlign}
+                  onValueChange={handleVAlignChange}
+                  variant='outline'
+                  className='flex-1 gap-0'
+                >
+                  <ToggleGroupItem
+                    value='top'
+                    aria-label='Align top'
+                    className='w-full rounded-r-none border-r-0'
+                  >
+                    <AlignVerticalJustifyStart className='h-4 w-4' />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value='center'
+                    aria-label='Align middle'
+                    className='w-full rounded-none border-r-0'
+                  >
+                    <AlignVerticalJustifyCenter className='h-4 w-4' />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value='bottom'
+                    aria-label='Align bottom'
+                    className='w-full rounded-l-none'
+                  >
+                    <AlignVerticalJustifyEnd className='h-4 w-4' />
+                  </ToggleGroupItem>
+                </ToggleGroup>
+                <Input
+                  type='number'
+                  value={vAlign === 'center' ? '' : yOffset}
+                  onChange={(e) => handleYOffsetChange(Number(e.target.value) || 0)}
+                  disabled={vAlign === 'center'}
+                  placeholder='—'
+                  min={0}
                   step={1}
-                  unit='px'
-                  onChange={handleYOffsetChange}
+                  className='h-9 w-20'
                 />
-              )}
+              </div>
             </div>
           </div>
 
