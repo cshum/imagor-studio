@@ -670,7 +670,11 @@
       "retry": "Riprova",
       "failedToDownload": "Impossibile scaricare l'immagine",
       "undo": "Annulla",
-      "redo": "Ripeti"
+      "redo": "Ripeti",
+      "unsavedChanges": "Hai modifiche non salvate",
+      "unsavedChangesMessage": "Sei sicuro di voler uscire? Le tue modifiche andranno perse.",
+      "leave": "Esci",
+      "stay": "Rimani"
     },
     "controls": {
       "cropAspect": "Ritaglia e Aspetto",
