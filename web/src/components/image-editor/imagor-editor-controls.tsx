@@ -285,6 +285,19 @@ export function ImageEditorControls({
     [openSections.sectionOrder, sectionConfigs],
   )
 
+  // Filter sections based on editing context - hide fill & padding when editing a layer
+  const visibleSections = useMemo(
+    () =>
+      orderedSections.filter((section) => {
+        // Hide fill & padding section when editing a layer
+        if (section.key === 'fill' && editingContext !== null) {
+          return false
+        }
+        return true
+      }),
+    [orderedSections, editingContext],
+  )
+
   const { t } = useTranslation()
 
   // Get the active section for DragOverlay
@@ -307,7 +320,7 @@ export function ImageEditorControls({
       >
         <SortableContext items={openSections.sectionOrder} strategy={verticalListSortingStrategy}>
           <div className='space-y-4'>
-            {orderedSections.map((section) => (
+            {visibleSections.map((section) => (
               <SortableSection
                 key={section.key}
                 section={section}

@@ -103,6 +103,17 @@ export function ColorControl({ params, onUpdateParams }: ColorControlProps) {
           step={0.1}
           onChange={(value) => onUpdateParams({ sharpen: value })}
         />
+
+        {/* Round Corner */}
+        <NumericControl
+          label={t('imageEditor.effects.roundCorner')}
+          value={params.roundCornerRadius ?? 0}
+          min={0}
+          max={params.width ? Math.floor(params.width / 2) : 100}
+          step={1}
+          unit='px'
+          onChange={(value) => onUpdateParams({ roundCornerRadius: value })}
+        />
       </div>
     </div>
   )

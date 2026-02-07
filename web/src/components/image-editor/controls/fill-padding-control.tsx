@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { NumericControl } from '@/components/ui/numeric-control'
 import {
   Select,
   SelectContent,
@@ -110,19 +109,6 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
             />
           )}
         </div>
-      </div>
-
-      {/* Round Corner Section */}
-      <div className='space-y-2'>
-        <NumericControl
-          label={t('imageEditor.effects.roundCorner')}
-          value={params.roundCornerRadius ?? 0}
-          min={0}
-          max={params.width ? Math.floor(params.width / 2) : 100}
-          step={1}
-          unit='px'
-          onChange={(value) => onUpdateParams({ roundCornerRadius: value })}
-        />
       </div>
 
       {/* Padding Section */}
