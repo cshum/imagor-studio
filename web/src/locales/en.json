@@ -678,7 +678,11 @@
       "retry": "Retry",
       "failedToDownload": "Failed to download image",
       "undo": "Undo",
-      "redo": "Redo"
+      "redo": "Redo",
+      "unsavedChanges": "You have unsaved changes",
+      "unsavedChangesMessage": "Are you sure you want to leave? Your changes will be lost.",
+      "leave": "Leave",
+      "stay": "Stay"
     },
     "controls": {
       "cropAspect": "Crop & Aspect",

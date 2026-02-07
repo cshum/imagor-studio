@@ -673,7 +673,11 @@
       "retry": "重試",
       "failedToDownload": "下載圖片失敗",
       "undo": "撤銷",
-      "redo": "重做"
+      "redo": "重做",
+      "unsavedChanges": "您有未儲存的變更",
+      "unsavedChangesMessage": "確定要離開嗎？您的變更將會遺失。",
+      "leave": "離開",
+      "stay": "留下"
     },
     "controls": {
       "cropAspect": "裁剪和比例",

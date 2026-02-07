@@ -9,9 +9,11 @@ import { PreviewArea } from '@/components/image-editor/preview-area'
 import { LoadingBar } from '@/components/loading-bar'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
+import { ConfirmNavigationDialog } from '@/components/ui/confirm-navigation-dialog'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 import {
   EditorOpenSectionsStorage,
   type EditorOpenSections,
@@ -90,6 +92,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
+
+  // Unsaved changes warning hook
+  const { showDialog, handleConfirm, handleCancel } = useUnsavedChangesWarning(canUndo)
 
   // Derive visualCropEnabled from params state (single source of truth)
   const visualCropEnabled = params.visualCropEnabled ?? false
@@ -430,6 +435,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
       {/* Copy URL Dialog */}
       <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
+
+      {/* Navigation Confirmation Dialog */}
+      <ConfirmNavigationDialog
+        open={showDialog}
+        onOpenChange={handleCancel}
+        onConfirm={handleConfirm}
+      />
     </div>
   )
 }
