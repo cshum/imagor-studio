@@ -245,9 +245,8 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
       }
       imageEditor.removeLayer(layerId)
       updateLayers()
-      toast.success(t('imageEditor.layers.layerDeleted'))
     },
-    [imageEditor, updateLayers, selectedLayerId, editingContext, t],
+    [imageEditor, updateLayers, selectedLayerId, editingContext],
   )
 
   const handleSelectLayer = useCallback(
@@ -321,9 +320,10 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
 
         imageEditor.addLayer(newLayer)
         updateLayers()
-        toast.success(t('imageEditor.layers.layerAdded'))
-      } catch (error) {
-        console.error('Failed to add layer:', error)
+
+        // Auto-select the newly added layer
+        setSelectedLayerId(newLayer.id)
+      } catch {
         toast.error(t('imageEditor.layers.failedToAddLayer'))
       } finally {
         setIsAddingLayer(false)

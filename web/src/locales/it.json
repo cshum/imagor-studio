@@ -809,8 +809,6 @@
       "hideLayer": "Nascondi livello",
       "showLayer": "Mostra livello",
       "deleteLayer": "Elimina livello",
-      "layerAdded": "Livello aggiunto correttamente",
-      "layerDeleted": "Livello eliminato correttamente",
       "failedToAddLayer": "Impossibile aggiungere il livello",
       "selectImage": "Seleziona Immagine per Livello",
       "selectImageDescription": "Scegli un'immagine da aggiungere come nuovo livello",

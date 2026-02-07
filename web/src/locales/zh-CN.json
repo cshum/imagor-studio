@@ -815,8 +815,6 @@
       "hideLayer": "隐藏图层",
       "showLayer": "显示图层",
       "deleteLayer": "删除图层",
-      "layerAdded": "图层添加成功",
-      "layerDeleted": "图层删除成功",
       "failedToAddLayer": "添加图层失败",
       "selectImage": "选择图层图片",
       "selectImageDescription": "选择要添加为新图层的图片",

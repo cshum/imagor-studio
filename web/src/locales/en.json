@@ -817,8 +817,6 @@
       "hideLayer": "Hide layer",
       "showLayer": "Show layer",
       "deleteLayer": "Delete layer",
-      "layerAdded": "Layer added successfully",
-      "layerDeleted": "Layer deleted successfully",
       "failedToAddLayer": "Failed to add layer",
       "selectImage": "Select Image for Layer",
       "selectImageDescription": "Choose an image to add as a new layer",
