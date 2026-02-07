@@ -27,8 +27,8 @@ export function ConfirmNavigationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('imageEditor.page.unsavedChanges')}</DialogTitle>
-          <DialogDescription>{t('imageEditor.page.unsavedChangesMessage')}</DialogDescription>
+          <DialogTitle>{t('imageEditor.page.confirmLeave')}</DialogTitle>
+          <DialogDescription>{t('imageEditor.page.confirmLeaveMessage')}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant='outline' onClick={() => onOpenChange(false)}>

@@ -679,8 +679,8 @@
       "failedToDownload": "Failed to download image",
       "undo": "Undo",
       "redo": "Redo",
-      "unsavedChanges": "You have unsaved changes",
-      "unsavedChangesMessage": "Are you sure you want to leave? Your changes will be lost.",
+      "confirmLeave": "Leave editor?",
+      "confirmLeaveMessage": "Are you sure you want to go back?",
       "leave": "Leave",
       "stay": "Stay"
     },

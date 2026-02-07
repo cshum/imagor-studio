@@ -674,8 +674,8 @@
       "failedToDownload": "下載圖片失敗",
       "undo": "撤銷",
       "redo": "重做",
-      "unsavedChanges": "您有未儲存的變更",
-      "unsavedChangesMessage": "確定要離開嗎？您的變更將會遺失。",
+      "confirmLeave": "離開編輯器？",
+      "confirmLeaveMessage": "確定要返回嗎？",
       "leave": "離開",
       "stay": "留下"
     },
