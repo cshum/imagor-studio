@@ -16,6 +16,7 @@ interface PreviewAreaProps {
   error: Error | null
   galleryKey: string
   imageKey: string
+  imagorPath: string
   originalDimensions: {
     width: number
     height: number
@@ -40,6 +41,7 @@ export function PreviewArea({
   error,
   galleryKey,
   imageKey,
+  imagorPath,
   originalDimensions,
   onLoad,
   onCopyUrl,
@@ -242,7 +244,13 @@ export function PreviewArea({
       </div>
 
       {/* Preview Controls */}
-      <div className={cn('bg-background border-t p-3', isMobile && 'ios-bottom-safe')}>
+      <div
+        className={cn(
+          'bg-background border-t',
+          isMobile ? 'p-3' : '',
+          isMobile && 'ios-bottom-safe',
+        )}
+      >
         {isMobile ? (
           /* Mobile: Only buttons spanning full width */
           <div className='flex items-center gap-2'>
@@ -266,18 +274,11 @@ export function PreviewArea({
             </Button>
           </div>
         ) : (
-          /* Desktop: Centered image name and dimensions */
-          <div className='flex items-center justify-center gap-2 p-2 text-sm'>
-            <span
-              className='max-w-50 truncate font-medium lg:max-w-80 xl:max-w-130'
-              title={imagePath}
-            >
-              {imagePath}
-            </span>
-            <span className='text-muted-foreground'>•</span>
-            <span className='text-muted-foreground'>
-              {originalDimensions.width} × {originalDimensions.height}
-            </span>
+          /* Desktop: Full-width Imagor path */
+          <div className='flex items-center overflow-x-auto'>
+            <code className='text-muted-foreground px-4 py-[22px] font-mono text-xs whitespace-nowrap select-text'>
+              {imagorPath}
+            </code>
           </div>
         )}
       </div>

@@ -1008,6 +1008,15 @@ export class ImageEditor {
   }
 
   /**
+   * Get the live Imagor path (synchronous)
+   * Returns the transformation path without base URL or signature
+   * Example: /fit-in/800x600/filters:brightness(10)/image.jpg
+   */
+  getImagorPath(): string {
+    return ImageEditor.editorStateToImagorPath(this.state, this.config.imagePath, 1, false)
+  }
+
+  /**
    * Get copy URL for dialog display
    */
   async getCopyUrl(): Promise<string> {

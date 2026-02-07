@@ -80,6 +80,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     }
   })
   const [previewUrl, setPreviewUrl] = useState<string>()
+  const [imagorPath, setImagorPath] = useState<string>(imageEditor.getImagorPath())
   const [error, setError] = useState<Error | null>(null)
   const [previewMaxDimensions, setPreviewMaxDimensions] = useState<{
     width: number
@@ -129,6 +130,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   useEffect(() => {
     imageEditor.updatePreviewMaxDimensions(previewMaxDimensions ?? undefined)
   }, [imageEditor, previewMaxDimensions])
+
+  // Update Imagor path whenever params change
+  useEffect(() => {
+    setImagorPath(imageEditor.getImagorPath())
+  }, [imageEditor, params])
 
   // Keyboard shortcuts for undo/redo
   useEffect(() => {
@@ -356,6 +362,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           error={error}
           galleryKey={galleryKey}
           imageKey={imageKey}
+          imagorPath={imagorPath}
           originalDimensions={imageEditor.getOriginalDimensions()}
           onLoad={handlePreviewLoad}
           onCopyUrl={handleCopyUrlClick}
