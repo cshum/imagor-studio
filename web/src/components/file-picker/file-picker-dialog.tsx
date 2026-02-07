@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { FilePickerContent } from '@/components/file-picker/file-picker-content'
-import { LoadingBar } from '@/components/loading-bar'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -48,7 +47,6 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   const { t } = useTranslation()
   const [currentPath, setCurrentPath] = useState<string>(initialPath || '')
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set())
-  const [isLoading, setIsLoading] = useState(false)
 
   const dialogTitle = title || t('components.filePicker.title')
   const dialogDescription = description || t('components.filePicker.description')
@@ -109,10 +107,9 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
   return (
     <>
-      {open && <LoadingBar isLoading={isLoading} />}
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className='bg-sidebar flex h-[80vh] max-w-7xl flex-col gap-0 p-0'>
-          <DialogHeader className='p-6'>
+          <DialogHeader className='relative p-6'>
             <DialogTitle>{dialogTitle}</DialogTitle>
             <DialogDescription>{dialogDescription}</DialogDescription>
           </DialogHeader>
@@ -126,7 +123,6 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
               maxItemWidth={maxItemWidth}
               onPathChange={handlePathChange}
               onSelectionChange={handleSelectionChange}
-              onLoadingChange={setIsLoading}
             />
           </div>
 
