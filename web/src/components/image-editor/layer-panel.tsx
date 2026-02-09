@@ -297,17 +297,40 @@ export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }
         // Extract filename for display name
         const filename = imagePath.split('/').pop() || imagePath
 
+        // Get base image dimensions for scaling
+        const baseDimensions = imageEditor.getOriginalDimensions()
+
+        // Calculate scale to fit layer at 90% of base image size
+        const targetWidth = baseDimensions.width * 0.9
+        const targetHeight = baseDimensions.height * 0.9
+
+        const scaleX = targetWidth / dimensions.width
+        const scaleY = targetHeight / dimensions.height
+        // Use Math.min with 1.0 to prevent upscaling small images
+        const scale = Math.min(scaleX, scaleY, 1.0)
+
+        // Only apply transforms if scaling is needed (scale < 1)
+        let layerTransforms: Partial<ImageLayer>['transforms'] | undefined
+        if (scale < 1) {
+          layerTransforms = {
+            width: Math.round(dimensions.width * scale),
+            height: Math.round(dimensions.height * scale),
+            fitIn: true,
+          }
+        }
+
         // Create new layer with default settings
         const newLayer: ImageLayer = {
           id: `layer-${Date.now()}`, // Simple unique ID
           imagePath,
           originalDimensions: dimensions,
-          x: 'center',
-          y: 'center',
+          x: 0, // Position at top-left instead of center
+          y: 0, // Position at top-left instead of center
           alpha: 0, // 0 = opaque (no transparency)
           blendMode: 'normal',
           visible: true,
           name: filename,
+          transforms: layerTransforms, // Apply auto-resize if needed
         }
 
         imageEditor.addLayer(newLayer)
