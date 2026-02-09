@@ -1217,6 +1217,10 @@ export class ImageEditor {
   switchContext(layerId: string | null): void {
     if (this.editingContext === layerId) return
 
+    // Flush any pending snapshot before switching contexts
+    // This ensures layer edits are saved to history before context switch
+    this.flushPendingHistorySnapshot()
+
     // Save current context state before switching
     // This updates this.state.layers with the saved transforms
     if (this.editingContext !== null) {
