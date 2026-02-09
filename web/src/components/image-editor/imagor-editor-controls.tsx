@@ -32,7 +32,6 @@ import {
   Scissors,
 } from 'lucide-react'
 
-import { ContextIndicator } from '@/components/image-editor/context-indicator'
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
 import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
 import { DimensionControl } from '@/components/image-editor/controls/dimension-control.tsx'
@@ -141,22 +140,7 @@ export function ImageEditorControls({
   const [activeId, setActiveId] = useState<SectionKey | null>(null)
 
   // Track editing context (which layer is being edited)
-  const [editingContext, setEditingContext] = useState<string | null>(
-    imageEditor.getEditingContext(),
-  )
-
-  // Handler to exit layer editing context
-  const handleExitContext = useCallback(() => {
-    imageEditor.switchContext(null)
-    setEditingContext(null)
-  }, [imageEditor])
-
-  // Update editing context when params change (layer selection changes)
-  // This ensures the indicator stays in sync with the editor state
-  const currentContext = imageEditor.getEditingContext()
-  if (currentContext !== editingContext) {
-    setEditingContext(currentContext)
-  }
+  const editingContext = imageEditor.getEditingContext()
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -311,13 +295,6 @@ export function ImageEditorControls({
 
   return (
     <div className='space-y-4'>
-      {/* Context Indicator - shows when editing a layer */}
-      <ContextIndicator
-        imageEditor={imageEditor}
-        editingContext={editingContext}
-        onExitContext={handleExitContext}
-      />
-
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}

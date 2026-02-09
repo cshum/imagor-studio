@@ -843,12 +843,6 @@
         "lighten": "Mostra aree più chiare",
         "mask": "Maschera di trasparenza"
       }
-    },
-    "context": {
-      "editing": "Modifica",
-      "layerTransforms": "Trasformazioni Livello",
-      "exitLayerEdit": "Esci da Modifica Livello",
-      "editingBaseImage": "Modifica Immagine Base"
     }
   }
 }
