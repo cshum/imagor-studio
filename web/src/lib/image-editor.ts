@@ -393,7 +393,7 @@ export class ImageEditor {
           const layerState: Partial<ImageEditorState> = {
             width: layer.originalDimensions.width,
             height: layer.originalDimensions.height,
-            fitIn: true,
+            fitIn: false, // Use fill mode for layers by default
           }
           layerPath = ImageEditor.editorStateToImagorPath(
             layerState,
@@ -689,7 +689,7 @@ export class ImageEditor {
           const layerState: Partial<ImageEditorState> = {
             width: layer.originalDimensions.width,
             height: layer.originalDimensions.height,
-            fitIn: true,
+            fitIn: false, // Use fill mode for layers by default
           }
           layerPath = ImageEditor.editorStateToImagorPath(
             layerState,

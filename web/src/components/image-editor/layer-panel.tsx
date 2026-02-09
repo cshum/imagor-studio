@@ -334,7 +334,7 @@ export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }
           layerTransforms = {
             width: Math.round(dimensions.width * scale),
             height: Math.round(dimensions.height * scale),
-            fitIn: true,
+            fitIn: false, // Use fill mode for layers
           }
         }
 

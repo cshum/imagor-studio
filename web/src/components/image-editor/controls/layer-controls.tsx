@@ -81,7 +81,6 @@ export function LayerControls({
             ...layer.transforms,
             width,
             height: newHeight,
-            fitIn: true,
           },
         })
       } else {
@@ -89,7 +88,6 @@ export function LayerControls({
           transforms: {
             ...layer.transforms,
             width,
-            fitIn: true,
           },
         })
       }
@@ -109,7 +107,6 @@ export function LayerControls({
             ...layer.transforms,
             width: newWidth,
             height,
-            fitIn: true,
           },
         })
       } else {
@@ -117,7 +114,6 @@ export function LayerControls({
           transforms: {
             ...layer.transforms,
             height,
-            fitIn: true,
           },
         })
       }
