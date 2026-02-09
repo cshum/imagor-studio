@@ -110,24 +110,9 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
     }
   }, [open, initialPath, authState.profile?.id, authState.state])
 
-  const handlePathChange = useCallback(
-    (path: string) => {
-      setCurrentPath(path)
-
-      // Save the path to user registry
-      if (authState.profile?.id && authState.state === 'authenticated') {
-        setUserRegistry(
-          'config.file_picker_last_folder_path',
-          path,
-          false,
-          authState.profile.id,
-        ).catch(() => {
-          // Silently fail if we can't save the preference
-        })
-      }
-    },
-    [authState.profile?.id, authState.state],
-  )
+  const handlePathChange = useCallback((path: string) => {
+    setCurrentPath(path)
+  }, [])
 
   const handleSelectionChange = useCallback(
     (path: string) => {
@@ -159,6 +144,18 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
   const handleConfirm = () => {
     if (selectedPaths.size > 0) {
+      // Save the current path to user registry when user confirms selection
+      if (authState.profile?.id && authState.state === 'authenticated') {
+        setUserRegistry(
+          'config.file_picker_last_folder_path',
+          currentPath,
+          false,
+          authState.profile.id,
+        ).catch(() => {
+          // Silently fail if we can't save the preference
+        })
+      }
+
       onSelect(Array.from(selectedPaths))
       onOpenChange(false)
     }
