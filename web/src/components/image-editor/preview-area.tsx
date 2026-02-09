@@ -174,7 +174,7 @@ export function PreviewArea({
       {/* Preview Content */}
       <div
         ref={previewContainerRef}
-        className='bg-muted/20 flex min-h-0 flex-1 touch-none items-center justify-center overflow-hidden p-4'
+        className='bg-muted/20 flex min-h-0 flex-1 touch-none items-center justify-center overflow-hidden p-2 pb-0'
       >
         {error ? (
           <div className='flex flex-col items-center gap-4 text-center'>
@@ -206,7 +206,7 @@ export function PreviewArea({
                 onLoad={handleImageLoad}
                 className={cn(
                   'h-auto w-auto object-contain',
-                  'max-h-[calc(100vh-162px)]',
+                  'max-h-[calc(100vh-152px)]',
                   isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
                 )}
               />
