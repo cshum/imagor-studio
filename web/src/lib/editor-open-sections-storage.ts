@@ -10,8 +10,8 @@ const EDITOR_SECTIONS = {
   effects: true,
   transform: false,
   dimensions: false,
-  fill: false,
   output: false,
+  fill: false,
 } as const
 
 // Derive SectionKey from the object keys
