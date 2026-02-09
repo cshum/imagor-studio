@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   AlignHorizontalJustifyCenter,
@@ -9,6 +9,8 @@ import {
   AlignVerticalJustifyStart,
   Check,
   Edit,
+  Lock,
+  Unlock,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -54,6 +56,108 @@ export function LayerControls({
   onExitEditMode,
 }: LayerControlsProps) {
   const { t } = useTranslation()
+
+  // Calculate and store aspect ratio from original dimensions
+  const [aspectRatio] = useState<number>(() => {
+    return layer.originalDimensions.width / layer.originalDimensions.height
+  })
+
+  // Default to locked
+  const [aspectRatioLocked, setAspectRatioLocked] = useState(true)
+
+  // Get current width/height from transforms or use original dimensions
+  const currentWidth = layer.transforms?.width || layer.originalDimensions.width
+  const currentHeight = layer.transforms?.height || layer.originalDimensions.height
+
+  const handleWidthChange = useCallback(
+    (value: string) => {
+      const width = parseInt(value) || undefined
+
+      if (aspectRatioLocked && width) {
+        // Use stored aspect ratio for calculation
+        const newHeight = Math.round(width / aspectRatio)
+        onUpdate({
+          transforms: {
+            ...layer.transforms,
+            width,
+            height: newHeight,
+            fitIn: true,
+          },
+        })
+      } else {
+        onUpdate({
+          transforms: {
+            ...layer.transforms,
+            width,
+            fitIn: true,
+          },
+        })
+      }
+    },
+    [aspectRatioLocked, aspectRatio, layer.transforms, onUpdate],
+  )
+
+  const handleHeightChange = useCallback(
+    (value: string) => {
+      const height = parseInt(value) || undefined
+
+      if (aspectRatioLocked && height) {
+        // Use stored aspect ratio for calculation
+        const newWidth = Math.round(height * aspectRatio)
+        onUpdate({
+          transforms: {
+            ...layer.transforms,
+            width: newWidth,
+            height,
+            fitIn: true,
+          },
+        })
+      } else {
+        onUpdate({
+          transforms: {
+            ...layer.transforms,
+            height,
+            fitIn: true,
+          },
+        })
+      }
+    },
+    [aspectRatioLocked, aspectRatio, layer.transforms, onUpdate],
+  )
+
+  const handleWidthBlur = useCallback(
+    (value: string) => {
+      // Validate only when user finishes editing
+      const width = parseInt(value) || 0
+      if (width <= 0) {
+        // Reset to original dimension if invalid
+        onUpdate({
+          transforms: {
+            ...layer.transforms,
+            width: layer.originalDimensions.width,
+          },
+        })
+      }
+    },
+    [layer.transforms, layer.originalDimensions.width, onUpdate],
+  )
+
+  const handleHeightBlur = useCallback(
+    (value: string) => {
+      // Validate only when user finishes editing
+      const height = parseInt(value) || 0
+      if (height <= 0) {
+        // Reset to original dimension if invalid
+        onUpdate({
+          transforms: {
+            ...layer.transforms,
+            height: layer.originalDimensions.height,
+          },
+        })
+      }
+    },
+    [layer.transforms, layer.originalDimensions.height, onUpdate],
+  )
 
   // Parse current alignment from x/y values
   const { hAlign, vAlign, xOffset, yOffset } = useMemo(() => {
@@ -200,8 +304,6 @@ export function LayerControls({
       {!isEditing && (
         <>
           <div className='space-y-3'>
-            <Label className='text-sm font-medium'>{t('imageEditor.layers.position')}</Label>
-
             {/* Horizontal Alignment */}
             <div className='space-y-2'>
               <Label className='text-muted-foreground text-xs'>
@@ -294,6 +396,58 @@ export function LayerControls({
                   min={0}
                   step={1}
                   className='h-9 w-20'
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Dimensions Control */}
+          <div className='space-y-3'>
+            <div className='grid grid-cols-[1fr_auto_1fr] items-end gap-2'>
+              <div>
+                <Label htmlFor='layer-width' className='text-muted-foreground text-xs'>
+                  {t('imageEditor.dimensions.width')}
+                </Label>
+                <Input
+                  id='layer-width'
+                  type='number'
+                  value={currentWidth}
+                  onChange={(e) => handleWidthChange(e.target.value)}
+                  onBlur={(e) => handleWidthBlur(e.target.value)}
+                  min='1'
+                  max='10000'
+                  className='h-8'
+                />
+              </div>
+
+              {/* Lock Button */}
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => setAspectRatioLocked(!aspectRatioLocked)}
+                className='h-8 w-8 p-0'
+                title={
+                  aspectRatioLocked
+                    ? t('imageEditor.dimensions.unlockAspectRatio')
+                    : t('imageEditor.dimensions.lockAspectRatio')
+                }
+              >
+                {aspectRatioLocked ? <Lock className='h-4 w-4' /> : <Unlock className='h-4 w-4' />}
+              </Button>
+
+              <div>
+                <Label htmlFor='layer-height' className='text-muted-foreground text-xs'>
+                  {t('imageEditor.dimensions.height')}
+                </Label>
+                <Input
+                  id='layer-height'
+                  type='number'
+                  value={currentHeight}
+                  onChange={(e) => handleHeightChange(e.target.value)}
+                  onBlur={(e) => handleHeightBlur(e.target.value)}
+                  min='1'
+                  max='10000'
+                  className='h-8'
                 />
               </div>
             </div>
