@@ -1364,7 +1364,11 @@ export class ImageEditor {
    * @param layer - The layer to add
    */
   addLayer(layer: ImageLayer): void {
-    this.scheduleHistorySnapshot()
+    // Flush any pending snapshot first
+    this.flushPendingHistorySnapshot()
+
+    // Save current state to history BEFORE adding layer (so undo removes it)
+    this.saveHistorySnapshot()
 
     const layers = this.state.layers || []
     this.state = {
@@ -1383,7 +1387,11 @@ export class ImageEditor {
   removeLayer(layerId: string): void {
     if (!this.state.layers) return
 
-    this.scheduleHistorySnapshot()
+    // Flush any pending snapshot first
+    this.flushPendingHistorySnapshot()
+
+    // Save current state to history BEFORE removing layer (so undo restores it)
+    this.saveHistorySnapshot()
 
     this.state = {
       ...this.state,
