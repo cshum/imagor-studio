@@ -1445,10 +1445,18 @@ export class ImageEditor {
 
   /**
    * Get all layers
+   * Always returns layers from base state, regardless of editing context
    * @returns Array of layers or empty array
    */
   getLayers(): ImageLayer[] {
-    return this.state.layers || []
+    // Always get layers from base state, not current editing context
+    if (this.editingContext !== null) {
+      // We're editing a layer - get layers from savedBaseState
+      return this.savedBaseState?.layers || []
+    } else {
+      // We're editing base - get layers from current state
+      return this.state.layers || []
+    }
   }
 
   /**
