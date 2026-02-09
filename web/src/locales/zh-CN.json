@@ -849,12 +849,6 @@
         "lighten": "显示较亮区域",
         "mask": "透明蒙版"
       }
-    },
-    "context": {
-      "editing": "编辑",
-      "layerTransforms": "图层变换",
-      "exitLayerEdit": "退出图层编辑",
-      "editingBaseImage": "编辑基础图片"
     }
   }
 }

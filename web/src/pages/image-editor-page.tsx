@@ -111,7 +111,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         setCanUndo(imageEditor.canUndo())
         setCanRedo(imageEditor.canRedo())
 
-        const state = imageEditor.getState()
+        // Get complete base state (includes all layers with current edits)
+        const state = imageEditor.getBaseState()
         const encoded = serializeStateToUrl(state)
         updateLocationState(encoded)
       },

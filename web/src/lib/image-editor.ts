@@ -181,6 +181,23 @@ export class ImageEditor {
   }
 
   /**
+   * Get the complete base state (including all layers with current edits)
+   * Does NOT switch contexts - just syncs current edits and returns base state
+   * Used for history snapshots and URL serialization
+   */
+  getBaseState(): ImageEditorState {
+    if (this.editingContext !== null) {
+      // Save current layer edits to savedBaseState first
+      this.saveContextToLayer(this.editingContext)
+      // Return the updated base state (includes all layers)
+      return { ...this.savedBaseState! }
+    } else {
+      // Already in base context - return current state
+      return { ...this.state }
+    }
+  }
+
+  /**
    * Get original dimensions of the current image
    * Used by components to access dimensions without loader dependency
    */
@@ -245,8 +262,8 @@ export class ImageEditor {
       }
 
       // Calculate dimensions with flip integration
-      let w = state.width ? Math.round(state.width * scaleFactor) : 0
-      let h = state.height ? Math.round(state.height * scaleFactor) : 0
+      const w = state.width ? Math.round(state.width * scaleFactor) : 0
+      const h = state.height ? Math.round(state.height * scaleFactor) : 0
 
       // Add minus sign for flips
       const wStr = state.hFlip ? `-${w}` : `${w}`
@@ -835,13 +852,16 @@ export class ImageEditor {
 
   /**
    * Save a state snapshot to history immediately
+   * Always captures the complete base state (including all layers)
    * Automatically strips visualCropEnabled (UI-only state)
-   * @param state - The state to save (visualCropEnabled will be stripped)
    */
-  private saveHistorySnapshot(state: ImageEditorState): void {
+  private saveHistorySnapshot(): void {
+    // Always get the complete base state (includes all layers with current edits)
+    const baseState = this.getBaseState()
+
     // Strip visualCropEnabled (UI-only state, not part of transform history)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { visualCropEnabled, ...transformState } = state
+    const { visualCropEnabled, ...transformState } = baseState
 
     // Don't save if state is identical to the last saved state
     if (this.undoStack.length > 0) {
@@ -880,7 +900,7 @@ export class ImageEditor {
     // Schedule snapshot after 300ms of inactivity
     this.historyDebounceTimer = window.setTimeout(() => {
       if (this.pendingHistorySnapshot) {
-        this.saveHistorySnapshot(this.pendingHistorySnapshot)
+        this.saveHistorySnapshot()
         this.pendingHistorySnapshot = null
       }
       this.historyDebounceTimer = null
@@ -894,7 +914,7 @@ export class ImageEditor {
   private flushPendingHistorySnapshot(): void {
     if (this.pendingHistorySnapshot && this.historyDebounceTimer) {
       clearTimeout(this.historyDebounceTimer)
-      this.saveHistorySnapshot(this.pendingHistorySnapshot)
+      this.saveHistorySnapshot()
       this.pendingHistorySnapshot = null
       this.historyDebounceTimer = null
     }
@@ -909,7 +929,7 @@ export class ImageEditor {
     this.flushPendingHistorySnapshot()
 
     // Save current state to history before resetting (so reset can be undone)
-    this.saveHistorySnapshot(this.state)
+    this.saveHistorySnapshot()
 
     // Reset to initial state (same as constructor)
     this.state = {
@@ -956,7 +976,7 @@ export class ImageEditor {
     // Only save to history when ENTERING crop mode (not when exiting/applying)
     // This ensures undo goes back to the state before entering crop mode
     if (enabled) {
-      this.saveHistorySnapshot(this.state)
+      this.saveHistorySnapshot()
     }
 
     // Update state first (affects preview URL generation)
@@ -1078,6 +1098,7 @@ export class ImageEditor {
 
   /**
    * Undo the last change
+   * Restores the complete base state and reloads the current context
    */
   undo(): void {
     if (!this.canUndo()) return
@@ -1085,14 +1106,30 @@ export class ImageEditor {
     // Flush any pending history snapshot first
     this.flushPendingHistorySnapshot()
 
-    // Push current state to redo stack WITHOUT visualCropEnabled
+    // Remember which context we're in
+    const currentContext = this.editingContext
+
+    // Save current base state to redo stack (always complete base state)
+    const currentBaseState = this.getBaseState()
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { visualCropEnabled, ...currentState } = this.state
+    const { visualCropEnabled: _, ...currentState } = currentBaseState
     this.redoStack.push({ ...currentState })
 
-    // Pop from undo stack and restore
+    // Pop from undo stack (this is a complete base state)
     const previousState = this.undoStack.pop()!
-    this.state = { ...previousState }
+
+    // Restore the base state
+    if (currentContext !== null) {
+      // We're editing a layer - update savedBaseState and reload context
+      this.savedBaseState = { ...previousState }
+
+      // Reload the layer context from the restored base state
+      const layers = previousState.layers || []
+      this.loadContextFromLayer(currentContext, layers)
+    } else {
+      // We're in base context - directly restore state
+      this.state = { ...previousState }
+    }
 
     // Notify and update preview
     this.callbacks.onStateChange?.(this.getState())
@@ -1104,6 +1141,7 @@ export class ImageEditor {
 
   /**
    * Redo the last undone change
+   * Restores the complete base state and reloads the current context
    */
   redo(): void {
     if (!this.canRedo()) return
@@ -1111,14 +1149,30 @@ export class ImageEditor {
     // Flush any pending history snapshot first
     this.flushPendingHistorySnapshot()
 
-    // Push current state to undo stack WITHOUT visualCropEnabled
+    // Remember which context we're in
+    const currentContext = this.editingContext
+
+    // Save current base state to undo stack (always complete base state)
+    const currentBaseState = this.getBaseState()
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { visualCropEnabled, ...currentState } = this.state
+    const { visualCropEnabled: _, ...currentState } = currentBaseState
     this.undoStack.push({ ...currentState })
 
-    // Pop from redo stack and restore
+    // Pop from redo stack (this is a complete base state)
     const nextState = this.redoStack.pop()!
-    this.state = { ...nextState }
+
+    // Restore the base state
+    if (currentContext !== null) {
+      // We're editing a layer - update savedBaseState and reload context
+      this.savedBaseState = { ...nextState }
+
+      // Reload the layer context from the restored base state
+      const layers = nextState.layers || []
+      this.loadContextFromLayer(currentContext, layers)
+    } else {
+      // We're in base context - directly restore state
+      this.state = { ...nextState }
+    }
 
     // Notify and update preview
     this.callbacks.onStateChange?.(this.getState())
@@ -1162,6 +1216,10 @@ export class ImageEditor {
    */
   switchContext(layerId: string | null): void {
     if (this.editingContext === layerId) return
+
+    // Flush any pending snapshot before switching contexts
+    // This ensures layer edits are saved to history before context switch
+    this.flushPendingHistorySnapshot()
 
     // Save current context state before switching
     // This updates this.state.layers with the saved transforms
@@ -1218,6 +1276,9 @@ export class ImageEditor {
     // Notify state change and update preview (now uses correct config!)
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
+
+    // Trigger history change to update URL with complete base state
+    this.callbacks.onHistoryChange?.()
   }
 
   /**
@@ -1307,7 +1368,11 @@ export class ImageEditor {
    * @param layer - The layer to add
    */
   addLayer(layer: ImageLayer): void {
-    this.scheduleHistorySnapshot()
+    // Flush any pending snapshot first
+    this.flushPendingHistorySnapshot()
+
+    // Save current state to history BEFORE adding layer (so undo removes it)
+    this.saveHistorySnapshot()
 
     const layers = this.state.layers || []
     this.state = {
@@ -1326,7 +1391,11 @@ export class ImageEditor {
   removeLayer(layerId: string): void {
     if (!this.state.layers) return
 
-    this.scheduleHistorySnapshot()
+    // Flush any pending snapshot first
+    this.flushPendingHistorySnapshot()
+
+    // Save current state to history BEFORE removing layer (so undo restores it)
+    this.saveHistorySnapshot()
 
     this.state = {
       ...this.state,
@@ -1376,10 +1445,18 @@ export class ImageEditor {
 
   /**
    * Get all layers
+   * Always returns layers from base state, regardless of editing context
    * @returns Array of layers or empty array
    */
   getLayers(): ImageLayer[] {
-    return this.state.layers || []
+    // Always get layers from base state, not current editing context
+    if (this.editingContext !== null) {
+      // We're editing a layer - get layers from savedBaseState
+      return this.savedBaseState?.layers || []
+    } else {
+      // We're editing base - get layers from current state
+      return this.state.layers || []
+    }
   }
 
   /**

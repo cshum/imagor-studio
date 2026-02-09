@@ -846,12 +846,6 @@
         "lighten": "顯示較亮區域",
         "mask": "透明遮罩"
       }
-    },
-    "context": {
-      "editing": "編輯",
-      "layerTransforms": "圖層變換",
-      "exitLayerEdit": "退出圖層編輯",
-      "editingBaseImage": "編輯基礎圖片"
     }
   }
 }
