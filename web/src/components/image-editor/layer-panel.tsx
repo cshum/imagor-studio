@@ -297,12 +297,31 @@ export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }
         // Extract filename for display name
         const filename = imagePath.split('/').pop() || imagePath
 
-        // Get base image dimensions for scaling
+        // Get base image state and original dimensions
+        const baseState = imageEditor.getState()
         const baseDimensions = imageEditor.getOriginalDimensions()
 
-        // Calculate scale to fit layer at 90% of base image size
-        const targetWidth = baseDimensions.width * 0.9
-        const targetHeight = baseDimensions.height * 0.9
+        // Calculate effective dimensions after crop and padding
+        let effectiveWidth = baseDimensions.width
+        let effectiveHeight = baseDimensions.height
+
+        // Account for crop (reduces dimensions)
+        if (baseState.cropWidth && baseState.cropHeight) {
+          effectiveWidth = baseState.cropWidth
+          effectiveHeight = baseState.cropHeight
+        }
+
+        // Account for padding (adds to dimensions)
+        if (baseState.paddingLeft || baseState.paddingRight) {
+          effectiveWidth += (baseState.paddingLeft || 0) + (baseState.paddingRight || 0)
+        }
+        if (baseState.paddingTop || baseState.paddingBottom) {
+          effectiveHeight += (baseState.paddingTop || 0) + (baseState.paddingBottom || 0)
+        }
+
+        // Calculate scale to fit layer at 90% of effective base image size
+        const targetWidth = effectiveWidth * 0.9
+        const targetHeight = effectiveHeight * 0.9
 
         const scaleX = targetWidth / dimensions.width
         const scaleY = targetHeight / dimensions.height
