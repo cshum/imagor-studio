@@ -174,7 +174,6 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
 
 export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }: LayerPanelProps) {
   const { t } = useTranslation()
-  // Read layers directly from ImageEditor (no local state)
   const layers = imageEditor.getLayers()
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [editingContext, setEditingContext] = useState<string | null>(
