@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils'
 interface LayerPanelProps {
   imageEditor: ImageEditor
   imagePath: string
+  visualCropEnabled?: boolean
 }
 
 interface SortableLayerItemProps {
@@ -171,7 +172,7 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
   )
 }
 
-export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
+export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }: LayerPanelProps) {
   const { t } = useTranslation()
   const [layers, setLayers] = useState<ImageLayer[]>(imageEditor.getLayers())
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
@@ -346,7 +347,7 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
         <Button
           variant='outline'
           onClick={() => setFilePickerOpen(true)}
-          disabled={isAddingLayer || editingContext !== null}
+          disabled={isAddingLayer || editingContext !== null || visualCropEnabled}
           className='mt-2 w-full'
         >
           <Plus className='mr-1 h-4 w-4' />
@@ -356,7 +357,12 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
 
       {/* Layer list (scrollable) */}
       <div className='flex-1 overflow-y-auto px-1'>
-        <div className={cn('mb-2 space-y-0.5', editingContext && 'pointer-events-none opacity-50')}>
+        <div
+          className={cn(
+            'mb-2 space-y-0.5',
+            (editingContext || visualCropEnabled) && 'pointer-events-none opacity-50',
+          )}
+        >
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -416,6 +422,7 @@ export function LayerPanel({ imageEditor, imagePath }: LayerPanelProps) {
           <LayerControls
             layer={selectedLayer}
             isEditing={editingContext === selectedLayer.id}
+            visualCropEnabled={visualCropEnabled}
             onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
             onEditLayer={() => handleEditLayer(selectedLayer.id)}
             onExitEditMode={handleExitEditMode}

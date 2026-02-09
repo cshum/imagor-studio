@@ -28,6 +28,7 @@ import type { BlendMode, ImageLayer } from '@/lib/image-editor'
 interface LayerControlsProps {
   layer: ImageLayer
   isEditing: boolean
+  visualCropEnabled?: boolean
   onUpdate: (updates: Partial<ImageLayer>) => void
   onEditLayer: () => void
   onExitEditMode: () => void
@@ -47,6 +48,7 @@ const BLEND_MODES: BlendMode[] = [
 export function LayerControls({
   layer,
   isEditing,
+  visualCropEnabled = false,
   onUpdate,
   onEditLayer,
   onExitEditMode,
@@ -178,6 +180,7 @@ export function LayerControls({
         variant='outline'
         size='default'
         onClick={isEditing ? onExitEditMode : onEditLayer}
+        disabled={visualCropEnabled}
         className='w-full'
       >
         {isEditing ? (

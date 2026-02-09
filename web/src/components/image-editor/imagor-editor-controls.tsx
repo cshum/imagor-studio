@@ -263,7 +263,13 @@ export function ImageEditorControls({
         key: 'layers',
         icon: Layers,
         titleKey: 'imageEditor.layers.title',
-        component: <LayerPanel imageEditor={imageEditor} imagePath={imagePath} />,
+        component: (
+          <LayerPanel
+            imageEditor={imageEditor}
+            imagePath={imagePath}
+            visualCropEnabled={isVisualCropEnabled}
+          />
+        ),
       },
     }),
     [
