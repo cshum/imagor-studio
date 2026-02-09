@@ -856,8 +856,8 @@ export class ImageEditor {
    * Automatically strips visualCropEnabled (UI-only state)
    */
   private saveHistorySnapshot(): void {
-    // Always get the complete base state (includes all layers with current edits)
-    const baseState = this.getBaseState()
+    // Use pending snapshot if available (state before changes), otherwise get current base state
+    const baseState = this.pendingHistorySnapshot || this.getBaseState()
 
     // Strip visualCropEnabled (UI-only state, not part of transform history)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -887,9 +887,22 @@ export class ImageEditor {
    */
   private scheduleHistorySnapshot(): void {
     // Capture current state as pending snapshot (before update)
-    // Only capture the first state in a sequence of rapid changes
-    if (!this.pendingHistorySnapshot) {
-      this.pendingHistorySnapshot = { ...this.state }
+    // Capture a fresh snapshot before each change (when timer is not running)
+    // IMPORTANT: Deep clone the layers array AND nested transforms to prevent reference issues
+    if (!this.historyDebounceTimer) {
+      this.pendingHistorySnapshot = {
+        ...this.state,
+        // Deep clone layers array AND their nested transforms to capture current state properly
+        layers: this.state.layers
+          ? [
+              ...this.state.layers.map((l) => ({
+                ...l,
+                // Clone the transforms object to prevent reference issues
+                transforms: l.transforms ? { ...l.transforms } : undefined,
+              })),
+            ]
+          : undefined,
+      }
     }
 
     // Clear existing timer
@@ -1414,6 +1427,8 @@ export class ImageEditor {
   updateLayer(layerId: string, updates: Partial<ImageLayer>): void {
     if (!this.state.layers) return
 
+    // Use debounced history snapshot (like updateParams)
+    // This prevents creating a snapshot for every keystroke
     this.scheduleHistorySnapshot()
 
     this.state = {
