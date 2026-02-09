@@ -386,10 +386,20 @@ export class ImageEditor {
           )
         }
 
-        // Build image() filter
+        // Build image() filter with optional trailing parameters
         const x = typeof layer.x === 'number' ? Math.round(layer.x * scaleFactor) : layer.x
         const y = typeof layer.y === 'number' ? Math.round(layer.y * scaleFactor) : layer.y
-        filters.push(`image(${layerPath},${x},${y},${layer.alpha},${layer.blendMode})`)
+
+        // Optimize: skip trailing default parameters
+        let imageFilter = `image(${layerPath},${x},${y}`
+        if (layer.blendMode !== 'normal') {
+          imageFilter += `,${layer.alpha},${layer.blendMode})`
+        } else if (layer.alpha !== 0) {
+          imageFilter += `,${layer.alpha})`
+        } else {
+          imageFilter += `)`
+        }
+        filters.push(imageFilter)
       }
     }
 
@@ -693,8 +703,13 @@ export class ImageEditor {
             ? (forPreview ? Math.round(layer.y * scaleFactor) : layer.y).toString()
             : layer.y.toString()
 
-        // Build image() filter args
-        const args = `${layerPath},${x},${y},${layer.alpha},${layer.blendMode}`
+        // Build image() filter args with optional trailing parameters
+        let args = `${layerPath},${x},${y}`
+        if (layer.blendMode !== 'normal') {
+          args += `,${layer.alpha},${layer.blendMode}`
+        } else if (layer.alpha !== 0) {
+          args += `,${layer.alpha}`
+        }
         filters.push({ name: 'image', args })
       }
     }
