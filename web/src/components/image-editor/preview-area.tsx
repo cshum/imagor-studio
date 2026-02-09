@@ -244,13 +244,7 @@ export function PreviewArea({
       </div>
 
       {/* Preview Controls */}
-      <div
-        className={cn(
-          'bg-background border-t',
-          isMobile ? 'p-3' : '',
-          isMobile && 'ios-bottom-safe',
-        )}
-      >
+      <div className={cn('bg-muted/20', isMobile ? 'p-3' : '', isMobile && 'ios-bottom-safe')}>
         {isMobile ? (
           /* Mobile: Only buttons spanning full width */
           <div className='flex items-center gap-2'>
@@ -276,7 +270,7 @@ export function PreviewArea({
         ) : (
           /* Desktop: Full-width Imagor path */
           <div className='flex items-center overflow-x-auto'>
-            <code className='text-muted-foreground mx-auto px-4 py-[22px] font-mono text-xs whitespace-nowrap select-text'>
+            <code className='text-muted-foreground mx-auto px-4 pb-6 font-mono text-xs whitespace-nowrap select-text'>
               {imagorPath}
             </code>
           </div>
