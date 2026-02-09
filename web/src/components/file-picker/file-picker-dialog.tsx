@@ -151,9 +151,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
           currentPath,
           false,
           authState.profile.id,
-        ).catch(() => {
-          // Silently fail if we can't save the preference
-        })
+        )
       }
 
       onSelect(Array.from(selectedPaths))
