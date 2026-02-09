@@ -70,7 +70,7 @@ function SortableLayerItem({
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
       <div
         className={cn(
-          'flex h-12 cursor-pointer items-center gap-2 rounded-md px-2',
+          'flex h-12 cursor-pointer items-center gap-2 rounded-md px-3',
           'hover:bg-accent',
           // Use ring style for both selected and editing
           (isSelected || isEditing) && 'ring-primary ring-2 ring-inset',
@@ -148,7 +148,7 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
   return (
     <div
       className={cn(
-        'flex h-12 cursor-pointer items-center gap-2 rounded-md px-2',
+        'flex h-12 cursor-pointer items-center gap-2 rounded-md px-3',
         'hover:bg-accent',
         isSelected && 'ring-primary ring-2 ring-inset',
       )}
