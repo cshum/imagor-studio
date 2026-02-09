@@ -262,8 +262,8 @@ export class ImageEditor {
       }
 
       // Calculate dimensions with flip integration
-      let w = state.width ? Math.round(state.width * scaleFactor) : 0
-      let h = state.height ? Math.round(state.height * scaleFactor) : 0
+      const w = state.width ? Math.round(state.width * scaleFactor) : 0
+      const h = state.height ? Math.round(state.height * scaleFactor) : 0
 
       // Add minus sign for flips
       const wStr = state.hFlip ? `-${w}` : `${w}`
