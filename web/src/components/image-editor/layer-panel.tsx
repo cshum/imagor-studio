@@ -174,7 +174,8 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
 
 export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }: LayerPanelProps) {
   const { t } = useTranslation()
-  const [layers, setLayers] = useState<ImageLayer[]>(imageEditor.getLayers())
+  // Read layers directly from ImageEditor (no local state)
+  const layers = imageEditor.getLayers()
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [editingContext, setEditingContext] = useState<string | null>(
     imageEditor.getEditingContext(),
@@ -194,11 +195,6 @@ export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }
     }),
   )
 
-  // Subscribe to layer changes from ImageEditor
-  const updateLayers = useCallback(() => {
-    setLayers(imageEditor.getLayers())
-  }, [imageEditor])
-
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string)
   }, [])
@@ -216,10 +212,9 @@ export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }
 
         const newOrder = arrayMove(currentLayers, oldIndex, newIndex)
         imageEditor.reorderLayers(newOrder)
-        updateLayers()
       }
     },
-    [imageEditor, updateLayers],
+    [imageEditor],
   )
 
   const handleToggleVisibility = useCallback(
@@ -227,10 +222,9 @@ export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }
       const layer = layers.find((l) => l.id === layerId)
       if (layer) {
         imageEditor.updateLayer(layerId, { visible: !layer.visible })
-        updateLayers()
       }
     },
-    [imageEditor, layers, updateLayers],
+    [imageEditor, layers],
   )
 
   const handleDelete = useCallback(
@@ -245,9 +239,8 @@ export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }
         setEditingContext(null)
       }
       imageEditor.removeLayer(layerId)
-      updateLayers()
     },
-    [imageEditor, updateLayers, selectedLayerId, editingContext],
+    [imageEditor, selectedLayerId, editingContext],
   )
 
   const handleSelectLayer = useCallback(
@@ -287,9 +280,8 @@ export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }
   const handleUpdateLayer = useCallback(
     (layerId: string, updates: Partial<ImageLayer>) => {
       imageEditor.updateLayer(layerId, updates)
-      updateLayers()
     },
-    [imageEditor, updateLayers],
+    [imageEditor],
   )
 
   const handleAddLayer = useCallback(
@@ -320,7 +312,6 @@ export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }
         }
 
         imageEditor.addLayer(newLayer)
-        updateLayers()
 
         // Auto-select the newly added layer
         setSelectedLayerId(newLayer.id)
@@ -330,7 +321,7 @@ export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }
         setIsAddingLayer(false)
       }
     },
-    [imageEditor, updateLayers, t],
+    [imageEditor, t],
   )
 
   // Get the active layer for DragOverlay
