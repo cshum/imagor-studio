@@ -854,9 +854,8 @@ export class ImageEditor {
    * Save a state snapshot to history immediately
    * Always captures the complete base state (including all layers)
    * Automatically strips visualCropEnabled (UI-only state)
-   * @param state - The state to save (visualCropEnabled will be stripped)
    */
-  private saveHistorySnapshot(state: ImageEditorState): void {
+  private saveHistorySnapshot(): void {
     // Always get the complete base state (includes all layers with current edits)
     const baseState = this.getBaseState()
 
@@ -901,7 +900,7 @@ export class ImageEditor {
     // Schedule snapshot after 300ms of inactivity
     this.historyDebounceTimer = window.setTimeout(() => {
       if (this.pendingHistorySnapshot) {
-        this.saveHistorySnapshot(this.pendingHistorySnapshot)
+        this.saveHistorySnapshot()
         this.pendingHistorySnapshot = null
       }
       this.historyDebounceTimer = null
@@ -915,7 +914,7 @@ export class ImageEditor {
   private flushPendingHistorySnapshot(): void {
     if (this.pendingHistorySnapshot && this.historyDebounceTimer) {
       clearTimeout(this.historyDebounceTimer)
-      this.saveHistorySnapshot(this.pendingHistorySnapshot)
+      this.saveHistorySnapshot()
       this.pendingHistorySnapshot = null
       this.historyDebounceTimer = null
     }
@@ -930,7 +929,7 @@ export class ImageEditor {
     this.flushPendingHistorySnapshot()
 
     // Save current state to history before resetting (so reset can be undone)
-    this.saveHistorySnapshot(this.state)
+    this.saveHistorySnapshot()
 
     // Reset to initial state (same as constructor)
     this.state = {
@@ -977,7 +976,7 @@ export class ImageEditor {
     // Only save to history when ENTERING crop mode (not when exiting/applying)
     // This ensures undo goes back to the state before entering crop mode
     if (enabled) {
-      this.saveHistorySnapshot(this.state)
+      this.saveHistorySnapshot()
     }
 
     // Update state first (affects preview URL generation)
