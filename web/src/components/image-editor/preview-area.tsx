@@ -269,7 +269,7 @@ export function PreviewArea({
           </div>
         ) : (
           /* Desktop: Full-width Imagor path */
-          <div className='flex items-center overflow-x-auto'>
+          <div className='flex h-12 items-center overflow-x-auto'>
             <code className='text-muted-foreground mx-auto px-4 pb-4 font-mono text-xs whitespace-nowrap select-text'>
               {imagorPath}
             </code>
