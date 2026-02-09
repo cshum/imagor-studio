@@ -165,6 +165,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
                 'config.app_default_sort_by',
                 'config.app_default_sort_order',
                 'config.app_show_file_names',
+                'config.file_picker_last_folder_path',
               ],
               userId,
             )

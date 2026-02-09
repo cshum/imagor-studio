@@ -1,6 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { getUserRegistryMultiple, setUserRegistry } from '@/api/registry-api'
+import { statFile } from '@/api/storage-api'
 import { FilePickerContent } from '@/components/file-picker/file-picker-content'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { useAuth } from '@/stores/auth-store'
 import { loadRootFolders } from '@/stores/folder-tree-store'
 
 export interface FilePickerDialogProps {
@@ -45,6 +48,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   confirmButtonText,
 }) => {
   const { t } = useTranslation()
+  const { authState } = useAuth()
   const [currentPath, setCurrentPath] = useState<string>(initialPath || '')
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set())
 
@@ -52,18 +56,78 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   const dialogDescription = description || t('components.filePicker.description')
   const buttonText = confirmButtonText || t('components.filePicker.select')
 
-  // Load root folders when dialog opens
-  useEffect(() => {
-    if (open) {
-      setCurrentPath(initialPath || '')
-      setSelectedPaths(new Set())
-      loadRootFolders()
-    }
-  }, [open, initialPath])
+  // Track if we've already loaded the initial path for this dialog session
+  const hasLoadedInitialPath = useRef(false)
 
-  const handlePathChange = useCallback((path: string) => {
-    setCurrentPath(path)
-  }, [])
+  // Load last folder path and validate it exists
+  useEffect(() => {
+    if (open && !hasLoadedInitialPath.current) {
+      const loadLastFolderPath = async () => {
+        let pathToUse = initialPath || ''
+
+        // Only load saved path if no initialPath was provided
+        if (!initialPath && authState.profile?.id && authState.state === 'authenticated') {
+          try {
+            const result = await getUserRegistryMultiple(
+              ['config.file_picker_last_folder_path'],
+              authState.profile.id,
+            )
+            const savedPath = result.find(
+              (r) => r.key === 'config.file_picker_last_folder_path',
+            )?.value
+
+            if (savedPath) {
+              // Validate that the folder still exists
+              try {
+                const stat = await statFile(savedPath)
+                if (stat && stat.isDirectory) {
+                  pathToUse = savedPath
+                }
+                // If not a directory or doesn't exist, fall back to root
+              } catch {
+                // Folder doesn't exist, use root directory
+                pathToUse = ''
+              }
+            }
+          } catch {
+            // Failed to load registry, use root directory
+            pathToUse = ''
+          }
+        }
+
+        setCurrentPath(pathToUse)
+        setSelectedPaths(new Set())
+        loadRootFolders()
+        hasLoadedInitialPath.current = true
+      }
+
+      loadLastFolderPath()
+    }
+
+    // Reset the flag when dialog closes
+    if (!open) {
+      hasLoadedInitialPath.current = false
+    }
+  }, [open, initialPath, authState.profile?.id, authState.state])
+
+  const handlePathChange = useCallback(
+    (path: string) => {
+      setCurrentPath(path)
+
+      // Save the path to user registry
+      if (authState.profile?.id && authState.state === 'authenticated') {
+        setUserRegistry(
+          'config.file_picker_last_folder_path',
+          path,
+          false,
+          authState.profile.id,
+        ).catch(() => {
+          // Silently fail if we can't save the preference
+        })
+      }
+    },
+    [authState.profile?.id, authState.state],
+  )
 
   const handleSelectionChange = useCallback(
     (path: string) => {
