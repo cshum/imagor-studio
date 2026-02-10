@@ -1111,8 +1111,8 @@ export class ImageEditor {
     try {
       const downloadUrl = await this.generateDownloadUrl()
 
-      // Use location.href for reliable downloads across all browsers
-      window.location.href = getFullImageUrl(downloadUrl)
+      // Open in new tab to avoid navigation confirmation dialogs
+      window.open(getFullImageUrl(downloadUrl), '_blank')
       return { success: true }
     } catch (error) {
       return {
