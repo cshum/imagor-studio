@@ -140,6 +140,8 @@ export function LayerOverlay({
     displayY: 0,
     displayWidth: 0,
     displayHeight: 0,
+    overlayWidth: 0,  // Store actual overlay dimensions for correct percentage calculation
+    overlayHeight: 0,
   })
 
   // Convert display coordinates back to layer position
@@ -149,6 +151,8 @@ export function LayerOverlay({
       newDisplayY: number,
       newDisplayWidth: number,
       newDisplayHeight: number,
+      overlayWidth: number,
+      overlayHeight: number,
     ) => {
       const updates: {
         x?: string | number
@@ -160,8 +164,9 @@ export function LayerOverlay({
       } = {}
 
       // Convert from preview pixels to base image pixels using percentages
-      const widthPercent = newDisplayWidth / previewWidth
-      const heightPercent = newDisplayHeight / previewHeight
+      // Use actual overlay dimensions (not previewWidth/Height props which may be wrong)
+      const widthPercent = newDisplayWidth / overlayWidth
+      const heightPercent = newDisplayHeight / overlayHeight
       updates.transforms = {
         width: Math.round(widthPercent * baseImageWidth),
         height: Math.round(heightPercent * baseImageHeight),
@@ -169,7 +174,7 @@ export function LayerOverlay({
 
       // Convert X position with auto-switch on boundary crossing
       if (canDragX) {
-        const xPercent = newDisplayX / previewWidth
+        const xPercent = newDisplayX / overlayWidth
         const originalX = Math.round(xPercent * baseImageWidth)
         const layerWidth = updates.transforms?.width || 0
 
@@ -198,7 +203,7 @@ export function LayerOverlay({
 
       // Convert Y position with auto-switch on boundary crossing
       if (canDragY) {
-        const yPercent = newDisplayY / previewHeight
+        const yPercent = newDisplayY / overlayHeight
         const originalY = Math.round(yPercent * baseImageHeight)
         const layerHeight = updates.transforms?.height || 0
 
@@ -263,6 +268,8 @@ export function LayerOverlay({
             displayY: layerRect.top - overlayRect.top,
             displayWidth: layerRect.width,
             displayHeight: layerRect.height,
+            overlayWidth: overlayRect.width,
+            overlayHeight: overlayRect.height,
           })
         }
       }
@@ -291,6 +298,8 @@ export function LayerOverlay({
           displayY: layerRect.top - overlayRect.top,
           displayWidth: layerRect.width,
           displayHeight: layerRect.height,
+          overlayWidth: overlayRect.width,
+          overlayHeight: overlayRect.height,
         })
       }
     },
@@ -326,6 +335,8 @@ export function LayerOverlay({
           newDisplayY,
           initialState.displayWidth,
           initialState.displayHeight,
+          initialState.overlayWidth,
+          initialState.overlayHeight,
         )
         onLayerChange(updates)
       } else if (isResizing && activeHandle) {
@@ -438,7 +449,14 @@ export function LayerOverlay({
           }
         }
 
-        const updates = convertToLayerPosition(newLeft, newTop, newWidth, newHeight)
+        const updates = convertToLayerPosition(
+          newLeft,
+          newTop,
+          newWidth,
+          newHeight,
+          initialState.overlayWidth,
+          initialState.overlayHeight,
+        )
         onLayerChange(updates)
       }
     }
