@@ -6,6 +6,7 @@ import {
   DragOverlay,
   KeyboardSensor,
   PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
   type DragOverEvent,
@@ -130,6 +131,22 @@ function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
           {section.component}
         </CollapsibleContent>
       </Collapsible>
+    </div>
+  )
+}
+
+interface DroppableColumnProps {
+  id: string
+  isEmpty: boolean
+  children: React.ReactNode
+}
+
+function DroppableColumn({ id, isEmpty, children }: DroppableColumnProps) {
+  const { setNodeRef } = useDroppable({ id })
+
+  return (
+    <div ref={setNodeRef} className={cn(isEmpty && 'min-h-full')}>
+      {children}
     </div>
   )
 }
@@ -415,36 +432,42 @@ export function ImageEditorControls({
   // Render based on column prop
   if (column === 'left') {
     // Only render left column (no DndContext - parent provides it)
+    const isEmpty = leftColumnSections.length === 0
     return (
       <SortableContext items={openSections.leftColumn} strategy={verticalListSortingStrategy}>
-        <div className='space-y-3'>
-          {leftColumnSections.map((section) => (
-            <SortableSection
-              key={section.key}
-              section={section}
-              isOpen={openSections[section.key]}
-              onToggle={(open) => handleSectionToggle(section.key, open)}
-            />
-          ))}
-        </div>
+        <DroppableColumn id='left-column' isEmpty={isEmpty}>
+          <div className='space-y-3'>
+            {leftColumnSections.map((section) => (
+              <SortableSection
+                key={section.key}
+                section={section}
+                isOpen={openSections[section.key]}
+                onToggle={(open) => handleSectionToggle(section.key, open)}
+              />
+            ))}
+          </div>
+        </DroppableColumn>
       </SortableContext>
     )
   }
 
   if (column === 'right') {
     // Only render right column (no DndContext - parent provides it)
+    const isEmpty = rightColumnSections.length === 0
     return (
       <SortableContext items={openSections.rightColumn} strategy={verticalListSortingStrategy}>
-        <div className='space-y-3'>
-          {rightColumnSections.map((section) => (
-            <SortableSection
-              key={section.key}
-              section={section}
-              isOpen={openSections[section.key]}
-              onToggle={(open) => handleSectionToggle(section.key, open)}
-            />
-          ))}
-        </div>
+        <DroppableColumn id='right-column' isEmpty={isEmpty}>
+          <div className='space-y-3'>
+            {rightColumnSections.map((section) => (
+              <SortableSection
+                key={section.key}
+                section={section}
+                isOpen={openSections[section.key]}
+                onToggle={(open) => handleSectionToggle(section.key, open)}
+              />
+            ))}
+          </div>
+        </DroppableColumn>
       </SortableContext>
     )
   }
