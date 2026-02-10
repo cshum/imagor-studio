@@ -40,7 +40,6 @@ import { OutputControl } from '@/components/image-editor/controls/output-control
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { LayerPanel } from '@/components/image-editor/layer-panel'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { useBreakpoint } from '@/hooks/use-breakpoint'
 import type { EditorOpenSections, SectionKey } from '@/lib/editor-open-sections-storage'
 import type { ImageEditor, ImageEditorState } from '@/lib/image-editor.ts'
 import { cn } from '@/lib/utils'

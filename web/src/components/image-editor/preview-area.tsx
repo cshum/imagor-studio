@@ -68,6 +68,8 @@ export function PreviewArea({
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
+  const isDesktop = useBreakpoint('lg') // Desktop when screen >= 1024px
+  const isTablet = !isMobile && !isDesktop // Tablet when 768px <= screen < 1024px
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const previewImageRef = useRef<HTMLImageElement>(null)
   const [imageDimensions, setImageDimensions] = useState<{
@@ -228,7 +230,11 @@ export function PreviewArea({
                 className={cn(
                   'h-auto w-auto object-contain',
                   'max-h-[calc(100vh-152px)]',
-                  isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
+                  isMobile
+                    ? 'max-w-[calc(100vw-32px)]'
+                    : isTablet
+                      ? 'max-w-[calc(100vw-362px)]'
+                      : 'max-w-[calc(100vw-692px)]',
                 )}
               />
               {visualCropEnabled &&

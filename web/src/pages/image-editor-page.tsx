@@ -628,10 +628,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         </div>
 
         {/* Bottom bar - spans full width */}
-        <div className='bg-background border-t p-3 overflow-x-auto'>
+        <div className='bg-background overflow-x-auto border-t p-3'>
           <div className='flex min-w-fit items-center gap-4'>
             {/* Imagor Path - scrollable with monospace font */}
-            <code className='text-muted-foreground whitespace-nowrap font-mono text-xs select-text'>
+            <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text'>
               {imagorPath}
             </code>
 
@@ -969,10 +969,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       </DndContext>
 
       {/* Bottom bar - spans full width */}
-      <div className='bg-background border-t p-3 overflow-x-auto'>
+      <div className='bg-background overflow-x-auto border-t p-3'>
         <div className='flex min-w-fit items-center gap-4'>
           {/* Imagor Path - scrollable with monospace font */}
-          <code className='text-muted-foreground whitespace-nowrap font-mono text-xs select-text'>
+          <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text'>
             {imagorPath}
           </code>
 
