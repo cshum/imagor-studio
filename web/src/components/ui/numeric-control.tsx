@@ -16,6 +16,7 @@ interface NumericControlProps {
   unit?: string
   onChange: (value: number) => void
   className?: string
+  disabled?: boolean
 }
 
 export function NumericControl({
@@ -27,6 +28,7 @@ export function NumericControl({
   unit = '',
   onChange,
   className,
+  disabled = false,
 }: NumericControlProps) {
   const [showInput, setShowInput] = useState(false)
 
@@ -96,7 +98,7 @@ export function NumericControl({
   }
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn('space-y-2', disabled && 'pointer-events-none opacity-50', className)}>
       <div className='flex items-center justify-between'>
         <Label className='text-sm'>{label}</Label>
         <div className='flex items-center gap-2'>
@@ -111,6 +113,7 @@ export function NumericControl({
             size='icon'
             className='h-6 w-6'
             onClick={toggleInput}
+            disabled={disabled}
             type='button'
           >
             <SlidersHorizontal className='h-3.5 w-3.5' />
@@ -126,6 +129,7 @@ export function NumericControl({
             min={min}
             max={max}
             step={step}
+            disabled={disabled}
             className='flex-1'
           />
           <Input
@@ -134,6 +138,7 @@ export function NumericControl({
             onChange={handleInputChange}
             onBlur={handleInputBlur}
             onKeyDown={handleKeyDown}
+            disabled={disabled}
             min={min}
             max={max}
             step={step}
@@ -147,6 +152,7 @@ export function NumericControl({
           min={min}
           max={max}
           step={step}
+          disabled={disabled}
           className='w-full'
         />
       )}

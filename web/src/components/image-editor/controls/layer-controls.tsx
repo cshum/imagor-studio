@@ -313,6 +313,7 @@ export function LayerControls({
                   onValueChange={handleHAlignChange}
                   variant='outline'
                   className='flex-1 gap-0'
+                  disabled={visualCropEnabled}
                 >
                   <ToggleGroupItem
                     value='left'
@@ -340,7 +341,7 @@ export function LayerControls({
                   type='number'
                   value={hAlign === 'center' ? '' : xOffset}
                   onChange={(e) => handleXOffsetChange(Number(e.target.value) || 0)}
-                  disabled={hAlign === 'center'}
+                  disabled={hAlign === 'center' || visualCropEnabled}
                   placeholder='—'
                   min={0}
                   step={1}
@@ -361,6 +362,7 @@ export function LayerControls({
                   onValueChange={handleVAlignChange}
                   variant='outline'
                   className='flex-1 gap-0'
+                  disabled={visualCropEnabled}
                 >
                   <ToggleGroupItem
                     value='top'
@@ -388,7 +390,7 @@ export function LayerControls({
                   type='number'
                   value={vAlign === 'center' ? '' : yOffset}
                   onChange={(e) => handleYOffsetChange(Number(e.target.value) || 0)}
-                  disabled={vAlign === 'center'}
+                  disabled={vAlign === 'center' || visualCropEnabled}
                   placeholder='—'
                   min={0}
                   step={1}
@@ -411,6 +413,7 @@ export function LayerControls({
                   value={currentWidth}
                   onChange={(e) => handleWidthChange(e.target.value)}
                   onBlur={(e) => handleWidthBlur(e.target.value)}
+                  disabled={visualCropEnabled}
                   min='1'
                   max='10000'
                   className='h-8'
@@ -422,6 +425,7 @@ export function LayerControls({
                 variant='outline'
                 size='sm'
                 onClick={() => onAspectRatioLockChange(!aspectRatioLocked)}
+                disabled={visualCropEnabled}
                 className='h-8 w-8 p-0'
                 title={
                   aspectRatioLocked
@@ -442,6 +446,7 @@ export function LayerControls({
                   value={currentHeight}
                   onChange={(e) => handleHeightChange(e.target.value)}
                   onBlur={(e) => handleHeightBlur(e.target.value)}
+                  disabled={visualCropEnabled}
                   min='1'
                   max='10000'
                   className='h-8'
@@ -459,12 +464,17 @@ export function LayerControls({
             step={1}
             unit='%'
             onChange={handleAlphaChange}
+            disabled={visualCropEnabled}
           />
 
           {/* Blend Mode Control */}
           <div className='space-y-2'>
             <Label className='text-sm font-medium'>{t('imageEditor.layers.blendMode')}</Label>
-            <Select value={layer.blendMode} onValueChange={handleBlendModeChange}>
+            <Select
+              value={layer.blendMode}
+              onValueChange={handleBlendModeChange}
+              disabled={visualCropEnabled}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
