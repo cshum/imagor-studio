@@ -19,7 +19,6 @@ export type SectionKey = keyof typeof EDITOR_SECTIONS
 
 // Use Record type for better type safety
 export interface EditorOpenSections extends Record<SectionKey, boolean> {
-  sectionOrder: SectionKey[]
   leftColumn: SectionKey[]
   rightColumn: SectionKey[]
 }
@@ -27,9 +26,8 @@ export interface EditorOpenSections extends Record<SectionKey, boolean> {
 // Default sections with proper typing
 const defaultOpenSections: EditorOpenSections = {
   ...EDITOR_SECTIONS,
-  sectionOrder: Object.keys(EDITOR_SECTIONS) as SectionKey[],
   leftColumn: ['layers', 'crop'],
-  rightColumn: ['effects', 'transform', 'dimensions', 'fill', 'output'],
+  rightColumn: ['effects', 'transform', 'dimensions', 'output', 'fill'],
 }
 
 export class EditorOpenSectionsStorage {
@@ -54,26 +52,6 @@ export class EditorOpenSectionsStorage {
 
         // Merge with defaults to ensure all properties exist
         const merged = { ...defaultOpenSections, ...savedSections }
-
-        // Ensure sectionOrder exists and contains valid sections
-        if (!merged.sectionOrder || !Array.isArray(merged.sectionOrder)) {
-          merged.sectionOrder = defaultOpenSections.sectionOrder
-        } else {
-          // Filter out any invalid section keys and ensure all valid sections are present
-          const validSectionKeys = Object.keys(EDITOR_SECTIONS) as SectionKey[]
-          const filteredOrder = merged.sectionOrder.filter((key): key is SectionKey =>
-            validSectionKeys.includes(key as SectionKey),
-          )
-
-          // Add any missing sections to the end
-          validSectionKeys.forEach((key) => {
-            if (!filteredOrder.includes(key)) {
-              filteredOrder.push(key)
-            }
-          })
-
-          merged.sectionOrder = filteredOrder
-        }
 
         // Ensure leftColumn and rightColumn exist and contain valid sections
         const validSectionKeys = Object.keys(EDITOR_SECTIONS) as SectionKey[]
