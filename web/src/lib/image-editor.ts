@@ -1521,7 +1521,7 @@ export class ImageEditor {
       ...this.state,
       layers: this.state.layers.map((layer) => {
         if (layer.id !== layerId) return layer
-        
+
         // Merge transforms object if present in updates
         // This preserves existing transform properties like fitIn
         const mergedLayer = { ...layer, ...updates }

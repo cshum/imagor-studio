@@ -276,11 +276,11 @@ export function PreviewArea({
 
                   // Use layer-specific scales (preview / output dimensions)
                   const { scaleX, scaleY } = getLayerScales()
-                  
+
                   // Get the actual output dimensions (after crop + resize, before padding)
                   // This is what layers are positioned relative to
                   const outputDims = imageEditor.getOutputDimensions()
-                  
+
                   return (
                     <LayerOverlay
                       previewWidth={imageDimensions.width}
