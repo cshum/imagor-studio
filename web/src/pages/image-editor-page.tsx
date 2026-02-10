@@ -196,6 +196,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }
 
   const handleBack = () => {
+    // If editing a layer, exit layer edit mode instead of leaving editor
+    if (editingContext !== null) {
+      imageEditor.switchContext(null)
+      return
+    }
+
+    // Otherwise, navigate back to image view
     if (galleryKey) {
       navigate({
         to: '/gallery/$galleryKey/$imageKey',

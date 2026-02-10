@@ -20,6 +20,8 @@ interface LayerOverlayProps {
   lockedAspectRatio: boolean
   baseImageWidth: number
   baseImageHeight: number
+  onDeselect?: () => void
+  onEnterEditMode?: () => void
 }
 
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | null
@@ -35,6 +37,8 @@ export function LayerOverlay({
   lockedAspectRatio,
   baseImageWidth,
   baseImageHeight,
+  onDeselect,
+  onEnterEditMode,
 }: LayerOverlayProps) {
   // Calculate CSS percentage strings for position and size
   // This allows the browser to handle scaling automatically via CSS
@@ -504,8 +508,35 @@ export function LayerOverlay({
     layerHeight,
   ])
 
+  // Handle click outside layer box to deselect
+  const handleOverlayClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Only deselect if clicking directly on overlay background (not layer box or handles)
+      if (e.target === overlayRef.current && onDeselect) {
+        onDeselect()
+      }
+    },
+    [onDeselect],
+  )
+
+  // Handle double-click on layer box to enter edit mode
+  const handleLayerDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if ((e.target as HTMLElement).classList.contains('layer-box') && onEnterEditMode) {
+        e.preventDefault()
+        e.stopPropagation()
+        onEnterEditMode()
+      }
+    },
+    [onEnterEditMode],
+  )
+
   return (
-    <div ref={overlayRef} className='pointer-events-none absolute inset-0 z-20 h-full w-full'>
+    <div
+      ref={overlayRef}
+      className='pointer-events-auto absolute inset-0 z-20 h-full w-full'
+      onClick={handleOverlayClick}
+    >
       {/* Layer box and handles */}
       <div
         ref={layerBoxRef}
@@ -521,6 +552,7 @@ export function LayerOverlay({
         }}
         onMouseDown={handleLayerMouseDown}
         onTouchStart={handleLayerMouseDown}
+        onDoubleClick={handleLayerDoubleClick}
       >
         {/* NO grid lines - as requested */}
 
