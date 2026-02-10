@@ -81,7 +81,15 @@ export function PreviewArea({
   const [overlayHFlip, setOverlayHFlip] = useState(hFlip)
   const [overlayVFlip, setOverlayVFlip] = useState(vFlip)
 
+  // Track context transitions to hide layer overlay until new preview loads
+  const [isTransitioning, setIsTransitioning] = useState(false)
+
   const imagePath = joinImagePath(galleryKey, imageKey)
+
+  // Detect context changes and set transition flag
+  useEffect(() => {
+    setIsTransitioning(true)
+  }, [editingContext])
 
   // Track image dimensions when loaded
   const handleImageLoad = (width: number, height: number) => {
@@ -98,6 +106,9 @@ export function PreviewArea({
     // This ensures overlay position matches the displayed image
     setOverlayHFlip(hFlip)
     setOverlayVFlip(vFlip)
+
+    // Clear transition flag after preview loads
+    setIsTransitioning(false)
 
     onLoad?.(width, height)
   }
@@ -252,6 +263,7 @@ export function PreviewArea({
               {!visualCropEnabled &&
                 selectedLayerId &&
                 editingContext === null &&
+                !isTransitioning &&
                 imageEditor &&
                 imageDimensions &&
                 imageDimensions.width > 0 &&
