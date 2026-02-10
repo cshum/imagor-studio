@@ -458,15 +458,6 @@ export function LayerOverlay({
     layerHeight,
   ])
 
-  // Determine cursor based on drag constraints
-  const getCursor = () => {
-    if (isDragging || isResizing) return 'cursor-grabbing'
-    if (!canDragX && !canDragY) return 'cursor-not-allowed'
-    if (!canDragX) return 'cursor-ns-resize'
-    if (!canDragY) return 'cursor-ew-resize'
-    return 'cursor-move'
-  }
-
   return (
     <div
       ref={overlayRef}
@@ -479,8 +470,8 @@ export function LayerOverlay({
       {/* Layer box and handles */}
       <div
         className={cn(
-          'layer-box pointer-events-auto absolute border-2 border-blue-500',
-          getCursor(),
+          'layer-box pointer-events-auto absolute cursor-move border-2 border-white',
+          (isDragging || isResizing) && 'cursor-grabbing',
         )}
         style={{
           left: displayX,
