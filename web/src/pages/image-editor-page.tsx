@@ -927,18 +927,15 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               className='flex w-full flex-col gap-0 p-0 sm:w-96'
             >
               <SheetHeader className='border-b p-3'>
-                <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-3'>
                   <Button variant='ghost' size='sm' onClick={() => setMobileSheetOpen(false)}>
                     <ChevronLeft className='mr-1 h-4 w-4' />
                     {t('imageEditor.page.back')}
                   </Button>
 
-                  <SheetTitle>{t('imageEditor.page.controls')}</SheetTitle>
-
-                  <Button variant='outline' size='sm' onClick={resetParams}>
-                    <RotateCcw className='mr-1 h-4 w-4' />
-                    {t('imageEditor.page.resetAll')}
-                  </Button>
+                  <SheetTitle className='flex-1 text-center'>
+                    {t('imageEditor.page.controls')}
+                  </SheetTitle>
                 </div>
               </SheetHeader>
 
@@ -982,6 +979,36 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }
 
   // Desktop layout - Three columns with full-width bottom bar
+  // Calculate if columns are empty for smart sizing
+  const leftColumnSections = editorOpenSections.leftColumn
+    .map((id) => id)
+    .filter((id) => {
+      const visibleSections = editorOpenSections.visibleSections || []
+      if (visibleSections.length > 0 && !visibleSections.includes(id)) {
+        return false
+      }
+      if (id === 'fill' && editingContext !== null) {
+        return false
+      }
+      return true
+    })
+
+  const rightColumnSections = editorOpenSections.rightColumn
+    .map((id) => id)
+    .filter((id) => {
+      const visibleSections = editorOpenSections.visibleSections || []
+      if (visibleSections.length > 0 && !visibleSections.includes(id)) {
+        return false
+      }
+      if (id === 'fill' && editingContext !== null) {
+        return false
+      }
+      return true
+    })
+
+  const isLeftEmpty = leftColumnSections.length === 0
+  const isRightEmpty = rightColumnSections.length === 0
+
   return (
     <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] overscroll-none select-none'>
       {/* Loading Bar */}
@@ -1143,7 +1170,12 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className='grid grid-cols-[330px_1fr_330px] overflow-hidden'>
+        <div
+          className='grid overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out'
+          style={{
+            gridTemplateColumns: `${isLeftEmpty ? '60px' : '330px'} 1fr ${isRightEmpty ? '60px' : '330px'}`,
+          }}
+        >
           {/* Left Column */}
           <div className='bg-background flex flex-col overflow-hidden border-r'>
             <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
