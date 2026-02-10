@@ -1506,6 +1506,46 @@ export class ImageEditor {
   }
 
   /**
+   * Duplicate a layer by ID
+   * Creates a copy with a new ID, offset position, and " Copy" appended to name
+   * @param layerId - ID of the layer to duplicate
+   */
+  duplicateLayer(layerId: string): void {
+    const sourceLayer = this.getLayer(layerId)
+    if (!sourceLayer) return
+
+    // Flush any pending snapshot first
+    this.flushPendingHistorySnapshot()
+
+    // Save current state to history BEFORE duplicating (so undo removes it)
+    this.saveHistorySnapshot()
+
+    // Create duplicate with new ID and offset position
+    const duplicatedLayer: ImageLayer = {
+      ...sourceLayer,
+      id: `layer-${Date.now()}`,
+      name: `${sourceLayer.name} Copy`,
+      // Offset position if numeric (so user can see it's duplicated)
+      x: typeof sourceLayer.x === 'number' ? sourceLayer.x + 10 : sourceLayer.x,
+      y: typeof sourceLayer.y === 'number' ? sourceLayer.y + 10 : sourceLayer.y,
+      // Deep copy transforms if present
+      transforms: sourceLayer.transforms ? { ...sourceLayer.transforms } : undefined,
+    }
+
+    const layers = this.state.layers || []
+    this.state = {
+      ...this.state,
+      layers: [...layers, duplicatedLayer],
+    }
+
+    // Auto-select the duplicated layer
+    this.setSelectedLayerId(duplicatedLayer.id)
+
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+  }
+
+  /**
    * Update a layer's properties
    * @param layerId - ID of the layer to update
    * @param updates - Partial layer properties to update
