@@ -1,14 +1,52 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import {
+  closestCenter,
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragOverEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useNavigate } from '@tanstack/react-router'
-import { ChevronLeft, Copy, Download, Redo2, RotateCcw, Settings, Undo2 } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronUp,
+  Copy,
+  Download,
+  FileImage,
+  Frame,
+  GripVertical,
+  Layers,
+  Maximize2,
+  Palette,
+  Redo2,
+  RotateCcw,
+  RotateCw,
+  Scissors,
+  Settings,
+  Undo2,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
+import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
+import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
+import { DimensionControl } from '@/components/image-editor/controls/dimension-control.tsx'
+import { FillPaddingControl } from '@/components/image-editor/controls/fill-padding-control.tsx'
+import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
+import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { ImageEditorControls } from '@/components/image-editor/imagor-editor-controls.tsx'
+import { LayerPanel } from '@/components/image-editor/layer-panel'
 import { PreviewArea } from '@/components/image-editor/preview-area'
 import { LoadingBar } from '@/components/loading-bar'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import { ConfirmNavigationDialog } from '@/components/ui/confirm-navigation-dialog'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
@@ -17,6 +55,7 @@ import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 import {
   EditorOpenSectionsStorage,
   type EditorOpenSections,
+  type SectionKey,
 } from '@/lib/editor-open-sections-storage'
 import {
   deserializeStateFromUrl,
@@ -95,6 +134,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [editingContext, setEditingContext] = useState<string | null>(null)
   const [layerAspectRatioLocked, setLayerAspectRatioLocked] = useState(true)
+
+  // Drag and drop state for desktop
+  const [activeId, setActiveId] = useState<string | null>(null)
 
   // Unsaved changes warning hook
   const { showDialog, handleConfirm, handleCancel } = useUnsavedChangesWarning(canUndo)
@@ -263,6 +305,210 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       cropHeight: crop.height,
     })
   }
+
+  // Drag and drop handlers for desktop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  )
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id as string)
+  }, [])
+
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
+      const { active, over } = event
+      if (!over) return
+
+      const activeId = active.id as SectionKey
+      const overId = over.id as string
+      const overIdAsSection = overId as SectionKey
+
+      const activeInLeft = editorOpenSections.leftColumn.includes(activeId)
+      const activeInRight = editorOpenSections.rightColumn.includes(activeId)
+
+      let targetColumn: 'left' | 'right' | null = null
+
+      if (overId === 'left-column') {
+        targetColumn = 'left'
+      } else if (overId === 'right-column') {
+        targetColumn = 'right'
+      } else {
+        if (editorOpenSections.leftColumn.includes(overIdAsSection)) {
+          targetColumn = 'left'
+        } else if (editorOpenSections.rightColumn.includes(overIdAsSection)) {
+          targetColumn = 'right'
+        }
+      }
+
+      if (!targetColumn) return
+
+      if (targetColumn === 'left' && activeInRight) {
+        const newLeftColumn = [...editorOpenSections.leftColumn]
+        const newRightColumn = editorOpenSections.rightColumn.filter((id) => id !== activeId)
+
+        if (overId === 'left-column' || !editorOpenSections.leftColumn.includes(overIdAsSection)) {
+          newLeftColumn.push(activeId)
+        } else {
+          const overIndex = newLeftColumn.indexOf(overIdAsSection)
+          newLeftColumn.splice(overIndex, 0, activeId)
+        }
+
+        handleOpenSectionsChange({
+          ...editorOpenSections,
+          leftColumn: newLeftColumn,
+          rightColumn: newRightColumn,
+        })
+      } else if (targetColumn === 'right' && activeInLeft) {
+        const newLeftColumn = editorOpenSections.leftColumn.filter((id) => id !== activeId)
+        const newRightColumn = [...editorOpenSections.rightColumn]
+
+        if (
+          overId === 'right-column' ||
+          !editorOpenSections.rightColumn.includes(overIdAsSection)
+        ) {
+          newRightColumn.push(activeId)
+        } else {
+          const overIndex = newRightColumn.indexOf(overIdAsSection)
+          newRightColumn.splice(overIndex, 0, activeId)
+        }
+
+        handleOpenSectionsChange({
+          ...editorOpenSections,
+          leftColumn: newLeftColumn,
+          rightColumn: newRightColumn,
+        })
+      } else if (targetColumn === 'left' && activeInLeft && overId !== 'left-column') {
+        const oldIndex = editorOpenSections.leftColumn.indexOf(activeId)
+        const newIndex = editorOpenSections.leftColumn.indexOf(overIdAsSection)
+
+        if (oldIndex !== newIndex) {
+          const newLeftColumn = arrayMove(editorOpenSections.leftColumn, oldIndex, newIndex)
+          handleOpenSectionsChange({
+            ...editorOpenSections,
+            leftColumn: newLeftColumn,
+          })
+        }
+      } else if (targetColumn === 'right' && activeInRight && overId !== 'right-column') {
+        const oldIndex = editorOpenSections.rightColumn.indexOf(activeId)
+        const newIndex = editorOpenSections.rightColumn.indexOf(overIdAsSection)
+
+        if (oldIndex !== newIndex) {
+          const newRightColumn = arrayMove(editorOpenSections.rightColumn, oldIndex, newIndex)
+          handleOpenSectionsChange({
+            ...editorOpenSections,
+            rightColumn: newRightColumn,
+          })
+        }
+      }
+    },
+    [editorOpenSections, handleOpenSectionsChange],
+  )
+
+  const handleDragEnd = useCallback(() => {
+    setActiveId(null)
+  }, [])
+
+  // Icon mapping for drag overlay
+  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    crop: Scissors,
+    effects: Palette,
+    transform: RotateCw,
+    dimensions: Maximize2,
+    fill: Frame,
+    output: FileImage,
+    layers: Layers,
+  }
+
+  const titleKeyMap: Record<string, string> = {
+    crop: 'imageEditor.controls.cropAspect',
+    effects: 'imageEditor.controls.colorEffects',
+    transform: 'imageEditor.controls.transformRotate',
+    dimensions: 'imageEditor.controls.dimensionsResize',
+    fill: 'imageEditor.controls.fillPadding',
+    output: 'imageEditor.controls.outputCompression',
+    layers: 'imageEditor.layers.title',
+  }
+
+  const ActiveIcon = activeId ? iconMap[activeId] : null
+
+  // Section configurations with actual components (for desktop DragOverlay)
+  const sectionConfigs = useMemo(
+    () => ({
+      crop: {
+        component: (
+          <CropAspectControl
+            params={params}
+            onUpdateParams={updateParams}
+            onVisualCropToggle={handleVisualCropToggle}
+            isVisualCropEnabled={visualCropEnabled}
+            outputWidth={imageEditor.getOriginalDimensions().width}
+            outputHeight={imageEditor.getOriginalDimensions().height}
+            onAspectRatioChange={setCropAspectRatio}
+          />
+        ),
+      },
+      effects: {
+        component: <ColorControl params={params} onUpdateParams={updateParams} />,
+      },
+      transform: {
+        component: <TransformControl params={params} onUpdateParams={updateParams} />,
+      },
+      dimensions: {
+        component: (
+          <DimensionControl
+            params={params}
+            onUpdateParams={updateParams}
+            originalDimensions={{
+              width: imageEditor.getOriginalDimensions().width,
+              height: imageEditor.getOriginalDimensions().height,
+            }}
+          />
+        ),
+      },
+      fill: {
+        component: <FillPaddingControl params={params} onUpdateParams={updateParams} />,
+      },
+      output: {
+        component: <OutputControl params={params} onUpdateParams={updateParams} />,
+      },
+      layers: {
+        component: (
+          <LayerPanel
+            imageEditor={imageEditor}
+            imagePath={imagePath}
+            selectedLayerId={selectedLayerId}
+            editingContext={editingContext}
+            layerAspectRatioLocked={layerAspectRatioLocked}
+            onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
+            visualCropEnabled={visualCropEnabled}
+          />
+        ),
+      },
+    }),
+    [
+      imageEditor,
+      imagePath,
+      params,
+      selectedLayerId,
+      editingContext,
+      layerAspectRatioLocked,
+      visualCropEnabled,
+      updateParams,
+      handleVisualCropToggle,
+      setCropAspectRatio,
+      setLayerAspectRatioLocked,
+    ],
+  )
+
+  const activeSection = activeId ? sectionConfigs[activeId as SectionKey] : null
 
   // Mobile layout
   if (isMobile) {
@@ -453,87 +699,124 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         </div>
       </div>
 
-      {/* Main content - Three columns */}
-      <div className='grid grid-cols-[300px_1fr_300px] overflow-hidden'>
-        {/* Left Column */}
-        <div className='bg-background flex flex-col overflow-hidden border-r'>
-          <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
-            <ImageEditorControls
-              key={`left-${resetCounter}`}
+      {/* Main content - Three columns with shared DndContext */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className='grid grid-cols-[300px_1fr_300px] overflow-hidden'>
+          {/* Left Column */}
+          <div className='bg-background flex flex-col overflow-hidden border-r'>
+            <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
+              <ImageEditorControls
+                key={`left-${resetCounter}`}
+                imageEditor={imageEditor}
+                imagePath={imagePath}
+                params={params}
+                selectedLayerId={selectedLayerId}
+                editingContext={editingContext}
+                layerAspectRatioLocked={layerAspectRatioLocked}
+                onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
+                openSections={editorOpenSections}
+                onOpenSectionsChange={handleOpenSectionsChange}
+                onUpdateParams={updateParams}
+                onVisualCropToggle={handleVisualCropToggle}
+                isVisualCropEnabled={visualCropEnabled}
+                outputWidth={imageEditor.getOriginalDimensions().width}
+                outputHeight={imageEditor.getOriginalDimensions().height}
+                onCropAspectRatioChange={setCropAspectRatio}
+                column='left'
+              />
+            </div>
+          </div>
+
+          {/* Center - Preview Area */}
+          <div className='flex flex-col overflow-hidden'>
+            <PreviewArea
+              previewUrl={previewUrl || ''}
+              error={error}
+              galleryKey={galleryKey}
+              imageKey={imageKey}
+              imagorPath={imagorPath}
+              originalDimensions={imageEditor.getOriginalDimensions()}
+              onLoad={handlePreviewLoad}
+              onCopyUrl={handleCopyUrlClick}
+              onDownload={handleDownloadClick}
+              onPreviewDimensionsChange={setPreviewMaxDimensions}
+              visualCropEnabled={visualCropEnabled}
+              cropLeft={params.cropLeft || 0}
+              cropTop={params.cropTop || 0}
+              cropWidth={params.cropWidth || 0}
+              cropHeight={params.cropHeight || 0}
+              onCropChange={handleCropChange}
+              cropAspectRatio={cropAspectRatio}
+              hFlip={params.hFlip}
+              vFlip={params.vFlip}
               imageEditor={imageEditor}
-              imagePath={imagePath}
-              params={params}
               selectedLayerId={selectedLayerId}
               editingContext={editingContext}
               layerAspectRatioLocked={layerAspectRatioLocked}
-              onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
-              openSections={editorOpenSections}
-              onOpenSectionsChange={handleOpenSectionsChange}
-              onUpdateParams={updateParams}
-              onVisualCropToggle={handleVisualCropToggle}
-              isVisualCropEnabled={visualCropEnabled}
-              outputWidth={imageEditor.getOriginalDimensions().width}
-              outputHeight={imageEditor.getOriginalDimensions().height}
-              onCropAspectRatioChange={setCropAspectRatio}
-              column='left'
             />
+          </div>
+
+          {/* Right Column */}
+          <div className='bg-background flex flex-col overflow-hidden border-l'>
+            <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
+              <ImageEditorControls
+                key={`right-${resetCounter}`}
+                imageEditor={imageEditor}
+                imagePath={imagePath}
+                params={params}
+                selectedLayerId={selectedLayerId}
+                editingContext={editingContext}
+                layerAspectRatioLocked={layerAspectRatioLocked}
+                onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
+                openSections={editorOpenSections}
+                onOpenSectionsChange={handleOpenSectionsChange}
+                onUpdateParams={updateParams}
+                onVisualCropToggle={handleVisualCropToggle}
+                isVisualCropEnabled={visualCropEnabled}
+                outputWidth={imageEditor.getOriginalDimensions().width}
+                outputHeight={imageEditor.getOriginalDimensions().height}
+                onCropAspectRatioChange={setCropAspectRatio}
+                column='right'
+              />
+            </div>
           </div>
         </div>
 
-        {/* Center - Preview Area */}
-        <div className='flex flex-col overflow-hidden'>
-          <PreviewArea
-            previewUrl={previewUrl || ''}
-            error={error}
-            galleryKey={galleryKey}
-            imageKey={imageKey}
-            imagorPath={imagorPath}
-            originalDimensions={imageEditor.getOriginalDimensions()}
-            onLoad={handlePreviewLoad}
-            onCopyUrl={handleCopyUrlClick}
-            onDownload={handleDownloadClick}
-            onPreviewDimensionsChange={setPreviewMaxDimensions}
-            visualCropEnabled={visualCropEnabled}
-            cropLeft={params.cropLeft || 0}
-            cropTop={params.cropTop || 0}
-            cropWidth={params.cropWidth || 0}
-            cropHeight={params.cropHeight || 0}
-            onCropChange={handleCropChange}
-            cropAspectRatio={cropAspectRatio}
-            hFlip={params.hFlip}
-            vFlip={params.vFlip}
-            imageEditor={imageEditor}
-            selectedLayerId={selectedLayerId}
-            editingContext={editingContext}
-            layerAspectRatioLocked={layerAspectRatioLocked}
-          />
-        </div>
-
-        {/* Right Column */}
-        <div className='bg-background flex flex-col overflow-hidden border-l'>
-          <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
-            <ImageEditorControls
-              key={`right-${resetCounter}`}
-              imageEditor={imageEditor}
-              imagePath={imagePath}
-              params={params}
-              selectedLayerId={selectedLayerId}
-              editingContext={editingContext}
-              layerAspectRatioLocked={layerAspectRatioLocked}
-              onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
-              openSections={editorOpenSections}
-              onOpenSectionsChange={handleOpenSectionsChange}
-              onUpdateParams={updateParams}
-              onVisualCropToggle={handleVisualCropToggle}
-              isVisualCropEnabled={visualCropEnabled}
-              outputWidth={imageEditor.getOriginalDimensions().width}
-              outputHeight={imageEditor.getOriginalDimensions().height}
-              onCropAspectRatioChange={setCropAspectRatio}
-              column='right'
-            />
-          </div>
-        </div>
-      </div>
+        {/* Drag Overlay */}
+        <DragOverlay>
+          {activeSection && ActiveIcon ? (
+            <div className='bg-card w-72 rounded-md border shadow-lg'>
+              <Collapsible open={editorOpenSections[activeId as SectionKey]}>
+                <div className='flex w-full items-center'>
+                  <div className='py-2 pr-1 pl-3'>
+                    <GripVertical className='h-4 w-4' />
+                  </div>
+                  <div className='flex flex-1 items-center justify-between py-2 pr-3'>
+                    <div className='flex items-center gap-2'>
+                      <ActiveIcon className='h-4 w-4' />
+                      <span className='font-medium'>{t(titleKeyMap[activeId!])}</span>
+                    </div>
+                    {editorOpenSections[activeId as SectionKey] ? (
+                      <ChevronUp className='h-4 w-4' />
+                    ) : (
+                      <ChevronDown className='h-4 w-4' />
+                    )}
+                  </div>
+                </div>
+                <CollapsibleContent className='overflow-hidden px-3 pb-3'>
+                  {activeSection.component}
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {/* Bottom bar - spans full width */}
       <div className='bg-background border-t p-3'>

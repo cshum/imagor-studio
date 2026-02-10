@@ -62,6 +62,11 @@ interface ImageEditorControlsProps {
   outputHeight: number
   onCropAspectRatioChange?: (aspectRatio: number | null) => void
   column?: 'left' | 'right' | 'both'
+  // Drag handlers (optional - only needed when column is 'left' or 'right')
+  onDragStart?: (event: DragStartEvent) => void
+  onDragOver?: (event: DragOverEvent) => void
+  onDragEnd?: () => void
+  activeId?: SectionKey | null
 }
 
 interface SectionConfig {
@@ -401,110 +406,38 @@ export function ImageEditorControls({
 
   // Render based on column prop
   if (column === 'left') {
-    // Only render left column
+    // Only render left column (no DndContext - parent provides it)
     return (
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={openSections.leftColumn} strategy={verticalListSortingStrategy}>
-          <div className='space-y-3'>
-            {leftColumnSections.map((section) => (
-              <SortableSection
-                key={section.key}
-                section={section}
-                isOpen={openSections[section.key]}
-                onToggle={(open) => handleSectionToggle(section.key, open)}
-              />
-            ))}
-          </div>
-        </SortableContext>
-
-        <DragOverlay>
-          {activeSection ? (
-            <div className='bg-card w-72 rounded-md border'>
-              <Collapsible open={openSections[activeSection.key]}>
-                <div className='flex w-full items-center'>
-                  <div className='py-2 pr-1 pl-3'>
-                    <GripVertical className='h-4 w-4' />
-                  </div>
-                  <div className='flex flex-1 items-center justify-between py-2 pr-3'>
-                    <div className='flex items-center gap-2'>
-                      <activeSection.icon className='h-4 w-4' />
-                      <span className='font-medium'>{t(activeSection.titleKey)}</span>
-                    </div>
-                    {openSections[activeSection.key] ? (
-                      <ChevronUp className='h-4 w-4' />
-                    ) : (
-                      <ChevronDown className='h-4 w-4' />
-                    )}
-                  </div>
-                </div>
-                <CollapsibleContent className='overflow-hidden px-3 pb-3'>
-                  {activeSection.component}
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+      <SortableContext items={openSections.leftColumn} strategy={verticalListSortingStrategy}>
+        <div className='space-y-3'>
+          {leftColumnSections.map((section) => (
+            <SortableSection
+              key={section.key}
+              section={section}
+              isOpen={openSections[section.key]}
+              onToggle={(open) => handleSectionToggle(section.key, open)}
+            />
+          ))}
+        </div>
+      </SortableContext>
     )
   }
 
   if (column === 'right') {
-    // Only render right column
+    // Only render right column (no DndContext - parent provides it)
     return (
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={openSections.rightColumn} strategy={verticalListSortingStrategy}>
-          <div className='space-y-3'>
-            {rightColumnSections.map((section) => (
-              <SortableSection
-                key={section.key}
-                section={section}
-                isOpen={openSections[section.key]}
-                onToggle={(open) => handleSectionToggle(section.key, open)}
-              />
-            ))}
-          </div>
-        </SortableContext>
-
-        <DragOverlay>
-          {activeSection ? (
-            <div className='bg-card w-72 rounded-md border'>
-              <Collapsible open={openSections[activeSection.key]}>
-                <div className='flex w-full items-center'>
-                  <div className='py-2 pr-1 pl-3'>
-                    <GripVertical className='h-4 w-4' />
-                  </div>
-                  <div className='flex flex-1 items-center justify-between py-2 pr-3'>
-                    <div className='flex items-center gap-2'>
-                      <activeSection.icon className='h-4 w-4' />
-                      <span className='font-medium'>{t(activeSection.titleKey)}</span>
-                    </div>
-                    {openSections[activeSection.key] ? (
-                      <ChevronUp className='h-4 w-4' />
-                    ) : (
-                      <ChevronDown className='h-4 w-4' />
-                    )}
-                  </div>
-                </div>
-                <CollapsibleContent className='overflow-hidden px-3 pb-3'>
-                  {activeSection.component}
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+      <SortableContext items={openSections.rightColumn} strategy={verticalListSortingStrategy}>
+        <div className='space-y-3'>
+          {rightColumnSections.map((section) => (
+            <SortableSection
+              key={section.key}
+              section={section}
+              isOpen={openSections[section.key]}
+              onToggle={(open) => handleSectionToggle(section.key, open)}
+            />
+          ))}
+        </div>
+      </SortableContext>
     )
   }
 
