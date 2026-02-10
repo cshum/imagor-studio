@@ -367,7 +367,10 @@ export function LayerPanel({
       if (layer) {
         setRenamingLayerId(layerId)
         setNewLayerName(layer.name)
-        setRenameDialogOpen(true)
+        // Small delay to let dropdown fully close before opening modal dialog
+        setTimeout(() => {
+          setRenameDialogOpen(true)
+        }, 100)
       }
     },
     [layers],
@@ -650,8 +653,8 @@ export function LayerPanel({
       />
 
       {/* Rename Layer Dialog */}
-      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen} modal={false}>
-        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('imageEditor.layers.renameLayer')}</DialogTitle>
             <DialogDescription>{t('imageEditor.layers.renameLayerDescription')}</DialogDescription>
