@@ -543,7 +543,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             </a>
           </div>
 
-          {/* Undo/Redo + Reset All + Theme Toggle */}
+          {/* Undo/Redo + Reset All + Download + Copy URL + Theme Toggle */}
           <div className='ml-auto flex items-center gap-2'>
             <Button
               variant='ghost'
@@ -566,6 +566,14 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             <Button variant='outline' size='sm' onClick={resetParams}>
               <RotateCcw className='mr-1 h-4 w-4' />
               {t('imageEditor.page.resetAll')}
+            </Button>
+            <Button variant='outline' size='sm' onClick={handleDownloadClick}>
+              <Download className='mr-1 h-4 w-4' />
+              {t('imageEditor.page.download')}
+            </Button>
+            <Button variant='outline' size='sm' onClick={handleCopyUrlClick}>
+              <Copy className='mr-1 h-4 w-4' />
+              {t('imageEditor.page.copyUrl')}
             </Button>
             <ModeToggle />
           </div>
@@ -627,26 +635,12 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           </div>
         </div>
 
-        {/* Bottom bar - spans full width */}
-        <div className='bg-background overflow-x-auto border-t p-3'>
-          <div className='flex min-w-fit items-center gap-4'>
-            {/* Imagor Path - scrollable with monospace font */}
-            <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text'>
-              {imagorPath}
-            </code>
-
-            {/* Action Buttons - right aligned */}
-            <div className='flex flex-shrink-0 gap-2'>
-              <Button variant='outline' size='sm' onClick={handleDownloadClick}>
-                <Download className='mr-1 h-4 w-4' />
-                {t('imageEditor.page.download')}
-              </Button>
-              <Button variant='outline' size='sm' onClick={handleCopyUrlClick}>
-                <Copy className='mr-1 h-4 w-4' />
-                {t('imageEditor.page.copyUrl')}
-              </Button>
-            </div>
-          </div>
+        {/* Bottom bar - status bar style */}
+        <div className='bg-background overflow-x-auto border-t px-3 py-1'>
+          {/* Imagor Path - scrollable with monospace font */}
+          <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text'>
+            {imagorPath}
+          </code>
         </div>
 
         {/* Copy URL Dialog */}
@@ -822,7 +816,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           </a>
         </div>
 
-        {/* Undo/Redo + Reset All + Theme Toggle */}
+        {/* Undo/Redo + Reset All + Download + Copy URL + Theme Toggle */}
         <div className='ml-auto flex items-center gap-2'>
           <Button
             variant='ghost'
@@ -845,6 +839,14 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <Button variant='outline' size='sm' onClick={resetParams}>
             <RotateCcw className='mr-1 h-4 w-4' />
             {t('imageEditor.page.resetAll')}
+          </Button>
+          <Button variant='outline' size='sm' onClick={handleDownloadClick}>
+            <Download className='mr-1 h-4 w-4' />
+            {t('imageEditor.page.download')}
+          </Button>
+          <Button variant='outline' size='sm' onClick={handleCopyUrlClick}>
+            <Copy className='mr-1 h-4 w-4' />
+            {t('imageEditor.page.copyUrl')}
           </Button>
           <ModeToggle />
         </div>
@@ -968,26 +970,12 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         </DragOverlay>
       </DndContext>
 
-      {/* Bottom bar - spans full width */}
-      <div className='bg-background overflow-x-auto border-t p-3'>
-        <div className='flex min-w-fit items-center gap-4'>
-          {/* Imagor Path - scrollable with monospace font */}
-          <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text'>
-            {imagorPath}
-          </code>
-
-          {/* Action Buttons - right aligned */}
-          <div className='flex flex-shrink-0 gap-2'>
-            <Button variant='outline' size='sm' onClick={handleDownloadClick}>
-              <Download className='mr-1 h-4 w-4' />
-              {t('imageEditor.page.download')}
-            </Button>
-            <Button variant='outline' size='sm' onClick={handleCopyUrlClick}>
-              <Copy className='mr-1 h-4 w-4' />
-              {t('imageEditor.page.copyUrl')}
-            </Button>
-          </div>
-        </div>
+      {/* Bottom bar - status bar style */}
+      <div className='bg-background overflow-x-auto border-t px-3 py-1'>
+        {/* Imagor Path - scrollable with monospace font */}
+        <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text'>
+          {imagorPath}
+        </code>
       </div>
 
       {/* Copy URL Dialog */}
