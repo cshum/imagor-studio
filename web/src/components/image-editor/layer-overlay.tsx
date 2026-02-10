@@ -61,7 +61,8 @@ export function LayerOverlay({
     } else if (layerX === 'right') {
       const xPos = baseImageWidth - layerWidth
       leftPercent = `${(xPos / baseImageWidth) * 100}%`
-      canDragX = false
+      isRightAligned = true
+      canDragX = true
     } else if (typeof layerX === 'number') {
       if (layerX < 0) {
         // Negative: distance from right edge
@@ -89,7 +90,8 @@ export function LayerOverlay({
     } else if (layerY === 'bottom') {
       const yPos = baseImageHeight - layerHeight
       topPercent = `${(yPos / baseImageHeight) * 100}%`
-      canDragY = false
+      isBottomAligned = true
+      canDragY = true
     } else if (typeof layerY === 'number') {
       if (layerY < 0) {
         // Negative: distance from bottom edge
@@ -140,7 +142,7 @@ export function LayerOverlay({
     displayY: 0,
     displayWidth: 0,
     displayHeight: 0,
-    overlayWidth: 0,  // Store actual overlay dimensions for correct percentage calculation
+    overlayWidth: 0, // Store actual overlay dimensions for correct percentage calculation
     overlayHeight: 0,
   })
 
@@ -179,12 +181,15 @@ export function LayerOverlay({
         const layerWidth = updates.transforms?.width || 0
 
         if (isRightAligned) {
-          // Currently right-aligned (negative offset)
+          // Currently right-aligned (negative offset from right edge)
           const calculatedOffset = originalX + layerWidth - baseImageWidth
 
-          if (calculatedOffset >= 0) {
+          if (calculatedOffset > 0) {
             // Crossed boundary to positive - switch to left-aligned
             updates.x = calculatedOffset
+          } else if (calculatedOffset === 0) {
+            // Exactly at right edge - use "right" string for imagor
+            updates.x = 'right'
           } else {
             // Stay right-aligned (negative offset)
             updates.x = calculatedOffset
@@ -208,12 +213,15 @@ export function LayerOverlay({
         const layerHeight = updates.transforms?.height || 0
 
         if (isBottomAligned) {
-          // Currently bottom-aligned (negative offset)
+          // Currently bottom-aligned (negative offset from bottom edge)
           const calculatedOffset = originalY + layerHeight - baseImageHeight
 
-          if (calculatedOffset >= 0) {
+          if (calculatedOffset > 0) {
             // Crossed boundary to positive - switch to top-aligned
             updates.y = calculatedOffset
+          } else if (calculatedOffset === 0) {
+            // Exactly at bottom edge - use "bottom" string for imagor
+            updates.y = 'bottom'
           } else {
             // Stay bottom-aligned (negative offset)
             updates.y = calculatedOffset
