@@ -291,24 +291,14 @@ export function LayerOverlay({
         let newDisplayY = initialState.displayY
 
         // Apply delta only to draggable axes
+        // No clamping - allow dragging beyond boundaries
+        // convertToLayerPosition will auto-switch alignment when crossing edges
         if (canDragX) {
           newDisplayX = initialState.displayX + deltaX
-          // No upper bound constraint - can go beyond edges
-          if (!isRightAligned) {
-            // Left-aligned: cannot go negative
-            newDisplayX = Math.max(0, newDisplayX)
-          }
-          // Right-aligned: no constraint (can go beyond left edge)
         }
 
         if (canDragY) {
           newDisplayY = initialState.displayY + deltaY
-          // No upper bound constraint - can go beyond edges
-          if (!isBottomAligned) {
-            // Top-aligned: cannot go negative
-            newDisplayY = Math.max(0, newDisplayY)
-          }
-          // Bottom-aligned: no constraint (can go beyond top edge)
         }
 
         const updates = convertToLayerPosition(
