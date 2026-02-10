@@ -5,7 +5,7 @@ import type { Auth } from '@/stores/auth-store'
 
 // Define sections as a const object (single source of truth with default states)
 const EDITOR_SECTIONS = {
-  layers: false,
+  layers: true,
   crop: true,
   effects: true,
   transform: false,

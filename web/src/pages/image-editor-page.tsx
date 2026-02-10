@@ -515,7 +515,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   // Tablet layout - Single column with stacked sections
   if (isTablet) {
     return (
-      <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] select-none'>
+      <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] overscroll-none select-none'>
         {/* Loading Bar */}
         <LoadingBar isLoading={isLoading} />
 
@@ -611,7 +611,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
           {/* Single Column - Stacked sections */}
           <div className='bg-background flex flex-col overflow-hidden border-l'>
-            <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
+            <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               <ImageEditorControls
                 key={resetCounter}
                 imageEditor={imageEditor}
@@ -636,7 +636,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         </div>
 
         {/* Bottom bar - status bar style */}
-        <div className='bg-background overflow-x-auto border-t px-4 pt-2 pb-3'>
+        <div className='bg-background overflow-x-auto border-t px-4 py-3'>
           {/* Imagor Path - scrollable with monospace font */}
           <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text'>
             {imagorPath}
@@ -659,7 +659,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   // Mobile layout
   if (isMobile) {
     return (
-      <div className='bg-background ios-no-drag min-h-screen-safe flex overflow-hidden select-none'>
+      <div className='bg-background ios-no-drag min-h-screen-safe flex overflow-hidden overscroll-none select-none'>
         {/* Loading Bar */}
         <LoadingBar isLoading={isLoading} />
 
@@ -720,7 +720,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   </SheetHeader>
 
                   {/* Scrollable Controls */}
-                  <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
+                  <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
                     <ImageEditorControls
                       key={resetCounter}
                       imageEditor={imageEditor}
@@ -788,7 +788,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
   // Desktop layout - Three columns with full-width bottom bar
   return (
-    <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] select-none'>
+    <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] overscroll-none select-none'>
       {/* Loading Bar */}
       <LoadingBar isLoading={isLoading} />
 
@@ -863,7 +863,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         <div className='grid grid-cols-[330px_1fr_330px] overflow-hidden'>
           {/* Left Column */}
           <div className='bg-background flex flex-col overflow-hidden border-r'>
-            <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
+            <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               <ImageEditorControls
                 key={`left-${resetCounter}`}
                 imageEditor={imageEditor}
@@ -916,7 +916,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
           {/* Right Column */}
           <div className='bg-background flex flex-col overflow-hidden border-l'>
-            <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
+            <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               <ImageEditorControls
                 key={`right-${resetCounter}`}
                 imageEditor={imageEditor}
@@ -971,7 +971,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       </DndContext>
 
       {/* Bottom bar - status bar style */}
-      <div className='bg-background overflow-x-auto border-t px-4 pt-2 pb-3'>
+      <div className='bg-background overflow-x-auto border-t px-4 py-3'>
         {/* Imagor Path - scrollable with monospace font */}
         <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text'>
           {imagorPath}
