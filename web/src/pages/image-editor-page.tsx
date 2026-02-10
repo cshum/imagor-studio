@@ -606,7 +606,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             error={error}
             galleryKey={galleryKey}
             imageKey={imageKey}
-            imagorPath={imagorPath}
             originalDimensions={imageEditor.getOriginalDimensions()}
             onLoad={handlePreviewLoad}
             onCopyUrl={handleCopyUrlClick}
@@ -740,7 +739,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               error={error}
               galleryKey={galleryKey}
               imageKey={imageKey}
-              imagorPath={imagorPath}
               originalDimensions={imageEditor.getOriginalDimensions()}
               onLoad={handlePreviewLoad}
               onCopyUrl={handleCopyUrlClick}
@@ -821,8 +819,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       {/* Bottom bar - spans full width */}
       <div className='bg-background border-t p-3'>
         <div className='flex items-center justify-between gap-4'>
-          {/* Imagor Path - left aligned */}
-          <div className='text-muted-foreground flex-1 truncate text-sm'>{imagorPath}</div>
+          {/* Imagor Path - left aligned with monospace font */}
+          <code className='text-muted-foreground flex-1 truncate font-mono text-xs select-text'>
+            {imagorPath}
+          </code>
 
           {/* Action Buttons - right aligned */}
           <div className='flex flex-shrink-0 gap-2'>

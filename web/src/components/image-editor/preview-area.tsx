@@ -19,7 +19,6 @@ interface PreviewAreaProps {
   error: Error | null
   galleryKey: string
   imageKey: string
-  imagorPath: string
   originalDimensions: {
     width: number
     height: number
@@ -48,7 +47,6 @@ export function PreviewArea({
   error,
   galleryKey,
   imageKey,
-  imagorPath,
   originalDimensions,
   onLoad,
   onCopyUrl,
@@ -321,10 +319,9 @@ export function PreviewArea({
         )}
       </div>
 
-      {/* Preview Controls */}
-      <div className={cn('bg-muted/20', isMobile ? 'p-3' : '', isMobile && 'ios-bottom-safe')}>
-        {isMobile ? (
-          /* Mobile: Only buttons spanning full width */
+      {/* Preview Controls - Mobile only */}
+      {isMobile && (
+        <div className='bg-muted/20 ios-bottom-safe p-3'>
           <div className='flex items-center gap-2'>
             <Button
               variant='outline'
@@ -345,15 +342,8 @@ export function PreviewArea({
               {t('imageEditor.page.download')}
             </Button>
           </div>
-        ) : (
-          /* Desktop: Full-width Imagor path */
-          <div className='flex h-12 items-center overflow-x-auto'>
-            <code className='text-muted-foreground mx-auto px-4 pb-4 font-mono text-xs whitespace-nowrap select-text'>
-              {imagorPath}
-            </code>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
