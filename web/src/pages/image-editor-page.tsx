@@ -636,7 +636,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         </div>
 
         {/* Bottom bar - status bar style */}
-        <div className='bg-background overflow-x-auto border-t px-3 py-1'>
+        <div className='bg-background overflow-x-auto border-t px-4 pt-2 pb-3'>
           {/* Imagor Path - scrollable with monospace font */}
           <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text'>
             {imagorPath}
@@ -971,7 +971,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       </DndContext>
 
       {/* Bottom bar - status bar style */}
-      <div className='bg-background overflow-x-auto border-t px-3 py-1'>
+      <div className='bg-background overflow-x-auto border-t px-4 pt-2 pb-3'>
         {/* Imagor Path - scrollable with monospace font */}
         <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text'>
           {imagorPath}
