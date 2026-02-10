@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, Copy, Download } from 'lucide-react'
+import { AlertCircle, Copy, Download, Settings } from 'lucide-react'
 
 import { CropOverlay } from '@/components/image-editor/crop-overlay'
 import { LayerOverlay } from '@/components/image-editor/layer-overlay'
@@ -40,6 +40,7 @@ interface PreviewAreaProps {
   selectedLayerId?: string | null
   editingContext?: string | null
   layerAspectRatioLocked?: boolean
+  onOpenControls?: () => void
 }
 
 export function PreviewArea({
@@ -65,6 +66,7 @@ export function PreviewArea({
   selectedLayerId = null,
   editingContext = null,
   layerAspectRatioLocked = true,
+  onOpenControls,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -331,22 +333,33 @@ export function PreviewArea({
           <div className='flex items-center gap-2'>
             <Button
               variant='outline'
-              size='sm'
+              size='default'
               onClick={onCopyUrl}
-              className='h-8 flex-1 touch-manipulation'
+              className='flex-1 touch-manipulation'
             >
               <Copy className='mr-1 h-4 w-4' />
               {t('imageEditor.page.copyUrl')}
             </Button>
             <Button
               variant='outline'
-              size='sm'
+              size='default'
               onClick={onDownload}
-              className='h-8 flex-1 touch-manipulation'
+              className='flex-1 touch-manipulation'
             >
               <Download className='mr-1 h-4 w-4' />
               {t('imageEditor.page.download')}
             </Button>
+            {onOpenControls && (
+              <Button
+                variant='outline'
+                size='default'
+                onClick={onOpenControls}
+                className='flex-1 touch-manipulation'
+              >
+                <Settings className='mr-1 h-4 w-4' />
+                {t('imageEditor.page.controls')}
+              </Button>
+            )}
           </div>
         </div>
       )}

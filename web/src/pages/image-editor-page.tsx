@@ -14,6 +14,7 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useNavigate } from '@tanstack/react-router'
 import {
+  Check,
   ChevronDown,
   ChevronLeft,
   ChevronUp,
@@ -23,6 +24,7 @@ import {
   FileImage,
   Frame,
   GripVertical,
+  Languages,
   Layers,
   Maximize2,
   MoreVertical,
@@ -31,7 +33,6 @@ import {
   RotateCcw,
   RotateCw,
   Scissors,
-  Settings,
   Undo2,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -65,6 +66,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
+import { availableLanguages } from '@/i18n'
 import {
   EditorOpenSectionsStorage,
   SECTION_KEYS,
@@ -81,6 +83,7 @@ import { type ImageEditorState } from '@/lib/image-editor.ts'
 import { cn, debounce } from '@/lib/utils.ts'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 import { useAuth } from '@/stores/auth-store'
+import { setLocale } from '@/stores/locale-store'
 
 interface ImageEditorPageProps {
   galleryKey: string
@@ -91,7 +94,7 @@ interface ImageEditorPageProps {
 export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
   const { imageEditor, imagePath, initialEditorOpenSections } = loaderData
 
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { authState } = useAuth()
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
@@ -337,6 +340,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     })
   }
 
+  // Handler for language change
+  const handleLanguageChange = async (languageCode: string) => {
+    await setLocale(languageCode)
+  }
+
   // Drag and drop handlers for desktop
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -552,7 +560,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         <div className='flex items-center gap-2 border-b p-3'>
           {/* Back button - hidden in embedded mode */}
           <Button
-            variant='ghost'
+            variant='outline'
             size='sm'
             className={cn(authState.isEmbedded && 'invisible')}
             onClick={handleBack}
@@ -593,14 +601,19 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             >
               <Redo2 className='h-4 w-4' />
             </Button>
-            <div className='flex items-center gap-0.5'>
-              <Button variant='outline' size='sm' onClick={handleDownloadClick}>
+            <div className='inline-flex items-center rounded-md'>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={handleDownloadClick}
+                className='rounded-r-none border-r-0'
+              >
                 <Download className='mr-1 h-4 w-4' />
                 {t('imageEditor.page.download')}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant='ghost' size='sm'>
+                  <Button variant='outline' size='sm' className='rounded-l-none px-2'>
                     <MoreVertical className='h-4 w-4' />
                   </Button>
                 </DropdownMenuTrigger>
@@ -617,6 +630,29 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                     <RotateCcw className='mr-3 h-4 w-4' />
                     {t('imageEditor.page.resetAll')}
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <Languages className='mr-3 h-4 w-4' />
+                      {t('common.language.title')}
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        {availableLanguages.map((lang) => (
+                          <DropdownMenuItem
+                            key={lang.code}
+                            onSelect={(e) => {
+                              e.preventDefault()
+                              handleLanguageChange(lang.code)
+                            }}
+                          >
+                            {lang.name}
+                            {i18n.language === lang.code && <Check className='ml-auto h-4 w-4' />}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
                   <DropdownMenuSeparator />
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
@@ -637,12 +673,14 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                                 handleToggleSectionVisibility(sectionKey)
                               }}
                             >
-                              <div className='flex w-full items-center justify-between'>
+                              <div className='flex w-full items-center justify-between gap-2'>
                                 <div className='flex items-center gap-2'>
                                   <SectionIcon className='h-4 w-4' />
                                   <span>{t(titleKeyMap[sectionKey])}</span>
                                 </div>
-                                {isVisible && <span className='ml-2'>✓</span>}
+                                <div className='flex w-4 items-center justify-center'>
+                                  {isVisible && <Check className='h-4 w-4' />}
+                                </div>
                               </div>
                             </DropdownMenuItem>
                           )
@@ -746,7 +784,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <div className='flex items-center gap-2 border-b p-3'>
             {/* Back button - hidden in embedded mode */}
             <Button
-              variant='ghost'
+              variant='outline'
               size='sm'
               className={cn(authState.isEmbedded && 'invisible')}
               onClick={handleBack}
@@ -766,60 +804,88 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               </a>
             </div>
 
-            {/* Mobile Controls Trigger */}
-            <div className='ml-auto'>
-              <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
-                <SheetTrigger asChild>
-                  <Button variant='outline' size='sm'>
-                    <Settings className='mr-1 h-4 w-4' />
-                    {t('imageEditor.page.controls')}
+            {/* Theme Toggle + 3-Dot Menu */}
+            <div className='ml-auto flex items-center gap-2'>
+              <ModeToggle />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant='ghost' size='sm'>
+                    <MoreVertical className='h-4 w-4' />
                   </Button>
-                </SheetTrigger>
-                <SheetContent
-                  side='right'
-                  hideClose={true}
-                  className='flex w-full flex-col gap-0 p-0 sm:w-96'
-                >
-                  <SheetHeader className='border-b p-3'>
-                    <div className='flex items-center justify-between'>
-                      <Button variant='ghost' size='sm' onClick={() => setMobileSheetOpen(false)}>
-                        <ChevronLeft className='mr-1 h-4 w-4' />
-                        {t('imageEditor.page.back')}
-                      </Button>
-
-                      <SheetTitle>{t('imageEditor.page.controls')}</SheetTitle>
-
-                      <Button variant='outline' size='sm' onClick={resetParams}>
-                        <RotateCcw className='mr-1 h-4 w-4' />
-                        {t('imageEditor.page.resetAll')}
-                      </Button>
-                    </div>
-                  </SheetHeader>
-
-                  {/* Scrollable Controls */}
-                  <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-                    <ImageEditorControls
-                      key={resetCounter}
-                      imageEditor={imageEditor}
-                      imagePath={imagePath}
-                      params={params}
-                      selectedLayerId={selectedLayerId}
-                      editingContext={editingContext}
-                      layerAspectRatioLocked={layerAspectRatioLocked}
-                      onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
-                      openSections={editorOpenSections}
-                      onOpenSectionsChange={handleOpenSectionsChange}
-                      onUpdateParams={updateParams}
-                      onVisualCropToggle={handleVisualCropToggle}
-                      isVisualCropEnabled={visualCropEnabled}
-                      outputWidth={imageEditor.getOriginalDimensions().width}
-                      outputHeight={imageEditor.getOriginalDimensions().height}
-                      onCropAspectRatioChange={setCropAspectRatio}
-                      column='both'
-                    />
-                  </div>
-                </SheetContent>
-              </Sheet>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end' className='w-56'>
+                  <DropdownMenuItem onClick={() => imageEditor.undo()} disabled={!canUndo}>
+                    <Undo2 className='mr-3 h-4 w-4' />
+                    {t('imageEditor.page.undo')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => imageEditor.redo()} disabled={!canRedo}>
+                    <Redo2 className='mr-3 h-4 w-4' />
+                    {t('imageEditor.page.redo')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={resetParams}>
+                    <RotateCcw className='mr-3 h-4 w-4' />
+                    {t('imageEditor.page.resetAll')}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <Languages className='mr-3 h-4 w-4' />
+                      {t('common.language.title')}
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        {availableLanguages.map((lang) => (
+                          <DropdownMenuItem
+                            key={lang.code}
+                            onSelect={(e) => {
+                              e.preventDefault()
+                              handleLanguageChange(lang.code)
+                            }}
+                          >
+                            {lang.name}
+                            {i18n.language === lang.code && <Check className='ml-auto h-4 w-4' />}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <Eye className='mr-3 h-4 w-4' />
+                      {t('imageEditor.page.showHideControls')}
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        {SECTION_KEYS.map((sectionKey) => {
+                          const isVisible =
+                            editorOpenSections.visibleSections?.includes(sectionKey) ?? true
+                          const SectionIcon = iconMap[sectionKey]
+                          return (
+                            <DropdownMenuItem
+                              key={sectionKey}
+                              onSelect={(e) => {
+                                e.preventDefault()
+                                handleToggleSectionVisibility(sectionKey)
+                              }}
+                            >
+                              <div className='flex w-full items-center justify-between gap-2'>
+                                <div className='flex items-center gap-2'>
+                                  <SectionIcon className='h-4 w-4' />
+                                  <span>{t(titleKeyMap[sectionKey])}</span>
+                                </div>
+                                <div className='flex w-4 items-center justify-center'>
+                                  {isVisible && <Check className='h-4 w-4' />}
+                                </div>
+                              </div>
+                            </DropdownMenuItem>
+                          )
+                        })}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -847,7 +913,59 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             selectedLayerId={selectedLayerId}
             editingContext={editingContext}
             layerAspectRatioLocked={layerAspectRatioLocked}
+            onOpenControls={() => setMobileSheetOpen(true)}
           />
+
+          {/* Controls Sheet */}
+          <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+            <SheetTrigger asChild>
+              <button className='hidden' />
+            </SheetTrigger>
+            <SheetContent
+              side='right'
+              hideClose={true}
+              className='flex w-full flex-col gap-0 p-0 sm:w-96'
+            >
+              <SheetHeader className='border-b p-3'>
+                <div className='flex items-center justify-between'>
+                  <Button variant='ghost' size='sm' onClick={() => setMobileSheetOpen(false)}>
+                    <ChevronLeft className='mr-1 h-4 w-4' />
+                    {t('imageEditor.page.back')}
+                  </Button>
+
+                  <SheetTitle>{t('imageEditor.page.controls')}</SheetTitle>
+
+                  <Button variant='outline' size='sm' onClick={resetParams}>
+                    <RotateCcw className='mr-1 h-4 w-4' />
+                    {t('imageEditor.page.resetAll')}
+                  </Button>
+                </div>
+              </SheetHeader>
+
+              {/* Scrollable Controls */}
+              <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
+                <ImageEditorControls
+                  key={resetCounter}
+                  imageEditor={imageEditor}
+                  imagePath={imagePath}
+                  params={params}
+                  selectedLayerId={selectedLayerId}
+                  editingContext={editingContext}
+                  layerAspectRatioLocked={layerAspectRatioLocked}
+                  onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
+                  openSections={editorOpenSections}
+                  onOpenSectionsChange={handleOpenSectionsChange}
+                  onUpdateParams={updateParams}
+                  onVisualCropToggle={handleVisualCropToggle}
+                  isVisualCropEnabled={visualCropEnabled}
+                  outputWidth={imageEditor.getOriginalDimensions().width}
+                  outputHeight={imageEditor.getOriginalDimensions().height}
+                  onCropAspectRatioChange={setCropAspectRatio}
+                  column='both'
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
 
         {/* Copy URL Dialog */}
@@ -873,7 +991,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       <div className='flex items-center gap-2 border-b p-3'>
         {/* Back button - hidden in embedded mode */}
         <Button
-          variant='ghost'
+          variant='outline'
           size='sm'
           className={cn(authState.isEmbedded && 'invisible')}
           onClick={handleBack}
@@ -914,14 +1032,19 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           >
             <Redo2 className='h-4 w-4' />
           </Button>
-          <div className='flex items-center gap-0.5'>
-            <Button variant='outline' size='sm' onClick={handleDownloadClick}>
+          <div className='inline-flex items-center rounded-md'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={handleDownloadClick}
+              className='rounded-r-none border-r-0'
+            >
               <Download className='mr-1 h-4 w-4' />
               {t('imageEditor.page.download')}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant='ghost' size='sm'>
+                <Button variant='outline' size='sm' className='rounded-l-none px-2'>
                   <MoreVertical className='h-4 w-4' />
                 </Button>
               </DropdownMenuTrigger>
@@ -938,6 +1061,29 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   <RotateCcw className='mr-3 h-4 w-4' />
                   {t('imageEditor.page.resetAll')}
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Languages className='mr-3 h-4 w-4' />
+                    {t('common.language.title')}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      {availableLanguages.map((lang) => (
+                        <DropdownMenuItem
+                          key={lang.code}
+                          onSelect={(e) => {
+                            e.preventDefault()
+                            handleLanguageChange(lang.code)
+                          }}
+                        >
+                          {lang.name}
+                          {i18n.language === lang.code && <Check className='ml-auto h-4 w-4' />}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
                 <DropdownMenuSeparator />
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
@@ -968,12 +1114,14 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                               handleToggleSectionVisibility(sectionKey)
                             }}
                           >
-                            <div className='flex w-full items-center justify-between'>
+                            <div className='flex w-full items-center justify-between gap-2'>
                               <div className='flex items-center gap-2'>
                                 <SectionIcon className='h-4 w-4' />
                                 <span>{t(titleKeyMap[sectionKey])}</span>
                               </div>
-                              {isVisible && <span className='ml-2'>✓</span>}
+                              <div className='flex w-4 items-center justify-center'>
+                                {isVisible && <Check className='h-4 w-4' />}
+                              </div>
                             </div>
                           </DropdownMenuItem>
                         )
