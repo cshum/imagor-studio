@@ -298,6 +298,7 @@ export function PreviewArea({
                         baseImageWidth={outputDims.width}
                         baseImageHeight={outputDims.height}
                         onDeselect={() => imageEditor.setSelectedLayerId(null)}
+                        onEnterEditMode={() => imageEditor.switchContext(selectedLayerId)}
                       />
                     )
                   } else {

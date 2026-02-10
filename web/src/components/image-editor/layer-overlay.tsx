@@ -21,6 +21,7 @@ interface LayerOverlayProps {
   baseImageWidth: number
   baseImageHeight: number
   onDeselect?: () => void
+  onEnterEditMode?: () => void
 }
 
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | null
@@ -37,6 +38,7 @@ export function LayerOverlay({
   baseImageWidth,
   baseImageHeight,
   onDeselect,
+  onEnterEditMode,
 }: LayerOverlayProps) {
   // Calculate CSS percentage strings for position and size
   // This allows the browser to handle scaling automatically via CSS
@@ -517,6 +519,18 @@ export function LayerOverlay({
     [onDeselect],
   )
 
+  // Handle double-click on layer box to enter edit mode
+  const handleLayerDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if ((e.target as HTMLElement).classList.contains('layer-box') && onEnterEditMode) {
+        e.preventDefault()
+        e.stopPropagation()
+        onEnterEditMode()
+      }
+    },
+    [onEnterEditMode],
+  )
+
   return (
     <div
       ref={overlayRef}
@@ -538,6 +552,7 @@ export function LayerOverlay({
         }}
         onMouseDown={handleLayerMouseDown}
         onTouchStart={handleLayerMouseDown}
+        onDoubleClick={handleLayerDoubleClick}
       >
         {/* NO grid lines - as requested */}
 

@@ -106,7 +106,6 @@ export function LayerRegionsOverlay({
             )}
             style={styles}
             onClick={() => onLayerSelect(layer.id)}
-            title={layer.name}
           />
         )
       })}
