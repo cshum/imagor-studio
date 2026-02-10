@@ -53,7 +53,7 @@ export function LayerOverlay({
     // Handle X position
     if (layerX === 'left') {
       leftPercent = '0%'
-      canDragX = false
+      canDragX = true
     } else if (layerX === 'center') {
       const xPos = (baseImageWidth - layerWidth) / 2
       leftPercent = `${(xPos / baseImageWidth) * 100}%`
@@ -82,7 +82,7 @@ export function LayerOverlay({
     // Handle Y position
     if (layerY === 'top') {
       topPercent = '0%'
-      canDragY = false
+      canDragY = true
     } else if (layerY === 'center') {
       const yPos = (baseImageHeight - layerHeight) / 2
       topPercent = `${(yPos / baseImageHeight) * 100}%`
