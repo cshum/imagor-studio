@@ -62,8 +62,9 @@ export function LayerOverlay({
       canDragX = false
     } else if (typeof layerX === 'number') {
       if (layerX < 0) {
-        // Negative: from right edge
-        displayX = (baseImageWidth + layerX) * scaleX
+        // Negative: distance from right edge to layer's RIGHT edge
+        // Position layer's LEFT edge so its RIGHT edge is |layerX| pixels from right edge
+        displayX = (baseImageWidth + layerX - layerWidth) * scaleX
         isRightAligned = true
       } else {
         // Positive: from left edge
@@ -87,8 +88,9 @@ export function LayerOverlay({
       canDragY = false
     } else if (typeof layerY === 'number') {
       if (layerY < 0) {
-        // Negative: from bottom edge
-        displayY = (baseImageHeight + layerY) * actualScaleY
+        // Negative: distance from bottom edge to layer's BOTTOM edge
+        // Position layer's TOP edge so its BOTTOM edge is |layerY| pixels from bottom edge
+        displayY = (baseImageHeight + layerY - layerHeight) * actualScaleY
         isBottomAligned = true
       } else {
         // Positive: from top edge
@@ -149,27 +151,57 @@ export function LayerOverlay({
       updates.width = Math.round(newDisplayWidth / scaleX)
       updates.height = Math.round(newDisplayHeight / actualScaleY)
 
-      // Convert X position
+      // Convert X position with auto-switch on boundary crossing
       if (canDragX) {
         const originalX = Math.round(newDisplayX / scaleX)
+        
         if (isRightAligned) {
-          // Negative offset from right
-          updates.x = originalX - baseImageWidth
+          // Currently right-aligned (negative offset)
+          const calculatedOffset = originalX + updates.width - baseImageWidth
+          
+          if (calculatedOffset >= 0) {
+            // Crossed boundary to positive - switch to left-aligned
+            updates.x = calculatedOffset
+          } else {
+            // Stay right-aligned (negative offset)
+            updates.x = calculatedOffset
+          }
         } else {
-          // Positive offset from left
-          updates.x = Math.max(0, originalX)
+          // Currently left-aligned (positive offset)
+          if (originalX < 0) {
+            // Crossed boundary to negative - switch to right-aligned
+            updates.x = originalX + updates.width - baseImageWidth
+          } else {
+            // Stay left-aligned (positive offset)
+            updates.x = originalX
+          }
         }
       }
 
-      // Convert Y position
+      // Convert Y position with auto-switch on boundary crossing
       if (canDragY) {
         const originalY = Math.round(newDisplayY / actualScaleY)
+        
         if (isBottomAligned) {
-          // Negative offset from bottom
-          updates.y = originalY - baseImageHeight
+          // Currently bottom-aligned (negative offset)
+          const calculatedOffset = originalY + updates.height - baseImageHeight
+          
+          if (calculatedOffset >= 0) {
+            // Crossed boundary to positive - switch to top-aligned
+            updates.y = calculatedOffset
+          } else {
+            // Stay bottom-aligned (negative offset)
+            updates.y = calculatedOffset
+          }
         } else {
-          // Positive offset from top
-          updates.y = Math.max(0, originalY)
+          // Currently top-aligned (positive offset)
+          if (originalY < 0) {
+            // Crossed boundary to negative - switch to bottom-aligned
+            updates.y = originalY + updates.height - baseImageHeight
+          } else {
+            // Stay top-aligned (positive offset)
+            updates.y = originalY
+          }
         }
       }
 
