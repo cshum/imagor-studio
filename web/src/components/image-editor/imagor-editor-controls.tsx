@@ -154,7 +154,6 @@ export function ImageEditorControls({
   column = 'both',
 }: ImageEditorControlsProps) {
   const { t } = useTranslation()
-  const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
 
   // Track the active dragged section for DragOverlay
   const [activeId, setActiveId] = useState<SectionKey | null>(null)
@@ -441,7 +440,7 @@ export function ImageEditorControls({
     )
   }
 
-  // column === 'both' - render both columns (for mobile Sheet)
+  // column === 'both' - render both columns stacked vertically (for mobile Sheet and tablet)
   return (
     <DndContext
       sensors={sensors}
@@ -450,8 +449,8 @@ export function ImageEditorControls({
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      {/* Desktop: Two columns side by side, Mobile: Stack vertically */}
-      <div className={cn('gap-3', isMobile ? 'flex flex-col' : 'grid grid-cols-2')}>
+      {/* Stack vertically: left column sections on top, right column sections below */}
+      <div className='flex flex-col gap-3'>
         {/* Left Column */}
         <SortableContext items={openSections.leftColumn} strategy={verticalListSortingStrategy}>
           <div className='space-y-3'>

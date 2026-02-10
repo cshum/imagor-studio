@@ -86,6 +86,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [editorOpenSections, setEditorOpenSections] =
     useState<EditorOpenSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
+  const isDesktop = useBreakpoint('lg') // Desktop when screen >= 1024px
+  const isTablet = !isMobile && !isDesktop // Tablet when 768px <= screen < 1024px
 
   // Read state from URL on mount (single source of truth, won't change during component lifetime)
   const initialState = useMemo(() => getStateFromLocation(), [])
@@ -510,6 +512,156 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
   const activeSection = activeId ? sectionConfigs[activeId as SectionKey] : null
 
+  // Tablet layout - Single column with stacked sections
+  if (isTablet) {
+    return (
+      <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] select-none'>
+        {/* Loading Bar */}
+        <LoadingBar isLoading={isLoading} />
+
+        {/* Header - spans full width */}
+        <div className='flex items-center gap-2 border-b p-3'>
+          {/* Back button - hidden in embedded mode */}
+          <Button
+            variant='ghost'
+            size='sm'
+            className={cn(authState.isEmbedded && 'invisible')}
+            onClick={handleBack}
+          >
+            <ChevronLeft className='mr-1 h-4 w-4' />
+            {t('imageEditor.page.back')}
+          </Button>
+
+          {/* Centered title */}
+          <div className='flex flex-1 justify-center'>
+            <a
+              href='https://imagor.net'
+              target='_blank'
+              className='text-foreground hover:text-foreground/80 text-lg font-semibold transition-colors'
+            >
+              {t('common.navigation.title')}
+            </a>
+          </div>
+
+          {/* Undo/Redo + Reset All + Theme Toggle */}
+          <div className='ml-auto flex items-center gap-2'>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => imageEditor.undo()}
+              disabled={!canUndo}
+              title={t('imageEditor.page.undo')}
+            >
+              <Undo2 className='h-4 w-4' />
+            </Button>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => imageEditor.redo()}
+              disabled={!canRedo}
+              title={t('imageEditor.page.redo')}
+            >
+              <Redo2 className='h-4 w-4' />
+            </Button>
+            <Button variant='outline' size='sm' onClick={resetParams}>
+              <RotateCcw className='mr-1 h-4 w-4' />
+              {t('imageEditor.page.resetAll')}
+            </Button>
+            <ModeToggle />
+          </div>
+        </div>
+
+        {/* Main content - Two columns (preview + sidebar) */}
+        <div className='grid w-full grid-cols-[1fr_330px] overflow-hidden'>
+          {/* Preview Area */}
+          <div className='flex min-w-0 flex-col overflow-hidden'>
+            <PreviewArea
+              previewUrl={previewUrl || ''}
+              error={error}
+              galleryKey={galleryKey}
+              imageKey={imageKey}
+              originalDimensions={imageEditor.getOriginalDimensions()}
+              onLoad={handlePreviewLoad}
+              onCopyUrl={handleCopyUrlClick}
+              onDownload={handleDownloadClick}
+              onPreviewDimensionsChange={setPreviewMaxDimensions}
+              visualCropEnabled={visualCropEnabled}
+              cropLeft={params.cropLeft || 0}
+              cropTop={params.cropTop || 0}
+              cropWidth={params.cropWidth || 0}
+              cropHeight={params.cropHeight || 0}
+              onCropChange={handleCropChange}
+              cropAspectRatio={cropAspectRatio}
+              hFlip={params.hFlip}
+              vFlip={params.vFlip}
+              imageEditor={imageEditor}
+              selectedLayerId={selectedLayerId}
+              editingContext={editingContext}
+              layerAspectRatioLocked={layerAspectRatioLocked}
+            />
+          </div>
+
+          {/* Single Column - Stacked sections */}
+          <div className='bg-background flex flex-col overflow-hidden border-l'>
+            <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
+              <ImageEditorControls
+                key={resetCounter}
+                imageEditor={imageEditor}
+                imagePath={imagePath}
+                params={params}
+                selectedLayerId={selectedLayerId}
+                editingContext={editingContext}
+                layerAspectRatioLocked={layerAspectRatioLocked}
+                onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
+                openSections={editorOpenSections}
+                onOpenSectionsChange={handleOpenSectionsChange}
+                onUpdateParams={updateParams}
+                onVisualCropToggle={handleVisualCropToggle}
+                isVisualCropEnabled={visualCropEnabled}
+                outputWidth={imageEditor.getOriginalDimensions().width}
+                outputHeight={imageEditor.getOriginalDimensions().height}
+                onCropAspectRatioChange={setCropAspectRatio}
+                column='both'
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom bar - spans full width */}
+        <div className='bg-background border-t p-3 overflow-x-auto'>
+          <div className='flex min-w-fit items-center gap-4'>
+            {/* Imagor Path - scrollable with monospace font */}
+            <code className='text-muted-foreground whitespace-nowrap font-mono text-xs select-text'>
+              {imagorPath}
+            </code>
+
+            {/* Action Buttons - right aligned */}
+            <div className='flex flex-shrink-0 gap-2'>
+              <Button variant='outline' size='sm' onClick={handleDownloadClick}>
+                <Download className='mr-1 h-4 w-4' />
+                {t('imageEditor.page.download')}
+              </Button>
+              <Button variant='outline' size='sm' onClick={handleCopyUrlClick}>
+                <Copy className='mr-1 h-4 w-4' />
+                {t('imageEditor.page.copyUrl')}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Copy URL Dialog */}
+        <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
+
+        {/* Navigation Confirmation Dialog */}
+        <ConfirmNavigationDialog
+          open={showDialog}
+          onOpenChange={handleCancel}
+          onConfirm={handleConfirm}
+        />
+      </div>
+    )
+  }
+
   // Mobile layout
   if (isMobile) {
     return (
@@ -789,7 +941,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         {/* Drag Overlay */}
         <DragOverlay>
           {activeSection && ActiveIcon ? (
-            <div className='bg-card w-72 rounded-md border shadow-lg'>
+            <div className='bg-card w-[330px] rounded-md border shadow-lg'>
               <Collapsible open={editorOpenSections[activeId as SectionKey]}>
                 <div className='flex w-full items-center'>
                   <div className='py-2 pr-1 pl-3'>
@@ -817,10 +969,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       </DndContext>
 
       {/* Bottom bar - spans full width */}
-      <div className='bg-background border-t p-3'>
-        <div className='flex items-center justify-between gap-4'>
-          {/* Imagor Path - left aligned with monospace font */}
-          <code className='text-muted-foreground flex-1 truncate font-mono text-xs select-text'>
+      <div className='bg-background border-t p-3 overflow-x-auto'>
+        <div className='flex min-w-fit items-center gap-4'>
+          {/* Imagor Path - scrollable with monospace font */}
+          <code className='text-muted-foreground whitespace-nowrap font-mono text-xs select-text'>
             {imagorPath}
           </code>
 
