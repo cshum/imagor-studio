@@ -264,70 +264,40 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     })
   }
 
-  return (
-    <div
-      className={cn(
-        'bg-background ios-no-drag flex overflow-hidden select-none',
-        isMobile && 'min-h-screen-safe',
-        !isMobile && 'h-screen',
-      )}
-    >
-      {/* Loading Bar */}
-      <LoadingBar isLoading={isLoading} />
+  // Mobile layout
+  if (isMobile) {
+    return (
+      <div className='bg-background ios-no-drag min-h-screen-safe flex overflow-hidden select-none'>
+        {/* Loading Bar */}
+        <LoadingBar isLoading={isLoading} />
 
-      {/* Preview Area  */}
-      <div className='ios-preview-container-fix flex flex-1 flex-col'>
-        {/* Header */}
-        <div className='flex items-center gap-2 border-b p-3'>
-          {/* Back button - hidden in embedded mode */}
-          <Button
-            variant='ghost'
-            size='sm'
-            className={cn(authState.isEmbedded && 'invisible')}
-            onClick={handleBack}
-          >
-            <ChevronLeft className='mr-1 h-4 w-4' />
-            {t('imageEditor.page.back')}
-          </Button>
-
-          {/* Centered title */}
-          <div className='flex flex-1 justify-center'>
-            <a
-              href='https://imagor.net'
-              target='_blank'
-              className='text-foreground hover:text-foreground/80 text-lg font-semibold transition-colors'
+        {/* Preview Area  */}
+        <div className='ios-preview-container-fix flex flex-1 flex-col'>
+          {/* Header */}
+          <div className='flex items-center gap-2 border-b p-3'>
+            {/* Back button - hidden in embedded mode */}
+            <Button
+              variant='ghost'
+              size='sm'
+              className={cn(authState.isEmbedded && 'invisible')}
+              onClick={handleBack}
             >
-              {t('common.navigation.title')}
-            </a>
-          </div>
+              <ChevronLeft className='mr-1 h-4 w-4' />
+              {t('imageEditor.page.back')}
+            </Button>
 
-          {/* Desktop Undo/Redo + Theme Toggle */}
-          {!isMobile && (
-            <div className='ml-auto flex items-center gap-2'>
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={() => imageEditor.undo()}
-                disabled={!canUndo}
-                title={t('imageEditor.page.undo')}
+            {/* Centered title */}
+            <div className='flex flex-1 justify-center'>
+              <a
+                href='https://imagor.net'
+                target='_blank'
+                className='text-foreground hover:text-foreground/80 text-lg font-semibold transition-colors'
               >
-                <Undo2 className='h-4 w-4' />
-              </Button>
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={() => imageEditor.redo()}
-                disabled={!canRedo}
-                title={t('imageEditor.page.redo')}
-              >
-                <Redo2 className='h-4 w-4' />
-              </Button>
-              <ModeToggle />
+                {t('common.navigation.title')}
+              </a>
             </div>
-          )}
 
-          {/* Mobile Controls Trigger */}
-          {isMobile && (
+            {/* Mobile Controls Trigger */}
             <div className='ml-auto'>
               <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
                 <SheetTrigger asChild>
@@ -376,60 +346,120 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                       outputWidth={imageEditor.getOriginalDimensions().width}
                       outputHeight={imageEditor.getOriginalDimensions().height}
                       onCropAspectRatioChange={setCropAspectRatio}
+                      column='both'
                     />
                   </div>
                 </SheetContent>
               </Sheet>
             </div>
-          )}
-        </div>
-
-        {/* Preview Content */}
-        <PreviewArea
-          previewUrl={previewUrl || ''}
-          error={error}
-          galleryKey={galleryKey}
-          imageKey={imageKey}
-          imagorPath={imagorPath}
-          originalDimensions={imageEditor.getOriginalDimensions()}
-          onLoad={handlePreviewLoad}
-          onCopyUrl={handleCopyUrlClick}
-          onDownload={handleDownloadClick}
-          onPreviewDimensionsChange={setPreviewMaxDimensions}
-          visualCropEnabled={visualCropEnabled}
-          cropLeft={params.cropLeft || 0}
-          cropTop={params.cropTop || 0}
-          cropWidth={params.cropWidth || 0}
-          cropHeight={params.cropHeight || 0}
-          onCropChange={handleCropChange}
-          cropAspectRatio={cropAspectRatio}
-          hFlip={params.hFlip}
-          vFlip={params.vFlip}
-          imageEditor={imageEditor}
-          selectedLayerId={selectedLayerId}
-          editingContext={editingContext}
-          layerAspectRatioLocked={layerAspectRatioLocked}
-        />
-      </div>
-
-      {/* Transform Panel (Hidden on mobile) */}
-      {!isMobile && (
-        <div className='bg-background flex w-100 flex-col border-l'>
-          {/* Panel Header */}
-          <div className='border-b p-3'>
-            <div className='flex items-center justify-between'>
-              <h2 className='font-semibold'>{t('imageEditor.page.controls')}</h2>
-              <Button variant='outline' size='sm' onClick={resetParams}>
-                <RotateCcw className='mr-1 h-4 w-4' />
-                {t('imageEditor.page.resetAll')}
-              </Button>
-            </div>
           </div>
 
-          {/* Controls */}
+          {/* Preview Content */}
+          <PreviewArea
+            previewUrl={previewUrl || ''}
+            error={error}
+            galleryKey={galleryKey}
+            imageKey={imageKey}
+            imagorPath={imagorPath}
+            originalDimensions={imageEditor.getOriginalDimensions()}
+            onLoad={handlePreviewLoad}
+            onCopyUrl={handleCopyUrlClick}
+            onDownload={handleDownloadClick}
+            onPreviewDimensionsChange={setPreviewMaxDimensions}
+            visualCropEnabled={visualCropEnabled}
+            cropLeft={params.cropLeft || 0}
+            cropTop={params.cropTop || 0}
+            cropWidth={params.cropWidth || 0}
+            cropHeight={params.cropHeight || 0}
+            onCropChange={handleCropChange}
+            cropAspectRatio={cropAspectRatio}
+            hFlip={params.hFlip}
+            vFlip={params.vFlip}
+            imageEditor={imageEditor}
+            selectedLayerId={selectedLayerId}
+            editingContext={editingContext}
+            layerAspectRatioLocked={layerAspectRatioLocked}
+          />
+        </div>
+
+        {/* Copy URL Dialog */}
+        <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
+
+        {/* Navigation Confirmation Dialog */}
+        <ConfirmNavigationDialog
+          open={showDialog}
+          onOpenChange={handleCancel}
+          onConfirm={handleConfirm}
+        />
+      </div>
+    )
+  }
+
+  // Desktop layout - Three columns with full-width bottom bar
+  return (
+    <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] select-none'>
+      {/* Loading Bar */}
+      <LoadingBar isLoading={isLoading} />
+
+      {/* Header - spans full width */}
+      <div className='flex items-center gap-2 border-b p-3'>
+        {/* Back button - hidden in embedded mode */}
+        <Button
+          variant='ghost'
+          size='sm'
+          className={cn(authState.isEmbedded && 'invisible')}
+          onClick={handleBack}
+        >
+          <ChevronLeft className='mr-1 h-4 w-4' />
+          {t('imageEditor.page.back')}
+        </Button>
+
+        {/* Centered title */}
+        <div className='flex flex-1 justify-center'>
+          <a
+            href='https://imagor.net'
+            target='_blank'
+            className='text-foreground hover:text-foreground/80 text-lg font-semibold transition-colors'
+          >
+            {t('common.navigation.title')}
+          </a>
+        </div>
+
+        {/* Undo/Redo + Reset All + Theme Toggle */}
+        <div className='ml-auto flex items-center gap-2'>
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={() => imageEditor.undo()}
+            disabled={!canUndo}
+            title={t('imageEditor.page.undo')}
+          >
+            <Undo2 className='h-4 w-4' />
+          </Button>
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={() => imageEditor.redo()}
+            disabled={!canRedo}
+            title={t('imageEditor.page.redo')}
+          >
+            <Redo2 className='h-4 w-4' />
+          </Button>
+          <Button variant='outline' size='sm' onClick={resetParams}>
+            <RotateCcw className='mr-1 h-4 w-4' />
+            {t('imageEditor.page.resetAll')}
+          </Button>
+          <ModeToggle />
+        </div>
+      </div>
+
+      {/* Main content - Three columns */}
+      <div className='grid grid-cols-[300px_1fr_300px] overflow-hidden'>
+        {/* Left Column */}
+        <div className='bg-background flex flex-col overflow-hidden border-r'>
           <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
             <ImageEditorControls
-              key={resetCounter}
+              key={`left-${resetCounter}`}
               imageEditor={imageEditor}
               imagePath={imagePath}
               params={params}
@@ -445,24 +475,85 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               outputWidth={imageEditor.getOriginalDimensions().width}
               outputHeight={imageEditor.getOriginalDimensions().height}
               onCropAspectRatioChange={setCropAspectRatio}
+              column='left'
             />
           </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className='bg-background border-t p-3'>
-            <div className='flex gap-2'>
-              <Button variant='outline' size='sm' onClick={handleDownloadClick} className='flex-1'>
-                <Download className='mr-1 h-4 w-4' />
-                {t('imageEditor.page.download')}
-              </Button>
-              <Button variant='outline' size='sm' onClick={handleCopyUrlClick} className='flex-1'>
-                <Copy className='mr-1 h-4 w-4' />
-                {t('imageEditor.page.copyUrl')}
-              </Button>
-            </div>
+        {/* Center - Preview Area */}
+        <div className='flex flex-col overflow-hidden'>
+          <PreviewArea
+            previewUrl={previewUrl || ''}
+            error={error}
+            galleryKey={galleryKey}
+            imageKey={imageKey}
+            imagorPath={imagorPath}
+            originalDimensions={imageEditor.getOriginalDimensions()}
+            onLoad={handlePreviewLoad}
+            onCopyUrl={handleCopyUrlClick}
+            onDownload={handleDownloadClick}
+            onPreviewDimensionsChange={setPreviewMaxDimensions}
+            visualCropEnabled={visualCropEnabled}
+            cropLeft={params.cropLeft || 0}
+            cropTop={params.cropTop || 0}
+            cropWidth={params.cropWidth || 0}
+            cropHeight={params.cropHeight || 0}
+            onCropChange={handleCropChange}
+            cropAspectRatio={cropAspectRatio}
+            hFlip={params.hFlip}
+            vFlip={params.vFlip}
+            imageEditor={imageEditor}
+            selectedLayerId={selectedLayerId}
+            editingContext={editingContext}
+            layerAspectRatioLocked={layerAspectRatioLocked}
+          />
+        </div>
+
+        {/* Right Column */}
+        <div className='bg-background flex flex-col overflow-hidden border-l'>
+          <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
+            <ImageEditorControls
+              key={`right-${resetCounter}`}
+              imageEditor={imageEditor}
+              imagePath={imagePath}
+              params={params}
+              selectedLayerId={selectedLayerId}
+              editingContext={editingContext}
+              layerAspectRatioLocked={layerAspectRatioLocked}
+              onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
+              openSections={editorOpenSections}
+              onOpenSectionsChange={handleOpenSectionsChange}
+              onUpdateParams={updateParams}
+              onVisualCropToggle={handleVisualCropToggle}
+              isVisualCropEnabled={visualCropEnabled}
+              outputWidth={imageEditor.getOriginalDimensions().width}
+              outputHeight={imageEditor.getOriginalDimensions().height}
+              onCropAspectRatioChange={setCropAspectRatio}
+              column='right'
+            />
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Bottom bar - spans full width */}
+      <div className='bg-background border-t p-3'>
+        <div className='flex items-center justify-between gap-4'>
+          {/* Imagor Path - left aligned */}
+          <div className='text-muted-foreground flex-1 truncate text-sm'>{imagorPath}</div>
+
+          {/* Action Buttons - right aligned */}
+          <div className='flex flex-shrink-0 gap-2'>
+            <Button variant='outline' size='sm' onClick={handleDownloadClick}>
+              <Download className='mr-1 h-4 w-4' />
+              {t('imageEditor.page.download')}
+            </Button>
+            <Button variant='outline' size='sm' onClick={handleCopyUrlClick}>
+              <Copy className='mr-1 h-4 w-4' />
+              {t('imageEditor.page.copyUrl')}
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* Copy URL Dialog */}
       <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
