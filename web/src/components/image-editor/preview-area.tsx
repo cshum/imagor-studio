@@ -4,6 +4,7 @@ import { AlertCircle, Copy, Download } from 'lucide-react'
 
 import { CropOverlay } from '@/components/image-editor/crop-overlay'
 import { LayerOverlay } from '@/components/image-editor/layer-overlay'
+import { LayerRegionsOverlay } from '@/components/image-editor/layer-regions-overlay'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
@@ -261,7 +262,6 @@ export function PreviewArea({
                   )
                 })()}
               {!visualCropEnabled &&
-                selectedLayerId &&
                 editingContext === null &&
                 !isTransitioning &&
                 imageEditor &&
@@ -269,31 +269,51 @@ export function PreviewArea({
                 imageDimensions.width > 0 &&
                 imageDimensions.height > 0 &&
                 (() => {
-                  const selectedLayer = imageEditor.getLayer(selectedLayerId)
-                  if (!selectedLayer) return null
-
                   // Get the actual output dimensions (after crop + resize, before padding)
                   // This is what layers are positioned relative to
                   const outputDims = imageEditor.getOutputDimensions()
 
-                  return (
-                    <LayerOverlay
-                      previewWidth={imageDimensions.width}
-                      previewHeight={imageDimensions.height}
-                      layerX={selectedLayer.x}
-                      layerY={selectedLayer.y}
-                      layerWidth={
-                        selectedLayer.transforms?.width || selectedLayer.originalDimensions.width
-                      }
-                      layerHeight={
-                        selectedLayer.transforms?.height || selectedLayer.originalDimensions.height
-                      }
-                      onLayerChange={(updates) => imageEditor.updateLayer(selectedLayerId, updates)}
-                      lockedAspectRatio={layerAspectRatioLocked}
-                      baseImageWidth={outputDims.width}
-                      baseImageHeight={outputDims.height}
-                    />
-                  )
+                  if (selectedLayerId) {
+                    // Show single layer overlay with drag/resize handles
+                    const selectedLayer = imageEditor.getLayer(selectedLayerId)
+                    if (!selectedLayer) return null
+
+                    return (
+                      <LayerOverlay
+                        previewWidth={imageDimensions.width}
+                        previewHeight={imageDimensions.height}
+                        layerX={selectedLayer.x}
+                        layerY={selectedLayer.y}
+                        layerWidth={
+                          selectedLayer.transforms?.width || selectedLayer.originalDimensions.width
+                        }
+                        layerHeight={
+                          selectedLayer.transforms?.height ||
+                          selectedLayer.originalDimensions.height
+                        }
+                        onLayerChange={(updates) =>
+                          imageEditor.updateLayer(selectedLayerId, updates)
+                        }
+                        lockedAspectRatio={layerAspectRatioLocked}
+                        baseImageWidth={outputDims.width}
+                        baseImageHeight={outputDims.height}
+                        onDeselect={() => imageEditor.setSelectedLayerId(null)}
+                      />
+                    )
+                  } else {
+                    // Show all layer regions for selection
+                    const layers = imageEditor.getLayers()
+                    if (layers.length === 0) return null
+
+                    return (
+                      <LayerRegionsOverlay
+                        layers={layers}
+                        baseImageWidth={outputDims.width}
+                        baseImageHeight={outputDims.height}
+                        onLayerSelect={(layerId) => imageEditor.setSelectedLayerId(layerId)}
+                      />
+                    )
+                  }
                 })()}
             </div>
           )

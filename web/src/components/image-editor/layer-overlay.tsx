@@ -20,6 +20,7 @@ interface LayerOverlayProps {
   lockedAspectRatio: boolean
   baseImageWidth: number
   baseImageHeight: number
+  onDeselect?: () => void
 }
 
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | null
@@ -35,6 +36,7 @@ export function LayerOverlay({
   lockedAspectRatio,
   baseImageWidth,
   baseImageHeight,
+  onDeselect,
 }: LayerOverlayProps) {
   // Calculate CSS percentage strings for position and size
   // This allows the browser to handle scaling automatically via CSS
@@ -504,8 +506,23 @@ export function LayerOverlay({
     layerHeight,
   ])
 
+  // Handle click outside layer box to deselect
+  const handleOverlayClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Only deselect if clicking directly on overlay background (not layer box or handles)
+      if (e.target === overlayRef.current && onDeselect) {
+        onDeselect()
+      }
+    },
+    [onDeselect],
+  )
+
   return (
-    <div ref={overlayRef} className='pointer-events-none absolute inset-0 z-20 h-full w-full'>
+    <div
+      ref={overlayRef}
+      className='pointer-events-none absolute inset-0 z-20 h-full w-full'
+      onClick={handleOverlayClick}
+    >
       {/* Layer box and handles */}
       <div
         ref={layerBoxRef}
