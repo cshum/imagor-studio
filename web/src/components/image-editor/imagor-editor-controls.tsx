@@ -51,6 +51,8 @@ interface ImageEditorControlsProps {
   params: ImageEditorState
   selectedLayerId: string | null
   editingContext: string | null
+  layerAspectRatioLocked: boolean
+  onLayerAspectRatioLockChange: (locked: boolean) => void
   openSections: EditorOpenSections
   onOpenSectionsChange: (sections: EditorOpenSections) => void
   onUpdateParams: (updates: Partial<ImageEditorState>) => void
@@ -131,6 +133,8 @@ export function ImageEditorControls({
   params,
   selectedLayerId,
   editingContext,
+  layerAspectRatioLocked,
+  onLayerAspectRatioLockChange,
   openSections,
   onOpenSectionsChange,
   onUpdateParams,
@@ -254,6 +258,8 @@ export function ImageEditorControls({
             imagePath={imagePath}
             selectedLayerId={selectedLayerId}
             editingContext={editingContext}
+            layerAspectRatioLocked={layerAspectRatioLocked}
+            onLayerAspectRatioLockChange={onLayerAspectRatioLockChange}
             visualCropEnabled={isVisualCropEnabled}
           />
         ),
@@ -265,6 +271,8 @@ export function ImageEditorControls({
       params,
       selectedLayerId,
       editingContext,
+      layerAspectRatioLocked,
+      onLayerAspectRatioLockChange,
       onUpdateParams,
       onVisualCropToggle,
       isVisualCropEnabled,

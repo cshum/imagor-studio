@@ -30,6 +30,8 @@ import type { BlendMode, ImageLayer } from '@/lib/image-editor'
 interface LayerControlsProps {
   layer: ImageLayer
   isEditing: boolean
+  aspectRatioLocked: boolean
+  onAspectRatioLockChange: (locked: boolean) => void
   visualCropEnabled?: boolean
   onUpdate: (updates: Partial<ImageLayer>) => void
   onEditLayer: () => void
@@ -50,6 +52,8 @@ const BLEND_MODES: BlendMode[] = [
 export function LayerControls({
   layer,
   isEditing,
+  aspectRatioLocked,
+  onAspectRatioLockChange,
   visualCropEnabled = false,
   onUpdate,
   onEditLayer,
@@ -61,9 +65,6 @@ export function LayerControls({
   const [aspectRatio] = useState<number>(() => {
     return layer.originalDimensions.width / layer.originalDimensions.height
   })
-
-  // Default to locked
-  const [aspectRatioLocked, setAspectRatioLocked] = useState(true)
 
   // Get current width/height from transforms or use original dimensions
   const currentWidth = layer.transforms?.width || layer.originalDimensions.width
@@ -420,7 +421,7 @@ export function LayerControls({
               <Button
                 variant='outline'
                 size='sm'
-                onClick={() => setAspectRatioLocked(!aspectRatioLocked)}
+                onClick={() => onAspectRatioLockChange(!aspectRatioLocked)}
                 className='h-8 w-8 p-0'
                 title={
                   aspectRatioLocked

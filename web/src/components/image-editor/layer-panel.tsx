@@ -35,6 +35,8 @@ interface LayerPanelProps {
   imagePath: string
   selectedLayerId: string | null
   editingContext: string | null
+  layerAspectRatioLocked: boolean
+  onLayerAspectRatioLockChange: (locked: boolean) => void
   visualCropEnabled?: boolean
 }
 
@@ -179,6 +181,8 @@ export function LayerPanel({
   imagePath,
   selectedLayerId,
   editingContext,
+  layerAspectRatioLocked,
+  onLayerAspectRatioLockChange,
   visualCropEnabled = false,
 }: LayerPanelProps) {
   const { t } = useTranslation()
@@ -450,6 +454,8 @@ export function LayerPanel({
           <LayerControls
             layer={selectedLayer}
             isEditing={editingContext === selectedLayer.id}
+            aspectRatioLocked={layerAspectRatioLocked}
+            onAspectRatioLockChange={onLayerAspectRatioLockChange}
             visualCropEnabled={visualCropEnabled}
             onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
             onEditLayer={() => handleEditLayer(selectedLayer.id)}

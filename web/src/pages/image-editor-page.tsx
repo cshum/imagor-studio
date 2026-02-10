@@ -94,12 +94,18 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [canRedo, setCanRedo] = useState(false)
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [editingContext, setEditingContext] = useState<string | null>(null)
+  const [layerAspectRatioLocked, setLayerAspectRatioLocked] = useState(true)
 
   // Unsaved changes warning hook
   const { showDialog, handleConfirm, handleCancel } = useUnsavedChangesWarning(canUndo)
 
   // Derive visualCropEnabled from params state (single source of truth)
   const visualCropEnabled = params.visualCropEnabled ?? false
+
+  // Reset aspect ratio lock when switching layers
+  useEffect(() => {
+    setLayerAspectRatioLocked(true)
+  }, [selectedLayerId])
 
   useEffect(() => {
     // Initialize editor FIRST (this resets state to defaults)
@@ -352,6 +358,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                       params={params}
                       selectedLayerId={selectedLayerId}
                       editingContext={editingContext}
+                      layerAspectRatioLocked={layerAspectRatioLocked}
+                      onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
                       openSections={editorOpenSections}
                       onOpenSectionsChange={handleOpenSectionsChange}
                       onUpdateParams={updateParams}
@@ -415,6 +423,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               params={params}
               selectedLayerId={selectedLayerId}
               editingContext={editingContext}
+              layerAspectRatioLocked={layerAspectRatioLocked}
+              onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
               openSections={editorOpenSections}
               onOpenSectionsChange={handleOpenSectionsChange}
               onUpdateParams={updateParams}
