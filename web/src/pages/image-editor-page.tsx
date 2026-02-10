@@ -397,6 +397,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           cropAspectRatio={cropAspectRatio}
           hFlip={params.hFlip}
           vFlip={params.vFlip}
+          imageEditor={imageEditor}
+          selectedLayerId={selectedLayerId}
+          editingContext={editingContext}
+          layerAspectRatioLocked={layerAspectRatioLocked}
         />
       </div>
 

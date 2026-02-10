@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { AlertCircle, Copy, Download } from 'lucide-react'
 
 import { CropOverlay } from '@/components/image-editor/crop-overlay'
+import { LayerOverlay } from '@/components/image-editor/layer-overlay'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
+import type { ImageEditor } from '@/lib/image-editor'
 import { joinImagePath } from '@/lib/path-utils'
 import { cn } from '@/lib/utils'
 
@@ -34,6 +36,10 @@ interface PreviewAreaProps {
   cropAspectRatio?: number | null
   hFlip?: boolean
   vFlip?: boolean
+  imageEditor?: ImageEditor
+  selectedLayerId?: string | null
+  editingContext?: string | null
+  layerAspectRatioLocked?: boolean
 }
 
 export function PreviewArea({
@@ -56,6 +62,10 @@ export function PreviewArea({
   cropAspectRatio = null,
   hFlip = false,
   vFlip = false,
+  imageEditor,
+  selectedLayerId = null,
+  editingContext = null,
+  layerAspectRatioLocked = true,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -235,6 +245,39 @@ export function PreviewArea({
                       vFlip={overlayVFlip}
                       originalWidth={originalDimensions.width}
                       originalHeight={originalDimensions.height}
+                    />
+                  )
+                })()}
+              {!visualCropEnabled &&
+                selectedLayerId &&
+                editingContext === null &&
+                imageEditor &&
+                imageDimensions &&
+                imageDimensions.width > 0 &&
+                imageDimensions.height > 0 &&
+                (() => {
+                  const selectedLayer = imageEditor.getLayer(selectedLayerId)
+                  if (!selectedLayer) return null
+
+                  const { scaleX, scaleY } = getScales()
+                  return (
+                    <LayerOverlay
+                      previewWidth={imageDimensions.width}
+                      previewHeight={imageDimensions.height}
+                      layerX={selectedLayer.x}
+                      layerY={selectedLayer.y}
+                      layerWidth={
+                        selectedLayer.transforms?.width || selectedLayer.originalDimensions.width
+                      }
+                      layerHeight={
+                        selectedLayer.transforms?.height || selectedLayer.originalDimensions.height
+                      }
+                      scale={scaleX}
+                      scaleY={scaleY}
+                      onLayerChange={(updates) => imageEditor.updateLayer(selectedLayerId, updates)}
+                      lockedAspectRatio={layerAspectRatioLocked}
+                      baseImageWidth={originalDimensions.width}
+                      baseImageHeight={originalDimensions.height}
                     />
                   )
                 })()}

@@ -1518,6 +1518,15 @@ export class ImageEditor {
   }
 
   /**
+   * Get a specific layer by ID
+   * @param layerId - ID of the layer to get
+   * @returns The layer or undefined if not found
+   */
+  getLayer(layerId: string): ImageLayer | undefined {
+    return this.getLayers().find((l) => l.id === layerId)
+  }
+
+  /**
    * Clean up resources
    */
   destroy(): void {
