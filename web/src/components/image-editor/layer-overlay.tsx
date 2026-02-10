@@ -520,7 +520,7 @@ export function LayerOverlay({
   return (
     <div
       ref={overlayRef}
-      className='pointer-events-none absolute inset-0 z-20 h-full w-full'
+      className='pointer-events-auto absolute inset-0 z-20 h-full w-full'
       onClick={handleOverlayClick}
     >
       {/* Layer box and handles */}
