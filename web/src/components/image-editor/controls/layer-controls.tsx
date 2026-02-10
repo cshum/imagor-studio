@@ -484,7 +484,7 @@ export function LayerControls({
               disabled={visualCropEnabled}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue>{t(`imageEditor.layers.blendModes.${layer.blendMode}`)}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {BLEND_MODES.map((mode) => (

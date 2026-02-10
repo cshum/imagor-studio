@@ -5,7 +5,7 @@ import type { Auth } from '@/stores/auth-store'
 
 // Define sections as a const object (single source of truth with default states)
 const EDITOR_SECTIONS = {
-  layers: false,
+  layers: true,
   crop: true,
   effects: true,
   transform: false,
@@ -17,15 +17,29 @@ const EDITOR_SECTIONS = {
 // Derive SectionKey from the object keys
 export type SectionKey = keyof typeof EDITOR_SECTIONS
 
+export const SECTION_KEYS: SectionKey[] = [
+  'crop',
+  'effects',
+  'transform',
+  'dimensions',
+  'fill',
+  'output',
+  'layers',
+]
+
 // Use Record type for better type safety
 export interface EditorOpenSections extends Record<SectionKey, boolean> {
-  sectionOrder: SectionKey[]
+  leftColumn: SectionKey[]
+  rightColumn: SectionKey[]
+  visibleSections: SectionKey[]
 }
 
 // Default sections with proper typing
 const defaultOpenSections: EditorOpenSections = {
   ...EDITOR_SECTIONS,
-  sectionOrder: Object.keys(EDITOR_SECTIONS) as SectionKey[],
+  leftColumn: ['layers', 'crop'],
+  rightColumn: ['effects', 'transform', 'dimensions', 'output', 'fill'],
+  visibleSections: ['layers', 'crop', 'effects', 'transform', 'dimensions', 'output', 'fill'],
 }
 
 export class EditorOpenSectionsStorage {
@@ -51,24 +65,41 @@ export class EditorOpenSectionsStorage {
         // Merge with defaults to ensure all properties exist
         const merged = { ...defaultOpenSections, ...savedSections }
 
-        // Ensure sectionOrder exists and contains valid sections
-        if (!merged.sectionOrder || !Array.isArray(merged.sectionOrder)) {
-          merged.sectionOrder = defaultOpenSections.sectionOrder
+        // Ensure leftColumn and rightColumn exist and contain valid sections
+        const validSectionKeys = Object.keys(EDITOR_SECTIONS) as SectionKey[]
+
+        if (!merged.leftColumn || !Array.isArray(merged.leftColumn)) {
+          merged.leftColumn = defaultOpenSections.leftColumn
         } else {
-          // Filter out any invalid section keys and ensure all valid sections are present
-          const validSectionKeys = Object.keys(EDITOR_SECTIONS) as SectionKey[]
-          const filteredOrder = merged.sectionOrder.filter((key): key is SectionKey =>
+          merged.leftColumn = merged.leftColumn.filter((key): key is SectionKey =>
             validSectionKeys.includes(key as SectionKey),
           )
+        }
 
-          // Add any missing sections to the end
-          validSectionKeys.forEach((key) => {
-            if (!filteredOrder.includes(key)) {
-              filteredOrder.push(key)
-            }
-          })
+        if (!merged.rightColumn || !Array.isArray(merged.rightColumn)) {
+          merged.rightColumn = defaultOpenSections.rightColumn
+        } else {
+          merged.rightColumn = merged.rightColumn.filter((key): key is SectionKey =>
+            validSectionKeys.includes(key as SectionKey),
+          )
+        }
 
-          merged.sectionOrder = filteredOrder
+        // Ensure all sections are assigned to a column
+        const assignedSections = new Set([...merged.leftColumn, ...merged.rightColumn])
+        validSectionKeys.forEach((key) => {
+          if (!assignedSections.has(key)) {
+            // Add missing sections to right column by default
+            merged.rightColumn.push(key)
+          }
+        })
+
+        // Ensure visibleSections exists and contains valid sections
+        if (!merged.visibleSections || !Array.isArray(merged.visibleSections)) {
+          merged.visibleSections = defaultOpenSections.visibleSections
+        } else {
+          merged.visibleSections = merged.visibleSections.filter((key): key is SectionKey =>
+            validSectionKeys.includes(key as SectionKey),
+          )
         }
 
         return merged as EditorOpenSections

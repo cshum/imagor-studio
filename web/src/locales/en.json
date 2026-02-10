@@ -682,7 +682,8 @@
       "confirmLeave": "Leave editor?",
       "confirmLeaveMessage": "Are you sure you want to go back?",
       "leave": "Leave",
-      "stay": "Stay"
+      "stay": "Stay",
+      "showHideControls": "Show/Hide Controls"
     },
     "controls": {
       "cropAspect": "Crop & Aspect",
@@ -735,7 +736,7 @@
       },
       "modeDescriptions": {
         "fitIn": "Resize to fit within dimensions, maintaining aspect ratio",
-        "fill": "Resize and crop to fill dimensions exactly",
+        "fill": "Resize and crop to fill dimensions",
         "stretch": "Resize to exact dimensions, ignoring aspect ratio",
         "smart": "Smart crop to fill dimensions with content detection"
       },
@@ -773,7 +774,7 @@
       "qualityDescription": "Higher quality = larger file size",
       "qualityAutoOptimized": "Quality will be automatically optimized to meet size limit",
       "maxFileSize": "Max Size",
-      "maxSizeDescription": "Automatically adjusts quality to meet the target file size",
+      "maxSizeDescription": "Automatically adjusts quality to meet the file size",
       "customSizeInBytes": "Custom size in bytes",
       "bytes": "bytes",
       "clear": "Clear",
@@ -781,7 +782,7 @@
       "metadata": "Metadata",
       "stripIcc": "Strip ICC Profile",
       "stripExif": "Strip EXIF Data",
-      "metadataDescription": "Remove color profiles and metadata to reduce file size"
+      "metadataDescription": "Remove metadata to reduce file size"
     },
     "crop": {
       "left": "Left (px)",

@@ -677,7 +677,8 @@
       "confirmLeave": "離開編輯器？",
       "confirmLeaveMessage": "確定要返回嗎？",
       "leave": "離開",
-      "stay": "留下"
+      "stay": "留下",
+      "showHideControls": "顯示/隱藏控制面板"
     },
     "controls": {
       "cropAspect": "裁剪和比例",

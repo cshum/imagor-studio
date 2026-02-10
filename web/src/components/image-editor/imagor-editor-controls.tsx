@@ -6,9 +6,10 @@ import {
   DragOverlay,
   KeyboardSensor,
   PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
-  type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
 import {
@@ -39,7 +40,6 @@ import { FillPaddingControl } from '@/components/image-editor/controls/fill-padd
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { LayerPanel } from '@/components/image-editor/layer-panel'
-import { Card } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { EditorOpenSections, SectionKey } from '@/lib/editor-open-sections-storage'
 import type { ImageEditor, ImageEditorState } from '@/lib/image-editor.ts'
@@ -61,6 +61,12 @@ interface ImageEditorControlsProps {
   outputWidth: number
   outputHeight: number
   onCropAspectRatioChange?: (aspectRatio: number | null) => void
+  column?: 'left' | 'right' | 'both'
+  // Drag handlers (optional - only needed when column is 'left' or 'right')
+  onDragStart?: (event: DragStartEvent) => void
+  onDragOver?: (event: DragOverEvent) => void
+  onDragEnd?: () => void
+  activeId?: SectionKey | null
 }
 
 interface SectionConfig {
@@ -93,36 +99,54 @@ function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
   const Icon = section.icon
 
   return (
-    <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0', 'relative')}>
-      <Card>
-        <Collapsible open={isOpen} onOpenChange={onToggle}>
-          <div className='flex w-full items-center'>
-            {/* Drag handle - spans left padding area */}
-            <button
-              className='cursor-grab touch-none py-4 pr-2 pl-4 active:cursor-grabbing'
-              {...attributes}
-              {...listeners}
-              onClick={(e) => e.stopPropagation()}
-              aria-label='Drag to reorder'
-              tabIndex={-1}
-            >
-              <GripVertical className='h-4 w-4' />
-            </button>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(isDragging && 'opacity-0', 'bg-card relative rounded-md border')}
+    >
+      <Collapsible open={isOpen} onOpenChange={onToggle}>
+        <div className='flex w-full items-center'>
+          {/* Drag handle - reduced padding */}
+          <button
+            className='cursor-grab touch-none py-2 pr-1 pl-3 active:cursor-grabbing'
+            {...attributes}
+            {...listeners}
+            onClick={(e) => e.stopPropagation()}
+            aria-label='Drag to reorder'
+            tabIndex={-1}
+          >
+            <GripVertical className='h-4 w-4' />
+          </button>
 
-            {/* Toggle area - rest of header */}
-            <CollapsibleTrigger className='flex flex-1 cursor-pointer items-center justify-between py-4 pr-4 text-left'>
-              <div className='flex items-center gap-2'>
-                <Icon className='h-4 w-4' />
-                <span className='font-medium'>{t(section.titleKey)}</span>
-              </div>
-              <CollapsibleIcon isOpen={isOpen} />
-            </CollapsibleTrigger>
-          </div>
-          <CollapsibleContent className='overflow-hidden px-4 pb-4'>
-            {section.component}
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
+          {/* Toggle area - reduced padding */}
+          <CollapsibleTrigger className='flex flex-1 cursor-pointer items-center justify-between py-2 pr-3 text-left'>
+            <div className='flex items-center gap-2'>
+              <Icon className='h-4 w-4' />
+              <span className='font-medium'>{t(section.titleKey)}</span>
+            </div>
+            <CollapsibleIcon isOpen={isOpen} />
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent className='overflow-hidden px-3 pb-3'>
+          {section.component}
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  )
+}
+
+interface DroppableColumnProps {
+  id: string
+  isEmpty: boolean
+  children: React.ReactNode
+}
+
+function DroppableColumn({ id, isEmpty, children }: DroppableColumnProps) {
+  const { setNodeRef } = useDroppable({ id })
+
+  return (
+    <div ref={setNodeRef} className={cn(isEmpty && 'min-h-full')}>
+      {children}
     </div>
   )
 }
@@ -143,7 +167,10 @@ export function ImageEditorControls({
   outputWidth,
   outputHeight,
   onCropAspectRatioChange,
+  column = 'both',
 }: ImageEditorControlsProps) {
+  const { t } = useTranslation()
+
   // Track the active dragged section for DragOverlay
   const [activeId, setActiveId] = useState<SectionKey | null>(null)
 
@@ -167,31 +194,109 @@ export function ImageEditorControls({
   )
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    // Track which section is being dragged for DragOverlay
-    setActiveId(event.active.id as SectionKey)
+    const draggedId = event.active.id as SectionKey
+    setActiveId(draggedId)
   }, [])
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
       const { active, over } = event
+      if (!over) return
 
-      // Clear active dragged item
-      setActiveId(null)
+      const activeId = active.id as SectionKey
+      const overId = over.id as string
 
-      // Update section order if items were reordered
-      if (over && active.id !== over.id) {
-        const oldIndex = openSections.sectionOrder.indexOf(active.id as SectionKey)
-        const newIndex = openSections.sectionOrder.indexOf(over.id as SectionKey)
+      // Determine source and destination columns
+      const activeInLeft = openSections.leftColumn.includes(activeId)
+      const activeInRight = openSections.rightColumn.includes(activeId)
 
-        const newOrder = arrayMove(openSections.sectionOrder, oldIndex, newIndex)
+      let targetColumn: 'left' | 'right' | null = null
+      const overIdAsSection = overId as SectionKey
+
+      // Check if dropping over a column droppable area
+      if (overId === 'left-column') {
+        targetColumn = 'left'
+      } else if (overId === 'right-column') {
+        targetColumn = 'right'
+      } else {
+        // Dropping over another section - determine its column
+        if (openSections.leftColumn.includes(overIdAsSection)) {
+          targetColumn = 'left'
+        } else if (openSections.rightColumn.includes(overIdAsSection)) {
+          targetColumn = 'right'
+        }
+      }
+
+      if (!targetColumn) return
+
+      // Handle cross-column movement
+      if (targetColumn === 'left' && activeInRight) {
+        // Move from right to left
+        const newLeftColumn = [...openSections.leftColumn]
+        const newRightColumn = openSections.rightColumn.filter((id) => id !== activeId)
+
+        if (overId === 'left-column' || !openSections.leftColumn.includes(overIdAsSection)) {
+          newLeftColumn.push(activeId)
+        } else {
+          const overIndex = newLeftColumn.indexOf(overIdAsSection)
+          newLeftColumn.splice(overIndex, 0, activeId)
+        }
+
         onOpenSectionsChange({
           ...openSections,
-          sectionOrder: newOrder,
+          leftColumn: newLeftColumn,
+          rightColumn: newRightColumn,
         })
+      } else if (targetColumn === 'right' && activeInLeft) {
+        // Move from left to right
+        const newLeftColumn = openSections.leftColumn.filter((id) => id !== activeId)
+        const newRightColumn = [...openSections.rightColumn]
+
+        if (overId === 'right-column' || !openSections.rightColumn.includes(overIdAsSection)) {
+          newRightColumn.push(activeId)
+        } else {
+          const overIndex = newRightColumn.indexOf(overIdAsSection)
+          newRightColumn.splice(overIndex, 0, activeId)
+        }
+
+        onOpenSectionsChange({
+          ...openSections,
+          leftColumn: newLeftColumn,
+          rightColumn: newRightColumn,
+        })
+      } else if (targetColumn === 'left' && activeInLeft && overId !== 'left-column') {
+        // Reorder within left column
+        const oldIndex = openSections.leftColumn.indexOf(activeId)
+        const newIndex = openSections.leftColumn.indexOf(overIdAsSection)
+
+        if (oldIndex !== newIndex) {
+          const newLeftColumn = arrayMove(openSections.leftColumn, oldIndex, newIndex)
+          onOpenSectionsChange({
+            ...openSections,
+            leftColumn: newLeftColumn,
+          })
+        }
+      } else if (targetColumn === 'right' && activeInRight && overId !== 'right-column') {
+        // Reorder within right column
+        const oldIndex = openSections.rightColumn.indexOf(activeId)
+        const newIndex = openSections.rightColumn.indexOf(overIdAsSection)
+
+        if (oldIndex !== newIndex) {
+          const newRightColumn = arrayMove(openSections.rightColumn, oldIndex, newIndex)
+          onOpenSectionsChange({
+            ...openSections,
+            rightColumn: newRightColumn,
+          })
+        }
       }
     },
     [openSections, onOpenSectionsChange],
   )
+
+  const handleDragEnd = useCallback(() => {
+    // Clear active dragged item
+    setActiveId(null)
+  }, [])
 
   // Define all section configurations
   const sectionConfigs: Record<SectionKey, SectionConfig> = useMemo(
@@ -282,41 +387,106 @@ export function ImageEditorControls({
     ],
   )
 
-  // Get ordered sections based on sectionOrder
-  const orderedSections = useMemo(
-    () => openSections.sectionOrder.map((id) => sectionConfigs[id]),
-    [openSections.sectionOrder, sectionConfigs],
-  )
-
-  // Filter sections based on editing context - hide fill & padding when editing a layer
-  const visibleSections = useMemo(
-    () =>
-      orderedSections.filter((section) => {
-        // Hide fill & padding section when editing a layer
-        if (section.key === 'fill' && editingContext !== null) {
-          return false
-        }
-        return true
-      }),
-    [orderedSections, editingContext],
-  )
-
-  const { t } = useTranslation()
-
   // Get the active section for DragOverlay
   const activeSection = activeId ? sectionConfigs[activeId] : null
 
+  // Get sections for each column (filtered by visibility)
+  const leftColumnSections = useMemo(
+    () =>
+      openSections.leftColumn
+        .map((id) => sectionConfigs[id])
+        .filter((section) => {
+          // Filter by visibility
+          const visibleSections = openSections.visibleSections || []
+          if (visibleSections.length > 0 && !visibleSections.includes(section.key)) {
+            return false
+          }
+          // Hide fill & padding section when editing a layer
+          if (section.key === 'fill' && editingContext !== null) {
+            return false
+          }
+          return true
+        }),
+    [openSections.leftColumn, openSections.visibleSections, sectionConfigs, editingContext],
+  )
+
+  const rightColumnSections = useMemo(
+    () =>
+      openSections.rightColumn
+        .map((id) => sectionConfigs[id])
+        .filter((section) => {
+          // Filter by visibility
+          const visibleSections = openSections.visibleSections || []
+          if (visibleSections.length > 0 && !visibleSections.includes(section.key)) {
+            return false
+          }
+          // Hide fill & padding section when editing a layer
+          if (section.key === 'fill' && editingContext !== null) {
+            return false
+          }
+          return true
+        }),
+    [openSections.rightColumn, openSections.visibleSections, sectionConfigs, editingContext],
+  )
+
+  // Render based on column prop
+  if (column === 'left') {
+    // Only render left column (no DndContext - parent provides it)
+    const isEmpty = leftColumnSections.length === 0
+    return (
+      <SortableContext items={openSections.leftColumn} strategy={verticalListSortingStrategy}>
+        <DroppableColumn id='left-column' isEmpty={isEmpty}>
+          <div className='space-y-3'>
+            {leftColumnSections.map((section) => (
+              <SortableSection
+                key={section.key}
+                section={section}
+                isOpen={openSections[section.key]}
+                onToggle={(open) => handleSectionToggle(section.key, open)}
+              />
+            ))}
+          </div>
+        </DroppableColumn>
+      </SortableContext>
+    )
+  }
+
+  if (column === 'right') {
+    // Only render right column (no DndContext - parent provides it)
+    const isEmpty = rightColumnSections.length === 0
+    return (
+      <SortableContext items={openSections.rightColumn} strategy={verticalListSortingStrategy}>
+        <DroppableColumn id='right-column' isEmpty={isEmpty}>
+          <div className='space-y-3'>
+            {rightColumnSections.map((section) => (
+              <SortableSection
+                key={section.key}
+                section={section}
+                isOpen={openSections[section.key]}
+                onToggle={(open) => handleSectionToggle(section.key, open)}
+              />
+            ))}
+          </div>
+        </DroppableColumn>
+      </SortableContext>
+    )
+  }
+
+  // column === 'both' - render both columns stacked vertically (for mobile Sheet and tablet)
   return (
-    <div className='space-y-4'>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={openSections.sectionOrder} strategy={verticalListSortingStrategy}>
-          <div className='space-y-4'>
-            {visibleSections.map((section) => (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
+      {/* Stack vertically: left column sections on top, right column sections below */}
+      <div className='flex flex-col gap-3'>
+        {/* Left Column */}
+        <SortableContext items={openSections.leftColumn} strategy={verticalListSortingStrategy}>
+          <div className='space-y-3'>
+            {leftColumnSections.map((section) => (
               <SortableSection
                 key={section.key}
                 section={section}
@@ -326,37 +496,53 @@ export function ImageEditorControls({
             ))}
           </div>
         </SortableContext>
-        <DragOverlay>
-          {activeSection ? (
-            <Card className='w-full'>
-              <Collapsible open={openSections[activeSection.key]}>
-                <div className='flex w-full items-center'>
-                  {/* Drag handle - matching the actual layout */}
-                  <div className='py-4 pr-2 pl-4'>
-                    <GripVertical className='h-4 w-4' />
-                  </div>
 
-                  {/* Content area - matching the actual layout */}
-                  <div className='flex flex-1 items-center justify-between py-4 pr-4'>
-                    <div className='flex items-center gap-2'>
-                      <activeSection.icon className='h-4 w-4' />
-                      <span className='font-medium'>{t(activeSection.titleKey)}</span>
-                    </div>
-                    {openSections[activeSection.key] ? (
-                      <ChevronUp className='h-4 w-4' />
-                    ) : (
-                      <ChevronDown className='h-4 w-4' />
-                    )}
-                  </div>
+        {/* Right Column */}
+        <SortableContext items={openSections.rightColumn} strategy={verticalListSortingStrategy}>
+          <div className='space-y-3'>
+            {rightColumnSections.map((section) => (
+              <SortableSection
+                key={section.key}
+                section={section}
+                isOpen={openSections[section.key]}
+                onToggle={(open) => handleSectionToggle(section.key, open)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </div>
+
+      {/* Drag Overlay */}
+      <DragOverlay>
+        {activeSection ? (
+          <div className='bg-card w-72 rounded-md border'>
+            <Collapsible open={openSections[activeSection.key]}>
+              <div className='flex w-full items-center'>
+                {/* Drag handle - matching the actual layout */}
+                <div className='py-2 pr-1 pl-3'>
+                  <GripVertical className='h-4 w-4' />
                 </div>
-                <CollapsibleContent className='overflow-hidden px-4 pb-4'>
-                  {activeSection.component}
-                </CollapsibleContent>
-              </Collapsible>
-            </Card>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-    </div>
+
+                {/* Content area - matching the actual layout */}
+                <div className='flex flex-1 items-center justify-between py-2 pr-3'>
+                  <div className='flex items-center gap-2'>
+                    <activeSection.icon className='h-4 w-4' />
+                    <span className='font-medium'>{t(activeSection.titleKey)}</span>
+                  </div>
+                  {openSections[activeSection.key] ? (
+                    <ChevronUp className='h-4 w-4' />
+                  ) : (
+                    <ChevronDown className='h-4 w-4' />
+                  )}
+                </div>
+              </div>
+              <CollapsibleContent className='overflow-hidden px-3 pb-3'>
+                {activeSection.component}
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   )
 }

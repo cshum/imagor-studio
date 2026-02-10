@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, Copy, Download } from 'lucide-react'
+import { AlertCircle, Copy, Download, Settings } from 'lucide-react'
 
 import { CropOverlay } from '@/components/image-editor/crop-overlay'
 import { LayerOverlay } from '@/components/image-editor/layer-overlay'
@@ -19,7 +19,6 @@ interface PreviewAreaProps {
   error: Error | null
   galleryKey: string
   imageKey: string
-  imagorPath: string
   originalDimensions: {
     width: number
     height: number
@@ -41,6 +40,7 @@ interface PreviewAreaProps {
   selectedLayerId?: string | null
   editingContext?: string | null
   layerAspectRatioLocked?: boolean
+  onOpenControls?: () => void
 }
 
 export function PreviewArea({
@@ -48,7 +48,6 @@ export function PreviewArea({
   error,
   galleryKey,
   imageKey,
-  imagorPath,
   originalDimensions,
   onLoad,
   onCopyUrl,
@@ -67,9 +66,12 @@ export function PreviewArea({
   selectedLayerId = null,
   editingContext = null,
   layerAspectRatioLocked = true,
+  onOpenControls,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
+  const isDesktop = useBreakpoint('lg') // Desktop when screen >= 1024px
+  const isTablet = !isMobile && !isDesktop // Tablet when 768px <= screen < 1024px
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const previewImageRef = useRef<HTMLImageElement>(null)
   const [imageDimensions, setImageDimensions] = useState<{
@@ -230,7 +232,11 @@ export function PreviewArea({
                 className={cn(
                   'h-auto w-auto object-contain',
                   'max-h-[calc(100vh-152px)]',
-                  isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[calc(100vw-432px)]',
+                  isMobile
+                    ? 'max-w-[calc(100vw-32px)]'
+                    : isTablet
+                      ? 'max-w-[calc(100vw-362px)]'
+                      : 'max-w-[calc(100vw-692px)]',
                 )}
               />
               {visualCropEnabled &&
@@ -321,39 +327,45 @@ export function PreviewArea({
         )}
       </div>
 
-      {/* Preview Controls */}
-      <div className={cn('bg-muted/20', isMobile ? 'p-3' : '', isMobile && 'ios-bottom-safe')}>
-        {isMobile ? (
-          /* Mobile: Only buttons spanning full width */
-          <div className='flex items-center gap-2'>
+      {/* Preview Controls - Mobile only */}
+      {isMobile && (
+        <div className='bg-muted/20 ios-bottom-safe p-3'>
+          <div className='inline-flex w-full rounded-md'>
             <Button
               variant='outline'
-              size='sm'
+              size='default'
               onClick={onCopyUrl}
-              className='h-8 flex-1 touch-manipulation'
+              className='flex-1 touch-manipulation rounded-r-none border-r-0'
             >
               <Copy className='mr-1 h-4 w-4' />
               {t('imageEditor.page.copyUrl')}
             </Button>
             <Button
               variant='outline'
-              size='sm'
+              size='default'
               onClick={onDownload}
-              className='h-8 flex-1 touch-manipulation'
+              className={cn(
+                'flex-1 touch-manipulation',
+                onOpenControls ? 'rounded-none border-r-0' : 'rounded-l-none',
+              )}
             >
               <Download className='mr-1 h-4 w-4' />
               {t('imageEditor.page.download')}
             </Button>
+            {onOpenControls && (
+              <Button
+                variant='outline'
+                size='default'
+                onClick={onOpenControls}
+                className='flex-1 touch-manipulation rounded-l-none'
+              >
+                <Settings className='mr-1 h-4 w-4' />
+                {t('imageEditor.page.controls')}
+              </Button>
+            )}
           </div>
-        ) : (
-          /* Desktop: Full-width Imagor path */
-          <div className='flex h-12 items-center overflow-x-auto'>
-            <code className='text-muted-foreground mx-auto px-4 pb-4 font-mono text-xs whitespace-nowrap select-text'>
-              {imagorPath}
-            </code>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
