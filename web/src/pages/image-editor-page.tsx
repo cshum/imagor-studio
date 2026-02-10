@@ -928,7 +928,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             >
               <SheetHeader className='border-b p-3'>
                 <div className='flex items-center gap-3'>
-                  <Button variant='ghost' size='sm' onClick={() => setMobileSheetOpen(false)}>
+                  <Button variant='outline' size='sm' onClick={() => setMobileSheetOpen(false)}>
                     <ChevronLeft className='mr-1 h-4 w-4' />
                     {t('imageEditor.page.back')}
                   </Button>
@@ -936,6 +936,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   <SheetTitle className='flex-1 text-center'>
                     {t('imageEditor.page.controls')}
                   </SheetTitle>
+
+                  {/* Invisible spacer to balance the Back button and center the title */}
+                  <div className='w-[72px]' />
                 </div>
               </SheetHeader>
 
