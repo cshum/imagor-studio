@@ -102,6 +102,10 @@ function SortableLayerItem({
           (isSelected || isEditing) && 'ring-primary ring-2 ring-inset',
         )}
         onClick={() => onSelect(layer.id)}
+        onDoubleClick={(e) => {
+          e.stopPropagation()
+          onEdit(layer.id)
+        }}
       >
         {/* Drag handle */}
         <button
@@ -161,11 +165,8 @@ function SortableLayerItem({
                   onEdit(layer.id)
                 }}
               >
-                <div className='flex flex-1 items-center'>
-                  <Edit className='mr-2 h-4 w-4' />
-                  {t('imageEditor.layers.editLayer')}
-                </div>
-                <DropdownMenuShortcut>Enter</DropdownMenuShortcut>
+                <Edit className='mr-2 h-4 w-4' />
+                {t('imageEditor.layers.editLayer')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={(e) => {
@@ -337,11 +338,10 @@ export function LayerPanel({
 
   const handleSelectLayer = useCallback(
     (layerId: string) => {
-      // Toggle selection without entering edit mode
-      const newSelection = selectedLayerId === layerId ? null : layerId
-      imageEditor.setSelectedLayerId(newSelection)
+      // Select layer without toggling (clicking same layer keeps it selected)
+      imageEditor.setSelectedLayerId(layerId)
     },
-    [imageEditor, selectedLayerId],
+    [imageEditor],
   )
 
   const handleEditLayer = useCallback(
@@ -473,10 +473,7 @@ export function LayerPanel({
         return
       }
 
-      if (event.key === 'Enter') {
-        event.preventDefault()
-        handleEditLayer(selectedLayerId)
-      } else if (event.key === 'Delete' || event.key === 'Backspace') {
+      if (event.key === 'Delete' || event.key === 'Backspace') {
         event.preventDefault()
         handleDelete(selectedLayerId)
       } else if ((event.ctrlKey || event.metaKey) && event.key === 'd') {
@@ -492,7 +489,6 @@ export function LayerPanel({
     editingContext,
     visualCropEnabled,
     activeId,
-    handleEditLayer,
     handleDelete,
     handleDuplicateLayer,
   ])
