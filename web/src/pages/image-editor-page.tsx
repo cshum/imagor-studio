@@ -706,7 +706,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className='grid grid-cols-[300px_1fr_300px] overflow-hidden'>
+        <div className='grid grid-cols-[330px_1fr_330px] overflow-hidden'>
           {/* Left Column */}
           <div className='bg-background flex flex-col overflow-hidden border-r'>
             <div className='flex-1 touch-pan-y overflow-y-auto p-3 select-none'>
