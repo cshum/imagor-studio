@@ -17,6 +17,16 @@ const EDITOR_SECTIONS = {
 // Derive SectionKey from the object keys
 export type SectionKey = keyof typeof EDITOR_SECTIONS
 
+export const SECTION_KEYS: SectionKey[] = [
+  'crop',
+  'effects',
+  'transform',
+  'dimensions',
+  'fill',
+  'output',
+  'layers',
+]
+
 // Use Record type for better type safety
 export interface EditorOpenSections extends Record<SectionKey, boolean> {
   leftColumn: SectionKey[]

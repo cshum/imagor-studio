@@ -379,13 +379,18 @@ export function ImageEditorControls({
       openSections.leftColumn
         .map((id) => sectionConfigs[id])
         .filter((section) => {
+          // Filter by visibility
+          const visibleSections = openSections.visibleSections || []
+          if (visibleSections.length > 0 && !visibleSections.includes(section.key)) {
+            return false
+          }
           // Hide fill & padding section when editing a layer
           if (section.key === 'fill' && editingContext !== null) {
             return false
           }
           return true
         }),
-    [openSections.leftColumn, sectionConfigs, editingContext],
+    [openSections.leftColumn, openSections.visibleSections, sectionConfigs, editingContext],
   )
 
   const rightColumnSections = useMemo(
@@ -393,13 +398,18 @@ export function ImageEditorControls({
       openSections.rightColumn
         .map((id) => sectionConfigs[id])
         .filter((section) => {
+          // Filter by visibility
+          const visibleSections = openSections.visibleSections || []
+          if (visibleSections.length > 0 && !visibleSections.includes(section.key)) {
+            return false
+          }
           // Hide fill & padding section when editing a layer
           if (section.key === 'fill' && editingContext !== null) {
             return false
           }
           return true
         }),
-    [openSections.rightColumn, sectionConfigs, editingContext],
+    [openSections.rightColumn, openSections.visibleSections, sectionConfigs, editingContext],
   )
 
   // Render based on column prop

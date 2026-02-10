@@ -19,11 +19,13 @@ import {
   ChevronUp,
   Copy,
   Download,
+  Eye,
   FileImage,
   Frame,
   GripVertical,
   Layers,
   Maximize2,
+  MoreVertical,
   Palette,
   Redo2,
   RotateCcw,
@@ -49,13 +51,24 @@ import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import { ConfirmNavigationDialog } from '@/components/ui/confirm-navigation-dialog'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 import {
   EditorOpenSectionsStorage,
   type EditorOpenSections,
-  type SectionKey,
+  type SectionKey, SECTION_KEYS,
 } from '@/lib/editor-open-sections-storage'
 import {
   deserializeStateFromUrl,
@@ -308,6 +321,21 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     })
   }
 
+  // Handler for toggling section visibility
+  const handleToggleSectionVisibility = (sectionKey: SectionKey) => {
+    const currentVisible = editorOpenSections.visibleSections || []
+    const isVisible = currentVisible.includes(sectionKey)
+
+    const newVisibleSections = isVisible
+      ? currentVisible.filter((key) => key !== sectionKey)
+      : [...currentVisible, sectionKey]
+
+    handleOpenSectionsChange({
+      ...editorOpenSections,
+      visibleSections: newVisibleSections,
+    })
+  }
+
   // Drag and drop handlers for desktop
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -543,7 +571,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             </a>
           </div>
 
-          {/* Undo/Redo + Reset All + Download + Copy URL + Theme Toggle */}
+          {/* Undo/Redo + Download + Three-dot Menu + Theme Toggle */}
           <div className='ml-auto flex items-center gap-2'>
             <Button
               variant='ghost'
@@ -563,18 +591,60 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             >
               <Redo2 className='h-4 w-4' />
             </Button>
-            <Button variant='outline' size='sm' onClick={resetParams}>
-              <RotateCcw className='mr-1 h-4 w-4' />
-              {t('imageEditor.page.resetAll')}
-            </Button>
             <Button variant='outline' size='sm' onClick={handleDownloadClick}>
               <Download className='mr-1 h-4 w-4' />
               {t('imageEditor.page.download')}
             </Button>
-            <Button variant='outline' size='sm' onClick={handleCopyUrlClick}>
-              <Copy className='mr-1 h-4 w-4' />
-              {t('imageEditor.page.copyUrl')}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='ghost' size='sm'>
+                  <MoreVertical className='h-4 w-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end' className='w-56'>
+                <DropdownMenuItem onClick={handleCopyUrlClick}>
+                  <Copy className='mr-3 h-4 w-4' />
+                  {t('imageEditor.page.copyUrl')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={resetParams}>
+                  <RotateCcw className='mr-3 h-4 w-4' />
+                  {t('imageEditor.page.resetAll')}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Eye className='mr-3 h-4 w-4' />
+                    {t('imageEditor.page.showHideControls')}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      {SECTION_KEYS.map((sectionKey) => {
+                        const isVisible =
+                          editorOpenSections.visibleSections?.includes(sectionKey) ?? true
+                        const SectionIcon = iconMap[sectionKey]
+                        return (
+                          <DropdownMenuItem
+                            key={sectionKey}
+                            onSelect={(e) => {
+                              e.preventDefault()
+                              handleToggleSectionVisibility(sectionKey)
+                            }}
+                          >
+                            <div className='flex w-full items-center justify-between'>
+                              <div className='flex items-center gap-2'>
+                                <SectionIcon className='h-4 w-4' />
+                                <span>{t(titleKeyMap[sectionKey])}</span>
+                              </div>
+                              {isVisible && <span className='ml-2'>✓</span>}
+                            </div>
+                          </DropdownMenuItem>
+                        )
+                      })}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <ModeToggle />
           </div>
         </div>
@@ -816,7 +886,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           </a>
         </div>
 
-        {/* Undo/Redo + Reset All + Download + Copy URL + Theme Toggle */}
+        {/* Undo/Redo + Download + Three-dot Menu + Theme Toggle */}
         <div className='ml-auto flex items-center gap-2'>
           <Button
             variant='ghost'
@@ -836,18 +906,70 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           >
             <Redo2 className='h-4 w-4' />
           </Button>
-          <Button variant='outline' size='sm' onClick={resetParams}>
-            <RotateCcw className='mr-1 h-4 w-4' />
-            {t('imageEditor.page.resetAll')}
-          </Button>
           <Button variant='outline' size='sm' onClick={handleDownloadClick}>
             <Download className='mr-1 h-4 w-4' />
             {t('imageEditor.page.download')}
           </Button>
-          <Button variant='outline' size='sm' onClick={handleCopyUrlClick}>
-            <Copy className='mr-1 h-4 w-4' />
-            {t('imageEditor.page.copyUrl')}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='ghost' size='sm'>
+                <MoreVertical className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end' className='w-56'>
+              <DropdownMenuItem onClick={handleCopyUrlClick}>
+                <Copy className='mr-3 h-4 w-4' />
+                {t('imageEditor.page.copyUrl')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={resetParams}>
+                <RotateCcw className='mr-3 h-4 w-4' />
+                {t('imageEditor.page.resetAll')}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Eye className='mr-3 h-4 w-4' />
+                  {t('imageEditor.page.showHideControls')}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    {(
+                      [
+                        'crop',
+                        'effects',
+                        'transform',
+                        'dimensions',
+                        'fill',
+                        'output',
+                        'layers',
+                      ] as SectionKey[]
+                    ).map((sectionKey) => {
+                      const isVisible =
+                        editorOpenSections.visibleSections?.includes(sectionKey) ?? true
+                      const SectionIcon = iconMap[sectionKey]
+                      return (
+                        <DropdownMenuItem
+                          key={sectionKey}
+                          onSelect={(e) => {
+                            e.preventDefault()
+                            handleToggleSectionVisibility(sectionKey)
+                          }}
+                        >
+                          <div className='flex w-full items-center justify-between'>
+                            <div className='flex items-center gap-2'>
+                              <SectionIcon className='h-4 w-4' />
+                              <span>{t(titleKeyMap[sectionKey])}</span>
+                            </div>
+                            {isVisible && <span className='ml-2'>✓</span>}
+                          </div>
+                        </DropdownMenuItem>
+                      )
+                    })}
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <ModeToggle />
         </div>
       </div>
