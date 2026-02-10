@@ -14,8 +14,10 @@ interface LayerOverlayProps {
   onLayerChange: (updates: {
     x?: string | number
     y?: string | number
-    width?: number
-    height?: number
+    transforms?: {
+      width?: number
+      height?: number
+    }
   }) => void
   lockedAspectRatio: boolean
   baseImageWidth: number
@@ -40,6 +42,12 @@ export function LayerOverlay({
 }: LayerOverlayProps) {
   const scaleX = scale
   const actualScaleY = scaleY ?? scale
+
+  // Calculate display dimensions
+  // Layer dimensions are in the same coordinate space as base image output
+  // So they use the same scale factor (preview / output)
+  const displayWidth = layerWidth * scaleX
+  const displayHeight = layerHeight * actualScaleY
 
   // Calculate display position and drag constraints
   const getDisplayPosition = useCallback(() => {
@@ -117,9 +125,6 @@ export function LayerOverlay({
   const { displayX, displayY, canDragX, canDragY, isRightAligned, isBottomAligned } =
     getDisplayPosition()
 
-  const displayWidth = layerWidth * scaleX
-  const displayHeight = layerHeight * actualScaleY
-
   const overlayRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
@@ -143,21 +148,28 @@ export function LayerOverlay({
       const updates: {
         x?: string | number
         y?: string | number
-        width?: number
-        height?: number
+        transforms?: {
+          width?: number
+          height?: number
+        }
       } = {}
 
-      // Convert width/height
-      updates.width = Math.round(newDisplayWidth / scaleX)
-      updates.height = Math.round(newDisplayHeight / actualScaleY)
+      // Convert width/height using the same scale as positioning
+      // Layer dimensions are in the same coordinate space as base image output
+      // Width/height go into transforms object
+      updates.transforms = {
+        width: Math.round(newDisplayWidth / scaleX),
+        height: Math.round(newDisplayHeight / actualScaleY),
+      }
 
       // Convert X position with auto-switch on boundary crossing
       if (canDragX) {
         const originalX = Math.round(newDisplayX / scaleX)
+        const layerWidth = updates.transforms?.width || 0
 
         if (isRightAligned) {
           // Currently right-aligned (negative offset)
-          const calculatedOffset = originalX + updates.width - baseImageWidth
+          const calculatedOffset = originalX + layerWidth - baseImageWidth
 
           if (calculatedOffset >= 0) {
             // Crossed boundary to positive - switch to left-aligned
@@ -170,7 +182,7 @@ export function LayerOverlay({
           // Currently left-aligned (positive offset)
           if (originalX < 0) {
             // Crossed boundary to negative - switch to right-aligned
-            updates.x = originalX + updates.width - baseImageWidth
+            updates.x = originalX + layerWidth - baseImageWidth
           } else {
             // Stay left-aligned (positive offset)
             updates.x = originalX
@@ -181,10 +193,11 @@ export function LayerOverlay({
       // Convert Y position with auto-switch on boundary crossing
       if (canDragY) {
         const originalY = Math.round(newDisplayY / actualScaleY)
+        const layerHeight = updates.transforms?.height || 0
 
         if (isBottomAligned) {
           // Currently bottom-aligned (negative offset)
-          const calculatedOffset = originalY + updates.height - baseImageHeight
+          const calculatedOffset = originalY + layerHeight - baseImageHeight
 
           if (calculatedOffset >= 0) {
             // Crossed boundary to positive - switch to top-aligned
@@ -197,7 +210,7 @@ export function LayerOverlay({
           // Currently top-aligned (positive offset)
           if (originalY < 0) {
             // Crossed boundary to negative - switch to bottom-aligned
-            updates.y = originalY + updates.height - baseImageHeight
+            updates.y = originalY + layerHeight - baseImageHeight
           } else {
             // Stay top-aligned (positive offset)
             updates.y = originalY

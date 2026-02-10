@@ -1519,9 +1519,17 @@ export class ImageEditor {
 
     this.state = {
       ...this.state,
-      layers: this.state.layers.map((layer) =>
-        layer.id === layerId ? { ...layer, ...updates } : layer,
-      ),
+      layers: this.state.layers.map((layer) => {
+        if (layer.id !== layerId) return layer
+        
+        // Merge transforms object if present in updates
+        // This preserves existing transform properties like fitIn
+        const mergedLayer = { ...layer, ...updates }
+        if (updates.transforms && layer.transforms) {
+          mergedLayer.transforms = { ...layer.transforms, ...updates.transforms }
+        }
+        return mergedLayer
+      }),
     }
 
     this.callbacks.onStateChange?.(this.getState())
