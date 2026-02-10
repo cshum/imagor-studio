@@ -103,8 +103,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const visualCropEnabled = params.visualCropEnabled ?? false
 
   // Reset aspect ratio lock when switching layers
+  // Default to unlocked for maximum flexibility
   useEffect(() => {
-    setLayerAspectRatioLocked(true)
+    setLayerAspectRatioLocked(false)
   }, [selectedLayerId])
 
   useEffect(() => {
@@ -397,6 +398,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           cropAspectRatio={cropAspectRatio}
           hFlip={params.hFlip}
           vFlip={params.vFlip}
+          imageEditor={imageEditor}
+          selectedLayerId={selectedLayerId}
+          editingContext={editingContext}
+          layerAspectRatioLocked={layerAspectRatioLocked}
         />
       </div>
 
