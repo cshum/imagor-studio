@@ -34,6 +34,7 @@ interface LayerPanelProps {
   imageEditor: ImageEditor
   imagePath: string
   selectedLayerId: string | null
+  editingContext: string | null
   visualCropEnabled?: boolean
 }
 
@@ -177,13 +178,11 @@ export function LayerPanel({
   imageEditor,
   imagePath,
   selectedLayerId,
+  editingContext,
   visualCropEnabled = false,
 }: LayerPanelProps) {
   const { t } = useTranslation()
   const layers = imageEditor.getLayers()
-  const [editingContext, setEditingContext] = useState<string | null>(
-    imageEditor.getEditingContext(),
-  )
   const [activeId, setActiveId] = useState<string | null>(null)
   const [filePickerOpen, setFilePickerOpen] = useState(false)
   const [isAddingLayer, setIsAddingLayer] = useState(false)
@@ -236,7 +235,6 @@ export function LayerPanel({
       // Exit edit mode if deleting the editing layer
       if (editingContext === layerId) {
         imageEditor.switchContext(null)
-        setEditingContext(null)
       }
       // removeLayer will automatically clear selection if needed
       imageEditor.removeLayer(layerId)
@@ -255,17 +253,15 @@ export function LayerPanel({
 
   const handleEditLayer = useCallback(
     (layerId: string) => {
-      // Enter edit mode for this layer (switchContext will auto-select)
+      // Enter edit mode for this layer (switchContext will auto-select and notify via callback)
       imageEditor.switchContext(layerId)
-      setEditingContext(layerId)
     },
     [imageEditor],
   )
 
   const handleExitEditMode = useCallback(() => {
-    // Exit edit mode, return to base
+    // Exit edit mode and return to base
     imageEditor.switchContext(null)
-    setEditingContext(null)
   }, [imageEditor])
 
   const handleSelectBase = useCallback(() => {
@@ -273,7 +269,6 @@ export function LayerPanel({
     imageEditor.setSelectedLayerId(null)
     if (editingContext !== null) {
       imageEditor.switchContext(null)
-      setEditingContext(null)
     }
   }, [editingContext, imageEditor])
 

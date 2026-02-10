@@ -93,6 +93,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
+  const [editingContext, setEditingContext] = useState<string | null>(null)
 
   // Unsaved changes warning hook
   const { showDialog, handleConfirm, handleCancel } = useUnsavedChangesWarning(canUndo)
@@ -118,6 +119,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         updateLocationState(encoded)
       },
       onSelectedLayerChange: setSelectedLayerId,
+      onEditingContextChange: setEditingContext,
     })
 
     // restore state from URL, after callbacks are set
@@ -349,6 +351,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                       imagePath={imagePath}
                       params={params}
                       selectedLayerId={selectedLayerId}
+                      editingContext={editingContext}
                       openSections={editorOpenSections}
                       onOpenSectionsChange={handleOpenSectionsChange}
                       onUpdateParams={updateParams}
@@ -411,6 +414,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               imagePath={imagePath}
               params={params}
               selectedLayerId={selectedLayerId}
+              editingContext={editingContext}
               openSections={editorOpenSections}
               onOpenSectionsChange={handleOpenSectionsChange}
               onUpdateParams={updateParams}

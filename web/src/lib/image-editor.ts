@@ -117,6 +117,7 @@ export interface ImageEditorCallbacks {
   onLoadingChange?: (isLoading: boolean) => void
   onHistoryChange?: () => void
   onSelectedLayerChange?: (layerId: string | null) => void
+  onEditingContextChange?: (layerId: string | null) => void
 }
 
 /**
@@ -1279,6 +1280,9 @@ export class ImageEditor {
 
     // Switch context
     this.editingContext = layerId
+
+    // Notify editing context change
+    this.callbacks.onEditingContextChange?.(layerId)
 
     // Auto-select the layer when entering edit mode
     if (layerId !== null) {

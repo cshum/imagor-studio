@@ -50,6 +50,7 @@ interface ImageEditorControlsProps {
   imagePath: string
   params: ImageEditorState
   selectedLayerId: string | null
+  editingContext: string | null
   openSections: EditorOpenSections
   onOpenSectionsChange: (sections: EditorOpenSections) => void
   onUpdateParams: (updates: Partial<ImageEditorState>) => void
@@ -129,6 +130,7 @@ export function ImageEditorControls({
   imagePath,
   params,
   selectedLayerId,
+  editingContext,
   openSections,
   onOpenSectionsChange,
   onUpdateParams,
@@ -140,9 +142,6 @@ export function ImageEditorControls({
 }: ImageEditorControlsProps) {
   // Track the active dragged section for DragOverlay
   const [activeId, setActiveId] = useState<SectionKey | null>(null)
-
-  // Track editing context (which layer is being edited)
-  const editingContext = imageEditor.getEditingContext()
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -254,6 +253,7 @@ export function ImageEditorControls({
             imageEditor={imageEditor}
             imagePath={imagePath}
             selectedLayerId={selectedLayerId}
+            editingContext={editingContext}
             visualCropEnabled={isVisualCropEnabled}
           />
         ),
@@ -264,6 +264,7 @@ export function ImageEditorControls({
       imagePath,
       params,
       selectedLayerId,
+      editingContext,
       onUpdateParams,
       onVisualCropToggle,
       isVisualCropEnabled,
