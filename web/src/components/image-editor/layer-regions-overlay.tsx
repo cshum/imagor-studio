@@ -100,7 +100,7 @@ export function LayerRegionsOverlay({
             className={cn(
               'pointer-events-auto absolute cursor-pointer',
               'border border-dashed border-white/30',
-              'transition-all duration-150',
+              'transition-colors duration-150',
               'hover:border hover:border-solid hover:border-white/80',
               'hover:bg-white/5',
             )}
