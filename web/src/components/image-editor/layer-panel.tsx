@@ -590,7 +590,9 @@ export function LayerPanel({
                 <div className='bg-background flex h-12 items-center gap-2 rounded-md border px-2 shadow-lg'>
                   <GripVertical className='h-4 w-4' />
                   <span className='flex-1 truncate text-sm'>
-                    {activeLayer.name || activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
+                    {activeLayer.name ||
+                      activeLayer.imagePath.split('/').pop() ||
+                      activeLayer.imagePath}
                   </span>
                   {/* Match layer item button structure */}
                   <div className='flex shrink-0 gap-1'>
@@ -648,13 +650,11 @@ export function LayerPanel({
       />
 
       {/* Rename Layer Dialog */}
-      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen} modal={true}>
-        <DialogContent onCloseAutoFocus={(e) => e.preventDefault()}>
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen} modal={false}>
+        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{t('imageEditor.layers.renameLayer')}</DialogTitle>
-            <DialogDescription>
-              {t('imageEditor.layers.renameLayerDescription')}
-            </DialogDescription>
+            <DialogDescription>{t('imageEditor.layers.renameLayerDescription')}</DialogDescription>
           </DialogHeader>
           <div className='space-y-2'>
             <Label htmlFor='layer-name'>{t('imageEditor.layers.layerName')}</Label>
