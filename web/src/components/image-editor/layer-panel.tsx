@@ -19,13 +19,31 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Eye, EyeOff, GripVertical, Image, Plus, Trash2 } from 'lucide-react'
+import {
+  Copy,
+  Edit,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Image,
+  MoreVertical,
+  Plus,
+  Trash2,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
 import { LayerControls } from '@/components/image-editor/controls/layer-controls'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
@@ -47,6 +65,8 @@ interface SortableLayerItemProps {
   onSelect: (layerId: string) => void
   onToggleVisibility: (layerId: string) => void
   onDelete: (layerId: string) => void
+  onEdit: (layerId: string) => void
+  onDuplicate: (layerId: string) => void
 }
 
 function SortableLayerItem({
@@ -56,6 +76,8 @@ function SortableLayerItem({
   onSelect,
   onToggleVisibility,
   onDelete,
+  onEdit,
+  onDuplicate,
 }: SortableLayerItemProps) {
   const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -120,19 +142,79 @@ function SortableLayerItem({
             )}
           </Button>
 
-          {/* Delete button */}
-          <Button
-            variant='ghost'
-            size='icon'
-            className='text-destructive hover:text-destructive h-8 w-8'
-            onClick={(e) => {
-              e.stopPropagation()
-              onDelete(layer.id)
-            }}
-            title={t('imageEditor.layers.deleteLayer')}
-          >
-            <Trash2 className='h-4 w-4' />
-          </Button>
+          {/* Layer Actions Dropdown Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-8 w-8'
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end' className='min-w-[180px]'>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit(layer.id)
+                }}
+              >
+                <div className='flex flex-1 items-center'>
+                  <Edit className='mr-2 h-4 w-4' />
+                  {t('imageEditor.layers.editLayer')}
+                </div>
+                <DropdownMenuShortcut>Enter</DropdownMenuShortcut>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDuplicate(layer.id)
+                }}
+              >
+                <div className='flex flex-1 items-center'>
+                  <Copy className='mr-2 h-4 w-4' />
+                  {t('imageEditor.layers.duplicateLayer')}
+                </div>
+                <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onToggleVisibility(layer.id)
+                }}
+              >
+                <div className='flex flex-1 items-center'>
+                  {layer.visible ? (
+                    <>
+                      <EyeOff className='mr-2 h-4 w-4' />
+                      {t('imageEditor.layers.hideLayer')}
+                    </>
+                  ) : (
+                    <>
+                      <Eye className='mr-2 h-4 w-4' />
+                      {t('imageEditor.layers.showLayer')}
+                    </>
+                  )}
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete(layer.id)
+                }}
+                className='text-destructive'
+              >
+                <div className='flex flex-1 items-center'>
+                  <Trash2 className='mr-2 h-4 w-4' />
+                  {t('imageEditor.layers.deleteLayer')}
+                </div>
+                <DropdownMenuShortcut>⌫</DropdownMenuShortcut>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>
@@ -455,6 +537,8 @@ export function LayerPanel({
                   onSelect={handleSelectLayer}
                   onToggleVisibility={handleToggleVisibility}
                   onDelete={handleDelete}
+                  onEdit={handleEditLayer}
+                  onDuplicate={handleDuplicateLayer}
                 />
               ))}
             </SortableContext>
@@ -474,8 +558,8 @@ export function LayerPanel({
                         <EyeOff className='text-muted-foreground h-4 w-4' />
                       )}
                     </div>
-                    <div className='text-destructive flex h-8 w-8 items-center justify-center'>
-                      <Trash2 className='h-4 w-4' />
+                    <div className='flex h-8 w-8 items-center justify-center'>
+                      <MoreVertical className='h-4 w-4' />
                     </div>
                   </div>
                 </div>
@@ -504,6 +588,9 @@ export function LayerPanel({
             onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
             onEditLayer={() => handleEditLayer(selectedLayer.id)}
             onExitEditMode={handleExitEditMode}
+            onDuplicateLayer={() => handleDuplicateLayer(selectedLayer.id)}
+            onDeleteLayer={() => handleDelete(selectedLayer.id)}
+            onToggleVisibility={() => handleToggleVisibility(selectedLayer.id)}
           />
         </div>
       )}

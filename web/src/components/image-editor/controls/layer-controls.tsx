@@ -37,6 +37,9 @@ interface LayerControlsProps {
   onUpdate: (updates: Partial<ImageLayer>) => void
   onEditLayer: () => void
   onExitEditMode: () => void
+  onDuplicateLayer: () => void
+  onDeleteLayer: () => void
+  onToggleVisibility: () => void
 }
 
 const BLEND_MODES: BlendMode[] = [
@@ -59,6 +62,9 @@ export function LayerControls({
   onUpdate,
   onEditLayer,
   onExitEditMode,
+  onDuplicateLayer,
+  onDeleteLayer,
+  onToggleVisibility,
 }: LayerControlsProps) {
   const { t } = useTranslation()
 
