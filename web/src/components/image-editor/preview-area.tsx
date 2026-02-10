@@ -330,12 +330,12 @@ export function PreviewArea({
       {/* Preview Controls - Mobile only */}
       {isMobile && (
         <div className='bg-muted/20 ios-bottom-safe p-3'>
-          <div className='flex items-center gap-2'>
+          <div className='inline-flex w-full rounded-md'>
             <Button
               variant='outline'
               size='default'
               onClick={onCopyUrl}
-              className='flex-1 touch-manipulation'
+              className='flex-1 touch-manipulation rounded-r-none border-r-0'
             >
               <Copy className='mr-1 h-4 w-4' />
               {t('imageEditor.page.copyUrl')}
@@ -344,7 +344,10 @@ export function PreviewArea({
               variant='outline'
               size='default'
               onClick={onDownload}
-              className='flex-1 touch-manipulation'
+              className={cn(
+                'flex-1 touch-manipulation',
+                onOpenControls ? 'rounded-none border-r-0' : 'rounded-l-none',
+              )}
             >
               <Download className='mr-1 h-4 w-4' />
               {t('imageEditor.page.download')}
@@ -354,7 +357,7 @@ export function PreviewArea({
                 variant='outline'
                 size='default'
                 onClick={onOpenControls}
-                className='flex-1 touch-manipulation'
+                className='flex-1 touch-manipulation rounded-l-none'
               >
                 <Settings className='mr-1 h-4 w-4' />
                 {t('imageEditor.page.controls')}
