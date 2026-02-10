@@ -674,7 +674,8 @@
       "confirmLeave": "Uscire dall'editor?",
       "confirmLeaveMessage": "Sei sicuro di voler tornare indietro?",
       "leave": "Esci",
-      "stay": "Rimani"
+      "stay": "Rimani",
+      "showHideControls": "Mostra/Nascondi Controlli"
     },
     "controls": {
       "cropAspect": "Ritaglia e Aspetto",

@@ -680,7 +680,8 @@
       "confirmLeave": "离开编辑器？",
       "confirmLeaveMessage": "确定要返回吗？",
       "leave": "离开",
-      "stay": "留下"
+      "stay": "留下",
+      "showHideControls": "显示/隐藏控制面板"
     },
     "controls": {
       "cropAspect": "裁剪和比例",

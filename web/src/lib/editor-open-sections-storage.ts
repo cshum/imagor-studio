@@ -21,6 +21,7 @@ export type SectionKey = keyof typeof EDITOR_SECTIONS
 export interface EditorOpenSections extends Record<SectionKey, boolean> {
   leftColumn: SectionKey[]
   rightColumn: SectionKey[]
+  visibleSections: SectionKey[]
 }
 
 // Default sections with proper typing
@@ -28,6 +29,7 @@ const defaultOpenSections: EditorOpenSections = {
   ...EDITOR_SECTIONS,
   leftColumn: ['layers', 'crop'],
   rightColumn: ['effects', 'transform', 'dimensions', 'output', 'fill'],
+  visibleSections: ['layers', 'crop', 'effects', 'transform', 'dimensions', 'output', 'fill'],
 }
 
 export class EditorOpenSectionsStorage {
@@ -80,6 +82,15 @@ export class EditorOpenSectionsStorage {
             merged.rightColumn.push(key)
           }
         })
+
+        // Ensure visibleSections exists and contains valid sections
+        if (!merged.visibleSections || !Array.isArray(merged.visibleSections)) {
+          merged.visibleSections = defaultOpenSections.visibleSections
+        } else {
+          merged.visibleSections = merged.visibleSections.filter((key): key is SectionKey =>
+            validSectionKeys.includes(key as SectionKey),
+          )
+        }
 
         return merged as EditorOpenSections
       }

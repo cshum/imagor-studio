@@ -682,7 +682,8 @@
       "confirmLeave": "Leave editor?",
       "confirmLeaveMessage": "Are you sure you want to go back?",
       "leave": "Leave",
-      "stay": "Stay"
+      "stay": "Stay",
+      "showHideControls": "Show/Hide Controls"
     },
     "controls": {
       "cropAspect": "Crop & Aspect",
