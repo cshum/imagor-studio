@@ -584,9 +584,6 @@ export function LayerPanel({
             onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
             onEditLayer={() => handleEditLayer(selectedLayer.id)}
             onExitEditMode={handleExitEditMode}
-            onDuplicateLayer={() => handleDuplicateLayer(selectedLayer.id)}
-            onDeleteLayer={() => handleDelete(selectedLayer.id)}
-            onToggleVisibility={() => handleToggleVisibility(selectedLayer.id)}
           />
         </div>
       )}
