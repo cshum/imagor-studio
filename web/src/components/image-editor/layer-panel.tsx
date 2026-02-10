@@ -27,6 +27,7 @@ import {
   GripVertical,
   Image,
   MoreVertical,
+  Pencil,
   Plus,
   Trash2,
 } from 'lucide-react'
@@ -37,6 +38,14 @@ import { LayerControls } from '@/components/image-editor/controls/layer-controls
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -44,6 +53,8 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
@@ -67,6 +78,7 @@ interface SortableLayerItemProps {
   onDelete: (layerId: string) => void
   onEdit: (layerId: string) => void
   onDuplicate: (layerId: string) => void
+  onRename: (layerId: string) => void
 }
 
 function SortableLayerItem({
@@ -78,6 +90,7 @@ function SortableLayerItem({
   onDelete,
   onEdit,
   onDuplicate,
+  onRename,
 }: SortableLayerItemProps) {
   const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -89,8 +102,8 @@ function SortableLayerItem({
     transition,
   }
 
-  // Extract filename from imagePath
-  const filename = layer.imagePath.split('/').pop() || layer.imagePath
+  // Use layer.name (custom name) or fallback to filename from imagePath
+  const displayName = layer.name || layer.imagePath.split('/').pop() || layer.imagePath
 
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
@@ -120,8 +133,8 @@ function SortableLayerItem({
         </button>
 
         {/* Layer name */}
-        <span className='flex-1 truncate text-sm' title={filename}>
-          {filename}
+        <span className='flex-1 truncate text-sm' title={displayName}>
+          {displayName}
         </span>
 
         {/* Action buttons (always visible, fixed width) */}
@@ -167,6 +180,15 @@ function SortableLayerItem({
               >
                 <Edit className='mr-2 h-4 w-4' />
                 {t('imageEditor.layers.editLayer')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  // onSelect fires after menu closes (Radix behavior)
+                  onRename(layer.id)
+                }}
+              >
+                <Pencil className='mr-2 h-4 w-4' />
+                {t('imageEditor.layers.renameLayer')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={(e) => {
@@ -273,6 +295,9 @@ export function LayerPanel({
   const [activeId, setActiveId] = useState<string | null>(null)
   const [filePickerOpen, setFilePickerOpen] = useState(false)
   const [isAddingLayer, setIsAddingLayer] = useState(false)
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false)
+  const [renamingLayerId, setRenamingLayerId] = useState<string | null>(null)
+  const [newLayerName, setNewLayerName] = useState('')
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -335,6 +360,27 @@ export function LayerPanel({
     },
     [imageEditor],
   )
+
+  const handleRenameLayer = useCallback(
+    (layerId: string) => {
+      const layer = layers.find((l) => l.id === layerId)
+      if (layer) {
+        setRenamingLayerId(layerId)
+        setNewLayerName(layer.name)
+        setRenameDialogOpen(true)
+      }
+    },
+    [layers],
+  )
+
+  const handleConfirmRename = useCallback(() => {
+    if (renamingLayerId && newLayerName.trim()) {
+      imageEditor.updateLayer(renamingLayerId, { name: newLayerName.trim() })
+      setRenameDialogOpen(false)
+      setRenamingLayerId(null)
+      setNewLayerName('')
+    }
+  }, [imageEditor, renamingLayerId, newLayerName])
 
   const handleSelectLayer = useCallback(
     (layerId: string) => {
@@ -535,6 +581,7 @@ export function LayerPanel({
                   onDelete={handleDelete}
                   onEdit={handleEditLayer}
                   onDuplicate={handleDuplicateLayer}
+                  onRename={handleRenameLayer}
                 />
               ))}
             </SortableContext>
@@ -543,7 +590,7 @@ export function LayerPanel({
                 <div className='bg-background flex h-12 items-center gap-2 rounded-md border px-2 shadow-lg'>
                   <GripVertical className='h-4 w-4' />
                   <span className='flex-1 truncate text-sm'>
-                    {activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
+                    {activeLayer.name || activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
                   </span>
                   {/* Match layer item button structure */}
                   <div className='flex shrink-0 gap-1'>
@@ -599,6 +646,41 @@ export function LayerPanel({
         description={t('imageEditor.layers.selectImageDescription')}
         confirmButtonText={t('imageEditor.layers.addLayer')}
       />
+
+      {/* Rename Layer Dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen} modal={true}>
+        <DialogContent onCloseAutoFocus={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>{t('imageEditor.layers.renameLayer')}</DialogTitle>
+            <DialogDescription>
+              {t('imageEditor.layers.renameLayerDescription')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-2'>
+            <Label htmlFor='layer-name'>{t('imageEditor.layers.layerName')}</Label>
+            <Input
+              id='layer-name'
+              value={newLayerName}
+              onChange={(e) => setNewLayerName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newLayerName.trim()) {
+                  handleConfirmRename()
+                }
+              }}
+              placeholder={t('imageEditor.layers.enterLayerName')}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setRenameDialogOpen(false)}>
+              {t('common.buttons.cancel')}
+            </Button>
+            <Button onClick={handleConfirmRename} disabled={!newLayerName.trim()}>
+              {t('common.buttons.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
