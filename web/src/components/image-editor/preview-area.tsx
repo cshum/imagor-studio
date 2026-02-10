@@ -142,20 +142,6 @@ export function PreviewArea({
     return { scaleX, scaleY }
   }
 
-  // Calculate scale factors for layer overlay specifically
-  // Layers are positioned relative to output dimensions (after crop + resize)
-  const getLayerScales = () => {
-    if (!imageDimensions || !imageEditor) {
-      return { scaleX: 1, scaleY: 1 }
-    }
-
-    const outputDims = imageEditor.getOutputDimensions()
-    const scaleX = imageDimensions.width / outputDims.width
-    const scaleY = imageDimensions.height / outputDims.height
-
-    return { scaleX, scaleY }
-  }
-
   // Calculate and report preview area dimensions
   useEffect(() => {
     const calculatePreviewDimensions = () => {
@@ -274,9 +260,6 @@ export function PreviewArea({
                   const selectedLayer = imageEditor.getLayer(selectedLayerId)
                   if (!selectedLayer) return null
 
-                  // Use layer-specific scales (preview / output dimensions)
-                  const { scaleX, scaleY } = getLayerScales()
-
                   // Get the actual output dimensions (after crop + resize, before padding)
                   // This is what layers are positioned relative to
                   const outputDims = imageEditor.getOutputDimensions()
@@ -293,8 +276,6 @@ export function PreviewArea({
                       layerHeight={
                         selectedLayer.transforms?.height || selectedLayer.originalDimensions.height
                       }
-                      scale={scaleX}
-                      scaleY={scaleY}
                       onLayerChange={(updates) => imageEditor.updateLayer(selectedLayerId, updates)}
                       lockedAspectRatio={layerAspectRatioLocked}
                       baseImageWidth={outputDims.width}

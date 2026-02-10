@@ -9,8 +9,6 @@ interface LayerOverlayProps {
   layerY: string | number
   layerWidth: number
   layerHeight: number
-  scale: number
-  scaleY?: number
   onLayerChange: (updates: {
     x?: string | number
     y?: string | number
@@ -33,99 +31,106 @@ export function LayerOverlay({
   layerY,
   layerWidth,
   layerHeight,
-  scale,
-  scaleY,
   onLayerChange,
   lockedAspectRatio,
   baseImageWidth,
   baseImageHeight,
 }: LayerOverlayProps) {
-  const scaleX = scale
-  const actualScaleY = scaleY ?? scale
-
-  // Calculate display dimensions
-  // Layer dimensions are in the same coordinate space as base image output
-  // So they use the same scale factor (preview / output)
-  const displayWidth = layerWidth * scaleX
-  const displayHeight = layerHeight * actualScaleY
-
-  // Calculate display position and drag constraints
-  const getDisplayPosition = useCallback(() => {
-    let displayX: number
-    let displayY: number
+  // Calculate CSS percentage strings for position and size
+  // This allows the browser to handle scaling automatically via CSS
+  const getPercentageStyles = useCallback(() => {
+    let leftPercent: string
+    let topPercent: string
     let canDragX: boolean
     let canDragY: boolean
     let isRightAligned = false
     let isBottomAligned = false
 
+    // Calculate width/height as percentages
+    const widthPercent = `${(layerWidth / baseImageWidth) * 100}%`
+    const heightPercent = `${(layerHeight / baseImageHeight) * 100}%`
+
     // Handle X position
     if (layerX === 'left') {
-      displayX = 0
+      leftPercent = '0%'
       canDragX = false
     } else if (layerX === 'center') {
-      displayX = ((baseImageWidth - layerWidth) / 2) * scaleX
+      const xPos = (baseImageWidth - layerWidth) / 2
+      leftPercent = `${(xPos / baseImageWidth) * 100}%`
       canDragX = false
     } else if (layerX === 'right') {
-      displayX = (baseImageWidth - layerWidth) * scaleX
+      const xPos = baseImageWidth - layerWidth
+      leftPercent = `${(xPos / baseImageWidth) * 100}%`
       canDragX = false
     } else if (typeof layerX === 'number') {
       if (layerX < 0) {
-        // Negative: distance from right edge to layer's RIGHT edge
-        // Position layer's LEFT edge so its RIGHT edge is |layerX| pixels from right edge
-        displayX = (baseImageWidth + layerX - layerWidth) * scaleX
+        // Negative: distance from right edge
+        const xPos = baseImageWidth + layerX - layerWidth
+        leftPercent = `${(xPos / baseImageWidth) * 100}%`
         isRightAligned = true
       } else {
         // Positive: from left edge
-        displayX = layerX * scaleX
+        leftPercent = `${(layerX / baseImageWidth) * 100}%`
       }
       canDragX = true
     } else {
-      displayX = 0
+      leftPercent = '0%'
       canDragX = false
     }
 
     // Handle Y position
     if (layerY === 'top') {
-      displayY = 0
+      topPercent = '0%'
       canDragY = false
     } else if (layerY === 'center') {
-      displayY = ((baseImageHeight - layerHeight) / 2) * actualScaleY
+      const yPos = (baseImageHeight - layerHeight) / 2
+      topPercent = `${(yPos / baseImageHeight) * 100}%`
       canDragY = false
     } else if (layerY === 'bottom') {
-      displayY = (baseImageHeight - layerHeight) * actualScaleY
+      const yPos = baseImageHeight - layerHeight
+      topPercent = `${(yPos / baseImageHeight) * 100}%`
       canDragY = false
     } else if (typeof layerY === 'number') {
       if (layerY < 0) {
-        // Negative: distance from bottom edge to layer's BOTTOM edge
-        // Position layer's TOP edge so its BOTTOM edge is |layerY| pixels from bottom edge
-        displayY = (baseImageHeight + layerY - layerHeight) * actualScaleY
+        // Negative: distance from bottom edge
+        const yPos = baseImageHeight + layerY - layerHeight
+        topPercent = `${(yPos / baseImageHeight) * 100}%`
         isBottomAligned = true
       } else {
         // Positive: from top edge
-        displayY = layerY * actualScaleY
+        topPercent = `${(layerY / baseImageHeight) * 100}%`
       }
       canDragY = true
     } else {
-      displayY = 0
+      topPercent = '0%'
       canDragY = false
     }
 
-    return { displayX, displayY, canDragX, canDragY, isRightAligned, isBottomAligned }
-  }, [
-    layerX,
-    layerY,
-    layerWidth,
-    layerHeight,
-    baseImageWidth,
-    baseImageHeight,
-    scaleX,
-    actualScaleY,
-  ])
+    return {
+      leftPercent,
+      topPercent,
+      widthPercent,
+      heightPercent,
+      canDragX,
+      canDragY,
+      isRightAligned,
+      isBottomAligned,
+    }
+  }, [layerX, layerY, layerWidth, layerHeight, baseImageWidth, baseImageHeight])
 
-  const { displayX, displayY, canDragX, canDragY, isRightAligned, isBottomAligned } =
-    getDisplayPosition()
+  const {
+    leftPercent,
+    topPercent,
+    widthPercent,
+    heightPercent,
+    canDragX,
+    canDragY,
+    isRightAligned,
+    isBottomAligned,
+  } = getPercentageStyles()
 
   const overlayRef = useRef<HTMLDivElement>(null)
+  const layerBoxRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
   const [activeHandle, setActiveHandle] = useState<ResizeHandle>(null)
@@ -154,17 +159,18 @@ export function LayerOverlay({
         }
       } = {}
 
-      // Convert width/height using the same scale as positioning
-      // Layer dimensions are in the same coordinate space as base image output
-      // Width/height go into transforms object
+      // Convert from preview pixels to base image pixels using percentages
+      const widthPercent = newDisplayWidth / previewWidth
+      const heightPercent = newDisplayHeight / previewHeight
       updates.transforms = {
-        width: Math.round(newDisplayWidth / scaleX),
-        height: Math.round(newDisplayHeight / actualScaleY),
+        width: Math.round(widthPercent * baseImageWidth),
+        height: Math.round(heightPercent * baseImageHeight),
       }
 
       // Convert X position with auto-switch on boundary crossing
       if (canDragX) {
-        const originalX = Math.round(newDisplayX / scaleX)
+        const xPercent = newDisplayX / previewWidth
+        const originalX = Math.round(xPercent * baseImageWidth)
         const layerWidth = updates.transforms?.width || 0
 
         if (isRightAligned) {
@@ -192,7 +198,8 @@ export function LayerOverlay({
 
       // Convert Y position with auto-switch on boundary crossing
       if (canDragY) {
-        const originalY = Math.round(newDisplayY / actualScaleY)
+        const yPercent = newDisplayY / previewHeight
+        const originalY = Math.round(yPercent * baseImageHeight)
         const layerHeight = updates.transforms?.height || 0
 
         if (isBottomAligned) {
@@ -221,14 +228,14 @@ export function LayerOverlay({
       return updates
     },
     [
-      scaleX,
-      actualScaleY,
+      previewWidth,
+      previewHeight,
+      baseImageWidth,
+      baseImageHeight,
       canDragX,
       canDragY,
       isRightAligned,
       isBottomAligned,
-      baseImageWidth,
-      baseImageHeight,
     ],
   )
 
@@ -242,19 +249,25 @@ export function LayerOverlay({
         // Only allow dragging if at least one axis is draggable
         if (!canDragX && !canDragY) return
 
-        setIsDragging(true)
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
-        setDragStart({ x: clientX, y: clientY })
-        setInitialState({
-          displayX,
-          displayY,
-          displayWidth,
-          displayHeight,
-        })
+        // Get actual pixel position from DOM element
+        if (layerBoxRef.current && overlayRef.current) {
+          const layerRect = layerBoxRef.current.getBoundingClientRect()
+          const overlayRect = overlayRef.current.getBoundingClientRect()
+
+          setIsDragging(true)
+          const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+          const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+          setDragStart({ x: clientX, y: clientY })
+          setInitialState({
+            displayX: layerRect.left - overlayRect.left,
+            displayY: layerRect.top - overlayRect.top,
+            displayWidth: layerRect.width,
+            displayHeight: layerRect.height,
+          })
+        }
       }
     },
-    [displayX, displayY, displayWidth, displayHeight, canDragX, canDragY],
+    [canDragX, canDragY],
   )
 
   // Handle mouse/touch down on resize handles
@@ -262,19 +275,26 @@ export function LayerOverlay({
     (e: React.MouseEvent | React.TouchEvent, handle: ResizeHandle) => {
       e.preventDefault()
       e.stopPropagation()
-      setIsResizing(true)
-      setActiveHandle(handle)
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
-      setDragStart({ x: clientX, y: clientY })
-      setInitialState({
-        displayX,
-        displayY,
-        displayWidth,
-        displayHeight,
-      })
+
+      // Get actual pixel position from DOM element
+      if (layerBoxRef.current && overlayRef.current) {
+        const layerRect = layerBoxRef.current.getBoundingClientRect()
+        const overlayRect = overlayRef.current.getBoundingClientRect()
+
+        setIsResizing(true)
+        setActiveHandle(handle)
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+        setDragStart({ x: clientX, y: clientY })
+        setInitialState({
+          displayX: layerRect.left - overlayRect.left,
+          displayY: layerRect.top - overlayRect.top,
+          displayWidth: layerRect.width,
+          displayHeight: layerRect.height,
+        })
+      }
     },
-    [displayX, displayY, displayWidth, displayHeight],
+    [],
   )
 
   // Handle mouse/touch move
@@ -459,25 +479,19 @@ export function LayerOverlay({
   ])
 
   return (
-    <div
-      ref={overlayRef}
-      className='pointer-events-none absolute inset-0 z-20'
-      style={{
-        width: previewWidth,
-        height: previewHeight,
-      }}
-    >
+    <div ref={overlayRef} className='pointer-events-none absolute inset-0 z-20 h-full w-full'>
       {/* Layer box and handles */}
       <div
+        ref={layerBoxRef}
         className={cn(
           'layer-box pointer-events-auto absolute cursor-move border-2 border-white',
           (isDragging || isResizing) && 'cursor-grabbing',
         )}
         style={{
-          left: displayX,
-          top: displayY,
-          width: displayWidth,
-          height: displayHeight,
+          left: leftPercent,
+          top: topPercent,
+          width: widthPercent,
+          height: heightPercent,
         }}
         onMouseDown={handleLayerMouseDown}
         onTouchStart={handleLayerMouseDown}
