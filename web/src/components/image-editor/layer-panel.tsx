@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   closestCenter,
@@ -246,6 +246,13 @@ export function LayerPanel({
     [imageEditor, editingContext],
   )
 
+  const handleDuplicateLayer = useCallback(
+    (layerId: string) => {
+      imageEditor.duplicateLayer(layerId)
+    },
+    [imageEditor],
+  )
+
   const handleSelectLayer = useCallback(
     (layerId: string) => {
       // Toggle selection without entering edit mode
@@ -370,6 +377,43 @@ export function LayerPanel({
 
   // Get selected layer for properties panel
   const selectedLayer = selectedLayerId ? layers.find((l) => l.id === selectedLayerId) : null
+
+  // Keyboard shortcuts for layer operations
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't trigger if typing in an input field
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      // Only handle shortcuts when a layer is selected and conditions are met
+      if (!selectedLayerId || editingContext !== null || visualCropEnabled || activeId !== null) {
+        return
+      }
+
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        handleEditLayer(selectedLayerId)
+      } else if (event.key === 'Delete' || event.key === 'Backspace') {
+        event.preventDefault()
+        handleDelete(selectedLayerId)
+      } else if ((event.ctrlKey || event.metaKey) && event.key === 'd') {
+        event.preventDefault()
+        handleDuplicateLayer(selectedLayerId)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [
+    selectedLayerId,
+    editingContext,
+    visualCropEnabled,
+    activeId,
+    handleEditLayer,
+    handleDelete,
+    handleDuplicateLayer,
+  ])
 
   return (
     <div className='flex h-full flex-col'>
