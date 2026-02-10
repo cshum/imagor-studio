@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { BlendMode, ImageLayer } from '@/lib/image-editor'
+import { cn } from '@/lib/utils'
 
 interface LayerControlsProps {
   layer: ImageLayer
@@ -469,7 +470,14 @@ export function LayerControls({
 
           {/* Blend Mode Control */}
           <div className='space-y-2'>
-            <Label className='text-sm font-medium'>{t('imageEditor.layers.blendMode')}</Label>
+            <Label
+              className={cn(
+                'text-sm font-medium',
+                visualCropEnabled && 'text-muted-foreground opacity-50',
+              )}
+            >
+              {t('imageEditor.layers.blendMode')}
+            </Label>
             <Select
               value={layer.blendMode}
               onValueChange={handleBlendModeChange}
