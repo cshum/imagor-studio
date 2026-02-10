@@ -210,6 +210,49 @@ export class ImageEditor {
   }
 
   /**
+   * Calculate the actual output dimensions (after crop + resize, before padding)
+   * This is what layers are positioned relative to
+   * Uses the same logic as convertStateToGraphQLParams to ensure consistency
+   */
+  getOutputDimensions(): { width: number; height: number } {
+    const state = this.state
+
+    // Determine the source dimensions (what goes INTO the resize operation)
+    let sourceWidth: number
+    let sourceHeight: number
+
+    if (ImageEditor.hasCropParams(state)) {
+      // Use cropped dimensions as the source
+      sourceWidth = state.cropWidth!
+      sourceHeight = state.cropHeight!
+    } else {
+      // Use original dimensions
+      sourceWidth = this.config.originalDimensions.width
+      sourceHeight = this.config.originalDimensions.height
+    }
+
+    // Calculate what the ACTUAL output will be after resize
+    const outputWidth = state.width ?? sourceWidth
+    const outputHeight = state.height ?? sourceHeight
+
+    if (state.fitIn !== false) {
+      // fitIn mode: calculate what fitIn will produce
+      // fit-in doesn't upscale by default, so cap the scale at 1.0
+      const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight, 1.0)
+      return {
+        width: Math.round(sourceWidth * outputScale),
+        height: Math.round(sourceHeight * outputScale),
+      }
+    } else {
+      // Stretch/fill mode: use exact dimensions
+      return {
+        width: outputWidth,
+        height: outputHeight,
+      }
+    }
+  }
+
+  /**
    * Check if all crop parameters are defined
    * Pure utility function - can be used from any context
    */

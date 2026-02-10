@@ -125,18 +125,33 @@ export function PreviewArea({
     }
   }, [visualCropEnabled])
 
-  // Calculate scale factors for crop overlay
-  // Crop coordinates are in original image space, but preview shows resized image
-  // When stretch is enabled, we need separate X and Y scales
+  // Calculate scale factors for overlays (crop and layer)
+  // Scale is the ratio between preview dimensions and output dimensions
+  // Output dimensions = after crop + resize, before padding
   const getScales = () => {
     if (!imageDimensions) {
       return { scaleX: 1, scaleY: 1 }
     }
 
-    // Calculate separate scales for X and Y
-    // This handles stretch mode where aspect ratio changes
+    // For crop overlay, use original dimensions (crop is in original image space)
+    // For layer overlay, use output dimensions (layers are positioned relative to output)
+    // We calculate both here and let the caller decide which to use
     const scaleX = imageDimensions.width / originalDimensions.width
     const scaleY = imageDimensions.height / originalDimensions.height
+
+    return { scaleX, scaleY }
+  }
+
+  // Calculate scale factors for layer overlay specifically
+  // Layers are positioned relative to output dimensions (after crop + resize)
+  const getLayerScales = () => {
+    if (!imageDimensions || !imageEditor) {
+      return { scaleX: 1, scaleY: 1 }
+    }
+
+    const outputDims = imageEditor.getOutputDimensions()
+    const scaleX = imageDimensions.width / outputDims.width
+    const scaleY = imageDimensions.height / outputDims.height
 
     return { scaleX, scaleY }
   }
@@ -259,7 +274,13 @@ export function PreviewArea({
                   const selectedLayer = imageEditor.getLayer(selectedLayerId)
                   if (!selectedLayer) return null
 
-                  const { scaleX, scaleY } = getScales()
+                  // Use layer-specific scales (preview / output dimensions)
+                  const { scaleX, scaleY } = getLayerScales()
+
+                  // Get the actual output dimensions (after crop + resize, before padding)
+                  // This is what layers are positioned relative to
+                  const outputDims = imageEditor.getOutputDimensions()
+
                   return (
                     <LayerOverlay
                       previewWidth={imageDimensions.width}
@@ -276,8 +297,8 @@ export function PreviewArea({
                       scaleY={scaleY}
                       onLayerChange={(updates) => imageEditor.updateLayer(selectedLayerId, updates)}
                       lockedAspectRatio={layerAspectRatioLocked}
-                      baseImageWidth={originalDimensions.width}
-                      baseImageHeight={originalDimensions.height}
+                      baseImageWidth={outputDims.width}
+                      baseImageHeight={outputDims.height}
                     />
                   )
                 })()}

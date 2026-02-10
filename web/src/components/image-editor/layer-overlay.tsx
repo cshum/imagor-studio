@@ -154,11 +154,11 @@ export function LayerOverlay({
       // Convert X position with auto-switch on boundary crossing
       if (canDragX) {
         const originalX = Math.round(newDisplayX / scaleX)
-        
+
         if (isRightAligned) {
           // Currently right-aligned (negative offset)
           const calculatedOffset = originalX + updates.width - baseImageWidth
-          
+
           if (calculatedOffset >= 0) {
             // Crossed boundary to positive - switch to left-aligned
             updates.x = calculatedOffset
@@ -181,11 +181,11 @@ export function LayerOverlay({
       // Convert Y position with auto-switch on boundary crossing
       if (canDragY) {
         const originalY = Math.round(newDisplayY / actualScaleY)
-        
+
         if (isBottomAligned) {
           // Currently bottom-aligned (negative offset)
           const calculatedOffset = originalY + updates.height - baseImageHeight
-          
+
           if (calculatedOffset >= 0) {
             // Crossed boundary to positive - switch to top-aligned
             updates.y = calculatedOffset
