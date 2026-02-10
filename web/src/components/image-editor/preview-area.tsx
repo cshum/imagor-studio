@@ -41,6 +41,8 @@ interface PreviewAreaProps {
   editingContext?: string | null
   layerAspectRatioLocked?: boolean
   onOpenControls?: () => void
+  isLeftColumnEmpty?: boolean
+  isRightColumnEmpty?: boolean
 }
 
 export function PreviewArea({
@@ -67,6 +69,8 @@ export function PreviewArea({
   editingContext = null,
   layerAspectRatioLocked = true,
   onOpenControls,
+  isLeftColumnEmpty = false,
+  isRightColumnEmpty = false,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -236,7 +240,11 @@ export function PreviewArea({
                     ? 'max-w-[calc(100vw-32px)]'
                     : isTablet
                       ? 'max-w-[calc(100vw-362px)]'
-                      : 'max-w-[calc(100vw-692px)]',
+                      : isLeftColumnEmpty && isRightColumnEmpty
+                        ? 'max-w-[calc(100vw-152px)]' // Both empty: 60 + 60 + 32 = 152px
+                        : isLeftColumnEmpty || isRightColumnEmpty
+                          ? 'max-w-[calc(100vw-422px)]' // One empty: 60 + 330 + 32 = 422px
+                          : 'max-w-[calc(100vw-692px)]', // Both full: 330 + 330 + 32 = 692px
                 )}
               />
               {visualCropEnabled &&

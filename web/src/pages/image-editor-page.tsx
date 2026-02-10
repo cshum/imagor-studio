@@ -1229,6 +1229,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               selectedLayerId={selectedLayerId}
               editingContext={editingContext}
               layerAspectRatioLocked={layerAspectRatioLocked}
+              isLeftColumnEmpty={isLeftEmpty}
+              isRightColumnEmpty={isRightEmpty}
             />
           </div>
 
