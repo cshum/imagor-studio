@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils'
 interface LayerPanelProps {
   imageEditor: ImageEditor
   imagePath: string
+  selectedLayerId: string | null
   visualCropEnabled?: boolean
 }
 
@@ -172,10 +173,14 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
   )
 }
 
-export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }: LayerPanelProps) {
+export function LayerPanel({
+  imageEditor,
+  imagePath,
+  selectedLayerId,
+  visualCropEnabled = false,
+}: LayerPanelProps) {
   const { t } = useTranslation()
   const layers = imageEditor.getLayers()
-  const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [editingContext, setEditingContext] = useState<string | null>(
     imageEditor.getEditingContext(),
   )
@@ -228,33 +233,29 @@ export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }
 
   const handleDelete = useCallback(
     (layerId: string) => {
-      // Deselect if deleting the selected layer
-      if (selectedLayerId === layerId) {
-        setSelectedLayerId(null)
-      }
       // Exit edit mode if deleting the editing layer
       if (editingContext === layerId) {
         imageEditor.switchContext(null)
         setEditingContext(null)
       }
+      // removeLayer will automatically clear selection if needed
       imageEditor.removeLayer(layerId)
     },
-    [imageEditor, selectedLayerId, editingContext],
+    [imageEditor, editingContext],
   )
 
   const handleSelectLayer = useCallback(
     (layerId: string) => {
       // Toggle selection without entering edit mode
       const newSelection = selectedLayerId === layerId ? null : layerId
-      setSelectedLayerId(newSelection)
+      imageEditor.setSelectedLayerId(newSelection)
     },
-    [selectedLayerId],
+    [imageEditor, selectedLayerId],
   )
 
   const handleEditLayer = useCallback(
     (layerId: string) => {
-      // Enter edit mode for this layer
-      setSelectedLayerId(layerId)
+      // Enter edit mode for this layer (switchContext will auto-select)
       imageEditor.switchContext(layerId)
       setEditingContext(layerId)
     },
@@ -269,7 +270,7 @@ export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }
 
   const handleSelectBase = useCallback(() => {
     // Deselect all layers and return to base
-    setSelectedLayerId(null)
+    imageEditor.setSelectedLayerId(null)
     if (editingContext !== null) {
       imageEditor.switchContext(null)
       setEditingContext(null)
@@ -355,7 +356,7 @@ export function LayerPanel({ imageEditor, imagePath, visualCropEnabled = false }
         imageEditor.addLayer(newLayer)
 
         // Auto-select the newly added layer
-        setSelectedLayerId(newLayer.id)
+        imageEditor.setSelectedLayerId(newLayer.id)
       } catch {
         toast.error(t('imageEditor.layers.failedToAddLayer'))
       } finally {

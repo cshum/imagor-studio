@@ -116,6 +116,7 @@ export interface ImageEditorCallbacks {
   onStateChange?: (state: ImageEditorState) => void
   onLoadingChange?: (isLoading: boolean) => void
   onHistoryChange?: () => void
+  onSelectedLayerChange?: (layerId: string | null) => void
 }
 
 /**
@@ -164,6 +165,8 @@ export class ImageEditor {
     this.undoStack = []
     this.redoStack = []
     this.pendingHistorySnapshot = null
+    // Reset selected layer
+    this.selectedLayerId = null
     // Reset state to defaults when component remounts
     // The page will restore from URL if there's a ?state= parameter
     this.state = {
@@ -1207,6 +1210,13 @@ export class ImageEditor {
   private editingContext: string | null = null
 
   /**
+   * Currently selected layer (for UI highlighting)
+   * null = base image selected or no selection
+   * string = layer with this ID is selected
+   */
+  private selectedLayerId: string | null = null
+
+  /**
    * Saved base image configuration (when editing a layer)
    * Allows restoring the original config when switching back to base
    */
@@ -1219,6 +1229,25 @@ export class ImageEditor {
    */
   getEditingContext(): string | null {
     return this.editingContext
+  }
+
+  /**
+   * Get the currently selected layer ID
+   * @returns null for base image or no selection, or layer ID for selected layer
+   */
+  getSelectedLayerId(): string | null {
+    return this.selectedLayerId
+  }
+
+  /**
+   * Set the currently selected layer ID
+   * Triggers onSelectedLayerChange callback if selection changes
+   * @param layerId - ID of the layer to select, or null for base image
+   */
+  setSelectedLayerId(layerId: string | null): void {
+    if (this.selectedLayerId === layerId) return
+    this.selectedLayerId = layerId
+    this.callbacks.onSelectedLayerChange?.(layerId)
   }
 
   /**
@@ -1250,6 +1279,11 @@ export class ImageEditor {
 
     // Switch context
     this.editingContext = layerId
+
+    // Auto-select the layer when entering edit mode
+    if (layerId !== null) {
+      this.setSelectedLayerId(layerId)
+    }
 
     // Update config and load new context
     if (layerId !== null) {
@@ -1409,6 +1443,11 @@ export class ImageEditor {
 
     // Save current state to history BEFORE removing layer (so undo restores it)
     this.saveHistorySnapshot()
+
+    // Clear selection if removing the selected layer
+    if (this.selectedLayerId === layerId) {
+      this.setSelectedLayerId(null)
+    }
 
     this.state = {
       ...this.state,

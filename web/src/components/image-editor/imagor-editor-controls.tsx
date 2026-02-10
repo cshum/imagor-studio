@@ -49,6 +49,7 @@ interface ImageEditorControlsProps {
   imageEditor: ImageEditor
   imagePath: string
   params: ImageEditorState
+  selectedLayerId: string | null
   openSections: EditorOpenSections
   onOpenSectionsChange: (sections: EditorOpenSections) => void
   onUpdateParams: (updates: Partial<ImageEditorState>) => void
@@ -127,6 +128,7 @@ export function ImageEditorControls({
   imageEditor,
   imagePath,
   params,
+  selectedLayerId,
   openSections,
   onOpenSectionsChange,
   onUpdateParams,
@@ -251,6 +253,7 @@ export function ImageEditorControls({
           <LayerPanel
             imageEditor={imageEditor}
             imagePath={imagePath}
+            selectedLayerId={selectedLayerId}
             visualCropEnabled={isVisualCropEnabled}
           />
         ),
@@ -260,6 +263,7 @@ export function ImageEditorControls({
       imageEditor,
       imagePath,
       params,
+      selectedLayerId,
       onUpdateParams,
       onVisualCropToggle,
       isVisualCropEnabled,
