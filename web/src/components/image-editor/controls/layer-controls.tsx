@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   AlignHorizontalJustifyCenter,
@@ -274,6 +274,50 @@ export function LayerControls({
     },
     [onUpdate],
   )
+
+  // Handle arrow key navigation for layer positioning
+  useEffect(() => {
+    // Only active when not editing and visual crop is disabled
+    if (isEditing || visualCropEnabled) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle arrow keys
+      if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+        return
+      }
+
+      // Prevent default scrolling behavior
+      e.preventDefault()
+
+      // Handle horizontal movement (only if not centered)
+      if (e.key === 'ArrowLeft' && hAlign !== 'center') {
+        handleXOffsetChange(Math.max(0, xOffset - 1))
+      } else if (e.key === 'ArrowRight' && hAlign !== 'center') {
+        handleXOffsetChange(xOffset + 1)
+      }
+
+      // Handle vertical movement (only if not centered)
+      if (e.key === 'ArrowUp' && vAlign !== 'center') {
+        handleYOffsetChange(Math.max(0, yOffset - 1))
+      } else if (e.key === 'ArrowDown' && vAlign !== 'center') {
+        handleYOffsetChange(yOffset + 1)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [
+    isEditing,
+    visualCropEnabled,
+    hAlign,
+    vAlign,
+    xOffset,
+    yOffset,
+    handleXOffsetChange,
+    handleYOffsetChange,
+  ])
 
   return (
     <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
