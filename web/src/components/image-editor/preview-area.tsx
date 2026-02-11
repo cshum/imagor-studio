@@ -100,12 +100,10 @@ export function PreviewArea({
     (e: React.MouseEvent) => {
       // Only deselect if:
       // 1. A layer is selected
-      // 2. Not in edit mode
-      // 3. Not in visual crop mode
-      // 4. Click is directly on the container (not bubbled from children)
+      // 2. Not in visual crop mode
+      // 3. Click is directly on the container (not bubbled from children)
       if (
         selectedLayerId &&
-        editingContext === null &&
         !visualCropEnabled &&
         e.target === e.currentTarget &&
         imageEditor
@@ -113,7 +111,7 @@ export function PreviewArea({
         imageEditor.setSelectedLayerId(null)
       }
     },
-    [selectedLayerId, editingContext, visualCropEnabled, imageEditor],
+    [selectedLayerId, visualCropEnabled, imageEditor],
   )
 
   // Detect context changes and set transition flag
