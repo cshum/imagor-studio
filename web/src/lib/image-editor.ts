@@ -1784,6 +1784,46 @@ export class ImageEditor {
       layers: newOrder,
     }
 
+    // If editing a nested layer, also update savedBaseState
+    // This ensures the reordering persists when context is reloaded
+    if (this.editingContext.length > 0 && this.savedBaseState) {
+      // Helper function to recursively update layers in the tree
+      const reorderLayersInTree = (
+        layers: ImageLayer[],
+        path: string[],
+        newOrder: ImageLayer[],
+      ): ImageLayer[] => {
+        if (path.length === 0) {
+          // We're at the right depth - replace layers here
+          return newOrder
+        }
+
+        // Need to go deeper
+        const [currentId, ...remainingPath] = path
+        return layers.map((l) => {
+          if (l.id !== currentId) return l
+
+          const nestedLayers = l.transforms?.layers || []
+          return {
+            ...l,
+            transforms: {
+              ...l.transforms,
+              layers: reorderLayersInTree(nestedLayers, remainingPath, newOrder),
+            },
+          }
+        })
+      }
+
+      // Update savedBaseState with reordered layers
+      const baseLayers = this.savedBaseState.layers || []
+      const updatedBaseLayers = reorderLayersInTree(baseLayers, this.editingContext, newOrder)
+
+      this.savedBaseState = {
+        ...this.savedBaseState,
+        layers: updatedBaseLayers,
+      }
+    }
+
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
   }

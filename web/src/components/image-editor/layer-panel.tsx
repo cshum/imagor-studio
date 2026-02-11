@@ -321,11 +321,18 @@ export function LayerPanel({
       setActiveId(null)
 
       if (over && active.id !== over.id) {
+        // Work with reversed array to match the visual display order
         const currentLayers = imageEditor.getContextLayers()
-        const oldIndex = currentLayers.findIndex((l) => l.id === active.id)
-        const newIndex = currentLayers.findIndex((l) => l.id === over.id)
+        const reversedLayers = [...currentLayers].reverse()
 
-        const newOrder = arrayMove(currentLayers, oldIndex, newIndex)
+        const oldIndex = reversedLayers.findIndex((l) => l.id === active.id)
+        const newIndex = reversedLayers.findIndex((l) => l.id === over.id)
+
+        // Reorder in the reversed array (matches visual drag)
+        const reorderedReversed = arrayMove(reversedLayers, oldIndex, newIndex)
+
+        // Reverse back to original order for storage
+        const newOrder = [...reorderedReversed].reverse()
         imageEditor.reorderLayers(newOrder)
       }
     },
@@ -434,27 +441,11 @@ export function LayerPanel({
         // Extract filename for display name
         const filename = imagePath.split('/').pop() || imagePath
 
-        // Get base image state and original dimensions
-        const baseState = imageEditor.getState()
-        const baseDimensions = imageEditor.getOriginalDimensions()
-
-        // Calculate effective dimensions after crop and padding
-        let effectiveWidth = baseDimensions.width
-        let effectiveHeight = baseDimensions.height
-
-        // Account for crop (reduces dimensions)
-        if (baseState.cropWidth && baseState.cropHeight) {
-          effectiveWidth = baseState.cropWidth
-          effectiveHeight = baseState.cropHeight
-        }
-
-        // Account for padding (adds to dimensions)
-        if (baseState.paddingLeft || baseState.paddingRight) {
-          effectiveWidth += (baseState.paddingLeft || 0) + (baseState.paddingRight || 0)
-        }
-        if (baseState.paddingTop || baseState.paddingBottom) {
-          effectiveHeight += (baseState.paddingTop || 0) + (baseState.paddingBottom || 0)
-        }
+        // Get current context output dimensions (context-aware)
+        // This returns the correct dimensions whether at base or in nested layer
+        const outputDims = imageEditor.getOutputDimensions()
+        const effectiveWidth = outputDims.width
+        const effectiveHeight = outputDims.height
 
         // Calculate scale to fit layer at 90% of effective base image size
         const targetWidth = effectiveWidth * 0.9
