@@ -12,14 +12,11 @@ import { PreloadImage } from '@/components/ui/preload-image'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
 import type { ImageEditor } from '@/lib/image-editor'
-import { joinImagePath } from '@/lib/path-utils'
 import { cn } from '@/lib/utils'
 
 interface PreviewAreaProps {
   previewUrl: string
   error: Error | null
-  galleryKey: string
-  imageKey: string
   originalDimensions: {
     width: number
     height: number
@@ -44,13 +41,12 @@ interface PreviewAreaProps {
   onOpenControls?: () => void
   isLeftColumnEmpty?: boolean
   isRightColumnEmpty?: boolean
+  imagePath?: string
 }
 
 export function PreviewArea({
   previewUrl,
   error,
-  galleryKey,
-  imageKey,
   originalDimensions,
   onLoad,
   onCopyUrl,
@@ -72,6 +68,7 @@ export function PreviewArea({
   onOpenControls,
   isLeftColumnEmpty = false,
   isRightColumnEmpty = false,
+  imagePath,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -92,8 +89,6 @@ export function PreviewArea({
 
   // Track context transitions to hide layer overlay until new preview loads
   const [isTransitioning, setIsTransitioning] = useState(false)
-
-  const imagePath = joinImagePath(galleryKey, imageKey)
 
   // Handle click on preview container to deselect layer
   const handleContainerClick = useCallback(

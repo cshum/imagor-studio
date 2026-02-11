@@ -128,6 +128,7 @@ export class ImageEditor {
   private state: ImageEditorState
   private config: ImageEditorConfig
   private callbacks: ImageEditorCallbacks
+  private baseImagePath: string
   private debounceTimer: number | null = null
   private abortController: AbortController | null = null
   private lastPreviewUrl: string | null = null
@@ -143,6 +144,7 @@ export class ImageEditor {
   constructor(config: ImageEditorConfig) {
     this.config = config
     this.callbacks = {}
+    this.baseImagePath = config.imagePath
 
     // Initialize state with original dimensions and fit-in mode
     this.state = {
@@ -207,6 +209,15 @@ export class ImageEditor {
    */
   getOriginalDimensions(): { width: number; height: number } {
     return { ...this.config.originalDimensions }
+  }
+
+  /**
+   * Get the base image path
+   * Returns the original image path, even when editing nested layers
+   * @returns The base image path
+   */
+  getBaseImagePath(): string {
+    return this.baseImagePath
   }
 
   /**

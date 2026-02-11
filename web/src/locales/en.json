@@ -837,10 +837,6 @@
       "yOffset": "Y Offset",
       "transparency": "Opacity",
       "blendMode": "Blend Mode",
-      "breadcrumb": {
-        "base": "Base Image",
-        "layer": "Layer"
-      },
       "blendModes": {
         "normal": "Normal",
         "multiply": "Multiply",

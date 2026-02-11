@@ -703,8 +703,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             <PreviewArea
               previewUrl={previewUrl || ''}
               error={error}
-              galleryKey={galleryKey}
-              imageKey={imageKey}
               originalDimensions={imageEditor.getOriginalDimensions()}
               onLoad={handlePreviewLoad}
               onCopyUrl={handleCopyUrlClick}
@@ -723,6 +721,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               selectedLayerId={selectedLayerId}
               editingContext={editingContext}
               layerAspectRatioLocked={layerAspectRatioLocked}
+              imagePath={imagePath}
             />
           </div>
 
@@ -895,8 +894,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <PreviewArea
             previewUrl={previewUrl || ''}
             error={error}
-            galleryKey={galleryKey}
-            imageKey={imageKey}
             originalDimensions={imageEditor.getOriginalDimensions()}
             onLoad={handlePreviewLoad}
             onCopyUrl={handleCopyUrlClick}
@@ -915,6 +912,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             selectedLayerId={selectedLayerId}
             editingContext={editingContext}
             layerAspectRatioLocked={layerAspectRatioLocked}
+            imagePath={imagePath}
             onOpenControls={() => setMobileSheetOpen(true)}
           />
 
@@ -1206,8 +1204,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             <PreviewArea
               previewUrl={previewUrl || ''}
               error={error}
-              galleryKey={galleryKey}
-              imageKey={imageKey}
               originalDimensions={imageEditor.getOriginalDimensions()}
               onLoad={handlePreviewLoad}
               onCopyUrl={handleCopyUrlClick}

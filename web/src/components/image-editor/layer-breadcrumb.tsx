@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronRight, Image, Layers } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -22,15 +21,18 @@ export function LayerBreadcrumb({
   className,
   isMobile = false,
 }: LayerBreadcrumbProps) {
-  const { t } = useTranslation()
   const contextPath = imageEditor.getContextPath()
   const allLayers = imageEditor.getBaseLayers()
+
+  // Extract filename from base image path
+  const imagePath = imageEditor.getBaseImagePath()
+  const baseImageName = imagePath.split('/').pop() || imagePath
 
   // Build breadcrumb items by traversing the layer tree
   const breadcrumbItems: Array<{ id: string | null; name: string; icon: typeof Image }> = [
     {
       id: null,
-      name: t('imageEditor.layers.breadcrumb.base'),
+      name: baseImageName,
       icon: Image,
     },
   ]
