@@ -1506,9 +1506,13 @@ export class ImageEditor {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { visualCropEnabled, ...transforms } = this.state
 
+    // For single-level path ["layer-1"], we need to update at the base level
+    // For multi-level path ["layer-1", "layer-2"], we traverse to parent first
+    const parentPath = contextPath.slice(0, -1)
+
     // Use generic helper to update the layer's transforms
-    const updatedLayers = this.updateLayersInTree(layers, contextPath, (layersAtPath) => {
-      // We're at the parent level - update the target layer
+    const updatedLayers = this.updateLayersInTree(layers, parentPath, (layersAtPath) => {
+      // We're at the correct level - update the target layer
       return layersAtPath.map((l) => {
         if (l.id !== layerId) return l
         return { ...l, transforms }
