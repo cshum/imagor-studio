@@ -38,8 +38,8 @@ export interface EditorOpenSections extends Record<SectionKey, boolean> {
 const defaultOpenSections: EditorOpenSections = {
   ...EDITOR_SECTIONS,
   leftColumn: ['layers', 'crop'],
-  rightColumn: ['effects', 'transform', 'dimensions', 'output', 'fill'],
-  visibleSections: ['layers', 'crop', 'effects', 'transform', 'dimensions', 'output', 'fill'],
+  rightColumn: ['effects', 'transform', 'dimensions', 'fill', 'output'],
+  visibleSections: ['layers', 'crop', 'effects', 'transform', 'dimensions', 'fill', 'output'],
 }
 
 export class EditorOpenSectionsStorage {

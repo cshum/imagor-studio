@@ -1002,9 +1002,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       if (visibleSections.length > 0 && !visibleSections.includes(id)) {
         return false
       }
-      if (id === 'fill' && editingContext !== null) {
-        return false
-      }
       return true
     })
 
@@ -1013,9 +1010,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     .filter((id) => {
       const visibleSections = editorOpenSections.visibleSections || []
       if (visibleSections.length > 0 && !visibleSections.includes(id)) {
-        return false
-      }
-      if (id === 'fill' && editingContext !== null) {
         return false
       }
       return true

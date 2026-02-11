@@ -7,6 +7,10 @@ interface LayerRegionsOverlayProps {
   layers: ImageLayer[]
   baseImageWidth: number
   baseImageHeight: number
+  paddingLeft?: number
+  paddingRight?: number
+  paddingTop?: number
+  paddingBottom?: number
   onLayerSelect: (layerId: string) => void
 }
 
@@ -14,62 +18,86 @@ export function LayerRegionsOverlay({
   layers,
   baseImageWidth,
   baseImageHeight,
+  paddingLeft = 0,
+  paddingRight = 0,
+  paddingTop = 0,
+  paddingBottom = 0,
   onLayerSelect,
 }: LayerRegionsOverlayProps) {
+  // Calculate content area dimensions (image without padding)
+  // Layers are positioned relative to the content area, not the total canvas
+  const contentWidth = baseImageWidth - paddingLeft - paddingRight
+  const contentHeight = baseImageHeight - paddingTop - paddingBottom
+
   // Calculate CSS percentage strings for position and size
   // Uses same logic as LayerOverlay for consistency
   const getLayerStyles = useCallback(
     (layer: ImageLayer) => {
-      const layerWidth = layer.transforms?.width || layer.originalDimensions.width
-      const layerHeight = layer.transforms?.height || layer.originalDimensions.height
+      // Get layer's image dimensions (without padding)
+      const layerImageWidth = layer.transforms?.width || layer.originalDimensions.width
+      const layerImageHeight = layer.transforms?.height || layer.originalDimensions.height
+      
+      // Get layer's own padding (if it has any)
+      const layerPaddingLeft = layer.transforms?.paddingLeft || 0
+      const layerPaddingRight = layer.transforms?.paddingRight || 0
+      const layerPaddingTop = layer.transforms?.paddingTop || 0
+      const layerPaddingBottom = layer.transforms?.paddingBottom || 0
+      
+      // Calculate layer's total size including its own padding
+      const layerWidth = layerImageWidth + layerPaddingLeft + layerPaddingRight
+      const layerHeight = layerImageHeight + layerPaddingTop + layerPaddingBottom
 
       let leftPercent: string
       let topPercent: string
 
-      // Handle X position
+      // Handle X position (relative to content area, then offset by padding)
       if (layer.x === 'left') {
-        leftPercent = '0%'
+        leftPercent = `${(paddingLeft / baseImageWidth) * 100}%`
       } else if (layer.x === 'center') {
-        const xPos = (baseImageWidth - layerWidth) / 2
+        const xPos = paddingLeft + (contentWidth - layerWidth) / 2
         leftPercent = `${(xPos / baseImageWidth) * 100}%`
       } else if (layer.x === 'right') {
-        const xPos = baseImageWidth - layerWidth
+        const xPos = paddingLeft + contentWidth - layerWidth
         leftPercent = `${(xPos / baseImageWidth) * 100}%`
       } else if (typeof layer.x === 'number') {
         if (layer.x < 0) {
-          // Negative: distance from right edge
-          const xPos = baseImageWidth + layer.x - layerWidth
+          // Negative: distance from right edge of content area
+          const xPos = paddingLeft + contentWidth + layer.x - layerWidth
           leftPercent = `${(xPos / baseImageWidth) * 100}%`
         } else {
-          // Positive: from left edge
-          leftPercent = `${(layer.x / baseImageWidth) * 100}%`
+          // Positive: from left edge of content area
+          const xPos = paddingLeft + layer.x
+          leftPercent = `${(xPos / baseImageWidth) * 100}%`
         }
       } else {
-        leftPercent = '0%'
+        leftPercent = `${(paddingLeft / baseImageWidth) * 100}%`
       }
 
-      // Handle Y position
+      // Handle Y position (relative to content area, then offset by padding)
       if (layer.y === 'top') {
-        topPercent = '0%'
+        topPercent = `${(paddingTop / baseImageHeight) * 100}%`
       } else if (layer.y === 'center') {
-        const yPos = (baseImageHeight - layerHeight) / 2
+        const yPos = paddingTop + (contentHeight - layerHeight) / 2
         topPercent = `${(yPos / baseImageHeight) * 100}%`
       } else if (layer.y === 'bottom') {
-        const yPos = baseImageHeight - layerHeight
+        const yPos = paddingTop + contentHeight - layerHeight
         topPercent = `${(yPos / baseImageHeight) * 100}%`
       } else if (typeof layer.y === 'number') {
         if (layer.y < 0) {
-          // Negative: distance from bottom edge
-          const yPos = baseImageHeight + layer.y - layerHeight
+          // Negative: distance from bottom edge of content area
+          const yPos = paddingTop + contentHeight + layer.y - layerHeight
           topPercent = `${(yPos / baseImageHeight) * 100}%`
         } else {
-          // Positive: from top edge
-          topPercent = `${(layer.y / baseImageHeight) * 100}%`
+          // Positive: from top edge of content area
+          const yPos = paddingTop + layer.y
+          topPercent = `${(yPos / baseImageHeight) * 100}%`
         }
       } else {
-        topPercent = '0%'
+        topPercent = `${(paddingTop / baseImageHeight) * 100}%`
       }
 
+      // Size is relative to total canvas (including padding)
+      // The overlay represents the entire preview image which includes padding
       const widthPercent = `${(layerWidth / baseImageWidth) * 100}%`
       const heightPercent = `${(layerHeight / baseImageHeight) * 100}%`
 
@@ -80,7 +108,7 @@ export function LayerRegionsOverlay({
         height: heightPercent,
       }
     },
-    [baseImageWidth, baseImageHeight],
+    [baseImageWidth, baseImageHeight, contentWidth, contentHeight, paddingLeft, paddingTop],
   )
 
   // Filter to only visible layers

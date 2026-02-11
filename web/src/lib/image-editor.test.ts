@@ -569,6 +569,153 @@ describe('ImageEditor', () => {
     })
   })
 
+  describe('getOutputDimensions', () => {
+    it('should return base dimensions without any transformations', () => {
+      const dims = editor.getOutputDimensions()
+      expect(dims).toEqual({ width: 1920, height: 1080 })
+    })
+
+    it('should return dimensions with resize in fit-in mode', () => {
+      editor.updateParams({ width: 800, height: 600, fitIn: true })
+      const dims = editor.getOutputDimensions()
+      // fit-in maintains aspect ratio: 1920/1080 = 1.778
+      // Target: 800x600 (aspect 1.333)
+      // Since 800/1920 = 0.417 < 600/1080 = 0.556, width is limiting
+      // scale = min(800/1920, 600/1080, 1.0) = 0.417
+      // result = 1920 * 0.417 = 800, 1080 * 0.417 = 450
+      expect(dims.width).toBe(800)
+      expect(dims.height).toBe(450)
+    })
+
+    it('should return exact dimensions in stretch mode', () => {
+      editor.updateParams({ width: 800, height: 600, fitIn: false, stretch: true })
+      const dims = editor.getOutputDimensions()
+      expect(dims).toEqual({ width: 800, height: 600 })
+    })
+
+    it('should include padding in output dimensions', () => {
+      editor.updateParams({
+        paddingLeft: 50,
+        paddingRight: 50,
+        paddingTop: 30,
+        paddingBottom: 30,
+      })
+      const dims = editor.getOutputDimensions()
+      // Base: 1920x1080 + padding (50+50, 30+30)
+      expect(dims).toEqual({ width: 2020, height: 1140 })
+    })
+
+    it('should include partial padding in output dimensions', () => {
+      editor.updateParams({
+        paddingLeft: 20,
+        paddingTop: 10,
+      })
+      const dims = editor.getOutputDimensions()
+      // Base: 1920x1080 + padding (20+0, 10+0)
+      expect(dims).toEqual({ width: 1940, height: 1090 })
+    })
+
+    it('should include padding with resize', () => {
+      editor.updateParams({
+        width: 800,
+        height: 600,
+        fitIn: false,
+        paddingLeft: 20,
+        paddingRight: 20,
+        paddingTop: 10,
+        paddingBottom: 10,
+      })
+      const dims = editor.getOutputDimensions()
+      // Resize: 800x600 + padding (20+20, 10+10)
+      expect(dims).toEqual({ width: 840, height: 620 })
+    })
+
+    it('should include padding with crop and resize', () => {
+      editor.updateParams({
+        cropLeft: 0,
+        cropTop: 0,
+        cropWidth: 1000,
+        cropHeight: 500,
+        width: 800,
+        height: 400,
+        fitIn: false,
+        paddingLeft: 25,
+        paddingRight: 25,
+        paddingTop: 15,
+        paddingBottom: 15,
+      })
+      const dims = editor.getOutputDimensions()
+      // Crop: 1000x500 → Resize: 800x400 → Padding: (25+25, 15+15)
+      expect(dims).toEqual({ width: 850, height: 430 })
+    })
+
+    it('should include padding with crop and fit-in resize', () => {
+      editor.updateParams({
+        cropLeft: 0,
+        cropTop: 0,
+        cropWidth: 1000,
+        cropHeight: 500,
+        width: 800,
+        height: 600,
+        fitIn: true,
+        paddingLeft: 10,
+        paddingRight: 10,
+      })
+      const dims = editor.getOutputDimensions()
+      // Crop: 1000x500 (aspect 2:1)
+      // fit-in 800x600: scale = min(800/1000, 600/500, 1.0) = min(0.8, 1.2, 1.0) = 0.8
+      // Result: 800x400 + padding (10+10, 0+0)
+      expect(dims).toEqual({ width: 820, height: 400 })
+    })
+
+    it('should not upscale in fit-in mode', () => {
+      // Small image that would be upscaled
+      const smallEditor = new ImageEditor({
+        imagePath: 'small.jpg',
+        originalDimensions: { width: 400, height: 300 },
+      })
+      smallEditor.initialize({})
+
+      smallEditor.updateParams({
+        width: 800,
+        height: 600,
+        fitIn: true,
+        paddingLeft: 20,
+        paddingRight: 20,
+      })
+
+      const dims = smallEditor.getOutputDimensions()
+      // fit-in doesn't upscale: stays 400x300 + padding (20+20, 0+0)
+      expect(dims).toEqual({ width: 440, height: 300 })
+    })
+
+    it('should handle zero padding values', () => {
+      editor.updateParams({
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+      })
+      const dims = editor.getOutputDimensions()
+      expect(dims).toEqual({ width: 1920, height: 1080 })
+    })
+
+    it('should handle asymmetric padding', () => {
+      editor.updateParams({
+        width: 1000,
+        height: 500,
+        fitIn: false,
+        paddingLeft: 10,
+        paddingRight: 30,
+        paddingTop: 5,
+        paddingBottom: 25,
+      })
+      const dims = editor.getOutputDimensions()
+      // Resize: 1000x500 + padding (10+30, 5+25)
+      expect(dims).toEqual({ width: 1040, height: 530 })
+    })
+  })
+
   describe('Async Operations', () => {
     describe('URL Generation', () => {
       it('should generate copy URL', async () => {
@@ -584,9 +731,7 @@ describe('ImageEditor', () => {
         expect(generateImagorUrl).toHaveBeenCalledWith(
           expect.objectContaining({
             params: expect.objectContaining({
-              filters: expect.arrayContaining([
-                expect.objectContaining({ name: 'attachment' }),
-              ]),
+              filters: expect.arrayContaining([expect.objectContaining({ name: 'attachment' })]),
             }),
           }),
         )
