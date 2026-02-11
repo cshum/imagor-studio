@@ -424,11 +424,6 @@ export function LayerPanel({
     [imageEditor],
   )
 
-  const handleExitEditMode = useCallback(() => {
-    // Exit edit mode and return to base
-    imageEditor.switchContext(null)
-  }, [imageEditor])
-
   const handleSelectBase = useCallback(() => {
     // Deselect all layers (but stay in current editing context)
     // This allows clicking "Base Layer" to view the layer's base image
@@ -640,7 +635,6 @@ export function LayerPanel({
             visualCropEnabled={visualCropEnabled}
             onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
             onEditLayer={() => handleEditLayer(selectedLayer.id)}
-            onExitEditMode={handleExitEditMode}
           />
         </div>
       )}

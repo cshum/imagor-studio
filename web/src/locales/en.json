@@ -830,7 +830,6 @@
       "renameLayerDescription": "Enter a new name for this layer.",
       "layerName": "Layer Name",
       "enterLayerName": "Enter layer name",
-      "exitLayerEdit": "Apply Layer Edit",
       "exitEditMode": "Apply",
       "xOffset": "X Offset",
       "yOffset": "Y Offset",
