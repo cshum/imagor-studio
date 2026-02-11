@@ -1694,10 +1694,39 @@ export class ImageEditor {
       transforms: sourceLayer.transforms ? { ...sourceLayer.transforms } : undefined,
     }
 
-    const layers = this.state.layers || []
-    this.state = {
-      ...this.state,
-      layers: [...layers, duplicatedLayer],
+    // If at base level, add to current state layers
+    if (this.editingContext.length === 0) {
+      const layers = this.state.layers || []
+      this.state = {
+        ...this.state,
+        layers: [...layers, duplicatedLayer],
+      }
+    } else {
+      // We're editing a layer - add to that layer's nested layers
+      // Need to update the layer in savedBaseState
+      if (!this.savedBaseState) return
+
+      const baseLayers = this.savedBaseState.layers || []
+
+      // Use generic helper to add duplicated layer to nested location
+      const updatedLayers = this.updateLayersInTree(
+        baseLayers,
+        this.editingContext,
+        (layersAtPath) => {
+          // We're at the target depth - add the duplicated layer
+          return [...layersAtPath, duplicatedLayer]
+        },
+      )
+
+      this.savedBaseState = {
+        ...this.savedBaseState,
+        layers: updatedLayers,
+      }
+
+      // Reload the current context to refresh this.state.layers with the updated nested layers
+      // This ensures the layer list and preview show all layers correctly
+      const currentLayerId = this.editingContext[this.editingContext.length - 1]
+      this.loadContextFromLayer(currentLayerId, updatedLayers)
     }
 
     // Auto-select the duplicated layer
