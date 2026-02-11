@@ -1696,19 +1696,71 @@ export class ImageEditor {
     // This prevents creating a snapshot for every keystroke
     this.scheduleHistorySnapshot()
 
+    // Update the layer in current state
+    const updatedLayers = this.state.layers.map((layer) => {
+      if (layer.id !== layerId) return layer
+
+      // Merge transforms object if present in updates
+      // This preserves existing transform properties like fitIn
+      const mergedLayer = { ...layer, ...updates }
+      if (updates.transforms && layer.transforms) {
+        mergedLayer.transforms = { ...layer.transforms, ...updates.transforms }
+      }
+      return mergedLayer
+    })
+
     this.state = {
       ...this.state,
-      layers: this.state.layers.map((layer) => {
-        if (layer.id !== layerId) return layer
+      layers: updatedLayers,
+    }
 
-        // Merge transforms object if present in updates
-        // This preserves existing transform properties like fitIn
-        const mergedLayer = { ...layer, ...updates }
-        if (updates.transforms && layer.transforms) {
-          mergedLayer.transforms = { ...layer.transforms, ...updates.transforms }
+    // If editing a nested layer, also update savedBaseState
+    // This ensures the changes persist when context is reloaded
+    if (this.editingContext.length > 0 && this.savedBaseState) {
+      // Helper function to recursively update a layer in the tree
+      const updateLayerInTree = (
+        layers: ImageLayer[],
+        path: string[],
+        targetId: string,
+        updates: Partial<ImageLayer>,
+      ): ImageLayer[] => {
+        if (path.length === 0) {
+          // We're at the right depth - update the layer here
+          return layers.map((l) => {
+            if (l.id !== targetId) return l
+
+            const mergedLayer = { ...l, ...updates }
+            if (updates.transforms && l.transforms) {
+              mergedLayer.transforms = { ...l.transforms, ...updates.transforms }
+            }
+            return mergedLayer
+          })
         }
-        return mergedLayer
-      }),
+
+        // Need to go deeper
+        const [currentId, ...remainingPath] = path
+        return layers.map((l) => {
+          if (l.id !== currentId) return l
+
+          const nestedLayers = l.transforms?.layers || []
+          return {
+            ...l,
+            transforms: {
+              ...l.transforms,
+              layers: updateLayerInTree(nestedLayers, remainingPath, targetId, updates),
+            },
+          }
+        })
+      }
+
+      // Update the layer in savedBaseState
+      const baseLayers = this.savedBaseState.layers || []
+      const updatedBaseLayers = updateLayerInTree(baseLayers, this.editingContext, layerId, updates)
+
+      this.savedBaseState = {
+        ...this.savedBaseState,
+        layers: updatedBaseLayers,
+      }
     }
 
     this.callbacks.onStateChange?.(this.getState())
