@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, Copy, Download, Settings } from 'lucide-react'
 
@@ -83,6 +83,7 @@ export function PreviewArea({
     height: number
   } | null>(null)
   const lastReportedDimensionsRef = useRef<{ width: number; height: number } | null>(null)
+  const onPreviewDimensionsChangeRef = useRef(onPreviewDimensionsChange)
 
   // Delayed flip states for overlay - only update after preview loads
   const [overlayHFlip, setOverlayHFlip] = useState(hFlip)
@@ -160,42 +161,50 @@ export function PreviewArea({
     return { scaleX, scaleY }
   }
 
-  // Calculate and report preview area dimensions
-  useEffect(() => {
-    const calculatePreviewDimensions = () => {
-      // Skip dimension updates during visual crop mode to keep preview stable
-      // This prevents the preview from being regenerated when window resizes,
-      // which would cause the crop overlay to become misaligned
-      if (visualCropEnabled) {
-        return
-      }
-
-      if (previewContainerRef.current && onPreviewDimensionsChange) {
-        const rect = previewContainerRef.current.getBoundingClientRect()
-        // Account for padding (16px on each side = 32px total)
-        const maxWidth = Math.floor(rect.width - 32)
-        const maxHeight = Math.floor(rect.height - 32)
-
-        // Only report if dimensions have actually changed
-        // This prevents unnecessary ImageEditor recreations when visualCropEnabled toggles
-        const lastReported = lastReportedDimensionsRef.current
-        if (!lastReported || lastReported.width !== maxWidth || lastReported.height !== maxHeight) {
-          lastReportedDimensionsRef.current = { width: maxWidth, height: maxHeight }
-          onPreviewDimensionsChange({
-            width: maxWidth,
-            height: maxHeight,
-          })
-        }
-      }
+  // Shared calculation logic for preview dimensions
+  const calculatePreviewDimensions = useCallback(() => {
+    // Skip dimension updates during visual crop mode to keep preview stable
+    // This prevents the preview from being regenerated when window resizes,
+    // which would cause the crop overlay to become misaligned
+    if (visualCropEnabled) {
+      return
     }
 
+    if (previewContainerRef.current && onPreviewDimensionsChangeRef.current) {
+      const rect = previewContainerRef.current.getBoundingClientRect()
+      // Account for padding (16px on each side = 32px total)
+      const maxWidth = Math.floor(rect.width - 32)
+      const maxHeight = Math.floor(rect.height - 32)
+
+      // Only report if dimensions have actually changed
+      // This prevents unnecessary ImageEditor recreations when visualCropEnabled toggles
+      const lastReported = lastReportedDimensionsRef.current
+      if (!lastReported || lastReported.width !== maxWidth || lastReported.height !== maxHeight) {
+        lastReportedDimensionsRef.current = { width: maxWidth, height: maxHeight }
+        onPreviewDimensionsChangeRef.current({
+          width: maxWidth,
+          height: maxHeight,
+        })
+      }
+    }
+  }, [visualCropEnabled])
+
+  // Calculate and report preview area dimensions (immediate for resize/mobile)
+  useEffect(() => {
     // Calculate on mount and when mobile state changes
     calculatePreviewDimensions()
 
     // Recalculate on window resize
     window.addEventListener('resize', calculatePreviewDimensions)
     return () => window.removeEventListener('resize', calculatePreviewDimensions)
-  }, [isMobile, onPreviewDimensionsChange, visualCropEnabled])
+  }, [isMobile, calculatePreviewDimensions])
+
+  // Handle column empty state changes with delay for CSS transition
+  useEffect(() => {
+    // Wait for CSS transition (300ms) to complete before recalculating
+    const timeoutId = setTimeout(calculatePreviewDimensions, 300)
+    return () => clearTimeout(timeoutId)
+  }, [isLeftColumnEmpty, isRightColumnEmpty, calculatePreviewDimensions])
 
   return (
     <div className='relative flex h-full flex-col'>
