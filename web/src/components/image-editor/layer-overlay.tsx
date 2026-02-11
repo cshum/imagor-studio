@@ -92,9 +92,8 @@ export function LayerOverlay({
         leftPercent = `${(xPos / baseImageWidth) * 100}%`
         isRightAligned = true
       } else {
-        // Positive: from left edge of content area
-        const xPos = paddingLeft + layerX
-        leftPercent = `${(xPos / baseImageWidth) * 100}%`
+        // Positive: absolute position on canvas (already includes padding offset)
+        leftPercent = `${(layerX / baseImageWidth) * 100}%`
       }
       canDragX = true
     } else {
@@ -122,9 +121,8 @@ export function LayerOverlay({
         topPercent = `${(yPos / baseImageHeight) * 100}%`
         isBottomAligned = true
       } else {
-        // Positive: from top edge of content area
-        const yPos = paddingTop + layerY
-        topPercent = `${(yPos / baseImageHeight) * 100}%`
+        // Positive: absolute position on canvas (already includes padding offset)
+        topPercent = `${(layerY / baseImageHeight) * 100}%`
       }
       canDragY = true
     } else {

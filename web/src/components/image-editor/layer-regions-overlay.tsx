@@ -65,9 +65,8 @@ export function LayerRegionsOverlay({
           const xPos = paddingLeft + contentWidth + layer.x - layerWidth
           leftPercent = `${(xPos / baseImageWidth) * 100}%`
         } else {
-          // Positive: from left edge of content area
-          const xPos = paddingLeft + layer.x
-          leftPercent = `${(xPos / baseImageWidth) * 100}%`
+          // Positive: absolute position on canvas (already includes padding offset)
+          leftPercent = `${(layer.x / baseImageWidth) * 100}%`
         }
       } else {
         leftPercent = `${(paddingLeft / baseImageWidth) * 100}%`
@@ -88,9 +87,8 @@ export function LayerRegionsOverlay({
           const yPos = paddingTop + contentHeight + layer.y - layerHeight
           topPercent = `${(yPos / baseImageHeight) * 100}%`
         } else {
-          // Positive: from top edge of content area
-          const yPos = paddingTop + layer.y
-          topPercent = `${(yPos / baseImageHeight) * 100}%`
+          // Positive: absolute position on canvas (already includes padding offset)
+          topPercent = `${(layer.y / baseImageHeight) * 100}%`
         }
       } else {
         topPercent = `${(paddingTop / baseImageHeight) * 100}%`
