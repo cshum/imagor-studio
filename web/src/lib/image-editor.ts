@@ -1253,6 +1253,39 @@ export class ImageEditor {
   private editingContext: string[] = []
 
   /**
+   * Generic helper to update layers in a tree by path
+   * @param layers - Starting layers array
+   * @param path - Path to the target location in the tree
+   * @param updater - Function that transforms the layers at the target location
+   * @returns Updated layers array
+   */
+  private updateLayersInTree(
+    layers: ImageLayer[],
+    path: string[],
+    updater: (layers: ImageLayer[]) => ImageLayer[],
+  ): ImageLayer[] {
+    if (path.length === 0) {
+      // We're at the target depth - apply the updater
+      return updater(layers)
+    }
+
+    const [currentId, ...remainingPath] = path
+
+    return layers.map((l) => {
+      if (l.id !== currentId) return l
+
+      const nestedLayers = l.transforms?.layers || []
+      return {
+        ...l,
+        transforms: {
+          ...l.transforms,
+          layers: this.updateLayersInTree(nestedLayers, remainingPath, updater),
+        },
+      }
+    })
+  }
+
+  /**
    * Currently selected layer (for UI highlighting)
    * null = base image selected or no selection
    * string = layer with this ID is selected
@@ -1456,49 +1489,20 @@ export class ImageEditor {
     const layers = this.savedBaseState?.layers
     if (!layers) return
 
-    // Need to traverse the tree to find the correct layer to save to
-    // Helper function to recursively update a layer's transforms
-    const updateLayerTransforms = (
-      layers: ImageLayer[],
-      path: string[],
-      newTransforms: Partial<ImageEditorState>,
-    ): ImageLayer[] => {
-      if (path.length === 0) return layers
-
-      const [currentId, ...remainingPath] = path
-
-      return layers.map((l) => {
-        if (l.id !== currentId) return l
-
-        // Found the target layer
-        if (remainingPath.length === 0) {
-          // This is the layer we want to update
-          return {
-            ...l,
-            transforms: newTransforms,
-          }
-        } else {
-          // Need to go deeper
-          const nestedLayers = l.transforms?.layers || []
-          return {
-            ...l,
-            transforms: {
-              ...l.transforms,
-              layers: updateLayerTransforms(nestedLayers, remainingPath, newTransforms),
-            },
-          }
-        }
-      })
-    }
-
     // Save current state to layer transforms
     // IMPORTANT: Include layers array so nested children are preserved!
     // Only exclude visualCropEnabled (UI-only state)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { visualCropEnabled, ...transforms } = this.state
 
-    // Update the layer's transforms in the tree
-    const updatedLayers = updateLayerTransforms(layers, contextPath, transforms)
+    // Use generic helper to update the layer's transforms
+    const updatedLayers = this.updateLayersInTree(layers, contextPath, (layersAtPath) => {
+      // We're at the parent level - update the target layer
+      return layersAtPath.map((l) => {
+        if (l.id !== layerId) return l
+        return { ...l, transforms }
+      })
+    })
 
     // Store updated layers back in savedBaseState
     if (this.savedBaseState) {
@@ -1582,46 +1586,15 @@ export class ImageEditor {
 
       const baseLayers = this.savedBaseState.layers || []
 
-      // Helper function to recursively update layers
-      const addToNestedLayer = (
-        layers: ImageLayer[],
-        path: string[],
-        newLayer: ImageLayer,
-      ): ImageLayer[] => {
-        if (path.length === 0) return layers
-
-        const [currentId, ...remainingPath] = path
-
-        return layers.map((l) => {
-          if (l.id !== currentId) return l
-
-          // Found the target layer
-          if (remainingPath.length === 0) {
-            // This is the layer we want to add to
-            const existingLayers = l.transforms?.layers || []
-            return {
-              ...l,
-              transforms: {
-                ...l.transforms,
-                layers: [...existingLayers, newLayer],
-              },
-            }
-          } else {
-            // Need to go deeper
-            const nestedLayers = l.transforms?.layers || []
-            return {
-              ...l,
-              transforms: {
-                ...l.transforms,
-                layers: addToNestedLayer(nestedLayers, remainingPath, newLayer),
-              },
-            }
-          }
-        })
-      }
-
-      // Update the base layers with the new nested layer
-      const updatedLayers = addToNestedLayer(baseLayers, this.editingContext, layer)
+      // Use generic helper to add layer to nested location
+      const updatedLayers = this.updateLayersInTree(
+        baseLayers,
+        this.editingContext,
+        (layersAtPath) => {
+          // We're at the target depth - add the new layer
+          return [...layersAtPath, layer]
+        },
+      )
 
       this.savedBaseState = {
         ...this.savedBaseState,
@@ -1738,17 +1711,15 @@ export class ImageEditor {
     // If editing a nested layer, also update savedBaseState
     // This ensures the changes persist when context is reloaded
     if (this.editingContext.length > 0 && this.savedBaseState) {
-      // Helper function to recursively update a layer in the tree
-      const updateLayerInTree = (
-        layers: ImageLayer[],
-        path: string[],
-        targetId: string,
-        updates: Partial<ImageLayer>,
-      ): ImageLayer[] => {
-        if (path.length === 0) {
-          // We're at the right depth - update the layer here
-          return layers.map((l) => {
-            if (l.id !== targetId) return l
+      const baseLayers = this.savedBaseState.layers || []
+
+      // Use generic helper to update the layer
+      const updatedBaseLayers = this.updateLayersInTree(
+        baseLayers,
+        this.editingContext,
+        (layersAtPath) => {
+          return layersAtPath.map((l) => {
+            if (l.id !== layerId) return l
 
             const mergedLayer = { ...l, ...updates }
             if (updates.transforms && l.transforms) {
@@ -1756,27 +1727,8 @@ export class ImageEditor {
             }
             return mergedLayer
           })
-        }
-
-        // Need to go deeper
-        const [currentId, ...remainingPath] = path
-        return layers.map((l) => {
-          if (l.id !== currentId) return l
-
-          const nestedLayers = l.transforms?.layers || []
-          return {
-            ...l,
-            transforms: {
-              ...l.transforms,
-              layers: updateLayerInTree(nestedLayers, remainingPath, targetId, updates),
-            },
-          }
-        })
-      }
-
-      // Update the layer in savedBaseState
-      const baseLayers = this.savedBaseState.layers || []
-      const updatedBaseLayers = updateLayerInTree(baseLayers, this.editingContext, layerId, updates)
+        },
+      )
 
       this.savedBaseState = {
         ...this.savedBaseState,
@@ -1803,36 +1755,14 @@ export class ImageEditor {
     // If editing a nested layer, also update savedBaseState
     // This ensures the reordering persists when context is reloaded
     if (this.editingContext.length > 0 && this.savedBaseState) {
-      // Helper function to recursively update layers in the tree
-      const reorderLayersInTree = (
-        layers: ImageLayer[],
-        path: string[],
-        newOrder: ImageLayer[],
-      ): ImageLayer[] => {
-        if (path.length === 0) {
-          // We're at the right depth - replace layers here
-          return newOrder
-        }
-
-        // Need to go deeper
-        const [currentId, ...remainingPath] = path
-        return layers.map((l) => {
-          if (l.id !== currentId) return l
-
-          const nestedLayers = l.transforms?.layers || []
-          return {
-            ...l,
-            transforms: {
-              ...l.transforms,
-              layers: reorderLayersInTree(nestedLayers, remainingPath, newOrder),
-            },
-          }
-        })
-      }
-
-      // Update savedBaseState with reordered layers
       const baseLayers = this.savedBaseState.layers || []
-      const updatedBaseLayers = reorderLayersInTree(baseLayers, this.editingContext, newOrder)
+
+      // Use generic helper to replace layers at target depth
+      const updatedBaseLayers = this.updateLayersInTree(
+        baseLayers,
+        this.editingContext,
+        () => newOrder,
+      )
 
       this.savedBaseState = {
         ...this.savedBaseState,
