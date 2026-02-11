@@ -72,16 +72,16 @@ export function LayerOverlay({
     const widthPercent = `${(layerWidth / baseImageWidth) * 100}%`
     const heightPercent = `${(layerHeight / baseImageHeight) * 100}%`
 
-    // Handle X position (relative to content area, then offset by padding)
+    // Handle X position (canvas-absolute for all types)
     if (layerX === 'left') {
-      leftPercent = `${(paddingLeft / baseImageWidth) * 100}%`
+      leftPercent = '0%' // Left edge of canvas
       canDragX = true
     } else if (layerX === 'center') {
-      const xPos = paddingLeft + (contentWidth - layerWidth) / 2
+      const xPos = (baseImageWidth - layerWidth) / 2
       leftPercent = `${(xPos / baseImageWidth) * 100}%`
       canDragX = false
     } else if (layerX === 'right') {
-      const xPos = paddingLeft + contentWidth - layerWidth
+      const xPos = baseImageWidth - layerWidth // Right edge of canvas
       leftPercent = `${(xPos / baseImageWidth) * 100}%`
       isRightAligned = true
       canDragX = true
@@ -92,7 +92,7 @@ export function LayerOverlay({
         leftPercent = `${(xPos / baseImageWidth) * 100}%`
         isRightAligned = true
       } else {
-        // Positive: absolute position on canvas (already includes padding offset)
+        // Positive: canvas-absolute position
         leftPercent = `${(layerX / baseImageWidth) * 100}%`
       }
       canDragX = true
@@ -101,16 +101,16 @@ export function LayerOverlay({
       canDragX = false
     }
 
-    // Handle Y position (relative to content area, then offset by padding)
+    // Handle Y position (canvas-absolute for all types)
     if (layerY === 'top') {
-      topPercent = `${(paddingTop / baseImageHeight) * 100}%`
+      topPercent = '0%' // Top edge of canvas
       canDragY = true
     } else if (layerY === 'center') {
-      const yPos = paddingTop + (contentHeight - layerHeight) / 2
+      const yPos = (baseImageHeight - layerHeight) / 2
       topPercent = `${(yPos / baseImageHeight) * 100}%`
       canDragY = false
     } else if (layerY === 'bottom') {
-      const yPos = paddingTop + contentHeight - layerHeight
+      const yPos = baseImageHeight - layerHeight // Bottom edge of canvas
       topPercent = `${(yPos / baseImageHeight) * 100}%`
       isBottomAligned = true
       canDragY = true
@@ -121,7 +121,7 @@ export function LayerOverlay({
         topPercent = `${(yPos / baseImageHeight) * 100}%`
         isBottomAligned = true
       } else {
-        // Positive: absolute position on canvas (already includes padding offset)
+        // Positive: canvas-absolute position
         topPercent = `${(layerY / baseImageHeight) * 100}%`
       }
       canDragY = true
@@ -242,16 +242,14 @@ export function LayerOverlay({
             updates.x = calculatedOffset
           }
         } else {
-          // Currently left-aligned (positive offset from content left edge)
-          const contentX = canvasX - paddingLeft
-          
-          if (contentX < 0) {
+          // Currently left-aligned (positive canvas-absolute position)
+          if (canvasX < paddingLeft) {
             // Crossed boundary to negative - switch to right-aligned
             // Calculate offset from canvas right
             updates.x = canvasX + totalLayerWidth - baseImageWidth
           } else {
-            // Stay left-aligned (positive offset from content left)
-            updates.x = contentX
+            // Stay left-aligned (positive canvas-absolute)
+            updates.x = canvasX
           }
         }
       }
@@ -279,16 +277,14 @@ export function LayerOverlay({
             updates.y = calculatedOffset
           }
         } else {
-          // Currently top-aligned (positive offset from top edge of content)
-          const contentY = canvasY - paddingTop
-
-          if (contentY < 0) {
+          // Currently top-aligned (positive canvas-absolute position)
+          if (canvasY < paddingTop) {
             // Crossed boundary to negative - switch to bottom-aligned
             // Calculate offset from canvas bottom
             updates.y = canvasY + totalLayerHeight - baseImageHeight
           } else {
-            // Stay top-aligned (positive offset from content top)
-            updates.y = contentY
+            // Stay top-aligned (positive canvas-absolute)
+            updates.y = canvasY
           }
         }
       }

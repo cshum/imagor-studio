@@ -50,14 +50,14 @@ export function LayerRegionsOverlay({
       let leftPercent: string
       let topPercent: string
 
-      // Handle X position (relative to content area, then offset by padding)
+      // Handle X position (canvas-absolute for all types)
       if (layer.x === 'left') {
-        leftPercent = `${(paddingLeft / baseImageWidth) * 100}%`
+        leftPercent = '0%' // Left edge of canvas
       } else if (layer.x === 'center') {
-        const xPos = paddingLeft + (contentWidth - layerWidth) / 2
+        const xPos = (baseImageWidth - layerWidth) / 2
         leftPercent = `${(xPos / baseImageWidth) * 100}%`
       } else if (layer.x === 'right') {
-        const xPos = paddingLeft + contentWidth - layerWidth
+        const xPos = baseImageWidth - layerWidth // Right edge of canvas
         leftPercent = `${(xPos / baseImageWidth) * 100}%`
       } else if (typeof layer.x === 'number') {
         if (layer.x < 0) {
@@ -65,21 +65,21 @@ export function LayerRegionsOverlay({
           const xPos = baseImageWidth + layer.x - layerWidth
           leftPercent = `${(xPos / baseImageWidth) * 100}%`
         } else {
-          // Positive: absolute position on canvas (already includes padding offset)
+          // Positive: canvas-absolute position
           leftPercent = `${(layer.x / baseImageWidth) * 100}%`
         }
       } else {
         leftPercent = `${(paddingLeft / baseImageWidth) * 100}%`
       }
 
-      // Handle Y position (relative to content area, then offset by padding)
+      // Handle Y position (canvas-absolute for all types)
       if (layer.y === 'top') {
-        topPercent = `${(paddingTop / baseImageHeight) * 100}%`
+        topPercent = '0%' // Top edge of canvas
       } else if (layer.y === 'center') {
-        const yPos = paddingTop + (contentHeight - layerHeight) / 2
+        const yPos = (baseImageHeight - layerHeight) / 2
         topPercent = `${(yPos / baseImageHeight) * 100}%`
       } else if (layer.y === 'bottom') {
-        const yPos = paddingTop + contentHeight - layerHeight
+        const yPos = baseImageHeight - layerHeight // Bottom edge of canvas
         topPercent = `${(yPos / baseImageHeight) * 100}%`
       } else if (typeof layer.y === 'number') {
         if (layer.y < 0) {
@@ -87,7 +87,7 @@ export function LayerRegionsOverlay({
           const yPos = baseImageHeight + layer.y - layerHeight
           topPercent = `${(yPos / baseImageHeight) * 100}%`
         } else {
-          // Positive: absolute position on canvas (already includes padding offset)
+          // Positive: canvas-absolute position
           topPercent = `${(layer.y / baseImageHeight) * 100}%`
         }
       } else {
