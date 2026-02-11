@@ -292,6 +292,20 @@ export function ImageView({
     }
   }, [onPrevImage, onNextImage, isVisible])
 
+  // Simplified variants for slideshow mode (crossfade only)
+  const slideshowVariants = {
+    enter: {
+      opacity: 0,
+    },
+    center: {
+      opacity: 1,
+    },
+    exit: {
+      opacity: 0,
+    },
+  }
+
+  // Full animation variants for manual navigation
   const slideVariants = {
     enter: (direction: number) => ({
       x: direction > 0 ? 20 : -20,
@@ -469,15 +483,21 @@ export function ImageView({
                     ) : (
                       <motion.div
                         key={image.imageKey}
-                        variants={slideVariants}
+                        variants={isSlideshow ? slideshowVariants : slideVariants}
                         custom={direction}
                         initial='enter'
                         animate='center'
                         exit='exit'
-                        transition={{
-                          x: { type: 'spring', stiffness: 300, damping: 30 },
-                          opacity: { duration: 0.2 },
-                        }}
+                        transition={
+                          isSlideshow
+                            ? {
+                                opacity: { duration: 0.15, ease: 'easeInOut' },
+                              }
+                            : {
+                                x: { type: 'spring', stiffness: 300, damping: 30 },
+                                opacity: { duration: 0.2 },
+                              }
+                        }
                         className='absolute z-10 flex h-full w-full items-center justify-center'
                       >
                         {image.isVideo ? (
