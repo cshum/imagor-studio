@@ -342,9 +342,8 @@ export function LayerControls({
         )}
       </Button>
 
-      {/* Position Controls (hidden during edit mode) */}
-      {!isEditing && (
-        <>
+      {/* Position Controls - always shown when layer is selected */}
+      <>
           <div className='space-y-3'>
             {/* Horizontal Alignment */}
             <div className='space-y-2'>
@@ -547,8 +546,7 @@ export function LayerControls({
               </SelectContent>
             </Select>
           </div>
-        </>
-      )}
+      </>
     </div>
   )
 }
