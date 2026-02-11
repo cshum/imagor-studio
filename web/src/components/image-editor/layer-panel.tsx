@@ -614,7 +614,7 @@ export function LayerPanel({
           {/* Base Image - Always shown at bottom */}
           <BaseImageItem
             imagePath={imagePath}
-            isSelected={selectedLayerId === null && editingContext === null}
+            isSelected={selectedLayerId === null}
             onClick={handleSelectBase}
           />
         </div>
