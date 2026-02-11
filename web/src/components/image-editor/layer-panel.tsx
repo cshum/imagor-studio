@@ -26,6 +26,7 @@ import {
   EyeOff,
   GripVertical,
   Image,
+  Layers,
   MoreVertical,
   Pencil,
   Plus,
@@ -246,13 +247,23 @@ function SortableLayerItem({
 
 interface BaseImageItemProps {
   imagePath: string
+  name?: string
+  isLayer?: boolean
   isSelected: boolean
   onClick: () => void
 }
 
-function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
+function BaseImageItem({
+  imagePath,
+  name,
+  isLayer = false,
+  isSelected,
+  onClick,
+}: BaseImageItemProps) {
   const { t } = useTranslation()
   const filename = imagePath.split('/').pop() || imagePath
+  const displayName = name || filename
+  const Icon = isLayer ? Layers : Image
 
   return (
     <div
@@ -265,12 +276,12 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
     >
       {/* Icon instead of drag handle */}
       <div className='flex h-4 w-4 shrink-0 items-center justify-center'>
-        <Image className='text-muted-foreground h-4 w-4' />
+        <Icon className='text-muted-foreground h-4 w-4' />
       </div>
 
       {/* Base image name */}
-      <span className='flex-1 truncate text-sm' title={filename}>
-        {filename}
+      <span className='flex-1 truncate text-sm' title={displayName}>
+        {displayName}
       </span>
 
       {/* Badge */}
@@ -298,6 +309,11 @@ export function LayerPanel({
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
   const [renamingLayerId, setRenamingLayerId] = useState<string | null>(null)
   const [newLayerName, setNewLayerName] = useState('')
+
+  // Get the editing layer info if in nested context
+  const editingLayer = editingContext
+    ? imageEditor.getBaseLayers().find((l) => l.id === editingContext)
+    : null
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -605,6 +621,8 @@ export function LayerPanel({
           {/* Base Image - Always shown at bottom */}
           <BaseImageItem
             imagePath={imagePath}
+            name={editingLayer?.name}
+            isLayer={!!editingLayer}
             isSelected={selectedLayerId === null}
             onClick={handleSelectBase}
           />
