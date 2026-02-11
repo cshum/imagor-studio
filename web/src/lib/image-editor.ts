@@ -799,6 +799,7 @@ export class ImageEditor {
         },
         this.abortController.signal,
       )
+
       // Only update if URL actually changed
       if (url !== this.lastPreviewUrl) {
         this.lastPreviewUrl = url
@@ -814,6 +815,7 @@ export class ImageEditor {
         error instanceof Error && (error.name === 'AbortError' || error.name === 'CancelError')
 
       if (!isAbortError) {
+        console.error('[PREVIEW] Error:', error)
         this.callbacks.onError?.(error as Error)
         // Clear loading on error, but only if this is the request that set it
         if (requestId === this.loadingRequestId) {
@@ -938,26 +940,45 @@ export class ImageEditor {
   }
 
   /**
+   * Deep clone a layer and all its nested transforms/layers
+   */
+  private deepCloneLayer(layer: ImageLayer): ImageLayer {
+    const cloned: ImageLayer = {
+      ...layer,
+      originalDimensions: { ...layer.originalDimensions },
+    }
+
+    if (layer.transforms) {
+      cloned.transforms = {
+        ...layer.transforms,
+        // Recursively clone nested layers if they exist
+        layers: layer.transforms.layers
+          ? layer.transforms.layers.map((nestedLayer) => this.deepCloneLayer(nestedLayer))
+          : undefined,
+      }
+    }
+
+    return cloned
+  }
+
+  /**
    * Schedule a debounced history snapshot
    * Captures current state and saves after 300ms of inactivity
+   * ALWAYS captures the complete base state (including all layers)
    */
   private scheduleHistorySnapshot(): void {
     // Capture current state as pending snapshot (before update)
     // Capture a fresh snapshot before each change (when timer is not running)
-    // IMPORTANT: Deep clone the layers array AND nested transforms to prevent reference issues
+    // IMPORTANT: Always capture the COMPLETE BASE STATE, not just current context
     if (!this.historyDebounceTimer) {
+      // Get the complete base state (syncs current edits to savedBaseState first)
+      const baseState = this.getBaseState()
+
+      // Deep clone to prevent reference issues
       this.pendingHistorySnapshot = {
-        ...this.state,
-        // Deep clone layers array AND their nested transforms to capture current state properly
-        layers: this.state.layers
-          ? [
-              ...this.state.layers.map((l) => ({
-                ...l,
-                // Clone the transforms object to prevent reference issues
-                transforms: l.transforms ? { ...l.transforms } : undefined,
-              })),
-            ]
-          : undefined,
+        ...baseState,
+        // Deep clone layers array AND their nested transforms recursively
+        layers: baseState.layers ? baseState.layers.map((l) => this.deepCloneLayer(l)) : undefined,
       }
     }
 
@@ -1188,7 +1209,7 @@ export class ImageEditor {
     const previousState = this.undoStack.pop()!
 
     // Restore the base state
-    if (currentContext !== null) {
+    if (currentContext.length > 0) {
       // We're editing a layer - update savedBaseState and reload context
       this.savedBaseState = { ...previousState }
 
@@ -1231,7 +1252,7 @@ export class ImageEditor {
     const nextState = this.redoStack.pop()!
 
     // Restore the base state
-    if (currentContext !== null) {
+    if (currentContext.length > 0) {
       // We're editing a layer - update savedBaseState and reload context
       this.savedBaseState = { ...nextState }
 
