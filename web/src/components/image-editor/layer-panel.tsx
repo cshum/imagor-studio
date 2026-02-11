@@ -321,7 +321,7 @@ export function LayerPanel({
       setActiveId(null)
 
       if (over && active.id !== over.id) {
-        const currentLayers = imageEditor.getLayers()
+        const currentLayers = imageEditor.getContextLayers()
         const oldIndex = currentLayers.findIndex((l) => l.id === active.id)
         const newIndex = currentLayers.findIndex((l) => l.id === over.id)
 

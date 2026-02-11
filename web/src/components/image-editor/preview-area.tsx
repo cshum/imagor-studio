@@ -102,12 +102,7 @@ export function PreviewArea({
       // 1. A layer is selected
       // 2. Not in visual crop mode
       // 3. Click is directly on the container (not bubbled from children)
-      if (
-        selectedLayerId &&
-        !visualCropEnabled &&
-        e.target === e.currentTarget &&
-        imageEditor
-      ) {
+      if (selectedLayerId && !visualCropEnabled && e.target === e.currentTarget && imageEditor) {
         imageEditor.setSelectedLayerId(null)
       }
     },

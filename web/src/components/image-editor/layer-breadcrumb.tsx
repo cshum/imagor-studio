@@ -12,7 +12,7 @@ interface LayerBreadcrumbProps {
 export function LayerBreadcrumb({ imageEditor, className }: LayerBreadcrumbProps) {
   const { t } = useTranslation()
   const contextPath = imageEditor.getContextPath()
-  const allLayers = imageEditor.getLayers()
+  const allLayers = imageEditor.getBaseLayers()
 
   // Build breadcrumb items
   const breadcrumbItems: Array<{ id: string | null; name: string; icon: typeof Image }> = [

@@ -1293,14 +1293,6 @@ export class ImageEditor {
   }
 
   /**
-   * Get the currently selected layer ID
-   * @returns null for base image or no selection, or layer ID for selected layer
-   */
-  getSelectedLayerId(): string | null {
-    return this.selectedLayerId
-  }
-
-  /**
    * Set the currently selected layer ID
    * Triggers onSelectedLayerChange callback if selection changes
    * @param layerId - ID of the layer to select, or null for base image
@@ -1801,7 +1793,7 @@ export class ImageEditor {
    * Always returns layers from base state, regardless of editing context
    * @returns Array of layers or empty array
    */
-  getLayers(): ImageLayer[] {
+  getBaseLayers(): ImageLayer[] {
     // Always get layers from base state, not current editing context
     if (this.editingContext.length > 0) {
       // We're editing a layer - get layers from savedBaseState
@@ -1825,10 +1817,8 @@ export class ImageEditor {
 
     // We're editing a layer - need to traverse the tree
     // Start from base layers (stored in savedBaseState during layer editing)
-    const baseLayers = this.savedBaseState?.layers || []
-
     // Traverse down the context path to find the current layer's children
-    let currentLayers = baseLayers
+    let currentLayers = this.savedBaseState?.layers || []
     for (const layerId of this.editingContext) {
       const layer = currentLayers.find((l) => l.id === layerId)
       if (!layer) return []
