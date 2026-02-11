@@ -14,16 +14,20 @@ export const useWidthHandler = (
     }
   }, [contentRef, padding])
 
+  // Immediate update on initial mount
   useEffect(() => {
     updateWidth()
+  }, [updateWidth])
 
+  // Delayed update for sidebar transitions
+  useEffect(() => {
     const transitionDuration = 200 // sidebar transition duration
     const timeoutId = setTimeout(() => {
-      updateWidth() // Recalculate width after sidebar transition
+      updateWidth() // Recalculate width after sidebar transition completes
     }, transitionDuration)
 
     return () => clearTimeout(timeoutId) // Cleanup timeout on unmount
-  }, [updateWidth, sidebarOpen])
+  }, [sidebarOpen, updateWidth])
 
   return {
     contentWidth,
