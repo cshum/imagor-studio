@@ -221,7 +221,7 @@ export class ImageEditor {
   }
 
   /**
-   * Calculate the actual output dimensions (after crop + resize, before padding)
+   * Calculate the actual output dimensions (after crop + resize + padding)
    * This is what layers are positioned relative to
    * Uses the same logic as convertStateToGraphQLParams to ensure consistency
    */
@@ -246,20 +246,30 @@ export class ImageEditor {
     const outputWidth = state.width ?? sourceWidth
     const outputHeight = state.height ?? sourceHeight
 
+    let finalWidth: number
+    let finalHeight: number
+
     if (state.fitIn !== false) {
       // fitIn mode: calculate what fitIn will produce
       // fit-in doesn't upscale by default, so cap the scale at 1.0
       const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight, 1.0)
-      return {
-        width: Math.round(sourceWidth * outputScale),
-        height: Math.round(sourceHeight * outputScale),
-      }
+      finalWidth = Math.round(sourceWidth * outputScale)
+      finalHeight = Math.round(sourceHeight * outputScale)
     } else {
       // Stretch/fill mode: use exact dimensions
-      return {
-        width: outputWidth,
-        height: outputHeight,
-      }
+      finalWidth = outputWidth
+      finalHeight = outputHeight
+    }
+
+    // Add padding to the output dimensions
+    const paddingLeft = state.paddingLeft || 0
+    const paddingRight = state.paddingRight || 0
+    const paddingTop = state.paddingTop || 0
+    const paddingBottom = state.paddingBottom || 0
+
+    return {
+      width: finalWidth + paddingLeft + paddingRight,
+      height: finalHeight + paddingTop + paddingBottom,
     }
   }
 

@@ -308,34 +308,58 @@ export function PreviewArea({
                 imageDimensions.width > 0 &&
                 imageDimensions.height > 0 &&
                 (() => {
-                  // Get the actual output dimensions (after crop + resize, before padding)
-                  // This is what layers are positioned relative to
+                  // Get the actual output dimensions (after crop + resize + padding)
+                  // This includes padding in the total canvas size
                   const outputDims = imageEditor.getOutputDimensions()
+
+                  // Get padding values from current state
+                  const state = imageEditor.getState()
+                  const paddingLeft = state.paddingLeft || 0
+                  const paddingRight = state.paddingRight || 0
+                  const paddingTop = state.paddingTop || 0
+                  const paddingBottom = state.paddingBottom || 0
 
                   if (selectedLayerId) {
                     // Show single layer overlay with drag/resize handles
                     const selectedLayer = imageEditor.getLayer(selectedLayerId)
                     if (!selectedLayer) return null
 
+                    // Get layer's image dimensions (without padding)
+                    const layerImageWidth =
+                      selectedLayer.transforms?.width || selectedLayer.originalDimensions.width
+                    const layerImageHeight =
+                      selectedLayer.transforms?.height || selectedLayer.originalDimensions.height
+
+                    // Get layer's own padding (if it has any)
+                    const layerPaddingLeft = selectedLayer.transforms?.paddingLeft || 0
+                    const layerPaddingRight = selectedLayer.transforms?.paddingRight || 0
+                    const layerPaddingTop = selectedLayer.transforms?.paddingTop || 0
+                    const layerPaddingBottom = selectedLayer.transforms?.paddingBottom || 0
+
+                    // Calculate layer's total size including its own padding
+                    const layerTotalWidth = layerImageWidth + layerPaddingLeft + layerPaddingRight
+                    const layerTotalHeight = layerImageHeight + layerPaddingTop + layerPaddingBottom
+
                     return (
                       <LayerOverlay
-                        previewWidth={imageDimensions.width}
-                        previewHeight={imageDimensions.height}
                         layerX={selectedLayer.x}
                         layerY={selectedLayer.y}
-                        layerWidth={
-                          selectedLayer.transforms?.width || selectedLayer.originalDimensions.width
-                        }
-                        layerHeight={
-                          selectedLayer.transforms?.height ||
-                          selectedLayer.originalDimensions.height
-                        }
+                        layerWidth={layerTotalWidth}
+                        layerHeight={layerTotalHeight}
                         onLayerChange={(updates) =>
                           imageEditor.updateLayer(selectedLayerId, updates)
                         }
                         lockedAspectRatio={layerAspectRatioLocked}
                         baseImageWidth={outputDims.width}
                         baseImageHeight={outputDims.height}
+                        paddingLeft={paddingLeft}
+                        paddingRight={paddingRight}
+                        paddingTop={paddingTop}
+                        paddingBottom={paddingBottom}
+                        layerPaddingLeft={layerPaddingLeft}
+                        layerPaddingRight={layerPaddingRight}
+                        layerPaddingTop={layerPaddingTop}
+                        layerPaddingBottom={layerPaddingBottom}
                         onDeselect={() => imageEditor.setSelectedLayerId(null)}
                         onEnterEditMode={() => imageEditor.switchContext(selectedLayerId)}
                       />
@@ -350,6 +374,10 @@ export function PreviewArea({
                         layers={layers}
                         baseImageWidth={outputDims.width}
                         baseImageHeight={outputDims.height}
+                        paddingLeft={paddingLeft}
+                        paddingRight={paddingRight}
+                        paddingTop={paddingTop}
+                        paddingBottom={paddingBottom}
                         onLayerSelect={(layerId) => imageEditor.setSelectedLayerId(layerId)}
                       />
                     )

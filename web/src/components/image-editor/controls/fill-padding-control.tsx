@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Input } from '@/components/ui/input'
@@ -20,27 +19,25 @@ interface FillPaddingControlProps {
 export function FillPaddingControl({ params, onUpdateParams }: FillPaddingControlProps) {
   const { t } = useTranslation()
 
-  // Determine current fill mode
+  // Calculate fill mode from params (no useState - follows convention)
   const getFillMode = (): 'none' | 'transparent' | 'color' => {
     if (!params.fillColor) return 'none'
     if (params.fillColor === 'none') return 'transparent'
     return 'color'
   }
 
-  const [fillMode, setFillMode] = useState<'none' | 'transparent' | 'color'>(getFillMode())
-  const [customColor, setCustomColor] = useState<string>(
-    params.fillColor && params.fillColor !== 'none' ? `#${params.fillColor}` : '#FFFFFF',
-  )
+  // Calculate values directly from params on every render
+  const fillMode = getFillMode()
+  const customColor =
+    params.fillColor && params.fillColor !== 'none' ? `#${params.fillColor}` : '#FFFFFF'
 
   const handleFillModeChange = (mode: 'none' | 'transparent' | 'color') => {
-    setFillMode(mode)
-
     if (mode === 'none') {
       onUpdateParams({ fillColor: undefined })
     } else if (mode === 'transparent') {
       onUpdateParams({ fillColor: 'none' })
     } else {
-      // Color mode - use current custom color
+      // Color mode - use current custom color (or default white)
       const hexWithoutHash = customColor.replace('#', '')
       onUpdateParams({ fillColor: hexWithoutHash })
     }
@@ -48,13 +45,8 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
 
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newColor = e.target.value
-    setCustomColor(newColor)
-
-    // Only update if we're in color mode
-    if (fillMode === 'color') {
-      const hexWithoutHash = newColor.replace('#', '')
-      onUpdateParams({ fillColor: hexWithoutHash })
-    }
+    const hexWithoutHash = newColor.replace('#', '')
+    onUpdateParams({ fillColor: hexWithoutHash })
   }
 
   const handlePaddingChange = (side: 'top' | 'right' | 'bottom' | 'left', value: string) => {

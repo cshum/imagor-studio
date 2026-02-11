@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { calculateLayerPosition } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
 
 interface LayerOverlayProps {
-  previewWidth: number
-  previewHeight: number
   layerX: string | number
   layerY: string | number
   layerWidth: number
@@ -20,6 +19,14 @@ interface LayerOverlayProps {
   lockedAspectRatio: boolean
   baseImageWidth: number
   baseImageHeight: number
+  paddingLeft?: number
+  paddingRight?: number
+  paddingTop?: number
+  paddingBottom?: number
+  layerPaddingLeft?: number
+  layerPaddingRight?: number
+  layerPaddingTop?: number
+  layerPaddingBottom?: number
   onDeselect?: () => void
   onEnterEditMode?: () => void
 }
@@ -27,8 +34,6 @@ interface LayerOverlayProps {
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | null
 
 export function LayerOverlay({
-  previewWidth,
-  previewHeight,
   layerX,
   layerY,
   layerWidth,
@@ -37,80 +42,47 @@ export function LayerOverlay({
   lockedAspectRatio,
   baseImageWidth,
   baseImageHeight,
+  paddingLeft = 0,
+  paddingRight = 0,
+  paddingTop = 0,
+  paddingBottom = 0,
+  layerPaddingLeft = 0,
+  layerPaddingRight = 0,
+  layerPaddingTop = 0,
+  layerPaddingBottom = 0,
   onDeselect,
   onEnterEditMode,
 }: LayerOverlayProps) {
+  // Calculate content area dimensions (image without padding)
+  // Layers are positioned relative to the content area, not the total canvas
+  const contentWidth = baseImageWidth - paddingLeft - paddingRight
+  const contentHeight = baseImageHeight - paddingTop - paddingBottom
+
   // Calculate CSS percentage strings for position and size
   // This allows the browser to handle scaling automatically via CSS
   const getPercentageStyles = useCallback(() => {
-    let leftPercent: string
-    let topPercent: string
-    let canDragX: boolean
-    let canDragY: boolean
-    let isRightAligned = false
-    let isBottomAligned = false
+    // Use the utility function to calculate position
+    const { leftPercent, topPercent } = calculateLayerPosition(
+      layerX,
+      layerY,
+      layerWidth,
+      layerHeight,
+      baseImageWidth,
+      baseImageHeight,
+      paddingLeft,
+      paddingTop,
+    )
 
-    // Calculate width/height as percentages
+    // Calculate width/height as percentages relative to total canvas (including padding)
+    // The overlay represents the entire preview image which includes padding
     const widthPercent = `${(layerWidth / baseImageWidth) * 100}%`
     const heightPercent = `${(layerHeight / baseImageHeight) * 100}%`
 
-    // Handle X position
-    if (layerX === 'left') {
-      leftPercent = '0%'
-      canDragX = true
-    } else if (layerX === 'center') {
-      const xPos = (baseImageWidth - layerWidth) / 2
-      leftPercent = `${(xPos / baseImageWidth) * 100}%`
-      canDragX = false
-    } else if (layerX === 'right') {
-      const xPos = baseImageWidth - layerWidth
-      leftPercent = `${(xPos / baseImageWidth) * 100}%`
-      isRightAligned = true
-      canDragX = true
-    } else if (typeof layerX === 'number') {
-      if (layerX < 0) {
-        // Negative: distance from right edge
-        const xPos = baseImageWidth + layerX - layerWidth
-        leftPercent = `${(xPos / baseImageWidth) * 100}%`
-        isRightAligned = true
-      } else {
-        // Positive: from left edge
-        leftPercent = `${(layerX / baseImageWidth) * 100}%`
-      }
-      canDragX = true
-    } else {
-      leftPercent = '0%'
-      canDragX = false
-    }
-
-    // Handle Y position
-    if (layerY === 'top') {
-      topPercent = '0%'
-      canDragY = true
-    } else if (layerY === 'center') {
-      const yPos = (baseImageHeight - layerHeight) / 2
-      topPercent = `${(yPos / baseImageHeight) * 100}%`
-      canDragY = false
-    } else if (layerY === 'bottom') {
-      const yPos = baseImageHeight - layerHeight
-      topPercent = `${(yPos / baseImageHeight) * 100}%`
-      isBottomAligned = true
-      canDragY = true
-    } else if (typeof layerY === 'number') {
-      if (layerY < 0) {
-        // Negative: distance from bottom edge
-        const yPos = baseImageHeight + layerY - layerHeight
-        topPercent = `${(yPos / baseImageHeight) * 100}%`
-        isBottomAligned = true
-      } else {
-        // Positive: from top edge
-        topPercent = `${(layerY / baseImageHeight) * 100}%`
-      }
-      canDragY = true
-    } else {
-      topPercent = '0%'
-      canDragY = false
-    }
+    // Determine drag capabilities and alignment
+    const canDragX = layerX !== 'center' && typeof layerX !== 'undefined'
+    const canDragY = layerY !== 'center' && typeof layerY !== 'undefined'
+    const isRightAligned = layerX === 'right' || (typeof layerX === 'number' && layerX < 0)
+    const isBottomAligned = layerY === 'bottom' || (typeof layerY === 'number' && layerY < 0)
 
     return {
       leftPercent,
@@ -122,7 +94,20 @@ export function LayerOverlay({
       isRightAligned,
       isBottomAligned,
     }
-  }, [layerX, layerY, layerWidth, layerHeight, baseImageWidth, baseImageHeight])
+  }, [
+    layerX,
+    layerY,
+    layerWidth,
+    layerHeight,
+    baseImageWidth,
+    baseImageHeight,
+    contentWidth,
+    contentHeight,
+    paddingLeft,
+    paddingRight,
+    paddingTop,
+    paddingBottom,
+  ])
 
   const {
     leftPercent,
@@ -169,43 +154,56 @@ export function LayerOverlay({
         }
       } = {}
 
-      // Convert from preview pixels to base image pixels using percentages
-      // Use actual overlay dimensions (not previewWidth/Height props which may be wrong)
+      // Convert from preview pixels to content area dimensions
+      // The overlay represents the entire canvas (content + padding)
+      // The display size includes the layer's own padding, so we need to subtract it
       const widthPercent = newDisplayWidth / overlayWidth
       const heightPercent = newDisplayHeight / overlayHeight
+
+      // Calculate total size on canvas (including base padding)
+      const totalCanvasWidth = Math.round(widthPercent * baseImageWidth)
+      const totalCanvasHeight = Math.round(heightPercent * baseImageHeight)
+
+      // Subtract layer's own padding to get the actual image dimensions
+      const layerImageWidth = totalCanvasWidth - layerPaddingLeft - layerPaddingRight
+      const layerImageHeight = totalCanvasHeight - layerPaddingTop - layerPaddingBottom
+
       updates.transforms = {
-        width: Math.round(widthPercent * baseImageWidth),
-        height: Math.round(heightPercent * baseImageHeight),
+        width: Math.max(1, layerImageWidth), // Ensure minimum of 1px
+        height: Math.max(1, layerImageHeight),
       }
 
       // Convert X position with auto-switch on boundary crossing
       if (canDragX) {
         const xPercent = newDisplayX / overlayWidth
-        const originalX = Math.round(xPercent * baseImageWidth)
-        const layerWidth = updates.transforms?.width || 0
+        const canvasX = Math.round(xPercent * baseImageWidth)
+        // Use total layer width (image + layer padding) for position calculations
+        const totalLayerWidth = totalCanvasWidth
 
         if (isRightAligned) {
-          // Currently right-aligned (negative offset from right edge)
-          const calculatedOffset = originalX + layerWidth - baseImageWidth
+          // Currently right-aligned (negative offset from canvas right edge)
+          const calculatedOffset = canvasX + totalLayerWidth - baseImageWidth
 
           if (calculatedOffset > 0) {
             // Crossed boundary to positive - switch to left-aligned
-            updates.x = calculatedOffset
+            // Convert to content-relative position
+            updates.x = canvasX - paddingLeft
           } else if (calculatedOffset === 0) {
             // Exactly at right edge - use "right" string for imagor
             updates.x = 'right'
           } else {
-            // Stay right-aligned (negative offset)
+            // Stay right-aligned (negative offset from canvas right)
             updates.x = calculatedOffset
           }
         } else {
-          // Currently left-aligned (positive offset)
-          if (originalX < 0) {
+          // Currently left-aligned (positive canvas-absolute position)
+          if (canvasX < paddingLeft) {
             // Crossed boundary to negative - switch to right-aligned
-            updates.x = originalX + layerWidth - baseImageWidth
+            // Calculate offset from canvas right
+            updates.x = canvasX + totalLayerWidth - baseImageWidth
           } else {
-            // Stay left-aligned (positive offset)
-            updates.x = originalX
+            // Stay left-aligned (positive canvas-absolute)
+            updates.x = canvasX
           }
         }
       }
@@ -213,31 +211,34 @@ export function LayerOverlay({
       // Convert Y position with auto-switch on boundary crossing
       if (canDragY) {
         const yPercent = newDisplayY / overlayHeight
-        const originalY = Math.round(yPercent * baseImageHeight)
-        const layerHeight = updates.transforms?.height || 0
+        const canvasY = Math.round(yPercent * baseImageHeight)
+        // Use total layer height (image + layer padding) for position calculations
+        const totalLayerHeight = totalCanvasHeight
 
         if (isBottomAligned) {
-          // Currently bottom-aligned (negative offset from bottom edge)
-          const calculatedOffset = originalY + layerHeight - baseImageHeight
+          // Currently bottom-aligned (negative offset from canvas bottom)
+          const calculatedOffset = canvasY + totalLayerHeight - baseImageHeight
 
           if (calculatedOffset > 0) {
             // Crossed boundary to positive - switch to top-aligned
-            updates.y = calculatedOffset
+            // Convert to content-relative position
+            updates.y = canvasY - paddingTop
           } else if (calculatedOffset === 0) {
             // Exactly at bottom edge - use "bottom" string for imagor
             updates.y = 'bottom'
           } else {
-            // Stay bottom-aligned (negative offset)
+            // Stay bottom-aligned (negative offset from canvas bottom)
             updates.y = calculatedOffset
           }
         } else {
-          // Currently top-aligned (positive offset)
-          if (originalY < 0) {
+          // Currently top-aligned (positive canvas-absolute position)
+          if (canvasY < paddingTop) {
             // Crossed boundary to negative - switch to bottom-aligned
-            updates.y = originalY + layerHeight - baseImageHeight
+            // Calculate offset from canvas bottom
+            updates.y = canvasY + totalLayerHeight - baseImageHeight
           } else {
-            // Stay top-aligned (positive offset)
-            updates.y = originalY
+            // Stay top-aligned (positive canvas-absolute)
+            updates.y = canvasY
           }
         }
       }
@@ -245,10 +246,16 @@ export function LayerOverlay({
       return updates
     },
     [
-      previewWidth,
-      previewHeight,
+      contentWidth,
+      contentHeight,
+      paddingLeft,
+      paddingTop,
       baseImageWidth,
       baseImageHeight,
+      layerPaddingLeft,
+      layerPaddingRight,
+      layerPaddingTop,
+      layerPaddingBottom,
       canDragX,
       canDragY,
       isRightAligned,

@@ -401,13 +401,9 @@ export function ImageEditorControls({
           if (visibleSections.length > 0 && !visibleSections.includes(section.key)) {
             return false
           }
-          // Hide fill & padding section when editing a layer
-          if (section.key === 'fill' && editingContext !== null) {
-            return false
-          }
           return true
         }),
-    [openSections.leftColumn, openSections.visibleSections, sectionConfigs, editingContext],
+    [openSections.leftColumn, openSections.visibleSections, sectionConfigs],
   )
 
   const rightColumnSections = useMemo(
@@ -420,13 +416,9 @@ export function ImageEditorControls({
           if (visibleSections.length > 0 && !visibleSections.includes(section.key)) {
             return false
           }
-          // Hide fill & padding section when editing a layer
-          if (section.key === 'fill' && editingContext !== null) {
-            return false
-          }
           return true
         }),
-    [openSections.rightColumn, openSections.visibleSections, sectionConfigs, editingContext],
+    [openSections.rightColumn, openSections.visibleSections, sectionConfigs],
   )
 
   // Render based on column prop
