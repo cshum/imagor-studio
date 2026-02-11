@@ -220,36 +220,37 @@ export function LayerOverlay({
       }
 
       // Convert X position with auto-switch on boundary crossing
-      // Position is relative to content area (subtract padding offset)
       if (canDragX) {
         const xPercent = newDisplayX / overlayWidth
         const canvasX = Math.round(xPercent * baseImageWidth)
-        // Subtract padding to get position relative to content area
-        const contentX = canvasX - paddingLeft
         // Use total layer width (image + layer padding) for position calculations
         const totalLayerWidth = totalCanvasWidth
 
         if (isRightAligned) {
-          // Currently right-aligned (negative offset from right edge of content)
-          const calculatedOffset = contentX + totalLayerWidth - contentWidth
+          // Currently right-aligned (negative offset from canvas right edge)
+          const calculatedOffset = canvasX + totalLayerWidth - baseImageWidth
 
           if (calculatedOffset > 0) {
             // Crossed boundary to positive - switch to left-aligned
-            updates.x = calculatedOffset
+            // Convert to content-relative position
+            updates.x = canvasX - paddingLeft
           } else if (calculatedOffset === 0) {
             // Exactly at right edge - use "right" string for imagor
             updates.x = 'right'
           } else {
-            // Stay right-aligned (negative offset)
+            // Stay right-aligned (negative offset from canvas right)
             updates.x = calculatedOffset
           }
         } else {
-          // Currently left-aligned (positive offset from left edge of content)
+          // Currently left-aligned (positive offset from content left edge)
+          const contentX = canvasX - paddingLeft
+          
           if (contentX < 0) {
             // Crossed boundary to negative - switch to right-aligned
-            updates.x = contentX + totalLayerWidth - contentWidth
+            // Calculate offset from canvas right
+            updates.x = canvasX + totalLayerWidth - baseImageWidth
           } else {
-            // Stay left-aligned (positive offset)
+            // Stay left-aligned (positive offset from content left)
             updates.x = contentX
           }
         }
