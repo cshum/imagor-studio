@@ -257,8 +257,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }
 
   const handleBack = () => {
-    // If editing a layer, exit layer edit mode instead of leaving editor
-    if (editingContext !== null) {
+    // If in nested layer context, go up one level
+    const contextDepth = imageEditor.getContextDepth()
+    if (contextDepth > 0) {
       imageEditor.switchContext(null)
       return
     }

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { AlertCircle, Copy, Download, Settings } from 'lucide-react'
 
 import { CropOverlay } from '@/components/image-editor/crop-overlay'
+import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb'
 import { LayerOverlay } from '@/components/image-editor/layer-overlay'
 import { LayerRegionsOverlay } from '@/components/image-editor/layer-regions-overlay'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
@@ -230,6 +231,12 @@ export function PreviewArea({
   return (
     <div className='relative flex h-full flex-col'>
       {!visualCropEnabled && <LicenseBadge />}
+      {/* Layer Breadcrumb - shown when editing nested layers */}
+      {imageEditor && imageEditor.getContextDepth() > 0 && (
+        <div className='border-b px-4 py-2'>
+          <LayerBreadcrumb imageEditor={imageEditor} />
+        </div>
+      )}
       {/* Preview Content */}
       <div
         ref={previewContainerRef}

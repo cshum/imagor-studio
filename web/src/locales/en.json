@@ -832,10 +832,15 @@
       "enterLayerName": "Enter layer name",
       "exitLayerEdit": "Apply Layer Edit",
       "exitEditMode": "Apply",
+      "exitToParent": "Exit to Parent",
       "xOffset": "X Offset",
       "yOffset": "Y Offset",
       "transparency": "Opacity",
       "blendMode": "Blend Mode",
+      "breadcrumb": {
+        "base": "Base Image",
+        "layer": "Layer"
+      },
       "blendModes": {
         "normal": "Normal",
         "multiply": "Multiply",

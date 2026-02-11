@@ -291,7 +291,7 @@ export function LayerPanel({
   visualCropEnabled = false,
 }: LayerPanelProps) {
   const { t } = useTranslation()
-  const layers = imageEditor.getLayers()
+  const layers = imageEditor.getContextLayers()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [filePickerOpen, setFilePickerOpen] = useState(false)
   const [isAddingLayer, setIsAddingLayer] = useState(false)
@@ -550,7 +550,7 @@ export function LayerPanel({
         <Button
           variant='outline'
           onClick={() => setFilePickerOpen(true)}
-          disabled={isAddingLayer || editingContext !== null || visualCropEnabled}
+          disabled={isAddingLayer || visualCropEnabled}
           className='mt-2 w-full'
         >
           <Plus className='mr-1 h-4 w-4' />
@@ -561,10 +561,7 @@ export function LayerPanel({
       {/* Layer list (scrollable) */}
       <div className='flex-1 overflow-y-auto px-1'>
         <div
-          className={cn(
-            'mb-2 space-y-0.5',
-            (editingContext || visualCropEnabled) && 'pointer-events-none opacity-50',
-          )}
+          className={cn('mb-2 space-y-0.5', visualCropEnabled && 'pointer-events-none opacity-50')}
         >
           <DndContext
             sensors={sensors}
