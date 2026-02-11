@@ -215,14 +215,20 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     setImagorPath(imageEditor.getImagorPath())
   }, [imageEditor, params])
 
-  // Keyboard shortcuts for undo/redo and escape to exit nested layer
+  // Keyboard shortcuts for undo/redo and escape to exit crop mode or nested layer
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape key - exit nested layer editing
+      // Escape key - exit crop mode or nested layer editing
       if (e.key === 'Escape') {
         e.preventDefault()
 
-        // Check if in nested context and exit one level up
+        // Priority 1: Exit crop mode if active (get state directly from imageEditor)
+        if (imageEditor.getState().visualCropEnabled) {
+          imageEditor.setVisualCropEnabled(false)
+          return
+        }
+
+        // Priority 2: Check if in nested context and exit one level up
         const contextDepth = imageEditor.getContextDepth()
         if (contextDepth > 0) {
           imageEditor.switchContext(null)
@@ -270,14 +276,20 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }
 
   const handleBack = () => {
-    // If in nested layer context, go up one level
+    // Priority 1: Exit crop mode if active
+    if (visualCropEnabled) {
+      imageEditor.setVisualCropEnabled(false)
+      return
+    }
+
+    // Priority 2: If in nested layer context, go up one level
     const contextDepth = imageEditor.getContextDepth()
     if (contextDepth > 0) {
       imageEditor.switchContext(null)
       return
     }
 
-    // Otherwise, navigate back to image view
+    // Priority 3: Navigate back to image view
     if (galleryKey) {
       navigate({
         to: '/gallery/$galleryKey/$imageKey',
