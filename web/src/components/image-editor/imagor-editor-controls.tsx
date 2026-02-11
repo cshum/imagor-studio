@@ -515,7 +515,7 @@ export function ImageEditorControls({
       {/* Drag Overlay */}
       <DragOverlay>
         {activeSection ? (
-          <div className='bg-card w-72 rounded-md border'>
+          <div className='bg-card w-[305px] rounded-md border shadow-lg'>
             <Collapsible open={openSections[activeSection.key]}>
               <div className='flex w-full items-center'>
                 {/* Drag handle - matching the actual layout */}

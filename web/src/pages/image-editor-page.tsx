@@ -1263,7 +1263,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         {/* Drag Overlay */}
         <DragOverlay>
           {activeSection && ActiveIcon ? (
-            <div className='bg-card w-[330px] rounded-md border shadow-lg'>
+            <div className='bg-card w-[305px] rounded-md border shadow-lg'>
               <Collapsible open={editorOpenSections[activeId as SectionKey]}>
                 <div className='flex w-full items-center'>
                   <div className='py-2 pr-1 pl-3'>
