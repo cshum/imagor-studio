@@ -7,7 +7,6 @@ import {
   AlignVerticalJustifyCenter,
   AlignVerticalJustifyEnd,
   AlignVerticalJustifyStart,
-  Check,
   Edit,
   Lock,
   Unlock,
@@ -36,7 +35,6 @@ interface LayerControlsProps {
   visualCropEnabled?: boolean
   onUpdate: (updates: Partial<ImageLayer>) => void
   onEditLayer: () => void
-  onExitEditMode: () => void
 }
 
 const BLEND_MODES: BlendMode[] = [
@@ -58,7 +56,6 @@ export function LayerControls({
   visualCropEnabled = false,
   onUpdate,
   onEditLayer,
-  onExitEditMode,
 }: LayerControlsProps) {
   const { t } = useTranslation()
 
@@ -321,234 +318,217 @@ export function LayerControls({
 
   return (
     <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
-      {/* Edit Layer Button */}
-      <Button
-        variant='outline'
-        size='default'
-        onClick={isEditing ? onExitEditMode : onEditLayer}
-        disabled={visualCropEnabled}
-        className='w-full'
-      >
-        {isEditing ? (
-          <>
-            <Check className='mr-2 h-4 w-4' />
-            {t('imageEditor.layers.exitLayerEdit')}
-          </>
-        ) : (
-          <>
-            <Edit className='mr-2 h-4 w-4' />
-            {t('imageEditor.layers.editLayer')}
-          </>
-        )}
-      </Button>
-
-      {/* Position Controls (hidden during edit mode) */}
+      {/* Edit Layer Button - only show when not already editing */}
       {!isEditing && (
-        <>
-          <div className='space-y-3'>
-            {/* Horizontal Alignment */}
-            <div className='space-y-2'>
-              <Label className='text-muted-foreground text-xs'>
-                {t('imageEditor.layers.xOffset')}
-              </Label>
-              <div className='flex items-center gap-2'>
-                <ToggleGroup
-                  type='single'
-                  value={hAlign}
-                  onValueChange={handleHAlignChange}
-                  variant='outline'
-                  className='flex-1 gap-0'
-                  disabled={visualCropEnabled}
-                >
-                  <ToggleGroupItem
-                    value='left'
-                    aria-label='Align left'
-                    className='w-full rounded-r-none border-r-0'
-                  >
-                    <AlignHorizontalJustifyStart className='h-4 w-4' />
-                  </ToggleGroupItem>
-                  <ToggleGroupItem
-                    value='center'
-                    aria-label='Align center'
-                    className='w-full rounded-none border-r-0'
-                  >
-                    <AlignHorizontalJustifyCenter className='h-4 w-4' />
-                  </ToggleGroupItem>
-                  <ToggleGroupItem
-                    value='right'
-                    aria-label='Align right'
-                    className='w-full rounded-l-none'
-                  >
-                    <AlignHorizontalJustifyEnd className='h-4 w-4' />
-                  </ToggleGroupItem>
-                </ToggleGroup>
-                <Input
-                  type='number'
-                  value={hAlign === 'center' ? '' : xOffset}
-                  onChange={(e) => handleXOffsetChange(Number(e.target.value) || 0)}
-                  disabled={hAlign === 'center' || visualCropEnabled}
-                  placeholder='—'
-                  min={0}
-                  step={1}
-                  className='h-9 w-20'
-                />
-              </div>
-            </div>
+        <Button
+          variant='outline'
+          size='default'
+          onClick={onEditLayer}
+          disabled={visualCropEnabled}
+          className='w-full'
+        >
+          <Edit className='mr-2 h-4 w-4' />
+          {t('imageEditor.layers.editLayer')}
+        </Button>
+      )}
 
-            {/* Vertical Alignment */}
-            <div className='space-y-2'>
-              <Label className='text-muted-foreground text-xs'>
-                {t('imageEditor.layers.yOffset')}
-              </Label>
-              <div className='flex items-center gap-2'>
-                <ToggleGroup
-                  type='single'
-                  value={vAlign}
-                  onValueChange={handleVAlignChange}
-                  variant='outline'
-                  className='flex-1 gap-0'
-                  disabled={visualCropEnabled}
-                >
-                  <ToggleGroupItem
-                    value='top'
-                    aria-label='Align top'
-                    className='w-full rounded-r-none border-r-0'
-                  >
-                    <AlignVerticalJustifyStart className='h-4 w-4' />
-                  </ToggleGroupItem>
-                  <ToggleGroupItem
-                    value='center'
-                    aria-label='Align middle'
-                    className='w-full rounded-none border-r-0'
-                  >
-                    <AlignVerticalJustifyCenter className='h-4 w-4' />
-                  </ToggleGroupItem>
-                  <ToggleGroupItem
-                    value='bottom'
-                    aria-label='Align bottom'
-                    className='w-full rounded-l-none'
-                  >
-                    <AlignVerticalJustifyEnd className='h-4 w-4' />
-                  </ToggleGroupItem>
-                </ToggleGroup>
-                <Input
-                  type='number'
-                  value={vAlign === 'center' ? '' : yOffset}
-                  onChange={(e) => handleYOffsetChange(Number(e.target.value) || 0)}
-                  disabled={vAlign === 'center' || visualCropEnabled}
-                  placeholder='—'
-                  min={0}
-                  step={1}
-                  className='h-9 w-20'
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Dimensions Control */}
-          <div className='space-y-3'>
-            <div className='grid grid-cols-[1fr_auto_1fr] items-end gap-2'>
-              <div>
-                <Label htmlFor='layer-width' className='text-muted-foreground text-xs'>
-                  {t('imageEditor.dimensions.width')}
-                </Label>
-                <Input
-                  id='layer-width'
-                  type='number'
-                  value={currentWidth}
-                  onChange={(e) => handleWidthChange(e.target.value)}
-                  onBlur={(e) => handleWidthBlur(e.target.value)}
-                  disabled={visualCropEnabled}
-                  min='1'
-                  max='10000'
-                  className='h-8'
-                />
-              </div>
-
-              {/* Lock Button */}
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => onAspectRatioLockChange(!aspectRatioLocked)}
-                disabled={visualCropEnabled}
-                className='h-8 w-8 p-0'
-                title={
-                  aspectRatioLocked
-                    ? t('imageEditor.dimensions.unlockAspectRatio')
-                    : t('imageEditor.dimensions.lockAspectRatio')
-                }
-              >
-                {aspectRatioLocked ? <Lock className='h-4 w-4' /> : <Unlock className='h-4 w-4' />}
-              </Button>
-
-              <div>
-                <Label htmlFor='layer-height' className='text-muted-foreground text-xs'>
-                  {t('imageEditor.dimensions.height')}
-                </Label>
-                <Input
-                  id='layer-height'
-                  type='number'
-                  value={currentHeight}
-                  onChange={(e) => handleHeightChange(e.target.value)}
-                  onBlur={(e) => handleHeightBlur(e.target.value)}
-                  disabled={visualCropEnabled}
-                  min='1'
-                  max='10000'
-                  className='h-8'
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Alpha/Transparency Control */}
-          <NumericControl
-            label={t('imageEditor.layers.transparency')}
-            value={100 - layer.alpha}
-            min={0}
-            max={100}
-            step={1}
-            unit='%'
-            onChange={handleAlphaChange}
-            disabled={visualCropEnabled}
-          />
-
-          {/* Blend Mode Control */}
-          <div className='space-y-2'>
-            <Label
-              className={cn(
-                'text-sm font-medium',
-                visualCropEnabled && 'text-muted-foreground opacity-50',
-              )}
-            >
-              {t('imageEditor.layers.blendMode')}
-            </Label>
-            <Select
-              value={layer.blendMode}
-              onValueChange={handleBlendModeChange}
+      {/* Position Controls */}
+      <div className='space-y-3'>
+        {/* Horizontal Alignment */}
+        <div className='space-y-2'>
+          <Label className='text-muted-foreground text-xs'>{t('imageEditor.layers.xOffset')}</Label>
+          <div className='flex items-center gap-2'>
+            <ToggleGroup
+              type='single'
+              value={hAlign}
+              onValueChange={handleHAlignChange}
+              variant='outline'
+              className='flex-1 gap-0'
               disabled={visualCropEnabled}
             >
-              <SelectTrigger>
-                <SelectValue>{t(`imageEditor.layers.blendModes.${layer.blendMode}`)}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {BLEND_MODES.map((mode) => (
-                  <SelectItem key={mode} value={mode}>
-                    <div className='flex items-center gap-2'>
-                      <span className='font-medium'>
-                        {t(`imageEditor.layers.blendModes.${mode}`)}
-                      </span>
-                      <span className='text-muted-foreground'>-</span>
-                      <span className='text-muted-foreground text-sm'>
-                        {t(`imageEditor.layers.blendModeDescriptions.${mode}`)}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <ToggleGroupItem
+                value='left'
+                aria-label='Align left'
+                className='w-full rounded-r-none border-r-0'
+              >
+                <AlignHorizontalJustifyStart className='h-4 w-4' />
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value='center'
+                aria-label='Align center'
+                className='w-full rounded-none border-r-0'
+              >
+                <AlignHorizontalJustifyCenter className='h-4 w-4' />
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value='right'
+                aria-label='Align right'
+                className='w-full rounded-l-none'
+              >
+                <AlignHorizontalJustifyEnd className='h-4 w-4' />
+              </ToggleGroupItem>
+            </ToggleGroup>
+            <Input
+              type='number'
+              value={hAlign === 'center' ? '' : xOffset}
+              onChange={(e) => handleXOffsetChange(Number(e.target.value) || 0)}
+              disabled={hAlign === 'center' || visualCropEnabled}
+              placeholder='—'
+              min={0}
+              step={1}
+              className='h-9 w-20'
+            />
           </div>
-        </>
-      )}
+        </div>
+
+        {/* Vertical Alignment */}
+        <div className='space-y-2'>
+          <Label className='text-muted-foreground text-xs'>{t('imageEditor.layers.yOffset')}</Label>
+          <div className='flex items-center gap-2'>
+            <ToggleGroup
+              type='single'
+              value={vAlign}
+              onValueChange={handleVAlignChange}
+              variant='outline'
+              className='flex-1 gap-0'
+              disabled={visualCropEnabled}
+            >
+              <ToggleGroupItem
+                value='top'
+                aria-label='Align top'
+                className='w-full rounded-r-none border-r-0'
+              >
+                <AlignVerticalJustifyStart className='h-4 w-4' />
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value='center'
+                aria-label='Align middle'
+                className='w-full rounded-none border-r-0'
+              >
+                <AlignVerticalJustifyCenter className='h-4 w-4' />
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value='bottom'
+                aria-label='Align bottom'
+                className='w-full rounded-l-none'
+              >
+                <AlignVerticalJustifyEnd className='h-4 w-4' />
+              </ToggleGroupItem>
+            </ToggleGroup>
+            <Input
+              type='number'
+              value={vAlign === 'center' ? '' : yOffset}
+              onChange={(e) => handleYOffsetChange(Number(e.target.value) || 0)}
+              disabled={vAlign === 'center' || visualCropEnabled}
+              placeholder='—'
+              min={0}
+              step={1}
+              className='h-9 w-20'
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Dimensions Control */}
+      <div className='space-y-3'>
+        <div className='grid grid-cols-[1fr_auto_1fr] items-end gap-2'>
+          <div>
+            <Label htmlFor='layer-width' className='text-muted-foreground text-xs'>
+              {t('imageEditor.dimensions.width')}
+            </Label>
+            <Input
+              id='layer-width'
+              type='number'
+              value={currentWidth}
+              onChange={(e) => handleWidthChange(e.target.value)}
+              onBlur={(e) => handleWidthBlur(e.target.value)}
+              disabled={visualCropEnabled}
+              min='1'
+              max='10000'
+              className='h-8'
+            />
+          </div>
+
+          {/* Lock Button */}
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => onAspectRatioLockChange(!aspectRatioLocked)}
+            disabled={visualCropEnabled}
+            className='h-8 w-8 p-0'
+            title={
+              aspectRatioLocked
+                ? t('imageEditor.dimensions.unlockAspectRatio')
+                : t('imageEditor.dimensions.lockAspectRatio')
+            }
+          >
+            {aspectRatioLocked ? <Lock className='h-4 w-4' /> : <Unlock className='h-4 w-4' />}
+          </Button>
+
+          <div>
+            <Label htmlFor='layer-height' className='text-muted-foreground text-xs'>
+              {t('imageEditor.dimensions.height')}
+            </Label>
+            <Input
+              id='layer-height'
+              type='number'
+              value={currentHeight}
+              onChange={(e) => handleHeightChange(e.target.value)}
+              onBlur={(e) => handleHeightBlur(e.target.value)}
+              disabled={visualCropEnabled}
+              min='1'
+              max='10000'
+              className='h-8'
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Alpha/Transparency Control */}
+      <NumericControl
+        label={t('imageEditor.layers.transparency')}
+        value={100 - layer.alpha}
+        min={0}
+        max={100}
+        step={1}
+        unit='%'
+        onChange={handleAlphaChange}
+        disabled={visualCropEnabled}
+      />
+
+      {/* Blend Mode Control */}
+      <div className='space-y-2'>
+        <Label
+          className={cn(
+            'text-sm font-medium',
+            visualCropEnabled && 'text-muted-foreground opacity-50',
+          )}
+        >
+          {t('imageEditor.layers.blendMode')}
+        </Label>
+        <Select
+          value={layer.blendMode}
+          onValueChange={handleBlendModeChange}
+          disabled={visualCropEnabled}
+        >
+          <SelectTrigger>
+            <SelectValue>{t(`imageEditor.layers.blendModes.${layer.blendMode}`)}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {BLEND_MODES.map((mode) => (
+              <SelectItem key={mode} value={mode}>
+                <div className='flex items-center gap-2'>
+                  <span className='font-medium'>{t(`imageEditor.layers.blendModes.${mode}`)}</span>
+                  <span className='text-muted-foreground'>-</span>
+                  <span className='text-muted-foreground text-sm'>
+                    {t(`imageEditor.layers.blendModeDescriptions.${mode}`)}
+                  </span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   )
 }

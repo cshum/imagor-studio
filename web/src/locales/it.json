@@ -822,7 +822,6 @@
       "renameLayerDescription": "Inserisci un nuovo nome per questo livello.",
       "layerName": "Nome Livello",
       "enterLayerName": "Inserisci nome livello",
-      "exitLayerEdit": "Applica Modifica Livello",
       "exitEditMode": "Applica",
       "xOffset": "Offset X",
       "yOffset": "Offset Y",

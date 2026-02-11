@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { AlertCircle, Copy, Download, Settings } from 'lucide-react'
 
 import { CropOverlay } from '@/components/image-editor/crop-overlay'
+import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb'
 import { LayerOverlay } from '@/components/image-editor/layer-overlay'
 import { LayerRegionsOverlay } from '@/components/image-editor/layer-regions-overlay'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
@@ -11,14 +12,11 @@ import { PreloadImage } from '@/components/ui/preload-image'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
 import type { ImageEditor } from '@/lib/image-editor'
-import { joinImagePath } from '@/lib/path-utils'
 import { cn } from '@/lib/utils'
 
 interface PreviewAreaProps {
   previewUrl: string
   error: Error | null
-  galleryKey: string
-  imageKey: string
   originalDimensions: {
     width: number
     height: number
@@ -43,13 +41,12 @@ interface PreviewAreaProps {
   onOpenControls?: () => void
   isLeftColumnEmpty?: boolean
   isRightColumnEmpty?: boolean
+  imagePath?: string
 }
 
 export function PreviewArea({
   previewUrl,
   error,
-  galleryKey,
-  imageKey,
   originalDimensions,
   onLoad,
   onCopyUrl,
@@ -71,6 +68,7 @@ export function PreviewArea({
   onOpenControls,
   isLeftColumnEmpty = false,
   isRightColumnEmpty = false,
+  imagePath,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -92,27 +90,18 @@ export function PreviewArea({
   // Track context transitions to hide layer overlay until new preview loads
   const [isTransitioning, setIsTransitioning] = useState(false)
 
-  const imagePath = joinImagePath(galleryKey, imageKey)
-
   // Handle click on preview container to deselect layer
   const handleContainerClick = useCallback(
     (e: React.MouseEvent) => {
       // Only deselect if:
       // 1. A layer is selected
-      // 2. Not in edit mode
-      // 3. Not in visual crop mode
-      // 4. Click is directly on the container (not bubbled from children)
-      if (
-        selectedLayerId &&
-        editingContext === null &&
-        !visualCropEnabled &&
-        e.target === e.currentTarget &&
-        imageEditor
-      ) {
+      // 2. Not in visual crop mode
+      // 3. Click is directly on the container (not bubbled from children)
+      if (selectedLayerId && !visualCropEnabled && e.target === e.currentTarget && imageEditor) {
         imageEditor.setSelectedLayerId(null)
       }
     },
-    [selectedLayerId, editingContext, visualCropEnabled, imageEditor],
+    [selectedLayerId, visualCropEnabled, imageEditor],
   )
 
   // Detect context changes and set transition flag
@@ -230,6 +219,12 @@ export function PreviewArea({
   return (
     <div className='relative flex h-full flex-col'>
       {!visualCropEnabled && <LicenseBadge />}
+      {/* Mobile & Tablet Breadcrumb - shown when editing nested layers */}
+      {!isDesktop && imageEditor && imageEditor.getContextDepth() > 0 && (
+        <div className='border-b px-3 py-2'>
+          <LayerBreadcrumb imageEditor={imageEditor} isMobile={isMobile} />
+        </div>
+      )}
       {/* Preview Content */}
       <div
         ref={previewContainerRef}
@@ -307,7 +302,6 @@ export function PreviewArea({
                   )
                 })()}
               {!visualCropEnabled &&
-                editingContext === null &&
                 !isTransitioning &&
                 imageEditor &&
                 imageDimensions &&
@@ -348,7 +342,7 @@ export function PreviewArea({
                     )
                   } else {
                     // Show all layer regions for selection
-                    const layers = imageEditor.getLayers()
+                    const layers = imageEditor.getContextLayers()
                     if (layers.length === 0) return null
 
                     return (

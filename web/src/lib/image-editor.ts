@@ -128,6 +128,7 @@ export class ImageEditor {
   private state: ImageEditorState
   private config: ImageEditorConfig
   private callbacks: ImageEditorCallbacks
+  private baseImagePath: string
   private debounceTimer: number | null = null
   private abortController: AbortController | null = null
   private lastPreviewUrl: string | null = null
@@ -143,6 +144,7 @@ export class ImageEditor {
   constructor(config: ImageEditorConfig) {
     this.config = config
     this.callbacks = {}
+    this.baseImagePath = config.imagePath
 
     // Initialize state with original dimensions and fit-in mode
     this.state = {
@@ -190,7 +192,7 @@ export class ImageEditor {
    * Used for history snapshots and URL serialization
    */
   getBaseState(): ImageEditorState {
-    if (this.editingContext !== null) {
+    if (this.editingContext.length > 0) {
       // Save current layer edits to savedBaseState first
       this.saveContextToLayer(this.editingContext)
       // Return the updated base state (includes all layers)
@@ -207,6 +209,15 @@ export class ImageEditor {
    */
   getOriginalDimensions(): { width: number; height: number } {
     return { ...this.config.originalDimensions }
+  }
+
+  /**
+   * Get the base image path
+   * Returns the original image path, even when editing nested layers
+   * @returns The base image path
+   */
+  getBaseImagePath(): string {
+    return this.baseImagePath
   }
 
   /**
@@ -416,18 +427,16 @@ export class ImageEditor {
 
     // Layer processing - add image() filters for each visible layer
     // Skip layers in visual crop mode (positions won't be accurate on uncropped image)
-    // Note: When editing a layer, state.layers is undefined, so this won't run
-    // The context switching architecture handles layer isolation automatically
     const shouldApplyLayers = !forPreview || (forPreview && !state.visualCropEnabled)
 
     if (shouldApplyLayers && state.layers && state.layers.length > 0) {
       for (const layer of state.layers) {
         if (!layer.visible) continue
 
-        // Generate layer path (simple image, no nested layers)
+        // Generate layer path with its transforms
         let layerPath: string
         if (layer.transforms && Object.keys(layer.transforms).length > 0) {
-          // Build path from layer transforms (NO layers array - prevents recursion)
+          // Build path from layer transforms (excluding nested layers to prevent recursion)
           const layerState = { ...layer.transforms }
           layerPath = ImageEditor.editorStateToImagorPath(
             layerState,
@@ -790,6 +799,7 @@ export class ImageEditor {
         },
         this.abortController.signal,
       )
+
       // Only update if URL actually changed
       if (url !== this.lastPreviewUrl) {
         this.lastPreviewUrl = url
@@ -805,6 +815,7 @@ export class ImageEditor {
         error instanceof Error && (error.name === 'AbortError' || error.name === 'CancelError')
 
       if (!isAbortError) {
+        console.error('[PREVIEW] Error:', error)
         this.callbacks.onError?.(error as Error)
         // Clear loading on error, but only if this is the request that set it
         if (requestId === this.loadingRequestId) {
@@ -929,26 +940,45 @@ export class ImageEditor {
   }
 
   /**
+   * Deep clone a layer and all its nested transforms/layers
+   */
+  private deepCloneLayer(layer: ImageLayer): ImageLayer {
+    const cloned: ImageLayer = {
+      ...layer,
+      originalDimensions: { ...layer.originalDimensions },
+    }
+
+    if (layer.transforms) {
+      cloned.transforms = {
+        ...layer.transforms,
+        // Recursively clone nested layers if they exist
+        layers: layer.transforms.layers
+          ? layer.transforms.layers.map((nestedLayer) => this.deepCloneLayer(nestedLayer))
+          : undefined,
+      }
+    }
+
+    return cloned
+  }
+
+  /**
    * Schedule a debounced history snapshot
    * Captures current state and saves after 300ms of inactivity
+   * ALWAYS captures the complete base state (including all layers)
    */
   private scheduleHistorySnapshot(): void {
     // Capture current state as pending snapshot (before update)
     // Capture a fresh snapshot before each change (when timer is not running)
-    // IMPORTANT: Deep clone the layers array AND nested transforms to prevent reference issues
+    // IMPORTANT: Always capture the COMPLETE BASE STATE, not just current context
     if (!this.historyDebounceTimer) {
+      // Get the complete base state (syncs current edits to savedBaseState first)
+      const baseState = this.getBaseState()
+
+      // Deep clone to prevent reference issues
       this.pendingHistorySnapshot = {
-        ...this.state,
-        // Deep clone layers array AND their nested transforms to capture current state properly
-        layers: this.state.layers
-          ? [
-              ...this.state.layers.map((l) => ({
-                ...l,
-                // Clone the transforms object to prevent reference issues
-                transforms: l.transforms ? { ...l.transforms } : undefined,
-              })),
-            ]
-          : undefined,
+        ...baseState,
+        // Deep clone layers array AND their nested transforms recursively
+        layers: baseState.layers ? baseState.layers.map((l) => this.deepCloneLayer(l)) : undefined,
       }
     }
 
@@ -1157,6 +1187,27 @@ export class ImageEditor {
   }
 
   /**
+   * Restore a state in the current editing context
+   * Handles both base level and nested layer contexts
+   * @param state - The state to restore
+   */
+  private restoreStateInContext(state: ImageEditorState): void {
+    const currentContext = this.editingContext
+
+    if (currentContext.length > 0) {
+      // We're editing a layer - update savedBaseState and reload context
+      this.savedBaseState = { ...state }
+
+      // Reload the layer context from the restored base state
+      const layers = state.layers || []
+      this.loadContextFromLayer(currentContext[currentContext.length - 1], layers)
+    } else {
+      // We're in base context - directly restore state
+      this.state = { ...state }
+    }
+  }
+
+  /**
    * Undo the last change
    * Restores the complete base state and reloads the current context
    */
@@ -1166,36 +1217,19 @@ export class ImageEditor {
     // Flush any pending history snapshot first
     this.flushPendingHistorySnapshot()
 
-    // Remember which context we're in
-    const currentContext = this.editingContext
-
     // Save current base state to redo stack (always complete base state)
     const currentBaseState = this.getBaseState()
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { visualCropEnabled: _, ...currentState } = currentBaseState
     this.redoStack.push({ ...currentState })
 
-    // Pop from undo stack (this is a complete base state)
+    // Pop from undo stack and restore it
     const previousState = this.undoStack.pop()!
-
-    // Restore the base state
-    if (currentContext !== null) {
-      // We're editing a layer - update savedBaseState and reload context
-      this.savedBaseState = { ...previousState }
-
-      // Reload the layer context from the restored base state
-      const layers = previousState.layers || []
-      this.loadContextFromLayer(currentContext, layers)
-    } else {
-      // We're in base context - directly restore state
-      this.state = { ...previousState }
-    }
+    this.restoreStateInContext(previousState)
 
     // Notify and update preview
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
-
-    // Notify that history changed
     this.callbacks.onHistoryChange?.()
   }
 
@@ -1209,36 +1243,19 @@ export class ImageEditor {
     // Flush any pending history snapshot first
     this.flushPendingHistorySnapshot()
 
-    // Remember which context we're in
-    const currentContext = this.editingContext
-
     // Save current base state to undo stack (always complete base state)
     const currentBaseState = this.getBaseState()
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { visualCropEnabled: _, ...currentState } = currentBaseState
     this.undoStack.push({ ...currentState })
 
-    // Pop from redo stack (this is a complete base state)
+    // Pop from redo stack and restore it
     const nextState = this.redoStack.pop()!
-
-    // Restore the base state
-    if (currentContext !== null) {
-      // We're editing a layer - update savedBaseState and reload context
-      this.savedBaseState = { ...nextState }
-
-      // Reload the layer context from the restored base state
-      const layers = nextState.layers || []
-      this.loadContextFromLayer(currentContext, layers)
-    } else {
-      // We're in base context - directly restore state
-      this.state = { ...nextState }
-    }
+    this.restoreStateInContext(nextState)
 
     // Notify and update preview
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
-
-    // Notify that history changed
     this.callbacks.onHistoryChange?.()
   }
 
@@ -1247,11 +1264,45 @@ export class ImageEditor {
   // ============================================================================
 
   /**
-   * Current editing context
-   * null = editing base image
-   * string = editing layer with this ID
+   * Current editing context path
+   * [] = editing base image
+   * ["layer-1"] = editing layer-1
+   * ["layer-1", "layer-2"] = editing layer-2 inside layer-1
    */
-  private editingContext: string | null = null
+  private editingContext: string[] = []
+
+  /**
+   * Generic helper to update layers in a tree by path
+   * @param layers - Starting layers array
+   * @param path - Path to the target location in the tree
+   * @param updater - Function that transforms the layers at the target location
+   * @returns Updated layers array
+   */
+  private updateLayersInTree(
+    layers: ImageLayer[],
+    path: string[],
+    updater: (layers: ImageLayer[]) => ImageLayer[],
+  ): ImageLayer[] {
+    if (path.length === 0) {
+      // We're at the target depth - apply the updater
+      return updater(layers)
+    }
+
+    const [currentId, ...remainingPath] = path
+
+    return layers.map((l) => {
+      if (l.id !== currentId) return l
+
+      const nestedLayers = l.transforms?.layers || []
+      return {
+        ...l,
+        transforms: {
+          ...l.transforms,
+          layers: this.updateLayersInTree(nestedLayers, remainingPath, updater),
+        },
+      }
+    })
+  }
 
   /**
    * Currently selected layer (for UI highlighting)
@@ -1269,18 +1320,28 @@ export class ImageEditor {
 
   /**
    * Get the current editing context
-   * @returns null for base image, or layer ID for layer editing
+   * @returns null for base image, or layer ID for layer editing (last in path)
    */
   getEditingContext(): string | null {
-    return this.editingContext
+    return this.editingContext.length > 0
+      ? this.editingContext[this.editingContext.length - 1]
+      : null
   }
 
   /**
-   * Get the currently selected layer ID
-   * @returns null for base image or no selection, or layer ID for selected layer
+   * Get the current editing context path
+   * @returns Array of layer IDs representing the path (empty for base)
    */
-  getSelectedLayerId(): string | null {
-    return this.selectedLayerId
+  getContextPath(): string[] {
+    return [...this.editingContext]
+  }
+
+  /**
+   * Get the depth of the current context
+   * @returns 0 for base, 1+ for nested layers
+   */
+  getContextDepth(): number {
+    return this.editingContext.length
   }
 
   /**
@@ -1298,18 +1359,20 @@ export class ImageEditor {
    * Switch editing context to a layer
    * Loads the layer's transforms into the editor state
    * Updates config to point to the layer's image and dimensions
-   * @param layerId - ID of the layer to edit, or null for base image
+   * @param layerId - ID of the layer to edit, or null to go up one level
    */
   switchContext(layerId: string | null): void {
-    if (this.editingContext === layerId) return
+    const currentLayerId = this.getEditingContext()
+
+    // Check if already in this context
+    if (currentLayerId === layerId) return
 
     // Flush any pending snapshot before switching contexts
     // This ensures layer edits are saved to history before context switch
     this.flushPendingHistorySnapshot()
 
     // Save current context state before switching
-    // This updates this.state.layers with the saved transforms
-    if (this.editingContext !== null) {
+    if (this.editingContext.length > 0) {
       // Save current state to the layer we're leaving
       this.saveContextToLayer(this.editingContext)
     } else {
@@ -1317,26 +1380,61 @@ export class ImageEditor {
       this.saveContextToBase()
     }
 
-    // Capture the updated layers array BEFORE switching context
-    // This is critical - saveContextToLayer() updated the layers, we must preserve them
-    const updatedLayers = this.state.layers
+    // Save the layer we're exiting FROM (before changing context)
+    const exitingFromLayerId = this.editingContext[this.editingContext.length - 1]
 
-    // Switch context
-    this.editingContext = layerId
+    // Update context path
+    if (layerId !== null) {
+      // Going deeper - add to path
+      this.editingContext = [...this.editingContext, layerId]
+    } else {
+      // Going up - remove last from path
+      this.editingContext = this.editingContext.slice(0, -1)
+    }
+
+    // Get new current layer ID after context change
+    const newLayerId = this.getEditingContext()
 
     // Notify editing context change
-    this.callbacks.onEditingContextChange?.(layerId)
+    this.callbacks.onEditingContextChange?.(newLayerId)
 
-    // Auto-select the layer when entering edit mode
+    // Update selection based on context change:
+    // - Drilling down: Clear selection (don't select the layer we're editing)
+    // - Going up: Select the layer we just exited from
+    // - Going to root: Clear selection
     if (layerId !== null) {
-      this.setSelectedLayerId(layerId)
+      // Drilling down into a layer - clear selection
+      this.setSelectedLayerId(null)
+    } else if (exitingFromLayerId) {
+      // Going up - select the layer we just exited from
+      this.setSelectedLayerId(exitingFromLayerId)
+    } else {
+      // Going to root - clear selection
+      this.setSelectedLayerId(null)
     }
 
     // Update config and load new context
-    if (layerId !== null) {
-      // Switching TO a layer
-      const layer = updatedLayers?.find((l) => l.id === layerId)
-      if (layer) {
+    if (newLayerId !== null) {
+      // Switching TO a layer - need to traverse tree to find it
+      // updatedLayers is from the PREVIOUS context, but we need to find the layer
+      // in the NEW context (which might be deeper in the tree)
+
+      // Traverse the tree following the new editingContext path to find the target layer
+      let currentLayers = this.savedBaseState?.layers || []
+      let targetLayer: ImageLayer | undefined
+
+      for (const contextLayerId of this.editingContext) {
+        targetLayer = currentLayers.find((l) => l.id === contextLayerId)
+        if (!targetLayer) break
+
+        // If this is the layer we're looking for, stop here
+        if (contextLayerId === newLayerId) break
+
+        // Otherwise, go deeper
+        currentLayers = targetLayer.transforms?.layers || []
+      }
+
+      if (targetLayer) {
         // Save base image config (first time only)
         if (!this.savedBaseImagePath) {
           this.savedBaseImagePath = this.config.imagePath
@@ -1344,15 +1442,15 @@ export class ImageEditor {
         }
 
         // Point editor config to layer image
-        this.config.imagePath = layer.imagePath
-        this.config.originalDimensions = { ...layer.originalDimensions }
+        this.config.imagePath = targetLayer.imagePath
+        this.config.originalDimensions = { ...targetLayer.originalDimensions }
       }
+
       // Load layer context (sets state WITHOUT layers array)
-      // Pass updatedLayers so we can look up the layer with its saved transforms
-      if (updatedLayers) {
-        this.loadContextFromLayer(layerId, updatedLayers)
+      const baseLayers = this.savedBaseState?.layers || []
+      if (baseLayers.length > 0) {
+        this.loadContextFromLayer(newLayerId, baseLayers)
       }
-      // DO NOT re-add layers array here - layer editing is isolated!
     } else {
       // Switching BACK to base image
       if (this.savedBaseImagePath && this.savedBaseImageDimensions) {
@@ -1367,7 +1465,7 @@ export class ImageEditor {
       this.loadContextFromBase()
     }
 
-    // Notify state change and update preview (now uses correct config!)
+    // Notify state change and update preview
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
 
@@ -1399,24 +1497,35 @@ export class ImageEditor {
 
   /**
    * Save current editor state to a layer's transforms
-   * @param layerId - ID of the layer to save to
+   * @param contextPath - Path to the layer (array of layer IDs)
    */
-  private saveContextToLayer(layerId: string): void {
+  private saveContextToLayer(contextPath: string[]): void {
+    // Get the current layer ID (last in path)
+    const layerId = contextPath[contextPath.length - 1]
+    if (!layerId) return
+
     // Get layers from savedBaseState (where they're stored during layer editing)
     const layers = this.savedBaseState?.layers
     if (!layers) return
 
-    const layer = layers.find((l) => l.id === layerId)
-    if (!layer) return
-
-    // Save current state (excluding layers) to layer transforms
+    // Save current state to layer transforms
+    // IMPORTANT: Include layers array so nested children are preserved!
+    // Only exclude visualCropEnabled (UI-only state)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { layers: _, visualCropEnabled, ...transforms } = this.state
+    const { visualCropEnabled, ...transforms } = this.state
 
-    // Update the layer's transforms in the layers array
-    const updatedLayers = layers.map((l) =>
-      l.id === layerId ? { ...l, transforms: { ...transforms } } : l,
-    )
+    // For single-level path ["layer-1"], we need to update at the base level
+    // For multi-level path ["layer-1", "layer-2"], we traverse to parent first
+    const parentPath = contextPath.slice(0, -1)
+
+    // Use generic helper to update the layer's transforms
+    const updatedLayers = this.updateLayersInTree(layers, parentPath, (layersAtPath) => {
+      // We're at the correct level - update the target layer
+      return layersAtPath.map((l) => {
+        if (l.id !== layerId) return l
+        return { ...l, transforms }
+      })
+    })
 
     // Store updated layers back in savedBaseState
     if (this.savedBaseState) {
@@ -1429,28 +1538,44 @@ export class ImageEditor {
 
   /**
    * Load a layer's transforms into editor state
-   * @param layerId - ID of the layer to load from
-   * @param layers - The layers array to look up from (passed as parameter since this.state.layers is undefined during layer editing)
+   * @param layerId - ID of the layer to load from (the target layer to load)
+   * @param layers - The base layers array to start traversal from
    */
   private loadContextFromLayer(layerId: string, layers: ImageLayer[]): void {
-    const layer = layers.find((l) => l.id === layerId)
-    if (!layer) return
+    // Traverse the editing context path to find the target layer
+    // editingContext is the full path, e.g., ["layer-1", "layer-2"]
+    // We need to traverse down to find the final layer
+    let currentLayers = layers
+    let targetLayer: ImageLayer | undefined
+
+    for (const contextLayerId of this.editingContext) {
+      targetLayer = currentLayers.find((l) => l.id === contextLayerId)
+      if (!targetLayer) return
+
+      // If this is the target layer we're looking for, stop here
+      if (contextLayerId === layerId) break
+
+      // Otherwise, go deeper into nested layers
+      currentLayers = targetLayer.transforms?.layers || []
+    }
+
+    if (!targetLayer) return
 
     // Start with FRESH defaults based on layer's original dimensions
     // This ensures no inheritance from base image or previous context
-    // NO layers array - layer editing is isolated!
     const freshState: ImageEditorState = {
-      width: layer.originalDimensions.width,
-      height: layer.originalDimensions.height,
+      width: targetLayer.originalDimensions.width,
+      height: targetLayer.originalDimensions.height,
       fitIn: true,
     }
 
     // If layer has saved transforms, apply them on top of fresh state
-    if (layer.transforms) {
+    if (targetLayer.transforms) {
       this.state = {
         ...freshState,
-        ...layer.transforms,
-        // NO layers array - layer editing is isolated!
+        ...targetLayer.transforms,
+        // Include nested layers so they render in preview
+        layers: targetLayer.transforms.layers,
       }
     } else {
       this.state = freshState
@@ -1458,7 +1583,9 @@ export class ImageEditor {
   }
 
   /**
-   * Add a new layer to the editor
+   * Add a new layer to the current editing context
+   * If at base level, adds to base layers
+   * If editing a layer, adds to that layer's nested layers
    * @param layer - The layer to add
    */
   addLayer(layer: ImageLayer): void {
@@ -1468,10 +1595,39 @@ export class ImageEditor {
     // Save current state to history BEFORE adding layer (so undo removes it)
     this.saveHistorySnapshot()
 
-    const layers = this.state.layers || []
-    this.state = {
-      ...this.state,
-      layers: [...layers, layer],
+    // If at base level, add to current state layers
+    if (this.editingContext.length === 0) {
+      const layers = this.state.layers || []
+      this.state = {
+        ...this.state,
+        layers: [...layers, layer],
+      }
+    } else {
+      // We're editing a layer - add to that layer's nested layers
+      // Need to update the layer in savedBaseState
+      if (!this.savedBaseState) return
+
+      const baseLayers = this.savedBaseState.layers || []
+
+      // Use generic helper to add layer to nested location
+      const updatedLayers = this.updateLayersInTree(
+        baseLayers,
+        this.editingContext,
+        (layersAtPath) => {
+          // We're at the target depth - add the new layer
+          return [...layersAtPath, layer]
+        },
+      )
+
+      this.savedBaseState = {
+        ...this.savedBaseState,
+        layers: updatedLayers,
+      }
+
+      // Reload the current context to refresh this.state.layers with the updated nested layers
+      // This ensures the layer list and preview show all layers correctly
+      const currentLayerId = this.editingContext[this.editingContext.length - 1]
+      this.loadContextFromLayer(currentLayerId, updatedLayers)
     }
 
     this.callbacks.onStateChange?.(this.getState())
@@ -1483,8 +1639,6 @@ export class ImageEditor {
    * @param layerId - ID of the layer to remove
    */
   removeLayer(layerId: string): void {
-    if (!this.state.layers) return
-
     // Flush any pending snapshot first
     this.flushPendingHistorySnapshot()
 
@@ -1496,9 +1650,40 @@ export class ImageEditor {
       this.setSelectedLayerId(null)
     }
 
-    this.state = {
-      ...this.state,
-      layers: this.state.layers.filter((layer) => layer.id !== layerId),
+    // If at base level, remove from current state layers
+    if (this.editingContext.length === 0) {
+      if (!this.state.layers) return
+
+      this.state = {
+        ...this.state,
+        layers: this.state.layers.filter((layer) => layer.id !== layerId),
+      }
+    } else {
+      // We're editing a layer - remove from that layer's nested layers
+      // Need to update the layer in savedBaseState
+      if (!this.savedBaseState) return
+
+      const baseLayers = this.savedBaseState.layers || []
+
+      // Use generic helper to remove layer from nested location
+      const updatedLayers = this.updateLayersInTree(
+        baseLayers,
+        this.editingContext,
+        (layersAtPath) => {
+          // We're at the target depth - remove the layer
+          return layersAtPath.filter((l) => l.id !== layerId)
+        },
+      )
+
+      this.savedBaseState = {
+        ...this.savedBaseState,
+        layers: updatedLayers,
+      }
+
+      // Reload the current context to refresh this.state.layers with the updated nested layers
+      // This ensures the layer list and preview show all layers correctly
+      const currentLayerId = this.editingContext[this.editingContext.length - 1]
+      this.loadContextFromLayer(currentLayerId, updatedLayers)
     }
 
     this.callbacks.onStateChange?.(this.getState())
@@ -1532,10 +1717,39 @@ export class ImageEditor {
       transforms: sourceLayer.transforms ? { ...sourceLayer.transforms } : undefined,
     }
 
-    const layers = this.state.layers || []
-    this.state = {
-      ...this.state,
-      layers: [...layers, duplicatedLayer],
+    // If at base level, add to current state layers
+    if (this.editingContext.length === 0) {
+      const layers = this.state.layers || []
+      this.state = {
+        ...this.state,
+        layers: [...layers, duplicatedLayer],
+      }
+    } else {
+      // We're editing a layer - add to that layer's nested layers
+      // Need to update the layer in savedBaseState
+      if (!this.savedBaseState) return
+
+      const baseLayers = this.savedBaseState.layers || []
+
+      // Use generic helper to add duplicated layer to nested location
+      const updatedLayers = this.updateLayersInTree(
+        baseLayers,
+        this.editingContext,
+        (layersAtPath) => {
+          // We're at the target depth - add the duplicated layer
+          return [...layersAtPath, duplicatedLayer]
+        },
+      )
+
+      this.savedBaseState = {
+        ...this.savedBaseState,
+        layers: updatedLayers,
+      }
+
+      // Reload the current context to refresh this.state.layers with the updated nested layers
+      // This ensures the layer list and preview show all layers correctly
+      const currentLayerId = this.editingContext[this.editingContext.length - 1]
+      this.loadContextFromLayer(currentLayerId, updatedLayers)
     }
 
     // Auto-select the duplicated layer
@@ -1557,19 +1771,50 @@ export class ImageEditor {
     // This prevents creating a snapshot for every keystroke
     this.scheduleHistorySnapshot()
 
+    // Update the layer in current state
+    const updatedLayers = this.state.layers.map((layer) => {
+      if (layer.id !== layerId) return layer
+
+      // Merge transforms object if present in updates
+      // This preserves existing transform properties like fitIn
+      const mergedLayer = { ...layer, ...updates }
+      if (updates.transforms && layer.transforms) {
+        mergedLayer.transforms = { ...layer.transforms, ...updates.transforms }
+      }
+      return mergedLayer
+    })
+
     this.state = {
       ...this.state,
-      layers: this.state.layers.map((layer) => {
-        if (layer.id !== layerId) return layer
+      layers: updatedLayers,
+    }
 
-        // Merge transforms object if present in updates
-        // This preserves existing transform properties like fitIn
-        const mergedLayer = { ...layer, ...updates }
-        if (updates.transforms && layer.transforms) {
-          mergedLayer.transforms = { ...layer.transforms, ...updates.transforms }
-        }
-        return mergedLayer
-      }),
+    // If editing a nested layer, also update savedBaseState
+    // This ensures the changes persist when context is reloaded
+    if (this.editingContext.length > 0 && this.savedBaseState) {
+      const baseLayers = this.savedBaseState.layers || []
+
+      // Use generic helper to update the layer
+      const updatedBaseLayers = this.updateLayersInTree(
+        baseLayers,
+        this.editingContext,
+        (layersAtPath) => {
+          return layersAtPath.map((l) => {
+            if (l.id !== layerId) return l
+
+            const mergedLayer = { ...l, ...updates }
+            if (updates.transforms && l.transforms) {
+              mergedLayer.transforms = { ...l.transforms, ...updates.transforms }
+            }
+            return mergedLayer
+          })
+        },
+      )
+
+      this.savedBaseState = {
+        ...this.savedBaseState,
+        layers: updatedBaseLayers,
+      }
     }
 
     this.callbacks.onStateChange?.(this.getState())
@@ -1588,18 +1833,36 @@ export class ImageEditor {
       layers: newOrder,
     }
 
+    // If editing a nested layer, also update savedBaseState
+    // This ensures the reordering persists when context is reloaded
+    if (this.editingContext.length > 0 && this.savedBaseState) {
+      const baseLayers = this.savedBaseState.layers || []
+
+      // Use generic helper to replace layers at target depth
+      const updatedBaseLayers = this.updateLayersInTree(
+        baseLayers,
+        this.editingContext,
+        () => newOrder,
+      )
+
+      this.savedBaseState = {
+        ...this.savedBaseState,
+        layers: updatedBaseLayers,
+      }
+    }
+
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
   }
 
   /**
-   * Get all layers
+   * Get all layers from base state
    * Always returns layers from base state, regardless of editing context
    * @returns Array of layers or empty array
    */
-  getLayers(): ImageLayer[] {
+  getBaseLayers(): ImageLayer[] {
     // Always get layers from base state, not current editing context
-    if (this.editingContext !== null) {
+    if (this.editingContext.length > 0) {
       // We're editing a layer - get layers from savedBaseState
       return this.savedBaseState?.layers || []
     } else {
@@ -1609,12 +1872,38 @@ export class ImageEditor {
   }
 
   /**
-   * Get a specific layer by ID
+   * Get layers for the current editing context
+   * Traverses the layer tree to find the layers at the current depth
+   * @returns Array of layers for current context or empty array
+   */
+  getContextLayers(): ImageLayer[] {
+    // If at base level, return base layers
+    if (this.editingContext.length === 0) {
+      return this.state.layers || []
+    }
+
+    // We're editing a layer - need to traverse the tree
+    // Start from base layers (stored in savedBaseState during layer editing)
+    // Traverse down the context path to find the current layer's children
+    let currentLayers = this.savedBaseState?.layers || []
+    for (const layerId of this.editingContext) {
+      const layer = currentLayers.find((l) => l.id === layerId)
+      if (!layer) return []
+
+      // Get this layer's nested layers from its transforms
+      currentLayers = layer.transforms?.layers || []
+    }
+
+    return currentLayers
+  }
+
+  /**
+   * Get a specific layer by ID from the current editing context
    * @param layerId - ID of the layer to get
    * @returns The layer or undefined if not found
    */
   getLayer(layerId: string): ImageLayer | undefined {
-    return this.getLayers().find((l) => l.id === layerId)
+    return this.getContextLayers().find((l) => l.id === layerId)
   }
 
   /**

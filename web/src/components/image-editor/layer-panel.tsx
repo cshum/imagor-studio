@@ -26,6 +26,7 @@ import {
   EyeOff,
   GripVertical,
   Image,
+  Layers,
   MoreVertical,
   Pencil,
   Plus,
@@ -37,6 +38,14 @@ import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
 import { LayerControls } from '@/components/image-editor/controls/layer-controls'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu'
 import {
   Dialog,
   DialogContent,
@@ -107,152 +116,210 @@ function SortableLayerItem({
 
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
-      <div
-        className={cn(
-          'flex h-12 cursor-pointer items-center gap-2 rounded-md px-3',
-          'hover:bg-accent',
-          // Use ring style for both selected and editing
-          (isSelected || isEditing) && 'ring-primary ring-2 ring-inset',
-        )}
-        onClick={() => onSelect(layer.id)}
-        onDoubleClick={(e) => {
-          e.stopPropagation()
-          onEdit(layer.id)
-        }}
-      >
-        {/* Drag handle */}
-        <button
-          className='shrink-0 cursor-grab touch-none active:cursor-grabbing'
-          {...attributes}
-          {...listeners}
-          onClick={(e) => e.stopPropagation()}
-          aria-label={t('imageEditor.layers.dragToReorder')}
-          tabIndex={-1}
-        >
-          <GripVertical className='h-4 w-4' />
-        </button>
-
-        {/* Layer name */}
-        <span className='flex-1 truncate text-sm' title={displayName}>
-          {displayName}
-        </span>
-
-        {/* Action buttons (always visible, fixed width) */}
-        <div className='flex shrink-0 gap-1'>
-          {/* Visibility toggle */}
-          <Button
-            variant='ghost'
-            size='icon'
-            className='h-8 w-8'
-            onClick={(e) => {
-              e.stopPropagation()
-              onToggleVisibility(layer.id)
-            }}
-            title={
-              layer.visible ? t('imageEditor.layers.hideLayer') : t('imageEditor.layers.showLayer')
-            }
-          >
-            {layer.visible ? (
-              <Eye className='h-4 w-4' />
-            ) : (
-              <EyeOff className='text-muted-foreground h-4 w-4' />
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div
+            className={cn(
+              'flex h-12 cursor-pointer items-center gap-2 rounded-md px-3',
+              'hover:bg-accent',
+              // Use ring style for both selected and editing
+              (isSelected || isEditing) && 'ring-primary ring-2 ring-inset',
             )}
-          </Button>
+            onClick={() => onSelect(layer.id)}
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              onEdit(layer.id)
+            }}
+          >
+            {/* Drag handle */}
+            <button
+              className='shrink-0 cursor-grab touch-none active:cursor-grabbing'
+              {...attributes}
+              {...listeners}
+              onClick={(e) => e.stopPropagation()}
+              aria-label={t('imageEditor.layers.dragToReorder')}
+              tabIndex={-1}
+            >
+              <GripVertical className='h-4 w-4' />
+            </button>
 
-          {/* Layer Actions Dropdown Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            {/* Layer name */}
+            <span className='flex-1 truncate text-sm' title={displayName}>
+              {displayName}
+            </span>
+
+            {/* Action buttons (always visible, fixed width) */}
+            <div className='flex shrink-0 gap-1'>
+              {/* Visibility toggle */}
               <Button
                 variant='ghost'
                 size='icon'
                 className='h-8 w-8'
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreVertical className='h-4 w-4' />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end' className='min-w-[180px]'>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEdit(layer.id)
-                }}
-              >
-                <Edit className='mr-2 h-4 w-4' />
-                {t('imageEditor.layers.editLayer')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  // onSelect fires after menu closes (Radix behavior)
-                  onRename(layer.id)
-                }}
-              >
-                <Pencil className='mr-2 h-4 w-4' />
-                {t('imageEditor.layers.renameLayer')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDuplicate(layer.id)
-                }}
-              >
-                <div className='flex flex-1 items-center'>
-                  <Copy className='mr-2 h-4 w-4' />
-                  {t('imageEditor.layers.duplicateLayer')}
-                </div>
-                <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation()
                   onToggleVisibility(layer.id)
                 }}
+                title={
+                  layer.visible
+                    ? t('imageEditor.layers.hideLayer')
+                    : t('imageEditor.layers.showLayer')
+                }
               >
-                <div className='flex flex-1 items-center'>
-                  {layer.visible ? (
-                    <>
-                      <EyeOff className='mr-2 h-4 w-4' />
-                      {t('imageEditor.layers.hideLayer')}
-                    </>
-                  ) : (
-                    <>
-                      <Eye className='mr-2 h-4 w-4' />
-                      {t('imageEditor.layers.showLayer')}
-                    </>
-                  )}
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDelete(layer.id)
-                }}
-                className='text-destructive'
-              >
-                <div className='flex flex-1 items-center'>
-                  <Trash2 className='mr-2 h-4 w-4' />
-                  {t('imageEditor.layers.deleteLayer')}
-                </div>
-                <DropdownMenuShortcut>⌫</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+                {layer.visible ? (
+                  <Eye className='h-4 w-4' />
+                ) : (
+                  <EyeOff className='text-muted-foreground h-4 w-4' />
+                )}
+              </Button>
+
+              {/* Layer Actions Dropdown Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='h-8 w-8'
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreVertical className='h-4 w-4' />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end' className='min-w-[180px]'>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onEdit(layer.id)
+                    }}
+                  >
+                    <Edit className='mr-2 h-4 w-4' />
+                    {t('imageEditor.layers.editLayer')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      // onSelect fires after menu closes (Radix behavior)
+                      onRename(layer.id)
+                    }}
+                  >
+                    <Pencil className='mr-2 h-4 w-4' />
+                    {t('imageEditor.layers.renameLayer')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDuplicate(layer.id)
+                    }}
+                  >
+                    <div className='flex flex-1 items-center'>
+                      <Copy className='mr-2 h-4 w-4' />
+                      {t('imageEditor.layers.duplicateLayer')}
+                    </div>
+                    <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onToggleVisibility(layer.id)
+                    }}
+                  >
+                    <div className='flex flex-1 items-center'>
+                      {layer.visible ? (
+                        <>
+                          <EyeOff className='mr-2 h-4 w-4' />
+                          {t('imageEditor.layers.hideLayer')}
+                        </>
+                      ) : (
+                        <>
+                          <Eye className='mr-2 h-4 w-4' />
+                          {t('imageEditor.layers.showLayer')}
+                        </>
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDelete(layer.id)
+                    }}
+                    className='text-destructive'
+                  >
+                    <div className='flex flex-1 items-center'>
+                      <Trash2 className='mr-2 h-4 w-4' />
+                      {t('imageEditor.layers.deleteLayer')}
+                    </div>
+                    <DropdownMenuShortcut>⌫</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </ContextMenuTrigger>
+
+        {/* Context Menu */}
+        <ContextMenuContent className='min-w-[180px]'>
+          <ContextMenuItem onClick={() => onEdit(layer.id)}>
+            <Edit className='mr-2 h-4 w-4' />
+            {t('imageEditor.layers.editLayer')}
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onRename(layer.id)}>
+            <Pencil className='mr-2 h-4 w-4' />
+            {t('imageEditor.layers.renameLayer')}
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onDuplicate(layer.id)}>
+            <div className='flex flex-1 items-center'>
+              <Copy className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.duplicateLayer')}
+            </div>
+            <ContextMenuShortcut>⌘D</ContextMenuShortcut>
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => onToggleVisibility(layer.id)}>
+            <div className='flex flex-1 items-center'>
+              {layer.visible ? (
+                <>
+                  <EyeOff className='mr-2 h-4 w-4' />
+                  {t('imageEditor.layers.hideLayer')}
+                </>
+              ) : (
+                <>
+                  <Eye className='mr-2 h-4 w-4' />
+                  {t('imageEditor.layers.showLayer')}
+                </>
+              )}
+            </div>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onDelete(layer.id)} className='text-destructive'>
+            <div className='flex flex-1 items-center'>
+              <Trash2 className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.deleteLayer')}
+            </div>
+            <ContextMenuShortcut>⌫</ContextMenuShortcut>
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
     </div>
   )
 }
 
 interface BaseImageItemProps {
   imagePath: string
+  name?: string
+  isLayer?: boolean
   isSelected: boolean
   onClick: () => void
 }
 
-function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
+function BaseImageItem({
+  imagePath,
+  name,
+  isLayer = false,
+  isSelected,
+  onClick,
+}: BaseImageItemProps) {
   const { t } = useTranslation()
   const filename = imagePath.split('/').pop() || imagePath
+  const displayName = name || filename
+  const Icon = isLayer ? Layers : Image
 
   return (
     <div
@@ -265,12 +332,12 @@ function BaseImageItem({ imagePath, isSelected, onClick }: BaseImageItemProps) {
     >
       {/* Icon instead of drag handle */}
       <div className='flex h-4 w-4 shrink-0 items-center justify-center'>
-        <Image className='text-muted-foreground h-4 w-4' />
+        <Icon className='text-muted-foreground h-4 w-4' />
       </div>
 
       {/* Base image name */}
-      <span className='flex-1 truncate text-sm' title={filename}>
-        {filename}
+      <span className='flex-1 truncate text-sm' title={displayName}>
+        {displayName}
       </span>
 
       {/* Badge */}
@@ -291,13 +358,18 @@ export function LayerPanel({
   visualCropEnabled = false,
 }: LayerPanelProps) {
   const { t } = useTranslation()
-  const layers = imageEditor.getLayers()
+  const layers = imageEditor.getContextLayers()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [filePickerOpen, setFilePickerOpen] = useState(false)
   const [isAddingLayer, setIsAddingLayer] = useState(false)
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
   const [renamingLayerId, setRenamingLayerId] = useState<string | null>(null)
   const [newLayerName, setNewLayerName] = useState('')
+
+  // Get the editing layer info if in nested context
+  const editingLayer = editingContext
+    ? imageEditor.getBaseLayers().find((l) => l.id === editingContext)
+    : null
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -321,11 +393,18 @@ export function LayerPanel({
       setActiveId(null)
 
       if (over && active.id !== over.id) {
-        const currentLayers = imageEditor.getLayers()
-        const oldIndex = currentLayers.findIndex((l) => l.id === active.id)
-        const newIndex = currentLayers.findIndex((l) => l.id === over.id)
+        // Work with reversed array to match the visual display order
+        const currentLayers = imageEditor.getContextLayers()
+        const reversedLayers = [...currentLayers].reverse()
 
-        const newOrder = arrayMove(currentLayers, oldIndex, newIndex)
+        const oldIndex = reversedLayers.findIndex((l) => l.id === active.id)
+        const newIndex = reversedLayers.findIndex((l) => l.id === over.id)
+
+        // Reorder in the reversed array (matches visual drag)
+        const reorderedReversed = arrayMove(reversedLayers, oldIndex, newIndex)
+
+        // Reverse back to original order for storage
+        const newOrder = [...reorderedReversed].reverse()
         imageEditor.reorderLayers(newOrder)
       }
     },
@@ -401,18 +480,12 @@ export function LayerPanel({
     [imageEditor],
   )
 
-  const handleExitEditMode = useCallback(() => {
-    // Exit edit mode and return to base
-    imageEditor.switchContext(null)
-  }, [imageEditor])
-
   const handleSelectBase = useCallback(() => {
-    // Deselect all layers and return to base
+    // Deselect all layers (but stay in current editing context)
+    // This allows clicking "Base Layer" to view the layer's base image
+    // without exiting back to root
     imageEditor.setSelectedLayerId(null)
-    if (editingContext !== null) {
-      imageEditor.switchContext(null)
-    }
-  }, [editingContext, imageEditor])
+  }, [imageEditor])
 
   const handleUpdateLayer = useCallback(
     (layerId: string, updates: Partial<ImageLayer>) => {
@@ -435,27 +508,11 @@ export function LayerPanel({
         // Extract filename for display name
         const filename = imagePath.split('/').pop() || imagePath
 
-        // Get base image state and original dimensions
-        const baseState = imageEditor.getState()
-        const baseDimensions = imageEditor.getOriginalDimensions()
-
-        // Calculate effective dimensions after crop and padding
-        let effectiveWidth = baseDimensions.width
-        let effectiveHeight = baseDimensions.height
-
-        // Account for crop (reduces dimensions)
-        if (baseState.cropWidth && baseState.cropHeight) {
-          effectiveWidth = baseState.cropWidth
-          effectiveHeight = baseState.cropHeight
-        }
-
-        // Account for padding (adds to dimensions)
-        if (baseState.paddingLeft || baseState.paddingRight) {
-          effectiveWidth += (baseState.paddingLeft || 0) + (baseState.paddingRight || 0)
-        }
-        if (baseState.paddingTop || baseState.paddingBottom) {
-          effectiveHeight += (baseState.paddingTop || 0) + (baseState.paddingBottom || 0)
-        }
+        // Get current context output dimensions (context-aware)
+        // This returns the correct dimensions whether at base or in nested layer
+        const outputDims = imageEditor.getOutputDimensions()
+        const effectiveWidth = outputDims.width
+        const effectiveHeight = outputDims.height
 
         // Calculate scale to fit layer at 90% of effective base image size
         const targetWidth = effectiveWidth * 0.9
@@ -550,7 +607,7 @@ export function LayerPanel({
         <Button
           variant='outline'
           onClick={() => setFilePickerOpen(true)}
-          disabled={isAddingLayer || editingContext !== null || visualCropEnabled}
+          disabled={isAddingLayer || visualCropEnabled}
           className='mt-2 w-full'
         >
           <Plus className='mr-1 h-4 w-4' />
@@ -561,10 +618,7 @@ export function LayerPanel({
       {/* Layer list (scrollable) */}
       <div className='flex-1 overflow-y-auto px-1'>
         <div
-          className={cn(
-            'mb-2 space-y-0.5',
-            (editingContext || visualCropEnabled) && 'pointer-events-none opacity-50',
-          )}
+          className={cn('mb-2 space-y-0.5', visualCropEnabled && 'pointer-events-none opacity-50')}
         >
           <DndContext
             sensors={sensors}
@@ -618,7 +672,9 @@ export function LayerPanel({
           {/* Base Image - Always shown at bottom */}
           <BaseImageItem
             imagePath={imagePath}
-            isSelected={selectedLayerId === null && editingContext === null}
+            name={editingLayer?.name}
+            isLayer={!!editingLayer}
+            isSelected={selectedLayerId === null}
             onClick={handleSelectBase}
           />
         </div>
@@ -635,7 +691,6 @@ export function LayerPanel({
             visualCropEnabled={visualCropEnabled}
             onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
             onEditLayer={() => handleEditLayer(selectedLayer.id)}
-            onExitEditMode={handleExitEditMode}
           />
         </div>
       )}

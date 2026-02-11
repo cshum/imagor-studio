@@ -828,7 +828,6 @@
       "renameLayerDescription": "为此图层输入新名称。",
       "layerName": "图层名称",
       "enterLayerName": "输入图层名称",
-      "exitLayerEdit": "应用图层编辑",
       "exitEditMode": "应用",
       "xOffset": "X 偏移",
       "yOffset": "Y 偏移",

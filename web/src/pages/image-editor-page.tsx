@@ -44,6 +44,7 @@ import { FillPaddingControl } from '@/components/image-editor/controls/fill-padd
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { ImageEditorControls } from '@/components/image-editor/imagor-editor-controls.tsx'
+import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb.tsx'
 import { LayerPanel } from '@/components/image-editor/layer-panel'
 import { PreviewArea } from '@/components/image-editor/preview-area'
 import { LoadingBar } from '@/components/loading-bar'
@@ -214,9 +215,21 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     setImagorPath(imageEditor.getImagorPath())
   }, [imageEditor, params])
 
-  // Keyboard shortcuts for undo/redo
+  // Keyboard shortcuts for undo/redo and escape to exit nested layer
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape key - exit nested layer editing
+      if (e.key === 'Escape') {
+        e.preventDefault()
+
+        // Check if in nested context and exit one level up
+        const contextDepth = imageEditor.getContextDepth()
+        if (contextDepth > 0) {
+          imageEditor.switchContext(null)
+        }
+        return
+      }
+
       // Cmd+Z (Mac) or Ctrl+Z (Windows/Linux)
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
         e.preventDefault()
@@ -257,8 +270,9 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }
 
   const handleBack = () => {
-    // If editing a layer, exit layer edit mode instead of leaving editor
-    if (editingContext !== null) {
+    // If in nested layer context, go up one level
+    const contextDepth = imageEditor.getContextDepth()
+    if (contextDepth > 0) {
       imageEditor.switchContext(null)
       return
     }
@@ -701,8 +715,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             <PreviewArea
               previewUrl={previewUrl || ''}
               error={error}
-              galleryKey={galleryKey}
-              imageKey={imageKey}
               originalDimensions={imageEditor.getOriginalDimensions()}
               onLoad={handlePreviewLoad}
               onCopyUrl={handleCopyUrlClick}
@@ -721,6 +733,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               selectedLayerId={selectedLayerId}
               editingContext={editingContext}
               layerAspectRatioLocked={layerAspectRatioLocked}
+              imagePath={imagePath}
             />
           </div>
 
@@ -893,8 +906,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <PreviewArea
             previewUrl={previewUrl || ''}
             error={error}
-            galleryKey={galleryKey}
-            imageKey={imageKey}
             originalDimensions={imageEditor.getOriginalDimensions()}
             onLoad={handlePreviewLoad}
             onCopyUrl={handleCopyUrlClick}
@@ -913,6 +924,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             selectedLayerId={selectedLayerId}
             editingContext={editingContext}
             layerAspectRatioLocked={layerAspectRatioLocked}
+            imagePath={imagePath}
             onOpenControls={() => setMobileSheetOpen(true)}
           />
 
@@ -1029,6 +1041,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <ChevronLeft className='mr-1 h-4 w-4' />
           {t('imageEditor.page.back')}
         </Button>
+
+        {/* Fixed-width breadcrumb container to prevent title shift */}
+        <div className='w-[200px]'>
+          <LayerBreadcrumb imageEditor={imageEditor} />
+        </div>
 
         {/* Centered title */}
         <div className='flex flex-1 justify-center'>
@@ -1199,8 +1216,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             <PreviewArea
               previewUrl={previewUrl || ''}
               error={error}
-              galleryKey={galleryKey}
-              imageKey={imageKey}
               originalDimensions={imageEditor.getOriginalDimensions()}
               onLoad={handlePreviewLoad}
               onCopyUrl={handleCopyUrlClick}
