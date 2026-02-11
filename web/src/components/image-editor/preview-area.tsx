@@ -224,10 +224,10 @@ export function PreviewArea({
   return (
     <div className='relative flex h-full flex-col'>
       {!visualCropEnabled && <LicenseBadge />}
-      {/* Layer Breadcrumb - shown when editing nested layers */}
-      {imageEditor && imageEditor.getContextDepth() > 0 && (
-        <div className='border-b px-4 py-2'>
-          <LayerBreadcrumb imageEditor={imageEditor} />
+      {/* Mobile & Tablet Breadcrumb - shown when editing nested layers */}
+      {!isDesktop && imageEditor && imageEditor.getContextDepth() > 0 && (
+        <div className='border-b px-3 py-2'>
+          <LayerBreadcrumb imageEditor={imageEditor} isMobile={isMobile} />
         </div>
       )}
       {/* Preview Content */}

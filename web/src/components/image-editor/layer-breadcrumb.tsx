@@ -1,15 +1,27 @@
 import { useTranslation } from 'react-i18next'
-import { ChevronRight, Image, Layers } from 'lucide-react'
+import { ChevronDown, ChevronRight, Image, Layers } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import type { ImageEditor } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface LayerBreadcrumbProps {
   imageEditor: ImageEditor
   className?: string
+  isMobile?: boolean
 }
 
-export function LayerBreadcrumb({ imageEditor, className }: LayerBreadcrumbProps) {
+export function LayerBreadcrumb({
+  imageEditor,
+  className,
+  isMobile = false,
+}: LayerBreadcrumbProps) {
   const { t } = useTranslation()
   const contextPath = imageEditor.getContextPath()
   const allLayers = imageEditor.getBaseLayers()
@@ -24,7 +36,6 @@ export function LayerBreadcrumb({ imageEditor, className }: LayerBreadcrumbProps
   ]
 
   // Traverse the tree to find each layer in the path
-  // This supports unlimited nesting depth
   let currentLayers = allLayers
   for (const layerId of contextPath) {
     const layer = currentLayers.find((l) => l.id === layerId)
@@ -47,6 +58,9 @@ export function LayerBreadcrumb({ imageEditor, className }: LayerBreadcrumbProps
     return null
   }
 
+  // Get the current page (last breadcrumb item)
+  const currentPage = breadcrumbItems[breadcrumbItems.length - 1]
+
   const handleNavigate = (targetId: string | null) => {
     if (targetId === null) {
       // Navigate to base - go up all levels
@@ -68,30 +82,58 @@ export function LayerBreadcrumb({ imageEditor, className }: LayerBreadcrumbProps
   }
 
   return (
-    <div className={cn('flex items-center gap-1 text-sm', className)}>
-      {breadcrumbItems.map((item, index) => {
-        const isLast = index === breadcrumbItems.length - 1
-        const Icon = item.icon
-
-        return (
-          <div key={item.id || 'base'} className='flex items-center gap-1'>
-            <button
-              onClick={() => !isLast && handleNavigate(item.id)}
-              disabled={isLast}
+    <div className={cn('flex items-center', className)}>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant='ghost'
+            className={cn(
+              'gap-1 px-2',
+              isMobile ? 'h-auto min-h-[44px] w-full justify-start py-2' : 'h-9',
+            )}
+          >
+            <span
               className={cn(
-                'flex items-center gap-1.5 rounded px-2 py-1 transition-colors',
-                isLast
-                  ? 'text-foreground cursor-default font-medium'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                'truncate',
+                isMobile ? 'max-w-[200px] text-base' : 'max-w-[180px] text-sm',
               )}
             >
-              <Icon className='h-3.5 w-3.5' />
-              <span className='max-w-[150px] truncate'>{item.name}</span>
-            </button>
-            {!isLast && <ChevronRight className='text-muted-foreground h-3.5 w-3.5' />}
-          </div>
-        )
-      })}
+              {currentPage?.name}
+            </span>
+            <ChevronDown className={cn('flex-shrink-0', isMobile ? 'h-4 w-4' : 'h-3.5 w-3.5')} />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align='start' className='w-64'>
+          {breadcrumbItems.map((breadcrumb, index) => {
+            const isLast = index === breadcrumbItems.length - 1
+            const Icon = breadcrumb.icon
+
+            return (
+              <DropdownMenuItem
+                key={breadcrumb.id || 'base'}
+                className={cn('flex items-center', isLast && 'bg-accent/50')}
+                onClick={() => !isLast && handleNavigate(breadcrumb.id)}
+                disabled={isLast}
+              >
+                <div className='flex w-full items-center'>
+                  <div
+                    className='flex w-full items-center'
+                    style={{ paddingLeft: `${index * 16}px` }}
+                  >
+                    {index > 0 && (
+                      <ChevronRight className='text-muted-foreground mr-2 h-3 w-3 flex-shrink-0' />
+                    )}
+                    <Icon className='mr-2 h-3.5 w-3.5 flex-shrink-0' />
+                    <span className={cn('truncate', isLast && 'font-medium')}>
+                      {breadcrumb.name}
+                    </span>
+                  </div>
+                </div>
+              </DropdownMenuItem>
+            )
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

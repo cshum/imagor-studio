@@ -44,6 +44,7 @@ import { FillPaddingControl } from '@/components/image-editor/controls/fill-padd
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { ImageEditorControls } from '@/components/image-editor/imagor-editor-controls.tsx'
+import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb.tsx'
 import { LayerPanel } from '@/components/image-editor/layer-panel'
 import { PreviewArea } from '@/components/image-editor/preview-area'
 import { LoadingBar } from '@/components/loading-bar'
@@ -1030,6 +1031,11 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <ChevronLeft className='mr-1 h-4 w-4' />
           {t('imageEditor.page.back')}
         </Button>
+
+        {/* Fixed-width breadcrumb container to prevent title shift */}
+        <div className='w-[200px]'>
+          <LayerBreadcrumb imageEditor={imageEditor} />
+        </div>
 
         {/* Centered title */}
         <div className='flex flex-1 justify-center'>
