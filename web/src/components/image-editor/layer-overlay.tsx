@@ -3,8 +3,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 
 interface LayerOverlayProps {
-  previewWidth: number
-  previewHeight: number
   layerX: string | number
   layerY: string | number
   layerWidth: number
@@ -24,6 +22,10 @@ interface LayerOverlayProps {
   paddingRight?: number
   paddingTop?: number
   paddingBottom?: number
+  layerPaddingLeft?: number
+  layerPaddingRight?: number
+  layerPaddingTop?: number
+  layerPaddingBottom?: number
   onDeselect?: () => void
   onEnterEditMode?: () => void
 }
@@ -31,8 +33,6 @@ interface LayerOverlayProps {
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | null
 
 export function LayerOverlay({
-  previewWidth,
-  previewHeight,
   layerX,
   layerY,
   layerWidth,
@@ -45,6 +45,10 @@ export function LayerOverlay({
   paddingRight = 0,
   paddingTop = 0,
   paddingBottom = 0,
+  layerPaddingLeft = 0,
+  layerPaddingRight = 0,
+  layerPaddingTop = 0,
+  layerPaddingBottom = 0,
   onDeselect,
   onEnterEditMode,
 }: LayerOverlayProps) {
@@ -198,12 +202,21 @@ export function LayerOverlay({
 
       // Convert from preview pixels to content area dimensions
       // The overlay represents the entire canvas (content + padding)
-      // But layer size is relative to content area (excluding padding)
+      // The display size includes the layer's own padding, so we need to subtract it
       const widthPercent = newDisplayWidth / overlayWidth
       const heightPercent = newDisplayHeight / overlayHeight
+
+      // Calculate total size on canvas (including base padding)
+      const totalCanvasWidth = Math.round(widthPercent * baseImageWidth)
+      const totalCanvasHeight = Math.round(heightPercent * baseImageHeight)
+
+      // Subtract layer's own padding to get the actual image dimensions
+      const layerImageWidth = totalCanvasWidth - layerPaddingLeft - layerPaddingRight
+      const layerImageHeight = totalCanvasHeight - layerPaddingTop - layerPaddingBottom
+
       updates.transforms = {
-        width: Math.round(widthPercent * contentWidth),
-        height: Math.round(heightPercent * contentHeight),
+        width: Math.max(1, layerImageWidth), // Ensure minimum of 1px
+        height: Math.max(1, layerImageHeight),
       }
 
       // Convert X position with auto-switch on boundary crossing
@@ -285,6 +298,10 @@ export function LayerOverlay({
       paddingTop,
       baseImageWidth,
       baseImageHeight,
+      layerPaddingLeft,
+      layerPaddingRight,
+      layerPaddingTop,
+      layerPaddingBottom,
       canDragX,
       canDragY,
       isRightAligned,

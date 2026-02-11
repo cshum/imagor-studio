@@ -36,13 +36,13 @@ export function LayerRegionsOverlay({
       // Get layer's image dimensions (without padding)
       const layerImageWidth = layer.transforms?.width || layer.originalDimensions.width
       const layerImageHeight = layer.transforms?.height || layer.originalDimensions.height
-      
+
       // Get layer's own padding (if it has any)
       const layerPaddingLeft = layer.transforms?.paddingLeft || 0
       const layerPaddingRight = layer.transforms?.paddingRight || 0
       const layerPaddingTop = layer.transforms?.paddingTop || 0
       const layerPaddingBottom = layer.transforms?.paddingBottom || 0
-      
+
       // Calculate layer's total size including its own padding
       const layerWidth = layerImageWidth + layerPaddingLeft + layerPaddingRight
       const layerHeight = layerImageHeight + layerPaddingTop + layerPaddingBottom
