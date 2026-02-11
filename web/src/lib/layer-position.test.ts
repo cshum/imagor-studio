@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { calculateLayerPosition } from '@/lib/layer-position'
+import { calculateLayerPosition } from '@/lib/layer-position.ts'
 
 /**
  * Test suite for Layer Overlay Positioning Logic
