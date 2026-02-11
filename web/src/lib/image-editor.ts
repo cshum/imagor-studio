@@ -1328,9 +1328,6 @@ export class ImageEditor {
       this.saveContextToBase()
     }
 
-    // Capture the updated layers array BEFORE switching context
-    const updatedLayers = this.state.layers
-
     // Save the layer we're exiting FROM (before changing context)
     const exitingFromLayerId = this.editingContext[this.editingContext.length - 1]
 
@@ -1366,9 +1363,26 @@ export class ImageEditor {
 
     // Update config and load new context
     if (newLayerId !== null) {
-      // Switching TO a layer
-      const layer = updatedLayers?.find((l) => l.id === newLayerId)
-      if (layer) {
+      // Switching TO a layer - need to traverse tree to find it
+      // updatedLayers is from the PREVIOUS context, but we need to find the layer
+      // in the NEW context (which might be deeper in the tree)
+
+      // Traverse the tree following the new editingContext path to find the target layer
+      let currentLayers = this.savedBaseState?.layers || []
+      let targetLayer: ImageLayer | undefined
+
+      for (const contextLayerId of this.editingContext) {
+        targetLayer = currentLayers.find((l) => l.id === contextLayerId)
+        if (!targetLayer) break
+
+        // If this is the layer we're looking for, stop here
+        if (contextLayerId === newLayerId) break
+
+        // Otherwise, go deeper
+        currentLayers = targetLayer.transforms?.layers || []
+      }
+
+      if (targetLayer) {
         // Save base image config (first time only)
         if (!this.savedBaseImagePath) {
           this.savedBaseImagePath = this.config.imagePath
@@ -1376,12 +1390,14 @@ export class ImageEditor {
         }
 
         // Point editor config to layer image
-        this.config.imagePath = layer.imagePath
-        this.config.originalDimensions = { ...layer.originalDimensions }
+        this.config.imagePath = targetLayer.imagePath
+        this.config.originalDimensions = { ...targetLayer.originalDimensions }
       }
+
       // Load layer context (sets state WITHOUT layers array)
-      if (updatedLayers) {
-        this.loadContextFromLayer(newLayerId, updatedLayers)
+      const baseLayers = this.savedBaseState?.layers || []
+      if (baseLayers.length > 0) {
+        this.loadContextFromLayer(newLayerId, baseLayers)
       }
     } else {
       // Switching BACK to base image

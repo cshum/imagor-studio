@@ -14,7 +14,7 @@ export function LayerBreadcrumb({ imageEditor, className }: LayerBreadcrumbProps
   const contextPath = imageEditor.getContextPath()
   const allLayers = imageEditor.getBaseLayers()
 
-  // Build breadcrumb items
+  // Build breadcrumb items by traversing the layer tree
   const breadcrumbItems: Array<{ id: string | null; name: string; icon: typeof Image }> = [
     {
       id: null,
@@ -23,15 +23,22 @@ export function LayerBreadcrumb({ imageEditor, className }: LayerBreadcrumbProps
     },
   ]
 
-  // Add each layer in the path
+  // Traverse the tree to find each layer in the path
+  // This supports unlimited nesting depth
+  let currentLayers = allLayers
   for (const layerId of contextPath) {
-    const layer = allLayers.find((l) => l.id === layerId)
+    const layer = currentLayers.find((l) => l.id === layerId)
     if (layer) {
       breadcrumbItems.push({
         id: layerId,
         name: layer.name,
         icon: Layers,
       })
+      // Go deeper into nested layers for next iteration
+      currentLayers = layer.transforms?.layers || []
+    } else {
+      // Layer not found in current depth, stop here
+      break
     }
   }
 
