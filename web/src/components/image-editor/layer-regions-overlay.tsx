@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 
 import type { ImageLayer } from '@/lib/image-editor'
+import { calculateLayerPosition } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
 
 interface LayerRegionsOverlayProps {
@@ -47,52 +48,17 @@ export function LayerRegionsOverlay({
       const layerWidth = layerImageWidth + layerPaddingLeft + layerPaddingRight
       const layerHeight = layerImageHeight + layerPaddingTop + layerPaddingBottom
 
-      let leftPercent: string
-      let topPercent: string
-
-      // Handle X position (canvas-absolute for all types)
-      if (layer.x === 'left') {
-        leftPercent = '0%' // Left edge of canvas
-      } else if (layer.x === 'center') {
-        const xPos = (baseImageWidth - layerWidth) / 2
-        leftPercent = `${(xPos / baseImageWidth) * 100}%`
-      } else if (layer.x === 'right') {
-        const xPos = baseImageWidth - layerWidth // Right edge of canvas
-        leftPercent = `${(xPos / baseImageWidth) * 100}%`
-      } else if (typeof layer.x === 'number') {
-        if (layer.x < 0) {
-          // Negative: distance from right edge of canvas (including paddingRight)
-          const xPos = baseImageWidth + layer.x - layerWidth
-          leftPercent = `${(xPos / baseImageWidth) * 100}%`
-        } else {
-          // Positive: canvas-absolute position
-          leftPercent = `${(layer.x / baseImageWidth) * 100}%`
-        }
-      } else {
-        leftPercent = `${(paddingLeft / baseImageWidth) * 100}%`
-      }
-
-      // Handle Y position (canvas-absolute for all types)
-      if (layer.y === 'top') {
-        topPercent = '0%' // Top edge of canvas
-      } else if (layer.y === 'center') {
-        const yPos = (baseImageHeight - layerHeight) / 2
-        topPercent = `${(yPos / baseImageHeight) * 100}%`
-      } else if (layer.y === 'bottom') {
-        const yPos = baseImageHeight - layerHeight // Bottom edge of canvas
-        topPercent = `${(yPos / baseImageHeight) * 100}%`
-      } else if (typeof layer.y === 'number') {
-        if (layer.y < 0) {
-          // Negative: distance from bottom edge of canvas (including paddingBottom)
-          const yPos = baseImageHeight + layer.y - layerHeight
-          topPercent = `${(yPos / baseImageHeight) * 100}%`
-        } else {
-          // Positive: canvas-absolute position
-          topPercent = `${(layer.y / baseImageHeight) * 100}%`
-        }
-      } else {
-        topPercent = `${(paddingTop / baseImageHeight) * 100}%`
-      }
+      // Use the utility function to calculate position
+      const { leftPercent, topPercent } = calculateLayerPosition(
+        layer.x,
+        layer.y,
+        layerWidth,
+        layerHeight,
+        baseImageWidth,
+        baseImageHeight,
+        paddingLeft,
+        paddingTop,
+      )
 
       // Size is relative to total canvas (including padding)
       // The overlay represents the entire preview image which includes padding

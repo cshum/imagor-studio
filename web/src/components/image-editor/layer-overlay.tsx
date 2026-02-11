@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { calculateLayerPosition } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
 
 interface LayerOverlayProps {
@@ -60,75 +61,28 @@ export function LayerOverlay({
   // Calculate CSS percentage strings for position and size
   // This allows the browser to handle scaling automatically via CSS
   const getPercentageStyles = useCallback(() => {
-    let leftPercent: string
-    let topPercent: string
-    let canDragX: boolean
-    let canDragY: boolean
-    let isRightAligned = false
-    let isBottomAligned = false
+    // Use the utility function to calculate position
+    const { leftPercent, topPercent } = calculateLayerPosition(
+      layerX,
+      layerY,
+      layerWidth,
+      layerHeight,
+      baseImageWidth,
+      baseImageHeight,
+      paddingLeft,
+      paddingTop,
+    )
 
     // Calculate width/height as percentages relative to total canvas (including padding)
     // The overlay represents the entire preview image which includes padding
     const widthPercent = `${(layerWidth / baseImageWidth) * 100}%`
     const heightPercent = `${(layerHeight / baseImageHeight) * 100}%`
 
-    // Handle X position (canvas-absolute for all types)
-    if (layerX === 'left') {
-      leftPercent = '0%' // Left edge of canvas
-      canDragX = true
-    } else if (layerX === 'center') {
-      const xPos = (baseImageWidth - layerWidth) / 2
-      leftPercent = `${(xPos / baseImageWidth) * 100}%`
-      canDragX = false
-    } else if (layerX === 'right') {
-      const xPos = baseImageWidth - layerWidth // Right edge of canvas
-      leftPercent = `${(xPos / baseImageWidth) * 100}%`
-      isRightAligned = true
-      canDragX = true
-    } else if (typeof layerX === 'number') {
-      if (layerX < 0) {
-        // Negative: distance from right edge of canvas (including paddingRight)
-        const xPos = baseImageWidth + layerX - layerWidth
-        leftPercent = `${(xPos / baseImageWidth) * 100}%`
-        isRightAligned = true
-      } else {
-        // Positive: canvas-absolute position
-        leftPercent = `${(layerX / baseImageWidth) * 100}%`
-      }
-      canDragX = true
-    } else {
-      leftPercent = `${(paddingLeft / baseImageWidth) * 100}%`
-      canDragX = false
-    }
-
-    // Handle Y position (canvas-absolute for all types)
-    if (layerY === 'top') {
-      topPercent = '0%' // Top edge of canvas
-      canDragY = true
-    } else if (layerY === 'center') {
-      const yPos = (baseImageHeight - layerHeight) / 2
-      topPercent = `${(yPos / baseImageHeight) * 100}%`
-      canDragY = false
-    } else if (layerY === 'bottom') {
-      const yPos = baseImageHeight - layerHeight // Bottom edge of canvas
-      topPercent = `${(yPos / baseImageHeight) * 100}%`
-      isBottomAligned = true
-      canDragY = true
-    } else if (typeof layerY === 'number') {
-      if (layerY < 0) {
-        // Negative: distance from bottom edge of canvas (including paddingBottom)
-        const yPos = baseImageHeight + layerY - layerHeight
-        topPercent = `${(yPos / baseImageHeight) * 100}%`
-        isBottomAligned = true
-      } else {
-        // Positive: canvas-absolute position
-        topPercent = `${(layerY / baseImageHeight) * 100}%`
-      }
-      canDragY = true
-    } else {
-      topPercent = `${(paddingTop / baseImageHeight) * 100}%`
-      canDragY = false
-    }
+    // Determine drag capabilities and alignment
+    const canDragX = layerX !== 'center' && typeof layerX !== 'undefined'
+    const canDragY = layerY !== 'center' && typeof layerY !== 'undefined'
+    const isRightAligned = layerX === 'right' || (typeof layerX === 'number' && layerX < 0)
+    const isBottomAligned = layerY === 'bottom' || (typeof layerY === 'number' && layerY < 0)
 
     return {
       leftPercent,
