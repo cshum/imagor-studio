@@ -185,7 +185,7 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
               variant={maxBytesValue === preset.value ? 'default' : 'outline'}
               size='sm'
               onClick={() => handlePresetClick(preset.value)}
-              className='h-7 text-xs'
+              className='h-7 px-2 text-xs'
             >
               {preset.label}
             </Button>
