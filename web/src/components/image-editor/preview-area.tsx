@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, Copy, Download, Settings } from 'lucide-react'
 
@@ -93,6 +93,27 @@ export function PreviewArea({
   const [isTransitioning, setIsTransitioning] = useState(false)
 
   const imagePath = joinImagePath(galleryKey, imageKey)
+
+  // Handle click on preview container to deselect layer
+  const handleContainerClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Only deselect if:
+      // 1. A layer is selected
+      // 2. Not in edit mode
+      // 3. Not in visual crop mode
+      // 4. Click is directly on the container (not bubbled from children)
+      if (
+        selectedLayerId &&
+        editingContext === null &&
+        !visualCropEnabled &&
+        e.target === e.currentTarget &&
+        imageEditor
+      ) {
+        imageEditor.setSelectedLayerId(null)
+      }
+    },
+    [selectedLayerId, editingContext, visualCropEnabled, imageEditor],
+  )
 
   // Detect context changes and set transition flag
   useEffect(() => {
@@ -213,6 +234,7 @@ export function PreviewArea({
       <div
         ref={previewContainerRef}
         className='bg-muted/20 flex min-h-0 flex-1 touch-none items-center justify-center overflow-hidden p-2 pb-0'
+        onClick={handleContainerClick}
       >
         {error ? (
           <div className='flex flex-col items-center gap-4 text-center'>
