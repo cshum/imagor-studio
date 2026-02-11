@@ -83,8 +83,8 @@ export function LayerRegionsOverlay({
         topPercent = `${(yPos / baseImageHeight) * 100}%`
       } else if (typeof layer.y === 'number') {
         if (layer.y < 0) {
-          // Negative: distance from bottom edge of content area
-          const yPos = paddingTop + contentHeight + layer.y - layerHeight
+          // Negative: distance from bottom edge of canvas (including paddingBottom)
+          const yPos = baseImageHeight + layer.y - layerHeight
           topPercent = `${(yPos / baseImageHeight) * 100}%`
         } else {
           // Positive: absolute position on canvas (already includes padding offset)
@@ -106,7 +106,16 @@ export function LayerRegionsOverlay({
         height: heightPercent,
       }
     },
-    [baseImageWidth, baseImageHeight, contentWidth, contentHeight, paddingLeft, paddingTop],
+    [
+      baseImageWidth,
+      baseImageHeight,
+      contentWidth,
+      contentHeight,
+      paddingLeft,
+      paddingRight,
+      paddingTop,
+      paddingBottom,
+    ],
   )
 
   // Filter to only visible layers

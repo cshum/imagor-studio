@@ -116,8 +116,8 @@ export function LayerOverlay({
       canDragY = true
     } else if (typeof layerY === 'number') {
       if (layerY < 0) {
-        // Negative: distance from bottom edge of content area
-        const yPos = paddingTop + contentHeight + layerY - layerHeight
+        // Negative: distance from bottom edge of canvas (including paddingBottom)
+        const yPos = baseImageHeight + layerY - layerHeight
         topPercent = `${(yPos / baseImageHeight) * 100}%`
         isBottomAligned = true
       } else {
@@ -150,7 +150,9 @@ export function LayerOverlay({
     contentWidth,
     contentHeight,
     paddingLeft,
+    paddingRight,
     paddingTop,
+    paddingBottom,
   ])
 
   const {
