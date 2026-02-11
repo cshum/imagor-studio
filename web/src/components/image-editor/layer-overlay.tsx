@@ -87,8 +87,8 @@ export function LayerOverlay({
       canDragX = true
     } else if (typeof layerX === 'number') {
       if (layerX < 0) {
-        // Negative: distance from right edge of content area
-        const xPos = paddingLeft + contentWidth + layerX - layerWidth
+        // Negative: distance from right edge of canvas (including paddingRight)
+        const xPos = baseImageWidth + layerX - layerWidth
         leftPercent = `${(xPos / baseImageWidth) * 100}%`
         isRightAligned = true
       } else {
@@ -226,11 +226,12 @@ export function LayerOverlay({
         const canvasX = Math.round(xPercent * baseImageWidth)
         // Subtract padding to get position relative to content area
         const contentX = canvasX - paddingLeft
-        const layerWidth = updates.transforms?.width || 0
+        // Use total layer width (image + layer padding) for position calculations
+        const totalLayerWidth = totalCanvasWidth
 
         if (isRightAligned) {
           // Currently right-aligned (negative offset from right edge of content)
-          const calculatedOffset = contentX + layerWidth - contentWidth
+          const calculatedOffset = contentX + totalLayerWidth - contentWidth
 
           if (calculatedOffset > 0) {
             // Crossed boundary to positive - switch to left-aligned
@@ -246,7 +247,7 @@ export function LayerOverlay({
           // Currently left-aligned (positive offset from left edge of content)
           if (contentX < 0) {
             // Crossed boundary to negative - switch to right-aligned
-            updates.x = contentX + layerWidth - contentWidth
+            updates.x = contentX + totalLayerWidth - contentWidth
           } else {
             // Stay left-aligned (positive offset)
             updates.x = contentX
@@ -255,35 +256,37 @@ export function LayerOverlay({
       }
 
       // Convert Y position with auto-switch on boundary crossing
-      // Position is relative to content area (subtract padding offset)
       if (canDragY) {
         const yPercent = newDisplayY / overlayHeight
         const canvasY = Math.round(yPercent * baseImageHeight)
-        // Subtract padding to get position relative to content area
-        const contentY = canvasY - paddingTop
-        const layerHeight = updates.transforms?.height || 0
+        // Use total layer height (image + layer padding) for position calculations
+        const totalLayerHeight = totalCanvasHeight
 
         if (isBottomAligned) {
-          // Currently bottom-aligned (negative offset from bottom edge of content)
-          const calculatedOffset = contentY + layerHeight - contentHeight
+          // Currently bottom-aligned (negative offset from canvas bottom)
+          const calculatedOffset = canvasY + totalLayerHeight - baseImageHeight
 
           if (calculatedOffset > 0) {
             // Crossed boundary to positive - switch to top-aligned
-            updates.y = calculatedOffset
+            // Convert to content-relative position
+            updates.y = canvasY - paddingTop
           } else if (calculatedOffset === 0) {
             // Exactly at bottom edge - use "bottom" string for imagor
             updates.y = 'bottom'
           } else {
-            // Stay bottom-aligned (negative offset)
+            // Stay bottom-aligned (negative offset from canvas bottom)
             updates.y = calculatedOffset
           }
         } else {
           // Currently top-aligned (positive offset from top edge of content)
+          const contentY = canvasY - paddingTop
+
           if (contentY < 0) {
             // Crossed boundary to negative - switch to bottom-aligned
-            updates.y = contentY + layerHeight - contentHeight
+            // Calculate offset from canvas bottom
+            updates.y = canvasY + totalLayerHeight - baseImageHeight
           } else {
-            // Stay top-aligned (positive offset)
+            // Stay top-aligned (positive offset from content top)
             updates.y = contentY
           }
         }

@@ -61,8 +61,8 @@ export function LayerRegionsOverlay({
         leftPercent = `${(xPos / baseImageWidth) * 100}%`
       } else if (typeof layer.x === 'number') {
         if (layer.x < 0) {
-          // Negative: distance from right edge of content area
-          const xPos = paddingLeft + contentWidth + layer.x - layerWidth
+          // Negative: distance from right edge of canvas (including paddingRight)
+          const xPos = baseImageWidth + layer.x - layerWidth
           leftPercent = `${(xPos / baseImageWidth) * 100}%`
         } else {
           // Positive: absolute position on canvas (already includes padding offset)
