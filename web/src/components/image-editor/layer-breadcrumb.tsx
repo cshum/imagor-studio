@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { ChevronRight, Image, Layers } from 'lucide-react'
 
-import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
+import type { ImageEditor } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface LayerBreadcrumbProps {

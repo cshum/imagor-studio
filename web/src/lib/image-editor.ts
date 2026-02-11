@@ -416,18 +416,16 @@ export class ImageEditor {
 
     // Layer processing - add image() filters for each visible layer
     // Skip layers in visual crop mode (positions won't be accurate on uncropped image)
-    // Note: When editing a layer, state.layers is undefined, so this won't run
-    // The context switching architecture handles layer isolation automatically
     const shouldApplyLayers = !forPreview || (forPreview && !state.visualCropEnabled)
 
     if (shouldApplyLayers && state.layers && state.layers.length > 0) {
       for (const layer of state.layers) {
         if (!layer.visible) continue
 
-        // Generate layer path (simple image, no nested layers)
+        // Generate layer path with its transforms
         let layerPath: string
         if (layer.transforms && Object.keys(layer.transforms).length > 0) {
-          // Build path from layer transforms (NO layers array - prevents recursion)
+          // Build path from layer transforms (excluding nested layers to prevent recursion)
           const layerState = { ...layer.transforms }
           layerPath = ImageEditor.editorStateToImagorPath(
             layerState,
@@ -1185,7 +1183,7 @@ export class ImageEditor {
 
       // Reload the layer context from the restored base state
       const layers = previousState.layers || []
-      this.loadContextFromLayer(currentContext, layers)
+      this.loadContextFromLayer(currentContext[currentContext.length - 1], layers)
     } else {
       // We're in base context - directly restore state
       this.state = { ...previousState }
@@ -1228,7 +1226,7 @@ export class ImageEditor {
 
       // Reload the layer context from the restored base state
       const layers = nextState.layers || []
-      this.loadContextFromLayer(currentContext, layers)
+      this.loadContextFromLayer(currentContext[currentContext.length - 1], layers)
     } else {
       // We're in base context - directly restore state
       this.state = { ...nextState }
