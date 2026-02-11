@@ -39,6 +39,14 @@ import { LayerControls } from '@/components/image-editor/controls/layer-controls
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu'
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -108,139 +116,187 @@ function SortableLayerItem({
 
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
-      <div
-        className={cn(
-          'flex h-12 cursor-pointer items-center gap-2 rounded-md px-3',
-          'hover:bg-accent',
-          // Use ring style for both selected and editing
-          (isSelected || isEditing) && 'ring-primary ring-2 ring-inset',
-        )}
-        onClick={() => onSelect(layer.id)}
-        onDoubleClick={(e) => {
-          e.stopPropagation()
-          onEdit(layer.id)
-        }}
-      >
-        {/* Drag handle */}
-        <button
-          className='shrink-0 cursor-grab touch-none active:cursor-grabbing'
-          {...attributes}
-          {...listeners}
-          onClick={(e) => e.stopPropagation()}
-          aria-label={t('imageEditor.layers.dragToReorder')}
-          tabIndex={-1}
-        >
-          <GripVertical className='h-4 w-4' />
-        </button>
-
-        {/* Layer name */}
-        <span className='flex-1 truncate text-sm' title={displayName}>
-          {displayName}
-        </span>
-
-        {/* Action buttons (always visible, fixed width) */}
-        <div className='flex shrink-0 gap-1'>
-          {/* Visibility toggle */}
-          <Button
-            variant='ghost'
-            size='icon'
-            className='h-8 w-8'
-            onClick={(e) => {
-              e.stopPropagation()
-              onToggleVisibility(layer.id)
-            }}
-            title={
-              layer.visible ? t('imageEditor.layers.hideLayer') : t('imageEditor.layers.showLayer')
-            }
-          >
-            {layer.visible ? (
-              <Eye className='h-4 w-4' />
-            ) : (
-              <EyeOff className='text-muted-foreground h-4 w-4' />
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div
+            className={cn(
+              'flex h-12 cursor-pointer items-center gap-2 rounded-md px-3',
+              'hover:bg-accent',
+              // Use ring style for both selected and editing
+              (isSelected || isEditing) && 'ring-primary ring-2 ring-inset',
             )}
-          </Button>
+            onClick={() => onSelect(layer.id)}
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              onEdit(layer.id)
+            }}
+          >
+            {/* Drag handle */}
+            <button
+              className='shrink-0 cursor-grab touch-none active:cursor-grabbing'
+              {...attributes}
+              {...listeners}
+              onClick={(e) => e.stopPropagation()}
+              aria-label={t('imageEditor.layers.dragToReorder')}
+              tabIndex={-1}
+            >
+              <GripVertical className='h-4 w-4' />
+            </button>
 
-          {/* Layer Actions Dropdown Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            {/* Layer name */}
+            <span className='flex-1 truncate text-sm' title={displayName}>
+              {displayName}
+            </span>
+
+            {/* Action buttons (always visible, fixed width) */}
+            <div className='flex shrink-0 gap-1'>
+              {/* Visibility toggle */}
               <Button
                 variant='ghost'
                 size='icon'
                 className='h-8 w-8'
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreVertical className='h-4 w-4' />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end' className='min-w-[180px]'>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEdit(layer.id)
-                }}
-              >
-                <Edit className='mr-2 h-4 w-4' />
-                {t('imageEditor.layers.editLayer')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  // onSelect fires after menu closes (Radix behavior)
-                  onRename(layer.id)
-                }}
-              >
-                <Pencil className='mr-2 h-4 w-4' />
-                {t('imageEditor.layers.renameLayer')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDuplicate(layer.id)
-                }}
-              >
-                <div className='flex flex-1 items-center'>
-                  <Copy className='mr-2 h-4 w-4' />
-                  {t('imageEditor.layers.duplicateLayer')}
-                </div>
-                <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation()
                   onToggleVisibility(layer.id)
                 }}
+                title={
+                  layer.visible
+                    ? t('imageEditor.layers.hideLayer')
+                    : t('imageEditor.layers.showLayer')
+                }
               >
-                <div className='flex flex-1 items-center'>
-                  {layer.visible ? (
-                    <>
-                      <EyeOff className='mr-2 h-4 w-4' />
-                      {t('imageEditor.layers.hideLayer')}
-                    </>
-                  ) : (
-                    <>
-                      <Eye className='mr-2 h-4 w-4' />
-                      {t('imageEditor.layers.showLayer')}
-                    </>
-                  )}
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDelete(layer.id)
-                }}
-                className='text-destructive'
-              >
-                <div className='flex flex-1 items-center'>
-                  <Trash2 className='mr-2 h-4 w-4' />
-                  {t('imageEditor.layers.deleteLayer')}
-                </div>
-                <DropdownMenuShortcut>⌫</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+                {layer.visible ? (
+                  <Eye className='h-4 w-4' />
+                ) : (
+                  <EyeOff className='text-muted-foreground h-4 w-4' />
+                )}
+              </Button>
+
+              {/* Layer Actions Dropdown Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='h-8 w-8'
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreVertical className='h-4 w-4' />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end' className='min-w-[180px]'>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onEdit(layer.id)
+                    }}
+                  >
+                    <Edit className='mr-2 h-4 w-4' />
+                    {t('imageEditor.layers.editLayer')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      // onSelect fires after menu closes (Radix behavior)
+                      onRename(layer.id)
+                    }}
+                  >
+                    <Pencil className='mr-2 h-4 w-4' />
+                    {t('imageEditor.layers.renameLayer')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDuplicate(layer.id)
+                    }}
+                  >
+                    <div className='flex flex-1 items-center'>
+                      <Copy className='mr-2 h-4 w-4' />
+                      {t('imageEditor.layers.duplicateLayer')}
+                    </div>
+                    <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onToggleVisibility(layer.id)
+                    }}
+                  >
+                    <div className='flex flex-1 items-center'>
+                      {layer.visible ? (
+                        <>
+                          <EyeOff className='mr-2 h-4 w-4' />
+                          {t('imageEditor.layers.hideLayer')}
+                        </>
+                      ) : (
+                        <>
+                          <Eye className='mr-2 h-4 w-4' />
+                          {t('imageEditor.layers.showLayer')}
+                        </>
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDelete(layer.id)
+                    }}
+                    className='text-destructive'
+                  >
+                    <div className='flex flex-1 items-center'>
+                      <Trash2 className='mr-2 h-4 w-4' />
+                      {t('imageEditor.layers.deleteLayer')}
+                    </div>
+                    <DropdownMenuShortcut>⌫</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </ContextMenuTrigger>
+
+        {/* Context Menu */}
+        <ContextMenuContent className='min-w-[180px]'>
+          <ContextMenuItem onClick={() => onEdit(layer.id)}>
+            <Edit className='mr-2 h-4 w-4' />
+            {t('imageEditor.layers.editLayer')}
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onRename(layer.id)}>
+            <Pencil className='mr-2 h-4 w-4' />
+            {t('imageEditor.layers.renameLayer')}
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onDuplicate(layer.id)}>
+            <div className='flex flex-1 items-center'>
+              <Copy className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.duplicateLayer')}
+            </div>
+            <ContextMenuShortcut>⌘D</ContextMenuShortcut>
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => onToggleVisibility(layer.id)}>
+            <div className='flex flex-1 items-center'>
+              {layer.visible ? (
+                <>
+                  <EyeOff className='mr-2 h-4 w-4' />
+                  {t('imageEditor.layers.hideLayer')}
+                </>
+              ) : (
+                <>
+                  <Eye className='mr-2 h-4 w-4' />
+                  {t('imageEditor.layers.showLayer')}
+                </>
+              )}
+            </div>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onDelete(layer.id)} className='text-destructive'>
+            <div className='flex flex-1 items-center'>
+              <Trash2 className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.deleteLayer')}
+            </div>
+            <ContextMenuShortcut>⌫</ContextMenuShortcut>
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
     </div>
   )
 }
