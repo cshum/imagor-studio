@@ -215,9 +215,21 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     setImagorPath(imageEditor.getImagorPath())
   }, [imageEditor, params])
 
-  // Keyboard shortcuts for undo/redo
+  // Keyboard shortcuts for undo/redo and escape to exit nested layer
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape key - exit nested layer editing
+      if (e.key === 'Escape') {
+        e.preventDefault()
+
+        // Check if in nested context and exit one level up
+        const contextDepth = imageEditor.getContextDepth()
+        if (contextDepth > 0) {
+          imageEditor.switchContext(null)
+        }
+        return
+      }
+
       // Cmd+Z (Mac) or Ctrl+Z (Windows/Linux)
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
         e.preventDefault()
