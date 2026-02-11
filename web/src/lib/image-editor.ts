@@ -1187,6 +1187,27 @@ export class ImageEditor {
   }
 
   /**
+   * Restore a state in the current editing context
+   * Handles both base level and nested layer contexts
+   * @param state - The state to restore
+   */
+  private restoreStateInContext(state: ImageEditorState): void {
+    const currentContext = this.editingContext
+
+    if (currentContext.length > 0) {
+      // We're editing a layer - update savedBaseState and reload context
+      this.savedBaseState = { ...state }
+
+      // Reload the layer context from the restored base state
+      const layers = state.layers || []
+      this.loadContextFromLayer(currentContext[currentContext.length - 1], layers)
+    } else {
+      // We're in base context - directly restore state
+      this.state = { ...state }
+    }
+  }
+
+  /**
    * Undo the last change
    * Restores the complete base state and reloads the current context
    */
@@ -1196,36 +1217,19 @@ export class ImageEditor {
     // Flush any pending history snapshot first
     this.flushPendingHistorySnapshot()
 
-    // Remember which context we're in
-    const currentContext = this.editingContext
-
     // Save current base state to redo stack (always complete base state)
     const currentBaseState = this.getBaseState()
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { visualCropEnabled: _, ...currentState } = currentBaseState
     this.redoStack.push({ ...currentState })
 
-    // Pop from undo stack (this is a complete base state)
+    // Pop from undo stack and restore it
     const previousState = this.undoStack.pop()!
-
-    // Restore the base state
-    if (currentContext.length > 0) {
-      // We're editing a layer - update savedBaseState and reload context
-      this.savedBaseState = { ...previousState }
-
-      // Reload the layer context from the restored base state
-      const layers = previousState.layers || []
-      this.loadContextFromLayer(currentContext[currentContext.length - 1], layers)
-    } else {
-      // We're in base context - directly restore state
-      this.state = { ...previousState }
-    }
+    this.restoreStateInContext(previousState)
 
     // Notify and update preview
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
-
-    // Notify that history changed
     this.callbacks.onHistoryChange?.()
   }
 
@@ -1239,36 +1243,19 @@ export class ImageEditor {
     // Flush any pending history snapshot first
     this.flushPendingHistorySnapshot()
 
-    // Remember which context we're in
-    const currentContext = this.editingContext
-
     // Save current base state to undo stack (always complete base state)
     const currentBaseState = this.getBaseState()
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { visualCropEnabled: _, ...currentState } = currentBaseState
     this.undoStack.push({ ...currentState })
 
-    // Pop from redo stack (this is a complete base state)
+    // Pop from redo stack and restore it
     const nextState = this.redoStack.pop()!
-
-    // Restore the base state
-    if (currentContext.length > 0) {
-      // We're editing a layer - update savedBaseState and reload context
-      this.savedBaseState = { ...nextState }
-
-      // Reload the layer context from the restored base state
-      const layers = nextState.layers || []
-      this.loadContextFromLayer(currentContext[currentContext.length - 1], layers)
-    } else {
-      // We're in base context - directly restore state
-      this.state = { ...nextState }
-    }
+    this.restoreStateInContext(nextState)
 
     // Notify and update preview
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
-
-    // Notify that history changed
     this.callbacks.onHistoryChange?.()
   }
 
