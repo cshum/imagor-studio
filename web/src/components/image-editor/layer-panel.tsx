@@ -407,12 +407,11 @@ export function LayerPanel({
   }, [imageEditor])
 
   const handleSelectBase = useCallback(() => {
-    // Deselect all layers and return to base
+    // Deselect all layers (but stay in current editing context)
+    // This allows clicking "Base Layer" to view the layer's base image
+    // without exiting back to root
     imageEditor.setSelectedLayerId(null)
-    if (editingContext !== null) {
-      imageEditor.switchContext(null)
-    }
-  }, [editingContext, imageEditor])
+  }, [imageEditor])
 
   const handleUpdateLayer = useCallback(
     (layerId: string, updates: Partial<ImageLayer>) => {

@@ -1339,6 +1339,9 @@ export class ImageEditor {
     // Capture the updated layers array BEFORE switching context
     const updatedLayers = this.state.layers
 
+    // Save the layer we're exiting FROM (before changing context)
+    const exitingFromLayerId = this.editingContext[this.editingContext.length - 1]
+
     // Update context path
     if (layerId !== null) {
       // Going deeper - add to path
@@ -1354,9 +1357,19 @@ export class ImageEditor {
     // Notify editing context change
     this.callbacks.onEditingContextChange?.(newLayerId)
 
-    // Auto-select the layer when entering edit mode
-    if (newLayerId !== null) {
-      this.setSelectedLayerId(layerId)
+    // Update selection based on context change:
+    // - Drilling down: Clear selection (don't select the layer we're editing)
+    // - Going up: Select the layer we just exited from
+    // - Going to root: Clear selection
+    if (layerId !== null) {
+      // Drilling down into a layer - clear selection
+      this.setSelectedLayerId(null)
+    } else if (exitingFromLayerId) {
+      // Going up - select the layer we just exited from
+      this.setSelectedLayerId(exitingFromLayerId)
+    } else {
+      // Going to root - clear selection
+      this.setSelectedLayerId(null)
     }
 
     // Update config and load new context
@@ -1828,12 +1841,12 @@ export class ImageEditor {
   }
 
   /**
-   * Get a specific layer by ID
+   * Get a specific layer by ID from the current editing context
    * @param layerId - ID of the layer to get
    * @returns The layer or undefined if not found
    */
   getLayer(layerId: string): ImageLayer | undefined {
-    return this.getLayers().find((l) => l.id === layerId)
+    return this.getContextLayers().find((l) => l.id === layerId)
   }
 
   /**

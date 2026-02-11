@@ -314,7 +314,6 @@ export function PreviewArea({
                   )
                 })()}
               {!visualCropEnabled &&
-                editingContext === null &&
                 !isTransitioning &&
                 imageEditor &&
                 imageDimensions &&
@@ -355,7 +354,7 @@ export function PreviewArea({
                     )
                   } else {
                     // Show all layer regions for selection
-                    const layers = imageEditor.getLayers()
+                    const layers = imageEditor.getContextLayers()
                     if (layers.length === 0) return null
 
                     return (
