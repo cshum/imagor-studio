@@ -568,4 +568,164 @@ describe('ImageEditor', () => {
       expect(state.brightness).toBe(50)
     })
   })
+
+  describe('Async Operations', () => {
+    describe('URL Generation', () => {
+      it('should generate copy URL', async () => {
+        const url = await editor.generateCopyUrl()
+        expect(url).toContain('/mocked-url')
+      })
+
+      it('should generate download URL with attachment filter', async () => {
+        const { generateImagorUrl } = await import('@/api/imagor-api')
+        await editor.generateDownloadUrl()
+
+        // Verify attachment filter was added
+        expect(generateImagorUrl).toHaveBeenCalledWith(
+          expect.objectContaining({
+            params: expect.objectContaining({
+              filters: expect.arrayContaining([
+                expect.objectContaining({ name: 'attachment' }),
+              ]),
+            }),
+          }),
+        )
+      })
+
+      it('should include current state in generated URLs', async () => {
+        const { generateImagorUrl } = await import('@/api/imagor-api')
+        editor.updateParams({ brightness: 50, hue: 120 })
+
+        await editor.generateCopyUrl()
+
+        expect(generateImagorUrl).toHaveBeenCalledWith(
+          expect.objectContaining({
+            params: expect.objectContaining({
+              filters: expect.arrayContaining([
+                expect.objectContaining({ name: 'brightness', args: '50' }),
+                expect.objectContaining({ name: 'hue', args: '120' }),
+              ]),
+            }),
+          }),
+        )
+      })
+    })
+
+    describe('Preview Generation with Callbacks', () => {
+      it('should call onPreviewUpdate callback after debounce', async () => {
+        const onPreviewUpdate = vi.fn()
+        editor.initialize({ onPreviewUpdate })
+
+        editor.updateParams({ brightness: 50 })
+
+        // Should not call immediately (debounced)
+        expect(onPreviewUpdate).not.toHaveBeenCalled()
+
+        // Fast-forward timers to trigger debounced preview
+        await vi.runAllTimersAsync()
+
+        // Now should be called
+        expect(onPreviewUpdate).toHaveBeenCalledWith('/mocked-url')
+      })
+
+      it('should call onLoadingChange callback when preview starts', async () => {
+        const onLoadingChange = vi.fn()
+        editor.initialize({ onLoadingChange })
+
+        editor.updateParams({ brightness: 50 })
+
+        // Should set loading to true when preview starts
+        expect(onLoadingChange).toHaveBeenCalledWith(true)
+      })
+
+      it('should debounce multiple rapid updates', async () => {
+        const onPreviewUpdate = vi.fn()
+        editor.initialize({ onPreviewUpdate })
+
+        // Make multiple rapid changes
+        editor.updateParams({ brightness: 25 })
+        editor.updateParams({ brightness: 50 })
+        editor.updateParams({ brightness: 75 })
+
+        await vi.runAllTimersAsync()
+
+        // Should only generate preview once (debounced)
+        expect(onPreviewUpdate).toHaveBeenCalledTimes(1)
+      })
+
+      it('should not update preview if URL unchanged', async () => {
+        const onPreviewUpdate = vi.fn()
+        editor.initialize({ onPreviewUpdate })
+
+        editor.updateParams({ brightness: 50 })
+        await vi.runAllTimersAsync()
+
+        onPreviewUpdate.mockClear()
+
+        // Make same change again (URL will be same)
+        editor.updateParams({ brightness: 50 })
+        await vi.runAllTimersAsync()
+
+        // Should not call onPreviewUpdate again (URL unchanged)
+        expect(onPreviewUpdate).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('Visual Crop Mode', () => {
+      it('should wait for preview to load when enabling visual crop', async () => {
+        const onPreviewUpdate = vi.fn()
+        editor.initialize({ onPreviewUpdate })
+
+        const promise = editor.setVisualCropEnabled(true)
+
+        // Should trigger preview update
+        await vi.runAllTimersAsync()
+
+        // Simulate preview loaded
+        editor.notifyPreviewLoaded()
+
+        // Promise should resolve
+        await expect(promise).resolves.toBeUndefined()
+      })
+
+      it('should update state after preview loads', async () => {
+        const onStateChange = vi.fn()
+        editor.initialize({ onStateChange })
+
+        const promise = editor.setVisualCropEnabled(true)
+        await vi.runAllTimersAsync()
+        editor.notifyPreviewLoaded()
+        await promise
+
+        // State change should be called after preview loads
+        expect(onStateChange).toHaveBeenCalled()
+      })
+    })
+
+    describe('Error Handling', () => {
+      it('should call onError callback on preview generation failure', async () => {
+        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const onError = vi.fn()
+        editor.initialize({ onError })
+
+        // Mock API to reject
+        vi.mocked(generateImagorUrl).mockRejectedValueOnce(new Error('API Error'))
+
+        editor.updateParams({ brightness: 50 })
+        await vi.runAllTimersAsync()
+
+        expect(onError).toHaveBeenCalledWith(expect.any(Error))
+      })
+
+      it('should handle download errors gracefully', async () => {
+        const { generateImagorUrl } = await import('@/api/imagor-api')
+        vi.mocked(generateImagorUrl).mockRejectedValueOnce(new Error('Download failed'))
+
+        const result = await editor.handleDownload()
+
+        expect(result.success).toBe(false)
+        expect(result.error).toBeDefined()
+      })
+    })
+  })
 })
