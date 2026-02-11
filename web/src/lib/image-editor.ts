@@ -1616,8 +1616,6 @@ export class ImageEditor {
    * @param layerId - ID of the layer to remove
    */
   removeLayer(layerId: string): void {
-    if (!this.state.layers) return
-
     // Flush any pending snapshot first
     this.flushPendingHistorySnapshot()
 
@@ -1629,9 +1627,40 @@ export class ImageEditor {
       this.setSelectedLayerId(null)
     }
 
-    this.state = {
-      ...this.state,
-      layers: this.state.layers.filter((layer) => layer.id !== layerId),
+    // If at base level, remove from current state layers
+    if (this.editingContext.length === 0) {
+      if (!this.state.layers) return
+
+      this.state = {
+        ...this.state,
+        layers: this.state.layers.filter((layer) => layer.id !== layerId),
+      }
+    } else {
+      // We're editing a layer - remove from that layer's nested layers
+      // Need to update the layer in savedBaseState
+      if (!this.savedBaseState) return
+
+      const baseLayers = this.savedBaseState.layers || []
+
+      // Use generic helper to remove layer from nested location
+      const updatedLayers = this.updateLayersInTree(
+        baseLayers,
+        this.editingContext,
+        (layersAtPath) => {
+          // We're at the target depth - remove the layer
+          return layersAtPath.filter((l) => l.id !== layerId)
+        },
+      )
+
+      this.savedBaseState = {
+        ...this.savedBaseState,
+        layers: updatedLayers,
+      }
+
+      // Reload the current context to refresh this.state.layers with the updated nested layers
+      // This ensures the layer list and preview show all layers correctly
+      const currentLayerId = this.editingContext[this.editingContext.length - 1]
+      this.loadContextFromLayer(currentLayerId, updatedLayers)
     }
 
     this.callbacks.onStateChange?.(this.getState())
