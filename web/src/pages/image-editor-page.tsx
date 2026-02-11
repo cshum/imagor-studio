@@ -1122,17 +1122,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent>
-                      {(
-                        [
-                          'crop',
-                          'effects',
-                          'transform',
-                          'dimensions',
-                          'fill',
-                          'output',
-                          'layers',
-                        ] as SectionKey[]
-                      ).map((sectionKey) => {
+                      {SECTION_KEYS.map((sectionKey) => {
                         const isVisible =
                           editorOpenSections.visibleSections?.includes(sectionKey) ?? true
                         const SectionIcon = iconMap[sectionKey]

@@ -18,13 +18,13 @@ const EDITOR_SECTIONS = {
 export type SectionKey = keyof typeof EDITOR_SECTIONS
 
 export const SECTION_KEYS: SectionKey[] = [
+  'layers',
   'crop',
   'effects',
   'transform',
   'dimensions',
-  'fill',
   'output',
-  'layers',
+  'fill',
 ]
 
 // Use Record type for better type safety
