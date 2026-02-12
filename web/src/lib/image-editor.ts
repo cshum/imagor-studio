@@ -472,7 +472,17 @@ export class ImageEditor {
         // Build image() filter
         const x = typeof layer.x === 'number' ? Math.round(layer.x * scaleFactor) : layer.x
         const y = typeof layer.y === 'number' ? Math.round(layer.y * scaleFactor) : layer.y
-        filters.push(`image(${layerPath},${x},${y},${layer.alpha},${layer.blendMode})`)
+
+        // Omit trailing default parameters (alpha=0, blendMode='normal')
+        let imageFilter = `image(${layerPath},${x},${y}`
+        if (layer.alpha !== 0 || layer.blendMode !== 'normal') {
+          imageFilter += `,${layer.alpha}`
+          if (layer.blendMode !== 'normal') {
+            imageFilter += `,${layer.blendMode}`
+          }
+        }
+        imageFilter += ')'
+        filters.push(imageFilter)
       }
     }
 
@@ -768,8 +778,14 @@ export class ImageEditor {
             ? (forPreview ? Math.round(layer.y * scaleFactor) : layer.y).toString()
             : layer.y.toString()
 
-        // Build image() filter args
-        const args = `${layerPath},${x},${y},${layer.alpha},${layer.blendMode}`
+        // Build image() filter args - omit trailing default parameters (alpha=0, blendMode='normal')
+        let args = `${layerPath},${x},${y}`
+        if (layer.alpha !== 0 || layer.blendMode !== 'normal') {
+          args += `,${layer.alpha}`
+          if (layer.blendMode !== 'normal') {
+            args += `,${layer.blendMode}`
+          }
+        }
         filters.push({ name: 'image', args })
       }
     }

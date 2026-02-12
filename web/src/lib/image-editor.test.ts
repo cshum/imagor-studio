@@ -834,6 +834,137 @@ describe('ImageEditor', () => {
     })
   })
 
+  describe('Imagor Path Generation', () => {
+    describe('Image Filter Parameter Omission', () => {
+      let mockLayer: ImageLayer
+
+      beforeEach(() => {
+        mockLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 100,
+          y: 200,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+        }
+      })
+
+      it('should omit both alpha and blendMode when both are default', () => {
+        editor.addLayer(mockLayer)
+        const path = editor.getImagorPath()
+
+        // Should contain image filter without trailing default params
+        // Layer uses its own dimensions (800x600)
+        expect(path).toContain('image(/800x600/overlay.jpg,100,200)')
+        expect(path).not.toContain(',0,normal')
+      })
+
+      it('should include alpha but omit blendMode when only alpha is non-default', () => {
+        const layerWithAlpha = { ...mockLayer, alpha: 50 }
+        editor.addLayer(layerWithAlpha)
+        const path = editor.getImagorPath()
+
+        // Should include alpha but omit blendMode
+        expect(path).toContain('image(/800x600/overlay.jpg,100,200,50)')
+        expect(path).not.toContain(',normal')
+      })
+
+      it('should include both alpha and blendMode when both are non-default', () => {
+        const layerWithBoth = { ...mockLayer, alpha: 50, blendMode: 'multiply' as const }
+        editor.addLayer(layerWithBoth)
+        const path = editor.getImagorPath()
+
+        // Should include both parameters
+        expect(path).toContain('image(/800x600/overlay.jpg,100,200,50,multiply)')
+      })
+
+      it('should include both when only blendMode is non-default', () => {
+        const layerWithBlend = { ...mockLayer, alpha: 0, blendMode: 'screen' as const }
+        editor.addLayer(layerWithBlend)
+        const path = editor.getImagorPath()
+
+        // Should include alpha=0 because blendMode is not default
+        expect(path).toContain('image(/800x600/overlay.jpg,100,200,0,screen)')
+      })
+
+      it('should handle multiple layers with different parameter combinations', () => {
+        const layer1 = { ...mockLayer, id: 'layer-1', alpha: 0, blendMode: 'normal' as const }
+        const layer2 = {
+          ...mockLayer,
+          id: 'layer-2',
+          x: 150,
+          y: 250,
+          alpha: 75,
+          blendMode: 'normal' as const,
+        }
+        const layer3 = {
+          ...mockLayer,
+          id: 'layer-3',
+          x: 200,
+          y: 300,
+          alpha: 25,
+          blendMode: 'overlay' as const,
+        }
+
+        editor.addLayer(layer1)
+        editor.addLayer(layer2)
+        editor.addLayer(layer3)
+
+        const path = editor.getImagorPath()
+
+        // Layer 1: both default (omit both)
+        expect(path).toContain('image(/800x600/overlay.jpg,100,200)')
+
+        // Layer 2: only alpha non-default (omit blendMode)
+        expect(path).toContain('image(/800x600/overlay.jpg,150,250,75)')
+
+        // Layer 3: both non-default (include both)
+        expect(path).toContain('image(/800x600/overlay.jpg,200,300,25,overlay)')
+      })
+
+      it('should work with string position values', () => {
+        const layerWithStringPos = {
+          ...mockLayer,
+          x: 'center',
+          y: 'top',
+          alpha: 0,
+          blendMode: 'normal' as const,
+        }
+        editor.addLayer(layerWithStringPos)
+        const path = editor.getImagorPath()
+
+        // Should omit default params with string positions
+        expect(path).toContain('image(/800x600/overlay.jpg,center,top)')
+        expect(path).not.toContain(',0,normal')
+      })
+
+      it('should work with layer transforms', () => {
+        const layerWithTransforms = {
+          ...mockLayer,
+          alpha: 0,
+          blendMode: 'normal' as const,
+          transforms: {
+            width: 400,
+            height: 300,
+            brightness: 50,
+          },
+        }
+        editor.addLayer(layerWithTransforms)
+        const path = editor.getImagorPath()
+
+        // Should include layer transforms in path and omit default params
+        expect(path).toContain('400x300')
+        expect(path).toContain('brightness(50)')
+        expect(path).toContain('image(/')
+        expect(path).toContain(',100,200)')
+        expect(path).not.toContain(',0,normal')
+      })
+    })
+  })
+
   describe('Async Operations', () => {
     describe('URL Generation', () => {
       it('should generate copy URL', async () => {
