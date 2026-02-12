@@ -520,22 +520,13 @@ export function LayerPanel({
 
         const scaleX = targetWidth / dimensions.width
         const scaleY = targetHeight / dimensions.height
-        const scale = Math.min(scaleX, scaleY)
+        const scale = Math.min(Math.min(scaleX, scaleY), 1)
 
         // Always set transforms with fitIn: false to allow free resizing
-        let layerTransforms: Partial<ImageLayer>['transforms'] | undefined
-        if (scale < 1) {
-          // Scale down if needed
-          layerTransforms = {
-            width: Math.round(dimensions.width * scale),
-            height: Math.round(dimensions.height * scale),
-            fitIn: false, // Use fill mode for layers
-          }
-        } else {
-          // For layers that don't need scaling, still set fitIn: false
-          layerTransforms = {
-            fitIn: false,
-          }
+        const layerTransforms: Partial<ImageLayer>['transforms'] | undefined = {
+          width: Math.round(dimensions.width * scale),
+          height: Math.round(dimensions.height * scale),
+          fitIn: false, // Use fill mode for layers
         }
 
         // Create new layer with default settings
