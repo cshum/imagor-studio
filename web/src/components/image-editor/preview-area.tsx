@@ -358,6 +358,7 @@ export function PreviewArea({
                         layerPaddingTop={layerPaddingTop}
                         layerPaddingBottom={layerPaddingBottom}
                         layerRotation={selectedLayer.transforms?.rotation || 0}
+                        layerFillColor={selectedLayer.transforms?.fillColor}
                         onDeselect={() => imageEditor.setSelectedLayerId(null)}
                         onEnterEditMode={() => imageEditor.switchContext(selectedLayerId)}
                       />

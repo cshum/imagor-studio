@@ -385,8 +385,8 @@ describe('calculateLayerImageDimensions', () => {
     })
   })
 
-  it('should subtract padding without rotation', () => {
-    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 0)
+  it('should subtract padding when fillColor is defined', () => {
+    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 0, 'FFFFFF')
     // width: 200 - 10 - 20 = 170
     // height: 150 - 30 - 40 = 80
     expect(result).toEqual({
@@ -395,44 +395,71 @@ describe('calculateLayerImageDimensions', () => {
     })
   })
 
-  it('should handle 90 degree rotation with padding', () => {
+  it('should NOT subtract padding when fillColor is undefined', () => {
+    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 0, undefined)
+    // Padding not applied when no fillColor, so dimensions stay the same
+    expect(result).toEqual({
+      width: 200,
+      height: 150,
+    })
+  })
+
+  it('should NOT subtract padding when fillColor is not provided', () => {
+    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 0)
+    // No fillColor parameter = undefined, so padding not applied
+    expect(result).toEqual({
+      width: 200,
+      height: 150,
+    })
+  })
+
+  it('should handle 90 degree rotation with padding and fillColor', () => {
     // Display: 200x150 with padding left:10, right:20, top:30, bottom:40
     // After 90° rotation: padding becomes left:30, right:40, top:20, bottom:10
     // Rotated size: 200-30-40=130, 150-20-10=120
     // Original size (swap back): width:120, height:130
-    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 90)
+    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 90, 'FFFFFF')
     expect(result).toEqual({
       width: 120,
       height: 130,
     })
   })
 
-  it('should handle 180 degree rotation with padding', () => {
+  it('should handle 90 degree rotation with padding but no fillColor', () => {
+    // Without fillColor, padding is not applied, so just swap dimensions
+    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 90, undefined)
+    expect(result).toEqual({
+      width: 150,
+      height: 200,
+    })
+  })
+
+  it('should handle 180 degree rotation with padding and fillColor', () => {
     // Display: 200x150 with padding left:10, right:20, top:30, bottom:40
     // After 180° rotation: padding becomes left:20, right:10, top:40, bottom:30
     // Size: 200-20-10=170, 150-40-30=80
     // No dimension swap for 180°
-    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 180)
+    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 180, 'FFFFFF')
     expect(result).toEqual({
       width: 170,
       height: 80,
     })
   })
 
-  it('should handle 270 degree rotation with padding', () => {
+  it('should handle 270 degree rotation with padding and fillColor', () => {
     // Display: 200x150 with padding left:10, right:20, top:30, bottom:40
     // After 270° rotation: padding becomes left:40, right:30, top:10, bottom:20
     // Rotated size: 200-40-30=130, 150-10-20=120
     // Original size (swap back): width:120, height:130
-    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 270)
+    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 270, 'FFFFFF')
     expect(result).toEqual({
       width: 120,
       height: 130,
     })
   })
 
-  it('should handle symmetric padding with rotation', () => {
-    const result = calculateLayerImageDimensions(200, 150, 10, 10, 10, 10, 90)
+  it('should handle symmetric padding with rotation and fillColor', () => {
+    const result = calculateLayerImageDimensions(200, 150, 10, 10, 10, 10, 90, 'FFFFFF')
     // Padding stays same after rotation: 10 all around
     // Rotated size: 200-20=180, 150-20=130
     // Original size (swap): width:130, height:180
@@ -547,7 +574,7 @@ describe('convertDisplayToLayerPosition', () => {
     expect(result.y).toBe('bottom')
   })
 
-  it('should handle layer padding without rotation', () => {
+  it('should handle layer padding without rotation when fillColor is defined', () => {
     const result = convertDisplayToLayerPosition(
       50,
       40,
@@ -566,6 +593,7 @@ describe('convertDisplayToLayerPosition', () => {
       0,
       0,
       0,
+      'FFFFFF', // fillColor
     )
 
     // Canvas size: 200x160 (from display)
@@ -576,7 +604,37 @@ describe('convertDisplayToLayerPosition', () => {
     })
   })
 
-  it('should handle 90 degree rotation with padding', () => {
+  it('should handle layer padding without rotation when fillColor is undefined', () => {
+    const result = convertDisplayToLayerPosition(
+      50,
+      40,
+      100,
+      80,
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0,
+      0,
+      10, // layerPaddingLeft
+      20, // layerPaddingRight
+      30, // layerPaddingTop
+      40, // layerPaddingBottom
+      0,
+      0,
+      0,
+      undefined, // no fillColor
+    )
+
+    // Canvas size: 200x160 (from display)
+    // Without fillColor, padding not subtracted
+    expect(result.transforms).toEqual({
+      width: 200,
+      height: 160,
+    })
+  })
+
+  it('should handle 90 degree rotation with padding and fillColor', () => {
     const result = convertDisplayToLayerPosition(
       50,
       40,
@@ -595,6 +653,7 @@ describe('convertDisplayToLayerPosition', () => {
       90, // rotation
       0,
       0,
+      'FFFFFF', // fillColor
     )
 
     // Canvas size: 200x160
@@ -604,6 +663,36 @@ describe('convertDisplayToLayerPosition', () => {
     expect(result.transforms).toEqual({
       width: 130,
       height: 130,
+    })
+  })
+
+  it('should handle 90 degree rotation with padding but no fillColor', () => {
+    const result = convertDisplayToLayerPosition(
+      50,
+      40,
+      100,
+      80,
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0,
+      0,
+      10, // layerPaddingLeft
+      20, // layerPaddingRight
+      30, // layerPaddingTop
+      40, // layerPaddingBottom
+      90, // rotation
+      0,
+      0,
+      undefined, // no fillColor
+    )
+
+    // Canvas size: 200x160
+    // Without fillColor, padding not applied, just swap dimensions
+    expect(result.transforms).toEqual({
+      width: 160,
+      height: 200,
     })
   })
 

@@ -163,6 +163,7 @@ export function rotatePadding(
  * @param layerPaddingTop - Layer's top padding
  * @param layerPaddingBottom - Layer's bottom padding
  * @param rotation - Rotation angle in degrees
+ * @param fillColor - Fill color (if undefined, padding was not applied to dimensions)
  * @returns Original image dimensions before padding and rotation
  */
 export function calculateLayerImageDimensions(
@@ -173,19 +174,28 @@ export function calculateLayerImageDimensions(
   layerPaddingTop: number,
   layerPaddingBottom: number,
   rotation: number,
+  fillColor?: string,
 ): { width: number; height: number } {
-  // Rotate padding values to match display orientation
-  const rotatedPadding = rotatePadding(
-    layerPaddingLeft,
-    layerPaddingRight,
-    layerPaddingTop,
-    layerPaddingBottom,
-    rotation,
-  )
+  // Only subtract padding if fillColor is defined (padding was actually applied)
+  const hasFillColor = fillColor !== undefined
 
-  // Subtract rotated padding to get rotated image size
-  const rotatedWidth = displayWidth - rotatedPadding.left - rotatedPadding.right
-  const rotatedHeight = displayHeight - rotatedPadding.top - rotatedPadding.bottom
+  let rotatedWidth = displayWidth
+  let rotatedHeight = displayHeight
+
+  if (hasFillColor) {
+    // Rotate padding values to match display orientation
+    const rotatedPadding = rotatePadding(
+      layerPaddingLeft,
+      layerPaddingRight,
+      layerPaddingTop,
+      layerPaddingBottom,
+      rotation,
+    )
+
+    // Subtract rotated padding to get rotated image size
+    rotatedWidth = displayWidth - rotatedPadding.left - rotatedPadding.right
+    rotatedHeight = displayHeight - rotatedPadding.top - rotatedPadding.bottom
+  }
 
   // If rotation swaps dimensions (90° or 270°), swap them back
   if (rotation === 90 || rotation === 270) {
@@ -233,6 +243,7 @@ export interface LayerPositionUpdates {
  * @param rotation - Rotation angle in degrees
  * @param currentX - Current X position (for determining alignment)
  * @param currentY - Current Y position (for determining alignment)
+ * @param fillColor - Fill color (if undefined, padding was not applied to dimensions)
  * @returns Layer position updates object
  */
 export function convertDisplayToLayerPosition(
@@ -253,6 +264,7 @@ export function convertDisplayToLayerPosition(
   rotation: number,
   currentX: string | number,
   currentY: string | number,
+  fillColor?: string,
 ): LayerPositionUpdates {
   const updates: LayerPositionUpdates = {}
 
@@ -273,6 +285,7 @@ export function convertDisplayToLayerPosition(
     layerPaddingTop,
     layerPaddingBottom,
     rotation,
+    fillColor,
   )
 
   updates.transforms = {

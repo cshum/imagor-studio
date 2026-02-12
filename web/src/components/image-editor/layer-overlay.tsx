@@ -28,6 +28,7 @@ interface LayerOverlayProps {
   layerPaddingTop?: number
   layerPaddingBottom?: number
   layerRotation?: number
+  layerFillColor?: string
   onDeselect?: () => void
   onEnterEditMode?: () => void
 }
@@ -52,6 +53,7 @@ export function LayerOverlay({
   layerPaddingTop = 0,
   layerPaddingBottom = 0,
   layerRotation = 0,
+  layerFillColor,
   onDeselect,
   onEnterEditMode,
 }: LayerOverlayProps) {
@@ -241,6 +243,7 @@ export function LayerOverlay({
           layerRotation,
           layerX,
           layerY,
+          layerFillColor,
         )
         // During drag, only update position - don't recalculate dimensions
         // This prevents rounding errors from causing dimension changes
@@ -374,6 +377,7 @@ export function LayerOverlay({
           layerRotation,
           layerX,
           layerY,
+          layerFillColor,
         )
         onLayerChange(updates)
       }
