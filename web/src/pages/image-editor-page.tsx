@@ -1292,7 +1292,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                     )}
                   </div>
                 </div>
-                <CollapsibleContent className='overflow-hidden px-3 pb-3'>
+                <CollapsibleContent className='overflow-hidden px-3 pt-1 pb-3'>
                   {activeSection.component}
                 </CollapsibleContent>
               </Collapsible>
