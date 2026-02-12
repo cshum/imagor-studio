@@ -457,7 +457,7 @@ export function LayerOverlay({
       <div
         ref={layerBoxRef}
         className={cn(
-          'layer-box pointer-events-auto absolute cursor-move border-2 border-white',
+          'layer-box pointer-events-auto absolute cursor-move border border-white',
           (isDragging || isResizing) && 'cursor-grabbing',
         )}
         style={{
@@ -465,6 +465,7 @@ export function LayerOverlay({
           top: topPercent,
           width: widthPercent,
           height: heightPercent,
+          boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.5)',
         }}
         onMouseDown={handleLayerMouseDown}
         onTouchStart={handleLayerMouseDown}
@@ -491,7 +492,11 @@ export function LayerOverlay({
             onMouseDown={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
             onTouchStart={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
           >
-            <div className='h-3 w-3 rounded-full border-2 border-white bg-blue-500' />
+            {/* Visual handle: Photoshop-style white square with black border */}
+            <div
+              className='h-2 w-2 border border-black bg-white'
+              style={{ boxShadow: '0 0 0 1px white' }}
+            />
           </div>
         ))}
       </div>

@@ -385,7 +385,7 @@ export function CropOverlay({
       {/* Crop box */}
       <div
         className={cn(
-          'crop-box pointer-events-auto absolute cursor-move border-2 border-white',
+          'crop-box pointer-events-auto absolute cursor-move border border-white',
           (isDragging || isResizing) && 'cursor-grabbing',
         )}
         style={{
@@ -393,16 +393,29 @@ export function CropOverlay({
           top: displayTop,
           width: displayWidth,
           height: displayHeight,
+          boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.5)',
         }}
         onMouseDown={handleCropMouseDown}
         onTouchStart={handleCropMouseDown}
       >
         {/* Grid lines */}
         <div className='pointer-events-none absolute inset-0'>
-          <div className='absolute top-0 left-1/3 h-full w-px bg-white/50' />
-          <div className='absolute top-0 left-2/3 h-full w-px bg-white/50' />
-          <div className='absolute top-1/3 left-0 h-px w-full bg-white/50' />
-          <div className='absolute top-2/3 left-0 h-px w-full bg-white/50' />
+          <div
+            className='absolute top-0 left-1/3 h-full w-px bg-white'
+            style={{ boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5)' }}
+          />
+          <div
+            className='absolute top-0 left-2/3 h-full w-px bg-white'
+            style={{ boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5)' }}
+          />
+          <div
+            className='absolute top-1/3 left-0 h-px w-full bg-white'
+            style={{ boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5)' }}
+          />
+          <div
+            className='absolute top-2/3 left-0 h-px w-full bg-white'
+            style={{ boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5)' }}
+          />
         </div>
 
         {/* Resize handles */}
@@ -426,8 +439,11 @@ export function CropOverlay({
             onMouseDown={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
             onTouchStart={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
           >
-            {/* Visual handle: 12px */}
-            <div className='h-3 w-3 rounded-full border-2 border-white bg-blue-500' />
+            {/* Visual handle: Photoshop-style white square with black border */}
+            <div
+              className='h-2 w-2 border border-black bg-white'
+              style={{ boxShadow: '0 0 0 1px white' }}
+            />
           </div>
         ))}
       </div>
