@@ -27,6 +27,7 @@ interface LayerOverlayProps {
   layerPaddingRight?: number
   layerPaddingTop?: number
   layerPaddingBottom?: number
+  layerRotation?: number
   onDeselect?: () => void
   onEnterEditMode?: () => void
 }
@@ -50,6 +51,7 @@ export function LayerOverlay({
   layerPaddingRight = 0,
   layerPaddingTop = 0,
   layerPaddingBottom = 0,
+  layerRotation = 0,
   onDeselect,
   onEnterEditMode,
 }: LayerOverlayProps) {
@@ -164,9 +166,26 @@ export function LayerOverlay({
       const totalCanvasWidth = Math.round(widthPercent * baseImageWidth)
       const totalCanvasHeight = Math.round(heightPercent * baseImageHeight)
 
-      // Subtract layer's own padding to get the actual image dimensions
-      const layerImageWidth = totalCanvasWidth - layerPaddingLeft - layerPaddingRight
-      const layerImageHeight = totalCanvasHeight - layerPaddingTop - layerPaddingBottom
+      // Account for rotation when calculating image dimensions
+      // Rotation is applied AFTER padding, so we need to reverse the process:
+      // 1. Subtract padding to get the rotated image size
+      // 2. If rotated 90° or 270°, swap dimensions to get pre-rotation size
+      
+      let rotatedWidth = totalCanvasWidth - layerPaddingLeft - layerPaddingRight
+      let rotatedHeight = totalCanvasHeight - layerPaddingTop - layerPaddingBottom
+
+      // If rotation swaps dimensions (90° or 270°), swap them back to get the actual image dimensions
+      let layerImageWidth: number
+      let layerImageHeight: number
+      
+      if (layerRotation === 90 || layerRotation === 270) {
+        // Dimensions are swapped after rotation, so swap them back
+        layerImageWidth = rotatedHeight
+        layerImageHeight = rotatedWidth
+      } else {
+        layerImageWidth = rotatedWidth
+        layerImageHeight = rotatedHeight
+      }
 
       updates.transforms = {
         width: Math.max(1, layerImageWidth), // Ensure minimum of 1px
@@ -256,6 +275,7 @@ export function LayerOverlay({
       layerPaddingRight,
       layerPaddingTop,
       layerPaddingBottom,
+      layerRotation,
       canDragX,
       canDragY,
       isRightAligned,

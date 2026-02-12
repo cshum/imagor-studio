@@ -357,6 +357,7 @@ export function PreviewArea({
                         layerPaddingRight={layerPaddingRight}
                         layerPaddingTop={layerPaddingTop}
                         layerPaddingBottom={layerPaddingBottom}
+                        layerRotation={selectedLayer.transforms?.rotation || 0}
                         onDeselect={() => imageEditor.setSelectedLayerId(null)}
                         onEnterEditMode={() => imageEditor.switchContext(selectedLayerId)}
                       />
