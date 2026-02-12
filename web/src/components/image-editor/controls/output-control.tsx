@@ -102,7 +102,7 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-4'>
       {/* Format Selection */}
       <div className='space-y-2'>
         <Label className='text-sm font-medium'>{t('imageEditor.output.outputFormat')}</Label>

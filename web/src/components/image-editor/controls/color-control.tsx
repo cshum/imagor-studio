@@ -14,9 +14,9 @@ export function ColorControl({ params, onUpdateParams }: ColorControlProps) {
   const { t } = useTranslation()
 
   return (
-    <div className='space-y-4'>
+    <div className='space-y-3 pb-2'>
       {/* Color Adjustments */}
-      <div className='space-y-4'>
+      <div className='space-y-3'>
         <h4 className='text-muted-foreground text-sm font-medium'>
           {t('imageEditor.effects.colorAdjustments')}
         </h4>
@@ -64,7 +64,7 @@ export function ColorControl({ params, onUpdateParams }: ColorControlProps) {
 
         {/* Grayscale */}
         <div className='space-y-2'>
-          <div className='flex items-center space-x-3 py-3'>
+          <div className='flex items-center space-x-3 pt-3'>
             <Checkbox
               id='grayscale'
               checked={params.grayscale ?? false}
@@ -79,7 +79,7 @@ export function ColorControl({ params, onUpdateParams }: ColorControlProps) {
       </div>
 
       {/* Effects */}
-      <div className='space-y-4'>
+      <div className='space-y-3'>
         <h4 className='text-muted-foreground text-sm font-medium'>
           {t('imageEditor.effects.effects')}
         </h4>

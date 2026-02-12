@@ -127,7 +127,7 @@ function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
             <CollapsibleIcon isOpen={isOpen} />
           </CollapsibleTrigger>
         </div>
-        <CollapsibleContent className='overflow-hidden px-3 pb-3'>
+        <CollapsibleContent className='overflow-hidden px-3 pt-1 pb-3'>
           {section.component}
         </CollapsibleContent>
       </Collapsible>
@@ -528,7 +528,7 @@ export function ImageEditorControls({
                   )}
                 </div>
               </div>
-              <CollapsibleContent className='overflow-hidden px-3 pb-3'>
+              <CollapsibleContent className='overflow-hidden px-3 pt-1 pb-3'>
                 {activeSection.component}
               </CollapsibleContent>
             </Collapsible>
