@@ -153,7 +153,8 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [canRedo, setCanRedo] = useState(false)
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [editingContext, setEditingContext] = useState<string | null>(null)
-  const [layerAspectRatioLocked, setLayerAspectRatioLocked] = useState(true)
+  const [layerAspectRatioLockToggle, setLayerAspectRatioLockToggle] = useState(true)
+  const [isShiftPressed, setIsShiftPressed] = useState(false)
 
   // Drag and drop state for desktop
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -164,10 +165,16 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   // Derive visualCropEnabled from params state (single source of truth)
   const visualCropEnabled = params.visualCropEnabled ?? false
 
+  // Compute effective aspect ratio lock state (button OR shift key)
+  const layerAspectRatioLocked = useMemo(
+    () => layerAspectRatioLockToggle || isShiftPressed,
+    [layerAspectRatioLockToggle, isShiftPressed],
+  )
+
   // Reset aspect ratio lock when switching layers
   // Default to unlocked for maximum flexibility
   useEffect(() => {
-    setLayerAspectRatioLocked(false)
+    setLayerAspectRatioLockToggle(false)
   }, [selectedLayerId])
 
   useEffect(() => {
@@ -214,6 +221,26 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   useEffect(() => {
     setImagorPath(imageEditor.getImagorPath())
   }, [imageEditor, params])
+
+  // Handle shift key pressed state
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        setIsShiftPressed(true)
+      }
+    }
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        setIsShiftPressed(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [])
 
   // Keyboard shortcuts for undo/redo and escape to exit crop mode or nested layer
   useEffect(() => {
@@ -552,7 +579,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             selectedLayerId={selectedLayerId}
             editingContext={editingContext}
             layerAspectRatioLocked={layerAspectRatioLocked}
-            onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
+            onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
             visualCropEnabled={visualCropEnabled}
           />
         ),
@@ -569,7 +596,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       updateParams,
       handleVisualCropToggle,
       setCropAspectRatio,
-      setLayerAspectRatioLocked,
+      setLayerAspectRatioLockToggle,
     ],
   )
 
@@ -760,7 +787,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                 selectedLayerId={selectedLayerId}
                 editingContext={editingContext}
                 layerAspectRatioLocked={layerAspectRatioLocked}
-                onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
+                onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
                 openSections={editorOpenSections}
                 onOpenSectionsChange={handleOpenSectionsChange}
                 onUpdateParams={updateParams}
@@ -976,7 +1003,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   selectedLayerId={selectedLayerId}
                   editingContext={editingContext}
                   layerAspectRatioLocked={layerAspectRatioLocked}
-                  onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
+                  onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
                   openSections={editorOpenSections}
                   onOpenSectionsChange={handleOpenSectionsChange}
                   onUpdateParams={updateParams}
@@ -1203,7 +1230,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                 selectedLayerId={selectedLayerId}
                 editingContext={editingContext}
                 layerAspectRatioLocked={layerAspectRatioLocked}
-                onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
+                onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
                 openSections={editorOpenSections}
                 onOpenSectionsChange={handleOpenSectionsChange}
                 onUpdateParams={updateParams}
@@ -1256,7 +1283,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                 selectedLayerId={selectedLayerId}
                 editingContext={editingContext}
                 layerAspectRatioLocked={layerAspectRatioLocked}
-                onLayerAspectRatioLockChange={setLayerAspectRatioLocked}
+                onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
                 openSections={editorOpenSections}
                 onOpenSectionsChange={handleOpenSectionsChange}
                 onUpdateParams={updateParams}
