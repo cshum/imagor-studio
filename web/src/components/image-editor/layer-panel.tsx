@@ -575,7 +575,7 @@ export function LayerPanel({
       }
 
       // Only handle shortcuts when a layer is selected and conditions are met
-      if (!selectedLayerId || editingContext !== null || visualCropEnabled || activeId !== null) {
+      if (!selectedLayerId || visualCropEnabled || activeId !== null) {
         return
       }
 
@@ -590,14 +590,7 @@ export function LayerPanel({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [
-    selectedLayerId,
-    editingContext,
-    visualCropEnabled,
-    activeId,
-    handleDelete,
-    handleDuplicateLayer,
-  ])
+  }, [selectedLayerId, visualCropEnabled, activeId, handleDelete, handleDuplicateLayer])
 
   return (
     <div className='flex h-full flex-col'>
