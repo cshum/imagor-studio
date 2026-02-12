@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 
 import type { ImageLayer } from '@/lib/image-editor'
+import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
 import { calculateLayerPosition } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
 
@@ -34,19 +35,14 @@ export function LayerRegionsOverlay({
   // Uses same logic as LayerOverlay for consistency
   const getLayerStyles = useCallback(
     (layer: ImageLayer) => {
-      // Get layer's image dimensions (without padding)
-      const layerImageWidth = layer.transforms?.width || layer.originalDimensions.width
-      const layerImageHeight = layer.transforms?.height || layer.originalDimensions.height
+      // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
+      const layerOutputDims = calculateLayerOutputDimensions(
+        layer.originalDimensions,
+        layer.transforms,
+      )
 
-      // Get layer's own padding (if it has any)
-      const layerPaddingLeft = layer.transforms?.paddingLeft || 0
-      const layerPaddingRight = layer.transforms?.paddingRight || 0
-      const layerPaddingTop = layer.transforms?.paddingTop || 0
-      const layerPaddingBottom = layer.transforms?.paddingBottom || 0
-
-      // Calculate layer's total size including its own padding
-      const layerWidth = layerImageWidth + layerPaddingLeft + layerPaddingRight
-      const layerHeight = layerImageHeight + layerPaddingTop + layerPaddingBottom
+      const layerWidth = layerOutputDims.width
+      const layerHeight = layerOutputDims.height
 
       // Use the utility function to calculate position
       const { leftPercent, topPercent } = calculateLayerPosition(

@@ -12,6 +12,7 @@ import { PreloadImage } from '@/components/ui/preload-image'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
 import type { ImageEditor } from '@/lib/image-editor'
+import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
 import { cn } from '@/lib/utils'
 
 interface PreviewAreaProps {
@@ -324,28 +325,24 @@ export function PreviewArea({
                     const selectedLayer = imageEditor.getLayer(selectedLayerId)
                     if (!selectedLayer) return null
 
-                    // Get layer's image dimensions (without padding)
-                    const layerImageWidth =
-                      selectedLayer.transforms?.width || selectedLayer.originalDimensions.width
-                    const layerImageHeight =
-                      selectedLayer.transforms?.height || selectedLayer.originalDimensions.height
+                    // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
+                    const layerOutputDims = calculateLayerOutputDimensions(
+                      selectedLayer.originalDimensions,
+                      selectedLayer.transforms,
+                    )
 
-                    // Get layer's own padding (if it has any)
+                    // Get layer's own padding (if it has any) for positioning calculations
                     const layerPaddingLeft = selectedLayer.transforms?.paddingLeft || 0
                     const layerPaddingRight = selectedLayer.transforms?.paddingRight || 0
                     const layerPaddingTop = selectedLayer.transforms?.paddingTop || 0
                     const layerPaddingBottom = selectedLayer.transforms?.paddingBottom || 0
 
-                    // Calculate layer's total size including its own padding
-                    const layerTotalWidth = layerImageWidth + layerPaddingLeft + layerPaddingRight
-                    const layerTotalHeight = layerImageHeight + layerPaddingTop + layerPaddingBottom
-
                     return (
                       <LayerOverlay
                         layerX={selectedLayer.x}
                         layerY={selectedLayer.y}
-                        layerWidth={layerTotalWidth}
-                        layerHeight={layerTotalHeight}
+                        layerWidth={layerOutputDims.width}
+                        layerHeight={layerOutputDims.height}
                         onLayerChange={(updates) =>
                           imageEditor.updateLayer(selectedLayerId, updates)
                         }
