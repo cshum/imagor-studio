@@ -65,9 +65,8 @@ export function LayerBreadcrumb({
   if (isAtBase) {
     return (
       <div className={cn('text-muted-foreground flex items-center px-2', className)}>
-        <Image className={cn('mr-2 flex-shrink-0', isMobile ? 'h-4 w-4' : 'h-3.5 w-3.5')} />
         <span
-          className={cn('truncate', isMobile ? 'max-w-[220px] text-base' : 'max-w-[200px] text-sm')}
+          className={cn('truncate', isMobile ? 'max-w-[260px] text-base' : 'max-w-[240px] text-sm')}
         >
           {baseImageName}
         </span>
