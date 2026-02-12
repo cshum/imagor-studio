@@ -55,13 +55,25 @@ export function LayerBreadcrumb({
     }
   }
 
-  // Don't show breadcrumb if we're at the base level
-  if (contextPath.length === 0) {
-    return null
-  }
+  // Check if we're at the base level
+  const isAtBase = contextPath.length === 0
 
   // Get the current page (last breadcrumb item)
   const currentPage = breadcrumbItems[breadcrumbItems.length - 1]
+
+  // If at base level, show simple non-interactive breadcrumb
+  if (isAtBase) {
+    return (
+      <div className={cn('text-muted-foreground flex items-center px-2', className)}>
+        <Image className={cn('mr-2 flex-shrink-0', isMobile ? 'h-4 w-4' : 'h-3.5 w-3.5')} />
+        <span
+          className={cn('truncate', isMobile ? 'max-w-[220px] text-base' : 'max-w-[200px] text-sm')}
+        >
+          {baseImageName}
+        </span>
+      </div>
+    )
+  }
 
   const handleNavigate = (targetId: string | null) => {
     if (targetId === null) {
@@ -94,10 +106,11 @@ export function LayerBreadcrumb({
               isMobile ? 'h-auto min-h-[44px] w-full justify-start py-2' : 'h-9',
             )}
           >
+            <Layers className={cn('mr-1 flex-shrink-0', isMobile ? 'h-4 w-4' : 'h-3.5 w-3.5')} />
             <span
               className={cn(
                 'truncate',
-                isMobile ? 'max-w-[200px] text-base' : 'max-w-[180px] text-sm',
+                isMobile ? 'max-w-[220px] text-base' : 'max-w-[200px] text-sm',
               )}
             >
               {currentPage?.name}

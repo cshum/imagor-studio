@@ -1049,7 +1049,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         </Button>
 
         {/* Fixed-width breadcrumb container to prevent title shift */}
-        <div className='w-[200px]'>
+        <div className='w-[220px]'>
           <LayerBreadcrumb imageEditor={imageEditor} />
         </div>
 
