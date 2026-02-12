@@ -70,13 +70,19 @@ export function calculateLayerOutputDimensions(
   }
 
   // Add padding to the output dimensions
-  const paddingLeft = transforms.paddingLeft || 0
-  const paddingRight = transforms.paddingRight || 0
-  const paddingTop = transforms.paddingTop || 0
-  const paddingBottom = transforms.paddingBottom || 0
+  // Only apply padding if fillColor is defined (undefined = no fill, no padding)
+  // fillColor can be "none" (transparent) or a hex color - both apply padding
+  const hasFillColor = transforms.fillColor !== undefined
 
-  finalWidth = finalWidth + paddingLeft + paddingRight
-  finalHeight = finalHeight + paddingTop + paddingBottom
+  if (hasFillColor) {
+    const paddingLeft = transforms.paddingLeft || 0
+    const paddingRight = transforms.paddingRight || 0
+    const paddingTop = transforms.paddingTop || 0
+    const paddingBottom = transforms.paddingBottom || 0
+
+    finalWidth = finalWidth + paddingLeft + paddingRight
+    finalHeight = finalHeight + paddingTop + paddingBottom
+  }
 
   // Account for rotation (90° and 270° swap dimensions)
   // Rotation is applied after padding, so dimensions swap

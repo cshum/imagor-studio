@@ -262,13 +262,19 @@ export class ImageEditor {
     }
 
     // Add padding to the output dimensions
-    const paddingLeft = state.paddingLeft || 0
-    const paddingRight = state.paddingRight || 0
-    const paddingTop = state.paddingTop || 0
-    const paddingBottom = state.paddingBottom || 0
+    // Only apply padding if fillColor is defined (undefined = no fill, no padding)
+    // fillColor can be "none" (transparent) or a hex color - both apply padding
+    const hasFillColor = state.fillColor !== undefined
 
-    finalWidth = finalWidth + paddingLeft + paddingRight
-    finalHeight = finalHeight + paddingTop + paddingBottom
+    if (hasFillColor) {
+      const paddingLeft = state.paddingLeft || 0
+      const paddingRight = state.paddingRight || 0
+      const paddingTop = state.paddingTop || 0
+      const paddingBottom = state.paddingBottom || 0
+
+      finalWidth = finalWidth + paddingLeft + paddingRight
+      finalHeight = finalHeight + paddingTop + paddingBottom
+    }
 
     // Account for rotation (90° and 270° swap dimensions)
     // Rotation is applied before layers, so layers are positioned on the rotated canvas
