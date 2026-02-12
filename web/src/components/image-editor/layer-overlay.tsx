@@ -168,16 +168,45 @@ export function LayerOverlay({
 
       // Account for rotation when calculating image dimensions
       // Rotation is applied AFTER padding, so we need to reverse the process:
-      // 1. Subtract padding to get the rotated image size
-      // 2. If rotated 90° or 270°, swap dimensions to get pre-rotation size
-      
-      let rotatedWidth = totalCanvasWidth - layerPaddingLeft - layerPaddingRight
-      let rotatedHeight = totalCanvasHeight - layerPaddingTop - layerPaddingBottom
+      // 1. Rotate padding values to match the current display orientation
+      // 2. Subtract rotated padding to get the rotated image size
+      // 3. If rotated 90° or 270°, swap dimensions to get pre-rotation size
+
+      // Rotate padding values based on layer rotation
+      // After rotation, padding positions change:
+      // 90°: top→left, right→top, bottom→right, left→bottom
+      // 180°: top→bottom, right→left, bottom→top, left→right
+      // 270°: top→right, right→bottom, bottom→left, left→top
+      let effectivePaddingLeft = layerPaddingLeft
+      let effectivePaddingRight = layerPaddingRight
+      let effectivePaddingTop = layerPaddingTop
+      let effectivePaddingBottom = layerPaddingBottom
+
+      if (layerRotation === 90) {
+        effectivePaddingLeft = layerPaddingTop
+        effectivePaddingTop = layerPaddingRight
+        effectivePaddingRight = layerPaddingBottom
+        effectivePaddingBottom = layerPaddingLeft
+      } else if (layerRotation === 180) {
+        effectivePaddingLeft = layerPaddingRight
+        effectivePaddingTop = layerPaddingBottom
+        effectivePaddingRight = layerPaddingLeft
+        effectivePaddingBottom = layerPaddingTop
+      } else if (layerRotation === 270) {
+        effectivePaddingLeft = layerPaddingBottom
+        effectivePaddingTop = layerPaddingLeft
+        effectivePaddingRight = layerPaddingTop
+        effectivePaddingBottom = layerPaddingRight
+      }
+
+      // Subtract the rotated padding values
+      let rotatedWidth = totalCanvasWidth - effectivePaddingLeft - effectivePaddingRight
+      let rotatedHeight = totalCanvasHeight - effectivePaddingTop - effectivePaddingBottom
 
       // If rotation swaps dimensions (90° or 270°), swap them back to get the actual image dimensions
       let layerImageWidth: number
       let layerImageHeight: number
-      
+
       if (layerRotation === 90 || layerRotation === 270) {
         // Dimensions are swapped after rotation, so swap them back
         layerImageWidth = rotatedHeight
@@ -377,6 +406,9 @@ export function LayerOverlay({
           initialState.overlayWidth,
           initialState.overlayHeight,
         )
+        // During drag, only update position - don't recalculate dimensions
+        // This prevents rounding errors from causing dimension changes
+        delete updates.transforms
         onLayerChange(updates)
       } else if (isResizing && activeHandle) {
         const deltaX = clientX - dragStart.x
