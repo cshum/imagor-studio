@@ -520,16 +520,21 @@ export function LayerPanel({
 
         const scaleX = targetWidth / dimensions.width
         const scaleY = targetHeight / dimensions.height
-        // Use Math.min with 1.0 to prevent upscaling small images
-        const scale = Math.min(scaleX, scaleY, 1.0)
+        const scale = Math.min(scaleX, scaleY)
 
-        // Only apply transforms if scaling is needed (scale < 1)
+        // Always set transforms with fitIn: false to allow free resizing
         let layerTransforms: Partial<ImageLayer>['transforms'] | undefined
         if (scale < 1) {
+          // Scale down if needed
           layerTransforms = {
             width: Math.round(dimensions.width * scale),
             height: Math.round(dimensions.height * scale),
             fitIn: false, // Use fill mode for layers
+          }
+        } else {
+          // For layers that don't need scaling, still set fitIn: false
+          layerTransforms = {
+            fitIn: false,
           }
         }
 

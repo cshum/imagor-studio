@@ -59,8 +59,7 @@ export function calculateLayerOutputDimensions(
 
   if (transforms.fitIn !== false) {
     // fitIn mode: calculate what fitIn will produce
-    // fit-in doesn't upscale by default, so cap the scale at 1.0
-    const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight, 1.0)
+    const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight)
     finalWidth = Math.round(sourceWidth * outputScale)
     finalHeight = Math.round(sourceHeight * outputScale)
   } else {
