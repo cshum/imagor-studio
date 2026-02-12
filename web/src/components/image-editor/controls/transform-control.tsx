@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { FlipHorizontal, FlipVertical, RotateCcw } from 'lucide-react'
+import { FlipHorizontal, FlipVertical } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -12,12 +12,6 @@ interface TransformControlProps {
 
 export function TransformControl({ params, onUpdateParams }: TransformControlProps) {
   const { t } = useTranslation()
-
-  const handleRotation = (angle: number) => {
-    const currentRotation = params.rotation || 0
-    const newRotation = (currentRotation + angle) % 360
-    onUpdateParams({ rotation: newRotation === 0 ? undefined : newRotation })
-  }
 
   const handleRotationToggle = (targetAngle: number) => {
     const currentRotation = params.rotation || 0
@@ -72,12 +66,12 @@ export function TransformControl({ params, onUpdateParams }: TransformControlPro
         {/* Rotation Buttons */}
         <div className='grid grid-cols-4 gap-2'>
           <Button
-            variant='outline'
+            variant={!params.rotation || params.rotation === 0 ? 'default' : 'outline'}
             size='sm'
-            onClick={() => handleRotation(-90)}
+            onClick={() => handleRotationToggle(0)}
             className='justify-center'
           >
-            <RotateCcw className='h-4 w-4' />
+            0°
           </Button>
           <Button
             variant={params.rotation === 90 ? 'default' : 'outline'}

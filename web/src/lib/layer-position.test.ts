@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { calculateLayerPosition } from '@/lib/layer-position.ts'
+import {
+  calculateLayerImageDimensions,
+  calculateLayerPosition,
+  convertDisplayToLayerPosition,
+  rotatePadding,
+} from '@/lib/layer-position.ts'
 
 /**
  * Test suite for Layer Overlay Positioning Logic
@@ -303,5 +308,384 @@ describe('Layer Overlay Positioning', () => {
       expect(leftPercent).toBe('78%')
       expect(topPercent).toBe('78.75%')
     })
+  })
+})
+
+describe('rotatePadding', () => {
+  it('should not rotate padding at 0 degrees', () => {
+    const result = rotatePadding(10, 20, 30, 40, 0)
+    expect(result).toEqual({
+      left: 10,
+      right: 20,
+      top: 30,
+      bottom: 40,
+    })
+  })
+
+  it('should rotate padding 90 degrees clockwise', () => {
+    // 90°: top→left, right→top, bottom→right, left→bottom
+    const result = rotatePadding(10, 20, 30, 40, 90)
+    expect(result).toEqual({
+      left: 30, // was top
+      top: 20, // was right
+      right: 40, // was bottom
+      bottom: 10, // was left
+    })
+  })
+
+  it('should rotate padding 180 degrees', () => {
+    // 180°: top→bottom, right→left, bottom→top, left→right
+    const result = rotatePadding(10, 20, 30, 40, 180)
+    expect(result).toEqual({
+      left: 20, // was right
+      top: 40, // was bottom
+      right: 10, // was left
+      bottom: 30, // was top
+    })
+  })
+
+  it('should rotate padding 270 degrees clockwise', () => {
+    // 270°: top→right, right→bottom, bottom→left, left→top
+    const result = rotatePadding(10, 20, 30, 40, 270)
+    expect(result).toEqual({
+      left: 40, // was bottom
+      top: 10, // was left
+      right: 30, // was top
+      bottom: 20, // was right
+    })
+  })
+
+  it('should handle zero padding values', () => {
+    const result = rotatePadding(0, 0, 0, 0, 90)
+    expect(result).toEqual({
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
+    })
+  })
+
+  it('should handle symmetric padding', () => {
+    const result = rotatePadding(10, 10, 10, 10, 90)
+    expect(result).toEqual({
+      left: 10,
+      right: 10,
+      top: 10,
+      bottom: 10,
+    })
+  })
+})
+
+describe('calculateLayerImageDimensions', () => {
+  it('should calculate dimensions without rotation or padding', () => {
+    const result = calculateLayerImageDimensions(200, 150, 0, 0, 0, 0, 0)
+    expect(result).toEqual({
+      width: 200,
+      height: 150,
+    })
+  })
+
+  it('should subtract padding without rotation', () => {
+    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 0)
+    // width: 200 - 10 - 20 = 170
+    // height: 150 - 30 - 40 = 80
+    expect(result).toEqual({
+      width: 170,
+      height: 80,
+    })
+  })
+
+  it('should handle 90 degree rotation with padding', () => {
+    // Display: 200x150 with padding left:10, right:20, top:30, bottom:40
+    // After 90° rotation: padding becomes left:30, right:40, top:20, bottom:10
+    // Rotated size: 200-30-40=130, 150-20-10=120
+    // Original size (swap back): width:120, height:130
+    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 90)
+    expect(result).toEqual({
+      width: 120,
+      height: 130,
+    })
+  })
+
+  it('should handle 180 degree rotation with padding', () => {
+    // Display: 200x150 with padding left:10, right:20, top:30, bottom:40
+    // After 180° rotation: padding becomes left:20, right:10, top:40, bottom:30
+    // Size: 200-20-10=170, 150-40-30=80
+    // No dimension swap for 180°
+    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 180)
+    expect(result).toEqual({
+      width: 170,
+      height: 80,
+    })
+  })
+
+  it('should handle 270 degree rotation with padding', () => {
+    // Display: 200x150 with padding left:10, right:20, top:30, bottom:40
+    // After 270° rotation: padding becomes left:40, right:30, top:10, bottom:20
+    // Rotated size: 200-40-30=130, 150-10-20=120
+    // Original size (swap back): width:120, height:130
+    const result = calculateLayerImageDimensions(200, 150, 10, 20, 30, 40, 270)
+    expect(result).toEqual({
+      width: 120,
+      height: 130,
+    })
+  })
+
+  it('should handle symmetric padding with rotation', () => {
+    const result = calculateLayerImageDimensions(200, 150, 10, 10, 10, 10, 90)
+    // Padding stays same after rotation: 10 all around
+    // Rotated size: 200-20=180, 150-20=130
+    // Original size (swap): width:130, height:180
+    expect(result).toEqual({
+      width: 130,
+      height: 180,
+    })
+  })
+
+  it('should handle zero padding with rotation', () => {
+    const result = calculateLayerImageDimensions(200, 150, 0, 0, 0, 0, 90)
+    // No padding, just swap dimensions
+    expect(result).toEqual({
+      width: 150,
+      height: 200,
+    })
+  })
+})
+
+describe('convertDisplayToLayerPosition', () => {
+  const baseImageWidth = 1000
+  const baseImageHeight = 800
+  const overlayWidth = 500
+  const overlayHeight = 400
+
+  it('should convert display position to layer position without padding or rotation', () => {
+    const result = convertDisplayToLayerPosition(
+      50, // displayX
+      40, // displayY
+      100, // displayWidth
+      80, // displayHeight
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0, // basePaddingLeft
+      0, // basePaddingTop
+      0, // layerPaddingLeft
+      0, // layerPaddingRight
+      0, // layerPaddingTop
+      0, // layerPaddingBottom
+      0, // rotation
+      0, // currentX
+      0, // currentY
+    )
+
+    // Display: 50/500 = 10%, 40/400 = 10%
+    // Canvas: 10% of 1000 = 100, 10% of 800 = 80
+    // Size: 100/500 = 20%, 80/400 = 20%
+    // Canvas size: 20% of 1000 = 200, 20% of 800 = 160
+    expect(result.x).toBe(100)
+    expect(result.y).toBe(80)
+    expect(result.transforms).toEqual({
+      width: 200,
+      height: 160,
+    })
+  })
+
+  it('should handle right-aligned position', () => {
+    const result = convertDisplayToLayerPosition(
+      400, // displayX (near right edge)
+      40,
+      100,
+      80,
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      -50, // currentX (right-aligned)
+      0,
+    )
+
+    // Display: 400/500 = 80%
+    // Canvas X: 80% of 1000 = 800
+    // Canvas width: 100/500 * 1000 = 200
+    // Offset from right: 800 + 200 - 1000 = 0
+    expect(result.x).toBe('right')
+  })
+
+  it('should handle bottom-aligned position', () => {
+    const result = convertDisplayToLayerPosition(
+      50,
+      320, // displayY (near bottom edge)
+      100,
+      80,
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      -50, // currentY (bottom-aligned)
+    )
+
+    // Display: 320/400 = 80%
+    // Canvas Y: 80% of 800 = 640
+    // Canvas height: 80/400 * 800 = 160
+    // Offset from bottom: 640 + 160 - 800 = 0
+    expect(result.y).toBe('bottom')
+  })
+
+  it('should handle layer padding without rotation', () => {
+    const result = convertDisplayToLayerPosition(
+      50,
+      40,
+      100,
+      80,
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0,
+      0,
+      10, // layerPaddingLeft
+      20, // layerPaddingRight
+      30, // layerPaddingTop
+      40, // layerPaddingBottom
+      0,
+      0,
+      0,
+    )
+
+    // Canvas size: 200x160 (from display)
+    // Image size: 200-10-20=170, 160-30-40=90
+    expect(result.transforms).toEqual({
+      width: 170,
+      height: 90,
+    })
+  })
+
+  it('should handle 90 degree rotation with padding', () => {
+    const result = convertDisplayToLayerPosition(
+      50,
+      40,
+      100,
+      80,
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0,
+      0,
+      10, // layerPaddingLeft
+      20, // layerPaddingRight
+      30, // layerPaddingTop
+      40, // layerPaddingBottom
+      90, // rotation
+      0,
+      0,
+    )
+
+    // Canvas size: 200x160
+    // After 90° rotation: padding becomes left:30, right:40, top:20, bottom:10
+    // Rotated size: 200-30-40=130, 160-20-10=130
+    // Original size (swap): width:130, height:130
+    expect(result.transforms).toEqual({
+      width: 130,
+      height: 130,
+    })
+  })
+
+  it('should not update position for center-aligned layers', () => {
+    const result = convertDisplayToLayerPosition(
+      50,
+      40,
+      100,
+      80,
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      'center', // currentX
+      'center', // currentY
+    )
+
+    // Center-aligned layers should not have x/y updates
+    expect(result.x).toBeUndefined()
+    expect(result.y).toBeUndefined()
+    expect(result.transforms).toBeDefined()
+  })
+
+  it('should switch from left to right alignment when crossing boundary', () => {
+    const result = convertDisplayToLayerPosition(
+      -10, // displayX (negative, beyond left edge)
+      40,
+      100,
+      80,
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      50, // basePaddingLeft
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      100, // currentX (left-aligned positive)
+      0,
+    )
+
+    // Display: -10/500 = -2%
+    // Canvas X: -2% of 1000 = -20
+    // Canvas width: 100/500 * 1000 = 200
+    // Since canvasX (-20) < paddingLeft (50), switch to right-aligned
+    // Offset: -20 + 200 - 1000 = -820
+    expect(result.x).toBe(-820)
+  })
+
+  it('should enforce minimum dimensions', () => {
+    const result = convertDisplayToLayerPosition(
+      50,
+      40,
+      1, // very small displayWidth
+      1, // very small displayHeight
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+    )
+
+    // Even with very small display size, should enforce minimum of 1px
+    expect(result.transforms?.width).toBeGreaterThanOrEqual(1)
+    expect(result.transforms?.height).toBeGreaterThanOrEqual(1)
   })
 })

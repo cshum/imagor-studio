@@ -595,6 +595,7 @@ describe('ImageEditor', () => {
 
     it('should include padding in output dimensions', () => {
       editor.updateParams({
+        fillColor: 'ffffff',
         paddingLeft: 50,
         paddingRight: 50,
         paddingTop: 30,
@@ -607,6 +608,7 @@ describe('ImageEditor', () => {
 
     it('should include partial padding in output dimensions', () => {
       editor.updateParams({
+        fillColor: 'ffffff',
         paddingLeft: 20,
         paddingTop: 10,
       })
@@ -620,6 +622,7 @@ describe('ImageEditor', () => {
         width: 800,
         height: 600,
         fitIn: false,
+        fillColor: 'ffffff',
         paddingLeft: 20,
         paddingRight: 20,
         paddingTop: 10,
@@ -639,6 +642,7 @@ describe('ImageEditor', () => {
         width: 800,
         height: 400,
         fitIn: false,
+        fillColor: 'ffffff',
         paddingLeft: 25,
         paddingRight: 25,
         paddingTop: 15,
@@ -658,6 +662,7 @@ describe('ImageEditor', () => {
         width: 800,
         height: 600,
         fitIn: true,
+        fillColor: 'ffffff',
         paddingLeft: 10,
         paddingRight: 10,
       })
@@ -680,6 +685,7 @@ describe('ImageEditor', () => {
         width: 800,
         height: 600,
         fitIn: true,
+        fillColor: 'ffffff',
         paddingLeft: 20,
         paddingRight: 20,
       })
@@ -705,6 +711,7 @@ describe('ImageEditor', () => {
         width: 1000,
         height: 500,
         fitIn: false,
+        fillColor: 'ffffff',
         paddingLeft: 10,
         paddingRight: 30,
         paddingTop: 5,
@@ -713,6 +720,117 @@ describe('ImageEditor', () => {
       const dims = editor.getOutputDimensions()
       // Resize: 1000x500 + padding (10+30, 5+25)
       expect(dims).toEqual({ width: 1040, height: 530 })
+    })
+
+    it('should NOT include padding when fillColor is undefined (no fill)', () => {
+      editor.updateParams({
+        paddingLeft: 50,
+        paddingRight: 50,
+        paddingTop: 30,
+        paddingBottom: 30,
+        // fillColor is undefined (no fill)
+      })
+      const dims = editor.getOutputDimensions()
+      // Padding should be ignored when no fill color
+      expect(dims).toEqual({ width: 1920, height: 1080 })
+    })
+
+    it('should include padding when fillColor is "none" (transparent)', () => {
+      editor.updateParams({
+        fillColor: 'none',
+        paddingLeft: 50,
+        paddingRight: 50,
+        paddingTop: 30,
+        paddingBottom: 30,
+      })
+      const dims = editor.getOutputDimensions()
+      // Padding should be applied with transparent fill
+      expect(dims).toEqual({ width: 2020, height: 1140 })
+    })
+
+    it('should include padding when fillColor is a hex color', () => {
+      editor.updateParams({
+        fillColor: 'ffffff',
+        paddingLeft: 50,
+        paddingRight: 50,
+        paddingTop: 30,
+        paddingBottom: 30,
+      })
+      const dims = editor.getOutputDimensions()
+      // Padding should be applied with color fill
+      expect(dims).toEqual({ width: 2020, height: 1140 })
+    })
+
+    it('should NOT include padding with resize when fillColor is undefined', () => {
+      editor.updateParams({
+        width: 800,
+        height: 600,
+        fitIn: false,
+        paddingLeft: 20,
+        paddingRight: 20,
+        paddingTop: 10,
+        paddingBottom: 10,
+        // fillColor is undefined
+      })
+      const dims = editor.getOutputDimensions()
+      // Padding should be ignored: just resize dimensions
+      expect(dims).toEqual({ width: 800, height: 600 })
+    })
+
+    it('should include padding with resize when fillColor is "none"', () => {
+      editor.updateParams({
+        width: 800,
+        height: 600,
+        fitIn: false,
+        fillColor: 'none',
+        paddingLeft: 20,
+        paddingRight: 20,
+        paddingTop: 10,
+        paddingBottom: 10,
+      })
+      const dims = editor.getOutputDimensions()
+      // Padding should be applied with transparent fill
+      expect(dims).toEqual({ width: 840, height: 620 })
+    })
+
+    it('should NOT include padding with crop when fillColor is undefined', () => {
+      editor.updateParams({
+        cropLeft: 0,
+        cropTop: 0,
+        cropWidth: 1000,
+        cropHeight: 500,
+        width: 800,
+        height: 400,
+        fitIn: false,
+        paddingLeft: 25,
+        paddingRight: 25,
+        paddingTop: 15,
+        paddingBottom: 15,
+        // fillColor is undefined
+      })
+      const dims = editor.getOutputDimensions()
+      // Padding should be ignored: just crop + resize
+      expect(dims).toEqual({ width: 800, height: 400 })
+    })
+
+    it('should include padding with crop when fillColor is set', () => {
+      editor.updateParams({
+        cropLeft: 0,
+        cropTop: 0,
+        cropWidth: 1000,
+        cropHeight: 500,
+        width: 800,
+        height: 400,
+        fitIn: false,
+        fillColor: '000000',
+        paddingLeft: 25,
+        paddingRight: 25,
+        paddingTop: 15,
+        paddingBottom: 15,
+      })
+      const dims = editor.getOutputDimensions()
+      // Padding should be applied with black fill
+      expect(dims).toEqual({ width: 850, height: 430 })
     })
   })
 

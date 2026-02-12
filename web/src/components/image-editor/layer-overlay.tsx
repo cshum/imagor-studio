@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { calculateLayerPosition } from '@/lib/layer-position'
+import { calculateLayerPosition, convertDisplayToLayerPosition } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
 
 interface LayerOverlayProps {
@@ -27,6 +27,7 @@ interface LayerOverlayProps {
   layerPaddingRight?: number
   layerPaddingTop?: number
   layerPaddingBottom?: number
+  layerRotation?: number
   onDeselect?: () => void
   onEnterEditMode?: () => void
 }
@@ -50,6 +51,7 @@ export function LayerOverlay({
   layerPaddingRight = 0,
   layerPaddingTop = 0,
   layerPaddingBottom = 0,
+  layerRotation = 0,
   onDeselect,
   onEnterEditMode,
 }: LayerOverlayProps) {
@@ -134,134 +136,6 @@ export function LayerOverlay({
     overlayWidth: 0, // Store actual overlay dimensions for correct percentage calculation
     overlayHeight: 0,
   })
-
-  // Convert display coordinates back to layer position
-  const convertToLayerPosition = useCallback(
-    (
-      newDisplayX: number,
-      newDisplayY: number,
-      newDisplayWidth: number,
-      newDisplayHeight: number,
-      overlayWidth: number,
-      overlayHeight: number,
-    ) => {
-      const updates: {
-        x?: string | number
-        y?: string | number
-        transforms?: {
-          width?: number
-          height?: number
-        }
-      } = {}
-
-      // Convert from preview pixels to content area dimensions
-      // The overlay represents the entire canvas (content + padding)
-      // The display size includes the layer's own padding, so we need to subtract it
-      const widthPercent = newDisplayWidth / overlayWidth
-      const heightPercent = newDisplayHeight / overlayHeight
-
-      // Calculate total size on canvas (including base padding)
-      const totalCanvasWidth = Math.round(widthPercent * baseImageWidth)
-      const totalCanvasHeight = Math.round(heightPercent * baseImageHeight)
-
-      // Subtract layer's own padding to get the actual image dimensions
-      const layerImageWidth = totalCanvasWidth - layerPaddingLeft - layerPaddingRight
-      const layerImageHeight = totalCanvasHeight - layerPaddingTop - layerPaddingBottom
-
-      updates.transforms = {
-        width: Math.max(1, layerImageWidth), // Ensure minimum of 1px
-        height: Math.max(1, layerImageHeight),
-      }
-
-      // Convert X position with auto-switch on boundary crossing
-      if (canDragX) {
-        const xPercent = newDisplayX / overlayWidth
-        const canvasX = Math.round(xPercent * baseImageWidth)
-        // Use total layer width (image + layer padding) for position calculations
-        const totalLayerWidth = totalCanvasWidth
-
-        if (isRightAligned) {
-          // Currently right-aligned (negative offset from canvas right edge)
-          const calculatedOffset = canvasX + totalLayerWidth - baseImageWidth
-
-          if (calculatedOffset > 0) {
-            // Crossed boundary to positive - switch to left-aligned
-            // Convert to content-relative position
-            updates.x = canvasX - paddingLeft
-          } else if (calculatedOffset === 0) {
-            // Exactly at right edge - use "right" string for imagor
-            updates.x = 'right'
-          } else {
-            // Stay right-aligned (negative offset from canvas right)
-            updates.x = calculatedOffset
-          }
-        } else {
-          // Currently left-aligned (positive canvas-absolute position)
-          if (canvasX < paddingLeft) {
-            // Crossed boundary to negative - switch to right-aligned
-            // Calculate offset from canvas right
-            updates.x = canvasX + totalLayerWidth - baseImageWidth
-          } else {
-            // Stay left-aligned (positive canvas-absolute)
-            updates.x = canvasX
-          }
-        }
-      }
-
-      // Convert Y position with auto-switch on boundary crossing
-      if (canDragY) {
-        const yPercent = newDisplayY / overlayHeight
-        const canvasY = Math.round(yPercent * baseImageHeight)
-        // Use total layer height (image + layer padding) for position calculations
-        const totalLayerHeight = totalCanvasHeight
-
-        if (isBottomAligned) {
-          // Currently bottom-aligned (negative offset from canvas bottom)
-          const calculatedOffset = canvasY + totalLayerHeight - baseImageHeight
-
-          if (calculatedOffset > 0) {
-            // Crossed boundary to positive - switch to top-aligned
-            // Convert to content-relative position
-            updates.y = canvasY - paddingTop
-          } else if (calculatedOffset === 0) {
-            // Exactly at bottom edge - use "bottom" string for imagor
-            updates.y = 'bottom'
-          } else {
-            // Stay bottom-aligned (negative offset from canvas bottom)
-            updates.y = calculatedOffset
-          }
-        } else {
-          // Currently top-aligned (positive canvas-absolute position)
-          if (canvasY < paddingTop) {
-            // Crossed boundary to negative - switch to bottom-aligned
-            // Calculate offset from canvas bottom
-            updates.y = canvasY + totalLayerHeight - baseImageHeight
-          } else {
-            // Stay top-aligned (positive canvas-absolute)
-            updates.y = canvasY
-          }
-        }
-      }
-
-      return updates
-    },
-    [
-      contentWidth,
-      contentHeight,
-      paddingLeft,
-      paddingTop,
-      baseImageWidth,
-      baseImageHeight,
-      layerPaddingLeft,
-      layerPaddingRight,
-      layerPaddingTop,
-      layerPaddingBottom,
-      canDragX,
-      canDragY,
-      isRightAligned,
-      isBottomAligned,
-    ],
-  )
 
   // Handle mouse/touch down on layer box (for dragging)
   const handleLayerMouseDown = useCallback(
@@ -349,14 +223,28 @@ export function LayerOverlay({
           newDisplayY = initialState.displayY + deltaY
         }
 
-        const updates = convertToLayerPosition(
+        const updates = convertDisplayToLayerPosition(
           newDisplayX,
           newDisplayY,
           initialState.displayWidth,
           initialState.displayHeight,
           initialState.overlayWidth,
           initialState.overlayHeight,
+          baseImageWidth,
+          baseImageHeight,
+          paddingLeft,
+          paddingTop,
+          layerPaddingLeft,
+          layerPaddingRight,
+          layerPaddingTop,
+          layerPaddingBottom,
+          layerRotation,
+          layerX,
+          layerY,
         )
+        // During drag, only update position - don't recalculate dimensions
+        // This prevents rounding errors from causing dimension changes
+        delete updates.transforms
         onLayerChange(updates)
       } else if (isResizing && activeHandle) {
         const deltaX = clientX - dragStart.x
@@ -468,13 +356,24 @@ export function LayerOverlay({
           }
         }
 
-        const updates = convertToLayerPosition(
+        const updates = convertDisplayToLayerPosition(
           newLeft,
           newTop,
           newWidth,
           newHeight,
           initialState.overlayWidth,
           initialState.overlayHeight,
+          baseImageWidth,
+          baseImageHeight,
+          paddingLeft,
+          paddingTop,
+          layerPaddingLeft,
+          layerPaddingRight,
+          layerPaddingTop,
+          layerPaddingBottom,
+          layerRotation,
+          layerX,
+          layerY,
         )
         onLayerChange(updates)
       }
@@ -508,11 +407,21 @@ export function LayerOverlay({
     canDragY,
     isRightAligned,
     isBottomAligned,
-    convertToLayerPosition,
     onLayerChange,
     lockedAspectRatio,
     layerWidth,
     layerHeight,
+    baseImageWidth,
+    baseImageHeight,
+    paddingLeft,
+    paddingTop,
+    layerPaddingLeft,
+    layerPaddingRight,
+    layerPaddingTop,
+    layerPaddingBottom,
+    layerRotation,
+    layerX,
+    layerY,
   ])
 
   // Handle click outside layer box to deselect
@@ -548,7 +457,7 @@ export function LayerOverlay({
       <div
         ref={layerBoxRef}
         className={cn(
-          'layer-box pointer-events-auto absolute cursor-move border-2 border-white',
+          'layer-box pointer-events-auto absolute cursor-move border border-white',
           (isDragging || isResizing) && 'cursor-grabbing',
         )}
         style={{
@@ -556,6 +465,7 @@ export function LayerOverlay({
           top: topPercent,
           width: widthPercent,
           height: heightPercent,
+          boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.5)',
         }}
         onMouseDown={handleLayerMouseDown}
         onTouchStart={handleLayerMouseDown}
@@ -582,7 +492,11 @@ export function LayerOverlay({
             onMouseDown={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
             onTouchStart={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
           >
-            <div className='h-3 w-3 rounded-full border-2 border-white bg-blue-500' />
+            {/* Visual handle: Photoshop-style white square with black border */}
+            <div
+              className='h-2 w-2 border border-black bg-white'
+              style={{ boxShadow: '0 0 0 1px white' }}
+            />
           </div>
         ))}
       </div>
