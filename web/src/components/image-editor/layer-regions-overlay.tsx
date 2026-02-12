@@ -96,10 +96,11 @@ export function LayerRegionsOverlay({
             key={layer.id}
             className={cn(
               'pointer-events-auto absolute cursor-pointer',
-              'border border-dashed border-white/30',
-              'transition-colors duration-150',
-              'hover:border hover:border-solid hover:border-white/80',
-              'hover:bg-white/5',
+              'border border-dashed border-white/50',
+              'shadow-[0_0_0_1px_rgba(0,0,0,0.3)]',
+              'transition-all duration-150',
+              'hover:border-solid hover:border-white hover:bg-white/5',
+              'hover:shadow-[0_0_0_1px_rgba(0,0,0,0.5)]',
             )}
             style={styles}
             onClick={() => onLayerSelect(layer.id)}
