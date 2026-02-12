@@ -221,7 +221,7 @@ export class ImageEditor {
   }
 
   /**
-   * Calculate the actual output dimensions (after crop + resize + padding)
+   * Calculate the actual output dimensions (after crop + resize + padding + rotation)
    * This is what layers are positioned relative to
    * Uses the same logic as convertStateToGraphQLParams to ensure consistency
    */
@@ -267,9 +267,21 @@ export class ImageEditor {
     const paddingTop = state.paddingTop || 0
     const paddingBottom = state.paddingBottom || 0
 
+    finalWidth = finalWidth + paddingLeft + paddingRight
+    finalHeight = finalHeight + paddingTop + paddingBottom
+
+    // Account for rotation (90° and 270° swap dimensions)
+    // Rotation is applied before layers, so layers are positioned on the rotated canvas
+    if (state.rotation === 90 || state.rotation === 270) {
+      return {
+        width: finalHeight,
+        height: finalWidth,
+      }
+    }
+
     return {
-      width: finalWidth + paddingLeft + paddingRight,
-      height: finalHeight + paddingTop + paddingBottom,
+      width: finalWidth,
+      height: finalHeight,
     }
   }
 
@@ -409,32 +421,14 @@ export class ImageEditor {
       filters.push(`fill(${state.fillColor})`)
     }
 
-    // Rotation
-    if (state.rotation !== undefined && state.rotation !== 0) {
+    // Rotation (applied BEFORE layers so layers are positioned on rotated canvas)
+    // Skip rotation in preview when visual cropping is enabled
+    const shouldApplyRotation = !forPreview || (forPreview && !state.visualCropEnabled)
+    if (shouldApplyRotation && state.rotation !== undefined && state.rotation !== 0) {
       filters.push(`rotate(${state.rotation})`)
     }
 
-    // Format/Quality/MaxBytes (only for non-preview layer paths)
-    if (!forPreview) {
-      if (state.format) {
-        filters.push(`format(${state.format})`)
-      }
-      if (state.quality && state.format) {
-        filters.push(`quality(${state.quality})`)
-      }
-      if (state.maxBytes && (state.format || state.quality)) {
-        filters.push(`max_bytes(${state.maxBytes})`)
-      }
-    }
-
-    // Metadata stripping
-    if (state.stripIcc) {
-      filters.push('strip_icc()')
-    }
-    if (state.stripExif) {
-      filters.push('strip_exif()')
-    }
-
+    // Layer processing - add image() filters for each visible layer
     // Layer processing - add image() filters for each visible layer
     // Skip layers in visual crop mode (positions won't be accurate on uncropped image)
     const shouldApplyLayers = !forPreview || (forPreview && !state.visualCropEnabled)
@@ -474,6 +468,27 @@ export class ImageEditor {
         const y = typeof layer.y === 'number' ? Math.round(layer.y * scaleFactor) : layer.y
         filters.push(`image(${layerPath},${x},${y},${layer.alpha},${layer.blendMode})`)
       }
+    }
+
+    // Format/Quality/MaxBytes (only for non-preview layer paths)
+    if (!forPreview) {
+      if (state.format) {
+        filters.push(`format(${state.format})`)
+      }
+      if (state.quality && state.format) {
+        filters.push(`quality(${state.quality})`)
+      }
+      if (state.maxBytes && (state.format || state.quality)) {
+        filters.push(`max_bytes(${state.maxBytes})`)
+      }
+    }
+
+    // Metadata stripping
+    if (state.stripIcc) {
+      filters.push('strip_icc()')
+    }
+    if (state.stripExif) {
+      filters.push('strip_exif()')
     }
 
     // Add filters to path
@@ -692,41 +707,12 @@ export class ImageEditor {
       filters.push({ name: 'fill', args: state.fillColor })
     }
 
+    // Rotation (applied BEFORE layers so layers are positioned on rotated canvas)
     // Skip rotation in preview when visual cropping is enabled
     // (so user can crop on unrotated image, rotation applied after crop in final URL)
     const shouldApplyRotation = !forPreview || (forPreview && !state.visualCropEnabled)
     if (shouldApplyRotation && state.rotation !== undefined && state.rotation !== 0) {
       filters.push({ name: 'rotate', args: state.rotation.toString() })
-    }
-
-    // Format handling
-    if (forPreview) {
-      // disable result storage on preview
-      filters.push({ name: 'preview', args: '' })
-      // Always WebP for preview
-      filters.push({ name: 'format', args: 'webp' })
-    } else if (state.format) {
-      // Use user-selected format for Copy URL / Download
-      filters.push({ name: 'format', args: state.format })
-    }
-    // If no format specified, Imagor uses original format
-
-    // Quality handling (only if format is specified)
-    if (state.quality && (forPreview || state.format)) {
-      filters.push({ name: 'quality', args: state.quality.toString() })
-    }
-
-    // Max bytes handling (automatic quality degradation)
-    if (state.maxBytes && (forPreview || state.format || state.quality)) {
-      filters.push({ name: 'max_bytes', args: state.maxBytes.toString() })
-    }
-
-    // Metadata stripping
-    if (state.stripIcc) {
-      filters.push({ name: 'strip_icc', args: '' })
-    }
-    if (state.stripExif) {
-      filters.push({ name: 'strip_exif', args: '' })
     }
 
     // Layer processing - add image() filters for each visible layer
@@ -780,6 +766,37 @@ export class ImageEditor {
         const args = `${layerPath},${x},${y},${layer.alpha},${layer.blendMode}`
         filters.push({ name: 'image', args })
       }
+    }
+
+    // Format handling
+    // Format handling
+    if (forPreview) {
+      // disable result storage on preview
+      filters.push({ name: 'preview', args: '' })
+      // Always WebP for preview
+      filters.push({ name: 'format', args: 'webp' })
+    } else if (state.format) {
+      // Use user-selected format for Copy URL / Download
+      filters.push({ name: 'format', args: state.format })
+    }
+    // If no format specified, Imagor uses original format
+
+    // Quality handling (only if format is specified)
+    if (state.quality && (forPreview || state.format)) {
+      filters.push({ name: 'quality', args: state.quality.toString() })
+    }
+
+    // Max bytes handling (automatic quality degradation)
+    if (state.maxBytes && (forPreview || state.format || state.quality)) {
+      filters.push({ name: 'max_bytes', args: state.maxBytes.toString() })
+    }
+
+    // Metadata stripping
+    if (state.stripIcc) {
+      filters.push({ name: 'strip_icc', args: '' })
+    }
+    if (state.stripExif) {
+      filters.push({ name: 'strip_exif', args: '' })
     }
 
     if (filters.length > 0) {
