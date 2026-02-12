@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { calculateLayerPosition } from '@/lib/layer-position'
+import { calculateLayerPosition, convertDisplayToLayerPosition } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
 
 interface LayerOverlayProps {
@@ -137,181 +137,6 @@ export function LayerOverlay({
     overlayHeight: 0,
   })
 
-  // Convert display coordinates back to layer position
-  const convertToLayerPosition = useCallback(
-    (
-      newDisplayX: number,
-      newDisplayY: number,
-      newDisplayWidth: number,
-      newDisplayHeight: number,
-      overlayWidth: number,
-      overlayHeight: number,
-    ) => {
-      const updates: {
-        x?: string | number
-        y?: string | number
-        transforms?: {
-          width?: number
-          height?: number
-        }
-      } = {}
-
-      // Convert from preview pixels to content area dimensions
-      // The overlay represents the entire canvas (content + padding)
-      // The display size includes the layer's own padding, so we need to subtract it
-      const widthPercent = newDisplayWidth / overlayWidth
-      const heightPercent = newDisplayHeight / overlayHeight
-
-      // Calculate total size on canvas (including base padding)
-      const totalCanvasWidth = Math.round(widthPercent * baseImageWidth)
-      const totalCanvasHeight = Math.round(heightPercent * baseImageHeight)
-
-      // Account for rotation when calculating image dimensions
-      // Rotation is applied AFTER padding, so we need to reverse the process:
-      // 1. Rotate padding values to match the current display orientation
-      // 2. Subtract rotated padding to get the rotated image size
-      // 3. If rotated 90° or 270°, swap dimensions to get pre-rotation size
-
-      // Rotate padding values based on layer rotation
-      // After rotation, padding positions change:
-      // 90°: top→left, right→top, bottom→right, left→bottom
-      // 180°: top→bottom, right→left, bottom→top, left→right
-      // 270°: top→right, right→bottom, bottom→left, left→top
-      let effectivePaddingLeft = layerPaddingLeft
-      let effectivePaddingRight = layerPaddingRight
-      let effectivePaddingTop = layerPaddingTop
-      let effectivePaddingBottom = layerPaddingBottom
-
-      if (layerRotation === 90) {
-        effectivePaddingLeft = layerPaddingTop
-        effectivePaddingTop = layerPaddingRight
-        effectivePaddingRight = layerPaddingBottom
-        effectivePaddingBottom = layerPaddingLeft
-      } else if (layerRotation === 180) {
-        effectivePaddingLeft = layerPaddingRight
-        effectivePaddingTop = layerPaddingBottom
-        effectivePaddingRight = layerPaddingLeft
-        effectivePaddingBottom = layerPaddingTop
-      } else if (layerRotation === 270) {
-        effectivePaddingLeft = layerPaddingBottom
-        effectivePaddingTop = layerPaddingLeft
-        effectivePaddingRight = layerPaddingTop
-        effectivePaddingBottom = layerPaddingRight
-      }
-
-      // Subtract the rotated padding values
-      let rotatedWidth = totalCanvasWidth - effectivePaddingLeft - effectivePaddingRight
-      let rotatedHeight = totalCanvasHeight - effectivePaddingTop - effectivePaddingBottom
-
-      // If rotation swaps dimensions (90° or 270°), swap them back to get the actual image dimensions
-      let layerImageWidth: number
-      let layerImageHeight: number
-
-      if (layerRotation === 90 || layerRotation === 270) {
-        // Dimensions are swapped after rotation, so swap them back
-        layerImageWidth = rotatedHeight
-        layerImageHeight = rotatedWidth
-      } else {
-        layerImageWidth = rotatedWidth
-        layerImageHeight = rotatedHeight
-      }
-
-      updates.transforms = {
-        width: Math.max(1, layerImageWidth), // Ensure minimum of 1px
-        height: Math.max(1, layerImageHeight),
-      }
-
-      // Convert X position with auto-switch on boundary crossing
-      if (canDragX) {
-        const xPercent = newDisplayX / overlayWidth
-        const canvasX = Math.round(xPercent * baseImageWidth)
-        // Use total layer width (image + layer padding) for position calculations
-        const totalLayerWidth = totalCanvasWidth
-
-        if (isRightAligned) {
-          // Currently right-aligned (negative offset from canvas right edge)
-          const calculatedOffset = canvasX + totalLayerWidth - baseImageWidth
-
-          if (calculatedOffset > 0) {
-            // Crossed boundary to positive - switch to left-aligned
-            // Convert to content-relative position
-            updates.x = canvasX - paddingLeft
-          } else if (calculatedOffset === 0) {
-            // Exactly at right edge - use "right" string for imagor
-            updates.x = 'right'
-          } else {
-            // Stay right-aligned (negative offset from canvas right)
-            updates.x = calculatedOffset
-          }
-        } else {
-          // Currently left-aligned (positive canvas-absolute position)
-          if (canvasX < paddingLeft) {
-            // Crossed boundary to negative - switch to right-aligned
-            // Calculate offset from canvas right
-            updates.x = canvasX + totalLayerWidth - baseImageWidth
-          } else {
-            // Stay left-aligned (positive canvas-absolute)
-            updates.x = canvasX
-          }
-        }
-      }
-
-      // Convert Y position with auto-switch on boundary crossing
-      if (canDragY) {
-        const yPercent = newDisplayY / overlayHeight
-        const canvasY = Math.round(yPercent * baseImageHeight)
-        // Use total layer height (image + layer padding) for position calculations
-        const totalLayerHeight = totalCanvasHeight
-
-        if (isBottomAligned) {
-          // Currently bottom-aligned (negative offset from canvas bottom)
-          const calculatedOffset = canvasY + totalLayerHeight - baseImageHeight
-
-          if (calculatedOffset > 0) {
-            // Crossed boundary to positive - switch to top-aligned
-            // Convert to content-relative position
-            updates.y = canvasY - paddingTop
-          } else if (calculatedOffset === 0) {
-            // Exactly at bottom edge - use "bottom" string for imagor
-            updates.y = 'bottom'
-          } else {
-            // Stay bottom-aligned (negative offset from canvas bottom)
-            updates.y = calculatedOffset
-          }
-        } else {
-          // Currently top-aligned (positive canvas-absolute position)
-          if (canvasY < paddingTop) {
-            // Crossed boundary to negative - switch to bottom-aligned
-            // Calculate offset from canvas bottom
-            updates.y = canvasY + totalLayerHeight - baseImageHeight
-          } else {
-            // Stay top-aligned (positive canvas-absolute)
-            updates.y = canvasY
-          }
-        }
-      }
-
-      return updates
-    },
-    [
-      contentWidth,
-      contentHeight,
-      paddingLeft,
-      paddingTop,
-      baseImageWidth,
-      baseImageHeight,
-      layerPaddingLeft,
-      layerPaddingRight,
-      layerPaddingTop,
-      layerPaddingBottom,
-      layerRotation,
-      canDragX,
-      canDragY,
-      isRightAligned,
-      isBottomAligned,
-    ],
-  )
-
   // Handle mouse/touch down on layer box (for dragging)
   const handleLayerMouseDown = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
@@ -398,13 +223,24 @@ export function LayerOverlay({
           newDisplayY = initialState.displayY + deltaY
         }
 
-        const updates = convertToLayerPosition(
+        const updates = convertDisplayToLayerPosition(
           newDisplayX,
           newDisplayY,
           initialState.displayWidth,
           initialState.displayHeight,
           initialState.overlayWidth,
           initialState.overlayHeight,
+          baseImageWidth,
+          baseImageHeight,
+          paddingLeft,
+          paddingTop,
+          layerPaddingLeft,
+          layerPaddingRight,
+          layerPaddingTop,
+          layerPaddingBottom,
+          layerRotation,
+          layerX,
+          layerY,
         )
         // During drag, only update position - don't recalculate dimensions
         // This prevents rounding errors from causing dimension changes
@@ -520,13 +356,24 @@ export function LayerOverlay({
           }
         }
 
-        const updates = convertToLayerPosition(
+        const updates = convertDisplayToLayerPosition(
           newLeft,
           newTop,
           newWidth,
           newHeight,
           initialState.overlayWidth,
           initialState.overlayHeight,
+          baseImageWidth,
+          baseImageHeight,
+          paddingLeft,
+          paddingTop,
+          layerPaddingLeft,
+          layerPaddingRight,
+          layerPaddingTop,
+          layerPaddingBottom,
+          layerRotation,
+          layerX,
+          layerY,
         )
         onLayerChange(updates)
       }
@@ -560,11 +407,21 @@ export function LayerOverlay({
     canDragY,
     isRightAligned,
     isBottomAligned,
-    convertToLayerPosition,
     onLayerChange,
     lockedAspectRatio,
     layerWidth,
     layerHeight,
+    baseImageWidth,
+    baseImageHeight,
+    paddingLeft,
+    paddingTop,
+    layerPaddingLeft,
+    layerPaddingRight,
+    layerPaddingTop,
+    layerPaddingBottom,
+    layerRotation,
+    layerX,
+    layerY,
   ])
 
   // Handle click outside layer box to deselect
