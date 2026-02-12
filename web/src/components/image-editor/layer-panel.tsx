@@ -673,7 +673,7 @@ export function LayerPanel({
           <BaseImageItem
             imagePath={imagePath}
             name={editingLayer?.name}
-            isLayer={!!editingLayer}
+            isLayer={!!editingContext}
             isSelected={selectedLayerId === null}
             onClick={handleSelectBase}
           />
