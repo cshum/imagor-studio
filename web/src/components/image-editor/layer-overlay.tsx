@@ -3,8 +3,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   applySnapping,
   calculateLayerPosition,
+  calculateResizeWithAspectRatioAndSnapping,
   convertDisplayToLayerPosition,
-  SNAP_THRESHOLDS,
+  type ResizeHandle,
 } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
 
@@ -37,8 +38,6 @@ interface LayerOverlayProps {
   onDeselect?: () => void
   onEnterEditMode?: () => void
 }
-
-type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | null
 
 export function LayerOverlay({
   layerX,
@@ -134,7 +133,7 @@ export function LayerOverlay({
   const layerBoxRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
-  const [activeHandle, setActiveHandle] = useState<ResizeHandle>(null)
+  const [activeHandle, setActiveHandle] = useState<ResizeHandle | null>(null)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [initialState, setInitialState] = useState({
     displayX: 0,
@@ -337,220 +336,29 @@ export function LayerOverlay({
         const deltaX = clientX - dragStart.x
         const deltaY = clientY - dragStart.y
 
-        let newLeft = initialState.displayX
-        let newTop = initialState.displayY
-        let newWidth = initialState.displayWidth
-        let newHeight = initialState.displayHeight
-
-        // Handle different resize directions
-        switch (activeHandle) {
-          case 'nw':
-            newLeft = initialState.displayX + deltaX
-            newTop = initialState.displayY + deltaY
-            newWidth = initialState.displayWidth - deltaX
-            newHeight = initialState.displayHeight - deltaY
-            break
-          case 'n':
-            newTop = initialState.displayY + deltaY
-            newHeight = initialState.displayHeight - deltaY
-            break
-          case 'ne':
-            newTop = initialState.displayY + deltaY
-            newWidth = initialState.displayWidth + deltaX
-            newHeight = initialState.displayHeight - deltaY
-            break
-          case 'e':
-            newWidth = initialState.displayWidth + deltaX
-            break
-          case 'se':
-            newWidth = initialState.displayWidth + deltaX
-            newHeight = initialState.displayHeight + deltaY
-            break
-          case 's':
-            newHeight = initialState.displayHeight + deltaY
-            break
-          case 'sw':
-            newLeft = initialState.displayX + deltaX
-            newWidth = initialState.displayWidth - deltaX
-            newHeight = initialState.displayHeight + deltaY
-            break
-          case 'w':
-            newLeft = initialState.displayX + deltaX
-            newWidth = initialState.displayWidth - deltaX
-            break
-        }
-
-        // Apply aspect ratio lock if enabled
-        if (lockedAspectRatio) {
-          const aspectRatio = layerWidth / layerHeight
-
-          if (activeHandle === 'e' || activeHandle === 'w') {
-            // Horizontal resize: adjust height
-            newHeight = newWidth / aspectRatio
-            if (activeHandle === 'w') {
-              newTop = initialState.displayY + initialState.displayHeight - newHeight
-            }
-          } else if (activeHandle === 'n' || activeHandle === 's') {
-            // Vertical resize: adjust width
-            newWidth = newHeight * aspectRatio
-            if (activeHandle === 'n') {
-              newLeft = initialState.displayX + initialState.displayWidth - newWidth
-            }
-          } else {
-            // Corner resize: maintain aspect ratio
-            const widthChange = Math.abs(newWidth - initialState.displayWidth)
-            const heightChange = Math.abs(newHeight - initialState.displayHeight)
-
-            if (widthChange > heightChange) {
-              newHeight = newWidth / aspectRatio
-            } else {
-              newWidth = newHeight * aspectRatio
-            }
-
-            if (activeHandle?.includes('n')) {
-              newTop = initialState.displayY + initialState.displayHeight - newHeight
-            }
-            if (activeHandle?.includes('w')) {
-              newLeft = initialState.displayX + initialState.displayWidth - newWidth
-            }
-          }
-        }
-
-        // Enforce minimum size
-        const minSize = 20
-        if (newWidth < minSize) {
-          newWidth = minSize
-          if (lockedAspectRatio) {
-            newHeight = newWidth / (layerWidth / layerHeight)
-          }
-          if (activeHandle?.includes('w')) {
-            newLeft = initialState.displayX + initialState.displayWidth - minSize
-          }
-          if (activeHandle?.includes('n') && lockedAspectRatio) {
-            newTop = initialState.displayY + initialState.displayHeight - newHeight
-          }
-        }
-        if (newHeight < minSize) {
-          newHeight = minSize
-          if (lockedAspectRatio) {
-            newWidth = newHeight * (layerWidth / layerHeight)
-          }
-          if (activeHandle?.includes('n')) {
-            newTop = initialState.displayY + initialState.displayHeight - minSize
-          }
-          if (activeHandle?.includes('w') && lockedAspectRatio) {
-            newLeft = initialState.displayX + initialState.displayWidth - newWidth
-          }
-        }
-
-        // Apply edge-based snapping during resize (unless Cmd/Ctrl is pressed to disable)
+        // Use the pure function to calculate resize dimensions
         const disableSnapping = e.metaKey || e.ctrlKey
-        if (!disableSnapping) {
-          // Snap edges based on which handle is being dragged
-          // This prevents jumpy behavior by adjusting size to match snapped edges
+        const aspectRatio = layerWidth / layerHeight
 
-          // Horizontal edge snapping
-          if (activeHandle?.includes('w')) {
-            // Moving left edge - snap to left edge or center
-            if (Math.abs(newLeft) < SNAP_THRESHOLDS.EDGE_PIXELS) {
-              const adjustment = newLeft - 0
-              newLeft = 0
-              newWidth += adjustment
-            } else {
-              const centerX = initialState.overlayWidth / 2
-              if (Math.abs(newLeft - centerX) < SNAP_THRESHOLDS.EDGE_PIXELS) {
-                const adjustment = newLeft - centerX
-                newLeft = centerX
-                newWidth += adjustment
-              }
-            }
-          }
-
-          if (activeHandle?.includes('e')) {
-            // Moving right edge - snap to right edge or center
-            const rightEdge = newLeft + newWidth
-            const overlayRight = initialState.overlayWidth
-            if (Math.abs(rightEdge - overlayRight) < SNAP_THRESHOLDS.EDGE_PIXELS) {
-              newWidth = overlayRight - newLeft
-            } else {
-              const centerX = initialState.overlayWidth / 2
-              if (Math.abs(rightEdge - centerX) < SNAP_THRESHOLDS.EDGE_PIXELS) {
-                newWidth = centerX - newLeft
-              }
-            }
-          }
-
-          // Vertical edge snapping
-          if (activeHandle?.includes('n')) {
-            // Moving top edge - snap to top edge or center
-            if (Math.abs(newTop) < SNAP_THRESHOLDS.EDGE_PIXELS) {
-              const adjustment = newTop - 0
-              newTop = 0
-              newHeight += adjustment
-            } else {
-              const centerY = initialState.overlayHeight / 2
-              if (Math.abs(newTop - centerY) < SNAP_THRESHOLDS.EDGE_PIXELS) {
-                const adjustment = newTop - centerY
-                newTop = centerY
-                newHeight += adjustment
-              }
-            }
-          }
-
-          if (activeHandle?.includes('s')) {
-            // Moving bottom edge - snap to bottom edge or center
-            const bottomEdge = newTop + newHeight
-            const overlayBottom = initialState.overlayHeight
-            if (Math.abs(bottomEdge - overlayBottom) < SNAP_THRESHOLDS.EDGE_PIXELS) {
-              newHeight = overlayBottom - newTop
-            } else {
-              const centerY = initialState.overlayHeight / 2
-              if (Math.abs(bottomEdge - centerY) < SNAP_THRESHOLDS.EDGE_PIXELS) {
-                newHeight = centerY - newTop
-              }
-            }
-          }
-        }
-
-        // Re-apply aspect ratio lock after snapping to maintain correct aspect ratio
-        // Snapping may have adjusted dimensions, so we need to compensate
-        if (lockedAspectRatio) {
-          const aspectRatio = layerWidth / layerHeight
-
-          if (activeHandle === 'e' || activeHandle === 'w') {
-            // Horizontal edge resize: width was potentially snapped, adjust height
-            newHeight = newWidth / aspectRatio
-            // Adjust top position for top-anchored handles
-            if (activeHandle === 'w') {
-              newTop = initialState.displayY + initialState.displayHeight - newHeight
-            }
-          } else if (activeHandle === 'n' || activeHandle === 's') {
-            // Vertical edge resize: height was potentially snapped, adjust width
-            newWidth = newHeight * aspectRatio
-            // Adjust left position for left-anchored handles
-            if (activeHandle === 'n') {
-              newLeft = initialState.displayX + initialState.displayWidth - newWidth
-            }
-          } else {
-            // Corner resize: determine which dimension changed more (likely the one that was snapped)
-            const widthRatio = newWidth / initialState.displayWidth
-            const heightRatio = newHeight / initialState.displayHeight
-
-            if (Math.abs(widthRatio - 1) > Math.abs(heightRatio - 1)) {
-              // Width changed more (likely snapped), adjust height to maintain aspect ratio
-              newHeight = newWidth / aspectRatio
-              if (activeHandle?.includes('n')) {
-                newTop = initialState.displayY + initialState.displayHeight - newHeight
-              }
-            } else {
-              // Height changed more (likely snapped), adjust width to maintain aspect ratio
-              newWidth = newHeight * aspectRatio
-              if (activeHandle?.includes('w')) {
-                newLeft = initialState.displayX + initialState.displayWidth - newWidth
-              }
-            }
-          }
-        }
+        const {
+          left: newLeft,
+          top: newTop,
+          width: newWidth,
+          height: newHeight,
+        } = calculateResizeWithAspectRatioAndSnapping(
+          activeHandle,
+          deltaX,
+          deltaY,
+          initialState.displayX,
+          initialState.displayY,
+          initialState.displayWidth,
+          initialState.displayHeight,
+          initialState.overlayWidth,
+          initialState.overlayHeight,
+          aspectRatio,
+          lockedAspectRatio,
+          disableSnapping,
+        )
 
         const updates = convertDisplayToLayerPosition(
           newLeft,
@@ -619,7 +427,6 @@ export function LayerOverlay({
     layerX,
     layerY,
     layerFillColor,
-    applySnapping,
   ])
 
   // Handle click outside layer box to deselect

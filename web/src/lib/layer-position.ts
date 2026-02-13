@@ -324,6 +324,270 @@ export function calculateLayerImageDimensions(
   }
 }
 
+export interface ResizeDimensions {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+export type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
+
+/**
+ * Calculate resize dimensions with aspect ratio lock and snapping
+ *
+ * This pure function handles the complex interaction between:
+ * 1. User's resize gesture (delta from initial state)
+ * 2. Aspect ratio locking (maintaining original proportions)
+ * 3. Edge/center snapping (aligning to canvas boundaries)
+ *
+ * The order of operations is critical:
+ * 1. Apply resize delta based on handle direction
+ * 2. Apply aspect ratio lock (if enabled)
+ * 3. Enforce minimum size constraints
+ * 4. Apply edge/center snapping (if enabled)
+ * 5. Re-apply aspect ratio lock to compensate for snapping adjustments
+ *
+ * @param handle - Which resize handle is being dragged
+ * @param deltaX - Horizontal mouse movement in pixels
+ * @param deltaY - Vertical mouse movement in pixels
+ * @param initialLeft - Initial left position
+ * @param initialTop - Initial top position
+ * @param initialWidth - Initial width
+ * @param initialHeight - Initial height
+ * @param overlayWidth - Width of the overlay container (for snapping calculations)
+ * @param overlayHeight - Height of the overlay container (for snapping calculations)
+ * @param aspectRatio - Original aspect ratio (width / height) - only used if lockedAspectRatio is true
+ * @param lockedAspectRatio - Whether to maintain aspect ratio during resize
+ * @param disableSnapping - Whether to disable edge/center snapping
+ * @param minSize - Minimum allowed dimension (default 20px)
+ * @returns New dimensions after applying all transformations
+ */
+export function calculateResizeWithAspectRatioAndSnapping(
+  handle: ResizeHandle,
+  deltaX: number,
+  deltaY: number,
+  initialLeft: number,
+  initialTop: number,
+  initialWidth: number,
+  initialHeight: number,
+  overlayWidth: number,
+  overlayHeight: number,
+  aspectRatio: number,
+  lockedAspectRatio: boolean,
+  disableSnapping: boolean,
+  minSize = 20,
+): ResizeDimensions {
+  let newLeft = initialLeft
+  let newTop = initialTop
+  let newWidth = initialWidth
+  let newHeight = initialHeight
+
+  // Step 1: Apply resize delta based on handle direction
+  switch (handle) {
+    case 'nw':
+      newLeft = initialLeft + deltaX
+      newTop = initialTop + deltaY
+      newWidth = initialWidth - deltaX
+      newHeight = initialHeight - deltaY
+      break
+    case 'n':
+      newTop = initialTop + deltaY
+      newHeight = initialHeight - deltaY
+      break
+    case 'ne':
+      newTop = initialTop + deltaY
+      newWidth = initialWidth + deltaX
+      newHeight = initialHeight - deltaY
+      break
+    case 'e':
+      newWidth = initialWidth + deltaX
+      break
+    case 'se':
+      newWidth = initialWidth + deltaX
+      newHeight = initialHeight + deltaY
+      break
+    case 's':
+      newHeight = initialHeight + deltaY
+      break
+    case 'sw':
+      newLeft = initialLeft + deltaX
+      newWidth = initialWidth - deltaX
+      newHeight = initialHeight + deltaY
+      break
+    case 'w':
+      newLeft = initialLeft + deltaX
+      newWidth = initialWidth - deltaX
+      break
+  }
+
+  // Step 2: Apply aspect ratio lock if enabled
+  if (lockedAspectRatio) {
+    if (handle === 'e' || handle === 'w') {
+      // Horizontal resize: adjust height
+      newHeight = newWidth / aspectRatio
+      if (handle === 'w') {
+        newTop = initialTop + initialHeight - newHeight
+      }
+    } else if (handle === 'n' || handle === 's') {
+      // Vertical resize: adjust width
+      newWidth = newHeight * aspectRatio
+      if (handle === 'n') {
+        newLeft = initialLeft + initialWidth - newWidth
+      }
+    } else {
+      // Corner resize: maintain aspect ratio
+      const widthChange = Math.abs(newWidth - initialWidth)
+      const heightChange = Math.abs(newHeight - initialHeight)
+
+      if (widthChange > heightChange) {
+        newHeight = newWidth / aspectRatio
+      } else {
+        newWidth = newHeight * aspectRatio
+      }
+
+      if (handle.includes('n')) {
+        newTop = initialTop + initialHeight - newHeight
+      }
+      if (handle.includes('w')) {
+        newLeft = initialLeft + initialWidth - newWidth
+      }
+    }
+  }
+
+  // Step 3: Enforce minimum size constraints
+  if (newWidth < minSize) {
+    newWidth = minSize
+    if (lockedAspectRatio) {
+      newHeight = newWidth / aspectRatio
+    }
+    if (handle.includes('w')) {
+      newLeft = initialLeft + initialWidth - minSize
+    }
+    if (handle.includes('n') && lockedAspectRatio) {
+      newTop = initialTop + initialHeight - newHeight
+    }
+  }
+  if (newHeight < minSize) {
+    newHeight = minSize
+    if (lockedAspectRatio) {
+      newWidth = newHeight * aspectRatio
+    }
+    if (handle.includes('n')) {
+      newTop = initialTop + initialHeight - minSize
+    }
+    if (handle.includes('w') && lockedAspectRatio) {
+      newLeft = initialLeft + initialWidth - newWidth
+    }
+  }
+
+  // Step 4: Apply edge-based snapping (unless disabled)
+  if (!disableSnapping) {
+    // Horizontal edge snapping
+    if (handle.includes('w')) {
+      // Moving left edge - snap to left edge or center
+      if (Math.abs(newLeft) < SNAP_THRESHOLDS.EDGE_PIXELS) {
+        newWidth = newWidth + newLeft // Adjust width to compensate for position change
+        newLeft = 0
+      } else {
+        const centerX = overlayWidth / 2
+        if (Math.abs(newLeft - centerX) < SNAP_THRESHOLDS.EDGE_PIXELS) {
+          newWidth = newWidth + (newLeft - centerX) // Adjust width to compensate
+          newLeft = centerX
+        }
+      }
+    }
+
+    if (handle.includes('e')) {
+      // Moving right edge - snap to right edge or center
+      const rightEdge = newLeft + newWidth
+      const overlayRight = overlayWidth
+      if (Math.abs(rightEdge - overlayRight) < SNAP_THRESHOLDS.EDGE_PIXELS) {
+        newWidth = overlayRight - newLeft
+      } else {
+        const centerX = overlayWidth / 2
+        if (Math.abs(rightEdge - centerX) < SNAP_THRESHOLDS.EDGE_PIXELS) {
+          newWidth = centerX - newLeft
+        }
+      }
+    }
+
+    // Vertical edge snapping
+    if (handle.includes('n')) {
+      // Moving top edge - snap to top edge or center
+      if (Math.abs(newTop) < SNAP_THRESHOLDS.EDGE_PIXELS) {
+        newHeight = newHeight + newTop // Adjust height to compensate for position change
+        newTop = 0
+      } else {
+        const centerY = overlayHeight / 2
+        if (Math.abs(newTop - centerY) < SNAP_THRESHOLDS.EDGE_PIXELS) {
+          newHeight = newHeight + (newTop - centerY) // Adjust height to compensate
+          newTop = centerY
+        }
+      }
+    }
+
+    if (handle.includes('s')) {
+      // Moving bottom edge - snap to bottom edge or center
+      const bottomEdge = newTop + newHeight
+      const overlayBottom = overlayHeight
+      if (Math.abs(bottomEdge - overlayBottom) < SNAP_THRESHOLDS.EDGE_PIXELS) {
+        newHeight = overlayBottom - newTop
+      } else {
+        const centerY = overlayHeight / 2
+        if (Math.abs(bottomEdge - centerY) < SNAP_THRESHOLDS.EDGE_PIXELS) {
+          newHeight = centerY - newTop
+        }
+      }
+    }
+  }
+
+  // Step 5: Re-apply aspect ratio lock after snapping
+  // Snapping may have adjusted dimensions, so we need to compensate
+  if (lockedAspectRatio) {
+    if (handle === 'e' || handle === 'w') {
+      // Horizontal edge resize: width was potentially snapped, adjust height
+      newHeight = newWidth / aspectRatio
+      // Adjust top position for top-anchored handles
+      if (handle === 'w') {
+        newTop = initialTop + initialHeight - newHeight
+      }
+    } else if (handle === 'n' || handle === 's') {
+      // Vertical edge resize: height was potentially snapped, adjust width
+      newWidth = newHeight * aspectRatio
+      // Adjust left position for left-anchored handles
+      if (handle === 'n') {
+        newLeft = initialLeft + initialWidth - newWidth
+      }
+    } else {
+      // Corner resize: determine which dimension changed more (likely the one that was snapped)
+      const widthRatio = newWidth / initialWidth
+      const heightRatio = newHeight / initialHeight
+
+      if (Math.abs(widthRatio - 1) > Math.abs(heightRatio - 1)) {
+        // Width changed more (likely snapped), adjust height to maintain aspect ratio
+        newHeight = newWidth / aspectRatio
+        if (handle.includes('n')) {
+          newTop = initialTop + initialHeight - newHeight
+        }
+      } else {
+        // Height changed more (likely snapped), adjust width to maintain aspect ratio
+        newWidth = newHeight * aspectRatio
+        if (handle.includes('w')) {
+          newLeft = initialLeft + initialWidth - newWidth
+        }
+      }
+    }
+  }
+
+  return {
+    left: newLeft,
+    top: newTop,
+    width: newWidth,
+    height: newHeight,
+  }
+}
+
 export interface LayerPositionUpdates {
   x?: string | number
   y?: string | number

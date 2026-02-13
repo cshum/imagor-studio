@@ -4,6 +4,7 @@ import {
   applySnapping,
   calculateLayerImageDimensions,
   calculateLayerPosition,
+  calculateResizeWithAspectRatioAndSnapping,
   convertDisplayToLayerPosition,
   rotatePadding,
   SNAP_THRESHOLDS,
@@ -1414,6 +1415,538 @@ describe('applySnapping', () => {
       expect(SNAP_THRESHOLDS.CENTER_ESCAPE_PERCENT).toBe(0.03)
       // Note: This threshold is used in convertDisplayToLayerPosition, not applySnapping
       // This test just verifies the constant exists and has the correct value
+    })
+  })
+})
+
+describe('calculateResizeWithAspectRatioAndSnapping', () => {
+  const overlayWidth = 1000
+  const overlayHeight = 800
+  const initialLeft = 100
+  const initialTop = 100
+  const initialWidth = 200
+  const initialHeight = 150
+  const aspectRatio = initialWidth / initialHeight // 4:3
+
+  describe('Basic Resize Without Aspect Ratio Lock or Snapping', () => {
+    it('should resize from east handle', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'e',
+        50, // deltaX
+        0,
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        false, // no aspect ratio lock
+        true, // disable snapping
+      )
+
+      expect(result.left).toBe(100)
+      expect(result.top).toBe(100)
+      expect(result.width).toBe(250) // 200 + 50
+      expect(result.height).toBe(150) // unchanged
+    })
+
+    it('should resize from south handle', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        's',
+        0,
+        40, // deltaY
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        false,
+        true,
+      )
+
+      expect(result.left).toBe(100)
+      expect(result.top).toBe(100)
+      expect(result.width).toBe(200) // unchanged
+      expect(result.height).toBe(190) // 150 + 40
+    })
+
+    it('should resize from southeast corner', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'se',
+        50,
+        40,
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        false,
+        true,
+      )
+
+      expect(result.left).toBe(100)
+      expect(result.top).toBe(100)
+      expect(result.width).toBe(250)
+      expect(result.height).toBe(190)
+    })
+
+    it('should resize from west handle (moves left edge)', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'w',
+        -30, // move left edge left by 30px
+        0,
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        false,
+        true,
+      )
+
+      expect(result.left).toBe(70) // 100 - 30
+      expect(result.top).toBe(100)
+      expect(result.width).toBe(230) // 200 + 30
+      expect(result.height).toBe(150)
+    })
+
+    it('should resize from north handle (moves top edge)', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'n',
+        0,
+        -20, // move top edge up by 20px
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        false,
+        true,
+      )
+
+      expect(result.left).toBe(100)
+      expect(result.top).toBe(80) // 100 - 20
+      expect(result.width).toBe(200)
+      expect(result.height).toBe(170) // 150 + 20
+    })
+  })
+
+  describe('Resize With Aspect Ratio Lock', () => {
+    it('should maintain aspect ratio when resizing from east handle', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'e',
+        60, // deltaX
+        0,
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        true, // aspect ratio locked
+        true, // disable snapping
+      )
+
+      const newWidth = 260 // 200 + 60
+      const expectedHeight = newWidth / aspectRatio // 260 / (4/3) = 195
+
+      expect(result.left).toBe(100)
+      expect(result.top).toBe(100)
+      expect(result.width).toBe(newWidth)
+      expect(result.height).toBe(expectedHeight)
+    })
+
+    it('should maintain aspect ratio when resizing from south handle', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        's',
+        0,
+        45, // deltaY
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        true,
+        true,
+      )
+
+      const newHeight = 195 // 150 + 45
+      const expectedWidth = newHeight * aspectRatio // 195 * (4/3) = 260
+
+      expect(result.left).toBe(100)
+      expect(result.top).toBe(100)
+      expect(result.width).toBe(expectedWidth)
+      expect(result.height).toBe(newHeight)
+    })
+
+    it('should maintain aspect ratio when resizing from southeast corner', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'se',
+        80, // larger width change
+        30, // smaller height change
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        true,
+        true,
+      )
+
+      // Width change is larger, so height should adjust
+      const newWidth = 280 // 200 + 80
+      const expectedHeight = newWidth / aspectRatio // 280 / (4/3) = 210
+
+      expect(result.width).toBe(newWidth)
+      expect(result.height).toBe(expectedHeight)
+    })
+
+    it('should adjust position when resizing from west handle with aspect ratio', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'w',
+        -40,
+        0,
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        true,
+        true,
+      )
+
+      const newWidth = 240 // 200 + 40
+      const newHeight = newWidth / aspectRatio // 240 / (4/3) = 180
+      const expectedTop = initialTop + initialHeight - newHeight // 100 + 150 - 180 = 70
+
+      expect(result.left).toBe(60) // 100 - 40
+      expect(result.top).toBe(expectedTop)
+      expect(result.width).toBe(newWidth)
+      expect(result.height).toBe(newHeight)
+    })
+  })
+
+  describe('Edge Snapping Without Aspect Ratio Lock', () => {
+    it('should snap to left edge when resizing from west handle', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'w',
+        -95, // move to within 5px of left edge
+        0,
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        false,
+        false, // enable snapping
+      )
+
+      expect(result.left).toBe(0) // snapped to left edge
+      expect(result.width).toBe(300) // 200 + 100 (initial 295 from delta, then +5 from snap adjustment)
+      expect(result.height).toBe(150) // unchanged (no aspect ratio lock)
+    })
+
+    it('should snap to right edge when resizing from east handle', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'e',
+        695, // move to within threshold of right edge (100 + 200 + 695 = 995)
+        0,
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        false,
+        false,
+      )
+
+      expect(result.left).toBe(100)
+      expect(result.width).toBe(900) // snapped to right edge (1000 - 100)
+      expect(result.height).toBe(150)
+    })
+
+    it('should snap to top edge when resizing from north handle', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'n',
+        0,
+        -95, // move to within 5px of top edge
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        false,
+        false,
+      )
+
+      expect(result.top).toBe(0) // snapped to top edge
+      expect(result.height).toBe(250) // 150 + 100 (initial 245 from delta, then +5 from snap adjustment)
+      expect(result.width).toBe(200)
+    })
+
+    it('should snap to bottom edge when resizing from south handle', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        's',
+        0,
+        545, // move to within threshold of bottom edge (100 + 150 + 545 = 795)
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        false,
+        false,
+      )
+
+      expect(result.top).toBe(100)
+      expect(result.height).toBe(700) // snapped to bottom edge (800 - 100)
+      expect(result.width).toBe(200)
+    })
+  })
+
+  describe('Edge Snapping WITH Aspect Ratio Lock - The Critical Fix!', () => {
+    it('should maintain aspect ratio after snapping to right edge from east handle', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'e',
+        695, // snap to right edge
+        0,
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        true, // aspect ratio locked
+        false, // snapping enabled
+      )
+
+      const snappedWidth = 900 // 1000 - 100 (snapped to right edge)
+      const expectedHeight = snappedWidth / aspectRatio // 900 / (4/3) = 675
+
+      expect(result.left).toBe(100)
+      expect(result.width).toBe(snappedWidth)
+      expect(result.height).toBe(expectedHeight) // Height adjusted to maintain aspect ratio!
+    })
+
+    it('should maintain aspect ratio after snapping to bottom edge from south handle', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        's',
+        0,
+        545, // snap to bottom edge
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        true,
+        false,
+      )
+
+      const snappedHeight = 700 // 800 - 100 (snapped to bottom edge)
+      const expectedWidth = snappedHeight * aspectRatio // 700 * (4/3) = 933.33...
+
+      expect(result.top).toBe(100)
+      expect(result.height).toBe(snappedHeight)
+      expect(result.width).toBeCloseTo(expectedWidth, 1) // Width adjusted to maintain aspect ratio!
+    })
+
+    it('should maintain aspect ratio after snapping to left edge from west handle', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'w',
+        -95, // snap to left edge
+        0,
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        true,
+        false,
+      )
+
+      const snappedWidth = 300 // width after snapping left edge to 0
+      const expectedHeight = snappedWidth / aspectRatio // 300 / (4/3) = 225
+      const expectedTop = initialTop + initialHeight - expectedHeight // 100 + 150 - 225 = 25
+
+      expect(result.left).toBe(0)
+      expect(result.width).toBe(snappedWidth)
+      expect(result.height).toBeCloseTo(expectedHeight, 1)
+      expect(result.top).toBeCloseTo(expectedTop, 1)
+    })
+
+    it('should maintain aspect ratio after snapping to top edge from north handle', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'n',
+        0,
+        -95, // snap to top edge
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        true,
+        false,
+      )
+
+      const snappedHeight = 250 // height after snapping top edge to 0
+      const expectedWidth = snappedHeight * aspectRatio // 250 * (4/3) = 333.33
+      const expectedLeft = initialLeft + initialWidth - expectedWidth // 100 + 200 - 333.33 = -33.33
+
+      expect(result.top).toBe(0)
+      expect(result.height).toBe(snappedHeight)
+      expect(result.width).toBeCloseTo(expectedWidth, 1)
+      expect(result.left).toBeCloseTo(expectedLeft, 1)
+    })
+
+    it('should maintain aspect ratio when snapping corner resize', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'se',
+        695, // snap to right edge
+        545, // snap to bottom edge
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        true,
+        false,
+      )
+
+      // Both edges snap, but aspect ratio must be maintained
+      // Width snaps to 900, height snaps to 700
+      // Width change ratio: 900/200 = 4.5
+      // Height change ratio: 700/150 = 4.67
+      // Width changed more, so keep width and adjust height
+      const snappedWidth = 900
+      const expectedHeight = snappedWidth / aspectRatio // 900 / (4/3) = 675
+
+      expect(result.width).toBe(snappedWidth)
+      expect(result.height).toBe(expectedHeight) // Not 700! Aspect ratio takes priority
+    })
+  })
+
+  describe('Minimum Size Constraints', () => {
+    it('should enforce minimum width', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'e',
+        -190, // try to make width 10px
+        0,
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        false,
+        true,
+        20, // minSize
+      )
+
+      expect(result.width).toBe(20) // enforced minimum
+      expect(result.height).toBe(150) // unchanged (no aspect ratio lock)
+    })
+
+    it('should enforce minimum height', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        's',
+        0,
+        -140, // try to make height 10px
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        false,
+        true,
+        20,
+      )
+
+      expect(result.width).toBe(200)
+      expect(result.height).toBe(20) // enforced minimum
+    })
+
+    it('should enforce minimum size with aspect ratio lock', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'e',
+        -190, // try to make width very small
+        0,
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        true, // aspect ratio locked
+        true,
+        20,
+      )
+
+      // When width hits minimum (20), height is adjusted for aspect ratio (15)
+      // But then height also hits minimum (20), so width is re-adjusted
+      const minHeight = 20
+      const expectedWidth = minHeight * aspectRatio // 20 * (4/3) = 26.67
+
+      expect(result.height).toBe(minHeight)
+      expect(result.width).toBeCloseTo(expectedWidth, 1)
+    })
+  })
+
+  describe('Disable Snapping Flag', () => {
+    it('should not snap when snapping is disabled', () => {
+      const result = calculateResizeWithAspectRatioAndSnapping(
+        'e',
+        695, // would snap to right edge if enabled
+        0,
+        initialLeft,
+        initialTop,
+        initialWidth,
+        initialHeight,
+        overlayWidth,
+        overlayHeight,
+        aspectRatio,
+        false,
+        true, // snapping disabled
+      )
+
+      expect(result.width).toBe(895) // 200 + 695, no snapping
+      expect(result.height).toBe(150)
     })
   })
 })
