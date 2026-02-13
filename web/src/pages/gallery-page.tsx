@@ -835,7 +835,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     return (
       <>
         <ContextMenuLabel>
-          {t('pages.gallery.selection.itemsSelected', { count: selection.selectedItems.size })}
+          {t('pages.gallery.selection.title', { count: selection.selectedItems.size })}
         </ContextMenuLabel>
         <ContextMenuSeparatorComponent />
         <ContextMenuItem onClick={handleClearSelection} className='hover:cursor-pointer'>

@@ -261,8 +261,6 @@
         "count_plural": "{{count}} items",
         "title": "{{count}} item selected",
         "title_plural": "{{count}} items selected",
-        "itemsSelected": "{{count}} item selected",
-        "itemsSelected_plural": "{{count}} items selected",
         "downloadAll": "Download All",
         "moveSelected": "Move to Folder",
         "deleteSelected": "Delete Selected",
