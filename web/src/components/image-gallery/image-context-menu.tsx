@@ -15,6 +15,7 @@ interface ImageContextMenuProps {
   renderBulkMenuItems?: () => React.ReactNode
   selectedItems?: Set<string>
   selectedCount?: number
+  galleryKey?: string
 }
 
 export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
@@ -23,6 +24,7 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
   renderBulkMenuItems,
   selectedItems,
   selectedCount = 0,
+  galleryKey = '',
 }) => {
   const [contextImageKey, setContextImageKey] = useState<string | null>(null)
   const [contextImageName, setContextImageName] = useState<string>('')
@@ -41,10 +43,15 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
       const isVideo = imageElement.getAttribute('data-is-video') === 'true'
 
       // If this image is in the selection, show bulk menu instead
-      if (selectedItems && imageKey && selectedItems.has(imageKey) && selectedCount > 0) {
-        setShowBulkMenu(true)
-        setContextImageKey(null)
-        return
+      if (selectedItems && imageKey && selectedCount > 0) {
+        // Construct full image path for comparison with selectedItems
+        const fullImagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
+
+        if (selectedItems.has(fullImagePath)) {
+          setShowBulkMenu(true)
+          setContextImageKey(null)
+          return
+        }
       }
 
       // Show individual menu

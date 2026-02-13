@@ -1142,6 +1142,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                         renderBulkMenuItems={renderBulkMenuItems}
                         selectedItems={selection.selectedItems}
                         selectedCount={selection.selectedItems.size}
+                        galleryKey={galleryKey}
                       >
                         <ImageGrid
                           images={filteredImages}
