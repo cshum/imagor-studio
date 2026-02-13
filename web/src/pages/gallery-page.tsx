@@ -834,6 +834,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const renderBulkMenuItems = () => {
     return (
       <>
+        <ContextMenuLabel>
+          {t('pages.gallery.selection.itemsSelected', { count: selection.selectedItems.size })}
+        </ContextMenuLabel>
+        <ContextMenuSeparatorComponent />
         <ContextMenuItem onClick={handleClearSelection} className='hover:cursor-pointer'>
           <X className='text-muted-foreground mr-3 h-4 w-4' />
           {t('pages.gallery.selection.clearSelection')}
