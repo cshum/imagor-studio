@@ -309,14 +309,16 @@ export function convertDisplayToLayerPosition(
       const calculatedOffset = canvasX + totalLayerWidth - baseImageWidth
 
       if (calculatedOffset > 0) {
-        updates.x = canvasX - basePaddingLeft
+        // Crossed to left side - use absolute position
+        updates.x = canvasX
       } else if (calculatedOffset === 0) {
         updates.x = 'right'
       } else {
         updates.x = calculatedOffset
       }
     } else {
-      if (canvasX < basePaddingLeft) {
+      // Left-aligned: check if crossing to right side (canvasX goes negative)
+      if (canvasX < 0) {
         updates.x = canvasX + totalLayerWidth - baseImageWidth
       } else {
         updates.x = canvasX
@@ -334,14 +336,16 @@ export function convertDisplayToLayerPosition(
       const calculatedOffset = canvasY + totalLayerHeight - baseImageHeight
 
       if (calculatedOffset > 0) {
-        updates.y = canvasY - basePaddingTop
+        // Crossed to top side - use absolute position
+        updates.y = canvasY
       } else if (calculatedOffset === 0) {
         updates.y = 'bottom'
       } else {
         updates.y = calculatedOffset
       }
     } else {
-      if (canvasY < basePaddingTop) {
+      // Top-aligned: check if crossing to bottom side (canvasY goes negative)
+      if (canvasY < 0) {
         updates.y = canvasY + totalLayerHeight - baseImageHeight
       } else {
         updates.y = canvasY
