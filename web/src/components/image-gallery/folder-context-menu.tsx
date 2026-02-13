@@ -35,8 +35,8 @@ export const FolderContextMenu = ({
       // Ensure folder key ends with / for comparison
       const normalizedFolderKey = folderKey.endsWith('/') ? folderKey : `${folderKey}/`
 
-      // If this folder is in the selection, show bulk menu instead
-      if (selectedItems && selectedItems.has(normalizedFolderKey) && selectedCount > 0) {
+      // If this folder is in the selection AND multiple items are selected, show bulk menu
+      if (selectedItems && selectedItems.has(normalizedFolderKey) && selectedCount > 1) {
         setShowBulkMenu(true)
         setContextData(null)
         return

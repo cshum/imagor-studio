@@ -42,8 +42,8 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
       const imageName = imageElement.getAttribute('data-image-name') || ''
       const isVideo = imageElement.getAttribute('data-is-video') === 'true'
 
-      // If this image is in the selection, show bulk menu instead
-      if (selectedItems && imageKey && selectedCount > 0) {
+      // If this image is in the selection AND multiple items are selected, show bulk menu
+      if (selectedItems && imageKey && selectedCount > 1) {
         // Construct full image path for comparison with selectedItems
         const fullImagePath = galleryKey ? `${galleryKey}/${imageKey}` : imageKey
 
