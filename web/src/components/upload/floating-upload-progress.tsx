@@ -14,6 +14,7 @@ export interface FloatingUploadProgressProps {
   onCancelFile?: (id: string) => void
   onRetryFile?: (id: string) => Promise<void>
   onClearAll?: () => void
+  onSuccess?: (count: number) => Promise<void>
 }
 
 export function FloatingUploadProgress({
@@ -23,6 +24,7 @@ export function FloatingUploadProgress({
   onCancelFile,
   onRetryFile,
   onClearAll,
+  onSuccess,
 }: FloatingUploadProgressProps) {
   const { t } = useTranslation()
   const [isExpanded, setIsExpanded] = useState(true)
@@ -54,15 +56,18 @@ export function FloatingUploadProgress({
   // Auto-hide after successful completion (no errors)
   useEffect(() => {
     if (isComplete && !hasErrors && !isUploading) {
-      // Wait 3 seconds then clear files
-      const timer = setTimeout(() => {
+      // Wait 3 seconds, call onSuccess (which handles invalidation + toast), then clear files
+      const timer = setTimeout(async () => {
+        if (onSuccess) {
+          await onSuccess(completedFiles)
+        }
         onClearAll?.()
       }, 3000)
       setAutoHideTimer(timer)
 
       return () => clearTimeout(timer)
     }
-  }, [isComplete, hasErrors, isUploading, onClearAll])
+  }, [isComplete, hasErrors, isUploading, onClearAll, onSuccess, completedFiles])
 
   const getHeaderContent = () => {
     if (hasActiveUploads) {
@@ -97,7 +102,7 @@ export function FloatingUploadProgress({
         side="bottom"
         hideOverlay={true}
         hideClose={true}
-        className="mx-auto max-w-2xl border-t p-4"
+        className="mx-auto max-w-2xl rounded-t-xl p-4"
       >
         {/* Header */}
         <div className="mb-3 flex items-center justify-between">
@@ -147,7 +152,7 @@ export function FloatingUploadProgress({
             {files.map((file) => (
               <div
                 key={file.id}
-                className="bg-muted/50 hover:bg-muted relative flex items-center gap-2 rounded-md p-2 transition-colors"
+                className="relative flex items-center gap-2 rounded-md bg-muted p-2 hover:bg-accent"
               >
                 <FileStatusIcon status={file.status} />
 
@@ -162,7 +167,7 @@ export function FloatingUploadProgress({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1">
                   {file.status === 'uploading' && onCancelFile && (
                     <Button
                       variant="ghost"
@@ -202,13 +207,6 @@ export function FloatingUploadProgress({
                       </Button>
                     )}
                 </div>
-
-                {/* Individual progress bar */}
-                {file.status === 'uploading' && (
-                  <div className="absolute right-0 bottom-0 left-0">
-                    <Progress value={file.progress} className="h-1 rounded-none" />
-                  </div>
-                )}
               </div>
             ))}
           </div>
