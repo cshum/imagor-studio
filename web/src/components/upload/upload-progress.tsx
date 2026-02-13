@@ -273,7 +273,6 @@ export function UploadProgress({
                   <p className='truncate text-sm font-medium'>{file.file.name}</p>
                   <div className='text-muted-foreground flex items-center gap-2 text-xs'>
                     <span>{formatFileSize(file.file.size)}</span>
-                    {file.status === 'uploading' && <span>{Math.round(file.progress)}%</span>}
                     {file.error && <span className='text-destructive truncate'>{file.error}</span>}
                   </div>
                 </div>
@@ -321,10 +320,10 @@ export function UploadProgress({
         )}
 
         {/* Summary stats when collapsed */}
-        {!state.isExpanded && (
+        {!state.isExpanded && stats.hasActiveUploads && (
           <div className='space-y-2'>
             {/* Progress bar - only show during active upload */}
-            {stats.hasActiveUploads && <Progress value={stats.progress} className='h-1.5' />}
+            <Progress value={stats.progress} className='h-1.5' />
 
             {/* Stats summary */}
             <div className='text-muted-foreground flex items-center gap-3 text-sm'>

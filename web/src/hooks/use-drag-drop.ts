@@ -173,25 +173,12 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
 
       for (const fileItem of filesToUpload) {
         try {
-          // Simulate progress updates
-          const progressInterval = setInterval(() => {
-            setFiles((prev) =>
-              prev.map((f) =>
-                f.id === fileItem.id && f.status === 'uploading'
-                  ? { ...f, progress: Math.min(f.progress + 10, 90) }
-                  : f,
-              ),
-            )
-          }, 100)
-
           const filePath = currentPath ? `${currentPath}/${fileItem.file.name}` : fileItem.file.name
           const success = await onFileUpload(
             fileItem.file,
             filePath,
             fileItem.abortController?.signal,
           )
-
-          clearInterval(progressInterval)
 
           if (success) {
             setFiles((prev) =>
@@ -283,21 +270,8 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
 
         setIsUploading(true)
 
-        // Simulate progress updates
-        const progressInterval = setInterval(() => {
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === id && f.status === 'uploading'
-                ? { ...f, progress: Math.min(f.progress + 10, 90) }
-                : f,
-            ),
-          )
-        }, 100)
-
         const filePath = currentPath ? `${currentPath}/${fileItem.file.name}` : fileItem.file.name
         const success = await onFileUpload(fileItem.file, filePath, abortController.signal)
-
-        clearInterval(progressInterval)
 
         if (success) {
           setFiles((prev) =>
