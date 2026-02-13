@@ -674,6 +674,7 @@ export function LayerPanel({
         <div className='shrink-0'>
           <LayerControls
             layer={selectedLayer}
+            imageEditor={imageEditor}
             isEditing={editingContext === selectedLayer.id}
             aspectRatioLocked={layerAspectRatioLocked}
             onAspectRatioLockChange={onLayerAspectRatioLockChange}

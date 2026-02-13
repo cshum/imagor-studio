@@ -328,14 +328,14 @@ export function convertDisplayToLayerPosition(
         const expectedCenterX = (baseImageWidth - totalLayerWidth) / 2
         const threshold = baseImageWidth * DRAG_THRESHOLD_PERCENT
         const distanceFromCenter = canvasX - expectedCenterX
-        
+
         if (Math.abs(distanceFromCenter) >= threshold) {
           // Dragged beyond threshold - switch to edge alignment
           if (distanceFromCenter < 0) {
             updates.x = canvasX // Left
           } else {
             updates.x = canvasX + totalLayerWidth - baseImageWidth // Right
-          } 
+          }
         } else {
           // Within threshold - keep centered
           updates.x = 'center'
@@ -384,7 +384,7 @@ export function convertDisplayToLayerPosition(
         const expectedCenterY = (baseImageHeight - totalLayerHeight) / 2
         const threshold = baseImageHeight * DRAG_THRESHOLD_PERCENT
         const distanceFromCenter = canvasY - expectedCenterY
-        
+
         if (Math.abs(distanceFromCenter) >= threshold) {
           // Dragged beyond threshold - switch to edge alignment
           if (distanceFromCenter < 0) {

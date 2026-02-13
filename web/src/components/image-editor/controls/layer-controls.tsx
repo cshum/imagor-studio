@@ -24,11 +24,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import type { BlendMode, ImageLayer } from '@/lib/image-editor'
+import type { BlendMode, ImageEditor, ImageLayer } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface LayerControlsProps {
   layer: ImageLayer
+  imageEditor: ImageEditor
   isEditing: boolean
   aspectRatioLocked: boolean
   onAspectRatioLockChange: (locked: boolean) => void
@@ -50,6 +51,7 @@ const BLEND_MODES: BlendMode[] = [
 
 export function LayerControls({
   layer,
+  imageEditor,
   isEditing,
   aspectRatioLocked,
   onAspectRatioLockChange,
@@ -67,6 +69,11 @@ export function LayerControls({
   // Get current width/height from transforms or use original dimensions
   const currentWidth = layer.transforms?.width || layer.originalDimensions.width
   const currentHeight = layer.transforms?.height || layer.originalDimensions.height
+
+  // Get base image dimensions
+  const baseDimensions = imageEditor.getOutputDimensions()
+  const baseWidth = baseDimensions.width
+  const baseHeight = baseDimensions.height
 
   const handleWidthChange = useCallback(
     (value: string) => {
@@ -198,20 +205,80 @@ export function LayerControls({
     return { hAlign, vAlign, xOffset, yOffset }
   }, [layer.x, layer.y])
 
+  // Calculate which alignment buttons can be switched to
+  const { canSwitchToLeft, canSwitchToRight } = useMemo(() => {
+    // Calculate current visual position from left edge
+    let visualX: number
+    if (hAlign === 'left') {
+      visualX = xOffset
+    } else if (hAlign === 'right') {
+      visualX = baseWidth - currentWidth - xOffset
+    } else {
+      // center
+      visualX = (baseWidth - currentWidth) / 2
+    }
+
+    // Can only switch if the visual position is within valid bounds
+    return {
+      canSwitchToLeft: visualX >= 0, // Not outside left edge
+      canSwitchToRight: visualX <= baseWidth - currentWidth, // Not outside right edge
+    }
+  }, [hAlign, xOffset, baseWidth, currentWidth])
+
+  const { canSwitchToTop, canSwitchToBottom } = useMemo(() => {
+    // Calculate current visual position from top edge
+    let visualY: number
+    if (vAlign === 'top') {
+      visualY = yOffset
+    } else if (vAlign === 'bottom') {
+      visualY = baseHeight - currentHeight - yOffset
+    } else {
+      // center
+      visualY = (baseHeight - currentHeight) / 2
+    }
+
+    // Can only switch if the visual position is within valid bounds
+    return {
+      canSwitchToTop: visualY >= 0, // Not outside top edge
+      canSwitchToBottom: visualY <= baseHeight - currentHeight, // Not outside bottom edge
+    }
+  }, [vAlign, yOffset, baseHeight, currentHeight])
+
   const handleHAlignChange = useCallback(
     (value: string) => {
       if (value === 'center') {
         // Center alignment - no offset
         onUpdate({ x: 'center' })
-      } else if (value === 'right') {
-        // Right alignment - use negative offset (or string if no offset)
-        onUpdate({ x: xOffset !== 0 ? -xOffset : 'right' })
+      } else if (value === hAlign) {
+        // No change - do nothing
+        return
       } else {
-        // Left alignment - use positive offset (or string if no offset)
-        onUpdate({ x: xOffset !== 0 ? xOffset : 'left' })
+        // Calculate visual position to preserve it when switching alignment
+        // Current visual position from left edge
+        let visualX: number
+        if (hAlign === 'left') {
+          visualX = xOffset
+        } else if (hAlign === 'right') {
+          visualX = baseWidth - currentWidth - xOffset
+        } else {
+          // center
+          visualX = (baseWidth - currentWidth) / 2
+        }
+
+        // Calculate new offset for target alignment
+        if (value === 'left') {
+          // New left offset = visual position
+          const newOffset = Math.round(visualX)
+          onUpdate({ x: newOffset !== 0 ? newOffset : 'left' })
+        } else {
+          // value === 'right'
+          // New right offset = baseWidth - layerWidth - visualX
+          const newOffset = Math.round(baseWidth - currentWidth - visualX)
+          onUpdate({ x: newOffset !== 0 ? -newOffset : 'right' })
+        }
       }
     },
-    [onUpdate, xOffset],
+    [onUpdate, hAlign, xOffset, baseWidth, currentWidth],
   )
 
   const handleVAlignChange = useCallback(
@@ -219,15 +286,36 @@ export function LayerControls({
       if (value === 'center') {
         // Center alignment - no offset
         onUpdate({ y: 'center' })
-      } else if (value === 'bottom') {
-        // Bottom alignment - use negative offset (or string if no offset)
-        onUpdate({ y: yOffset !== 0 ? -yOffset : 'bottom' })
+      } else if (value === vAlign) {
+        // No change - do nothing
+        return
       } else {
-        // Top alignment - use positive offset (or string if no offset)
-        onUpdate({ y: yOffset !== 0 ? yOffset : 'top' })
+        // Calculate visual position to preserve it when switching alignment
+        // Current visual position from top edge
+        let visualY: number
+        if (vAlign === 'top') {
+          visualY = yOffset
+        } else if (vAlign === 'bottom') {
+          visualY = baseHeight - currentHeight - yOffset
+        } else {
+          // center
+          visualY = (baseHeight - currentHeight) / 2
+        }
+
+        // Calculate new offset for target alignment
+        if (value === 'top') {
+          // New top offset = visual position
+          const newOffset = Math.round(visualY)
+          onUpdate({ y: newOffset !== 0 ? newOffset : 'top' })
+        } else {
+          // value === 'bottom'
+          // New bottom offset = baseHeight - layerHeight - visualY
+          const newOffset = Math.round(baseHeight - currentHeight - visualY)
+          onUpdate({ y: newOffset !== 0 ? -newOffset : 'bottom' })
+        }
       }
     },
-    [onUpdate, yOffset],
+    [onUpdate, vAlign, yOffset, baseHeight, currentHeight],
   )
 
   const handleXOffsetChange = useCallback(
@@ -350,6 +438,7 @@ export function LayerControls({
                 value='left'
                 aria-label='Align left'
                 className='w-full rounded-r-none border-r-0'
+                disabled={!canSwitchToLeft || visualCropEnabled}
               >
                 <AlignHorizontalJustifyStart className='h-4 w-4' />
               </ToggleGroupItem>
@@ -357,6 +446,7 @@ export function LayerControls({
                 value='center'
                 aria-label='Align center'
                 className='w-full rounded-none border-r-0'
+                disabled={visualCropEnabled}
               >
                 <AlignHorizontalJustifyCenter className='h-4 w-4' />
               </ToggleGroupItem>
@@ -364,6 +454,7 @@ export function LayerControls({
                 value='right'
                 aria-label='Align right'
                 className='w-full rounded-l-none'
+                disabled={!canSwitchToRight || visualCropEnabled}
               >
                 <AlignHorizontalJustifyEnd className='h-4 w-4' />
               </ToggleGroupItem>
@@ -397,6 +488,7 @@ export function LayerControls({
                 value='top'
                 aria-label='Align top'
                 className='w-full rounded-r-none border-r-0'
+                disabled={!canSwitchToTop || visualCropEnabled}
               >
                 <AlignVerticalJustifyStart className='h-4 w-4' />
               </ToggleGroupItem>
@@ -404,6 +496,7 @@ export function LayerControls({
                 value='center'
                 aria-label='Align middle'
                 className='w-full rounded-none border-r-0'
+                disabled={visualCropEnabled}
               >
                 <AlignVerticalJustifyCenter className='h-4 w-4' />
               </ToggleGroupItem>
@@ -411,6 +504,7 @@ export function LayerControls({
                 value='bottom'
                 aria-label='Align bottom'
                 className='w-full rounded-l-none'
+                disabled={!canSwitchToBottom || visualCropEnabled}
               >
                 <AlignVerticalJustifyEnd className='h-4 w-4' />
               </ToggleGroupItem>
