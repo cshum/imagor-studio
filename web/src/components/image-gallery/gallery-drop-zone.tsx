@@ -39,8 +39,7 @@ export function GalleryDropZone({
     async (file: File, path: string, signal?: AbortSignal): Promise<boolean> => {
       try {
         return await uploadFile(path, file, signal)
-      } catch (error) {
-        console.error('Upload failed:', error)
+      } catch {
         return false
       }
     },
