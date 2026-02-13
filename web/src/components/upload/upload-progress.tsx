@@ -145,11 +145,13 @@ export function UploadProgress({
       autoCloseStartedRef.current = true
       setState((s) => ({ ...s, isAutoClosing: true, displayFiles: files, displayStats: stats }))
 
-      setTimeout(async () => {
-        // Call onSuccess and wait for it to complete (use ref)
-        if (onSuccessRef.current) {
-          await onSuccessRef.current(stats.completed)
-        }
+      // Call onSuccess IMMEDIATELY to refresh gallery (use ref)
+      if (onSuccessRef.current) {
+        onSuccessRef.current(stats.completed)
+      }
+
+      // THEN wait 3 seconds before closing
+      setTimeout(() => {
         // Close the sheet
         setState((s) => ({ ...s, isOpen: false, isAutoClosing: false, displayStats: null }))
         // Reset flags for next upload
