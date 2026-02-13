@@ -12,11 +12,17 @@ export interface ImageContextData {
 interface ImageContextMenuProps {
   children: React.ReactNode
   renderMenuItems?: (contextData: ImageContextData) => React.ReactNode
+  renderBulkMenuItems?: () => React.ReactNode
+  selectedItems?: Set<string>
+  selectedCount?: number
 }
 
 export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
   children,
   renderMenuItems,
+  renderBulkMenuItems,
+  selectedItems,
+  selectedCount = 0,
 }) => {
   const [contextImageKey, setContextImageKey] = useState<string | null>(null)
   const [contextImageName, setContextImageName] = useState<string>('')
@@ -24,6 +30,7 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
   const [contextPosition, setContextPosition] = useState<
     { top: number; left: number; width: number; height: number } | undefined
   >(undefined)
+  const [showBulkMenu, setShowBulkMenu] = useState(false)
 
   const handleContextMenuOpen = (e: React.MouseEvent) => {
     // Find the closest image element using event delegation
@@ -32,6 +39,16 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
       const imageKey = imageElement.getAttribute('data-image-key')
       const imageName = imageElement.getAttribute('data-image-name') || ''
       const isVideo = imageElement.getAttribute('data-is-video') === 'true'
+
+      // If this image is in the selection, show bulk menu instead
+      if (selectedItems && imageKey && selectedItems.has(imageKey) && selectedCount > 0) {
+        setShowBulkMenu(true)
+        setContextImageKey(null)
+        return
+      }
+
+      // Show individual menu
+      setShowBulkMenu(false)
 
       // Calculate position once here
       const rect = imageElement.getBoundingClientRect()
@@ -50,6 +67,7 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
       // Prevent context menu from opening when clicking on empty space
       e.preventDefault()
       setContextImageKey(null)
+      setShowBulkMenu(false)
     }
   }
 
@@ -65,8 +83,11 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
       <ContextMenuTrigger asChild>
         <div onContextMenu={handleContextMenuOpen}>{children}</div>
       </ContextMenuTrigger>
-      {contextImageKey && (
-        <ContextMenuContent className='w-56'>{renderMenuItems?.(contextData)}</ContextMenuContent>
+      {showBulkMenu && renderBulkMenuItems && (
+        <ContextMenuContent className='w-56'>{renderBulkMenuItems()}</ContextMenuContent>
+      )}
+      {!showBulkMenu && contextImageKey && renderMenuItems && (
+        <ContextMenuContent className='w-56'>{renderMenuItems(contextData)}</ContextMenuContent>
       )}
     </ContextMenu>
   )

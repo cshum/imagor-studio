@@ -122,7 +122,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const [uploadState, setUploadState] = useState<{
     files: DragDropFile[]
     isUploading: boolean
-    uploadFiles: () => Promise<void>
     removeFile: (id: string) => void
     cancelFile: (id: string) => void
     retryFile: (id: string) => Promise<void>
@@ -831,6 +830,42 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     selection.clearSelection()
   }
 
+  // Bulk menu rendering function
+  const renderBulkMenuItems = () => {
+    return (
+      <>
+        <ContextMenuItem onClick={handleClearSelection} className='hover:cursor-pointer'>
+          <X className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.gallery.selection.clearSelection')}
+        </ContextMenuItem>
+        <ContextMenuSeparatorComponent />
+        {authState.state === 'authenticated' && (
+          <>
+            <ContextMenuItem
+              onClick={() => {
+                setTimeout(() => handleBulkMove(), 0)
+              }}
+              className='hover:cursor-pointer'
+            >
+              <FolderInput className='mr-3 h-4 w-4' />
+              {t('pages.gallery.moveItems.title')}
+            </ContextMenuItem>
+            <ContextMenuSeparatorComponent />
+            <ContextMenuItem
+              onClick={() => {
+                setTimeout(() => handleBulkDelete(), 0)
+              }}
+              className='text-destructive focus:text-destructive hover:cursor-pointer'
+            >
+              <Trash2 className='mr-3 h-4 w-4' />
+              {t('pages.gallery.selection.deleteSelected', { count: selection.selectedItems.size })}
+            </ContextMenuItem>
+          </>
+        )}
+      </>
+    )
+  }
+
   // Move handlers (single and bulk)
   const handleMoveFromMenu = (itemKey: string, itemName: string, itemType: 'file' | 'folder') => {
     // For files, construct the full path
@@ -1050,7 +1085,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                   ) : (
                     <div ref={galleryContainerRef} {...galleryContainerProps}>
                       {filteredFolders.length > 0 && (
-                        <FolderContextMenu renderMenuItems={renderFolderContextMenuItems}>
+                        <FolderContextMenu
+                          renderMenuItems={renderFolderContextMenuItems}
+                          renderBulkMenuItems={renderBulkMenuItems}
+                          selectedItems={selection.selectedItems}
+                          selectedCount={selection.selectedItems.size}
+                        >
                           <FolderGrid
                             folders={filteredFolders}
                             width={contentWidth}
@@ -1097,7 +1137,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           />
                         </FolderContextMenu>
                       )}
-                      <ImageContextMenu renderMenuItems={renderContextMenuItems}>
+                      <ImageContextMenu
+                        renderMenuItems={renderContextMenuItems}
+                        renderBulkMenuItems={renderBulkMenuItems}
+                        selectedItems={selection.selectedItems}
+                        selectedCount={selection.selectedItems.size}
+                      >
                         <ImageGrid
                           images={filteredImages}
                           aspectRatio={4 / 3}

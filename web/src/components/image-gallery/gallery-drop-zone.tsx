@@ -19,7 +19,6 @@ export interface GalleryDropZoneProps {
   onUploadStateChange?: (uploadState: {
     files: DragDropFile[]
     isUploading: boolean
-    uploadFiles: () => Promise<void>
     removeFile: (id: string) => void
     cancelFile: (id: string) => void
     retryFile: (id: string) => Promise<void>
@@ -46,7 +45,6 @@ export function GalleryDropZone({
       try {
         return await uploadFile(path, file, signal)
       } catch (error) {
-        console.error('Upload failed:', error)
         // Don't show error toast for cancelled uploads
         if (error instanceof Error && error.name !== 'AbortError') {
           toast.error(t('pages.gallery.upload.messages.uploadFailed', { fileName: file.name }))
@@ -164,7 +162,6 @@ export function GalleryDropZone({
       onUploadStateChange({
         files,
         isUploading,
-        uploadFiles: async () => {}, // No-op for backward compatibility
         removeFile,
         cancelFile,
         retryFile,
