@@ -777,4 +777,158 @@ describe('convertDisplayToLayerPosition', () => {
     expect(result.transforms?.width).toBeGreaterThanOrEqual(1)
     expect(result.transforms?.height).toBeGreaterThanOrEqual(1)
   })
+
+  it('should switch to center when layer width overflows base image', () => {
+    const result = convertDisplayToLayerPosition(
+      50,
+      40,
+      600, // displayWidth: 600/500 * 1000 = 1200 (larger than base 1000)
+      80,
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      100, // currentX (left-aligned)
+      0,
+    )
+
+    // Layer width (1200) > base width (1000), should switch to center
+    expect(result.x).toBe('center')
+    expect(result.y).toBe(80) // Y should still work normally
+  })
+
+  it('should switch to center when layer height overflows base image', () => {
+    const result = convertDisplayToLayerPosition(
+      50,
+      40,
+      100,
+      500, // displayHeight: 500/400 * 800 = 1000 (larger than base 800)
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      100, // currentY (top-aligned)
+    )
+
+    // Layer height (1000) > base height (800), should switch to center
+    expect(result.x).toBe(100) // X should still work normally
+    expect(result.y).toBe('center')
+  })
+
+  it('should switch to center on both axes when layer overflows in both dimensions', () => {
+    const result = convertDisplayToLayerPosition(
+      50,
+      40,
+      600, // displayWidth: 600/500 * 1000 = 1200 (larger than base 1000)
+      500, // displayHeight: 500/400 * 800 = 1000 (larger than base 800)
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      100, // currentX (left-aligned)
+      100, // currentY (top-aligned)
+    )
+
+    // Both dimensions overflow, should center both axes
+    expect(result.x).toBe('center')
+    expect(result.y).toBe('center')
+  })
+
+  it('should use edge positioning when layer fits within base image', () => {
+    const result = convertDisplayToLayerPosition(
+      50,
+      40,
+      100, // displayWidth: 100/500 * 1000 = 200 (smaller than base 1000)
+      80, // displayHeight: 80/400 * 800 = 160 (smaller than base 800)
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      100, // currentX (left-aligned)
+      100, // currentY (top-aligned)
+    )
+
+    // Layer fits, should use normal edge positioning
+    expect(result.x).toBe(100)
+    expect(result.y).toBe(80)
+  })
+
+  it('should handle overflow with right-aligned layer', () => {
+    const result = convertDisplayToLayerPosition(
+      50,
+      40,
+      600, // displayWidth: 600/500 * 1000 = 1200 (larger than base 1000)
+      80,
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      -50, // currentX (right-aligned)
+      0,
+    )
+
+    // Even though right-aligned, overflow should force center
+    expect(result.x).toBe('center')
+  })
+
+  it('should handle overflow with padding', () => {
+    const result = convertDisplayToLayerPosition(
+      50,
+      40,
+      600, // displayWidth: 600/500 * 1000 = 1200 (larger than base 1000)
+      80,
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      50, // basePaddingLeft
+      30, // basePaddingTop
+      0,
+      0,
+      0,
+      0,
+      0,
+      100, // currentX (left-aligned)
+      0,
+    )
+
+    // Overflow detection should work regardless of padding
+    expect(result.x).toBe('center')
+  })
 })

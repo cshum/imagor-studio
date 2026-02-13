@@ -299,13 +299,16 @@ export function convertDisplayToLayerPosition(
   const isRightAligned = currentX === 'right' || (typeof currentX === 'number' && currentX < 0)
   const isBottomAligned = currentY === 'bottom' || (typeof currentY === 'number' && currentY < 0)
 
-  // Convert X position with auto-switch on boundary crossing
+  // Convert X position with smart overflow handling
   if (canDragX) {
     const xPercent = displayX / overlayWidth
     const canvasX = Math.round(xPercent * baseImageWidth)
     const totalLayerWidth = totalCanvasWidth
 
-    if (isRightAligned) {
+    // Smart overflow detection: if layer is wider than base, use center
+    if (totalLayerWidth > baseImageWidth) {
+      updates.x = 'center'
+    } else if (isRightAligned) {
       const calculatedOffset = canvasX + totalLayerWidth - baseImageWidth
 
       if (calculatedOffset > 0) {
@@ -326,13 +329,16 @@ export function convertDisplayToLayerPosition(
     }
   }
 
-  // Convert Y position with auto-switch on boundary crossing
+  // Convert Y position with smart overflow handling
   if (canDragY) {
     const yPercent = displayY / overlayHeight
     const canvasY = Math.round(yPercent * baseImageHeight)
     const totalLayerHeight = totalCanvasHeight
 
-    if (isBottomAligned) {
+    // Smart overflow detection: if layer is taller than base, use center
+    if (totalLayerHeight > baseImageHeight) {
+      updates.y = 'center'
+    } else if (isBottomAligned) {
       const calculatedOffset = canvasY + totalLayerHeight - baseImageHeight
 
       if (calculatedOffset > 0) {
