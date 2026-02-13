@@ -6,14 +6,15 @@ import { generateUniqueFilename } from '@/lib/file-utils'
 export interface DragDropFile {
   file: File
   id: string
-  status: 'uploading' | 'success' | 'error'
+  status: 'uploading' | 'success' | 'error' | 'cancelled'
   progress: number
   error?: string
+  abortController?: AbortController
 }
 
 export interface UseDragDropOptions {
   onFilesAdded?: (files: File[]) => void
-  onFileUpload?: (file: File, path: string) => Promise<boolean>
+  onFileUpload?: (file: File, path: string, signal?: AbortSignal) => Promise<boolean>
   onFilesDropped?: () => void
   existingFiles?: string[]
   imageExtensions?: string
@@ -31,6 +32,7 @@ export interface UseDragDropReturn {
     onDrop: (e: React.DragEvent) => void
   }
   removeFile: (id: string) => void
+  cancelFile: (id: string) => void
   clearFiles: () => void
   retryFile: (id: string) => Promise<void>
   isUploading: boolean
@@ -93,11 +95,13 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
           fileToAdd = new File([file], uniqueFileName, { type: file.type })
         }
 
+        const abortController = new AbortController()
         validFiles.push({
           file: fileToAdd,
           id: `${uniqueFileName}-${file.size}-${Date.now()}-${Math.random()}`,
           status: 'uploading', // Start as uploading instead of pending
           progress: 0,
+          abortController,
         })
       }
 
@@ -181,7 +185,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
           }, 100)
 
           const filePath = currentPath ? `${currentPath}/${fileItem.file.name}` : fileItem.file.name
-          const success = await onFileUpload(fileItem.file, filePath)
+          const success = await onFileUpload(fileItem.file, filePath, fileItem.abortController?.signal)
 
           clearInterval(progressInterval)
 
@@ -201,18 +205,34 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
             )
           }
         } catch (error) {
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === fileItem.id
-                ? {
-                    ...f,
-                    status: 'error',
-                    progress: 0,
-                    error: error instanceof Error ? error.message : 'Upload failed',
-                  }
-                : f,
-            ),
-          )
+          // Check if it was cancelled
+          if (error instanceof Error && error.name === 'AbortError') {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === fileItem.id
+                  ? {
+                      ...f,
+                      status: 'cancelled',
+                      progress: 0,
+                      error: 'Upload cancelled',
+                    }
+                  : f,
+              ),
+            )
+          } else {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === fileItem.id
+                  ? {
+                      ...f,
+                      status: 'error',
+                      progress: 0,
+                      error: error instanceof Error ? error.message : 'Upload failed',
+                    }
+                  : f,
+              ),
+            )
+          }
         }
       }
 
@@ -225,6 +245,13 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     setFiles((prev) => prev.filter((f) => f.id !== id))
   }, [])
 
+  const cancelFile = useCallback((id: string) => {
+    const fileItem = files.find((f) => f.id === id)
+    if (fileItem && fileItem.status === 'uploading' && fileItem.abortController) {
+      fileItem.abortController.abort()
+    }
+  }, [files])
+
   const clearFiles = useCallback(() => {
     setFiles([])
   }, [])
@@ -235,9 +262,12 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
       if (!fileItem || !onFileUpload) return
 
       try {
+        const abortController = new AbortController()
         setFiles((prev) =>
           prev.map((f) =>
-            f.id === id ? { ...f, status: 'uploading', progress: 0, error: undefined } : f,
+            f.id === id
+              ? { ...f, status: 'uploading', progress: 0, error: undefined, abortController }
+              : f,
           ),
         )
 
@@ -255,7 +285,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
         }, 100)
 
         const filePath = currentPath ? `${currentPath}/${fileItem.file.name}` : fileItem.file.name
-        const success = await onFileUpload(fileItem.file, filePath)
+        const success = await onFileUpload(fileItem.file, filePath, abortController.signal)
 
         clearInterval(progressInterval)
 
@@ -273,18 +303,34 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
 
         setIsUploading(false)
       } catch (error) {
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === id
-              ? {
-                  ...f,
-                  status: 'error',
-                  progress: 0,
-                  error: error instanceof Error ? error.message : 'Upload failed',
-                }
-              : f,
-          ),
-        )
+        // Check if it was cancelled
+        if (error instanceof Error && error.name === 'AbortError') {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === id
+                ? {
+                    ...f,
+                    status: 'cancelled',
+                    progress: 0,
+                    error: 'Upload cancelled',
+                  }
+                : f,
+            ),
+          )
+        } else {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === id
+                ? {
+                    ...f,
+                    status: 'error',
+                    progress: 0,
+                    error: error instanceof Error ? error.message : 'Upload failed',
+                  }
+                : f,
+            ),
+          )
+        }
         setIsUploading(false)
       }
     },
@@ -304,6 +350,7 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
       onDrop: handleDrop,
     },
     removeFile,
+    cancelFile,
     clearFiles,
     retryFile,
     isUploading,

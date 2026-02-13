@@ -54,6 +54,7 @@ export async function statFile(path: string): Promise<StatFileQuery['statFile']>
 export async function uploadFile(
   path: string,
   file: File,
+  signal?: AbortSignal,
 ): Promise<UploadFileMutation['uploadFile']> {
   const { UploadFileMutation } = await import('@/graphql/storage.gql')
   const { uploadSingleFile } = await import('@/lib/graphql-upload')
@@ -67,6 +68,7 @@ export async function uploadFile(
     { path, content: file },
     'content',
     file,
+    signal,
   )
 
   return result.uploadFile

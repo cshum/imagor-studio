@@ -21,6 +21,7 @@ export interface GalleryDropZoneProps {
     isUploading: boolean
     uploadFiles: () => Promise<void>
     removeFile: (id: string) => void
+    cancelFile: (id: string) => void
     retryFile: (id: string) => Promise<void>
     clearFiles: () => void
   }) => void
@@ -41,12 +42,15 @@ export function GalleryDropZone({
   const { authState } = useAuth()
 
   const handleFileUpload = useCallback(
-    async (file: File, path: string): Promise<boolean> => {
+    async (file: File, path: string, signal?: AbortSignal): Promise<boolean> => {
       try {
-        return await uploadFile(path, file)
+        return await uploadFile(path, file, signal)
       } catch (error) {
         console.error('Upload failed:', error)
-        toast.error(t('pages.gallery.upload.messages.uploadFailed', { fileName: file.name }))
+        // Don't show error toast for cancelled uploads
+        if (error instanceof Error && error.name !== 'AbortError') {
+          toast.error(t('pages.gallery.upload.messages.uploadFailed', { fileName: file.name }))
+        }
         return false
       }
     },
@@ -56,15 +60,15 @@ export function GalleryDropZone({
   const handleUploadComplete = useCallback(() => {
     // Refresh the gallery after successful uploads
     router.invalidate()
-    toast.success(t('pages.gallery.upload.messages.uploadSuccess'))
-  }, [router, t])
+    // Note: Success message is shown in the floating upload progress popup
+  }, [router])
 
   const handleFilesDropped = useCallback(() => {
     // Scroll to top when files are dropped
     window.scrollTo({ top: 0 })
   }, [])
 
-  const { isDragActive, files, dragProps, removeFile, clearFiles, retryFile, isUploading } =
+  const { isDragActive, files, dragProps, removeFile, cancelFile, clearFiles, retryFile, isUploading } =
     useDragDrop({
       onFileUpload: handleFileUpload,
       onFilesDropped: handleFilesDropped,
@@ -154,11 +158,12 @@ export function GalleryDropZone({
         isUploading,
         uploadFiles: async () => {}, // No-op for backward compatibility
         removeFile,
+        cancelFile,
         retryFile,
         clearFiles,
       })
     }
-  }, [files, isUploading, removeFile, retryFile, clearFiles, onUploadStateChange])
+  }, [files, isUploading, removeFile, cancelFile, retryFile, clearFiles, onUploadStateChange])
 
   // Check if user has write permissions
   const canUpload = authState.state === 'authenticated'
