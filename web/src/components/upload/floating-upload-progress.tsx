@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CheckCircle, ChevronDown, ChevronUp, RotateCcw, Upload, X, XCircle } from 'lucide-react'
 
@@ -27,85 +27,126 @@ export function FloatingUploadProgress({
   onSuccess,
 }: FloatingUploadProgressProps) {
   const { t } = useTranslation()
-  const [isExpanded, setIsExpanded] = useState(true)
-  const autoHideTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const onSuccessRef = useRef(onSuccess)
-  const onClearAllRef = useRef(onClearAll)
+  const [state, setState] = useState<{
+    isOpen: boolean
+    isExpanded: boolean
+    displayFiles: DragDropFile[]
+    displayStats: {
+      completed: number
+      failed: number
+      uploading: number
+      progress: number
+      isComplete: boolean
+      hasErrors: boolean
+      hasActiveUploads: boolean
+    } | null
+    isAutoClosing: boolean
+  }>({
+    isOpen: false,
+    isExpanded: true,
+    displayFiles: [],
+    displayStats: null,
+    isAutoClosing: false,
+  })
+  const autoCloseStartedRef = useRef(false)
+  const manuallyClosedRef = useRef(false)
 
-  const completedFiles = files.filter((f) => f.status === 'success').length
-  const failedFiles = files.filter((f) => f.status === 'error').length
-  const uploadingFiles = files.filter((f) => f.status === 'uploading').length
+  // Memoize derived stats to avoid recalculation on every render
+  const stats = useMemo(() => {
+    const completed = files.filter((f) => f.status === 'success').length
+    const failed = files.filter((f) => f.status === 'error').length
+    const uploading = files.filter((f) => f.status === 'uploading').length
+    const progress =
+      files.length > 0 ? files.reduce((acc, file) => acc + file.progress, 0) / files.length : 0
 
-  const overallProgress =
-    files.length > 0 ? files.reduce((acc, file) => acc + file.progress, 0) / files.length : 0
-
-  const hasActiveUploads = uploadingFiles > 0
-  const isComplete = completedFiles + failedFiles === files.length && files.length > 0
-  const hasErrors = failedFiles > 0
-
-  // Keep callback refs updated
-  useEffect(() => {
-    onSuccessRef.current = onSuccess
-    onClearAllRef.current = onClearAll
-  }, [onSuccess, onClearAll])
-
-  // Show popup when files are added
-  useEffect(() => {
-    if (files.length > 0) {
-      setIsExpanded(true)
-      // Clear any existing auto-hide timer
-      if (autoHideTimerRef.current) {
-        clearTimeout(autoHideTimerRef.current)
-        autoHideTimerRef.current = null
-      }
+    return {
+      completed,
+      failed,
+      uploading,
+      progress,
+      isComplete: completed + failed === files.length && files.length > 0,
+      hasErrors: failed > 0,
+      hasActiveUploads: uploading > 0,
     }
-  }, [files.length])
+  }, [files])
 
-  // Auto-hide after successful completion (no errors)
+  // Handle sheet opening and auto-close logic
   useEffect(() => {
-    if (isComplete && !hasErrors && !isUploading) {
-      const timer = setTimeout(() => {
-        // Call onSuccess first
-        const successPromise = onSuccessRef.current?.(completedFiles)
-        
-        // Then close after success completes
-        if (successPromise) {
-          successPromise.then(() => {
-            onClearAllRef.current?.()
-          })
-        } else {
-          onClearAllRef.current?.()
+    // Close sheet and reset flags when all files are removed
+    if (files.length === 0 && state.isOpen) {
+      setState((s) => ({ ...s, isOpen: false, displayStats: null, isAutoClosing: false }))
+      manuallyClosedRef.current = false
+      autoCloseStartedRef.current = false
+      return
+    }
+
+    // Open sheet when files are added (but not if manually closed or auto-close started)
+    if (
+      files.length > 0 &&
+      !state.isOpen &&
+      !autoCloseStartedRef.current &&
+      !manuallyClosedRef.current
+    ) {
+      setState((s) => ({
+        ...s,
+        isOpen: true,
+        isExpanded: true,
+        displayFiles: files,
+        isAutoClosing: false,
+      }))
+    }
+
+    // Update display files while uploading
+    if (files.length > 0 && !state.isAutoClosing) {
+      setState((s) => ({ ...s, displayFiles: files }))
+    }
+
+    // Auto-close after successful completion (no errors)
+    if (
+      stats.isComplete &&
+      !stats.hasErrors &&
+      !isUploading &&
+      !autoCloseStartedRef.current &&
+      state.isOpen
+    ) {
+      autoCloseStartedRef.current = true
+      setState((s) => ({ ...s, isAutoClosing: true, displayFiles: files, displayStats: stats }))
+
+      setTimeout(async () => {
+        // Call onSuccess and wait for it to complete
+        if (onSuccess) {
+          await onSuccess(stats.completed)
         }
+        // Close the sheet
+        setState((s) => ({ ...s, isOpen: false, isAutoClosing: false, displayStats: null }))
+        // Clear files
+        onClearAll?.()
       }, 3000)
-      
-      autoHideTimerRef.current = timer
-      return () => {
-        if (autoHideTimerRef.current) {
-          clearTimeout(autoHideTimerRef.current)
-        }
-      }
     }
-  }, [isComplete, hasErrors, isUploading, completedFiles])
+  }, [files, stats, isUploading, state.isOpen, state.isAutoClosing, onSuccess, onClearAll])
+
+  // Use snapshot stats if auto-closing, otherwise use live stats
+  const activeStats = state.displayStats || stats
 
   const getHeaderContent = () => {
-    if (hasActiveUploads) {
+    if (activeStats.hasActiveUploads) {
       return {
         title: t('pages.gallery.upload.progress.uploadProgress'),
         subtitle: t('pages.gallery.upload.progress.filesCompleted', {
-          completed: completedFiles,
-          total: files.length,
+          completed: activeStats.completed,
+          total: state.displayFiles.length,
         }),
       }
-    } else if (isComplete) {
-      if (failedFiles === 0) {
+    } else if (activeStats.isComplete) {
+      if (activeStats.failed === 0) {
         return {
           title: t('pages.gallery.upload.messages.uploadSuccess'),
-          subtitle: t('pages.gallery.upload.progress.completed', { count: completedFiles }),
+          subtitle: t('pages.gallery.upload.progress.completed', { count: activeStats.completed }),
         }
       } else {
         return {
           title: t('pages.gallery.upload.summary.allFilesProcessed'),
-          subtitle: `${completedFiles} successful${failedFiles > 0 ? `, ${failedFiles} failed` : ''}`,
+          subtitle: `${activeStats.completed} successful${activeStats.failed > 0 ? `, ${activeStats.failed} failed` : ''}`,
         }
       }
     }
@@ -114,8 +155,14 @@ export function FloatingUploadProgress({
 
   const { title, subtitle } = getHeaderContent()
 
+  const handleClose = () => {
+    setState((s) => ({ ...s, isOpen: false, isAutoClosing: false, displayStats: null }))
+    manuallyClosedRef.current = true // Mark as manually closed to prevent reopening
+    onClearAll?.()
+  }
+
   return (
-    <Sheet open={files.length > 0} modal={false}>
+    <Sheet open={state.isOpen} modal={false}>
       <SheetContent
         side='bottom'
         hideOverlay={true}
@@ -133,20 +180,19 @@ export function FloatingUploadProgress({
             <Button
               variant='ghost'
               size='sm'
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={() => setState((s) => ({ ...s, isExpanded: !s.isExpanded }))}
               className='h-8 w-8 p-0'
             >
-              {isExpanded ? <ChevronDown className='h-4 w-4' /> : <ChevronUp className='h-4 w-4' />}
+              {state.isExpanded ? (
+                <ChevronDown className='h-4 w-4' />
+              ) : (
+                <ChevronUp className='h-4 w-4' />
+              )}
             </Button>
 
-            {/* Clear/Close button */}
-            {onClearAll && !isUploading && (
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={() => onClearAll()}
-                className='h-8 w-8 p-0'
-              >
+            {/* Close button - only show if there are errors OR not auto-closing */}
+            {onClearAll && !isUploading && (stats.hasErrors || !state.isAutoClosing) && (
+              <Button variant='ghost' size='sm' onClick={handleClose} className='h-8 w-8 p-0'>
                 <X className='h-4 w-4' />
               </Button>
             )}
@@ -154,16 +200,16 @@ export function FloatingUploadProgress({
         </div>
 
         {/* Overall progress bar - only show during active upload */}
-        {hasActiveUploads && isExpanded && (
+        {stats.hasActiveUploads && state.isExpanded && (
           <div className='mb-3'>
-            <Progress value={overallProgress} className='h-2' />
+            <Progress value={stats.progress} className='h-2' />
           </div>
         )}
 
         {/* Expanded file list */}
-        {isExpanded && (
+        {state.isExpanded && (
           <div className='max-h-60 space-y-2 overflow-y-auto'>
-            {files.map((file) => (
+            {state.displayFiles.map((file) => (
               <div
                 key={file.id}
                 className='bg-muted hover:bg-accent relative flex items-center gap-2 rounded-md p-2'
@@ -225,22 +271,22 @@ export function FloatingUploadProgress({
         )}
 
         {/* Summary stats when collapsed */}
-        {!isExpanded && (
+        {!state.isExpanded && (
           <div className='text-muted-foreground flex items-center justify-between text-sm'>
             <div className='flex items-center gap-3'>
-              {uploadingFiles > 0 && (
+              {stats.uploading > 0 && (
                 <span className='text-muted-foreground'>
-                  {t('pages.gallery.upload.progress.uploading', { count: uploadingFiles })}
+                  {t('pages.gallery.upload.progress.uploading', { count: stats.uploading })}
                 </span>
               )}
-              {completedFiles > 0 && (
+              {stats.completed > 0 && (
                 <span className='text-muted-foreground'>
-                  {t('pages.gallery.upload.progress.completed', { count: completedFiles })}
+                  {t('pages.gallery.upload.progress.completed', { count: stats.completed })}
                 </span>
               )}
-              {failedFiles > 0 && (
+              {stats.failed > 0 && (
                 <span className='text-destructive'>
-                  {t('pages.gallery.upload.progress.failed', { count: failedFiles })}
+                  {t('pages.gallery.upload.progress.failed', { count: stats.failed })}
                 </span>
               )}
             </div>
