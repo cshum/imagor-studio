@@ -32,6 +32,7 @@ export interface GraphQLUploadOptions<
   mutation: DocumentNode
   variables: TVariables
   files: Record<string, File>
+  signal?: AbortSignal
 }
 
 export interface GraphQLUploadResult<TData = unknown> {
@@ -69,7 +70,7 @@ export interface GraphQLUploadResult<TData = unknown> {
 export async function executeGraphQLUpload<
   TVariables extends Record<string, unknown> = Record<string, unknown>,
   TData = unknown,
->({ mutation, variables, files }: GraphQLUploadOptions<TVariables>): Promise<TData> {
+>({ mutation, variables, files, signal }: GraphQLUploadOptions<TVariables>): Promise<TData> {
   const endpoint = `${getBaseUrl()}/api/query`
   const auth = getAuth()
 
@@ -116,6 +117,7 @@ export async function executeGraphQLUpload<
     method: 'POST',
     headers,
     body: formData,
+    signal,
   })
 
   if (!response.ok) {
@@ -170,11 +172,13 @@ export async function uploadSingleFile<TData = unknown>(
   variables: Record<string, unknown>,
   fileKey: string,
   file: File,
+  signal?: AbortSignal,
 ): Promise<TData> {
   return executeGraphQLUpload({
     mutation,
     variables,
     files: { [fileKey]: file },
+    signal,
   })
 }
 

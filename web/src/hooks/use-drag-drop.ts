@@ -6,14 +6,15 @@ import { generateUniqueFilename } from '@/lib/file-utils'
 export interface DragDropFile {
   file: File
   id: string
-  status: 'pending' | 'uploading' | 'success' | 'error'
+  status: 'uploading' | 'success' | 'error' | 'cancelled'
   progress: number
   error?: string
+  abortController?: AbortController
 }
 
 export interface UseDragDropOptions {
   onFilesAdded?: (files: File[]) => void
-  onFileUpload?: (file: File, path: string) => Promise<boolean>
+  onFileUpload?: (file: File, path: string, signal?: AbortSignal) => Promise<boolean>
   onFilesDropped?: () => void
   existingFiles?: string[]
   imageExtensions?: string
@@ -30,8 +31,8 @@ export interface UseDragDropReturn {
     onDragOver: (e: React.DragEvent) => void
     onDrop: (e: React.DragEvent) => void
   }
-  uploadFiles: () => Promise<void>
   removeFile: (id: string) => void
+  cancelFile: (id: string) => void
   clearFiles: () => void
   retryFile: (id: string) => Promise<void>
   isUploading: boolean
@@ -94,17 +95,21 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
           fileToAdd = new File([file], uniqueFileName, { type: file.type })
         }
 
+        const abortController = new AbortController()
         validFiles.push({
           file: fileToAdd,
           id: `${uniqueFileName}-${file.size}-${Date.now()}-${Math.random()}`,
-          status: 'pending',
+          status: 'uploading', // Start as uploading instead of pending
           progress: 0,
+          abortController,
         })
       }
 
       if (validFiles.length > 0) {
         setFiles((prev) => [...prev, ...validFiles])
         onFilesAdded?.(validFiles.map((f) => f.file))
+        // Auto-upload files immediately after adding them
+        setTimeout(() => uploadFilesImmediate(validFiles), 0)
       }
     },
     [files, validateFile, onFilesAdded, existingFiles],
@@ -159,71 +164,102 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     [addFiles, onFilesDropped],
   )
 
-  const uploadFiles = useCallback(async () => {
-    if (!onFileUpload || isUploading) return
+  // Internal function to upload specific files immediately
+  const uploadFilesImmediate = useCallback(
+    async (filesToUpload: DragDropFile[]) => {
+      if (!onFileUpload) return
 
-    setIsUploading(true)
-    const pendingFiles = files.filter((f) => f.status === 'pending')
+      setIsUploading(true)
 
-    for (const fileItem of pendingFiles) {
-      try {
-        // Update status to uploading
-        setFiles((prev) =>
-          prev.map((f) => (f.id === fileItem.id ? { ...f, status: 'uploading', progress: 0 } : f)),
-        )
+      for (const fileItem of filesToUpload) {
+        try {
+          // Simulate progress updates
+          const progressInterval = setInterval(() => {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === fileItem.id && f.status === 'uploading'
+                  ? { ...f, progress: Math.min(f.progress + 10, 90) }
+                  : f,
+              ),
+            )
+          }, 100)
 
-        // Simulate progress updates (you might want to implement real progress tracking)
-        const progressInterval = setInterval(() => {
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === fileItem.id && f.status === 'uploading'
-                ? { ...f, progress: Math.min(f.progress + 10, 90) }
-                : f,
-            ),
+          const filePath = currentPath ? `${currentPath}/${fileItem.file.name}` : fileItem.file.name
+          const success = await onFileUpload(
+            fileItem.file,
+            filePath,
+            fileItem.abortController?.signal,
           )
-        }, 100)
 
-        const filePath = currentPath ? `${currentPath}/${fileItem.file.name}` : fileItem.file.name
-        const success = await onFileUpload(fileItem.file, filePath)
+          clearInterval(progressInterval)
 
-        clearInterval(progressInterval)
-
-        if (success) {
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === fileItem.id ? { ...f, status: 'success', progress: 100 } : f,
-            ),
-          )
-        } else {
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === fileItem.id
-                ? { ...f, status: 'error', progress: 0, error: 'Upload failed' }
-                : f,
-            ),
-          )
+          if (success) {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === fileItem.id ? { ...f, status: 'success', progress: 100 } : f,
+              ),
+            )
+          } else {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === fileItem.id
+                  ? { ...f, status: 'error', progress: 0, error: 'Upload failed' }
+                  : f,
+              ),
+            )
+          }
+        } catch (error) {
+          // Check if it was cancelled
+          if (error instanceof Error && error.name === 'AbortError') {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === fileItem.id
+                  ? {
+                      ...f,
+                      status: 'cancelled',
+                      progress: 0,
+                      error: 'Upload cancelled',
+                    }
+                  : f,
+              ),
+            )
+          } else {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === fileItem.id
+                  ? {
+                      ...f,
+                      status: 'error',
+                      progress: 0,
+                      error: error instanceof Error ? error.message : 'Upload failed',
+                    }
+                  : f,
+              ),
+            )
+          }
         }
-      } catch (error) {
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === fileItem.id
-              ? {
-                  ...f,
-                  status: 'error',
-                  progress: 0,
-                  error: error instanceof Error ? error.message : 'Upload failed',
-                }
-              : f,
-          ),
-        )
       }
-    }
 
-    setIsUploading(false)
-  }, [files, onFileUpload, isUploading, currentPath])
+      setIsUploading(false)
+    },
+    [onFileUpload, currentPath],
+  )
 
   const removeFile = useCallback((id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id))
+  }, [])
+
+  const cancelFile = useCallback((id: string) => {
+    setFiles((prev) => {
+      const fileItem = prev.find((f) => f.id === id)
+      if (fileItem && fileItem.status === 'uploading' && fileItem.abortController) {
+        fileItem.abortController.abort()
+      }
+      // Immediately update status to cancelled for instant visual feedback
+      return prev.map((f) =>
+        f.id === id ? { ...f, status: 'cancelled', progress: 0, error: 'Upload cancelled' } : f,
+      )
+    })
   }, [])
 
   const clearFiles = useCallback(() => {
@@ -236,14 +272,32 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
       if (!fileItem || !onFileUpload) return
 
       try {
+        const abortController = new AbortController()
         setFiles((prev) =>
           prev.map((f) =>
-            f.id === id ? { ...f, status: 'uploading', progress: 0, error: undefined } : f,
+            f.id === id
+              ? { ...f, status: 'uploading', progress: 0, error: undefined, abortController }
+              : f,
           ),
         )
 
+        setIsUploading(true)
+
+        // Simulate progress updates
+        const progressInterval = setInterval(() => {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === id && f.status === 'uploading'
+                ? { ...f, progress: Math.min(f.progress + 10, 90) }
+                : f,
+            ),
+          )
+        }, 100)
+
         const filePath = currentPath ? `${currentPath}/${fileItem.file.name}` : fileItem.file.name
-        const success = await onFileUpload(fileItem.file, filePath)
+        const success = await onFileUpload(fileItem.file, filePath, abortController.signal)
+
+        clearInterval(progressInterval)
 
         if (success) {
           setFiles((prev) =>
@@ -256,19 +310,38 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
             ),
           )
         }
+
+        setIsUploading(false)
       } catch (error) {
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === id
-              ? {
-                  ...f,
-                  status: 'error',
-                  progress: 0,
-                  error: error instanceof Error ? error.message : 'Upload failed',
-                }
-              : f,
-          ),
-        )
+        // Check if it was cancelled
+        if (error instanceof Error && error.name === 'AbortError') {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === id
+                ? {
+                    ...f,
+                    status: 'cancelled',
+                    progress: 0,
+                    error: 'Upload cancelled',
+                  }
+                : f,
+            ),
+          )
+        } else {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === id
+                ? {
+                    ...f,
+                    status: 'error',
+                    progress: 0,
+                    error: error instanceof Error ? error.message : 'Upload failed',
+                  }
+                : f,
+            ),
+          )
+        }
+        setIsUploading(false)
       }
     },
     [files, onFileUpload, currentPath],
@@ -286,8 +359,8 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
       onDragOver: handleDragOver,
       onDrop: handleDrop,
     },
-    uploadFiles,
     removeFile,
+    cancelFile,
     clearFiles,
     retryFile,
     isUploading,

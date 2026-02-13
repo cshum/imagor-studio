@@ -124,6 +124,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     isUploading: boolean
     uploadFiles: () => Promise<void>
     removeFile: (id: string) => void
+    cancelFile: (id: string) => void
     retryFile: (id: string) => Promise<void>
     clearFiles: () => void
   } | null>(null)
@@ -1042,19 +1043,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
           <Card className='rounded-lg border-none'>
             <CardContent className='overflow-hidden p-2 md:p-4' ref={contentRef}>
-              {/* Upload Progress - After header, before gallery content */}
-              {uploadState && uploadState.files.length > 0 && (
-                <div className='mb-4'>
-                  <UploadProgress
-                    files={uploadState.files}
-                    isUploading={uploadState.isUploading}
-                    onUpload={uploadState.uploadFiles}
-                    onRemoveFile={uploadState.removeFile}
-                    onRetryFile={uploadState.retryFile}
-                    onClearAll={uploadState.clearFiles}
-                  />
-                </div>
-              )}
               {contentWidth > 0 && (
                 <>
                   {isEmpty ? (
@@ -1212,6 +1200,19 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         style={{ display: 'none' }}
         tabIndex={-1}
       />
+
+      {/* Upload Progress - Rendered in portal */}
+      {uploadState && (
+        <UploadProgress
+          files={uploadState.files}
+          isUploading={uploadState.isUploading}
+          onRemoveFile={uploadState.removeFile}
+          onCancelFile={uploadState.cancelFile}
+          onRetryFile={uploadState.retryFile}
+          onClearAll={uploadState.clearFiles}
+          onSuccess={() => router.invalidate()}
+        />
+      )}
 
       {children}
     </>

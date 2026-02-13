@@ -52,6 +52,7 @@ interface SheetContentProps
     VariantProps<typeof sheetVariants> {
   hideOverlay?: boolean
   hideClose?: boolean
+  modal?: boolean
 }
 
 const SheetContent = React.forwardRef<
@@ -59,7 +60,15 @@ const SheetContent = React.forwardRef<
   SheetContentProps
 >(
   (
-    { side = 'right', className, children, hideOverlay = false, hideClose = false, ...props },
+    {
+      side = 'right',
+      className,
+      children,
+      hideOverlay = false,
+      hideClose = false,
+      modal,
+      ...props
+    },
     ref,
   ) => (
     <SheetPortal>
@@ -67,6 +76,16 @@ const SheetContent = React.forwardRef<
       <SheetPrimitive.Content
         ref={ref}
         className={cn(sheetVariants({ side }), className)}
+        onPointerDownOutside={(e) => {
+          if (modal === false) {
+            e.preventDefault()
+          }
+        }}
+        onInteractOutside={(e) => {
+          if (modal === false) {
+            e.preventDefault()
+          }
+        }}
         {...props}
       >
         {children}
