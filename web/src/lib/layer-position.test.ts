@@ -483,8 +483,16 @@ describe('applySnapping', () => {
 
   describe('Disable Snapping', () => {
     it('should return original coordinates when snapping is disabled', () => {
-      const result = applySnapping(123, 456, layerWidth, layerHeight, overlayWidth, overlayHeight, true)
-      
+      const result = applySnapping(
+        123,
+        456,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        true,
+      )
+
       expect(result.x).toBe(123)
       expect(result.y).toBe(456)
       expect(result.snappedToCenter.x).toBe(false)
@@ -493,7 +501,7 @@ describe('applySnapping', () => {
 
     it('should not snap to edges when snapping is disabled', () => {
       const result = applySnapping(5, 5, layerWidth, layerHeight, overlayWidth, overlayHeight, true)
-      
+
       expect(result.x).toBe(5)
       expect(result.y).toBe(5)
       expect(result.snappedToCenter.x).toBe(false)
@@ -503,8 +511,16 @@ describe('applySnapping', () => {
     it('should not snap to center when snapping is disabled', () => {
       const centerX = (overlayWidth - layerWidth) / 2
       const centerY = (overlayHeight - layerHeight) / 2
-      const result = applySnapping(centerX + 5, centerY + 5, layerWidth, layerHeight, overlayWidth, overlayHeight, true)
-      
+      const result = applySnapping(
+        centerX + 5,
+        centerY + 5,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        true,
+      )
+
       expect(result.x).toBe(centerX + 5)
       expect(result.y).toBe(centerY + 5)
       expect(result.snappedToCenter.x).toBe(false)
@@ -514,31 +530,63 @@ describe('applySnapping', () => {
 
   describe('Edge Snapping - Horizontal', () => {
     it('should snap to left edge when displayX is within threshold', () => {
-      const result = applySnapping(5, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        5,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(0)
       expect(result.y).toBe(100)
       expect(result.snappedToCenter.x).toBe(false)
     })
 
     it('should snap to left edge when displayX is exactly at threshold', () => {
-      const result = applySnapping(SNAP_THRESHOLDS.EDGE_PIXELS - 1, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        SNAP_THRESHOLDS.EDGE_PIXELS - 1,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(0)
       expect(result.snappedToCenter.x).toBe(false)
     })
 
     it('should NOT snap to left edge when displayX is beyond threshold', () => {
-      const result = applySnapping(10, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        10,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(10)
       expect(result.snappedToCenter.x).toBe(false)
     })
 
     it('should snap to right edge when near right boundary', () => {
       const rightEdge = overlayWidth - layerWidth
-      const result = applySnapping(rightEdge - 5, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        rightEdge - 5,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(rightEdge)
       expect(result.y).toBe(100)
       expect(result.snappedToCenter.x).toBe(false)
@@ -546,31 +594,63 @@ describe('applySnapping', () => {
 
     it('should snap to right edge when exactly at threshold from right', () => {
       const rightEdge = overlayWidth - layerWidth
-      const result = applySnapping(rightEdge - (SNAP_THRESHOLDS.EDGE_PIXELS - 1), 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        rightEdge - (SNAP_THRESHOLDS.EDGE_PIXELS - 1),
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(rightEdge)
       expect(result.snappedToCenter.x).toBe(false)
     })
 
     it('should NOT snap to right edge when beyond threshold', () => {
       const rightEdge = overlayWidth - layerWidth
-      const result = applySnapping(rightEdge - 10, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        rightEdge - 10,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(rightEdge - 10)
       expect(result.snappedToCenter.x).toBe(false)
     })
 
     it('should snap to left edge at exactly 0', () => {
-      const result = applySnapping(0, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        0,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(0)
       expect(result.snappedToCenter.x).toBe(false)
     })
 
     it('should snap to right edge when exactly at right boundary', () => {
       const rightEdge = overlayWidth - layerWidth
-      const result = applySnapping(rightEdge, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        rightEdge,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(rightEdge)
       expect(result.snappedToCenter.x).toBe(false)
     })
@@ -578,31 +658,63 @@ describe('applySnapping', () => {
 
   describe('Edge Snapping - Vertical', () => {
     it('should snap to top edge when displayY is within threshold', () => {
-      const result = applySnapping(100, 5, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        5,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(100)
       expect(result.y).toBe(0)
       expect(result.snappedToCenter.y).toBe(false)
     })
 
     it('should snap to top edge when displayY is exactly at threshold', () => {
-      const result = applySnapping(100, SNAP_THRESHOLDS.EDGE_PIXELS - 1, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        SNAP_THRESHOLDS.EDGE_PIXELS - 1,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.y).toBe(0)
       expect(result.snappedToCenter.y).toBe(false)
     })
 
     it('should NOT snap to top edge when displayY is beyond threshold', () => {
-      const result = applySnapping(100, 10, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        10,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.y).toBe(10)
       expect(result.snappedToCenter.y).toBe(false)
     })
 
     it('should snap to bottom edge when near bottom boundary', () => {
       const bottomEdge = overlayHeight - layerHeight
-      const result = applySnapping(100, bottomEdge - 5, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        bottomEdge - 5,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(100)
       expect(result.y).toBe(bottomEdge)
       expect(result.snappedToCenter.y).toBe(false)
@@ -610,31 +722,63 @@ describe('applySnapping', () => {
 
     it('should snap to bottom edge when exactly at threshold from bottom', () => {
       const bottomEdge = overlayHeight - layerHeight
-      const result = applySnapping(100, bottomEdge - (SNAP_THRESHOLDS.EDGE_PIXELS - 1), layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        bottomEdge - (SNAP_THRESHOLDS.EDGE_PIXELS - 1),
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.y).toBe(bottomEdge)
       expect(result.snappedToCenter.y).toBe(false)
     })
 
     it('should NOT snap to bottom edge when beyond threshold', () => {
       const bottomEdge = overlayHeight - layerHeight
-      const result = applySnapping(100, bottomEdge - 10, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        bottomEdge - 10,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.y).toBe(bottomEdge - 10)
       expect(result.snappedToCenter.y).toBe(false)
     })
 
     it('should snap to top edge at exactly 0', () => {
-      const result = applySnapping(100, 0, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        0,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.y).toBe(0)
       expect(result.snappedToCenter.y).toBe(false)
     })
 
     it('should snap to bottom edge when exactly at bottom boundary', () => {
       const bottomEdge = overlayHeight - layerHeight
-      const result = applySnapping(100, bottomEdge, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        bottomEdge,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.y).toBe(bottomEdge)
       expect(result.snappedToCenter.y).toBe(false)
     })
@@ -644,8 +788,16 @@ describe('applySnapping', () => {
     it('should snap to horizontal center when within threshold', () => {
       const centerX = (overlayWidth - layerWidth) / 2
       const threshold = overlayWidth * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
-      const result = applySnapping(centerX + threshold - 1, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        centerX + threshold - 1,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(centerX)
       expect(result.snappedToCenter.x).toBe(true)
       expect(result.snappedToCenter.y).toBe(false)
@@ -653,8 +805,16 @@ describe('applySnapping', () => {
 
     it('should snap to horizontal center when exactly at center', () => {
       const centerX = (overlayWidth - layerWidth) / 2
-      const result = applySnapping(centerX, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        centerX,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(centerX)
       expect(result.snappedToCenter.x).toBe(true)
     })
@@ -662,8 +822,16 @@ describe('applySnapping', () => {
     it('should NOT snap to horizontal center when beyond threshold', () => {
       const centerX = (overlayWidth - layerWidth) / 2
       const threshold = overlayWidth * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
-      const result = applySnapping(centerX + threshold + 1, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        centerX + threshold + 1,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(centerX + threshold + 1)
       expect(result.snappedToCenter.x).toBe(false)
     })
@@ -671,8 +839,16 @@ describe('applySnapping', () => {
     it('should snap to horizontal center from left side of center', () => {
       const centerX = (overlayWidth - layerWidth) / 2
       const threshold = overlayWidth * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
-      const result = applySnapping(centerX - threshold + 1, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        centerX - threshold + 1,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(centerX)
       expect(result.snappedToCenter.x).toBe(true)
     })
@@ -680,8 +856,16 @@ describe('applySnapping', () => {
     it('should NOT snap to horizontal center when far left of center', () => {
       const centerX = (overlayWidth - layerWidth) / 2
       const threshold = overlayWidth * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
-      const result = applySnapping(centerX - threshold - 1, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        centerX - threshold - 1,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(centerX - threshold - 1)
       expect(result.snappedToCenter.x).toBe(false)
     })
@@ -691,8 +875,16 @@ describe('applySnapping', () => {
     it('should snap to vertical center when within threshold', () => {
       const centerY = (overlayHeight - layerHeight) / 2
       const threshold = overlayHeight * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
-      const result = applySnapping(100, centerY + threshold - 1, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        centerY + threshold - 1,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.y).toBe(centerY)
       expect(result.snappedToCenter.x).toBe(false)
       expect(result.snappedToCenter.y).toBe(true)
@@ -700,8 +892,16 @@ describe('applySnapping', () => {
 
     it('should snap to vertical center when exactly at center', () => {
       const centerY = (overlayHeight - layerHeight) / 2
-      const result = applySnapping(100, centerY, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        centerY,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.y).toBe(centerY)
       expect(result.snappedToCenter.y).toBe(true)
     })
@@ -709,8 +909,16 @@ describe('applySnapping', () => {
     it('should NOT snap to vertical center when beyond threshold', () => {
       const centerY = (overlayHeight - layerHeight) / 2
       const threshold = overlayHeight * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
-      const result = applySnapping(100, centerY + threshold + 1, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        centerY + threshold + 1,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.y).toBe(centerY + threshold + 1)
       expect(result.snappedToCenter.y).toBe(false)
     })
@@ -718,8 +926,16 @@ describe('applySnapping', () => {
     it('should snap to vertical center from top side of center', () => {
       const centerY = (overlayHeight - layerHeight) / 2
       const threshold = overlayHeight * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
-      const result = applySnapping(100, centerY - threshold + 1, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        centerY - threshold + 1,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.y).toBe(centerY)
       expect(result.snappedToCenter.y).toBe(true)
     })
@@ -727,8 +943,16 @@ describe('applySnapping', () => {
     it('should NOT snap to vertical center when far above center', () => {
       const centerY = (overlayHeight - layerHeight) / 2
       const threshold = overlayHeight * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
-      const result = applySnapping(100, centerY - threshold - 1, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        centerY - threshold - 1,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.y).toBe(centerY - threshold - 1)
       expect(result.snappedToCenter.y).toBe(false)
     })
@@ -737,31 +961,63 @@ describe('applySnapping', () => {
   describe('Snapping Priority - Edge Takes Priority Over Center', () => {
     it('should snap to left edge even if near center horizontally', () => {
       // Position near both left edge and center
-      const result = applySnapping(5, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        5,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(0) // Snapped to edge, not center
       expect(result.snappedToCenter.x).toBe(false)
     })
 
     it('should snap to right edge even if near center horizontally', () => {
       const rightEdge = overlayWidth - layerWidth
-      const result = applySnapping(rightEdge - 5, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        rightEdge - 5,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(rightEdge) // Snapped to edge, not center
       expect(result.snappedToCenter.x).toBe(false)
     })
 
     it('should snap to top edge even if near center vertically', () => {
-      const result = applySnapping(100, 5, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        5,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.y).toBe(0) // Snapped to edge, not center
       expect(result.snappedToCenter.y).toBe(false)
     })
 
     it('should snap to bottom edge even if near center vertically', () => {
       const bottomEdge = overlayHeight - layerHeight
-      const result = applySnapping(100, bottomEdge - 5, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        100,
+        bottomEdge - 5,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.y).toBe(bottomEdge) // Snapped to edge, not center
       expect(result.snappedToCenter.y).toBe(false)
     })
@@ -769,8 +1025,16 @@ describe('applySnapping', () => {
 
   describe('Mixed Alignment Scenarios - Independent Axis Snapping', () => {
     it('should snap to left edge regardless of Y position', () => {
-      const result = applySnapping(5, 300, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        5,
+        300,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(0)
       expect(result.y).toBe(300)
       expect(result.snappedToCenter.x).toBe(false)
@@ -779,8 +1043,16 @@ describe('applySnapping', () => {
 
     it('should snap to right edge regardless of Y position', () => {
       const rightEdge = overlayWidth - layerWidth
-      const result = applySnapping(rightEdge - 5, 300, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        rightEdge - 5,
+        300,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(rightEdge)
       expect(result.y).toBe(300)
       expect(result.snappedToCenter.x).toBe(false)
@@ -788,8 +1060,16 @@ describe('applySnapping', () => {
     })
 
     it('should snap to top edge regardless of X position', () => {
-      const result = applySnapping(300, 5, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        300,
+        5,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(300)
       expect(result.y).toBe(0)
       expect(result.snappedToCenter.x).toBe(false)
@@ -798,8 +1078,16 @@ describe('applySnapping', () => {
 
     it('should snap to bottom edge regardless of X position', () => {
       const bottomEdge = overlayHeight - layerHeight
-      const result = applySnapping(300, bottomEdge - 5, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        300,
+        bottomEdge - 5,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(300)
       expect(result.y).toBe(bottomEdge)
       expect(result.snappedToCenter.x).toBe(false)
@@ -808,8 +1096,16 @@ describe('applySnapping', () => {
 
     it('should snap to horizontal center regardless of Y position', () => {
       const centerX = (overlayWidth - layerWidth) / 2
-      const result = applySnapping(centerX, 300, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        centerX,
+        300,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(centerX)
       expect(result.y).toBe(300)
       expect(result.snappedToCenter.x).toBe(true)
@@ -818,8 +1114,16 @@ describe('applySnapping', () => {
 
     it('should snap to vertical center regardless of X position', () => {
       const centerY = (overlayHeight - layerHeight) / 2
-      const result = applySnapping(300, centerY, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        300,
+        centerY,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(300)
       expect(result.y).toBe(centerY)
       expect(result.snappedToCenter.x).toBe(false)
@@ -828,8 +1132,16 @@ describe('applySnapping', () => {
 
     it('should snap to left edge when Y is centered', () => {
       const centerY = (overlayHeight - layerHeight) / 2
-      const result = applySnapping(5, centerY, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        5,
+        centerY,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(0)
       expect(result.y).toBe(centerY)
       expect(result.snappedToCenter.x).toBe(false)
@@ -838,8 +1150,16 @@ describe('applySnapping', () => {
 
     it('should snap to top edge when X is centered', () => {
       const centerX = (overlayWidth - layerWidth) / 2
-      const result = applySnapping(centerX, 5, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        centerX,
+        5,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(centerX)
       expect(result.y).toBe(0)
       expect(result.snappedToCenter.x).toBe(true)
@@ -849,8 +1169,16 @@ describe('applySnapping', () => {
     it('should snap to both centers when near both', () => {
       const centerX = (overlayWidth - layerWidth) / 2
       const centerY = (overlayHeight - layerHeight) / 2
-      const result = applySnapping(centerX, centerY, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        centerX,
+        centerY,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(centerX)
       expect(result.y).toBe(centerY)
       expect(result.snappedToCenter.x).toBe(true)
@@ -859,8 +1187,16 @@ describe('applySnapping', () => {
 
     it('should snap to left edge and bottom edge simultaneously', () => {
       const bottomEdge = overlayHeight - layerHeight
-      const result = applySnapping(5, bottomEdge - 5, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        5,
+        bottomEdge - 5,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(0)
       expect(result.y).toBe(bottomEdge)
       expect(result.snappedToCenter.x).toBe(false)
@@ -869,8 +1205,16 @@ describe('applySnapping', () => {
 
     it('should snap to right edge and top edge simultaneously', () => {
       const rightEdge = overlayWidth - layerWidth
-      const result = applySnapping(rightEdge - 5, 5, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        rightEdge - 5,
+        5,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(rightEdge)
       expect(result.y).toBe(0)
       expect(result.snappedToCenter.x).toBe(false)
@@ -880,8 +1224,16 @@ describe('applySnapping', () => {
 
   describe('Edge Cases', () => {
     it('should handle layer at exact edge (0, 0)', () => {
-      const result = applySnapping(0, 0, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        0,
+        0,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(0)
       expect(result.y).toBe(0)
       expect(result.snappedToCenter.x).toBe(false)
@@ -891,8 +1243,16 @@ describe('applySnapping', () => {
     it('should handle layer at exact center', () => {
       const centerX = (overlayWidth - layerWidth) / 2
       const centerY = (overlayHeight - layerHeight) / 2
-      const result = applySnapping(centerX, centerY, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        centerX,
+        centerY,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(centerX)
       expect(result.y).toBe(centerY)
       expect(result.snappedToCenter.x).toBe(true)
@@ -903,8 +1263,16 @@ describe('applySnapping', () => {
       const smallWidth = 10
       const smallHeight = 10
       const centerX = (overlayWidth - smallWidth) / 2
-      const result = applySnapping(centerX, 100, smallWidth, smallHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        centerX,
+        100,
+        smallWidth,
+        smallHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result.x).toBe(centerX)
       expect(result.snappedToCenter.x).toBe(true)
     })
@@ -913,16 +1281,32 @@ describe('applySnapping', () => {
       const largeWidth = 1200
       const largeHeight = 1000
       const centerX = (overlayWidth - largeWidth) / 2 // Negative value
-      const result = applySnapping(centerX, 100, largeWidth, largeHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        centerX,
+        100,
+        largeWidth,
+        largeHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       // Should still calculate center correctly even with negative value
       expect(result.x).toBe(centerX)
       expect(result.snappedToCenter.x).toBe(true)
     })
 
     it('should handle negative display coordinates', () => {
-      const result = applySnapping(-10, -10, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        -10,
+        -10,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       // Negative coordinates are far from edges, should not snap
       expect(result.x).toBe(-10)
       expect(result.y).toBe(-10)
@@ -931,8 +1315,16 @@ describe('applySnapping', () => {
     })
 
     it('should handle coordinates beyond overlay bounds', () => {
-      const result = applySnapping(overlayWidth + 100, overlayHeight + 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result = applySnapping(
+        overlayWidth + 100,
+        overlayHeight + 100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       // Beyond bounds, should not snap
       expect(result.x).toBe(overlayWidth + 100)
       expect(result.y).toBe(overlayHeight + 100)
@@ -942,7 +1334,7 @@ describe('applySnapping', () => {
 
     it('should handle zero-sized layer', () => {
       const result = applySnapping(100, 100, 0, 0, overlayWidth, overlayHeight, false)
-      
+
       // Should still work with zero-sized layer
       expect(result.x).toBeDefined()
       expect(result.y).toBeDefined()
@@ -950,7 +1342,7 @@ describe('applySnapping', () => {
 
     it('should handle zero-sized overlay', () => {
       const result = applySnapping(0, 0, layerWidth, layerHeight, 0, 0, false)
-      
+
       // Edge case: should not crash
       expect(result.x).toBeDefined()
       expect(result.y).toBeDefined()
@@ -960,28 +1352,60 @@ describe('applySnapping', () => {
   describe('Snapping Threshold Constants', () => {
     it('should use correct edge snapping threshold (8px)', () => {
       expect(SNAP_THRESHOLDS.EDGE_PIXELS).toBe(8)
-      
+
       // Test that 7px snaps but 8px does not
-      const result7 = applySnapping(7, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      const result8 = applySnapping(8, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
-      
+      const result7 = applySnapping(
+        7,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+      const result8 = applySnapping(
+        8,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
+
       expect(result7.x).toBe(0) // Snaps
       expect(result8.x).toBe(8) // Does not snap
     })
 
     it('should use correct center snap threshold (2%)', () => {
       expect(SNAP_THRESHOLDS.CENTER_SNAP_PERCENT).toBe(0.02)
-      
+
       const centerX = (overlayWidth - layerWidth) / 2
       const threshold = overlayWidth * 0.02 // 20px for 1000px overlay
-      
+
       // Just inside threshold should snap
-      const resultInside = applySnapping(centerX + threshold - 1, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
+      const resultInside = applySnapping(
+        centerX + threshold - 1,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
       expect(resultInside.x).toBe(centerX)
       expect(resultInside.snappedToCenter.x).toBe(true)
-      
+
       // Just outside threshold should not snap
-      const resultOutside = applySnapping(centerX + threshold + 1, 100, layerWidth, layerHeight, overlayWidth, overlayHeight, false)
+      const resultOutside = applySnapping(
+        centerX + threshold + 1,
+        100,
+        layerWidth,
+        layerHeight,
+        overlayWidth,
+        overlayHeight,
+        false,
+      )
       expect(resultOutside.x).toBe(centerX + threshold + 1)
       expect(resultOutside.snappedToCenter.x).toBe(false)
     })
