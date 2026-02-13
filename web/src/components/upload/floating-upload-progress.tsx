@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CheckCircle, ChevronDown, ChevronUp, RotateCcw, Upload, X, XCircle } from 'lucide-react'
 
@@ -28,7 +28,9 @@ export function FloatingUploadProgress({
 }: FloatingUploadProgressProps) {
   const { t } = useTranslation()
   const [isExpanded, setIsExpanded] = useState(true)
-  const [autoHideTimer, setAutoHideTimer] = useState<NodeJS.Timeout | null>(null)
+  const autoHideTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const onSuccessRef = useRef(onSuccess)
+  const onClearAllRef = useRef(onClearAll)
 
   const completedFiles = files.filter((f) => f.status === 'success').length
   const failedFiles = files.filter((f) => f.status === 'error').length
@@ -41,14 +43,20 @@ export function FloatingUploadProgress({
   const isComplete = completedFiles + failedFiles === files.length && files.length > 0
   const hasErrors = failedFiles > 0
 
+  // Keep callback refs updated
+  useEffect(() => {
+    onSuccessRef.current = onSuccess
+    onClearAllRef.current = onClearAll
+  }, [onSuccess, onClearAll])
+
   // Show popup when files are added
   useEffect(() => {
     if (files.length > 0) {
       setIsExpanded(true)
       // Clear any existing auto-hide timer
-      if (autoHideTimer) {
-        clearTimeout(autoHideTimer)
-        setAutoHideTimer(null)
+      if (autoHideTimerRef.current) {
+        clearTimeout(autoHideTimerRef.current)
+        autoHideTimerRef.current = null
       }
     }
   }, [files.length])
@@ -56,18 +64,28 @@ export function FloatingUploadProgress({
   // Auto-hide after successful completion (no errors)
   useEffect(() => {
     if (isComplete && !hasErrors && !isUploading) {
-      // Wait 3 seconds, call onSuccess (which handles invalidation + toast), then clear files
-      const timer = setTimeout(async () => {
-        if (onSuccess) {
-          await onSuccess(completedFiles)
+      const timer = setTimeout(() => {
+        // Call onSuccess first
+        const successPromise = onSuccessRef.current?.(completedFiles)
+        
+        // Then close after success completes
+        if (successPromise) {
+          successPromise.then(() => {
+            onClearAllRef.current?.()
+          })
+        } else {
+          onClearAllRef.current?.()
         }
-        onClearAll?.()
       }, 3000)
-      setAutoHideTimer(timer)
-
-      return () => clearTimeout(timer)
+      
+      autoHideTimerRef.current = timer
+      return () => {
+        if (autoHideTimerRef.current) {
+          clearTimeout(autoHideTimerRef.current)
+        }
+      }
     }
-  }, [isComplete, hasErrors, isUploading, onClearAll, onSuccess, completedFiles])
+  }, [isComplete, hasErrors, isUploading, completedFiles])
 
   const getHeaderContent = () => {
     if (hasActiveUploads) {
@@ -99,41 +117,37 @@ export function FloatingUploadProgress({
   return (
     <Sheet open={files.length > 0} modal={false}>
       <SheetContent
-        side="bottom"
+        side='bottom'
         hideOverlay={true}
         hideClose={true}
-        className="mx-auto max-w-2xl rounded-t-xl p-4"
+        className='mx-auto max-w-2xl rounded-t-xl p-4'
       >
         {/* Header */}
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex-1">
-            <h3 className="font-medium">{title}</h3>
-            <p className="text-muted-foreground text-sm">{subtitle}</p>
+        <div className='mb-3 flex items-center justify-between'>
+          <div className='flex-1'>
+            <h3 className='font-medium'>{title}</h3>
+            <p className='text-muted-foreground text-sm'>{subtitle}</p>
           </div>
-          <div className="flex items-center gap-1">
+          <div className='flex items-center gap-1'>
             {/* Collapse/Expand button */}
             <Button
-              variant="ghost"
-              size="sm"
+              variant='ghost'
+              size='sm'
               onClick={() => setIsExpanded(!isExpanded)}
-              className="h-8 w-8 p-0"
+              className='h-8 w-8 p-0'
             >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronUp className="h-4 w-4" />
-              )}
+              {isExpanded ? <ChevronDown className='h-4 w-4' /> : <ChevronUp className='h-4 w-4' />}
             </Button>
 
             {/* Clear/Close button */}
             {onClearAll && !isUploading && (
               <Button
-                variant="ghost"
-                size="sm"
+                variant='ghost'
+                size='sm'
                 onClick={() => onClearAll()}
-                className="h-8 w-8 p-0"
+                className='h-8 w-8 p-0'
               >
-                <X className="h-4 w-4" />
+                <X className='h-4 w-4' />
               </Button>
             )}
           </div>
@@ -141,54 +155,52 @@ export function FloatingUploadProgress({
 
         {/* Overall progress bar - only show during active upload */}
         {hasActiveUploads && isExpanded && (
-          <div className="mb-3">
-            <Progress value={overallProgress} className="h-2" />
+          <div className='mb-3'>
+            <Progress value={overallProgress} className='h-2' />
           </div>
         )}
 
         {/* Expanded file list */}
         {isExpanded && (
-          <div className="max-h-60 space-y-2 overflow-y-auto">
+          <div className='max-h-60 space-y-2 overflow-y-auto'>
             {files.map((file) => (
               <div
                 key={file.id}
-                className="relative flex items-center gap-2 rounded-md bg-muted p-2 hover:bg-accent"
+                className='bg-muted hover:bg-accent relative flex items-center gap-2 rounded-md p-2'
               >
                 <FileStatusIcon status={file.status} />
 
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{file.file.name}</p>
-                  <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                <div className='min-w-0 flex-1'>
+                  <p className='truncate text-sm font-medium'>{file.file.name}</p>
+                  <div className='text-muted-foreground flex items-center gap-2 text-xs'>
                     <span>{formatFileSize(file.file.size)}</span>
                     {file.status === 'uploading' && <span>{Math.round(file.progress)}%</span>}
-                    {file.error && (
-                      <span className="text-destructive truncate">{file.error}</span>
-                    )}
+                    {file.error && <span className='text-destructive truncate'>{file.error}</span>}
                   </div>
                 </div>
 
-                <div className="flex shrink-0 items-center gap-1">
+                <div className='flex shrink-0 items-center gap-1'>
                   {file.status === 'uploading' && onCancelFile && (
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant='ghost'
+                      size='sm'
                       onClick={() => onCancelFile(file.id)}
-                      className="h-7 w-7 p-0"
-                      title="Cancel upload"
+                      className='h-7 w-7 p-0'
+                      title='Cancel upload'
                     >
-                      <X className="h-3 w-3" />
+                      <X className='h-3 w-3' />
                     </Button>
                   )}
 
                   {file.status === 'error' && onRetryFile && (
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant='ghost'
+                      size='sm'
                       onClick={() => onRetryFile(file.id)}
-                      className="h-7 w-7 p-0"
-                      title="Retry upload"
+                      className='h-7 w-7 p-0'
+                      title='Retry upload'
                     >
-                      <RotateCcw className="h-3 w-3" />
+                      <RotateCcw className='h-3 w-3' />
                     </Button>
                   )}
 
@@ -197,13 +209,13 @@ export function FloatingUploadProgress({
                       file.status === 'error' ||
                       file.status === 'cancelled') && (
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        variant='ghost'
+                        size='sm'
                         onClick={() => onRemoveFile(file.id)}
-                        className="h-7 w-7 p-0"
-                        title="Remove"
+                        className='h-7 w-7 p-0'
+                        title='Remove'
                       >
-                        <X className="h-3 w-3" />
+                        <X className='h-3 w-3' />
                       </Button>
                     )}
                 </div>
@@ -214,20 +226,20 @@ export function FloatingUploadProgress({
 
         {/* Summary stats when collapsed */}
         {!isExpanded && (
-          <div className="text-muted-foreground flex items-center justify-between text-sm">
-            <div className="flex items-center gap-3">
+          <div className='text-muted-foreground flex items-center justify-between text-sm'>
+            <div className='flex items-center gap-3'>
               {uploadingFiles > 0 && (
-                <span className="text-muted-foreground">
+                <span className='text-muted-foreground'>
                   {t('pages.gallery.upload.progress.uploading', { count: uploadingFiles })}
                 </span>
               )}
               {completedFiles > 0 && (
-                <span className="text-muted-foreground">
+                <span className='text-muted-foreground'>
                   {t('pages.gallery.upload.progress.completed', { count: completedFiles })}
                 </span>
               )}
               {failedFiles > 0 && (
-                <span className="text-destructive">
+                <span className='text-destructive'>
                   {t('pages.gallery.upload.progress.failed', { count: failedFiles })}
                 </span>
               )}
@@ -242,14 +254,14 @@ export function FloatingUploadProgress({
 function FileStatusIcon({ status }: { status: DragDropFile['status'] }) {
   switch (status) {
     case 'success':
-      return <CheckCircle className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+      return <CheckCircle className='text-muted-foreground h-4 w-4 flex-shrink-0' />
     case 'error':
-      return <XCircle className="text-destructive h-4 w-4 flex-shrink-0" />
+      return <XCircle className='text-destructive h-4 w-4 flex-shrink-0' />
     case 'cancelled':
-      return <XCircle className="text-muted-foreground h-4 w-4 flex-shrink-0" />
+      return <XCircle className='text-muted-foreground h-4 w-4 flex-shrink-0' />
     case 'uploading':
     default:
-      return <Upload className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+      return <Upload className='text-muted-foreground h-4 w-4 flex-shrink-0' />
   }
 }
 

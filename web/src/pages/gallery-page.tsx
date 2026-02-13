@@ -1210,11 +1210,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           onCancelFile={uploadState.cancelFile}
           onRetryFile={uploadState.retryFile}
           onClearAll={uploadState.clearFiles}
-          onSuccess={async (count) => {
+          onSuccess={async () => {
             await router.invalidate()
-            toast.success(t('pages.gallery.upload.messages.uploadSuccess'), {
-              description: t('pages.gallery.upload.progress.completed', { count }),
-            })
+            toast.success('diu')
           }}
         />
       )}

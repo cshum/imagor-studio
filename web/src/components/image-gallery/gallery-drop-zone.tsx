@@ -68,15 +68,23 @@ export function GalleryDropZone({
     window.scrollTo({ top: 0 })
   }, [])
 
-  const { isDragActive, files, dragProps, removeFile, cancelFile, clearFiles, retryFile, isUploading } =
-    useDragDrop({
-      onFileUpload: handleFileUpload,
-      onFilesDropped: handleFilesDropped,
-      existingFiles,
-      currentPath,
-      imageExtensions,
-      videoExtensions,
-    })
+  const {
+    isDragActive,
+    files,
+    dragProps,
+    removeFile,
+    cancelFile,
+    clearFiles,
+    retryFile,
+    isUploading,
+  } = useDragDrop({
+    onFileUpload: handleFileUpload,
+    onFilesDropped: handleFilesDropped,
+    existingFiles,
+    currentPath,
+    imageExtensions,
+    videoExtensions,
+  })
 
   const uploadCompletedRef = useRef(false)
 

@@ -60,7 +60,15 @@ const SheetContent = React.forwardRef<
   SheetContentProps
 >(
   (
-    { side = 'right', className, children, hideOverlay = false, hideClose = false, modal, ...props },
+    {
+      side = 'right',
+      className,
+      children,
+      hideOverlay = false,
+      hideClose = false,
+      modal,
+      ...props
+    },
     ref,
   ) => (
     <SheetPortal>

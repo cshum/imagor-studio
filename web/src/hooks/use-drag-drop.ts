@@ -185,7 +185,11 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
           }, 100)
 
           const filePath = currentPath ? `${currentPath}/${fileItem.file.name}` : fileItem.file.name
-          const success = await onFileUpload(fileItem.file, filePath, fileItem.abortController?.signal)
+          const success = await onFileUpload(
+            fileItem.file,
+            filePath,
+            fileItem.abortController?.signal,
+          )
 
           clearInterval(progressInterval)
 
@@ -245,12 +249,15 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     setFiles((prev) => prev.filter((f) => f.id !== id))
   }, [])
 
-  const cancelFile = useCallback((id: string) => {
-    const fileItem = files.find((f) => f.id === id)
-    if (fileItem && fileItem.status === 'uploading' && fileItem.abortController) {
-      fileItem.abortController.abort()
-    }
-  }, [files])
+  const cancelFile = useCallback(
+    (id: string) => {
+      const fileItem = files.find((f) => f.id === id)
+      if (fileItem && fileItem.status === 'uploading' && fileItem.abortController) {
+        fileItem.abortController.abort()
+      }
+    },
+    [files],
+  )
 
   const clearFiles = useCallback(() => {
     setFiles([])
