@@ -50,8 +50,22 @@ export function UploadProgress({
   })
   const autoCloseStartedRef = useRef(false)
   const manuallyClosedRef = useRef(false)
+  const prevFilesRef = useRef<DragDropFile[]>([])
+  const onSuccessRef = useRef(onSuccess)
+  const onClearAllRef = useRef(onClearAll)
+  const isOpenRef = useRef(state.isOpen)
+  const isAutoClosingRef = useRef(state.isAutoClosing)
 
-  // Memoize derived stats to avoid recalculation on every render
+  useEffect(() => {
+    onSuccessRef.current = onSuccess
+    onClearAllRef.current = onClearAll
+  }, [onSuccess, onClearAll])
+
+  useEffect(() => {
+    isOpenRef.current = state.isOpen
+    isAutoClosingRef.current = state.isAutoClosing
+  }, [state.isOpen, state.isAutoClosing])
+
   const stats = useMemo(() => {
     const completed = files.filter((f) => f.status === 'success').length
     const failed = files.filter((f) => f.status === 'error').length
@@ -73,7 +87,7 @@ export function UploadProgress({
   // Handle sheet opening and auto-close logic
   useEffect(() => {
     // Close sheet when all files are removed (but not if auto-closing - let timeout handle it)
-    if (files.length === 0 && state.isOpen && !state.isAutoClosing) {
+    if (files.length === 0 && isOpenRef.current && !isAutoClosingRef.current) {
       setState((s) => ({ ...s, isOpen: false, displayStats: null, isAutoClosing: false }))
       manuallyClosedRef.current = false
       autoCloseStartedRef.current = false
@@ -81,7 +95,7 @@ export function UploadProgress({
     }
 
     // If new files are added during auto-close, cancel it and show new upload
-    if (files.length > 0 && state.isAutoClosing) {
+    if (files.length > 0 && isAutoClosingRef.current) {
       autoCloseStartedRef.current = false
       setState((s) => ({
         ...s,
@@ -97,7 +111,7 @@ export function UploadProgress({
     // Open sheet when files are added (but not if manually closed or auto-close started)
     if (
       files.length > 0 &&
-      !state.isOpen &&
+      !isOpenRef.current &&
       !autoCloseStartedRef.current &&
       !manuallyClosedRef.current
     ) {
@@ -110,9 +124,14 @@ export function UploadProgress({
       }))
     }
 
-    // Update display files while uploading
-    if (files.length > 0 && !state.isAutoClosing) {
-      setState((s) => ({ ...s, displayFiles: files }))
+    // Update display files while uploading (but not if auto-closing - use snapshot)
+    if (files.length > 0 && !isAutoClosingRef.current && isOpenRef.current) {
+      // Check if files actually changed by comparing with previous ref
+      const filesChanged = prevFilesRef.current !== files
+      if (filesChanged) {
+        prevFilesRef.current = files
+        setState((s) => ({ ...s, displayFiles: files }))
+      }
     }
 
     // Auto-close after successful completion (no errors)
@@ -121,26 +140,26 @@ export function UploadProgress({
       !stats.hasErrors &&
       !isUploading &&
       !autoCloseStartedRef.current &&
-      state.isOpen
+      isOpenRef.current
     ) {
       autoCloseStartedRef.current = true
       setState((s) => ({ ...s, isAutoClosing: true, displayFiles: files, displayStats: stats }))
 
       setTimeout(async () => {
-        // Call onSuccess and wait for it to complete
-        if (onSuccess) {
-          await onSuccess(stats.completed)
+        // Call onSuccess and wait for it to complete (use ref)
+        if (onSuccessRef.current) {
+          await onSuccessRef.current(stats.completed)
         }
         // Close the sheet
         setState((s) => ({ ...s, isOpen: false, isAutoClosing: false, displayStats: null }))
         // Reset flags for next upload
         autoCloseStartedRef.current = false
         manuallyClosedRef.current = false
-        // Clear files
-        onClearAll?.()
+        // Clear files (use ref)
+        onClearAllRef.current?.()
       }, 3000)
     }
-  }, [files, stats, isUploading, state.isOpen, state.isAutoClosing, onSuccess, onClearAll])
+  }, [files, stats, isUploading])
 
   // Use snapshot stats if auto-closing, otherwise use live stats
   const activeStats = state.displayStats || stats
@@ -272,20 +291,17 @@ export function UploadProgress({
                     </Button>
                   )}
 
-                  {onRemoveFile &&
-                    (file.status === 'success' ||
-                      file.status === 'error' ||
-                      file.status === 'cancelled') && (
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => onRemoveFile(file.id)}
-                        className='h-7 w-7 p-0'
-                        title='Remove'
-                      >
-                        <X className='h-3 w-3' />
-                      </Button>
-                    )}
+                  {onRemoveFile && (file.status === 'error' || file.status === 'cancelled') && (
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onRemoveFile(file.id)}
+                      className='h-7 w-7 p-0'
+                      title='Remove'
+                    >
+                      <X className='h-3 w-3' />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}

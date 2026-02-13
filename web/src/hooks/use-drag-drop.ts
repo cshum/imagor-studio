@@ -249,15 +249,15 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     setFiles((prev) => prev.filter((f) => f.id !== id))
   }, [])
 
-  const cancelFile = useCallback(
-    (id: string) => {
-      const fileItem = files.find((f) => f.id === id)
+  const cancelFile = useCallback((id: string) => {
+    setFiles((prev) => {
+      const fileItem = prev.find((f) => f.id === id)
       if (fileItem && fileItem.status === 'uploading' && fileItem.abortController) {
         fileItem.abortController.abort()
       }
-    },
-    [files],
-  )
+      return prev
+    })
+  }, [])
 
   const clearFiles = useCallback(() => {
     setFiles([])
