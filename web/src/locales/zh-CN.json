@@ -171,11 +171,7 @@
         "uploadFiles": "上传文件",
         "messages": {
           "uploadSuccess": "文件上传成功",
-          "uploadFailed": "上传 {{fileName}} 失败",
-          "uploadSuccessPartial": "{{count}} 个文件上传成功",
-          "uploadFailedPartial": "{{count}} 个文件上传失败",
-          "uploadFailedAll": "上传 {{count}} 个文件失败",
-          "uploadFailedAllPlural": "上传 {{count}} 个文件失败"
+          "uploadFailed": "上传 {{fileName}} 失败"
         }
       },
       "contextMenu": {

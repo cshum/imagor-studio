@@ -167,12 +167,8 @@
         },
         "uploadFiles": "Carica File",
         "messages": {
-          "uploadSuccess": "File caricati correttamente",
-          "uploadFailed": "Impossibile caricare {{fileName}}",
-          "uploadSuccessPartial": "{{count}} file caricati correttamente",
-          "uploadFailedPartial": "{{count}} file non caricati",
-          "uploadFailedAll": "Impossibile caricare {{count}} file",
-          "uploadFailedAllPlural": "Impossibile caricare {{count}} file"
+          "uploadSuccess": "File caricati con successo",
+          "uploadFailed": "Impossibile caricare {{fileName}}"
         }
       },
       "contextMenu": {

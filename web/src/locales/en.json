@@ -174,11 +174,7 @@
         "uploadFiles": "Upload Files",
         "messages": {
           "uploadSuccess": "Files uploaded successfully",
-          "uploadFailed": "Failed to upload {{fileName}}",
-          "uploadSuccessPartial": "{{count}} files uploaded successfully",
-          "uploadFailedPartial": "{{count}} files failed to upload",
-          "uploadFailedAll": "Failed to upload {{count}} file",
-          "uploadFailedAllPlural": "Failed to upload {{count}} files"
+          "uploadFailed": "Failed to upload {{fileName}}"
         }
       },
       "contextMenu": {
