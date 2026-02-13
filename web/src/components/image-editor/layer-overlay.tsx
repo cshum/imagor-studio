@@ -429,10 +429,10 @@ export function LayerOverlay({
     layerFillColor,
   ])
 
-  // Handle click outside layer box to deselect
-  const handleOverlayClick = useCallback(
+  // Handle mousedown outside layer box to deselect
+  const handleOverlayMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      // Only deselect if clicking directly on overlay background (not layer box or handles)
+      // Only deselect if mousedown directly on overlay background (not layer box or handles)
       if (e.target === overlayRef.current && onDeselect) {
         onDeselect()
       }
@@ -456,7 +456,7 @@ export function LayerOverlay({
     <div
       ref={overlayRef}
       className='pointer-events-auto absolute inset-0 z-20 h-full w-full'
-      onClick={handleOverlayClick}
+      onMouseDown={handleOverlayMouseDown}
     >
       {/* Layer box and handles */}
       <div

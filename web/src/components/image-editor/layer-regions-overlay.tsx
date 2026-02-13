@@ -31,6 +31,16 @@ export function LayerRegionsOverlay({
   const contentWidth = baseImageWidth - paddingLeft - paddingRight
   const contentHeight = baseImageHeight - paddingTop - paddingBottom
 
+  // Handle layer selection on mouse/touch down for immediate response
+  const handleLayerSelect = useCallback(
+    (layerId: string) => (e: React.MouseEvent | React.TouchEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      onLayerSelect(layerId)
+    },
+    [onLayerSelect],
+  )
+
   // Calculate CSS percentage strings for position and size
   // Uses same logic as LayerOverlay for consistency
   const getLayerStyles = useCallback(
@@ -103,7 +113,8 @@ export function LayerRegionsOverlay({
               'hover:shadow-[0_0_0_1px_rgba(0,0,0,0.5)]',
             )}
             style={styles}
-            onClick={() => onLayerSelect(layer.id)}
+            onMouseDown={handleLayerSelect(layer.id)}
+            onTouchStart={handleLayerSelect(layer.id)}
           />
         )
       })}

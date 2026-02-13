@@ -91,13 +91,13 @@ export function PreviewArea({
   // Track context transitions to hide layer overlay until new preview loads
   const [isTransitioning, setIsTransitioning] = useState(false)
 
-  // Handle click on preview container to deselect layer
-  const handleContainerClick = useCallback(
+  // Handle mousedown on preview container to deselect layer
+  const handleContainerMouseDown = useCallback(
     (e: React.MouseEvent) => {
       // Only deselect if:
       // 1. A layer is selected
       // 2. Not in visual crop mode
-      // 3. Click is directly on the container (not bubbled from children)
+      // 3. Mousedown is directly on the container (not bubbled from children)
       if (selectedLayerId && !visualCropEnabled && e.target === e.currentTarget && imageEditor) {
         imageEditor.setSelectedLayerId(null)
       }
@@ -230,7 +230,7 @@ export function PreviewArea({
       <div
         ref={previewContainerRef}
         className='bg-muted/20 flex min-h-0 flex-1 touch-none items-center justify-center overflow-hidden p-2 pb-0'
-        onClick={handleContainerClick}
+        onMouseDown={handleContainerMouseDown}
       >
         {error ? (
           <div className='flex flex-col items-center gap-4 text-center'>
