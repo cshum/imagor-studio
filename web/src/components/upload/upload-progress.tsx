@@ -1,64 +1,152 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CheckCircle, RotateCcw, Upload, X, XCircle } from 'lucide-react'
+import { CheckCircle, ChevronDown, ChevronUp, RotateCcw, Upload, X, XCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { DragDropFile } from '@/hooks/use-drag-drop'
-import { cn } from '@/lib/utils'
 
 export interface UploadProgressProps {
   files: DragDropFile[]
   isUploading: boolean
   onRemoveFile?: (id: string) => void
-  onRetryFile?: (id: string) => void
+  onCancelFile?: (id: string) => void
+  onRetryFile?: (id: string) => Promise<void>
   onClearAll?: () => void
-  className?: string
+  onSuccess?: (count: number) => Promise<void>
 }
 
 export function UploadProgress({
   files,
   isUploading,
   onRemoveFile,
+  onCancelFile,
   onRetryFile,
   onClearAll,
-  className,
+  onSuccess,
 }: UploadProgressProps) {
   const { t } = useTranslation()
+  const [state, setState] = useState<{
+    isOpen: boolean
+    isExpanded: boolean
+    displayFiles: DragDropFile[]
+    displayStats: {
+      completed: number
+      failed: number
+      uploading: number
+      progress: number
+      isComplete: boolean
+      hasErrors: boolean
+      hasActiveUploads: boolean
+    } | null
+    isAutoClosing: boolean
+  }>({
+    isOpen: false,
+    isExpanded: true,
+    displayFiles: [],
+    displayStats: null,
+    isAutoClosing: false,
+  })
+  const autoCloseStartedRef = useRef(false)
+  const manuallyClosedRef = useRef(false)
 
-  if (files.length === 0) return null
+  // Memoize derived stats to avoid recalculation on every render
+  const stats = useMemo(() => {
+    const completed = files.filter((f) => f.status === 'success').length
+    const failed = files.filter((f) => f.status === 'error').length
+    const uploading = files.filter((f) => f.status === 'uploading').length
+    const progress =
+      files.length > 0 ? files.reduce((acc, file) => acc + file.progress, 0) / files.length : 0
 
-  const completedFiles = files.filter((f) => f.status === 'success').length
-  const failedFiles = files.filter((f) => f.status === 'error').length
-  const uploadingFiles = files.filter((f) => f.status === 'uploading').length
+    return {
+      completed,
+      failed,
+      uploading,
+      progress,
+      isComplete: completed + failed === files.length && files.length > 0,
+      hasErrors: failed > 0,
+      hasActiveUploads: uploading > 0,
+    }
+  }, [files])
 
-  const overallProgress =
-    files.length > 0 ? files.reduce((acc, file) => acc + file.progress, 0) / files.length : 0
+  // Handle sheet opening and auto-close logic
+  useEffect(() => {
+    // Close sheet when all files are removed (but not if auto-closing - let timeout handle it)
+    if (files.length === 0 && state.isOpen && !state.isAutoClosing) {
+      setState((s) => ({ ...s, isOpen: false, displayStats: null, isAutoClosing: false }))
+      manuallyClosedRef.current = false
+      autoCloseStartedRef.current = false
+      return
+    }
 
-  // Determine current state
-  const hasActiveUploads = uploadingFiles > 0
-  const isComplete = completedFiles + failedFiles === files.length && files.length > 0
+    // Open sheet when files are added (but not if manually closed or auto-close started)
+    if (
+      files.length > 0 &&
+      !state.isOpen &&
+      !autoCloseStartedRef.current &&
+      !manuallyClosedRef.current
+    ) {
+      setState((s) => ({
+        ...s,
+        isOpen: true,
+        isExpanded: true,
+        displayFiles: files,
+        isAutoClosing: false,
+      }))
+    }
 
-  // Dynamic header content
+    // Update display files while uploading
+    if (files.length > 0 && !state.isAutoClosing) {
+      setState((s) => ({ ...s, displayFiles: files }))
+    }
+
+    // Auto-close after successful completion (no errors)
+    if (
+      stats.isComplete &&
+      !stats.hasErrors &&
+      !isUploading &&
+      !autoCloseStartedRef.current &&
+      state.isOpen
+    ) {
+      autoCloseStartedRef.current = true
+      setState((s) => ({ ...s, isAutoClosing: true, displayFiles: files, displayStats: stats }))
+
+      setTimeout(async () => {
+        // Call onSuccess and wait for it to complete
+        if (onSuccess) {
+          await onSuccess(stats.completed)
+        }
+        // Close the sheet
+        setState((s) => ({ ...s, isOpen: false, isAutoClosing: false, displayStats: null }))
+        // Clear files
+        onClearAll?.()
+      }, 3000)
+    }
+  }, [files, stats, isUploading, state.isOpen, state.isAutoClosing, onSuccess, onClearAll])
+
+  // Use snapshot stats if auto-closing, otherwise use live stats
+  const activeStats = state.displayStats || stats
+
   const getHeaderContent = () => {
-    if (hasActiveUploads) {
+    if (activeStats.hasActiveUploads) {
       return {
         title: t('pages.gallery.upload.progress.uploadProgress'),
         subtitle: t('pages.gallery.upload.progress.filesCompleted', {
-          completed: completedFiles,
-          total: files.length,
+          completed: activeStats.completed,
+          total: state.displayFiles.length,
         }),
       }
-    } else if (isComplete) {
-      if (failedFiles === 0) {
+    } else if (activeStats.isComplete) {
+      if (activeStats.failed === 0) {
         return {
           title: t('pages.gallery.upload.messages.uploadSuccess'),
-          subtitle: t('pages.gallery.upload.progress.completed', { count: completedFiles }),
+          subtitle: t('pages.gallery.upload.progress.completed', { count: activeStats.completed }),
         }
       } else {
         return {
           title: t('pages.gallery.upload.summary.allFilesProcessed'),
-          subtitle: `${completedFiles} successful${failedFiles > 0 ? `, ${failedFiles} failed` : ''}`,
+          subtitle: `${activeStats.completed} successful${activeStats.failed > 0 ? `, ${activeStats.failed} failed` : ''}`,
         }
       }
     }
@@ -67,119 +155,159 @@ export function UploadProgress({
 
   const { title, subtitle } = getHeaderContent()
 
+  const handleClose = () => {
+    setState((s) => ({ ...s, isOpen: false, isAutoClosing: false, displayStats: null }))
+    manuallyClosedRef.current = true // Mark as manually closed to prevent reopening
+    onClearAll?.()
+  }
+
   return (
-    <div className={cn('bg-card rounded-lg border p-4 shadow-sm', className)}>
-      <div className='mb-4 flex items-center justify-between'>
-        <div>
-          <h3 className='font-medium'>{title}</h3>
-          <p className='text-muted-foreground text-sm'>{subtitle}</p>
-        </div>
-        <div className='flex items-center gap-2'>
-          {onClearAll && !isUploading && (
-            <Button variant='outline' size='sm' onClick={onClearAll}>
-              {t('pages.gallery.upload.summary.clear')}
+    <Sheet open={state.isOpen} modal={false}>
+      <SheetContent
+        side='bottom'
+        hideOverlay={true}
+        hideClose={true}
+        className='mx-auto max-w-2xl rounded-t-xl p-4'
+      >
+        {/* Header */}
+        <div className='mb-3 flex items-center justify-between'>
+          <div className='flex-1'>
+            <h3 className='font-medium'>{title}</h3>
+            <p className='text-muted-foreground text-sm'>{subtitle}</p>
+          </div>
+          <div className='flex items-center gap-1'>
+            {/* Collapse/Expand button */}
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => setState((s) => ({ ...s, isExpanded: !s.isExpanded }))}
+              className='h-8 w-8 p-0'
+            >
+              {state.isExpanded ? (
+                <ChevronDown className='h-4 w-4' />
+              ) : (
+                <ChevronUp className='h-4 w-4' />
+              )}
             </Button>
-          )}
-        </div>
-      </div>
 
-      {/* Progress bar - only show during active upload */}
-      {hasActiveUploads && (
-        <div className='mb-4'>
-          <Progress value={overallProgress} className='h-2' />
-        </div>
-      )}
-
-      {/* File Grid - Responsive Tailwind Grid */}
-      <div className='grid-cols grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-        {files.map((file) => (
-          <Card key={file.id} className='hover-touch:bg-accent relative transition-colors'>
-            <CardContent className='flex items-center px-4 py-4 sm:py-3'>
-              <FileStatusIcon status={file.status} />
-
-              <div className='ml-2 min-w-0 flex-1'>
-                <p className='truncate text-sm font-medium'>{file.file.name}</p>
-                <div className='text-muted-foreground flex items-center gap-2 text-xs'>
-                  <span>{formatFileSize(file.file.size)}</span>
-                  {file.status === 'uploading' && <span>{Math.round(file.progress)}%</span>}
-                  {file.error && <span className='text-destructive truncate'>{file.error}</span>}
-                </div>
-              </div>
-
-              <div className='ml-2 flex items-center gap-1'>
-                {file.status === 'error' && onRetryFile && (
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => onRetryFile(file.id)}
-                    className='h-6 w-6 p-0'
-                  >
-                    <RotateCcw className='h-3 w-3' />
-                  </Button>
-                )}
-
-                {/* Show individual remove button only for completed files (success/error) */}
-                {onRemoveFile && (file.status === 'success' || file.status === 'error') && (
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => onRemoveFile(file.id)}
-                    className='h-6 w-6 p-0'
-                  >
-                    <X className='h-3 w-3' />
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-
-            {/* Upload progress overlay */}
-            {file.status === 'uploading' && (
-              <div className='absolute right-0 bottom-0 left-0'>
-                <Progress value={file.progress} className='h-1 rounded-none' />
-              </div>
-            )}
-          </Card>
-        ))}
-      </div>
-
-      {/* Summary Stats */}
-      {(uploadingFiles > 0 || failedFiles > 0 || completedFiles > 0) && (
-        <div className='mt-4 pt-4'>
-          <div className='flex items-center justify-between text-sm'>
-            <div className='flex items-center gap-4'>
-              {uploadingFiles > 0 && (
-                <span className='text-blue-600'>
-                  {t('pages.gallery.upload.progress.uploading', { count: uploadingFiles })}
-                </span>
-              )}
-              {failedFiles > 0 && (
-                <span className='text-destructive'>
-                  {t('pages.gallery.upload.progress.failed', { count: failedFiles })}
-                </span>
-              )}
-            </div>
-
-            {completedFiles > 0 && (
-              <span className='text-green-600'>
-                {t('pages.gallery.upload.progress.completed', { count: completedFiles })}
-              </span>
+            {/* Close button - only show if there are errors OR not auto-closing */}
+            {onClearAll && !isUploading && (stats.hasErrors || !state.isAutoClosing) && (
+              <Button variant='ghost' size='sm' onClick={handleClose} className='h-8 w-8 p-0'>
+                <X className='h-4 w-4' />
+              </Button>
             )}
           </div>
         </div>
-      )}
-    </div>
+
+        {/* Overall progress bar - only show during active upload */}
+        {stats.hasActiveUploads && state.isExpanded && (
+          <div className='mb-3'>
+            <Progress value={stats.progress} className='h-2' />
+          </div>
+        )}
+
+        {/* Expanded file list */}
+        {state.isExpanded && (
+          <div className='max-h-60 space-y-2 overflow-y-auto'>
+            {state.displayFiles.map((file) => (
+              <div
+                key={file.id}
+                className='bg-muted hover:bg-accent relative flex items-center gap-2 rounded-md p-2'
+              >
+                <FileStatusIcon status={file.status} />
+
+                <div className='min-w-0 flex-1'>
+                  <p className='truncate text-sm font-medium'>{file.file.name}</p>
+                  <div className='text-muted-foreground flex items-center gap-2 text-xs'>
+                    <span>{formatFileSize(file.file.size)}</span>
+                    {file.status === 'uploading' && <span>{Math.round(file.progress)}%</span>}
+                    {file.error && <span className='text-destructive truncate'>{file.error}</span>}
+                  </div>
+                </div>
+
+                <div className='flex shrink-0 items-center gap-1'>
+                  {file.status === 'uploading' && onCancelFile && (
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onCancelFile(file.id)}
+                      className='h-7 w-7 p-0'
+                      title='Cancel upload'
+                    >
+                      <X className='h-3 w-3' />
+                    </Button>
+                  )}
+
+                  {file.status === 'error' && onRetryFile && (
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onRetryFile(file.id)}
+                      className='h-7 w-7 p-0'
+                      title='Retry upload'
+                    >
+                      <RotateCcw className='h-3 w-3' />
+                    </Button>
+                  )}
+
+                  {onRemoveFile &&
+                    (file.status === 'success' ||
+                      file.status === 'error' ||
+                      file.status === 'cancelled') && (
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => onRemoveFile(file.id)}
+                        className='h-7 w-7 p-0'
+                        title='Remove'
+                      >
+                        <X className='h-3 w-3' />
+                      </Button>
+                    )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Summary stats when collapsed */}
+        {!state.isExpanded && (
+          <div className='text-muted-foreground flex items-center justify-between text-sm'>
+            <div className='flex items-center gap-3'>
+              {stats.uploading > 0 && (
+                <span className='text-muted-foreground'>
+                  {t('pages.gallery.upload.progress.uploading', { count: stats.uploading })}
+                </span>
+              )}
+              {stats.completed > 0 && (
+                <span className='text-muted-foreground'>
+                  {t('pages.gallery.upload.progress.completed', { count: stats.completed })}
+                </span>
+              )}
+              {stats.failed > 0 && (
+                <span className='text-destructive'>
+                  {t('pages.gallery.upload.progress.failed', { count: stats.failed })}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
   )
 }
 
 function FileStatusIcon({ status }: { status: DragDropFile['status'] }) {
   switch (status) {
     case 'success':
-      return <CheckCircle className='h-4 w-4 text-green-600' />
+      return <CheckCircle className='text-muted-foreground h-4 w-4 flex-shrink-0' />
     case 'error':
-      return <XCircle className='text-destructive h-4 w-4' />
+      return <XCircle className='text-destructive h-4 w-4 flex-shrink-0' />
+    case 'cancelled':
+      return <XCircle className='text-muted-foreground h-4 w-4 flex-shrink-0' />
     case 'uploading':
     default:
-      return <Upload className='h-4 w-4 text-blue-600' />
+      return <Upload className='text-muted-foreground h-4 w-4 flex-shrink-0' />
   }
 }
 

@@ -51,7 +51,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
-import { FloatingUploadProgress } from '@/components/upload/floating-upload-progress.tsx'
+import { UploadProgress } from '@/components/upload/upload-progress.tsx'
 import { ImagorParamsInput, SortOption, SortOrder } from '@/generated/graphql'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
 import { DragDropFile } from '@/hooks/use-drag-drop'
@@ -1201,9 +1201,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         tabIndex={-1}
       />
 
-      {/* Floating Upload Progress - Rendered in portal */}
+      {/* Upload Progress - Rendered in portal */}
       {uploadState && (
-        <FloatingUploadProgress
+        <UploadProgress
           files={uploadState.files}
           isUploading={uploadState.isUploading}
           onRemoveFile={uploadState.removeFile}
