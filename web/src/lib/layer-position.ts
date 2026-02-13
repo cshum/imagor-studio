@@ -312,8 +312,12 @@ export function convertDisplayToLayerPosition(
     const canvasX = Math.round(xPercent * baseImageWidth)
     const totalLayerWidth = totalCanvasWidth
 
-    // Smart overflow detection: if layer is wider than base, use center
-    if (totalLayerWidth > baseImageWidth) {
+    // Smart overflow detection: check if BOTH edges are outside base image
+    const leftEdgeOutside = canvasX < 0
+    const rightEdgeOutside = canvasX + totalLayerWidth > baseImageWidth
+    const isOverflowingX = leftEdgeOutside && rightEdgeOutside
+
+    if (isOverflowingX) {
       updates.x = 'center'
     } else if (isCenterX) {
       if (isResizing) {
@@ -364,8 +368,12 @@ export function convertDisplayToLayerPosition(
     const canvasY = Math.round(yPercent * baseImageHeight)
     const totalLayerHeight = totalCanvasHeight
 
-    // Smart overflow detection: if layer is taller than base, use center
-    if (totalLayerHeight > baseImageHeight) {
+    // Smart overflow detection: check if BOTH edges are outside base image
+    const topEdgeOutside = canvasY < 0
+    const bottomEdgeOutside = canvasY + totalLayerHeight > baseImageHeight
+    const isOverflowingY = topEdgeOutside && bottomEdgeOutside
+
+    if (isOverflowingY) {
       updates.y = 'center'
     } else if (isCenterY) {
       if (isResizing) {
