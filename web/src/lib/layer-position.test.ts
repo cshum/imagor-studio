@@ -25,10 +25,7 @@ describe('Layer Overlay Positioning', () => {
   const layerHeight = 150
 
   // Helper function to calculate display position percentage
-  const calculatePosition = (
-    layerX: string | number,
-    layerY: string | number,
-  ) => {
+  const calculatePosition = (layerX: string | number, layerY: string | number) => {
     return calculateLayerPosition(
       layerX,
       layerY,

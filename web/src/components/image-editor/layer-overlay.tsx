@@ -234,27 +234,29 @@ export function LayerOverlay({
         // Apply snapping (unless Cmd/Ctrl is pressed to disable)
         const disableSnapping = e.metaKey || e.ctrlKey
 
-        // Check if snapping to center - if so, auto-switch to center alignment
-        if (!disableSnapping) {
-          const centerX = (initialState.overlayWidth - initialState.displayWidth) / 2
-          const centerY = (initialState.overlayHeight - initialState.displayHeight) / 2
+        // Apply edge and center snapping FIRST
+        const snapped = applySnapping(
+          newDisplayX,
+          newDisplayY,
+          initialState.displayWidth,
+          initialState.displayHeight,
+          initialState.overlayWidth,
+          initialState.overlayHeight,
+          disableSnapping,
+        )
+        newDisplayX = snapped.x
+        newDisplayY = snapped.y
 
-          const centerSnapThresholdX =
-            initialState.overlayWidth * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
-          const centerSnapThresholdY =
-            initialState.overlayHeight * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
-
-          const snapToHCenter = Math.abs(newDisplayX - centerX) < centerSnapThresholdX
-          const snapToVCenter = Math.abs(newDisplayY - centerY) < centerSnapThresholdY
-
+        // Check if snapped to center - if so, auto-switch to center alignment
+        if (!disableSnapping && (snapped.snappedToCenter.x || snapped.snappedToCenter.y)) {
           // If snapping to center on both axes, switch to full center alignment
-          if (snapToHCenter && snapToVCenter) {
+          if (snapped.snappedToCenter.x && snapped.snappedToCenter.y) {
             onLayerChange({ x: 'center', y: 'center' })
             return
           }
 
           // If snapping to horizontal center only, switch x to center
-          if (snapToHCenter && canDragX) {
+          if (snapped.snappedToCenter.x && canDragX) {
             const updates = convertDisplayToLayerPosition(
               newDisplayX,
               newDisplayY,
@@ -281,7 +283,7 @@ export function LayerOverlay({
           }
 
           // If snapping to vertical center only, switch y to center
-          if (snapToVCenter && canDragY) {
+          if (snapped.snappedToCenter.y && canDragY) {
             const updates = convertDisplayToLayerPosition(
               newDisplayX,
               newDisplayY,
@@ -307,18 +309,6 @@ export function LayerOverlay({
             return
           }
         }
-
-        const snapped = applySnapping(
-          newDisplayX,
-          newDisplayY,
-          initialState.displayWidth,
-          initialState.displayHeight,
-          initialState.overlayWidth,
-          initialState.overlayHeight,
-          disableSnapping,
-        )
-        newDisplayX = snapped.x
-        newDisplayY = snapped.y
 
         const updates = convertDisplayToLayerPosition(
           newDisplayX,
