@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { calculateLayerPosition, convertDisplayToLayerPosition } from '@/lib/layer-position'
+import {
+  applySnapping,
+  calculateLayerPosition,
+  calculateResizeWithAspectRatioAndSnapping,
+  convertDisplayToLayerPosition,
+  type ResizeHandle,
+} from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
 
 interface LayerOverlayProps {
@@ -32,8 +38,6 @@ interface LayerOverlayProps {
   onDeselect?: () => void
   onEnterEditMode?: () => void
 }
-
-type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | null
 
 export function LayerOverlay({
   layerX,
@@ -83,8 +87,9 @@ export function LayerOverlay({
     const heightPercent = `${(layerHeight / baseImageHeight) * 100}%`
 
     // Determine drag capabilities and alignment
-    const canDragX = layerX !== 'center' && typeof layerX !== 'undefined'
-    const canDragY = layerY !== 'center' && typeof layerY !== 'undefined'
+    // Allow dragging for all defined positions, including center
+    const canDragX = typeof layerX !== 'undefined'
+    const canDragY = typeof layerY !== 'undefined'
     const isRightAligned = layerX === 'right' || (typeof layerX === 'number' && layerX < 0)
     const isBottomAligned = layerY === 'bottom' || (typeof layerY === 'number' && layerY < 0)
 
@@ -128,7 +133,7 @@ export function LayerOverlay({
   const layerBoxRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
-  const [activeHandle, setActiveHandle] = useState<ResizeHandle>(null)
+  const [activeHandle, setActiveHandle] = useState<ResizeHandle | null>(null)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [initialState, setInitialState] = useState({
     displayX: 0,
@@ -225,6 +230,85 @@ export function LayerOverlay({
           newDisplayY = initialState.displayY + deltaY
         }
 
+        // Apply snapping (unless Cmd/Ctrl is pressed to disable)
+        const disableSnapping = e.metaKey || e.ctrlKey
+
+        // Apply edge and center snapping FIRST
+        const snapped = applySnapping(
+          newDisplayX,
+          newDisplayY,
+          initialState.displayWidth,
+          initialState.displayHeight,
+          initialState.overlayWidth,
+          initialState.overlayHeight,
+          disableSnapping,
+        )
+        newDisplayX = snapped.x
+        newDisplayY = snapped.y
+
+        // Check if snapped to center - if so, auto-switch to center alignment
+        if (!disableSnapping && (snapped.snappedToCenter.x || snapped.snappedToCenter.y)) {
+          // If snapping to center on both axes, switch to full center alignment
+          if (snapped.snappedToCenter.x && snapped.snappedToCenter.y) {
+            onLayerChange({ x: 'center', y: 'center' })
+            return
+          }
+
+          // If snapping to horizontal center only, switch x to center
+          if (snapped.snappedToCenter.x && canDragX) {
+            const updates = convertDisplayToLayerPosition(
+              newDisplayX,
+              newDisplayY,
+              initialState.displayWidth,
+              initialState.displayHeight,
+              initialState.overlayWidth,
+              initialState.overlayHeight,
+              baseImageWidth,
+              baseImageHeight,
+              layerPaddingLeft,
+              layerPaddingRight,
+              layerPaddingTop,
+              layerPaddingBottom,
+              layerRotation,
+              layerX,
+              layerY,
+              layerFillColor,
+              false,
+            )
+            delete updates.transforms
+            updates.x = 'center'
+            onLayerChange(updates)
+            return
+          }
+
+          // If snapping to vertical center only, switch y to center
+          if (snapped.snappedToCenter.y && canDragY) {
+            const updates = convertDisplayToLayerPosition(
+              newDisplayX,
+              newDisplayY,
+              initialState.displayWidth,
+              initialState.displayHeight,
+              initialState.overlayWidth,
+              initialState.overlayHeight,
+              baseImageWidth,
+              baseImageHeight,
+              layerPaddingLeft,
+              layerPaddingRight,
+              layerPaddingTop,
+              layerPaddingBottom,
+              layerRotation,
+              layerX,
+              layerY,
+              layerFillColor,
+              false,
+            )
+            delete updates.transforms
+            updates.y = 'center'
+            onLayerChange(updates)
+            return
+          }
+        }
+
         const updates = convertDisplayToLayerPosition(
           newDisplayX,
           newDisplayY,
@@ -234,8 +318,6 @@ export function LayerOverlay({
           initialState.overlayHeight,
           baseImageWidth,
           baseImageHeight,
-          paddingLeft,
-          paddingTop,
           layerPaddingLeft,
           layerPaddingRight,
           layerPaddingTop,
@@ -244,6 +326,7 @@ export function LayerOverlay({
           layerX,
           layerY,
           layerFillColor,
+          false, // isResizing = false (dragging)
         )
         // During drag, only update position - don't recalculate dimensions
         // This prevents rounding errors from causing dimension changes
@@ -253,111 +336,29 @@ export function LayerOverlay({
         const deltaX = clientX - dragStart.x
         const deltaY = clientY - dragStart.y
 
-        let newLeft = initialState.displayX
-        let newTop = initialState.displayY
-        let newWidth = initialState.displayWidth
-        let newHeight = initialState.displayHeight
+        // Use the pure function to calculate resize dimensions
+        const disableSnapping = e.metaKey || e.ctrlKey
+        const aspectRatio = layerWidth / layerHeight
 
-        // Handle different resize directions
-        switch (activeHandle) {
-          case 'nw':
-            newLeft = initialState.displayX + deltaX
-            newTop = initialState.displayY + deltaY
-            newWidth = initialState.displayWidth - deltaX
-            newHeight = initialState.displayHeight - deltaY
-            break
-          case 'n':
-            newTop = initialState.displayY + deltaY
-            newHeight = initialState.displayHeight - deltaY
-            break
-          case 'ne':
-            newTop = initialState.displayY + deltaY
-            newWidth = initialState.displayWidth + deltaX
-            newHeight = initialState.displayHeight - deltaY
-            break
-          case 'e':
-            newWidth = initialState.displayWidth + deltaX
-            break
-          case 'se':
-            newWidth = initialState.displayWidth + deltaX
-            newHeight = initialState.displayHeight + deltaY
-            break
-          case 's':
-            newHeight = initialState.displayHeight + deltaY
-            break
-          case 'sw':
-            newLeft = initialState.displayX + deltaX
-            newWidth = initialState.displayWidth - deltaX
-            newHeight = initialState.displayHeight + deltaY
-            break
-          case 'w':
-            newLeft = initialState.displayX + deltaX
-            newWidth = initialState.displayWidth - deltaX
-            break
-        }
-
-        // Apply aspect ratio lock if enabled
-        if (lockedAspectRatio) {
-          const aspectRatio = layerWidth / layerHeight
-
-          if (activeHandle === 'e' || activeHandle === 'w') {
-            // Horizontal resize: adjust height
-            newHeight = newWidth / aspectRatio
-            if (activeHandle === 'w') {
-              newTop = initialState.displayY + initialState.displayHeight - newHeight
-            }
-          } else if (activeHandle === 'n' || activeHandle === 's') {
-            // Vertical resize: adjust width
-            newWidth = newHeight * aspectRatio
-            if (activeHandle === 'n') {
-              newLeft = initialState.displayX + initialState.displayWidth - newWidth
-            }
-          } else {
-            // Corner resize: maintain aspect ratio
-            const widthChange = Math.abs(newWidth - initialState.displayWidth)
-            const heightChange = Math.abs(newHeight - initialState.displayHeight)
-
-            if (widthChange > heightChange) {
-              newHeight = newWidth / aspectRatio
-            } else {
-              newWidth = newHeight * aspectRatio
-            }
-
-            if (activeHandle?.includes('n')) {
-              newTop = initialState.displayY + initialState.displayHeight - newHeight
-            }
-            if (activeHandle?.includes('w')) {
-              newLeft = initialState.displayX + initialState.displayWidth - newWidth
-            }
-          }
-        }
-
-        // Enforce minimum size
-        const minSize = 20
-        if (newWidth < minSize) {
-          newWidth = minSize
-          if (lockedAspectRatio) {
-            newHeight = newWidth / (layerWidth / layerHeight)
-          }
-          if (activeHandle?.includes('w')) {
-            newLeft = initialState.displayX + initialState.displayWidth - minSize
-          }
-          if (activeHandle?.includes('n') && lockedAspectRatio) {
-            newTop = initialState.displayY + initialState.displayHeight - newHeight
-          }
-        }
-        if (newHeight < minSize) {
-          newHeight = minSize
-          if (lockedAspectRatio) {
-            newWidth = newHeight * (layerWidth / layerHeight)
-          }
-          if (activeHandle?.includes('n')) {
-            newTop = initialState.displayY + initialState.displayHeight - minSize
-          }
-          if (activeHandle?.includes('w') && lockedAspectRatio) {
-            newLeft = initialState.displayX + initialState.displayWidth - newWidth
-          }
-        }
+        const {
+          left: newLeft,
+          top: newTop,
+          width: newWidth,
+          height: newHeight,
+        } = calculateResizeWithAspectRatioAndSnapping(
+          activeHandle,
+          deltaX,
+          deltaY,
+          initialState.displayX,
+          initialState.displayY,
+          initialState.displayWidth,
+          initialState.displayHeight,
+          initialState.overlayWidth,
+          initialState.overlayHeight,
+          aspectRatio,
+          lockedAspectRatio,
+          disableSnapping,
+        )
 
         const updates = convertDisplayToLayerPosition(
           newLeft,
@@ -368,8 +369,6 @@ export function LayerOverlay({
           initialState.overlayHeight,
           baseImageWidth,
           baseImageHeight,
-          paddingLeft,
-          paddingTop,
           layerPaddingLeft,
           layerPaddingRight,
           layerPaddingTop,
@@ -378,6 +377,7 @@ export function LayerOverlay({
           layerX,
           layerY,
           layerFillColor,
+          true, // isResizing = true
         )
         onLayerChange(updates)
       }
@@ -426,12 +426,13 @@ export function LayerOverlay({
     layerRotation,
     layerX,
     layerY,
+    layerFillColor,
   ])
 
-  // Handle click outside layer box to deselect
-  const handleOverlayClick = useCallback(
+  // Handle mousedown outside layer box to deselect
+  const handleOverlayMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      // Only deselect if clicking directly on overlay background (not layer box or handles)
+      // Only deselect if mousedown directly on overlay background (not layer box or handles)
       if (e.target === overlayRef.current && onDeselect) {
         onDeselect()
       }
@@ -455,7 +456,7 @@ export function LayerOverlay({
     <div
       ref={overlayRef}
       className='pointer-events-auto absolute inset-0 z-20 h-full w-full'
-      onClick={handleOverlayClick}
+      onMouseDown={handleOverlayMouseDown}
     >
       {/* Layer box and handles */}
       <div
