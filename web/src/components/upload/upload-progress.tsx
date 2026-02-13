@@ -10,29 +10,15 @@ import { cn } from '@/lib/utils'
 export interface UploadProgressProps {
   files: DragDropFile[]
   isUploading: boolean
-  onUpload?: () => void
   onRemoveFile?: (id: string) => void
   onRetryFile?: (id: string) => void
   onClearAll?: () => void
   className?: string
 }
 
-export interface UnifiedUploadProps {
-  files: DragDropFile[]
-  isUploading: boolean
-  onUpload?: () => void
-  onRemoveFile?: (id: string) => void
-  onRetryFile?: (id: string) => void
-  onClear?: () => void
-  className?: string
-  width?: number
-  maxFileCardWidth?: number
-}
-
 export function UploadProgress({
   files,
   isUploading,
-  onUpload,
   onRemoveFile,
   onRetryFile,
   onClearAll,
@@ -45,27 +31,17 @@ export function UploadProgress({
   const completedFiles = files.filter((f) => f.status === 'success').length
   const failedFiles = files.filter((f) => f.status === 'error').length
   const uploadingFiles = files.filter((f) => f.status === 'uploading').length
-  const pendingFiles = files.filter((f) => f.status === 'pending').length
 
   const overallProgress =
     files.length > 0 ? files.reduce((acc, file) => acc + file.progress, 0) / files.length : 0
 
   // Determine current state
-  const isAllPending = pendingFiles === files.length
   const hasActiveUploads = uploadingFiles > 0
   const isComplete = completedFiles + failedFiles === files.length && files.length > 0
 
   // Dynamic header content
   const getHeaderContent = () => {
-    if (isAllPending) {
-      return {
-        title:
-          files.length === 1
-            ? t('pages.gallery.upload.summary.fileReady', { count: files.length })
-            : t('pages.gallery.upload.summary.filesReady', { count: files.length }),
-        subtitle: t('pages.gallery.upload.summary.pendingUpload', { count: pendingFiles }),
-      }
-    } else if (hasActiveUploads) {
+    if (hasActiveUploads) {
       return {
         title: t('pages.gallery.upload.progress.uploadProgress'),
         subtitle: t('pages.gallery.upload.progress.filesCompleted', {
@@ -99,18 +75,9 @@ export function UploadProgress({
           <p className='text-muted-foreground text-sm'>{subtitle}</p>
         </div>
         <div className='flex items-center gap-2'>
-          {onClearAll && (
-            <Button variant='outline' size='sm' onClick={onClearAll} disabled={isUploading}>
+          {onClearAll && !isUploading && (
+            <Button variant='outline' size='sm' onClick={onClearAll}>
               {t('pages.gallery.upload.summary.clear')}
-            </Button>
-          )}
-          {onUpload && isAllPending && (
-            <Button size='sm' onClick={onUpload} disabled={isUploading}>
-              {isUploading
-                ? t('pages.gallery.upload.summary.uploading')
-                : pendingFiles === 1
-                  ? t('pages.gallery.upload.summary.upload', { count: pendingFiles })
-                  : t('pages.gallery.upload.summary.uploadFiles', { count: pendingFiles })}
             </Button>
           )}
         </div>
@@ -151,8 +118,8 @@ export function UploadProgress({
                   </Button>
                 )}
 
-                {/* Show individual remove button for all files except uploading */}
-                {onRemoveFile && file.status !== 'uploading' && (
+                {/* Show individual remove button only for completed files (success/error) */}
+                {onRemoveFile && (file.status === 'success' || file.status === 'error') && (
                   <Button
                     variant='ghost'
                     size='sm'
@@ -211,10 +178,8 @@ function FileStatusIcon({ status }: { status: DragDropFile['status'] }) {
     case 'error':
       return <XCircle className='text-destructive h-4 w-4' />
     case 'uploading':
-      return <Upload className='h-4 w-4 text-blue-600' />
-    case 'pending':
     default:
-      return <Upload className='text-muted-foreground h-4 w-4' />
+      return <Upload className='h-4 w-4 text-blue-600' />
   }
 }
 
@@ -226,64 +191,4 @@ function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k))
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
-}
-
-export interface UploadSummaryProps {
-  files: DragDropFile[]
-  isUploading: boolean
-  onUpload?: () => void
-  onClear?: () => void
-  className?: string
-}
-
-export function UploadSummary({
-  files,
-  isUploading,
-  onUpload,
-  onClear,
-  className,
-}: UploadSummaryProps) {
-  const { t } = useTranslation()
-
-  if (files.length === 0) return null
-
-  const pendingFiles = files.filter((f) => f.status === 'pending')
-  const hasFilesToUpload = pendingFiles.length > 0
-
-  return (
-    <div
-      className={cn('bg-card flex items-center justify-between rounded-lg border p-4', className)}
-    >
-      <div>
-        <p className='font-medium'>
-          {files.length === 1
-            ? t('pages.gallery.upload.summary.fileReady', { count: files.length })
-            : t('pages.gallery.upload.summary.filesReady', { count: files.length })}
-        </p>
-        <p className='text-muted-foreground text-sm'>
-          {hasFilesToUpload
-            ? t('pages.gallery.upload.summary.pendingUpload', { count: pendingFiles.length })
-            : t('pages.gallery.upload.summary.allFilesProcessed')}
-        </p>
-      </div>
-
-      <div className='flex items-center gap-2'>
-        {onClear && (
-          <Button variant='outline' size='sm' onClick={onClear} disabled={isUploading}>
-            {t('pages.gallery.upload.summary.clear')}
-          </Button>
-        )}
-
-        {onUpload && hasFilesToUpload && (
-          <Button size='sm' onClick={onUpload} disabled={isUploading}>
-            {isUploading
-              ? t('pages.gallery.upload.summary.uploading')
-              : pendingFiles.length === 1
-                ? t('pages.gallery.upload.summary.upload', { count: pendingFiles.length })
-                : t('pages.gallery.upload.summary.uploadFiles', { count: pendingFiles.length })}
-          </Button>
-        )}
-      </div>
-    </div>
-  )
 }

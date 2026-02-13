@@ -1048,7 +1048,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                   <UploadProgress
                     files={uploadState.files}
                     isUploading={uploadState.isUploading}
-                    onUpload={uploadState.uploadFiles}
                     onRemoveFile={uploadState.removeFile}
                     onRetryFile={uploadState.retryFile}
                     onClearAll={uploadState.clearFiles}
