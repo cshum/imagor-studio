@@ -14,7 +14,7 @@ export interface UploadProgressProps {
   onCancelFile?: (id: string) => void
   onRetryFile?: (id: string) => Promise<void>
   onClearAll?: () => void
-  onSuccess?: (count: number) => Promise<void>
+  onComplete?: (count: number) => Promise<void>
 }
 
 export function UploadProgress({
@@ -24,7 +24,7 @@ export function UploadProgress({
   onCancelFile,
   onRetryFile,
   onClearAll,
-  onSuccess,
+  onComplete,
 }: UploadProgressProps) {
   const { t } = useTranslation()
   const [state, setState] = useState<{
@@ -51,15 +51,15 @@ export function UploadProgress({
   const autoCloseStartedRef = useRef(false)
   const manuallyClosedRef = useRef(false)
   const prevFilesRef = useRef<DragDropFile[]>([])
-  const onSuccessRef = useRef(onSuccess)
+  const onCompleteRef = useRef(onComplete)
   const onClearAllRef = useRef(onClearAll)
   const isOpenRef = useRef(state.isOpen)
   const isAutoClosingRef = useRef(state.isAutoClosing)
 
   useEffect(() => {
-    onSuccessRef.current = onSuccess
+    onCompleteRef.current = onComplete
     onClearAllRef.current = onClearAll
-  }, [onSuccess, onClearAll])
+  }, [onComplete, onClearAll])
 
   useEffect(() => {
     isOpenRef.current = state.isOpen
@@ -134,10 +134,10 @@ export function UploadProgress({
       }
     }
 
-    // Auto-close after successful completion (no errors)
+    // Call onComplete when upload batch finishes (even with partial success)
     if (
       stats.isComplete &&
-      !stats.hasErrors &&
+      stats.completed > 0 &&
       !isUploading &&
       !autoCloseStartedRef.current &&
       isOpenRef.current
@@ -145,19 +145,28 @@ export function UploadProgress({
       autoCloseStartedRef.current = true
       setState((s) => ({ ...s, isAutoClosing: true, displayFiles: files, displayStats: stats }))
 
-      setTimeout(async () => {
-        // Call onSuccess and wait for it to complete (use ref)
-        if (onSuccessRef.current) {
-          await onSuccessRef.current(stats.completed)
-        }
-        // Close the sheet
-        setState((s) => ({ ...s, isOpen: false, isAutoClosing: false, displayStats: null }))
-        // Reset flags for next upload
+      // Call onComplete IMMEDIATELY to refresh gallery (use ref)
+      if (onCompleteRef.current) {
+        onCompleteRef.current(stats.completed)
+      }
+
+      // Auto-close ONLY if no errors, otherwise keep sheet open for retry
+      if (!stats.hasErrors) {
+        // THEN wait 3 seconds before closing
+        setTimeout(() => {
+          // Close the sheet
+          setState((s) => ({ ...s, isOpen: false, isAutoClosing: false, displayStats: null }))
+          // Reset flags for next upload
+          autoCloseStartedRef.current = false
+          manuallyClosedRef.current = false
+          // Clear files (use ref)
+          onClearAllRef.current?.()
+        }, 3000)
+      } else {
+        // Has errors - don't auto-close, but reset flag so user can manually close
         autoCloseStartedRef.current = false
-        manuallyClosedRef.current = false
-        // Clear files (use ref)
-        onClearAllRef.current?.()
-      }, 3000)
+        setState((s) => ({ ...s, isAutoClosing: false }))
+      }
     }
   }, [files, stats, isUploading])
 
