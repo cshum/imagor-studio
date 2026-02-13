@@ -696,12 +696,12 @@ describe('convertDisplayToLayerPosition', () => {
     })
   })
 
-  it('should not update position for center-aligned layers', () => {
+  it('should keep center alignment when layer is still at center position', () => {
     const result = convertDisplayToLayerPosition(
-      50,
-      40,
-      100,
-      80,
+      200, // displayX: 200/500 = 40%, which is center for 200px layer
+      162.5, // displayY: 162.5/400 = 40.625%, which is center for 160px layer
+      100, // displayWidth
+      80, // displayHeight
       overlayWidth,
       overlayHeight,
       baseImageWidth,
@@ -717,9 +717,9 @@ describe('convertDisplayToLayerPosition', () => {
       'center', // currentY
     )
 
-    // Center-aligned layers should not have x/y updates
-    expect(result.x).toBeUndefined()
-    expect(result.y).toBeUndefined()
+    // Layer is still at center position - should stay centered
+    expect(result.x).toBe('center')
+    expect(result.y).toBe('center')
     expect(result.transforms).toBeDefined()
   })
 

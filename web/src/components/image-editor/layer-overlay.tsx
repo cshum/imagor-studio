@@ -83,8 +83,9 @@ export function LayerOverlay({
     const heightPercent = `${(layerHeight / baseImageHeight) * 100}%`
 
     // Determine drag capabilities and alignment
-    const canDragX = layerX !== 'center' && typeof layerX !== 'undefined'
-    const canDragY = layerY !== 'center' && typeof layerY !== 'undefined'
+    // Allow dragging for all defined positions, including center
+    const canDragX = typeof layerX !== 'undefined'
+    const canDragY = typeof layerY !== 'undefined'
     const isRightAligned = layerX === 'right' || (typeof layerX === 'number' && layerX < 0)
     const isBottomAligned = layerY === 'bottom' || (typeof layerY === 'number' && layerY < 0)
 
@@ -244,6 +245,7 @@ export function LayerOverlay({
           layerX,
           layerY,
           layerFillColor,
+          false, // isResizing = false (dragging)
         )
         // During drag, only update position - don't recalculate dimensions
         // This prevents rounding errors from causing dimension changes
@@ -378,6 +380,7 @@ export function LayerOverlay({
           layerX,
           layerY,
           layerFillColor,
+          true, // isResizing = true
         )
         onLayerChange(updates)
       }

@@ -244,6 +244,7 @@ export interface LayerPositionUpdates {
  * @param currentX - Current X position (for determining alignment)
  * @param currentY - Current Y position (for determining alignment)
  * @param fillColor - Fill color (if undefined, padding was not applied to dimensions)
+ * @param isResizing - Whether this is a resize operation (vs drag)
  * @returns Layer position updates object
  */
 export function convertDisplayToLayerPosition(
@@ -265,6 +266,7 @@ export function convertDisplayToLayerPosition(
   currentX: string | number,
   currentY: string | number,
   fillColor?: string,
+  isResizing?: boolean,
 ): LayerPositionUpdates {
   const updates: LayerPositionUpdates = {}
 
@@ -294,10 +296,15 @@ export function convertDisplayToLayerPosition(
   }
 
   // Determine current alignment
-  const canDragX = currentX !== 'center' && typeof currentX !== 'undefined'
-  const canDragY = currentY !== 'center' && typeof currentY !== 'undefined'
+  const isCenterX = currentX === 'center'
+  const isCenterY = currentY === 'center'
+  const canDragX = typeof currentX !== 'undefined'
+  const canDragY = typeof currentY !== 'undefined'
   const isRightAligned = currentX === 'right' || (typeof currentX === 'number' && currentX < 0)
   const isBottomAligned = currentY === 'bottom' || (typeof currentY === 'number' && currentY < 0)
+
+  // Threshold for switching from center to edge alignment (5% of canvas)
+  const DRAG_THRESHOLD_PERCENT = 0.05
 
   // Convert X position with smart overflow handling
   if (canDragX) {
@@ -308,6 +315,28 @@ export function convertDisplayToLayerPosition(
     // Smart overflow detection: if layer is wider than base, use center
     if (totalLayerWidth > baseImageWidth) {
       updates.x = 'center'
+    } else if (isCenterX) {
+      if (isResizing) {
+        // Resizing - always keep centered
+        updates.x = 'center'
+      } else {
+        // Dragging - check if beyond threshold for switching to edge alignment
+        const expectedCenterX = (baseImageWidth - totalLayerWidth) / 2
+        const threshold = baseImageWidth * DRAG_THRESHOLD_PERCENT
+        const distanceFromCenter = canvasX - expectedCenterX
+        
+        if (Math.abs(distanceFromCenter) >= threshold) {
+          // Dragged beyond threshold - switch to edge alignment
+          if (distanceFromCenter < 0) {
+            updates.x = canvasX // Left
+          } else {
+            updates.x = canvasX + totalLayerWidth - baseImageWidth // Right
+          } 
+        } else {
+          // Within threshold - keep centered
+          updates.x = 'center'
+        }
+      }
     } else if (isRightAligned) {
       const calculatedOffset = canvasX + totalLayerWidth - baseImageWidth
 
@@ -338,6 +367,28 @@ export function convertDisplayToLayerPosition(
     // Smart overflow detection: if layer is taller than base, use center
     if (totalLayerHeight > baseImageHeight) {
       updates.y = 'center'
+    } else if (isCenterY) {
+      if (isResizing) {
+        // Resizing - always keep centered
+        updates.y = 'center'
+      } else {
+        // Dragging - check if beyond threshold for switching to edge alignment
+        const expectedCenterY = (baseImageHeight - totalLayerHeight) / 2
+        const threshold = baseImageHeight * DRAG_THRESHOLD_PERCENT
+        const distanceFromCenter = canvasY - expectedCenterY
+        
+        if (Math.abs(distanceFromCenter) >= threshold) {
+          // Dragged beyond threshold - switch to edge alignment
+          if (distanceFromCenter < 0) {
+            updates.y = canvasY // Top
+          } else {
+            updates.y = canvasY + totalLayerHeight - baseImageHeight // Bottom
+          }
+        } else {
+          // Within threshold - keep centered
+          updates.y = 'center'
+        }
+      }
     } else if (isBottomAligned) {
       const calculatedOffset = canvasY + totalLayerHeight - baseImageHeight
 
