@@ -64,30 +64,24 @@ export function GalleryDropZone({
     window.scrollTo({ top: 0 })
   }, [])
 
-  const {
-    isDragActive,
-    files,
-    dragProps,
-    uploadFiles,
-    removeFile,
-    clearFiles,
-    retryFile,
-    isUploading,
-  } = useDragDrop({
-    onFileUpload: handleFileUpload,
-    onFilesDropped: handleFilesDropped,
-    existingFiles,
-    currentPath,
-    imageExtensions,
-    videoExtensions,
-  })
+  const { isDragActive, files, dragProps, removeFile, clearFiles, retryFile, isUploading } =
+    useDragDrop({
+      onFileUpload: handleFileUpload,
+      onFilesDropped: handleFilesDropped,
+      existingFiles,
+      currentPath,
+      imageExtensions,
+      videoExtensions,
+    })
 
   const uploadCompletedRef = useRef(false)
 
-  const handleUpload = useCallback(async () => {
-    uploadCompletedRef.current = false
-    await uploadFiles()
-  }, [uploadFiles])
+  // Reset uploadCompletedRef when files are cleared (allows next batch to trigger invalidation)
+  useEffect(() => {
+    if (files.length === 0) {
+      uploadCompletedRef.current = false
+    }
+  }, [files.length])
 
   // Watch for upload completion
   useEffect(() => {
@@ -158,13 +152,13 @@ export function GalleryDropZone({
       onUploadStateChange({
         files,
         isUploading,
-        uploadFiles: handleUpload,
+        uploadFiles: async () => {}, // No-op for backward compatibility
         removeFile,
         retryFile,
         clearFiles,
       })
     }
-  }, [files, isUploading, handleUpload, removeFile, retryFile, clearFiles, onUploadStateChange])
+  }, [files, isUploading, removeFile, retryFile, clearFiles, onUploadStateChange])
 
   // Check if user has write permissions
   const canUpload = authState.state === 'authenticated'
