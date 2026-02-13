@@ -255,7 +255,10 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
       if (fileItem && fileItem.status === 'uploading' && fileItem.abortController) {
         fileItem.abortController.abort()
       }
-      return prev
+      // Immediately update status to cancelled for instant visual feedback
+      return prev.map((f) =>
+        f.id === id ? { ...f, status: 'cancelled', progress: 0, error: 'Upload cancelled' } : f,
+      )
     })
   }, [])
 

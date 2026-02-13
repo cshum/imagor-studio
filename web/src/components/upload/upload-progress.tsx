@@ -310,8 +310,12 @@ export function UploadProgress({
 
         {/* Summary stats when collapsed */}
         {!state.isExpanded && (
-          <div className='text-muted-foreground flex items-center justify-between text-sm'>
-            <div className='flex items-center gap-3'>
+          <div className='space-y-2'>
+            {/* Progress bar - only show during active upload */}
+            {stats.hasActiveUploads && <Progress value={stats.progress} className='h-1.5' />}
+
+            {/* Stats summary */}
+            <div className='text-muted-foreground flex items-center gap-3 text-sm'>
               {stats.uploading > 0 && (
                 <span className='text-muted-foreground'>
                   {t('pages.gallery.upload.progress.uploading', { count: stats.uploading })}
