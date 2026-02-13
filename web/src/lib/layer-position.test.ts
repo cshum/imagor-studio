@@ -28,8 +28,6 @@ describe('Layer Overlay Positioning', () => {
   const calculatePosition = (
     layerX: string | number,
     layerY: string | number,
-    paddingLeft = 0,
-    paddingTop = 0,
   ) => {
     return calculateLayerPosition(
       layerX,
@@ -38,8 +36,6 @@ describe('Layer Overlay Positioning', () => {
       layerHeight,
       baseImageWidth,
       baseImageHeight,
-      paddingLeft,
-      paddingTop,
     )
   }
 
@@ -77,7 +73,7 @@ describe('Layer Overlay Positioning', () => {
     })
 
     it('should ignore padding for string alignments', () => {
-      const { leftPercent, topPercent } = calculatePosition('left', 'top', 50, 30)
+      const { leftPercent, topPercent } = calculatePosition('left', 'top')
       // String alignments are canvas-absolute, not affected by padding
       expect(leftPercent).toBe('0%')
       expect(topPercent).toBe('0%')
@@ -108,7 +104,7 @@ describe('Layer Overlay Positioning', () => {
     })
 
     it('should handle positive values with base image padding', () => {
-      const { leftPercent, topPercent } = calculatePosition(50, 30, 100, 50)
+      const { leftPercent, topPercent } = calculatePosition(50, 30)
       // Positive values are canvas-absolute, not affected by padding
       // x=50: 50/1000 = 5%
       // y=30: 30/800 = 3.75%
@@ -150,7 +146,7 @@ describe('Layer Overlay Positioning', () => {
     })
 
     it('should handle negative values with padding', () => {
-      const { leftPercent, topPercent } = calculatePosition(-100, -50, 50, 30)
+      const { leftPercent, topPercent } = calculatePosition(-100, -50)
       // Negative values are canvas-relative, not affected by padding
       // x=-100: (1000 - 100 - 200) / 1000 = 70%
       // y=-50: (800 - 50 - 150) / 800 = 75%
@@ -230,14 +226,14 @@ describe('Layer Overlay Positioning', () => {
     })
 
     it('should handle large padding values', () => {
-      const { leftPercent, topPercent } = calculatePosition('left', 'top', 200, 150)
+      const { leftPercent, topPercent } = calculatePosition('left', 'top')
       // String alignments ignore padding
       expect(leftPercent).toBe('0%')
       expect(topPercent).toBe('0%')
     })
 
     it('should handle asymmetric padding', () => {
-      const { leftPercent, topPercent } = calculatePosition(0, 0, 100, 75)
+      const { leftPercent, topPercent } = calculatePosition(0, 0)
       // Positive numeric values ignore padding
       expect(leftPercent).toBe('0%')
       expect(topPercent).toBe('0%')
@@ -495,8 +491,6 @@ describe('convertDisplayToLayerPosition', () => {
       overlayHeight,
       baseImageWidth,
       baseImageHeight,
-      0, // basePaddingLeft
-      0, // basePaddingTop
       0, // layerPaddingLeft
       0, // layerPaddingRight
       0, // layerPaddingTop
@@ -533,8 +527,6 @@ describe('convertDisplayToLayerPosition', () => {
       0,
       0,
       0,
-      0,
-      0,
       -50, // currentX (right-aligned)
       0,
     )
@@ -562,8 +554,6 @@ describe('convertDisplayToLayerPosition', () => {
       0,
       0,
       0,
-      0,
-      0,
       -50, // currentY (bottom-aligned)
     )
 
@@ -584,8 +574,6 @@ describe('convertDisplayToLayerPosition', () => {
       overlayHeight,
       baseImageWidth,
       baseImageHeight,
-      0,
-      0,
       10, // layerPaddingLeft
       20, // layerPaddingRight
       30, // layerPaddingTop
@@ -614,8 +602,6 @@ describe('convertDisplayToLayerPosition', () => {
       overlayHeight,
       baseImageWidth,
       baseImageHeight,
-      0,
-      0,
       10, // layerPaddingLeft
       20, // layerPaddingRight
       30, // layerPaddingTop
@@ -644,8 +630,6 @@ describe('convertDisplayToLayerPosition', () => {
       overlayHeight,
       baseImageWidth,
       baseImageHeight,
-      0,
-      0,
       10, // layerPaddingLeft
       20, // layerPaddingRight
       30, // layerPaddingTop
@@ -676,8 +660,6 @@ describe('convertDisplayToLayerPosition', () => {
       overlayHeight,
       baseImageWidth,
       baseImageHeight,
-      0,
-      0,
       10, // layerPaddingLeft
       20, // layerPaddingRight
       30, // layerPaddingTop
@@ -711,8 +693,6 @@ describe('convertDisplayToLayerPosition', () => {
       0,
       0,
       0,
-      0,
-      0,
       'center', // currentX
       'center', // currentY
     )
@@ -733,8 +713,6 @@ describe('convertDisplayToLayerPosition', () => {
       overlayHeight,
       baseImageWidth,
       baseImageHeight,
-      50, // basePaddingLeft
-      0,
       0,
       0,
       0,
@@ -769,8 +747,6 @@ describe('convertDisplayToLayerPosition', () => {
       0,
       0,
       0,
-      0,
-      0,
     )
 
     // Even with very small display size, should enforce minimum of 1px
@@ -788,8 +764,6 @@ describe('convertDisplayToLayerPosition', () => {
       overlayHeight,
       baseImageWidth,
       baseImageHeight,
-      0,
-      0,
       0,
       0,
       0,
@@ -822,8 +796,6 @@ describe('convertDisplayToLayerPosition', () => {
       0,
       0,
       0,
-      0,
-      0,
       100, // currentY (top-aligned)
     )
 
@@ -844,8 +816,6 @@ describe('convertDisplayToLayerPosition', () => {
       overlayHeight,
       baseImageWidth,
       baseImageHeight,
-      0,
-      0,
       0,
       0,
       0,
@@ -877,8 +847,6 @@ describe('convertDisplayToLayerPosition', () => {
       0,
       0,
       0,
-      0,
-      0,
       100, // currentX (left-aligned)
       100, // currentY (top-aligned)
     )
@@ -903,8 +871,6 @@ describe('convertDisplayToLayerPosition', () => {
       0,
       0,
       0,
-      0,
-      0,
       -50, // currentX (right-aligned)
       0,
     )
@@ -924,8 +890,6 @@ describe('convertDisplayToLayerPosition', () => {
       overlayHeight,
       baseImageWidth,
       baseImageHeight,
-      50, // basePaddingLeft
-      30, // basePaddingTop
       0,
       0,
       0,

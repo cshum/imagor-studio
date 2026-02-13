@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { calculateLayerPosition, convertDisplayToLayerPosition } from '@/lib/layer-position'
+import {
+  applySnapping,
+  calculateLayerPosition,
+  convertDisplayToLayerPosition,
+  SNAP_THRESHOLDS,
+} from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
-
-// Snap threshold in pixels (matches Figma)
-const SNAP_THRESHOLD_PX = 8
 
 interface LayerOverlayProps {
   layerX: string | number
@@ -143,63 +145,6 @@ export function LayerOverlay({
     overlayHeight: 0,
   })
 
-  // Apply edge snapping to display coordinates
-  const applySnapping = useCallback(
-    (
-      displayX: number,
-      displayY: number,
-      displayWidth: number,
-      displayHeight: number,
-      overlayWidth: number,
-      overlayHeight: number,
-      disableSnapping: boolean,
-    ): { x: number; y: number } => {
-      if (disableSnapping) {
-        return { x: displayX, y: displayY }
-      }
-
-      let snappedX = displayX
-      let snappedY = displayY
-
-      // Snap to left edge (x = 0)
-      if (Math.abs(displayX) < SNAP_THRESHOLD_PX) {
-        snappedX = 0
-      }
-
-      // Snap to right edge
-      const rightEdge = overlayWidth - displayWidth
-      if (Math.abs(displayX - rightEdge) < SNAP_THRESHOLD_PX) {
-        snappedX = rightEdge
-      }
-
-      // Snap to horizontal center
-      const centerX = (overlayWidth - displayWidth) / 2
-      if (Math.abs(displayX - centerX) < SNAP_THRESHOLD_PX) {
-        snappedX = centerX
-      }
-
-      // Snap to top edge (y = 0)
-      if (Math.abs(displayY) < SNAP_THRESHOLD_PX) {
-        snappedY = 0
-      }
-
-      // Snap to bottom edge
-      const bottomEdge = overlayHeight - displayHeight
-      if (Math.abs(displayY - bottomEdge) < SNAP_THRESHOLD_PX) {
-        snappedY = bottomEdge
-      }
-
-      // Snap to vertical center
-      const centerY = (overlayHeight - displayHeight) / 2
-      if (Math.abs(displayY - centerY) < SNAP_THRESHOLD_PX) {
-        snappedY = centerY
-      }
-
-      return { x: snappedX, y: snappedY }
-    },
-    [],
-  )
-
   // Handle mouse/touch down on layer box (for dragging)
   const handleLayerMouseDown = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
@@ -288,6 +233,81 @@ export function LayerOverlay({
 
         // Apply snapping (unless Cmd/Ctrl is pressed to disable)
         const disableSnapping = e.metaKey || e.ctrlKey
+
+        // Check if snapping to center - if so, auto-switch to center alignment
+        if (!disableSnapping) {
+          const centerX = (initialState.overlayWidth - initialState.displayWidth) / 2
+          const centerY = (initialState.overlayHeight - initialState.displayHeight) / 2
+
+          const centerSnapThresholdX =
+            initialState.overlayWidth * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
+          const centerSnapThresholdY =
+            initialState.overlayHeight * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
+
+          const snapToHCenter = Math.abs(newDisplayX - centerX) < centerSnapThresholdX
+          const snapToVCenter = Math.abs(newDisplayY - centerY) < centerSnapThresholdY
+
+          // If snapping to center on both axes, switch to full center alignment
+          if (snapToHCenter && snapToVCenter) {
+            onLayerChange({ x: 'center', y: 'center' })
+            return
+          }
+
+          // If snapping to horizontal center only, switch x to center
+          if (snapToHCenter && canDragX) {
+            const updates = convertDisplayToLayerPosition(
+              newDisplayX,
+              newDisplayY,
+              initialState.displayWidth,
+              initialState.displayHeight,
+              initialState.overlayWidth,
+              initialState.overlayHeight,
+              baseImageWidth,
+              baseImageHeight,
+              layerPaddingLeft,
+              layerPaddingRight,
+              layerPaddingTop,
+              layerPaddingBottom,
+              layerRotation,
+              layerX,
+              layerY,
+              layerFillColor,
+              false,
+            )
+            delete updates.transforms
+            updates.x = 'center'
+            onLayerChange(updates)
+            return
+          }
+
+          // If snapping to vertical center only, switch y to center
+          if (snapToVCenter && canDragY) {
+            const updates = convertDisplayToLayerPosition(
+              newDisplayX,
+              newDisplayY,
+              initialState.displayWidth,
+              initialState.displayHeight,
+              initialState.overlayWidth,
+              initialState.overlayHeight,
+              baseImageWidth,
+              baseImageHeight,
+              layerPaddingLeft,
+              layerPaddingRight,
+              layerPaddingTop,
+              layerPaddingBottom,
+              layerRotation,
+              layerX,
+              layerY,
+              layerFillColor,
+              false,
+            )
+            delete updates.transforms
+            updates.y = 'center'
+            onLayerChange(updates)
+            return
+          }
+        }
+
         const snapped = applySnapping(
           newDisplayX,
           newDisplayY,
@@ -309,8 +329,6 @@ export function LayerOverlay({
           initialState.overlayHeight,
           baseImageWidth,
           baseImageHeight,
-          paddingLeft,
-          paddingTop,
           layerPaddingLeft,
           layerPaddingRight,
           layerPaddingTop,
@@ -444,13 +462,13 @@ export function LayerOverlay({
           // Horizontal edge snapping
           if (activeHandle?.includes('w')) {
             // Moving left edge - snap to left edge or center
-            if (Math.abs(newLeft) < SNAP_THRESHOLD_PX) {
+            if (Math.abs(newLeft) < SNAP_THRESHOLDS.EDGE_PIXELS) {
               const adjustment = newLeft - 0
               newLeft = 0
               newWidth += adjustment
             } else {
               const centerX = initialState.overlayWidth / 2
-              if (Math.abs(newLeft - centerX) < SNAP_THRESHOLD_PX) {
+              if (Math.abs(newLeft - centerX) < SNAP_THRESHOLDS.EDGE_PIXELS) {
                 const adjustment = newLeft - centerX
                 newLeft = centerX
                 newWidth += adjustment
@@ -462,11 +480,11 @@ export function LayerOverlay({
             // Moving right edge - snap to right edge or center
             const rightEdge = newLeft + newWidth
             const overlayRight = initialState.overlayWidth
-            if (Math.abs(rightEdge - overlayRight) < SNAP_THRESHOLD_PX) {
+            if (Math.abs(rightEdge - overlayRight) < SNAP_THRESHOLDS.EDGE_PIXELS) {
               newWidth = overlayRight - newLeft
             } else {
               const centerX = initialState.overlayWidth / 2
-              if (Math.abs(rightEdge - centerX) < SNAP_THRESHOLD_PX) {
+              if (Math.abs(rightEdge - centerX) < SNAP_THRESHOLDS.EDGE_PIXELS) {
                 newWidth = centerX - newLeft
               }
             }
@@ -475,13 +493,13 @@ export function LayerOverlay({
           // Vertical edge snapping
           if (activeHandle?.includes('n')) {
             // Moving top edge - snap to top edge or center
-            if (Math.abs(newTop) < SNAP_THRESHOLD_PX) {
+            if (Math.abs(newTop) < SNAP_THRESHOLDS.EDGE_PIXELS) {
               const adjustment = newTop - 0
               newTop = 0
               newHeight += adjustment
             } else {
               const centerY = initialState.overlayHeight / 2
-              if (Math.abs(newTop - centerY) < SNAP_THRESHOLD_PX) {
+              if (Math.abs(newTop - centerY) < SNAP_THRESHOLDS.EDGE_PIXELS) {
                 const adjustment = newTop - centerY
                 newTop = centerY
                 newHeight += adjustment
@@ -493,11 +511,11 @@ export function LayerOverlay({
             // Moving bottom edge - snap to bottom edge or center
             const bottomEdge = newTop + newHeight
             const overlayBottom = initialState.overlayHeight
-            if (Math.abs(bottomEdge - overlayBottom) < SNAP_THRESHOLD_PX) {
+            if (Math.abs(bottomEdge - overlayBottom) < SNAP_THRESHOLDS.EDGE_PIXELS) {
               newHeight = overlayBottom - newTop
             } else {
               const centerY = initialState.overlayHeight / 2
-              if (Math.abs(bottomEdge - centerY) < SNAP_THRESHOLD_PX) {
+              if (Math.abs(bottomEdge - centerY) < SNAP_THRESHOLDS.EDGE_PIXELS) {
                 newHeight = centerY - newTop
               }
             }
@@ -513,8 +531,6 @@ export function LayerOverlay({
           initialState.overlayHeight,
           baseImageWidth,
           baseImageHeight,
-          paddingLeft,
-          paddingTop,
           layerPaddingLeft,
           layerPaddingRight,
           layerPaddingTop,

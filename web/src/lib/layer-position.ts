@@ -16,6 +16,119 @@ export interface LayerPositionResult {
 }
 
 /**
+ * Snapping thresholds for layer positioning
+ */
+export const SNAP_THRESHOLDS = {
+  /** Fixed pixels for edge snapping (matches Figma/Photoshop) */
+  EDGE_PIXELS: 8,
+  /** Percentage of canvas to snap TO center */
+  CENTER_SNAP_PERCENT: 0.02,
+  /** Percentage of canvas to escape FROM center (slightly larger for hysteresis) */
+  CENTER_ESCAPE_PERCENT: 0.03,
+} as const
+
+export interface SnappingResult {
+  x: number
+  y: number
+  snappedToCenter: {
+    x: boolean
+    y: boolean
+  }
+}
+
+/**
+ * Apply edge and center snapping to display coordinates
+ *
+ * This is a pure function that calculates snapped positions based on proximity
+ * to edges and center. It uses fixed pixels for edges (consistent feel) and
+ * percentage for center (scales with canvas size).
+ *
+ * @param displayX - Current X position in display coordinates
+ * @param displayY - Current Y position in display coordinates
+ * @param displayWidth - Width of the layer in display coordinates
+ * @param displayHeight - Height of the layer in display coordinates
+ * @param overlayWidth - Width of the overlay container
+ * @param overlayHeight - Height of the overlay container
+ * @param disableSnapping - Whether to disable all snapping
+ * @returns Snapped coordinates and flags indicating if snapped to center
+ */
+export function applySnapping(
+  displayX: number,
+  displayY: number,
+  displayWidth: number,
+  displayHeight: number,
+  overlayWidth: number,
+  overlayHeight: number,
+  disableSnapping: boolean,
+): SnappingResult {
+  if (disableSnapping) {
+    return {
+      x: displayX,
+      y: displayY,
+      snappedToCenter: { x: false, y: false },
+    }
+  }
+
+  let snappedX = displayX
+  let snappedY = displayY
+  let snappedToCenterX = false
+  let snappedToCenterY = false
+
+  // Calculate center snap threshold in pixels
+  const centerSnapThresholdX = overlayWidth * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
+  const centerSnapThresholdY = overlayHeight * SNAP_THRESHOLDS.CENTER_SNAP_PERCENT
+
+  // Horizontal snapping
+  // Priority: edges first, then center
+  if (Math.abs(displayX) < SNAP_THRESHOLDS.EDGE_PIXELS) {
+    // Snap to left edge
+    snappedX = 0
+  } else {
+    const rightEdge = overlayWidth - displayWidth
+    if (Math.abs(displayX - rightEdge) < SNAP_THRESHOLDS.EDGE_PIXELS) {
+      // Snap to right edge
+      snappedX = rightEdge
+    } else {
+      // Check center snap
+      const centerX = (overlayWidth - displayWidth) / 2
+      if (Math.abs(displayX - centerX) < centerSnapThresholdX) {
+        snappedX = centerX
+        snappedToCenterX = true
+      }
+    }
+  }
+
+  // Vertical snapping
+  // Priority: edges first, then center
+  if (Math.abs(displayY) < SNAP_THRESHOLDS.EDGE_PIXELS) {
+    // Snap to top edge
+    snappedY = 0
+  } else {
+    const bottomEdge = overlayHeight - displayHeight
+    if (Math.abs(displayY - bottomEdge) < SNAP_THRESHOLDS.EDGE_PIXELS) {
+      // Snap to bottom edge
+      snappedY = bottomEdge
+    } else {
+      // Check center snap
+      const centerY = (overlayHeight - displayHeight) / 2
+      if (Math.abs(displayY - centerY) < centerSnapThresholdY) {
+        snappedY = centerY
+        snappedToCenterY = true
+      }
+    }
+  }
+
+  return {
+    x: snappedX,
+    y: snappedY,
+    snappedToCenter: {
+      x: snappedToCenterX,
+      y: snappedToCenterY,
+    },
+  }
+}
+
+/**
  * Calculate the display position percentage for a layer
  *
  * @param layerX - Layer X position (string alignment or numeric value)
@@ -234,8 +347,6 @@ export interface LayerPositionUpdates {
  * @param overlayHeight - Height of the overlay container
  * @param baseImageWidth - Width of the base image canvas
  * @param baseImageHeight - Height of the base image canvas
- * @param basePaddingLeft - Base image left padding
- * @param basePaddingTop - Base image top padding
  * @param layerPaddingLeft - Layer's left padding
  * @param layerPaddingRight - Layer's right padding
  * @param layerPaddingTop - Layer's top padding
@@ -256,8 +367,6 @@ export function convertDisplayToLayerPosition(
   overlayHeight: number,
   baseImageWidth: number,
   baseImageHeight: number,
-  basePaddingLeft: number,
-  basePaddingTop: number,
   layerPaddingLeft: number,
   layerPaddingRight: number,
   layerPaddingTop: number,
@@ -303,8 +412,8 @@ export function convertDisplayToLayerPosition(
   const isRightAligned = currentX === 'right' || (typeof currentX === 'number' && currentX < 0)
   const isBottomAligned = currentY === 'bottom' || (typeof currentY === 'number' && currentY < 0)
 
-  // Threshold for switching from center to edge alignment (5% of canvas)
-  const DRAG_THRESHOLD_PERCENT = 0.05
+  // Threshold for switching from center to edge alignment
+  const DRAG_THRESHOLD_PERCENT = SNAP_THRESHOLDS.CENTER_ESCAPE_PERCENT
 
   // Convert X position with smart overflow handling
   if (canDragX) {
