@@ -119,6 +119,9 @@ export function UploadProgress({
         }
         // Close the sheet
         setState((s) => ({ ...s, isOpen: false, isAutoClosing: false, displayStats: null }))
+        // Reset flags for next upload
+        autoCloseStartedRef.current = false
+        manuallyClosedRef.current = false
         // Clear files
         onClearAll?.()
       }, 3000)
