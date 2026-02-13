@@ -198,7 +198,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       selection.clearSelection()
 
       // Refresh gallery
-      router.invalidate()
+      await router.invalidate()
 
       // Show result toast
       if (failCount === 0 && successCount > 0) {
@@ -260,7 +260,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         authState.profile.id,
       )
       // Invalidate only the current gallery route to trigger loader reload
-      router.invalidate()
+      await router.invalidate()
     }
   }
 
@@ -448,7 +448,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           : deleteItemDialog.itemKey
 
         await deleteFile(itemPath)
-        router.invalidate()
+        await router.invalidate()
         toast.success(
           t('pages.gallery.deleteImage.success', { fileName: deleteItemDialog.itemName }),
         )
@@ -511,7 +511,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         const newPath = pathParts.join('/')
 
         await moveFile(renameDialog.itemPath, newPath)
-        router.invalidate()
+        await router.invalidate()
         toast.success(t('pages.gallery.renameItem.success', { name: newName }))
       }
 
@@ -746,7 +746,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         authState.profile.id,
       )
       // Invalidate the router to reload loader data with new value
-      router.invalidate()
+      await router.invalidate()
     }
   }
 
@@ -796,7 +796,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       selection.clearSelection()
 
       // Refresh gallery
-      router.invalidate()
+      await router.invalidate()
 
       // Show result toast
       if (failCount === 0) {

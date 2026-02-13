@@ -117,7 +117,7 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
       onMoveComplete?.()
 
       // Refresh gallery
-      router.invalidate()
+      await router.invalidate()
 
       // Show result toast
       if (failCount === 0 && successCount > 0) {
