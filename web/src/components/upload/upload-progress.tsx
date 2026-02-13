@@ -80,6 +80,20 @@ export function UploadProgress({
       return
     }
 
+    // If new files are added during auto-close, cancel it and show new upload
+    if (files.length > 0 && state.isAutoClosing) {
+      autoCloseStartedRef.current = false
+      setState((s) => ({
+        ...s,
+        isOpen: true,
+        isExpanded: true,
+        displayFiles: files,
+        isAutoClosing: false,
+        displayStats: null,
+      }))
+      return
+    }
+
     // Open sheet when files are added (but not if manually closed or auto-close started)
     if (
       files.length > 0 &&
@@ -160,8 +174,13 @@ export function UploadProgress({
 
   const handleClose = () => {
     setState((s) => ({ ...s, isOpen: false, isAutoClosing: false, displayStats: null }))
-    manuallyClosedRef.current = true // Mark as manually closed to prevent reopening
+    manuallyClosedRef.current = true // Mark as manually closed to prevent immediate reopening
     onClearAll?.()
+
+    // Reset after a short delay to allow next upload
+    setTimeout(() => {
+      manuallyClosedRef.current = false
+    }, 100)
   }
 
   return (
