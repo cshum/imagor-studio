@@ -4,7 +4,7 @@ import { CheckCircle, ChevronDown, ChevronUp, RotateCcw, Upload, X, XCircle } fr
 
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { DragDropFile } from '@/hooks/use-drag-drop'
 
 export interface UploadProgressProps {
@@ -210,6 +210,9 @@ export function UploadProgress({
         hideClose={true}
         className='mx-auto max-w-2xl rounded-t-xl p-4'
       >
+        {/* Accessible title for screen readers */}
+        <SheetTitle className='sr-only'>{title}</SheetTitle>
+        
         {/* Header */}
         <div className='mb-3 flex items-center justify-between'>
           <div className='flex-1'>
