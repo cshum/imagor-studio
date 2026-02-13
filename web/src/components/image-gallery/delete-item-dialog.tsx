@@ -39,11 +39,11 @@ export function DeleteItemDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t(`pages.gallery.${translationKey}.title`)}</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className='break-words'>
             <Trans
               i18nKey={`pages.gallery.${translationKey}.description`}
               values={{ [valueKey]: itemName }}
-              components={{ 1: <strong /> }}
+              components={{ 1: <strong className='break-all' /> }}
             />
           </DialogDescription>
         </DialogHeader>
