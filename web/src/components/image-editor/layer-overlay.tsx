@@ -512,6 +512,46 @@ export function LayerOverlay({
           }
         }
 
+        // Re-apply aspect ratio lock after snapping to maintain correct aspect ratio
+        // Snapping may have adjusted dimensions, so we need to compensate
+        if (lockedAspectRatio) {
+          const aspectRatio = layerWidth / layerHeight
+
+          if (activeHandle === 'e' || activeHandle === 'w') {
+            // Horizontal edge resize: width was potentially snapped, adjust height
+            newHeight = newWidth / aspectRatio
+            // Adjust top position for top-anchored handles
+            if (activeHandle === 'w') {
+              newTop = initialState.displayY + initialState.displayHeight - newHeight
+            }
+          } else if (activeHandle === 'n' || activeHandle === 's') {
+            // Vertical edge resize: height was potentially snapped, adjust width
+            newWidth = newHeight * aspectRatio
+            // Adjust left position for left-anchored handles
+            if (activeHandle === 'n') {
+              newLeft = initialState.displayX + initialState.displayWidth - newWidth
+            }
+          } else {
+            // Corner resize: determine which dimension changed more (likely the one that was snapped)
+            const widthRatio = newWidth / initialState.displayWidth
+            const heightRatio = newHeight / initialState.displayHeight
+
+            if (Math.abs(widthRatio - 1) > Math.abs(heightRatio - 1)) {
+              // Width changed more (likely snapped), adjust height to maintain aspect ratio
+              newHeight = newWidth / aspectRatio
+              if (activeHandle?.includes('n')) {
+                newTop = initialState.displayY + initialState.displayHeight - newHeight
+              }
+            } else {
+              // Height changed more (likely snapped), adjust width to maintain aspect ratio
+              newWidth = newHeight * aspectRatio
+              if (activeHandle?.includes('w')) {
+                newLeft = initialState.displayX + initialState.displayWidth - newWidth
+              }
+            }
+          }
+        }
+
         const updates = convertDisplayToLayerPosition(
           newLeft,
           newTop,
