@@ -1210,9 +1210,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           onCancelFile={uploadState.cancelFile}
           onRetryFile={uploadState.retryFile}
           onClearAll={uploadState.clearFiles}
-          onSuccess={async () => {
-            await router.invalidate()
-          }}
+          onSuccess={() => router.invalidate()}
         />
       )}
 

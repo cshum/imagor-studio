@@ -212,7 +212,7 @@ export function UploadProgress({
       >
         {/* Accessible title for screen readers */}
         <SheetTitle className='sr-only'>{title}</SheetTitle>
-        
+
         {/* Header */}
         <div className='mb-3 flex items-center justify-between'>
           <div className='flex-1'>
