@@ -15,7 +15,7 @@ export function DropZoneOverlay({ isDragActive, onClose }: DropZoneOverlayProps)
 
   return (
     <div className='bg-background/80 fixed inset-0 z-50 flex items-center justify-center'>
-      <div className='border-muted-foreground bg-card relative mx-4 max-w-md rounded-lg border-1 border-dashed p-8 text-center shadow-lg'>
+      <div className='border-muted-foreground/60 bg-card text-foreground relative mx-4 max-w-md rounded-lg border-1 border-dashed p-8 text-center shadow-lg'>
         {onClose && (
           <Button
             variant='ghost'
@@ -26,7 +26,7 @@ export function DropZoneOverlay({ isDragActive, onClose }: DropZoneOverlayProps)
             <X className='h-4 w-4' />
           </Button>
         )}
-        <Upload className='text-primary mx-auto h-16 w-16' />
+        <Upload className='text-foreground mx-auto h-16 w-16' />
         <h3 className='mt-4 text-xl font-semibold'>
           {t('pages.gallery.upload.dropZone.dropToUpload')}
         </h3>
