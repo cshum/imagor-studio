@@ -21,6 +21,7 @@ import {
   Copy,
   Download,
   Eye,
+  FileDown,
   FileImage,
   Frame,
   GripVertical,
@@ -47,6 +48,7 @@ import { ImageEditorControls } from '@/components/image-editor/imagor-editor-con
 import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb.tsx'
 import { LayerPanel } from '@/components/image-editor/layer-panel'
 import { PreviewArea } from '@/components/image-editor/preview-area'
+import { SaveTemplateDialog } from '@/components/image-editor/save-template-dialog'
 import { LoadingBar } from '@/components/loading-bar'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
@@ -101,6 +103,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
   const [copyUrl, setCopyUrl] = useState('')
+  const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false)
   const [editorOpenSections, setEditorOpenSections] =
     useState<EditorOpenSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -683,6 +686,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                     <RotateCcw className='mr-3 h-4 w-4' />
                     {t('imageEditor.page.resetAll')}
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSaveTemplateDialogOpen(true)}>
+                    <FileDown className='mr-3 h-4 w-4' />
+                    {t('imageEditor.template.saveTemplate')}
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
@@ -812,6 +819,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
         {/* Copy URL Dialog */}
         <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
+
+        {/* Save Template Dialog */}
+        <SaveTemplateDialog
+          open={saveTemplateDialogOpen}
+          onOpenChange={setSaveTemplateDialogOpen}
+          imageEditor={imageEditor}
+        />
 
         {/* Navigation Confirmation Dialog */}
         <ConfirmNavigationDialog
@@ -1021,6 +1035,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
         {/* Copy URL Dialog */}
         <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
+
+        {/* Save Template Dialog */}
+        <SaveTemplateDialog
+          open={saveTemplateDialogOpen}
+          onOpenChange={setSaveTemplateDialogOpen}
+          imageEditor={imageEditor}
+        />
 
         {/* Navigation Confirmation Dialog */}
         <ConfirmNavigationDialog
@@ -1338,6 +1359,13 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
       {/* Copy URL Dialog */}
       <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
+
+      {/* Save Template Dialog */}
+      <SaveTemplateDialog
+        open={saveTemplateDialogOpen}
+        onOpenChange={setSaveTemplateDialogOpen}
+        imageEditor={imageEditor}
+      />
 
       {/* Navigation Confirmation Dialog */}
       <ConfirmNavigationDialog

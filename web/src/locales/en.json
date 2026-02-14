@@ -848,6 +848,26 @@
         "lighten": "Show lighter areas",
         "mask": "Transparency mask"
       }
+    },
+    "template": {
+      "saveTemplate": "Save Template...",
+      "saveDescription": "Save current transformations as a reusable template",
+      "templateName": "Template Name",
+      "templateNamePlaceholder": "e.g., Instagram Square, Product Thumbnail",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe what this template does...",
+      "dimensionMode": "Dimension Mode",
+      "adaptive": "Adaptive",
+      "adaptiveDescription": "Template adapts to each image's dimensions",
+      "predefined": "Predefined",
+      "predefinedDescription": "Lock dimensions to current image size",
+      "nameRequired": "Template name is required",
+      "saveSuccess": "Template saved successfully",
+      "saveError": "Failed to save template",
+      "saving": "Saving..."
     }
+  },
+  "common": {
+    "optional": "(optional)"
   }
 }
