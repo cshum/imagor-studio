@@ -231,10 +231,7 @@
       },
       "selection": {
         "menu": "選擇選單",
-        "count": "{{count}} 項目",
-        "count_plural": "{{count}} 項目",
         "title": "已選擇 {{count}} 項目",
-        "title_plural": "已選擇 {{count}} 項目",
         "downloadAll": "全部下載",
         "deleteSelected": "刪除所選",
         "clearSelection": "清除選擇",

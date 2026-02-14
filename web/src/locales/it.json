@@ -228,10 +228,7 @@
       },
       "selection": {
         "menu": "Menu di selezione",
-        "count": "{{count}} elemento",
-        "count_plural": "{{count}} elementi",
-        "title": "{{count}} elemento selezionato",
-        "title_plural": "{{count}} elementi selezionati",
+        "title": "{{count}} elementi selezionati",
         "downloadAll": "Scarica tutto",
         "deleteSelected": "Elimina selezionati",
         "clearSelection": "Cancella selezione",

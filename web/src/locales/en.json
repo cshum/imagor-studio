@@ -257,10 +257,7 @@
       },
       "selection": {
         "menu": "Selection Menu",
-        "count": "{{count}} item",
-        "count_plural": "{{count}} items",
-        "title": "{{count}} item selected",
-        "title_plural": "{{count}} items selected",
+        "title": "{{count}} items selected",
         "downloadAll": "Download All",
         "moveSelected": "Move to Folder",
         "deleteSelected": "Delete Selected",
