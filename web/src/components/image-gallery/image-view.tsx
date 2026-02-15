@@ -27,6 +27,7 @@ export interface GalleryImage {
   imageName: string
   imageKey: string
   isVideo?: boolean
+  isTemplate?: boolean
   originalSrc?: string
   imageInfo?: ImageInfo
 }
