@@ -1164,6 +1164,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                   <RotateCcw className='mr-3 h-4 w-4' />
                   {t('imageEditor.page.resetAll')}
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSaveTemplateDialogOpen(true)}>
+                  <FileDown className='mr-3 h-4 w-4' />
+                  {t('imageEditor.template.saveTemplate')}
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
