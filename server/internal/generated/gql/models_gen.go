@@ -165,6 +165,7 @@ type SaveTemplateInput struct {
 	DimensionMode   DimensionMode `json:"dimensionMode"`
 	TemplateJSON    string        `json:"templateJson"`
 	SourceImagePath string        `json:"sourceImagePath"`
+	SavePath        string        `json:"savePath"`
 }
 
 type StorageConfigInput struct {

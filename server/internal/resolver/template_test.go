@@ -30,11 +30,11 @@ func TestSaveTemplate(t *testing.T) {
 			Return("http://localhost:8000/preview-url", nil).Maybe()
 
 		// Mock storage Put for template JSON
-		mockStorage.On("Put", ctx, ".templates/my-template.imagor.json", mock.Anything).
+		mockStorage.On("Put", ctx, "templates/my-template.imagor.json", mock.Anything).
 			Return(nil)
 
 		// Mock storage Put for preview image (may be called if preview generation succeeds)
-		mockStorage.On("Put", ctx, ".templates/my-template.imagor.preview.webp", mock.Anything).
+		mockStorage.On("Put", ctx, "templates/my-template.imagor.preview.webp", mock.Anything).
 			Return(nil).Maybe()
 
 		// Create valid template JSON
@@ -59,6 +59,7 @@ func TestSaveTemplate(t *testing.T) {
 			DimensionMode:   gql.DimensionModeAdaptive,
 			TemplateJSON:    templateJSON,
 			SourceImagePath: "test-image.jpg",
+			SavePath:        "templates",
 		}
 
 		// Execute
@@ -68,7 +69,7 @@ func TestSaveTemplate(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.True(t, result.Success)
-		assert.Equal(t, ".templates/my-template.imagor.json", result.TemplatePath)
+		assert.Equal(t, "templates/my-template.imagor.json", result.TemplatePath)
 		assert.NotNil(t, result.Message)
 		assert.Equal(t, "Template saved successfully", *result.Message)
 
@@ -91,9 +92,9 @@ func TestSaveTemplate(t *testing.T) {
 			Return("http://localhost:8000/preview-url", nil).Maybe()
 
 		// Expect sanitized filename
-		mockStorage.On("Put", ctx, ".templates/my-special-template.imagor.json", mock.Anything).
+		mockStorage.On("Put", ctx, "my-folder/my-special-template.imagor.json", mock.Anything).
 			Return(nil)
-		mockStorage.On("Put", ctx, ".templates/my-special-template.imagor.preview.webp", mock.Anything).
+		mockStorage.On("Put", ctx, "my-folder/my-special-template.imagor.preview.webp", mock.Anything).
 			Return(nil).Maybe()
 
 		templateJSON := `{
@@ -107,13 +108,14 @@ func TestSaveTemplate(t *testing.T) {
 			DimensionMode:   gql.DimensionModeAdaptive,
 			TemplateJSON:    templateJSON,
 			SourceImagePath: "test.jpg",
+			SavePath:        "my-folder",
 		}
 
 		result, err := resolver.Mutation().SaveTemplate(ctx, input)
 
 		assert.NoError(t, err)
 		assert.True(t, result.Success)
-		assert.Equal(t, ".templates/my-special-template.imagor.json", result.TemplatePath)
+		assert.Equal(t, "my-folder/my-special-template.imagor.json", result.TemplatePath)
 	})
 
 	t.Run("should reject invalid template name", func(t *testing.T) {
@@ -133,6 +135,7 @@ func TestSaveTemplate(t *testing.T) {
 			DimensionMode:   gql.DimensionModeAdaptive,
 			TemplateJSON:    `{"version":"1.0","name":"Test","transformations":{}}`,
 			SourceImagePath: "test.jpg",
+			SavePath:        "templates",
 		}
 
 		result, err := resolver.Mutation().SaveTemplate(ctx, input)
@@ -159,6 +162,7 @@ func TestSaveTemplate(t *testing.T) {
 			DimensionMode:   gql.DimensionModeAdaptive,
 			TemplateJSON:    `{invalid json}`,
 			SourceImagePath: "test.jpg",
+			SavePath:        "templates",
 		}
 
 		result, err := resolver.Mutation().SaveTemplate(ctx, input)
@@ -185,6 +189,7 @@ func TestSaveTemplate(t *testing.T) {
 			DimensionMode:   gql.DimensionModeAdaptive,
 			TemplateJSON:    `{"version":"1.0","name":"Test","transformations":{}}`,
 			SourceImagePath: "test.jpg",
+			SavePath:        "templates",
 		}
 
 		_, err := resolver.Mutation().SaveTemplate(ctx, input)

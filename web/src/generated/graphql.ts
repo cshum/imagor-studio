@@ -358,6 +358,7 @@ export type SaveTemplateInput = {
   description: InputMaybe<Scalars['String']['input']>
   dimensionMode: DimensionMode
   name: Scalars['String']['input']
+  savePath: Scalars['String']['input']
   sourceImagePath: Scalars['String']['input']
   templateJson: Scalars['String']['input']
 }

@@ -151,6 +151,7 @@ input SaveTemplateInput {
   dimensionMode: DimensionMode!
   templateJson: String!
   sourceImagePath: String!
+  savePath: String!
 }
 
 enum DimensionMode {

@@ -1567,6 +1567,7 @@ input SaveTemplateInput {
   dimensionMode: DimensionMode!
   templateJson: String!
   sourceImagePath: String!
+  savePath: String!
 }
 
 enum DimensionMode {
@@ -8204,7 +8205,7 @@ func (ec *executionContext) unmarshalInputSaveTemplateInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "dimensionMode", "templateJson", "sourceImagePath"}
+	fieldsInOrder := [...]string{"name", "description", "dimensionMode", "templateJson", "sourceImagePath", "savePath"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -8246,6 +8247,13 @@ func (ec *executionContext) unmarshalInputSaveTemplateInput(ctx context.Context,
 				return it, err
 			}
 			it.SourceImagePath = data
+		case "savePath":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("savePath"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SavePath = data
 		}
 	}
 
