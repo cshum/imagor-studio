@@ -2058,6 +2058,21 @@ export class ImageEditor {
       },
     }
 
+    // Generate preview params (200x200 thumbnail with transformations)
+    const previewParams = this.convertStateToGraphQLParams(this.getBaseState(), true)
+    previewParams.width = 200
+    previewParams.height = 200
+    previewParams.fitIn = true
+
+    // Ensure WebP format and good quality for thumbnails
+    const filters = previewParams.filters || []
+    const filteredFilters = filters.filter(
+      (f) => f.name !== 'format' && f.name !== 'quality' && f.name !== 'preview',
+    )
+    filteredFilters.push({ name: 'format', args: 'webp' })
+    filteredFilters.push({ name: 'quality', args: '80' })
+    previewParams.filters = filteredFilters
+
     // Call backend API to save template
     const { saveTemplate } = await import('@/api/storage-api')
 
@@ -2070,6 +2085,7 @@ export class ImageEditor {
         sourceImagePath: this.baseImagePath,
         savePath,
         overwrite,
+        previewParams: previewParams as ImagorParamsInput,
       },
     })
 

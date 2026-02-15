@@ -2344,6 +2344,14 @@
             "deprecationReason": null
           },
           {
+            "name": "previewParams",
+            "description": null,
+            "type": { "kind": "INPUT_OBJECT", "name": "ImagorParamsInput", "ofType": null },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "savePath",
             "description": null,
             "type": {

@@ -78,7 +78,7 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 	}
 
 	// 3. Generate preview image using Imagor
-	previewImage, err := r.generateTemplatePreview(ctx, input.SourceImagePath, input.TemplateJSON)
+	previewImage, err := r.generateTemplatePreview(ctx, input.SourceImagePath, input.PreviewParams)
 	if err != nil {
 		r.logger.Warn("Preview generation failed (continuing without preview)", zap.Error(err))
 		// Don't fail the operation - template can work without preview
@@ -129,74 +129,72 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 }
 
 // generateTemplatePreview generates a preview image for the template using Imagor
-func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceImagePath string, templateJSON string) ([]byte, error) {
-	// 1. Parse template JSON to extract transformations
-	var template struct {
-		Transformations json.RawMessage `json:"transformations"`
-	}
-	if err := json.Unmarshal([]byte(templateJSON), &template); err != nil {
-		return nil, fmt.Errorf("failed to parse template JSON: %w", err)
-	}
-
-	// 2. Parse transformations into ImagorParamsInput
-	var transformations map[string]interface{}
-	if err := json.Unmarshal(template.Transformations, &transformations); err != nil {
-		return nil, fmt.Errorf("failed to parse transformations: %w", err)
-	}
-
-	// 3. Build Imagor params for 200x200 thumbnail
-	params := imagorpath.Params{
-		Width:  200,
-		Height: 200,
-		FitIn:  true,
-		Filters: imagorpath.Filters{
-			{Name: "format", Args: "webp"},
-			{Name: "quality", Args: "80"},
-		},
-	}
-
-	// Apply transformations from template (simplified - just apply filters if present)
-	if filters, ok := transformations["filters"].([]interface{}); ok {
-		for _, f := range filters {
-			if filterMap, ok := f.(map[string]interface{}); ok {
-				name, _ := filterMap["name"].(string)
-				args, _ := filterMap["args"].(string)
-				if name != "" {
-					// Skip format/quality/preview filters (we set our own)
-					if name != "format" && name != "quality" && name != "preview" {
-						params.Filters = append(params.Filters, imagorpath.Filter{
-							Name: name,
-							Args: args,
-						})
-					}
-				}
-			}
+func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceImagePath string, previewParams *gql.ImagorParamsInput) ([]byte, error) {
+	// Convert preview params to imagorpath.Params
+	var params imagorpath.Params
+	if previewParams != nil {
+		// Use provided preview params from frontend
+		params = convertToImagorParams(*previewParams)
+	} else {
+		// Fallback: simple 200x200 thumbnail
+		params = imagorpath.Params{
+			Width:  200,
+			Height: 200,
+			FitIn:  true,
+			Filters: imagorpath.Filters{
+				{Name: "format", Args: "webp"},
+				{Name: "quality", Args: "80"},
+			},
 		}
 	}
 
-	// 4. Generate Imagor URL
-	imagorURL, err := r.imagorProvider.GenerateURL(sourceImagePath, params)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate imagor URL: %w", err)
-	}
+	var imageData []byte
 
-	r.logger.Debug("Fetching preview image", zap.String("url", imagorURL))
+	// Check if we're in embedded mode
+	if imagorInstance := r.imagorProvider.GetInstance(); imagorInstance != nil {
+		// EMBEDDED MODE: Use Imagor instance directly
+		r.logger.Debug("Generating preview using embedded Imagor instance")
 
-	// 5. Fetch the processed image from Imagor
-	resp, err := http.Get(imagorURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch preview image: %w", err)
-	}
-	defer resp.Body.Close()
+		// Create a dummy HTTP request for the Imagor instance
+		req, err := http.NewRequestWithContext(ctx, "GET", "/"+sourceImagePath, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("imagor returned status %d", resp.StatusCode)
-	}
+		blob, err := imagorInstance.Do(req, params)
+		if err != nil {
+			return nil, fmt.Errorf("imagor processing failed: %w", err)
+		}
 
-	// 6. Read image data
-	imageData, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read preview image: %w", err)
+		imageData, err = blob.ReadAll()
+		if err != nil {
+			return nil, fmt.Errorf("failed to read blob: %w", err)
+		}
+	} else {
+		// EXTERNAL MODE: Use HTTP request
+		r.logger.Debug("Generating preview using external Imagor service")
+
+		imagorURL, err := r.imagorProvider.GenerateURL(sourceImagePath, params)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate imagor URL: %w", err)
+		}
+
+		r.logger.Debug("Fetching preview image", zap.String("url", imagorURL))
+
+		resp, err := http.Get(imagorURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch preview image: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("imagor returned status %d", resp.StatusCode)
+		}
+
+		imageData, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read preview image: %w", err)
+		}
 	}
 
 	r.logger.Debug("Preview image generated successfully",

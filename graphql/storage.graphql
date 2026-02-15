@@ -153,6 +153,7 @@ input SaveTemplateInput {
   sourceImagePath: String!
   savePath: String!
   overwrite: Boolean
+  previewParams: ImagorParamsInput
 }
 
 enum DimensionMode {

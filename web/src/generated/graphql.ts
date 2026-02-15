@@ -359,6 +359,7 @@ export type SaveTemplateInput = {
   dimensionMode: DimensionMode
   name: Scalars['String']['input']
   overwrite: InputMaybe<Scalars['Boolean']['input']>
+  previewParams: InputMaybe<ImagorParamsInput>
   savePath: Scalars['String']['input']
   sourceImagePath: Scalars['String']['input']
   templateJson: Scalars['String']['input']

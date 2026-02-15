@@ -1569,6 +1569,7 @@ input SaveTemplateInput {
   sourceImagePath: String!
   savePath: String!
   overwrite: Boolean
+  previewParams: ImagorParamsInput
 }
 
 enum DimensionMode {
@@ -8206,7 +8207,7 @@ func (ec *executionContext) unmarshalInputSaveTemplateInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "dimensionMode", "templateJson", "sourceImagePath", "savePath", "overwrite"}
+	fieldsInOrder := [...]string{"name", "description", "dimensionMode", "templateJson", "sourceImagePath", "savePath", "overwrite", "previewParams"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -8262,6 +8263,13 @@ func (ec *executionContext) unmarshalInputSaveTemplateInput(ctx context.Context,
 				return it, err
 			}
 			it.Overwrite = data
+		case "previewParams":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("previewParams"))
+			data, err := ec.unmarshalOImagorParamsInput2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorParamsInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreviewParams = data
 		}
 	}
 
@@ -11014,6 +11022,14 @@ func (ec *executionContext) marshalOImagorMode2ᚖgithubᚗcomᚋcshumᚋimagor�
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOImagorParamsInput2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorParamsInput(ctx context.Context, v any) (*ImagorParamsInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputImagorParamsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOImagorSignerType2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorSignerType(ctx context.Context, v any) (*ImagorSignerType, error) {
