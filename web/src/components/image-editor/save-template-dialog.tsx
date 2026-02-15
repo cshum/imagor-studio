@@ -16,7 +16,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Textarea } from '@/components/ui/textarea'
 import type { ImageEditor } from '@/lib/image-editor'
 import { splitImagePath } from '@/lib/path-utils'
 
@@ -45,7 +44,6 @@ export function SaveTemplateDialog({
 }: SaveTemplateDialogProps) {
   const { t } = useTranslation()
   const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
   const [dimensionMode, setDimensionMode] = useState<'adaptive' | 'predefined'>('adaptive')
   const [savePath, setSavePath] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -75,13 +73,7 @@ export function SaveTemplateDialog({
     setIsSaving(true)
 
     try {
-      await imageEditor.exportTemplate(
-        name.trim(),
-        description.trim() || undefined,
-        dimensionMode,
-        savePath,
-        overwrite,
-      )
+      await imageEditor.exportTemplate(name.trim(), undefined, dimensionMode, savePath, overwrite)
 
       // Success - template saved
       toast.success(t('imageEditor.template.saveSuccess'))
@@ -89,7 +81,6 @@ export function SaveTemplateDialog({
 
       // Reset form
       setName('')
-      setDescription('')
       setDimensionMode('adaptive')
     } catch (error) {
       // Check if it's a conflict error (template already exists)
@@ -154,21 +145,6 @@ export function SaveTemplateDialog({
                 {savePath || t('imageEditor.template.rootFolder')}
               </span>
             </Button>
-          </div>
-
-          {/* Description */}
-          <div className='grid gap-2'>
-            <Label htmlFor='template-description'>
-              {t('imageEditor.template.description')} {t('common.optional')}
-            </Label>
-            <Textarea
-              id='template-description'
-              placeholder={t('imageEditor.template.descriptionPlaceholder')}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              maxLength={500}
-            />
           </div>
 
           {/* Dimension Mode */}
