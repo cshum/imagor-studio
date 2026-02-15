@@ -94,7 +94,7 @@ export function SaveTemplateDialog({
     } catch (error) {
       // Check if it's a conflict error (template already exists)
       const errorMessage = error instanceof Error ? error.message : String(error)
-      
+
       if (errorMessage.includes('Template already exists')) {
         setIsSaving(false)
         // Show custom confirmation dialog
@@ -134,7 +134,8 @@ export function SaveTemplateDialog({
             {/* Filename Preview */}
             {filename && (
               <p className='text-muted-foreground text-sm'>
-                {t('imageEditor.template.filenamePreview')}: <code className='bg-muted rounded px-1.5 py-0.5'>{filename}</code>
+                {t('imageEditor.template.filenamePreview')}:{' '}
+                <code className='bg-muted rounded px-1.5 py-0.5'>{filename}</code>
               </p>
             )}
           </div>
@@ -173,7 +174,10 @@ export function SaveTemplateDialog({
           {/* Dimension Mode */}
           <div className='grid gap-2'>
             <Label>{t('imageEditor.template.dimensionMode')}</Label>
-            <RadioGroup value={dimensionMode} onValueChange={(v) => setDimensionMode(v as any)}>
+            <RadioGroup
+              value={dimensionMode}
+              onValueChange={(v) => setDimensionMode(v as 'adaptive' | 'predefined')}
+            >
               <div className='flex items-start space-x-2'>
                 <RadioGroupItem value='adaptive' id='adaptive' className='mt-1' />
                 <div className='grid gap-1'>
