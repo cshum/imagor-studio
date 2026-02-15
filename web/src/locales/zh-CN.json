@@ -674,7 +674,28 @@
       "confirmLeaveMessage": "确定要返回吗？",
       "leave": "离开",
       "stay": "留下",
-      "showHideControls": "显示/隐藏控制面板"
+      "showHideControls": "显示/隐藏控制面板",
+      "saveTemplate": "保存模板...",
+      "loadTemplate": "加载模板..."
+    },
+    "template": {
+      "saveTemplate": "保存模板",
+      "saveTemplateDescription": "将当前编辑器状态保存为可重复使用的模板",
+      "templateName": "模板名称",
+      "templateNamePlaceholder": "输入模板名称",
+      "templateDescription": "描述（可选）",
+      "templateDescriptionPlaceholder": "描述此模板的用途...",
+      "dimensionMode": "尺寸模式",
+      "dimensionModeAdaptive": "自适应",
+      "dimensionModeAdaptiveDescription": "模板将适应应用的图片尺寸",
+      "dimensionModePredefined": "预定义",
+      "dimensionModePredefinedDescription": "模板将使用固定尺寸 ({{width}}x{{height}})",
+      "saveAsTemplate": "保存为模板",
+      "saving": "保存中...",
+      "templateSaved": "模板已保存",
+      "templateSavedSuccess": "模板 \"{{name}}\" 已成功保存",
+      "saveTemplateFailed": "保存模板失败",
+      "nameRequired": "模板名称为必填项"
     },
     "controls": {
       "cropAspect": "裁剪和比例",

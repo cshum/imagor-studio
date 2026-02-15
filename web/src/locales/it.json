@@ -668,7 +668,28 @@
       "confirmLeaveMessage": "Sei sicuro di voler tornare indietro?",
       "leave": "Esci",
       "stay": "Rimani",
-      "showHideControls": "Mostra/Nascondi Controlli"
+      "showHideControls": "Mostra/Nascondi Controlli",
+      "saveTemplate": "Salva Modello...",
+      "loadTemplate": "Carica Modello..."
+    },
+    "template": {
+      "saveTemplate": "Salva Modello",
+      "saveTemplateDescription": "Salva lo stato corrente dell'editor come modello riutilizzabile",
+      "templateName": "Nome Modello",
+      "templateNamePlaceholder": "Inserisci nome modello",
+      "templateDescription": "Descrizione (opzionale)",
+      "templateDescriptionPlaceholder": "Descrivi a cosa serve questo modello...",
+      "dimensionMode": "Modalità Dimensioni",
+      "dimensionModeAdaptive": "Adattivo",
+      "dimensionModeAdaptiveDescription": "Il modello si adatterà alle dimensioni dell'immagine applicata",
+      "dimensionModePredefined": "Predefinito",
+      "dimensionModePredefinedDescription": "Il modello utilizzerà dimensioni fisse ({{width}}x{{height}})",
+      "saveAsTemplate": "Salva come Modello",
+      "saving": "Salvataggio...",
+      "templateSaved": "Modello Salvato",
+      "templateSavedSuccess": "Modello \"{{name}}\" salvato con successo",
+      "saveTemplateFailed": "Salvataggio modello fallito",
+      "nameRequired": "Il nome del modello è obbligatorio"
     },
     "controls": {
       "cropAspect": "Ritaglia e Aspetto",
