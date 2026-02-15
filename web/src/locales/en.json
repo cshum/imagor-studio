@@ -872,7 +872,9 @@
       "saveSuccess": "Template saved successfully",
       "saveError": "Failed to save template",
       "saving": "Saving...",
-      "overwriteConfirm": "A template named \"{{name}}\" already exists. Do you want to replace it?"
+      "overwriteTitle": "Overwrite Template?",
+      "overwriteConfirm": "A template named \"{{name}}\" already exists. Do you want to replace it?",
+      "overwrite": "Overwrite"
     }
   }
 }

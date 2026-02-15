@@ -701,7 +701,9 @@
       "saveSuccess": "模板保存成功",
       "saveError": "保存模板失败",
       "saving": "保存中...",
-      "overwriteConfirm": "已存在名为\"{{name}}\"的模板。是否要替换它？"
+      "overwriteTitle": "覆盖模板？",
+      "overwriteConfirm": "已存在名为\"{{name}}\"的模板。是否要替换它？",
+      "overwrite": "覆盖"
     },
     "controls": {
       "cropAspect": "裁剪和比例",

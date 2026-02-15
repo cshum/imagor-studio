@@ -695,7 +695,9 @@
       "saveSuccess": "Modello salvato con successo",
       "saveError": "Impossibile salvare il modello",
       "saving": "Salvataggio...",
-      "overwriteConfirm": "Esiste già un modello denominato \"{{name}}\". Vuoi sostituirlo?"
+      "overwriteTitle": "Sovrascrivere il modello?",
+      "overwriteConfirm": "Esiste già un modello denominato \"{{name}}\". Vuoi sostituirlo?",
+      "overwrite": "Sovrascrivi"
     },
     "controls": {
       "cropAspect": "Ritaglia e Aspetto",

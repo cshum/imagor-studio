@@ -50,6 +50,7 @@ export function SaveTemplateDialog({
   const [savePath, setSavePath] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [folderDialogOpen, setFolderDialogOpen] = useState(false)
+  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false)
 
   const dimensions = imageEditor.getOriginalDimensions()
 
@@ -96,14 +97,8 @@ export function SaveTemplateDialog({
       
       if (errorMessage.includes('Template already exists')) {
         setIsSaving(false)
-        // Show confirmation dialog
-        const confirmed = window.confirm(
-          t('imageEditor.template.overwriteConfirm', { name: name.trim() })
-        )
-        if (confirmed) {
-          // Retry with overwrite=true
-          await handleSave(true)
-        }
+        // Show custom confirmation dialog
+        setShowOverwriteConfirm(true)
         return
       }
 
@@ -245,6 +240,32 @@ export function SaveTemplateDialog({
         description={t('imageEditor.template.selectFolderDescription')}
         confirmButtonText={t('common.buttons.select')}
       />
+
+      {/* Overwrite Confirmation Dialog */}
+      <Dialog open={showOverwriteConfirm} onOpenChange={setShowOverwriteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('imageEditor.template.overwriteTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('imageEditor.template.overwriteConfirm', { name: name.trim() })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setShowOverwriteConfirm(false)}>
+              {t('common.buttons.cancel')}
+            </Button>
+            <Button
+              variant='destructive'
+              onClick={() => {
+                setShowOverwriteConfirm(false)
+                handleSave(true)
+              }}
+            >
+              {t('imageEditor.template.overwrite')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }
