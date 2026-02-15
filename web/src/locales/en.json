@@ -866,8 +866,5 @@
       "saveError": "Failed to save template",
       "saving": "Saving..."
     }
-  },
-  "common": {
-    "optional": "(optional)"
   }
 }
