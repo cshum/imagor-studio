@@ -152,6 +152,7 @@ input SaveTemplateInput {
   templateJson: String!
   sourceImagePath: String!
   savePath: String!
+  overwrite: Boolean
 }
 
 enum DimensionMode {
@@ -164,4 +165,5 @@ type TemplateResult {
   templatePath: String!
   previewPath: String
   message: String
+  alreadyExists: Boolean
 }

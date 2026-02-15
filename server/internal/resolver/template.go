@@ -39,6 +39,30 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 		}, nil
 	}
 
+	// 1.5. Check if template file already exists
+	templateFilePath := fmt.Sprintf("%s/%s.imagor.json", input.SavePath, sanitizedName)
+	_, err := r.getStorage().Stat(ctx, templateFilePath)
+	if err == nil {
+		// File exists - check if overwrite is allowed
+		overwrite := input.Overwrite != nil && *input.Overwrite
+		if !overwrite {
+			r.logger.Debug("Template already exists, overwrite not allowed",
+				zap.String("templatePath", templateFilePath))
+			msg := "Template already exists"
+			alreadyExists := true
+			return &gql.TemplateResult{
+				Success:       false,
+				TemplatePath:  "",
+				PreviewPath:   nil,
+				Message:       &msg,
+				AlreadyExists: &alreadyExists,
+			}, nil
+		}
+		r.logger.Debug("Template already exists, overwriting",
+			zap.String("templatePath", templateFilePath))
+	}
+	// else: file doesn't exist OR error checking (proceed with save)
+
 	// 2. Validate template JSON structure
 	if err := validateTemplateJSON(input.TemplateJSON); err != nil {
 		r.logger.Error("Invalid template JSON", zap.Error(err))
@@ -59,7 +83,6 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 	}
 
 	// 4. Save template JSON to storage
-	templateFilePath := fmt.Sprintf("%s/%s.imagor.json", input.SavePath, sanitizedName)
 	jsonReader := strings.NewReader(input.TemplateJSON)
 	if err := r.getStorage().Put(ctx, templateFilePath, jsonReader); err != nil {
 		r.logger.Error("Failed to save template JSON", zap.Error(err))

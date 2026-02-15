@@ -64,7 +64,7 @@ export function SaveTemplateDialog({
     }
   }, [open, imagePath])
 
-  const handleSave = async () => {
+  const handleSave = async (overwrite = false) => {
     // Validate name
     if (!name.trim()) {
       toast.error(t('imageEditor.template.nameRequired'))
@@ -74,12 +74,27 @@ export function SaveTemplateDialog({
     setIsSaving(true)
 
     try {
-      await imageEditor.exportTemplate(
+      const result = await imageEditor.exportTemplate(
         name.trim(),
         description.trim() || undefined,
         dimensionMode,
         savePath,
+        overwrite,
       )
+
+      // Check if file already exists
+      if (result.alreadyExists) {
+        setIsSaving(false)
+        // Show confirmation dialog
+        const confirmed = window.confirm(
+          t('imageEditor.template.overwriteConfirm', { name: name.trim() })
+        )
+        if (confirmed) {
+          // Retry with overwrite=true
+          await handleSave(true)
+        }
+        return
+      }
 
       toast.success(t('imageEditor.template.saveSuccess'))
       onOpenChange(false)
@@ -196,7 +211,7 @@ export function SaveTemplateDialog({
           <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isSaving}>
             {t('common.buttons.cancel')}
           </Button>
-          <Button onClick={handleSave} disabled={isSaving || !name.trim()}>
+          <Button onClick={() => handleSave()} disabled={isSaving || !name.trim()}>
             {isSaving ? (
               <>
                 <Loader2 className='mr-2 h-4 w-4 animate-spin' />

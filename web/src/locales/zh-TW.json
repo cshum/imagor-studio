@@ -697,7 +697,8 @@
       "nameRequired": "範本名稱為必填項",
       "saveSuccess": "範本儲存成功",
       "saveError": "儲存範本失敗",
-      "saving": "儲存中..."
+      "saving": "儲存中...",
+      "overwriteConfirm": "已存在名為「{{name}}」的範本。是否要取代它？"
     },
     "controls": {
       "cropAspect": "裁剪和比例",

@@ -6,6 +6,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
@@ -28,6 +29,10 @@ func TestSaveTemplate(t *testing.T) {
 		// Mock Imagor URL generation for preview (will fail but that's ok)
 		mockImagorProvider.On("GenerateURL", "test-image.jpg", mock.Anything).
 			Return("http://localhost:8000/preview-url", nil).Maybe()
+
+		// Mock storage Stat to check if file exists (return error = file doesn't exist)
+		mockStorage.On("Stat", ctx, "templates/my-template.imagor.json").
+			Return(storage.FileInfo{}, assert.AnError)
 
 		// Mock storage Put for template JSON
 		mockStorage.On("Put", ctx, "templates/my-template.imagor.json", mock.Anything).
@@ -90,6 +95,10 @@ func TestSaveTemplate(t *testing.T) {
 
 		mockImagorProvider.On("GenerateURL", mock.Anything, mock.Anything).
 			Return("http://localhost:8000/preview-url", nil).Maybe()
+
+		// Mock storage Stat to check if file exists (return error = file doesn't exist)
+		mockStorage.On("Stat", ctx, "my-folder/my-special-template.imagor.json").
+			Return(storage.FileInfo{}, assert.AnError)
 
 		// Expect sanitized filename
 		mockStorage.On("Put", ctx, "my-folder/my-special-template.imagor.json", mock.Anything).
@@ -156,6 +165,10 @@ func TestSaveTemplate(t *testing.T) {
 		resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
 
 		ctx := createReadWriteContext("user1")
+
+		// Mock storage Stat (won't be called since validation fails first, but add for safety)
+		mockStorage.On("Stat", ctx, mock.Anything).
+			Return(storage.FileInfo{}, assert.AnError).Maybe()
 
 		input := gql.SaveTemplateInput{
 			Name:            "Test Template",

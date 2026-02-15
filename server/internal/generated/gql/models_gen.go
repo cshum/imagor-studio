@@ -166,6 +166,7 @@ type SaveTemplateInput struct {
 	TemplateJSON    string        `json:"templateJson"`
 	SourceImagePath string        `json:"sourceImagePath"`
 	SavePath        string        `json:"savePath"`
+	Overwrite       *bool         `json:"overwrite,omitempty"`
 }
 
 type StorageConfigInput struct {
@@ -205,10 +206,11 @@ type SystemRegistry struct {
 }
 
 type TemplateResult struct {
-	Success      bool    `json:"success"`
-	TemplatePath string  `json:"templatePath"`
-	PreviewPath  *string `json:"previewPath,omitempty"`
-	Message      *string `json:"message,omitempty"`
+	Success       bool    `json:"success"`
+	TemplatePath  string  `json:"templatePath"`
+	PreviewPath   *string `json:"previewPath,omitempty"`
+	Message       *string `json:"message,omitempty"`
+	AlreadyExists *bool   `json:"alreadyExists,omitempty"`
 }
 
 type ThumbnailUrls struct {

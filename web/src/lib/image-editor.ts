@@ -2024,14 +2024,17 @@ export class ImageEditor {
    * @param name - Template name
    * @param description - Optional template description
    * @param dimensionMode - How dimensions should be handled
-   * @returns Promise that resolves when template is saved
+   * @param savePath - Path to save the template
+   * @param overwrite - Whether to overwrite existing template
+   * @returns Promise that resolves with save result
    */
   async exportTemplate(
     name: string,
     description: string | undefined,
     dimensionMode: 'adaptive' | 'predefined',
     savePath: string,
-  ): Promise<void> {
+    overwrite = false,
+  ): Promise<{ success: boolean; alreadyExists?: boolean }> {
     // Import type at top of file instead
     type ImagorTemplate = import('@/lib/template-types').ImagorTemplate
 
@@ -2057,7 +2060,7 @@ export class ImageEditor {
     // Call backend API to save template
     const { saveTemplate } = await import('@/api/storage-api')
 
-    await saveTemplate({
+    const result = await saveTemplate({
       input: {
         name,
         description: description || null,
@@ -2065,8 +2068,14 @@ export class ImageEditor {
         templateJson: JSON.stringify(template, null, 2),
         sourceImagePath: this.baseImagePath,
         savePath,
+        overwrite,
       },
     })
+
+    return {
+      success: result.success,
+      alreadyExists: result.alreadyExists || false,
+    }
   }
 
   /**

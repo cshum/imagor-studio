@@ -359,6 +359,7 @@ export type SaveTemplateInput = {
   description: InputMaybe<Scalars['String']['input']>
   dimensionMode: DimensionMode
   name: Scalars['String']['input']
+  overwrite: InputMaybe<Scalars['Boolean']['input']>
   savePath: Scalars['String']['input']
   sourceImagePath: Scalars['String']['input']
   templateJson: Scalars['String']['input']
@@ -412,6 +413,7 @@ export type SystemRegistry = {
 
 export type TemplateResult = {
   __typename?: 'TemplateResult'
+  alreadyExists: Maybe<Scalars['Boolean']['output']>
   message: Maybe<Scalars['String']['output']>
   previewPath: Maybe<Scalars['String']['output']>
   success: Scalars['Boolean']['output']

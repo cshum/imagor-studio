@@ -694,7 +694,8 @@
       "nameRequired": "Il nome del modello è obbligatorio",
       "saveSuccess": "Modello salvato con successo",
       "saveError": "Impossibile salvare il modello",
-      "saving": "Salvataggio..."
+      "saving": "Salvataggio...",
+      "overwriteConfirm": "Esiste già un modello denominato \"{{name}}\". Vuoi sostituirlo?"
     },
     "controls": {
       "cropAspect": "Ritaglia e Aspetto",
