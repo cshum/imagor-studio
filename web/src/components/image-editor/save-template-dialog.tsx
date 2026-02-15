@@ -74,7 +74,7 @@ export function SaveTemplateDialog({
     setIsSaving(true)
 
     try {
-      const result = await imageEditor.exportTemplate(
+      await imageEditor.exportTemplate(
         name.trim(),
         description.trim() || undefined,
         dimensionMode,
@@ -82,8 +82,19 @@ export function SaveTemplateDialog({
         overwrite,
       )
 
-      // Check if file already exists
-      if (result.alreadyExists) {
+      // Success - template saved
+      toast.success(t('imageEditor.template.saveSuccess'))
+      onOpenChange(false)
+
+      // Reset form
+      setName('')
+      setDescription('')
+      setDimensionMode('adaptive')
+    } catch (error) {
+      // Check if it's a conflict error (template already exists)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      
+      if (errorMessage.includes('Template already exists')) {
         setIsSaving(false)
         // Show confirmation dialog
         const confirmed = window.confirm(
@@ -96,14 +107,7 @@ export function SaveTemplateDialog({
         return
       }
 
-      toast.success(t('imageEditor.template.saveSuccess'))
-      onOpenChange(false)
-
-      // Reset form
-      setName('')
-      setDescription('')
-      setDimensionMode('adaptive')
-    } catch (error) {
+      // Other errors
       console.error('Failed to save template:', error)
       toast.error(t('imageEditor.template.saveError'))
     } finally {

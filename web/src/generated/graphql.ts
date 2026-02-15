@@ -412,7 +412,6 @@ export type SystemRegistry = {
 
 export type TemplateResult = {
   __typename?: 'TemplateResult'
-  alreadyExists: Maybe<Scalars['Boolean']['output']>
   message: Maybe<Scalars['String']['output']>
   previewPath: Maybe<Scalars['String']['output']>
   success: Scalars['Boolean']['output']

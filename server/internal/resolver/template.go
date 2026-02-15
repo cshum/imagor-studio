@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
@@ -40,7 +41,12 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 	}
 
 	// 1.5. Check if template file already exists
-	templateFilePath := fmt.Sprintf("%s/%s.imagor.json", input.SavePath, sanitizedName)
+	var templateFilePath string
+	if input.SavePath == "" {
+		templateFilePath = fmt.Sprintf("%s.imagor.json", sanitizedName)
+	} else {
+		templateFilePath = fmt.Sprintf("%s/%s.imagor.json", input.SavePath, sanitizedName)
+	}
 	_, err := r.getStorage().Stat(ctx, templateFilePath)
 	if err == nil {
 		// File exists - check if overwrite is allowed
@@ -48,15 +54,11 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 		if !overwrite {
 			r.logger.Debug("Template already exists, overwrite not allowed",
 				zap.String("templatePath", templateFilePath))
-			msg := "Template already exists"
-			alreadyExists := true
-			return &gql.TemplateResult{
-				Success:       false,
-				TemplatePath:  "",
-				PreviewPath:   nil,
-				Message:       &msg,
-				AlreadyExists: &alreadyExists,
-			}, nil
+			return nil, apperror.Conflict(
+				"Template already exists",
+				"templatePath",
+				templateFilePath,
+			)
 		}
 		r.logger.Debug("Template already exists, overwriting",
 			zap.String("templatePath", templateFilePath))
@@ -98,7 +100,12 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 	// 5. Save preview image to storage (if generated)
 	var previewFilePath *string
 	if previewImage != nil {
-		previewPath := fmt.Sprintf("%s/%s.imagor.preview.webp", input.SavePath, sanitizedName)
+		var previewPath string
+		if input.SavePath == "" {
+			previewPath = fmt.Sprintf("%s.imagor.preview.webp", sanitizedName)
+		} else {
+			previewPath = fmt.Sprintf("%s/%s.imagor.preview.webp", input.SavePath, sanitizedName)
+		}
 		previewReader := bytes.NewReader(previewImage)
 		if err := r.getStorage().Put(ctx, previewPath, previewReader); err != nil {
 			r.logger.Warn("Failed to save preview image (continuing)", zap.Error(err))

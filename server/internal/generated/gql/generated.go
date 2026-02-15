@@ -186,11 +186,10 @@ type ComplexityRoot struct {
 	}
 
 	TemplateResult struct {
-		AlreadyExists func(childComplexity int) int
-		Message       func(childComplexity int) int
-		PreviewPath   func(childComplexity int) int
-		Success       func(childComplexity int) int
-		TemplatePath  func(childComplexity int) int
+		Message      func(childComplexity int) int
+		PreviewPath  func(childComplexity int) int
+		Success      func(childComplexity int) int
+		TemplatePath func(childComplexity int) int
 	}
 
 	ThumbnailUrls struct {
@@ -999,12 +998,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.SystemRegistry.Value(childComplexity), true
 
-	case "TemplateResult.alreadyExists":
-		if e.complexity.TemplateResult.AlreadyExists == nil {
-			break
-		}
-
-		return e.complexity.TemplateResult.AlreadyExists(childComplexity), true
 	case "TemplateResult.message":
 		if e.complexity.TemplateResult.Message == nil {
 			break
@@ -1588,7 +1581,6 @@ type TemplateResult {
   templatePath: String!
   previewPath: String
   message: String
-  alreadyExists: Boolean
 }
 `, BuiltIn: false},
 	{Name: "../../../../graphql/user.graphql", Input: `extend type Query {
@@ -3579,8 +3571,6 @@ func (ec *executionContext) fieldContext_Mutation_saveTemplate(ctx context.Conte
 				return ec.fieldContext_TemplateResult_previewPath(ctx, field)
 			case "message":
 				return ec.fieldContext_TemplateResult_message(ctx, field)
-			case "alreadyExists":
-				return ec.fieldContext_TemplateResult_alreadyExists(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TemplateResult", field.Name)
 		},
@@ -5753,35 +5743,6 @@ func (ec *executionContext) fieldContext_TemplateResult_message(_ context.Contex
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TemplateResult_alreadyExists(ctx context.Context, field graphql.CollectedField, obj *TemplateResult) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TemplateResult_alreadyExists,
-		func(ctx context.Context) (any, error) {
-			return obj.AlreadyExists, nil
-		},
-		nil,
-		ec.marshalOBoolean2ᚖbool,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_TemplateResult_alreadyExists(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TemplateResult",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9599,8 +9560,6 @@ func (ec *executionContext) _TemplateResult(ctx context.Context, sel ast.Selecti
 			out.Values[i] = ec._TemplateResult_previewPath(ctx, field, obj)
 		case "message":
 			out.Values[i] = ec._TemplateResult_message(ctx, field, obj)
-		case "alreadyExists":
-			out.Values[i] = ec._TemplateResult_alreadyExists(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

@@ -206,11 +206,10 @@ type SystemRegistry struct {
 }
 
 type TemplateResult struct {
-	Success       bool    `json:"success"`
-	TemplatePath  string  `json:"templatePath"`
-	PreviewPath   *string `json:"previewPath,omitempty"`
-	Message       *string `json:"message,omitempty"`
-	AlreadyExists *bool   `json:"alreadyExists,omitempty"`
+	Success      bool    `json:"success"`
+	TemplatePath string  `json:"templatePath"`
+	PreviewPath  *string `json:"previewPath,omitempty"`
+	Message      *string `json:"message,omitempty"`
 }
 
 type ThumbnailUrls struct {

@@ -2027,6 +2027,7 @@ export class ImageEditor {
    * @param savePath - Path to save the template
    * @param overwrite - Whether to overwrite existing template
    * @returns Promise that resolves with save result
+   * @throws Error with code 'CONFLICT' if template already exists
    */
   async exportTemplate(
     name: string,
@@ -2034,7 +2035,7 @@ export class ImageEditor {
     dimensionMode: 'adaptive' | 'predefined',
     savePath: string,
     overwrite = false,
-  ): Promise<{ success: boolean; alreadyExists?: boolean }> {
+  ): Promise<{ success: boolean }> {
     // Import type at top of file instead
     type ImagorTemplate = import('@/lib/template-types').ImagorTemplate
 
@@ -2074,7 +2075,6 @@ export class ImageEditor {
 
     return {
       success: result.success,
-      alreadyExists: result.alreadyExists || false,
     }
   }
 

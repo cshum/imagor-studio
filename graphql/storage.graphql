@@ -165,5 +165,4 @@ type TemplateResult {
   templatePath: String!
   previewPath: String
   message: String
-  alreadyExists: Boolean
 }

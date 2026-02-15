@@ -210,6 +210,89 @@ func TestSaveTemplate(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "write access required")
 	})
+
+	t.Run("should return conflict error when template exists", func(t *testing.T) {
+		mockStorage := new(MockStorage)
+		mockRegistryStore := new(MockRegistryStore)
+		mockUserStore := new(MockUserStore)
+		mockImagorProvider := new(MockImagorProvider)
+		logger, _ := zap.NewDevelopment()
+		cfg := &config.Config{}
+		mockStorageProvider := NewMockStorageProvider(mockStorage)
+		resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+
+		ctx := createReadWriteContext("user1")
+
+		// Mock Stat to return success (file exists)
+		mockStorage.On("Stat", ctx, "templates/existing-template.imagor.json").
+			Return(storage.FileInfo{}, nil)
+
+		input := gql.SaveTemplateInput{
+			Name:            "Existing Template",
+			DimensionMode:   gql.DimensionModeAdaptive,
+			TemplateJSON:    `{"version":"1.0","name":"Existing","transformations":{}}`,
+			SourceImagePath: "test.jpg",
+			SavePath:        "templates",
+			Overwrite:       nil, // Default: no overwrite
+		}
+
+		_, err := resolver.Mutation().SaveTemplate(ctx, input)
+
+		// Should return a conflict error
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Template already exists")
+
+		mockStorage.AssertExpectations(t)
+	})
+
+	t.Run("should overwrite when overwrite flag is true", func(t *testing.T) {
+		mockStorage := new(MockStorage)
+		mockRegistryStore := new(MockRegistryStore)
+		mockUserStore := new(MockUserStore)
+		mockImagorProvider := new(MockImagorProvider)
+		logger, _ := zap.NewDevelopment()
+		cfg := &config.Config{}
+		mockStorageProvider := NewMockStorageProvider(mockStorage)
+		resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+
+		ctx := createReadWriteContext("user1")
+
+		overwriteTrue := true
+
+		// Mock Imagor URL generation
+		mockImagorProvider.On("GenerateURL", "test.jpg", mock.Anything).
+			Return("http://localhost:8000/preview-url", nil).Maybe()
+
+		// Mock Stat to return success (file exists)
+		mockStorage.On("Stat", ctx, "templates/existing-template.imagor.json").
+			Return(storage.FileInfo{}, nil)
+
+		// Mock Put for template JSON (should be called despite file existing)
+		mockStorage.On("Put", ctx, "templates/existing-template.imagor.json", mock.Anything).
+			Return(nil)
+
+		// Mock Put for preview image
+		mockStorage.On("Put", ctx, "templates/existing-template.imagor.preview.webp", mock.Anything).
+			Return(nil).Maybe()
+
+		input := gql.SaveTemplateInput{
+			Name:            "Existing Template",
+			DimensionMode:   gql.DimensionModeAdaptive,
+			TemplateJSON:    `{"version":"1.0","name":"Existing","transformations":{}}`,
+			SourceImagePath: "test.jpg",
+			SavePath:        "templates",
+			Overwrite:       &overwriteTrue,
+		}
+
+		result, err := resolver.Mutation().SaveTemplate(ctx, input)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.True(t, result.Success)
+		assert.Equal(t, "templates/existing-template.imagor.json", result.TemplatePath)
+
+		mockStorage.AssertExpectations(t)
+	})
 }
 
 func TestSanitizeTemplateName(t *testing.T) {
