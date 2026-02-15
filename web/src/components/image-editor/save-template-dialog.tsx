@@ -127,10 +127,10 @@ export function SaveTemplateDialog({
                 <RadioGroupItem value='adaptive' id='adaptive' className='mt-1' />
                 <div className='grid gap-1'>
                   <Label htmlFor='adaptive' className='cursor-pointer font-normal'>
-                    {t('imageEditor.template.adaptive')}
+                    {t('imageEditor.template.flexible')}
                   </Label>
                   <p className='text-muted-foreground text-sm'>
-                    {t('imageEditor.template.adaptiveDescription')}
+                    {t('imageEditor.template.flexibleDescription')}
                   </p>
                 </div>
               </div>
@@ -138,11 +138,16 @@ export function SaveTemplateDialog({
                 <RadioGroupItem value='predefined' id='predefined' className='mt-1' />
                 <div className='grid gap-1'>
                   <Label htmlFor='predefined' className='cursor-pointer font-normal'>
-                    {t('imageEditor.template.predefined')} ({dimensions.width} × {dimensions.height}
-                    )
+                    {t('imageEditor.template.fixed', {
+                      width: dimensions.width,
+                      height: dimensions.height,
+                    })}
                   </Label>
                   <p className='text-muted-foreground text-sm'>
-                    {t('imageEditor.template.predefinedDescription')}
+                    {t('imageEditor.template.fixedDescription', {
+                      width: dimensions.width,
+                      height: dimensions.height,
+                    })}
                   </p>
                 </div>
               </div>
@@ -152,7 +157,7 @@ export function SaveTemplateDialog({
 
         <DialogFooter>
           <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isSaving}>
-            {t('common.cancel')}
+            {t('common.buttons.cancel')}
           </Button>
           <Button onClick={handleSave} disabled={isSaving || !name.trim()}>
             {isSaving ? (

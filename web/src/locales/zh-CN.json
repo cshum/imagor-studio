@@ -10,6 +10,7 @@
     }
   },
   "common": {
+    "optional": "（可选）",
     "buttons": {
       "save": "保存",
       "cancel": "取消",
@@ -680,22 +681,20 @@
     },
     "template": {
       "saveTemplate": "保存模板",
-      "saveTemplateDescription": "将当前编辑器状态保存为可重复使用的模板",
+      "saveDescription": "将当前变换保存为可重复使用的模板",
       "templateName": "模板名称",
-      "templateNamePlaceholder": "输入模板名称",
-      "templateDescription": "描述（可选）",
-      "templateDescriptionPlaceholder": "描述此模板的用途...",
+      "templateNamePlaceholder": "例如：Instagram 方形、产品缩略图",
+      "description": "描述",
+      "descriptionPlaceholder": "描述此模板的用途...",
       "dimensionMode": "尺寸模式",
-      "dimensionModeAdaptive": "自适应",
-      "dimensionModeAdaptiveDescription": "模板将适应应用的图片尺寸",
-      "dimensionModePredefined": "预定义",
-      "dimensionModePredefinedDescription": "模板将使用固定尺寸 ({{width}}x{{height}})",
-      "saveAsTemplate": "保存为模板",
-      "saving": "保存中...",
-      "templateSaved": "模板已保存",
-      "templateSavedSuccess": "模板 \"{{name}}\" 已成功保存",
-      "saveTemplateFailed": "保存模板失败",
-      "nameRequired": "模板名称为必填项"
+      "flexible": "灵活尺寸",
+      "flexibleDescription": "模板适应每张图片的尺寸",
+      "fixed": "固定尺寸",
+      "fixedDescription": "将模板锁定为 {{width}} × {{height}}",
+      "nameRequired": "模板名称为必填项",
+      "saveSuccess": "模板保存成功",
+      "saveError": "保存模板失败",
+      "saving": "保存中..."
     },
     "controls": {
       "cropAspect": "裁剪和比例",
