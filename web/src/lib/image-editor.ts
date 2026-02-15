@@ -2020,7 +2020,7 @@ export class ImageEditor {
 
   /**
    * Export current editor state as a template
-   * Downloads two files: template JSON and preview image
+   * Saves template to backend (.templates folder) with preview
    * @param name - Template name
    * @param description - Optional template description
    * @param dimensionMode - How dimensions should be handled
@@ -2034,15 +2034,7 @@ export class ImageEditor {
     // Import type at top of file instead
     type ImagorTemplate = import('@/lib/template-types').ImagorTemplate
 
-    // Sanitize filename (used for both files)
-    const sanitizedName =
-      name
-        .replace(/[^a-z0-9-_\s]/gi, '')
-        .replace(/\s+/g, '-')
-        .toLowerCase()
-        .slice(0, 100) || 'template'
-
-    // Build template object (NO preview embedded)
+    // Build template object
     const template: ImagorTemplate = {
       version: '1.0',
       name,
@@ -2058,26 +2050,21 @@ export class ImageEditor {
       transformations: this.getBaseState(),
       metadata: {
         createdAt: new Date().toISOString(),
-        // NO previewImage field - preview saved as separate file
       },
     }
 
-    // Download JSON file
-    const jsonBlob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' })
-    this.downloadFile(jsonBlob, `${sanitizedName}.imagor.json`)
+    // Call backend API to save template
+    const { saveTemplate } = await import('@/api/storage-api')
 
-    // Generate and download preview image as separate file
-    try {
-      const thumbnailUrl = await this.generateThumbnailUrl(200, 200)
-      const response = await fetch(thumbnailUrl)
-      if (response.ok) {
-        const imageBlob = await response.blob()
-        this.downloadFile(imageBlob, `${sanitizedName}.imagor.preview.webp`)
-      }
-    } catch (error) {
-      // Preview generation failed - template still works without it
-      console.warn('Failed to generate preview image:', error)
-    }
+    await saveTemplate({
+      input: {
+        name,
+        description: description || null,
+        dimensionMode: dimensionMode.toUpperCase() as 'ADAPTIVE' | 'PREDEFINED',
+        templateJson: JSON.stringify(template, null, 2),
+        sourceImagePath: this.baseImagePath,
+      },
+    })
   }
 
   /**
