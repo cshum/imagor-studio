@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileDown, Loader2 } from 'lucide-react'
+import { FileDown, Loader2, Folder } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -17,21 +17,32 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Textarea } from '@/components/ui/textarea'
 import type { ImageEditor } from '@/lib/image-editor'
+import { splitImagePath } from '@/lib/path-utils'
 
 interface SaveTemplateDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   imageEditor: ImageEditor
+  imagePath: string
 }
 
-export function SaveTemplateDialog({ open, onOpenChange, imageEditor }: SaveTemplateDialogProps) {
+export function SaveTemplateDialog({ open, onOpenChange, imageEditor, imagePath }: SaveTemplateDialogProps) {
   const { t } = useTranslation()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [dimensionMode, setDimensionMode] = useState<'adaptive' | 'predefined'>('adaptive')
+  const [savePath, setSavePath] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
   const dimensions = imageEditor.getOriginalDimensions()
+
+  // Set default save path to current image's folder when dialog opens
+  useEffect(() => {
+    if (open) {
+      const { galleryKey } = splitImagePath(imagePath)
+      setSavePath(galleryKey || '')
+    }
+  }, [open, imagePath])
 
   const handleSave = async () => {
     // Validate name

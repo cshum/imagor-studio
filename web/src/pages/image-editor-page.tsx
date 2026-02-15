@@ -825,6 +825,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           open={saveTemplateDialogOpen}
           onOpenChange={setSaveTemplateDialogOpen}
           imageEditor={imageEditor}
+          imagePath={imagePath}
         />
 
         {/* Navigation Confirmation Dialog */}
@@ -1041,6 +1042,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           open={saveTemplateDialogOpen}
           onOpenChange={setSaveTemplateDialogOpen}
           imageEditor={imageEditor}
+          imagePath={imagePath}
         />
 
         {/* Navigation Confirmation Dialog */}
@@ -1365,6 +1367,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
         open={saveTemplateDialogOpen}
         onOpenChange={setSaveTemplateDialogOpen}
         imageEditor={imageEditor}
+        imagePath={imagePath}
       />
 
       {/* Navigation Confirmation Dialog */}
