@@ -59,7 +59,12 @@ export function SaveTemplateDialog({
     setIsSaving(true)
 
     try {
-      await imageEditor.exportTemplate(name.trim(), description.trim() || undefined, dimensionMode, savePath)
+      await imageEditor.exportTemplate(
+        name.trim(),
+        description.trim() || undefined,
+        dimensionMode,
+        savePath,
+      )
 
       toast.success(t('imageEditor.template.saveSuccess'))
       onOpenChange(false)
