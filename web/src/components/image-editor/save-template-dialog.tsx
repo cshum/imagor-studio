@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileDown, Loader2 } from 'lucide-react'
+import { FileDown, Folder, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { FolderSelectionDialog } from '@/components/folder-picker/folder-selection-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -18,6 +19,16 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Textarea } from '@/components/ui/textarea'
 import type { ImageEditor } from '@/lib/image-editor'
 import { splitImagePath } from '@/lib/path-utils'
+
+// Slugify function to convert template name to filename
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+    .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+}
 
 interface SaveTemplateDialogProps {
   open: boolean
@@ -38,8 +49,12 @@ export function SaveTemplateDialog({
   const [dimensionMode, setDimensionMode] = useState<'adaptive' | 'predefined'>('adaptive')
   const [savePath, setSavePath] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [folderDialogOpen, setFolderDialogOpen] = useState(false)
 
   const dimensions = imageEditor.getOriginalDimensions()
+
+  // Generate filename preview
+  const filename = name.trim() ? `${slugify(name)}.imagor.json` : ''
 
   // Set default save path to current image's folder when dialog opens
   useEffect(() => {
@@ -102,6 +117,28 @@ export function SaveTemplateDialog({
               onChange={(e) => setName(e.target.value)}
               maxLength={100}
             />
+            {/* Filename Preview */}
+            {filename && (
+              <p className='text-muted-foreground text-sm'>
+                {t('imageEditor.template.filenamePreview')}: <code className='bg-muted rounded px-1.5 py-0.5'>{filename}</code>
+              </p>
+            )}
+          </div>
+
+          {/* Save Location */}
+          <div className='grid gap-2'>
+            <Label>{t('imageEditor.template.saveLocation')}</Label>
+            <Button
+              type='button'
+              variant='outline'
+              className='justify-start'
+              onClick={() => setFolderDialogOpen(true)}
+            >
+              <Folder className='mr-2 h-4 w-4' />
+              <span className='flex-1 truncate text-left'>
+                {savePath || t('imageEditor.template.rootFolder')}
+              </span>
+            </Button>
           </div>
 
           {/* Description */}
@@ -174,6 +211,21 @@ export function SaveTemplateDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Folder Selection Dialog */}
+      <FolderSelectionDialog
+        open={folderDialogOpen}
+        onOpenChange={setFolderDialogOpen}
+        selectedPath={savePath}
+        onSelect={(path) => {
+          setSavePath(path)
+          setFolderDialogOpen(false)
+        }}
+        currentPath={savePath}
+        title={t('imageEditor.template.selectFolder')}
+        description={t('imageEditor.template.selectFolderDescription')}
+        confirmButtonText={t('common.buttons.select')}
+      />
     </Dialog>
   )
 }
