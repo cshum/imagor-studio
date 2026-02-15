@@ -159,6 +159,14 @@ type S3StorageInput struct {
 	BaseDir         *string `json:"baseDir,omitempty"`
 }
 
+type SaveTemplateInput struct {
+	Name            string        `json:"name"`
+	Description     *string       `json:"description,omitempty"`
+	DimensionMode   DimensionMode `json:"dimensionMode"`
+	TemplateJSON    string        `json:"templateJson"`
+	SourceImagePath string        `json:"sourceImagePath"`
+}
+
 type StorageConfigInput struct {
 	Type       StorageType       `json:"type"`
 	FileConfig *FileStorageInput `json:"fileConfig,omitempty"`
@@ -195,6 +203,13 @@ type SystemRegistry struct {
 	IsOverriddenByConfig bool   `json:"isOverriddenByConfig"`
 }
 
+type TemplateResult struct {
+	Success      bool    `json:"success"`
+	TemplatePath string  `json:"templatePath"`
+	PreviewPath  *string `json:"previewPath,omitempty"`
+	Message      *string `json:"message,omitempty"`
+}
+
 type ThumbnailUrls struct {
 	Grid     *string `json:"grid,omitempty"`
 	Preview  *string `json:"preview,omitempty"`
@@ -227,6 +242,61 @@ type UserRegistry struct {
 	Key         string `json:"key"`
 	Value       string `json:"value"`
 	IsEncrypted bool   `json:"isEncrypted"`
+}
+
+type DimensionMode string
+
+const (
+	DimensionModeAdaptive   DimensionMode = "ADAPTIVE"
+	DimensionModePredefined DimensionMode = "PREDEFINED"
+)
+
+var AllDimensionMode = []DimensionMode{
+	DimensionModeAdaptive,
+	DimensionModePredefined,
+}
+
+func (e DimensionMode) IsValid() bool {
+	switch e {
+	case DimensionModeAdaptive, DimensionModePredefined:
+		return true
+	}
+	return false
+}
+
+func (e DimensionMode) String() string {
+	return string(e)
+}
+
+func (e *DimensionMode) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DimensionMode(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DimensionMode", str)
+	}
+	return nil
+}
+
+func (e DimensionMode) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DimensionMode) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DimensionMode) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 type ImagorMode string

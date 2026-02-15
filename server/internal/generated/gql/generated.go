@@ -124,6 +124,7 @@ type ComplexityRoot struct {
 		DeleteUserRegistry      func(childComplexity int, key *string, keys []string, ownerID *string) int
 		GenerateImagorURL       func(childComplexity int, imagePath string, params ImagorParamsInput) int
 		MoveFile                func(childComplexity int, sourcePath string, destPath string) int
+		SaveTemplate            func(childComplexity int, input SaveTemplateInput) int
 		SetSystemRegistry       func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
 		SetUserRegistry         func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
 		TestStorageConfig       func(childComplexity int, input StorageConfigInput) int
@@ -184,6 +185,13 @@ type ComplexityRoot struct {
 		Value                func(childComplexity int) int
 	}
 
+	TemplateResult struct {
+		Message      func(childComplexity int) int
+		PreviewPath  func(childComplexity int) int
+		Success      func(childComplexity int) int
+		TemplatePath func(childComplexity int) int
+	}
+
 	ThumbnailUrls struct {
 		Full     func(childComplexity int) int
 		Grid     func(childComplexity int) int
@@ -220,6 +228,7 @@ type MutationResolver interface {
 	CreateFolder(ctx context.Context, path string) (bool, error)
 	CopyFile(ctx context.Context, sourcePath string, destPath string) (bool, error)
 	MoveFile(ctx context.Context, sourcePath string, destPath string) (bool, error)
+	SaveTemplate(ctx context.Context, input SaveTemplateInput) (*TemplateResult, error)
 	ConfigureFileStorage(ctx context.Context, input FileStorageInput) (*StorageConfigResult, error)
 	ConfigureS3Storage(ctx context.Context, input S3StorageInput) (*StorageConfigResult, error)
 	TestStorageConfig(ctx context.Context, input StorageConfigInput) (*StorageTestResult, error)
@@ -666,6 +675,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.MoveFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string)), true
+	case "Mutation.saveTemplate":
+		if e.complexity.Mutation.SaveTemplate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_saveTemplate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SaveTemplate(childComplexity, args["input"].(SaveTemplateInput)), true
 	case "Mutation.setSystemRegistry":
 		if e.complexity.Mutation.SetSystemRegistry == nil {
 			break
@@ -978,6 +998,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.SystemRegistry.Value(childComplexity), true
 
+	case "TemplateResult.message":
+		if e.complexity.TemplateResult.Message == nil {
+			break
+		}
+
+		return e.complexity.TemplateResult.Message(childComplexity), true
+	case "TemplateResult.previewPath":
+		if e.complexity.TemplateResult.PreviewPath == nil {
+			break
+		}
+
+		return e.complexity.TemplateResult.PreviewPath(childComplexity), true
+	case "TemplateResult.success":
+		if e.complexity.TemplateResult.Success == nil {
+			break
+		}
+
+		return e.complexity.TemplateResult.Success(childComplexity), true
+	case "TemplateResult.templatePath":
+		if e.complexity.TemplateResult.TemplatePath == nil {
+			break
+		}
+
+		return e.complexity.TemplateResult.TemplatePath(childComplexity), true
+
 	case "ThumbnailUrls.full":
 		if e.complexity.ThumbnailUrls.Full == nil {
 			break
@@ -1100,6 +1145,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputImagorParamsInput,
 		ec.unmarshalInputRegistryEntryInput,
 		ec.unmarshalInputS3StorageInput,
+		ec.unmarshalInputSaveTemplateInput,
 		ec.unmarshalInputStorageConfigInput,
 		ec.unmarshalInputUpdateProfileInput,
 	)
@@ -1395,6 +1441,9 @@ type Mutation {
   copyFile(sourcePath: String!, destPath: String!): Boolean!
   moveFile(sourcePath: String!, destPath: String!): Boolean!
 
+  # Template management (write scope required)
+  saveTemplate(input: SaveTemplateInput!): TemplateResult!
+
   # Storage Configuration APIs (admin only)
   configureFileStorage(input: FileStorageInput!): StorageConfigResult!
   configureS3Storage(input: S3StorageInput!): StorageConfigResult!
@@ -1509,6 +1558,27 @@ input S3StorageInput {
 enum StorageType {
   FILE
   S3
+}
+
+# Template Types
+input SaveTemplateInput {
+  name: String!
+  description: String
+  dimensionMode: DimensionMode!
+  templateJson: String!
+  sourceImagePath: String!
+}
+
+enum DimensionMode {
+  ADAPTIVE
+  PREDEFINED
+}
+
+type TemplateResult {
+  success: Boolean!
+  templatePath: String!
+  previewPath: String
+  message: String
 }
 `, BuiltIn: false},
 	{Name: "../../../../graphql/user.graphql", Input: `extend type Query {
@@ -1743,6 +1813,17 @@ func (ec *executionContext) field_Mutation_moveFile_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["destPath"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_saveTemplate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSaveTemplateInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSaveTemplateInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -3449,6 +3530,57 @@ func (ec *executionContext) fieldContext_Mutation_moveFile(ctx context.Context, 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_moveFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_saveTemplate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_saveTemplate,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().SaveTemplate(ctx, fc.Args["input"].(SaveTemplateInput))
+		},
+		nil,
+		ec.marshalNTemplateResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐTemplateResult,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_saveTemplate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_TemplateResult_success(ctx, field)
+			case "templatePath":
+				return ec.fieldContext_TemplateResult_templatePath(ctx, field)
+			case "previewPath":
+				return ec.fieldContext_TemplateResult_previewPath(ctx, field)
+			case "message":
+				return ec.fieldContext_TemplateResult_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TemplateResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_saveTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -5493,6 +5625,122 @@ func (ec *executionContext) fieldContext_SystemRegistry_isOverriddenByConfig(_ c
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TemplateResult_success(ctx context.Context, field graphql.CollectedField, obj *TemplateResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TemplateResult_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TemplateResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TemplateResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TemplateResult_templatePath(ctx context.Context, field graphql.CollectedField, obj *TemplateResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TemplateResult_templatePath,
+		func(ctx context.Context) (any, error) {
+			return obj.TemplatePath, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TemplateResult_templatePath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TemplateResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TemplateResult_previewPath(ctx context.Context, field graphql.CollectedField, obj *TemplateResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TemplateResult_previewPath,
+		func(ctx context.Context) (any, error) {
+			return obj.PreviewPath, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TemplateResult_previewPath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TemplateResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TemplateResult_message(ctx context.Context, field graphql.CollectedField, obj *TemplateResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TemplateResult_message,
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TemplateResult_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TemplateResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7949,6 +8197,61 @@ func (ec *executionContext) unmarshalInputS3StorageInput(ctx context.Context, ob
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSaveTemplateInput(ctx context.Context, obj any) (SaveTemplateInput, error) {
+	var it SaveTemplateInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "description", "dimensionMode", "templateJson", "sourceImagePath"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "dimensionMode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dimensionMode"))
+			data, err := ec.unmarshalNDimensionMode2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐDimensionMode(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DimensionMode = data
+		case "templateJson":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("templateJson"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TemplateJSON = data
+		case "sourceImagePath":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceImagePath"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceImagePath = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputStorageConfigInput(ctx context.Context, obj any) (StorageConfigInput, error) {
 	var it StorageConfigInput
 	asMap := map[string]any{}
@@ -8524,6 +8827,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "moveFile":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_moveFile(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "saveTemplate":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_saveTemplate(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -9209,6 +9519,54 @@ func (ec *executionContext) _SystemRegistry(ctx context.Context, sel ast.Selecti
 	return out
 }
 
+var templateResultImplementors = []string{"TemplateResult"}
+
+func (ec *executionContext) _TemplateResult(ctx context.Context, sel ast.SelectionSet, obj *TemplateResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, templateResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TemplateResult")
+		case "success":
+			out.Values[i] = ec._TemplateResult_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "templatePath":
+			out.Values[i] = ec._TemplateResult_templatePath(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "previewPath":
+			out.Values[i] = ec._TemplateResult_previewPath(ctx, field, obj)
+		case "message":
+			out.Values[i] = ec._TemplateResult_message(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var thumbnailUrlsImplementors = []string{"ThumbnailUrls"}
 
 func (ec *executionContext) _ThumbnailUrls(ctx context.Context, sel ast.SelectionSet, obj *ThumbnailUrls) graphql.Marshaler {
@@ -9776,6 +10134,16 @@ func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋcshumᚋima
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNDimensionMode2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐDimensionMode(ctx context.Context, v any) (DimensionMode, error) {
+	var res DimensionMode
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDimensionMode2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐDimensionMode(ctx context.Context, sel ast.SelectionSet, v DimensionMode) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNExternalImagorInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐExternalImagorInput(ctx context.Context, v any) (ExternalImagorInput, error) {
 	res, err := ec.unmarshalInputExternalImagorInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -9958,6 +10326,11 @@ func (ec *executionContext) unmarshalNS3StorageInput2githubᚗcomᚋcshumᚋimag
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNSaveTemplateInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSaveTemplateInput(ctx context.Context, v any) (SaveTemplateInput, error) {
+	res, err := ec.unmarshalInputSaveTemplateInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNStorageConfigInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageConfigInput(ctx context.Context, v any) (StorageConfigInput, error) {
 	res, err := ec.unmarshalInputStorageConfigInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -10083,6 +10456,20 @@ func (ec *executionContext) marshalNSystemRegistry2ᚖgithubᚗcomᚋcshumᚋima
 		return graphql.Null
 	}
 	return ec._SystemRegistry(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTemplateResult2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐTemplateResult(ctx context.Context, sel ast.SelectionSet, v TemplateResult) graphql.Marshaler {
+	return ec._TemplateResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTemplateResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐTemplateResult(ctx context.Context, sel ast.SelectionSet, v *TemplateResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TemplateResult(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateProfileInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUpdateProfileInput(ctx context.Context, v any) (UpdateProfileInput, error) {

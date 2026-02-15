@@ -25,6 +25,9 @@ type Mutation {
   copyFile(sourcePath: String!, destPath: String!): Boolean!
   moveFile(sourcePath: String!, destPath: String!): Boolean!
 
+  # Template management (write scope required)
+  saveTemplate(input: SaveTemplateInput!): TemplateResult!
+
   # Storage Configuration APIs (admin only)
   configureFileStorage(input: FileStorageInput!): StorageConfigResult!
   configureS3Storage(input: S3StorageInput!): StorageConfigResult!
@@ -139,4 +142,25 @@ input S3StorageInput {
 enum StorageType {
   FILE
   S3
+}
+
+# Template Types
+input SaveTemplateInput {
+  name: String!
+  description: String
+  dimensionMode: DimensionMode!
+  templateJson: String!
+  sourceImagePath: String!
+}
+
+enum DimensionMode {
+  ADAPTIVE
+  PREDEFINED
+}
+
+type TemplateResult {
+  success: Boolean!
+  templatePath: String!
+  previewPath: String
+  message: String
 }
