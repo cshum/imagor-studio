@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"strings"
 
@@ -152,24 +153,40 @@ func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceIm
 
 	// Check if we're in embedded mode
 	if imagorInstance := r.imagorProvider.GetInstance(); imagorInstance != nil {
-		// EMBEDDED MODE: Use Imagor instance directly
+		// EMBEDDED MODE: Use ServeHTTP directly for in-process handling
 		r.logger.Debug("Generating preview using embedded Imagor instance")
 
-		// Create a dummy HTTP request for the Imagor instance
-		req, err := http.NewRequestWithContext(ctx, "GET", "/"+sourceImagePath, nil)
+		// Generate properly signed URL using GenerateURL (respects configuration)
+		imagorURL, err := r.imagorProvider.GenerateURL(sourceImagePath, params)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate imagor URL: %w", err)
+		}
+
+		// Extract path from URL (remove base URL prefix)
+		cfg := r.imagorProvider.GetConfig()
+		if cfg == nil {
+			return nil, fmt.Errorf("imagor configuration not available")
+		}
+		path := strings.TrimPrefix(imagorURL, cfg.BaseURL)
+
+		r.logger.Debug("Calling ServeHTTP for preview", zap.String("path", path))
+
+		// Create HTTP request and response recorder
+		req, err := http.NewRequestWithContext(ctx, "GET", path, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create request: %w", err)
 		}
 
-		blob, err := imagorInstance.Do(req, params)
-		if err != nil {
-			return nil, fmt.Errorf("imagor processing failed: %w", err)
+		recorder := httptest.NewRecorder()
+
+		// Call ServeHTTP directly (in-process, no network overhead)
+		imagorInstance.ServeHTTP(recorder, req)
+
+		if recorder.Code != http.StatusOK {
+			return nil, fmt.Errorf("imagor returned status %d", recorder.Code)
 		}
 
-		imageData, err = blob.ReadAll()
-		if err != nil {
-			return nil, fmt.Errorf("failed to read blob: %w", err)
-		}
+		imageData = recorder.Body.Bytes()
 	} else {
 		// EXTERNAL MODE: Use HTTP request
 		r.logger.Debug("Generating preview using external Imagor service")
