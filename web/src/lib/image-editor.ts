@@ -2030,6 +2030,7 @@ export class ImageEditor {
     name: string,
     description: string | undefined,
     dimensionMode: 'adaptive' | 'predefined',
+    savePath: string,
   ): Promise<void> {
     // Import type at top of file instead
     type ImagorTemplate = import('@/lib/template-types').ImagorTemplate
@@ -2063,24 +2064,9 @@ export class ImageEditor {
         dimensionMode: dimensionMode.toUpperCase() as 'ADAPTIVE' | 'PREDEFINED',
         templateJson: JSON.stringify(template, null, 2),
         sourceImagePath: this.baseImagePath,
+        savePath,
       },
     })
-  }
-
-  /**
-   * Helper to trigger file download
-   * @param blob - File content
-   * @param filename - Download filename
-   */
-  private downloadFile(blob: Blob, filename: string): void {
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
   }
 
   /**

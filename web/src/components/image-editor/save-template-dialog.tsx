@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileDown, Loader2, Folder } from 'lucide-react'
+import { FileDown, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -26,7 +26,12 @@ interface SaveTemplateDialogProps {
   imagePath: string
 }
 
-export function SaveTemplateDialog({ open, onOpenChange, imageEditor, imagePath }: SaveTemplateDialogProps) {
+export function SaveTemplateDialog({
+  open,
+  onOpenChange,
+  imageEditor,
+  imagePath,
+}: SaveTemplateDialogProps) {
   const { t } = useTranslation()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -54,7 +59,7 @@ export function SaveTemplateDialog({ open, onOpenChange, imageEditor, imagePath 
     setIsSaving(true)
 
     try {
-      await imageEditor.exportTemplate(name.trim(), description.trim() || undefined, dimensionMode)
+      await imageEditor.exportTemplate(name.trim(), description.trim() || undefined, dimensionMode, savePath)
 
       toast.success(t('imageEditor.template.saveSuccess'))
       onOpenChange(false)
