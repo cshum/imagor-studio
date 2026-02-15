@@ -1,5 +1,5 @@
-import { Check, Copy, Download, Eye, FileDown, Languages, Redo2, RotateCcw, Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Check, Copy, Download, Eye, FileDown, Languages, Redo2, Undo2 } from 'lucide-react'
 
 import {
   DropdownMenuContent,
@@ -11,12 +11,15 @@ import {
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu'
 import { availableLanguages } from '@/i18n'
-import { SECTION_KEYS, type EditorOpenSections, type SectionKey } from '@/lib/editor-open-sections-storage'
+import {
+  SECTION_KEYS,
+  type EditorOpenSections,
+  type SectionKey,
+} from '@/lib/editor-open-sections-storage'
 
 interface EditorMenuDropdownProps {
   onDownload: () => void
   onCopyUrl: () => void
-  onReset: () => void
   onSaveTemplate: () => void
   onLanguageChange: (languageCode: string) => void
   onToggleSectionVisibility: (sectionKey: SectionKey) => void
@@ -33,7 +36,6 @@ interface EditorMenuDropdownProps {
 export function EditorMenuDropdown({
   onDownload,
   onCopyUrl,
-  onReset,
   onSaveTemplate,
   onLanguageChange,
   onToggleSectionVisibility,
@@ -69,10 +71,6 @@ export function EditorMenuDropdown({
             <Copy className='mr-3 h-4 w-4' />
             {t('imageEditor.page.copyUrl')}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onReset}>
-            <RotateCcw className='mr-3 h-4 w-4' />
-            {t('imageEditor.page.resetAll')}
-          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault()
@@ -97,10 +95,6 @@ export function EditorMenuDropdown({
           <DropdownMenuItem onClick={onCopyUrl}>
             <Copy className='mr-3 h-4 w-4' />
             {t('imageEditor.page.copyUrl')}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onReset}>
-            <RotateCcw className='mr-3 h-4 w-4' />
-            {t('imageEditor.page.resetAll')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {

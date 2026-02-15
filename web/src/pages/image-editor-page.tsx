@@ -14,24 +14,18 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useNavigate } from '@tanstack/react-router'
 import {
-  Check,
   ChevronDown,
   ChevronLeft,
   ChevronUp,
-  Copy,
   Download,
-  Eye,
-  FileDown,
   FileImage,
   Frame,
   GripVertical,
-  Languages,
   Layers,
   Maximize2,
   MoreVertical,
   Palette,
   Redo2,
-  RotateCcw,
   RotateCw,
   Scissors,
   Undo2,
@@ -41,10 +35,10 @@ import { toast } from 'sonner'
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
 import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
 import { DimensionControl } from '@/components/image-editor/controls/dimension-control.tsx'
-import { EditorMenuDropdown } from '@/components/image-editor/editor-menu-dropdown'
 import { FillPaddingControl } from '@/components/image-editor/controls/fill-padding-control.tsx'
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
+import { EditorMenuDropdown } from '@/components/image-editor/editor-menu-dropdown'
 import { ImageEditorControls } from '@/components/image-editor/imagor-editor-controls.tsx'
 import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb.tsx'
 import { LayerPanel } from '@/components/image-editor/layer-panel'
@@ -56,24 +50,12 @@ import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import { ConfirmNavigationDialog } from '@/components/ui/confirm-navigation-dialog'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
-import { availableLanguages } from '@/i18n'
 import {
   EditorOpenSectionsStorage,
-  SECTION_KEYS,
   type EditorOpenSections,
   type SectionKey,
 } from '@/lib/editor-open-sections-storage'
@@ -98,7 +80,7 @@ interface ImageEditorPageProps {
 export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
   const { imageEditor, imagePath, initialEditorOpenSections } = loaderData
 
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { authState } = useAuth()
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
@@ -151,7 +133,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     width: number
     height: number
   } | null>(null)
-  const [resetCounter, setResetCounter] = useState(0)
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
@@ -285,18 +266,12 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [imageEditor])
 
-  const updateParams = (updates: Partial<ImageEditorState>) => {
-    imageEditor.updateParams(updates)
-  }
-
-  const resetParams = () => {
-    imageEditor.resetParams()
-
-    // Reset crop aspect ratio to free-form
-    setCropAspectRatio(null)
-
-    setResetCounter((prev) => prev + 1)
-  }
+  const updateParams = useCallback(
+    (updates: Partial<ImageEditorState>) => {
+      imageEditor.updateParams(updates)
+    },
+    [imageEditor],
+  )
 
   const getCopyUrl = async () => {
     return await imageEditor.getCopyUrl()
@@ -677,7 +652,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                 <EditorMenuDropdown
                   onDownload={handleDownloadClick}
                   onCopyUrl={handleCopyUrlClick}
-                  onReset={resetParams}
                   onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
                   onLanguageChange={handleLanguageChange}
                   onToggleSectionVisibility={handleToggleSectionVisibility}
@@ -723,7 +697,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <div className='bg-background flex flex-col overflow-hidden border-l'>
             <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               <ImageEditorControls
-                key={resetCounter}
                 imageEditor={imageEditor}
                 imagePath={imagePath}
                 params={params}
@@ -819,7 +792,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                 <EditorMenuDropdown
                   onDownload={handleDownloadClick}
                   onCopyUrl={handleCopyUrlClick}
-                  onReset={resetParams}
                   onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
                   onLanguageChange={handleLanguageChange}
                   onToggleSectionVisibility={handleToggleSectionVisibility}
@@ -891,7 +863,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               {/* Scrollable Controls */}
               <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
                 <ImageEditorControls
-                  key={resetCounter}
                   imageEditor={imageEditor}
                   imagePath={imagePath}
                   params={params}
@@ -1034,7 +1005,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               <EditorMenuDropdown
                 onDownload={handleDownloadClick}
                 onCopyUrl={handleCopyUrlClick}
-                onReset={resetParams}
                 onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
                 onLanguageChange={handleLanguageChange}
                 onToggleSectionVisibility={handleToggleSectionVisibility}
@@ -1065,7 +1035,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <div className='bg-background flex flex-col overflow-hidden border-r'>
             <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               <ImageEditorControls
-                key={`left-${resetCounter}`}
                 imageEditor={imageEditor}
                 imagePath={imagePath}
                 params={params}
@@ -1118,7 +1087,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <div className='bg-background flex flex-col overflow-hidden border-l'>
             <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               <ImageEditorControls
-                key={`right-${resetCounter}`}
                 imageEditor={imageEditor}
                 imagePath={imagePath}
                 params={params}
