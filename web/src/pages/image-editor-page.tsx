@@ -323,24 +323,33 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     // No success toast for download as it's obvious when it works
   }
 
-  const handleVisualCropToggle = async (enabled: boolean) => {
-    // Update ImageEditor to control crop filter in preview
-    // This will update the state and wait for the new preview to load
-    await imageEditor.setVisualCropEnabled(enabled)
+  const handleVisualCropToggle = useCallback(
+    async (enabled: boolean) => {
+      // Update ImageEditor to control crop filter in preview
+      // This will update the state and wait for the new preview to load
+      await imageEditor.setVisualCropEnabled(enabled)
 
-    // Initialize crop dimensions if enabling for the first time
-    if (enabled && !params.cropLeft && !params.cropTop && !params.cropWidth && !params.cropHeight) {
-      // Crop works on original dimensions (before resize)
-      // Set initial crop to full original dimensions (100%)
-      const dims = imageEditor.getOriginalDimensions()
-      updateParams({
-        cropLeft: 0,
-        cropTop: 0,
-        cropWidth: dims.width,
-        cropHeight: dims.height,
-      })
-    }
-  }
+      // Initialize crop dimensions if enabling for the first time
+      if (
+        enabled &&
+        !params.cropLeft &&
+        !params.cropTop &&
+        !params.cropWidth &&
+        !params.cropHeight
+      ) {
+        // Crop works on original dimensions (before resize)
+        // Set initial crop to full original dimensions (100%)
+        const dims = imageEditor.getOriginalDimensions()
+        imageEditor.updateParams({
+          cropLeft: 0,
+          cropTop: 0,
+          cropWidth: dims.width,
+          cropHeight: dims.height,
+        })
+      }
+    },
+    [imageEditor, params.cropHeight, params.cropLeft, params.cropTop, params.cropWidth],
+  )
 
   const handlePreviewLoad = () => {
     setIsLoading(false)
