@@ -26,6 +26,9 @@ func TestSaveTemplate(t *testing.T) {
 
 		ctx := createReadWriteContext("user1")
 
+		// Mock GetInstance to return nil (external mode - uses HTTP)
+		mockImagorProvider.On("GetInstance").Return(nil).Maybe()
+
 		// Mock Imagor URL generation for preview (will fail but that's ok)
 		mockImagorProvider.On("GenerateURL", "test-image.jpg", mock.Anything).
 			Return("http://localhost:8000/preview-url", nil).Maybe()
@@ -93,6 +96,7 @@ func TestSaveTemplate(t *testing.T) {
 
 		ctx := createReadWriteContext("user1")
 
+		mockImagorProvider.On("GetInstance").Return(nil).Maybe()
 		mockImagorProvider.On("GenerateURL", mock.Anything, mock.Anything).
 			Return("http://localhost:8000/preview-url", nil).Maybe()
 
@@ -258,6 +262,9 @@ func TestSaveTemplate(t *testing.T) {
 		ctx := createReadWriteContext("user1")
 
 		overwriteTrue := true
+
+		// Mock GetInstance
+		mockImagorProvider.On("GetInstance").Return(nil).Maybe()
 
 		// Mock Imagor URL generation
 		mockImagorProvider.On("GenerateURL", "test.jpg", mock.Anything).
