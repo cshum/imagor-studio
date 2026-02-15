@@ -2020,6 +2020,7 @@ export class ImageEditor {
 
   /**
    * Export current editor state as a template
+   * Downloads two files: template JSON and preview image
    * @param name - Template name
    * @param description - Optional template description
    * @param dimensionMode - How dimensions should be handled
@@ -2033,10 +2034,15 @@ export class ImageEditor {
     // Import type at top of file instead
     type ImagorTemplate = import('@/lib/template-types').ImagorTemplate
 
-    // Generate preview thumbnail
-    const previewImage = await this.generateThumbnailBase64(200, 200)
+    // Sanitize filename (used for both files)
+    const sanitizedName =
+      name
+        .replace(/[^a-z0-9-_\s]/gi, '')
+        .replace(/\s+/g, '-')
+        .toLowerCase()
+        .slice(0, 100) || 'template'
 
-    // Build template object
+    // Build template object (NO preview embedded)
     const template: ImagorTemplate = {
       version: '1.0',
       name,
@@ -2052,25 +2058,34 @@ export class ImageEditor {
       transformations: this.getBaseState(),
       metadata: {
         createdAt: new Date().toISOString(),
-        previewImage,
+        // NO previewImage field - preview saved as separate file
       },
     }
 
-    // Convert to JSON
-    const json = JSON.stringify(template)
+    // Download JSON file
+    const jsonBlob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' })
+    this.downloadFile(jsonBlob, `${sanitizedName}.imagor.json`)
 
-    // Sanitize filename
-    const sanitizedName = name
-      .replace(/[^a-z0-9-_\s]/gi, '')
-      .replace(/\s+/g, '-')
-      .toLowerCase()
-      .slice(0, 100)
+    // Generate and download preview image as separate file
+    try {
+      const thumbnailUrl = await this.generateThumbnailUrl(200, 200)
+      const response = await fetch(thumbnailUrl)
+      if (response.ok) {
+        const imageBlob = await response.blob()
+        this.downloadFile(imageBlob, `${sanitizedName}.imagor.preview.webp`)
+      }
+    } catch (error) {
+      // Preview generation failed - template still works without it
+      console.warn('Failed to generate preview image:', error)
+    }
+  }
 
-    // Create blob and download
-    const blob = new Blob([json], { type: 'application/json' })
-    const filename = `${sanitizedName || 'template'}.imagor.json`
-
-    // Trigger download
+  /**
+   * Helper to trigger file download
+   * @param blob - File content
+   * @param filename - Download filename
+   */
+  private downloadFile(blob: Blob, filename: string): void {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url

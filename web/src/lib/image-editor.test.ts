@@ -1143,7 +1143,7 @@ describe('ImageEditor', () => {
           },
           metadata: {
             createdAt: new Date().toISOString(),
-            previewImage: 'data:image/png;base64,mock',
+            // NO previewImage - preview saved as separate .imagor.preview.webp file
           },
         }
 

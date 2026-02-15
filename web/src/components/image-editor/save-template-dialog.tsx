@@ -43,11 +43,7 @@ export function SaveTemplateDialog({ open, onOpenChange, imageEditor }: SaveTemp
     setIsSaving(true)
 
     try {
-      await imageEditor.exportTemplate(
-        name.trim(),
-        description.trim() || undefined,
-        dimensionMode,
-      )
+      await imageEditor.exportTemplate(name.trim(), description.trim() || undefined, dimensionMode)
 
       toast.success(t('imageEditor.template.saveSuccess'))
       onOpenChange(false)
@@ -109,7 +105,7 @@ export function SaveTemplateDialog({ open, onOpenChange, imageEditor }: SaveTemp
               <div className='flex items-start space-x-2'>
                 <RadioGroupItem value='adaptive' id='adaptive' className='mt-1' />
                 <div className='grid gap-1'>
-                  <Label htmlFor='adaptive' className='font-normal cursor-pointer'>
+                  <Label htmlFor='adaptive' className='cursor-pointer font-normal'>
                     {t('imageEditor.template.adaptive')}
                   </Label>
                   <p className='text-muted-foreground text-sm'>
@@ -120,7 +116,7 @@ export function SaveTemplateDialog({ open, onOpenChange, imageEditor }: SaveTemp
               <div className='flex items-start space-x-2'>
                 <RadioGroupItem value='predefined' id='predefined' className='mt-1' />
                 <div className='grid gap-1'>
-                  <Label htmlFor='predefined' className='font-normal cursor-pointer'>
+                  <Label htmlFor='predefined' className='cursor-pointer font-normal'>
                     {t('imageEditor.template.predefined')} ({dimensions.width} × {dimensions.height}
                     )
                   </Label>

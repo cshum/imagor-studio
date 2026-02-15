@@ -31,8 +31,11 @@ export interface ImagorTemplate {
     /** ISO 8601 timestamp when template was created */
     createdAt: string
 
-    /** Base64-encoded WebP preview thumbnail (200x200) */
-    previewImage: string
+    /**
+     * @deprecated Preview is now saved as separate .imagor.preview.webp file
+     * This field is kept for backward compatibility with old templates
+     */
+    previewImage?: string
   }
 }
 
