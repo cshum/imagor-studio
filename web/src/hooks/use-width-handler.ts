@@ -24,7 +24,7 @@ export const useWidthHandler = (
     const transitionDuration = 200 // sidebar transition duration
     const timeoutId = setTimeout(() => {
       updateWidth() // Recalculate width after sidebar transition completes
-    }, transitionDuration)
+    }, transitionDuration + 50) // with buffer
 
     return () => clearTimeout(timeoutId) // Cleanup timeout on unmount
   }, [sidebarOpen, updateWidth])
