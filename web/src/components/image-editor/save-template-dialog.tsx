@@ -19,14 +19,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import type { ImageEditor } from '@/lib/image-editor'
 import { splitImagePath } from '@/lib/path-utils'
 
-// Slugify function to convert template name to filename
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '') // Remove special characters
-    .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
-    .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+// Validate filename - only block filesystem-unsafe characters
+function isValidFilename(name: string): boolean {
+  // Disallow filesystem-unsafe characters: / \ : * ? " < > |
+  const invalidChars = /[/\\:*?"<>|]/
+  return !invalidChars.test(name)
 }
 
 interface SaveTemplateDialogProps {
@@ -52,8 +49,9 @@ export function SaveTemplateDialog({
 
   const dimensions = imageEditor.getOriginalDimensions()
 
-  // Generate filename preview
-  const filename = name.trim() ? `${slugify(name)}.imagor.json` : ''
+  // Generate filename preview - use original name
+  const filename = name.trim() ? `${name.trim()}.imagor.json` : ''
+  const hasInvalidChars = name.trim() ? !isValidFilename(name.trim()) : false
 
   // Set default save path to current image's folder when dialog opens
   useEffect(() => {
@@ -122,12 +120,18 @@ export function SaveTemplateDialog({
               onChange={(e) => setName(e.target.value)}
               maxLength={100}
             />
-            {/* Filename Preview */}
-            {filename && (
-              <p className='text-muted-foreground text-sm'>
-                {t('imageEditor.template.filenamePreview')}:{' '}
-                <code className='bg-muted rounded px-1.5 py-0.5'>{filename}</code>
+            {/* Filename Preview or Error */}
+            {hasInvalidChars ? (
+              <p className='text-destructive text-sm'>
+                Invalid characters: / \ : * ? " &lt; &gt; |
               </p>
+            ) : (
+              filename && (
+                <p className='text-muted-foreground text-sm'>
+                  {t('imageEditor.template.filenamePreview')}:{' '}
+                  <code className='bg-muted rounded px-1.5 py-0.5'>{filename}</code>
+                </p>
+              )
             )}
           </div>
 
@@ -190,7 +194,10 @@ export function SaveTemplateDialog({
           <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isSaving}>
             {t('common.buttons.cancel')}
           </Button>
-          <Button onClick={() => handleSave()} disabled={isSaving || !name.trim()}>
+          <Button
+            onClick={() => handleSave()}
+            disabled={isSaving || !name.trim() || hasInvalidChars}
+          >
             {isSaving ? (
               <>
                 <Loader2 className='mr-2 h-4 w-4 animate-spin' />
