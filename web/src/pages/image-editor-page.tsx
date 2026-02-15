@@ -41,6 +41,7 @@ import { toast } from 'sonner'
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
 import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
 import { DimensionControl } from '@/components/image-editor/controls/dimension-control.tsx'
+import { EditorMenuDropdown } from '@/components/image-editor/editor-menu-dropdown'
 import { FillPaddingControl } from '@/components/image-editor/controls/fill-padding-control.tsx'
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
@@ -667,88 +668,23 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
                 <Download className='mr-1 h-4 w-4' />
                 {t('imageEditor.page.download')}
               </Button>
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button variant='outline' size='sm' className='rounded-l-none px-2'>
                     <MoreVertical className='h-4 w-4' />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-56'>
-                  <DropdownMenuItem onClick={handleDownloadClick}>
-                    <Download className='mr-3 h-4 w-4' />
-                    {t('imageEditor.page.download')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleCopyUrlClick}>
-                    <Copy className='mr-3 h-4 w-4' />
-                    {t('imageEditor.page.copyUrl')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={resetParams}>
-                    <RotateCcw className='mr-3 h-4 w-4' />
-                    {t('imageEditor.page.resetAll')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSaveTemplateDialogOpen(true)}>
-                    <FileDown className='mr-3 h-4 w-4' />
-                    {t('imageEditor.template.saveTemplate')}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Languages className='mr-3 h-4 w-4' />
-                      {t('common.language.title')}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        {availableLanguages.map((lang) => (
-                          <DropdownMenuItem
-                            key={lang.code}
-                            onSelect={(e) => {
-                              e.preventDefault()
-                              handleLanguageChange(lang.code)
-                            }}
-                          >
-                            {lang.name}
-                            {i18n.language === lang.code && <Check className='ml-auto h-4 w-4' />}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Eye className='mr-3 h-4 w-4' />
-                      {t('imageEditor.page.showHideControls')}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        {SECTION_KEYS.map((sectionKey) => {
-                          const isVisible =
-                            editorOpenSections.visibleSections?.includes(sectionKey) ?? true
-                          const SectionIcon = iconMap[sectionKey]
-                          return (
-                            <DropdownMenuItem
-                              key={sectionKey}
-                              onSelect={(e) => {
-                                e.preventDefault()
-                                handleToggleSectionVisibility(sectionKey)
-                              }}
-                            >
-                              <div className='flex w-full items-center justify-between gap-2'>
-                                <div className='flex items-center gap-2'>
-                                  <SectionIcon className='h-4 w-4' />
-                                  <span>{t(titleKeyMap[sectionKey])}</span>
-                                </div>
-                                <div className='flex w-4 items-center justify-center'>
-                                  {isVisible && <Check className='h-4 w-4' />}
-                                </div>
-                              </div>
-                            </DropdownMenuItem>
-                          )
-                        })}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                </DropdownMenuContent>
+                <EditorMenuDropdown
+                  onDownload={handleDownloadClick}
+                  onCopyUrl={handleCopyUrlClick}
+                  onReset={resetParams}
+                  onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                  onLanguageChange={handleLanguageChange}
+                  onToggleSectionVisibility={handleToggleSectionVisibility}
+                  editorOpenSections={editorOpenSections}
+                  iconMap={iconMap}
+                  titleKeyMap={titleKeyMap}
+                />
               </DropdownMenu>
             </div>
           </div>
@@ -874,84 +810,28 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             {/* Theme Toggle + 3-Dot Menu */}
             <div className='ml-auto flex items-center gap-2'>
               <ModeToggle />
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button variant='ghost' size='sm'>
                     <MoreVertical className='h-4 w-4' />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-56'>
-                  <DropdownMenuItem onClick={() => imageEditor.undo()} disabled={!canUndo}>
-                    <Undo2 className='mr-3 h-4 w-4' />
-                    {t('imageEditor.page.undo')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => imageEditor.redo()} disabled={!canRedo}>
-                    <Redo2 className='mr-3 h-4 w-4' />
-                    {t('imageEditor.page.redo')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={resetParams}>
-                    <RotateCcw className='mr-3 h-4 w-4' />
-                    {t('imageEditor.page.resetAll')}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Languages className='mr-3 h-4 w-4' />
-                      {t('common.language.title')}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        {availableLanguages.map((lang) => (
-                          <DropdownMenuItem
-                            key={lang.code}
-                            onSelect={(e) => {
-                              e.preventDefault()
-                              handleLanguageChange(lang.code)
-                            }}
-                          >
-                            {lang.name}
-                            {i18n.language === lang.code && <Check className='ml-auto h-4 w-4' />}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Eye className='mr-3 h-4 w-4' />
-                      {t('imageEditor.page.showHideControls')}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        {SECTION_KEYS.map((sectionKey) => {
-                          const isVisible =
-                            editorOpenSections.visibleSections?.includes(sectionKey) ?? true
-                          const SectionIcon = iconMap[sectionKey]
-                          return (
-                            <DropdownMenuItem
-                              key={sectionKey}
-                              onSelect={(e) => {
-                                e.preventDefault()
-                                handleToggleSectionVisibility(sectionKey)
-                              }}
-                            >
-                              <div className='flex w-full items-center justify-between gap-2'>
-                                <div className='flex items-center gap-2'>
-                                  <SectionIcon className='h-4 w-4' />
-                                  <span>{t(titleKeyMap[sectionKey])}</span>
-                                </div>
-                                <div className='flex w-4 items-center justify-center'>
-                                  {isVisible && <Check className='h-4 w-4' />}
-                                </div>
-                              </div>
-                            </DropdownMenuItem>
-                          )
-                        })}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                </DropdownMenuContent>
+                <EditorMenuDropdown
+                  onDownload={handleDownloadClick}
+                  onCopyUrl={handleCopyUrlClick}
+                  onReset={resetParams}
+                  onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                  onLanguageChange={handleLanguageChange}
+                  onToggleSectionVisibility={handleToggleSectionVisibility}
+                  editorOpenSections={editorOpenSections}
+                  iconMap={iconMap}
+                  titleKeyMap={titleKeyMap}
+                  includeUndoRedo={true}
+                  onUndo={() => imageEditor.undo()}
+                  onRedo={() => imageEditor.redo()}
+                  canUndo={canUndo}
+                  canRedo={canRedo}
+                />
               </DropdownMenu>
             </div>
           </div>
@@ -1145,88 +1025,23 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               <Download className='mr-1 h-4 w-4' />
               {t('imageEditor.page.download')}
             </Button>
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant='outline' size='sm' className='rounded-l-none px-2'>
                   <MoreVertical className='h-4 w-4' />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' className='w-56'>
-                <DropdownMenuItem onClick={handleDownloadClick}>
-                  <Download className='mr-3 h-4 w-4' />
-                  {t('imageEditor.page.download')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleCopyUrlClick}>
-                  <Copy className='mr-3 h-4 w-4' />
-                  {t('imageEditor.page.copyUrl')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={resetParams}>
-                  <RotateCcw className='mr-3 h-4 w-4' />
-                  {t('imageEditor.page.resetAll')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSaveTemplateDialogOpen(true)}>
-                  <FileDown className='mr-3 h-4 w-4' />
-                  {t('imageEditor.template.saveTemplate')}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Languages className='mr-3 h-4 w-4' />
-                    {t('common.language.title')}
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      {availableLanguages.map((lang) => (
-                        <DropdownMenuItem
-                          key={lang.code}
-                          onSelect={(e) => {
-                            e.preventDefault()
-                            handleLanguageChange(lang.code)
-                          }}
-                        >
-                          {lang.name}
-                          {i18n.language === lang.code && <Check className='ml-auto h-4 w-4' />}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuSeparator />
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Eye className='mr-3 h-4 w-4' />
-                    {t('imageEditor.page.showHideControls')}
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      {SECTION_KEYS.map((sectionKey) => {
-                        const isVisible =
-                          editorOpenSections.visibleSections?.includes(sectionKey) ?? true
-                        const SectionIcon = iconMap[sectionKey]
-                        return (
-                          <DropdownMenuItem
-                            key={sectionKey}
-                            onSelect={(e) => {
-                              e.preventDefault()
-                              handleToggleSectionVisibility(sectionKey)
-                            }}
-                          >
-                            <div className='flex w-full items-center justify-between gap-2'>
-                              <div className='flex items-center gap-2'>
-                                <SectionIcon className='h-4 w-4' />
-                                <span>{t(titleKeyMap[sectionKey])}</span>
-                              </div>
-                              <div className='flex w-4 items-center justify-center'>
-                                {isVisible && <Check className='h-4 w-4' />}
-                              </div>
-                            </div>
-                          </DropdownMenuItem>
-                        )
-                      })}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-              </DropdownMenuContent>
+              <EditorMenuDropdown
+                onDownload={handleDownloadClick}
+                onCopyUrl={handleCopyUrlClick}
+                onReset={resetParams}
+                onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                onLanguageChange={handleLanguageChange}
+                onToggleSectionVisibility={handleToggleSectionVisibility}
+                editorOpenSections={editorOpenSections}
+                iconMap={iconMap}
+                titleKeyMap={titleKeyMap}
+              />
             </DropdownMenu>
           </div>
         </div>

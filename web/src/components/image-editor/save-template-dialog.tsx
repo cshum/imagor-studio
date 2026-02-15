@@ -82,7 +82,7 @@ export function SaveTemplateDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
       <DialogContent className='sm:max-w-[500px]'>
         <DialogHeader>
           <DialogTitle>{t('imageEditor.template.saveTemplate')}</DialogTitle>
