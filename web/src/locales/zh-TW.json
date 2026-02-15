@@ -10,6 +10,7 @@
     }
   },
   "common": {
+    "optional": "（可選）",
     "buttons": {
       "save": "儲存",
       "cancel": "取消",
@@ -20,7 +21,8 @@
       "updateSettings": "更新設定",
       "close": "關閉",
       "more": "更多",
-      "switchTheme": "切換主題"
+      "switchTheme": "切換主題",
+      "select": "選擇"
     },
     "navigation": {
       "title": "Imagor Studio",
@@ -677,22 +679,25 @@
     },
     "template": {
       "saveTemplate": "儲存範本",
-      "saveTemplateDescription": "將當前編輯器狀態儲存為可重複使用的範本",
+      "saveDescription": "將當前變換儲存為可重複使用的範本",
       "templateName": "範本名稱",
-      "templateNamePlaceholder": "輸入範本名稱",
-      "templateDescription": "描述（可選）",
-      "templateDescriptionPlaceholder": "描述此範本的用途...",
+      "templateNamePlaceholder": "例如：Instagram 方形、產品縮圖",
+      "description": "描述",
+      "descriptionPlaceholder": "描述此範本的用途...",
       "dimensionMode": "尺寸模式",
-      "dimensionModeAdaptive": "自適應",
-      "dimensionModeAdaptiveDescription": "範本將適應應用的圖片尺寸",
-      "dimensionModePredefined": "預定義",
-      "dimensionModePredefinedDescription": "範本將使用固定尺寸 ({{width}}x{{height}})",
-      "saveAsTemplate": "儲存為範本",
-      "saving": "儲存中...",
-      "templateSaved": "範本已儲存",
-      "templateSavedSuccess": "範本 \"{{name}}\" 已成功儲存",
-      "saveTemplateFailed": "儲存範本失敗",
-      "nameRequired": "範本名稱為必填項"
+      "flexible": "靈活尺寸",
+      "flexibleDescription": "範本適應每張圖片的尺寸",
+      "fixed": "固定尺寸",
+      "fixedDescription": "將範本鎖定為 {{width}} × {{height}}",
+      "filenamePreview": "檔案將儲存為",
+      "saveLocation": "儲存位置",
+      "rootFolder": "根資料夾",
+      "selectFolder": "選擇範本資料夾",
+      "selectFolderDescription": "選擇儲存範本檔案的位置",
+      "nameRequired": "範本名稱為必填項",
+      "saveSuccess": "範本儲存成功",
+      "saveError": "儲存範本失敗",
+      "saving": "儲存中..."
     },
     "controls": {
       "cropAspect": "裁剪和比例",

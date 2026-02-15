@@ -21,7 +21,8 @@
       "updateSettings": "更新设置",
       "close": "关闭",
       "more": "更多",
-      "switchTheme": "切换主题"
+      "switchTheme": "切换主题",
+      "select": "选择"
     },
     "navigation": {
       "title": "Imagor Studio",

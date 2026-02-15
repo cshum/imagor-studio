@@ -21,7 +21,8 @@
       "updateSettings": "Update Settings",
       "close": "Close",
       "more": "More",
-      "switchTheme": "Switch Theme"
+      "switchTheme": "Switch Theme",
+      "select": "Select"
     },
     "language": {
       "title": "Language",
