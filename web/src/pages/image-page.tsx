@@ -28,7 +28,6 @@ export function ImagePage({
   const { image, imageElement } = imageLoaderData
 
   // Filter out videos and templates from navigation - only navigate through regular images
-  // Use useMemo to prevent infinite loop in useEffect
   const navigableImages = useMemo(
     () => images.filter((img) => !img.isVideo && !img.isTemplate),
     [images],
@@ -89,7 +88,6 @@ export function ImagePage({
   // Slideshow timer logic
   useEffect(() => {
     if (isSlideshow) {
-      // Safety check: need at least 2 navigable images for slideshow
       if (navigableImages.length < 2) {
         return
       }
@@ -98,7 +96,6 @@ export function ImagePage({
       const nextIndex = (currentIndex + 1) % navigableImages.length
       const nextImage = navigableImages[nextIndex]
 
-      // Safety check: if next image is the same as current, skip timer
       if (nextImage.imageKey === imageKey) {
         return
       }
