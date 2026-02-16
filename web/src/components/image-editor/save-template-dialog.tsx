@@ -175,26 +175,6 @@ export function SaveTemplateDialog({
               </span>
             </Button>
           </div>
-
-          {/* Dimension Mode - Auto-detected, read-only display */}
-          <div className='bg-muted/50 grid gap-2 rounded-md border p-3'>
-            <Label className='text-sm font-medium'>
-              {dimensionMode === 'adaptive'
-                ? t('imageEditor.template.flexible')
-                : t('imageEditor.template.fixed', {
-                    width: currentState.width,
-                    height: currentState.height,
-                  })}
-            </Label>
-            <p className='text-muted-foreground text-sm'>
-              {dimensionMode === 'adaptive'
-                ? t('imageEditor.template.flexibleDescription')
-                : t('imageEditor.template.fixedDescription', {
-                    width: currentState.width,
-                    height: currentState.height,
-                  })}
-            </p>
-          </div>
         </div>
 
         <DialogFooter>
