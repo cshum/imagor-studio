@@ -2058,10 +2058,10 @@ export class ImageEditor {
       },
     }
 
-    // Generate preview params (200x200 thumbnail with transformations)
+    // Generate preview params (800x800 thumbnail with transformations)
     const previewParams = this.convertStateToGraphQLParams(this.getBaseState(), true)
-    previewParams.width = 200
-    previewParams.height = 200
+    previewParams.width = 800
+    previewParams.height = 800
     previewParams.fitIn = true
 
     // Ensure WebP format and good quality for thumbnails
