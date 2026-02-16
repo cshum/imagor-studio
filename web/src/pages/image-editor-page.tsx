@@ -65,11 +65,18 @@ import {
   serializeStateToUrl,
   updateLocationState,
 } from '@/lib/editor-state-url'
+import type { ImageEditor } from '@/lib/image-editor'
 import { type ImageEditorState } from '@/lib/image-editor.ts'
+import type { ImagorTemplate } from '@/lib/template-types'
 import { cn, debounce } from '@/lib/utils.ts'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 import { useAuth } from '@/stores/auth-store'
 import { setLocale } from '@/stores/locale-store'
+
+// Extend ImageEditor type to include pendingTemplate property
+interface ImageEditorWithTemplate extends ImageEditor {
+  pendingTemplate?: ImagorTemplate
+}
 
 interface ImageEditorPageProps {
   galleryKey: string
@@ -190,6 +197,28 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       if (urlState) {
         imageEditor.restoreState(urlState)
       }
+    }
+
+    // Apply pending template if loaded from template file
+    const editorWithTemplate = imageEditor as ImageEditorWithTemplate
+    if (editorWithTemplate.pendingTemplate) {
+      const pendingTemplate = editorWithTemplate.pendingTemplate
+
+      // Apply template transformations with dimension mode handling
+      const templateState = pendingTemplate.transformations
+
+      // Handle dimension mode
+      if (pendingTemplate.dimensionMode === 'predefined' && pendingTemplate.predefinedDimensions) {
+        // Use template's predefined dimensions
+        templateState.width = pendingTemplate.predefinedDimensions.width
+        templateState.height = pendingTemplate.predefinedDimensions.height
+      }
+      // Adaptive mode uses current image dimensions (already set in editor)
+
+      imageEditor.restoreState(templateState)
+
+      // Clear pending template
+      delete editorWithTemplate.pendingTemplate
     }
 
     return () => {
