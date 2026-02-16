@@ -65,18 +65,11 @@ import {
   serializeStateToUrl,
   updateLocationState,
 } from '@/lib/editor-state-url'
-import type { ImageEditor } from '@/lib/image-editor'
 import { type ImageEditorState } from '@/lib/image-editor.ts'
-import type { ImagorTemplate } from '@/lib/template-types'
 import { cn, debounce } from '@/lib/utils.ts'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 import { useAuth } from '@/stores/auth-store'
 import { setLocale } from '@/stores/locale-store'
-
-// Extend ImageEditor type to include pendingTemplate property
-interface ImageEditorWithTemplate extends ImageEditor {
-  pendingTemplate?: ImagorTemplate
-}
 
 interface ImageEditorPageProps {
   galleryKey: string
@@ -85,7 +78,7 @@ interface ImageEditorPageProps {
 }
 
 export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
-  const { imageEditor, imagePath, initialEditorOpenSections } = loaderData
+  const { imageEditor, imagePath, initialEditorOpenSections, isTemplate } = loaderData
 
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -170,7 +163,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }, [selectedLayerId])
 
   useEffect(() => {
-    // Initialize editor FIRST (this resets state to defaults)
+    // Save current state before initialize (only if it's a template)
+    const savedState = isTemplate ? imageEditor.getState() : null
+
+    // Initialize editor (this resets state to defaults)
     imageEditor.initialize({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
@@ -190,41 +186,22 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       onEditingContextChange: setEditingContext,
     })
 
-    // restore state from URL, after callbacks are set
+    // Restore state from URL first (if exists)
     const encoded = getStateFromLocation()
     if (encoded) {
       const urlState = deserializeStateFromUrl(encoded)
       if (urlState) {
         imageEditor.restoreState(urlState)
       }
-    }
-
-    // Apply pending template if loaded from template file
-    const editorWithTemplate = imageEditor as ImageEditorWithTemplate
-    if (editorWithTemplate.pendingTemplate) {
-      const pendingTemplate = editorWithTemplate.pendingTemplate
-
-      // Apply template transformations with dimension mode handling
-      const templateState = pendingTemplate.transformations
-
-      // Handle dimension mode
-      if (pendingTemplate.dimensionMode === 'predefined' && pendingTemplate.predefinedDimensions) {
-        // Use template's predefined dimensions
-        templateState.width = pendingTemplate.predefinedDimensions.width
-        templateState.height = pendingTemplate.predefinedDimensions.height
-      }
-      // Adaptive mode uses current image dimensions (already set in editor)
-
-      imageEditor.restoreState(templateState)
-
-      // Clear pending template
-      delete editorWithTemplate.pendingTemplate
+    } else if (savedState) {
+      // No URL state, but we have template state from loader - restore it
+      imageEditor.restoreState(savedState)
     }
 
     return () => {
       imageEditor.destroy()
     }
-  }, [imageEditor])
+  }, [imageEditor, isTemplate])
 
   // Update preview dimensions dynamically when they change
   useEffect(() => {

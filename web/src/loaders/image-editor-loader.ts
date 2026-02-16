@@ -12,15 +12,12 @@ import type { ImagorTemplate } from '@/lib/template-types'
 import { getAuth } from '@/stores/auth-store'
 import { clearPosition } from '@/stores/image-position-store.ts'
 
-interface ImageEditorWithTemplate extends ImageEditor {
-  pendingTemplate?: ImagorTemplate
-}
-
 export interface ImageEditorLoaderData {
   imagePath: string
   initialEditorOpenSections: EditorOpenSections
   breadcrumb: BreadcrumbItem
   imageEditor: ImageEditor
+  isTemplate: boolean
 }
 
 /**
@@ -49,7 +46,7 @@ export const imageEditorLoader = async ({
   const isTemplate = imageKey.endsWith('.imagor.json')
 
   let actualImagePath = imagePath
-  let template: ImagorTemplate | null = null
+  let imageEditor: ImageEditor
 
   if (isTemplate) {
     // Fetch template JSON via thumbnailUrls.original (backend ensures this points to the JSON file)
@@ -58,41 +55,71 @@ export const imageEditorLoader = async ({
     }
 
     const templateUrl = getFullImageUrl(fileStat.thumbnailUrls.original)
-    const response = await fetch(templateUrl)
+    const response = await fetch(templateUrl, {
+      cache: 'no-store', // Prevent browser caching
+    })
 
     if (!response.ok) {
       throw new Error(`Failed to load template: ${response.status} ${response.statusText}`)
     }
 
-    template = (await response.json()) as ImagorTemplate
+    const template = (await response.json()) as ImagorTemplate
 
-    // Use source image path from template
-    actualImagePath = template.sourceImagePath
+    // Get source image path - either from template or infer from first layer (for old templates)
+    if (template.sourceImagePath) {
+      actualImagePath = template.sourceImagePath
+    } else if (template.transformations.layers && template.transformations.layers.length > 0) {
+      // For old templates without sourceImagePath, use the first layer's image
+      actualImagePath = template.transformations.layers[0].imagePath
+    } else {
+      throw new Error(
+        'Template is missing source image path and has no layers. Cannot determine source image.',
+      )
+    }
 
     // Verify source image exists
     const sourceFileStat = await statFile(actualImagePath)
     if (!sourceFileStat || sourceFileStat.isDirectory) {
       throw new Error(`Template source image not found: ${actualImagePath}`)
     }
-  }
 
-  // Fetch dimensions using utility (handles metadata API + fallback)
-  const originalDimensions = await fetchImageDimensions(actualImagePath)
+    // Fetch source image dimensions
+    const originalDimensions = await fetchImageDimensions(actualImagePath)
 
-  // Clear image position for better transition
-  clearPosition(galleryKey, imageKey)
+    // Clear image position for better transition
+    clearPosition(galleryKey, imageKey)
 
-  // Create ImageEditor instance with actual image path
-  const imageEditor = new ImageEditor({
-    imagePath: actualImagePath,
-    originalDimensions,
-  })
+    // Create ImageEditor instance with source image
+    imageEditor = new ImageEditor({
+      imagePath: actualImagePath,
+      originalDimensions,
+    })
 
-  // If template, apply transformations after editor is created
-  if (template) {
-    // Apply template state (will be done in the page component after initialization)
-    // Store template in editor for later application
-    ;(imageEditor as ImageEditorWithTemplate).pendingTemplate = template
+    // Apply template state directly (no need for pendingTemplate!)
+    const templateState = { ...template.transformations }
+
+    // Handle dimension mode
+    if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
+      templateState.width = template.predefinedDimensions.width
+      templateState.height = template.predefinedDimensions.height
+    }
+
+    // Apply template state to the editor instance using restoreState()
+    // This happens in the loader, so it's already there when the page loads
+    imageEditor.restoreState(templateState)
+  } else {
+    // Normal image (not a template)
+    // Fetch dimensions using utility (handles metadata API + fallback)
+    const originalDimensions = await fetchImageDimensions(imagePath)
+
+    // Clear image position for better transition
+    clearPosition(galleryKey, imageKey)
+
+    // Create ImageEditor instance
+    imageEditor = new ImageEditor({
+      imagePath,
+      originalDimensions,
+    })
   }
 
   return {
@@ -100,5 +127,6 @@ export const imageEditorLoader = async ({
     initialEditorOpenSections: editorOpenSections,
     breadcrumb: { label: 'Imagor Studio' },
     imageEditor,
+    isTemplate,
   }
 }
