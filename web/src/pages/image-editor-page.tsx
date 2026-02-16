@@ -297,10 +297,10 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     return await imageEditor.handleDownload()
   }
 
-  const handleBack = () => {
+  const handleBack = async () => {
     // Priority 1: Exit crop mode if active
     if (visualCropEnabled) {
-      imageEditor.setVisualCropEnabled(false)
+      await imageEditor.setVisualCropEnabled(false)
       return
     }
 
@@ -312,13 +312,14 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
 
     // Priority 3: Navigate back to gallery
+    await router.invalidate()
     if (galleryKey) {
-      navigate({
+      await navigate({
         to: '/gallery/$galleryKey',
         params: { galleryKey },
       })
     } else {
-      navigate({
+      await navigate({
         to: '/',
       })
     }
@@ -371,7 +372,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       toast.success(t('imageEditor.template.saveSuccess', { name: templateMetadata.name }))
 
       // Invalidate gallery cache to refresh preview on navigation back
-      router.invalidate()
+      await router.invalidate()
     } catch (error) {
       console.error('Failed to save template:', error)
       toast.error(t('imageEditor.template.saveError'))
