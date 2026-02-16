@@ -27,33 +27,33 @@ export function ImagePage({
   const { images } = galleryLoaderData
   const { image, imageElement } = imageLoaderData
 
-  const { navigableImages, slideshowImages } = useMemo(() => {
-    const navigableImages: GalleryImage[] = []
+  const { navigationImages, slideshowImages } = useMemo(() => {
+    const navigationImages: GalleryImage[] = []
     const slideshowImages: GalleryImage[] = []
     for (const img of images) {
       if (!img.isTemplate) {
-        navigableImages.push(img) // Images + Videos (exclude templates)
+        navigationImages.push(img) // Images + Videos (exclude templates)
         if (!img.isVideo) {
           slideshowImages.push(img) // Only images (exclude videos + templates)
         }
       }
     }
-    return { navigableImages, slideshowImages }
+    return { navigationImages, slideshowImages }
   }, [images])
 
-  const imageIndex = navigableImages.findIndex((img) => img.imageKey === imageKey)
+  const imageIndex = navigationImages.findIndex((img) => img.imageKey === imageKey)
 
   // Slideshow state management
   const [isSlideshow, setIsSlideshow] = useState(false)
 
   const handlePrevImage =
-    navigableImages && imageIndex > 0
-      ? () => handleImageClick(navigableImages[imageIndex - 1])
+    navigationImages && imageIndex > 0
+      ? () => handleImageClick(navigationImages[imageIndex - 1])
       : undefined
 
   const handleNextImage =
-    navigableImages && imageIndex < navigableImages.length - 1
-      ? () => handleImageClick(navigableImages[imageIndex + 1])
+    navigationImages && imageIndex < navigationImages.length - 1
+      ? () => handleImageClick(navigationImages[imageIndex + 1])
       : undefined
 
   const handleImageClick = ({ imageKey }: GalleryImage) => {
