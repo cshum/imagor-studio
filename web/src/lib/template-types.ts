@@ -28,9 +28,8 @@ export interface ImagorTemplate {
    * Enables dual-mode usage:
    * - "Open as Project": Load source image with transformations applied
    * - "Apply to Current": Apply transformations to any image
-   * Optional for backward compatibility with old templates
    */
-  sourceImagePath?: string
+  sourceImagePath: string
 
   /** All image transformations (filters, layers, crops, etc.) */
   transformations: ImageEditorState

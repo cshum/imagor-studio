@@ -2044,6 +2044,7 @@ export class ImageEditor {
       version: '1.0',
       name,
       description,
+      sourceImagePath: this.baseImagePath,
       dimensionMode,
       predefinedDimensions:
         dimensionMode === 'predefined'
