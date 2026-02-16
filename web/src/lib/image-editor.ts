@@ -2059,19 +2059,20 @@ export class ImageEditor {
     }
 
     // Generate preview params (800x800 thumbnail with transformations)
+    // Temporarily override previewMaxDimensions to ensure correct scaling for 800x800
+    const originalPreviewDimensions = this.config.previewMaxDimensions
+    this.config.previewMaxDimensions = { width: 800, height: 800 }
+
+    // Generate params with correct 800x800 scaling
     const previewParams = this.convertStateToGraphQLParams(this.getBaseState(), true)
-    previewParams.width = 800
-    previewParams.height = 800
+
+    // Restore original preview dimensions
+    this.config.previewMaxDimensions = originalPreviewDimensions
+
+    // Ensure fitIn is true (already set by convertStateToGraphQLParams, but be explicit)
     previewParams.fitIn = true
 
-    // Ensure WebP format and good quality for thumbnails
-    const filters = previewParams.filters || []
-    const filteredFilters = filters.filter(
-      (f) => f.name !== 'format' && f.name !== 'quality' && f.name !== 'preview',
-    )
-    filteredFilters.push({ name: 'format', args: 'webp' })
-    filteredFilters.push({ name: 'quality', args: '80' })
-    previewParams.filters = filteredFilters
+    // Filters (format, quality, preview) are already added by convertStateToGraphQLParams
 
     // Call backend API to save template
     const { saveTemplate } = await import('@/api/storage-api')
