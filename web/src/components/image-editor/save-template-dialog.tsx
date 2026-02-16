@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditor } from '@/lib/image-editor'
 import { splitImagePath } from '@/lib/path-utils'
+import { useFolderTree } from '@/stores/folder-tree-store'
 
 // Validate filename - only block filesystem-unsafe characters
 function isValidFilename(name: string): boolean {
@@ -46,6 +47,7 @@ export function SaveTemplateDialog({
   templateMetadata,
 }: SaveTemplateDialogProps) {
   const { t } = useTranslation()
+  const { homeTitle } = useFolderTree()
   const [name, setName] = useState('')
   const [savePath, setSavePath] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -170,9 +172,7 @@ export function SaveTemplateDialog({
               onClick={() => setFolderDialogOpen(true)}
             >
               <Folder className='mr-2 h-4 w-4' />
-              <span className='flex-1 truncate text-left'>
-                {savePath || t('imageEditor.template.rootFolder')}
-              </span>
+              <span className='flex-1 truncate text-left'>{savePath || homeTitle}</span>
             </Button>
           </div>
         </div>
