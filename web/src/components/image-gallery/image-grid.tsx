@@ -1,5 +1,5 @@
 import React, { RefObject, useEffect, useRef, useState } from 'react'
-import { Check, FileJson, MoreVertical, Play } from 'lucide-react'
+import { Check, FileText, MoreVertical, Play } from 'lucide-react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
 import {
@@ -210,8 +210,8 @@ const ImageCell = ({
           </div>
         )}
         {image.isTemplate && (
-          <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-600/90 p-3 opacity-90 transition-opacity'>
-            <FileJson className='h-6 w-6 text-white' />
+          <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/60 p-3 opacity-90 transition-opacity'>
+            <FileText className='h-6 w-6 text-white' />
           </div>
         )}
         {showFileName && (
