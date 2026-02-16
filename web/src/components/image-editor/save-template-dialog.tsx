@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import type { ImageEditor } from '@/lib/image-editor'
 import { splitImagePath } from '@/lib/path-utils'
 
@@ -31,6 +30,12 @@ interface SaveTemplateDialogProps {
   onOpenChange: (open: boolean) => void
   imageEditor: ImageEditor
   imagePath: string
+  templateMetadata?: {
+    name: string
+    description?: string
+    dimensionMode: 'adaptive' | 'predefined'
+    templatePath: string
+  }
 }
 
 export function SaveTemplateDialog({
@@ -38,28 +43,49 @@ export function SaveTemplateDialog({
   onOpenChange,
   imageEditor,
   imagePath,
+  templateMetadata,
 }: SaveTemplateDialogProps) {
   const { t } = useTranslation()
   const [name, setName] = useState('')
-  const [dimensionMode, setDimensionMode] = useState<'adaptive' | 'predefined'>('adaptive')
   const [savePath, setSavePath] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [folderDialogOpen, setFolderDialogOpen] = useState(false)
   const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false)
 
   const dimensions = imageEditor.getOriginalDimensions()
+  const currentState = imageEditor.getState()
+
+  // Auto-detect dimension mode based on current state
+  const dimensionMode: 'adaptive' | 'predefined' = (() => {
+    // If width/height are set and differ from original, use predefined
+    if (currentState.width && currentState.height) {
+      if (currentState.width !== dimensions.width || currentState.height !== dimensions.height) {
+        return 'predefined'
+      }
+    }
+    // Otherwise use adaptive (works with any image size)
+    return 'adaptive'
+  })()
 
   // Generate filename preview - use original name
   const filename = name.trim() ? `${name.trim()}.imagor.json` : ''
   const hasInvalidChars = name.trim() ? !isValidFilename(name.trim()) : false
 
-  // Set default save path to current image's folder when dialog opens
+  // Pre-fill form when dialog opens
   useEffect(() => {
     if (open) {
-      const { galleryKey } = splitImagePath(imagePath)
-      setSavePath(galleryKey || '')
+      if (templateMetadata) {
+        // Editing existing template - pre-fill with metadata
+        setName(templateMetadata.name)
+        const { galleryKey } = splitImagePath(templateMetadata.templatePath)
+        setSavePath(galleryKey || '')
+      } else {
+        // Creating new template - use defaults
+        const { galleryKey } = splitImagePath(imagePath)
+        setSavePath(galleryKey || '')
+      }
     }
-  }, [open, imagePath])
+  }, [open, imagePath, templateMetadata])
 
   const handleSave = async (overwrite = false) => {
     // Validate name
@@ -79,7 +105,6 @@ export function SaveTemplateDialog({
 
       // Reset form
       setName('')
-      setDimensionMode('adaptive')
     } catch (error) {
       // Check if it's a conflict error (template already exists)
       const errorMessage = error instanceof Error ? error.message : String(error)
@@ -151,42 +176,24 @@ export function SaveTemplateDialog({
             </Button>
           </div>
 
-          {/* Dimension Mode */}
-          <div className='grid gap-2'>
-            <Label>{t('imageEditor.template.dimensionMode')}</Label>
-            <RadioGroup
-              value={dimensionMode}
-              onValueChange={(v) => setDimensionMode(v as 'adaptive' | 'predefined')}
-            >
-              <div className='flex items-start space-x-2'>
-                <RadioGroupItem value='adaptive' id='adaptive' className='mt-1' />
-                <div className='grid gap-1'>
-                  <Label htmlFor='adaptive' className='cursor-pointer font-normal'>
-                    {t('imageEditor.template.flexible')}
-                  </Label>
-                  <p className='text-muted-foreground text-sm'>
-                    {t('imageEditor.template.flexibleDescription')}
-                  </p>
-                </div>
-              </div>
-              <div className='flex items-start space-x-2'>
-                <RadioGroupItem value='predefined' id='predefined' className='mt-1' />
-                <div className='grid gap-1'>
-                  <Label htmlFor='predefined' className='cursor-pointer font-normal'>
-                    {t('imageEditor.template.fixed', {
-                      width: dimensions.width,
-                      height: dimensions.height,
-                    })}
-                  </Label>
-                  <p className='text-muted-foreground text-sm'>
-                    {t('imageEditor.template.fixedDescription', {
-                      width: dimensions.width,
-                      height: dimensions.height,
-                    })}
-                  </p>
-                </div>
-              </div>
-            </RadioGroup>
+          {/* Dimension Mode - Auto-detected, read-only display */}
+          <div className='bg-muted/50 grid gap-2 rounded-md border p-3'>
+            <Label className='text-sm font-medium'>
+              {dimensionMode === 'adaptive'
+                ? t('imageEditor.template.flexible')
+                : t('imageEditor.template.fixed', {
+                    width: currentState.width,
+                    height: currentState.height,
+                  })}
+            </Label>
+            <p className='text-muted-foreground text-sm'>
+              {dimensionMode === 'adaptive'
+                ? t('imageEditor.template.flexibleDescription')
+                : t('imageEditor.template.fixedDescription', {
+                    width: currentState.width,
+                    height: currentState.height,
+                  })}
+            </p>
           </div>
         </div>
 

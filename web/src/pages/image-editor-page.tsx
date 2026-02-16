@@ -627,7 +627,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             </a>
           </div>
 
-          {/* Theme Toggle + Undo/Redo + Download & Three-dot Menu (grouped) */}
+          {/* Theme Toggle + Undo/Redo + Primary Action & Three-dot Menu (grouped) */}
           <div className='ml-auto flex items-center gap-2'>
             <ModeToggle />
             <Button
@@ -649,32 +649,66 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
               <Redo2 className='h-4 w-4' />
             </Button>
             <div className='inline-flex items-center rounded-md'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={handleDownloadClick}
-                className='rounded-r-none border-r-0'
-              >
-                <Download className='mr-1 h-4 w-4' />
-                {t('imageEditor.page.download')}
-              </Button>
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant='outline' size='sm' className='rounded-l-none px-2'>
-                    <MoreVertical className='h-4 w-4' />
+              {isTemplate ? (
+                <>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setSaveTemplateDialogOpen(true)}
+                    className='rounded-r-none border-r-0'
+                  >
+                    <FileText className='mr-1 h-4 w-4' />
+                    {t('imageEditor.template.saveTemplate')}
                   </Button>
-                </DropdownMenuTrigger>
-                <EditorMenuDropdown
-                  onDownload={handleDownloadClick}
-                  onCopyUrl={handleCopyUrlClick}
-                  onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
-                  onLanguageChange={handleLanguageChange}
-                  onToggleSectionVisibility={handleToggleSectionVisibility}
-                  editorOpenSections={editorOpenSections}
-                  iconMap={iconMap}
-                  titleKeyMap={titleKeyMap}
-                />
-              </DropdownMenu>
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant='outline' size='sm' className='rounded-l-none px-2'>
+                        <MoreVertical className='h-4 w-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <EditorMenuDropdown
+                      onDownload={handleDownloadClick}
+                      onCopyUrl={handleCopyUrlClick}
+                      onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                      onLanguageChange={handleLanguageChange}
+                      onToggleSectionVisibility={handleToggleSectionVisibility}
+                      editorOpenSections={editorOpenSections}
+                      iconMap={iconMap}
+                      titleKeyMap={titleKeyMap}
+                      isTemplate={isTemplate}
+                    />
+                  </DropdownMenu>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={handleDownloadClick}
+                    className='rounded-r-none border-r-0'
+                  >
+                    <Download className='mr-1 h-4 w-4' />
+                    {t('imageEditor.page.download')}
+                  </Button>
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant='outline' size='sm' className='rounded-l-none px-2'>
+                        <MoreVertical className='h-4 w-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <EditorMenuDropdown
+                      onDownload={handleDownloadClick}
+                      onCopyUrl={handleCopyUrlClick}
+                      onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                      onLanguageChange={handleLanguageChange}
+                      onToggleSectionVisibility={handleToggleSectionVisibility}
+                      editorOpenSections={editorOpenSections}
+                      iconMap={iconMap}
+                      titleKeyMap={titleKeyMap}
+                    />
+                  </DropdownMenu>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -750,6 +784,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           onOpenChange={setSaveTemplateDialogOpen}
           imageEditor={imageEditor}
           imagePath={imagePath}
+          templateMetadata={templateMetadata}
         />
 
         {/* Navigation Confirmation Dialog */}
@@ -909,6 +944,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           onOpenChange={setSaveTemplateDialogOpen}
           imageEditor={imageEditor}
           imagePath={imagePath}
+          templateMetadata={templateMetadata}
         />
 
         {/* Navigation Confirmation Dialog */}
@@ -991,7 +1027,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           </a>
         </div>
 
-        {/* Theme Toggle + Undo/Redo + Download & Three-dot Menu (grouped) */}
+        {/* Theme Toggle + Undo/Redo + Primary Action & Three-dot Menu (grouped) */}
         <div className='ml-auto flex items-center gap-2'>
           <ModeToggle />
           <Button
@@ -1013,32 +1049,66 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             <Redo2 className='h-4 w-4' />
           </Button>
           <div className='inline-flex items-center rounded-md'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={handleDownloadClick}
-              className='rounded-r-none border-r-0'
-            >
-              <Download className='mr-1 h-4 w-4' />
-              {t('imageEditor.page.download')}
-            </Button>
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button variant='outline' size='sm' className='rounded-l-none px-2'>
-                  <MoreVertical className='h-4 w-4' />
+            {isTemplate ? (
+              <>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setSaveTemplateDialogOpen(true)}
+                  className='rounded-r-none border-r-0'
+                >
+                  <FileText className='mr-1 h-4 w-4' />
+                  {t('imageEditor.template.saveTemplate')}
                 </Button>
-              </DropdownMenuTrigger>
-              <EditorMenuDropdown
-                onDownload={handleDownloadClick}
-                onCopyUrl={handleCopyUrlClick}
-                onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
-                onLanguageChange={handleLanguageChange}
-                onToggleSectionVisibility={handleToggleSectionVisibility}
-                editorOpenSections={editorOpenSections}
-                iconMap={iconMap}
-                titleKeyMap={titleKeyMap}
-              />
-            </DropdownMenu>
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='outline' size='sm' className='rounded-l-none px-2'>
+                      <MoreVertical className='h-4 w-4' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <EditorMenuDropdown
+                    onDownload={handleDownloadClick}
+                    onCopyUrl={handleCopyUrlClick}
+                    onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                    onLanguageChange={handleLanguageChange}
+                    onToggleSectionVisibility={handleToggleSectionVisibility}
+                    editorOpenSections={editorOpenSections}
+                    iconMap={iconMap}
+                    titleKeyMap={titleKeyMap}
+                    isTemplate={isTemplate}
+                  />
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleDownloadClick}
+                  className='rounded-r-none border-r-0'
+                >
+                  <Download className='mr-1 h-4 w-4' />
+                  {t('imageEditor.page.download')}
+                </Button>
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='outline' size='sm' className='rounded-l-none px-2'>
+                      <MoreVertical className='h-4 w-4' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <EditorMenuDropdown
+                    onDownload={handleDownloadClick}
+                    onCopyUrl={handleCopyUrlClick}
+                    onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                    onLanguageChange={handleLanguageChange}
+                    onToggleSectionVisibility={handleToggleSectionVisibility}
+                    editorOpenSections={editorOpenSections}
+                    iconMap={iconMap}
+                    titleKeyMap={titleKeyMap}
+                  />
+                </DropdownMenu>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -1181,6 +1251,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         onOpenChange={setSaveTemplateDialogOpen}
         imageEditor={imageEditor}
         imagePath={imagePath}
+        templateMetadata={templateMetadata}
       />
 
       {/* Navigation Confirmation Dialog */}

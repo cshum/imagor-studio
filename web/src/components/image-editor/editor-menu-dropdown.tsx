@@ -31,6 +31,7 @@ interface EditorMenuDropdownProps {
   onRedo?: () => void
   canUndo?: boolean
   canRedo?: boolean
+  isTemplate?: boolean
 }
 
 export function EditorMenuDropdown({
