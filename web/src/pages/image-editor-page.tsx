@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   closestCenter,
@@ -143,13 +143,16 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   const [editingContext, setEditingContext] = useState<string | null>(null)
   const [layerAspectRatioLockToggle, setLayerAspectRatioLockToggle] = useState(true)
   const [isShiftPressed, setIsShiftPressed] = useState(false)
-  const [isSaved, setIsSaved] = useState(false)
+  const isSavedRef = useRef(false)
 
   // Drag and drop state for desktop
   const [activeId, setActiveId] = useState<string | null>(null)
 
   // Unsaved changes warning hook (skip if template was just saved)
-  const { showDialog, handleConfirm, handleCancel } = useUnsavedChangesWarning(canUndo && !isSaved)
+  // Pass a function so it checks the ref value at navigation time, not render time
+  const { showDialog, handleConfirm, handleCancel } = useUnsavedChangesWarning(
+    () => canUndo && !isSavedRef.current,
+  )
 
   // Derive visualCropEnabled from params state (single source of truth)
   const visualCropEnabled = params.visualCropEnabled ?? false
@@ -178,7 +181,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       onLoadingChange: setIsLoading,
       onHistoryChange: () => {
         // Reset saved flag when user makes changes after save
-        setIsSaved(false)
+        isSavedRef.current = false
 
         // Update undo/redo button states
         setCanUndo(imageEditor.canUndo())
@@ -362,7 +365,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       )
 
       // Mark as saved to skip unsaved changes warning
-      setIsSaved(true)
+      isSavedRef.current = true
 
       // Show success toast with template name
       toast.success(t('imageEditor.template.saveSuccess', { name: templateMetadata.name }))
@@ -832,7 +835,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           imagePath={imagePath}
           templateMetadata={templateMetadata}
           onSaveSuccess={(templatePath) => {
-            setIsSaved(true)
+            isSavedRef.current = true
             navigate({
               to: '/$imagePath/editor',
               params: { imagePath: templatePath },
@@ -999,7 +1002,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           imagePath={imagePath}
           templateMetadata={templateMetadata}
           onSaveSuccess={(templatePath) => {
-            setIsSaved(true)
+            isSavedRef.current = true
             navigate({
               to: '/$imagePath/editor',
               params: { imagePath: templatePath },
@@ -1313,7 +1316,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         imagePath={imagePath}
         templateMetadata={templateMetadata}
         onSaveSuccess={(templatePath) => {
-          setIsSaved(true)
+          isSavedRef.current = true
           navigate({
             to: '/$imagePath/editor',
             params: { imagePath: templatePath },

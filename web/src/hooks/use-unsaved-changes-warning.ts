@@ -5,7 +5,7 @@ import { useBlocker } from '@tanstack/react-router'
  * Hook to warn users about unsaved changes when navigating away.
  * Handles both browser navigation (closing tab/window) and in-app navigation.
  *
- * @param hasUnsavedChanges - Whether there are unsaved changes
+ * @param hasUnsavedChanges - Whether there are unsaved changes (boolean or function returning boolean)
  * @returns Dialog state and handlers for the confirmation dialog
  *
  * @example
@@ -24,21 +24,26 @@ import { useBlocker } from '@tanstack/react-router'
  * )
  * ```
  */
-export function useUnsavedChangesWarning(hasUnsavedChanges: boolean) {
+export function useUnsavedChangesWarning(hasUnsavedChanges: boolean | (() => boolean)) {
   const [showDialog, setShowDialog] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null)
+
+  // Helper to get the current unsaved changes state
+  const getHasUnsavedChanges = useCallback(() => {
+    return typeof hasUnsavedChanges === 'function' ? hasUnsavedChanges() : hasUnsavedChanges
+  }, [hasUnsavedChanges])
 
   // Block in-app navigation when there are unsaved changes
   // Using new API with withResolver to get blocker object
   const blocker = useBlocker({
-    shouldBlockFn: () => hasUnsavedChanges,
+    shouldBlockFn: () => getHasUnsavedChanges(),
     withResolver: true,
   })
 
   // Handle browser beforeunload event (closing tab/window or external navigation)
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
+      if (getHasUnsavedChanges()) {
         e.preventDefault()
         // Modern browsers ignore custom messages and show their own
         e.returnValue = ''
@@ -47,7 +52,7 @@ export function useUnsavedChangesWarning(hasUnsavedChanges: boolean) {
 
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [hasUnsavedChanges])
+  }, [getHasUnsavedChanges])
 
   // Handle TanStack Router blocker (in-app navigation)
   useEffect(() => {
