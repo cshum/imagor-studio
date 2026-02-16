@@ -2040,9 +2040,9 @@ export class ImageEditor {
     type ImagorTemplate = import('@/lib/template-types').ImagorTemplate
 
     // Build template object
+    // Note: Template name is derived from filename, not stored in JSON
     const template: ImagorTemplate = {
       version: '1.0',
-      name,
       description,
       sourceImagePath: this.baseImagePath,
       dimensionMode,
@@ -2130,8 +2130,8 @@ export class ImageEditor {
       }
     }
 
-    // Validate required fields
-    if (!template.version || !template.name || !template.transformations) {
+    // Validate required fields (name is no longer required - derived from filename)
+    if (!template.version || !template.transformations) {
       return {
         success: false,
         warnings: [

@@ -102,7 +102,7 @@ export function SaveTemplateDialog({
       await imageEditor.exportTemplate(name.trim(), undefined, dimensionMode, savePath, overwrite)
 
       // Success - template saved
-      toast.success(t('imageEditor.template.saveSuccess'))
+      toast.success(t('imageEditor.template.saveSuccess', { name: name.trim() }))
       onOpenChange(false)
 
       // Reset form

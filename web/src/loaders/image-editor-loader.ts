@@ -117,9 +117,13 @@ export const imageEditorLoader = async ({
     // This happens in the loader, so it's already there when the page loads
     imageEditor.restoreState(templateState)
 
+    // Extract template name from filename (source of truth)
+    const filename = imagePath.split('/').pop() || ''
+    const templateName = filename.replace(/\.imagor\.json$/, '')
+
     // Store template metadata for UI
     templateMetadata = {
-      name: template.name,
+      name: templateName,
       description: template.description,
       dimensionMode: template.dimensionMode,
       templatePath: imagePath,

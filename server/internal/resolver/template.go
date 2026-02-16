@@ -250,11 +250,11 @@ func sanitizeTemplateName(name string) string {
 }
 
 // validateTemplateJSON validates the structure of a template JSON string
+// Note: Template name is derived from filename, not stored in JSON
 func validateTemplateJSON(templateJSON string) error {
 	// Parse JSON
 	var template struct {
 		Version         string          `json:"version"`
-		Name            string          `json:"name"`
 		Transformations json.RawMessage `json:"transformations"`
 	}
 
@@ -265,10 +265,6 @@ func validateTemplateJSON(templateJSON string) error {
 	// Check required fields
 	if template.Version == "" {
 		return fmt.Errorf("missing required field: version")
-	}
-
-	if template.Name == "" {
-		return fmt.Errorf("missing required field: name")
 	}
 
 	if len(template.Transformations) == 0 {
