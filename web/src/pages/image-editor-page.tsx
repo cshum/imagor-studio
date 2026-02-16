@@ -12,7 +12,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import {
   ChevronDown,
   ChevronLeft,
@@ -84,6 +84,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const router = useRouter()
   const { authState } = useAuth()
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
@@ -142,12 +143,13 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   const [editingContext, setEditingContext] = useState<string | null>(null)
   const [layerAspectRatioLockToggle, setLayerAspectRatioLockToggle] = useState(true)
   const [isShiftPressed, setIsShiftPressed] = useState(false)
+  const [isSaved, setIsSaved] = useState(false)
 
   // Drag and drop state for desktop
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  // Unsaved changes warning hook
-  const { showDialog, handleConfirm, handleCancel } = useUnsavedChangesWarning(canUndo)
+  // Unsaved changes warning hook (skip if template was just saved)
+  const { showDialog, handleConfirm, handleCancel } = useUnsavedChangesWarning(canUndo && !isSaved)
 
   // Derive visualCropEnabled from params state (single source of truth)
   const visualCropEnabled = params.visualCropEnabled ?? false
@@ -175,6 +177,9 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       onStateChange: setParams,
       onLoadingChange: setIsLoading,
       onHistoryChange: () => {
+        // Reset saved flag when user makes changes after save
+        setIsSaved(false)
+
         // Update undo/redo button states
         setCanUndo(imageEditor.canUndo())
         setCanRedo(imageEditor.canRedo())
@@ -356,7 +361,14 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         true, // overwrite = true for direct save
       )
 
-      toast.success(t('imageEditor.template.saveSuccess'))
+      // Mark as saved to skip unsaved changes warning
+      setIsSaved(true)
+
+      // Show success toast with template name
+      toast.success(t('imageEditor.template.saveSuccess', { name: templateMetadata.name }))
+
+      // Invalidate gallery cache to refresh preview on navigation back
+      router.invalidate()
     } catch (error) {
       console.error('Failed to save template:', error)
       toast.error(t('imageEditor.template.saveError'))

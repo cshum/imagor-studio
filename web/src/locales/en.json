@@ -867,7 +867,7 @@
       "selectFolder": "Select Template Folder",
       "selectFolderDescription": "Choose where to save the template file",
       "nameRequired": "Template name is required",
-      "saveSuccess": "Template saved successfully",
+      "saveSuccess": "Template \"{{name}}\" saved successfully",
       "saveError": "Failed to save template",
       "saving": "Saving...",
       "overwriteTitle": "Overwrite Template?",

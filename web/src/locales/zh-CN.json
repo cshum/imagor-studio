@@ -699,7 +699,7 @@
       "selectFolder": "选择模板文件夹",
       "selectFolderDescription": "选择保存模板文件的位置",
       "nameRequired": "模板名称为必填项",
-      "saveSuccess": "模板保存成功",
+      "saveSuccess": "模板 \"{{name}}\" 保存成功",
       "saveError": "保存模板失败",
       "saving": "保存中...",
       "overwriteTitle": "覆盖模板？",

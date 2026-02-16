@@ -696,7 +696,7 @@
       "selectFolder": "選擇範本資料夾",
       "selectFolderDescription": "選擇儲存範本檔案的位置",
       "nameRequired": "範本名稱為必填項",
-      "saveSuccess": "範本儲存成功",
+      "saveSuccess": "範本 「{{name}}」 儲存成功",
       "saveError": "儲存範本失敗",
       "saving": "儲存中...",
       "overwriteTitle": "覆蓋範本？",

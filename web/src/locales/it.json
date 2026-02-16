@@ -693,7 +693,7 @@
       "selectFolder": "Seleziona Cartella Modello",
       "selectFolderDescription": "Scegli dove salvare il file del modello",
       "nameRequired": "Il nome del modello è obbligatorio",
-      "saveSuccess": "Modello salvato con successo",
+      "saveSuccess": "Modello \"{{name}}\" salvato con successo",
       "saveError": "Impossibile salvare il modello",
       "saving": "Salvataggio...",
       "overwriteTitle": "Sovrascrivere il modello?",
