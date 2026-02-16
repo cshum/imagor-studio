@@ -676,6 +676,7 @@
     },
     "template": {
       "saveTemplate": "Salva Modello",
+      "saveTemplateAs": "Salva modello come...",
       "saveDescription": "Salva le trasformazioni correnti come modello riutilizzabile",
       "templateName": "Nome Modello",
       "templateNamePlaceholder": "es. Instagram Quadrato, Miniatura Prodotto",

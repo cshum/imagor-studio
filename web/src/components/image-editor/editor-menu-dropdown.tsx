@@ -80,7 +80,7 @@ export function EditorMenuDropdown({
             }}
           >
             <FileDown className='mr-3 h-4 w-4' />
-            {t('imageEditor.template.saveTemplate')}
+            {t('imageEditor.template.saveTemplateAs')}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
         </>
@@ -103,7 +103,7 @@ export function EditorMenuDropdown({
             }}
           >
             <FileDown className='mr-3 h-4 w-4' />
-            {t('imageEditor.template.saveTemplate')}
+            {t('imageEditor.template.saveTemplateAs')}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
         </>

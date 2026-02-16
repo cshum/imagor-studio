@@ -854,7 +854,7 @@
     "template": {
       "editingTemplate": "Editing Template",
       "saveTemplate": "Save Template",
-      "saveAsTemplate": "Save As...",
+      "saveTemplateAs": "Save Template As...",
       "downloadImage": "Download Image",
       "saveDescription": "Save current transformations as a reusable template",
       "templateName": "Template Name",

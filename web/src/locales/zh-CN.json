@@ -682,6 +682,7 @@
     },
     "template": {
       "saveTemplate": "保存模板",
+      "saveTemplateAs": "另存为模板...",
       "saveDescription": "将当前变换保存为可重复使用的模板",
       "templateName": "模板名称",
       "templateNamePlaceholder": "例如：Instagram 方形、产品缩略图",

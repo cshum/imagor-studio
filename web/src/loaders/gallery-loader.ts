@@ -177,13 +177,24 @@ export const galleryLoader = async ({
   // Filter and convert image files (including templates)
   const images: GalleryImage[] = result.items
     .filter((item) => !item.isDirectory && item.thumbnailUrls)
-    .map((item) => ({
-      imageKey: item.name,
-      imageSrc: item.thumbnailUrls?.grid || '',
-      imageName: item.name,
-      isVideo: hasExtension(item.name, videoExtensions),
-      isTemplate: hasExtension(item.name, TEMPLATE_EXTENSION),
-    }))
+    .map((item) => {
+      const isTemplate = hasExtension(item.name, TEMPLATE_EXTENSION)
+      let imageSrc = item.thumbnailUrls?.grid || ''
+
+      // Add cache-busting parameter for template previews to ensure fresh previews after saves
+      if (isTemplate && imageSrc) {
+        const separator = imageSrc.includes('?') ? '&' : '?'
+        imageSrc = `${imageSrc}${separator}t=${Date.now()}`
+      }
+
+      return {
+        imageKey: item.name,
+        imageSrc,
+        imageName: item.name,
+        isVideo: hasExtension(item.name, videoExtensions),
+        isTemplate,
+      }
+    })
 
   // Get home title from the folder tree store
   const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
