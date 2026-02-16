@@ -296,6 +296,24 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   // Define handlers before hook
   const handleImageClick = (imageKey: string, position?: ImagePosition | null) => {
+    // Check if this is a template - if so, go straight to editor
+    const image = images.find((img) => img.imageKey === imageKey)
+    if (image?.isTemplate) {
+      // Navigate directly to editor for templates
+      if (galleryKey) {
+        return navigate({
+          to: '/gallery/$galleryKey/$imageKey/editor',
+          params: { galleryKey, imageKey },
+        })
+      } else {
+        return navigate({
+          to: '/$imageKey/editor',
+          params: { imageKey },
+        })
+      }
+    }
+
+    // For regular images and videos, open the viewer
     if (position) {
       setPosition(galleryKey, imageKey, position)
     }

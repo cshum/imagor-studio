@@ -584,7 +584,7 @@ export function ImageView({
                       <SquarePen size={20} />
                     </button>
                   )}
-                {!image.isVideo && (onPrevImage || onNextImage) && (
+                {!image.isVideo && !image.isTemplate && (onPrevImage || onNextImage) && (
                   <button
                     onClick={toggleSlideshow}
                     className='rounded-full bg-black/50 px-2.5 py-2 text-white transition-colors hover:bg-black/75'
