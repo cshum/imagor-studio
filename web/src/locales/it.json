@@ -10,6 +10,7 @@
     }
   },
   "common": {
+    "optional": "(facoltativo)",
     "buttons": {
       "save": "Salva",
       "cancel": "Annulla",
@@ -20,7 +21,8 @@
       "updateSettings": "Aggiorna Impostazioni",
       "close": "Chiudi",
       "more": "Altro",
-      "switchTheme": "Cambia Tema"
+      "switchTheme": "Cambia Tema",
+      "select": "Seleziona"
     },
     "navigation": {
       "title": "Imagor Studio",
@@ -669,6 +671,32 @@
       "leave": "Esci",
       "stay": "Rimani",
       "showHideControls": "Mostra/Nascondi Controlli"
+    },
+    "template": {
+      "saveTemplate": "Salva Modello",
+      "saveTemplateAs": "Salva modello come...",
+      "saveDescription": "Salva le trasformazioni correnti come modello riutilizzabile",
+      "templateName": "Nome Modello",
+      "templateNamePlaceholder": "es. Instagram Quadrato, Miniatura Prodotto",
+      "description": "Descrizione",
+      "descriptionPlaceholder": "Descrivi a cosa serve questo modello...",
+      "dimensionMode": "Modalità Dimensioni",
+      "flexible": "Dimensioni Flessibili",
+      "flexibleDescription": "Il modello si adatta alle dimensioni di ogni immagine",
+      "fixed": "Dimensioni Fisse",
+      "fixedDescription": "Blocca il modello a {{width}} × {{height}}",
+      "filenamePreview": "Il file verrà salvato come",
+      "saveLocation": "Posizione di Salvataggio",
+      "rootFolder": "Cartella Radice",
+      "selectFolder": "Seleziona Cartella Modello",
+      "selectFolderDescription": "Scegli dove salvare il file del modello",
+      "nameRequired": "Il nome del modello è obbligatorio",
+      "saveSuccess": "Modello \"{{name}}\" salvato con successo",
+      "saveError": "Impossibile salvare il modello",
+      "saving": "Salvataggio...",
+      "overwriteTitle": "Sovrascrivere il modello?",
+      "overwriteConfirm": "Esiste già un modello denominato \"{{name}}\". Vuoi sostituirlo?",
+      "overwrite": "Sovrascrivi"
     },
     "controls": {
       "cropAspect": "Ritaglia e Aspetto",

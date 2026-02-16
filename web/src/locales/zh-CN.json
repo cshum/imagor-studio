@@ -10,6 +10,7 @@
     }
   },
   "common": {
+    "optional": "（可选）",
     "buttons": {
       "save": "保存",
       "cancel": "取消",
@@ -20,7 +21,8 @@
       "updateSettings": "更新设置",
       "close": "关闭",
       "more": "更多",
-      "switchTheme": "切换主题"
+      "switchTheme": "切换主题",
+      "select": "选择"
     },
     "navigation": {
       "title": "Imagor Studio",
@@ -675,6 +677,32 @@
       "leave": "离开",
       "stay": "留下",
       "showHideControls": "显示/隐藏控制面板"
+    },
+    "template": {
+      "saveTemplate": "保存模板",
+      "saveTemplateAs": "另存为模板...",
+      "saveDescription": "将当前变换保存为可重复使用的模板",
+      "templateName": "模板名称",
+      "templateNamePlaceholder": "例如：Instagram 方形、产品缩略图",
+      "description": "描述",
+      "descriptionPlaceholder": "描述此模板的用途...",
+      "dimensionMode": "尺寸模式",
+      "flexible": "灵活尺寸",
+      "flexibleDescription": "模板适应每张图片的尺寸",
+      "fixed": "固定尺寸",
+      "fixedDescription": "将模板锁定为 {{width}} × {{height}}",
+      "filenamePreview": "文件将保存为",
+      "saveLocation": "保存位置",
+      "rootFolder": "根文件夹",
+      "selectFolder": "选择模板文件夹",
+      "selectFolderDescription": "选择保存模板文件的位置",
+      "nameRequired": "模板名称为必填项",
+      "saveSuccess": "模板 \"{{name}}\" 保存成功",
+      "saveError": "保存模板失败",
+      "saving": "保存中...",
+      "overwriteTitle": "覆盖模板？",
+      "overwriteConfirm": "已存在名为\"{{name}}\"的模板。是否要替换它？",
+      "overwrite": "覆盖"
     },
     "controls": {
       "cropAspect": "裁剪和比例",

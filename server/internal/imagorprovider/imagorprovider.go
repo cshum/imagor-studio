@@ -102,6 +102,13 @@ func (p *Provider) GetHandler() http.Handler {
 	return nil
 }
 
+// GetInstance returns the imagor instance for embedded mode (nil for external)
+func (p *Provider) GetInstance() *imagor.Imagor {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+	return p.imagorInstance
+}
+
 // Initialize initializes imagor using registry and provider configuration
 func (p *Provider) Initialize() error {
 	p.mutex.Lock()

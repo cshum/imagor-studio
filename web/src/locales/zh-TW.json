@@ -10,6 +10,7 @@
     }
   },
   "common": {
+    "optional": "（可選）",
     "buttons": {
       "save": "儲存",
       "cancel": "取消",
@@ -20,7 +21,8 @@
       "updateSettings": "更新設定",
       "close": "關閉",
       "more": "更多",
-      "switchTheme": "切換主題"
+      "switchTheme": "切換主題",
+      "select": "選擇"
     },
     "navigation": {
       "title": "Imagor Studio",
@@ -672,6 +674,32 @@
       "leave": "離開",
       "stay": "留下",
       "showHideControls": "顯示/隱藏控制面板"
+    },
+    "template": {
+      "saveTemplate": "儲存範本",
+      "saveTemplateAs": "另存為範本...",
+      "saveDescription": "將當前變換儲存為可重複使用的範本",
+      "templateName": "範本名稱",
+      "templateNamePlaceholder": "例如：Instagram 方形、產品縮圖",
+      "description": "描述",
+      "descriptionPlaceholder": "描述此範本的用途...",
+      "dimensionMode": "尺寸模式",
+      "flexible": "靈活尺寸",
+      "flexibleDescription": "範本適應每張圖片的尺寸",
+      "fixed": "固定尺寸",
+      "fixedDescription": "將範本鎖定為 {{width}} × {{height}}",
+      "filenamePreview": "檔案將儲存為",
+      "saveLocation": "儲存位置",
+      "rootFolder": "根資料夾",
+      "selectFolder": "選擇範本資料夾",
+      "selectFolderDescription": "選擇儲存範本檔案的位置",
+      "nameRequired": "範本名稱為必填項",
+      "saveSuccess": "範本 「{{name}}」 儲存成功",
+      "saveError": "儲存範本失敗",
+      "saving": "儲存中...",
+      "overwriteTitle": "覆蓋範本？",
+      "overwriteConfirm": "已存在名為「{{name}}」的範本。是否要取代它？",
+      "overwrite": "覆蓋"
     },
     "controls": {
       "cropAspect": "裁剪和比例",

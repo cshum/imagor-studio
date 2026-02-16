@@ -1,5 +1,5 @@
 import React, { RefObject, useEffect, useRef, useState } from 'react'
-import { Check, MoreVertical, Play } from 'lucide-react'
+import { Check, FileText, MoreVertical, Play } from 'lucide-react'
 
 import { GalleryImage, Position } from '@/components/image-gallery/image-view.tsx'
 import {
@@ -207,6 +207,11 @@ const ImageCell = ({
         {image.isVideo && (
           <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/60 p-3 opacity-80 transition-opacity'>
             <Play className='h-6 w-6 fill-white text-white' />
+          </div>
+        )}
+        {image.isTemplate && (
+          <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/60 p-3 opacity-90 transition-opacity'>
+            <FileText className='h-6 w-6 text-white' />
           </div>
         )}
         {showFileName && (

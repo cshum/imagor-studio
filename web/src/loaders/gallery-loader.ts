@@ -33,6 +33,7 @@ export interface ImageLoaderData {
 export const DEFAULT_IMAGE_EXTENSIONS =
   '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2'
 export const DEFAULT_VIDEO_EXTENSIONS = '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg'
+export const TEMPLATE_EXTENSION = '.imagor.json'
 /**
  * Gallery loader using imagor for thumbnail generation
  * Loads images and folders from storage API with imagor-generated thumbnails
@@ -113,8 +114,8 @@ export const galleryLoader = async ({
     imageExtensions = imageExtensionsEntry?.value || DEFAULT_IMAGE_EXTENSIONS
     videoExtensions = videoExtensionsEntry?.value || DEFAULT_VIDEO_EXTENSIONS
 
-    // Combine image and video extensions
-    extensionsString = `${imageExtensions},${videoExtensions}`
+    // Combine image, video, and template extensions
+    extensionsString = `${imageExtensions},${videoExtensions},${TEMPLATE_EXTENSION}`
 
     const showHiddenEntry = systemRegistryResult.find((r) => r.key === 'config.app_show_hidden')
     showHidden = showHiddenEntry?.value === 'true'
@@ -173,15 +174,27 @@ export const galleryLoader = async ({
   // Update folder tree store with fresh data while preserving toggle states
   updateTreeData(path, folderNodes)
 
-  // Filter and convert image files
+  // Filter and convert image files (including templates)
   const images: GalleryImage[] = result.items
     .filter((item) => !item.isDirectory && item.thumbnailUrls)
-    .map((item) => ({
-      imageKey: item.name,
-      imageSrc: item.thumbnailUrls?.grid || '',
-      imageName: item.name,
-      isVideo: hasExtension(item.name, videoExtensions),
-    }))
+    .map((item) => {
+      const isTemplate = hasExtension(item.name, TEMPLATE_EXTENSION)
+      let imageSrc = item.thumbnailUrls?.grid || ''
+
+      // Add cache-busting parameter for template previews to ensure fresh previews after saves
+      if (isTemplate && imageSrc) {
+        const separator = imageSrc.includes('?') ? '&' : '?'
+        imageSrc = `${imageSrc}${separator}t=${Date.now()}`
+      }
+
+      return {
+        imageKey: item.name,
+        imageSrc,
+        imageName: item.name,
+        isVideo: hasExtension(item.name, videoExtensions),
+        isTemplate,
+      }
+    })
 
   // Get home title from the folder tree store
   const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)

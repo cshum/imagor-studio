@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Image, Layers } from 'lucide-react'
+import { ChevronDown, ChevronRight, FileText, Image, Layers } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -14,12 +14,16 @@ interface LayerBreadcrumbProps {
   imageEditor: ImageEditor
   className?: string
   isMobile?: boolean
+  baseLabel?: React.ReactNode
+  baseName?: string
 }
 
 export function LayerBreadcrumb({
   imageEditor,
   className,
   isMobile = false,
+  baseLabel,
+  baseName,
 }: LayerBreadcrumbProps) {
   const contextPath = imageEditor.getContextPath()
   const allLayers = imageEditor.getBaseLayers()
@@ -28,12 +32,18 @@ export function LayerBreadcrumb({
   const imagePath = imageEditor.getBaseImagePath()
   const baseImageName = imagePath.split('/').pop() || imagePath
 
+  // Use baseName if provided, otherwise use the image filename
+  const displayBaseName = baseName || baseImageName
+
+  // Determine if this is a template (baseName is provided)
+  const isTemplate = !!baseName
+
   // Build breadcrumb items by traversing the layer tree
   const breadcrumbItems: Array<{ id: string | null; name: string; icon: typeof Image }> = [
     {
       id: null,
-      name: baseImageName,
-      icon: Image,
+      name: displayBaseName,
+      icon: isTemplate ? FileText : Image,
     },
   ]
 
@@ -63,6 +73,11 @@ export function LayerBreadcrumb({
 
   // If at base level, show simple non-interactive breadcrumb
   if (isAtBase) {
+    // If baseLabel is provided, use it; otherwise show the base image name
+    if (baseLabel) {
+      return <div className={cn('flex items-center px-2', className)}>{baseLabel}</div>
+    }
+
     return (
       <div className={cn('text-muted-foreground flex items-center px-2', className)}>
         <span

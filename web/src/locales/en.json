@@ -10,6 +10,7 @@
     }
   },
   "common": {
+    "optional": "(optional)",
     "buttons": {
       "save": "Save",
       "cancel": "Cancel",
@@ -20,7 +21,8 @@
       "updateSettings": "Update Settings",
       "close": "Close",
       "more": "More",
-      "switchTheme": "Switch Theme"
+      "switchTheme": "Switch Theme",
+      "select": "Select"
     },
     "language": {
       "title": "Language",
@@ -848,6 +850,29 @@
         "lighten": "Show lighter areas",
         "mask": "Transparency mask"
       }
+    },
+    "template": {
+      "editingTemplate": "Editing Template",
+      "saveTemplate": "Save Template",
+      "saveTemplateAs": "Save Template As...",
+      "downloadImage": "Download Image",
+      "saveDescription": "Save current transformations as a reusable template",
+      "templateName": "Template Name",
+      "templateNamePlaceholder": "e.g., Instagram Square, Product Thumbnail",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe what this template does...",
+      "filenamePreview": "File will be saved as",
+      "saveLocation": "Save Location",
+      "rootFolder": "Root Folder",
+      "selectFolder": "Select Template Folder",
+      "selectFolderDescription": "Choose where to save the template file",
+      "nameRequired": "Template name is required",
+      "saveSuccess": "Template \"{{name}}\" saved successfully",
+      "saveError": "Failed to save template",
+      "saving": "Saving...",
+      "overwriteTitle": "Overwrite Template?",
+      "overwriteConfirm": "A template named \"{{name}}\" already exists. Do you want to replace it?",
+      "overwrite": "Overwrite"
     }
   }
 }

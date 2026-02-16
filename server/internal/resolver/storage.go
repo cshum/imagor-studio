@@ -20,6 +20,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// getPreviewPath returns the preview image path for a template file.
+// Returns empty string if the path is not a template file.
+func getPreviewPath(templatePath string) string {
+	if !strings.HasSuffix(templatePath, ".imagor.json") {
+		return ""
+	}
+	return strings.TrimSuffix(templatePath, ".imagor.json") + ".imagor.preview"
+}
+
 // UploadFile is the resolver for the uploadFile field.
 func (r *mutationResolver) UploadFile(ctx context.Context, path string, content graphql.Upload) (bool, error) {
 	// Check write permissions and path access
@@ -45,9 +54,22 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, path string) (bool, e
 
 	r.logger.Debug("Deleting file", zap.String("path", path))
 
+	// Delete the main file
 	if err := r.getStorage().Delete(ctx, path); err != nil {
 		r.logger.Error("Failed to delete file", zap.Error(err))
 		return false, fmt.Errorf("failed to delete file: %w", err)
+	}
+
+	// If it's a template file, also delete the preview image
+	if previewPath := getPreviewPath(path); previewPath != "" {
+		// Check if preview exists before attempting to delete
+		if _, err := r.getStorage().Stat(ctx, previewPath); err == nil {
+			r.logger.Debug("Deleting template preview", zap.String("path", previewPath))
+			if err := r.getStorage().Delete(ctx, previewPath); err != nil {
+				// Log warning but don't fail the operation
+				r.logger.Warn("Failed to delete template preview", zap.String("path", previewPath), zap.Error(err))
+			}
+		}
 	}
 
 	return true, nil
@@ -113,6 +135,7 @@ func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, dest
 
 	r.logger.Debug("Moving file", zap.String("sourcePath", sourcePath), zap.String("destPath", destPath))
 
+	// Move the main file
 	if err := r.getStorage().Move(ctx, sourcePath, destPath); err != nil {
 		r.logger.Error("Failed to move file", zap.Error(err))
 
@@ -127,6 +150,25 @@ func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, dest
 		}
 
 		return false, fmt.Errorf("failed to move file: %w", err)
+	}
+
+	// If it's a template file, also move the preview image
+	if sourcePreviewPath := getPreviewPath(sourcePath); sourcePreviewPath != "" {
+		// Check if preview exists before attempting to move
+		if _, err := r.getStorage().Stat(ctx, sourcePreviewPath); err == nil {
+			destPreviewPath := getPreviewPath(destPath)
+			r.logger.Debug("Moving template preview",
+				zap.String("source", sourcePreviewPath),
+				zap.String("dest", destPreviewPath))
+
+			if err := r.getStorage().Move(ctx, sourcePreviewPath, destPreviewPath); err != nil {
+				// Log warning but don't fail the operation
+				r.logger.Warn("Failed to move template preview",
+					zap.String("source", sourcePreviewPath),
+					zap.String("dest", destPreviewPath),
+					zap.Error(err))
+			}
+		}
 	}
 
 	return true, nil

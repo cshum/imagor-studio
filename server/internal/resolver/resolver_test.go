@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 
+	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
@@ -221,6 +222,14 @@ func (m *MockImagorProvider) GetConfig() *imagorprovider.ImagorConfig {
 		return nil
 	}
 	return args.Get(0).(*imagorprovider.ImagorConfig)
+}
+
+func (m *MockImagorProvider) GetInstance() *imagor.Imagor {
+	args := m.Called()
+	if args.Get(0) == nil {
+		return nil
+	}
+	return args.Get(0).(*imagor.Imagor)
 }
 
 func (m *MockImagorProvider) IsRestartRequired() bool {

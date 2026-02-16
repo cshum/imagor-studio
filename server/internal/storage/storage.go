@@ -60,14 +60,20 @@ type Storage interface {
 // Helper functions for common filtering logic
 
 // MatchesExtensions checks if a filename matches any of the provided extensions
+// Supports both simple extensions (.jpg) and compound extensions (.imagor.json, .tar.gz)
 func MatchesExtensions(filename string, extensions []string) bool {
 	if len(extensions) == 0 {
 		return true // No filter means match all
 	}
 
+	lowerFilename := strings.ToLower(filename)
 	fileExt := strings.ToLower(filepath.Ext(filename))
+
 	for _, ext := range extensions {
-		if strings.ToLower(strings.TrimSpace(ext)) == fileExt {
+		ext = strings.ToLower(strings.TrimSpace(ext))
+		// Check both exact extension match (for simple extensions like .jpg)
+		// and suffix match (for compound extensions like .imagor.json)
+		if ext == fileExt || strings.HasSuffix(lowerFilename, ext) {
 			return true
 		}
 	}

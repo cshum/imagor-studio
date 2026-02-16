@@ -13,6 +13,8 @@ import type {
   ListFilesQueryVariables,
   MoveFileMutation,
   MoveFileMutationVariables,
+  SaveTemplateMutation,
+  SaveTemplateMutationVariables,
   SortOption,
   SortOrder,
   StatFileQuery,
@@ -199,4 +201,15 @@ export async function moveFile(
   const variables: MoveFileMutationVariables = { sourcePath, destPath }
   const result = await sdk.MoveFile(variables)
   return result.moveFile
+}
+
+/**
+ * Save a template to the .templates folder
+ */
+export async function saveTemplate(
+  variables: SaveTemplateMutationVariables,
+): Promise<SaveTemplateMutation['saveTemplate']> {
+  const sdk = getSdk(getGraphQLClient())
+  const result = await sdk.SaveTemplate(variables)
+  return result.saveTemplate
 }

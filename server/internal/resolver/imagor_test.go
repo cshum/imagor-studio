@@ -660,6 +660,94 @@ func TestGenerateThumbnailUrls_WithSvgAndPdf(t *testing.T) {
 	}
 }
 
+func TestGenerateThumbnailUrls_TemplateFile(t *testing.T) {
+	mockImagorProvider := new(MockImagorProvider)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+
+	resolver := NewResolver(
+		mockStorageProvider,
+		mockRegistryStore,
+		mockUserStore,
+		mockImagorProvider,
+		cfg,
+		nil,
+		logger,
+	)
+
+	templatePath := "test.imagor.json"
+	previewPath := "test.imagor.preview"
+
+	// Mock preview URLs (grid, preview, full, original, meta)
+	mockImagorProvider.On("GenerateURL", previewPath, imagorpath.Params{
+		Width:  300,
+		Height: 225,
+		Filters: imagorpath.Filters{
+			{Name: "quality", Args: "80"},
+			{Name: "format", Args: "webp"},
+		},
+	}).Return("/imagor/300x225/filters:quality(80):format(webp)/test.imagor.preview", nil)
+
+	mockImagorProvider.On("GenerateURL", previewPath, imagorpath.Params{
+		Width:  1200,
+		Height: 900,
+		FitIn:  true,
+		Filters: imagorpath.Filters{
+			{Name: "quality", Args: "90"},
+			{Name: "format", Args: "webp"},
+		},
+	}).Return("/imagor/fit-in/1200x900/filters:quality(90):format(webp)/test.imagor.preview", nil)
+
+	mockImagorProvider.On("GenerateURL", previewPath, imagorpath.Params{
+		Width:  2400,
+		Height: 1800,
+		FitIn:  true,
+		Filters: imagorpath.Filters{
+			{Name: "quality", Args: "95"},
+			{Name: "format", Args: "webp"},
+		},
+	}).Return("/imagor/fit-in/2400x1800/filters:quality(95):format(webp)/test.imagor.preview", nil)
+
+	mockImagorProvider.On("GenerateURL", previewPath, imagorpath.Params{
+		Filters: imagorpath.Filters{{Name: "raw"}},
+	}).Return("/imagor/filters:raw()/test.imagor.preview", nil)
+
+	mockImagorProvider.On("GenerateURL", previewPath, imagorpath.Params{
+		Meta: true,
+	}).Return("/imagor/meta/test.imagor.preview", nil)
+
+	// Mock JSON URL - this should override the preview's original URL
+	mockImagorProvider.On("GenerateURL", templatePath, imagorpath.Params{
+		Filters: imagorpath.Filters{{Name: "raw"}},
+	}).Return("/imagor/filters:raw()/test.imagor.json", nil)
+
+	// Execute
+	result := resolver.generateThumbnailUrls(templatePath, "first_frame")
+
+	// Assert
+	require.NotNil(t, result)
+	assert.NotNil(t, result.Grid)
+	assert.NotNil(t, result.Preview)
+	assert.NotNil(t, result.Full)
+	assert.NotNil(t, result.Meta)
+
+	// CRITICAL: Original should point to JSON, not preview
+	assert.NotNil(t, result.Original)
+	assert.Equal(t, "/imagor/filters:raw()/test.imagor.json", *result.Original,
+		"Original URL should point to JSON file for templates")
+
+	// Grid, Preview, Full should point to preview image
+	assert.Contains(t, *result.Grid, "test.imagor.preview")
+	assert.Contains(t, *result.Preview, "test.imagor.preview")
+	assert.Contains(t, *result.Full, "test.imagor.preview")
+
+	mockImagorProvider.AssertExpectations(t)
+}
+
 // Helper function for creating float pointers (intPtr and stringPtr already exist in resolver_test.go)
 func floatPtr(f float64) *float64 {
 	return &f

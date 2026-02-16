@@ -1,6 +1,7 @@
 package resolver
 
 import (
+	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
@@ -27,6 +28,7 @@ type StorageProvider interface {
 // ImagorProvider interface for imagor operations
 type ImagorProvider interface {
 	GetConfig() *imagorprovider.ImagorConfig
+	GetInstance() *imagor.Imagor
 	IsRestartRequired() bool
 	ReloadFromRegistry() error
 	GenerateURL(imagePath string, params imagorpath.Params) (string, error)

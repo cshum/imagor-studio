@@ -146,3 +146,14 @@ export const TEST_STORAGE_CONFIG = gql(`
     }
   }
 `)
+
+export const SAVE_TEMPLATE = gql(`
+  mutation SaveTemplate($input: SaveTemplateInput!) {
+    saveTemplate(input: $input) {
+      success
+      templatePath
+      previewPath
+      message
+    }
+  }
+`)

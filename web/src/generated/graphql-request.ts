@@ -35,6 +35,8 @@ export type CreateUserInput = {
   username: Scalars['String']['input']
 }
 
+export type DimensionMode = 'ADAPTIVE' | 'PREDEFINED'
+
 export type ExternalImagorConfig = {
   __typename?: 'ExternalImagorConfig'
   baseUrl: Scalars['String']['output']
@@ -170,6 +172,7 @@ export type Mutation = {
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
   moveFile: Scalars['Boolean']['output']
+  saveTemplate: TemplateResult
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
@@ -234,6 +237,10 @@ export type MutationGenerateImagorUrlArgs = {
 export type MutationMoveFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
+}
+
+export type MutationSaveTemplateArgs = {
+  input: SaveTemplateInput
 }
 
 export type MutationSetSystemRegistryArgs = {
@@ -348,6 +355,17 @@ export type S3StorageInput = {
   sessionToken: InputMaybe<Scalars['String']['input']>
 }
 
+export type SaveTemplateInput = {
+  description: InputMaybe<Scalars['String']['input']>
+  dimensionMode: DimensionMode
+  name: Scalars['String']['input']
+  overwrite: InputMaybe<Scalars['Boolean']['input']>
+  previewParams: InputMaybe<ImagorParamsInput>
+  savePath: Scalars['String']['input']
+  sourceImagePath: Scalars['String']['input']
+  templateJson: Scalars['String']['input']
+}
+
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
 
 export type SortOrder = 'ASC' | 'DESC'
@@ -392,6 +410,14 @@ export type SystemRegistry = {
   isOverriddenByConfig: Scalars['Boolean']['output']
   key: Scalars['String']['output']
   value: Scalars['String']['output']
+}
+
+export type TemplateResult = {
+  __typename?: 'TemplateResult'
+  message: Maybe<Scalars['String']['output']>
+  previewPath: Maybe<Scalars['String']['output']>
+  success: Scalars['Boolean']['output']
+  templatePath: Scalars['String']['output']
 }
 
 export type ThumbnailUrls = {
@@ -796,6 +822,21 @@ export type TestStorageConfigMutation = {
   }
 }
 
+export type SaveTemplateMutationVariables = Exact<{
+  input: SaveTemplateInput
+}>
+
+export type SaveTemplateMutation = {
+  __typename?: 'Mutation'
+  saveTemplate: {
+    __typename?: 'TemplateResult'
+    success: boolean
+    templatePath: string
+    previewPath: string | null
+    message: string | null
+  }
+}
+
 export type UserInfoFragment = {
   __typename?: 'User'
   id: string
@@ -1192,6 +1233,16 @@ export const TestStorageConfigDocument = gql`
       success
       message
       details
+    }
+  }
+`
+export const SaveTemplateDocument = gql`
+  mutation SaveTemplate($input: SaveTemplateInput!) {
+    saveTemplate(input: $input) {
+      success
+      templatePath
+      previewPath
+      message
     }
   }
 `
@@ -1689,6 +1740,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'TestStorageConfig',
+        'mutation',
+        variables,
+      )
+    },
+    SaveTemplate(
+      variables: SaveTemplateMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<SaveTemplateMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<SaveTemplateMutation>({
+            document: SaveTemplateDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'SaveTemplate',
         'mutation',
         variables,
       )

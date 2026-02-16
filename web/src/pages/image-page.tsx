@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { FocusScope } from '@radix-ui/react-focus-scope'
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 
@@ -26,17 +26,34 @@ export function ImagePage({
   const { isLoading } = useRouterState()
   const { images } = galleryLoaderData
   const { image, imageElement } = imageLoaderData
-  const imageIndex = images.findIndex((img) => img.imageKey === imageKey)
+
+  const { navigationImages, slideshowImages } = useMemo(() => {
+    const navigationImages: GalleryImage[] = []
+    const slideshowImages: GalleryImage[] = []
+    for (const img of images) {
+      if (!img.isTemplate) {
+        navigationImages.push(img) // Images + Videos (exclude templates)
+        if (!img.isVideo) {
+          slideshowImages.push(img) // Only images (exclude videos + templates)
+        }
+      }
+    }
+    return { navigationImages, slideshowImages }
+  }, [images])
+
+  const imageIndex = navigationImages.findIndex((img) => img.imageKey === imageKey)
 
   // Slideshow state management
   const [isSlideshow, setIsSlideshow] = useState(false)
 
   const handlePrevImage =
-    images && imageIndex > 0 ? () => handleImageClick(images[imageIndex - 1]) : undefined
+    navigationImages && imageIndex > 0
+      ? () => handleImageClick(navigationImages[imageIndex - 1])
+      : undefined
 
   const handleNextImage =
-    images && imageIndex < images.length - 1
-      ? () => handleImageClick(images[imageIndex + 1])
+    navigationImages && imageIndex < navigationImages.length - 1
+      ? () => handleImageClick(navigationImages[imageIndex + 1])
       : undefined
 
   const handleImageClick = ({ imageKey }: GalleryImage) => {
@@ -77,12 +94,22 @@ export function ImagePage({
     setIsSlideshow(slideshow)
   }
 
-  // Slideshow timer logic
+  // Slideshow timer logic - only auto-advance through images (skip videos)
   useEffect(() => {
     if (isSlideshow) {
-      const currentIndex = images.findIndex((img) => img.imageKey === imageKey)
-      const nextIndex = (currentIndex + 1) % images.length
-      const nextImage = images[nextIndex]
+      // Safety check: need at least 2 images for slideshow
+      if (slideshowImages.length < 2) {
+        return
+      }
+
+      const currentIndex = slideshowImages.findIndex((img) => img.imageKey === imageKey)
+      const nextIndex = (currentIndex + 1) % slideshowImages.length
+      const nextImage = slideshowImages[nextIndex]
+
+      // Safety check: if next image is the same as current, skip timer
+      if (nextImage.imageKey === imageKey) {
+        return
+      }
 
       // Preload next route immediately when timer starts
       try {
@@ -112,7 +139,7 @@ export function ImagePage({
 
       return () => clearTimeout(timer)
     }
-  }, [imageKey, isSlideshow, images, router, galleryKey, navigate])
+  }, [imageKey, isSlideshow, slideshowImages, router, galleryKey, navigate])
 
   return (
     <>

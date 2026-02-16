@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   closestCenter,
@@ -12,25 +12,21 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import {
-  Check,
   ChevronDown,
   ChevronLeft,
   ChevronUp,
-  Copy,
   Download,
-  Eye,
   FileImage,
+  FileText,
   Frame,
   GripVertical,
-  Languages,
   Layers,
   Maximize2,
   MoreVertical,
   Palette,
   Redo2,
-  RotateCcw,
   RotateCw,
   Scissors,
   Undo2,
@@ -43,34 +39,24 @@ import { DimensionControl } from '@/components/image-editor/controls/dimension-c
 import { FillPaddingControl } from '@/components/image-editor/controls/fill-padding-control.tsx'
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
+import { EditorMenuDropdown } from '@/components/image-editor/editor-menu-dropdown'
 import { ImageEditorControls } from '@/components/image-editor/imagor-editor-controls.tsx'
 import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb.tsx'
 import { LayerPanel } from '@/components/image-editor/layer-panel'
 import { PreviewArea } from '@/components/image-editor/preview-area'
+import { SaveTemplateDialog } from '@/components/image-editor/save-template-dialog'
 import { LoadingBar } from '@/components/loading-bar'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import { ConfirmNavigationDialog } from '@/components/ui/confirm-navigation-dialog'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
-import { availableLanguages } from '@/i18n'
 import {
   EditorOpenSectionsStorage,
-  SECTION_KEYS,
   type EditorOpenSections,
   type SectionKey,
 } from '@/lib/editor-open-sections-storage'
@@ -81,6 +67,7 @@ import {
   updateLocationState,
 } from '@/lib/editor-state-url'
 import { type ImageEditorState } from '@/lib/image-editor.ts'
+import { splitImagePath } from '@/lib/path-utils'
 import { cn, debounce } from '@/lib/utils.ts'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 import { useAuth } from '@/stores/auth-store'
@@ -88,19 +75,21 @@ import { setLocale } from '@/stores/locale-store'
 
 interface ImageEditorPageProps {
   galleryKey: string
-  imageKey: string
   loaderData: ImageEditorLoaderData
 }
 
-export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
-  const { imageEditor, imagePath, initialEditorOpenSections } = loaderData
+export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps) {
+  const { imageEditor, imagePath, initialEditorOpenSections, isTemplate, templateMetadata } =
+    loaderData
 
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const navigate = useNavigate()
+  const router = useRouter()
   const { authState } = useAuth()
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
   const [copyUrl, setCopyUrl] = useState('')
+  const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false)
   const [editorOpenSections, setEditorOpenSections] =
     useState<EditorOpenSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -147,7 +136,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     width: number
     height: number
   } | null>(null)
-  const [resetCounter, setResetCounter] = useState(0)
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
@@ -155,12 +143,16 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   const [editingContext, setEditingContext] = useState<string | null>(null)
   const [layerAspectRatioLockToggle, setLayerAspectRatioLockToggle] = useState(true)
   const [isShiftPressed, setIsShiftPressed] = useState(false)
+  const isSavedRef = useRef(false)
 
   // Drag and drop state for desktop
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  // Unsaved changes warning hook
-  const { showDialog, handleConfirm, handleCancel } = useUnsavedChangesWarning(canUndo)
+  // Unsaved changes warning hook (skip if template was just saved)
+  // Pass a function so it checks the ref value at navigation time, not render time
+  const { showDialog, handleConfirm, handleCancel } = useUnsavedChangesWarning(
+    () => canUndo && !isSavedRef.current,
+  )
 
   // Derive visualCropEnabled from params state (single source of truth)
   const visualCropEnabled = params.visualCropEnabled ?? false
@@ -178,13 +170,19 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
   }, [selectedLayerId])
 
   useEffect(() => {
-    // Initialize editor FIRST (this resets state to defaults)
+    // Save current state before initialize (only if it's a template)
+    const savedState = isTemplate ? imageEditor.getState() : null
+
+    // Initialize editor (this resets state to defaults)
     imageEditor.initialize({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
       onStateChange: setParams,
       onLoadingChange: setIsLoading,
       onHistoryChange: () => {
+        // Reset saved flag when user makes changes after save
+        isSavedRef.current = false
+
         // Update undo/redo button states
         setCanUndo(imageEditor.canUndo())
         setCanRedo(imageEditor.canRedo())
@@ -198,19 +196,22 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       onEditingContextChange: setEditingContext,
     })
 
-    // restore state from URL, after callbacks are set
+    // Restore state from URL first (if exists)
     const encoded = getStateFromLocation()
     if (encoded) {
       const urlState = deserializeStateFromUrl(encoded)
       if (urlState) {
         imageEditor.restoreState(urlState)
       }
+    } else if (savedState) {
+      // No URL state, but we have template state from loader - restore it
+      imageEditor.restoreState(savedState)
     }
 
     return () => {
       imageEditor.destroy()
     }
-  }, [imageEditor])
+  }, [imageEditor, isTemplate])
 
   // Update preview dimensions dynamically when they change
   useEffect(() => {
@@ -281,18 +282,12 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [imageEditor])
 
-  const updateParams = (updates: Partial<ImageEditorState>) => {
-    imageEditor.updateParams(updates)
-  }
-
-  const resetParams = () => {
-    imageEditor.resetParams()
-
-    // Reset crop aspect ratio to free-form
-    setCropAspectRatio(null)
-
-    setResetCounter((prev) => prev + 1)
-  }
+  const updateParams = useCallback(
+    (updates: Partial<ImageEditorState>) => {
+      imageEditor.updateParams(updates)
+    },
+    [imageEditor],
+  )
 
   const getCopyUrl = async () => {
     return await imageEditor.getCopyUrl()
@@ -302,10 +297,10 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     return await imageEditor.handleDownload()
   }
 
-  const handleBack = () => {
+  const handleBack = async () => {
     // Priority 1: Exit crop mode if active
     if (visualCropEnabled) {
-      imageEditor.setVisualCropEnabled(false)
+      await imageEditor.setVisualCropEnabled(false)
       return
     }
 
@@ -316,16 +311,16 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       return
     }
 
-    // Priority 3: Navigate back to image view
+    // Priority 3: Navigate back to gallery
+    await router.invalidate()
     if (galleryKey) {
-      navigate({
-        to: '/gallery/$galleryKey/$imageKey',
-        params: { galleryKey, imageKey },
+      await navigate({
+        to: '/gallery/$galleryKey',
+        params: { galleryKey },
       })
     } else {
-      navigate({
-        to: '/$imageKey',
-        params: { imageKey },
+      await navigate({
+        to: '/',
       })
     }
   }
@@ -344,24 +339,73 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
     // No success toast for download as it's obvious when it works
   }
 
-  const handleVisualCropToggle = async (enabled: boolean) => {
-    // Update ImageEditor to control crop filter in preview
-    // This will update the state and wait for the new preview to load
-    await imageEditor.setVisualCropEnabled(enabled)
+  const handleSaveTemplateClick = async () => {
+    // Direct save for existing templates (no dialog)
+    if (!templateMetadata) return
 
-    // Initialize crop dimensions if enabling for the first time
-    if (enabled && !params.cropLeft && !params.cropTop && !params.cropWidth && !params.cropHeight) {
-      // Crop works on original dimensions (before resize)
-      // Set initial crop to full original dimensions (100%)
-      const dims = imageEditor.getOriginalDimensions()
-      updateParams({
-        cropLeft: 0,
-        cropTop: 0,
-        cropWidth: dims.width,
-        cropHeight: dims.height,
-      })
+    try {
+      const dimensions = imageEditor.getOriginalDimensions()
+      const currentState = imageEditor.getState()
+
+      // Auto-detect dimension mode
+      const dimensionMode: 'adaptive' | 'predefined' =
+        currentState.width &&
+        currentState.height &&
+        (currentState.width !== dimensions.width || currentState.height !== dimensions.height)
+          ? 'predefined'
+          : 'adaptive'
+
+      const { galleryKey } = splitImagePath(templateMetadata.templatePath)
+
+      await imageEditor.exportTemplate(
+        templateMetadata.name,
+        undefined,
+        dimensionMode,
+        galleryKey || '',
+        true, // overwrite = true for direct save
+      )
+
+      // Mark as saved to skip unsaved changes warning
+      isSavedRef.current = true
+
+      // Show success toast with template name
+      toast.success(t('imageEditor.template.saveSuccess', { name: templateMetadata.name }))
+
+      // Invalidate gallery cache to refresh preview on navigation back
+      await router.invalidate()
+    } catch (error) {
+      console.error('Failed to save template:', error)
+      toast.error(t('imageEditor.template.saveError'))
     }
   }
+
+  const handleVisualCropToggle = useCallback(
+    async (enabled: boolean) => {
+      // Update ImageEditor to control crop filter in preview
+      // This will update the state and wait for the new preview to load
+      await imageEditor.setVisualCropEnabled(enabled)
+
+      // Initialize crop dimensions if enabling for the first time
+      if (
+        enabled &&
+        !params.cropLeft &&
+        !params.cropTop &&
+        !params.cropWidth &&
+        !params.cropHeight
+      ) {
+        // Crop works on original dimensions (before resize)
+        // Set initial crop to full original dimensions (100%)
+        const dims = imageEditor.getOriginalDimensions()
+        imageEditor.updateParams({
+          cropLeft: 0,
+          cropTop: 0,
+          cropWidth: dims.width,
+          cropHeight: dims.height,
+        })
+      }
+    },
+    [imageEditor, params.cropHeight, params.cropLeft, params.cropTop, params.cropWidth],
+  )
 
   const handlePreviewLoad = () => {
     setIsLoading(false)
@@ -633,7 +677,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             </a>
           </div>
 
-          {/* Theme Toggle + Undo/Redo + Download & Three-dot Menu (grouped) */}
+          {/* Theme Toggle + Undo/Redo + Primary Action & Three-dot Menu (grouped) */}
           <div className='ml-auto flex items-center gap-2'>
             <ModeToggle />
             <Button
@@ -655,94 +699,66 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               <Redo2 className='h-4 w-4' />
             </Button>
             <div className='inline-flex items-center rounded-md'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={handleDownloadClick}
-                className='rounded-r-none border-r-0'
-              >
-                <Download className='mr-1 h-4 w-4' />
-                {t('imageEditor.page.download')}
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant='outline' size='sm' className='rounded-l-none px-2'>
-                    <MoreVertical className='h-4 w-4' />
+              {isTemplate ? (
+                <>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={handleSaveTemplateClick}
+                    className='rounded-r-none border-r-0'
+                  >
+                    <FileText className='mr-1 h-4 w-4' />
+                    {t('imageEditor.template.saveTemplate')}
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-56'>
-                  <DropdownMenuItem onClick={handleDownloadClick}>
-                    <Download className='mr-3 h-4 w-4' />
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant='outline' size='sm' className='rounded-l-none px-2'>
+                        <MoreVertical className='h-4 w-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <EditorMenuDropdown
+                      onDownload={handleDownloadClick}
+                      onCopyUrl={handleCopyUrlClick}
+                      onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                      onLanguageChange={handleLanguageChange}
+                      onToggleSectionVisibility={handleToggleSectionVisibility}
+                      editorOpenSections={editorOpenSections}
+                      iconMap={iconMap}
+                      titleKeyMap={titleKeyMap}
+                      isTemplate={isTemplate}
+                    />
+                  </DropdownMenu>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={handleDownloadClick}
+                    className='rounded-r-none border-r-0'
+                  >
+                    <Download className='mr-1 h-4 w-4' />
                     {t('imageEditor.page.download')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleCopyUrlClick}>
-                    <Copy className='mr-3 h-4 w-4' />
-                    {t('imageEditor.page.copyUrl')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={resetParams}>
-                    <RotateCcw className='mr-3 h-4 w-4' />
-                    {t('imageEditor.page.resetAll')}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Languages className='mr-3 h-4 w-4' />
-                      {t('common.language.title')}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        {availableLanguages.map((lang) => (
-                          <DropdownMenuItem
-                            key={lang.code}
-                            onSelect={(e) => {
-                              e.preventDefault()
-                              handleLanguageChange(lang.code)
-                            }}
-                          >
-                            {lang.name}
-                            {i18n.language === lang.code && <Check className='ml-auto h-4 w-4' />}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Eye className='mr-3 h-4 w-4' />
-                      {t('imageEditor.page.showHideControls')}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        {SECTION_KEYS.map((sectionKey) => {
-                          const isVisible =
-                            editorOpenSections.visibleSections?.includes(sectionKey) ?? true
-                          const SectionIcon = iconMap[sectionKey]
-                          return (
-                            <DropdownMenuItem
-                              key={sectionKey}
-                              onSelect={(e) => {
-                                e.preventDefault()
-                                handleToggleSectionVisibility(sectionKey)
-                              }}
-                            >
-                              <div className='flex w-full items-center justify-between gap-2'>
-                                <div className='flex items-center gap-2'>
-                                  <SectionIcon className='h-4 w-4' />
-                                  <span>{t(titleKeyMap[sectionKey])}</span>
-                                </div>
-                                <div className='flex w-4 items-center justify-center'>
-                                  {isVisible && <Check className='h-4 w-4' />}
-                                </div>
-                              </div>
-                            </DropdownMenuItem>
-                          )
-                        })}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </Button>
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant='outline' size='sm' className='rounded-l-none px-2'>
+                        <MoreVertical className='h-4 w-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <EditorMenuDropdown
+                      onDownload={handleDownloadClick}
+                      onCopyUrl={handleCopyUrlClick}
+                      onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                      onLanguageChange={handleLanguageChange}
+                      onToggleSectionVisibility={handleToggleSectionVisibility}
+                      editorOpenSections={editorOpenSections}
+                      iconMap={iconMap}
+                      titleKeyMap={titleKeyMap}
+                    />
+                  </DropdownMenu>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -780,7 +796,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <div className='bg-background flex flex-col overflow-hidden border-l'>
             <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               <ImageEditorControls
-                key={resetCounter}
                 imageEditor={imageEditor}
                 imagePath={imagePath}
                 params={params}
@@ -812,6 +827,22 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
         {/* Copy URL Dialog */}
         <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
+
+        {/* Save Template Dialog */}
+        <SaveTemplateDialog
+          open={saveTemplateDialogOpen}
+          onOpenChange={setSaveTemplateDialogOpen}
+          imageEditor={imageEditor}
+          imagePath={imagePath}
+          templateMetadata={templateMetadata}
+          onSaveSuccess={(templatePath) => {
+            isSavedRef.current = true
+            navigate({
+              to: '/$imagePath/editor',
+              params: { imagePath: templatePath },
+            })
+          }}
+        />
 
         {/* Navigation Confirmation Dialog */}
         <ConfirmNavigationDialog
@@ -859,84 +890,27 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             {/* Theme Toggle + 3-Dot Menu */}
             <div className='ml-auto flex items-center gap-2'>
               <ModeToggle />
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button variant='ghost' size='sm'>
                     <MoreVertical className='h-4 w-4' />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-56'>
-                  <DropdownMenuItem onClick={() => imageEditor.undo()} disabled={!canUndo}>
-                    <Undo2 className='mr-3 h-4 w-4' />
-                    {t('imageEditor.page.undo')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => imageEditor.redo()} disabled={!canRedo}>
-                    <Redo2 className='mr-3 h-4 w-4' />
-                    {t('imageEditor.page.redo')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={resetParams}>
-                    <RotateCcw className='mr-3 h-4 w-4' />
-                    {t('imageEditor.page.resetAll')}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Languages className='mr-3 h-4 w-4' />
-                      {t('common.language.title')}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        {availableLanguages.map((lang) => (
-                          <DropdownMenuItem
-                            key={lang.code}
-                            onSelect={(e) => {
-                              e.preventDefault()
-                              handleLanguageChange(lang.code)
-                            }}
-                          >
-                            {lang.name}
-                            {i18n.language === lang.code && <Check className='ml-auto h-4 w-4' />}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Eye className='mr-3 h-4 w-4' />
-                      {t('imageEditor.page.showHideControls')}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        {SECTION_KEYS.map((sectionKey) => {
-                          const isVisible =
-                            editorOpenSections.visibleSections?.includes(sectionKey) ?? true
-                          const SectionIcon = iconMap[sectionKey]
-                          return (
-                            <DropdownMenuItem
-                              key={sectionKey}
-                              onSelect={(e) => {
-                                e.preventDefault()
-                                handleToggleSectionVisibility(sectionKey)
-                              }}
-                            >
-                              <div className='flex w-full items-center justify-between gap-2'>
-                                <div className='flex items-center gap-2'>
-                                  <SectionIcon className='h-4 w-4' />
-                                  <span>{t(titleKeyMap[sectionKey])}</span>
-                                </div>
-                                <div className='flex w-4 items-center justify-center'>
-                                  {isVisible && <Check className='h-4 w-4' />}
-                                </div>
-                              </div>
-                            </DropdownMenuItem>
-                          )
-                        })}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                </DropdownMenuContent>
+                <EditorMenuDropdown
+                  onDownload={handleDownloadClick}
+                  onCopyUrl={handleCopyUrlClick}
+                  onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                  onLanguageChange={handleLanguageChange}
+                  onToggleSectionVisibility={handleToggleSectionVisibility}
+                  editorOpenSections={editorOpenSections}
+                  iconMap={iconMap}
+                  titleKeyMap={titleKeyMap}
+                  includeUndoRedo={true}
+                  onUndo={() => imageEditor.undo()}
+                  onRedo={() => imageEditor.redo()}
+                  canUndo={canUndo}
+                  canRedo={canRedo}
+                />
               </DropdownMenu>
             </div>
           </div>
@@ -996,7 +970,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
               {/* Scrollable Controls */}
               <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
                 <ImageEditorControls
-                  key={resetCounter}
                   imageEditor={imageEditor}
                   imagePath={imagePath}
                   params={params}
@@ -1021,6 +994,22 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
         {/* Copy URL Dialog */}
         <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
+
+        {/* Save Template Dialog */}
+        <SaveTemplateDialog
+          open={saveTemplateDialogOpen}
+          onOpenChange={setSaveTemplateDialogOpen}
+          imageEditor={imageEditor}
+          imagePath={imagePath}
+          templateMetadata={templateMetadata}
+          onSaveSuccess={(templatePath) => {
+            isSavedRef.current = true
+            navigate({
+              to: '/$imagePath/editor',
+              params: { imagePath: templatePath },
+            })
+          }}
+        />
 
         {/* Navigation Confirmation Dialog */}
         <ConfirmNavigationDialog
@@ -1077,7 +1066,18 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
         {/* Fixed-width breadcrumb container to prevent title shift */}
         <div className='w-[220px]'>
-          <LayerBreadcrumb imageEditor={imageEditor} />
+          <LayerBreadcrumb
+            imageEditor={imageEditor}
+            baseName={isTemplate && templateMetadata ? templateMetadata.name : undefined}
+            baseLabel={
+              isTemplate && templateMetadata ? (
+                <div className='text-muted-foreground flex items-center gap-1.5'>
+                  <FileText className='h-3.5 w-3.5 flex-shrink-0' />
+                  <span className='max-w-[200px] truncate text-sm'>{templateMetadata.name}</span>
+                </div>
+              ) : undefined
+            }
+          />
         </div>
 
         {/* Centered title */}
@@ -1091,7 +1091,7 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           </a>
         </div>
 
-        {/* Theme Toggle + Undo/Redo + Download & Three-dot Menu (grouped) */}
+        {/* Theme Toggle + Undo/Redo + Primary Action & Three-dot Menu (grouped) */}
         <div className='ml-auto flex items-center gap-2'>
           <ModeToggle />
           <Button
@@ -1113,94 +1113,66 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
             <Redo2 className='h-4 w-4' />
           </Button>
           <div className='inline-flex items-center rounded-md'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={handleDownloadClick}
-              className='rounded-r-none border-r-0'
-            >
-              <Download className='mr-1 h-4 w-4' />
-              {t('imageEditor.page.download')}
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='outline' size='sm' className='rounded-l-none px-2'>
-                  <MoreVertical className='h-4 w-4' />
+            {isTemplate ? (
+              <>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleSaveTemplateClick}
+                  className='rounded-r-none border-r-0'
+                >
+                  <FileText className='mr-1 h-4 w-4' />
+                  {t('imageEditor.template.saveTemplate')}
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' className='w-56'>
-                <DropdownMenuItem onClick={handleDownloadClick}>
-                  <Download className='mr-3 h-4 w-4' />
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='outline' size='sm' className='rounded-l-none px-2'>
+                      <MoreVertical className='h-4 w-4' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <EditorMenuDropdown
+                    onDownload={handleDownloadClick}
+                    onCopyUrl={handleCopyUrlClick}
+                    onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                    onLanguageChange={handleLanguageChange}
+                    onToggleSectionVisibility={handleToggleSectionVisibility}
+                    editorOpenSections={editorOpenSections}
+                    iconMap={iconMap}
+                    titleKeyMap={titleKeyMap}
+                    isTemplate={isTemplate}
+                  />
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleDownloadClick}
+                  className='rounded-r-none border-r-0'
+                >
+                  <Download className='mr-1 h-4 w-4' />
                   {t('imageEditor.page.download')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleCopyUrlClick}>
-                  <Copy className='mr-3 h-4 w-4' />
-                  {t('imageEditor.page.copyUrl')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={resetParams}>
-                  <RotateCcw className='mr-3 h-4 w-4' />
-                  {t('imageEditor.page.resetAll')}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Languages className='mr-3 h-4 w-4' />
-                    {t('common.language.title')}
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      {availableLanguages.map((lang) => (
-                        <DropdownMenuItem
-                          key={lang.code}
-                          onSelect={(e) => {
-                            e.preventDefault()
-                            handleLanguageChange(lang.code)
-                          }}
-                        >
-                          {lang.name}
-                          {i18n.language === lang.code && <Check className='ml-auto h-4 w-4' />}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuSeparator />
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Eye className='mr-3 h-4 w-4' />
-                    {t('imageEditor.page.showHideControls')}
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      {SECTION_KEYS.map((sectionKey) => {
-                        const isVisible =
-                          editorOpenSections.visibleSections?.includes(sectionKey) ?? true
-                        const SectionIcon = iconMap[sectionKey]
-                        return (
-                          <DropdownMenuItem
-                            key={sectionKey}
-                            onSelect={(e) => {
-                              e.preventDefault()
-                              handleToggleSectionVisibility(sectionKey)
-                            }}
-                          >
-                            <div className='flex w-full items-center justify-between gap-2'>
-                              <div className='flex items-center gap-2'>
-                                <SectionIcon className='h-4 w-4' />
-                                <span>{t(titleKeyMap[sectionKey])}</span>
-                              </div>
-                              <div className='flex w-4 items-center justify-center'>
-                                {isVisible && <Check className='h-4 w-4' />}
-                              </div>
-                            </div>
-                          </DropdownMenuItem>
-                        )
-                      })}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </Button>
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='outline' size='sm' className='rounded-l-none px-2'>
+                      <MoreVertical className='h-4 w-4' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <EditorMenuDropdown
+                    onDownload={handleDownloadClick}
+                    onCopyUrl={handleCopyUrlClick}
+                    onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                    onLanguageChange={handleLanguageChange}
+                    onToggleSectionVisibility={handleToggleSectionVisibility}
+                    editorOpenSections={editorOpenSections}
+                    iconMap={iconMap}
+                    titleKeyMap={titleKeyMap}
+                  />
+                </DropdownMenu>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -1223,7 +1195,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <div className='bg-background flex flex-col overflow-hidden border-r'>
             <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               <ImageEditorControls
-                key={`left-${resetCounter}`}
                 imageEditor={imageEditor}
                 imagePath={imagePath}
                 params={params}
@@ -1276,7 +1247,6 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
           <div className='bg-background flex flex-col overflow-hidden border-l'>
             <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               <ImageEditorControls
-                key={`right-${resetCounter}`}
                 imageEditor={imageEditor}
                 imagePath={imagePath}
                 params={params}
@@ -1338,6 +1308,22 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
 
       {/* Copy URL Dialog */}
       <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
+
+      {/* Save Template Dialog */}
+      <SaveTemplateDialog
+        open={saveTemplateDialogOpen}
+        onOpenChange={setSaveTemplateDialogOpen}
+        imageEditor={imageEditor}
+        imagePath={imagePath}
+        templateMetadata={templateMetadata}
+        onSaveSuccess={(templatePath) => {
+          isSavedRef.current = true
+          navigate({
+            to: '/$imagePath/editor',
+            params: { imagePath: templatePath },
+          })
+        }}
+      />
 
       {/* Navigation Confirmation Dialog */}
       <ConfirmNavigationDialog

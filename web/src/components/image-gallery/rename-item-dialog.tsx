@@ -39,15 +39,23 @@ export function RenameItemDialog({
     if (open && itemName) {
       // For files, extract extension and show only the name without extension
       if (itemType === 'file') {
-        const lastDot = itemName.lastIndexOf('.')
-        if (lastDot > 0) {
-          const nameWithoutExt = itemName.substring(0, lastDot)
-          const extension = itemName.substring(lastDot) // includes the dot
-          setRenameInput(nameWithoutExt)
-          setFileExtension(extension)
+        // Special handling for template files (.imagor.json)
+        if (itemName.endsWith('.imagor.json')) {
+          const baseName = itemName.replace(/\.imagor\.json$/, '')
+          setRenameInput(baseName)
+          setFileExtension('.imagor.json')
         } else {
-          setRenameInput(itemName)
-          setFileExtension('')
+          // Regular file handling
+          const lastDot = itemName.lastIndexOf('.')
+          if (lastDot > 0) {
+            const nameWithoutExt = itemName.substring(0, lastDot)
+            const extension = itemName.substring(lastDot) // includes the dot
+            setRenameInput(nameWithoutExt)
+            setFileExtension(extension)
+          } else {
+            setRenameInput(itemName)
+            setFileExtension('')
+          }
         }
       } else {
         // For folders, use the full name
@@ -87,17 +95,37 @@ export function RenameItemDialog({
           </DialogDescription>
         </DialogHeader>
         <div className='grid gap-4 py-4'>
-          <Input
-            value={renameInput}
-            onChange={(e) => setRenameInput(e.target.value)}
-            placeholder={t('pages.gallery.renameItem.placeholder')}
-            disabled={isRenaming}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && renameInput.trim()) {
-                handleConfirm()
-              }
-            }}
-          />
+          {fileExtension ? (
+            <div className='border-input focus-within:ring-ring flex overflow-hidden rounded-md border focus-within:ring-2 focus-within:ring-offset-2'>
+              <Input
+                value={renameInput}
+                onChange={(e) => setRenameInput(e.target.value)}
+                placeholder={t('pages.gallery.renameItem.placeholder')}
+                disabled={isRenaming}
+                className='flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0'
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && renameInput.trim()) {
+                    handleConfirm()
+                  }
+                }}
+              />
+              <div className='bg-muted text-muted-foreground flex items-center border-l px-3 font-mono text-sm'>
+                {fileExtension}
+              </div>
+            </div>
+          ) : (
+            <Input
+              value={renameInput}
+              onChange={(e) => setRenameInput(e.target.value)}
+              placeholder={t('pages.gallery.renameItem.placeholder')}
+              disabled={isRenaming}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && renameInput.trim()) {
+                  handleConfirm()
+                }
+              }}
+            />
+          )}
         </div>
         <DialogFooter>
           <Button variant='outline' onClick={() => handleOpenChange(false)} disabled={isRenaming}>

@@ -54,6 +54,48 @@ func TestMatchesExtensions(t *testing.T) {
 			extensions: []string{".pdf"},
 			expected:   true,
 		},
+		{
+			name:       "matches compound extension .imagor.json",
+			filename:   "template.imagor.json",
+			extensions: []string{".imagor.json"},
+			expected:   true,
+		},
+		{
+			name:       "matches compound extension .tar.gz",
+			filename:   "archive.tar.gz",
+			extensions: []string{".tar.gz"},
+			expected:   true,
+		},
+		{
+			name:       "matches compound extension case insensitive",
+			filename:   "template.IMAGOR.JSON",
+			extensions: []string{".imagor.json"},
+			expected:   true,
+		},
+		{
+			name:       "does not match partial compound extension",
+			filename:   "file.json",
+			extensions: []string{".imagor.json"},
+			expected:   false,
+		},
+		{
+			name:       "matches compound extension in mixed list",
+			filename:   "template.imagor.json",
+			extensions: []string{".jpg", ".png", ".imagor.json"},
+			expected:   true,
+		},
+		{
+			name:       "matches simple extension when compound also present",
+			filename:   "image.jpg",
+			extensions: []string{".imagor.json", ".jpg"},
+			expected:   true,
+		},
+		{
+			name:       "compound extension with spaces",
+			filename:   "template.imagor.json",
+			extensions: []string{" .imagor.json "},
+			expected:   true,
+		},
 	}
 
 	for _, tt := range tests {

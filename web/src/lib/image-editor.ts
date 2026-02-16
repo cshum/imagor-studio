@@ -1956,6 +1956,304 @@ export class ImageEditor {
   }
 
   /**
+   * Generate a thumbnail URL for the current state
+   * @param width - Thumbnail width (default 200)
+   * @param height - Thumbnail height (default 200)
+   * @returns Promise resolving to thumbnail URL
+   */
+  async generateThumbnailUrl(width = 200, height = 200): Promise<string> {
+    // Use existing convertStateToGraphQLParams with forPreview=true
+    const thumbnailParams = this.convertStateToGraphQLParams(this.getBaseState(), true)
+
+    // Override dimensions for thumbnail
+    thumbnailParams.width = width
+    thumbnailParams.height = height
+    thumbnailParams.fitIn = true
+
+    // Ensure WebP format and good quality for thumbnails
+    const filters = thumbnailParams.filters || []
+    // Remove any existing format/quality filters
+    const filteredFilters = filters.filter(
+      (f) => f.name !== 'format' && f.name !== 'quality' && f.name !== 'preview',
+    )
+    // Add thumbnail-specific filters
+    filteredFilters.push({ name: 'format', args: 'webp' })
+    filteredFilters.push({ name: 'quality', args: '80' })
+    thumbnailParams.filters = filteredFilters
+
+    return await generateImagorUrl({
+      imagePath: this.baseImagePath,
+      params: thumbnailParams as ImagorParamsInput,
+    })
+  }
+
+  /**
+   * Generate a base64-encoded thumbnail for embedding
+   * @param width - Thumbnail width (default 200)
+   * @param height - Thumbnail height (default 200)
+   * @returns Promise resolving to base64 data URL
+   */
+  async generateThumbnailBase64(width = 200, height = 200): Promise<string> {
+    try {
+      const thumbnailUrl = await this.generateThumbnailUrl(width, height)
+
+      // Fetch the thumbnail
+      const response = await fetch(thumbnailUrl)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch thumbnail: ${response.statusText}`)
+      }
+
+      // Convert to base64
+      const blob = await response.blob()
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(blob)
+      })
+    } catch (error) {
+      console.error('Failed to generate thumbnail:', error)
+      // Return placeholder SVG on error
+      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlRlbXBsYXRlPC90ZXh0Pjwvc3ZnPg=='
+    }
+  }
+
+  /**
+   * Export current editor state as a template
+   * Saves template to backend (.templates folder) with preview
+   * @param name - Template name
+   * @param description - Optional template description
+   * @param dimensionMode - How dimensions should be handled
+   * @param savePath - Path to save the template
+   * @param overwrite - Whether to overwrite existing template
+   * @returns Promise that resolves with save result
+   * @throws Error with code 'CONFLICT' if template already exists
+   */
+  async exportTemplate(
+    name: string,
+    description: string | undefined,
+    dimensionMode: 'adaptive' | 'predefined',
+    savePath: string,
+    overwrite = false,
+  ): Promise<{ success: boolean }> {
+    // Import type at top of file instead
+    type ImagorTemplate = import('@/lib/template-types').ImagorTemplate
+
+    // Build template object
+    // Note: Template name is derived from filename, not stored in JSON
+    const template: ImagorTemplate = {
+      version: '1.0',
+      description,
+      sourceImagePath: this.baseImagePath,
+      dimensionMode,
+      predefinedDimensions:
+        dimensionMode === 'predefined'
+          ? {
+              width: this.config.originalDimensions.width,
+              height: this.config.originalDimensions.height,
+            }
+          : undefined,
+      transformations: this.getBaseState(),
+      metadata: {
+        createdAt: new Date().toISOString(),
+      },
+    }
+
+    // Generate preview params (800x800 thumbnail with transformations)
+    // Temporarily override previewMaxDimensions to ensure correct scaling for 800x800
+    const originalPreviewDimensions = this.config.previewMaxDimensions
+    this.config.previewMaxDimensions = { width: 800, height: 800 }
+
+    // Generate params with correct 800x800 scaling
+    const previewParams = this.convertStateToGraphQLParams(this.getBaseState(), true)
+
+    // Restore original preview dimensions
+    this.config.previewMaxDimensions = originalPreviewDimensions
+
+    // Ensure fitIn is true (already set by convertStateToGraphQLParams, but be explicit)
+    previewParams.fitIn = true
+
+    // Filters (format, quality, preview) are already added by convertStateToGraphQLParams
+
+    // Call backend API to save template
+    const { saveTemplate } = await import('@/api/storage-api')
+
+    const result = await saveTemplate({
+      input: {
+        name,
+        description: description || null,
+        dimensionMode: dimensionMode.toUpperCase() as 'ADAPTIVE' | 'PREDEFINED',
+        templateJson: JSON.stringify(template, null, 2),
+        sourceImagePath: this.baseImagePath,
+        savePath,
+        overwrite,
+        previewParams: previewParams as ImagorParamsInput,
+      },
+    })
+
+    return {
+      success: result.success,
+    }
+  }
+
+  /**
+   * Validate and load a template from JSON string
+   * @param jsonString - Template JSON content
+   * @returns Load result with template and warnings
+   */
+  private validateAndLoadTemplate(jsonString: string): {
+    success: boolean
+    warnings: Array<{ type: string; message: string; substitution?: string }>
+    template: import('@/lib/template-types').ImagorTemplate | null
+    appliedState: ImageEditorState | null
+  } {
+    type ImagorTemplate = import('@/lib/template-types').ImagorTemplate
+    type TemplateWarning = import('@/lib/template-types').TemplateWarning
+
+    const warnings: TemplateWarning[] = []
+
+    // Try to parse JSON
+    let template: ImagorTemplate
+    try {
+      template = JSON.parse(jsonString) as ImagorTemplate
+    } catch {
+      return {
+        success: false,
+        warnings: [
+          {
+            type: 'invalid-json',
+            message: 'Invalid template file: Could not parse JSON',
+          },
+        ],
+        template: null,
+        appliedState: null,
+      }
+    }
+
+    // Validate required fields (name is no longer required - derived from filename)
+    if (!template.version || !template.transformations) {
+      return {
+        success: false,
+        warnings: [
+          {
+            type: 'invalid-json',
+            message: 'Invalid template file: Missing required fields',
+          },
+        ],
+        template: null,
+        appliedState: null,
+      }
+    }
+
+    // Check version compatibility
+    if (template.version !== '1.0') {
+      warnings.push({
+        type: 'version-mismatch',
+        message: `Template version ${template.version} may not be fully compatible`,
+        substitution: 'Attempting to load with current version',
+      })
+    }
+
+    // Validate and substitute transformations
+    const state = { ...template.transformations }
+
+    // Check for missing layer images
+    if (state.layers && state.layers.length > 0) {
+      const validLayers: ImageLayer[] = []
+      for (const layer of state.layers) {
+        // For now, we'll include all layers and let the editor handle missing images
+        // In a future enhancement, we could check if images exist
+        validLayers.push(layer)
+      }
+
+      // If we filtered out any layers, add a warning
+      if (validLayers.length < state.layers.length) {
+        const skippedCount = state.layers.length - validLayers.length
+        warnings.push({
+          type: 'missing-layer',
+          message: `${skippedCount} layer(s) skipped (images not found)`,
+          substitution: 'Layers removed from template',
+        })
+      }
+
+      state.layers = validLayers
+    }
+
+    return {
+      success: true,
+      warnings,
+      template,
+      appliedState: state,
+    }
+  }
+
+  /**
+   * Apply template state with dimension mode handling
+   * @param template - Template to apply
+   * @returns Editor state to apply
+   */
+  private applyTemplateState(
+    template: import('@/lib/template-types').ImagorTemplate,
+  ): ImageEditorState {
+    const state = { ...template.transformations }
+
+    // Handle dimension mode
+    if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
+      // Use template's predefined dimensions
+      state.width = template.predefinedDimensions.width
+      state.height = template.predefinedDimensions.height
+    } else {
+      // Adaptive mode: use current image dimensions
+      state.width = this.config.originalDimensions.width
+      state.height = this.config.originalDimensions.height
+    }
+
+    return state
+  }
+
+  /**
+   * Import and apply a template to the current image
+   * @param jsonString - Template JSON content
+   * @returns Load result with warnings
+   */
+  async importTemplate(jsonString: string): Promise<{
+    success: boolean
+    warnings: Array<{ type: string; message: string; substitution?: string }>
+  }> {
+    // Load and validate template
+    const result = this.validateAndLoadTemplate(jsonString)
+
+    if (!result.success || !result.template || !result.appliedState) {
+      return {
+        success: false,
+        warnings: result.warnings,
+      }
+    }
+
+    // Apply template with dimension mode handling
+    const stateToApply = this.applyTemplateState(result.template)
+
+    // Flush any pending history snapshot first
+    this.flushPendingHistorySnapshot()
+
+    // Save current state to history BEFORE applying template (so undo restores it)
+    this.saveHistorySnapshot()
+
+    // Apply the template state
+    this.state = { ...stateToApply }
+
+    // Notify and update
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+    this.callbacks.onHistoryChange?.()
+
+    return {
+      success: true,
+      warnings: result.warnings,
+    }
+  }
+
+  /**
    * Clean up resources
    */
   destroy(): void {
