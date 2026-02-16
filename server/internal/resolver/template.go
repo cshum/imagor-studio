@@ -103,9 +103,9 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 	if previewImage != nil {
 		var previewPath string
 		if input.SavePath == "" {
-			previewPath = fmt.Sprintf("%s.imagor.preview.webp", sanitizedName)
+			previewPath = fmt.Sprintf("%s.imagor.preview", sanitizedName)
 		} else {
-			previewPath = fmt.Sprintf("%s/%s.imagor.preview.webp", input.SavePath, sanitizedName)
+			previewPath = fmt.Sprintf("%s/%s.imagor.preview", input.SavePath, sanitizedName)
 		}
 		previewReader := bytes.NewReader(previewImage)
 		if err := r.getStorage().Put(ctx, previewPath, previewReader); err != nil {
@@ -137,10 +137,10 @@ func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceIm
 		// Use provided preview params from frontend
 		params = convertToImagorParams(*previewParams)
 	} else {
-		// Fallback: simple 200x200 thumbnail
+		// Fallback: simple 800x800 thumbnail
 		params = imagorpath.Params{
-			Width:  200,
-			Height: 200,
+			Width:  800,
+			Height: 800,
 			FitIn:  true,
 			Filters: imagorpath.Filters{
 				{Name: "format", Args: "webp"},

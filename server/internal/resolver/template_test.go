@@ -42,7 +42,7 @@ func TestSaveTemplate(t *testing.T) {
 			Return(nil)
 
 		// Mock storage Put for preview image (may be called if preview generation succeeds)
-		mockStorage.On("Put", ctx, "templates/my-template.imagor.preview.webp", mock.Anything).
+		mockStorage.On("Put", ctx, "templates/my-template.imagor.preview", mock.Anything).
 			Return(nil).Maybe()
 
 		// Create valid template JSON
@@ -107,7 +107,7 @@ func TestSaveTemplate(t *testing.T) {
 		// Expect sanitized filename
 		mockStorage.On("Put", ctx, "my-folder/my-special-template.imagor.json", mock.Anything).
 			Return(nil)
-		mockStorage.On("Put", ctx, "my-folder/my-special-template.imagor.preview.webp", mock.Anything).
+		mockStorage.On("Put", ctx, "my-folder/my-special-template.imagor.preview", mock.Anything).
 			Return(nil).Maybe()
 
 		templateJSON := `{
@@ -279,7 +279,7 @@ func TestSaveTemplate(t *testing.T) {
 			Return(nil)
 
 		// Mock Put for preview image
-		mockStorage.On("Put", ctx, "templates/existing-template.imagor.preview.webp", mock.Anything).
+		mockStorage.On("Put", ctx, "templates/existing-template.imagor.preview", mock.Anything).
 			Return(nil).Maybe()
 
 		input := gql.SaveTemplateInput{
