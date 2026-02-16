@@ -419,6 +419,316 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 	mockRegistryStore.AssertExpectations(t)
 }
 
+// Test DeleteFile with template preview image
+func TestDeleteFile_WithTemplatePreview(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	templatePath := "templates/my-template.imagor.json"
+	previewPath := "templates/my-template.imagor.preview"
+
+	// Mock successful deletion of template file
+	mockStorage.On("Delete", ctx, templatePath).Return(nil)
+
+	// Mock Stat to check if preview exists (it does)
+	mockStorage.On("Stat", ctx, previewPath).Return(storage.FileInfo{
+		Name: "my-template.imagor.preview",
+		Path: previewPath,
+	}, nil)
+
+	// Mock successful deletion of preview file
+	mockStorage.On("Delete", ctx, previewPath).Return(nil)
+
+	result, err := resolver.Mutation().DeleteFile(ctx, templatePath)
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+
+	// Verify both files were deleted
+	mockStorage.AssertExpectations(t)
+	mockStorage.AssertCalled(t, "Delete", ctx, templatePath)
+	mockStorage.AssertCalled(t, "Delete", ctx, previewPath)
+}
+
+// Test DeleteFile with template but no preview (graceful handling)
+func TestDeleteFile_TemplateWithoutPreview(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	templatePath := "templates/my-template.imagor.json"
+	previewPath := "templates/my-template.imagor.preview"
+
+	// Mock successful deletion of template file
+	mockStorage.On("Delete", ctx, templatePath).Return(nil)
+
+	// Mock Stat to check if preview exists (it doesn't)
+	mockStorage.On("Stat", ctx, previewPath).Return(storage.FileInfo{}, assert.AnError)
+
+	result, err := resolver.Mutation().DeleteFile(ctx, templatePath)
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+
+	// Verify template was deleted but preview delete was not attempted
+	mockStorage.AssertExpectations(t)
+	mockStorage.AssertCalled(t, "Delete", ctx, templatePath)
+	mockStorage.AssertNotCalled(t, "Delete", ctx, previewPath)
+}
+
+// Test DeleteFile with template where preview deletion fails (should not fail operation)
+func TestDeleteFile_TemplatePreviewDeletionFails(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	templatePath := "templates/my-template.imagor.json"
+	previewPath := "templates/my-template.imagor.preview"
+
+	// Mock successful deletion of template file
+	mockStorage.On("Delete", ctx, templatePath).Return(nil)
+
+	// Mock Stat to check if preview exists (it does)
+	mockStorage.On("Stat", ctx, previewPath).Return(storage.FileInfo{
+		Name: "my-template.imagor.preview",
+		Path: previewPath,
+	}, nil)
+
+	// Mock failed deletion of preview file
+	mockStorage.On("Delete", ctx, previewPath).Return(assert.AnError)
+
+	result, err := resolver.Mutation().DeleteFile(ctx, templatePath)
+
+	// Should still succeed even though preview deletion failed
+	assert.NoError(t, err)
+	assert.True(t, result)
+
+	mockStorage.AssertExpectations(t)
+	mockStorage.AssertCalled(t, "Delete", ctx, templatePath)
+	mockStorage.AssertCalled(t, "Delete", ctx, previewPath)
+}
+
+// Test DeleteFile with non-template file (no preview handling)
+func TestDeleteFile_NonTemplateFile(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	imagePath := "images/photo.jpg"
+
+	// Mock successful deletion of image file
+	mockStorage.On("Delete", ctx, imagePath).Return(nil)
+
+	result, err := resolver.Mutation().DeleteFile(ctx, imagePath)
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+
+	// Verify only the image was deleted, no preview operations
+	mockStorage.AssertExpectations(t)
+	mockStorage.AssertCalled(t, "Delete", ctx, imagePath)
+	mockStorage.AssertNotCalled(t, "Stat", mock.Anything, mock.Anything)
+}
+
+// Test MoveFile with template preview image
+func TestMoveFile_WithTemplatePreview(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	sourceTemplatePath := "templates/old-name.imagor.json"
+	destTemplatePath := "templates/new-name.imagor.json"
+	sourcePreviewPath := "templates/old-name.imagor.preview"
+	destPreviewPath := "templates/new-name.imagor.preview"
+
+	// Mock successful move of template file
+	mockStorage.On("Move", ctx, sourceTemplatePath, destTemplatePath).Return(nil)
+
+	// Mock Stat to check if preview exists (it does)
+	mockStorage.On("Stat", ctx, sourcePreviewPath).Return(storage.FileInfo{
+		Name: "old-name.imagor.preview",
+		Path: sourcePreviewPath,
+	}, nil)
+
+	// Mock successful move of preview file
+	mockStorage.On("Move", ctx, sourcePreviewPath, destPreviewPath).Return(nil)
+
+	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath)
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+
+	// Verify both files were moved
+	mockStorage.AssertExpectations(t)
+	mockStorage.AssertCalled(t, "Move", ctx, sourceTemplatePath, destTemplatePath)
+	mockStorage.AssertCalled(t, "Move", ctx, sourcePreviewPath, destPreviewPath)
+}
+
+// Test MoveFile with template but no preview (graceful handling)
+func TestMoveFile_TemplateWithoutPreview(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	sourceTemplatePath := "templates/old-name.imagor.json"
+	destTemplatePath := "templates/new-name.imagor.json"
+	sourcePreviewPath := "templates/old-name.imagor.preview"
+
+	// Mock successful move of template file
+	mockStorage.On("Move", ctx, sourceTemplatePath, destTemplatePath).Return(nil)
+
+	// Mock Stat to check if preview exists (it doesn't)
+	mockStorage.On("Stat", ctx, sourcePreviewPath).Return(storage.FileInfo{}, assert.AnError)
+
+	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath)
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+
+	// Verify template was moved but preview move was not attempted
+	mockStorage.AssertExpectations(t)
+	mockStorage.AssertCalled(t, "Move", ctx, sourceTemplatePath, destTemplatePath)
+	mockStorage.AssertNumberOfCalls(t, "Move", 1) // Only template, not preview
+}
+
+// Test MoveFile with template where preview move fails (should not fail operation)
+func TestMoveFile_TemplatePreviewMoveFails(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	sourceTemplatePath := "templates/old-name.imagor.json"
+	destTemplatePath := "templates/new-name.imagor.json"
+	sourcePreviewPath := "templates/old-name.imagor.preview"
+	destPreviewPath := "templates/new-name.imagor.preview"
+
+	// Mock successful move of template file
+	mockStorage.On("Move", ctx, sourceTemplatePath, destTemplatePath).Return(nil)
+
+	// Mock Stat to check if preview exists (it does)
+	mockStorage.On("Stat", ctx, sourcePreviewPath).Return(storage.FileInfo{
+		Name: "old-name.imagor.preview",
+		Path: sourcePreviewPath,
+	}, nil)
+
+	// Mock failed move of preview file
+	mockStorage.On("Move", ctx, sourcePreviewPath, destPreviewPath).Return(assert.AnError)
+
+	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath)
+
+	// Should still succeed even though preview move failed
+	assert.NoError(t, err)
+	assert.True(t, result)
+
+	mockStorage.AssertExpectations(t)
+	mockStorage.AssertCalled(t, "Move", ctx, sourceTemplatePath, destTemplatePath)
+	mockStorage.AssertCalled(t, "Move", ctx, sourcePreviewPath, destPreviewPath)
+}
+
+// Test MoveFile with non-template file (no preview handling)
+func TestMoveFile_NonTemplateFile(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	sourceImagePath := "images/old-photo.jpg"
+	destImagePath := "images/new-photo.jpg"
+
+	// Mock successful move of image file
+	mockStorage.On("Move", ctx, sourceImagePath, destImagePath).Return(nil)
+
+	result, err := resolver.Mutation().MoveFile(ctx, sourceImagePath, destImagePath)
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+
+	// Verify only the image was moved, no preview operations
+	mockStorage.AssertExpectations(t)
+	mockStorage.AssertCalled(t, "Move", ctx, sourceImagePath, destImagePath)
+	mockStorage.AssertNotCalled(t, "Stat", mock.Anything, mock.Anything)
+	mockStorage.AssertNumberOfCalls(t, "Move", 1) // Only image, not preview
+}
+
+// Test MoveFile with template to different folder
+func TestMoveFile_TemplateToDifferentFolder(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	sourceTemplatePath := "folder1/my-template.imagor.json"
+	destTemplatePath := "folder2/my-template.imagor.json"
+	sourcePreviewPath := "folder1/my-template.imagor.preview"
+	destPreviewPath := "folder2/my-template.imagor.preview"
+
+	// Mock successful move of template file
+	mockStorage.On("Move", ctx, sourceTemplatePath, destTemplatePath).Return(nil)
+
+	// Mock Stat to check if preview exists (it does)
+	mockStorage.On("Stat", ctx, sourcePreviewPath).Return(storage.FileInfo{
+		Name: "my-template.imagor.preview",
+		Path: sourcePreviewPath,
+	}, nil)
+
+	// Mock successful move of preview file
+	mockStorage.On("Move", ctx, sourcePreviewPath, destPreviewPath).Return(nil)
+
+	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath)
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+
+	// Verify both files were moved to new folder
+	mockStorage.AssertExpectations(t)
+	mockStorage.AssertCalled(t, "Move", ctx, sourceTemplatePath, destTemplatePath)
+	mockStorage.AssertCalled(t, "Move", ctx, sourcePreviewPath, destPreviewPath)
+}
+
 func TestCopyFile(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockRegistryStore := new(MockRegistryStore)
