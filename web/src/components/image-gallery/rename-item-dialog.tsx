@@ -95,25 +95,37 @@ export function RenameItemDialog({
           </DialogDescription>
         </DialogHeader>
         <div className='grid gap-4 py-4'>
-          <div className='flex items-center gap-2'>
+          {fileExtension ? (
+            <div className='border-input focus-within:ring-ring flex overflow-hidden rounded-md border focus-within:ring-2 focus-within:ring-offset-2'>
+              <Input
+                value={renameInput}
+                onChange={(e) => setRenameInput(e.target.value)}
+                placeholder={t('pages.gallery.renameItem.placeholder')}
+                disabled={isRenaming}
+                className='flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0'
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && renameInput.trim()) {
+                    handleConfirm()
+                  }
+                }}
+              />
+              <div className='bg-muted text-muted-foreground flex items-center border-l px-3 font-mono text-sm'>
+                {fileExtension}
+              </div>
+            </div>
+          ) : (
             <Input
               value={renameInput}
               onChange={(e) => setRenameInput(e.target.value)}
               placeholder={t('pages.gallery.renameItem.placeholder')}
               disabled={isRenaming}
-              className='flex-1'
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && renameInput.trim()) {
                   handleConfirm()
                 }
               }}
             />
-            {fileExtension && (
-              <span className='bg-muted text-muted-foreground shrink-0 rounded px-2 py-1 font-mono text-sm'>
-                {fileExtension}
-              </span>
-            )}
-          </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant='outline' onClick={() => handleOpenChange(false)} disabled={isRenaming}>
