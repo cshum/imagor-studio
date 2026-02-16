@@ -152,7 +152,7 @@ func (r *Resolver) generateThumbnailUrls(imagePath string, videoThumbnailPos str
 
 	// For .imagor.json template files, use the preview image
 	if strings.HasSuffix(imagePath, ".imagor.json") {
-		previewPath := strings.TrimSuffix(imagePath, ".json") + ".preview"
+		previewPath := strings.TrimSuffix(imagePath, ".imagor.json") + ".imagor.preview"
 		// Recursively call with the preview path (which is a WebP image)
 		return r.generateThumbnailUrls(previewPath, videoThumbnailPos)
 	}
