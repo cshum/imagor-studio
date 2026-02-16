@@ -3,7 +3,7 @@ import type { ImageEditorState } from '@/lib/image-editor'
 /**
  * Imagor Template File Format (.imagor.json)
  * Industry-standard approach with embedded preview thumbnail
- * 
+ *
  * Note: Template name is derived from the filename, not stored in JSON.
  * This ensures filename is the single source of truth.
  */

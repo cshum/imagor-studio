@@ -109,7 +109,7 @@ export function RenameItemDialog({
               }}
             />
             {fileExtension && (
-              <span className='shrink-0 rounded bg-muted px-2 py-1 font-mono text-sm text-muted-foreground'>
+              <span className='bg-muted text-muted-foreground shrink-0 rounded px-2 py-1 font-mono text-sm'>
                 {fileExtension}
               </span>
             )}
