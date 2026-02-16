@@ -12,12 +12,20 @@ import type { ImagorTemplate } from '@/lib/template-types'
 import { getAuth } from '@/stores/auth-store'
 import { clearPosition } from '@/stores/image-position-store.ts'
 
+export interface TemplateMetadata {
+  name: string
+  description?: string
+  dimensionMode: 'adaptive' | 'predefined'
+  templatePath: string
+}
+
 export interface ImageEditorLoaderData {
   imagePath: string
   initialEditorOpenSections: EditorOpenSections
   breadcrumb: BreadcrumbItem
   imageEditor: ImageEditor
   isTemplate: boolean
+  templateMetadata?: TemplateMetadata
 }
 
 /**
@@ -47,6 +55,7 @@ export const imageEditorLoader = async ({
 
   let actualImagePath = imagePath
   let imageEditor: ImageEditor
+  let templateMetadata: TemplateMetadata | undefined
 
   if (isTemplate) {
     // Fetch template JSON via thumbnailUrls.original (backend ensures this points to the JSON file)
@@ -107,6 +116,14 @@ export const imageEditorLoader = async ({
     // Apply template state to the editor instance using restoreState()
     // This happens in the loader, so it's already there when the page loads
     imageEditor.restoreState(templateState)
+
+    // Store template metadata for UI
+    templateMetadata = {
+      name: template.name,
+      description: template.description,
+      dimensionMode: template.dimensionMode,
+      templatePath: imagePath,
+    }
   } else {
     // Normal image (not a template)
     // Fetch dimensions using utility (handles metadata API + fallback)
@@ -128,5 +145,6 @@ export const imageEditorLoader = async ({
     breadcrumb: { label: 'Imagor Studio' },
     imageEditor,
     isTemplate,
+    templateMetadata,
   }
 }

@@ -19,6 +19,7 @@ import {
   ChevronUp,
   Download,
   FileImage,
+  FileText,
   Frame,
   GripVertical,
   Layers,
@@ -77,7 +78,8 @@ interface ImageEditorPageProps {
 }
 
 export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps) {
-  const { imageEditor, imagePath, initialEditorOpenSections, isTemplate } = loaderData
+  const { imageEditor, imagePath, initialEditorOpenSections, isTemplate, templateMetadata } =
+    loaderData
 
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -964,7 +966,18 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
         {/* Fixed-width breadcrumb container to prevent title shift */}
         <div className='w-[220px]'>
-          <LayerBreadcrumb imageEditor={imageEditor} />
+          <LayerBreadcrumb
+            imageEditor={imageEditor}
+            baseName={isTemplate && templateMetadata ? templateMetadata.name : undefined}
+            baseLabel={
+              isTemplate && templateMetadata ? (
+                <div className='text-muted-foreground flex items-center gap-1.5'>
+                  <FileText className='h-3.5 w-3.5 flex-shrink-0' />
+                  <span className='max-w-[200px] truncate text-sm'>{templateMetadata.name}</span>
+                </div>
+              ) : undefined
+            }
+          />
         </div>
 
         {/* Centered title */}
