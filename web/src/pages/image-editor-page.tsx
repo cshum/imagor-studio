@@ -67,6 +67,7 @@ import {
   updateLocationState,
 } from '@/lib/editor-state-url'
 import { type ImageEditorState } from '@/lib/image-editor.ts'
+import { splitImagePath } from '@/lib/path-utils'
 import { cn, debounce } from '@/lib/utils.ts'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 import { useAuth } from '@/stores/auth-store'
@@ -327,6 +328,39 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       toast.error(result.error || t('imageEditor.page.failedToDownload'))
     }
     // No success toast for download as it's obvious when it works
+  }
+
+  const handleSaveTemplateClick = async () => {
+    // Direct save for existing templates (no dialog)
+    if (!templateMetadata) return
+
+    try {
+      const dimensions = imageEditor.getOriginalDimensions()
+      const currentState = imageEditor.getState()
+
+      // Auto-detect dimension mode
+      const dimensionMode: 'adaptive' | 'predefined' =
+        currentState.width &&
+        currentState.height &&
+        (currentState.width !== dimensions.width || currentState.height !== dimensions.height)
+          ? 'predefined'
+          : 'adaptive'
+
+      const { galleryKey } = splitImagePath(templateMetadata.templatePath)
+
+      await imageEditor.exportTemplate(
+        templateMetadata.name,
+        undefined,
+        dimensionMode,
+        galleryKey || '',
+        true, // overwrite = true for direct save
+      )
+
+      toast.success(t('imageEditor.template.saveSuccess'))
+    } catch (error) {
+      console.error('Failed to save template:', error)
+      toast.error(t('imageEditor.template.saveError'))
+    }
   }
 
   const handleVisualCropToggle = useCallback(
@@ -654,7 +688,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                   <Button
                     variant='outline'
                     size='sm'
-                    onClick={() => setSaveTemplateDialogOpen(true)}
+                    onClick={handleSaveTemplateClick}
                     className='rounded-r-none border-r-0'
                   >
                     <FileText className='mr-1 h-4 w-4' />
@@ -1054,7 +1088,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => setSaveTemplateDialogOpen(true)}
+                  onClick={handleSaveTemplateClick}
                   className='rounded-r-none border-r-0'
                 >
                   <FileText className='mr-1 h-4 w-4' />
