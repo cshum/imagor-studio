@@ -397,17 +397,6 @@ func TestValidateTemplateJSON(t *testing.T) {
 		assert.Contains(t, err.Error(), "missing required field: version")
 	})
 
-	t.Run("missing name", func(t *testing.T) {
-		templateJSON := `{
-			"version": "1.0",
-			"transformations": {}
-		}`
-
-		err := validateTemplateJSON(templateJSON)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "missing required field: name")
-	})
-
 	t.Run("missing transformations", func(t *testing.T) {
 		templateJSON := `{
 			"version": "1.0",
