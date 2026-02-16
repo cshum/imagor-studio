@@ -73,11 +73,10 @@ import { setLocale } from '@/stores/locale-store'
 
 interface ImageEditorPageProps {
   galleryKey: string
-  imageKey: string
   loaderData: ImageEditorLoaderData
 }
 
-export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEditorPageProps) {
+export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps) {
   const { imageEditor, imagePath, initialEditorOpenSections, isTemplate } = loaderData
 
   const { t } = useTranslation()
@@ -301,16 +300,15 @@ export function ImageEditorPage({ galleryKey, imageKey, loaderData }: ImageEdito
       return
     }
 
-    // Priority 3: Navigate back to image view
+    // Priority 3: Navigate back to gallery
     if (galleryKey) {
       navigate({
-        to: '/gallery/$galleryKey/$imageKey',
-        params: { galleryKey, imageKey },
+        to: '/gallery/$galleryKey',
+        params: { galleryKey },
       })
     } else {
       navigate({
-        to: '/$imageKey',
-        params: { imageKey },
+        to: '/',
       })
     }
   }
