@@ -676,9 +676,7 @@
       "confirmLeaveMessage": "确定要返回吗？",
       "leave": "离开",
       "stay": "留下",
-      "showHideControls": "显示/隐藏控制面板",
-      "saveTemplate": "保存模板...",
-      "loadTemplate": "加载模板..."
+      "showHideControls": "显示/隐藏控制面板"
     },
     "template": {
       "saveTemplate": "保存模板",

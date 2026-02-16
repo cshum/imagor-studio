@@ -670,9 +670,7 @@
       "confirmLeaveMessage": "Sei sicuro di voler tornare indietro?",
       "leave": "Esci",
       "stay": "Rimani",
-      "showHideControls": "Mostra/Nascondi Controlli",
-      "saveTemplate": "Salva Modello...",
-      "loadTemplate": "Carica Modello..."
+      "showHideControls": "Mostra/Nascondi Controlli"
     },
     "template": {
       "saveTemplate": "Salva Modello",
