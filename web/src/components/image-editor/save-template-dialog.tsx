@@ -37,6 +37,7 @@ interface SaveTemplateDialogProps {
     dimensionMode: 'adaptive' | 'predefined'
     templatePath: string
   }
+  onSaveSuccess?: (templatePath: string) => void
 }
 
 export function SaveTemplateDialog({
@@ -45,6 +46,7 @@ export function SaveTemplateDialog({
   imageEditor,
   imagePath,
   templateMetadata,
+  onSaveSuccess,
 }: SaveTemplateDialogProps) {
   const { t } = useTranslation()
   const { homeTitle } = useFolderTree()
@@ -101,12 +103,20 @@ export function SaveTemplateDialog({
     try {
       await imageEditor.exportTemplate(name.trim(), undefined, dimensionMode, savePath, overwrite)
 
+      // Build template path for navigation
+      const templatePath = savePath
+        ? `${savePath}/${name.trim()}.imagor.json`
+        : `${name.trim()}.imagor.json`
+
       // Success - template saved
       toast.success(t('imageEditor.template.saveSuccess', { name: name.trim() }))
       onOpenChange(false)
 
       // Reset form
       setName('')
+
+      // Notify parent with template path (parent handles navigation and marking as saved)
+      onSaveSuccess?.(templatePath)
     } catch (error) {
       // Check if it's a conflict error (template already exists)
       const errorMessage = error instanceof Error ? error.message : String(error)

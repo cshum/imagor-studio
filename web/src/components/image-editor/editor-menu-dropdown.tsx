@@ -48,8 +48,14 @@ export function EditorMenuDropdown({
   onRedo,
   canUndo = false,
   canRedo = false,
+  isTemplate = false,
 }: EditorMenuDropdownProps) {
   const { t, i18n } = useTranslation()
+
+  // Conditional label: "Save Template" for images, "Save Template As..." for templates
+  const saveTemplateLabel = isTemplate
+    ? t('imageEditor.template.saveTemplateAs')
+    : t('imageEditor.template.saveTemplate')
 
   return (
     <DropdownMenuContent align='end' className='w-56'>
@@ -80,7 +86,7 @@ export function EditorMenuDropdown({
             }}
           >
             <FileDown className='mr-3 h-4 w-4' />
-            {t('imageEditor.template.saveTemplateAs')}
+            {saveTemplateLabel}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
         </>
@@ -103,7 +109,7 @@ export function EditorMenuDropdown({
             }}
           >
             <FileDown className='mr-3 h-4 w-4' />
-            {t('imageEditor.template.saveTemplateAs')}
+            {saveTemplateLabel}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
         </>
