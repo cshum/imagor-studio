@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRouter } from '@tanstack/react-router'
 import { FileDown, Folder, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -50,7 +49,6 @@ export function SaveTemplateDialog({
   onSaveSuccess,
 }: SaveTemplateDialogProps) {
   const { t } = useTranslation()
-  const router = useRouter()
   const { homeTitle } = useFolderTree()
   const [name, setName] = useState('')
   const [savePath, setSavePath] = useState('')
@@ -116,9 +114,6 @@ export function SaveTemplateDialog({
 
       // Reset form
       setName('')
-
-      // Invalidate router cache to refresh gallery preview
-      router.invalidate()
 
       // Notify parent with template path (parent handles navigation and marking as saved)
       onSaveSuccess?.(templatePath)
