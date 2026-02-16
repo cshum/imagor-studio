@@ -2115,7 +2115,7 @@ export class ImageEditor {
     let template: ImagorTemplate
     try {
       template = JSON.parse(jsonString) as ImagorTemplate
-    } catch (error) {
+    } catch {
       return {
         success: false,
         warnings: [
