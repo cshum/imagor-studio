@@ -52,27 +52,19 @@ export const imageEditorLoader = async ({
   let template: ImagorTemplate | null = null
 
   if (isTemplate) {
-    // Fetch template JSON via HTTP
-    const templateUrl = getFullImageUrl(`/${imagePath}`)
+    // Fetch template JSON via thumbnailUrls.original (backend ensures this points to the JSON file)
+    if (!fileStat.thumbnailUrls?.original) {
+      throw new Error('Template file URL not available')
+    }
+
+    const templateUrl = getFullImageUrl(fileStat.thumbnailUrls.original)
     const response = await fetch(templateUrl)
 
     if (!response.ok) {
       throw new Error(`Failed to load template: ${response.status} ${response.statusText}`)
     }
 
-    // Check if response is actually JSON
-    const contentType = response.headers.get('content-type')
-    if (!contentType || !contentType.includes('application/json')) {
-      throw new Error(`Template file is not JSON (content-type: ${contentType || 'unknown'})`)
-    }
-
-    try {
-      template = (await response.json()) as ImagorTemplate
-    } catch (error) {
-      throw new Error(
-        `Failed to parse template JSON: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      )
-    }
+    template = (await response.json()) as ImagorTemplate
 
     // Use source image path from template
     actualImagePath = template.sourceImagePath

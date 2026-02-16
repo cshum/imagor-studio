@@ -150,11 +150,22 @@ func (r *Resolver) generateThumbnailUrls(imagePath string, videoThumbnailPos str
 		return nil
 	}
 
-	// For .imagor.json template files, use the preview image
+	// For .imagor.json template files, generate preview URLs but keep original pointing to JSON
 	if strings.HasSuffix(imagePath, ".imagor.json") {
 		previewPath := strings.TrimSuffix(imagePath, ".imagor.json") + ".imagor.preview"
-		// Recursively call with the preview path (which is a WebP image)
-		return r.generateThumbnailUrls(previewPath, videoThumbnailPos)
+
+		// Generate preview-based URLs for display (grid, preview, full, meta)
+		previewUrls := r.generateThumbnailUrls(previewPath, videoThumbnailPos)
+
+		// Override 'original' to point to the actual JSON file
+		if previewUrls != nil {
+			jsonURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
+				Filters: imagorpath.Filters{{Name: "raw"}},
+			})
+			previewUrls.Original = &jsonURL
+		}
+
+		return previewUrls
 	}
 
 	// Check if the image is SVG or PDF (case-insensitive)
