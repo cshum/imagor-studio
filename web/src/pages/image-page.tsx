@@ -27,11 +27,20 @@ export function ImagePage({
   const { images } = galleryLoaderData
   const { image, imageElement } = imageLoaderData
 
-  // Filter out videos and templates from navigation - only navigate through regular images
-  const navigableImages = useMemo(
-    () => images.filter((img) => !img.isVideo && !img.isTemplate),
-    [images],
-  )
+  const { navigableImages, slideshowImages } = useMemo(() => {
+    const navigableImages: GalleryImage[] = []
+    const slideshowImages: GalleryImage[] = []
+    for (const img of images) {
+      if (!img.isTemplate) {
+        navigableImages.push(img) // Images + Videos (exclude templates)
+        if (!img.isVideo) {
+          slideshowImages.push(img) // Only images (exclude videos + templates)
+        }
+      }
+    }
+    return { navigableImages, slideshowImages }
+  }, [images])
+
   const imageIndex = navigableImages.findIndex((img) => img.imageKey === imageKey)
 
   // Slideshow state management
@@ -85,17 +94,19 @@ export function ImagePage({
     setIsSlideshow(slideshow)
   }
 
-  // Slideshow timer logic
+  // Slideshow timer logic - only auto-advance through images (skip videos)
   useEffect(() => {
     if (isSlideshow) {
-      if (navigableImages.length < 2) {
+      // Safety check: need at least 2 images for slideshow
+      if (slideshowImages.length < 2) {
         return
       }
 
-      const currentIndex = navigableImages.findIndex((img) => img.imageKey === imageKey)
-      const nextIndex = (currentIndex + 1) % navigableImages.length
-      const nextImage = navigableImages[nextIndex]
+      const currentIndex = slideshowImages.findIndex((img) => img.imageKey === imageKey)
+      const nextIndex = (currentIndex + 1) % slideshowImages.length
+      const nextImage = slideshowImages[nextIndex]
 
+      // Safety check: if next image is the same as current, skip timer
       if (nextImage.imageKey === imageKey) {
         return
       }
@@ -128,7 +139,7 @@ export function ImagePage({
 
       return () => clearTimeout(timer)
     }
-  }, [imageKey, isSlideshow, navigableImages, router, galleryKey, navigate])
+  }, [imageKey, isSlideshow, slideshowImages, router, galleryKey, navigate])
 
   return (
     <>
