@@ -113,7 +113,11 @@ const ImageCell = ({
       // Add all selected images
       selectedImageKeys.forEach((key) => {
         const name = key.split('/').pop() || key
-        items.push({ key: joinImagePath(galleryKey, key), name, type: 'image' })
+        items.push({
+          key: joinImagePath(galleryKey, key),
+          name,
+          type: image.isTemplate ? 'template' : 'image',
+        })
       })
 
       // Add all selected folders
@@ -127,7 +131,7 @@ const ImageCell = ({
       items.push({
         key: fullKey,
         name: image.imageName,
-        type: 'image',
+        type: image.isTemplate ? 'template' : 'image',
       })
     }
 

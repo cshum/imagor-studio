@@ -3,7 +3,7 @@ import { createStore } from '@/lib/create-store'
 export interface DragItem {
   key: string // Full path
   name: string
-  type: 'folder' | 'image'
+  type: 'folder' | 'image' | 'template'
 }
 
 export interface DragDropState {

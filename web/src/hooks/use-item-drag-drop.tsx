@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { useTranslation } from 'react-i18next'
-import { Folder, Image, Layers } from 'lucide-react'
+import { FileText, Folder, Image, Layers } from 'lucide-react'
 
 import type { DragItem as StoreDragItem } from '@/stores/drag-drop-store'
 import {
@@ -70,7 +70,8 @@ export function useItemDragDrop({ onDrop, isAuthenticated }: UseDragDropOptions)
       if (items.length === 1) {
         // Single item: Show Lucide icon + truncated name
         const item = items[0]
-        const IconComponent = item.type === 'folder' ? Folder : Image
+        const IconComponent =
+          item.type === 'folder' ? Folder : item.type === 'template' ? FileText : Image
         const truncatedName = item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name
         dragImage.innerHTML = renderToStaticMarkup(
           <DragPreviewBadge icon={<IconComponent size={16} />} text={truncatedName} />,
