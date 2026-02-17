@@ -1701,6 +1701,7 @@ export class ImageEditor {
 
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
+    this.callbacks.onHistoryChange?.()
   }
 
   /**
@@ -1757,6 +1758,7 @@ export class ImageEditor {
 
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
+    this.callbacks.onHistoryChange?.()
   }
 
   /**
