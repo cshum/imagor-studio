@@ -27,6 +27,7 @@ export interface FilePickerDialogProps {
   fileType?: 'images' | 'videos' | 'both' // Filter by file type (uses system config)
   fileExtensions?: string[] // Custom extensions (overrides fileType)
   maxItemWidth?: number // Default: 170 (for 3 columns)
+  lastLocationRegistryKey?: string // Custom registry key for remembering last folder location
 
   // Customization
   title?: string
@@ -43,6 +44,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   fileType = 'both',
   fileExtensions,
   maxItemWidth = 230,
+  lastLocationRegistryKey = 'config.file_picker_last_folder_path',
   title,
   description,
   confirmButtonText,
@@ -69,12 +71,10 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
         if (!initialPath && authState.profile?.id && authState.state === 'authenticated') {
           try {
             const result = await getUserRegistryMultiple(
-              ['config.file_picker_last_folder_path'],
+              [lastLocationRegistryKey],
               authState.profile.id,
             )
-            const savedPath = result.find(
-              (r) => r.key === 'config.file_picker_last_folder_path',
-            )?.value
+            const savedPath = result.find((r) => r.key === lastLocationRegistryKey)?.value
 
             if (savedPath) {
               // Validate that the folder still exists
@@ -146,12 +146,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
     if (selectedPaths.size > 0) {
       // Save the current path to user registry when user confirms selection
       if (authState.profile?.id && authState.state === 'authenticated') {
-        setUserRegistry(
-          'config.file_picker_last_folder_path',
-          currentPath,
-          false,
-          authState.profile.id,
-        )
+        setUserRegistry(lastLocationRegistryKey, currentPath, false, authState.profile.id)
       }
 
       onSelect(Array.from(selectedPaths))

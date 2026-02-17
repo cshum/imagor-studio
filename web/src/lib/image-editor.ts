@@ -2238,7 +2238,8 @@ export class ImageEditor {
   ): ImageEditorState {
     // Strip crop parameters (source-image-specific, doesn't transfer)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { cropLeft, cropTop, cropWidth, cropHeight, ...stateWithoutCrop } = template.transformations
+    const { cropLeft, cropTop, cropWidth, cropHeight, ...stateWithoutCrop } =
+      template.transformations
 
     // Handle dimension mode
     if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
