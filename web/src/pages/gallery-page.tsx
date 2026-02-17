@@ -6,16 +6,9 @@ import {
   ArrowUp,
   Check,
   Clock,
-  Copy,
-  Download,
-  Eye,
   FileText,
-  FolderInput,
   FolderPlus,
   Search,
-  SquarePen,
-  Trash2,
-  Type,
   Upload,
   X,
 } from 'lucide-react'
@@ -32,18 +25,13 @@ import { EmptyGalleryState } from '@/components/image-gallery/empty-gallery-stat
 import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
 import { FolderGrid, Gallery } from '@/components/image-gallery/folder-grid'
 import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
-import { ImageContextData, ImageContextMenu } from '@/components/image-gallery/image-context-menu'
+import { ImageContextMenu } from '@/components/image-gallery/image-context-menu'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { MoveItem, MoveItemsDialog } from '@/components/image-gallery/move-items-dialog'
 import { RenameItemDialog } from '@/components/image-gallery/rename-item-dialog'
 import { SelectionMenu } from '@/components/image-gallery/selection-menu'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  ContextMenuItem,
-  ContextMenuLabel,
-  ContextMenuSeparator as ContextMenuSeparatorComponent,
-} from '@/components/ui/context-menu'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
 import {
   DropdownMenuItem,
@@ -54,9 +42,11 @@ import { Input } from '@/components/ui/input'
 import { UploadProgress } from '@/components/upload/upload-progress.tsx'
 import { ImagorParamsInput, SortOption, SortOrder } from '@/generated/graphql'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
+import { useBulkSelectionMenu } from '@/hooks/use-bulk-selection-menu'
 import { DragDropFile } from '@/hooks/use-drag-drop'
 import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
 import { useGalleryKeyboardNavigation } from '@/hooks/use-gallery-keyboard-navigation'
+import { useImageContextMenu } from '@/hooks/use-image-context-menu'
 import { DragItem, useItemDragDrop } from '@/hooks/use-item-drag-drop'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
@@ -604,124 +594,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
-  const renderContextMenuItems = ({ imageName, imageKey, position, isVideo }: ImageContextData) => {
-    const isAuthenticated = authState.state === 'authenticated'
-    const canEdit = (isAuthenticated || authState.isEmbedded) && !isVideo
-
-    if (!imageKey) return null
-
-    return (
-      <>
-        <ContextMenuLabel className='break-all'>{imageName}</ContextMenuLabel>
-        <ContextMenuSeparatorComponent />
-        <ContextMenuItem onClick={() => handleImageClick(imageKey, position)}>
-          <Eye className='mr-2 h-4 w-4' />
-          {t('pages.gallery.contextMenu.open')}
-        </ContextMenuItem>
-        {canEdit && (
-          <ContextMenuItem onClick={() => handleEditImage(imageKey)}>
-            <SquarePen className='mr-2 h-4 w-4' />
-            {t('pages.gallery.contextMenu.edit')}
-          </ContextMenuItem>
-        )}
-        {isAuthenticated && (
-          <>
-            <ContextMenuItem onClick={() => handleCopyUrl(imageKey, isVideo)}>
-              <Copy className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.copyUrl')}
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => handleDownload(imageKey)}>
-              <Download className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.download')}
-            </ContextMenuItem>
-            <ContextMenuItem
-              onClick={() => {
-                // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
-                setTimeout(() => handleRenameFromMenu(imageKey, imageName, 'file'), 0)
-              }}
-            >
-              <Type className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.rename')}
-            </ContextMenuItem>
-            <ContextMenuItem
-              onClick={() => {
-                // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
-                setTimeout(() => handleMoveFromMenu(imageKey, imageName, 'file'), 0)
-              }}
-            >
-              <FolderInput className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.move')}
-            </ContextMenuItem>
-            <ContextMenuSeparatorComponent />
-            <ContextMenuItem
-              onClick={() => {
-                // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
-                setTimeout(() => handleDeleteItemFromMenu(imageKey, imageName, 'file'), 0)
-              }}
-              className='text-destructive focus:text-destructive'
-            >
-              <Trash2 className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.delete')}
-            </ContextMenuItem>
-          </>
-        )}
-      </>
-    )
-  }
-
-  // Render function for dropdown menus (uses DropdownMenuItem instead of ContextMenuItem)
-  const renderDropdownMenuItems = (imageName: string, imageKey: string, isVideo: boolean) => {
-    const isAuthenticated = authState.state === 'authenticated'
-    const canEdit = (isAuthenticated || authState.isEmbedded) && !isVideo
-
-    if (!imageKey) return null
-
-    return (
-      <>
-        <DropdownMenuLabel className='break-all'>{imageName}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => handleImageClick(imageKey)}>
-          <Eye className='mr-2 h-4 w-4' />
-          {t('pages.gallery.contextMenu.open')}
-        </DropdownMenuItem>
-        {canEdit && (
-          <DropdownMenuItem onClick={() => handleEditImage(imageKey)}>
-            <SquarePen className='mr-2 h-4 w-4' />
-            {t('pages.gallery.contextMenu.edit')}
-          </DropdownMenuItem>
-        )}
-        {isAuthenticated && (
-          <>
-            <DropdownMenuItem onClick={() => handleCopyUrl(imageKey, isVideo)}>
-              <Copy className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.copyUrl')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleDownload(imageKey)}>
-              <Download className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.download')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleRenameFromMenu(imageKey, imageName, 'file')}>
-              <Type className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.rename')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleMoveFromMenu(imageKey, imageName, 'file')}>
-              <FolderInput className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.move')}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => handleDeleteItemFromMenu(imageKey, imageName, 'file')}
-              className='text-destructive focus:text-destructive'
-            >
-              <Trash2 className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.delete')}
-            </DropdownMenuItem>
-          </>
-        )}
-      </>
-    )
-  }
-
   // Use the shared folder context menu hook for context menus (right-click)
   const {
     renderMenuItems: renderFolderContextMenuItems,
@@ -737,17 +609,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
       setTimeout(() => handleMoveFromMenu(folderKey, folderName, 'folder'), 0)
     },
-  })
-
-  // Use the shared folder context menu hook for dropdown menus (three-dots)
-  const { renderMenuItems: renderFolderDropdownMenuItems } = useFolderContextMenu({
-    isAuthenticated: () => authState.state === 'authenticated',
-    onRename: (folderKey, folderName) => handleRenameFromMenu(folderKey, folderName, 'folder'),
-    onDelete: (folderKey, folderName) => {
-      handleDeleteItemFromMenu(folderKey, folderName, 'folder')
-    },
-    onMove: (folderKey, folderName) => handleMoveFromMenu(folderKey, folderName, 'folder'),
-    useDropdownItems: true,
   })
 
   const isNavigateToImage = !!(
@@ -848,46 +709,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     selection.clearSelection()
   }
 
-  // Bulk menu rendering function
-  const renderBulkMenuItems = () => {
-    return (
-      <>
-        <ContextMenuLabel>
-          {t('pages.gallery.selection.title', { count: selection.selectedItems.size })}
-        </ContextMenuLabel>
-        <ContextMenuSeparatorComponent />
-        <ContextMenuItem onClick={handleClearSelection} className='hover:cursor-pointer'>
-          <X className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.selection.clearSelection')}
-        </ContextMenuItem>
-        <ContextMenuSeparatorComponent />
-        {authState.state === 'authenticated' && (
-          <>
-            <ContextMenuItem
-              onClick={() => {
-                setTimeout(() => handleBulkMove(), 0)
-              }}
-              className='hover:cursor-pointer'
-            >
-              <FolderInput className='mr-3 h-4 w-4' />
-              {t('pages.gallery.moveItems.title')}
-            </ContextMenuItem>
-            <ContextMenuSeparatorComponent />
-            <ContextMenuItem
-              onClick={() => {
-                setTimeout(() => handleBulkDelete(), 0)
-              }}
-              className='text-destructive focus:text-destructive hover:cursor-pointer'
-            >
-              <Trash2 className='mr-3 h-4 w-4' />
-              {t('pages.gallery.selection.deleteSelected', { count: selection.selectedItems.size })}
-            </ContextMenuItem>
-          </>
-        )}
-      </>
-    )
-  }
-
   // Move handlers (single and bulk)
   const handleMoveFromMenu = (itemKey: string, itemName: string, itemType: 'file' | 'folder') => {
     // For files, construct the full path
@@ -935,6 +756,53 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     // Clear selection after bulk move
     selection.clearSelection()
   }
+
+  // Use the bulk selection menu hook
+  const { renderBulkMenuItems } = useBulkSelectionMenu({
+    selectedCount: selection.selectedItems.size,
+    onClearSelection: handleClearSelection,
+    onMove: handleBulkMove,
+    onDelete: handleBulkDelete,
+    isAuthenticated: () => authState.state === 'authenticated',
+  })
+
+  // Use the shared folder context menu hook for dropdown menus (three-dots)
+  const { renderMenuItems: renderFolderDropdownMenuItems } = useFolderContextMenu({
+    isAuthenticated: () => authState.state === 'authenticated',
+    onRename: (folderKey, folderName) => handleRenameFromMenu(folderKey, folderName, 'folder'),
+    onDelete: (folderKey, folderName) => {
+      handleDeleteItemFromMenu(folderKey, folderName, 'folder')
+    },
+    onMove: (folderKey, folderName) => handleMoveFromMenu(folderKey, folderName, 'folder'),
+    useDropdownItems: true,
+  })
+
+  // Use the image context menu hook for context menus (right-click)
+  const { renderMenuItems: renderImageContextMenuItems } = useImageContextMenu({
+    isAuthenticated: () => authState.state === 'authenticated',
+    isEmbedded: authState.isEmbedded,
+    onOpen: handleImageClick,
+    onEdit: handleEditImage,
+    onCopyUrl: handleCopyUrl,
+    onDownload: handleDownload,
+    onRename: handleRenameFromMenu,
+    onMove: handleMoveFromMenu,
+    onDelete: handleDeleteItemFromMenu,
+  })
+
+  // Use the image context menu hook for dropdown menus (three-dots)
+  const { renderMenuItems: renderImageDropdownMenuItems } = useImageContextMenu({
+    isAuthenticated: () => authState.state === 'authenticated',
+    isEmbedded: authState.isEmbedded,
+    onOpen: handleImageClick,
+    onEdit: handleEditImage,
+    onCopyUrl: handleCopyUrl,
+    onDownload: handleDownload,
+    onRename: handleRenameFromMenu,
+    onMove: handleMoveFromMenu,
+    onDelete: handleDeleteItemFromMenu,
+    useDropdownItems: true,
+  })
 
   // Create menu items for authenticated users
   const customMenuItems =
@@ -1159,8 +1027,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           />
                         </FolderContextMenu>
                       )}
+                      {/* Unified Images Grid with single context menu */}
                       <ImageContextMenu
-                        renderMenuItems={renderContextMenuItems}
+                        renderMenuItems={renderImageContextMenuItems}
                         renderBulkMenuItems={renderBulkMenuItems}
                         selectedItems={selection.selectedItems}
                         selectedCount={selection.selectedItems.size}
@@ -1182,11 +1051,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                               : undefined
                           }
                           renderMenuItems={(image) =>
-                            renderDropdownMenuItems(
-                              image.imageName,
-                              image.imageKey,
-                              image.isVideo || false,
-                            )
+                            renderImageDropdownMenuItems({
+                              imageKey: image.imageKey,
+                              imageName: image.imageName,
+                              isVideo: image.isVideo || false,
+                              isTemplate: image.isTemplate || false,
+                            })
                           }
                           onDragStart={
                             authState.state === 'authenticated' ? handleDragStart : undefined
