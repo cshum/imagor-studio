@@ -871,7 +871,12 @@
       "saving": "Saving...",
       "overwriteTitle": "Overwrite Template?",
       "overwriteConfirm": "A template named \"{{name}}\" already exists. Do you want to replace it?",
-      "overwrite": "Overwrite"
+      "overwrite": "Overwrite",
+      "applyTemplate": "Apply Template...",
+      "selectTemplate": "Select Template",
+      "selectTemplateDescription": "Choose a template to apply to this image",
+      "applySuccess": "Template applied successfully",
+      "applyError": "Failed to apply template"
     }
   }
 }

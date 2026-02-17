@@ -696,7 +696,12 @@
       "saving": "Salvataggio...",
       "overwriteTitle": "Sovrascrivere il modello?",
       "overwriteConfirm": "Esiste già un modello denominato \"{{name}}\". Vuoi sostituirlo?",
-      "overwrite": "Sovrascrivi"
+      "overwrite": "Sovrascrivi",
+      "applyTemplate": "Applica modello...",
+      "selectTemplate": "Seleziona modello",
+      "selectTemplateDescription": "Scegli un modello da applicare a questa immagine",
+      "applySuccess": "Modello applicato con successo",
+      "applyError": "Impossibile applicare il modello"
     },
     "controls": {
       "cropAspect": "Ritaglia e Aspetto",

@@ -302,10 +302,11 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
             isVideo: hasExtension(item.name, config.videoExtensions), // Always use baseline for detection
           }))
 
-        // Filter by allowed extensions
+        // Filter by allowed extensions (handles compound extensions like .imagor.json)
         imageItems = imageItems.filter((item) => {
-          const ext = `.${item.imageName.split('.').pop()?.toLowerCase()}`
-          return allowedExtensions.includes(ext)
+          return allowedExtensions.some((ext) =>
+            item.imageName.toLowerCase().endsWith(ext.toLowerCase()),
+          )
         })
 
         setFolders(folderItems)

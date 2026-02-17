@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Check, Copy, Download, Eye, FileDown, Languages, Redo2, Undo2 } from 'lucide-react'
+import { Check, Copy, Download, Eye, FileDown, FileUp, Languages, Redo2, Undo2 } from 'lucide-react'
 
 import {
   DropdownMenuContent,
@@ -21,6 +21,7 @@ interface EditorMenuDropdownProps {
   onDownload: () => void
   onCopyUrl: () => void
   onSaveTemplate: () => void
+  onApplyTemplate?: () => void
   onLanguageChange: (languageCode: string) => void
   onToggleSectionVisibility: (sectionKey: SectionKey) => void
   editorOpenSections: EditorOpenSections
@@ -38,6 +39,7 @@ export function EditorMenuDropdown({
   onDownload,
   onCopyUrl,
   onSaveTemplate,
+  onApplyTemplate,
   onLanguageChange,
   onToggleSectionVisibility,
   editorOpenSections,
@@ -88,6 +90,17 @@ export function EditorMenuDropdown({
             <FileDown className='mr-3 h-4 w-4' />
             {saveTemplateLabel}
           </DropdownMenuItem>
+          {onApplyTemplate && (
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault()
+                setTimeout(() => onApplyTemplate(), 100)
+              }}
+            >
+              <FileUp className='mr-3 h-4 w-4' />
+              {t('imageEditor.template.applyTemplate')}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
         </>
       )}
@@ -111,6 +124,16 @@ export function EditorMenuDropdown({
             <FileDown className='mr-3 h-4 w-4' />
             {saveTemplateLabel}
           </DropdownMenuItem>
+          {onApplyTemplate && (
+            <DropdownMenuItem
+              onSelect={() => {
+                setTimeout(() => onApplyTemplate(), 0)
+              }}
+            >
+              <FileUp className='mr-3 h-4 w-4' />
+              {t('imageEditor.template.applyTemplate')}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
         </>
       )}

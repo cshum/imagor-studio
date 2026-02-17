@@ -699,7 +699,12 @@
       "saving": "儲存中...",
       "overwriteTitle": "覆蓋範本？",
       "overwriteConfirm": "已存在名為「{{name}}」的範本。是否要取代它？",
-      "overwrite": "覆蓋"
+      "overwrite": "覆蓋",
+      "applyTemplate": "套用範本...",
+      "selectTemplate": "選擇範本",
+      "selectTemplateDescription": "選擇要套用到此圖像的範本",
+      "applySuccess": "範本套用成功",
+      "applyError": "套用範本失敗"
     },
     "controls": {
       "cropAspect": "裁剪和比例",
