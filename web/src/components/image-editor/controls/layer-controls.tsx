@@ -177,7 +177,7 @@ export function LayerControls({
         // Parse new negative offset syntax: 'left-20', 'right-20'
         const leftMatch = x.match(/^(?:left|l)-(\d+)$/)
         const rightMatch = x.match(/^(?:right|r)-(\d+)$/)
-        
+
         if (leftMatch) {
           hAlign = 'left'
           xOffset = -parseInt(leftMatch[1]) // Negative offset
@@ -208,7 +208,7 @@ export function LayerControls({
         // Parse new negative offset syntax: 'top-20', 'bottom-20'
         const topMatch = y.match(/^(?:top|t)-(\d+)$/)
         const bottomMatch = y.match(/^(?:bottom|b)-(\d+)$/)
-        
+
         if (topMatch) {
           vAlign = 'top'
           yOffset = -parseInt(topMatch[1]) // Negative offset
@@ -230,7 +230,6 @@ export function LayerControls({
 
     return { hAlign, vAlign, xOffset, yOffset }
   }, [layer.x, layer.y])
-
 
   const handleHAlignChange = useCallback(
     (value: string) => {

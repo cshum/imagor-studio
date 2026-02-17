@@ -148,10 +148,7 @@ export class ImageEditor {
    * @param scaleFactor - Scale factor to apply
    * @returns Scaled position value
    */
-  private static scalePositionValue(
-    value: string | number,
-    scaleFactor: number,
-  ): string | number {
+  private static scalePositionValue(value: string | number, scaleFactor: number): string | number {
     if (typeof value === 'number') {
       return Math.round(value * scaleFactor)
     }
@@ -796,14 +793,8 @@ export class ImageEditor {
         }
 
         // Scale position values (including new string syntax) for preview
-        const scaledX = ImageEditor.scalePositionValue(
-          layer.x,
-          forPreview ? scaleFactor : 1,
-        )
-        const scaledY = ImageEditor.scalePositionValue(
-          layer.y,
-          forPreview ? scaleFactor : 1,
-        )
+        const scaledX = ImageEditor.scalePositionValue(layer.x, forPreview ? scaleFactor : 1)
+        const scaledY = ImageEditor.scalePositionValue(layer.y, forPreview ? scaleFactor : 1)
         const x = scaledX.toString()
         const y = scaledY.toString()
 

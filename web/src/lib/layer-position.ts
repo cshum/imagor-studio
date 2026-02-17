@@ -170,7 +170,7 @@ export function calculateLayerPosition(
     // Parse negative offset syntax: 'left-20', 'l-20', 'right-20', 'r-20'
     const leftMatch = layerX.match(/^(?:left|l)-(\d+)$/)
     const rightMatch = layerX.match(/^(?:right|r)-(\d+)$/)
-    
+
     if (leftMatch) {
       // left-N: N pixels outside the left edge (negative position)
       const offset = parseInt(leftMatch[1])
@@ -215,7 +215,7 @@ export function calculateLayerPosition(
     // Parse negative offset syntax: 'top-20', 't-20', 'bottom-20', 'b-20'
     const topMatch = layerY.match(/^(?:top|t)-(\d+)$/)
     const bottomMatch = layerY.match(/^(?:bottom|b)-(\d+)$/)
-    
+
     if (topMatch) {
       // top-N: N pixels outside the top edge (negative position)
       const offset = parseInt(topMatch[1])
@@ -711,16 +711,16 @@ export function convertDisplayToLayerPosition(
   const isCenterY = currentY === 'center'
   const canDragX = typeof currentX !== 'undefined'
   const canDragY = typeof currentY !== 'undefined'
-  
+
   // Check if right-aligned (including string syntax like 'right-20')
-  const isRightAligned = 
-    currentX === 'right' || 
+  const isRightAligned =
+    currentX === 'right' ||
     (typeof currentX === 'number' && currentX < 0) ||
     (typeof currentX === 'string' && /^(?:right|r)-\d+$/.test(currentX))
-  
+
   // Check if bottom-aligned (including string syntax like 'bottom-20')
-  const isBottomAligned = 
-    currentY === 'bottom' || 
+  const isBottomAligned =
+    currentY === 'bottom' ||
     (typeof currentY === 'number' && currentY < 0) ||
     (typeof currentY === 'string' && /^(?:bottom|b)-\d+$/.test(currentY))
 
