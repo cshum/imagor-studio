@@ -185,7 +185,8 @@
         "move": "移動",
         "delete": "刪除",
         "copyUrlError": "複製 URL 失敗",
-        "downloadError": "下載失敗"
+        "downloadError": "下載失敗",
+        "copyUrlSuccess": "URL 已複製到剪貼簿"
       },
       "copyUrlDialog": {
         "title": "複製 URL",
@@ -673,7 +674,8 @@
       "confirmLeaveMessage": "確定要返回嗎？",
       "leave": "離開",
       "stay": "留下",
-      "showHideControls": "顯示/隱藏控制面板"
+      "showHideControls": "顯示/隱藏控制面板",
+      "copyUrlSuccess": "URL 已複製到剪貼簿"
     },
     "template": {
       "saveTemplate": "儲存範本",

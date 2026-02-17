@@ -52,6 +52,32 @@ export async function fallbackCopyToClipboard(text: string): Promise<void> {
 }
 
 /**
+ * Copy text to clipboard using modern Clipboard API with fallback
+ * Returns a promise that resolves to true on success, false on failure
+ */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (isClipboardAPIAvailable()) {
+      await navigator.clipboard.writeText(text)
+      return true
+    } else {
+      // Fallback to execCommand
+      return fallbackCopyToClipboard(text)
+        .then(() => true)
+        .catch(() => false)
+    }
+  } catch {
+    // Try execCommand fallback
+    try {
+      await fallbackCopyToClipboard(text)
+      return true
+    } catch {
+      return false
+    }
+  }
+}
+
+/**
  * Silent clipboard copy that doesn't throw errors
  * Used for background clipboard attempts in dialogs
  */

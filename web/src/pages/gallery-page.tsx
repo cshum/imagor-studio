@@ -53,6 +53,7 @@ import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-hand
 import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { getFullImageUrl } from '@/lib/api-utils'
+import { copyToClipboard } from '@/lib/browser-utils'
 import { joinImagePath } from '@/lib/path-utils'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
@@ -564,10 +565,20 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         params: params as ImagorParamsInput,
       })
       const fullUrl = getFullImageUrl(url)
-      setCopyUrlDialog({
-        open: true,
-        url: fullUrl,
-      })
+
+      // Try to copy to clipboard using modern API
+      const success = await copyToClipboard(fullUrl)
+
+      if (success) {
+        // Show success toast
+        toast.success(t('pages.gallery.contextMenu.copyUrlSuccess'))
+      } else {
+        // Fallback to dialog if clipboard API fails
+        setCopyUrlDialog({
+          open: true,
+          url: fullUrl,
+        })
+      }
     } catch {
       toast.error(t('pages.gallery.contextMenu.copyUrlError'))
     }
