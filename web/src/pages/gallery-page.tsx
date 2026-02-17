@@ -721,11 +721,52 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   }
 
   // Render function for dropdown menus (uses DropdownMenuItem instead of ContextMenuItem)
-  const renderDropdownMenuItems = (imageName: string, imageKey: string, isVideo: boolean) => {
+  const renderDropdownMenuItems = (
+    imageName: string,
+    imageKey: string,
+    isVideo: boolean,
+    isTemplate: boolean = false,
+  ) => {
     const isAuthenticated = authState.state === 'authenticated'
     const canEdit = (isAuthenticated || authState.isEmbedded) && !isVideo
 
     if (!imageKey) return null
+
+    // For templates, show only Edit, Rename, Move, Delete
+    if (isTemplate) {
+      return (
+        <>
+          <DropdownMenuLabel className='break-all'>{imageName}</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {isAuthenticated && (
+            <>
+              <DropdownMenuItem onClick={() => handleEditImage(imageKey)}>
+                <SquarePen className='mr-2 h-4 w-4' />
+                {t('pages.gallery.contextMenu.edit')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleRenameFromMenu(imageKey, imageName, 'file')}>
+                <Type className='mr-2 h-4 w-4' />
+                {t('pages.gallery.contextMenu.rename')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleMoveFromMenu(imageKey, imageName, 'file')}>
+                <FolderInput className='mr-2 h-4 w-4' />
+                {t('pages.gallery.contextMenu.move')}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => handleDeleteItemFromMenu(imageKey, imageName, 'file')}
+                className='text-destructive focus:text-destructive'
+              >
+                <Trash2 className='mr-2 h-4 w-4' />
+                {t('pages.gallery.contextMenu.delete')}
+              </DropdownMenuItem>
+            </>
+          )}
+        </>
+      )
+    }
+
+    // For regular images/videos, show full menu
 
     return (
       <>
@@ -762,46 +803,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => handleDeleteItemFromMenu(imageKey, imageName, 'file')}
-              className='text-destructive focus:text-destructive'
-            >
-              <Trash2 className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.delete')}
-            </DropdownMenuItem>
-          </>
-        )}
-      </>
-    )
-  }
-
-  // Render function for template dropdown menus
-  const renderTemplateDropdownMenuItems = (templateName: string, templateKey: string) => {
-    const isAuthenticated = authState.state === 'authenticated'
-
-    if (!templateKey) return null
-
-    return (
-      <>
-        <DropdownMenuLabel className='break-all'>{templateName}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {isAuthenticated && (
-          <>
-            <DropdownMenuItem onClick={() => handleEditImage(templateKey)}>
-              <SquarePen className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.edit')}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => handleRenameFromMenu(templateKey, templateName, 'file')}
-            >
-              <Type className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.rename')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleMoveFromMenu(templateKey, templateName, 'file')}>
-              <FolderInput className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.move')}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => handleDeleteItemFromMenu(templateKey, templateName, 'file')}
               className='text-destructive focus:text-destructive'
             >
               <Trash2 className='mr-2 h-4 w-4' />
@@ -1274,13 +1275,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                               : undefined
                           }
                           renderMenuItems={(image) =>
-                            image.isTemplate
-                              ? renderTemplateDropdownMenuItems(image.imageName, image.imageKey)
-                              : renderDropdownMenuItems(
-                                  image.imageName,
-                                  image.imageKey,
-                                  image.isVideo || false,
-                                )
+                            renderDropdownMenuItems(
+                              image.imageName,
+                              image.imageKey,
+                              image.isVideo || false,
+                              image.isTemplate || false,
+                            )
                           }
                           onDragStart={
                             authState.state === 'authenticated' ? handleDragStart : undefined
