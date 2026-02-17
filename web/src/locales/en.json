@@ -436,7 +436,6 @@
       "baseDirectory": "Base Directory",
       "baseDirectoryDescription": "Optional prefix for all object keys in the bucket (e.g., \"images/\")",
       "testConfiguration": "Test Configuration",
-      "configureStorage": "Configure Storage",
       "testConfigurationFirst": "Please fill in the {{storageType}} storage configuration first",
       "testPassed": "Storage configuration test passed",
       "testFailed": "Storage configuration test failed",
