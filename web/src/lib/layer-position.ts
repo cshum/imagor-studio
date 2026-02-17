@@ -166,6 +166,25 @@ export function calculateLayerPosition(
     // Right edge of canvas
     const xPos = baseImageWidth - layerWidth
     leftPercent = `${(xPos / baseImageWidth) * 100}%`
+  } else if (typeof layerX === 'string') {
+    // Parse negative offset syntax: 'left-20', 'l-20', 'right-20', 'r-20'
+    const leftMatch = layerX.match(/^(?:left|l)-(\d+)$/)
+    const rightMatch = layerX.match(/^(?:right|r)-(\d+)$/)
+
+    if (leftMatch) {
+      // left-N: N pixels outside the left edge (negative position)
+      const offset = parseInt(leftMatch[1])
+      const xPos = -offset
+      leftPercent = `${(xPos / baseImageWidth) * 100}%`
+    } else if (rightMatch) {
+      // right-N: N pixels outside the right edge
+      const offset = parseInt(rightMatch[1])
+      const xPos = baseImageWidth - layerWidth + offset
+      leftPercent = `${(xPos / baseImageWidth) * 100}%`
+    } else {
+      // Fallback: use padding left as default
+      leftPercent = `${(paddingLeft / baseImageWidth) * 100}%`
+    }
   } else if (typeof layerX === 'number') {
     if (layerX < 0) {
       // Negative: offset from canvas right edge
@@ -192,6 +211,25 @@ export function calculateLayerPosition(
     // Bottom edge of canvas
     const yPos = baseImageHeight - layerHeight
     topPercent = `${(yPos / baseImageHeight) * 100}%`
+  } else if (typeof layerY === 'string') {
+    // Parse negative offset syntax: 'top-20', 't-20', 'bottom-20', 'b-20'
+    const topMatch = layerY.match(/^(?:top|t)-(\d+)$/)
+    const bottomMatch = layerY.match(/^(?:bottom|b)-(\d+)$/)
+
+    if (topMatch) {
+      // top-N: N pixels outside the top edge (negative position)
+      const offset = parseInt(topMatch[1])
+      const yPos = -offset
+      topPercent = `${(yPos / baseImageHeight) * 100}%`
+    } else if (bottomMatch) {
+      // bottom-N: N pixels outside the bottom edge
+      const offset = parseInt(bottomMatch[1])
+      const yPos = baseImageHeight - layerHeight + offset
+      topPercent = `${(yPos / baseImageHeight) * 100}%`
+    } else {
+      // Fallback: use padding top as default
+      topPercent = `${(paddingTop / baseImageHeight) * 100}%`
+    }
   } else if (typeof layerY === 'number') {
     if (layerY < 0) {
       // Negative: offset from canvas bottom edge
@@ -673,8 +711,18 @@ export function convertDisplayToLayerPosition(
   const isCenterY = currentY === 'center'
   const canDragX = typeof currentX !== 'undefined'
   const canDragY = typeof currentY !== 'undefined'
-  const isRightAligned = currentX === 'right' || (typeof currentX === 'number' && currentX < 0)
-  const isBottomAligned = currentY === 'bottom' || (typeof currentY === 'number' && currentY < 0)
+
+  // Check if right-aligned (including string syntax like 'right-20')
+  const isRightAligned =
+    currentX === 'right' ||
+    (typeof currentX === 'number' && currentX < 0) ||
+    (typeof currentX === 'string' && /^(?:right|r)-\d+$/.test(currentX))
+
+  // Check if bottom-aligned (including string syntax like 'bottom-20')
+  const isBottomAligned =
+    currentY === 'bottom' ||
+    (typeof currentY === 'number' && currentY < 0) ||
+    (typeof currentY === 'string' && /^(?:bottom|b)-\d+$/.test(currentY))
 
   // Threshold for switching from center to edge alignment
   const DRAG_THRESHOLD_PERCENT = SNAP_THRESHOLDS.CENTER_ESCAPE_PERCENT
@@ -715,21 +763,27 @@ export function convertDisplayToLayerPosition(
         }
       }
     } else if (isRightAligned) {
-      const calculatedOffset = canvasX + totalLayerWidth - baseImageWidth
+      // Right-aligned: calculate offset from right edge
+      const offsetFromRight = canvasX + totalLayerWidth - baseImageWidth
 
-      if (calculatedOffset > 0) {
-        // Crossed to left side - use absolute position
-        updates.x = canvasX
-      } else if (calculatedOffset === 0) {
+      if (offsetFromRight === 0) {
         updates.x = 'right'
+      } else if (offsetFromRight > 0) {
+        // Positive offset (outside right edge) - use string syntax
+        updates.x = `right-${offsetFromRight}`
       } else {
-        updates.x = calculatedOffset
+        // Negative offset (inside canvas) - use negative numeric value
+        updates.x = offsetFromRight
       }
     } else {
-      // Left-aligned: check if crossing to right side (canvasX goes negative)
-      if (canvasX < 0) {
-        updates.x = canvasX + totalLayerWidth - baseImageWidth
+      // Left-aligned: use position from left edge
+      if (canvasX === 0) {
+        updates.x = 'left'
+      } else if (canvasX < 0) {
+        // Negative position (outside left edge) - use string syntax
+        updates.x = `left-${Math.abs(canvasX)}`
       } else {
+        // Positive position (inside canvas)
         updates.x = canvasX
       }
     }
@@ -771,21 +825,27 @@ export function convertDisplayToLayerPosition(
         }
       }
     } else if (isBottomAligned) {
-      const calculatedOffset = canvasY + totalLayerHeight - baseImageHeight
+      // Bottom-aligned: calculate offset from bottom edge
+      const offsetFromBottom = canvasY + totalLayerHeight - baseImageHeight
 
-      if (calculatedOffset > 0) {
-        // Crossed to top side - use absolute position
-        updates.y = canvasY
-      } else if (calculatedOffset === 0) {
+      if (offsetFromBottom === 0) {
         updates.y = 'bottom'
+      } else if (offsetFromBottom > 0) {
+        // Positive offset (outside bottom edge) - use string syntax
+        updates.y = `bottom-${offsetFromBottom}`
       } else {
-        updates.y = calculatedOffset
+        // Negative offset (inside canvas) - use negative numeric value
+        updates.y = offsetFromBottom
       }
     } else {
-      // Top-aligned: check if crossing to bottom side (canvasY goes negative)
-      if (canvasY < 0) {
-        updates.y = canvasY + totalLayerHeight - baseImageHeight
+      // Top-aligned: use position from top edge
+      if (canvasY === 0) {
+        updates.y = 'top'
+      } else if (canvasY < 0) {
+        // Negative position (outside top edge) - use string syntax
+        updates.y = `top-${Math.abs(canvasY)}`
       } else {
+        // Positive position (inside canvas)
         updates.y = canvasY
       }
     }

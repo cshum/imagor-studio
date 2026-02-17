@@ -141,6 +141,31 @@ export class ImageEditor {
   private previewRequestId: number = 0
   private loadingRequestId: number = 0
 
+  /**
+   * Scale a position value (number or string with offset syntax)
+   * Handles: numbers, 'left-20', 'right-30', 'top-10', 'bottom-40', etc.
+   * @param value - Position value to scale
+   * @param scaleFactor - Scale factor to apply
+   * @returns Scaled position value
+   */
+  private static scalePositionValue(value: string | number, scaleFactor: number): string | number {
+    if (typeof value === 'number') {
+      return Math.round(value * scaleFactor)
+    }
+
+    // Parse new negative offset syntax: 'left-20', 'right-30', 'top-10', 'bottom-40'
+    const match = value.match(/^(left|right|top|bottom|l|r|t|b)-(\d+)$/)
+    if (match) {
+      const alignment = match[1]
+      const offset = parseInt(match[2])
+      const scaledOffset = Math.round(offset * scaleFactor)
+      return `${alignment}-${scaledOffset}`
+    }
+
+    // Return as-is for other string values ('left', 'right', 'center', etc.)
+    return value
+  }
+
   constructor(config: ImageEditorConfig) {
     this.config = config
     this.callbacks = {}
@@ -469,9 +494,9 @@ export class ImageEditor {
           )
         }
 
-        // Build image() filter
-        const x = typeof layer.x === 'number' ? Math.round(layer.x * scaleFactor) : layer.x
-        const y = typeof layer.y === 'number' ? Math.round(layer.y * scaleFactor) : layer.y
+        // Build image() filter - scale position values (including new string syntax)
+        const x = ImageEditor.scalePositionValue(layer.x, scaleFactor)
+        const y = ImageEditor.scalePositionValue(layer.y, scaleFactor)
 
         // Omit trailing default parameters (alpha=0, blendMode='normal')
         let imageFilter = `image(${layerPath},${x},${y}`
@@ -767,16 +792,11 @@ export class ImageEditor {
           )
         }
 
-        // Scale position if numeric pixels (for preview)
-        const x =
-          typeof layer.x === 'number'
-            ? (forPreview ? Math.round(layer.x * scaleFactor) : layer.x).toString()
-            : layer.x.toString()
-
-        const y =
-          typeof layer.y === 'number'
-            ? (forPreview ? Math.round(layer.y * scaleFactor) : layer.y).toString()
-            : layer.y.toString()
+        // Scale position values (including new string syntax) for preview
+        const scaledX = ImageEditor.scalePositionValue(layer.x, forPreview ? scaleFactor : 1)
+        const scaledY = ImageEditor.scalePositionValue(layer.y, forPreview ? scaleFactor : 1)
+        const x = scaledX.toString()
+        const y = scaledY.toString()
 
         // Build image() filter args - omit trailing default parameters (alpha=0, blendMode='normal')
         let args = `${layerPath},${x},${y}`
