@@ -2059,6 +2059,20 @@ export class ImageEditor {
     // Import type at top of file instead
     type ImagorTemplate = import('@/lib/template-types').ImagorTemplate
 
+    // Get base state
+    const baseState = this.getBaseState()
+
+    // For adaptive mode, remove width/height from transformations (clean solution!)
+    // For predefined mode, keep width/height in transformations
+    const transformations =
+      dimensionMode === 'adaptive'
+        ? (() => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { width, height, ...rest } = baseState
+            return rest
+          })()
+        : baseState
+
     // Build template object
     // Note: Template name is derived from filename, not stored in JSON
     const template: ImagorTemplate = {
@@ -2073,7 +2087,7 @@ export class ImageEditor {
               height: this.config.originalDimensions.height,
             }
           : undefined,
-      transformations: this.getBaseState(),
+      transformations, // Clean transformations (no width/height for adaptive)
       metadata: {
         createdAt: new Date().toISOString(),
       },

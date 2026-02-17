@@ -408,8 +408,21 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
       const template = await response.json()
 
-      // Apply transformations to current image
-      imageEditor.restoreState(template.transformations)
+      // Handle dimension modes (clean solution - adaptive has no width/height)
+      const templateState = { ...template.transformations }
+
+      if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
+        // Predefined: Use locked dimensions from template
+        templateState.width = template.predefinedDimensions.width
+        templateState.height = template.predefinedDimensions.height
+      } else {
+        // Adaptive: Use current image dimensions (transformations won't have width/height)
+        templateState.width = imageEditor.getOriginalDimensions().width
+        templateState.height = imageEditor.getOriginalDimensions().height
+      }
+
+      // Apply the modified state
+      imageEditor.restoreState(templateState)
 
       toast.success(t('imageEditor.template.applySuccess'))
     } catch (error) {
