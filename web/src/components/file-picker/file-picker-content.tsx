@@ -39,7 +39,11 @@ import { SortOption, SortOrder } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { hasExtension } from '@/lib/file-extensions'
-import { DEFAULT_IMAGE_EXTENSIONS, DEFAULT_VIDEO_EXTENSIONS } from '@/loaders/gallery-loader.ts'
+import {
+  DEFAULT_IMAGE_EXTENSIONS,
+  DEFAULT_VIDEO_EXTENSIONS,
+  TEMPLATE_EXTENSION,
+} from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { useFolderTree } from '@/stores/folder-tree-store'
 
@@ -300,12 +304,14 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
             imageSrc: item.thumbnailUrls?.grid || '',
             imageName: item.name,
             isVideo: hasExtension(item.name, config.videoExtensions), // Always use baseline for detection
+            isTemplate: hasExtension(item.name, TEMPLATE_EXTENSION), // Detect template files
           }))
 
-        // Filter by allowed extensions
+        // Filter by allowed extensions (handles compound extensions like .imagor.json)
         imageItems = imageItems.filter((item) => {
-          const ext = `.${item.imageName.split('.').pop()?.toLowerCase()}`
-          return allowedExtensions.includes(ext)
+          return allowedExtensions.some((ext) =>
+            item.imageName.toLowerCase().endsWith(ext.toLowerCase()),
+          )
         })
 
         setFolders(folderItems)

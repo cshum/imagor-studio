@@ -677,6 +677,7 @@
     },
     "template": {
       "saveTemplate": "儲存範本",
+      "createTemplate": "建立範本",
       "saveTemplateAs": "另存為範本...",
       "saveDescription": "將當前變換儲存為可重複使用的範本",
       "templateName": "範本名稱",
@@ -696,10 +697,14 @@
       "nameRequired": "範本名稱為必填項",
       "saveSuccess": "範本 「{{name}}」 儲存成功",
       "saveError": "儲存範本失敗",
-      "saving": "儲存中...",
       "overwriteTitle": "覆蓋範本？",
       "overwriteConfirm": "已存在名為「{{name}}」的範本。是否要取代它？",
-      "overwrite": "覆蓋"
+      "overwrite": "覆蓋",
+      "applyTemplate": "套用範本...",
+      "selectTemplate": "選擇範本",
+      "selectTemplateDescription": "選擇要套用到此圖像的範本",
+      "applySuccess": "範本套用成功",
+      "applyError": "套用範本失敗"
     },
     "controls": {
       "cropAspect": "裁剪和比例",

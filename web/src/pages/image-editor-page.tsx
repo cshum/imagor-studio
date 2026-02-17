@@ -33,6 +33,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { statFile } from '@/api/storage-api'
+import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
 import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
 import { DimensionControl } from '@/components/image-editor/controls/dimension-control.tsx'
@@ -55,6 +57,7 @@ import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
+import { getFullImageUrl } from '@/lib/api-utils'
 import {
   EditorOpenSectionsStorage,
   type EditorOpenSections,
@@ -90,6 +93,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
   const [copyUrl, setCopyUrl] = useState('')
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false)
+  const [applyTemplateDialogOpen, setApplyTemplateDialogOpen] = useState(false)
   const [editorOpenSections, setEditorOpenSections] =
     useState<EditorOpenSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -312,7 +316,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
 
     // Priority 3: Navigate back to gallery
-    await router.invalidate()
     if (galleryKey) {
       await navigate({
         to: '/gallery/$galleryKey',
@@ -376,6 +379,57 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     } catch (error) {
       console.error('Failed to save template:', error)
       toast.error(t('imageEditor.template.saveError'))
+    }
+  }
+
+  const handleApplyTemplate = async (selectedPaths: string[]) => {
+    if (selectedPaths.length === 0) return
+
+    const templatePath = selectedPaths[0]
+
+    try {
+      // Fetch file metadata first (like image-editor-loader does)
+      const fileStat = await statFile(templatePath)
+
+      if (!fileStat || !fileStat.thumbnailUrls?.original) {
+        throw new Error('Template file URL not available')
+      }
+
+      // Use the proper URL from thumbnailUrls.original
+      const templateUrl = getFullImageUrl(fileStat.thumbnailUrls.original)
+      const response = await fetch(templateUrl, {
+        cache: 'no-store', // Prevent browser caching
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch template: ${response.statusText}`)
+      }
+
+      const template = await response.json()
+
+      // Strip crop parameters (source-image-specific, doesn't transfer)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { cropLeft, cropTop, cropWidth, cropHeight, ...templateState } =
+        template.transformations
+
+      // Handle dimension modes
+      if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
+        // Predefined: Use locked dimensions from template
+        templateState.width = template.predefinedDimensions.width
+        templateState.height = template.predefinedDimensions.height
+      } else {
+        // Adaptive: Use current image dimensions
+        templateState.width = imageEditor.getOriginalDimensions().width
+        templateState.height = imageEditor.getOriginalDimensions().height
+      }
+
+      // Apply the modified state
+      imageEditor.restoreState(templateState)
+
+      toast.success(t('imageEditor.template.applySuccess'))
+    } catch (error) {
+      console.error('Failed to apply template:', error)
+      toast.error(t('imageEditor.template.applyError'))
     }
   }
 
@@ -720,6 +774,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                       onDownload={handleDownloadClick}
                       onCopyUrl={handleCopyUrlClick}
                       onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                      onApplyTemplate={() => setApplyTemplateDialogOpen(true)}
                       onLanguageChange={handleLanguageChange}
                       onToggleSectionVisibility={handleToggleSectionVisibility}
                       editorOpenSections={editorOpenSections}
@@ -750,6 +805,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                       onDownload={handleDownloadClick}
                       onCopyUrl={handleCopyUrlClick}
                       onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                      onApplyTemplate={() => setApplyTemplateDialogOpen(true)}
                       onLanguageChange={handleLanguageChange}
                       onToggleSectionVisibility={handleToggleSectionVisibility}
                       editorOpenSections={editorOpenSections}
@@ -835,6 +891,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           imageEditor={imageEditor}
           imagePath={imagePath}
           templateMetadata={templateMetadata}
+          title={
+            templateMetadata
+              ? t('imageEditor.template.saveTemplateAs')
+              : t('imageEditor.template.createTemplate')
+          }
           onSaveSuccess={(templatePath) => {
             isSavedRef.current = true
             navigate({
@@ -842,6 +903,18 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
               params: { imagePath: templatePath },
             })
           }}
+        />
+
+        {/* Apply Template Dialog */}
+        <FilePickerDialog
+          open={applyTemplateDialogOpen}
+          onOpenChange={setApplyTemplateDialogOpen}
+          title={t('imageEditor.template.selectTemplate')}
+          description={t('imageEditor.template.selectTemplateDescription')}
+          onSelect={handleApplyTemplate}
+          fileExtensions={['.imagor.json']}
+          lastLocationRegistryKey='config.file_picker_last_folder_path_template'
+          selectionMode='single'
         />
 
         {/* Navigation Confirmation Dialog */}
@@ -900,6 +973,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                   onDownload={handleDownloadClick}
                   onCopyUrl={handleCopyUrlClick}
                   onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                  onApplyTemplate={() => setApplyTemplateDialogOpen(true)}
                   onLanguageChange={handleLanguageChange}
                   onToggleSectionVisibility={handleToggleSectionVisibility}
                   editorOpenSections={editorOpenSections}
@@ -1002,6 +1076,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           imageEditor={imageEditor}
           imagePath={imagePath}
           templateMetadata={templateMetadata}
+          title={
+            templateMetadata
+              ? t('imageEditor.template.saveTemplateAs')
+              : t('imageEditor.template.createTemplate')
+          }
           onSaveSuccess={(templatePath) => {
             isSavedRef.current = true
             navigate({
@@ -1009,6 +1088,18 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
               params: { imagePath: templatePath },
             })
           }}
+        />
+
+        {/* Apply Template Dialog */}
+        <FilePickerDialog
+          open={applyTemplateDialogOpen}
+          onOpenChange={setApplyTemplateDialogOpen}
+          title={t('imageEditor.template.selectTemplate')}
+          description={t('imageEditor.template.selectTemplateDescription')}
+          onSelect={handleApplyTemplate}
+          fileExtensions={['.imagor.json']}
+          lastLocationRegistryKey='config.file_picker_last_folder_path_template'
+          selectionMode='single'
         />
 
         {/* Navigation Confirmation Dialog */}
@@ -1134,6 +1225,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                     onDownload={handleDownloadClick}
                     onCopyUrl={handleCopyUrlClick}
                     onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                    onApplyTemplate={() => setApplyTemplateDialogOpen(true)}
                     onLanguageChange={handleLanguageChange}
                     onToggleSectionVisibility={handleToggleSectionVisibility}
                     editorOpenSections={editorOpenSections}
@@ -1164,6 +1256,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                     onDownload={handleDownloadClick}
                     onCopyUrl={handleCopyUrlClick}
                     onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
+                    onApplyTemplate={() => setApplyTemplateDialogOpen(true)}
                     onLanguageChange={handleLanguageChange}
                     onToggleSectionVisibility={handleToggleSectionVisibility}
                     editorOpenSections={editorOpenSections}
@@ -1316,6 +1409,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         imageEditor={imageEditor}
         imagePath={imagePath}
         templateMetadata={templateMetadata}
+        title={
+          templateMetadata
+            ? t('imageEditor.template.saveTemplateAs')
+            : t('imageEditor.template.createTemplate')
+        }
         onSaveSuccess={(templatePath) => {
           isSavedRef.current = true
           navigate({
@@ -1323,6 +1421,18 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             params: { imagePath: templatePath },
           })
         }}
+      />
+
+      {/* Apply Template Dialog */}
+      <FilePickerDialog
+        open={applyTemplateDialogOpen}
+        onOpenChange={setApplyTemplateDialogOpen}
+        title={t('imageEditor.template.selectTemplate')}
+        description={t('imageEditor.template.selectTemplateDescription')}
+        onSelect={handleApplyTemplate}
+        fileExtensions={['.imagor.json']}
+        lastLocationRegistryKey='config.file_picker_last_folder_path_template'
+        selectionMode='single'
       />
 
       {/* Navigation Confirmation Dialog */}

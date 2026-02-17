@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileDown, Folder, Loader2 } from 'lucide-react'
+import { Folder } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { FolderSelectionDialog } from '@/components/folder-picker/folder-selection-dialog'
 import { Button } from '@/components/ui/button'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import {
   Dialog,
   DialogContent,
@@ -38,6 +39,7 @@ interface SaveTemplateDialogProps {
     templatePath: string
   }
   onSaveSuccess?: (templatePath: string) => void
+  title?: string // Custom dialog title
 }
 
 export function SaveTemplateDialog({
@@ -47,9 +49,13 @@ export function SaveTemplateDialog({
   imagePath,
   templateMetadata,
   onSaveSuccess,
+  title,
 }: SaveTemplateDialogProps) {
   const { t } = useTranslation()
   const { homeTitle } = useFolderTree()
+
+  // Use custom title or fallback to default
+  const dialogTitle = title || t('imageEditor.template.saveTemplate')
   const [name, setName] = useState('')
   const [savePath, setSavePath] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -140,7 +146,7 @@ export function SaveTemplateDialog({
     <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
       <DialogContent className='sm:max-w-[500px]'>
         <DialogHeader>
-          <DialogTitle>{t('imageEditor.template.saveTemplate')}</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{t('imageEditor.template.saveDescription')}</DialogDescription>
         </DialogHeader>
 
@@ -191,22 +197,13 @@ export function SaveTemplateDialog({
           <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isSaving}>
             {t('common.buttons.cancel')}
           </Button>
-          <Button
+          <ButtonWithLoading
             onClick={() => handleSave()}
-            disabled={isSaving || !name.trim() || hasInvalidChars}
+            isLoading={isSaving}
+            disabled={!name.trim() || hasInvalidChars}
           >
-            {isSaving ? (
-              <>
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                {t('imageEditor.template.saving')}
-              </>
-            ) : (
-              <>
-                <FileDown className='mr-2 h-4 w-4' />
-                {t('imageEditor.template.saveTemplate')}
-              </>
-            )}
-          </Button>
+            {t('imageEditor.template.saveTemplate')}
+          </ButtonWithLoading>
         </DialogFooter>
       </DialogContent>
 

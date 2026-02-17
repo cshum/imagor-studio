@@ -104,13 +104,19 @@ export const imageEditorLoader = async ({
       originalDimensions,
     })
 
-    // Apply template state directly (no need for pendingTemplate!)
-    const templateState = { ...template.transformations }
+    // Strip crop parameters (source-image-specific, doesn't transfer)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { cropLeft, cropTop, cropWidth, cropHeight, ...templateState } = template.transformations
 
     // Handle dimension mode
     if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
+      // Predefined: Use locked dimensions from template
       templateState.width = template.predefinedDimensions.width
       templateState.height = template.predefinedDimensions.height
+    } else {
+      // Adaptive: Use source image dimensions
+      templateState.width = originalDimensions.width
+      templateState.height = originalDimensions.height
     }
 
     // Apply template state to the editor instance using restoreState()

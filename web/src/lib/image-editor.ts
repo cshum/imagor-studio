@@ -2059,6 +2059,26 @@ export class ImageEditor {
     // Import type at top of file instead
     type ImagorTemplate = import('@/lib/template-types').ImagorTemplate
 
+    // Get base state
+    const baseState = this.getBaseState()
+
+    // Strip visualCropEnabled (UI-only state)
+    // KEEP crop in template (complete record of edits)
+    // Crop will be excluded when APPLYING template to different images
+    // For adaptive mode, also remove width/height
+    // For predefined mode, keep width/height
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { visualCropEnabled, ...stateWithoutUI } = baseState
+
+    const transformations =
+      dimensionMode === 'adaptive'
+        ? (() => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { width, height, ...rest } = stateWithoutUI
+            return rest
+          })()
+        : stateWithoutUI
+
     // Build template object
     // Note: Template name is derived from filename, not stored in JSON
     const template: ImagorTemplate = {
@@ -2073,7 +2093,7 @@ export class ImageEditor {
               height: this.config.originalDimensions.height,
             }
           : undefined,
-      transformations: this.getBaseState(),
+      transformations, // Clean transformations (no width/height for adaptive)
       metadata: {
         createdAt: new Date().toISOString(),
       },
@@ -2209,26 +2229,30 @@ export class ImageEditor {
 
   /**
    * Apply template state with dimension mode handling
+   * Strips crop (source-image-specific) when applying to different images
    * @param template - Template to apply
    * @returns Editor state to apply
    */
   private applyTemplateState(
     template: import('@/lib/template-types').ImagorTemplate,
   ): ImageEditorState {
-    const state = { ...template.transformations }
+    // Strip crop parameters (source-image-specific, doesn't transfer)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { cropLeft, cropTop, cropWidth, cropHeight, ...stateWithoutCrop } =
+      template.transformations
 
     // Handle dimension mode
     if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
       // Use template's predefined dimensions
-      state.width = template.predefinedDimensions.width
-      state.height = template.predefinedDimensions.height
+      stateWithoutCrop.width = template.predefinedDimensions.width
+      stateWithoutCrop.height = template.predefinedDimensions.height
     } else {
       // Adaptive mode: use current image dimensions
-      state.width = this.config.originalDimensions.width
-      state.height = this.config.originalDimensions.height
+      stateWithoutCrop.width = this.config.originalDimensions.width
+      stateWithoutCrop.height = this.config.originalDimensions.height
     }
 
-    return state
+    return stateWithoutCrop
   }
 
   /**

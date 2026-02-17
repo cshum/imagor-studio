@@ -853,6 +853,7 @@
     "template": {
       "editingTemplate": "Editing Template",
       "saveTemplate": "Save Template",
+      "createTemplate": "Create Template",
       "saveTemplateAs": "Save Template As...",
       "downloadImage": "Download Image",
       "saveDescription": "Save current transformations as a reusable template",
@@ -868,10 +869,14 @@
       "nameRequired": "Template name is required",
       "saveSuccess": "Template \"{{name}}\" saved successfully",
       "saveError": "Failed to save template",
-      "saving": "Saving...",
       "overwriteTitle": "Overwrite Template?",
       "overwriteConfirm": "A template named \"{{name}}\" already exists. Do you want to replace it?",
-      "overwrite": "Overwrite"
+      "overwrite": "Overwrite",
+      "applyTemplate": "Apply Template...",
+      "selectTemplate": "Select Template",
+      "selectTemplateDescription": "Choose a template to apply to this image",
+      "applySuccess": "Template applied successfully",
+      "applyError": "Failed to apply template"
     }
   }
 }
