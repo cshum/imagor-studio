@@ -604,12 +604,63 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }
 
-  const renderContextMenuItems = ({ imageName, imageKey, position, isVideo }: ImageContextData) => {
+  const renderContextMenuItems = ({
+    imageName,
+    imageKey,
+    position,
+    isVideo,
+    isTemplate,
+  }: ImageContextData) => {
     const isAuthenticated = authState.state === 'authenticated'
     const canEdit = (isAuthenticated || authState.isEmbedded) && !isVideo
 
     if (!imageKey) return null
 
+    // For templates, show only Edit, Rename, Move, Delete
+    if (isTemplate) {
+      return (
+        <>
+          <ContextMenuLabel className='break-all'>{imageName}</ContextMenuLabel>
+          <ContextMenuSeparatorComponent />
+          {isAuthenticated && (
+            <>
+              <ContextMenuItem onClick={() => handleEditImage(imageKey)}>
+                <SquarePen className='mr-2 h-4 w-4' />
+                {t('pages.gallery.contextMenu.edit')}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => {
+                  setTimeout(() => handleRenameFromMenu(imageKey, imageName, 'file'), 0)
+                }}
+              >
+                <Type className='mr-2 h-4 w-4' />
+                {t('pages.gallery.contextMenu.rename')}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => {
+                  setTimeout(() => handleMoveFromMenu(imageKey, imageName, 'file'), 0)
+                }}
+              >
+                <FolderInput className='mr-2 h-4 w-4' />
+                {t('pages.gallery.contextMenu.move')}
+              </ContextMenuItem>
+              <ContextMenuSeparatorComponent />
+              <ContextMenuItem
+                onClick={() => {
+                  setTimeout(() => handleDeleteItemFromMenu(imageKey, imageName, 'file'), 0)
+                }}
+                className='text-destructive focus:text-destructive'
+              >
+                <Trash2 className='mr-2 h-4 w-4' />
+                {t('pages.gallery.contextMenu.delete')}
+              </ContextMenuItem>
+            </>
+          )}
+        </>
+      )
+    }
+
+    // For regular images/videos, show full menu
     return (
       <>
         <ContextMenuLabel className='break-all'>{imageName}</ContextMenuLabel>
@@ -711,6 +762,46 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => handleDeleteItemFromMenu(imageKey, imageName, 'file')}
+              className='text-destructive focus:text-destructive'
+            >
+              <Trash2 className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.delete')}
+            </DropdownMenuItem>
+          </>
+        )}
+      </>
+    )
+  }
+
+  // Render function for template dropdown menus
+  const renderTemplateDropdownMenuItems = (templateName: string, templateKey: string) => {
+    const isAuthenticated = authState.state === 'authenticated'
+
+    if (!templateKey) return null
+
+    return (
+      <>
+        <DropdownMenuLabel className='break-all'>{templateName}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {isAuthenticated && (
+          <>
+            <DropdownMenuItem onClick={() => handleEditImage(templateKey)}>
+              <SquarePen className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.edit')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleRenameFromMenu(templateKey, templateName, 'file')}
+            >
+              <Type className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.rename')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleMoveFromMenu(templateKey, templateName, 'file')}>
+              <FolderInput className='mr-2 h-4 w-4' />
+              {t('pages.gallery.contextMenu.move')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => handleDeleteItemFromMenu(templateKey, templateName, 'file')}
               className='text-destructive focus:text-destructive'
             >
               <Trash2 className='mr-2 h-4 w-4' />
@@ -1159,6 +1250,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           />
                         </FolderContextMenu>
                       )}
+                      {/* Unified Images Grid with single context menu */}
                       <ImageContextMenu
                         renderMenuItems={renderContextMenuItems}
                         renderBulkMenuItems={renderBulkMenuItems}
@@ -1182,11 +1274,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                               : undefined
                           }
                           renderMenuItems={(image) =>
-                            renderDropdownMenuItems(
-                              image.imageName,
-                              image.imageKey,
-                              image.isVideo || false,
-                            )
+                            image.isTemplate
+                              ? renderTemplateDropdownMenuItems(image.imageName, image.imageKey)
+                              : renderDropdownMenuItems(
+                                  image.imageName,
+                                  image.imageKey,
+                                  image.isVideo || false,
+                                )
                           }
                           onDragStart={
                             authState.state === 'authenticated' ? handleDragStart : undefined

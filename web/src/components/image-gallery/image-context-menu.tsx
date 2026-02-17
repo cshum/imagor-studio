@@ -6,6 +6,7 @@ export interface ImageContextData {
   imageKey: string | null
   imageName: string
   isVideo: boolean
+  isTemplate: boolean
   position?: { top: number; left: number; width: number; height: number }
 }
 
@@ -29,6 +30,7 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
   const [contextImageKey, setContextImageKey] = useState<string | null>(null)
   const [contextImageName, setContextImageName] = useState<string>('')
   const [contextIsVideo, setContextIsVideo] = useState<boolean>(false)
+  const [contextIsTemplate, setContextIsTemplate] = useState<boolean>(false)
   const [contextPosition, setContextPosition] = useState<
     { top: number; left: number; width: number; height: number } | undefined
   >(undefined)
@@ -41,6 +43,7 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
       const imageKey = imageElement.getAttribute('data-image-key')
       const imageName = imageElement.getAttribute('data-image-name') || ''
       const isVideo = imageElement.getAttribute('data-is-video') === 'true'
+      const isTemplate = imageElement.hasAttribute('data-template-key')
 
       // If this image is in the selection AND multiple items are selected, show bulk menu
       if (selectedItems && imageKey && selectedCount > 1) {
@@ -69,6 +72,7 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
       setContextImageKey(imageKey)
       setContextImageName(imageName)
       setContextIsVideo(isVideo)
+      setContextIsTemplate(isTemplate)
       setContextPosition(position)
     } else {
       // Prevent context menu from opening when clicking on empty space
@@ -82,6 +86,7 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({
     imageKey: contextImageKey,
     imageName: contextImageName,
     isVideo: contextIsVideo,
+    isTemplate: contextIsTemplate,
     position: contextPosition,
   }
 

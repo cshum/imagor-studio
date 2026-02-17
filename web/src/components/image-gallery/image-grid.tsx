@@ -144,6 +144,8 @@ const ImageCell = ({
       data-image-key={image.imageKey}
       data-image-name={image.imageName}
       data-is-video={image.isVideo}
+      data-template-key={image.isTemplate ? image.imageKey : undefined}
+      data-template-name={image.isTemplate ? image.imageName : undefined}
       className={`group/image focus-visible:ring-ring absolute box-border cursor-pointer rounded-xl p-1 select-none focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:p-1.5`}
       style={{
         width: `${columnWidth}px`,
