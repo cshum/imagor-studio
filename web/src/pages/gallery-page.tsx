@@ -7,10 +7,8 @@ import {
   Check,
   Clock,
   FileText,
-  FolderInput,
   FolderPlus,
   Search,
-  Trash2,
   Upload,
   X,
 } from 'lucide-react'
@@ -34,11 +32,6 @@ import { RenameItemDialog } from '@/components/image-gallery/rename-item-dialog'
 import { SelectionMenu } from '@/components/image-gallery/selection-menu'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  ContextMenuItem,
-  ContextMenuLabel,
-  ContextMenuSeparator as ContextMenuSeparatorComponent,
-} from '@/components/ui/context-menu'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
 import {
   DropdownMenuItem,
@@ -49,6 +42,7 @@ import { Input } from '@/components/ui/input'
 import { UploadProgress } from '@/components/upload/upload-progress.tsx'
 import { ImagorParamsInput, SortOption, SortOrder } from '@/generated/graphql'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
+import { useBulkSelectionMenu } from '@/hooks/use-bulk-selection-menu'
 import { DragDropFile } from '@/hooks/use-drag-drop'
 import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
 import { useGalleryKeyboardNavigation } from '@/hooks/use-gallery-keyboard-navigation'
@@ -715,46 +709,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     selection.clearSelection()
   }
 
-  // Bulk menu rendering function
-  const renderBulkMenuItems = () => {
-    return (
-      <>
-        <ContextMenuLabel>
-          {t('pages.gallery.selection.title', { count: selection.selectedItems.size })}
-        </ContextMenuLabel>
-        <ContextMenuSeparatorComponent />
-        <ContextMenuItem onClick={handleClearSelection} className='hover:cursor-pointer'>
-          <X className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.selection.clearSelection')}
-        </ContextMenuItem>
-        <ContextMenuSeparatorComponent />
-        {authState.state === 'authenticated' && (
-          <>
-            <ContextMenuItem
-              onClick={() => {
-                setTimeout(() => handleBulkMove(), 0)
-              }}
-              className='hover:cursor-pointer'
-            >
-              <FolderInput className='mr-3 h-4 w-4' />
-              {t('pages.gallery.moveItems.title')}
-            </ContextMenuItem>
-            <ContextMenuSeparatorComponent />
-            <ContextMenuItem
-              onClick={() => {
-                setTimeout(() => handleBulkDelete(), 0)
-              }}
-              className='text-destructive focus:text-destructive hover:cursor-pointer'
-            >
-              <Trash2 className='mr-3 h-4 w-4' />
-              {t('pages.gallery.selection.deleteSelected', { count: selection.selectedItems.size })}
-            </ContextMenuItem>
-          </>
-        )}
-      </>
-    )
-  }
-
   // Move handlers (single and bulk)
   const handleMoveFromMenu = (itemKey: string, itemName: string, itemType: 'file' | 'folder') => {
     // For files, construct the full path
@@ -802,6 +756,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     // Clear selection after bulk move
     selection.clearSelection()
   }
+
+  // Use the bulk selection menu hook
+  const { renderBulkMenuItems } = useBulkSelectionMenu({
+    selectedCount: selection.selectedItems.size,
+    onClearSelection: handleClearSelection,
+    onMove: handleBulkMove,
+    onDelete: handleBulkDelete,
+    isAuthenticated: () => authState.state === 'authenticated',
+  })
 
   // Use the shared folder context menu hook for dropdown menus (three-dots)
   const { renderMenuItems: renderFolderDropdownMenuItems } = useFolderContextMenu({
