@@ -173,6 +173,19 @@ export function LayerControls({
       if (x === 'left') hAlign = 'left'
       else if (x === 'right') hAlign = 'right'
       else if (x === 'center') hAlign = 'center'
+      else {
+        // Parse new negative offset syntax: 'left-20', 'right-20'
+        const leftMatch = x.match(/^(?:left|l)-(\d+)$/)
+        const rightMatch = x.match(/^(?:right|r)-(\d+)$/)
+        
+        if (leftMatch) {
+          hAlign = 'left'
+          xOffset = -parseInt(leftMatch[1]) // Negative offset
+        } else if (rightMatch) {
+          hAlign = 'right'
+          xOffset = -parseInt(rightMatch[1]) // Negative offset
+        }
+      }
     } else {
       // Numeric value - negative means right-aligned, positive means left-aligned
       if (x < 0) {
@@ -191,6 +204,19 @@ export function LayerControls({
       if (y === 'top') vAlign = 'top'
       else if (y === 'bottom') vAlign = 'bottom'
       else if (y === 'center') vAlign = 'center'
+      else {
+        // Parse new negative offset syntax: 'top-20', 'bottom-20'
+        const topMatch = y.match(/^(?:top|t)-(\d+)$/)
+        const bottomMatch = y.match(/^(?:bottom|b)-(\d+)$/)
+        
+        if (topMatch) {
+          vAlign = 'top'
+          yOffset = -parseInt(topMatch[1]) // Negative offset
+        } else if (bottomMatch) {
+          vAlign = 'bottom'
+          yOffset = -parseInt(bottomMatch[1]) // Negative offset
+        }
+      }
     } else {
       // Numeric value - negative means bottom-aligned, positive means top-aligned
       if (y < 0) {
@@ -205,44 +231,6 @@ export function LayerControls({
     return { hAlign, vAlign, xOffset, yOffset }
   }, [layer.x, layer.y])
 
-  // Calculate which alignment buttons can be switched to
-  const { canSwitchToLeft, canSwitchToRight } = useMemo(() => {
-    // Calculate current visual position from left edge
-    let visualX: number
-    if (hAlign === 'left') {
-      visualX = xOffset
-    } else if (hAlign === 'right') {
-      visualX = baseWidth - currentWidth - xOffset
-    } else {
-      // center
-      visualX = (baseWidth - currentWidth) / 2
-    }
-
-    // Can only switch if the visual position is within valid bounds
-    return {
-      canSwitchToLeft: visualX >= 0, // Not outside left edge
-      canSwitchToRight: visualX <= baseWidth - currentWidth, // Not outside right edge
-    }
-  }, [hAlign, xOffset, baseWidth, currentWidth])
-
-  const { canSwitchToTop, canSwitchToBottom } = useMemo(() => {
-    // Calculate current visual position from top edge
-    let visualY: number
-    if (vAlign === 'top') {
-      visualY = yOffset
-    } else if (vAlign === 'bottom') {
-      visualY = baseHeight - currentHeight - yOffset
-    } else {
-      // center
-      visualY = (baseHeight - currentHeight) / 2
-    }
-
-    // Can only switch if the visual position is within valid bounds
-    return {
-      canSwitchToTop: visualY >= 0, // Not outside top edge
-      canSwitchToBottom: visualY <= baseHeight - currentHeight, // Not outside bottom edge
-    }
-  }, [vAlign, yOffset, baseHeight, currentHeight])
 
   const handleHAlignChange = useCallback(
     (value: string) => {
@@ -253,32 +241,20 @@ export function LayerControls({
         // No change - do nothing
         return
       } else {
-        // Calculate visual position to preserve it when switching alignment
-        // Current visual position from left edge
-        let visualX: number
-        if (hAlign === 'left') {
-          visualX = xOffset
-        } else if (hAlign === 'right') {
-          visualX = baseWidth - currentWidth - xOffset
+        // Simply switch alignment, keeping the offset value
+        // Use new string syntax for negative offsets
+        if (xOffset === 0) {
+          onUpdate({ x: value })
+        } else if (xOffset < 0) {
+          onUpdate({ x: `${value}-${Math.abs(xOffset)}` })
         } else {
-          // center
-          visualX = (baseWidth - currentWidth) / 2
-        }
-
-        // Calculate new offset for target alignment
-        if (value === 'left') {
-          // New left offset = visual position
-          const newOffset = Math.round(visualX)
-          onUpdate({ x: newOffset !== 0 ? newOffset : 'left' })
-        } else {
-          // value === 'right'
-          // New right offset = baseWidth - layerWidth - visualX
-          const newOffset = Math.round(baseWidth - currentWidth - visualX)
-          onUpdate({ x: newOffset !== 0 ? -newOffset : 'right' })
+          // Positive offset - convert to work with new alignment
+          // Right alignment uses negative numeric values
+          onUpdate({ x: value === 'right' ? -xOffset : xOffset })
         }
       }
     },
-    [onUpdate, hAlign, xOffset, baseWidth, currentWidth],
+    [onUpdate, hAlign, xOffset],
   )
 
   const handleVAlignChange = useCallback(
@@ -290,32 +266,20 @@ export function LayerControls({
         // No change - do nothing
         return
       } else {
-        // Calculate visual position to preserve it when switching alignment
-        // Current visual position from top edge
-        let visualY: number
-        if (vAlign === 'top') {
-          visualY = yOffset
-        } else if (vAlign === 'bottom') {
-          visualY = baseHeight - currentHeight - yOffset
+        // Simply switch alignment, keeping the offset value
+        // Use new string syntax for negative offsets
+        if (yOffset === 0) {
+          onUpdate({ y: value })
+        } else if (yOffset < 0) {
+          onUpdate({ y: `${value}-${Math.abs(yOffset)}` })
         } else {
-          // center
-          visualY = (baseHeight - currentHeight) / 2
-        }
-
-        // Calculate new offset for target alignment
-        if (value === 'top') {
-          // New top offset = visual position
-          const newOffset = Math.round(visualY)
-          onUpdate({ y: newOffset !== 0 ? newOffset : 'top' })
-        } else {
-          // value === 'bottom'
-          // New bottom offset = baseHeight - layerHeight - visualY
-          const newOffset = Math.round(baseHeight - currentHeight - visualY)
-          onUpdate({ y: newOffset !== 0 ? -newOffset : 'bottom' })
+          // Positive offset - convert to work with new alignment
+          // Bottom alignment uses negative numeric values
+          onUpdate({ y: value === 'bottom' ? -yOffset : yOffset })
         }
       }
     },
-    [onUpdate, vAlign, yOffset, baseHeight, currentHeight],
+    [onUpdate, vAlign, yOffset],
   )
 
   const handleXOffsetChange = useCallback(
@@ -323,8 +287,11 @@ export function LayerControls({
       if (value === 0) {
         // Zero offset - use alignment string to maintain alignment
         onUpdate({ x: hAlign })
+      } else if (value < 0) {
+        // Negative offset - use new string syntax
+        onUpdate({ x: `${hAlign}-${Math.abs(value)}` })
       } else {
-        // Non-zero offset - convert UI value to imagor value (negative for right)
+        // Positive offset - use numeric value (negative for right alignment)
         onUpdate({ x: hAlign === 'right' ? -value : value })
       }
     },
@@ -336,8 +303,11 @@ export function LayerControls({
       if (value === 0) {
         // Zero offset - use alignment string to maintain alignment
         onUpdate({ y: vAlign })
+      } else if (value < 0) {
+        // Negative offset - use new string syntax
+        onUpdate({ y: `${vAlign}-${Math.abs(value)}` })
       } else {
-        // Non-zero offset - convert UI value to imagor value (negative for bottom)
+        // Positive offset - use numeric value (negative for bottom alignment)
         onUpdate({ y: vAlign === 'bottom' ? -value : value })
       }
     },
@@ -376,14 +346,14 @@ export function LayerControls({
 
       // Handle horizontal movement (only if not centered)
       if (e.key === 'ArrowLeft' && hAlign !== 'center') {
-        handleXOffsetChange(Math.max(0, xOffset - 1))
+        handleXOffsetChange(xOffset - 1)
       } else if (e.key === 'ArrowRight' && hAlign !== 'center') {
         handleXOffsetChange(xOffset + 1)
       }
 
       // Handle vertical movement (only if not centered)
       if (e.key === 'ArrowUp' && vAlign !== 'center') {
-        handleYOffsetChange(Math.max(0, yOffset - 1))
+        handleYOffsetChange(yOffset - 1)
       } else if (e.key === 'ArrowDown' && vAlign !== 'center') {
         handleYOffsetChange(yOffset + 1)
       }
@@ -438,7 +408,7 @@ export function LayerControls({
                 value='left'
                 aria-label='Align left'
                 className='w-full rounded-r-none border-r-0'
-                disabled={!canSwitchToLeft || visualCropEnabled}
+                disabled={visualCropEnabled}
               >
                 <AlignHorizontalJustifyStart className='h-4 w-4' />
               </ToggleGroupItem>
@@ -454,7 +424,7 @@ export function LayerControls({
                 value='right'
                 aria-label='Align right'
                 className='w-full rounded-l-none'
-                disabled={!canSwitchToRight || visualCropEnabled}
+                disabled={visualCropEnabled}
               >
                 <AlignHorizontalJustifyEnd className='h-4 w-4' />
               </ToggleGroupItem>
@@ -465,7 +435,6 @@ export function LayerControls({
               onChange={(e) => handleXOffsetChange(Number(e.target.value) || 0)}
               disabled={hAlign === 'center' || visualCropEnabled}
               placeholder='—'
-              min={0}
               step={1}
               className='h-9 w-20'
             />
@@ -488,7 +457,7 @@ export function LayerControls({
                 value='top'
                 aria-label='Align top'
                 className='w-full rounded-r-none border-r-0'
-                disabled={!canSwitchToTop || visualCropEnabled}
+                disabled={visualCropEnabled}
               >
                 <AlignVerticalJustifyStart className='h-4 w-4' />
               </ToggleGroupItem>
@@ -504,7 +473,7 @@ export function LayerControls({
                 value='bottom'
                 aria-label='Align bottom'
                 className='w-full rounded-l-none'
-                disabled={!canSwitchToBottom || visualCropEnabled}
+                disabled={visualCropEnabled}
               >
                 <AlignVerticalJustifyEnd className='h-4 w-4' />
               </ToggleGroupItem>
@@ -515,7 +484,6 @@ export function LayerControls({
               onChange={(e) => handleYOffsetChange(Number(e.target.value) || 0)}
               disabled={vAlign === 'center' || visualCropEnabled}
               placeholder='—'
-              min={0}
               step={1}
               className='h-9 w-20'
             />

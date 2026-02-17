@@ -166,6 +166,25 @@ export function calculateLayerPosition(
     // Right edge of canvas
     const xPos = baseImageWidth - layerWidth
     leftPercent = `${(xPos / baseImageWidth) * 100}%`
+  } else if (typeof layerX === 'string') {
+    // Parse negative offset syntax: 'left-20', 'l-20', 'right-20', 'r-20'
+    const leftMatch = layerX.match(/^(?:left|l)-(\d+)$/)
+    const rightMatch = layerX.match(/^(?:right|r)-(\d+)$/)
+    
+    if (leftMatch) {
+      // left-N: N pixels outside the left edge (negative position)
+      const offset = parseInt(leftMatch[1])
+      const xPos = -offset
+      leftPercent = `${(xPos / baseImageWidth) * 100}%`
+    } else if (rightMatch) {
+      // right-N: N pixels outside the right edge
+      const offset = parseInt(rightMatch[1])
+      const xPos = baseImageWidth - layerWidth + offset
+      leftPercent = `${(xPos / baseImageWidth) * 100}%`
+    } else {
+      // Fallback: use padding left as default
+      leftPercent = `${(paddingLeft / baseImageWidth) * 100}%`
+    }
   } else if (typeof layerX === 'number') {
     if (layerX < 0) {
       // Negative: offset from canvas right edge
@@ -192,6 +211,25 @@ export function calculateLayerPosition(
     // Bottom edge of canvas
     const yPos = baseImageHeight - layerHeight
     topPercent = `${(yPos / baseImageHeight) * 100}%`
+  } else if (typeof layerY === 'string') {
+    // Parse negative offset syntax: 'top-20', 't-20', 'bottom-20', 'b-20'
+    const topMatch = layerY.match(/^(?:top|t)-(\d+)$/)
+    const bottomMatch = layerY.match(/^(?:bottom|b)-(\d+)$/)
+    
+    if (topMatch) {
+      // top-N: N pixels outside the top edge (negative position)
+      const offset = parseInt(topMatch[1])
+      const yPos = -offset
+      topPercent = `${(yPos / baseImageHeight) * 100}%`
+    } else if (bottomMatch) {
+      // bottom-N: N pixels outside the bottom edge
+      const offset = parseInt(bottomMatch[1])
+      const yPos = baseImageHeight - layerHeight + offset
+      topPercent = `${(yPos / baseImageHeight) * 100}%`
+    } else {
+      // Fallback: use padding top as default
+      topPercent = `${(paddingTop / baseImageHeight) * 100}%`
+    }
   } else if (typeof layerY === 'number') {
     if (layerY < 0) {
       // Negative: offset from canvas bottom edge
@@ -722,13 +760,17 @@ export function convertDisplayToLayerPosition(
         updates.x = canvasX
       } else if (calculatedOffset === 0) {
         updates.x = 'right'
+      } else if (calculatedOffset < 0) {
+        // Negative offset from right - use new string syntax
+        updates.x = `right-${Math.abs(calculatedOffset)}`
       } else {
         updates.x = calculatedOffset
       }
     } else {
       // Left-aligned: check if crossing to right side (canvasX goes negative)
       if (canvasX < 0) {
-        updates.x = canvasX + totalLayerWidth - baseImageWidth
+        // Negative position - use new string syntax for left offset
+        updates.x = `left-${Math.abs(canvasX)}`
       } else {
         updates.x = canvasX
       }
@@ -778,13 +820,17 @@ export function convertDisplayToLayerPosition(
         updates.y = canvasY
       } else if (calculatedOffset === 0) {
         updates.y = 'bottom'
+      } else if (calculatedOffset < 0) {
+        // Negative offset from bottom - use new string syntax
+        updates.y = `bottom-${Math.abs(calculatedOffset)}`
       } else {
         updates.y = calculatedOffset
       }
     } else {
       // Top-aligned: check if crossing to bottom side (canvasY goes negative)
       if (canvasY < 0) {
-        updates.y = canvasY + totalLayerHeight - baseImageHeight
+        // Negative position - use new string syntax for top offset
+        updates.y = `top-${Math.abs(canvasY)}`
       } else {
         updates.y = canvasY
       }

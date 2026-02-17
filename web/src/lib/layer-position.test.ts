@@ -2201,9 +2201,8 @@ describe('convertDisplayToLayerPosition', () => {
     // Display: -10/500 = -2%
     // Canvas X: -2% of 1000 = -20
     // Canvas width: 100/500 * 1000 = 200
-    // Since canvasX (-20) < 0, switch to right-aligned
-    // Offset: -20 + 200 - 1000 = -820
-    expect(result.x).toBe(-820)
+    // Since canvasX (-20) < 0, use new string syntax for negative offset
+    expect(result.x).toBe('left-20')
   })
 
   it('should enforce minimum dimensions', () => {
