@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileDown, Folder, Loader2 } from 'lucide-react'
+import { Folder } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { FolderSelectionDialog } from '@/components/folder-picker/folder-selection-dialog'
 import { Button } from '@/components/ui/button'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import {
   Dialog,
   DialogContent,
@@ -191,22 +192,13 @@ export function SaveTemplateDialog({
           <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isSaving}>
             {t('common.buttons.cancel')}
           </Button>
-          <Button
+          <ButtonWithLoading
             onClick={() => handleSave()}
-            disabled={isSaving || !name.trim() || hasInvalidChars}
+            isLoading={isSaving}
+            disabled={!name.trim() || hasInvalidChars}
           >
-            {isSaving ? (
-              <>
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                {t('imageEditor.template.saving')}
-              </>
-            ) : (
-              <>
-                <FileDown className='mr-2 h-4 w-4' />
-                {t('imageEditor.template.saveTemplate')}
-              </>
-            )}
-          </Button>
+            {t('imageEditor.template.saveTemplate')}
+          </ButtonWithLoading>
         </DialogFooter>
       </DialogContent>
 
