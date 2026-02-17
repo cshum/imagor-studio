@@ -272,6 +272,80 @@ describe('Layer Overlay Positioning', () => {
     })
   })
 
+  describe('Negative Offset String Syntax - New Feature', () => {
+    it('should parse left-N syntax (N pixels outside left edge)', () => {
+      const { leftPercent } = calculatePosition('left-20', 'top')
+      // left-20: -20px position
+      // Percentage: -20 / 1000 = -2%
+      expect(leftPercent).toBe('-2%')
+    })
+
+    it('should parse right-N syntax (N pixels outside right edge)', () => {
+      const { leftPercent } = calculatePosition('right-20', 'top')
+      // right-20: baseWidth - layerWidth + 20 = 1000 - 200 + 20 = 820
+      // Percentage: 820 / 1000 = 82%
+      expect(leftPercent).toBe('82%')
+    })
+
+    it('should parse top-N syntax (N pixels outside top edge)', () => {
+      const { topPercent } = calculatePosition('left', 'top-30')
+      // top-30: -30px position
+      // Percentage: -30 / 800 = -3.75%
+      expect(topPercent).toBe('-3.75%')
+    })
+
+    it('should parse bottom-N syntax (N pixels outside bottom edge)', () => {
+      const { topPercent } = calculatePosition('left', 'bottom-40')
+      // bottom-40: baseHeight - layerHeight + 40 = 800 - 150 + 40 = 690
+      // Percentage: 690 / 800 = 86.25%
+      expect(topPercent).toBe('86.25%')
+    })
+
+    it('should parse short syntax l-N (left)', () => {
+      const { leftPercent } = calculatePosition('l-15', 'top')
+      // l-15: -15px position
+      // Percentage: -15 / 1000 = -1.5%
+      expect(leftPercent).toBe('-1.5%')
+    })
+
+    it('should parse short syntax r-N (right)', () => {
+      const { leftPercent } = calculatePosition('r-25', 'top')
+      // r-25: 1000 - 200 + 25 = 825
+      // Percentage: 825 / 1000 = 82.5%
+      expect(leftPercent).toBe('82.5%')
+    })
+
+    it('should parse short syntax t-N (top)', () => {
+      const { topPercent } = calculatePosition('left', 't-10')
+      // t-10: -10px position
+      // Percentage: -10 / 800 = -1.25%
+      expect(topPercent).toBe('-1.25%')
+    })
+
+    it('should parse short syntax b-N (bottom)', () => {
+      const { topPercent } = calculatePosition('left', 'b-50')
+      // b-50: 800 - 150 + 50 = 700
+      // Percentage: 700 / 800 = 87.5%
+      expect(topPercent).toBe('87.5%')
+    })
+
+    it('should handle large negative offsets', () => {
+      const { leftPercent, topPercent } = calculatePosition('left-100', 'top-80')
+      // left-100: -100 / 1000 = -10%
+      // top-80: -80 / 800 = -10%
+      expect(leftPercent).toBe('-10%')
+      expect(topPercent).toBe('-10%')
+    })
+
+    it('should handle mixed negative offset syntax', () => {
+      const { leftPercent, topPercent } = calculatePosition('right-50', 'bottom-60')
+      // right-50: 1000 - 200 + 50 = 850, 850/1000 = 85%
+      // bottom-60: 800 - 150 + 60 = 710, 710/800 = 88.75%
+      expect(leftPercent).toBe('85%')
+      expect(topPercent).toBe('88.75%')
+    })
+  })
+
   describe('Real-World Scenarios', () => {
     it('should position watermark in bottom-right corner', () => {
       const { leftPercent, topPercent } = calculatePosition('right', 'bottom')
@@ -303,6 +377,19 @@ describe('Layer Overlay Positioning', () => {
       // y=-20: (800 - 20 - 150) / 800 = 78.75%
       expect(leftPercent).toBe('78%')
       expect(topPercent).toBe('78.75%')
+    })
+
+    it('should position layer outside left edge using negative offset syntax', () => {
+      const { leftPercent } = calculatePosition('left-10', 'top')
+      // left-10: layer starts 10px to the left of canvas
+      expect(leftPercent).toBe('-1%')
+    })
+
+    it('should position layer outside right edge using negative offset syntax', () => {
+      const { leftPercent } = calculatePosition('right-15', 'top')
+      // right-15: layer extends 15px beyond right edge
+      // Position: 1000 - 200 + 15 = 815, 815/1000 = 81.5%
+      expect(leftPercent).toBe('81.5%')
     })
   })
 })
