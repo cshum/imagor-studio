@@ -316,7 +316,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
 
     // Priority 3: Navigate back to gallery
-    await router.invalidate()
     if (galleryKey) {
       await navigate({
         to: '/gallery/$galleryKey',
