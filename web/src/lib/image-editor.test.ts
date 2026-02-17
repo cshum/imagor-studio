@@ -1668,6 +1668,331 @@ describe('ImageEditor', () => {
       })
     })
 
+    describe('Dimension Mode Behavior (Pure Logic Tests)', () => {
+      describe('Adaptive Mode', () => {
+        it('should use current image dimensions when applying adaptive template', async () => {
+          // Create template with adaptive mode
+          const template = {
+            version: '1.0',
+            name: 'Adaptive Template',
+            dimensionMode: 'adaptive',
+            transformations: {
+              brightness: 50,
+              contrast: 30,
+            },
+            metadata: {
+              createdAt: new Date().toISOString(),
+            },
+          }
+
+          const result = await editor.importTemplate(JSON.stringify(template))
+          expect(result.success).toBe(true)
+
+          const state = editor.getState()
+          // Should use editor's original dimensions (1920x1080)
+          expect(state.width).toBe(1920)
+          expect(state.height).toBe(1080)
+          // But keep transformations
+          expect(state.brightness).toBe(50)
+          expect(state.contrast).toBe(30)
+        })
+
+        it('should adapt to different image sizes', async () => {
+          const template = {
+            version: '1.0',
+            name: 'Adaptive Template',
+            dimensionMode: 'adaptive',
+            transformations: {
+              brightness: 75,
+            },
+            metadata: {
+              createdAt: new Date().toISOString(),
+            },
+          }
+
+          // Create editor with different image size
+          const largeEditor = new ImageEditor({
+            imagePath: 'large-image.jpg',
+            originalDimensions: { width: 3840, height: 2160 }, // 4K
+          })
+          largeEditor.initialize({})
+
+          const result = await largeEditor.importTemplate(JSON.stringify(template))
+          expect(result.success).toBe(true)
+
+          const state = largeEditor.getState()
+          // Should use new image's dimensions
+          expect(state.width).toBe(3840)
+          expect(state.height).toBe(2160)
+          expect(state.brightness).toBe(75)
+        })
+
+        it('should preserve transformations but adapt dimensions', async () => {
+          const template = {
+            version: '1.0',
+            name: 'Complex Adaptive',
+            dimensionMode: 'adaptive',
+            transformations: {
+              brightness: 50,
+              contrast: 30,
+              saturation: 20,
+              hue: 120,
+              blur: 5,
+              grayscale: true,
+            },
+            metadata: {
+              createdAt: new Date().toISOString(),
+            },
+          }
+
+          const result = await editor.importTemplate(JSON.stringify(template))
+          expect(result.success).toBe(true)
+
+          const state = editor.getState()
+          // Dimensions adapt
+          expect(state.width).toBe(1920)
+          expect(state.height).toBe(1080)
+          // All transformations preserved
+          expect(state.brightness).toBe(50)
+          expect(state.contrast).toBe(30)
+          expect(state.saturation).toBe(20)
+          expect(state.hue).toBe(120)
+          expect(state.blur).toBe(5)
+          expect(state.grayscale).toBe(true)
+        })
+      })
+
+      describe('Predefined Mode', () => {
+        it('should use template dimensions when applying predefined template', async () => {
+          const template = {
+            version: '1.0',
+            name: 'Predefined Template',
+            dimensionMode: 'predefined',
+            predefinedDimensions: {
+              width: 800,
+              height: 600,
+            },
+            transformations: {
+              brightness: 50,
+            },
+            metadata: {
+              createdAt: new Date().toISOString(),
+            },
+          }
+
+          const result = await editor.importTemplate(JSON.stringify(template))
+          expect(result.success).toBe(true)
+
+          const state = editor.getState()
+          // Should use template's predefined dimensions
+          expect(state.width).toBe(800)
+          expect(state.height).toBe(600)
+          expect(state.brightness).toBe(50)
+        })
+
+        it('should maintain predefined dimensions across different images', async () => {
+          const template = {
+            version: '1.0',
+            name: 'Fixed Size Template',
+            dimensionMode: 'predefined',
+            predefinedDimensions: {
+              width: 1024,
+              height: 768,
+            },
+            transformations: {
+              brightness: 75,
+            },
+            metadata: {
+              createdAt: new Date().toISOString(),
+            },
+          }
+
+          // Apply to small image
+          const smallEditor = new ImageEditor({
+            imagePath: 'small.jpg',
+            originalDimensions: { width: 640, height: 480 },
+          })
+          smallEditor.initialize({})
+
+          let result = await smallEditor.importTemplate(JSON.stringify(template))
+          expect(result.success).toBe(true)
+          let state = smallEditor.getState()
+          expect(state.width).toBe(1024)
+          expect(state.height).toBe(768)
+
+          // Apply to large image
+          const largeEditor = new ImageEditor({
+            imagePath: 'large.jpg',
+            originalDimensions: { width: 3840, height: 2160 },
+          })
+          largeEditor.initialize({})
+
+          result = await largeEditor.importTemplate(JSON.stringify(template))
+          expect(result.success).toBe(true)
+          state = largeEditor.getState()
+          // Same dimensions regardless of source image
+          expect(state.width).toBe(1024)
+          expect(state.height).toBe(768)
+        })
+
+        it('should preserve transformations with predefined dimensions', async () => {
+          const template = {
+            version: '1.0',
+            name: 'Predefined with Transforms',
+            dimensionMode: 'predefined',
+            predefinedDimensions: {
+              width: 1280,
+              height: 720,
+            },
+            transformations: {
+              brightness: 50,
+              contrast: 30,
+              hue: 120,
+            },
+            metadata: {
+              createdAt: new Date().toISOString(),
+            },
+          }
+
+          const result = await editor.importTemplate(JSON.stringify(template))
+          expect(result.success).toBe(true)
+
+          const state = editor.getState()
+          expect(state.width).toBe(1280)
+          expect(state.height).toBe(720)
+          expect(state.brightness).toBe(50)
+          expect(state.contrast).toBe(30)
+          expect(state.hue).toBe(120)
+        })
+
+        it('should fallback to current dimensions if predefinedDimensions missing', async () => {
+          const template = {
+            version: '1.0',
+            name: 'Broken Predefined',
+            dimensionMode: 'predefined',
+            // Missing predefinedDimensions!
+            transformations: {
+              brightness: 50,
+            },
+            metadata: {
+              createdAt: new Date().toISOString(),
+            },
+          }
+
+          const result = await editor.importTemplate(JSON.stringify(template))
+          expect(result.success).toBe(true)
+
+          const state = editor.getState()
+          // Should fallback to current image dimensions
+          expect(state.width).toBe(1920)
+          expect(state.height).toBe(1080)
+          expect(state.brightness).toBe(50)
+        })
+      })
+
+      describe('Dimension Mode Edge Cases', () => {
+        it('should handle adaptive template with layers', async () => {
+          const template = {
+            version: '1.0',
+            name: 'Adaptive with Layers',
+            dimensionMode: 'adaptive',
+            transformations: {
+              brightness: 50,
+              layers: [
+                {
+                  id: 'layer-1',
+                  imagePath: 'overlay.jpg',
+                  x: 100,
+                  y: 200,
+                  alpha: 50,
+                  blendMode: 'multiply',
+                  visible: true,
+                  name: 'Overlay',
+                  originalDimensions: { width: 800, height: 600 },
+                },
+              ],
+            },
+            metadata: {
+              createdAt: new Date().toISOString(),
+            },
+          }
+
+          const result = await editor.importTemplate(JSON.stringify(template))
+          expect(result.success).toBe(true)
+
+          const state = editor.getState()
+          expect(state.width).toBe(1920)
+          expect(state.height).toBe(1080)
+          expect(state.layers).toHaveLength(1)
+          expect(state.layers?.[0].name).toBe('Overlay')
+        })
+
+        it('should handle predefined template with layers', async () => {
+          const template = {
+            version: '1.0',
+            name: 'Predefined with Layers',
+            dimensionMode: 'predefined',
+            predefinedDimensions: {
+              width: 1024,
+              height: 768,
+            },
+            transformations: {
+              brightness: 50,
+              layers: [
+                {
+                  id: 'layer-1',
+                  imagePath: 'overlay.jpg',
+                  x: 100,
+                  y: 200,
+                  alpha: 50,
+                  blendMode: 'multiply',
+                  visible: true,
+                  name: 'Overlay',
+                  originalDimensions: { width: 800, height: 600 },
+                },
+              ],
+            },
+            metadata: {
+              createdAt: new Date().toISOString(),
+            },
+          }
+
+          const result = await editor.importTemplate(JSON.stringify(template))
+          expect(result.success).toBe(true)
+
+          const state = editor.getState()
+          expect(state.width).toBe(1024)
+          expect(state.height).toBe(768)
+          expect(state.layers).toHaveLength(1)
+        })
+
+        it('should handle template without explicit dimensions in transformations', async () => {
+          const template = {
+            version: '1.0',
+            name: 'No Dimensions',
+            dimensionMode: 'adaptive',
+            transformations: {
+              // No width/height specified
+              brightness: 50,
+              contrast: 30,
+            },
+            metadata: {
+              createdAt: new Date().toISOString(),
+            },
+          }
+
+          const result = await editor.importTemplate(JSON.stringify(template))
+          expect(result.success).toBe(true)
+
+          const state = editor.getState()
+          // Should use current image dimensions
+          expect(state.width).toBe(1920)
+          expect(state.height).toBe(1080)
+          expect(state.brightness).toBe(50)
+        })
+      })
+    })
+
     describe('generateThumbnailUrl', () => {
       it('should generate thumbnail URL with default dimensions', async () => {
         const { generateImagorUrl } = await import('@/api/imagor-api')
