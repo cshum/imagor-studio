@@ -853,6 +853,7 @@
     "template": {
       "editingTemplate": "Editing Template",
       "saveTemplate": "Save Template",
+      "createTemplate": "Create Template",
       "saveTemplateAs": "Save Template As...",
       "downloadImage": "Download Image",
       "saveDescription": "Save current transformations as a reusable template",

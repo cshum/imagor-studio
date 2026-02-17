@@ -677,6 +677,7 @@
     },
     "template": {
       "saveTemplate": "儲存範本",
+      "createTemplate": "建立範本",
       "saveTemplateAs": "另存為範本...",
       "saveDescription": "將當前變換儲存為可重複使用的範本",
       "templateName": "範本名稱",

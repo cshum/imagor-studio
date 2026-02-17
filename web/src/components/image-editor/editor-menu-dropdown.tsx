@@ -54,10 +54,10 @@ export function EditorMenuDropdown({
 }: EditorMenuDropdownProps) {
   const { t, i18n } = useTranslation()
 
-  // Conditional label: "Save Template" for images, "Save Template As..." for templates
+  // Conditional label: "Create Template" for images, "Save Template As..." for templates
   const saveTemplateLabel = isTemplate
     ? t('imageEditor.template.saveTemplateAs')
-    : t('imageEditor.template.saveTemplate')
+    : t('imageEditor.template.createTemplate')
 
   return (
     <DropdownMenuContent align='end' className='w-56'>
@@ -90,7 +90,8 @@ export function EditorMenuDropdown({
             <FileDown className='mr-3 h-4 w-4' />
             {saveTemplateLabel}
           </DropdownMenuItem>
-          {onApplyTemplate && (
+          {/* Hide "Apply Template" when editing templates (doesn't make sense to apply template to itself) */}
+          {onApplyTemplate && !isTemplate && (
             <DropdownMenuItem
               onSelect={(e) => {
                 e.preventDefault()
@@ -124,7 +125,8 @@ export function EditorMenuDropdown({
             <FileDown className='mr-3 h-4 w-4' />
             {saveTemplateLabel}
           </DropdownMenuItem>
-          {onApplyTemplate && (
+          {/* Hide "Apply Template" when editing templates (doesn't make sense to apply template to itself) */}
+          {onApplyTemplate && !isTemplate && (
             <DropdownMenuItem
               onSelect={() => {
                 setTimeout(() => onApplyTemplate(), 0)
