@@ -58,6 +58,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 import { getFullImageUrl } from '@/lib/api-utils'
+import { copyToClipboard } from '@/lib/browser-utils'
 import {
   EditorOpenSectionsStorage,
   type EditorOpenSections,
@@ -330,8 +331,18 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
   const handleCopyUrlClick = async () => {
     const url = await getCopyUrl()
-    setCopyUrl(url)
-    setCopyUrlDialogOpen(true)
+
+    // Try to copy to clipboard using modern API
+    const success = await copyToClipboard(url)
+
+    if (success) {
+      // Show success toast
+      toast.success(t('imageEditor.page.copyUrlSuccess'))
+    } else {
+      // Fallback to dialog if clipboard API fails
+      setCopyUrl(url)
+      setCopyUrlDialogOpen(true)
+    }
   }
 
   const handleDownloadClick = async () => {
