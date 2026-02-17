@@ -891,6 +891,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           imageEditor={imageEditor}
           imagePath={imagePath}
           templateMetadata={templateMetadata}
+          title={
+            templateMetadata
+              ? t('imageEditor.template.saveTemplateAs')
+              : t('imageEditor.template.createTemplate')
+          }
           onSaveSuccess={(templatePath) => {
             isSavedRef.current = true
             navigate({
@@ -1071,6 +1076,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           imageEditor={imageEditor}
           imagePath={imagePath}
           templateMetadata={templateMetadata}
+          title={
+            templateMetadata
+              ? t('imageEditor.template.saveTemplateAs')
+              : t('imageEditor.template.createTemplate')
+          }
           onSaveSuccess={(templatePath) => {
             isSavedRef.current = true
             navigate({
@@ -1399,6 +1409,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         imageEditor={imageEditor}
         imagePath={imagePath}
         templateMetadata={templateMetadata}
+        title={
+          templateMetadata
+            ? t('imageEditor.template.saveTemplateAs')
+            : t('imageEditor.template.createTemplate')
+        }
         onSaveSuccess={(templatePath) => {
           isSavedRef.current = true
           navigate({

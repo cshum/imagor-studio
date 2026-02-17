@@ -694,7 +694,6 @@
       "nameRequired": "Il nome del modello è obbligatorio",
       "saveSuccess": "Modello \"{{name}}\" salvato con successo",
       "saveError": "Impossibile salvare il modello",
-      "saving": "Salvataggio...",
       "overwriteTitle": "Sovrascrivere il modello?",
       "overwriteConfirm": "Esiste già un modello denominato \"{{name}}\". Vuoi sostituirlo?",
       "overwrite": "Sovrascrivi",

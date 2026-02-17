@@ -39,6 +39,7 @@ interface SaveTemplateDialogProps {
     templatePath: string
   }
   onSaveSuccess?: (templatePath: string) => void
+  title?: string // Custom dialog title
 }
 
 export function SaveTemplateDialog({
@@ -48,9 +49,13 @@ export function SaveTemplateDialog({
   imagePath,
   templateMetadata,
   onSaveSuccess,
+  title,
 }: SaveTemplateDialogProps) {
   const { t } = useTranslation()
   const { homeTitle } = useFolderTree()
+
+  // Use custom title or fallback to default
+  const dialogTitle = title || t('imageEditor.template.saveTemplate')
   const [name, setName] = useState('')
   const [savePath, setSavePath] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -141,7 +146,7 @@ export function SaveTemplateDialog({
     <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
       <DialogContent className='sm:max-w-[500px]'>
         <DialogHeader>
-          <DialogTitle>{t('imageEditor.template.saveTemplate')}</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{t('imageEditor.template.saveDescription')}</DialogDescription>
         </DialogHeader>
 

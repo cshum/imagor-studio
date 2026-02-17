@@ -869,7 +869,6 @@
       "nameRequired": "Template name is required",
       "saveSuccess": "Template \"{{name}}\" saved successfully",
       "saveError": "Failed to save template",
-      "saving": "Saving...",
       "overwriteTitle": "Overwrite Template?",
       "overwriteConfirm": "A template named \"{{name}}\" already exists. Do you want to replace it?",
       "overwrite": "Overwrite",
