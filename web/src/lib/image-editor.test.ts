@@ -1075,6 +1075,81 @@ describe('ImageEditor', () => {
         expect(path).toContain('b64:')
         expect(path).not.toContain('my image.jpg')
       })
+
+      it('should encode image path with comma', () => {
+        const editorWithComma = new ImageEditor({
+          imagePath: 'image,file.jpg',
+          originalDimensions: { width: 800, height: 600 },
+        })
+        const path = editorWithComma.getImagorPath()
+        // Should contain base64 encoded path
+        expect(path).toContain('b64:aW1hZ2UsZmlsZS5qcGc')
+        expect(path).not.toContain('image,file.jpg')
+      })
+
+      it('should encode image path with reserved prefix trim/', () => {
+        const editorWithPrefix = new ImageEditor({
+          imagePath: 'trim/image.jpg',
+          originalDimensions: { width: 800, height: 600 },
+        })
+        const path = editorWithPrefix.getImagorPath()
+        // Should contain base64 encoded path
+        expect(path).toContain('b64:dHJpbS9pbWFnZS5qcGc')
+        expect(path).not.toContain('trim/image.jpg')
+      })
+
+      it('should encode image path with reserved prefix fit-in/', () => {
+        const editorWithPrefix = new ImageEditor({
+          imagePath: 'fit-in/image.jpg',
+          originalDimensions: { width: 800, height: 600 },
+        })
+        const path = editorWithPrefix.getImagorPath()
+        // Should contain base64 encoded path (not the literal path)
+        expect(path).toContain('b64:Zml0LWluL2ltYWdlLmpwZw')
+        // Should not contain the literal path that would be misinterpreted
+        expect(path).not.toMatch(/\/fit-in\/image\.jpg/)
+      })
+    })
+
+    describe('Padding Optimization', () => {
+      it('should use symmetric format when padding is equal', () => {
+        editor.updateParams({
+          paddingLeft: 10,
+          paddingRight: 10,
+          paddingTop: 20,
+          paddingBottom: 20,
+          fillColor: 'ffffff',
+        })
+        const path = editor.getImagorPath()
+        // Should use symmetric format (10x20) not asymmetric (10x20:10x20)
+        expect(path).toContain('/10x20/')
+        // Should not contain the asymmetric colon separator in padding part
+        expect(path).not.toMatch(/\/\d+x\d+:\d+x\d+\//)
+      })
+
+      it('should use asymmetric format when padding differs', () => {
+        editor.updateParams({
+          paddingLeft: 10,
+          paddingRight: 20,
+          paddingTop: 30,
+          paddingBottom: 40,
+          fillColor: 'ffffff',
+        })
+        const path = editor.getImagorPath()
+        expect(path).toContain('/10x30:20x40/')
+      })
+
+      it('should use symmetric format when all padding is equal', () => {
+        editor.updateParams({
+          paddingLeft: 15,
+          paddingRight: 15,
+          paddingTop: 15,
+          paddingBottom: 15,
+          fillColor: 'ffffff',
+        })
+        const path = editor.getImagorPath()
+        expect(path).toContain('/15x15/')
+      })
     })
 
     describe('Image Filter Parameter Omission', () => {

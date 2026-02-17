@@ -166,31 +166,6 @@ export class ImageEditor {
     return value
   }
 
-  /**
-   * Check if image path needs base64 encoding
-   * Aligns with backend logic in server/internal/imagorprovider/imagorprovider.go
-   * @param imagePath - Image path to check
-   * @returns true if path contains special characters that need encoding
-   */
-  private static needsBase64Encoding(imagePath: string): boolean {
-    // Auto-enable base64 encoding if path contains spaces or special characters
-    // that would interfere with URL parsing (?, #, &, (, ))
-    return imagePath.includes(' ') || /[?#&()]/.test(imagePath)
-  }
-
-  /**
-   * Encode image path to base64url format (RFC 4648 Section 5)
-   * Aligns with backend logic in ../imagor/imagorpath/parse.go
-   * @param imagePath - Image path to encode
-   * @returns base64url encoded path with b64: prefix
-   */
-  private static encodeImagePath(imagePath: string): string {
-    // Convert to base64url (URL-safe base64 without padding)
-    // Standard base64 uses +/ but base64url uses -_
-    const base64 = btoa(imagePath).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') // Remove padding
-    return `b64:${base64}`
-  }
-
   constructor(config: ImageEditorConfig) {
     this.config = config
     this.callbacks = {}
@@ -234,6 +209,56 @@ export class ImageEditor {
    */
   getState(): ImageEditorState {
     return { ...this.state }
+  }
+
+  /**
+   * Check if an image path needs base64 encoding
+   * Detects special characters that would interfere with URL parsing
+   * Also checks for reserved prefixes that would be interpreted as imagor commands
+   * @param imagePath - Image path to check
+   * @returns true if path needs encoding
+   */
+  private static needsBase64Encoding(imagePath: string): boolean {
+    // Check for special characters
+    if (
+      imagePath.includes(' ') ||
+      imagePath.includes('?') ||
+      imagePath.includes('#') ||
+      imagePath.includes('&') ||
+      imagePath.includes('(') ||
+      imagePath.includes(')') ||
+      imagePath.includes(',') // Comma is used in filter syntax
+    ) {
+      return true
+    }
+
+    // Check for reserved prefixes that would be interpreted as imagor commands
+    const reservedPrefixes = [
+      'trim/',
+      'meta/',
+      'fit-in/',
+      'stretch/',
+      'top/',
+      'left/',
+      'right/',
+      'bottom/',
+      'center/',
+      'smart/',
+    ]
+    return reservedPrefixes.some((prefix) => imagePath.startsWith(prefix))
+  }
+
+  /**
+   * Encode image path to base64url format (RFC 4648 Section 5)
+   * Aligns with backend logic in ../imagor/imagorpath/generate.go
+   * @param imagePath - Image path to encode
+   * @returns base64url encoded path with b64: prefix
+   */
+  private static encodeImagePath(imagePath: string): string {
+    // Convert to base64url (URL-safe base64 without padding)
+    // Standard base64 uses +/ but base64url uses -_
+    const base64 = btoa(imagePath).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+    return `b64:${base64}`
   }
 
   /**
@@ -410,6 +435,7 @@ export class ImageEditor {
 
     // Add padding (scaled by scaleFactor)
     // Format: leftxtop:rightxbottom (GxH:IxJ in imagor spec)
+    // Optimize: use symmetric format (leftxtop) when left==right and top==bottom
     const hasPadding =
       (state.paddingTop !== undefined && state.paddingTop > 0) ||
       (state.paddingRight !== undefined && state.paddingRight > 0) ||
@@ -421,8 +447,13 @@ export class ImageEditor {
       const right = state.paddingRight ? Math.round(state.paddingRight * scaleFactor) : 0
       const bottom = state.paddingBottom ? Math.round(state.paddingBottom * scaleFactor) : 0
       const left = state.paddingLeft ? Math.round(state.paddingLeft * scaleFactor) : 0
-      // Correct format: left x top : right x bottom
-      parts.push(`${left}x${top}:${right}x${bottom}`)
+
+      // Optimize: use symmetric format when possible (aligns with backend)
+      if (left === right && top === bottom) {
+        parts.push(`${left}x${top}`)
+      } else {
+        parts.push(`${left}x${top}:${right}x${bottom}`)
+      }
     }
 
     // Add alignment (for Fill mode when fitIn is false)
