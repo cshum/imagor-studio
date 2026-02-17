@@ -2316,7 +2316,7 @@ describe('convertDisplayToLayerPosition', () => {
     expect(result.transforms?.height).toBeGreaterThanOrEqual(1)
   })
 
-  it('should switch to center when layer width overflows base image', () => {
+  it('should handle oversized layer with left alignment using negative offset syntax', () => {
     const result = convertDisplayToLayerPosition(
       -50, // displayX: negative (left edge outside)
       40,
@@ -2336,13 +2336,13 @@ describe('convertDisplayToLayerPosition', () => {
     )
 
     // displayX: -50/500 = -10%, canvasX = -100 (left edge outside)
-    // canvasX + width = -100 + 1200 = 1100 > 1000 (right edge outside)
-    // Both edges outside, should switch to center
-    expect(result.x).toBe('center')
+    // Layer is left-aligned and starts 100px to the left of canvas
+    // Should use 'left-100' syntax instead of forcing to center
+    expect(result.x).toBe('left-100')
     expect(result.y).toBe(80) // Y should still work normally
   })
 
-  it('should switch to center when layer height overflows base image', () => {
+  it('should handle oversized layer with top alignment using negative offset syntax', () => {
     const result = convertDisplayToLayerPosition(
       50,
       -40, // displayY: negative (top edge outside)
@@ -2362,13 +2362,13 @@ describe('convertDisplayToLayerPosition', () => {
     )
 
     // displayY: -40/400 = -10%, canvasY = -80 (top edge outside)
-    // canvasY + height = -80 + 1000 = 920 > 800 (bottom edge outside)
-    // Both edges outside, should switch to center
+    // Layer is top-aligned and starts 80px above canvas
+    // Should use 'top-80' syntax instead of forcing to center
     expect(result.x).toBe(100) // X should still work normally
-    expect(result.y).toBe('center')
+    expect(result.y).toBe('top-80')
   })
 
-  it('should switch to center on both axes when layer overflows in both dimensions', () => {
+  it('should handle oversized layer on both axes using negative offset syntax', () => {
     const result = convertDisplayToLayerPosition(
       -50, // displayX: negative (left edge outside)
       -40, // displayY: negative (top edge outside)
@@ -2387,11 +2387,11 @@ describe('convertDisplayToLayerPosition', () => {
       100, // currentY (top-aligned)
     )
 
-    // X: canvasX = -100, canvasX + width = 1100 > 1000 (both edges outside)
-    // Y: canvasY = -80, canvasY + height = 920 > 800 (both edges outside)
-    // Both dimensions overflow, should center both axes
-    expect(result.x).toBe('center')
-    expect(result.y).toBe('center')
+    // X: canvasX = -100, layer starts 100px to the left
+    // Y: canvasY = -80, layer starts 80px above
+    // Should use negative offset syntax for both axes
+    expect(result.x).toBe('left-100')
+    expect(result.y).toBe('top-80')
   })
 
   it('should use edge positioning when layer fits within base image', () => {
@@ -2418,7 +2418,7 @@ describe('convertDisplayToLayerPosition', () => {
     expect(result.y).toBe(80)
   })
 
-  it('should handle overflow with right-aligned layer', () => {
+  it('should handle oversized layer with right alignment using negative offset syntax', () => {
     const result = convertDisplayToLayerPosition(
       -50, // displayX: negative (left edge outside)
       40,
@@ -2437,12 +2437,13 @@ describe('convertDisplayToLayerPosition', () => {
       0,
     )
 
-    // canvasX = -100 (left outside), canvasX + width = 1100 > 1000 (right outside)
-    // Even though right-aligned, overflow should force center
-    expect(result.x).toBe('center')
+    // canvasX = -100, canvasX + width = 1100
+    // offsetFromRight = 1100 - 1000 = 100 (extends 100px beyond right edge)
+    // Should use 'right-100' syntax
+    expect(result.x).toBe('right-100')
   })
 
-  it('should handle overflow with padding', () => {
+  it('should handle oversized layer with padding using negative offset syntax', () => {
     const result = convertDisplayToLayerPosition(
       -50, // displayX: negative (left edge outside)
       40,
@@ -2461,8 +2462,8 @@ describe('convertDisplayToLayerPosition', () => {
       0,
     )
 
-    // canvasX = -100 (left outside), canvasX + width = 1100 > 1000 (right outside)
-    // Overflow detection should work regardless of padding
-    expect(result.x).toBe('center')
+    // canvasX = -100 (left edge outside)
+    // Should use 'left-100' syntax regardless of padding
+    expect(result.x).toBe('left-100')
   })
 })

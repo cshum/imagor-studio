@@ -727,20 +727,13 @@ export function convertDisplayToLayerPosition(
   // Threshold for switching from center to edge alignment
   const DRAG_THRESHOLD_PERCENT = SNAP_THRESHOLDS.CENTER_ESCAPE_PERCENT
 
-  // Convert X position with smart overflow handling
+  // Convert X position
   if (canDragX) {
     const xPercent = displayX / overlayWidth
     const canvasX = Math.round(xPercent * baseImageWidth)
     const totalLayerWidth = totalCanvasWidth
 
-    // Smart overflow detection: check if BOTH edges are outside base image
-    const leftEdgeOutside = canvasX < 0
-    const rightEdgeOutside = canvasX + totalLayerWidth > baseImageWidth
-    const isOverflowingX = leftEdgeOutside && rightEdgeOutside
-
-    if (isOverflowingX) {
-      updates.x = 'center'
-    } else if (isCenterX) {
+    if (isCenterX) {
       if (isResizing) {
         // Resizing - always keep centered
         updates.x = 'center'
@@ -789,20 +782,13 @@ export function convertDisplayToLayerPosition(
     }
   }
 
-  // Convert Y position with smart overflow handling
+  // Convert Y position
   if (canDragY) {
     const yPercent = displayY / overlayHeight
     const canvasY = Math.round(yPercent * baseImageHeight)
     const totalLayerHeight = totalCanvasHeight
 
-    // Smart overflow detection: check if BOTH edges are outside base image
-    const topEdgeOutside = canvasY < 0
-    const bottomEdgeOutside = canvasY + totalLayerHeight > baseImageHeight
-    const isOverflowingY = topEdgeOutside && bottomEdgeOutside
-
-    if (isOverflowingY) {
-      updates.y = 'center'
-    } else if (isCenterY) {
+    if (isCenterY) {
       if (isResizing) {
         // Resizing - always keep centered
         updates.y = 'center'
