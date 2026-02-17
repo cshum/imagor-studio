@@ -384,45 +384,47 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
   const handleApplyTemplate = async (selectedPaths: string[]) => {
     if (selectedPaths.length === 0) return
-
+    
     const templatePath = selectedPaths[0]
-
+    
     try {
       // Fetch file metadata first (like image-editor-loader does)
       const fileStat = await statFile(templatePath)
-
+      
       if (!fileStat || !fileStat.thumbnailUrls?.original) {
         throw new Error('Template file URL not available')
       }
-
+      
       // Use the proper URL from thumbnailUrls.original
       const templateUrl = getFullImageUrl(fileStat.thumbnailUrls.original)
       const response = await fetch(templateUrl, {
         cache: 'no-store', // Prevent browser caching
       })
-
+      
       if (!response.ok) {
         throw new Error(`Failed to fetch template: ${response.statusText}`)
       }
-
+      
       const template = await response.json()
-
-      // Handle dimension modes (clean solution - adaptive has no width/height)
-      const templateState = { ...template.transformations }
-
+      
+      // Strip crop parameters (source-image-specific, doesn't transfer)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { cropLeft, cropTop, cropWidth, cropHeight, ...templateState } = template.transformations
+      
+      // Handle dimension modes
       if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
         // Predefined: Use locked dimensions from template
         templateState.width = template.predefinedDimensions.width
         templateState.height = template.predefinedDimensions.height
       } else {
-        // Adaptive: Use current image dimensions (transformations won't have width/height)
+        // Adaptive: Use current image dimensions
         templateState.width = imageEditor.getOriginalDimensions().width
         templateState.height = imageEditor.getOriginalDimensions().height
       }
-
+      
       // Apply the modified state
       imageEditor.restoreState(templateState)
-
+      
       toast.success(t('imageEditor.template.applySuccess'))
     } catch (error) {
       console.error('Failed to apply template:', error)
