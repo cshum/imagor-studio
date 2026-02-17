@@ -8,6 +8,7 @@ import {
   AlignVerticalJustifyEnd,
   AlignVerticalJustifyStart,
   Edit,
+  Image as ImageIcon,
   Lock,
   Unlock,
 } from 'lucide-react'
@@ -36,6 +37,7 @@ interface LayerControlsProps {
   visualCropEnabled?: boolean
   onUpdate: (updates: Partial<ImageLayer>) => void
   onEditLayer: () => void
+  onSwapImage: () => void
 }
 
 const BLEND_MODES: BlendMode[] = [
@@ -58,6 +60,7 @@ export function LayerControls({
   visualCropEnabled = false,
   onUpdate,
   onEditLayer,
+  onSwapImage,
 }: LayerControlsProps) {
   const { t } = useTranslation()
 
@@ -438,6 +441,20 @@ export function LayerControls({
         >
           <Edit className='mr-2 h-4 w-4' />
           {t('imageEditor.layers.editLayer')}
+        </Button>
+      )}
+
+      {/* Swap Image Button - only show when editing (no Edit Layer button) */}
+      {isEditing && (
+        <Button
+          variant='outline'
+          size='default'
+          onClick={onSwapImage}
+          disabled={visualCropEnabled}
+          className='w-full'
+        >
+          <ImageIcon className='mr-2 h-4 w-4' />
+          {t('imageEditor.layers.swapImage')}
         </Button>
       )}
 

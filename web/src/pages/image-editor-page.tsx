@@ -59,6 +59,7 @@ import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 import { getFullImageUrl } from '@/lib/api-utils'
 import { copyToClipboard } from '@/lib/browser-utils'
+import { fetchImageDimensions } from '@/lib/image-dimensions'
 import {
   EditorOpenSectionsStorage,
   type EditorOpenSections,
@@ -95,6 +96,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   const [copyUrl, setCopyUrl] = useState('')
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false)
   const [applyTemplateDialogOpen, setApplyTemplateDialogOpen] = useState(false)
+  const [swapImageDialogOpen, setSwapImageDialogOpen] = useState(false)
+  const [swapImageLayerId, setSwapImageLayerId] = useState<string | null>(null)
   const [editorOpenSections, setEditorOpenSections] =
     useState<EditorOpenSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -444,6 +447,33 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
   }
 
+  const handleSwapImageClick = useCallback((layerId: string | null) => {
+    setSwapImageLayerId(layerId)
+    setSwapImageDialogOpen(true)
+  }, [])
+
+  const handleSwapImageSelect = useCallback(
+    async (selectedPaths: string[]) => {
+      if (selectedPaths.length === 0) return
+
+      const newImagePath = selectedPaths[0]
+
+      try {
+        // Fetch dimensions for the new image
+        const dimensions = await fetchImageDimensions(newImagePath)
+
+        // Swap the image using imageEditor
+        imageEditor.swapImage(newImagePath, dimensions, swapImageLayerId)
+
+        toast.success(t('imageEditor.layers.swapImageSuccess'))
+      } catch (error) {
+        console.error('Failed to swap image:', error)
+        toast.error(t('imageEditor.layers.swapImageError'))
+      }
+    },
+    [imageEditor, swapImageLayerId, t],
+  )
+
   const handleVisualCropToggle = useCallback(
     async (enabled: boolean) => {
       // Update ImageEditor to control crop filter in preview
@@ -690,6 +720,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             layerAspectRatioLocked={layerAspectRatioLocked}
             onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
             visualCropEnabled={visualCropEnabled}
+            onSwapImage={handleSwapImageClick}
           />
         ),
       },
@@ -706,6 +737,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       handleVisualCropToggle,
       setCropAspectRatio,
       setLayerAspectRatioLockToggle,
+      handleSwapImageClick,
     ],
   )
 
@@ -878,6 +910,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                 outputWidth={imageEditor.getOriginalDimensions().width}
                 outputHeight={imageEditor.getOriginalDimensions().height}
                 onCropAspectRatioChange={setCropAspectRatio}
+                onSwapImage={handleSwapImageClick}
                 column='both'
               />
             </div>
@@ -925,6 +958,17 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           onSelect={handleApplyTemplate}
           fileExtensions={['.imagor.json']}
           lastLocationRegistryKey='config.file_picker_last_folder_path_template'
+          selectionMode='single'
+        />
+
+        {/* Swap Image Dialog */}
+        <FilePickerDialog
+          open={swapImageDialogOpen}
+          onOpenChange={setSwapImageDialogOpen}
+          title={t('imageEditor.layers.selectImageToSwap')}
+          description={t('imageEditor.layers.selectImageToSwapDescription')}
+          onSelect={handleSwapImageSelect}
+          fileType='images'
           selectionMode='single'
         />
 
@@ -1070,6 +1114,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                   outputWidth={imageEditor.getOriginalDimensions().width}
                   outputHeight={imageEditor.getOriginalDimensions().height}
                   onCropAspectRatioChange={setCropAspectRatio}
+                  onSwapImage={handleSwapImageClick}
                   column='both'
                 />
               </div>
@@ -1110,6 +1155,17 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           onSelect={handleApplyTemplate}
           fileExtensions={['.imagor.json']}
           lastLocationRegistryKey='config.file_picker_last_folder_path_template'
+          selectionMode='single'
+        />
+
+        {/* Swap Image Dialog */}
+        <FilePickerDialog
+          open={swapImageDialogOpen}
+          onOpenChange={setSwapImageDialogOpen}
+          title={t('imageEditor.layers.selectImageToSwap')}
+          description={t('imageEditor.layers.selectImageToSwapDescription')}
+          onSelect={handleSwapImageSelect}
+          fileType='images'
           selectionMode='single'
         />
 
@@ -1314,6 +1370,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                 outputWidth={imageEditor.getOriginalDimensions().width}
                 outputHeight={imageEditor.getOriginalDimensions().height}
                 onCropAspectRatioChange={setCropAspectRatio}
+                onSwapImage={handleSwapImageClick}
                 column='left'
               />
             </div>
@@ -1366,6 +1423,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                 outputWidth={imageEditor.getOriginalDimensions().width}
                 outputHeight={imageEditor.getOriginalDimensions().height}
                 onCropAspectRatioChange={setCropAspectRatio}
+                onSwapImage={handleSwapImageClick}
                 column='right'
               />
             </div>
@@ -1443,6 +1501,17 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         onSelect={handleApplyTemplate}
         fileExtensions={['.imagor.json']}
         lastLocationRegistryKey='config.file_picker_last_folder_path_template'
+        selectionMode='single'
+      />
+
+      {/* Swap Image Dialog */}
+      <FilePickerDialog
+        open={swapImageDialogOpen}
+        onOpenChange={setSwapImageDialogOpen}
+        title={t('imageEditor.layers.selectImageToSwap')}
+        description={t('imageEditor.layers.selectImageToSwapDescription')}
+        onSelect={handleSwapImageSelect}
+        fileType='images'
         selectionMode='single'
       />
 

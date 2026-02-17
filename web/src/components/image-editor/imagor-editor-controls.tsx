@@ -61,6 +61,7 @@ interface ImageEditorControlsProps {
   outputWidth: number
   outputHeight: number
   onCropAspectRatioChange?: (aspectRatio: number | null) => void
+  onSwapImage?: (layerId: string | null) => void
   column?: 'left' | 'right' | 'both'
   // Drag handlers (optional - only needed when column is 'left' or 'right')
   onDragStart?: (event: DragStartEvent) => void
@@ -167,6 +168,7 @@ export function ImageEditorControls({
   outputWidth,
   outputHeight,
   onCropAspectRatioChange,
+  onSwapImage,
   column = 'both',
 }: ImageEditorControlsProps) {
   const { t } = useTranslation()
@@ -366,6 +368,7 @@ export function ImageEditorControls({
             layerAspectRatioLocked={layerAspectRatioLocked}
             onLayerAspectRatioLockChange={onLayerAspectRatioLockChange}
             visualCropEnabled={isVisualCropEnabled}
+            onSwapImage={onSwapImage || (() => {})}
           />
         ),
       },
@@ -384,6 +387,7 @@ export function ImageEditorControls({
       outputWidth,
       outputHeight,
       onCropAspectRatioChange,
+      onSwapImage,
     ],
   )
 

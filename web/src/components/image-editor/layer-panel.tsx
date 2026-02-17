@@ -76,6 +76,7 @@ interface LayerPanelProps {
   layerAspectRatioLocked: boolean
   onLayerAspectRatioLockChange: (locked: boolean) => void
   visualCropEnabled?: boolean
+  onSwapImage: (layerId: string | null) => void
 }
 
 interface SortableLayerItemProps {
@@ -356,6 +357,7 @@ export function LayerPanel({
   layerAspectRatioLocked,
   onLayerAspectRatioLockChange,
   visualCropEnabled = false,
+  onSwapImage,
 }: LayerPanelProps) {
   const { t } = useTranslation()
   const layers = imageEditor.getContextLayers()
@@ -681,7 +683,25 @@ export function LayerPanel({
             visualCropEnabled={visualCropEnabled}
             onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
             onEditLayer={() => handleEditLayer(selectedLayer.id)}
+            onSwapImage={() => onSwapImage(selectedLayer.id)}
           />
+        </div>
+      )}
+
+      {/* Base Image Swap - shown when base is selected */}
+      {selectedLayerId === null && !activeId && (
+        <div className='shrink-0'>
+          <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
+            <Button
+              variant='outline'
+              onClick={() => onSwapImage(null)}
+              disabled={visualCropEnabled}
+              className='w-full'
+            >
+              <Image className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.swapBaseImage')}
+            </Button>
+          </div>
         </div>
       )}
 

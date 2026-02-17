@@ -1668,6 +1668,7 @@ export class ImageEditor {
 
   /**
    * Load a layer's transforms into editor state
+   * Also updates config to match the layer's image (critical for undo/redo after swap)
    * @param layerId - ID of the layer to load from (the target layer to load)
    * @param layers - The base layers array to start traversal from
    */
@@ -1690,6 +1691,10 @@ export class ImageEditor {
     }
 
     if (!targetLayer) return
+
+    // Update config to match the layer's image (critical for undo/redo after swap)
+    this.config.imagePath = targetLayer.imagePath
+    this.config.originalDimensions = { ...targetLayer.originalDimensions }
 
     // Start with FRESH defaults based on layer's original dimensions
     // This ensures no inheritance from base image or previous context
@@ -2358,6 +2363,152 @@ export class ImageEditor {
       success: true,
       warnings: result.warnings,
     }
+  }
+
+  /**
+   * Swap the image for a layer or base image
+   * Resets crop parameters but preserves all other transformations
+   * Context-aware: When layerId is null and in nested context, swaps the base image of the current layer
+   * @param newImagePath - Path to the new image
+   * @param newDimensions - Dimensions of the new image
+   * @param layerId - Optional layer ID (null = swap base image of current context)
+   */
+  swapImage(
+    newImagePath: string,
+    newDimensions: ImageDimensions,
+    layerId: string | null = null,
+  ): void {
+    // Flush any pending history snapshot first
+    this.flushPendingHistorySnapshot()
+
+    // Save current state to history BEFORE swapping (so undo restores it)
+    this.saveHistorySnapshot()
+
+    if (layerId === null) {
+      // Swap base image of current context
+      // If in nested context, swap the layer's base image
+      // If at root, swap the root base image
+      if (this.editingContext.length > 0) {
+        // We're editing a layer - swap that layer's base image
+        const currentLayerId = this.editingContext[this.editingContext.length - 1]
+        
+        // Update the layer in savedBaseState
+        if (!this.savedBaseState) return
+
+        const baseLayers = this.savedBaseState.layers || []
+        const updatedLayers = this.updateLayersInTree(
+          baseLayers,
+          this.editingContext.slice(0, -1), // Parent path
+          (layersAtPath) => {
+            return layersAtPath.map((l) => {
+              if (l.id !== currentLayerId) return l
+              
+              // Update layer's image path and dimensions
+              const updatedLayer: ImageLayer = {
+                ...l,
+                imagePath: newImagePath,
+                originalDimensions: { ...newDimensions },
+              }
+
+              // Reset crop from layer transforms if present
+              if (updatedLayer.transforms) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { cropLeft, cropTop, cropWidth, cropHeight, ...transformsWithoutCrop } =
+                  updatedLayer.transforms
+                updatedLayer.transforms = transformsWithoutCrop
+              }
+
+              return updatedLayer
+            })
+          },
+        )
+
+        this.savedBaseState = {
+          ...this.savedBaseState,
+          layers: updatedLayers,
+        }
+
+        // Update config to point to new image
+        this.config.imagePath = newImagePath
+        this.config.originalDimensions = { ...newDimensions }
+
+        // Reload context to refresh state
+        this.loadContextFromLayer(currentLayerId, updatedLayers)
+      } else {
+        // We're at root - swap root base image
+        this.config.imagePath = newImagePath
+        this.config.originalDimensions = { ...newDimensions }
+
+        // If we have a saved base image path (shouldn't happen at root), update that too
+        if (this.savedBaseImagePath) {
+          this.savedBaseImagePath = newImagePath
+          this.savedBaseImageDimensions = { ...newDimensions }
+        }
+
+        // Reset crop parameters from current state
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { cropLeft, cropTop, cropWidth, cropHeight, ...stateWithoutCrop } = this.state
+        this.state = stateWithoutCrop
+      }
+    } else {
+      // Swap layer image
+      const layers = this.getContextLayers()
+      const layer = layers.find((l) => l.id === layerId)
+      if (!layer) return
+
+      // Update layer with new image path and dimensions
+      const updatedLayer: ImageLayer = {
+        ...layer,
+        imagePath: newImagePath,
+        originalDimensions: { ...newDimensions },
+      }
+
+      // Reset crop from layer transforms if present
+      if (updatedLayer.transforms) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { cropLeft, cropTop, cropWidth, cropHeight, ...transformsWithoutCrop } =
+          updatedLayer.transforms
+        updatedLayer.transforms = transformsWithoutCrop
+      }
+
+      // Update the layer in the appropriate context
+      if (this.editingContext.length === 0) {
+        // Base level - update in current state
+        this.state = {
+          ...this.state,
+          layers: this.state.layers?.map((l) => (l.id === layerId ? updatedLayer : l)),
+        }
+      } else {
+        // Nested level - update in savedBaseState
+        if (!this.savedBaseState) return
+
+        const baseLayers = this.savedBaseState.layers || []
+        const updatedLayers = this.updateLayersInTree(
+          baseLayers,
+          this.editingContext,
+          (layersAtPath) => {
+            return layersAtPath.map((l) => (l.id === layerId ? updatedLayer : l))
+          },
+        )
+
+        this.savedBaseState = {
+          ...this.savedBaseState,
+          layers: updatedLayers,
+        }
+
+        // Reload context to refresh state
+        const currentLayerId = this.editingContext[this.editingContext.length - 1]
+        this.loadContextFromLayer(currentLayerId, updatedLayers)
+      }
+    }
+
+    // Notify and update
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+    
+    // IMPORTANT: Always call onHistoryChange to update URL with complete base state
+    // This ensures undo/redo works correctly, especially in nested contexts
+    this.callbacks.onHistoryChange?.()
   }
 
   /**
