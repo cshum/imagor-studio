@@ -835,6 +835,248 @@ describe('ImageEditor', () => {
   })
 
   describe('Imagor Path Generation', () => {
+    describe('Base64 Encoding for Special Characters', () => {
+      it('should encode image path with spaces', () => {
+        const editorWithSpaces = new ImageEditor({
+          imagePath: 'my image.jpg',
+          originalDimensions: { width: 1920, height: 1080 },
+        })
+        editorWithSpaces.initialize({})
+
+        const path = editorWithSpaces.getImagorPath()
+
+        // Should contain b64: prefix and base64url encoded path
+        expect(path).toContain('b64:')
+        expect(path).not.toContain('my image.jpg')
+        // Decode to verify: "my image.jpg" -> "bXkgaW1hZ2UuanBn"
+        expect(path).toContain('b64:bXkgaW1hZ2UuanBn')
+      })
+
+      it('should encode image path with question mark', () => {
+        const editorWithQuestion = new ImageEditor({
+          imagePath: 'image?.jpg',
+          originalDimensions: { width: 1920, height: 1080 },
+        })
+        editorWithQuestion.initialize({})
+
+        const path = editorWithQuestion.getImagorPath()
+
+        expect(path).toContain('b64:')
+        expect(path).not.toContain('image?.jpg')
+        // "image?.jpg" -> "aW1hZ2U_LmpwZw" (? becomes _ in base64url)
+        expect(path).toContain('b64:aW1hZ2U_LmpwZw')
+      })
+
+      it('should encode image path with hash', () => {
+        const editorWithHash = new ImageEditor({
+          imagePath: 'image#1.jpg',
+          originalDimensions: { width: 1920, height: 1080 },
+        })
+        editorWithHash.initialize({})
+
+        const path = editorWithHash.getImagorPath()
+
+        expect(path).toContain('b64:')
+        expect(path).not.toContain('image#1.jpg')
+      })
+
+      it('should encode image path with ampersand', () => {
+        const editorWithAmpersand = new ImageEditor({
+          imagePath: 'image&file.jpg',
+          originalDimensions: { width: 1920, height: 1080 },
+        })
+        editorWithAmpersand.initialize({})
+
+        const path = editorWithAmpersand.getImagorPath()
+
+        expect(path).toContain('b64:')
+        expect(path).not.toContain('image&file.jpg')
+      })
+
+      it('should encode image path with parentheses', () => {
+        const editorWithParens = new ImageEditor({
+          imagePath: 'image(1).jpg',
+          originalDimensions: { width: 1920, height: 1080 },
+        })
+        editorWithParens.initialize({})
+
+        const path = editorWithParens.getImagorPath()
+
+        expect(path).toContain('b64:')
+        expect(path).not.toContain('image(1).jpg')
+      })
+
+      it('should NOT encode normal image paths', () => {
+        const editorNormal = new ImageEditor({
+          imagePath: 'normal-image.jpg',
+          originalDimensions: { width: 1920, height: 1080 },
+        })
+        editorNormal.initialize({})
+
+        const path = editorNormal.getImagorPath()
+
+        expect(path).not.toContain('b64:')
+        expect(path).toContain('normal-image.jpg')
+      })
+
+      it('should NOT encode paths with slashes only', () => {
+        const editorWithSlash = new ImageEditor({
+          imagePath: 'folder/subfolder/image.jpg',
+          originalDimensions: { width: 1920, height: 1080 },
+        })
+        editorWithSlash.initialize({})
+
+        const path = editorWithSlash.getImagorPath()
+
+        expect(path).not.toContain('b64:')
+        expect(path).toContain('folder/subfolder/image.jpg')
+      })
+
+      it('should encode layer image paths with special characters', () => {
+        const layerWithSpaces: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay image.jpg',
+          x: 100,
+          y: 200,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+        }
+
+        editor.addLayer(layerWithSpaces)
+        const path = editor.getImagorPath()
+
+        // Layer path should be base64 encoded
+        expect(path).toContain('b64:')
+        expect(path).not.toContain('overlay image.jpg')
+      })
+
+      it('should encode nested layer paths with special characters', () => {
+        const layerWithTransforms: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'my overlay?.jpg',
+          x: 100,
+          y: 200,
+          alpha: 50,
+          blendMode: 'multiply',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+          transforms: {
+            width: 400,
+            height: 300,
+            brightness: 50,
+          },
+        }
+
+        editor.addLayer(layerWithTransforms)
+        const path = editor.getImagorPath()
+
+        // Layer path with transforms should be base64 encoded
+        expect(path).toContain('b64:')
+        expect(path).toContain('brightness(50)')
+        expect(path).not.toContain('my overlay?.jpg')
+      })
+
+      it('should handle multiple layers with mixed encoding needs', () => {
+        const layer1: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'normal.jpg',
+          x: 100,
+          y: 200,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Normal Layer',
+          originalDimensions: { width: 800, height: 600 },
+        }
+
+        const layer2: ImageLayer = {
+          id: 'layer-2',
+          imagePath: 'special image.jpg',
+          x: 150,
+          y: 250,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Special Layer',
+          originalDimensions: { width: 800, height: 600 },
+        }
+
+        editor.addLayer(layer1)
+        editor.addLayer(layer2)
+        const path = editor.getImagorPath()
+
+        // Should contain normal path as-is
+        expect(path).toContain('normal.jpg')
+        // Should contain encoded path for special characters
+        expect(path).toContain('b64:')
+        expect(path).not.toContain('special image.jpg')
+      })
+
+      it('should use base64url encoding (not standard base64)', () => {
+        // Base64url uses - and _ instead of + and /
+        // The > character doesn't trigger encoding, so use a character that does
+        const editorWithSpecial = new ImageEditor({
+          imagePath: 'test image?.jpg', // Space and ? trigger encoding
+          originalDimensions: { width: 1920, height: 1080 },
+        })
+        editorWithSpecial.initialize({})
+
+        const path = editorWithSpecial.getImagorPath()
+
+        // Should use base64url (- and _ instead of + and /)
+        // Extract just the base64 part after b64: to check encoding
+        const b64Match = path.match(/b64:([A-Za-z0-9_-]+)/)
+        expect(b64Match).toBeTruthy()
+        const b64Part = b64Match![1]
+
+        // Base64url should not contain + or / (uses - and _ instead)
+        expect(b64Part).not.toContain('+')
+        expect(b64Part).not.toContain('/')
+        expect(path).toContain('b64:')
+      })
+
+      it('should remove padding from base64url encoding', () => {
+        // "a" encodes to "YQ==" in standard base64, should be "YQ" in base64url
+        const editorShort = new ImageEditor({
+          imagePath: 'a b.jpg', // Contains space, will be encoded
+          originalDimensions: { width: 1920, height: 1080 },
+        })
+        editorShort.initialize({})
+
+        const path = editorShort.getImagorPath()
+
+        // Should not contain = padding
+        expect(path).toContain('b64:')
+        expect(path).not.toContain('=')
+      })
+
+      it('should encode main image path with transformations', () => {
+        const editorWithSpaces = new ImageEditor({
+          imagePath: 'my image.jpg',
+          originalDimensions: { width: 1920, height: 1080 },
+        })
+        editorWithSpaces.initialize({})
+
+        editorWithSpaces.updateParams({
+          width: 800,
+          height: 600,
+          brightness: 50,
+        })
+
+        const path = editorWithSpaces.getImagorPath()
+
+        // Should contain transformations AND encoded path
+        expect(path).toContain('800x600')
+        expect(path).toContain('brightness(50)')
+        expect(path).toContain('b64:')
+        expect(path).not.toContain('my image.jpg')
+      })
+    })
+
     describe('Image Filter Parameter Omission', () => {
       let mockLayer: ImageLayer
 

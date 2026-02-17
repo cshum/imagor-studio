@@ -166,6 +166,31 @@ export class ImageEditor {
     return value
   }
 
+  /**
+   * Check if image path needs base64 encoding
+   * Aligns with backend logic in server/internal/imagorprovider/imagorprovider.go
+   * @param imagePath - Image path to check
+   * @returns true if path contains special characters that need encoding
+   */
+  private static needsBase64Encoding(imagePath: string): boolean {
+    // Auto-enable base64 encoding if path contains spaces or special characters
+    // that would interfere with URL parsing (?, #, &, (, ))
+    return imagePath.includes(' ') || /[?#&()]/.test(imagePath)
+  }
+
+  /**
+   * Encode image path to base64url format (RFC 4648 Section 5)
+   * Aligns with backend logic in ../imagor/imagorpath/parse.go
+   * @param imagePath - Image path to encode
+   * @returns base64url encoded path with b64: prefix
+   */
+  private static encodeImagePath(imagePath: string): string {
+    // Convert to base64url (URL-safe base64 without padding)
+    // Standard base64 uses +/ but base64url uses -_
+    const base64 = btoa(imagePath).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') // Remove padding
+    return `b64:${base64}`
+  }
+
   constructor(config: ImageEditorConfig) {
     this.config = config
     this.callbacks = {}
@@ -537,8 +562,13 @@ export class ImageEditor {
       parts.push(`filters:${filters.join(':')}`)
     }
 
+    // Apply base64 encoding to image path if needed (aligns with backend logic)
+    const finalImagePath = ImageEditor.needsBase64Encoding(imagePath)
+      ? ImageEditor.encodeImagePath(imagePath)
+      : imagePath
+
     // Combine parts with image path
-    return parts.length > 0 ? `/${parts.join('/')}/${imagePath}` : `/${imagePath}`
+    return parts.length > 0 ? `/${parts.join('/')}/${finalImagePath}` : `/${finalImagePath}`
   }
 
   /**
