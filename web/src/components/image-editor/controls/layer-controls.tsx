@@ -241,20 +241,46 @@ export function LayerControls({
         // No change - do nothing
         return
       } else {
-        // Simply switch alignment, keeping the offset value
-        // Use new string syntax for negative offsets
-        if (xOffset === 0) {
-          onUpdate({ x: value })
-        } else if (xOffset < 0) {
-          onUpdate({ x: `${value}-${Math.abs(xOffset)}` })
+        // Calculate visual position to preserve it when switching alignment
+        // Current visual position from left edge
+        let visualX: number
+        if (hAlign === 'left') {
+          visualX = xOffset
+        } else if (hAlign === 'right') {
+          visualX = baseWidth - currentWidth - xOffset
         } else {
-          // Positive offset - convert to work with new alignment
-          // Right alignment uses negative numeric values
-          onUpdate({ x: value === 'right' ? -xOffset : xOffset })
+          // center
+          visualX = (baseWidth - currentWidth) / 2
+        }
+
+        // Calculate new offset for target alignment
+        if (value === 'left') {
+          // New left offset = visual position
+          const newOffset = Math.round(visualX)
+          // Use string syntax for negative offsets
+          if (newOffset < 0) {
+            onUpdate({ x: `left-${Math.abs(newOffset)}` })
+          } else if (newOffset === 0) {
+            onUpdate({ x: 'left' })
+          } else {
+            onUpdate({ x: newOffset })
+          }
+        } else {
+          // value === 'right'
+          // New right offset = baseWidth - layerWidth - visualX
+          const newOffset = Math.round(baseWidth - currentWidth - visualX)
+          // Use string syntax for negative offsets
+          if (newOffset < 0) {
+            onUpdate({ x: `right-${Math.abs(newOffset)}` })
+          } else if (newOffset === 0) {
+            onUpdate({ x: 'right' })
+          } else {
+            onUpdate({ x: -newOffset })
+          }
         }
       }
     },
-    [onUpdate, hAlign, xOffset],
+    [onUpdate, hAlign, xOffset, baseWidth, currentWidth],
   )
 
   const handleVAlignChange = useCallback(
@@ -266,20 +292,46 @@ export function LayerControls({
         // No change - do nothing
         return
       } else {
-        // Simply switch alignment, keeping the offset value
-        // Use new string syntax for negative offsets
-        if (yOffset === 0) {
-          onUpdate({ y: value })
-        } else if (yOffset < 0) {
-          onUpdate({ y: `${value}-${Math.abs(yOffset)}` })
+        // Calculate visual position to preserve it when switching alignment
+        // Current visual position from top edge
+        let visualY: number
+        if (vAlign === 'top') {
+          visualY = yOffset
+        } else if (vAlign === 'bottom') {
+          visualY = baseHeight - currentHeight - yOffset
         } else {
-          // Positive offset - convert to work with new alignment
-          // Bottom alignment uses negative numeric values
-          onUpdate({ y: value === 'bottom' ? -yOffset : yOffset })
+          // center
+          visualY = (baseHeight - currentHeight) / 2
+        }
+
+        // Calculate new offset for target alignment
+        if (value === 'top') {
+          // New top offset = visual position
+          const newOffset = Math.round(visualY)
+          // Use string syntax for negative offsets
+          if (newOffset < 0) {
+            onUpdate({ y: `top-${Math.abs(newOffset)}` })
+          } else if (newOffset === 0) {
+            onUpdate({ y: 'top' })
+          } else {
+            onUpdate({ y: newOffset })
+          }
+        } else {
+          // value === 'bottom'
+          // New bottom offset = baseHeight - layerHeight - visualY
+          const newOffset = Math.round(baseHeight - currentHeight - visualY)
+          // Use string syntax for negative offsets
+          if (newOffset < 0) {
+            onUpdate({ y: `bottom-${Math.abs(newOffset)}` })
+          } else if (newOffset === 0) {
+            onUpdate({ y: 'bottom' })
+          } else {
+            onUpdate({ y: -newOffset })
+          }
         }
       }
     },
-    [onUpdate, vAlign, yOffset],
+    [onUpdate, vAlign, yOffset, baseHeight, currentHeight],
   )
 
   const handleXOffsetChange = useCallback(

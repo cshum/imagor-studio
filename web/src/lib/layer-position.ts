@@ -760,15 +760,18 @@ export function convertDisplayToLayerPosition(
         updates.x = canvasX
       } else if (calculatedOffset === 0) {
         updates.x = 'right'
-      } else if (calculatedOffset < 0) {
-        // Negative offset from right - use new string syntax
-        updates.x = `right-${Math.abs(calculatedOffset)}`
       } else {
+        // Negative offset from right - use negative numeric value
         updates.x = calculatedOffset
       }
     } else {
-      // Left-aligned: check if crossing to right side (canvasX goes negative)
-      if (canvasX < 0) {
+      // Left-aligned: check if crossing to right side
+      const rightEdge = canvasX + totalLayerWidth
+      if (rightEdge > baseImageWidth) {
+        // Crossed to right side - calculate offset from right
+        const offsetFromRight = rightEdge - baseImageWidth
+        updates.x = -offsetFromRight
+      } else if (canvasX < 0) {
         // Negative position - use new string syntax for left offset
         updates.x = `left-${Math.abs(canvasX)}`
       } else {
@@ -820,15 +823,18 @@ export function convertDisplayToLayerPosition(
         updates.y = canvasY
       } else if (calculatedOffset === 0) {
         updates.y = 'bottom'
-      } else if (calculatedOffset < 0) {
-        // Negative offset from bottom - use new string syntax
-        updates.y = `bottom-${Math.abs(calculatedOffset)}`
       } else {
+        // Negative offset from bottom - use negative numeric value
         updates.y = calculatedOffset
       }
     } else {
-      // Top-aligned: check if crossing to bottom side (canvasY goes negative)
-      if (canvasY < 0) {
+      // Top-aligned: check if crossing to bottom side
+      const bottomEdge = canvasY + totalLayerHeight
+      if (bottomEdge > baseImageHeight) {
+        // Crossed to bottom side - calculate offset from bottom
+        const offsetFromBottom = bottomEdge - baseImageHeight
+        updates.y = -offsetFromBottom
+      } else if (canvasY < 0) {
         // Negative position - use new string syntax for top offset
         updates.y = `top-${Math.abs(canvasY)}`
       } else {
