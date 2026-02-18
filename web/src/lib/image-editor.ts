@@ -41,6 +41,10 @@ export interface ImageLayer {
 }
 
 export interface ImageEditorState {
+  // Base image (for root context only - captured in history for swap image undo/redo)
+  imagePath?: string
+  originalDimensions?: ImageDimensions
+
   // Dimensions
   width?: number
   height?: number
@@ -273,8 +277,13 @@ export class ImageEditor {
       // Return the updated base state (includes all layers)
       return { ...this.savedBaseState! }
     } else {
-      // Already in base context - return current state
-      return { ...this.state }
+      // Already in base context - return current state with imagePath/originalDimensions
+      // These are included for history snapshots (swap image undo/redo)
+      return {
+        ...this.state,
+        imagePath: this.config.imagePath,
+        originalDimensions: { ...this.config.originalDimensions },
+      }
     }
   }
 
@@ -1334,6 +1343,15 @@ export class ImageEditor {
     } else {
       // We're in base context - directly restore state
       this.state = { ...state }
+      
+      // Restore config from state if present (critical for swap image undo/redo)
+      if (state.imagePath) {
+        this.config.imagePath = state.imagePath
+        this.baseImagePath = state.imagePath
+      }
+      if (state.originalDimensions) {
+        this.config.originalDimensions = { ...state.originalDimensions }
+      }
     }
   }
 
@@ -2130,13 +2148,15 @@ export class ImageEditor {
     // Get base state
     const baseState = this.getBaseState()
 
-    // Strip visualCropEnabled (UI-only state)
+    // Strip UI-only and base-image-specific properties
+    // - visualCropEnabled: UI-only state
+    // - imagePath/originalDimensions: Base-image-specific (for swap image undo/redo)
     // KEEP crop in template (complete record of edits)
     // Crop will be excluded when APPLYING template to different images
     // For adaptive mode, also remove width/height
     // For predefined mode, keep width/height
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { visualCropEnabled, ...stateWithoutUI } = baseState
+    const { visualCropEnabled, imagePath, originalDimensions, ...stateWithoutUI } = baseState
 
     const transformations =
       dimensionMode === 'adaptive'
@@ -2414,10 +2434,16 @@ export class ImageEditor {
       this.savedBaseState = { ...this.savedBaseState, layers: updatedLayers }
       this.loadContextFromLayer(currentLayerId, updatedLayers)
     } else if (layerId === null) {
-      // Swap root base image
+      // Swap root base image - update STATE (captured in history) and config (for preview)
+      this.state = {
+        ...removeCrop(this.state),
+        imagePath: newImagePath,
+        originalDimensions: { ...newDimensions },
+      }
+      // Also update config for preview generation
       this.config.imagePath = newImagePath
       this.config.originalDimensions = { ...newDimensions }
-      this.state = removeCrop(this.state)
+      this.baseImagePath = newImagePath
     } else {
       // Swap specific layer image
       const layer = this.getLayer(layerId)
