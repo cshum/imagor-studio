@@ -2149,7 +2149,7 @@ export class ImageEditor {
    * @param dimensionMode - How dimensions should be handled
    * @param savePath - Path to save the template
    * @param overwrite - Whether to overwrite existing template
-   * @returns Promise that resolves with save result
+   * @returns Promise that resolves with save result including normalized templatePath
    * @throws Error with code 'CONFLICT' if template already exists
    */
   async exportTemplate(
@@ -2158,7 +2158,7 @@ export class ImageEditor {
     dimensionMode: 'adaptive' | 'predefined',
     savePath: string,
     overwrite = false,
-  ): Promise<{ success: boolean }> {
+  ): Promise<{ success: boolean; templatePath: string }> {
     // Import type at top of file instead
     type ImagorTemplate = import('@/lib/template-types').ImagorTemplate
 
@@ -2191,13 +2191,13 @@ export class ImageEditor {
       description,
       sourceImagePath: this.baseImagePath,
       dimensionMode,
-      predefinedDimensions:
-        dimensionMode === 'predefined'
-          ? {
-              width: this.config.originalDimensions.width,
-              height: this.config.originalDimensions.height,
-            }
-          : undefined,
+      // Always save predefinedDimensions (both modes)
+      // - Predefined mode: Used for dimension locking AND crop validation
+      // - Adaptive mode: Used for crop validation only
+      predefinedDimensions: {
+        width: this.config.originalDimensions.width,
+        height: this.config.originalDimensions.height,
+      },
       transformations, // Clean transformations (no width/height for adaptive)
       metadata: {
         createdAt: new Date().toISOString(),
@@ -2238,6 +2238,7 @@ export class ImageEditor {
 
     return {
       success: result.success,
+      templatePath: result.templatePath,
     }
   }
 
@@ -2334,30 +2335,45 @@ export class ImageEditor {
 
   /**
    * Apply template state with dimension mode handling
-   * Strips crop (source-image-specific) when applying to different images
+   * Smart crop preservation: keeps crop when source and target have same dimensions
    * @param template - Template to apply
    * @returns Editor state to apply
    */
   private applyTemplateState(
     template: import('@/lib/template-types').ImagorTemplate,
   ): ImageEditorState {
-    // Strip crop parameters (source-image-specific, doesn't transfer)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { cropLeft, cropTop, cropWidth, cropHeight, ...stateWithoutCrop } =
-      template.transformations
+    // Check if source and target images have same dimensions
+    const sourceDims = template.predefinedDimensions
+    const targetDims = this.config.originalDimensions
 
-    // Handle dimension mode
-    if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
-      // Use template's predefined dimensions
-      stateWithoutCrop.width = template.predefinedDimensions.width
-      stateWithoutCrop.height = template.predefinedDimensions.height
+    const sameDimensions =
+      sourceDims && sourceDims.width === targetDims.width && sourceDims.height === targetDims.height
+
+    // Conditional crop handling based on dimensions
+    let stateToApply: ImageEditorState
+    if (sameDimensions) {
+      // Same dimensions: KEEP crop (coordinates are valid)
+      stateToApply = { ...template.transformations }
     } else {
-      // Adaptive mode: use current image dimensions
-      stateWithoutCrop.width = this.config.originalDimensions.width
-      stateWithoutCrop.height = this.config.originalDimensions.height
+      // Different dimensions: REMOVE crop (coordinates won't align)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { cropLeft, cropTop, cropWidth, cropHeight, ...stateWithoutCrop } =
+        template.transformations
+      stateToApply = stateWithoutCrop
     }
 
-    return stateWithoutCrop
+    // Handle dimension mode (separate concern from crop)
+    if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
+      // Predefined: Lock to template's dimensions
+      stateToApply.width = template.predefinedDimensions.width
+      stateToApply.height = template.predefinedDimensions.height
+    } else {
+      // Adaptive: Use current image dimensions
+      stateToApply.width = this.config.originalDimensions.width
+      stateToApply.height = this.config.originalDimensions.height
+    }
+
+    return stateToApply
   }
 
   /**
