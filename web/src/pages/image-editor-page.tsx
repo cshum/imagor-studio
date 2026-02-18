@@ -59,7 +59,6 @@ import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 import { getFullImageUrl } from '@/lib/api-utils'
 import { copyToClipboard } from '@/lib/browser-utils'
-import { fetchImageDimensions } from '@/lib/image-dimensions'
 import {
   EditorOpenSectionsStorage,
   type EditorOpenSections,
@@ -71,6 +70,7 @@ import {
   serializeStateToUrl,
   updateLocationState,
 } from '@/lib/editor-state-url'
+import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { type ImageEditorState } from '@/lib/image-editor.ts'
 import { splitImagePath } from '@/lib/path-utils'
 import { cn, debounce } from '@/lib/utils.ts'
@@ -465,10 +465,10 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         // Swap the image using imageEditor
         imageEditor.swapImage(newImagePath, dimensions, swapImageLayerId)
 
-        toast.success(t('imageEditor.layers.swapImageSuccess'))
+        toast.success(t('imageEditor.layers.replaceImageSuccess'))
       } catch (error) {
         console.error('Failed to swap image:', error)
-        toast.error(t('imageEditor.layers.swapImageError'))
+        toast.error(t('imageEditor.layers.replaceImageError'))
       }
     },
     [imageEditor, swapImageLayerId, t],
@@ -965,8 +965,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         <FilePickerDialog
           open={swapImageDialogOpen}
           onOpenChange={setSwapImageDialogOpen}
-          title={t('imageEditor.layers.selectImageToSwap')}
-          description={t('imageEditor.layers.selectImageToSwapDescription')}
+          title={t('imageEditor.layers.selectImageToReplace')}
+          description={t('imageEditor.layers.selectImageToReplaceDescription')}
           onSelect={handleSwapImageSelect}
           fileType='images'
           selectionMode='single'
@@ -1162,8 +1162,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         <FilePickerDialog
           open={swapImageDialogOpen}
           onOpenChange={setSwapImageDialogOpen}
-          title={t('imageEditor.layers.selectImageToSwap')}
-          description={t('imageEditor.layers.selectImageToSwapDescription')}
+          title={t('imageEditor.layers.selectImageToReplace')}
+          description={t('imageEditor.layers.selectImageToReplaceDescription')}
           onSelect={handleSwapImageSelect}
           fileType='images'
           selectionMode='single'
@@ -1508,8 +1508,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       <FilePickerDialog
         open={swapImageDialogOpen}
         onOpenChange={setSwapImageDialogOpen}
-        title={t('imageEditor.layers.selectImageToSwap')}
-        description={t('imageEditor.layers.selectImageToSwapDescription')}
+        title={t('imageEditor.layers.selectImageToReplace')}
+        description={t('imageEditor.layers.selectImageToReplaceDescription')}
         onSelect={handleSwapImageSelect}
         fileType='images'
         selectionMode='single'

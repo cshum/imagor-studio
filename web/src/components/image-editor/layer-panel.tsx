@@ -699,7 +699,7 @@ export function LayerPanel({
               className='w-full'
             >
               <Image className='mr-2 h-4 w-4' />
-              {t('imageEditor.layers.swapBaseImage')}
+              {t('imageEditor.layers.replaceImage')}
             </Button>
           </div>
         </div>

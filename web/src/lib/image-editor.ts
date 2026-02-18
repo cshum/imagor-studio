@@ -1343,7 +1343,7 @@ export class ImageEditor {
     } else {
       // We're in base context - directly restore state
       this.state = { ...state }
-      
+
       // Restore config from state if present (critical for swap image undo/redo)
       if (state.imagePath) {
         this.config.imagePath = state.imagePath
@@ -2467,7 +2467,7 @@ export class ImageEditor {
         imagePath: newImagePath,
         originalDimensions: { ...newDimensions },
       }
-      
+
       // If layer has transforms, remove crop and set the cleaned transforms
       if (layer.transforms) {
         updatedLayer.transforms = removeCrop(layer.transforms)

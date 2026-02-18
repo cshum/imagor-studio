@@ -454,7 +454,7 @@ export function LayerControls({
           className='w-full'
         >
           <ImageIcon className='mr-2 h-4 w-4' />
-          {t('imageEditor.layers.swapImage')}
+          {t('imageEditor.layers.replaceImage')}
         </Button>
       )}
 
