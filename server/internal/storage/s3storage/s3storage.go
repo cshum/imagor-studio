@@ -5,6 +5,7 @@ import (
 	"io"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -157,9 +158,10 @@ func (s *S3Storage) List(ctx context.Context, key string, options storage.ListOp
 
 				if currentOffset >= options.Offset && (options.Limit <= 0 || len(items) < options.Limit) {
 					items = append(items, storage.FileInfo{
-						Name:  folderBaseName,
-						Path:  relativePath,
-						IsDir: true,
+						Name:         folderBaseName,
+						Path:         relativePath,
+						IsDir:        true,
+						ModifiedTime: time.Time{}, // S3 folders are virtual, no LastModified
 					})
 				}
 				currentOffset++

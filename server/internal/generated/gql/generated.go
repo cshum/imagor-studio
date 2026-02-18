@@ -55,6 +55,7 @@ type ComplexityRoot struct {
 
 	FileItem struct {
 		IsDirectory   func(childComplexity int) int
+		ModifiedTime  func(childComplexity int) int
 		Name          func(childComplexity int) int
 		Path          func(childComplexity int) int
 		Size          func(childComplexity int) int
@@ -315,6 +316,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.FileItem.IsDirectory(childComplexity), true
+	case "FileItem.modifiedTime":
+		if e.complexity.FileItem.ModifiedTime == nil {
+			break
+		}
+
+		return e.complexity.FileItem.ModifiedTime(childComplexity), true
 	case "FileItem.name":
 		if e.complexity.FileItem.Name == nil {
 			break
@@ -1460,6 +1467,7 @@ type FileItem {
   path: String!
   size: Int!
   isDirectory: Boolean!
+  modifiedTime: String!
   thumbnailUrls: ThumbnailUrls
 }
 
@@ -2387,6 +2395,35 @@ func (ec *executionContext) fieldContext_FileItem_isDirectory(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _FileItem_modifiedTime(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FileItem_modifiedTime,
+		func(ctx context.Context) (any, error) {
+			return obj.ModifiedTime, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FileItem_modifiedTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FileItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _FileItem_thumbnailUrls(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2460,6 +2497,8 @@ func (ec *executionContext) fieldContext_FileList_items(_ context.Context, field
 				return ec.fieldContext_FileItem_size(ctx, field)
 			case "isDirectory":
 				return ec.fieldContext_FileItem_isDirectory(ctx, field)
+			case "modifiedTime":
+				return ec.fieldContext_FileItem_modifiedTime(ctx, field)
 			case "thumbnailUrls":
 				return ec.fieldContext_FileItem_thumbnailUrls(ctx, field)
 			}
@@ -8446,6 +8485,11 @@ func (ec *executionContext) _FileItem(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "isDirectory":
 			out.Values[i] = ec._FileItem_isDirectory(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "modifiedTime":
+			out.Values[i] = ec._FileItem_modifiedTime(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

@@ -56,6 +56,7 @@ export type ExternalImagorInput = {
 export type FileItem = {
   __typename?: 'FileItem'
   isDirectory: Scalars['Boolean']['output']
+  modifiedTime: Scalars['String']['output']
   name: Scalars['String']['output']
   path: Scalars['String']['output']
   size: Scalars['Int']['output']
@@ -679,6 +680,7 @@ export type ListFilesQuery = {
       path: string
       size: number
       isDirectory: boolean
+      modifiedTime: string
       thumbnailUrls: {
         __typename?: 'ThumbnailUrls'
         grid: string | null
@@ -1830,6 +1832,7 @@ export const ListFilesDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'path' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'size' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'isDirectory' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'modifiedTime' } },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'thumbnailUrls' },
