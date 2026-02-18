@@ -1918,8 +1918,9 @@ export class ImageEditor {
    * Update a layer's properties
    * @param layerId - ID of the layer to update
    * @param updates - Partial layer properties to update
+   * @param replaceTransforms - If true, replace transforms instead of merging (for swap image)
    */
-  updateLayer(layerId: string, updates: Partial<ImageLayer>): void {
+  updateLayer(layerId: string, updates: Partial<ImageLayer>, replaceTransforms = false): void {
     if (!this.state.layers) return
 
     // Use debounced history snapshot (like updateParams)
@@ -1933,8 +1934,14 @@ export class ImageEditor {
       // Merge transforms object if present in updates
       // This preserves existing transform properties like fitIn
       const mergedLayer = { ...layer, ...updates }
-      if (updates.transforms && layer.transforms) {
-        mergedLayer.transforms = { ...layer.transforms, ...updates.transforms }
+      if (updates.transforms) {
+        if (replaceTransforms || !layer.transforms) {
+          // Replace transforms entirely (used for swap image to remove crop)
+          mergedLayer.transforms = updates.transforms
+        } else {
+          // Merge transforms (preserves existing properties)
+          mergedLayer.transforms = { ...layer.transforms, ...updates.transforms }
+        }
       }
       return mergedLayer
     })
@@ -1958,8 +1965,14 @@ export class ImageEditor {
             if (l.id !== layerId) return l
 
             const mergedLayer = { ...l, ...updates }
-            if (updates.transforms && l.transforms) {
-              mergedLayer.transforms = { ...l.transforms, ...updates.transforms }
+            if (updates.transforms) {
+              if (replaceTransforms || !l.transforms) {
+                // Replace transforms entirely (used for swap image to remove crop)
+                mergedLayer.transforms = updates.transforms
+              } else {
+                // Merge transforms (preserves existing properties)
+                mergedLayer.transforms = { ...l.transforms, ...updates.transforms }
+              }
             }
             return mergedLayer
           })
@@ -2449,11 +2462,19 @@ export class ImageEditor {
       const layer = this.getLayer(layerId)
       if (!layer) return
 
-      this.updateLayer(layerId, {
+      // Create updated layer with crop removed from transforms
+      const updatedLayer: Partial<ImageLayer> = {
         imagePath: newImagePath,
         originalDimensions: { ...newDimensions },
-        transforms: layer.transforms ? removeCrop(layer.transforms) : undefined,
-      })
+      }
+      
+      // If layer has transforms, remove crop and set the cleaned transforms
+      if (layer.transforms) {
+        updatedLayer.transforms = removeCrop(layer.transforms)
+      }
+
+      // Use replaceTransforms=true to ensure crop is removed (not merged)
+      this.updateLayer(layerId, updatedLayer, true)
     }
 
     // 3. Notify

@@ -1440,6 +1440,394 @@ describe('ImageEditor', () => {
     })
   })
 
+  describe('Swap Image Functionality', () => {
+    describe('swapImage() - Root Base Image', () => {
+      it('should swap root base image path and dimensions', () => {
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        const state = editor.getState()
+        expect(state.imagePath).toBe('new-image.jpg')
+        expect(state.originalDimensions).toEqual({ width: 2560, height: 1440 })
+      })
+
+      it('should update config.imagePath and baseImagePath', () => {
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        expect(editor.getBaseImagePath()).toBe('new-image.jpg')
+        expect(editor.getOriginalDimensions()).toEqual({ width: 2560, height: 1440 })
+      })
+
+      it('should reset crop parameters when swapping root image', () => {
+        editor.updateParams({
+          cropLeft: 100,
+          cropTop: 100,
+          cropWidth: 800,
+          cropHeight: 600,
+        })
+
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        const state = editor.getState()
+        expect(state.cropLeft).toBeUndefined()
+        expect(state.cropTop).toBeUndefined()
+        expect(state.cropWidth).toBeUndefined()
+        expect(state.cropHeight).toBeUndefined()
+      })
+
+      it('should preserve other transformations when swapping', () => {
+        editor.updateParams({
+          brightness: 50,
+          contrast: 30,
+          hue: 120,
+          cropLeft: 100,
+          cropTop: 100,
+          cropWidth: 800,
+          cropHeight: 600,
+        })
+
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        const state = editor.getState()
+        expect(state.brightness).toBe(50)
+        expect(state.contrast).toBe(30)
+        expect(state.hue).toBe(120)
+        // But crop should be reset
+        expect(state.cropLeft).toBeUndefined()
+      })
+
+      it('should save to history before swapping', () => {
+        editor.updateParams({ brightness: 50 })
+        vi.runAllTimers()
+
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        expect(editor.canUndo()).toBe(true)
+      })
+    })
+
+    describe('swapImage() - Layer Context', () => {
+      let mockLayer: ImageLayer
+
+      beforeEach(() => {
+        mockLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+        }
+      })
+
+      it('should swap current layer base image when in nested context', () => {
+        editor.addLayer(mockLayer)
+        editor.switchContext('layer-1')
+
+        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 })
+
+        // Switch back to base to check layer was updated
+        editor.switchContext(null)
+        const layer = editor.getLayer('layer-1')
+        expect(layer?.imagePath).toBe('new-overlay.jpg')
+        expect(layer?.originalDimensions).toEqual({ width: 1024, height: 768 })
+      })
+
+      it('should swap specific layer image by ID', () => {
+        editor.addLayer(mockLayer)
+
+        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+
+        const layer = editor.getLayer('layer-1')
+        expect(layer?.imagePath).toBe('new-overlay.jpg')
+        expect(layer?.originalDimensions).toEqual({ width: 1024, height: 768 })
+      })
+
+      it('should reset crop in layer transforms when swapping', () => {
+        const layerWithCrop = {
+          ...mockLayer,
+          transforms: {
+            cropLeft: 50,
+            cropTop: 50,
+            cropWidth: 400,
+            cropHeight: 300,
+            brightness: 50,
+          },
+        }
+        editor.addLayer(layerWithCrop)
+        vi.runAllTimers() // Flush add layer history
+
+        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+        vi.runAllTimers() // Flush swap history
+
+        const layer = editor.getLayer('layer-1')
+        expect(layer?.transforms?.cropLeft).toBeUndefined()
+        expect(layer?.transforms?.cropTop).toBeUndefined()
+        expect(layer?.transforms?.cropWidth).toBeUndefined()
+        expect(layer?.transforms?.cropHeight).toBeUndefined()
+        // But other transforms preserved
+        expect(layer?.transforms?.brightness).toBe(50)
+      })
+
+      it('should preserve layer transforms except crop', () => {
+        const layerWithTransforms = {
+          ...mockLayer,
+          transforms: {
+            width: 400,
+            height: 300,
+            brightness: 75,
+            contrast: 25,
+            cropLeft: 10,
+            cropTop: 10,
+            cropWidth: 200,
+            cropHeight: 150,
+          },
+        }
+        editor.addLayer(layerWithTransforms)
+        vi.runAllTimers() // Flush add layer history
+
+        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+        vi.runAllTimers() // Flush swap history
+
+        const layer = editor.getLayer('layer-1')
+        expect(layer?.transforms?.width).toBe(400)
+        expect(layer?.transforms?.height).toBe(300)
+        expect(layer?.transforms?.brightness).toBe(75)
+        expect(layer?.transforms?.contrast).toBe(25)
+        expect(layer?.transforms?.cropLeft).toBeUndefined()
+      })
+    })
+
+    describe('getBaseState() - imagePath Integration', () => {
+      it('should include imagePath in base state at root level', () => {
+        const baseState = editor.getBaseState()
+
+        expect(baseState.imagePath).toBe('test-image.jpg')
+      })
+
+      it('should include originalDimensions in base state at root level', () => {
+        const baseState = editor.getBaseState()
+
+        expect(baseState.originalDimensions).toEqual({ width: 1920, height: 1080 })
+      })
+
+      it('should sync imagePath from config when at root', () => {
+        // Swap image to change config
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        const baseState = editor.getBaseState()
+        expect(baseState.imagePath).toBe('new-image.jpg')
+        expect(baseState.originalDimensions).toEqual({ width: 2560, height: 1440 })
+      })
+
+      it('should NOT include imagePath when editing nested layer', () => {
+        const mockLayer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+        }
+        editor.addLayer(mockLayer)
+        editor.switchContext('layer-1')
+
+        const baseState = editor.getBaseState()
+        // Base state should still have root image path (from savedBaseState)
+        expect(baseState.imagePath).toBeUndefined()
+      })
+    })
+
+    describe('History - Swap Image Undo/Redo', () => {
+      it('should undo root image swap and restore old image path', () => {
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        vi.runAllTimers()
+
+        editor.undo()
+
+        const state = editor.getState()
+        expect(state.imagePath).toBe('test-image.jpg')
+      })
+
+      it('should undo root image swap and restore old dimensions', () => {
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        vi.runAllTimers()
+
+        editor.undo()
+
+        const state = editor.getState()
+        expect(state.originalDimensions).toEqual({ width: 1920, height: 1080 })
+      })
+
+      it('should redo root image swap and restore new image path', () => {
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        vi.runAllTimers()
+
+        editor.undo()
+        editor.redo()
+
+        const state = editor.getState()
+        expect(state.imagePath).toBe('new-image.jpg')
+        expect(state.originalDimensions).toEqual({ width: 2560, height: 1440 })
+      })
+
+      it('should restore config.imagePath when undoing swap', () => {
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        vi.runAllTimers()
+
+        editor.undo()
+
+        expect(editor.getBaseImagePath()).toBe('test-image.jpg')
+        expect(editor.getOriginalDimensions()).toEqual({ width: 1920, height: 1080 })
+      })
+
+      it('should restore baseImagePath when undoing swap', () => {
+        const originalPath = editor.getBaseImagePath()
+
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        vi.runAllTimers()
+
+        expect(editor.getBaseImagePath()).toBe('new-image.jpg')
+
+        editor.undo()
+
+        expect(editor.getBaseImagePath()).toBe(originalPath)
+      })
+
+      it('should undo layer image swap in nested context', () => {
+        const mockLayer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+        }
+        editor.addLayer(mockLayer)
+        editor.switchContext('layer-1')
+
+        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 })
+        vi.runAllTimers()
+
+        editor.undo()
+
+        // Switch back to check layer
+        editor.switchContext(null)
+        const layer = editor.getLayer('layer-1')
+        expect(layer?.imagePath).toBe('overlay.jpg')
+        expect(layer?.originalDimensions).toEqual({ width: 800, height: 600 })
+      })
+
+      it('should undo specific layer image swap', () => {
+        const mockLayer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+        }
+        editor.addLayer(mockLayer)
+
+        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+        vi.runAllTimers()
+
+        editor.undo()
+
+        const layer = editor.getLayer('layer-1')
+        expect(layer?.imagePath).toBe('overlay.jpg')
+        expect(layer?.originalDimensions).toEqual({ width: 800, height: 600 })
+      })
+    })
+
+    describe('Swap Image - Integration Tests', () => {
+      it('should swap → undo → redo → verify state consistency', () => {
+        // Initial state
+        editor.updateParams({ brightness: 50 })
+        vi.runAllTimers()
+
+        // Swap
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        vi.runAllTimers()
+
+        expect(editor.getState().imagePath).toBe('new-image.jpg')
+
+        // Undo
+        editor.undo()
+        expect(editor.getState().imagePath).toBe('test-image.jpg')
+        expect(editor.getState().brightness).toBe(50)
+
+        // Redo
+        editor.redo()
+        expect(editor.getState().imagePath).toBe('new-image.jpg')
+        expect(editor.getState().brightness).toBe(50)
+      })
+
+      it('should swap → make changes → undo all → verify original state', () => {
+        const originalPath = editor.getBaseImagePath()
+
+        // Swap
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        vi.runAllTimers()
+
+        // Make changes
+        editor.updateParams({ brightness: 75 })
+        vi.runAllTimers()
+
+        // Undo changes
+        editor.undo()
+        expect(editor.getState().brightness).toBeUndefined()
+
+        // Undo swap
+        editor.undo()
+        expect(editor.getBaseImagePath()).toBe(originalPath)
+      })
+
+      it('should swap in nested context → switch context → verify persistence', () => {
+        const mockLayer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+        }
+        editor.addLayer(mockLayer)
+        editor.switchContext('layer-1')
+
+        // Swap in nested context
+        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 })
+
+        // Switch back to base
+        editor.switchContext(null)
+
+        // Verify layer was updated
+        const layer = editor.getLayer('layer-1')
+        expect(layer?.imagePath).toBe('new-overlay.jpg')
+
+        // Switch back to layer
+        editor.switchContext('layer-1')
+
+        // Verify config updated
+        expect(editor.getOriginalDimensions()).toEqual({ width: 1024, height: 768 })
+      })
+    })
+  })
+
   describe('Template Operations', () => {
     // Note: exportTemplate tests are skipped because they rely on fetch() for thumbnail
     // generation which cannot be properly mocked in the test environment. The export
