@@ -1742,6 +1742,7 @@ func TestListFiles(t *testing.T) {
 	assert.Equal(t, "/test/file1.txt", result.Items[0].Path)
 	assert.Equal(t, 100, result.Items[0].Size)
 	assert.False(t, result.Items[0].IsDirectory)
+	assert.NotEmpty(t, result.Items[0].ModifiedTime, "ModifiedTime should be populated")
 
 	mockStorage.AssertExpectations(t)
 	mockRegistryStore.AssertExpectations(t)
