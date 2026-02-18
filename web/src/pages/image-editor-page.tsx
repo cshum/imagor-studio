@@ -423,20 +423,37 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
       const template = await response.json()
 
-      // Strip crop parameters (source-image-specific, doesn't transfer)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { cropLeft, cropTop, cropWidth, cropHeight, ...templateState } =
-        template.transformations
+      // Check if source and target images have same dimensions
+      const currentDimensions = imageEditor.getOriginalDimensions()
+      const templateDimensions = template.predefinedDimensions || currentDimensions
+      const sameDimensions =
+        currentDimensions.width === templateDimensions.width &&
+        currentDimensions.height === templateDimensions.height
 
-      // Handle dimension modes
-      if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
-        // Predefined: Use locked dimensions from template
-        templateState.width = template.predefinedDimensions.width
-        templateState.height = template.predefinedDimensions.height
+      // Conditional crop handling based on dimensions
+      let templateState
+      if (sameDimensions) {
+        // Same dimensions: KEEP crop (coordinates are valid)
+        templateState = { ...template.transformations }
+      } else {
+        // Different dimensions: REMOVE crop (coordinates won't align)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { cropLeft, cropTop, cropWidth, cropHeight, ...stateWithoutCrop } =
+          template.transformations
+        templateState = stateWithoutCrop
+      }
+
+      // Handle dimension mode (separate concern from crop)
+      if (template.dimensionMode === 'predefined') {
+        // Predefined: Use template's TRANSFORMATION dimensions (the desired output size)
+        // Note: predefinedDimensions is the SOURCE image size, used only for crop validation
+        // The actual output dimensions are in transformations.width/height
+        templateState.width = template.transformations.width
+        templateState.height = template.transformations.height
       } else {
         // Adaptive: Use current image dimensions
-        templateState.width = imageEditor.getOriginalDimensions().width
-        templateState.height = imageEditor.getOriginalDimensions().height
+        templateState.width = currentDimensions.width
+        templateState.height = currentDimensions.height
       }
 
       // Apply the modified state
