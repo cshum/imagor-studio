@@ -4,7 +4,7 @@ import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
 import { SortOption, SortOrder } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
-import { getFullImageUrl } from '@/lib/api-utils.ts'
+import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { hasExtension } from '@/lib/file-extensions.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
@@ -182,9 +182,8 @@ export const galleryLoader = async ({
       let imageSrc = item.thumbnailUrls?.grid || ''
 
       // Add cache-busting parameter for template previews to ensure fresh previews after saves
-      if (isTemplate && imageSrc) {
-        const separator = imageSrc.includes('?') ? '&' : '?'
-        imageSrc = `${imageSrc}${separator}t=${Date.now()}`
+      if (isTemplate) {
+        imageSrc = addCacheBuster(imageSrc, item.modifiedTime)
       }
 
       return {

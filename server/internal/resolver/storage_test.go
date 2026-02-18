@@ -365,8 +365,8 @@ func TestListFiles_OnlyRequiresReadScope(t *testing.T) {
 
 			mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
 				Items: []storage.FileInfo{
-					{Name: "file1.txt", Path: "/test/file1.txt", Size: 100, IsDir: false},
-					{Name: "file2.txt", Path: "/test/file2.txt", Size: 200, IsDir: false},
+					{Name: "file1.txt", Path: "/test/file1.txt", Size: 100, IsDir: false, ModifiedTime: time.Now()},
+					{Name: "file2.txt", Path: "/test/file2.txt", Size: 200, IsDir: false, ModifiedTime: time.Now()},
 				},
 				TotalCount: 2,
 			}, nil)
@@ -1726,8 +1726,8 @@ func TestListFiles(t *testing.T) {
 
 	mockStorage.On("List", ctx, path, mock.AnythingOfType("storage.ListOptions")).Return(storage.ListResult{
 		Items: []storage.FileInfo{
-			{Name: "file1.txt", Path: "/test/file1.txt", Size: 100, IsDir: false},
-			{Name: "file2.txt", Path: "/test/file2.txt", Size: 200, IsDir: false},
+			{Name: "file1.txt", Path: "/test/file1.txt", Size: 100, IsDir: false, ModifiedTime: time.Now()},
+			{Name: "file2.txt", Path: "/test/file2.txt", Size: 200, IsDir: false, ModifiedTime: time.Now()},
 		},
 		TotalCount: 2,
 	}, nil)
@@ -1742,6 +1742,7 @@ func TestListFiles(t *testing.T) {
 	assert.Equal(t, "/test/file1.txt", result.Items[0].Path)
 	assert.Equal(t, 100, result.Items[0].Size)
 	assert.False(t, result.Items[0].IsDirectory)
+	assert.NotEmpty(t, result.Items[0].ModifiedTime, "ModifiedTime should be populated")
 
 	mockStorage.AssertExpectations(t)
 	mockRegistryStore.AssertExpectations(t)

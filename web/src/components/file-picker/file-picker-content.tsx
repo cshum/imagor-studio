@@ -38,6 +38,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { SortOption, SortOrder } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
+import { addCacheBuster } from '@/lib/api-utils'
 import { hasExtension } from '@/lib/file-extensions'
 import {
   DEFAULT_IMAGE_EXTENSIONS,
@@ -299,13 +300,23 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         // Process images/files
         let imageItems: GalleryImage[] = result.items
           .filter((item) => !item.isDirectory && item.thumbnailUrls)
-          .map((item) => ({
-            imageKey: item.name,
-            imageSrc: item.thumbnailUrls?.grid || '',
-            imageName: item.name,
-            isVideo: hasExtension(item.name, config.videoExtensions), // Always use baseline for detection
-            isTemplate: hasExtension(item.name, TEMPLATE_EXTENSION), // Detect template files
-          }))
+          .map((item) => {
+            const isTemplate = hasExtension(item.name, TEMPLATE_EXTENSION)
+            let imageSrc = item.thumbnailUrls?.grid || ''
+
+            // Add cache-busting parameter for template previews to ensure fresh previews after saves
+            if (isTemplate) {
+              imageSrc = addCacheBuster(imageSrc, item.modifiedTime)
+            }
+
+            return {
+              imageKey: item.name,
+              imageSrc,
+              imageName: item.name,
+              isVideo: hasExtension(item.name, config.videoExtensions), // Always use baseline for detection
+              isTemplate, // Detect template files
+            }
+          })
 
         // Filter by allowed extensions (handles compound extensions like .imagor.json)
         imageItems = imageItems.filter((item) => {

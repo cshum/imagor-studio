@@ -42,6 +42,7 @@ type FileItem struct {
 	Path          string         `json:"path"`
 	Size          int            `json:"size"`
 	IsDirectory   bool           `json:"isDirectory"`
+	ModifiedTime  string         `json:"modifiedTime"`
 	ThumbnailUrls *ThumbnailUrls `json:"thumbnailUrls,omitempty"`
 }
 

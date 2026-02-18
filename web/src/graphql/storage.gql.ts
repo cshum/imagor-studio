@@ -28,6 +28,7 @@ export const LIST_FILES = gql(`
         path
         size
         isDirectory
+        modifiedTime
         thumbnailUrls {
           grid
           preview
