@@ -20,7 +20,6 @@ export interface TemplateMetadata {
 }
 
 export interface ImageEditorLoaderData {
-  imagePath: string
   initialEditorOpenSections: EditorOpenSections
   breadcrumb: BreadcrumbItem
   imageEditor: ImageEditor
@@ -150,7 +149,6 @@ export const imageEditorLoader = async ({
   }
 
   return {
-    imagePath: actualImagePath,
     initialEditorOpenSections: editorOpenSections,
     breadcrumb: { label: 'Imagor Studio' },
     imageEditor,

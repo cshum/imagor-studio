@@ -31,7 +31,6 @@ interface SaveTemplateDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   imageEditor: ImageEditor
-  imagePath: string
   templateMetadata?: {
     name: string
     description?: string
@@ -46,13 +45,15 @@ export function SaveTemplateDialog({
   open,
   onOpenChange,
   imageEditor,
-  imagePath,
   templateMetadata,
   onSaveSuccess,
   title,
 }: SaveTemplateDialogProps) {
   const { t } = useTranslation()
   const { homeTitle } = useFolderTree()
+
+  // Read imagePath from imageEditor (reactive to swaps)
+  const imagePath = imageEditor.getImagePath()
 
   // Use custom title or fallback to default
   const dialogTitle = title || t('imageEditor.template.saveTemplate')

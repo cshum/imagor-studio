@@ -47,7 +47,6 @@ import { cn } from '@/lib/utils'
 
 interface ImageEditorControlsProps {
   imageEditor: ImageEditor
-  imagePath: string
   params: ImageEditorState
   selectedLayerId: string | null
   editingContext: string | null
@@ -154,7 +153,6 @@ function DroppableColumn({ id, isEmpty, children }: DroppableColumnProps) {
 
 export function ImageEditorControls({
   imageEditor,
-  imagePath,
   params,
   selectedLayerId,
   editingContext,
@@ -374,7 +372,6 @@ export function ImageEditorControls({
     }),
     [
       imageEditor,
-      imagePath,
       params,
       selectedLayerId,
       editingContext,

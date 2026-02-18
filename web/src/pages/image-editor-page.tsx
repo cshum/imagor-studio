@@ -84,8 +84,10 @@ interface ImageEditorPageProps {
 }
 
 export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps) {
-  const { imageEditor, imagePath, initialEditorOpenSections, isTemplate, templateMetadata } =
-    loaderData
+  const { imageEditor, initialEditorOpenSections, isTemplate, templateMetadata } = loaderData
+
+  // Read imagePath from imageEditor (reactive to swaps)
+  const imagePath = imageEditor.getImagePath()
 
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -884,7 +886,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
               selectedLayerId={selectedLayerId}
               editingContext={editingContext}
               layerAspectRatioLocked={layerAspectRatioLocked}
-              imagePath={imagePath}
             />
           </div>
 
@@ -893,7 +894,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               <ImageEditorControls
                 imageEditor={imageEditor}
-                imagePath={imagePath}
                 params={params}
                 selectedLayerId={selectedLayerId}
                 editingContext={editingContext}
@@ -930,7 +930,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           open={saveTemplateDialogOpen}
           onOpenChange={setSaveTemplateDialogOpen}
           imageEditor={imageEditor}
-          imagePath={imagePath}
           templateMetadata={templateMetadata}
           title={
             templateMetadata
@@ -1063,7 +1062,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             selectedLayerId={selectedLayerId}
             editingContext={editingContext}
             layerAspectRatioLocked={layerAspectRatioLocked}
-            imagePath={imagePath}
             onOpenControls={() => setMobileSheetOpen(true)}
           />
 
@@ -1097,7 +1095,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
               <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
                 <ImageEditorControls
                   imageEditor={imageEditor}
-                  imagePath={imagePath}
                   params={params}
                   selectedLayerId={selectedLayerId}
                   editingContext={editingContext}
@@ -1127,7 +1124,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           open={saveTemplateDialogOpen}
           onOpenChange={setSaveTemplateDialogOpen}
           imageEditor={imageEditor}
-          imagePath={imagePath}
           templateMetadata={templateMetadata}
           title={
             templateMetadata
@@ -1353,7 +1349,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               <ImageEditorControls
                 imageEditor={imageEditor}
-                imagePath={imagePath}
                 params={params}
                 selectedLayerId={selectedLayerId}
                 editingContext={editingContext}
@@ -1406,7 +1401,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               <ImageEditorControls
                 imageEditor={imageEditor}
-                imagePath={imagePath}
                 params={params}
                 selectedLayerId={selectedLayerId}
                 editingContext={editingContext}
@@ -1473,7 +1467,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         open={saveTemplateDialogOpen}
         onOpenChange={setSaveTemplateDialogOpen}
         imageEditor={imageEditor}
-        imagePath={imagePath}
         templateMetadata={templateMetadata}
         title={
           templateMetadata
