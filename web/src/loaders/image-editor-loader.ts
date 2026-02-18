@@ -126,10 +126,12 @@ export const imageEditorLoader = async ({
     }
 
     // Handle dimension mode
-    if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
-      // Predefined: Use locked dimensions from template
-      templateState.width = template.predefinedDimensions.width
-      templateState.height = template.predefinedDimensions.height
+    if (template.dimensionMode === 'predefined') {
+      // Predefined: Use template's TRANSFORMATION dimensions (the desired output size)
+      // Note: predefinedDimensions is the SOURCE image size, used only for crop validation
+      // The actual output dimensions are in transformations.width/height
+      templateState.width = template.transformations.width
+      templateState.height = template.transformations.height
     } else {
       // Adaptive: Use source image dimensions
       templateState.width = originalDimensions.width

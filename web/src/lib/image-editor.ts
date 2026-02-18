@@ -2363,10 +2363,12 @@ export class ImageEditor {
     }
 
     // Handle dimension mode (separate concern from crop)
-    if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
-      // Predefined: Lock to template's dimensions
-      stateToApply.width = template.predefinedDimensions.width
-      stateToApply.height = template.predefinedDimensions.height
+    if (template.dimensionMode === 'predefined') {
+      // Predefined: Use template's TRANSFORMATION dimensions (the desired output size)
+      // Note: predefinedDimensions is the SOURCE image size, used only for crop validation
+      // The actual output dimensions are in transformations.width/height
+      stateToApply.width = template.transformations.width
+      stateToApply.height = template.transformations.height
     } else {
       // Adaptive: Use current image dimensions
       stateToApply.width = this.config.originalDimensions.width
