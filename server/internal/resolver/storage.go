@@ -252,10 +252,11 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int,
 	files := make([]*gql.FileItem, len(result.Items))
 	for i, item := range result.Items {
 		fileItem := &gql.FileItem{
-			Name:        item.Name,
-			Path:        item.Path,
-			Size:        int(item.Size),
-			IsDirectory: item.IsDir,
+			Name:         item.Name,
+			Path:         item.Path,
+			Size:         int(item.Size),
+			IsDirectory:  item.IsDir,
+			ModifiedTime: item.ModifiedTime.Format(time.RFC3339),
 		}
 
 		// Generate thumbnail URLs for image files
