@@ -2408,7 +2408,7 @@ export class ImageEditor {
    * @param newDimensions - Dimensions of the new image
    * @param layerId - Optional layer ID (null = swap base image of current context)
    */
-  swapImage(
+  replaceImage(
     newImagePath: string,
     newDimensions: ImageDimensions,
     layerId: string | null = null,

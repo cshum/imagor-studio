@@ -96,8 +96,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   const [copyUrl, setCopyUrl] = useState('')
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false)
   const [applyTemplateDialogOpen, setApplyTemplateDialogOpen] = useState(false)
-  const [swapImageDialogOpen, setSwapImageDialogOpen] = useState(false)
-  const [swapImageLayerId, setSwapImageLayerId] = useState<string | null>(null)
+  const [replaceImageDialogOpen, setReplaceImageDialogOpen] = useState(false)
+  const [replaceImageLayerId, setReplaceImageLayerId] = useState<string | null>(null)
   const [editorOpenSections, setEditorOpenSections] =
     useState<EditorOpenSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -447,12 +447,12 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
   }
 
-  const handleSwapImageClick = useCallback((layerId: string | null) => {
-    setSwapImageLayerId(layerId)
-    setSwapImageDialogOpen(true)
+  const handleReplaceImageClick = useCallback((layerId: string | null) => {
+    setReplaceImageLayerId(layerId)
+    setReplaceImageDialogOpen(true)
   }, [])
 
-  const handleSwapImageSelect = useCallback(
+  const handleReplaceImageSelect = useCallback(
     async (selectedPaths: string[]) => {
       if (selectedPaths.length === 0) return
 
@@ -463,7 +463,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         const dimensions = await fetchImageDimensions(newImagePath)
 
         // Swap the image using imageEditor
-        imageEditor.swapImage(newImagePath, dimensions, swapImageLayerId)
+        imageEditor.replaceImage(newImagePath, dimensions, replaceImageLayerId)
 
         toast.success(t('imageEditor.layers.replaceImageSuccess'))
       } catch (error) {
@@ -471,7 +471,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         toast.error(t('imageEditor.layers.replaceImageError'))
       }
     },
-    [imageEditor, swapImageLayerId, t],
+    [imageEditor, replaceImageLayerId, t],
   )
 
   const handleVisualCropToggle = useCallback(
@@ -720,7 +720,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             layerAspectRatioLocked={layerAspectRatioLocked}
             onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
             visualCropEnabled={visualCropEnabled}
-            onSwapImage={handleSwapImageClick}
+            onReplaceImage={handleReplaceImageClick}
           />
         ),
       },
@@ -737,7 +737,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       handleVisualCropToggle,
       setCropAspectRatio,
       setLayerAspectRatioLockToggle,
-      handleSwapImageClick,
+      handleReplaceImageClick,
     ],
   )
 
@@ -910,7 +910,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                 outputWidth={imageEditor.getOriginalDimensions().width}
                 outputHeight={imageEditor.getOriginalDimensions().height}
                 onCropAspectRatioChange={setCropAspectRatio}
-                onSwapImage={handleSwapImageClick}
+                onReplaceImage={handleReplaceImageClick}
                 column='both'
               />
             </div>
@@ -963,11 +963,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
         {/* Swap Image Dialog */}
         <FilePickerDialog
-          open={swapImageDialogOpen}
-          onOpenChange={setSwapImageDialogOpen}
+          open={replaceImageDialogOpen}
+          onOpenChange={setReplaceImageDialogOpen}
           title={t('imageEditor.layers.selectImageToReplace')}
           description={t('imageEditor.layers.selectImageToReplaceDescription')}
-          onSelect={handleSwapImageSelect}
+          onSelect={handleReplaceImageSelect}
           fileType='images'
           selectionMode='single'
         />
@@ -1114,7 +1114,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                   outputWidth={imageEditor.getOriginalDimensions().width}
                   outputHeight={imageEditor.getOriginalDimensions().height}
                   onCropAspectRatioChange={setCropAspectRatio}
-                  onSwapImage={handleSwapImageClick}
+                  onReplaceImage={handleReplaceImageClick}
                   column='both'
                 />
               </div>
@@ -1160,11 +1160,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
         {/* Swap Image Dialog */}
         <FilePickerDialog
-          open={swapImageDialogOpen}
-          onOpenChange={setSwapImageDialogOpen}
+          open={replaceImageDialogOpen}
+          onOpenChange={setReplaceImageDialogOpen}
           title={t('imageEditor.layers.selectImageToReplace')}
           description={t('imageEditor.layers.selectImageToReplaceDescription')}
-          onSelect={handleSwapImageSelect}
+          onSelect={handleReplaceImageSelect}
           fileType='images'
           selectionMode='single'
         />
@@ -1370,7 +1370,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                 outputWidth={imageEditor.getOriginalDimensions().width}
                 outputHeight={imageEditor.getOriginalDimensions().height}
                 onCropAspectRatioChange={setCropAspectRatio}
-                onSwapImage={handleSwapImageClick}
+                onReplaceImage={handleReplaceImageClick}
                 column='left'
               />
             </div>
@@ -1423,7 +1423,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                 outputWidth={imageEditor.getOriginalDimensions().width}
                 outputHeight={imageEditor.getOriginalDimensions().height}
                 onCropAspectRatioChange={setCropAspectRatio}
-                onSwapImage={handleSwapImageClick}
+                onReplaceImage={handleReplaceImageClick}
                 column='right'
               />
             </div>
@@ -1506,11 +1506,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
       {/* Swap Image Dialog */}
       <FilePickerDialog
-        open={swapImageDialogOpen}
-        onOpenChange={setSwapImageDialogOpen}
+        open={replaceImageDialogOpen}
+        onOpenChange={setReplaceImageDialogOpen}
         title={t('imageEditor.layers.selectImageToReplace')}
         description={t('imageEditor.layers.selectImageToReplaceDescription')}
-        onSelect={handleSwapImageSelect}
+        onSelect={handleReplaceImageSelect}
         fileType='images'
         selectionMode='single'
       />

@@ -37,7 +37,7 @@ interface LayerControlsProps {
   visualCropEnabled?: boolean
   onUpdate: (updates: Partial<ImageLayer>) => void
   onEditLayer: () => void
-  onSwapImage: () => void
+  onReplaceImage: () => void
 }
 
 const BLEND_MODES: BlendMode[] = [
@@ -60,7 +60,7 @@ export function LayerControls({
   visualCropEnabled = false,
   onUpdate,
   onEditLayer,
-  onSwapImage,
+  onReplaceImage,
 }: LayerControlsProps) {
   const { t } = useTranslation()
 
@@ -449,7 +449,7 @@ export function LayerControls({
         <Button
           variant='outline'
           size='default'
-          onClick={onSwapImage}
+          onClick={onReplaceImage}
           disabled={visualCropEnabled}
           className='w-full'
         >

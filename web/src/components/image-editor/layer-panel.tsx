@@ -76,7 +76,7 @@ interface LayerPanelProps {
   layerAspectRatioLocked: boolean
   onLayerAspectRatioLockChange: (locked: boolean) => void
   visualCropEnabled?: boolean
-  onSwapImage: (layerId: string | null) => void
+  onReplaceImage: (layerId: string | null) => void
 }
 
 interface SortableLayerItemProps {
@@ -357,7 +357,7 @@ export function LayerPanel({
   layerAspectRatioLocked,
   onLayerAspectRatioLockChange,
   visualCropEnabled = false,
-  onSwapImage,
+  onReplaceImage,
 }: LayerPanelProps) {
   const { t } = useTranslation()
   const layers = imageEditor.getContextLayers()
@@ -683,7 +683,7 @@ export function LayerPanel({
             visualCropEnabled={visualCropEnabled}
             onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
             onEditLayer={() => handleEditLayer(selectedLayer.id)}
-            onSwapImage={() => onSwapImage(selectedLayer.id)}
+            onReplaceImage={() => onReplaceImage(selectedLayer.id)}
           />
         </div>
       )}
@@ -694,7 +694,7 @@ export function LayerPanel({
           <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
             <Button
               variant='outline'
-              onClick={() => onSwapImage(null)}
+              onClick={() => onReplaceImage(null)}
               disabled={visualCropEnabled}
               className='w-full'
             >

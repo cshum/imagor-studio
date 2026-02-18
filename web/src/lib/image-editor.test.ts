@@ -1441,9 +1441,9 @@ describe('ImageEditor', () => {
   })
 
   describe('Swap Image Functionality', () => {
-    describe('swapImage() - Root Base Image', () => {
+    describe('replaceImage() - Root Base Image', () => {
       it('should swap root base image path and dimensions', () => {
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
         expect(state.imagePath).toBe('new-image.jpg')
@@ -1451,7 +1451,7 @@ describe('ImageEditor', () => {
       })
 
       it('should update config.imagePath and baseImagePath', () => {
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         expect(editor.getBaseImagePath()).toBe('new-image.jpg')
         expect(editor.getOriginalDimensions()).toEqual({ width: 2560, height: 1440 })
@@ -1465,7 +1465,7 @@ describe('ImageEditor', () => {
           cropHeight: 600,
         })
 
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
         expect(state.cropLeft).toBeUndefined()
@@ -1485,7 +1485,7 @@ describe('ImageEditor', () => {
           cropHeight: 600,
         })
 
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
         expect(state.brightness).toBe(50)
@@ -1499,13 +1499,13 @@ describe('ImageEditor', () => {
         editor.updateParams({ brightness: 50 })
         vi.runAllTimers()
 
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         expect(editor.canUndo()).toBe(true)
       })
     })
 
-    describe('swapImage() - Layer Context', () => {
+    describe('replaceImage() - Layer Context', () => {
       let mockLayer: ImageLayer
 
       beforeEach(() => {
@@ -1526,7 +1526,7 @@ describe('ImageEditor', () => {
         editor.addLayer(mockLayer)
         editor.switchContext('layer-1')
 
-        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 })
+        editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 })
 
         // Switch back to base to check layer was updated
         editor.switchContext(null)
@@ -1538,7 +1538,7 @@ describe('ImageEditor', () => {
       it('should swap specific layer image by ID', () => {
         editor.addLayer(mockLayer)
 
-        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+        editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
 
         const layer = editor.getLayer('layer-1')
         expect(layer?.imagePath).toBe('new-overlay.jpg')
@@ -1559,7 +1559,7 @@ describe('ImageEditor', () => {
         editor.addLayer(layerWithCrop)
         vi.runAllTimers() // Flush add layer history
 
-        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+        editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
         vi.runAllTimers() // Flush swap history
 
         const layer = editor.getLayer('layer-1')
@@ -1588,7 +1588,7 @@ describe('ImageEditor', () => {
         editor.addLayer(layerWithTransforms)
         vi.runAllTimers() // Flush add layer history
 
-        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+        editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
         vi.runAllTimers() // Flush swap history
 
         const layer = editor.getLayer('layer-1')
@@ -1615,7 +1615,7 @@ describe('ImageEditor', () => {
 
       it('should sync imagePath from config when at root', () => {
         // Swap image to change config
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const baseState = editor.getBaseState()
         expect(baseState.imagePath).toBe('new-image.jpg')
@@ -1645,7 +1645,7 @@ describe('ImageEditor', () => {
 
     describe('History - Swap Image Undo/Redo', () => {
       it('should undo root image swap and restore old image path', () => {
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
         vi.runAllTimers()
 
         editor.undo()
@@ -1655,7 +1655,7 @@ describe('ImageEditor', () => {
       })
 
       it('should undo root image swap and restore old dimensions', () => {
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
         vi.runAllTimers()
 
         editor.undo()
@@ -1665,7 +1665,7 @@ describe('ImageEditor', () => {
       })
 
       it('should redo root image swap and restore new image path', () => {
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
         vi.runAllTimers()
 
         editor.undo()
@@ -1677,7 +1677,7 @@ describe('ImageEditor', () => {
       })
 
       it('should restore config.imagePath when undoing swap', () => {
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
         vi.runAllTimers()
 
         editor.undo()
@@ -1689,7 +1689,7 @@ describe('ImageEditor', () => {
       it('should restore baseImagePath when undoing swap', () => {
         const originalPath = editor.getBaseImagePath()
 
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
         vi.runAllTimers()
 
         expect(editor.getBaseImagePath()).toBe('new-image.jpg')
@@ -1714,7 +1714,7 @@ describe('ImageEditor', () => {
         editor.addLayer(mockLayer)
         editor.switchContext('layer-1')
 
-        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 })
+        editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 })
         vi.runAllTimers()
 
         editor.undo()
@@ -1740,7 +1740,7 @@ describe('ImageEditor', () => {
         }
         editor.addLayer(mockLayer)
 
-        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+        editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
         vi.runAllTimers()
 
         editor.undo()
@@ -1758,7 +1758,7 @@ describe('ImageEditor', () => {
         vi.runAllTimers()
 
         // Swap
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
         vi.runAllTimers()
 
         expect(editor.getState().imagePath).toBe('new-image.jpg')
@@ -1778,7 +1778,7 @@ describe('ImageEditor', () => {
         const originalPath = editor.getBaseImagePath()
 
         // Swap
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
         vi.runAllTimers()
 
         // Make changes
@@ -1810,7 +1810,7 @@ describe('ImageEditor', () => {
         editor.switchContext('layer-1')
 
         // Swap in nested context
-        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 })
+        editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 })
 
         // Switch back to base
         editor.switchContext(null)
@@ -2467,7 +2467,7 @@ describe('ImageEditor', () => {
         expect(state.height).toBe(1080)
 
         // Swap to new image with different dimensions
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const newState = editor.getState()
         // Should update to new dimensions (adaptive mode)
@@ -2480,7 +2480,7 @@ describe('ImageEditor', () => {
         editor.updateParams({ width: 1920, height: 1080 })
 
         // Swap to new image
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
         // Should update to new dimensions (not customized)
@@ -2495,7 +2495,7 @@ describe('ImageEditor', () => {
         editor.updateParams({ width: 800, height: 600 })
 
         // Swap to new image
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
         // Should preserve customized dimensions (predefined mode)
@@ -2508,7 +2508,7 @@ describe('ImageEditor', () => {
         editor.updateParams({ width: 1000 })
 
         // Swap to new image
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
         // Should preserve customized width
@@ -2522,7 +2522,7 @@ describe('ImageEditor', () => {
         editor.updateParams({ height: 720 })
 
         // Swap to new image
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
         // Width stays as original (not updated)
@@ -2550,7 +2550,7 @@ describe('ImageEditor', () => {
         editor.switchContext('layer-1')
 
         // Swap layer's base image
-        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 })
+        editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 })
 
         // Switch back to check layer
         editor.switchContext(null)
@@ -2582,7 +2582,7 @@ describe('ImageEditor', () => {
         editor.switchContext('layer-1')
 
         // Swap layer's base image
-        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 })
+        editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 })
 
         // Switch back to check layer
         editor.switchContext(null)
@@ -2618,7 +2618,7 @@ describe('ImageEditor', () => {
         editor.switchContext('layer-1')
 
         // Swap layer's base image
-        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 })
+        editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 })
 
         // Switch back to check layer
         editor.switchContext(null)
@@ -2653,7 +2653,7 @@ describe('ImageEditor', () => {
         editor.addLayer(mockLayer)
 
         // Swap specific layer (not in nested context)
-        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+        editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
 
         const layer = editor.getLayer('layer-1')
 
@@ -2684,7 +2684,7 @@ describe('ImageEditor', () => {
         editor.addLayer(mockLayer)
 
         // Swap specific layer
-        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+        editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
 
         const layer = editor.getLayer('layer-1')
 
@@ -2709,7 +2709,7 @@ describe('ImageEditor', () => {
         editor.addLayer(mockLayer)
 
         // Swap specific layer
-        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+        editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
 
         const layer = editor.getLayer('layer-1')
 
@@ -2722,7 +2722,7 @@ describe('ImageEditor', () => {
     describe('Undo/Redo with Smart Dimensions', () => {
       it('should undo adaptive dimension update', () => {
         // Swap with adaptive mode (dimensions not customized)
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
         vi.runAllTimers()
 
         // Undo
@@ -2741,7 +2741,7 @@ describe('ImageEditor', () => {
         vi.runAllTimers()
 
         // Swap with predefined mode (dimensions customized)
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
         vi.runAllTimers()
 
         // Undo
@@ -2755,7 +2755,7 @@ describe('ImageEditor', () => {
       })
 
       it('should redo adaptive dimension update', () => {
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
         vi.runAllTimers()
 
         editor.undo()
@@ -2775,7 +2775,7 @@ describe('ImageEditor', () => {
         editor.updateParams({ width: undefined, height: undefined })
 
         // Swap
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
         // Should update to new dimensions (not customized)
@@ -2793,7 +2793,7 @@ describe('ImageEditor', () => {
         })
 
         // Swap
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
         // Crop removed
@@ -2815,7 +2815,7 @@ describe('ImageEditor', () => {
         })
 
         // Swap
-        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
         // Crop removed
@@ -2827,7 +2827,7 @@ describe('ImageEditor', () => {
 
       it('should handle swapping to same dimensions (adaptive)', () => {
         // Swap to image with same dimensions
-        editor.swapImage('new-image.jpg', { width: 1920, height: 1080 })
+        editor.replaceImage('new-image.jpg', { width: 1920, height: 1080 })
 
         const state = editor.getState()
         // Should still update (even though same)
@@ -2841,7 +2841,7 @@ describe('ImageEditor', () => {
         editor.updateParams({ width: 800, height: 600 })
 
         // Swap to image with same dimensions as original
-        editor.swapImage('new-image.jpg', { width: 1920, height: 1080 })
+        editor.replaceImage('new-image.jpg', { width: 1920, height: 1080 })
 
         const state = editor.getState()
         // Should preserve customized dimensions
