@@ -215,6 +215,10 @@ export class ImageEditor {
     return { ...this.state }
   }
 
+  getImagePath(): string {
+    return this.config.imagePath
+  }
+
   /**
    * Check if an image path needs base64 encoding
    * Detects special characters that would interfere with URL parsing

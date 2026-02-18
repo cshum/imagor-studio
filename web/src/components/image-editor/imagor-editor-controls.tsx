@@ -362,7 +362,6 @@ export function ImageEditorControls({
         component: (
           <LayerPanel
             imageEditor={imageEditor}
-            imagePath={imagePath}
             selectedLayerId={selectedLayerId}
             editingContext={editingContext}
             layerAspectRatioLocked={layerAspectRatioLocked}

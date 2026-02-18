@@ -70,7 +70,6 @@ import { cn } from '@/lib/utils'
 
 interface LayerPanelProps {
   imageEditor: ImageEditor
-  imagePath: string
   selectedLayerId: string | null
   editingContext: string | null
   layerAspectRatioLocked: boolean
@@ -351,7 +350,6 @@ function BaseImageItem({
 
 export function LayerPanel({
   imageEditor,
-  imagePath,
   selectedLayerId,
   editingContext,
   layerAspectRatioLocked,
@@ -360,6 +358,7 @@ export function LayerPanel({
   onReplaceImage,
 }: LayerPanelProps) {
   const { t } = useTranslation()
+  const imagePath = imageEditor.getImagePath()
   const layers = imageEditor.getContextLayers()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [filePickerOpen, setFilePickerOpen] = useState(false)

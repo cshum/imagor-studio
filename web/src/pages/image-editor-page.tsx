@@ -712,7 +712,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         component: (
           <LayerPanel
             imageEditor={imageEditor}
-            imagePath={imagePath}
             selectedLayerId={selectedLayerId}
             editingContext={editingContext}
             layerAspectRatioLocked={layerAspectRatioLocked}
