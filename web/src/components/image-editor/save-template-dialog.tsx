@@ -27,6 +27,30 @@ function isValidFilename(name: string): boolean {
   return !invalidChars.test(name)
 }
 
+// Sanitize template name to match backend normalization
+// Replicates server/internal/resolver/template.go:sanitizeTemplateName
+// Only removes filesystem-unsafe characters, preserves spaces and case
+function sanitizeTemplateName(name: string): string {
+  // Remove leading/trailing whitespace
+  name = name.trim()
+  if (name === '') {
+    return ''
+  }
+
+  // Only remove filesystem-unsafe characters: / \ : * ? " < > |
+  name = name.replace(/[/\\:*?"<>|]/g, '')
+
+  // Limit length to 100 characters
+  if (name.length > 100) {
+    name = name.substring(0, 100)
+  }
+
+  // Trim again after character removal
+  name = name.trim()
+
+  return name
+}
+
 interface SaveTemplateDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -78,8 +102,9 @@ export function SaveTemplateDialog({
     return 'adaptive'
   })()
 
-  // Generate filename preview - use original name
-  const filename = name.trim() ? `${name.trim()}.imagor.json` : ''
+  // Generate filename preview - use sanitized name to show what will actually be saved
+  const sanitizedName = sanitizeTemplateName(name)
+  const filename = sanitizedName ? `${sanitizedName}.imagor.json` : ''
   const hasInvalidChars = name.trim() ? !isValidFilename(name.trim()) : false
 
   // Pre-fill form when dialog opens
@@ -108,12 +133,16 @@ export function SaveTemplateDialog({
     setIsSaving(true)
 
     try {
-      await imageEditor.exportTemplate(name.trim(), undefined, dimensionMode, savePath, overwrite)
+      const result = await imageEditor.exportTemplate(
+        name.trim(),
+        undefined,
+        dimensionMode,
+        savePath,
+        overwrite,
+      )
 
-      // Build template path for navigation
-      const templatePath = savePath
-        ? `${savePath}/${name.trim()}.imagor.json`
-        : `${name.trim()}.imagor.json`
+      // Build full template path using backend's normalized filename
+      const templatePath = savePath ? `${savePath}/${result.templatePath}` : result.templatePath
 
       // Success - template saved
       toast.success(t('imageEditor.template.saveSuccess', { name: name.trim() }))

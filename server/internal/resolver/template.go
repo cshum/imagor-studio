@@ -221,6 +221,7 @@ func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceIm
 }
 
 // sanitizeTemplateName sanitizes a template name for use as a filename
+// Only removes filesystem-unsafe characters, preserves spaces and case
 func sanitizeTemplateName(name string) string {
 	// Remove leading/trailing whitespace
 	name = strings.TrimSpace(name)
@@ -228,23 +229,17 @@ func sanitizeTemplateName(name string) string {
 		return ""
 	}
 
-	// Replace spaces with hyphens
-	name = strings.ReplaceAll(name, " ", "-")
-
-	// Remove special characters (keep only alphanumeric, hyphens, underscores)
-	reg := regexp.MustCompile(`[^a-zA-Z0-9\-_]`)
+	// Only remove filesystem-unsafe characters: / \ : * ? " < > |
+	reg := regexp.MustCompile(`[/\\:*?"<>|]`)
 	name = reg.ReplaceAllString(name, "")
-
-	// Convert to lowercase
-	name = strings.ToLower(name)
 
 	// Limit length to 100 characters
 	if len(name) > 100 {
 		name = name[:100]
 	}
 
-	// Remove trailing hyphens/underscores
-	name = strings.TrimRight(name, "-_")
+	// Trim again after character removal
+	name = strings.TrimSpace(name)
 
 	return name
 }

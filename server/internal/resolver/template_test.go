@@ -34,15 +34,16 @@ func TestSaveTemplate(t *testing.T) {
 			Return("http://localhost:8000/preview-url", nil).Maybe()
 
 		// Mock storage Stat to check if file exists (return error = file doesn't exist)
-		mockStorage.On("Stat", ctx, "templates/my-template.imagor.json").
+		// New sanitization preserves spaces and case
+		mockStorage.On("Stat", ctx, "templates/My Template.imagor.json").
 			Return(storage.FileInfo{}, assert.AnError)
 
 		// Mock storage Put for template JSON
-		mockStorage.On("Put", ctx, "templates/my-template.imagor.json", mock.Anything).
+		mockStorage.On("Put", ctx, "templates/My Template.imagor.json", mock.Anything).
 			Return(nil)
 
 		// Mock storage Put for preview image (may be called if preview generation succeeds)
-		mockStorage.On("Put", ctx, "templates/my-template.imagor.preview", mock.Anything).
+		mockStorage.On("Put", ctx, "templates/My Template.imagor.preview", mock.Anything).
 			Return(nil).Maybe()
 
 		// Create valid template JSON
@@ -77,7 +78,8 @@ func TestSaveTemplate(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.True(t, result.Success)
-		assert.Equal(t, "templates/my-template.imagor.json", result.TemplatePath)
+		// New sanitization preserves spaces and case
+		assert.Equal(t, "templates/My Template.imagor.json", result.TemplatePath)
 		assert.NotNil(t, result.Message)
 		assert.Equal(t, "Template saved successfully", *result.Message)
 
@@ -101,13 +103,15 @@ func TestSaveTemplate(t *testing.T) {
 			Return("http://localhost:8000/preview-url", nil).Maybe()
 
 		// Mock storage Stat to check if file exists (return error = file doesn't exist)
-		mockStorage.On("Stat", ctx, "my-folder/my-special-template.imagor.json").
+		// New sanitization only removes filesystem-unsafe chars: / \ : * ? " < > |
+		// Characters like !@#$% are filesystem-safe and preserved
+		mockStorage.On("Stat", ctx, "my-folder/My Special Template!@#$%.imagor.json").
 			Return(storage.FileInfo{}, assert.AnError)
 
-		// Expect sanitized filename
-		mockStorage.On("Put", ctx, "my-folder/my-special-template.imagor.json", mock.Anything).
+		// Expect !@#$% to be preserved (they are filesystem-safe)
+		mockStorage.On("Put", ctx, "my-folder/My Special Template!@#$%.imagor.json", mock.Anything).
 			Return(nil)
-		mockStorage.On("Put", ctx, "my-folder/my-special-template.imagor.preview", mock.Anything).
+		mockStorage.On("Put", ctx, "my-folder/My Special Template!@#$%.imagor.preview", mock.Anything).
 			Return(nil).Maybe()
 
 		templateJSON := `{
@@ -128,7 +132,7 @@ func TestSaveTemplate(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.True(t, result.Success)
-		assert.Equal(t, "my-folder/my-special-template.imagor.json", result.TemplatePath)
+		assert.Equal(t, "my-folder/My Special Template!@#$%.imagor.json", result.TemplatePath)
 	})
 
 	t.Run("should reject invalid template name", func(t *testing.T) {
@@ -144,7 +148,7 @@ func TestSaveTemplate(t *testing.T) {
 		ctx := createReadWriteContext("user1")
 
 		input := gql.SaveTemplateInput{
-			Name:            "!@#$%^&*()", // All special chars - will be empty after sanitization
+			Name:            "/\\:*?\"<>|", // Only filesystem-unsafe chars - will be empty after sanitization
 			DimensionMode:   gql.DimensionModeAdaptive,
 			TemplateJSON:    `{"version":"1.0","name":"Test","transformations":{}}`,
 			SourceImagePath: "test.jpg",
@@ -228,7 +232,8 @@ func TestSaveTemplate(t *testing.T) {
 		ctx := createReadWriteContext("user1")
 
 		// Mock Stat to return success (file exists)
-		mockStorage.On("Stat", ctx, "templates/existing-template.imagor.json").
+		// New sanitization preserves spaces and case
+		mockStorage.On("Stat", ctx, "templates/Existing Template.imagor.json").
 			Return(storage.FileInfo{}, nil)
 
 		input := gql.SaveTemplateInput{
@@ -271,15 +276,16 @@ func TestSaveTemplate(t *testing.T) {
 			Return("http://localhost:8000/preview-url", nil).Maybe()
 
 		// Mock Stat to return success (file exists)
-		mockStorage.On("Stat", ctx, "templates/existing-template.imagor.json").
+		// New sanitization preserves spaces and case
+		mockStorage.On("Stat", ctx, "templates/Existing Template.imagor.json").
 			Return(storage.FileInfo{}, nil)
 
 		// Mock Put for template JSON (should be called despite file existing)
-		mockStorage.On("Put", ctx, "templates/existing-template.imagor.json", mock.Anything).
+		mockStorage.On("Put", ctx, "templates/Existing Template.imagor.json", mock.Anything).
 			Return(nil)
 
 		// Mock Put for preview image
-		mockStorage.On("Put", ctx, "templates/existing-template.imagor.preview", mock.Anything).
+		mockStorage.On("Put", ctx, "templates/Existing Template.imagor.preview", mock.Anything).
 			Return(nil).Maybe()
 
 		input := gql.SaveTemplateInput{
@@ -296,7 +302,7 @@ func TestSaveTemplate(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.True(t, result.Success)
-		assert.Equal(t, "templates/existing-template.imagor.json", result.TemplatePath)
+		assert.Equal(t, "templates/Existing Template.imagor.json", result.TemplatePath)
 
 		mockStorage.AssertExpectations(t)
 	})
@@ -309,19 +315,19 @@ func TestSanitizeTemplateName(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "simple name",
+			name:     "simple name with spaces",
 			input:    "My Template",
-			expected: "my-template",
+			expected: "My Template", // Spaces preserved
 		},
 		{
-			name:     "special characters",
+			name:     "filesystem-safe characters preserved",
 			input:    "My Template!@#$%",
-			expected: "my-template",
+			expected: "My Template!@#$%", // !@#$% are filesystem-safe, preserved along with spaces and case
 		},
 		{
-			name:     "multiple spaces",
+			name:     "multiple spaces preserved",
 			input:    "My   Template   Name",
-			expected: "my---template---name",
+			expected: "My   Template   Name", // Spaces preserved
 		},
 		{
 			name:     "underscores preserved",
@@ -334,19 +340,39 @@ func TestSanitizeTemplateName(t *testing.T) {
 			expected: "my-template-name",
 		},
 		{
-			name:     "mixed case",
+			name:     "mixed case preserved",
 			input:    "MyTemplateNAME",
-			expected: "mytemplatename",
+			expected: "MyTemplateNAME", // Case preserved
 		},
 		{
-			name:     "trailing spaces",
+			name:     "trailing spaces trimmed",
 			input:    "  My Template  ",
-			expected: "my-template",
+			expected: "My Template", // Leading/trailing trimmed, internal spaces preserved
+		},
+		{
+			name:     "filesystem-unsafe chars: slashes",
+			input:    "My/Template\\Name",
+			expected: "MyTemplateName", // / and \ removed
+		},
+		{
+			name:     "filesystem-unsafe chars: colons and asterisks",
+			input:    "My:Template*Name",
+			expected: "MyTemplateName", // : and * removed
+		},
+		{
+			name:     "filesystem-unsafe chars: question marks and quotes",
+			input:    `My?Template"Name`,
+			expected: "MyTemplateName", // ? and " removed
+		},
+		{
+			name:     "filesystem-unsafe chars: angle brackets and pipes",
+			input:    "My<Template>Name|Test",
+			expected: "MyTemplateNameTest", // <, >, | removed
 		},
 		{
 			name:     "empty after sanitization",
-			input:    "!@#$%^&*()",
-			expected: "",
+			input:    "/\\:*?\"<>|",
+			expected: "", // All filesystem-unsafe chars
 		},
 		{
 			name:     "very long name",
@@ -354,9 +380,9 @@ func TestSanitizeTemplateName(t *testing.T) {
 			expected: strings.Repeat("a", 100),
 		},
 		{
-			name:     "trailing hyphens removed",
-			input:    "my-template---",
-			expected: "my-template",
+			name:     "trailing spaces after char removal",
+			input:    "my-template   ///",
+			expected: "my-template", // Trailing slashes removed, then trimmed
 		},
 	}
 

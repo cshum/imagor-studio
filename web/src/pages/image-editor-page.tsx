@@ -404,7 +404,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     const templatePath = selectedPaths[0]
 
     try {
-      // Fetch file metadata first (like image-editor-loader does)
+      // Fetch file metadata first
       const fileStat = await statFile(templatePath)
 
       if (!fileStat || !fileStat.thumbnailUrls?.original) {
@@ -421,28 +421,16 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         throw new Error(`Failed to fetch template: ${response.statusText}`)
       }
 
-      const template = await response.json()
+      const templateJson = await response.text()
 
-      // Strip crop parameters (source-image-specific, doesn't transfer)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { cropLeft, cropTop, cropWidth, cropHeight, ...templateState } =
-        template.transformations
+      // Use ImageEditor's importTemplate method (single source of truth)
+      const result = await imageEditor.importTemplate(templateJson)
 
-      // Handle dimension modes
-      if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
-        // Predefined: Use locked dimensions from template
-        templateState.width = template.predefinedDimensions.width
-        templateState.height = template.predefinedDimensions.height
+      if (result.success) {
+        toast.success(t('imageEditor.template.applySuccess'))
       } else {
-        // Adaptive: Use current image dimensions
-        templateState.width = imageEditor.getOriginalDimensions().width
-        templateState.height = imageEditor.getOriginalDimensions().height
+        toast.error(t('imageEditor.template.applyError'))
       }
-
-      // Apply the modified state
-      imageEditor.restoreState(templateState)
-
-      toast.success(t('imageEditor.template.applySuccess'))
     } catch (error) {
       console.error('Failed to apply template:', error)
       toast.error(t('imageEditor.template.applyError'))
