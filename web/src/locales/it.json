@@ -876,7 +876,6 @@
         "mask": "Maschera di trasparenza"
       },
       "replaceImage": "Sostituisci immagine",
-      "replaceImageSuccess": "Immagine sostituita con successo",
       "replaceImageError": "Impossibile sostituire l'immagine",
       "selectImageToReplace": "Seleziona immagine da sostituire",
       "selectImageToReplaceDescription": "Scegli una nuova immagine per sostituire quella corrente."

@@ -879,7 +879,6 @@
         "mask": "透明蒙版"
       },
       "replaceImage": "替换图片",
-      "replaceImageSuccess": "图片替换成功",
       "replaceImageError": "替换图片失败",
       "selectImageToReplace": "选择要替换的图片",
       "selectImageToReplaceDescription": "选择新图片以替换当前图片。"

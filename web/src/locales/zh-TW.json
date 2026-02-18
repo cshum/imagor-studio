@@ -879,7 +879,6 @@
         "mask": "透明遮罩"
       },
       "replaceImage": "替換圖片",
-      "replaceImageSuccess": "圖片替換成功",
       "replaceImageError": "替換圖片失敗",
       "selectImageToReplace": "選擇要替換的圖片",
       "selectImageToReplaceDescription": "選擇新圖片以替換目前圖片。"

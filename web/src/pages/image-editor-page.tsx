@@ -464,8 +464,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
         // Swap the image using imageEditor
         imageEditor.replaceImage(newImagePath, dimensions, replaceImageLayerId)
-
-        toast.success(t('imageEditor.layers.replaceImageSuccess'))
       } catch (error) {
         console.error('Failed to swap image:', error)
         toast.error(t('imageEditor.layers.replaceImageError'))
