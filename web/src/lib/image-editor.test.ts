@@ -1875,8 +1875,8 @@ describe('ImageEditor', () => {
             height: 600,
           },
           transformations: {
-            width: 1920,
-            height: 1080,
+            width: 800, // Predefined mode uses transformations.width/height
+            height: 600,
             brightness: 75,
           },
           metadata: {
@@ -1890,7 +1890,7 @@ describe('ImageEditor', () => {
         expect(result.success).toBe(true)
 
         const state = editor.getState()
-        // Predefined mode uses template's dimensions
+        // Predefined mode uses template's transformations dimensions
         expect(state.width).toBe(800)
         expect(state.height).toBe(600)
         expect(state.brightness).toBe(75)
@@ -2161,6 +2161,8 @@ describe('ImageEditor', () => {
               height: 600,
             },
             transformations: {
+              width: 800, // Predefined mode uses transformations.width/height
+              height: 600,
               brightness: 50,
             },
             metadata: {
@@ -2172,7 +2174,7 @@ describe('ImageEditor', () => {
           expect(result.success).toBe(true)
 
           const state = editor.getState()
-          // Should use template's predefined dimensions
+          // Should use template's transformations dimensions
           expect(state.width).toBe(800)
           expect(state.height).toBe(600)
           expect(state.brightness).toBe(50)
@@ -2188,6 +2190,8 @@ describe('ImageEditor', () => {
               height: 768,
             },
             transformations: {
+              width: 1024, // Predefined mode uses transformations.width/height
+              height: 768,
               brightness: 75,
             },
             metadata: {
@@ -2233,6 +2237,8 @@ describe('ImageEditor', () => {
               height: 720,
             },
             transformations: {
+              width: 1280, // Predefined mode uses transformations.width/height
+              height: 720,
               brightness: 50,
               contrast: 30,
               hue: 120,
@@ -2260,6 +2266,8 @@ describe('ImageEditor', () => {
             dimensionMode: 'predefined',
             // Missing predefinedDimensions!
             transformations: {
+              width: 1920, // Predefined templates must have width/height in transformations
+              height: 1080,
               brightness: 50,
             },
             metadata: {
@@ -2271,7 +2279,7 @@ describe('ImageEditor', () => {
           expect(result.success).toBe(true)
 
           const state = editor.getState()
-          // Should fallback to current image dimensions
+          // Should use dimensions from transformations
           expect(state.width).toBe(1920)
           expect(state.height).toBe(1080)
           expect(state.brightness).toBe(50)
@@ -2325,6 +2333,8 @@ describe('ImageEditor', () => {
               height: 768,
             },
             transformations: {
+              width: 1024, // Predefined templates must have width/height in transformations
+              height: 768,
               brightness: 50,
               layers: [
                 {
