@@ -877,7 +877,42 @@
         "darken": "显示较暗区域",
         "lighten": "显示较亮区域",
         "mask": "透明蒙版"
-      }
+      },
+      "replaceImage": "替换图片",
+      "replaceImageError": "替换图片失败",
+      "selectImageToReplace": "选择要替换的图片",
+      "selectImageToReplaceDescription": "选择新图片以替换当前图片。"
+    },
+    "template": {
+      "saveTemplate": "保存模板",
+      "createTemplate": "创建模板",
+      "saveTemplateAs": "另存为模板...",
+      "saveDescription": "将当前变换保存为可重复使用的模板",
+      "templateName": "模板名称",
+      "templateNamePlaceholder": "例如：Instagram 方形、产品缩略图",
+      "description": "描述",
+      "descriptionPlaceholder": "描述此模板的用途...",
+      "dimensionMode": "尺寸模式",
+      "flexible": "灵活尺寸",
+      "flexibleDescription": "模板适应每张图片的尺寸",
+      "fixed": "固定尺寸",
+      "fixedDescription": "将模板锁定为 {{width}} × {{height}}",
+      "filenamePreview": "文件将保存为",
+      "saveLocation": "保存位置",
+      "rootFolder": "根文件夹",
+      "selectFolder": "选择模板文件夹",
+      "selectFolderDescription": "选择保存模板文件的位置",
+      "nameRequired": "模板名称为必填项",
+      "saveSuccess": "模板 \"{{name}}\" 保存成功",
+      "saveError": "保存模板失败",
+      "overwriteTitle": "覆盖模板？",
+      "overwriteConfirm": "已存在名为 \"{{name}}\" 的模板。是否要替换它？",
+      "overwrite": "覆盖",
+      "applyTemplate": "应用模板...",
+      "selectTemplate": "选择模板",
+      "selectTemplateDescription": "选择要应用到此图像的模板",
+      "applySuccess": "模板应用成功",
+      "applyError": "应用模板失败"
     }
   }
 }

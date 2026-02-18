@@ -70,12 +70,12 @@ import { cn } from '@/lib/utils'
 
 interface LayerPanelProps {
   imageEditor: ImageEditor
-  imagePath: string
   selectedLayerId: string | null
   editingContext: string | null
   layerAspectRatioLocked: boolean
   onLayerAspectRatioLockChange: (locked: boolean) => void
   visualCropEnabled?: boolean
+  onReplaceImage: (layerId: string | null) => void
 }
 
 interface SortableLayerItemProps {
@@ -350,14 +350,15 @@ function BaseImageItem({
 
 export function LayerPanel({
   imageEditor,
-  imagePath,
   selectedLayerId,
   editingContext,
   layerAspectRatioLocked,
   onLayerAspectRatioLockChange,
   visualCropEnabled = false,
+  onReplaceImage,
 }: LayerPanelProps) {
   const { t } = useTranslation()
+  const imagePath = imageEditor.getImagePath()
   const layers = imageEditor.getContextLayers()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [filePickerOpen, setFilePickerOpen] = useState(false)
@@ -681,7 +682,25 @@ export function LayerPanel({
             visualCropEnabled={visualCropEnabled}
             onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
             onEditLayer={() => handleEditLayer(selectedLayer.id)}
+            onReplaceImage={() => onReplaceImage(selectedLayer.id)}
           />
+        </div>
+      )}
+
+      {/* Base Image Swap - shown when base is selected */}
+      {selectedLayerId === null && !activeId && (
+        <div className='shrink-0'>
+          <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
+            <Button
+              variant='outline'
+              onClick={() => onReplaceImage(null)}
+              disabled={visualCropEnabled}
+              className='w-full'
+            >
+              <Image className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.replaceImage')}
+            </Button>
+          </div>
         </div>
       )}
 

@@ -874,7 +874,11 @@
         "darken": "Mostra aree più scure",
         "lighten": "Mostra aree più chiare",
         "mask": "Maschera di trasparenza"
-      }
+      },
+      "replaceImage": "Sostituisci immagine",
+      "replaceImageError": "Impossibile sostituire l'immagine",
+      "selectImageToReplace": "Seleziona immagine da sostituire",
+      "selectImageToReplaceDescription": "Scegli una nuova immagine per sostituire quella corrente."
     }
   }
 }

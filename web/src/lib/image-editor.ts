@@ -41,6 +41,10 @@ export interface ImageLayer {
 }
 
 export interface ImageEditorState {
+  // Base image (for root context only - captured in history for swap image undo/redo)
+  imagePath?: string
+  originalDimensions?: ImageDimensions
+
   // Dimensions
   width?: number
   height?: number
@@ -211,6 +215,10 @@ export class ImageEditor {
     return { ...this.state }
   }
 
+  getImagePath(): string {
+    return this.config.imagePath
+  }
+
   /**
    * Check if an image path needs base64 encoding
    * Detects special characters that would interfere with URL parsing
@@ -273,8 +281,13 @@ export class ImageEditor {
       // Return the updated base state (includes all layers)
       return { ...this.savedBaseState! }
     } else {
-      // Already in base context - return current state
-      return { ...this.state }
+      // Already in base context - return current state with imagePath/originalDimensions
+      // These are included for history snapshots (swap image undo/redo)
+      return {
+        ...this.state,
+        imagePath: this.config.imagePath,
+        originalDimensions: { ...this.config.originalDimensions },
+      }
     }
   }
 
@@ -1334,6 +1347,15 @@ export class ImageEditor {
     } else {
       // We're in base context - directly restore state
       this.state = { ...state }
+
+      // Restore config from state if present (critical for swap image undo/redo)
+      if (state.imagePath) {
+        this.config.imagePath = state.imagePath
+        this.baseImagePath = state.imagePath
+      }
+      if (state.originalDimensions) {
+        this.config.originalDimensions = { ...state.originalDimensions }
+      }
     }
   }
 
@@ -1668,6 +1690,7 @@ export class ImageEditor {
 
   /**
    * Load a layer's transforms into editor state
+   * Also updates config to match the layer's image (critical for undo/redo after swap)
    * @param layerId - ID of the layer to load from (the target layer to load)
    * @param layers - The base layers array to start traversal from
    */
@@ -1690,6 +1713,10 @@ export class ImageEditor {
     }
 
     if (!targetLayer) return
+
+    // Update config to match the layer's image (critical for undo/redo after swap)
+    this.config.imagePath = targetLayer.imagePath
+    this.config.originalDimensions = { ...targetLayer.originalDimensions }
 
     // Start with FRESH defaults based on layer's original dimensions
     // This ensures no inheritance from base image or previous context
@@ -1895,8 +1922,9 @@ export class ImageEditor {
    * Update a layer's properties
    * @param layerId - ID of the layer to update
    * @param updates - Partial layer properties to update
+   * @param replaceTransforms - If true, replace transforms instead of merging (for swap image)
    */
-  updateLayer(layerId: string, updates: Partial<ImageLayer>): void {
+  updateLayer(layerId: string, updates: Partial<ImageLayer>, replaceTransforms = false): void {
     if (!this.state.layers) return
 
     // Use debounced history snapshot (like updateParams)
@@ -1910,8 +1938,14 @@ export class ImageEditor {
       // Merge transforms object if present in updates
       // This preserves existing transform properties like fitIn
       const mergedLayer = { ...layer, ...updates }
-      if (updates.transforms && layer.transforms) {
-        mergedLayer.transforms = { ...layer.transforms, ...updates.transforms }
+      if (updates.transforms) {
+        if (replaceTransforms || !layer.transforms) {
+          // Replace transforms entirely (used for swap image to remove crop)
+          mergedLayer.transforms = updates.transforms
+        } else {
+          // Merge transforms (preserves existing properties)
+          mergedLayer.transforms = { ...layer.transforms, ...updates.transforms }
+        }
       }
       return mergedLayer
     })
@@ -1935,8 +1969,14 @@ export class ImageEditor {
             if (l.id !== layerId) return l
 
             const mergedLayer = { ...l, ...updates }
-            if (updates.transforms && l.transforms) {
-              mergedLayer.transforms = { ...l.transforms, ...updates.transforms }
+            if (updates.transforms) {
+              if (replaceTransforms || !l.transforms) {
+                // Replace transforms entirely (used for swap image to remove crop)
+                mergedLayer.transforms = updates.transforms
+              } else {
+                // Merge transforms (preserves existing properties)
+                mergedLayer.transforms = { ...l.transforms, ...updates.transforms }
+              }
             }
             return mergedLayer
           })
@@ -2125,13 +2165,15 @@ export class ImageEditor {
     // Get base state
     const baseState = this.getBaseState()
 
-    // Strip visualCropEnabled (UI-only state)
+    // Strip UI-only and base-image-specific properties
+    // - visualCropEnabled: UI-only state
+    // - imagePath/originalDimensions: Base-image-specific (for swap image undo/redo)
     // KEEP crop in template (complete record of edits)
     // Crop will be excluded when APPLYING template to different images
     // For adaptive mode, also remove width/height
     // For predefined mode, keep width/height
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { visualCropEnabled, ...stateWithoutUI } = baseState
+    const { visualCropEnabled, imagePath, originalDimensions, ...stateWithoutUI } = baseState
 
     const transformations =
       dimensionMode === 'adaptive'
@@ -2358,6 +2400,123 @@ export class ImageEditor {
       success: true,
       warnings: result.warnings,
     }
+  }
+
+  /**
+   * Swap the image for a layer or base image
+   * Resets crop parameters and handles dimensions intelligently:
+   * - Base images: Adaptive (update if not customized) or Predefined (keep if customized)
+   * - Layers: Always Predefined (preserve current dimensions like Photoshop/Figma)
+   * Context-aware: When layerId is null and in nested context, swaps the base image of the current layer
+   * @param newImagePath - Path to the new image
+   * @param newDimensions - Dimensions of the new image
+   * @param layerId - Optional layer ID (null = swap base image of current context)
+   */
+  replaceImage(
+    newImagePath: string,
+    newDimensions: ImageDimensions,
+    layerId: string | null = null,
+  ): void {
+    // 1. Save history BEFORE changes
+    this.flushPendingHistorySnapshot()
+    this.saveHistorySnapshot()
+
+    // Helper for base images: Smart dimension handling (adaptive/predefined)
+    const removeCropAndSmartDimensions = <T extends Partial<ImageEditorState>>(
+      state: T,
+      oldDimensions: ImageDimensions,
+      newDimensions: ImageDimensions,
+    ): T => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { cropLeft, cropTop, cropWidth, cropHeight, ...rest } = state
+
+      // Check if user has customized dimensions
+      const hasCustomDimensions =
+        (state.width !== undefined && state.width !== oldDimensions.width) ||
+        (state.height !== undefined && state.height !== oldDimensions.height)
+
+      if (!hasCustomDimensions) {
+        // Adaptive mode: User hasn't customized dimensions, update to new image size
+        return {
+          ...rest,
+          width: newDimensions.width,
+          height: newDimensions.height,
+        } as T
+      } else {
+        // Predefined mode: User has customized dimensions, preserve them
+        return rest as T
+      }
+    }
+
+    // Helper for layers: Always preserve dimensions (predefined mode)
+    const removeCropOnly = <T extends Partial<ImageEditorState>>(state: T): T => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { cropLeft, cropTop, cropWidth, cropHeight, ...rest } = state
+      return rest as T
+    }
+
+    // 2. Update based on context
+    if (layerId === null && this.editingContext.length > 0) {
+      // Swap current layer's BASE image - use smart dimension logic
+      const currentLayerId = this.editingContext[this.editingContext.length - 1]
+      if (!this.savedBaseState) return
+
+      const baseLayers = this.savedBaseState.layers || []
+      const updatedLayers = this.updateLayersInTree(
+        baseLayers,
+        this.editingContext.slice(0, -1),
+        (layersAtPath) =>
+          layersAtPath.map((l) => {
+            if (l.id !== currentLayerId) return l
+            return {
+              ...l,
+              imagePath: newImagePath,
+              originalDimensions: { ...newDimensions },
+              transforms: l.transforms
+                ? removeCropAndSmartDimensions(l.transforms, l.originalDimensions, newDimensions)
+                : undefined,
+            }
+          }),
+      )
+
+      this.savedBaseState = { ...this.savedBaseState, layers: updatedLayers }
+      this.loadContextFromLayer(currentLayerId, updatedLayers)
+    } else if (layerId === null) {
+      // Swap root BASE image - use smart dimension logic
+      const oldDimensions = this.config.originalDimensions
+      this.state = {
+        ...removeCropAndSmartDimensions(this.state, oldDimensions, newDimensions),
+        imagePath: newImagePath,
+        originalDimensions: { ...newDimensions },
+      }
+      // Also update config for preview generation
+      this.config.imagePath = newImagePath
+      this.config.originalDimensions = { ...newDimensions }
+      this.baseImagePath = newImagePath
+    } else {
+      // Swap specific LAYER image - always preserve dimensions (predefined mode)
+      const layer = this.getLayer(layerId)
+      if (!layer) return
+
+      // Create updated layer with crop removed from transforms
+      const updatedLayer: Partial<ImageLayer> = {
+        imagePath: newImagePath,
+        originalDimensions: { ...newDimensions },
+      }
+
+      // If layer has transforms, remove crop only (preserve dimensions)
+      if (layer.transforms) {
+        updatedLayer.transforms = removeCropOnly(layer.transforms)
+      }
+
+      // Use replaceTransforms=true to ensure crop is removed (not merged)
+      this.updateLayer(layerId, updatedLayer, true)
+    }
+
+    // 3. Notify
+    this.callbacks.onStateChange?.(this.getState())
+    this.schedulePreviewUpdate()
+    this.callbacks.onHistoryChange?.()
   }
 
   /**
