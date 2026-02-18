@@ -103,44 +103,9 @@ export const imageEditorLoader = async ({
       originalDimensions,
     })
 
-    // Determine if crop parameters should be preserved
-    // Only strip crop if source image dimensions don't match template's saved dimensions
-    const templateDimensions = template.predefinedDimensions || {
-      width: originalDimensions.width,
-      height: originalDimensions.height,
-    }
-    const dimensionsMatch =
-      originalDimensions.width === templateDimensions.width &&
-      originalDimensions.height === templateDimensions.height
-
-    let templateState: typeof template.transformations
-    if (dimensionsMatch) {
-      // Dimensions match: preserve crop parameters (they're valid for this image)
-      templateState = { ...template.transformations }
-    } else {
-      // Dimensions differ: strip crop parameters (they won't make sense for different dimensions)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { cropLeft, cropTop, cropWidth, cropHeight, ...stateWithoutCrop } =
-        template.transformations
-      templateState = stateWithoutCrop
-    }
-
-    // Handle dimension mode
-    if (template.dimensionMode === 'predefined') {
-      // Predefined: Use template's TRANSFORMATION dimensions (the desired output size)
-      // Note: predefinedDimensions is the SOURCE image size, used only for crop validation
-      // The actual output dimensions are in transformations.width/height
-      templateState.width = template.transformations.width
-      templateState.height = template.transformations.height
-    } else {
-      // Adaptive: Use source image dimensions
-      templateState.width = originalDimensions.width
-      templateState.height = originalDimensions.height
-    }
-
-    // Apply template state to the editor instance using restoreState()
-    // This happens in the loader, so it's already there when the page loads
-    imageEditor.restoreState(templateState)
+    // Use ImageEditor's importTemplate method (single source of truth)
+    // This handles all dimension modes, crop validation, etc.
+    await imageEditor.importTemplate(JSON.stringify(template))
 
     // Extract template name from filename (source of truth)
     const filename = imagePath.split('/').pop() || ''

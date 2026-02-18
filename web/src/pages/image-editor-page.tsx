@@ -404,7 +404,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     const templatePath = selectedPaths[0]
 
     try {
-      // Fetch file metadata first (like image-editor-loader does)
+      // Fetch file metadata first
       const fileStat = await statFile(templatePath)
 
       if (!fileStat || !fileStat.thumbnailUrls?.original) {
@@ -421,45 +421,16 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         throw new Error(`Failed to fetch template: ${response.statusText}`)
       }
 
-      const template = await response.json()
+      const templateJson = await response.text()
 
-      // Check if source and target images have same dimensions
-      const currentDimensions = imageEditor.getOriginalDimensions()
-      const templateDimensions = template.predefinedDimensions || currentDimensions
-      const sameDimensions =
-        currentDimensions.width === templateDimensions.width &&
-        currentDimensions.height === templateDimensions.height
+      // Use ImageEditor's importTemplate method (single source of truth)
+      const result = await imageEditor.importTemplate(templateJson)
 
-      // Conditional crop handling based on dimensions
-      let templateState
-      if (sameDimensions) {
-        // Same dimensions: KEEP crop (coordinates are valid)
-        templateState = { ...template.transformations }
+      if (result.success) {
+        toast.success(t('imageEditor.template.applySuccess'))
       } else {
-        // Different dimensions: REMOVE crop (coordinates won't align)
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { cropLeft, cropTop, cropWidth, cropHeight, ...stateWithoutCrop } =
-          template.transformations
-        templateState = stateWithoutCrop
+        toast.error(t('imageEditor.template.applyError'))
       }
-
-      // Handle dimension mode (separate concern from crop)
-      if (template.dimensionMode === 'predefined') {
-        // Predefined: Use template's TRANSFORMATION dimensions (the desired output size)
-        // Note: predefinedDimensions is the SOURCE image size, used only for crop validation
-        // The actual output dimensions are in transformations.width/height
-        templateState.width = template.transformations.width
-        templateState.height = template.transformations.height
-      } else {
-        // Adaptive: Use current image dimensions
-        templateState.width = currentDimensions.width
-        templateState.height = currentDimensions.height
-      }
-
-      // Apply the modified state
-      imageEditor.restoreState(templateState)
-
-      toast.success(t('imageEditor.template.applySuccess'))
     } catch (error) {
       console.error('Failed to apply template:', error)
       toast.error(t('imageEditor.template.applyError'))
