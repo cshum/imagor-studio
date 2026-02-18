@@ -2400,7 +2400,9 @@ export class ImageEditor {
 
   /**
    * Swap the image for a layer or base image
-   * Resets crop parameters but preserves all other transformations
+   * Resets crop parameters and handles dimensions intelligently:
+   * - Base images: Adaptive (update if not customized) or Predefined (keep if customized)
+   * - Layers: Always Predefined (preserve current dimensions like Photoshop/Figma)
    * Context-aware: When layerId is null and in nested context, swaps the base image of the current layer
    * @param newImagePath - Path to the new image
    * @param newDimensions - Dimensions of the new image
@@ -2415,8 +2417,35 @@ export class ImageEditor {
     this.flushPendingHistorySnapshot()
     this.saveHistorySnapshot()
 
-    // Helper to remove crop parameters
-    const removeCrop = <T extends Partial<ImageEditorState>>(state: T): T => {
+    // Helper for base images: Smart dimension handling (adaptive/predefined)
+    const removeCropAndSmartDimensions = <T extends Partial<ImageEditorState>>(
+      state: T,
+      oldDimensions: ImageDimensions,
+      newDimensions: ImageDimensions,
+    ): T => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { cropLeft, cropTop, cropWidth, cropHeight, ...rest } = state
+
+      // Check if user has customized dimensions
+      const hasCustomDimensions =
+        (state.width !== undefined && state.width !== oldDimensions.width) ||
+        (state.height !== undefined && state.height !== oldDimensions.height)
+
+      if (!hasCustomDimensions) {
+        // Adaptive mode: User hasn't customized dimensions, update to new image size
+        return {
+          ...rest,
+          width: newDimensions.width,
+          height: newDimensions.height,
+        } as T
+      } else {
+        // Predefined mode: User has customized dimensions, preserve them
+        return rest as T
+      }
+    }
+
+    // Helper for layers: Always preserve dimensions (predefined mode)
+    const removeCropOnly = <T extends Partial<ImageEditorState>>(state: T): T => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { cropLeft, cropTop, cropWidth, cropHeight, ...rest } = state
       return rest as T
@@ -2424,7 +2453,7 @@ export class ImageEditor {
 
     // 2. Update based on context
     if (layerId === null && this.editingContext.length > 0) {
-      // Swap current layer's base image
+      // Swap current layer's BASE image - use smart dimension logic
       const currentLayerId = this.editingContext[this.editingContext.length - 1]
       if (!this.savedBaseState) return
 
@@ -2439,7 +2468,9 @@ export class ImageEditor {
               ...l,
               imagePath: newImagePath,
               originalDimensions: { ...newDimensions },
-              transforms: l.transforms ? removeCrop(l.transforms) : undefined,
+              transforms: l.transforms
+                ? removeCropAndSmartDimensions(l.transforms, l.originalDimensions, newDimensions)
+                : undefined,
             }
           }),
       )
@@ -2447,9 +2478,10 @@ export class ImageEditor {
       this.savedBaseState = { ...this.savedBaseState, layers: updatedLayers }
       this.loadContextFromLayer(currentLayerId, updatedLayers)
     } else if (layerId === null) {
-      // Swap root base image - update STATE (captured in history) and config (for preview)
+      // Swap root BASE image - use smart dimension logic
+      const oldDimensions = this.config.originalDimensions
       this.state = {
-        ...removeCrop(this.state),
+        ...removeCropAndSmartDimensions(this.state, oldDimensions, newDimensions),
         imagePath: newImagePath,
         originalDimensions: { ...newDimensions },
       }
@@ -2458,7 +2490,7 @@ export class ImageEditor {
       this.config.originalDimensions = { ...newDimensions }
       this.baseImagePath = newImagePath
     } else {
-      // Swap specific layer image
+      // Swap specific LAYER image - always preserve dimensions (predefined mode)
       const layer = this.getLayer(layerId)
       if (!layer) return
 
@@ -2468,9 +2500,9 @@ export class ImageEditor {
         originalDimensions: { ...newDimensions },
       }
 
-      // If layer has transforms, remove crop and set the cleaned transforms
+      // If layer has transforms, remove crop only (preserve dimensions)
       if (layer.transforms) {
-        updatedLayer.transforms = removeCrop(layer.transforms)
+        updatedLayer.transforms = removeCropOnly(layer.transforms)
       }
 
       // Use replaceTransforms=true to ensure crop is removed (not merged)

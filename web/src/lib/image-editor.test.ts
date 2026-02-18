@@ -2457,4 +2457,398 @@ describe('ImageEditor', () => {
     // FileReader which cannot be properly mocked in the test environment. The functionality
     // works correctly in production and is tested manually.
   })
+
+  describe('Smart Dimension Handling on Swap Image', () => {
+    describe('Root Base Image - Adaptive Mode', () => {
+      it('should update dimensions when not customized (adaptive)', () => {
+        // Default state: dimensions match original (1920x1080)
+        const state = editor.getState()
+        expect(state.width).toBe(1920)
+        expect(state.height).toBe(1080)
+
+        // Swap to new image with different dimensions
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        const newState = editor.getState()
+        // Should update to new dimensions (adaptive mode)
+        expect(newState.width).toBe(2560)
+        expect(newState.height).toBe(1440)
+      })
+
+      it('should update dimensions when explicitly set to original (adaptive)', () => {
+        // Explicitly set dimensions to match original
+        editor.updateParams({ width: 1920, height: 1080 })
+
+        // Swap to new image
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        const state = editor.getState()
+        // Should update to new dimensions (not customized)
+        expect(state.width).toBe(2560)
+        expect(state.height).toBe(1440)
+      })
+    })
+
+    describe('Root Base Image - Predefined Mode', () => {
+      it('should preserve dimensions when customized (predefined)', () => {
+        // Customize dimensions (different from original)
+        editor.updateParams({ width: 800, height: 600 })
+
+        // Swap to new image
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        const state = editor.getState()
+        // Should preserve customized dimensions (predefined mode)
+        expect(state.width).toBe(800)
+        expect(state.height).toBe(600)
+      })
+
+      it('should preserve dimensions when only width customized', () => {
+        // Customize only width
+        editor.updateParams({ width: 1000 })
+
+        // Swap to new image
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        const state = editor.getState()
+        // Should preserve customized width
+        expect(state.width).toBe(1000)
+        // Height stays as original (not updated)
+        expect(state.height).toBe(1080)
+      })
+
+      it('should preserve dimensions when only height customized', () => {
+        // Customize only height
+        editor.updateParams({ height: 720 })
+
+        // Swap to new image
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        const state = editor.getState()
+        // Width stays as original (not updated)
+        expect(state.width).toBe(1920)
+        // Should preserve customized height
+        expect(state.height).toBe(720)
+      })
+    })
+
+    describe('Layer Base Image - Adaptive Mode', () => {
+      it('should update layer dimensions when not customized (adaptive)', () => {
+        const mockLayer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+          // No transforms - dimensions not customized
+        }
+        editor.addLayer(mockLayer)
+        editor.switchContext('layer-1')
+
+        // Swap layer's base image
+        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 })
+
+        // Switch back to check layer
+        editor.switchContext(null)
+        const layer = editor.getLayer('layer-1')
+
+        // Should update to new dimensions (adaptive mode)
+        expect(layer?.transforms?.width).toBe(1024)
+        expect(layer?.transforms?.height).toBe(768)
+      })
+
+      it('should update layer dimensions when set to original (adaptive)', () => {
+        const mockLayer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+          transforms: {
+            width: 800, // Same as original
+            height: 600, // Same as original
+            brightness: 50,
+          },
+        }
+        editor.addLayer(mockLayer)
+        editor.switchContext('layer-1')
+
+        // Swap layer's base image
+        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 })
+
+        // Switch back to check layer
+        editor.switchContext(null)
+        const layer = editor.getLayer('layer-1')
+
+        // Should update to new dimensions (not customized)
+        expect(layer?.transforms?.width).toBe(1024)
+        expect(layer?.transforms?.height).toBe(768)
+        // Other transforms preserved
+        expect(layer?.transforms?.brightness).toBe(50)
+      })
+    })
+
+    describe('Layer Base Image - Predefined Mode', () => {
+      it('should preserve layer dimensions when customized (predefined)', () => {
+        const mockLayer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+          transforms: {
+            width: 400, // Customized (different from original)
+            height: 300, // Customized (different from original)
+            brightness: 50,
+          },
+        }
+        editor.addLayer(mockLayer)
+        editor.switchContext('layer-1')
+
+        // Swap layer's base image
+        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 })
+
+        // Switch back to check layer
+        editor.switchContext(null)
+        const layer = editor.getLayer('layer-1')
+
+        // Should preserve customized dimensions (predefined mode)
+        expect(layer?.transforms?.width).toBe(400)
+        expect(layer?.transforms?.height).toBe(300)
+        // Other transforms preserved
+        expect(layer?.transforms?.brightness).toBe(50)
+      })
+    })
+
+    describe('Specific Layer Swap - Always Predefined', () => {
+      it('should always preserve layer dimensions when swapping specific layer', () => {
+        const mockLayer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+          transforms: {
+            width: 400,
+            height: 300,
+            brightness: 50,
+          },
+        }
+        editor.addLayer(mockLayer)
+
+        // Swap specific layer (not in nested context)
+        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+
+        const layer = editor.getLayer('layer-1')
+
+        // Should preserve dimensions (layers always predefined)
+        expect(layer?.transforms?.width).toBe(400)
+        expect(layer?.transforms?.height).toBe(300)
+        // Other transforms preserved
+        expect(layer?.transforms?.brightness).toBe(50)
+      })
+
+      it('should preserve dimensions even when not customized (layers always predefined)', () => {
+        const mockLayer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+          transforms: {
+            width: 800, // Same as original
+            height: 600, // Same as original
+            brightness: 50,
+          },
+        }
+        editor.addLayer(mockLayer)
+
+        // Swap specific layer
+        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+
+        const layer = editor.getLayer('layer-1')
+
+        // Should preserve dimensions (layers always predefined, even if matching original)
+        expect(layer?.transforms?.width).toBe(800)
+        expect(layer?.transforms?.height).toBe(600)
+      })
+
+      it('should preserve dimensions when layer has no transforms', () => {
+        const mockLayer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+          // No transforms
+        }
+        editor.addLayer(mockLayer)
+
+        // Swap specific layer
+        editor.swapImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
+
+        const layer = editor.getLayer('layer-1')
+
+        // Should not add dimensions (no transforms to preserve)
+        expect(layer?.transforms?.width).toBeUndefined()
+        expect(layer?.transforms?.height).toBeUndefined()
+      })
+    })
+
+    describe('Undo/Redo with Smart Dimensions', () => {
+      it('should undo adaptive dimension update', () => {
+        // Swap with adaptive mode (dimensions not customized)
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        vi.runAllTimers()
+
+        // Undo
+        editor.undo()
+
+        const state = editor.getState()
+        // Should restore original dimensions
+        expect(state.width).toBe(1920)
+        expect(state.height).toBe(1080)
+        expect(state.imagePath).toBe('test-image.jpg')
+      })
+
+      it('should undo predefined dimension preservation', () => {
+        // Customize dimensions
+        editor.updateParams({ width: 800, height: 600 })
+        vi.runAllTimers()
+
+        // Swap with predefined mode (dimensions customized)
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        vi.runAllTimers()
+
+        // Undo
+        editor.undo()
+
+        const state = editor.getState()
+        // Should restore customized dimensions
+        expect(state.width).toBe(800)
+        expect(state.height).toBe(600)
+        expect(state.imagePath).toBe('test-image.jpg')
+      })
+
+      it('should redo adaptive dimension update', () => {
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+        vi.runAllTimers()
+
+        editor.undo()
+        editor.redo()
+
+        const state = editor.getState()
+        // Should restore new dimensions
+        expect(state.width).toBe(2560)
+        expect(state.height).toBe(1440)
+        expect(state.imagePath).toBe('new-image.jpg')
+      })
+    })
+
+    describe('Edge Cases', () => {
+      it('should handle undefined width/height (adaptive)', () => {
+        // Remove dimensions
+        editor.updateParams({ width: undefined, height: undefined })
+
+        // Swap
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        const state = editor.getState()
+        // Should update to new dimensions (not customized)
+        expect(state.width).toBe(2560)
+        expect(state.height).toBe(1440)
+      })
+
+      it('should handle crop removal with adaptive dimensions', () => {
+        // Set crop
+        editor.updateParams({
+          cropLeft: 100,
+          cropTop: 100,
+          cropWidth: 800,
+          cropHeight: 600,
+        })
+
+        // Swap
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        const state = editor.getState()
+        // Crop removed
+        expect(state.cropLeft).toBeUndefined()
+        // Dimensions updated (adaptive)
+        expect(state.width).toBe(2560)
+        expect(state.height).toBe(1440)
+      })
+
+      it('should handle crop removal with predefined dimensions', () => {
+        // Customize dimensions and set crop
+        editor.updateParams({
+          width: 800,
+          height: 600,
+          cropLeft: 100,
+          cropTop: 100,
+          cropWidth: 400,
+          cropHeight: 300,
+        })
+
+        // Swap
+        editor.swapImage('new-image.jpg', { width: 2560, height: 1440 })
+
+        const state = editor.getState()
+        // Crop removed
+        expect(state.cropLeft).toBeUndefined()
+        // Dimensions preserved (predefined)
+        expect(state.width).toBe(800)
+        expect(state.height).toBe(600)
+      })
+
+      it('should handle swapping to same dimensions (adaptive)', () => {
+        // Swap to image with same dimensions
+        editor.swapImage('new-image.jpg', { width: 1920, height: 1080 })
+
+        const state = editor.getState()
+        // Should still update (even though same)
+        expect(state.width).toBe(1920)
+        expect(state.height).toBe(1080)
+        expect(state.imagePath).toBe('new-image.jpg')
+      })
+
+      it('should handle swapping to same dimensions (predefined)', () => {
+        // Customize to different dimensions
+        editor.updateParams({ width: 800, height: 600 })
+
+        // Swap to image with same dimensions as original
+        editor.swapImage('new-image.jpg', { width: 1920, height: 1080 })
+
+        const state = editor.getState()
+        // Should preserve customized dimensions
+        expect(state.width).toBe(800)
+        expect(state.height).toBe(600)
+        expect(state.imagePath).toBe('new-image.jpg')
+      })
+    })
+  })
 })
