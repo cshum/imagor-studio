@@ -57,7 +57,7 @@ import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
-import { getFullImageUrl } from '@/lib/api-utils'
+import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import { copyToClipboard } from '@/lib/browser-utils'
 import {
   EditorOpenSectionsStorage,
@@ -411,8 +411,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         throw new Error('Template file URL not available')
       }
 
-      // Use the proper URL from thumbnailUrls.original
-      const templateUrl = getFullImageUrl(fileStat.thumbnailUrls.original)
+      // Add cache-busting to prevent stale template JSON
+      const templateUrl = addCacheBuster(
+        getFullImageUrl(fileStat.thumbnailUrls.original),
+        fileStat.modifiedTime,
+      )
       const response = await fetch(templateUrl, {
         cache: 'no-store', // Prevent browser caching
       })

@@ -1,6 +1,6 @@
 import { statFile } from '@/api/storage-api'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
-import { getFullImageUrl } from '@/lib/api-utils'
+import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import {
   EditorOpenSectionsStorage,
   type EditorOpenSections,
@@ -62,7 +62,11 @@ export const imageEditorLoader = async ({
       throw new Error('Template file URL not available')
     }
 
-    const templateUrl = getFullImageUrl(fileStat.thumbnailUrls.original)
+    // Add cache-busting to prevent stale template JSON
+    const templateUrl = addCacheBuster(
+      getFullImageUrl(fileStat.thumbnailUrls.original),
+      fileStat.modifiedTime,
+    )
     const response = await fetch(templateUrl, {
       cache: 'no-store', // Prevent browser caching
     })
