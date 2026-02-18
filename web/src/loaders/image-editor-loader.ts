@@ -103,9 +103,27 @@ export const imageEditorLoader = async ({
       originalDimensions,
     })
 
-    // Strip crop parameters (source-image-specific, doesn't transfer)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { cropLeft, cropTop, cropWidth, cropHeight, ...templateState } = template.transformations
+    // Determine if crop parameters should be preserved
+    // Only strip crop if source image dimensions don't match template's saved dimensions
+    const templateDimensions = template.predefinedDimensions || {
+      width: originalDimensions.width,
+      height: originalDimensions.height,
+    }
+    const dimensionsMatch =
+      originalDimensions.width === templateDimensions.width &&
+      originalDimensions.height === templateDimensions.height
+
+    let templateState: typeof template.transformations
+    if (dimensionsMatch) {
+      // Dimensions match: preserve crop parameters (they're valid for this image)
+      templateState = { ...template.transformations }
+    } else {
+      // Dimensions differ: strip crop parameters (they won't make sense for different dimensions)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { cropLeft, cropTop, cropWidth, cropHeight, ...stateWithoutCrop } =
+        template.transformations
+      templateState = stateWithoutCrop
+    }
 
     // Handle dimension mode
     if (template.dimensionMode === 'predefined' && template.predefinedDimensions) {
