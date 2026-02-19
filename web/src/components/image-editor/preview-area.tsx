@@ -6,6 +6,7 @@ import { CropOverlay } from '@/components/image-editor/crop-overlay'
 import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb'
 import { LayerOverlay } from '@/components/image-editor/layer-overlay'
 import { LayerRegionsOverlay } from '@/components/image-editor/layer-regions-overlay'
+import { ZoomControls } from '@/components/image-editor/zoom-controls'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
@@ -43,6 +44,8 @@ interface PreviewAreaProps {
   isLeftColumnEmpty?: boolean
   isRightColumnEmpty?: boolean
   imagePath?: string
+  zoom?: number | 'fit'
+  onZoomChange?: (zoom: number | 'fit') => void
 }
 
 export function PreviewArea({
@@ -70,6 +73,8 @@ export function PreviewArea({
   isLeftColumnEmpty = false,
   isRightColumnEmpty = false,
   imagePath,
+  zoom = 'fit',
+  onZoomChange,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -217,6 +222,13 @@ export function PreviewArea({
     return () => clearTimeout(timeoutId)
   }, [isLeftColumnEmpty, isRightColumnEmpty, calculatePreviewDimensions])
 
+  // Calculate actual scale factor from rendered dimensions
+  // Use output dimensions (after crop + resize + padding) for accurate scale
+  const actualScale =
+    imageDimensions && imageEditor
+      ? imageDimensions.width / imageEditor.getOutputDimensions().width
+      : null
+
   return (
     <div className='relative flex h-full flex-col'>
       {!visualCropEnabled && <LicenseBadge />}
@@ -229,7 +241,11 @@ export function PreviewArea({
       {/* Preview Content */}
       <div
         ref={previewContainerRef}
-        className='bg-muted/20 flex min-h-0 flex-1 touch-none items-center justify-center overflow-hidden p-2 pb-0'
+        className={cn(
+          'bg-muted/20 relative flex min-h-0 flex-1 touch-none overflow-auto p-2 pb-0',
+          // Only center when in fit mode, otherwise allow scrolling
+          zoom === 'fit' && 'items-center justify-center',
+        )}
         onMouseDown={handleContainerMouseDown}
       >
         {error ? (
@@ -254,7 +270,7 @@ export function PreviewArea({
           </div>
         ) : (
           previewUrl && (
-            <div className='relative'>
+            <>
               <PreloadImage
                 ref={previewImageRef}
                 src={getFullImageUrl(previewUrl)}
@@ -262,53 +278,56 @@ export function PreviewArea({
                 onLoad={handleImageLoad}
                 className={cn(
                   'h-auto w-auto object-contain',
-                  'max-h-[calc(100vh-152px)]',
-                  isMobile
-                    ? 'max-w-[calc(100vw-32px)]'
-                    : isTablet
-                      ? 'max-w-[calc(100vw-362px)]'
-                      : isLeftColumnEmpty && isRightColumnEmpty
-                        ? 'max-w-[calc(100vw-152px)]' // Both empty: 60 + 60 + 32 = 152px
-                        : isLeftColumnEmpty || isRightColumnEmpty
-                          ? 'max-w-[calc(100vw-422px)]' // One empty: 60 + 330 + 32 = 422px
-                          : 'max-w-[calc(100vw-692px)]', // Both full: 330 + 330 + 32 = 692px
+                  // Only apply max constraints when in 'fit' mode
+                  // This allows the image to grow beyond viewport when zoomed
+                  zoom === 'fit' && 'max-h-[calc(100vh-152px)]',
+                  zoom === 'fit' &&
+                    (isMobile
+                      ? 'max-w-[calc(100vw-32px)]'
+                      : isTablet
+                        ? 'max-w-[calc(100vw-362px)]'
+                        : isLeftColumnEmpty && isRightColumnEmpty
+                          ? 'max-w-[calc(100vw-152px)]' // Both empty: 60 + 60 + 32 = 152px
+                          : isLeftColumnEmpty || isRightColumnEmpty
+                            ? 'max-w-[calc(100vw-422px)]' // One empty: 60 + 330 + 32 = 422px
+                            : 'max-w-[calc(100vw-692px)]'), // Both full: 330 + 330 + 32 = 692px
                 )}
               />
               {visualCropEnabled &&
-                imageDimensions &&
-                imageDimensions.width > 0 &&
-                imageDimensions.height > 0 &&
-                onCropChange &&
-                cropWidth > 0 &&
-                cropHeight > 0 &&
-                (() => {
-                  const { scaleX, scaleY } = getScales()
-                  return (
-                    <CropOverlay
-                      previewWidth={imageDimensions.width}
-                      previewHeight={imageDimensions.height}
-                      cropLeft={cropLeft}
-                      cropTop={cropTop}
-                      cropWidth={cropWidth}
-                      cropHeight={cropHeight}
-                      scale={scaleX}
-                      scaleY={scaleY}
-                      onCropChange={onCropChange}
-                      lockedAspectRatio={cropAspectRatio}
-                      hFlip={overlayHFlip}
-                      vFlip={overlayVFlip}
-                      originalWidth={originalDimensions.width}
-                      originalHeight={originalDimensions.height}
-                    />
-                  )
-                })()}
-              {!visualCropEnabled &&
-                !isTransitioning &&
-                imageEditor &&
-                imageDimensions &&
-                imageDimensions.width > 0 &&
-                imageDimensions.height > 0 &&
-                (() => {
+              imageDimensions &&
+              imageDimensions.width > 0 &&
+              imageDimensions.height > 0 &&
+              onCropChange &&
+              cropWidth > 0 &&
+              cropHeight > 0 &&
+              (() => {
+                const { scaleX, scaleY } = getScales()
+                return (
+                  <CropOverlay
+                    previewWidth={imageDimensions.width}
+                    previewHeight={imageDimensions.height}
+                    cropLeft={cropLeft}
+                    cropTop={cropTop}
+                    cropWidth={cropWidth}
+                    cropHeight={cropHeight}
+                    scale={scaleX}
+                    scaleY={scaleY}
+                    onCropChange={onCropChange}
+                    lockedAspectRatio={cropAspectRatio}
+                    hFlip={overlayHFlip}
+                    vFlip={overlayVFlip}
+                    originalWidth={originalDimensions.width}
+                    originalHeight={originalDimensions.height}
+                  />
+                )
+              })()}
+            {!visualCropEnabled &&
+              !isTransitioning &&
+              imageEditor &&
+              imageDimensions &&
+              imageDimensions.width > 0 &&
+              imageDimensions.height > 0 &&
+              (() => {
                   // Get the actual output dimensions (after crop + resize + padding)
                   // This includes padding in the total canvas size
                   const outputDims = imageEditor.getOutputDimensions()
@@ -380,10 +399,19 @@ export function PreviewArea({
                         onLayerSelect={(layerId) => imageEditor.setSelectedLayerId(layerId)}
                       />
                     )
-                  }
-                })()}
-            </div>
+                }
+              })()}
+            </>
           )
+        )}
+
+        {/* Zoom Controls - Bottom Right */}
+        {!visualCropEnabled && !error && previewUrl && onZoomChange && (
+          <div className='pointer-events-none absolute inset-0 flex items-end justify-end p-4'>
+            <div className='pointer-events-auto'>
+              <ZoomControls zoom={zoom} onZoomChange={onZoomChange} actualScale={actualScale} />
+            </div>
+          </div>
         )}
       </div>
 

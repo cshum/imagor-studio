@@ -153,6 +153,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   const [editingContext, setEditingContext] = useState<string | null>(null)
   const [layerAspectRatioLockToggle, setLayerAspectRatioLockToggle] = useState(true)
   const [isShiftPressed, setIsShiftPressed] = useState(false)
+  const [zoom, setZoom] = useState<number | 'fit'>('fit')
   const isSavedRef = useRef(false)
 
   // Drag and drop state for desktop
@@ -223,10 +224,22 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
   }, [imageEditor, isTemplate])
 
+  // Calculate effective preview dimensions with zoom factor
+  const effectivePreviewDimensions = useMemo(() => {
+    if (!previewMaxDimensions) return null
+    // When zoom is 'fit', use original dimensions (no multiplier)
+    if (zoom === 'fit') return previewMaxDimensions
+    // When zoom is a number, multiply dimensions by zoom factor
+    return {
+      width: Math.floor(previewMaxDimensions.width * zoom),
+      height: Math.floor(previewMaxDimensions.height * zoom),
+    }
+  }, [previewMaxDimensions, zoom])
+
   // Update preview dimensions dynamically when they change
   useEffect(() => {
-    imageEditor.updatePreviewMaxDimensions(previewMaxDimensions ?? undefined)
-  }, [imageEditor, previewMaxDimensions])
+    imageEditor.updatePreviewMaxDimensions(effectivePreviewDimensions ?? undefined)
+  }, [imageEditor, effectivePreviewDimensions])
 
   // Update Imagor path whenever params change
   useEffect(() => {
@@ -253,7 +266,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
   }, [])
 
-  // Keyboard shortcuts for undo/redo and escape to exit crop mode or nested layer
+  // Keyboard shortcuts for undo/redo, zoom, and escape to exit crop mode or nested layer
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Escape key - exit crop mode or nested layer editing
@@ -274,6 +287,44 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         return
       }
 
+      // Zoom shortcuts (Cmd/Ctrl + Plus/Minus/0/1)
+      if (e.metaKey || e.ctrlKey) {
+        const ZOOM_LEVELS: Array<number | 'fit'> = ['fit', 0.5, 1.0, 2.0, 4.0]
+        const currentIndex = ZOOM_LEVELS.indexOf(zoom)
+
+        if (e.key === '+' || e.key === '=') {
+          // Zoom in
+          e.preventDefault()
+          if (currentIndex >= 0 && currentIndex < ZOOM_LEVELS.length - 1) {
+            setZoom(ZOOM_LEVELS[currentIndex + 1])
+          }
+          return
+        }
+
+        if (e.key === '-' || e.key === '_') {
+          // Zoom out
+          e.preventDefault()
+          if (currentIndex > 0) {
+            setZoom(ZOOM_LEVELS[currentIndex - 1])
+          }
+          return
+        }
+
+        if (e.key === '0') {
+          // Fit to viewport
+          e.preventDefault()
+          setZoom('fit')
+          return
+        }
+
+        if (e.key === '1') {
+          // 100% zoom
+          e.preventDefault()
+          setZoom(1.0)
+          return
+        }
+      }
+
       // Cmd+Z (Mac) or Ctrl+Z (Windows/Linux)
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
         e.preventDefault()
@@ -290,7 +341,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [imageEditor])
+  }, [imageEditor, zoom])
 
   const updateParams = useCallback(
     (updates: Partial<ImageEditorState>) => {
@@ -457,6 +508,9 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
         // Swap the image using imageEditor
         imageEditor.replaceImage(newImagePath, dimensions, replaceImageLayerId)
+
+        // Reset zoom to fit when swapping images
+        setZoom('fit')
       } catch (error) {
         console.error('Failed to swap image:', error)
         toast.error(t('imageEditor.layers.replaceImageError'))
@@ -877,6 +931,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
               selectedLayerId={selectedLayerId}
               editingContext={editingContext}
               layerAspectRatioLocked={layerAspectRatioLocked}
+              zoom={zoom}
+              onZoomChange={setZoom}
             />
           </div>
 
@@ -1054,6 +1110,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             editingContext={editingContext}
             layerAspectRatioLocked={layerAspectRatioLocked}
             onOpenControls={() => setMobileSheetOpen(true)}
+            zoom={zoom}
+            onZoomChange={setZoom}
           />
 
           {/* Controls Sheet */}
@@ -1384,6 +1442,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
               layerAspectRatioLocked={layerAspectRatioLocked}
               isLeftColumnEmpty={isLeftEmpty}
               isRightColumnEmpty={isRightEmpty}
+              zoom={zoom}
+              onZoomChange={setZoom}
             />
           </div>
 
