@@ -278,10 +278,10 @@ export function ImageView({
       if (event.key === 'Escape') {
         event.preventDefault()
         handleCloseFullView()
-      } else if (event.key === 'ArrowLeft' && onPrevImage) {
+      } else if (event.key === 'ArrowLeft' && onPrevImage && !isSlideshow) {
         event.preventDefault()
         handlePrevImage()
-      } else if (event.key === 'ArrowRight' && onNextImage) {
+      } else if (event.key === 'ArrowRight' && onNextImage && !isSlideshow) {
         event.preventDefault()
         handleNextImage()
       }
@@ -291,7 +291,7 @@ export function ImageView({
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [onPrevImage, onNextImage, isVisible])
+  }, [onPrevImage, onNextImage, isVisible, isSlideshow])
 
   // Simplified variants for slideshow mode (crossfade only)
   const slideshowVariants = {
