@@ -129,9 +129,9 @@ export function PreviewArea({
 
   // Track image dimensions when loaded
   const handleImageLoad = (width: number, height: number) => {
-    // During visual crop mode, use the actual rendered size instead of natural size
-    // This ensures the crop overlay stays aligned even when filters are applied
-    if (visualCropEnabled && previewImageRef.current) {
+    // In fit mode (both normal and visual crop), use actual rendered size
+    // In zoom mode, use natural size for both modes
+    if (zoom === 'fit' && previewImageRef.current) {
       const rect = previewImageRef.current.getBoundingClientRect()
       setImageDimensions({ width: rect.width, height: rect.height })
     } else {
@@ -149,10 +149,12 @@ export function PreviewArea({
     onLoad?.(width, height)
   }
 
-  // Use ResizeObserver to track actual rendered image size
-  // This ensures crop overlay follows the image when window resizes
+  // Use ResizeObserver to track actual rendered image size in fit mode
+  // This ensures overlays follow the image when window resizes
   useEffect(() => {
-    if (!visualCropEnabled || !previewImageRef.current) {
+    // Only use ResizeObserver in fit mode (when image size is dynamic)
+    // In zoom mode, dimensions are fixed and don't need observation
+    if (zoom !== 'fit' || !previewImageRef.current) {
       return
     }
 
@@ -170,7 +172,7 @@ export function PreviewArea({
     return () => {
       resizeObserver.disconnect()
     }
-  }, [visualCropEnabled])
+  }, [zoom])
 
   // Calculate scale factors for overlays (crop and layer)
   // Scale is the ratio between preview dimensions and output dimensions
@@ -191,10 +193,11 @@ export function PreviewArea({
 
   // Shared calculation logic for preview dimensions
   const calculatePreviewDimensions = useCallback(() => {
-    // Skip dimension updates during visual crop mode to keep preview stable
-    // This prevents the preview from being regenerated when window resizes,
+    // In visual crop mode, only skip dimension updates when in fit mode AND window is resizing
+    // This prevents the preview from being regenerated during window resize,
     // which would cause the crop overlay to become misaligned
-    if (visualCropEnabled) {
+    // However, we DO want to update dimensions when zoom changes
+    if (visualCropEnabled && zoom === 'fit') {
       return
     }
 
@@ -215,7 +218,7 @@ export function PreviewArea({
         })
       }
     }
-  }, [visualCropEnabled])
+  }, [visualCropEnabled, zoom])
 
   // Calculate and report preview area dimensions (immediate for resize/mobile)
   useEffect(() => {
@@ -570,7 +573,7 @@ export function PreviewArea({
       </div>
 
       {/* Zoom Controls - Bottom Right (positioned relative to preview area) */}
-      {!visualCropEnabled && !error && previewUrl && onZoomChange && (
+      {!error && previewUrl && onZoomChange && (
         <div className='pointer-events-none absolute right-0 bottom-0 z-30 flex items-end justify-end p-4'>
           <div className='pointer-events-auto'>
             <ZoomControls zoom={zoom} onZoomChange={onZoomChange} actualScale={actualScale} />
