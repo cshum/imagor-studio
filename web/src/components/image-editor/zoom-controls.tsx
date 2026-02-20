@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Minus, Plus } from 'lucide-react'
 
@@ -16,6 +17,17 @@ const ZOOM_LEVELS: Array<number | 'fit'> = ['fit', 0.25, 0.5, 0.75, 1.0, 1.5, 2.
 export function ZoomControls({ zoom, onZoomChange, actualScale, className }: ZoomControlsProps) {
   const { t } = useTranslation()
 
+  // Preserve the last known actualScale during transitions
+  // This ensures smart zoom logic works even when actualScale becomes null temporarily
+  const previousActualScaleRef = useRef<number | null>(null)
+
+  // Update ref whenever we have a valid actualScale
+  useEffect(() => {
+    if (actualScale !== null && actualScale !== undefined) {
+      previousActualScaleRef.current = actualScale
+    }
+  }, [actualScale])
+
   const currentIndex = ZOOM_LEVELS.indexOf(zoom)
   const canZoomIn = currentIndex >= 0 && currentIndex < ZOOM_LEVELS.length - 1
   const canZoomOut = currentIndex > 0
@@ -25,13 +37,11 @@ export function ZoomControls({ zoom, onZoomChange, actualScale, className }: Zoo
 
     // Smart zoom from Fit mode: jump to a substantial level
     if (zoom === 'fit') {
-      // Use actualScale if available, otherwise default to 100% as a sensible starting point
-      const scale = actualScale || 1.0
-      
+      // Use actualScale if available, fall back to previous scale, or default to 100%
+      const scale = actualScale || previousActualScaleRef.current || 1.0
+
       // Find first level that's at least 1.5x the current scale (50% larger)
-      const targetLevel = ZOOM_LEVELS.find(
-        (level) => level !== 'fit' && level > scale * 1.5,
-      )
+      const targetLevel = ZOOM_LEVELS.find((level) => level !== 'fit' && level > scale * 1.5)
       if (targetLevel) {
         onZoomChange(targetLevel)
         return
@@ -50,9 +60,9 @@ export function ZoomControls({ zoom, onZoomChange, actualScale, className }: Zoo
 
     // Smart zoom from Fit mode: jump to a substantial level
     if (zoom === 'fit') {
-      // Use actualScale if available, otherwise default to 100% as a sensible starting point
-      const scale = actualScale || 1.0
-      
+      // Use actualScale if available, fall back to previous scale, or default to 100%
+      const scale = actualScale || previousActualScaleRef.current || 1.0
+
       // Find last level that's at most 0.67x the current scale (33% smaller)
       const targetLevel = [...ZOOM_LEVELS]
         .reverse()
