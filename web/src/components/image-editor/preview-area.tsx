@@ -379,8 +379,10 @@ export function PreviewArea({
         ref={previewContainerRef}
         className={cn(
           'bg-muted/20 relative flex min-h-0 flex-1 touch-none overflow-auto p-2 pb-0',
-          // Center when in fit mode OR during zoom transition (to prevent jarring jump)
-          (zoom === 'fit' || isZoomTransitioning) && 'items-center justify-center',
+          // Always center - this centers on non-scrolling dimensions
+          // When image is smaller than container: centered
+          // When image is larger than container: scrollable, starts from center
+          'items-center justify-center',
           // Disable elastic/springy scroll effect
           'overscroll-none',
         )}

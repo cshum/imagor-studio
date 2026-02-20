@@ -12,72 +12,47 @@ interface ZoomControlsProps {
   className?: string
 }
 
-const ZOOM_LEVELS: Array<number | 'fit'> = ['fit', 0.25, 0.5, 0.75, 1.0]
-
 export function ZoomControls({ zoom, onZoomChange, actualScale, className }: ZoomControlsProps) {
   const { t } = useTranslation()
 
-  // Preserve the last known actualScale during transitions
-  // This ensures smart zoom logic works even when actualScale becomes null temporarily
-  const previousActualScaleRef = useRef<number | null>(null)
+  // Store the fit scale (only updates when in fit mode)
+  const fitScaleRef = useRef<number | null>(null)
 
-  // Update ref whenever we have a valid actualScale
+  // Update fit scale only when in fit mode
   useEffect(() => {
-    if (actualScale !== null && actualScale !== undefined) {
-      previousActualScaleRef.current = actualScale
+    if (zoom === 'fit' && actualScale !== null && actualScale !== undefined) {
+      fitScaleRef.current = actualScale
     }
-  }, [actualScale])
+  }, [zoom, actualScale])
 
-  const currentIndex = ZOOM_LEVELS.indexOf(zoom)
-  const canZoomIn = currentIndex >= 0 && currentIndex < ZOOM_LEVELS.length - 1
+  // Get effective zoom levels (only levels larger than fit)
+  const getEffectiveZoomLevels = (): Array<number | 'fit'> => {
+    const fitScale = fitScaleRef.current || 0
+    const baseLevels = [0.25, 0.5, 0.75, 1.0]
+
+    // Filter to only keep levels significantly larger than fit (15% minimum distance)
+    const MIN_DISTANCE = 0.15
+    const largerLevels = baseLevels.filter((level) => level > fitScale + MIN_DISTANCE)
+
+    // Effective levels: fit + larger levels
+    return ['fit', ...largerLevels]
+  }
+
+  const effectiveLevels = getEffectiveZoomLevels()
+  const currentIndex = effectiveLevels.indexOf(zoom)
+  const canZoomIn = currentIndex >= 0 && currentIndex < effectiveLevels.length - 1
   const canZoomOut = currentIndex > 0
 
   const handleZoomIn = () => {
     if (!canZoomIn) return
-
-    // Smart zoom from Fit mode: jump to a substantial level
-    if (zoom === 'fit') {
-      // Use actualScale if available, fall back to previous scale, or default to 100%
-      const scale = actualScale || previousActualScaleRef.current || 1.0
-
-      // Find first level that's at least 1.5x the current scale (50% larger)
-      const targetLevel = ZOOM_LEVELS.find((level) => level !== 'fit' && level > scale * 1.5)
-      if (targetLevel) {
-        onZoomChange(targetLevel)
-        return
-      }
-      // Fallback to max zoom if no suitable level found
-      onZoomChange(ZOOM_LEVELS[ZOOM_LEVELS.length - 1])
-      return
-    }
-
-    // Normal zoom: go to next level
-    onZoomChange(ZOOM_LEVELS[currentIndex + 1])
+    // Go to next level in effective levels array
+    onZoomChange(effectiveLevels[currentIndex + 1])
   }
 
   const handleZoomOut = () => {
     if (!canZoomOut) return
-
-    // Smart zoom from Fit mode: jump to a substantial level
-    if (zoom === 'fit') {
-      // Use actualScale if available, fall back to previous scale, or default to 100%
-      const scale = actualScale || previousActualScaleRef.current || 1.0
-
-      // Find last level that's at most 0.67x the current scale (33% smaller)
-      const targetLevel = [...ZOOM_LEVELS]
-        .reverse()
-        .find((level) => level !== 'fit' && level < scale * 0.67)
-      if (targetLevel) {
-        onZoomChange(targetLevel)
-        return
-      }
-      // Fallback to minimum zoom (25%)
-      onZoomChange(ZOOM_LEVELS[1])
-      return
-    }
-
-    // Normal zoom: go to previous level
-    onZoomChange(ZOOM_LEVELS[currentIndex - 1])
+    // Go to previous level in effective levels array
+    onZoomChange(effectiveLevels[currentIndex - 1])
   }
 
   const handleFit = () => {
