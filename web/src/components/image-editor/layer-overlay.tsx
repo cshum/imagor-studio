@@ -455,7 +455,7 @@ export function LayerOverlay({
   return (
     <div
       ref={overlayRef}
-      className='pointer-events-auto absolute inset-0 z-20 h-full w-full'
+      className='pointer-events-auto absolute inset-0 z-20 h-full w-full overflow-hidden'
       onMouseDown={handleOverlayMouseDown}
     >
       {/* Layer box and handles */}

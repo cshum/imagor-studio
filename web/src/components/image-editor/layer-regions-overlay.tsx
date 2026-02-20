@@ -98,7 +98,7 @@ export function LayerRegionsOverlay({
   }
 
   return (
-    <div className='pointer-events-none absolute inset-0 z-10 h-full w-full'>
+    <div className='pointer-events-none absolute inset-0 z-10 h-full w-full overflow-hidden'>
       {visibleLayers.map((layer) => {
         const styles = getLayerStyles(layer)
         return (
