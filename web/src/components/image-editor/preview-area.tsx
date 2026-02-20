@@ -280,44 +280,56 @@ export function PreviewArea({
         ) : (
           previewUrl && (
             <>
-              <PreloadImage
-                ref={previewImageRef}
-                src={getFullImageUrl(previewUrl)}
-                alt={`Preview of ${imagePath}`}
-                onLoad={handleImageLoad}
+              {/* Wrap image and overlays together so overlays position relative to image */}
+              <div
+                className='relative'
                 style={
                   zoom !== 'fit' && imageDimensions
                     ? {
                         width: `${imageDimensions.width}px`,
                         height: `${imageDimensions.height}px`,
-                        minWidth: `${imageDimensions.width}px`,
-                        minHeight: `${imageDimensions.height}px`,
-                        maxWidth: `${imageDimensions.width}px`,
-                        maxHeight: `${imageDimensions.height}px`,
-                        flexShrink: 0,
                       }
                     : undefined
                 }
-                className={cn(
-                  // Only apply auto-sizing and object-contain in fit mode
-                  // When zoomed, image renders at natural size to enable scrolling
-                  zoom === 'fit' && 'h-auto w-auto object-contain',
-                  // Only apply max constraints when in 'fit' mode
-                  // This allows the image to grow beyond viewport when zoomed
-                  zoom === 'fit' && 'max-h-[calc(100vh-152px)]',
-                  zoom === 'fit' &&
-                    (isMobile
-                      ? 'max-w-[calc(100vw-32px)]'
-                      : isTablet
-                        ? 'max-w-[calc(100vw-362px)]'
-                        : isLeftColumnEmpty && isRightColumnEmpty
-                          ? 'max-w-[calc(100vw-152px)]' // Both empty: 60 + 60 + 32 = 152px
-                          : isLeftColumnEmpty || isRightColumnEmpty
-                            ? 'max-w-[calc(100vw-422px)]' // One empty: 60 + 330 + 32 = 422px
-                            : 'max-w-[calc(100vw-692px)]'), // Both full: 330 + 330 + 32 = 692px
-                )}
-              />
-              {visualCropEnabled &&
+              >
+                <PreloadImage
+                  ref={previewImageRef}
+                  src={getFullImageUrl(previewUrl)}
+                  alt={`Preview of ${imagePath}`}
+                  onLoad={handleImageLoad}
+                  style={
+                    zoom !== 'fit' && imageDimensions
+                      ? {
+                          width: `${imageDimensions.width}px`,
+                          height: `${imageDimensions.height}px`,
+                          minWidth: `${imageDimensions.width}px`,
+                          minHeight: `${imageDimensions.height}px`,
+                          maxWidth: `${imageDimensions.width}px`,
+                          maxHeight: `${imageDimensions.height}px`,
+                          flexShrink: 0,
+                        }
+                      : undefined
+                  }
+                  className={cn(
+                    // Only apply auto-sizing and object-contain in fit mode
+                    // When zoomed, image renders at natural size to enable scrolling
+                    zoom === 'fit' && 'h-auto w-auto object-contain',
+                    // Only apply max constraints when in 'fit' mode
+                    // This allows the image to grow beyond viewport when zoomed
+                    zoom === 'fit' && 'max-h-[calc(100vh-152px)]',
+                    zoom === 'fit' &&
+                      (isMobile
+                        ? 'max-w-[calc(100vw-32px)]'
+                        : isTablet
+                          ? 'max-w-[calc(100vw-362px)]'
+                          : isLeftColumnEmpty && isRightColumnEmpty
+                            ? 'max-w-[calc(100vw-152px)]' // Both empty: 60 + 60 + 32 = 152px
+                            : isLeftColumnEmpty || isRightColumnEmpty
+                              ? 'max-w-[calc(100vw-422px)]' // One empty: 60 + 330 + 32 = 422px
+                              : 'max-w-[calc(100vw-692px)]'), // Both full: 330 + 330 + 32 = 692px
+                  )}
+                />
+                {visualCropEnabled &&
               imageDimensions &&
               imageDimensions.width > 0 &&
               imageDimensions.height > 0 &&
@@ -425,19 +437,20 @@ export function PreviewArea({
                     )
                 }
               })()}
+              </div>
             </>
           )
         )}
-
-        {/* Zoom Controls - Bottom Right */}
-        {!visualCropEnabled && !error && previewUrl && onZoomChange && (
-          <div className='pointer-events-none absolute inset-0 flex items-end justify-end p-4'>
-            <div className='pointer-events-auto'>
-              <ZoomControls zoom={zoom} onZoomChange={onZoomChange} actualScale={actualScale} />
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Zoom Controls - Bottom Right (positioned relative to preview area) */}
+      {!visualCropEnabled && !error && previewUrl && onZoomChange && (
+        <div className='pointer-events-none absolute bottom-0 right-0 flex items-end justify-end p-4'>
+          <div className='pointer-events-auto'>
+            <ZoomControls zoom={zoom} onZoomChange={onZoomChange} actualScale={actualScale} />
+          </div>
+        </div>
+      )}
 
       {/* Preview Controls - Mobile only */}
       {isMobile && (
