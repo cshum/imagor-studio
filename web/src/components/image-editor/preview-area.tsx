@@ -88,6 +88,15 @@ export function PreviewArea({
   } | null>(null)
   const lastReportedDimensionsRef = useRef<{ width: number; height: number } | null>(null)
   const onPreviewDimensionsChangeRef = useRef(onPreviewDimensionsChange)
+  const previousZoomRef = useRef<number | 'fit'>(zoom)
+  const previousImageDimensionsRef = useRef<{ width: number; height: number } | null>(null)
+  const pendingScrollAdjustment = useRef<{
+    scrollLeft: number
+    scrollTop: number
+    scrollWidth: number
+    scrollHeight: number
+    hasScrolled: boolean
+  } | null>(null)
 
   // Delayed flip states for overlay - only update after preview loads
   const [overlayHFlip, setOverlayHFlip] = useState(hFlip)
@@ -238,6 +247,107 @@ export function PreviewArea({
       ? imageDimensions.width / imageEditor.getOutputDimensions().width
       : null
 
+  // Store scroll position when zoom changes (before image loads)
+  useEffect(() => {
+    const container = previewContainerRef.current
+    const previousZoom = previousZoomRef.current
+
+    // Only handle zoom changes between explicit levels (not to/from fit)
+    if (container && zoom !== previousZoom && zoom !== 'fit' && previousZoom !== 'fit') {
+      // Store actual scroll positions and dimensions from OLD zoom level
+      const scrollWidth = container.scrollWidth - container.clientWidth
+      const scrollHeight = container.scrollHeight - container.clientHeight
+      const hasScrolled = container.scrollLeft > 0 || container.scrollTop > 0
+
+      pendingScrollAdjustment.current = {
+        scrollLeft: container.scrollLeft,
+        scrollTop: container.scrollTop,
+        scrollWidth,
+        scrollHeight,
+        hasScrolled,
+      }
+    } else if (zoom !== 'fit' && previousZoom === 'fit') {
+      // Fit → Zoom: Always center (mark as not scrolled to trigger centering)
+      pendingScrollAdjustment.current = {
+        scrollLeft: 0,
+        scrollTop: 0,
+        scrollWidth: 0,
+        scrollHeight: 0,
+        hasScrolled: false,
+      }
+    }
+    // Note: Zoom → Fit doesn't need adjustment (CSS centers it)
+
+    // Update ref for next zoom change
+    previousZoomRef.current = zoom
+  }, [zoom])
+
+  // Apply scroll adjustment after image loads (when dimensions change)
+  useEffect(() => {
+    const container = previewContainerRef.current
+    const previousDimensions = previousImageDimensionsRef.current
+
+    // Only apply if:
+    // 1. We have a pending adjustment
+    // 2. New dimensions exist
+    // 3. Not in fit mode
+    // 4. Dimensions actually changed (not a duplicate update)
+    const dimensionsChanged =
+      !previousDimensions ||
+      !imageDimensions ||
+      previousDimensions.width !== imageDimensions.width ||
+      previousDimensions.height !== imageDimensions.height
+
+    if (
+      container &&
+      pendingScrollAdjustment.current &&
+      imageDimensions &&
+      zoom !== 'fit' &&
+      dimensionsChanged
+    ) {
+      const { scrollLeft, scrollTop, scrollWidth: oldScrollWidth, scrollHeight: oldScrollHeight, hasScrolled } =
+        pendingScrollAdjustment.current
+
+      // Wait for browser to update container dimensions after image loads
+      // Use double requestAnimationFrame to ensure layout is complete
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // Calculate NEW scroll dimensions (after layout)
+          const newScrollWidth = container.scrollWidth - container.clientWidth
+          const newScrollHeight = container.scrollHeight - container.clientHeight
+
+          // Only apply if dimensions actually changed
+          if (newScrollWidth !== oldScrollWidth || newScrollHeight !== oldScrollHeight) {
+            if (hasScrolled && oldScrollWidth > 0 && oldScrollHeight > 0) {
+              // User has scrolled - calculate and preserve ratio
+              const ratioX = scrollLeft / oldScrollWidth
+              const ratioY = scrollTop / oldScrollHeight
+
+              const newScrollLeft = ratioX * newScrollWidth
+              const newScrollTop = ratioY * newScrollHeight
+
+              container.scrollLeft = newScrollLeft
+              container.scrollTop = newScrollTop
+            } else {
+              // User hasn't scrolled - center it
+              const newScrollLeft = 0.5 * newScrollWidth
+              const newScrollTop = 0.5 * newScrollHeight
+
+              container.scrollLeft = newScrollLeft
+              container.scrollTop = newScrollTop
+            }
+          }
+        })
+      })
+
+      // Clear pending adjustment
+      pendingScrollAdjustment.current = null
+    }
+
+    // Update ref for next comparison
+    previousImageDimensionsRef.current = imageDimensions
+  }, [imageDimensions, zoom])
+
   return (
     <div className='relative flex h-full flex-col'>
       {!visualCropEnabled && <LicenseBadge />}
@@ -254,6 +364,8 @@ export function PreviewArea({
           'bg-muted/20 relative flex min-h-0 flex-1 touch-none overflow-auto p-2 pb-0',
           // Only center when in fit mode, otherwise allow scrolling
           zoom === 'fit' && 'items-center justify-center',
+          // Disable elastic/springy scroll effect
+          'overscroll-none',
         )}
         onMouseDown={handleContainerMouseDown}
       >
