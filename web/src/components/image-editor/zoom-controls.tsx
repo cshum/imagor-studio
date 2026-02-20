@@ -12,7 +12,7 @@ interface ZoomControlsProps {
   className?: string
 }
 
-const ZOOM_LEVELS: Array<number | 'fit'> = ['fit', 0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
+const ZOOM_LEVELS: Array<number | 'fit'> = ['fit', 0.25, 0.5, 0.75, 1.0]
 
 export function ZoomControls({ zoom, onZoomChange, actualScale, className }: ZoomControlsProps) {
   const { t } = useTranslation()

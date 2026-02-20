@@ -573,13 +573,17 @@ export function PreviewArea({
       </div>
 
       {/* Zoom Controls - Bottom Right (positioned relative to preview area) */}
-      {!error && previewUrl && onZoomChange && (
-        <div className='pointer-events-none absolute right-0 bottom-0 z-30 flex items-end justify-end p-4'>
-          <div className='pointer-events-auto'>
-            <ZoomControls zoom={zoom} onZoomChange={onZoomChange} actualScale={actualScale} />
+      {/* Hide zoom controls when fit mode is already at ~100% (no point in zooming) */}
+      {!error &&
+        previewUrl &&
+        onZoomChange &&
+        !(zoom === 'fit' && actualScale && actualScale >= 0.95) && (
+          <div className='pointer-events-none absolute right-0 bottom-0 z-30 flex items-end justify-end p-4'>
+            <div className='pointer-events-auto'>
+              <ZoomControls zoom={zoom} onZoomChange={onZoomChange} actualScale={actualScale} />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Preview Controls - Mobile only */}
       {isMobile && (
