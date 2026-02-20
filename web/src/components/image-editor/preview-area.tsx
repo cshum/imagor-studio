@@ -105,6 +105,9 @@ export function PreviewArea({
   // Track context transitions to hide layer overlay until new preview loads
   const [isTransitioning, setIsTransitioning] = useState(false)
 
+  // Track zoom transitions to keep image centered during fit → zoom transition
+  const [isZoomTransitioning, setIsZoomTransitioning] = useState(false)
+
   // Handle mousedown on preview container to deselect layer
   const handleContainerMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -268,6 +271,8 @@ export function PreviewArea({
       }
     } else if (zoom !== 'fit' && previousZoom === 'fit') {
       // Fit → Zoom: Always center (mark as not scrolled to trigger centering)
+      // Set transition flag to keep container centered during transition
+      setIsZoomTransitioning(true)
       pendingScrollAdjustment.current = {
         scrollLeft: 0,
         scrollTop: 0,
@@ -275,6 +280,9 @@ export function PreviewArea({
         scrollHeight: 0,
         hasScrolled: false,
       }
+    } else if (zoom === 'fit' && previousZoom !== 'fit') {
+      // Zoom → Fit: Clear transition flag immediately
+      setIsZoomTransitioning(false)
     }
     // Note: Zoom → Fit doesn't need adjustment (CSS centers it)
 
@@ -305,39 +313,45 @@ export function PreviewArea({
       zoom !== 'fit' &&
       dimensionsChanged
     ) {
-      const { scrollLeft, scrollTop, scrollWidth: oldScrollWidth, scrollHeight: oldScrollHeight, hasScrolled } =
-        pendingScrollAdjustment.current
+      const {
+        scrollLeft,
+        scrollTop,
+        scrollWidth: oldScrollWidth,
+        scrollHeight: oldScrollHeight,
+        hasScrolled,
+      } = pendingScrollAdjustment.current
 
       // Wait for browser to update container dimensions after image loads
-      // Use double requestAnimationFrame to ensure layout is complete
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          // Calculate NEW scroll dimensions (after layout)
-          const newScrollWidth = container.scrollWidth - container.clientWidth
-          const newScrollHeight = container.scrollHeight - container.clientHeight
+        // Calculate NEW scroll dimensions (after layout)
+        const newScrollWidth = container.scrollWidth - container.clientWidth
+        const newScrollHeight = container.scrollHeight - container.clientHeight
 
-          // Only apply if dimensions actually changed
-          if (newScrollWidth !== oldScrollWidth || newScrollHeight !== oldScrollHeight) {
-            if (hasScrolled && oldScrollWidth > 0 && oldScrollHeight > 0) {
-              // User has scrolled - calculate and preserve ratio
-              const ratioX = scrollLeft / oldScrollWidth
-              const ratioY = scrollTop / oldScrollHeight
+        // Only apply if dimensions actually changed
+        if (newScrollWidth !== oldScrollWidth || newScrollHeight !== oldScrollHeight) {
+          if (hasScrolled && oldScrollWidth > 0 && oldScrollHeight > 0) {
+            // User has scrolled - calculate and preserve ratio
+            const ratioX = scrollLeft / oldScrollWidth
+            const ratioY = scrollTop / oldScrollHeight
 
-              const newScrollLeft = ratioX * newScrollWidth
-              const newScrollTop = ratioY * newScrollHeight
+            const newScrollLeft = ratioX * newScrollWidth
+            const newScrollTop = ratioY * newScrollHeight
 
-              container.scrollLeft = newScrollLeft
-              container.scrollTop = newScrollTop
-            } else {
-              // User hasn't scrolled - center it
-              const newScrollLeft = 0.5 * newScrollWidth
-              const newScrollTop = 0.5 * newScrollHeight
+            container.scrollLeft = newScrollLeft
+            container.scrollTop = newScrollTop
+          } else {
+            // User hasn't scrolled - center it
+            const newScrollLeft = 0.5 * newScrollWidth
+            const newScrollTop = 0.5 * newScrollHeight
 
-              container.scrollLeft = newScrollLeft
-              container.scrollTop = newScrollTop
-            }
+            container.scrollLeft = newScrollLeft
+            container.scrollTop = newScrollTop
           }
-        })
+        }
+
+        // Clear zoom transition flag after scroll positioning is complete
+        // This allows the container to switch from centered to scrollable mode
+        setIsZoomTransitioning(false)
       })
 
       // Clear pending adjustment
@@ -362,8 +376,8 @@ export function PreviewArea({
         ref={previewContainerRef}
         className={cn(
           'bg-muted/20 relative flex min-h-0 flex-1 touch-none overflow-auto p-2 pb-0',
-          // Only center when in fit mode, otherwise allow scrolling
-          zoom === 'fit' && 'items-center justify-center',
+          // Center when in fit mode OR during zoom transition (to prevent jarring jump)
+          (zoom === 'fit' || isZoomTransitioning) && 'items-center justify-center',
           // Disable elastic/springy scroll effect
           'overscroll-none',
         )}
