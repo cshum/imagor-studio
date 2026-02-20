@@ -229,12 +229,12 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   // 100% = preview area matches output dimensions exactly
   const effectivePreviewDimensions = useMemo(() => {
     if (!previewMaxDimensions) return null
-    
+
     if (zoom === 'fit') {
       // Fit mode: use container dimensions
       return previewMaxDimensions
     }
-    
+
     // Zoom mode: set preview area to output dimensions * zoom
     const outputDims = imageEditor.getOutputDimensions()
     return {

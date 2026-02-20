@@ -330,113 +330,113 @@ export function PreviewArea({
                   )}
                 />
                 {visualCropEnabled &&
-              imageDimensions &&
-              imageDimensions.width > 0 &&
-              imageDimensions.height > 0 &&
-              onCropChange &&
-              cropWidth > 0 &&
-              cropHeight > 0 &&
-              (() => {
-                const { scaleX, scaleY } = getScales()
-                return (
-                  <CropOverlay
-                    previewWidth={imageDimensions.width}
-                    previewHeight={imageDimensions.height}
-                    cropLeft={cropLeft}
-                    cropTop={cropTop}
-                    cropWidth={cropWidth}
-                    cropHeight={cropHeight}
-                    scale={scaleX}
-                    scaleY={scaleY}
-                    onCropChange={onCropChange}
-                    lockedAspectRatio={cropAspectRatio}
-                    hFlip={overlayHFlip}
-                    vFlip={overlayVFlip}
-                    originalWidth={originalDimensions.width}
-                    originalHeight={originalDimensions.height}
-                  />
-                )
-              })()}
-            {!visualCropEnabled &&
-              !isTransitioning &&
-              imageEditor &&
-              imageDimensions &&
-              imageDimensions.width > 0 &&
-              imageDimensions.height > 0 &&
-              (() => {
-                  // Get the actual output dimensions (after crop + resize + padding)
-                  // This includes padding in the total canvas size
-                  const outputDims = imageEditor.getOutputDimensions()
-
-                  // Get padding values from current state
-                  const state = imageEditor.getState()
-                  const paddingLeft = state.paddingLeft || 0
-                  const paddingRight = state.paddingRight || 0
-                  const paddingTop = state.paddingTop || 0
-                  const paddingBottom = state.paddingBottom || 0
-
-                  if (selectedLayerId) {
-                    // Show single layer overlay with drag/resize handles
-                    const selectedLayer = imageEditor.getLayer(selectedLayerId)
-                    if (!selectedLayer) return null
-
-                    // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
-                    const layerOutputDims = calculateLayerOutputDimensions(
-                      selectedLayer.originalDimensions,
-                      selectedLayer.transforms,
-                    )
-
-                    // Get layer's own padding (if it has any) for positioning calculations
-                    const layerPaddingLeft = selectedLayer.transforms?.paddingLeft || 0
-                    const layerPaddingRight = selectedLayer.transforms?.paddingRight || 0
-                    const layerPaddingTop = selectedLayer.transforms?.paddingTop || 0
-                    const layerPaddingBottom = selectedLayer.transforms?.paddingBottom || 0
-
+                  imageDimensions &&
+                  imageDimensions.width > 0 &&
+                  imageDimensions.height > 0 &&
+                  onCropChange &&
+                  cropWidth > 0 &&
+                  cropHeight > 0 &&
+                  (() => {
+                    const { scaleX, scaleY } = getScales()
                     return (
-                      <LayerOverlay
-                        layerX={selectedLayer.x}
-                        layerY={selectedLayer.y}
-                        layerWidth={layerOutputDims.width}
-                        layerHeight={layerOutputDims.height}
-                        onLayerChange={(updates) =>
-                          imageEditor.updateLayer(selectedLayerId, updates)
-                        }
-                        lockedAspectRatio={layerAspectRatioLocked}
-                        baseImageWidth={outputDims.width}
-                        baseImageHeight={outputDims.height}
-                        paddingLeft={paddingLeft}
-                        paddingRight={paddingRight}
-                        paddingTop={paddingTop}
-                        paddingBottom={paddingBottom}
-                        layerPaddingLeft={layerPaddingLeft}
-                        layerPaddingRight={layerPaddingRight}
-                        layerPaddingTop={layerPaddingTop}
-                        layerPaddingBottom={layerPaddingBottom}
-                        layerRotation={selectedLayer.transforms?.rotation || 0}
-                        layerFillColor={selectedLayer.transforms?.fillColor}
-                        onDeselect={() => imageEditor.setSelectedLayerId(null)}
-                        onEnterEditMode={() => imageEditor.switchContext(selectedLayerId)}
+                      <CropOverlay
+                        previewWidth={imageDimensions.width}
+                        previewHeight={imageDimensions.height}
+                        cropLeft={cropLeft}
+                        cropTop={cropTop}
+                        cropWidth={cropWidth}
+                        cropHeight={cropHeight}
+                        scale={scaleX}
+                        scaleY={scaleY}
+                        onCropChange={onCropChange}
+                        lockedAspectRatio={cropAspectRatio}
+                        hFlip={overlayHFlip}
+                        vFlip={overlayVFlip}
+                        originalWidth={originalDimensions.width}
+                        originalHeight={originalDimensions.height}
                       />
                     )
-                  } else {
-                    // Show all layer regions for selection
-                    const layers = imageEditor.getContextLayers()
-                    if (layers.length === 0) return null
+                  })()}
+                {!visualCropEnabled &&
+                  !isTransitioning &&
+                  imageEditor &&
+                  imageDimensions &&
+                  imageDimensions.width > 0 &&
+                  imageDimensions.height > 0 &&
+                  (() => {
+                    // Get the actual output dimensions (after crop + resize + padding)
+                    // This includes padding in the total canvas size
+                    const outputDims = imageEditor.getOutputDimensions()
 
-                    return (
-                      <LayerRegionsOverlay
-                        layers={layers}
-                        baseImageWidth={outputDims.width}
-                        baseImageHeight={outputDims.height}
-                        paddingLeft={paddingLeft}
-                        paddingRight={paddingRight}
-                        paddingTop={paddingTop}
-                        paddingBottom={paddingBottom}
-                        onLayerSelect={(layerId) => imageEditor.setSelectedLayerId(layerId)}
-                      />
-                    )
-                }
-              })()}
+                    // Get padding values from current state
+                    const state = imageEditor.getState()
+                    const paddingLeft = state.paddingLeft || 0
+                    const paddingRight = state.paddingRight || 0
+                    const paddingTop = state.paddingTop || 0
+                    const paddingBottom = state.paddingBottom || 0
+
+                    if (selectedLayerId) {
+                      // Show single layer overlay with drag/resize handles
+                      const selectedLayer = imageEditor.getLayer(selectedLayerId)
+                      if (!selectedLayer) return null
+
+                      // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
+                      const layerOutputDims = calculateLayerOutputDimensions(
+                        selectedLayer.originalDimensions,
+                        selectedLayer.transforms,
+                      )
+
+                      // Get layer's own padding (if it has any) for positioning calculations
+                      const layerPaddingLeft = selectedLayer.transforms?.paddingLeft || 0
+                      const layerPaddingRight = selectedLayer.transforms?.paddingRight || 0
+                      const layerPaddingTop = selectedLayer.transforms?.paddingTop || 0
+                      const layerPaddingBottom = selectedLayer.transforms?.paddingBottom || 0
+
+                      return (
+                        <LayerOverlay
+                          layerX={selectedLayer.x}
+                          layerY={selectedLayer.y}
+                          layerWidth={layerOutputDims.width}
+                          layerHeight={layerOutputDims.height}
+                          onLayerChange={(updates) =>
+                            imageEditor.updateLayer(selectedLayerId, updates)
+                          }
+                          lockedAspectRatio={layerAspectRatioLocked}
+                          baseImageWidth={outputDims.width}
+                          baseImageHeight={outputDims.height}
+                          paddingLeft={paddingLeft}
+                          paddingRight={paddingRight}
+                          paddingTop={paddingTop}
+                          paddingBottom={paddingBottom}
+                          layerPaddingLeft={layerPaddingLeft}
+                          layerPaddingRight={layerPaddingRight}
+                          layerPaddingTop={layerPaddingTop}
+                          layerPaddingBottom={layerPaddingBottom}
+                          layerRotation={selectedLayer.transforms?.rotation || 0}
+                          layerFillColor={selectedLayer.transforms?.fillColor}
+                          onDeselect={() => imageEditor.setSelectedLayerId(null)}
+                          onEnterEditMode={() => imageEditor.switchContext(selectedLayerId)}
+                        />
+                      )
+                    } else {
+                      // Show all layer regions for selection
+                      const layers = imageEditor.getContextLayers()
+                      if (layers.length === 0) return null
+
+                      return (
+                        <LayerRegionsOverlay
+                          layers={layers}
+                          baseImageWidth={outputDims.width}
+                          baseImageHeight={outputDims.height}
+                          paddingLeft={paddingLeft}
+                          paddingRight={paddingRight}
+                          paddingTop={paddingTop}
+                          paddingBottom={paddingBottom}
+                          onLayerSelect={(layerId) => imageEditor.setSelectedLayerId(layerId)}
+                        />
+                      )
+                    }
+                  })()}
               </div>
             </>
           )
@@ -445,7 +445,7 @@ export function PreviewArea({
 
       {/* Zoom Controls - Bottom Right (positioned relative to preview area) */}
       {!visualCropEnabled && !error && previewUrl && onZoomChange && (
-        <div className='pointer-events-none absolute bottom-0 right-0 flex items-end justify-end p-4'>
+        <div className='pointer-events-none absolute right-0 bottom-0 flex items-end justify-end p-4'>
           <div className='pointer-events-auto'>
             <ZoomControls zoom={zoom} onZoomChange={onZoomChange} actualScale={actualScale} />
           </div>
