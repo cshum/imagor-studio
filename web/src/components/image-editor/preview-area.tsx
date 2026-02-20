@@ -295,11 +295,11 @@ export function PreviewArea({
       // Account for padding (8px on each side = 16px total)
       const containerWidth = container.clientWidth - 16
       const containerHeight = container.clientHeight - 16
-      
+
       const fitsWidth = imageDimensions.width <= containerWidth
       const fitsHeight = imageDimensions.height <= containerHeight
       const fits = fitsWidth && fitsHeight
-      
+
       setImageFitsInContainer(fits)
     }
   }, [imageDimensions])
@@ -582,9 +582,11 @@ export function PreviewArea({
 
       {/* Zoom Controls - Bottom Right (positioned relative to preview area) */}
       {/* Hide zoom controls when fit mode is already at ~100% (no point in zooming) */}
+      {/* Hide on mobile to avoid covering control buttons (users can pinch-to-zoom) */}
       {!error &&
         previewUrl &&
         onZoomChange &&
+        !isMobile &&
         !(zoom === 'fit' && actualScale && actualScale >= 0.95) && (
           <div className='pointer-events-none absolute right-0 bottom-0 z-30 flex items-end justify-end p-4'>
             <div className='pointer-events-auto'>
