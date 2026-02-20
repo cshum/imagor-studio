@@ -176,12 +176,18 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     [layerAspectRatioLockToggle, isShiftPressed],
   )
 
-  // Reset aspect ratio lock and zoom when switching layers
-  // Default to unlocked for maximum flexibility and fit view
+  // Reset aspect ratio lock when switching layers
+  // Default to unlocked for maximum flexibility
   useEffect(() => {
     setLayerAspectRatioLockToggle(false)
-    setZoom('fit')
   }, [selectedLayerId])
+
+  // Reset zoom to fit when switching to nested layer editing
+  useEffect(() => {
+    if (editingContext) {
+      setZoom('fit')
+    }
+  }, [editingContext])
 
   useEffect(() => {
     // Save current state before initialize (only if it's a template)
