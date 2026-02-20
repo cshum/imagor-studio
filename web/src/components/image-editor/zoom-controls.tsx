@@ -84,14 +84,8 @@ export function ZoomControls({ zoom, onZoomChange, actualScale, className }: Zoo
     onZoomChange('fit')
   }
 
-  // Display "Fit" when in fit mode, otherwise show zoom percentage
-  // Only show actualScale percentage for explicit zoom levels (not fit mode)
-  const displayText =
-    zoom === 'fit'
-      ? 'Fit'
-      : actualScale
-        ? `${Math.round(actualScale * 100)}%`
-        : `${Math.round(zoom * 100)}%`
+  // Display "Fit" when in fit mode, otherwise show target zoom percentage
+  const displayText = zoom === 'fit' ? 'Fit' : `${Math.round(zoom * 100)}%`
 
   // Generate helpful tooltip for zoom button
   const zoomTooltip =
