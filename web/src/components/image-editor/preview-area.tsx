@@ -210,10 +210,19 @@ export function PreviewArea({
     // Calculate on mount and when mobile state changes
     calculatePreviewDimensions()
 
-    // Recalculate on window resize
-    window.addEventListener('resize', calculatePreviewDimensions)
-    return () => window.removeEventListener('resize', calculatePreviewDimensions)
-  }, [isMobile, calculatePreviewDimensions])
+    // Only add resize listener in fit mode
+    // When zoomed, dimensions are locked and shouldn't change on resize
+    if (zoom === 'fit') {
+      window.addEventListener('resize', calculatePreviewDimensions)
+      return () => window.removeEventListener('resize', calculatePreviewDimensions)
+    }
+  }, [isMobile, zoom, calculatePreviewDimensions])
+
+  // Trigger dimension calculation when zoom changes
+  // This ensures previewMaxDimensions is updated when switching zoom levels
+  useEffect(() => {
+    calculatePreviewDimensions()
+  }, [zoom, calculatePreviewDimensions])
 
   // Handle column empty state changes with delay for CSS transition
   useEffect(() => {
@@ -276,8 +285,23 @@ export function PreviewArea({
                 src={getFullImageUrl(previewUrl)}
                 alt={`Preview of ${imagePath}`}
                 onLoad={handleImageLoad}
+                style={
+                  zoom !== 'fit' && imageDimensions
+                    ? {
+                        width: `${imageDimensions.width}px`,
+                        height: `${imageDimensions.height}px`,
+                        minWidth: `${imageDimensions.width}px`,
+                        minHeight: `${imageDimensions.height}px`,
+                        maxWidth: `${imageDimensions.width}px`,
+                        maxHeight: `${imageDimensions.height}px`,
+                        flexShrink: 0,
+                      }
+                    : undefined
+                }
                 className={cn(
-                  'h-auto w-auto object-contain',
+                  // Only apply auto-sizing and object-contain in fit mode
+                  // When zoomed, image renders at natural size to enable scrolling
+                  zoom === 'fit' && 'h-auto w-auto object-contain',
                   // Only apply max constraints when in 'fit' mode
                   // This allows the image to grow beyond viewport when zoomed
                   zoom === 'fit' && 'max-h-[calc(100vh-152px)]',

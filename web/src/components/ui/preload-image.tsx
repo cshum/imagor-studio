@@ -12,12 +12,13 @@ interface PreloadImageProps {
   src: string
   alt: string
   className?: string
+  style?: React.CSSProperties
   onLoad?: (width: number, height: number) => void
   onError?: () => void
 }
 
 export const PreloadImage = forwardRef<HTMLImageElement, PreloadImageProps>(
-  ({ src, alt, className, onLoad, onError }, forwardedRef) => {
+  ({ src, alt, className, style, onLoad, onError }, forwardedRef) => {
     const [imageStack, setImageStack] = useState<ImageStackItem[]>([])
 
     // Handle src changes - add new image to stack
@@ -117,6 +118,7 @@ export const PreloadImage = forwardRef<HTMLImageElement, PreloadImageProps>(
             ref={index === visibleIndex ? forwardedRef : null}
             src={image.src}
             alt={alt}
+            style={style}
             className={cn(
               className,
               index === visibleIndex ? '!block' : '!hidden',
