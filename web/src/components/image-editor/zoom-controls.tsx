@@ -105,7 +105,7 @@ export function ZoomControls({ zoom, onZoomChange, actualScale, className }: Zoo
   return (
     <div
       className={cn(
-        'bg-background/95 flex items-center gap-1 rounded-md border p-1 shadow-lg backdrop-blur-sm',
+        'bg-background/95 flex items-center gap-1 rounded-md p-1 shadow-lg backdrop-blur-sm',
         className,
       )}
     >

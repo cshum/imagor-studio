@@ -914,7 +914,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
               editingContext={editingContext}
               layerAspectRatioLocked={layerAspectRatioLocked}
               zoom={zoom}
-              onZoomChange={setZoom}
             />
           </div>
 
@@ -1093,7 +1092,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             layerAspectRatioLocked={layerAspectRatioLocked}
             onOpenControls={() => setMobileSheetOpen(true)}
             zoom={zoom}
-            onZoomChange={setZoom}
           />
 
           {/* Controls Sheet */}
@@ -1425,7 +1423,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
               isLeftColumnEmpty={isLeftEmpty}
               isRightColumnEmpty={isRightEmpty}
               zoom={zoom}
-              onZoomChange={setZoom}
             />
           </div>
 
@@ -1485,22 +1482,18 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       </DndContext>
 
       {/* Bottom bar - status bar style */}
-      <div className='bg-background h-12 overflow-x-auto overflow-y-hidden border-t px-4 pt-2'>
+      <div className='bg-background flex h-12 items-center overflow-x-auto overflow-y-hidden border-t px-4'>
         {/* Imagor Path - scrollable with monospace font, padding to avoid zoom controls */}
-        <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text pr-32'>
+        <code className='text-muted-foreground pr-36 font-mono text-xs whitespace-nowrap select-text'>
           {imagorPath}
         </code>
       </div>
-      
-      {/* Zoom Controls - fixed position overlay, hide when fit mode is already at ~100% or on mobile */}
+
+      {/* Zoom Controls - fixed position overlay aligned with bottom bar, hide when fit mode is already at ~100% or on mobile */}
       {!isMobile && !(zoom === 'fit' && actualScale && actualScale >= 0.95) && (
-        <div className='pointer-events-none fixed right-4 bottom-2 z-20'>
+        <div className='pointer-events-none fixed right-3 bottom-0 z-20 flex h-12 items-center'>
           <div className='pointer-events-auto'>
-            <ZoomControls
-              zoom={zoom}
-              onZoomChange={setZoom}
-              actualScale={actualScale}
-            />
+            <ZoomControls zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />
           </div>
         </div>
       )}

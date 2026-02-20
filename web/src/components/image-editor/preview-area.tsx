@@ -44,7 +44,6 @@ interface PreviewAreaProps {
   isRightColumnEmpty?: boolean
   imagePath?: string
   zoom?: number | 'fit'
-  onZoomChange?: (zoom: number | 'fit') => void
 }
 
 export function PreviewArea({
@@ -73,7 +72,6 @@ export function PreviewArea({
   isRightColumnEmpty = false,
   imagePath,
   zoom = 'fit',
-  onZoomChange,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -244,13 +242,6 @@ export function PreviewArea({
     const timeoutId = setTimeout(calculatePreviewDimensions, 300)
     return () => clearTimeout(timeoutId)
   }, [isLeftColumnEmpty, isRightColumnEmpty, calculatePreviewDimensions])
-
-  // Calculate actual scale factor from rendered dimensions
-  // Use output dimensions (after crop + resize + padding) for accurate scale
-  const actualScale =
-    imageDimensions && imageEditor
-      ? imageDimensions.width / imageEditor.getOutputDimensions().width
-      : null
 
   // Store scroll position when zoom changes (before image loads)
   useEffect(() => {
