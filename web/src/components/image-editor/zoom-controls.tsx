@@ -4,30 +4,13 @@ import { Minus, Plus } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { getEffectiveZoomLevels } from '@/lib/zoom-utils'
 
 interface ZoomControlsProps {
   zoom: number | 'fit'
   onZoomChange: (zoom: number | 'fit') => void
   actualScale?: number | null
   className?: string
-}
-
-/**
- * Calculate effective zoom levels by filtering out levels too close to the fit scale.
- * Only returns levels significantly larger than fit (with minimum 15% distance).
- *
- * @param fitScale - The current fit scale (0-1)
- * @returns Array of effective zoom levels including 'fit' and larger numeric levels
- */
-function getEffectiveZoomLevels(fitScale: number): Array<number | 'fit'> {
-  const baseLevels = [0.25, 0.5, 0.75, 1.0]
-
-  // Filter to only keep levels significantly larger than fit (15% minimum distance)
-  const MIN_DISTANCE = 0.15
-  const largerLevels = baseLevels.filter((level) => level > fitScale + MIN_DISTANCE)
-
-  // Effective levels: fit + larger levels
-  return ['fit', ...largerLevels]
 }
 
 export function ZoomControls({ zoom, onZoomChange, actualScale, className }: ZoomControlsProps) {
@@ -52,15 +35,55 @@ export function ZoomControls({ zoom, onZoomChange, actualScale, className }: Zoo
   const canZoomIn = currentIndex >= 0 && currentIndex < effectiveLevels.length - 1
   const canZoomOut = currentIndex > 0
 
+  // Keyboard shortcuts for zoom (Cmd/Ctrl + Plus/Minus/0/1)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return
+
+      if (e.key === '+' || e.key === '=') {
+        // Zoom in
+        e.preventDefault()
+        if (canZoomIn) {
+          onZoomChange(effectiveLevels[currentIndex + 1])
+        }
+        return
+      }
+
+      if (e.key === '-' || e.key === '_') {
+        // Zoom out
+        e.preventDefault()
+        if (canZoomOut) {
+          onZoomChange(effectiveLevels[currentIndex - 1])
+        }
+        return
+      }
+
+      if (e.key === '0') {
+        // Fit to viewport
+        e.preventDefault()
+        onZoomChange('fit')
+        return
+      }
+
+      if (e.key === '1') {
+        // 100% zoom
+        e.preventDefault()
+        onZoomChange(1.0)
+        return
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [canZoomIn, canZoomOut, effectiveLevels, currentIndex, onZoomChange])
+
   const handleZoomIn = () => {
     if (!canZoomIn) return
-    // Go to next level in effective levels array
     onZoomChange(effectiveLevels[currentIndex + 1])
   }
 
   const handleZoomOut = () => {
     if (!canZoomOut) return
-    // Go to previous level in effective levels array
     onZoomChange(effectiveLevels[currentIndex - 1])
   }
 

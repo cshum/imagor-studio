@@ -273,7 +273,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
   }, [])
 
-  // Keyboard shortcuts for undo/redo, zoom, and escape to exit crop mode or nested layer
+  // Keyboard shortcuts for undo/redo and escape to exit crop mode or nested layer
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Escape key - exit crop mode or nested layer editing
@@ -294,44 +294,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         return
       }
 
-      // Zoom shortcuts (Cmd/Ctrl + Plus/Minus/0/1)
-      if (e.metaKey || e.ctrlKey) {
-        const ZOOM_LEVELS: Array<number | 'fit'> = ['fit', 0.5, 1.0, 2.0, 4.0]
-        const currentIndex = ZOOM_LEVELS.indexOf(zoom)
-
-        if (e.key === '+' || e.key === '=') {
-          // Zoom in
-          e.preventDefault()
-          if (currentIndex >= 0 && currentIndex < ZOOM_LEVELS.length - 1) {
-            setZoom(ZOOM_LEVELS[currentIndex + 1])
-          }
-          return
-        }
-
-        if (e.key === '-' || e.key === '_') {
-          // Zoom out
-          e.preventDefault()
-          if (currentIndex > 0) {
-            setZoom(ZOOM_LEVELS[currentIndex - 1])
-          }
-          return
-        }
-
-        if (e.key === '0') {
-          // Fit to viewport
-          e.preventDefault()
-          setZoom('fit')
-          return
-        }
-
-        if (e.key === '1') {
-          // 100% zoom
-          e.preventDefault()
-          setZoom(1.0)
-          return
-        }
-      }
-
       // Cmd+Z (Mac) or Ctrl+Z (Windows/Linux)
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
         e.preventDefault()
@@ -348,7 +310,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [imageEditor, zoom])
+  }, [imageEditor])
 
   const updateParams = useCallback(
     (updates: Partial<ImageEditorState>) => {
