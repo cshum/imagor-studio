@@ -47,6 +47,7 @@ import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb.tsx'
 import { LayerPanel } from '@/components/image-editor/layer-panel'
 import { PreviewArea } from '@/components/image-editor/preview-area'
 import { SaveTemplateDialog } from '@/components/image-editor/save-template-dialog'
+import { ZoomControls } from '@/components/image-editor/zoom-controls'
 import { LoadingBar } from '@/components/loading-bar'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
@@ -153,6 +154,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   const [editingContext, setEditingContext] = useState<string | null>(null)
   const [layerAspectRatioLockToggle, setLayerAspectRatioLockToggle] = useState(true)
   const [isShiftPressed, setIsShiftPressed] = useState(false)
+  const [zoom, setZoom] = useState<number | 'fit'>('fit')
+  const [actualScale, setActualScale] = useState<number | null>(null)
   const isSavedRef = useRef(false)
 
   // Drag and drop state for desktop
@@ -223,10 +226,40 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
   }, [imageEditor, isTemplate])
 
+  // Calculate effective preview dimensions based on zoom
+  // Zoom % = preview area size / output dimensions
+  // 100% = preview area matches output dimensions exactly
+  const effectivePreviewDimensions = useMemo(() => {
+    if (!previewMaxDimensions) return null
+
+    if (zoom === 'fit') {
+      // Fit mode: use container dimensions
+      return previewMaxDimensions
+    }
+
+    // Zoom mode: set preview area to output dimensions * zoom
+    const outputDims = imageEditor.getOutputDimensions()
+    return {
+      width: Math.round(outputDims.width * zoom),
+      height: Math.round(outputDims.height * zoom),
+    }
+  }, [previewMaxDimensions, zoom, imageEditor])
+
   // Update preview dimensions dynamically when they change
   useEffect(() => {
-    imageEditor.updatePreviewMaxDimensions(previewMaxDimensions ?? undefined)
-  }, [imageEditor, previewMaxDimensions])
+    imageEditor.updatePreviewMaxDimensions(effectivePreviewDimensions ?? undefined)
+  }, [imageEditor, effectivePreviewDimensions])
+
+  // Calculate actual scale from effective preview dimensions
+  useEffect(() => {
+    if (effectivePreviewDimensions) {
+      const outputDims = imageEditor.getOutputDimensions()
+      const scale = effectivePreviewDimensions.width / outputDims.width
+      setActualScale(scale)
+    } else {
+      setActualScale(null)
+    }
+  }, [effectivePreviewDimensions, imageEditor])
 
   // Update Imagor path whenever params change
   useEffect(() => {
@@ -457,6 +490,9 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
         // Swap the image using imageEditor
         imageEditor.replaceImage(newImagePath, dimensions, replaceImageLayerId)
+
+        // Reset zoom to fit when swapping images
+        setZoom('fit')
       } catch (error) {
         console.error('Failed to swap image:', error)
         toast.error(t('imageEditor.layers.replaceImageError'))
@@ -877,6 +913,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
               selectedLayerId={selectedLayerId}
               editingContext={editingContext}
               layerAspectRatioLocked={layerAspectRatioLocked}
+              zoom={zoom}
             />
           </div>
 
@@ -1054,6 +1091,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             editingContext={editingContext}
             layerAspectRatioLocked={layerAspectRatioLocked}
             onOpenControls={() => setMobileSheetOpen(true)}
+            zoom={zoom}
           />
 
           {/* Controls Sheet */}
@@ -1384,6 +1422,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
               layerAspectRatioLocked={layerAspectRatioLocked}
               isLeftColumnEmpty={isLeftEmpty}
               isRightColumnEmpty={isRightEmpty}
+              zoom={zoom}
             />
           </div>
 
@@ -1443,12 +1482,21 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       </DndContext>
 
       {/* Bottom bar - status bar style */}
-      <div className='bg-background h-12 overflow-x-auto overflow-y-hidden border-t px-4 pt-2'>
-        {/* Imagor Path - scrollable with monospace font */}
-        <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text'>
+      <div className='bg-background flex h-12 items-center overflow-x-auto overflow-y-hidden border-t px-4'>
+        {/* Imagor Path - scrollable with monospace font, padding to avoid zoom controls */}
+        <code className='text-muted-foreground pr-36 font-mono text-xs whitespace-nowrap select-text'>
           {imagorPath}
         </code>
       </div>
+
+      {/* Zoom Controls - fixed position overlay aligned with bottom bar, hide when fit mode is already at ~100% or on mobile */}
+      {!isMobile && !(zoom === 'fit' && actualScale && actualScale >= 0.95) && (
+        <div className='pointer-events-none fixed right-3 bottom-0 z-20 flex h-12 items-center'>
+          <div className='pointer-events-auto'>
+            <ZoomControls zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />
+          </div>
+        </div>
+      )}
 
       {/* Copy URL Dialog */}
       <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />

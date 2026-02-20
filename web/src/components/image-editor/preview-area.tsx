@@ -43,6 +43,7 @@ interface PreviewAreaProps {
   isLeftColumnEmpty?: boolean
   isRightColumnEmpty?: boolean
   imagePath?: string
+  zoom?: number | 'fit'
 }
 
 export function PreviewArea({
@@ -70,6 +71,7 @@ export function PreviewArea({
   isLeftColumnEmpty = false,
   isRightColumnEmpty = false,
   imagePath,
+  zoom = 'fit',
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -83,6 +85,15 @@ export function PreviewArea({
   } | null>(null)
   const lastReportedDimensionsRef = useRef<{ width: number; height: number } | null>(null)
   const onPreviewDimensionsChangeRef = useRef(onPreviewDimensionsChange)
+  const previousZoomRef = useRef<number | 'fit'>(zoom)
+  const previousImageDimensionsRef = useRef<{ width: number; height: number } | null>(null)
+  const pendingScrollAdjustment = useRef<{
+    scrollLeft: number
+    scrollTop: number
+    scrollWidth: number
+    scrollHeight: number
+    hasScrolled: boolean
+  } | null>(null)
 
   // Delayed flip states for overlay - only update after preview loads
   const [overlayHFlip, setOverlayHFlip] = useState(hFlip)
@@ -90,6 +101,9 @@ export function PreviewArea({
 
   // Track context transitions to hide layer overlay until new preview loads
   const [isTransitioning, setIsTransitioning] = useState(false)
+
+  // Track if image fits in container (for smart centering)
+  const [imageFitsInContainer, setImageFitsInContainer] = useState(true)
 
   // Handle mousedown on preview container to deselect layer
   const handleContainerMouseDown = useCallback(
@@ -112,9 +126,9 @@ export function PreviewArea({
 
   // Track image dimensions when loaded
   const handleImageLoad = (width: number, height: number) => {
-    // During visual crop mode, use the actual rendered size instead of natural size
-    // This ensures the crop overlay stays aligned even when filters are applied
-    if (visualCropEnabled && previewImageRef.current) {
+    // In fit mode (both normal and visual crop), use actual rendered size
+    // In zoom mode, use natural size for both modes
+    if (zoom === 'fit' && previewImageRef.current) {
       const rect = previewImageRef.current.getBoundingClientRect()
       setImageDimensions({ width: rect.width, height: rect.height })
     } else {
@@ -132,10 +146,12 @@ export function PreviewArea({
     onLoad?.(width, height)
   }
 
-  // Use ResizeObserver to track actual rendered image size
-  // This ensures crop overlay follows the image when window resizes
+  // Use ResizeObserver to track actual rendered image size in fit mode
+  // This ensures overlays follow the image when window resizes
   useEffect(() => {
-    if (!visualCropEnabled || !previewImageRef.current) {
+    // Only use ResizeObserver in fit mode (when image size is dynamic)
+    // In zoom mode, dimensions are fixed and don't need observation
+    if (zoom !== 'fit' || !previewImageRef.current) {
       return
     }
 
@@ -153,7 +169,7 @@ export function PreviewArea({
     return () => {
       resizeObserver.disconnect()
     }
-  }, [visualCropEnabled])
+  }, [zoom])
 
   // Calculate scale factors for overlays (crop and layer)
   // Scale is the ratio between preview dimensions and output dimensions
@@ -174,10 +190,11 @@ export function PreviewArea({
 
   // Shared calculation logic for preview dimensions
   const calculatePreviewDimensions = useCallback(() => {
-    // Skip dimension updates during visual crop mode to keep preview stable
-    // This prevents the preview from being regenerated when window resizes,
+    // In visual crop mode, only skip dimension updates when in fit mode AND window is resizing
+    // This prevents the preview from being regenerated during window resize,
     // which would cause the crop overlay to become misaligned
-    if (visualCropEnabled) {
+    // However, we DO want to update dimensions when zoom changes
+    if (visualCropEnabled && zoom === 'fit') {
       return
     }
 
@@ -198,17 +215,26 @@ export function PreviewArea({
         })
       }
     }
-  }, [visualCropEnabled])
+  }, [visualCropEnabled, zoom])
 
   // Calculate and report preview area dimensions (immediate for resize/mobile)
   useEffect(() => {
     // Calculate on mount and when mobile state changes
     calculatePreviewDimensions()
 
-    // Recalculate on window resize
-    window.addEventListener('resize', calculatePreviewDimensions)
-    return () => window.removeEventListener('resize', calculatePreviewDimensions)
-  }, [isMobile, calculatePreviewDimensions])
+    // Only add resize listener in fit mode
+    // When zoomed, dimensions are locked and shouldn't change on resize
+    if (zoom === 'fit') {
+      window.addEventListener('resize', calculatePreviewDimensions)
+      return () => window.removeEventListener('resize', calculatePreviewDimensions)
+    }
+  }, [isMobile, zoom, calculatePreviewDimensions])
+
+  // Trigger dimension calculation when zoom changes
+  // This ensures previewMaxDimensions is updated when switching zoom levels
+  useEffect(() => {
+    calculatePreviewDimensions()
+  }, [zoom, calculatePreviewDimensions])
 
   // Handle column empty state changes with delay for CSS transition
   useEffect(() => {
@@ -216,6 +242,125 @@ export function PreviewArea({
     const timeoutId = setTimeout(calculatePreviewDimensions, 300)
     return () => clearTimeout(timeoutId)
   }, [isLeftColumnEmpty, isRightColumnEmpty, calculatePreviewDimensions])
+
+  // Store scroll position when zoom changes (before image loads)
+  useEffect(() => {
+    const container = previewContainerRef.current
+    const previousZoom = previousZoomRef.current
+
+    // Only handle zoom changes between explicit levels (not to/from fit)
+    if (container && zoom !== previousZoom && zoom !== 'fit' && previousZoom !== 'fit') {
+      // Store actual scroll positions and dimensions from OLD zoom level
+      const scrollWidth = container.scrollWidth - container.clientWidth
+      const scrollHeight = container.scrollHeight - container.clientHeight
+      const hasScrolled = container.scrollLeft > 0 || container.scrollTop > 0
+
+      pendingScrollAdjustment.current = {
+        scrollLeft: container.scrollLeft,
+        scrollTop: container.scrollTop,
+        scrollWidth,
+        scrollHeight,
+        hasScrolled,
+      }
+    } else if (zoom !== 'fit' && previousZoom === 'fit') {
+      // Fit → Zoom: Always center (mark as not scrolled to trigger centering)
+      pendingScrollAdjustment.current = {
+        scrollLeft: 0,
+        scrollTop: 0,
+        scrollWidth: 0,
+        scrollHeight: 0,
+        hasScrolled: false,
+      }
+    }
+    // Note: Zoom → Fit doesn't need adjustment (CSS centers it)
+
+    // Update ref for next zoom change
+    previousZoomRef.current = zoom
+  }, [zoom])
+
+  // Check if image fits in container and update state
+  useEffect(() => {
+    const container = previewContainerRef.current
+    if (container && imageDimensions) {
+      // Account for padding (8px on each side = 16px total)
+      const containerWidth = container.clientWidth - 16
+      const containerHeight = container.clientHeight - 16
+
+      const fitsWidth = imageDimensions.width <= containerWidth
+      const fitsHeight = imageDimensions.height <= containerHeight
+      const fits = fitsWidth && fitsHeight
+
+      setImageFitsInContainer(fits)
+    }
+  }, [imageDimensions])
+
+  // Apply scroll adjustment after image loads (when dimensions change)
+  useEffect(() => {
+    const container = previewContainerRef.current
+    const previousDimensions = previousImageDimensionsRef.current
+
+    // Only apply if:
+    // 1. We have a pending adjustment
+    // 2. New dimensions exist
+    // 3. Not in fit mode
+    // 4. Dimensions actually changed (not a duplicate update)
+    const dimensionsChanged =
+      !previousDimensions ||
+      !imageDimensions ||
+      previousDimensions.width !== imageDimensions.width ||
+      previousDimensions.height !== imageDimensions.height
+
+    if (
+      container &&
+      pendingScrollAdjustment.current &&
+      imageDimensions &&
+      zoom !== 'fit' &&
+      dimensionsChanged
+    ) {
+      const {
+        scrollLeft,
+        scrollTop,
+        scrollWidth: oldScrollWidth,
+        scrollHeight: oldScrollHeight,
+        hasScrolled,
+      } = pendingScrollAdjustment.current
+
+      // Wait for browser to update container dimensions after image loads
+      requestAnimationFrame(() => {
+        // Calculate NEW scroll dimensions (after layout)
+        const newScrollWidth = container.scrollWidth - container.clientWidth
+        const newScrollHeight = container.scrollHeight - container.clientHeight
+
+        // Only apply if dimensions actually changed
+        if (newScrollWidth !== oldScrollWidth || newScrollHeight !== oldScrollHeight) {
+          if (hasScrolled && oldScrollWidth > 0 && oldScrollHeight > 0) {
+            // User has scrolled - calculate and preserve ratio
+            const ratioX = scrollLeft / oldScrollWidth
+            const ratioY = scrollTop / oldScrollHeight
+
+            const newScrollLeft = ratioX * newScrollWidth
+            const newScrollTop = ratioY * newScrollHeight
+
+            container.scrollLeft = newScrollLeft
+            container.scrollTop = newScrollTop
+          } else {
+            // User hasn't scrolled - center it
+            const newScrollLeft = 0.5 * newScrollWidth
+            const newScrollTop = 0.5 * newScrollHeight
+
+            container.scrollLeft = newScrollLeft
+            container.scrollTop = newScrollTop
+          }
+        }
+      })
+
+      // Clear pending adjustment
+      pendingScrollAdjustment.current = null
+    }
+
+    // Update ref for next comparison
+    previousImageDimensionsRef.current = imageDimensions
+  }, [imageDimensions, zoom])
 
   return (
     <div className='relative flex h-full flex-col'>
@@ -229,7 +374,14 @@ export function PreviewArea({
       {/* Preview Content */}
       <div
         ref={previewContainerRef}
-        className='bg-muted/20 flex min-h-0 flex-1 touch-none items-center justify-center overflow-hidden p-2 pb-0'
+        className={cn(
+          'bg-muted/20 relative flex min-h-0 flex-1 touch-none overflow-auto p-2 pb-0',
+          // Smart centering: apply when in fit mode OR when image fits in container
+          // This prevents jarring jumps during zoom transitions while avoiding edge cropping
+          (zoom === 'fit' || imageFitsInContainer) && 'items-center justify-center',
+          // Disable elastic/springy scroll effect
+          'overscroll-none',
+        )}
         onMouseDown={handleContainerMouseDown}
       >
         {error ? (
@@ -254,135 +406,166 @@ export function PreviewArea({
           </div>
         ) : (
           previewUrl && (
-            <div className='relative'>
-              <PreloadImage
-                ref={previewImageRef}
-                src={getFullImageUrl(previewUrl)}
-                alt={`Preview of ${imagePath}`}
-                onLoad={handleImageLoad}
-                className={cn(
-                  'h-auto w-auto object-contain',
-                  'max-h-[calc(100vh-152px)]',
-                  isMobile
-                    ? 'max-w-[calc(100vw-32px)]'
-                    : isTablet
-                      ? 'max-w-[calc(100vw-362px)]'
-                      : isLeftColumnEmpty && isRightColumnEmpty
-                        ? 'max-w-[calc(100vw-152px)]' // Both empty: 60 + 60 + 32 = 152px
-                        : isLeftColumnEmpty || isRightColumnEmpty
-                          ? 'max-w-[calc(100vw-422px)]' // One empty: 60 + 330 + 32 = 422px
-                          : 'max-w-[calc(100vw-692px)]', // Both full: 330 + 330 + 32 = 692px
-                )}
-              />
-              {visualCropEnabled &&
-                imageDimensions &&
-                imageDimensions.width > 0 &&
-                imageDimensions.height > 0 &&
-                onCropChange &&
-                cropWidth > 0 &&
-                cropHeight > 0 &&
-                (() => {
-                  const { scaleX, scaleY } = getScales()
-                  return (
-                    <CropOverlay
-                      previewWidth={imageDimensions.width}
-                      previewHeight={imageDimensions.height}
-                      cropLeft={cropLeft}
-                      cropTop={cropTop}
-                      cropWidth={cropWidth}
-                      cropHeight={cropHeight}
-                      scale={scaleX}
-                      scaleY={scaleY}
-                      onCropChange={onCropChange}
-                      lockedAspectRatio={cropAspectRatio}
-                      hFlip={overlayHFlip}
-                      vFlip={overlayVFlip}
-                      originalWidth={originalDimensions.width}
-                      originalHeight={originalDimensions.height}
-                    />
-                  )
-                })()}
-              {!visualCropEnabled &&
-                !isTransitioning &&
-                imageEditor &&
-                imageDimensions &&
-                imageDimensions.width > 0 &&
-                imageDimensions.height > 0 &&
-                (() => {
-                  // Get the actual output dimensions (after crop + resize + padding)
-                  // This includes padding in the total canvas size
-                  const outputDims = imageEditor.getOutputDimensions()
-
-                  // Get padding values from current state
-                  const state = imageEditor.getState()
-                  const paddingLeft = state.paddingLeft || 0
-                  const paddingRight = state.paddingRight || 0
-                  const paddingTop = state.paddingTop || 0
-                  const paddingBottom = state.paddingBottom || 0
-
-                  if (selectedLayerId) {
-                    // Show single layer overlay with drag/resize handles
-                    const selectedLayer = imageEditor.getLayer(selectedLayerId)
-                    if (!selectedLayer) return null
-
-                    // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
-                    const layerOutputDims = calculateLayerOutputDimensions(
-                      selectedLayer.originalDimensions,
-                      selectedLayer.transforms,
-                    )
-
-                    // Get layer's own padding (if it has any) for positioning calculations
-                    const layerPaddingLeft = selectedLayer.transforms?.paddingLeft || 0
-                    const layerPaddingRight = selectedLayer.transforms?.paddingRight || 0
-                    const layerPaddingTop = selectedLayer.transforms?.paddingTop || 0
-                    const layerPaddingBottom = selectedLayer.transforms?.paddingBottom || 0
-
-                    return (
-                      <LayerOverlay
-                        layerX={selectedLayer.x}
-                        layerY={selectedLayer.y}
-                        layerWidth={layerOutputDims.width}
-                        layerHeight={layerOutputDims.height}
-                        onLayerChange={(updates) =>
-                          imageEditor.updateLayer(selectedLayerId, updates)
+            <>
+              {/* Wrap image and overlays together so overlays position relative to image */}
+              <div
+                className='relative'
+                style={
+                  zoom !== 'fit' && imageDimensions
+                    ? {
+                        width: `${imageDimensions.width}px`,
+                        height: `${imageDimensions.height}px`,
+                      }
+                    : undefined
+                }
+              >
+                <PreloadImage
+                  ref={previewImageRef}
+                  src={getFullImageUrl(previewUrl)}
+                  alt={`Preview of ${imagePath}`}
+                  onLoad={handleImageLoad}
+                  style={
+                    zoom !== 'fit' && imageDimensions
+                      ? {
+                          width: `${imageDimensions.width}px`,
+                          height: `${imageDimensions.height}px`,
+                          minWidth: `${imageDimensions.width}px`,
+                          minHeight: `${imageDimensions.height}px`,
+                          maxWidth: `${imageDimensions.width}px`,
+                          maxHeight: `${imageDimensions.height}px`,
+                          flexShrink: 0,
                         }
-                        lockedAspectRatio={layerAspectRatioLocked}
-                        baseImageWidth={outputDims.width}
-                        baseImageHeight={outputDims.height}
-                        paddingLeft={paddingLeft}
-                        paddingRight={paddingRight}
-                        paddingTop={paddingTop}
-                        paddingBottom={paddingBottom}
-                        layerPaddingLeft={layerPaddingLeft}
-                        layerPaddingRight={layerPaddingRight}
-                        layerPaddingTop={layerPaddingTop}
-                        layerPaddingBottom={layerPaddingBottom}
-                        layerRotation={selectedLayer.transforms?.rotation || 0}
-                        layerFillColor={selectedLayer.transforms?.fillColor}
-                        onDeselect={() => imageEditor.setSelectedLayerId(null)}
-                        onEnterEditMode={() => imageEditor.switchContext(selectedLayerId)}
-                      />
-                    )
-                  } else {
-                    // Show all layer regions for selection
-                    const layers = imageEditor.getContextLayers()
-                    if (layers.length === 0) return null
-
-                    return (
-                      <LayerRegionsOverlay
-                        layers={layers}
-                        baseImageWidth={outputDims.width}
-                        baseImageHeight={outputDims.height}
-                        paddingLeft={paddingLeft}
-                        paddingRight={paddingRight}
-                        paddingTop={paddingTop}
-                        paddingBottom={paddingBottom}
-                        onLayerSelect={(layerId) => imageEditor.setSelectedLayerId(layerId)}
-                      />
-                    )
+                      : undefined
                   }
-                })()}
-            </div>
+                  className={cn(
+                    // Only apply auto-sizing and object-contain in fit mode
+                    // When zoomed, image renders at natural size to enable scrolling
+                    zoom === 'fit' && 'h-auto w-auto object-contain',
+                    // Only apply max constraints when in 'fit' mode
+                    // This allows the image to grow beyond viewport when zoomed
+                    zoom === 'fit' && 'max-h-[calc(100vh-152px)]',
+                    zoom === 'fit' &&
+                      (isMobile
+                        ? 'max-w-[calc(100vw-32px)]'
+                        : isTablet
+                          ? 'max-w-[calc(100vw-362px)]'
+                          : isLeftColumnEmpty && isRightColumnEmpty
+                            ? 'max-w-[calc(100vw-152px)]' // Both empty: 60 + 60 + 32 = 152px
+                            : isLeftColumnEmpty || isRightColumnEmpty
+                              ? 'max-w-[calc(100vw-422px)]' // One empty: 60 + 330 + 32 = 422px
+                              : 'max-w-[calc(100vw-692px)]'), // Both full: 330 + 330 + 32 = 692px
+                  )}
+                />
+                {visualCropEnabled &&
+                  imageDimensions &&
+                  imageDimensions.width > 0 &&
+                  imageDimensions.height > 0 &&
+                  onCropChange &&
+                  cropWidth > 0 &&
+                  cropHeight > 0 &&
+                  (() => {
+                    const { scaleX, scaleY } = getScales()
+                    return (
+                      <CropOverlay
+                        previewWidth={imageDimensions.width}
+                        previewHeight={imageDimensions.height}
+                        cropLeft={cropLeft}
+                        cropTop={cropTop}
+                        cropWidth={cropWidth}
+                        cropHeight={cropHeight}
+                        scale={scaleX}
+                        scaleY={scaleY}
+                        onCropChange={onCropChange}
+                        lockedAspectRatio={cropAspectRatio}
+                        hFlip={overlayHFlip}
+                        vFlip={overlayVFlip}
+                        originalWidth={originalDimensions.width}
+                        originalHeight={originalDimensions.height}
+                      />
+                    )
+                  })()}
+                {!visualCropEnabled &&
+                  !isTransitioning &&
+                  imageEditor &&
+                  imageDimensions &&
+                  imageDimensions.width > 0 &&
+                  imageDimensions.height > 0 &&
+                  (() => {
+                    // Get the actual output dimensions (after crop + resize + padding)
+                    // This includes padding in the total canvas size
+                    const outputDims = imageEditor.getOutputDimensions()
+
+                    // Get padding values from current state
+                    const state = imageEditor.getState()
+                    const paddingLeft = state.paddingLeft || 0
+                    const paddingRight = state.paddingRight || 0
+                    const paddingTop = state.paddingTop || 0
+                    const paddingBottom = state.paddingBottom || 0
+
+                    if (selectedLayerId) {
+                      // Show single layer overlay with drag/resize handles
+                      const selectedLayer = imageEditor.getLayer(selectedLayerId)
+                      if (!selectedLayer) return null
+
+                      // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
+                      const layerOutputDims = calculateLayerOutputDimensions(
+                        selectedLayer.originalDimensions,
+                        selectedLayer.transforms,
+                      )
+
+                      // Get layer's own padding (if it has any) for positioning calculations
+                      const layerPaddingLeft = selectedLayer.transforms?.paddingLeft || 0
+                      const layerPaddingRight = selectedLayer.transforms?.paddingRight || 0
+                      const layerPaddingTop = selectedLayer.transforms?.paddingTop || 0
+                      const layerPaddingBottom = selectedLayer.transforms?.paddingBottom || 0
+
+                      return (
+                        <LayerOverlay
+                          layerX={selectedLayer.x}
+                          layerY={selectedLayer.y}
+                          layerWidth={layerOutputDims.width}
+                          layerHeight={layerOutputDims.height}
+                          onLayerChange={(updates) =>
+                            imageEditor.updateLayer(selectedLayerId, updates)
+                          }
+                          lockedAspectRatio={layerAspectRatioLocked}
+                          baseImageWidth={outputDims.width}
+                          baseImageHeight={outputDims.height}
+                          paddingLeft={paddingLeft}
+                          paddingRight={paddingRight}
+                          paddingTop={paddingTop}
+                          paddingBottom={paddingBottom}
+                          layerPaddingLeft={layerPaddingLeft}
+                          layerPaddingRight={layerPaddingRight}
+                          layerPaddingTop={layerPaddingTop}
+                          layerPaddingBottom={layerPaddingBottom}
+                          layerRotation={selectedLayer.transforms?.rotation || 0}
+                          layerFillColor={selectedLayer.transforms?.fillColor}
+                          onDeselect={() => imageEditor.setSelectedLayerId(null)}
+                          onEnterEditMode={() => imageEditor.switchContext(selectedLayerId)}
+                        />
+                      )
+                    } else {
+                      // Show all layer regions for selection
+                      const layers = imageEditor.getContextLayers()
+                      if (layers.length === 0) return null
+
+                      return (
+                        <LayerRegionsOverlay
+                          layers={layers}
+                          baseImageWidth={outputDims.width}
+                          baseImageHeight={outputDims.height}
+                          paddingLeft={paddingLeft}
+                          paddingRight={paddingRight}
+                          paddingTop={paddingTop}
+                          paddingBottom={paddingBottom}
+                          onLayerSelect={(layerId) => imageEditor.setSelectedLayerId(layerId)}
+                        />
+                      )
+                    }
+                  })()}
+              </div>
+            </>
           )
         )}
       </div>
