@@ -21,15 +21,53 @@ export function ZoomControls({ zoom, onZoomChange, actualScale, className }: Zoo
   const canZoomOut = currentIndex > 0
 
   const handleZoomIn = () => {
-    if (canZoomIn) {
-      onZoomChange(ZOOM_LEVELS[currentIndex + 1])
+    if (!canZoomIn) return
+
+    // Smart zoom from Fit mode: jump to a substantial level
+    if (zoom === 'fit') {
+      // Use actualScale if available, otherwise default to 100% as a sensible starting point
+      const scale = actualScale || 1.0
+      
+      // Find first level that's at least 1.5x the current scale (50% larger)
+      const targetLevel = ZOOM_LEVELS.find(
+        (level) => level !== 'fit' && level > scale * 1.5,
+      )
+      if (targetLevel) {
+        onZoomChange(targetLevel)
+        return
+      }
+      // Fallback to max zoom if no suitable level found
+      onZoomChange(ZOOM_LEVELS[ZOOM_LEVELS.length - 1])
+      return
     }
+
+    // Normal zoom: go to next level
+    onZoomChange(ZOOM_LEVELS[currentIndex + 1])
   }
 
   const handleZoomOut = () => {
-    if (canZoomOut) {
-      onZoomChange(ZOOM_LEVELS[currentIndex - 1])
+    if (!canZoomOut) return
+
+    // Smart zoom from Fit mode: jump to a substantial level
+    if (zoom === 'fit') {
+      // Use actualScale if available, otherwise default to 100% as a sensible starting point
+      const scale = actualScale || 1.0
+      
+      // Find last level that's at most 0.67x the current scale (33% smaller)
+      const targetLevel = [...ZOOM_LEVELS]
+        .reverse()
+        .find((level) => level !== 'fit' && level < scale * 0.67)
+      if (targetLevel) {
+        onZoomChange(targetLevel)
+        return
+      }
+      // Fallback to minimum zoom (25%)
+      onZoomChange(ZOOM_LEVELS[1])
+      return
     }
+
+    // Normal zoom: go to previous level
+    onZoomChange(ZOOM_LEVELS[currentIndex - 1])
   }
 
   const handleFit = () => {
