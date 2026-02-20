@@ -6,7 +6,6 @@ import { CropOverlay } from '@/components/image-editor/crop-overlay'
 import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb'
 import { LayerOverlay } from '@/components/image-editor/layer-overlay'
 import { LayerRegionsOverlay } from '@/components/image-editor/layer-regions-overlay'
-import { ZoomControls } from '@/components/image-editor/zoom-controls'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
@@ -579,21 +578,6 @@ export function PreviewArea({
           )
         )}
       </div>
-
-      {/* Zoom Controls - Bottom Right (positioned relative to preview area) */}
-      {/* Hide zoom controls when fit mode is already at ~100% (no point in zooming) */}
-      {/* Hide on mobile to avoid covering control buttons (users can pinch-to-zoom) */}
-      {!error &&
-        previewUrl &&
-        onZoomChange &&
-        !isMobile &&
-        !(zoom === 'fit' && actualScale && actualScale >= 0.95) && (
-          <div className='pointer-events-none absolute right-0 bottom-0 z-10 flex items-end justify-end p-4'>
-            <div className='pointer-events-auto'>
-              <ZoomControls zoom={zoom} onZoomChange={onZoomChange} actualScale={actualScale} />
-            </div>
-          </div>
-        )}
 
       {/* Preview Controls - Mobile only */}
       {isMobile && (
