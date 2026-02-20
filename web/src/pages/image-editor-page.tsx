@@ -224,17 +224,24 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
   }, [imageEditor, isTemplate])
 
-  // Calculate effective preview dimensions with zoom factor
+  // Calculate effective preview dimensions based on zoom
+  // Zoom % = preview area size / output dimensions
+  // 100% = preview area matches output dimensions exactly
   const effectivePreviewDimensions = useMemo(() => {
     if (!previewMaxDimensions) return null
-    // When zoom is 'fit', use original dimensions (no multiplier)
-    if (zoom === 'fit') return previewMaxDimensions
-    // When zoom is a number, multiply dimensions by zoom factor
-    return {
-      width: Math.floor(previewMaxDimensions.width * zoom),
-      height: Math.floor(previewMaxDimensions.height * zoom),
+    
+    if (zoom === 'fit') {
+      // Fit mode: use container dimensions
+      return previewMaxDimensions
     }
-  }, [previewMaxDimensions, zoom])
+    
+    // Zoom mode: set preview area to output dimensions * zoom
+    const outputDims = imageEditor.getOutputDimensions()
+    return {
+      width: Math.round(outputDims.width * zoom),
+      height: Math.round(outputDims.height * zoom),
+    }
+  }, [previewMaxDimensions, zoom, imageEditor])
 
   // Update preview dimensions dynamically when they change
   useEffect(() => {
