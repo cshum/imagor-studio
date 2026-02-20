@@ -105,6 +105,9 @@ export function PreviewArea({
   // Track context transitions to hide layer overlay until new preview loads
   const [isTransitioning, setIsTransitioning] = useState(false)
 
+  // Track if image fits in container (for smart centering)
+  const [imageFitsInContainer, setImageFitsInContainer] = useState(true)
+
   // Handle mousedown on preview container to deselect layer
   const handleContainerMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -285,6 +288,22 @@ export function PreviewArea({
     previousZoomRef.current = zoom
   }, [zoom])
 
+  // Check if image fits in container and update state
+  useEffect(() => {
+    const container = previewContainerRef.current
+    if (container && imageDimensions) {
+      // Account for padding (8px on each side = 16px total)
+      const containerWidth = container.clientWidth - 16
+      const containerHeight = container.clientHeight - 16
+      
+      const fitsWidth = imageDimensions.width <= containerWidth
+      const fitsHeight = imageDimensions.height <= containerHeight
+      const fits = fitsWidth && fitsHeight
+      
+      setImageFitsInContainer(fits)
+    }
+  }, [imageDimensions])
+
   // Apply scroll adjustment after image loads (when dimensions change)
   useEffect(() => {
     const container = previewContainerRef.current
@@ -367,9 +386,9 @@ export function PreviewArea({
         ref={previewContainerRef}
         className={cn(
           'bg-muted/20 relative flex min-h-0 flex-1 touch-none overflow-auto p-2 pb-0',
-          // Only center in fit mode (when image fits in viewport)
-          // When zoomed: no centering to avoid cropping edges - use scroll position instead
-          zoom === 'fit' && 'items-center justify-center',
+          // Smart centering: apply when in fit mode OR when image fits in container
+          // This prevents jarring jumps during zoom transitions while avoiding edge cropping
+          (zoom === 'fit' || imageFitsInContainer) && 'items-center justify-center',
           // Disable elastic/springy scroll effect
           'overscroll-none',
         )}
