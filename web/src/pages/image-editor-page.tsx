@@ -182,13 +182,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     setLayerAspectRatioLockToggle(false)
   }, [selectedLayerId])
 
-  // Reset zoom to fit when switching to nested layer editing
-  useEffect(() => {
-    if (editingContext) {
-      setZoom('fit')
-    }
-  }, [editingContext])
-
   useEffect(() => {
     // Save current state before initialize (only if it's a template)
     const savedState = isTemplate ? imageEditor.getState() : null
