@@ -105,9 +105,6 @@ export function PreviewArea({
   // Track context transitions to hide layer overlay until new preview loads
   const [isTransitioning, setIsTransitioning] = useState(false)
 
-  // Track zoom transitions to keep image centered during fit → zoom transition
-  const [isZoomTransitioning, setIsZoomTransitioning] = useState(false)
-
   // Handle mousedown on preview container to deselect layer
   const handleContainerMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -274,8 +271,6 @@ export function PreviewArea({
       }
     } else if (zoom !== 'fit' && previousZoom === 'fit') {
       // Fit → Zoom: Always center (mark as not scrolled to trigger centering)
-      // Set transition flag to keep container centered during transition
-      setIsZoomTransitioning(true)
       pendingScrollAdjustment.current = {
         scrollLeft: 0,
         scrollTop: 0,
@@ -283,9 +278,6 @@ export function PreviewArea({
         scrollHeight: 0,
         hasScrolled: false,
       }
-    } else if (zoom === 'fit' && previousZoom !== 'fit') {
-      // Zoom → Fit: Clear transition flag immediately
-      setIsZoomTransitioning(false)
     }
     // Note: Zoom → Fit doesn't need adjustment (CSS centers it)
 
@@ -351,10 +343,6 @@ export function PreviewArea({
             container.scrollTop = newScrollTop
           }
         }
-
-        // Clear zoom transition flag after scroll positioning is complete
-        // This allows the container to switch from centered to scrollable mode
-        setIsZoomTransitioning(false)
       })
 
       // Clear pending adjustment

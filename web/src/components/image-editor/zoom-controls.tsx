@@ -12,6 +12,24 @@ interface ZoomControlsProps {
   className?: string
 }
 
+/**
+ * Calculate effective zoom levels by filtering out levels too close to the fit scale.
+ * Only returns levels significantly larger than fit (with minimum 15% distance).
+ *
+ * @param fitScale - The current fit scale (0-1)
+ * @returns Array of effective zoom levels including 'fit' and larger numeric levels
+ */
+function getEffectiveZoomLevels(fitScale: number): Array<number | 'fit'> {
+  const baseLevels = [0.25, 0.5, 0.75, 1.0]
+
+  // Filter to only keep levels significantly larger than fit (15% minimum distance)
+  const MIN_DISTANCE = 0.15
+  const largerLevels = baseLevels.filter((level) => level > fitScale + MIN_DISTANCE)
+
+  // Effective levels: fit + larger levels
+  return ['fit', ...largerLevels]
+}
+
 export function ZoomControls({ zoom, onZoomChange, actualScale, className }: ZoomControlsProps) {
   const { t } = useTranslation()
 
@@ -25,20 +43,11 @@ export function ZoomControls({ zoom, onZoomChange, actualScale, className }: Zoo
     }
   }, [zoom, actualScale])
 
-  // Get effective zoom levels (only levels larger than fit)
-  const getEffectiveZoomLevels = (): Array<number | 'fit'> => {
-    const fitScale = fitScaleRef.current || 0
-    const baseLevels = [0.25, 0.5, 0.75, 1.0]
-
-    // Filter to only keep levels significantly larger than fit (15% minimum distance)
-    const MIN_DISTANCE = 0.15
-    const largerLevels = baseLevels.filter((level) => level > fitScale + MIN_DISTANCE)
-
-    // Effective levels: fit + larger levels
-    return ['fit', ...largerLevels]
-  }
-
-  const effectiveLevels = getEffectiveZoomLevels()
+  // Calculate effective zoom levels
+  // Use fitScaleRef if available, otherwise fall back to current actualScale
+  // This ensures correct behavior on first load before fitScaleRef is set
+  const fitScale = fitScaleRef.current || actualScale || 0
+  const effectiveLevels = getEffectiveZoomLevels(fitScale)
   const currentIndex = effectiveLevels.indexOf(zoom)
   const canZoomIn = currentIndex >= 0 && currentIndex < effectiveLevels.length - 1
   const canZoomOut = currentIndex > 0
