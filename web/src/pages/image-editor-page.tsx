@@ -176,10 +176,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     [layerAspectRatioLockToggle, isShiftPressed],
   )
 
-  // Reset aspect ratio lock when switching layers
-  // Default to unlocked for maximum flexibility
+  // Reset aspect ratio lock and zoom when switching layers
+  // Default to unlocked for maximum flexibility and fit view
   useEffect(() => {
     setLayerAspectRatioLockToggle(false)
+    setZoom('fit')
   }, [selectedLayerId])
 
   useEffect(() => {
