@@ -445,7 +445,7 @@ export function PreviewArea({
 
       {/* Zoom Controls - Bottom Right (positioned relative to preview area) */}
       {!visualCropEnabled && !error && previewUrl && onZoomChange && (
-        <div className='pointer-events-none absolute right-0 bottom-0 flex items-end justify-end p-4'>
+        <div className='pointer-events-none absolute right-0 bottom-0 z-30 flex items-end justify-end p-4'>
           <div className='pointer-events-auto'>
             <ZoomControls zoom={zoom} onZoomChange={onZoomChange} actualScale={actualScale} />
           </div>

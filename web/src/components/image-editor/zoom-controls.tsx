@@ -11,7 +11,7 @@ interface ZoomControlsProps {
   className?: string
 }
 
-const ZOOM_LEVELS: Array<number | 'fit'> = ['fit', 0.5, 1.0, 2.0, 4.0]
+const ZOOM_LEVELS: Array<number | 'fit'> = ['fit', 0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
 
 export function ZoomControls({ zoom, onZoomChange, actualScale, className }: ZoomControlsProps) {
   const { t } = useTranslation()
@@ -36,12 +36,22 @@ export function ZoomControls({ zoom, onZoomChange, actualScale, className }: Zoo
     onZoomChange('fit')
   }
 
-  // Display actual scale if available, otherwise show zoom multiplier or "Fit"
-  const displayText = actualScale
-    ? `${Math.round(actualScale * 100)}%`
-    : zoom === 'fit'
+  // Display "Fit" when in fit mode, otherwise show zoom percentage
+  // Only show actualScale percentage for explicit zoom levels (not fit mode)
+  const displayText =
+    zoom === 'fit'
       ? 'Fit'
-      : `${Math.round(zoom * 100)}%`
+      : actualScale
+        ? `${Math.round(actualScale * 100)}%`
+        : `${Math.round(zoom * 100)}%`
+
+  // Generate helpful tooltip for zoom button
+  const zoomTooltip =
+    zoom === 'fit'
+      ? t('imageEditor.zoom.fit')
+      : zoom === 1.0
+        ? t('imageEditor.zoom.actualSize')
+        : `${Math.round(zoom * 100)}%`
 
   return (
     <div
@@ -66,7 +76,7 @@ export function ZoomControls({ zoom, onZoomChange, actualScale, className }: Zoo
         size='sm'
         onClick={handleFit}
         disabled={zoom === 'fit'}
-        title={t('imageEditor.zoom.fit')}
+        title={zoomTooltip}
         className='text-muted-foreground hover:text-foreground h-7 min-w-[60px] px-2 font-mono text-xs'
       >
         {displayText}
