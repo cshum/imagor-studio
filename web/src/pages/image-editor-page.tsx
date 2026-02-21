@@ -254,7 +254,10 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   useEffect(() => {
     if (effectivePreviewDimensions) {
       const outputDims = imageEditor.getOutputDimensions()
-      const scale = effectivePreviewDimensions.width / outputDims.width
+      const scale = Math.min(
+        effectivePreviewDimensions.width / outputDims.width,
+        effectivePreviewDimensions.height / outputDims.height,
+      )
       setActualScale(scale)
     } else {
       setActualScale(null)
@@ -1226,9 +1229,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   const isLeftEmpty = leftColumnSections.length === 0
   const isRightEmpty = rightColumnSections.length === 0
 
-  // Calculate if zoom controls should be shown
-  const showZoomControls = !isMobile && !(zoom === 'fit' && actualScale && actualScale >= 0.95)
-
   return (
     <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] overscroll-none select-none'>
       {/* Loading Bar */}
@@ -1487,18 +1487,13 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       {/* Bottom bar - status bar style */}
       <div className='bg-background flex h-12 items-center overflow-x-auto overflow-y-hidden border-t px-4'>
         {/* Imagor Path - scrollable with monospace font, conditional padding based on zoom controls visibility */}
-        <code
-          className={cn(
-            'text-muted-foreground font-mono text-xs whitespace-nowrap select-text',
-            showZoomControls && 'pr-36',
-          )}
-        >
+        <code className='text-muted-foreground pr-36 font-mono text-xs whitespace-nowrap select-text'>
           {imagorPath}
         </code>
       </div>
 
       {/* Zoom Controls - fixed position overlay aligned with bottom bar */}
-      {showZoomControls && (
+      {!isMobile && (
         <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
           <div className='pointer-events-auto'>
             <ZoomControls zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />
