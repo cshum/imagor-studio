@@ -13,6 +13,20 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Features",
+      items: [
+        "features/gallery",
+        "features/image-editing",
+        "features/layers",
+        "features/templates",
+        "features/keyboard-shortcuts",
+        "features/url-transformations",
+        "features/multi-language",
+        "features/video-support",
+      ],
+    },
+    {
+      type: "category",
       label: "Configuration",
       items: [
         "configuration/overview",
