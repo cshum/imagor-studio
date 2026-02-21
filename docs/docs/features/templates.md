@@ -4,17 +4,26 @@ sidebar_position: 4
 
 # Templates
 
-Save your editing workflows as reusable templates. Templates capture all transformations, layers, and settings so you can apply the same look to different images.
+Save and reuse your editing workflows with template-based image processing. Templates capture complete editing states in an open JSON format, enabling consistent results across your image library.
 
 ## What Are Templates?
 
-Templates are `.imagor.json` files that store:
+Templates are `.imagor.json` files stored in an open, portable JSON format that contains:
 
 - All image transformations (crop, resize, color adjustments, effects)
 - Layer compositions and settings
 - Output format and quality settings
 
-Templates don't contain the actual images—they store the transformation instructions. This lets you apply the same editing workflow to any image.
+Templates store transformation instructions, not the actual images. This approach enables you to apply the same editing workflow to different images while keeping your originals untouched.
+
+## Open JSON Format
+
+Templates use a structured JSON format that is:
+
+- **Portable** - Share templates as files between users and systems
+- **Readable** - Human-readable JSON structure
+- **Extensible** - Open format for future enhancements
+- **Version-controlled** - Track template changes in git
 
 ## Creating Templates
 
@@ -48,23 +57,43 @@ When editing a template:
 - All standard editing controls available
 - Changes save back to the template file
 
-## Template Workflow
+## Use Cases
 
 ### Consistent Branding
 
-Create templates for:
+Maintain visual consistency across your image library:
 
 - Logo watermarks with specific positioning
-- Brand color adjustments
-- Standard crop ratios and sizes
-- Signature effects and filters
+- Brand color adjustments and filters
+- Standard crop ratios and dimensions
+- Signature effects for your style
 
-### Batch Processing
+### Social Media Graphics
 
-1. Create template with desired transformations
-2. Apply template to multiple images
-3. Each image gets the same transformations
-4. Original images remain unchanged
+Create templates for different platforms:
+
+- Instagram post templates (1:1 aspect ratio)
+- Twitter header templates (3:1 aspect ratio)
+- YouTube thumbnail templates (16:9 aspect ratio)
+- Consistent filters and branding across platforms
+
+### Product Photography
+
+Standardize product image processing:
+
+- Consistent background colors
+- Standard padding and dimensions
+- Watermark positioning
+- Color correction presets
+
+### Photo Collections
+
+Apply consistent edits across photo sets:
+
+- Wedding photo color grading
+- Event photography filters
+- Portfolio presentation styles
+- Archive standardization
 
 ### Sharing Templates
 

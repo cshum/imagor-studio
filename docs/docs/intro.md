@@ -5,7 +5,7 @@ slug: /
 
 # Introduction
 
-**Imagor Studio** is a self-hosted image gallery and editing web application with URL-based image transformations.
+**Imagor Studio** is a self-hosted image gallery and editing platform with URL-based transformations and template-driven workflows.
 
 ### Gallery
 
@@ -39,11 +39,12 @@ Responsive interface that works on mobile devices.
 
 ## Key Features
 
-- **Virtual scrolling gallery** - Efficient rendering for large image collections
-- **URL-based transformations** - Non-destructive image editing powered by [imagor](https://github.com/cshum/imagor)
-- **Multi-layer editing** - Stack and composite multiple images
-- **Template system** - Save and reuse editing workflows
-- **Universal storage** - Works with local filesystem, S3, MinIO, Cloudflare R2
+- **Self-hosted image management** - Full control over your image library and data
+- **Virtual scrolling gallery** - Efficient rendering for thousands of images
+- **URL-based transformations** - Non-destructive image processing powered by [imagor](https://github.com/cshum/imagor) and libvips
+- **Template-driven workflows** - Save and reuse editing workflows in open JSON format
+- **Multi-layer compositing** - Stack and composite multiple images with independent transformations
+- **Universal storage support** - Works with local filesystem, S3, MinIO, Cloudflare R2, and more
 
 ## What Makes Imagor Studio Special?
 
