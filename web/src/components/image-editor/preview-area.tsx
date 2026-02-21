@@ -478,8 +478,6 @@ export function PreviewArea({
                               : 'max-w-[calc(100vw-692px)]'), // Both full: 330 + 330 + 32 = 692px
                   )}
                 />
-
-                {/* Unified overlay container - works for both fit and zoom modes */}
                 {imageDimensions && (
                   <div
                     className='absolute'
