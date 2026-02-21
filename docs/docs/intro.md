@@ -5,11 +5,11 @@ slug: /
 
 # Introduction
 
-**Imagor Studio** is a self-hosted image gallery and live editing web application designed for creators who need powerful image management and editing capabilities.
+**Imagor Studio** is a self-hosted image gallery with built-in editing. Virtual scrolling, drag-and-drop management, multi-layer compositing, and template workflows.
 
-### Lightning-Fast Gallery
+### Gallery
 
-High-performance virtual scrolling gallery with instant thumbnail generation and smooth navigation through thousands of images.
+Browse and organize your image files with virtual scrolling, drag-and-drop management, folder navigation, and multi-select for bulk operations.
 
 <div className="screenshot-container">
 
@@ -17,9 +17,9 @@ High-performance virtual scrolling gallery with instant thumbnail generation and
 
 </div>
 
-### Professional Live Editing
+### Image Editing
 
-Advanced image editing with real-time preview, color adjustments, effects, cropping, and instant URL generation for transformed images.
+Image editing with real-time preview, multi-layer compositing, template workflows, color adjustments, effects, and cropping. All transformations are URL-based.
 
 <div className="screenshot-container">
 
@@ -27,22 +27,24 @@ Advanced image editing with real-time preview, color adjustments, effects, cropp
 
 </div>
 
-### Mobile Experience
+### Template Workflows
 
-Touch-optimized interface that works seamlessly on mobile while maintaining desktop power and full functionality.
+Save editing workflows as reusable templates. Stored as portable JSON files, apply the same edits across your entire image library.
 
-<div className="screenshot-container-mobile">
+<div className="screenshot-container">
 
-![Mobile](../static/img/mobile.jpg)
+![Templates](../static/img/template.jpg)
 
 </div>
 
 ## Key Features
 
-- **High-performance image gallery** with virtual scrolling and live editing capabilities powered by [imagor](https://github.com/cshum/imagor)
-- **Zero-configuration setup** with universal storage support and non-destructive workflow
-- **Advanced image editing** with real-time preview, color adjustments, effects, cropping, and instant URL generation for transformed images
-- **Touch-optimized interface** that works seamlessly on mobile while maintaining desktop power and full functionality
+- **Self-hosted image management** - Full control over your image library and data
+- **Virtual scrolling gallery** - Efficient rendering for thousands of images
+- **URL-based transformations** - Non-destructive image processing powered by [imagor](https://github.com/cshum/imagor) and libvips
+- **Template-driven workflows** - Save and reuse editing workflows in open JSON format
+- **Multi-layer compositing** - Stack and composite multiple images with independent transformations
+- **Universal storage support** - Works with local filesystem, S3, MinIO, Cloudflare R2, and more
 
 ## What Makes Imagor Studio Special?
 
