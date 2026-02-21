@@ -73,9 +73,10 @@ import {
 } from '@/lib/editor-state-url'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { type ImageEditorState } from '@/lib/image-editor.ts'
+import { calculateOptimalLayerPositioning } from '@/lib/layer-positioning'
+import { calculateLayerPositionInViewport, calculateViewportBounds } from '@/lib/viewport-utils'
 import { splitImagePath } from '@/lib/path-utils'
 import { cn, debounce } from '@/lib/utils.ts'
-import { calculateLayerPositionInViewport, calculateViewportBounds } from '@/lib/viewport-utils'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 import { useAuth } from '@/stores/auth-store'
 import { setLocale } from '@/stores/locale-store'
@@ -529,21 +530,13 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             'center', // Position at center of viewport
           )
         } else {
-
-          // Fit mode: Use traditional positioning (90% of output dimensions, top-left)
-          const targetWidth = outputDims.width * 0.9
-          const targetHeight = outputDims.height * 0.9
-
-          const scaleX = targetWidth / dimensions.width
-          const scaleY = targetHeight / dimensions.height
-          const scale = Math.min(scaleX, scaleY, 1)
-
-          layerPosition = {
-            x: 0,
-            y: 0,
-            width: Math.round(dimensions.width * scale),
-            height: Math.round(dimensions.height * scale),
-          }
+          // Fit mode: Use calculateOptimalLayerPositioning for consistency
+          layerPosition = calculateOptimalLayerPositioning({
+            layerOriginalDimensions: dimensions,
+            outputDimensions: outputDims,
+            scaleFactor: 0.9,
+            positioning: 'center',
+          })
         }
 
         // Create new layer with calculated positioning
