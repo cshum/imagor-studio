@@ -174,7 +174,6 @@ export function PreviewArea({
   // Use CSS transform mode only for zoom levels > 1.0 (150%, 200%)
   // For ≤100% zoom levels, use the original unified container architecture
   const useCSSTransform = typeof zoom === 'number' && zoom > 1.0
-  const effectiveScale = useCSSTransform ? zoom : 1.0
 
   // Calculate effective dimensions for overlays
   // In CSS transform mode, keep container at original size to maintain coordinate system
@@ -424,11 +423,11 @@ export function PreviewArea({
                   <div
                     className='relative'
                     style={
-                      zoom !== 'fit' && effectiveImageDimensions
+                      effectiveImageDimensions
                         ? {
                             width: `${effectiveImageDimensions.width}px`,
                             height: `${effectiveImageDimensions.height}px`,
-                            transform: `scale(${zoom})`,
+                            transform: `scale(${zoom as number})`,
                             transformOrigin: 'top left',
                           }
                         : undefined
@@ -440,7 +439,7 @@ export function PreviewArea({
                       alt={`Preview of ${imagePath}`}
                       onLoad={handleImageLoad}
                       style={
-                        zoom !== 'fit' && imageDimensions
+                        imageDimensions
                           ? {
                               width: `${imageDimensions.width}px`,
                               height: `${imageDimensions.height}px`,
@@ -453,20 +452,6 @@ export function PreviewArea({
                             }
                           : undefined
                       }
-                      className={cn(
-                        zoom === 'fit' && 'h-auto w-auto object-contain',
-                        zoom === 'fit' && 'max-h-[calc(100vh-152px)]',
-                        zoom === 'fit' &&
-                          (isMobile
-                            ? 'max-w-[calc(100vw-32px)]'
-                            : isTablet
-                              ? 'max-w-[calc(100vw-362px)]'
-                              : isLeftColumnEmpty && isRightColumnEmpty
-                                ? 'max-w-[calc(100vw-152px)]'
-                                : isLeftColumnEmpty || isRightColumnEmpty
-                                  ? 'max-w-[calc(100vw-422px)]'
-                                  : 'max-w-[calc(100vw-692px)]'),
-                      )}
                     />
                   </div>
 
