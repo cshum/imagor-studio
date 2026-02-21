@@ -195,10 +195,9 @@ export function PreviewArea({
 
   // Shared calculation logic for preview dimensions
   const calculatePreviewDimensions = useCallback(() => {
-    // In visual crop mode, only skip dimension updates when in fit mode AND window is resizing
-    // This prevents the preview from being regenerated during window resize,
-    // which would cause the crop overlay to become misaligned
-    // However, we DO want to update dimensions when zoom changes
+    // In visual crop mode in fit zoom, skip preview dimension updates to prevent regeneration
+    // The overlay now uses percentage-based dimensions and will scale via ResizeObserver
+    // This prevents the preview from being regenerated during window resize
     if (visualCropEnabled && zoom === 'fit') {
       return
     }
@@ -536,6 +535,7 @@ export function PreviewArea({
                             vFlip={overlayVFlip}
                             originalWidth={originalDimensions.width}
                             originalHeight={originalDimensions.height}
+                            zoom={zoom}
                           />
                         )
                       })()}
