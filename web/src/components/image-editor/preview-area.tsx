@@ -171,6 +171,15 @@ export function PreviewArea({
     }
   }, [zoom])
 
+  // Detect CSS transform mode for zoom levels > 1.0
+  const useCSSTransform = typeof zoom === 'number' && zoom > 1.0
+  const effectiveScale = useCSSTransform ? zoom : 1.0
+
+  // Calculate effective dimensions for overlays
+  // In CSS transform mode, keep container at original size to maintain coordinate system
+  // The CSS transform will handle the visual scaling
+  const effectiveImageDimensions = imageDimensions
+
   // Calculate scale factors for overlays (crop and layer)
   // Scale is the ratio between preview dimensions and output dimensions
   // Output dimensions = after crop + resize, before padding
@@ -411,10 +420,16 @@ export function PreviewArea({
               <div
                 className='relative'
                 style={
-                  zoom !== 'fit' && imageDimensions
+                  zoom !== 'fit' && effectiveImageDimensions
                     ? {
-                        width: `${imageDimensions.width}px`,
-                        height: `${imageDimensions.height}px`,
+                        width: `${effectiveImageDimensions.width}px`,
+                        height: `${effectiveImageDimensions.height}px`,
+                        // Apply the same CSS transform to the entire container in CSS transform mode
+                        // This ensures overlays scale along with the image
+                        ...(useCSSTransform && {
+                          transform: `scale(${zoom})`,
+                          transformOrigin: 'top left',
+                        }),
                       }
                     : undefined
                 }
@@ -434,6 +449,11 @@ export function PreviewArea({
                           maxWidth: `${imageDimensions.width}px`,
                           maxHeight: `${imageDimensions.height}px`,
                           flexShrink: 0,
+                          // Apply pixelated rendering for CSS transform mode
+                          // Don't apply transform here since container is already transformed
+                          ...(useCSSTransform && {
+                            imageRendering: 'pixelated' as const,
+                          }),
                         }
                       : undefined
                   }
@@ -487,15 +507,19 @@ export function PreviewArea({
                 {!visualCropEnabled &&
                   !isTransitioning &&
                   imageEditor &&
-                  imageDimensions &&
-                  imageDimensions.width > 0 &&
-                  imageDimensions.height > 0 &&
+                  effectiveImageDimensions &&
+                  effectiveImageDimensions.width > 0 &&
+                  effectiveImageDimensions.height > 0 &&
                   (() => {
                     // Get the actual output dimensions (after crop + resize + padding)
                     // This includes padding in the total canvas size
                     const outputDims = imageEditor.getOutputDimensions()
 
-                    // Get padding values from current state
+                    // DON'T scale output dimensions - let CSS percentages handle scaling automatically
+                    // The container is already scaled, so percentage-based positioning will scale correctly
+
+                    // Get padding values from current state - DON'T scale them
+                    // CSS percentages will handle the scaling automatically
                     const state = imageEditor.getState()
                     const paddingLeft = state.paddingLeft || 0
                     const paddingRight = state.paddingRight || 0
@@ -513,7 +537,9 @@ export function PreviewArea({
                         selectedLayer.transforms,
                       )
 
-                      // Get layer's own padding (if it has any) for positioning calculations
+                      // DON'T scale layer dimensions - let CSS percentages handle scaling automatically
+
+                      // Get layer's own padding (if it has any) for positioning calculations - DON'T scale them
                       const layerPaddingLeft = selectedLayer.transforms?.paddingLeft || 0
                       const layerPaddingRight = selectedLayer.transforms?.paddingRight || 0
                       const layerPaddingTop = selectedLayer.transforms?.paddingTop || 0

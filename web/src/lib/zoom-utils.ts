@@ -6,7 +6,7 @@
  * @returns Array of effective zoom levels including 'fit' and larger numeric levels
  */
 export function getEffectiveZoomLevels(fitScale: number): Array<number | 'fit'> {
-  const baseLevels = [0.25, 0.5, 0.75, 1.0]
+  const baseLevels = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
 
   // Filter to only keep levels significantly larger than fit (15% minimum distance)
   const MIN_DISTANCE = 0.15
