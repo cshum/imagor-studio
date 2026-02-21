@@ -91,7 +91,7 @@ export function ZoomControls({ zoom, onZoomChange, actualScale, className }: Zoo
     onZoomChange('fit')
   }
 
-  // Display "Fit" when in fit mode, otherwise show target zoom percentage
+  // Display image percentage in fit mode, otherwise show target zoom percentage
   const displayText =
     zoom === 'fit'
       ? `${Math.round(Math.min(actualScale || 1, 1) * 100)}%`
