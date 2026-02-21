@@ -18,8 +18,6 @@ type ImagorProvider interface {
 // imagorPathRegex matches imagor-style paths using the same logic as imagorpath package
 var imagorPathRegex = regexp.MustCompile(
 	"^/*" +
-		// params (optional)
-		"(params/)?" +
 		// hash: either "unsafe/" or base64 URL-safe hash with min 17 chars
 		"((unsafe/)|([A-Za-z0-9-_=]{17,})/)?" +
 		// path (required for imagor)
@@ -42,15 +40,15 @@ func isImagorPath(path string) bool {
 
 	// Check if path matches imagor pattern
 	matches := imagorPathRegex.FindStringSubmatch(path)
-	if len(matches) < 6 {
+	if len(matches) < 5 {
 		return false
 	}
 
 	// Check if we have either unsafe or a valid hash
-	hasUnsafe := matches[3] == "unsafe/"
-	hasValidHash := matches[4] != "" && len(matches[4]) >= 17 &&
-		matches[4] != "adaptive-full-fit-in" && isValidBase64URLHash(matches[4])
-	hasImagePath := matches[5] != ""
+	hasUnsafe := matches[2] == "unsafe/"
+	hasValidHash := matches[3] != "" && len(matches[3]) >= 17 &&
+		matches[3] != "adaptive-full-fit-in" && isValidBase64URLHash(matches[3])
+	hasImagePath := matches[4] != ""
 
 	// Must have either unsafe or valid hash, and must have an image path
 	return (hasUnsafe || hasValidHash) && hasImagePath

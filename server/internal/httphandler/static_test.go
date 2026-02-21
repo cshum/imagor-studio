@@ -76,7 +76,6 @@ func TestIsImagorPath(t *testing.T) {
 		// Should route to imagor
 		{"/unsafe/300x200/test.jpg", true, "unsafe path"},
 		{"/unsafe/fit-in/300x200/test.jpg", true, "unsafe path with fit-in"},
-		{"/params/unsafe/300x200/test.jpg", true, "params with unsafe"},
 		{"abc123def456ghi789jkl/test.jpg", true, "valid hash (17+ chars)"},
 		{"abcdefghijklmnopqrstuvwxyz123456/test.jpg", true, "long valid hash"},
 		{"/abcdefghijklmnopq/300x200/test.jpg", true, "exactly 17 char hash"},
@@ -97,8 +96,6 @@ func TestIsImagorPath(t *testing.T) {
 		{"has spaces/test.jpg", false, "spaces in hash"},
 
 		// Edge cases
-		{"/params/short/test.jpg", false, "params with short hash"},
-		{"/params/abcdefghijklmnopq/test.jpg", true, "params with valid hash"},
 		{"adaptive-full-fit-in/test.jpg", false, "fit-in keyword without hash"},
 		{"/unsafe/", false, "unsafe without image path"},
 		{"/abcdefghijklmnopq/", false, "hash without image path"},
