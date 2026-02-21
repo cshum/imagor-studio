@@ -56,18 +56,8 @@ export function calculateViewportBounds(input: ViewportCalculationInput): Viewpo
     outputDimensions,
   } = input
 
-  console.log('=== OUTPUT-SPACE COORDINATE SYSTEM ===')
-  console.log('Input:', {
-    scroll: { left: scrollLeft, top: scrollTop },
-    client: { width: clientWidth, height: clientHeight },
-    wrapper: { width: scrollWidth, height: scrollHeight },
-    imageDimensions,
-    outputDimensions,
-  })
-
   // Calculate the scale factor between preview and output space
   const previewToOutputScale = outputDimensions.width / imageDimensions.width
-  console.log('Preview to output scale factor:', previewToOutputScale)
 
   // Step 1: Calculate visible area in container coordinates (accounting for 8px container padding)
   const containerPadding = 8 // p-2 = 8px padding
@@ -76,12 +66,6 @@ export function calculateViewportBounds(input: ViewportCalculationInput): Viewpo
   const containerVisibleRight = scrollLeft + clientWidth - containerPadding
   const containerVisibleBottom = scrollTop + clientHeight - containerPadding
 
-  console.log('Container visible area:', {
-    left: containerVisibleLeft,
-    top: containerVisibleTop,
-    right: containerVisibleRight,
-    bottom: containerVisibleBottom,
-  })
 
   // Step 2: Calculate the image's position within the container
   // The wrapper has 50% padding on all sides, so the image starts at 25% of wrapper size
@@ -90,12 +74,6 @@ export function calculateViewportBounds(input: ViewportCalculationInput): Viewpo
   const imageEndX = imageStartX + imageDimensions.width
   const imageEndY = imageStartY + imageDimensions.height
 
-  console.log('Image position in container space:', {
-    startX: imageStartX,
-    startY: imageStartY,
-    endX: imageEndX,
-    endY: imageEndY,
-  })
 
   // Step 4: Find intersection between visible container area and image area
   const intersectionLeft = Math.max(containerVisibleLeft, imageStartX)
@@ -103,25 +81,11 @@ export function calculateViewportBounds(input: ViewportCalculationInput): Viewpo
   const intersectionRight = Math.min(containerVisibleRight, imageEndX)
   const intersectionBottom = Math.min(containerVisibleBottom, imageEndY)
 
-  console.log('Intersection in container space:', {
-    left: intersectionLeft,
-    top: intersectionTop,
-    right: intersectionRight,
-    bottom: intersectionBottom,
-  })
-
   // Step 5: Convert intersection back to preview image coordinates
   const previewVisibleLeft = Math.max(0, intersectionLeft - imageStartX)
   const previewVisibleTop = Math.max(0, intersectionTop - imageStartY)
   const previewVisibleRight = Math.min(imageDimensions.width, intersectionRight - imageStartX)
   const previewVisibleBottom = Math.min(imageDimensions.height, intersectionBottom - imageStartY)
-
-  console.log('Preview image coordinates:', {
-    left: previewVisibleLeft,
-    top: previewVisibleTop,
-    right: previewVisibleRight,
-    bottom: previewVisibleBottom,
-  })
 
   // Step 6: Convert to output space coordinates
   // This is the key fix - we need to work in output space for layer positioning
@@ -140,9 +104,6 @@ export function calculateViewportBounds(input: ViewportCalculationInput): Viewpo
     width: outputVisibleWidth,
     height: outputVisibleHeight,
   }
-
-  console.log('Final viewport bounds in OUTPUT space:', bounds)
-  console.log('Scale factor applied:', previewToOutputScale)
 
   return bounds
 }
@@ -191,14 +152,6 @@ export function calculateLayerPositionInViewport(
     width: layerWidth,
     height: layerHeight,
   }
-
-  console.log('Layer positioning calculation:', {
-    layerDimensions,
-    viewportBounds,
-    scaleFactor,
-    positioning,
-    result,
-  })
 
   return result
 }

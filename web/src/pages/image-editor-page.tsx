@@ -491,46 +491,24 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
   const handleAddLayerWithViewport = useCallback(
     async (paths: string[]) => {
-      console.log('paths:', paths)
       if (paths.length === 0) return
-
-      console.log('=== VIEWPORT-AWARE LAYER POSITIONING DEBUG (ImageEditorPage) ===')
-      console.log('Zoom level:', zoom)
-      console.log('Zoom type:', typeof zoom)
-      console.log('previewContainerRef exists:', !!previewContainerRef.current)
-      console.log('previewImageDimensions exists:', !!previewImageDimensions)
-      console.log('previewImageDimensions value:', previewImageDimensions)
 
       try {
         const imagePath = paths[0] // Single selection mode
 
         // Fetch dimensions for the layer image
         const dimensions = await fetchImageDimensions(imagePath)
-        console.log('Layer image dimensions:', dimensions)
 
         // Extract filename for display name
         const filename = imagePath.split('/').pop() || imagePath
 
         // Get current context output dimensions (context-aware)
         const outputDims = imageEditor.getOutputDimensions()
-        console.log('Output dimensions:', outputDims)
 
         let layerPosition: { x: number; y: number; width: number; height: number }
 
         // Check if we're in zoom mode and have viewport information
         if (zoom !== 'fit' && previewContainerRef.current && previewImageDimensions) {
-          console.log('=== ZOOM MODE POSITIONING ===')
-          console.log('Container scroll position:', {
-            scrollLeft: previewContainerRef.current.scrollLeft,
-            scrollTop: previewContainerRef.current.scrollTop,
-          })
-          console.log('Container dimensions:', {
-            clientWidth: previewContainerRef.current.clientWidth,
-            clientHeight: previewContainerRef.current.clientHeight,
-            scrollWidth: previewContainerRef.current.scrollWidth,
-            scrollHeight: previewContainerRef.current.scrollHeight,
-          })
-
           // Calculate viewport bounds using our utility
           const viewportBounds = calculateViewportBounds({
             scrollLeft: previewContainerRef.current.scrollLeft,
@@ -542,7 +520,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             imageDimensions: previewImageDimensions,
             outputDimensions: outputDims,
           })
-          console.log('Calculated viewport bounds:', viewportBounds)
 
           // Calculate layer position within the visible viewport
           layerPosition = calculateLayerPositionInViewport(
@@ -551,13 +528,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             0.9, // 90% scale factor
             'center', // Position at center of viewport
           )
-          console.log('Zoom mode layer position:', layerPosition)
         } else {
-          console.log('=== FIT MODE POSITIONING ===')
-          console.log('Reason for fit mode:')
-          console.log('  - zoom === "fit":', zoom === 'fit')
-          console.log('  - no previewContainerRef.current:', !previewContainerRef.current)
-          console.log('  - no previewImageDimensions:', !previewImageDimensions)
 
           // Fit mode: Use traditional positioning (90% of output dimensions, top-left)
           const targetWidth = outputDims.width * 0.9
@@ -573,7 +544,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             width: Math.round(dimensions.width * scale),
             height: Math.round(dimensions.height * scale),
           }
-          console.log('Fit mode layer position:', layerPosition)
         }
 
         // Create new layer with calculated positioning
@@ -594,13 +564,10 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           },
         }
 
-        console.log('Final layer object:', newLayer)
-
         imageEditor.addLayer(newLayer)
 
         // Auto-select the newly added layer
         imageEditor.setSelectedLayerId(newLayer.id)
-        console.log('Layer added and selected successfully')
       } catch (error) {
         console.error('Failed to add layer:', error)
         toast.error(t('imageEditor.layers.failedToAddLayer'))
