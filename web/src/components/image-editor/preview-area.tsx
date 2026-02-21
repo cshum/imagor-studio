@@ -375,10 +375,11 @@ export function PreviewArea({
       <div
         ref={previewContainerRef}
         className={cn(
-          'bg-muted/20 relative flex min-h-0 flex-1 touch-none overflow-auto p-2 pb-0',
+          'bg-muted/20 relative flex min-h-0 flex-1 touch-none p-2 pb-0',
           // Smart centering: apply when in fit mode OR when image fits in container
           // This prevents jarring jumps during zoom transitions while avoiding edge cropping
           (zoom === 'fit' || imageFitsInContainer) && 'items-center justify-center',
+          zoom === 'fit' || imageFitsInContainer ? 'overflow-hidden' : 'overflow-auto',
           // Disable elastic/springy scroll effect
           'overscroll-none',
         )}
