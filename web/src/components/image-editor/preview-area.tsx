@@ -440,6 +440,7 @@ export function PreviewArea({
                       }
                     : undefined
                 }
+                onMouseDown={handleContainerMouseDown}
               >
                 <PreloadImage
                   ref={previewImageRef}
