@@ -383,14 +383,14 @@ export function PreviewArea({
       container.scrollTop = 0
     }
 
-  // Update ref for next comparison
-  previousImageDimensionsRef.current = imageDimensions
-}, [imageDimensions, zoom])
+    // Update ref for next comparison
+    previousImageDimensionsRef.current = imageDimensions
+  }, [imageDimensions, zoom])
 
-// Report image dimensions to parent for viewport calculations
-useEffect(() => {
-  onImageDimensionsChange?.(imageDimensions)
-}, [imageDimensions, onImageDimensionsChange])
+  // Report image dimensions to parent for viewport calculations
+  useEffect(() => {
+    onImageDimensionsChange?.(imageDimensions)
+  }, [imageDimensions, onImageDimensionsChange])
 
   return (
     <div className='relative flex h-full flex-col'>

@@ -1,14 +1,15 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
+
 import {
-  calculateVisibleImageArea,
-  calculateLayerSizeForArea,
   calculateLayerPositionInArea,
-  convertPreviewToOutputCoordinates,
+  calculateLayerSizeForArea,
   calculateOptimalLayerPositioning,
-  type ViewportInfo,
+  calculateVisibleImageArea,
+  convertPreviewToOutputCoordinates,
   type ImageDimensions,
+  type LayerPositioningInput,
+  type ViewportInfo,
   type VisibleArea,
-  type LayerPositioningInput
 } from './layer-positioning'
 
 describe('calculateVisibleImageArea', () => {
@@ -24,11 +25,18 @@ describe('calculateVisibleImageArea', () => {
 
     const result = calculateVisibleImageArea(viewport)
 
+    // With new 25% padding approach:
+    // Wrapper dimensions: 2400x1800 (image is 50% of wrapper)
+    // Image offset: 600x450 (25% of wrapper)
+    // Visible area: scrollLeft=100, scrollTop=50, clientWidth=800, clientHeight=600
+    // Image coordinates: max(0, 100-600)=0, max(0, 50-450)=0
+    // Width: min(1200, 100+800-600) - 0 = min(1200, 300) = 300
+    // Height: min(900, 50+600-450) - 0 = min(900, 200) = 200
     expect(result).toEqual({
       left: 0,
       top: 0,
-      width: 400,
-      height: 300
+      width: 300,
+      height: 200,
     })
   })
 
@@ -53,7 +61,7 @@ describe('calculateVisibleImageArea', () => {
       left: 0,
       top: 0,
       width: 100, // 100 - 0
-      height: 50  // 50 - 0
+      height: 50, // 50 - 0
     })
   })
 
@@ -78,7 +86,7 @@ describe('calculateVisibleImageArea', () => {
       left: 200,
       top: 150,
       width: 400, // 600 - 200
-      height: 300 // 450 - 150
+      height: 300, // 450 - 150
     })
   })
 
@@ -98,7 +106,7 @@ describe('calculateVisibleImageArea', () => {
       left: 0,
       top: 0,
       width: 400,
-      height: 300
+      height: 300,
     })
   })
 })
@@ -116,7 +124,7 @@ describe('calculateLayerSizeForArea', () => {
     // But capped at 1.0, so scale = 1.0
     expect(result).toEqual({
       width: 200,
-      height: 100
+      height: 100,
     })
   })
 
@@ -130,7 +138,7 @@ describe('calculateLayerSizeForArea', () => {
     // Scale to fit: min(360/800, 270/600) = min(0.45, 0.45) = 0.45
     expect(result).toEqual({
       width: 360, // 800 * 0.45
-      height: 270  // 600 * 0.45
+      height: 270, // 600 * 0.45
     })
   })
 
@@ -144,7 +152,7 @@ describe('calculateLayerSizeForArea', () => {
     // Scale to fit: min(360/100, 270/800) = min(3.6, 0.3375) = 0.3375
     expect(result).toEqual({
       width: 34, // 100 * 0.3375 = 33.75, rounded to 34
-      height: 270  // 800 * 0.3375 = 270
+      height: 270, // 800 * 0.3375 = 270
     })
   })
 
@@ -158,7 +166,7 @@ describe('calculateLayerSizeForArea', () => {
     // Scale to fit: min(200/400, 150/300) = min(0.5, 0.5) = 0.5
     expect(result).toEqual({
       width: 200,
-      height: 150
+      height: 150,
     })
   })
 })
@@ -172,7 +180,7 @@ describe('calculateLayerPositionInArea', () => {
 
     expect(result).toEqual({
       x: 100,
-      y: 50
+      y: 50,
     })
   })
 
@@ -184,7 +192,7 @@ describe('calculateLayerPositionInArea', () => {
 
     expect(result).toEqual({
       x: 200, // 100 + (400 - 200) / 2
-      y: 125  // 50 + (300 - 150) / 2
+      y: 125, // 50 + (300 - 150) / 2
     })
   })
 
@@ -195,8 +203,8 @@ describe('calculateLayerPositionInArea', () => {
     const result = calculateLayerPositionInArea(targetArea, layerDimensions, 'center')
 
     expect(result).toEqual({
-      x: 0,   // 100 + (200 - 400) / 2 = 100 - 100 = 0
-      y: -25  // 50 + (150 - 300) / 2 = 50 - 75 = -25
+      x: 0, // 100 + (200 - 400) / 2 = 100 - 100 = 0
+      y: -25, // 50 + (150 - 300) / 2 = 50 - 75 = -25
     })
   })
 })
@@ -210,14 +218,14 @@ describe('convertPreviewToOutputCoordinates', () => {
     const result = convertPreviewToOutputCoordinates(
       previewCoords,
       previewDimensions,
-      outputDimensions
+      outputDimensions,
     )
 
     expect(result).toEqual({
       x: 100,
       y: 50,
       width: 200,
-      height: 150
+      height: 150,
     })
   })
 
@@ -229,14 +237,14 @@ describe('convertPreviewToOutputCoordinates', () => {
     const result = convertPreviewToOutputCoordinates(
       previewCoords,
       previewDimensions,
-      outputDimensions
+      outputDimensions,
     )
 
     expect(result).toEqual({
       x: 200, // 100 * 2
       y: 100, // 50 * 2
       width: 400, // 200 * 2
-      height: 300 // 150 * 2
+      height: 300, // 150 * 2
     })
   })
 
@@ -248,14 +256,14 @@ describe('convertPreviewToOutputCoordinates', () => {
     const result = convertPreviewToOutputCoordinates(
       previewCoords,
       previewDimensions,
-      outputDimensions
+      outputDimensions,
     )
 
     expect(result).toEqual({
       x: 100, // 200 * 0.5
-      y: 50,  // 100 * 0.5
+      y: 50, // 100 * 0.5
       width: 200, // 400 * 0.5
-      height: 150 // 300 * 0.5
+      height: 150, // 300 * 0.5
     })
   })
 })
@@ -267,7 +275,7 @@ describe('calculateOptimalLayerPositioning', () => {
         layerOriginalDimensions: { width: 400, height: 300 },
         outputDimensions: { width: 800, height: 600 },
         scaleFactor: 0.9,
-        positioning: 'top-left'
+        positioning: 'top-left',
       }
 
       const result = calculateOptimalLayerPositioning(input)
@@ -279,7 +287,7 @@ describe('calculateOptimalLayerPositioning', () => {
         x: 0,
         y: 0,
         width: 400,
-        height: 300
+        height: 300,
       })
     })
 
@@ -287,7 +295,7 @@ describe('calculateOptimalLayerPositioning', () => {
       const input: LayerPositioningInput = {
         layerOriginalDimensions: { width: 1000, height: 800 },
         outputDimensions: { width: 800, height: 600 },
-        scaleFactor: 0.9
+        scaleFactor: 0.9,
       }
 
       const result = calculateOptimalLayerPositioning(input)
@@ -298,7 +306,7 @@ describe('calculateOptimalLayerPositioning', () => {
         x: 0,
         y: 0,
         width: 675, // 1000 * 0.675
-        height: 540 // 800 * 0.675
+        height: 540, // 800 * 0.675
       })
     })
 
@@ -307,7 +315,7 @@ describe('calculateOptimalLayerPositioning', () => {
         layerOriginalDimensions: { width: 400, height: 300 },
         outputDimensions: { width: 800, height: 600 },
         scaleFactor: 0.9,
-        positioning: 'center'
+        positioning: 'center',
       }
 
       const result = calculateOptimalLayerPositioning(input)
@@ -316,7 +324,7 @@ describe('calculateOptimalLayerPositioning', () => {
         x: 200, // (800 - 400) / 2
         y: 150, // (600 - 300) / 2
         width: 400,
-        height: 300
+        height: 300,
       })
     })
   })
@@ -334,7 +342,7 @@ describe('calculateOptimalLayerPositioning', () => {
           imageDimensions: { width: 800, height: 600 },
           actualScale: 1.0,
         },
-        scaleFactor: 0.9
+        scaleFactor: 0.9,
       }
 
       const result = calculateOptimalLayerPositioning(input)
@@ -361,7 +369,7 @@ describe('calculateOptimalLayerPositioning', () => {
           imageDimensions: { width: 800, height: 600 },
           actualScale: 1.0,
         },
-        scaleFactor: 0.9
+        scaleFactor: 0.9,
       }
 
       const result = calculateOptimalLayerPositioning(input)
@@ -383,7 +391,7 @@ describe('calculateOptimalLayerPositioning', () => {
           imageDimensions: { width: 800, height: 600 },
           actualScale: 1.0,
         },
-        positioning: 'center'
+        positioning: 'center',
       }
 
       const result = calculateOptimalLayerPositioning(input)
@@ -406,7 +414,7 @@ describe('calculateOptimalLayerPositioning', () => {
           clientHeight: 0,
           imageDimensions: { width: 800, height: 600 },
           actualScale: 1.0,
-        }
+        },
       }
 
       const result = calculateOptimalLayerPositioning(input)
@@ -419,7 +427,7 @@ describe('calculateOptimalLayerPositioning', () => {
     it('should handle very large layer dimensions', () => {
       const input: LayerPositioningInput = {
         layerOriginalDimensions: { width: 10000, height: 8000 },
-        outputDimensions: { width: 800, height: 600 }
+        outputDimensions: { width: 800, height: 600 },
       }
 
       const result = calculateOptimalLayerPositioning(input)
@@ -432,7 +440,7 @@ describe('calculateOptimalLayerPositioning', () => {
     it('should handle very small layer dimensions', () => {
       const input: LayerPositioningInput = {
         layerOriginalDimensions: { width: 1, height: 1 },
-        outputDimensions: { width: 800, height: 600 }
+        outputDimensions: { width: 800, height: 600 },
       }
 
       const result = calculateOptimalLayerPositioning(input)

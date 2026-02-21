@@ -540,6 +540,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             scrollWidth: previewContainerRef.current.scrollWidth,
             scrollHeight: previewContainerRef.current.scrollHeight,
             imageDimensions: previewImageDimensions,
+            outputDimensions: outputDims,
           })
           console.log('Calculated viewport bounds:', viewportBounds)
 

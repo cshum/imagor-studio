@@ -502,7 +502,7 @@ export function LayerPanel({
       console.log('paths:', paths)
       console.log('onAddLayer function exists:', !!onAddLayer)
       console.log('onAddLayer function type:', typeof onAddLayer)
-      
+
       if (paths.length === 0) {
         console.log('No paths provided, returning early')
         return
