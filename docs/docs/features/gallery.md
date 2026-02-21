@@ -4,14 +4,31 @@ sidebar_position: 1
 
 # Gallery
 
-Browse and manage your image library with virtual scrolling that handles thousands of files efficiently.
+High-performance image gallery with virtual scrolling, drag-and-drop file management, and keyboard navigation. Efficiently browse and organize thousands of images with a responsive interface.
+
+## Performance
+
+- **Virtual scrolling** - Renders only visible items, enabling smooth navigation through large collections
+- **Efficient thumbnail generation** - Automatic thumbnail creation powered by imagor
+- **Responsive rendering** - Maintains performance with thousands of images
+- **Optimized loading** - Progressive image loading for faster initial display
 
 ## Image Viewing
 
-- **Virtual scrolling** - Only renders visible thumbnails, enabling smooth navigation through large collections
-- **Thumbnail generation** - Automatic thumbnail creation powered by imagor
-- **Image viewer** - Full-screen image viewing with navigation controls
+- **Full-screen viewer** - Immersive full-screen image viewing
 - **Slideshow mode** - Auto-play through images with crossfade transitions
+- **Auto-hiding controls** - Controls fade out for cleaner viewing experience
+- **Navigation controls** - Previous/next buttons and keyboard shortcuts
+- **Zoom support** - View images at full resolution
+
+## Keyboard Navigation
+
+- **Arrow keys** - Navigate between images and folders
+- **Enter** - Open selected image or folder
+- **ESC** - Close image viewer or dialogs
+- **Tab** - Cycle through gallery items
+- **Left/Right arrows** - Previous/next image in viewer
+- **Space** - Toggle slideshow mode
 
 ## File Management
 
