@@ -173,7 +173,7 @@ export function PreviewArea({
 
   // Use CSS transform mode only for zoom levels > 1.0 (150%, 200%)
   // For ≤100% zoom levels, use the original unified container architecture
-  const useCSSTransform = typeof zoom === 'number' && zoom > 1.0
+  const isCSSTransform = typeof zoom === 'number' && zoom > 1.0
 
   // Calculate effective dimensions for overlays
   // In CSS transform mode, keep container at original size to maintain coordinate system
@@ -416,7 +416,7 @@ export function PreviewArea({
         ) : (
           previewUrl && (
             <>
-              {useCSSTransform ? (
+              {isCSSTransform ? (
                 /* Separate image and overlay containers for CSS transform mode (>100% zoom) */
                 <div className='relative'>
                   {/* Image container - gets CSS transform in zoom mode */}
