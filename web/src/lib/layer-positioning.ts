@@ -54,9 +54,9 @@ export function calculateVisibleImageArea(viewport: ViewportInfo): VisibleArea {
 
   // Calculate wrapper dimensions based on 50% total padding (25% on each side)
   // This matches the approach in viewport-utils.ts
-  const wrapperWidth = imageDimensions.width / 0.5  // Image is 50% of wrapper
+  const wrapperWidth = imageDimensions.width / 0.5 // Image is 50% of wrapper
   const wrapperHeight = imageDimensions.height / 0.5
-  
+
   // The image starts at 25% of wrapper size (matching viewport-utils.ts)
   const imageOffsetX = wrapperWidth * 0.25
   const imageOffsetY = wrapperHeight * 0.25

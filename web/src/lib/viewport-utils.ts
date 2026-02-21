@@ -66,14 +66,12 @@ export function calculateViewportBounds(input: ViewportCalculationInput): Viewpo
   const containerVisibleRight = scrollLeft + clientWidth - containerPadding
   const containerVisibleBottom = scrollTop + clientHeight - containerPadding
 
-
   // Step 2: Calculate the image's position within the container
   // The wrapper has 50% padding on all sides, so the image starts at 25% of wrapper size
   const imageStartX = scrollWidth * 0.25
   const imageStartY = scrollHeight * 0.25
   const imageEndX = imageStartX + imageDimensions.width
   const imageEndY = imageStartY + imageDimensions.height
-
 
   // Step 4: Find intersection between visible container area and image area
   const intersectionLeft = Math.max(containerVisibleLeft, imageStartX)
