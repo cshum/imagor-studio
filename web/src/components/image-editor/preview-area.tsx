@@ -345,25 +345,25 @@ export function PreviewArea({
             container.scrollTop = newScrollTop
           } else {
             // User hasn't scrolled - center it
-            // Account for half-width padding when centering
+            // Enhanced centering logic that works better for wide horizontal images
             const paddingWidth = imageDimensions.width * 0.5
             const paddingHeight = imageDimensions.height * 0.5
 
-            // Center the image content within the scrollable area
-            const imageScrollWidth = Math.max(0, newScrollWidth - 2 * paddingWidth)
-            const imageScrollHeight = Math.max(0, newScrollHeight - 2 * paddingHeight)
+            // Calculate the center of the viewport
+            const containerCenterX = container.clientWidth / 2
+            const containerCenterY = container.clientHeight / 2
 
-            if (imageScrollWidth > 0 && imageScrollHeight > 0) {
-              const centerScrollLeft = 0.5 * imageScrollWidth + paddingWidth
-              const centerScrollTop = 0.5 * imageScrollHeight + paddingHeight
+            // Calculate the center of the image content (accounting for padding)
+            const imageCenterX = paddingWidth + imageDimensions.width / 2
+            const imageCenterY = paddingHeight + imageDimensions.height / 2
 
-              container.scrollLeft = centerScrollLeft
-              container.scrollTop = centerScrollTop
-            } else {
-              // If no scrollable area, just position at padding offset
-              container.scrollLeft = paddingWidth
-              container.scrollTop = paddingHeight
-            }
+            // Calculate scroll position to center the image content in the viewport
+            const centerScrollLeft = imageCenterX - containerCenterX
+            const centerScrollTop = imageCenterY - containerCenterY
+
+            // Apply scroll position with bounds checking
+            container.scrollLeft = Math.max(0, Math.min(centerScrollLeft, newScrollWidth))
+            container.scrollTop = Math.max(0, Math.min(centerScrollTop, newScrollHeight))
           }
         }
       })
