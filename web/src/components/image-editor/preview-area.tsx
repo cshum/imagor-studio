@@ -171,7 +171,8 @@ export function PreviewArea({
     }
   }, [zoom])
 
-  // Detect CSS transform mode for zoom levels > 1.0
+  // Use CSS transform mode only for zoom levels > 1.0 (150%, 200%)
+  // For ≤100% zoom levels, use the original unified container architecture
   const useCSSTransform = typeof zoom === 'number' && zoom > 1.0
   const effectiveScale = useCSSTransform ? zoom : 1.0
 
@@ -416,9 +417,189 @@ export function PreviewArea({
         ) : (
           previewUrl && (
             <>
-              {/* Separate image and overlay containers for CSS transform mode */}
-              <div className='relative'>
-                {/* Image container - gets CSS transform in zoom mode */}
+              {useCSSTransform ? (
+                /* Separate image and overlay containers for CSS transform mode (>100% zoom) */
+                <div className='relative'>
+                  {/* Image container - gets CSS transform in zoom mode */}
+                  <div
+                    className='relative'
+                    style={
+                      zoom !== 'fit' && effectiveImageDimensions
+                        ? {
+                            width: `${effectiveImageDimensions.width}px`,
+                            height: `${effectiveImageDimensions.height}px`,
+                            transform: `scale(${zoom})`,
+                            transformOrigin: 'top left',
+                          }
+                        : undefined
+                    }
+                  >
+                    <PreloadImage
+                      ref={previewImageRef}
+                      src={getFullImageUrl(previewUrl)}
+                      alt={`Preview of ${imagePath}`}
+                      onLoad={handleImageLoad}
+                      style={
+                        zoom !== 'fit' && imageDimensions
+                          ? {
+                              width: `${imageDimensions.width}px`,
+                              height: `${imageDimensions.height}px`,
+                              minWidth: `${imageDimensions.width}px`,
+                              minHeight: `${imageDimensions.height}px`,
+                              maxWidth: `${imageDimensions.width}px`,
+                              maxHeight: `${imageDimensions.height}px`,
+                              flexShrink: 0,
+                              imageRendering: 'pixelated' as const,
+                            }
+                          : undefined
+                      }
+                      className={cn(
+                        zoom === 'fit' && 'h-auto w-auto object-contain',
+                        zoom === 'fit' && 'max-h-[calc(100vh-152px)]',
+                        zoom === 'fit' &&
+                          (isMobile
+                            ? 'max-w-[calc(100vw-32px)]'
+                            : isTablet
+                              ? 'max-w-[calc(100vw-362px)]'
+                              : isLeftColumnEmpty && isRightColumnEmpty
+                                ? 'max-w-[calc(100vw-152px)]'
+                                : isLeftColumnEmpty || isRightColumnEmpty
+                                  ? 'max-w-[calc(100vw-422px)]'
+                                  : 'max-w-[calc(100vw-692px)]'),
+                      )}
+                    />
+                  </div>
+
+                  {/* Overlay container - positioned separately with scaled coordinates */}
+                  <div
+                    className='pointer-events-none absolute inset-0'
+                    style={
+                      effectiveImageDimensions
+                        ? {
+                            width: `${effectiveImageDimensions.width * zoom}px`,
+                            height: `${effectiveImageDimensions.height * zoom}px`,
+                          }
+                        : undefined
+                    }
+                  >
+                    {visualCropEnabled &&
+                      imageDimensions &&
+                      imageDimensions.width > 0 &&
+                      imageDimensions.height > 0 &&
+                      onCropChange &&
+                      cropWidth > 0 &&
+                      cropHeight > 0 &&
+                      (() => {
+                        const { scaleX, scaleY } = getScales()
+                        return (
+                          <CropOverlay
+                            previewWidth={imageDimensions.width}
+                            previewHeight={imageDimensions.height}
+                            cropLeft={cropLeft}
+                            cropTop={cropTop}
+                            cropWidth={cropWidth}
+                            cropHeight={cropHeight}
+                            scale={scaleX}
+                            scaleY={scaleY}
+                            onCropChange={onCropChange}
+                            lockedAspectRatio={cropAspectRatio}
+                            hFlip={overlayHFlip}
+                            vFlip={overlayVFlip}
+                            originalWidth={originalDimensions.width}
+                            originalHeight={originalDimensions.height}
+                          />
+                        )
+                      })()}
+                    {!visualCropEnabled &&
+                      !isTransitioning &&
+                      imageEditor &&
+                      effectiveImageDimensions &&
+                      effectiveImageDimensions.width > 0 &&
+                      effectiveImageDimensions.height > 0 &&
+                      (() => {
+                        // Get the actual output dimensions (after crop + resize + padding)
+                        // This includes padding in the total canvas size
+                        const outputDims = imageEditor.getOutputDimensions()
+
+                        // DON'T scale output dimensions - let CSS percentages handle scaling automatically
+                        // The container is already scaled, so percentage-based positioning will scale correctly
+
+                        // Get padding values from current state - DON'T scale them
+                        // CSS percentages will handle the scaling automatically
+                        const state = imageEditor.getState()
+                        const paddingLeft = state.paddingLeft || 0
+                        const paddingRight = state.paddingRight || 0
+                        const paddingTop = state.paddingTop || 0
+                        const paddingBottom = state.paddingBottom || 0
+
+                        if (selectedLayerId) {
+                          // Show single layer overlay with drag/resize handles
+                          const selectedLayer = imageEditor.getLayer(selectedLayerId)
+                          if (!selectedLayer) return null
+
+                          // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
+                          const layerOutputDims = calculateLayerOutputDimensions(
+                            selectedLayer.originalDimensions,
+                            selectedLayer.transforms,
+                          )
+
+                          // DON'T scale layer dimensions - let CSS percentages handle scaling automatically
+
+                          // Get layer's own padding (if it has any) for positioning calculations - DON'T scale them
+                          const layerPaddingLeft = selectedLayer.transforms?.paddingLeft || 0
+                          const layerPaddingRight = selectedLayer.transforms?.paddingRight || 0
+                          const layerPaddingTop = selectedLayer.transforms?.paddingTop || 0
+                          const layerPaddingBottom = selectedLayer.transforms?.paddingBottom || 0
+
+                          return (
+                            <LayerOverlay
+                              layerX={selectedLayer.x}
+                              layerY={selectedLayer.y}
+                              layerWidth={layerOutputDims.width}
+                              layerHeight={layerOutputDims.height}
+                              onLayerChange={(updates) =>
+                                imageEditor.updateLayer(selectedLayerId, updates)
+                              }
+                              lockedAspectRatio={layerAspectRatioLocked}
+                              baseImageWidth={outputDims.width}
+                              baseImageHeight={outputDims.height}
+                              paddingLeft={paddingLeft}
+                              paddingRight={paddingRight}
+                              paddingTop={paddingTop}
+                              paddingBottom={paddingBottom}
+                              layerPaddingLeft={layerPaddingLeft}
+                              layerPaddingRight={layerPaddingRight}
+                              layerPaddingTop={layerPaddingTop}
+                              layerPaddingBottom={layerPaddingBottom}
+                              layerRotation={selectedLayer.transforms?.rotation || 0}
+                              layerFillColor={selectedLayer.transforms?.fillColor}
+                              onDeselect={() => imageEditor.setSelectedLayerId(null)}
+                              onEnterEditMode={() => imageEditor.switchContext(selectedLayerId)}
+                            />
+                          )
+                        } else {
+                          // Show all layer regions for selection
+                          const layers = imageEditor.getContextLayers()
+                          if (layers.length === 0) return null
+
+                          return (
+                            <LayerRegionsOverlay
+                              layers={layers}
+                              baseImageWidth={outputDims.width}
+                              baseImageHeight={outputDims.height}
+                              paddingLeft={paddingLeft}
+                              paddingRight={paddingRight}
+                              paddingTop={paddingTop}
+                              paddingBottom={paddingBottom}
+                              onLayerSelect={(layerId) => imageEditor.setSelectedLayerId(layerId)}
+                            />
+                          )
+                        }
+                      })()}
+                  </div>
+                </div>
+              ) : (
+                /* Unified container for ≤100% zoom levels and fit mode */
                 <div
                   className='relative'
                   style={
@@ -426,11 +607,6 @@ export function PreviewArea({
                       ? {
                           width: `${effectiveImageDimensions.width}px`,
                           height: `${effectiveImageDimensions.height}px`,
-                          // Apply CSS transform only to image in CSS transform mode
-                          ...(useCSSTransform && {
-                            transform: `scale(${zoom})`,
-                            transformOrigin: 'top left',
-                          }),
                         }
                       : undefined
                   }
@@ -450,19 +626,11 @@ export function PreviewArea({
                             maxWidth: `${imageDimensions.width}px`,
                             maxHeight: `${imageDimensions.height}px`,
                             flexShrink: 0,
-                            // Apply pixelated rendering for CSS transform mode
-                            ...(useCSSTransform && {
-                              imageRendering: 'pixelated' as const,
-                            }),
                           }
                         : undefined
                     }
                     className={cn(
-                      // Only apply auto-sizing and object-contain in fit mode
-                      // When zoomed, image renders at natural size to enable scrolling
                       zoom === 'fit' && 'h-auto w-auto object-contain',
-                      // Only apply max constraints when in 'fit' mode
-                      // This allows the image to grow beyond viewport when zoomed
                       zoom === 'fit' && 'max-h-[calc(100vh-152px)]',
                       zoom === 'fit' &&
                         (isMobile
@@ -470,26 +638,13 @@ export function PreviewArea({
                           : isTablet
                             ? 'max-w-[calc(100vw-362px)]'
                             : isLeftColumnEmpty && isRightColumnEmpty
-                              ? 'max-w-[calc(100vw-152px)]' // Both empty: 60 + 60 + 32 = 152px
+                              ? 'max-w-[calc(100vw-152px)]'
                               : isLeftColumnEmpty || isRightColumnEmpty
-                                ? 'max-w-[calc(100vw-422px)]' // One empty: 60 + 330 + 32 = 422px
-                                : 'max-w-[calc(100vw-692px)]'), // Both full: 330 + 330 + 32 = 692px
+                                ? 'max-w-[calc(100vw-422px)]'
+                                : 'max-w-[calc(100vw-692px)]'),
                     )}
                   />
-                </div>
 
-                {/* Overlay container - positioned separately with scaled coordinates */}
-                <div
-                  className='pointer-events-none absolute inset-0'
-                  style={
-                    useCSSTransform && effectiveImageDimensions
-                      ? {
-                          width: `${effectiveImageDimensions.width * zoom}px`,
-                          height: `${effectiveImageDimensions.height * zoom}px`,
-                        }
-                      : undefined
-                  }
-                >
                   {visualCropEnabled &&
                     imageDimensions &&
                     imageDimensions.width > 0 &&
@@ -525,15 +680,7 @@ export function PreviewArea({
                     effectiveImageDimensions.width > 0 &&
                     effectiveImageDimensions.height > 0 &&
                     (() => {
-                      // Get the actual output dimensions (after crop + resize + padding)
-                      // This includes padding in the total canvas size
                       const outputDims = imageEditor.getOutputDimensions()
-
-                      // DON'T scale output dimensions - let CSS percentages handle scaling automatically
-                      // The container is already scaled, so percentage-based positioning will scale correctly
-
-                      // Get padding values from current state - DON'T scale them
-                      // CSS percentages will handle the scaling automatically
                       const state = imageEditor.getState()
                       const paddingLeft = state.paddingLeft || 0
                       const paddingRight = state.paddingRight || 0
@@ -541,19 +688,14 @@ export function PreviewArea({
                       const paddingBottom = state.paddingBottom || 0
 
                       if (selectedLayerId) {
-                        // Show single layer overlay with drag/resize handles
                         const selectedLayer = imageEditor.getLayer(selectedLayerId)
                         if (!selectedLayer) return null
 
-                        // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
                         const layerOutputDims = calculateLayerOutputDimensions(
                           selectedLayer.originalDimensions,
                           selectedLayer.transforms,
                         )
 
-                        // DON'T scale layer dimensions - let CSS percentages handle scaling automatically
-
-                        // Get layer's own padding (if it has any) for positioning calculations - DON'T scale them
                         const layerPaddingLeft = selectedLayer.transforms?.paddingLeft || 0
                         const layerPaddingRight = selectedLayer.transforms?.paddingRight || 0
                         const layerPaddingTop = selectedLayer.transforms?.paddingTop || 0
@@ -586,7 +728,6 @@ export function PreviewArea({
                           />
                         )
                       } else {
-                        // Show all layer regions for selection
                         const layers = imageEditor.getContextLayers()
                         if (layers.length === 0) return null
 
@@ -605,7 +746,7 @@ export function PreviewArea({
                       }
                     })()}
                 </div>
-              </div>
+              )}
             </>
           )
         )}
