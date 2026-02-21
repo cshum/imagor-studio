@@ -220,7 +220,7 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 	}
 
 	if imagorConfig.Mode == ImagorModeEmbedded {
-		imagorConfig.BaseURL = "/imagor"
+		imagorConfig.BaseURL = ""
 	} else {
 		if baseURLResult := resultMap["config.imagor_base_url"]; baseURLResult.Exists {
 			imagorConfig.BaseURL = baseURLResult.Value
@@ -311,6 +311,9 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 		hashAlg := getHashAlgorithm(cfg.SignerType)
 		signer = imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
 		path = imagorpath.Generate(params, signer)
+	}
+	if cfg.BaseURL == "" {
+		return fmt.Sprintf("/%s", path), nil
 	}
 	return fmt.Sprintf("%s/%s", cfg.BaseURL, path), nil
 }
