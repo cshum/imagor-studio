@@ -492,13 +492,23 @@ export function PreviewArea({
                 {imageDimensions && (
                   <div
                     className='absolute'
-                    style={{
-                      // Fit mode: padding = 0, Zoom mode: padding = 0.5x image size
-                      left: zoom === 'fit' ? '0px' : `${imageDimensions.width * 0.5}px`,
-                      top: zoom === 'fit' ? '0px' : `${imageDimensions.height * 0.5}px`,
-                      width: `${imageDimensions.width}px`,
-                      height: `${imageDimensions.height}px`,
-                    }}
+                    style={
+                      zoom === 'fit'
+                        ? {
+                            // Fit mode: Use percentage-based dimensions to follow image scaling
+                            left: '0',
+                            top: '0',
+                            width: '100%',
+                            height: '100%',
+                          }
+                        : {
+                            // Zoom mode: Use fixed pixel dimensions for precise positioning
+                            left: `${imageDimensions.width * 0.5}px`,
+                            top: `${imageDimensions.height * 0.5}px`,
+                            width: `${imageDimensions.width}px`,
+                            height: `${imageDimensions.height}px`,
+                          }
+                    }
                   >
                     {/* Single set of overlay logic - works for both modes */}
                     {visualCropEnabled &&
