@@ -865,33 +865,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     onAddLayer: handleAddLayerWithViewport,
   }
 
-  // Shared preview props
-  const previewProps = {
-    previewUrl: previewUrl || '',
-    error,
-    originalDimensions: imageEditor.getOriginalDimensions(),
-    onLoad: handlePreviewLoad,
-    onCopyUrl: handleCopyUrlClick,
-    onDownload: handleDownloadClick,
-    onPreviewDimensionsChange: setPreviewMaxDimensions,
-    visualCropEnabled,
-    cropLeft: params.cropLeft || 0,
-    cropTop: params.cropTop || 0,
-    cropWidth: params.cropWidth || 0,
-    cropHeight: params.cropHeight || 0,
-    onCropChange: handleCropChange,
-    cropAspectRatio,
-    hFlip: params.hFlip,
-    vFlip: params.vFlip,
-    imageEditor,
-    selectedLayerId,
-    editingContext,
-    layerAspectRatioLocked,
-    zoom,
-    previewContainerRef,
-    onImageDimensionsChange: setPreviewImageDimensions,
-  }
-
   // Breadcrumb for desktop
   const breadcrumb = (
     <LayerBreadcrumb
@@ -978,9 +951,31 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       iconMap={iconMap}
       titleKeyMap={titleKeyMap}
       breadcrumb={breadcrumb}
-      preview={
+      previewArea={
         <PreviewArea
-          {...previewProps}
+          previewUrl={previewUrl || ''}
+          error={error}
+          originalDimensions={imageEditor.getOriginalDimensions()}
+          onLoad={handlePreviewLoad}
+          onCopyUrl={handleCopyUrlClick}
+          onDownload={handleDownloadClick}
+          onPreviewDimensionsChange={setPreviewMaxDimensions}
+          visualCropEnabled={visualCropEnabled}
+          cropLeft={params.cropLeft || 0}
+          cropTop={params.cropTop || 0}
+          cropWidth={params.cropWidth || 0}
+          cropHeight={params.cropHeight || 0}
+          onCropChange={handleCropChange}
+          cropAspectRatio={cropAspectRatio}
+          hFlip={params.hFlip}
+          vFlip={params.vFlip}
+          imageEditor={imageEditor}
+          selectedLayerId={selectedLayerId}
+          editingContext={editingContext}
+          layerAspectRatioLocked={layerAspectRatioLocked}
+          zoom={zoom}
+          previewContainerRef={previewContainerRef}
+          onImageDimensionsChange={setPreviewImageDimensions}
           isLeftColumnEmpty={isLeftEmpty}
           isRightColumnEmpty={isRightEmpty}
           onOpenControls={isMobile ? () => setMobileSheetOpen(true) : undefined}

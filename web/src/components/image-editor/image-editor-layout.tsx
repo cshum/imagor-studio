@@ -63,7 +63,7 @@ export interface ImageEditorLayoutProps {
   breadcrumb?: React.ReactNode
 
   // Preview area (rendered by parent)
-  preview: React.ReactNode
+  previewArea: React.ReactNode
 
   // Controls (rendered by parent, used in sidebar and mobile sheet)
   leftControls: React.ReactNode
@@ -117,7 +117,7 @@ export function ImageEditorLayout({
   iconMap,
   titleKeyMap,
   breadcrumb,
-  preview,
+  previewArea,
   leftControls,
   rightControls,
   singleColumnControls,
@@ -302,7 +302,7 @@ export function ImageEditorLayout({
           </div>
 
           {/* Preview */}
-          {preview}
+          {previewArea}
 
           {/* Controls Sheet */}
           <Sheet open={mobileSheetOpen} onOpenChange={onMobileSheetOpenChange}>
@@ -361,7 +361,7 @@ export function ImageEditorLayout({
 
         {/* Main content - Two columns */}
         <div className='grid w-full grid-cols-[1fr_330px] overflow-hidden'>
-          <div className='flex min-w-0 flex-col overflow-hidden'>{preview}</div>
+          <div className='flex min-w-0 flex-col overflow-hidden'>{previewArea}</div>
           <div className='bg-background flex flex-col overflow-hidden border-l'>
             <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               {singleColumnControls}
@@ -420,7 +420,7 @@ export function ImageEditorLayout({
           </div>
 
           {/* Center - Preview */}
-          <div className='flex flex-col overflow-hidden'>{preview}</div>
+          <div className='flex flex-col overflow-hidden'>{previewArea}</div>
 
           {/* Right Column */}
           <div className='bg-background flex flex-col overflow-hidden border-l'>
