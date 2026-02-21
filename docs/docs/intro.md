@@ -5,11 +5,11 @@ slug: /
 
 # Introduction
 
-**Imagor Studio** is a self-hosted image gallery and editing platform with URL-based transformations and template-driven workflows.
+**Imagor Studio** is a self-hosted image gallery with built-in editing. Virtual scrolling, drag-and-drop management, multi-layer compositing, and template workflows.
 
 ### Gallery
 
-Virtual scrolling gallery with thumbnail generation for browsing large image collections.
+Browse and organize your image files with virtual scrolling, drag-and-drop management, folder navigation, and multi-select for bulk operations.
 
 <div className="screenshot-container">
 
@@ -19,7 +19,7 @@ Virtual scrolling gallery with thumbnail generation for browsing large image col
 
 ### Image Editing
 
-URL-based image transformations with real-time preview. Powered by [imagor](https://github.com/cshum/imagor) and libvips.
+Image editing with real-time preview, multi-layer compositing, template workflows, color adjustments, effects, and cropping. All transformations are URL-based.
 
 <div className="screenshot-container">
 
@@ -27,13 +27,13 @@ URL-based image transformations with real-time preview. Powered by [imagor](http
 
 </div>
 
-### Mobile Interface
+### Template Workflows
 
-Responsive interface that works on mobile devices.
+Save editing workflows as reusable templates. Stored as portable JSON files, apply the same edits across your entire image library.
 
-<div className="screenshot-container-mobile">
+<div className="screenshot-container">
 
-![Mobile](../static/img/mobile.jpg)
+![Templates](../static/img/template.jpg)
 
 </div>
 
