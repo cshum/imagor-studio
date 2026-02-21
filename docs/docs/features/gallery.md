@@ -37,6 +37,16 @@ Browse and manage your image library with virtual scrolling that handles thousan
 - **Bulk operations** - Move or delete multiple files at once
 - **Selection count** - Shows number of selected items in context menu
 
+### Drag-and-Drop
+
+- **Upload files** - Drag files from desktop to gallery to upload
+- **Move files** - Drag selected files/folders to move them:
+  - Drop on folder tree sidebar folders
+  - Drop on breadcrumb folders
+  - Drop on folder grid items
+- **Multi-select drag** - Select multiple items and drag them all at once
+- **Visual feedback** - Drop zones highlight when dragging over valid targets
+
 ## Organization
 
 ### Sorting
