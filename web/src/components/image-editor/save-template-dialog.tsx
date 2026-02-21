@@ -141,8 +141,8 @@ export function SaveTemplateDialog({
         overwrite,
       )
 
-      // Build full template path using backend's normalized filename
-      const templatePath = savePath ? `${savePath}/${result.templatePath}` : result.templatePath
+      // Backend already returns the complete path with savePath included
+      const templatePath = result.templatePath
 
       // Success - template saved
       toast.success(t('imageEditor.template.saveSuccess', { name: name.trim() }))
