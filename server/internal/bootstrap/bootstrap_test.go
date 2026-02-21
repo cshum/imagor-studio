@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -302,18 +303,18 @@ func TestImagorProviderIntegration(t *testing.T) {
 	defer os.Remove(tmpDB)
 
 	cfg := &config.Config{
-		DatabaseURL:   "sqlite:" + tmpDB,
-		JWTSecret:     "test-jwt-secret",
-		ImagorMode:    "external",
-		ImagorBaseURL: "http://localhost:8000",
-		ImagorSecret:  "test-secret",
-		ImagorUnsafe:  true, // Use unsafe mode for testing
+		DatabaseURL:  "sqlite:" + tmpDB,
+		JWTSecret:    "test-jwt-secret",
+		ImagorMode:   "embedded", // Test embedded mode
+		ImagorSecret: "test-secret",
+		ImagorUnsafe: true, // Use unsafe mode for testing
 	}
 
 	logger := zap.NewNop()
 	args := []string{
 		"--jwt-secret", "test-jwt-secret",
 		"--database-url", "sqlite:" + tmpDB,
+		"--imagor-mode", "embedded",
 		"--imagor-secret", "test-secret",
 		"--imagor-unsafe", "true",
 	}
@@ -327,7 +328,7 @@ func TestImagorProviderIntegration(t *testing.T) {
 	imagorConfig := services.ImagorProvider.GetConfig()
 	require.NotNil(t, imagorConfig)
 	assert.Equal(t, imagorprovider.ImagorModeEmbedded, imagorConfig.Mode)
-	assert.Equal(t, "/imagor", imagorConfig.BaseURL)
+	assert.Equal(t, "", imagorConfig.BaseURL) // Updated to empty string for root path
 	assert.Equal(t, "test-secret", imagorConfig.Secret)
 	assert.True(t, imagorConfig.Unsafe)
 
@@ -338,6 +339,8 @@ func TestImagorProviderIntegration(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.NotEmpty(t, url)
+	// URL should start with / (root path) instead of /imagor
+	assert.True(t, strings.HasPrefix(url, "/unsafe/") || strings.Contains(url, "/test/image.jpg"))
 
 	// Clean up
 	services.DB.Close()

@@ -194,7 +194,7 @@ func TestInitializeWithConfig(t *testing.T) {
 			},
 			needsStorage:   true,
 			expectedMode:   ImagorModeEmbedded,
-			expectedURL:    "/imagor",
+			expectedURL:    "",
 			expectedSecret: "test-secret",
 			expectedUnsafe: true,
 			hasHandler:     true,
@@ -207,7 +207,7 @@ func TestInitializeWithConfig(t *testing.T) {
 			},
 			needsStorage:   true,
 			expectedMode:   ImagorModeEmbedded,
-			expectedURL:    "/imagor",
+			expectedURL:    "",
 			expectedSecret: "test-jwt-secret",
 			expectedUnsafe: false,
 			hasHandler:     true,
@@ -227,7 +227,7 @@ func TestInitializeWithConfig(t *testing.T) {
 			},
 			needsStorage:   true, // CLI wins with embedded
 			expectedMode:   ImagorModeEmbedded,
-			expectedURL:    "/imagor",
+			expectedURL:    "",
 			expectedSecret: "registry-secret", // Registry secret is used since no CLI override
 			expectedUnsafe: false,
 			hasHandler:     true,
@@ -298,7 +298,7 @@ func TestInitializeWithConfig(t *testing.T) {
 			},
 			needsStorage:   true,
 			expectedMode:   ImagorModeEmbedded,
-			expectedURL:    "/imagor",
+			expectedURL:    "",
 			expectedSecret: "",
 			expectedUnsafe: true,
 			hasHandler:     true,
@@ -553,8 +553,8 @@ func TestGenerateURL_BasicScenarios(t *testing.T) {
 				"--jwt-secret", "jwt-secret",
 			},
 			needsStorage:  true,
-			expectedURL:   "/imagor/",
-			expectedRegex: `^/imagor/[a-zA-Z0-9_=/-]+/`,
+			expectedURL:   "/",
+			expectedRegex: `^/[a-zA-Z0-9_=/-]+/`,
 			description:   "Embedded mode with secret should generate signed URLs",
 		},
 		{
@@ -565,7 +565,7 @@ func TestGenerateURL_BasicScenarios(t *testing.T) {
 				"--jwt-secret", "jwt-secret",
 			},
 			needsStorage: true,
-			expectedURL:  "/imagor/unsafe/",
+			expectedURL:  "/unsafe/",
 			description:  "Embedded unsafe mode should generate unsigned URLs",
 		},
 	}
@@ -738,7 +738,7 @@ func TestBuildConfig_CLIFallback(t *testing.T) {
 			expectedType:   "sha256", // JWT fallback uses SHA256
 			expectedTrunc:  32,       // JWT fallback uses 32
 			expectedMode:   ImagorModeEmbedded,
-			expectedURL:    "/imagor",
+			expectedURL:    "",
 			description:    "Should default to embedded mode with JWT fallback",
 		},
 		{
@@ -756,7 +756,7 @@ func TestBuildConfig_CLIFallback(t *testing.T) {
 			expectedType:   "sha1",
 			expectedTrunc:  28,
 			expectedMode:   ImagorModeEmbedded,
-			expectedURL:    "/imagor",
+			expectedURL:    "",
 			description:    "Should use explicit CLI configuration for embedded mode",
 		},
 		{

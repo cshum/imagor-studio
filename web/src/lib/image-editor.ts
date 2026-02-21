@@ -258,15 +258,22 @@ export class ImageEditor {
 
   /**
    * Encode image path to base64url format (RFC 4648 Section 5)
+   * Unicode-safe version that handles all UTF-8 characters
    * Aligns with backend logic in ../imagor/imagorpath/generate.go
    * @param imagePath - Image path to encode
    * @returns base64url encoded path with b64: prefix
    */
   private static encodeImagePath(imagePath: string): string {
-    // Convert to base64url (URL-safe base64 without padding)
-    // Standard base64 uses +/ but base64url uses -_
-    const base64 = btoa(imagePath).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-    return `b64:${base64}`
+    // Use TextEncoder for Unicode-safe encoding
+    const encoder = new TextEncoder()
+    const bytes = encoder.encode(imagePath)
+
+    // Convert bytes to base64 using browser API
+    const base64 = btoa(String.fromCharCode(...bytes))
+
+    // Convert to base64url format (replace +/ with -_, remove padding)
+    const base64url = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+    return `b64:${base64url}`
   }
 
   /**

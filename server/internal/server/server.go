@@ -112,7 +112,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	if err != nil {
 		return nil, err
 	}
-	mux.Handle("/", httphandler.SPAHandler(staticFS, services.Logger))
+	mux.Handle("/", httphandler.SPAHandler(staticFS, services.ImagorProvider, services.Logger))
 
 	// Configure CORS
 	corsConfig := middleware.DefaultCORSConfig()
