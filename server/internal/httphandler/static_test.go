@@ -1,6 +1,7 @@
 package httphandler
 
 import (
+	"io"
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
@@ -34,14 +35,21 @@ func (m MockFS) Open(name string) (fs.File, error) {
 
 type MockFile struct {
 	name string
+	read bool
 }
 
 func (m *MockFile) Stat() (fs.FileInfo, error) {
 	return &MockFileInfo{name: m.name}, nil
 }
 
-func (m *MockFile) Read([]byte) (int, error) {
-	return 0, nil
+func (m *MockFile) Read(p []byte) (int, error) {
+	if m.read {
+		return 0, io.EOF // EOF
+	}
+	m.read = true
+	content := "<html><body>Mock HTML</body></html>"
+	n := copy(p, []byte(content))
+	return n, nil
 }
 
 func (m *MockFile) Close() error {
@@ -136,7 +144,7 @@ func TestSPAHandlerImagorRouting(t *testing.T) {
 		{"/unsafe/300x200/test.jpg", "imagor", 200, "unsafe imagor path"},
 		{"/abcdefghijklmnopq/test.jpg", "imagor", 200, "signed imagor path"},
 		{"/gallery", "", 200, "SPA route"},
-		{"/api/auth/login", "", 404, "API route (not handled by SPA)"},
+		{"/api/auth/login", "", 200, "API route (falls back to SPA)"},
 	}
 
 	for _, tt := range tests {
