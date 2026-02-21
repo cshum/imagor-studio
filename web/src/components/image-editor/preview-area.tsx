@@ -44,6 +44,8 @@ interface PreviewAreaProps {
   isRightColumnEmpty?: boolean
   imagePath?: string
   zoom?: number | 'fit'
+  previewContainerRef?: React.RefObject<HTMLDivElement | null>
+  onImageDimensionsChange?: (dimensions: { width: number; height: number } | null) => void
 }
 
 export function PreviewArea({
@@ -72,12 +74,15 @@ export function PreviewArea({
   isRightColumnEmpty = false,
   imagePath,
   zoom = 'fit',
+  previewContainerRef: externalPreviewContainerRef,
+  onImageDimensionsChange,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
   const isDesktop = useBreakpoint('lg') // Desktop when screen >= 1024px
   const isTablet = !isMobile && !isDesktop // Tablet when 768px <= screen < 1024px
-  const previewContainerRef = useRef<HTMLDivElement>(null)
+  // Use external ref if provided, otherwise use internal ref
+  const previewContainerRef = externalPreviewContainerRef || useRef<HTMLDivElement>(null)
   const previewImageRef = useRef<HTMLImageElement>(null)
   const [imageDimensions, setImageDimensions] = useState<{
     width: number
@@ -378,9 +383,14 @@ export function PreviewArea({
       container.scrollTop = 0
     }
 
-    // Update ref for next comparison
-    previousImageDimensionsRef.current = imageDimensions
-  }, [imageDimensions, zoom])
+  // Update ref for next comparison
+  previousImageDimensionsRef.current = imageDimensions
+}, [imageDimensions, zoom])
+
+// Report image dimensions to parent for viewport calculations
+useEffect(() => {
+  onImageDimensionsChange?.(imageDimensions)
+}, [imageDimensions, onImageDimensionsChange])
 
   return (
     <div className='relative flex h-full flex-col'>

@@ -64,7 +64,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { fetchImageDimensions } from '@/lib/image-dimensions'
 import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
@@ -76,6 +75,7 @@ interface LayerPanelProps {
   onLayerAspectRatioLockChange: (locked: boolean) => void
   visualCropEnabled?: boolean
   onReplaceImage: (layerId: string | null) => void
+  onAddLayer: (paths: string[]) => Promise<void>
 }
 
 interface SortableLayerItemProps {
@@ -356,6 +356,7 @@ export function LayerPanel({
   onLayerAspectRatioLockChange,
   visualCropEnabled = false,
   onReplaceImage,
+  onAddLayer,
 }: LayerPanelProps) {
   const { t } = useTranslation()
   const imagePath = imageEditor.getImagePath()
@@ -497,64 +498,29 @@ export function LayerPanel({
 
   const handleAddLayer = useCallback(
     async (paths: string[]) => {
-      if (paths.length === 0) return
+      console.log('=== LayerPanel.handleAddLayer called ===')
+      console.log('paths:', paths)
+      console.log('onAddLayer function exists:', !!onAddLayer)
+      console.log('onAddLayer function type:', typeof onAddLayer)
+      
+      if (paths.length === 0) {
+        console.log('No paths provided, returning early')
+        return
+      }
 
       setIsAddingLayer(true)
       try {
-        const imagePath = paths[0] // Single selection mode
-
-        // Fetch dimensions for the layer image
-        const dimensions = await fetchImageDimensions(imagePath)
-
-        // Extract filename for display name
-        const filename = imagePath.split('/').pop() || imagePath
-
-        // Get current context output dimensions (context-aware)
-        // This returns the correct dimensions whether at base or in nested layer
-        const outputDims = imageEditor.getOutputDimensions()
-        const effectiveWidth = outputDims.width
-        const effectiveHeight = outputDims.height
-
-        // Calculate scale to fit layer at 90% of effective base image size
-        const targetWidth = effectiveWidth * 0.9
-        const targetHeight = effectiveHeight * 0.9
-
-        const scaleX = targetWidth / dimensions.width
-        const scaleY = targetHeight / dimensions.height
-        const scale = Math.min(Math.min(scaleX, scaleY), 1)
-
-        // Always set transforms with fitIn: false to allow free resizing
-        const layerTransforms: Partial<ImageLayer>['transforms'] | undefined = {
-          width: Math.round(dimensions.width * scale),
-          height: Math.round(dimensions.height * scale),
-          fitIn: false, // Use fill mode for layers
-        }
-
-        // Create new layer with default settings
-        const newLayer: ImageLayer = {
-          id: `layer-${Date.now()}`, // Simple unique ID
-          imagePath,
-          originalDimensions: dimensions,
-          x: 0, // Position at top-left instead of center
-          y: 0, // Position at top-left instead of center
-          alpha: 0, // 0 = opaque (no transparency)
-          blendMode: 'normal',
-          visible: true,
-          name: filename,
-          transforms: layerTransforms, // Apply auto-resize if needed
-        }
-
-        imageEditor.addLayer(newLayer)
-
-        // Auto-select the newly added layer
-        imageEditor.setSelectedLayerId(newLayer.id)
-      } catch {
+        console.log('Calling onAddLayer with paths:', paths)
+        await onAddLayer(paths)
+        console.log('onAddLayer completed successfully')
+      } catch (error) {
+        console.error('Failed to add layer:', error)
         toast.error(t('imageEditor.layers.failedToAddLayer'))
       } finally {
         setIsAddingLayer(false)
       }
     },
-    [imageEditor, t],
+    [onAddLayer, t],
   )
 
   // Get the active layer for DragOverlay
