@@ -498,21 +498,13 @@ export function LayerPanel({
 
   const handleAddLayer = useCallback(
     async (paths: string[]) => {
-      console.log('=== LayerPanel.handleAddLayer called ===')
-      console.log('paths:', paths)
-      console.log('onAddLayer function exists:', !!onAddLayer)
-      console.log('onAddLayer function type:', typeof onAddLayer)
-
       if (paths.length === 0) {
-        console.log('No paths provided, returning early')
         return
       }
 
       setIsAddingLayer(true)
       try {
-        console.log('Calling onAddLayer with paths:', paths)
         await onAddLayer(paths)
-        console.log('onAddLayer completed successfully')
       } catch (error) {
         console.error('Failed to add layer:', error)
         toast.error(t('imageEditor.layers.failedToAddLayer'))
