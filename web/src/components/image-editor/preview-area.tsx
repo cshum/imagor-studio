@@ -358,6 +358,12 @@ export function PreviewArea({
       pendingScrollAdjustment.current = null
     }
 
+    // reset scroll on fit
+    if (container && zoom === 'fit') {
+      container.scrollLeft = 0
+      container.scrollTop = 0
+    }
+
     // Update ref for next comparison
     previousImageDimensionsRef.current = imageDimensions
   }, [imageDimensions, zoom])
