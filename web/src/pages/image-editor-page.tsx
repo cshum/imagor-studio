@@ -1,35 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  closestCenter,
-  DndContext,
-  DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragOverEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core'
-import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import type { DragOverEvent, DragStartEvent } from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronUp,
-  Download,
   FileImage,
   FileText,
   Frame,
-  GripVertical,
   Layers,
   Maximize2,
-  MoreVertical,
   Palette,
-  Redo2,
   RotateCw,
   Scissors,
-  Undo2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -41,21 +23,14 @@ import { DimensionControl } from '@/components/image-editor/controls/dimension-c
 import { FillPaddingControl } from '@/components/image-editor/controls/fill-padding-control.tsx'
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
-import { EditorMenuDropdown } from '@/components/image-editor/editor-menu-dropdown'
+import { ImageEditorLayout } from '@/components/image-editor/image-editor-layout'
 import { ImageEditorControls } from '@/components/image-editor/imagor-editor-controls.tsx'
 import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb.tsx'
 import { LayerPanel } from '@/components/image-editor/layer-panel'
 import { PreviewArea } from '@/components/image-editor/preview-area'
 import { SaveTemplateDialog } from '@/components/image-editor/save-template-dialog'
-import { ZoomControls } from '@/components/image-editor/zoom-controls'
-import { LoadingBar } from '@/components/loading-bar'
-import { ModeToggle } from '@/components/mode-toggle'
-import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import { ConfirmNavigationDialog } from '@/components/ui/confirm-navigation-dialog'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
-import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
@@ -75,7 +50,7 @@ import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { type ImageEditorState } from '@/lib/image-editor.ts'
 import { calculateOptimalLayerPositioning } from '@/lib/layer-positioning'
 import { splitImagePath } from '@/lib/path-utils'
-import { cn, debounce } from '@/lib/utils.ts'
+import { debounce } from '@/lib/utils.ts'
 import { calculateLayerPositionInViewport, calculateViewportBounds } from '@/lib/viewport-utils'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 import { useAuth } from '@/stores/auth-store'
@@ -106,8 +81,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   const [editorOpenSections, setEditorOpenSections] =
     useState<EditorOpenSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
-  const isDesktop = useBreakpoint('lg') // Desktop when screen >= 1024px
-  const isTablet = !isMobile && !isDesktop // Tablet when 768px <= screen < 1024px
 
   // Read state from URL on mount (single source of truth, won't change during component lifetime)
   const initialState = useMemo(() => getStateFromLocation(), [])
@@ -655,18 +628,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     await setLocale(languageCode)
   }
 
-  // Drag and drop handlers for desktop
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  )
-
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string)
   }, [])
@@ -786,8 +747,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     layers: 'imageEditor.layers.title',
   }
 
-  const ActiveIcon = activeId ? iconMap[activeId] : null
-
   // Section configurations with actual components (for desktop DragOverlay)
   const sectionConfigs = useMemo(
     () => ({
@@ -862,446 +821,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
   const activeSection = activeId ? sectionConfigs[activeId as SectionKey] : null
 
-  // Tablet layout - Single column with stacked sections
-  if (isTablet) {
-    return (
-      <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] overscroll-none select-none'>
-        {/* Loading Bar */}
-        <LoadingBar isLoading={isLoading} />
-
-        {/* Header - spans full width */}
-        <div className='flex items-center gap-2 border-b p-3'>
-          {/* Back button - hidden in embedded mode */}
-          <Button
-            variant='outline'
-            size='sm'
-            className={cn(authState.isEmbedded && 'invisible')}
-            onClick={handleBack}
-          >
-            <ChevronLeft className='mr-1 h-4 w-4' />
-            {t('imageEditor.page.back')}
-          </Button>
-
-          {/* Centered title */}
-          <div className='flex flex-1 justify-center'>
-            <a
-              href='https://imagor.net'
-              target='_blank'
-              className='text-foreground hover:text-foreground/80 text-lg font-semibold transition-colors'
-            >
-              {t('common.navigation.title')}
-            </a>
-          </div>
-
-          {/* Theme Toggle + Undo/Redo + Primary Action & Three-dot Menu (grouped) */}
-          <div className='ml-auto flex items-center gap-2'>
-            <ModeToggle />
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => imageEditor.undo()}
-              disabled={!canUndo}
-              title={t('imageEditor.page.undo')}
-            >
-              <Undo2 className='h-4 w-4' />
-            </Button>
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => imageEditor.redo()}
-              disabled={!canRedo}
-              title={t('imageEditor.page.redo')}
-            >
-              <Redo2 className='h-4 w-4' />
-            </Button>
-            <div className='inline-flex items-center rounded-md'>
-              {isTemplate ? (
-                <>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={handleSaveTemplateClick}
-                    className='rounded-r-none border-r-0'
-                  >
-                    <FileText className='mr-1 h-4 w-4' />
-                    {t('imageEditor.template.saveTemplate')}
-                  </Button>
-                  <DropdownMenu modal={false}>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant='outline' size='sm' className='rounded-l-none px-2'>
-                        <MoreVertical className='h-4 w-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <EditorMenuDropdown
-                      onDownload={handleDownloadClick}
-                      onCopyUrl={handleCopyUrlClick}
-                      onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
-                      onApplyTemplate={() => setApplyTemplateDialogOpen(true)}
-                      onLanguageChange={handleLanguageChange}
-                      onToggleSectionVisibility={handleToggleSectionVisibility}
-                      editorOpenSections={editorOpenSections}
-                      iconMap={iconMap}
-                      titleKeyMap={titleKeyMap}
-                      isTemplate={isTemplate}
-                    />
-                  </DropdownMenu>
-                </>
-              ) : (
-                <>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={handleDownloadClick}
-                    className='rounded-r-none border-r-0'
-                  >
-                    <Download className='mr-1 h-4 w-4' />
-                    {t('imageEditor.page.download')}
-                  </Button>
-                  <DropdownMenu modal={false}>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant='outline' size='sm' className='rounded-l-none px-2'>
-                        <MoreVertical className='h-4 w-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <EditorMenuDropdown
-                      onDownload={handleDownloadClick}
-                      onCopyUrl={handleCopyUrlClick}
-                      onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
-                      onApplyTemplate={() => setApplyTemplateDialogOpen(true)}
-                      onLanguageChange={handleLanguageChange}
-                      onToggleSectionVisibility={handleToggleSectionVisibility}
-                      editorOpenSections={editorOpenSections}
-                      iconMap={iconMap}
-                      titleKeyMap={titleKeyMap}
-                    />
-                  </DropdownMenu>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Main content - Two columns (preview + sidebar) */}
-        <div className='grid w-full grid-cols-[1fr_330px] overflow-hidden'>
-          {/* Preview Area */}
-          <div className='flex min-w-0 flex-col overflow-hidden'>
-            <PreviewArea
-              previewUrl={previewUrl || ''}
-              error={error}
-              originalDimensions={imageEditor.getOriginalDimensions()}
-              onLoad={handlePreviewLoad}
-              onCopyUrl={handleCopyUrlClick}
-              onDownload={handleDownloadClick}
-              onPreviewDimensionsChange={setPreviewMaxDimensions}
-              visualCropEnabled={visualCropEnabled}
-              cropLeft={params.cropLeft || 0}
-              cropTop={params.cropTop || 0}
-              cropWidth={params.cropWidth || 0}
-              cropHeight={params.cropHeight || 0}
-              onCropChange={handleCropChange}
-              cropAspectRatio={cropAspectRatio}
-              hFlip={params.hFlip}
-              vFlip={params.vFlip}
-              imageEditor={imageEditor}
-              selectedLayerId={selectedLayerId}
-              editingContext={editingContext}
-              layerAspectRatioLocked={layerAspectRatioLocked}
-              zoom={zoom}
-              previewContainerRef={previewContainerRef}
-              onImageDimensionsChange={setPreviewImageDimensions}
-            />
-          </div>
-
-          {/* Single Column - Stacked sections */}
-          <div className='bg-background flex flex-col overflow-hidden border-l'>
-            <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-              <ImageEditorControls
-                imageEditor={imageEditor}
-                params={params}
-                selectedLayerId={selectedLayerId}
-                editingContext={editingContext}
-                layerAspectRatioLocked={layerAspectRatioLocked}
-                onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
-                openSections={editorOpenSections}
-                onOpenSectionsChange={handleOpenSectionsChange}
-                onUpdateParams={updateParams}
-                onVisualCropToggle={handleVisualCropToggle}
-                isVisualCropEnabled={visualCropEnabled}
-                outputWidth={imageEditor.getOriginalDimensions().width}
-                outputHeight={imageEditor.getOriginalDimensions().height}
-                onCropAspectRatioChange={setCropAspectRatio}
-                onReplaceImage={handleReplaceImageClick}
-                onAddLayer={handleAddLayerWithViewport}
-                column='both'
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom bar - status bar style */}
-        <div className='bg-background h-12 overflow-x-auto overflow-y-hidden border-t px-4 pt-2'>
-          {/* Imagor Path - scrollable with monospace font */}
-          <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text'>
-            {imagorPath}
-          </code>
-        </div>
-
-        {/* Copy URL Dialog */}
-        <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
-
-        {/* Save Template Dialog */}
-        <SaveTemplateDialog
-          open={saveTemplateDialogOpen}
-          onOpenChange={setSaveTemplateDialogOpen}
-          imageEditor={imageEditor}
-          templateMetadata={templateMetadata}
-          title={
-            templateMetadata
-              ? t('imageEditor.template.saveTemplateAs')
-              : t('imageEditor.template.createTemplate')
-          }
-          onSaveSuccess={(templatePath) => {
-            isSavedRef.current = true
-            navigate({
-              to: '/$imagePath/editor',
-              params: { imagePath: templatePath },
-            })
-          }}
-        />
-
-        {/* Apply Template Dialog */}
-        <FilePickerDialog
-          open={applyTemplateDialogOpen}
-          onOpenChange={setApplyTemplateDialogOpen}
-          title={t('imageEditor.template.selectTemplate')}
-          description={t('imageEditor.template.selectTemplateDescription')}
-          onSelect={handleApplyTemplate}
-          fileExtensions={['.imagor.json']}
-          lastLocationRegistryKey='config.file_picker_last_folder_path_template'
-          selectionMode='single'
-        />
-
-        {/* Swap Image Dialog */}
-        <FilePickerDialog
-          open={replaceImageDialogOpen}
-          onOpenChange={setReplaceImageDialogOpen}
-          title={t('imageEditor.layers.selectImageToReplace')}
-          description={t('imageEditor.layers.selectImageToReplaceDescription')}
-          onSelect={handleReplaceImageSelect}
-          fileType='images'
-          selectionMode='single'
-        />
-
-        {/* Navigation Confirmation Dialog */}
-        <ConfirmNavigationDialog
-          open={showDialog}
-          onOpenChange={handleCancel}
-          onConfirm={handleConfirm}
-        />
-      </div>
-    )
-  }
-
-  // Mobile layout
-  if (isMobile) {
-    return (
-      <div className='bg-background ios-no-drag min-h-screen-safe flex overflow-hidden overscroll-none select-none'>
-        {/* Loading Bar */}
-        <LoadingBar isLoading={isLoading} />
-
-        {/* Preview Area  */}
-        <div className='ios-preview-container-fix flex flex-1 flex-col'>
-          {/* Header */}
-          <div className='flex items-center gap-2 border-b p-3'>
-            {/* Back button - hidden in embedded mode */}
-            <Button
-              variant='outline'
-              size='sm'
-              className={cn(authState.isEmbedded && 'invisible')}
-              onClick={handleBack}
-            >
-              <ChevronLeft className='mr-1 h-4 w-4' />
-              {t('imageEditor.page.back')}
-            </Button>
-
-            {/* Centered title */}
-            <div className='flex flex-1 justify-center'>
-              <a
-                href='https://imagor.net'
-                target='_blank'
-                className='text-foreground hover:text-foreground/80 text-lg font-semibold transition-colors'
-              >
-                {t('common.navigation.title')}
-              </a>
-            </div>
-
-            {/* Theme Toggle + 3-Dot Menu */}
-            <div className='ml-auto flex items-center gap-2'>
-              <ModeToggle />
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant='ghost' size='sm'>
-                    <MoreVertical className='h-4 w-4' />
-                  </Button>
-                </DropdownMenuTrigger>
-                <EditorMenuDropdown
-                  onDownload={handleDownloadClick}
-                  onCopyUrl={handleCopyUrlClick}
-                  onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
-                  onApplyTemplate={() => setApplyTemplateDialogOpen(true)}
-                  onLanguageChange={handleLanguageChange}
-                  onToggleSectionVisibility={handleToggleSectionVisibility}
-                  editorOpenSections={editorOpenSections}
-                  iconMap={iconMap}
-                  titleKeyMap={titleKeyMap}
-                  includeUndoRedo={true}
-                  onUndo={() => imageEditor.undo()}
-                  onRedo={() => imageEditor.redo()}
-                  canUndo={canUndo}
-                  canRedo={canRedo}
-                />
-              </DropdownMenu>
-            </div>
-          </div>
-
-          {/* Preview Content */}
-          <PreviewArea
-            previewUrl={previewUrl || ''}
-            error={error}
-            originalDimensions={imageEditor.getOriginalDimensions()}
-            onLoad={handlePreviewLoad}
-            onCopyUrl={handleCopyUrlClick}
-            onDownload={handleDownloadClick}
-            onPreviewDimensionsChange={setPreviewMaxDimensions}
-            visualCropEnabled={visualCropEnabled}
-            cropLeft={params.cropLeft || 0}
-            cropTop={params.cropTop || 0}
-            cropWidth={params.cropWidth || 0}
-            cropHeight={params.cropHeight || 0}
-            onCropChange={handleCropChange}
-            cropAspectRatio={cropAspectRatio}
-            hFlip={params.hFlip}
-            vFlip={params.vFlip}
-            imageEditor={imageEditor}
-            selectedLayerId={selectedLayerId}
-            editingContext={editingContext}
-            layerAspectRatioLocked={layerAspectRatioLocked}
-            onOpenControls={() => setMobileSheetOpen(true)}
-            zoom={zoom}
-            previewContainerRef={previewContainerRef}
-            onImageDimensionsChange={setPreviewImageDimensions}
-          />
-
-          {/* Controls Sheet */}
-          <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
-            <SheetTrigger asChild>
-              <button className='hidden' />
-            </SheetTrigger>
-            <SheetContent
-              side='right'
-              hideClose={true}
-              className='flex w-full flex-col gap-0 p-0 sm:w-96'
-            >
-              <SheetHeader className='border-b p-3'>
-                <div className='flex items-center gap-3'>
-                  <Button variant='outline' size='sm' onClick={() => setMobileSheetOpen(false)}>
-                    <ChevronLeft className='mr-1 h-4 w-4' />
-                    {t('imageEditor.page.back')}
-                  </Button>
-
-                  <SheetTitle className='flex-1 text-center'>
-                    {t('imageEditor.page.controls')}
-                  </SheetTitle>
-
-                  {/* Invisible spacer to balance the Back button and center the title */}
-                  <div className='w-[72px]' />
-                </div>
-              </SheetHeader>
-
-              {/* Scrollable Controls */}
-              <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-                <ImageEditorControls
-                  imageEditor={imageEditor}
-                  params={params}
-                  selectedLayerId={selectedLayerId}
-                  editingContext={editingContext}
-                  layerAspectRatioLocked={layerAspectRatioLocked}
-                  onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
-                  openSections={editorOpenSections}
-                  onOpenSectionsChange={handleOpenSectionsChange}
-                  onUpdateParams={updateParams}
-                  onVisualCropToggle={handleVisualCropToggle}
-                  isVisualCropEnabled={visualCropEnabled}
-                  outputWidth={imageEditor.getOriginalDimensions().width}
-                  outputHeight={imageEditor.getOriginalDimensions().height}
-                  onCropAspectRatioChange={setCropAspectRatio}
-                  onReplaceImage={handleReplaceImageClick}
-                  onAddLayer={handleAddLayerWithViewport}
-                  column='both'
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-
-        {/* Copy URL Dialog */}
-        <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
-
-        {/* Save Template Dialog */}
-        <SaveTemplateDialog
-          open={saveTemplateDialogOpen}
-          onOpenChange={setSaveTemplateDialogOpen}
-          imageEditor={imageEditor}
-          templateMetadata={templateMetadata}
-          title={
-            templateMetadata
-              ? t('imageEditor.template.saveTemplateAs')
-              : t('imageEditor.template.createTemplate')
-          }
-          onSaveSuccess={(templatePath) => {
-            isSavedRef.current = true
-            navigate({
-              to: '/$imagePath/editor',
-              params: { imagePath: templatePath },
-            })
-          }}
-        />
-
-        {/* Apply Template Dialog */}
-        <FilePickerDialog
-          open={applyTemplateDialogOpen}
-          onOpenChange={setApplyTemplateDialogOpen}
-          title={t('imageEditor.template.selectTemplate')}
-          description={t('imageEditor.template.selectTemplateDescription')}
-          onSelect={handleApplyTemplate}
-          fileExtensions={['.imagor.json']}
-          lastLocationRegistryKey='config.file_picker_last_folder_path_template'
-          selectionMode='single'
-        />
-
-        {/* Swap Image Dialog */}
-        <FilePickerDialog
-          open={replaceImageDialogOpen}
-          onOpenChange={setReplaceImageDialogOpen}
-          title={t('imageEditor.layers.selectImageToReplace')}
-          description={t('imageEditor.layers.selectImageToReplaceDescription')}
-          onSelect={handleReplaceImageSelect}
-          fileType='images'
-          selectionMode='single'
-        />
-
-        {/* Navigation Confirmation Dialog */}
-        <ConfirmNavigationDialog
-          open={showDialog}
-          onOpenChange={handleCancel}
-          onConfirm={handleConfirm}
-        />
-      </div>
-    )
-  }
-
-  // Desktop layout - Three columns with full-width bottom bar
-  // Calculate if columns are empty for smart sizing
+  // Calculate if columns are empty for smart sizing (desktop)
   const leftColumnSections = editorOpenSections.leftColumn
     .map((id) => id)
     .filter((id) => {
@@ -1325,286 +845,46 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   const isLeftEmpty = leftColumnSections.length === 0
   const isRightEmpty = rightColumnSections.length === 0
 
-  return (
-    <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] overscroll-none select-none'>
-      {/* Loading Bar */}
-      <LoadingBar isLoading={isLoading} />
+  // Shared controls props
+  const controlsProps = {
+    imageEditor,
+    params,
+    selectedLayerId,
+    editingContext,
+    layerAspectRatioLocked,
+    onLayerAspectRatioLockChange: setLayerAspectRatioLockToggle,
+    openSections: editorOpenSections,
+    onOpenSectionsChange: handleOpenSectionsChange,
+    onUpdateParams: updateParams,
+    onVisualCropToggle: handleVisualCropToggle,
+    isVisualCropEnabled: visualCropEnabled,
+    outputWidth: imageEditor.getOriginalDimensions().width,
+    outputHeight: imageEditor.getOriginalDimensions().height,
+    onCropAspectRatioChange: setCropAspectRatio,
+    onReplaceImage: handleReplaceImageClick,
+    onAddLayer: handleAddLayerWithViewport,
+  }
 
-      {/* Header - spans full width */}
-      <div className='flex items-center gap-2 border-b p-3'>
-        {/* Back button - hidden in embedded mode */}
-        <Button
-          variant='outline'
-          size='sm'
-          className={cn(authState.isEmbedded && 'invisible')}
-          onClick={handleBack}
-        >
-          <ChevronLeft className='mr-1 h-4 w-4' />
-          {t('imageEditor.page.back')}
-        </Button>
-
-        {/* Fixed-width breadcrumb container to prevent title shift */}
-        <div className='w-[220px]'>
-          <LayerBreadcrumb
-            imageEditor={imageEditor}
-            baseName={isTemplate && templateMetadata ? templateMetadata.name : undefined}
-            baseLabel={
-              isTemplate && templateMetadata ? (
-                <div className='text-muted-foreground flex items-center gap-1.5'>
-                  <FileText className='h-3.5 w-3.5 flex-shrink-0' />
-                  <span className='max-w-[200px] truncate text-sm'>{templateMetadata.name}</span>
-                </div>
-              ) : undefined
-            }
-          />
-        </div>
-
-        {/* Centered title */}
-        <div className='flex flex-1 justify-center'>
-          <a
-            href='https://imagor.net'
-            target='_blank'
-            className='text-foreground hover:text-foreground/80 text-lg font-semibold transition-colors'
-          >
-            {t('common.navigation.title')}
-          </a>
-        </div>
-
-        {/* Theme Toggle + Undo/Redo + Primary Action & Three-dot Menu (grouped) */}
-        <div className='ml-auto flex items-center gap-2'>
-          <ModeToggle />
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={() => imageEditor.undo()}
-            disabled={!canUndo}
-            title={t('imageEditor.page.undo')}
-          >
-            <Undo2 className='h-4 w-4' />
-          </Button>
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={() => imageEditor.redo()}
-            disabled={!canRedo}
-            title={t('imageEditor.page.redo')}
-          >
-            <Redo2 className='h-4 w-4' />
-          </Button>
-          <div className='inline-flex items-center rounded-md'>
-            {isTemplate ? (
-              <>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={handleSaveTemplateClick}
-                  className='rounded-r-none border-r-0'
-                >
-                  <FileText className='mr-1 h-4 w-4' />
-                  {t('imageEditor.template.saveTemplate')}
-                </Button>
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant='outline' size='sm' className='rounded-l-none px-2'>
-                      <MoreVertical className='h-4 w-4' />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <EditorMenuDropdown
-                    onDownload={handleDownloadClick}
-                    onCopyUrl={handleCopyUrlClick}
-                    onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
-                    onApplyTemplate={() => setApplyTemplateDialogOpen(true)}
-                    onLanguageChange={handleLanguageChange}
-                    onToggleSectionVisibility={handleToggleSectionVisibility}
-                    editorOpenSections={editorOpenSections}
-                    iconMap={iconMap}
-                    titleKeyMap={titleKeyMap}
-                    isTemplate={isTemplate}
-                  />
-                </DropdownMenu>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={handleDownloadClick}
-                  className='rounded-r-none border-r-0'
-                >
-                  <Download className='mr-1 h-4 w-4' />
-                  {t('imageEditor.page.download')}
-                </Button>
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant='outline' size='sm' className='rounded-l-none px-2'>
-                      <MoreVertical className='h-4 w-4' />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <EditorMenuDropdown
-                    onDownload={handleDownloadClick}
-                    onCopyUrl={handleCopyUrlClick}
-                    onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
-                    onApplyTemplate={() => setApplyTemplateDialogOpen(true)}
-                    onLanguageChange={handleLanguageChange}
-                    onToggleSectionVisibility={handleToggleSectionVisibility}
-                    editorOpenSections={editorOpenSections}
-                    iconMap={iconMap}
-                    titleKeyMap={titleKeyMap}
-                  />
-                </DropdownMenu>
-              </>
-            )}
+  // Breadcrumb for desktop
+  const breadcrumb = (
+    <LayerBreadcrumb
+      imageEditor={imageEditor}
+      baseName={isTemplate && templateMetadata ? templateMetadata.name : undefined}
+      baseLabel={
+        isTemplate && templateMetadata ? (
+          <div className='text-muted-foreground flex items-center gap-1.5'>
+            <FileText className='h-3.5 w-3.5 flex-shrink-0' />
+            <span className='max-w-[200px] truncate text-sm'>{templateMetadata.name}</span>
           </div>
-        </div>
-      </div>
+        ) : undefined
+      }
+    />
+  )
 
-      {/* Main content - Three columns with shared DndContext */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <div
-          className='grid overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out'
-          style={{
-            gridTemplateColumns: `${isLeftEmpty ? '60px' : '330px'} 1fr ${isRightEmpty ? '60px' : '330px'}`,
-          }}
-        >
-          {/* Left Column */}
-          <div className='bg-background flex flex-col overflow-hidden border-r'>
-            <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-              <ImageEditorControls
-                imageEditor={imageEditor}
-                params={params}
-                selectedLayerId={selectedLayerId}
-                editingContext={editingContext}
-                layerAspectRatioLocked={layerAspectRatioLocked}
-                onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
-                openSections={editorOpenSections}
-                onOpenSectionsChange={handleOpenSectionsChange}
-                onUpdateParams={updateParams}
-                onVisualCropToggle={handleVisualCropToggle}
-                isVisualCropEnabled={visualCropEnabled}
-                outputWidth={imageEditor.getOriginalDimensions().width}
-                outputHeight={imageEditor.getOriginalDimensions().height}
-                onCropAspectRatioChange={setCropAspectRatio}
-                onReplaceImage={handleReplaceImageClick}
-                onAddLayer={handleAddLayerWithViewport}
-                column='left'
-              />
-            </div>
-          </div>
-
-          {/* Center - Preview Area */}
-          <div className='flex flex-col overflow-hidden'>
-            <PreviewArea
-              previewUrl={previewUrl || ''}
-              error={error}
-              originalDimensions={imageEditor.getOriginalDimensions()}
-              onLoad={handlePreviewLoad}
-              onCopyUrl={handleCopyUrlClick}
-              onDownload={handleDownloadClick}
-              onPreviewDimensionsChange={setPreviewMaxDimensions}
-              visualCropEnabled={visualCropEnabled}
-              cropLeft={params.cropLeft || 0}
-              cropTop={params.cropTop || 0}
-              cropWidth={params.cropWidth || 0}
-              cropHeight={params.cropHeight || 0}
-              onCropChange={handleCropChange}
-              cropAspectRatio={cropAspectRatio}
-              hFlip={params.hFlip}
-              vFlip={params.vFlip}
-              imageEditor={imageEditor}
-              selectedLayerId={selectedLayerId}
-              editingContext={editingContext}
-              layerAspectRatioLocked={layerAspectRatioLocked}
-              isLeftColumnEmpty={isLeftEmpty}
-              isRightColumnEmpty={isRightEmpty}
-              zoom={zoom}
-              previewContainerRef={previewContainerRef}
-              onImageDimensionsChange={setPreviewImageDimensions}
-            />
-          </div>
-
-          {/* Right Column */}
-          <div className='bg-background flex flex-col overflow-hidden border-l'>
-            <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-              <ImageEditorControls
-                imageEditor={imageEditor}
-                params={params}
-                selectedLayerId={selectedLayerId}
-                editingContext={editingContext}
-                layerAspectRatioLocked={layerAspectRatioLocked}
-                onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
-                openSections={editorOpenSections}
-                onOpenSectionsChange={handleOpenSectionsChange}
-                onUpdateParams={updateParams}
-                onVisualCropToggle={handleVisualCropToggle}
-                isVisualCropEnabled={visualCropEnabled}
-                outputWidth={imageEditor.getOriginalDimensions().width}
-                outputHeight={imageEditor.getOriginalDimensions().height}
-                onCropAspectRatioChange={setCropAspectRatio}
-                onReplaceImage={handleReplaceImageClick}
-                onAddLayer={handleAddLayerWithViewport}
-                column='right'
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Drag Overlay */}
-        <DragOverlay>
-          {activeSection && ActiveIcon ? (
-            <div className='bg-card w-[305px] rounded-md border shadow-lg'>
-              <Collapsible open={editorOpenSections[activeId as SectionKey]}>
-                <div className='flex w-full items-center'>
-                  <div className='py-2 pr-1 pl-3'>
-                    <GripVertical className='h-4 w-4' />
-                  </div>
-                  <div className='flex flex-1 items-center justify-between py-2 pr-3'>
-                    <div className='flex items-center gap-2'>
-                      <ActiveIcon className='h-4 w-4' />
-                      <span className='font-medium'>{t(titleKeyMap[activeId!])}</span>
-                    </div>
-                    {editorOpenSections[activeId as SectionKey] ? (
-                      <ChevronUp className='h-4 w-4' />
-                    ) : (
-                      <ChevronDown className='h-4 w-4' />
-                    )}
-                  </div>
-                </div>
-                <CollapsibleContent className='overflow-hidden px-3 pt-1 pb-3'>
-                  {activeSection.component}
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-
-      {/* Bottom bar - status bar style */}
-      <div className='bg-background flex h-12 items-center overflow-x-auto overflow-y-hidden border-t px-4'>
-        {/* Imagor Path - scrollable with monospace font, conditional padding based on zoom controls visibility */}
-        <code className='text-muted-foreground pr-36 font-mono text-xs whitespace-nowrap select-text'>
-          {imagorPath}
-        </code>
-      </div>
-
-      {/* Zoom Controls - fixed position overlay aligned with bottom bar */}
-      {!isMobile && (
-        <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
-          <div className='pointer-events-auto'>
-            <ZoomControls zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />
-          </div>
-        </div>
-      )}
-
-      {/* Copy URL Dialog */}
+  // Dialogs - shared across all layouts
+  const dialogs = (
+    <>
       <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
-
-      {/* Save Template Dialog */}
       <SaveTemplateDialog
         open={saveTemplateDialogOpen}
         onOpenChange={setSaveTemplateDialogOpen}
@@ -1623,8 +903,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           })
         }}
       />
-
-      {/* Apply Template Dialog */}
       <FilePickerDialog
         open={applyTemplateDialogOpen}
         onOpenChange={setApplyTemplateDialogOpen}
@@ -1635,8 +913,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         lastLocationRegistryKey='config.file_picker_last_folder_path_template'
         selectionMode='single'
       />
-
-      {/* Swap Image Dialog */}
       <FilePickerDialog
         open={replaceImageDialogOpen}
         onOpenChange={setReplaceImageDialogOpen}
@@ -1646,13 +922,82 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         fileType='images'
         selectionMode='single'
       />
-
-      {/* Navigation Confirmation Dialog */}
       <ConfirmNavigationDialog
         open={showDialog}
         onOpenChange={handleCancel}
         onConfirm={handleConfirm}
       />
-    </div>
+    </>
+  )
+
+  return (
+    <ImageEditorLayout
+      isLoading={isLoading}
+      isEmbedded={authState.isEmbedded}
+      onBack={handleBack}
+      canUndo={canUndo}
+      canRedo={canRedo}
+      onUndo={() => imageEditor.undo()}
+      onRedo={() => imageEditor.redo()}
+      isTemplate={isTemplate}
+      onSaveTemplate={handleSaveTemplateClick}
+      onDownload={handleDownloadClick}
+      onCopyUrl={handleCopyUrlClick}
+      onSaveTemplateAs={() => setSaveTemplateDialogOpen(true)}
+      onApplyTemplate={() => setApplyTemplateDialogOpen(true)}
+      onLanguageChange={handleLanguageChange}
+      onToggleSectionVisibility={handleToggleSectionVisibility}
+      editorOpenSections={editorOpenSections}
+      iconMap={iconMap}
+      titleKeyMap={titleKeyMap}
+      breadcrumb={breadcrumb}
+      previewArea={
+        <PreviewArea
+          previewUrl={previewUrl || ''}
+          error={error}
+          originalDimensions={imageEditor.getOriginalDimensions()}
+          onLoad={handlePreviewLoad}
+          onCopyUrl={handleCopyUrlClick}
+          onDownload={handleDownloadClick}
+          onPreviewDimensionsChange={setPreviewMaxDimensions}
+          visualCropEnabled={visualCropEnabled}
+          cropLeft={params.cropLeft || 0}
+          cropTop={params.cropTop || 0}
+          cropWidth={params.cropWidth || 0}
+          cropHeight={params.cropHeight || 0}
+          onCropChange={handleCropChange}
+          cropAspectRatio={cropAspectRatio}
+          hFlip={params.hFlip}
+          vFlip={params.vFlip}
+          imageEditor={imageEditor}
+          selectedLayerId={selectedLayerId}
+          editingContext={editingContext}
+          layerAspectRatioLocked={layerAspectRatioLocked}
+          zoom={zoom}
+          previewContainerRef={previewContainerRef}
+          onImageDimensionsChange={setPreviewImageDimensions}
+          isLeftColumnEmpty={isLeftEmpty}
+          isRightColumnEmpty={isRightEmpty}
+          onOpenControls={isMobile ? () => setMobileSheetOpen(true) : undefined}
+        />
+      }
+      leftControls={<ImageEditorControls {...controlsProps} column='left' />}
+      rightControls={<ImageEditorControls {...controlsProps} column='right' />}
+      singleColumnControls={<ImageEditorControls {...controlsProps} column='both' />}
+      imagorPath={imagorPath}
+      zoom={zoom}
+      onZoomChange={setZoom}
+      actualScale={actualScale}
+      mobileSheetOpen={mobileSheetOpen}
+      onMobileSheetOpenChange={setMobileSheetOpen}
+      activeId={activeId}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+      activeSectionComponent={activeSection?.component}
+      isLeftColumnEmpty={isLeftEmpty}
+      isRightColumnEmpty={isRightEmpty}
+      dialogs={dialogs}
+    />
   )
 }

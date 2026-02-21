@@ -195,10 +195,9 @@ export function PreviewArea({
 
   // Shared calculation logic for preview dimensions
   const calculatePreviewDimensions = useCallback(() => {
-    // In visual crop mode, only skip dimension updates when in fit mode AND window is resizing
-    // This prevents the preview from being regenerated during window resize,
-    // which would cause the crop overlay to become misaligned
-    // However, we DO want to update dimensions when zoom changes
+    // In visual crop mode in fit zoom, skip preview dimension updates to prevent regeneration
+    // The overlay now uses percentage-based dimensions and will scale via ResizeObserver
+    // This prevents the preview from being regenerated during window resize
     if (visualCropEnabled && zoom === 'fit') {
       return
     }
@@ -492,13 +491,23 @@ export function PreviewArea({
                 {imageDimensions && (
                   <div
                     className='absolute'
-                    style={{
-                      // Fit mode: padding = 0, Zoom mode: padding = 0.5x image size
-                      left: zoom === 'fit' ? '0px' : `${imageDimensions.width * 0.5}px`,
-                      top: zoom === 'fit' ? '0px' : `${imageDimensions.height * 0.5}px`,
-                      width: `${imageDimensions.width}px`,
-                      height: `${imageDimensions.height}px`,
-                    }}
+                    style={
+                      zoom === 'fit'
+                        ? {
+                            // Fit mode: Use percentage-based dimensions to follow image scaling
+                            left: '0',
+                            top: '0',
+                            width: '100%',
+                            height: '100%',
+                          }
+                        : {
+                            // Zoom mode: Use fixed pixel dimensions for precise positioning
+                            left: `${imageDimensions.width * 0.5}px`,
+                            top: `${imageDimensions.height * 0.5}px`,
+                            width: `${imageDimensions.width}px`,
+                            height: `${imageDimensions.height}px`,
+                          }
+                    }
                   >
                     {/* Single set of overlay logic - works for both modes */}
                     {visualCropEnabled &&
@@ -526,6 +535,7 @@ export function PreviewArea({
                             vFlip={overlayVFlip}
                             originalWidth={originalDimensions.width}
                             originalHeight={originalDimensions.height}
+                            zoom={zoom}
                           />
                         )
                       })()}

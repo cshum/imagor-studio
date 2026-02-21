@@ -17,6 +17,7 @@ interface CropOverlayProps {
   vFlip?: boolean
   originalWidth: number
   originalHeight: number
+  zoom?: number | 'fit'
 }
 
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | null
@@ -36,6 +37,7 @@ export function CropOverlay({
   vFlip = false,
   originalWidth,
   originalHeight,
+  zoom = 'fit',
 }: CropOverlayProps) {
   // Use separate scales for X and Y (for stretch mode support)
   const scaleX = scale
@@ -359,10 +361,19 @@ export function CropOverlay({
     <div
       ref={overlayRef}
       className='pointer-events-none absolute inset-0 z-20'
-      style={{
-        width: previewWidth,
-        height: previewHeight,
-      }}
+      style={
+        zoom === 'fit'
+          ? {
+              // Fit mode: Use percentage-based dimensions to follow image scaling
+              width: '100%',
+              height: '100%',
+            }
+          : {
+              // Zoom mode: Use fixed pixel dimensions for precise positioning
+              width: previewWidth,
+              height: previewHeight,
+            }
+      }
     >
       {/* Darkened overlay outside crop area */}
       <svg className='absolute inset-0 h-full w-full'>
@@ -370,10 +381,10 @@ export function CropOverlay({
           <mask id='crop-mask'>
             <rect width='100%' height='100%' fill='white' />
             <rect
-              x={displayLeft}
-              y={displayTop}
-              width={displayWidth}
-              height={displayHeight}
+              x={zoom === 'fit' ? `${(displayLeft / previewWidth) * 100}%` : displayLeft}
+              y={zoom === 'fit' ? `${(displayTop / previewHeight) * 100}%` : displayTop}
+              width={zoom === 'fit' ? `${(displayWidth / previewWidth) * 100}%` : displayWidth}
+              height={zoom === 'fit' ? `${(displayHeight / previewHeight) * 100}%` : displayHeight}
               fill='black'
             />
           </mask>
@@ -388,13 +399,25 @@ export function CropOverlay({
           'crop-box pointer-events-auto absolute cursor-move border border-white',
           (isDragging || isResizing) && 'cursor-grabbing',
         )}
-        style={{
-          left: displayLeft,
-          top: displayTop,
-          width: displayWidth,
-          height: displayHeight,
-          boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.5)',
-        }}
+        style={
+          zoom === 'fit'
+            ? {
+                // Fit mode: Use percentage-based positioning for automatic scaling
+                left: `${(displayLeft / previewWidth) * 100}%`,
+                top: `${(displayTop / previewHeight) * 100}%`,
+                width: `${(displayWidth / previewWidth) * 100}%`,
+                height: `${(displayHeight / previewHeight) * 100}%`,
+                boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.5)',
+              }
+            : {
+                // Zoom mode: Use pixel-based positioning for precise control
+                left: displayLeft,
+                top: displayTop,
+                width: displayWidth,
+                height: displayHeight,
+                boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.5)',
+              }
+        }
         onMouseDown={handleCropMouseDown}
         onTouchStart={handleCropMouseDown}
       >

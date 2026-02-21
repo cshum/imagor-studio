@@ -18,8 +18,8 @@ const EDITOR_SECTIONS = {
 export type SectionKey = keyof typeof EDITOR_SECTIONS
 
 export const SECTION_KEYS: SectionKey[] = [
-  'layers',
   'crop',
+  'layers',
   'effects',
   'transform',
   'dimensions',
@@ -37,9 +37,9 @@ export interface EditorOpenSections extends Record<SectionKey, boolean> {
 // Default sections with proper typing
 const defaultOpenSections: EditorOpenSections = {
   ...EDITOR_SECTIONS,
-  leftColumn: ['layers', 'crop'],
+  leftColumn: ['crop', 'layers'],
   rightColumn: ['effects', 'transform', 'dimensions', 'fill', 'output'],
-  visibleSections: ['layers', 'crop', 'effects', 'transform', 'dimensions', 'fill', 'output'],
+  visibleSections: ['crop', 'layers', 'effects', 'transform', 'dimensions', 'fill', 'output'],
 }
 
 export class EditorOpenSectionsStorage {
