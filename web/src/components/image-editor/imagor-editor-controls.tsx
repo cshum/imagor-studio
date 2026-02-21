@@ -61,6 +61,7 @@ interface ImageEditorControlsProps {
   outputHeight: number
   onCropAspectRatioChange?: (aspectRatio: number | null) => void
   onReplaceImage?: (layerId: string | null) => void
+  onAddLayer?: (paths: string[]) => Promise<void>
   column?: 'left' | 'right' | 'both'
   // Drag handlers (optional - only needed when column is 'left' or 'right')
   onDragStart?: (event: DragStartEvent) => void
@@ -167,6 +168,7 @@ export function ImageEditorControls({
   outputHeight,
   onCropAspectRatioChange,
   onReplaceImage,
+  onAddLayer,
   column = 'both',
 }: ImageEditorControlsProps) {
   const { t } = useTranslation()
@@ -366,6 +368,7 @@ export function ImageEditorControls({
             onLayerAspectRatioLockChange={onLayerAspectRatioLockChange}
             visualCropEnabled={isVisualCropEnabled}
             onReplaceImage={onReplaceImage || (() => {})}
+            onAddLayer={onAddLayer || (() => Promise.resolve())}
           />
         ),
       },
@@ -384,6 +387,7 @@ export function ImageEditorControls({
       outputHeight,
       onCropAspectRatioChange,
       onReplaceImage,
+      onAddLayer,
     ],
   )
 

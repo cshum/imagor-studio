@@ -73,8 +73,10 @@ import {
 } from '@/lib/editor-state-url'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { type ImageEditorState } from '@/lib/image-editor.ts'
+import { calculateOptimalLayerPositioning } from '@/lib/layer-positioning'
 import { splitImagePath } from '@/lib/path-utils'
 import { cn, debounce } from '@/lib/utils.ts'
+import { calculateLayerPositionInViewport, calculateViewportBounds } from '@/lib/viewport-utils'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 import { useAuth } from '@/stores/auth-store'
 import { setLocale } from '@/stores/locale-store'
@@ -160,6 +162,13 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
   // Drag and drop state for desktop
   const [activeId, setActiveId] = useState<string | null>(null)
+
+  // Preview container ref and image dimensions for viewport calculations
+  const previewContainerRef = useRef<HTMLDivElement>(null)
+  const [previewImageDimensions, setPreviewImageDimensions] = useState<{
+    width: number
+    height: number
+  } | null>(null)
 
   // Unsaved changes warning hook (skip if template was just saved)
   // Pass a function so it checks the ref value at navigation time, not render time
@@ -481,6 +490,85 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     setReplaceImageDialogOpen(true)
   }, [])
 
+  const handleAddLayerWithViewport = useCallback(
+    async (paths: string[]) => {
+      if (paths.length === 0) return
+
+      try {
+        const imagePath = paths[0] // Single selection mode
+
+        // Fetch dimensions for the layer image
+        const dimensions = await fetchImageDimensions(imagePath)
+
+        // Extract filename for display name
+        const filename = imagePath.split('/').pop() || imagePath
+
+        // Get current context output dimensions (context-aware)
+        const outputDims = imageEditor.getOutputDimensions()
+
+        let layerPosition: { x: number; y: number; width: number; height: number }
+
+        // Check if we're in zoom mode and have viewport information
+        if (zoom !== 'fit' && previewContainerRef.current && previewImageDimensions) {
+          // Calculate viewport bounds using our utility
+          const viewportBounds = calculateViewportBounds({
+            scrollLeft: previewContainerRef.current.scrollLeft,
+            scrollTop: previewContainerRef.current.scrollTop,
+            clientWidth: previewContainerRef.current.clientWidth,
+            clientHeight: previewContainerRef.current.clientHeight,
+            scrollWidth: previewContainerRef.current.scrollWidth,
+            scrollHeight: previewContainerRef.current.scrollHeight,
+            imageDimensions: previewImageDimensions,
+            outputDimensions: outputDims,
+          })
+
+          // Calculate layer position within the visible viewport
+          layerPosition = calculateLayerPositionInViewport(
+            dimensions,
+            viewportBounds,
+            0.9, // 90% scale factor
+            'center', // Position at center of viewport
+          )
+        } else {
+          // Fit mode: Use calculateOptimalLayerPositioning for consistency
+          layerPosition = calculateOptimalLayerPositioning({
+            layerOriginalDimensions: dimensions,
+            outputDimensions: outputDims,
+            scaleFactor: 0.9,
+            positioning: 'center',
+          })
+        }
+
+        // Create new layer with calculated positioning
+        const newLayer = {
+          id: `layer-${Date.now()}`, // Simple unique ID
+          imagePath,
+          originalDimensions: dimensions,
+          x: layerPosition.x,
+          y: layerPosition.y,
+          alpha: 0, // 0 = opaque (no transparency)
+          blendMode: 'normal' as const,
+          visible: true,
+          name: filename,
+          transforms: {
+            width: layerPosition.width,
+            height: layerPosition.height,
+            fitIn: false, // Use fill mode for layers
+          },
+        }
+
+        imageEditor.addLayer(newLayer)
+
+        // Auto-select the newly added layer
+        imageEditor.setSelectedLayerId(newLayer.id)
+      } catch (error) {
+        console.error('Failed to add layer:', error)
+        toast.error(t('imageEditor.layers.failedToAddLayer'))
+      }
+    },
+    [imageEditor, t, zoom, previewImageDimensions],
+  )
+
   const handleReplaceImageSelect = useCallback(
     async (selectedPaths: string[]) => {
       if (selectedPaths.length === 0) return
@@ -750,6 +838,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
             visualCropEnabled={visualCropEnabled}
             onReplaceImage={handleReplaceImageClick}
+            onAddLayer={handleAddLayerWithViewport}
           />
         ),
       },
@@ -767,6 +856,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       setCropAspectRatio,
       setLayerAspectRatioLockToggle,
       handleReplaceImageClick,
+      handleAddLayerWithViewport,
     ],
   )
 
@@ -917,6 +1007,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
               editingContext={editingContext}
               layerAspectRatioLocked={layerAspectRatioLocked}
               zoom={zoom}
+              previewContainerRef={previewContainerRef}
+              onImageDimensionsChange={setPreviewImageDimensions}
             />
           </div>
 
@@ -939,6 +1031,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                 outputHeight={imageEditor.getOriginalDimensions().height}
                 onCropAspectRatioChange={setCropAspectRatio}
                 onReplaceImage={handleReplaceImageClick}
+                onAddLayer={handleAddLayerWithViewport}
                 column='both'
               />
             </div>
@@ -1095,6 +1188,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             layerAspectRatioLocked={layerAspectRatioLocked}
             onOpenControls={() => setMobileSheetOpen(true)}
             zoom={zoom}
+            previewContainerRef={previewContainerRef}
+            onImageDimensionsChange={setPreviewImageDimensions}
           />
 
           {/* Controls Sheet */}
@@ -1141,6 +1236,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                   outputHeight={imageEditor.getOriginalDimensions().height}
                   onCropAspectRatioChange={setCropAspectRatio}
                   onReplaceImage={handleReplaceImageClick}
+                  onAddLayer={handleAddLayerWithViewport}
                   column='both'
                 />
               </div>
@@ -1395,6 +1491,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                 outputHeight={imageEditor.getOriginalDimensions().height}
                 onCropAspectRatioChange={setCropAspectRatio}
                 onReplaceImage={handleReplaceImageClick}
+                onAddLayer={handleAddLayerWithViewport}
                 column='left'
               />
             </div>
@@ -1426,6 +1523,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
               isLeftColumnEmpty={isLeftEmpty}
               isRightColumnEmpty={isRightEmpty}
               zoom={zoom}
+              previewContainerRef={previewContainerRef}
+              onImageDimensionsChange={setPreviewImageDimensions}
             />
           </div>
 
@@ -1448,6 +1547,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
                 outputHeight={imageEditor.getOriginalDimensions().height}
                 onCropAspectRatioChange={setCropAspectRatio}
                 onReplaceImage={handleReplaceImageClick}
+                onAddLayer={handleAddLayerWithViewport}
                 column='right'
               />
             </div>
