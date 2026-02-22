@@ -25,8 +25,8 @@ interface EditorMenuDropdownProps {
   onLanguageChange: (languageCode: string) => void
   onToggleSectionVisibility: (sectionKey: SectionKey) => void
   editorOpenSections: EditorOpenSections
-  iconMap: Record<string, React.ComponentType<{ className?: string }>>
-  titleKeyMap: Record<string, string>
+  sectionIconMap: Record<string, React.ComponentType<{ className?: string }>>
+  sectionTitleKeyMap: Record<string, string>
   includeUndoRedo?: boolean
   onUndo?: () => void
   onRedo?: () => void
@@ -43,8 +43,8 @@ export function EditorMenuDropdown({
   onLanguageChange,
   onToggleSectionVisibility,
   editorOpenSections,
-  iconMap,
-  titleKeyMap,
+  sectionIconMap,
+  sectionTitleKeyMap,
   includeUndoRedo = false,
   onUndo,
   onRedo,
@@ -176,7 +176,7 @@ export function EditorMenuDropdown({
           <DropdownMenuSubContent>
             {SECTION_KEYS.map((sectionKey) => {
               const isVisible = editorOpenSections.visibleSections?.includes(sectionKey) ?? true
-              const SectionIcon = iconMap[sectionKey]
+              const SectionIcon = sectionIconMap[sectionKey]
               return (
                 <DropdownMenuItem
                   key={sectionKey}
@@ -188,7 +188,7 @@ export function EditorMenuDropdown({
                   <div className='flex w-full items-center justify-between gap-2'>
                     <div className='flex items-center gap-2'>
                       <SectionIcon className='h-4 w-4' />
-                      <span>{t(titleKeyMap[sectionKey])}</span>
+                      <span>{t(sectionTitleKeyMap[sectionKey])}</span>
                     </div>
                     <div className='flex w-4 items-center justify-center'>
                       {isVisible && <Check className='h-4 w-4' />}

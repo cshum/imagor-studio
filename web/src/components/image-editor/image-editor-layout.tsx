@@ -55,8 +55,7 @@ export interface ImageEditorLayoutProps {
   onLanguageChange: (code: string) => void
   onToggleSectionVisibility: (key: SectionKey) => void
   editorOpenSections: EditorOpenSections
-  iconMap: Record<string, React.ComponentType<{ className?: string }>>
-  titleKeyMap: Record<string, string>
+  onOpenSectionsChange: (sections: EditorOpenSections) => void
 
   // Desktop-only header: layer breadcrumb
   layerBreadcrumb?: React.ReactNode
@@ -82,9 +81,10 @@ export interface ImageEditorLayoutProps {
   mobileSheetOpen: boolean
   onMobileSheetOpenChange: (open: boolean) => void
 
-  // Desktop DnD - section configs for drag overlay
+  // Section configs for drag overlay
+  sectionIconMap: Record<string, React.ComponentType<{ className?: string }>>
+  sectionTitleKeyMap: Record<string, string>
   sectionConfigs: Record<string, { component: React.ReactNode }>
-  onOpenSectionsChange: (sections: EditorOpenSections) => void
 }
 
 export function ImageEditorLayout({
@@ -104,8 +104,7 @@ export function ImageEditorLayout({
   onLanguageChange,
   onToggleSectionVisibility,
   editorOpenSections,
-  iconMap,
-  titleKeyMap,
+  onOpenSectionsChange,
   layerBreadcrumb,
   previewArea,
   leftControls,
@@ -115,8 +114,9 @@ export function ImageEditorLayout({
   zoomControl,
   mobileSheetOpen,
   onMobileSheetOpenChange,
+  sectionIconMap,
+  sectionTitleKeyMap,
   sectionConfigs,
-  onOpenSectionsChange,
 }: ImageEditorLayoutProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md')
@@ -126,7 +126,7 @@ export function ImageEditorLayout({
   // Drag and drop state (desktop only)
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  const ActiveIcon = activeId ? iconMap[activeId] : null
+  const ActiveIcon = activeId ? sectionIconMap[activeId] : null
   const activeSection = activeId ? sectionConfigs[activeId as SectionKey] : null
 
   // Calculate if columns are empty for smart sizing (desktop)
@@ -292,8 +292,8 @@ export function ImageEditorLayout({
           onLanguageChange={onLanguageChange}
           onToggleSectionVisibility={onToggleSectionVisibility}
           editorOpenSections={editorOpenSections}
-          iconMap={iconMap}
-          titleKeyMap={titleKeyMap}
+          sectionIconMap={sectionIconMap}
+          sectionTitleKeyMap={sectionTitleKeyMap}
           isTemplate={isTemplate}
         />
       </DropdownMenu>
@@ -323,8 +323,8 @@ export function ImageEditorLayout({
           onLanguageChange={onLanguageChange}
           onToggleSectionVisibility={onToggleSectionVisibility}
           editorOpenSections={editorOpenSections}
-          iconMap={iconMap}
-          titleKeyMap={titleKeyMap}
+          sectionIconMap={sectionIconMap}
+          sectionTitleKeyMap={sectionTitleKeyMap}
         />
       </DropdownMenu>
     </>
@@ -399,8 +399,8 @@ export function ImageEditorLayout({
                   onLanguageChange={onLanguageChange}
                   onToggleSectionVisibility={onToggleSectionVisibility}
                   editorOpenSections={editorOpenSections}
-                  iconMap={iconMap}
-                  titleKeyMap={titleKeyMap}
+                  sectionIconMap={sectionIconMap}
+                  sectionTitleKeyMap={sectionTitleKeyMap}
                   includeUndoRedo={true}
                   onUndo={onUndo}
                   onRedo={onRedo}
@@ -553,7 +553,7 @@ export function ImageEditorLayout({
                   <div className='flex flex-1 items-center justify-between py-2 pr-3'>
                     <div className='flex items-center gap-2'>
                       <ActiveIcon className='h-4 w-4' />
-                      <span className='font-medium'>{t(titleKeyMap[activeId!])}</span>
+                      <span className='font-medium'>{t(sectionTitleKeyMap[activeId!])}</span>
                     </div>
                     {editorOpenSections[activeId as SectionKey] ? (
                       <ChevronUp className='h-4 w-4' />

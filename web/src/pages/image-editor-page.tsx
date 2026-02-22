@@ -605,7 +605,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   }
 
   // Icon mapping for drag overlay
-  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  const sectionIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     crop: Scissors,
     effects: Palette,
     transform: RotateCw,
@@ -615,7 +615,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     layers: Layers,
   }
 
-  const titleKeyMap: Record<string, string> = {
+  const sectionTitleKeyMap: Record<string, string> = {
     crop: 'imageEditor.controls.cropAspect',
     effects: 'imageEditor.controls.colorEffects',
     transform: 'imageEditor.controls.transformRotate',
@@ -735,8 +735,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         onLanguageChange={handleLanguageChange}
         onToggleSectionVisibility={handleToggleSectionVisibility}
         editorOpenSections={editorOpenSections}
-        iconMap={iconMap}
-        titleKeyMap={titleKeyMap}
+        sectionIconMap={sectionIconMap}
+        sectionTitleKeyMap={sectionTitleKeyMap}
         layerBreadcrumb={
           <LayerBreadcrumb
             imageEditor={imageEditor}
