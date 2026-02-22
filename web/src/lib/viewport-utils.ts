@@ -2,6 +2,8 @@
  * Utility functions for calculating viewport bounding boxes in the image editor
  */
 
+import { calculateOptimalLayerPositioning } from '@/lib/layer-positioning'
+
 export interface ViewportBounds {
   left: number
   top: number
@@ -96,14 +98,12 @@ export function calculateViewportBounds(input: ViewportCalculationInput): Viewpo
     Math.max(0, previewVisibleBottom - previewVisibleTop) * previewToOutputScale,
   )
 
-  const bounds = {
+  return {
     left: outputVisibleLeft,
     top: outputVisibleTop,
     width: outputVisibleWidth,
     height: outputVisibleHeight,
   }
-
-  return bounds
 }
 
 /**
@@ -144,12 +144,93 @@ export function calculateLayerPositionInViewport(
     y = viewportBounds.top
   }
 
-  const result = {
+  return {
     x: Math.round(x),
     y: Math.round(y),
     width: layerWidth,
     height: layerHeight,
   }
+}
 
-  return result
+/**
+ * Input parameters for calculating layer position in current view
+ */
+export interface LayerPositionInput {
+  // Required
+  layerDimensions: { width: number; height: number }
+  outputDimensions: { width: number; height: number }
+  zoom: number | 'fit'
+
+  // Optional - needed for zoom mode
+  previewContainerRef?: React.RefObject<HTMLDivElement | null> | null
+  previewImageDimensions?: { width: number; height: number } | null
+
+  // Optional - configuration
+  scaleFactor?: number // default 0.9
+  positioning?: 'center' | 'top-left' // default 'center'
+}
+
+/**
+ * High-level helper: Calculate layer position for current view state
+ * Handles both fit mode and zoom mode automatically
+ *
+ * This is a convenience function that orchestrates the lower-level utilities:
+ * - In zoom mode: uses calculateViewportBounds + calculateLayerPositionInViewport
+ * - In fit mode: uses calculateOptimalLayerPositioning
+ *
+ * @param input - Configuration object with all required parameters
+ * @returns Layer position and dimensions ready for layer creation
+ */
+export function calculateLayerPositionForCurrentView(input: LayerPositionInput): {
+  x: number
+  y: number
+  width: number
+  height: number
+} {
+  const {
+    layerDimensions,
+    outputDimensions,
+    zoom,
+    previewContainerRef,
+    previewImageDimensions,
+    scaleFactor = 0.9,
+    positioning = 'center',
+  } = input
+
+  // Check if we're in zoom mode and have all required viewport information
+  const isZoomMode =
+    zoom !== 'fit' &&
+    previewContainerRef?.current &&
+    previewImageDimensions &&
+    previewImageDimensions.width > 0 &&
+    previewImageDimensions.height > 0
+
+  if (isZoomMode && previewContainerRef?.current && previewImageDimensions) {
+    // Zoom mode: Calculate viewport bounds and position layer within visible area
+    const viewportBounds = calculateViewportBounds({
+      scrollLeft: previewContainerRef.current.scrollLeft,
+      scrollTop: previewContainerRef.current.scrollTop,
+      clientWidth: previewContainerRef.current.clientWidth,
+      clientHeight: previewContainerRef.current.clientHeight,
+      scrollWidth: previewContainerRef.current.scrollWidth,
+      scrollHeight: previewContainerRef.current.scrollHeight,
+      imageDimensions: previewImageDimensions,
+      outputDimensions,
+    })
+
+    return calculateLayerPositionInViewport(
+      layerDimensions,
+      viewportBounds,
+      scaleFactor,
+      positioning,
+    )
+  } else {
+    // Fit mode (or fallback): Use full output dimensions
+    return calculateOptimalLayerPositioning({
+      layerOriginalDimensions: layerDimensions,
+      outputDimensions,
+      scaleFactor,
+      positioning,
+    })
+  }
 }

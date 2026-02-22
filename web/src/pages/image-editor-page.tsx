@@ -47,10 +47,9 @@ import {
 } from '@/lib/editor-state-url'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { type ImageEditorState } from '@/lib/image-editor.ts'
-import { calculateOptimalLayerPositioning } from '@/lib/layer-positioning'
 import { splitImagePath } from '@/lib/path-utils'
 import { debounce } from '@/lib/utils.ts'
-import { calculateLayerPositionInViewport, calculateViewportBounds } from '@/lib/viewport-utils'
+import { calculateLayerPositionForCurrentView } from '@/lib/viewport-utils'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 import { useAuth } from '@/stores/auth-store'
 import { setLocale } from '@/stores/locale-store'
@@ -481,38 +480,16 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         // Get current context output dimensions (context-aware)
         const outputDims = imageEditor.getOutputDimensions()
 
-        let layerPosition: { x: number; y: number; width: number; height: number }
-
-        // Check if we're in zoom mode and have viewport information
-        if (zoom !== 'fit' && previewContainerRef.current && previewImageDimensions) {
-          // Calculate viewport bounds using our utility
-          const viewportBounds = calculateViewportBounds({
-            scrollLeft: previewContainerRef.current.scrollLeft,
-            scrollTop: previewContainerRef.current.scrollTop,
-            clientWidth: previewContainerRef.current.clientWidth,
-            clientHeight: previewContainerRef.current.clientHeight,
-            scrollWidth: previewContainerRef.current.scrollWidth,
-            scrollHeight: previewContainerRef.current.scrollHeight,
-            imageDimensions: previewImageDimensions,
-            outputDimensions: outputDims,
-          })
-
-          // Calculate layer position within the visible viewport
-          layerPosition = calculateLayerPositionInViewport(
-            dimensions,
-            viewportBounds,
-            0.9, // 90% scale factor
-            'center', // Position at center of viewport
-          )
-        } else {
-          // Fit mode: Use calculateOptimalLayerPositioning for consistency
-          layerPosition = calculateOptimalLayerPositioning({
-            layerOriginalDimensions: dimensions,
-            outputDimensions: outputDims,
-            scaleFactor: 0.9,
-            positioning: 'center',
-          })
-        }
+        // Calculate layer position for current view
+        const layerPosition = calculateLayerPositionForCurrentView({
+          layerDimensions: dimensions,
+          outputDimensions: outputDims,
+          zoom,
+          previewContainerRef,
+          previewImageDimensions,
+          scaleFactor: 0.9,
+          positioning: 'center',
+        })
 
         // Create new layer with calculated positioning
         const newLayer = {
@@ -541,7 +518,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         toast.error(t('imageEditor.layers.failedToAddLayer'))
       }
     },
-    [imageEditor, t, zoom, previewImageDimensions],
+    [imageEditor, t, zoom, previewImageDimensions, previewContainerRef],
   )
 
   const handleReplaceImageSelect = useCallback(
