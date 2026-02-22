@@ -163,9 +163,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
   // Reset Zoom to fit when switching editing context
   useEffect(() => {
-    if (editingContext) {
-      setZoom('fit')
-    }
+    setZoom('fit')
   }, [editingContext])
 
   // Reset aspect ratio lock when switching layers
