@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   closestCenter,
@@ -11,7 +11,7 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import {
   ChevronDown,
   ChevronLeft,
@@ -79,12 +79,9 @@ export interface ImageEditorLayoutProps {
   mobileSheetOpen: boolean
   onMobileSheetOpenChange: (open: boolean) => void
 
-  // Desktop DnD
-  activeId: string | null
-  onDragStart: (event: DragStartEvent) => void
-  onDragOver: (event: DragOverEvent) => void
-  onDragEnd: () => void
-  activeSectionComponent?: React.ReactNode
+  // Desktop DnD - section configs for drag overlay
+  sectionConfigs: Record<string, { component: React.ReactNode }>
+  onOpenSectionsChange: (sections: EditorOpenSections) => void
 
   // Desktop column empty states
   isLeftColumnEmpty: boolean
@@ -122,11 +119,8 @@ export function ImageEditorLayout({
   zoomControl,
   mobileSheetOpen,
   onMobileSheetOpenChange,
-  activeId,
-  onDragStart,
-  onDragOver,
-  onDragEnd,
-  activeSectionComponent,
+  sectionConfigs,
+  onOpenSectionsChange,
   isLeftColumnEmpty,
   isRightColumnEmpty,
   dialogs,
@@ -136,7 +130,110 @@ export function ImageEditorLayout({
   const isDesktop = useBreakpoint('lg')
   const isTablet = !isMobile && !isDesktop
 
+  // Drag and drop state (desktop only)
+  const [activeId, setActiveId] = useState<string | null>(null)
+
   const ActiveIcon = activeId ? iconMap[activeId] : null
+  const activeSection = activeId ? sectionConfigs[activeId as SectionKey] : null
+
+  // Drag and drop handlers (desktop only)
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id as string)
+  }, [])
+
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
+      const { active, over } = event
+      if (!over) return
+
+      const activeId = active.id as SectionKey
+      const overId = over.id as string
+      const overIdAsSection = overId as SectionKey
+
+      const activeInLeft = editorOpenSections.leftColumn.includes(activeId)
+      const activeInRight = editorOpenSections.rightColumn.includes(activeId)
+
+      let targetColumn: 'left' | 'right' | null = null
+
+      if (overId === 'left-column') {
+        targetColumn = 'left'
+      } else if (overId === 'right-column') {
+        targetColumn = 'right'
+      } else {
+        if (editorOpenSections.leftColumn.includes(overIdAsSection)) {
+          targetColumn = 'left'
+        } else if (editorOpenSections.rightColumn.includes(overIdAsSection)) {
+          targetColumn = 'right'
+        }
+      }
+
+      if (!targetColumn) return
+
+      if (targetColumn === 'left' && activeInRight) {
+        const newLeftColumn = [...editorOpenSections.leftColumn]
+        const newRightColumn = editorOpenSections.rightColumn.filter((id) => id !== activeId)
+
+        if (overId === 'left-column' || !editorOpenSections.leftColumn.includes(overIdAsSection)) {
+          newLeftColumn.push(activeId)
+        } else {
+          const overIndex = newLeftColumn.indexOf(overIdAsSection)
+          newLeftColumn.splice(overIndex, 0, activeId)
+        }
+
+        onOpenSectionsChange({
+          ...editorOpenSections,
+          leftColumn: newLeftColumn,
+          rightColumn: newRightColumn,
+        })
+      } else if (targetColumn === 'right' && activeInLeft) {
+        const newLeftColumn = editorOpenSections.leftColumn.filter((id) => id !== activeId)
+        const newRightColumn = [...editorOpenSections.rightColumn]
+
+        if (
+          overId === 'right-column' ||
+          !editorOpenSections.rightColumn.includes(overIdAsSection)
+        ) {
+          newRightColumn.push(activeId)
+        } else {
+          const overIndex = newRightColumn.indexOf(overIdAsSection)
+          newRightColumn.splice(overIndex, 0, activeId)
+        }
+
+        onOpenSectionsChange({
+          ...editorOpenSections,
+          leftColumn: newLeftColumn,
+          rightColumn: newRightColumn,
+        })
+      } else if (targetColumn === 'left' && activeInLeft && overId !== 'left-column') {
+        const oldIndex = editorOpenSections.leftColumn.indexOf(activeId)
+        const newIndex = editorOpenSections.leftColumn.indexOf(overIdAsSection)
+
+        if (oldIndex !== newIndex) {
+          const newLeftColumn = arrayMove(editorOpenSections.leftColumn, oldIndex, newIndex)
+          onOpenSectionsChange({
+            ...editorOpenSections,
+            leftColumn: newLeftColumn,
+          })
+        }
+      } else if (targetColumn === 'right' && activeInRight && overId !== 'right-column') {
+        const oldIndex = editorOpenSections.rightColumn.indexOf(activeId)
+        const newIndex = editorOpenSections.rightColumn.indexOf(overIdAsSection)
+
+        if (oldIndex !== newIndex) {
+          const newRightColumn = arrayMove(editorOpenSections.rightColumn, oldIndex, newIndex)
+          onOpenSectionsChange({
+            ...editorOpenSections,
+            rightColumn: newRightColumn,
+          })
+        }
+      }
+    },
+    [editorOpenSections, onOpenSectionsChange],
+  )
+
+  const handleDragEnd = useCallback(() => {
+    setActiveId(null)
+  }, [])
 
   // Drag and drop sensors for desktop
   const sensors = useSensors(
@@ -402,9 +499,9 @@ export function ImageEditorLayout({
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
-        onDragStart={onDragStart}
-        onDragOver={onDragOver}
-        onDragEnd={onDragEnd}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
       >
         <div
           className='grid overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out'
@@ -432,7 +529,7 @@ export function ImageEditorLayout({
 
         {/* Drag Overlay */}
         <DragOverlay>
-          {activeSectionComponent && ActiveIcon ? (
+          {activeSection && ActiveIcon ? (
             <div className='bg-card w-[305px] rounded-md border shadow-lg'>
               <Collapsible open={editorOpenSections[activeId as SectionKey]}>
                 <div className='flex w-full items-center'>
@@ -452,7 +549,7 @@ export function ImageEditorLayout({
                   </div>
                 </div>
                 <CollapsibleContent className='overflow-hidden px-3 pt-1 pb-3'>
-                  {activeSectionComponent}
+                  {activeSection.component}
                 </CollapsibleContent>
               </Collapsible>
             </div>

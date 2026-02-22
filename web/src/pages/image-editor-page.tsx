@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { DragOverEvent, DragStartEvent } from '@dnd-kit/core'
-import { arrayMove } from '@dnd-kit/sortable'
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import {
   FileImage,
@@ -133,9 +131,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   const [zoom, setZoom] = useState<number | 'fit'>('fit')
   const [actualScale, setActualScale] = useState<number | null>(null)
   const isSavedRef = useRef(false)
-
-  // Drag and drop state for desktop
-  const [activeId, setActiveId] = useState<string | null>(null)
 
   // Preview container ref and image dimensions for viewport calculations
   const previewContainerRef = useRef<HTMLDivElement>(null)
@@ -635,104 +630,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     await setLocale(languageCode)
   }
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id as string)
-  }, [])
-
-  const handleDragOver = useCallback(
-    (event: DragOverEvent) => {
-      const { active, over } = event
-      if (!over) return
-
-      const activeId = active.id as SectionKey
-      const overId = over.id as string
-      const overIdAsSection = overId as SectionKey
-
-      const activeInLeft = editorOpenSections.leftColumn.includes(activeId)
-      const activeInRight = editorOpenSections.rightColumn.includes(activeId)
-
-      let targetColumn: 'left' | 'right' | null = null
-
-      if (overId === 'left-column') {
-        targetColumn = 'left'
-      } else if (overId === 'right-column') {
-        targetColumn = 'right'
-      } else {
-        if (editorOpenSections.leftColumn.includes(overIdAsSection)) {
-          targetColumn = 'left'
-        } else if (editorOpenSections.rightColumn.includes(overIdAsSection)) {
-          targetColumn = 'right'
-        }
-      }
-
-      if (!targetColumn) return
-
-      if (targetColumn === 'left' && activeInRight) {
-        const newLeftColumn = [...editorOpenSections.leftColumn]
-        const newRightColumn = editorOpenSections.rightColumn.filter((id) => id !== activeId)
-
-        if (overId === 'left-column' || !editorOpenSections.leftColumn.includes(overIdAsSection)) {
-          newLeftColumn.push(activeId)
-        } else {
-          const overIndex = newLeftColumn.indexOf(overIdAsSection)
-          newLeftColumn.splice(overIndex, 0, activeId)
-        }
-
-        handleOpenSectionsChange({
-          ...editorOpenSections,
-          leftColumn: newLeftColumn,
-          rightColumn: newRightColumn,
-        })
-      } else if (targetColumn === 'right' && activeInLeft) {
-        const newLeftColumn = editorOpenSections.leftColumn.filter((id) => id !== activeId)
-        const newRightColumn = [...editorOpenSections.rightColumn]
-
-        if (
-          overId === 'right-column' ||
-          !editorOpenSections.rightColumn.includes(overIdAsSection)
-        ) {
-          newRightColumn.push(activeId)
-        } else {
-          const overIndex = newRightColumn.indexOf(overIdAsSection)
-          newRightColumn.splice(overIndex, 0, activeId)
-        }
-
-        handleOpenSectionsChange({
-          ...editorOpenSections,
-          leftColumn: newLeftColumn,
-          rightColumn: newRightColumn,
-        })
-      } else if (targetColumn === 'left' && activeInLeft && overId !== 'left-column') {
-        const oldIndex = editorOpenSections.leftColumn.indexOf(activeId)
-        const newIndex = editorOpenSections.leftColumn.indexOf(overIdAsSection)
-
-        if (oldIndex !== newIndex) {
-          const newLeftColumn = arrayMove(editorOpenSections.leftColumn, oldIndex, newIndex)
-          handleOpenSectionsChange({
-            ...editorOpenSections,
-            leftColumn: newLeftColumn,
-          })
-        }
-      } else if (targetColumn === 'right' && activeInRight && overId !== 'right-column') {
-        const oldIndex = editorOpenSections.rightColumn.indexOf(activeId)
-        const newIndex = editorOpenSections.rightColumn.indexOf(overIdAsSection)
-
-        if (oldIndex !== newIndex) {
-          const newRightColumn = arrayMove(editorOpenSections.rightColumn, oldIndex, newIndex)
-          handleOpenSectionsChange({
-            ...editorOpenSections,
-            rightColumn: newRightColumn,
-          })
-        }
-      }
-    },
-    [editorOpenSections, handleOpenSectionsChange],
-  )
-
-  const handleDragEnd = useCallback(() => {
-    setActiveId(null)
-  }, [])
-
   // Icon mapping for drag overlay
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     crop: Scissors,
@@ -824,8 +721,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       handleAddLayerWithViewport,
     ],
   )
-
-  const activeSection = activeId ? sectionConfigs[activeId as SectionKey] : null
 
   // Calculate if columns are empty for smart sizing (desktop)
   const leftColumnSections = editorOpenSections.leftColumn
@@ -993,11 +888,8 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       zoomControl={<ZoomControl zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />}
       mobileSheetOpen={mobileSheetOpen}
       onMobileSheetOpenChange={setMobileSheetOpen}
-      activeId={activeId}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-      activeSectionComponent={activeSection?.component}
+      sectionConfigs={sectionConfigs}
+      onOpenSectionsChange={handleOpenSectionsChange}
       isLeftColumnEmpty={isLeftEmpty}
       isRightColumnEmpty={isRightEmpty}
       dialogs={dialogs}
