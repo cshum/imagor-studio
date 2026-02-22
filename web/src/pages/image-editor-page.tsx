@@ -115,6 +115,9 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       height: dims.height,
     }
   })
+  const [outputDimensions, setOutputDimensions] = useState<{ width: number; height: number }>(() =>
+    imageEditor.getOutputDimensions(),
+  )
   const [previewUrl, setPreviewUrl] = useState<string>()
   const [imagorPath, setImagorPath] = useState<string>(imageEditor.getImagorPath())
   const [error, setError] = useState<Error | null>(null)
@@ -158,6 +161,13 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     [layerAspectRatioLockToggle, isShiftPressed],
   )
 
+  // Reset Zoom to fit when switching editing context
+  useEffect(() => {
+    if (editingContext) {
+      setZoom('fit')
+    }
+  }, [editingContext])
+
   // Reset aspect ratio lock when switching layers
   // Default to unlocked for maximum flexibility
   useEffect(() => {
@@ -172,7 +182,10 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     imageEditor.initialize({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
-      onStateChange: setParams,
+      onStateChange: (newState) => {
+        setParams(newState)
+        setOutputDimensions(imageEditor.getOutputDimensions())
+      },
       onLoadingChange: setIsLoading,
       onHistoryChange: () => {
         // Reset saved flag when user makes changes after save
@@ -220,12 +233,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
 
     // Zoom mode: set preview area to output dimensions * zoom
-    const outputDims = imageEditor.getOutputDimensions()
     return {
-      width: Math.round(outputDims.width * zoom),
-      height: Math.round(outputDims.height * zoom),
+      width: Math.round(outputDimensions.width * zoom),
+      height: Math.round(outputDimensions.height * zoom),
     }
-  }, [previewMaxDimensions, zoom, imageEditor])
+  }, [previewMaxDimensions, zoom, outputDimensions])
 
   // Update preview dimensions dynamically when they change
   useEffect(() => {
@@ -235,16 +247,15 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   // Calculate actual scale from effective preview dimensions
   useEffect(() => {
     if (effectivePreviewDimensions) {
-      const outputDims = imageEditor.getOutputDimensions()
       const scale = Math.min(
-        effectivePreviewDimensions.width / outputDims.width,
-        effectivePreviewDimensions.height / outputDims.height,
+        effectivePreviewDimensions.width / outputDimensions.width,
+        effectivePreviewDimensions.height / outputDimensions.height,
       )
       setActualScale(scale)
     } else {
       setActualScale(null)
     }
-  }, [effectivePreviewDimensions, imageEditor])
+  }, [effectivePreviewDimensions, outputDimensions])
 
   // Update Imagor path whenever params change
   useEffect(() => {
@@ -558,7 +569,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         // Reset zoom to fit when swapping images
         setZoom('fit')
       } catch (error) {
-        console.error('Failed to swap image:', error)
+        console.error('Failed to replace image:', error)
         toast.error(t('imageEditor.layers.replaceImageError'))
       }
     },
