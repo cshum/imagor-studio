@@ -18,10 +18,6 @@ import { cn } from '@/lib/utils'
 interface PreviewAreaProps {
   previewUrl: string
   error: Error | null
-  originalDimensions: {
-    width: number
-    height: number
-  }
   onLoad?: (width: number, height: number) => void
   onCopyUrl: () => void
   onDownload: () => void
@@ -42,7 +38,6 @@ interface PreviewAreaProps {
   onOpenControls?: () => void
   isLeftColumnEmpty?: boolean
   isRightColumnEmpty?: boolean
-  imagePath?: string
   zoom?: number | 'fit'
   previewContainerRef?: React.RefObject<HTMLDivElement | null>
   onImageDimensionsChange?: (dimensions: { width: number; height: number } | null) => void
@@ -51,7 +46,6 @@ interface PreviewAreaProps {
 export function PreviewArea({
   previewUrl,
   error,
-  originalDimensions,
   onLoad,
   onCopyUrl,
   onDownload,
@@ -72,7 +66,6 @@ export function PreviewArea({
   onOpenControls,
   isLeftColumnEmpty = false,
   isRightColumnEmpty = false,
-  imagePath,
   zoom = 'fit',
   previewContainerRef: externalPreviewContainerRef,
   onImageDimensionsChange,
@@ -81,6 +74,9 @@ export function PreviewArea({
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
   const isDesktop = useBreakpoint('lg') // Desktop when screen >= 1024px
   const isTablet = !isMobile && !isDesktop // Tablet when 768px <= screen < 1024px
+  const [originalDimensions, setOriginalDimensions] = useState<{ width: number; height: number }>(
+    imageEditor?.getOriginalDimensions() || { width: 0, height: 0 },
+  )
   // Use external ref if provided, otherwise use internal ref
   const previewContainerRef = externalPreviewContainerRef || useRef<HTMLDivElement>(null)
   const previewImageRef = useRef<HTMLImageElement>(null)
@@ -127,19 +123,23 @@ export function PreviewArea({
   // Detect context changes and set transition flag
   useEffect(() => {
     setIsTransitioning(true)
-  }, [editingContext])
+    if (imageEditor) {
+      setOriginalDimensions(imageEditor.getOriginalDimensions())
+    }
+  }, [editingContext, imageEditor])
 
   // Track image dimensions when loaded
   const handleImageLoad = (width: number, height: number) => {
     // In fit mode (both normal and visual crop), use actual rendered size
     // In zoom mode, use natural size for both modes
-    if (zoom === 'fit' && previewImageRef.current) {
-      const rect = previewImageRef.current.getBoundingClientRect()
-      setImageDimensions({ width: rect.width, height: rect.height })
-    } else {
-      setImageDimensions({ width, height })
-    }
-
+    requestAnimationFrame(() => {
+      if (zoom === 'fit' && previewImageRef.current) {
+        const rect = previewImageRef.current.getBoundingClientRect()
+        setImageDimensions({ width: rect.width, height: rect.height })
+      } else {
+        setImageDimensions({ width, height })
+      }
+    })
     // Update overlay flip states after preview loads
     // This ensures overlay position matches the displayed image
     setOverlayHFlip(hFlip)
@@ -219,7 +219,7 @@ export function PreviewArea({
         })
       }
     }
-  }, [visualCropEnabled, zoom])
+  }, [previewContainerRef, visualCropEnabled, zoom])
 
   // Calculate and report preview area dimensions (immediate for resize/mobile)
   useEffect(() => {
@@ -280,7 +280,7 @@ export function PreviewArea({
 
     // Update ref for next zoom change
     previousZoomRef.current = zoom
-  }, [zoom])
+  }, [previewContainerRef, zoom])
 
   // Check if image fits in container and update state
   useEffect(() => {
@@ -296,7 +296,7 @@ export function PreviewArea({
 
       setImageFitsInContainer(fits)
     }
-  }, [imageDimensions])
+  }, [imageDimensions, previewContainerRef])
 
   // Apply scroll adjustment after image loads (when dimensions change)
   useEffect(() => {
@@ -384,7 +384,7 @@ export function PreviewArea({
 
     // Update ref for next comparison
     previousImageDimensionsRef.current = imageDimensions
-  }, [imageDimensions, zoom])
+  }, [imageDimensions, previewContainerRef, zoom])
 
   // Report image dimensions to parent for viewport calculations
   useEffect(() => {
@@ -454,7 +454,7 @@ export function PreviewArea({
                 <PreloadImage
                   ref={previewImageRef}
                   src={getFullImageUrl(previewUrl)}
-                  alt={`Preview of ${imagePath}`}
+                  alt={`Image preview`}
                   onLoad={handleImageLoad}
                   style={
                     zoom !== 'fit' && imageDimensions
