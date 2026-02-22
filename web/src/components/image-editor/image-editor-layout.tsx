@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   closestCenter,
@@ -152,6 +152,12 @@ export function ImageEditorLayout({
 
   const isLeftColumnEmpty = leftColumnSections.length === 0
   const isRightColumnEmpty = rightColumnSections.length === 0
+
+  // Memoize the rendered preview area to prevent infinite render loops
+  const renderedPreviewArea = useMemo(
+    () => previewArea({ isLeftColumnEmpty, isRightColumnEmpty }),
+    [previewArea, isLeftColumnEmpty, isRightColumnEmpty],
+  )
 
   // Drag and drop handlers (desktop only)
   const handleDragStart = useCallback((event: DragStartEvent) => {
@@ -411,7 +417,7 @@ export function ImageEditorLayout({
           </div>
 
           {/* Preview */}
-          {previewArea({ isLeftColumnEmpty, isRightColumnEmpty })}
+          {renderedPreviewArea}
 
           {/* Controls Sheet */}
           <Sheet open={mobileSheetOpen} onOpenChange={onMobileSheetOpenChange}>
@@ -470,9 +476,7 @@ export function ImageEditorLayout({
 
         {/* Main content - Two columns */}
         <div className='grid w-full grid-cols-[1fr_330px] overflow-hidden'>
-          <div className='flex min-w-0 flex-col overflow-hidden'>
-            {previewArea({ isLeftColumnEmpty, isRightColumnEmpty })}
-          </div>
+          <div className='flex min-w-0 flex-col overflow-hidden'>{renderedPreviewArea}</div>
           <div className='bg-background flex flex-col overflow-hidden border-l'>
             <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               {singleColumnControls}
@@ -536,9 +540,7 @@ export function ImageEditorLayout({
           </div>
 
           {/* Center - Preview */}
-          <div className='flex flex-col overflow-hidden'>
-            {previewArea({ isLeftColumnEmpty, isRightColumnEmpty })}
-          </div>
+          <div className='flex flex-col overflow-hidden'>{renderedPreviewArea}</div>
 
           {/* Right Column */}
           <div className='bg-background flex flex-col overflow-hidden border-l'>
