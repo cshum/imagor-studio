@@ -722,30 +722,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     ],
   )
 
-  // Calculate if columns are empty for smart sizing (desktop)
-  const leftColumnSections = editorOpenSections.leftColumn
-    .map((id) => id)
-    .filter((id) => {
-      const visibleSections = editorOpenSections.visibleSections || []
-      if (visibleSections.length > 0 && !visibleSections.includes(id)) {
-        return false
-      }
-      return true
-    })
-
-  const rightColumnSections = editorOpenSections.rightColumn
-    .map((id) => id)
-    .filter((id) => {
-      const visibleSections = editorOpenSections.visibleSections || []
-      if (visibleSections.length > 0 && !visibleSections.includes(id)) {
-        return false
-      }
-      return true
-    })
-
-  const isLeftEmpty = leftColumnSections.length === 0
-  const isRightEmpty = rightColumnSections.length === 0
-
   // Shared controls props
   const controlsProps = {
     imageEditor,
@@ -852,7 +828,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       iconMap={iconMap}
       titleKeyMap={titleKeyMap}
       breadcrumb={breadcrumb}
-      previewArea={
+      previewArea={({ isLeftColumnEmpty, isRightColumnEmpty }) => (
         <PreviewArea
           previewUrl={previewUrl || ''}
           error={error}
@@ -876,11 +852,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
           zoom={zoom}
           previewContainerRef={previewContainerRef}
           onImageDimensionsChange={setPreviewImageDimensions}
-          isLeftColumnEmpty={isLeftEmpty}
-          isRightColumnEmpty={isRightEmpty}
           onOpenControls={isMobile ? () => setMobileSheetOpen(true) : undefined}
+          isLeftColumnEmpty={isLeftColumnEmpty}
+          isRightColumnEmpty={isRightColumnEmpty}
         />
-      }
+      )}
       leftControls={<ImageEditorControls {...controlsProps} column='left' />}
       rightControls={<ImageEditorControls {...controlsProps} column='right' />}
       singleColumnControls={<ImageEditorControls {...controlsProps} column='both' />}
@@ -890,8 +866,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       onMobileSheetOpenChange={setMobileSheetOpen}
       sectionConfigs={sectionConfigs}
       onOpenSectionsChange={handleOpenSectionsChange}
-      isLeftColumnEmpty={isLeftEmpty}
-      isRightColumnEmpty={isRightEmpty}
       dialogs={dialogs}
     />
   )

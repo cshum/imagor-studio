@@ -61,8 +61,11 @@ export interface ImageEditorLayoutProps {
   // Desktop-only header: breadcrumb
   breadcrumb?: React.ReactNode
 
-  // Preview area (rendered by parent)
-  previewArea: React.ReactNode
+  // Preview area (render prop - receives column sizing info)
+  previewArea: (props: {
+    isLeftColumnEmpty: boolean
+    isRightColumnEmpty: boolean
+  }) => React.ReactNode
 
   // Controls (rendered by parent, used in sidebar and mobile sheet)
   leftControls: React.ReactNode
@@ -82,10 +85,6 @@ export interface ImageEditorLayoutProps {
   // Desktop DnD - section configs for drag overlay
   sectionConfigs: Record<string, { component: React.ReactNode }>
   onOpenSectionsChange: (sections: EditorOpenSections) => void
-
-  // Desktop column empty states
-  isLeftColumnEmpty: boolean
-  isRightColumnEmpty: boolean
 
   // Dialogs (rendered by parent)
   dialogs: React.ReactNode
@@ -121,8 +120,6 @@ export function ImageEditorLayout({
   onMobileSheetOpenChange,
   sectionConfigs,
   onOpenSectionsChange,
-  isLeftColumnEmpty,
-  isRightColumnEmpty,
   dialogs,
 }: ImageEditorLayoutProps) {
   const { t } = useTranslation()
@@ -135,6 +132,26 @@ export function ImageEditorLayout({
 
   const ActiveIcon = activeId ? iconMap[activeId] : null
   const activeSection = activeId ? sectionConfigs[activeId as SectionKey] : null
+
+  // Calculate if columns are empty for smart sizing (desktop)
+  const leftColumnSections = editorOpenSections.leftColumn.filter((id) => {
+    const visibleSections = editorOpenSections.visibleSections || []
+    if (visibleSections.length > 0 && !visibleSections.includes(id)) {
+      return false
+    }
+    return true
+  })
+
+  const rightColumnSections = editorOpenSections.rightColumn.filter((id) => {
+    const visibleSections = editorOpenSections.visibleSections || []
+    if (visibleSections.length > 0 && !visibleSections.includes(id)) {
+      return false
+    }
+    return true
+  })
+
+  const isLeftColumnEmpty = leftColumnSections.length === 0
+  const isRightColumnEmpty = rightColumnSections.length === 0
 
   // Drag and drop handlers (desktop only)
   const handleDragStart = useCallback((event: DragStartEvent) => {
@@ -394,7 +411,7 @@ export function ImageEditorLayout({
           </div>
 
           {/* Preview */}
-          {previewArea}
+          {previewArea({ isLeftColumnEmpty, isRightColumnEmpty })}
 
           {/* Controls Sheet */}
           <Sheet open={mobileSheetOpen} onOpenChange={onMobileSheetOpenChange}>
@@ -453,7 +470,9 @@ export function ImageEditorLayout({
 
         {/* Main content - Two columns */}
         <div className='grid w-full grid-cols-[1fr_330px] overflow-hidden'>
-          <div className='flex min-w-0 flex-col overflow-hidden'>{previewArea}</div>
+          <div className='flex min-w-0 flex-col overflow-hidden'>
+            {previewArea({ isLeftColumnEmpty, isRightColumnEmpty })}
+          </div>
           <div className='bg-background flex flex-col overflow-hidden border-l'>
             <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
               {singleColumnControls}
@@ -517,7 +536,9 @@ export function ImageEditorLayout({
           </div>
 
           {/* Center - Preview */}
-          <div className='flex flex-col overflow-hidden'>{previewArea}</div>
+          <div className='flex flex-col overflow-hidden'>
+            {previewArea({ isLeftColumnEmpty, isRightColumnEmpty })}
+          </div>
 
           {/* Right Column */}
           <div className='bg-background flex flex-col overflow-hidden border-l'>
