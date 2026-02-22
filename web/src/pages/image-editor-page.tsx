@@ -29,6 +29,7 @@ import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb.tsx'
 import { LayerPanel } from '@/components/image-editor/layer-panel'
 import { PreviewArea } from '@/components/image-editor/preview-area'
 import { SaveTemplateDialog } from '@/components/image-editor/save-template-dialog'
+import { ZoomControl } from '@/components/image-editor/zoom-control.tsx'
 import { ConfirmNavigationDialog } from '@/components/ui/confirm-navigation-dialog'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
@@ -993,9 +994,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
       rightControls={<ImageEditorControls {...controlsProps} column='right' />}
       singleColumnControls={<ImageEditorControls {...controlsProps} column='both' />}
       imagorPath={imagorPath}
-      zoom={zoom}
-      onZoomChange={setZoom}
-      actualScale={actualScale}
+      zoomControl={<ZoomControl zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />}
       mobileSheetOpen={mobileSheetOpen}
       onMobileSheetOpenChange={setMobileSheetOpen}
       activeId={activeId}

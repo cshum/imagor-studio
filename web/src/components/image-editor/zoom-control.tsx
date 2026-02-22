@@ -13,7 +13,7 @@ interface ZoomControlsProps {
   className?: string
 }
 
-export function ZoomControls({ zoom, onZoomChange, actualScale, className }: ZoomControlsProps) {
+export function ZoomControl({ zoom, onZoomChange, actualScale, className }: ZoomControlsProps) {
   const { t } = useTranslation()
 
   // Store the fit scale (only updates when in fit mode)

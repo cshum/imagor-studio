@@ -25,7 +25,6 @@ import {
 } from 'lucide-react'
 
 import { EditorMenuDropdown } from '@/components/image-editor/editor-menu-dropdown'
-import { ZoomControls } from '@/components/image-editor/zoom-controls'
 import { LoadingBar } from '@/components/loading-bar'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
@@ -73,10 +72,8 @@ export interface ImageEditorLayoutProps {
   // Status bar
   imagorPath: string
 
-  // Zoom
-  zoom: number | 'fit'
-  onZoomChange: (zoom: number | 'fit') => void
-  actualScale: number | null
+  // Zoom control (desktop and tablet only)
+  zoomControl: React.ReactNode
 
   // Mobile sheet
   mobileSheetOpen: boolean
@@ -122,9 +119,7 @@ export function ImageEditorLayout({
   rightControls,
   singleColumnControls,
   imagorPath,
-  zoom,
-  onZoomChange,
-  actualScale,
+  zoomControl,
   mobileSheetOpen,
   onMobileSheetOpenChange,
   activeId,
@@ -370,10 +365,15 @@ export function ImageEditorLayout({
         </div>
 
         {/* Status bar */}
-        <div className='bg-background h-12 overflow-x-auto overflow-y-hidden border-t px-4 pt-2'>
-          <code className='text-muted-foreground font-mono text-xs whitespace-nowrap select-text'>
+        <div className='bg-background flex h-12 items-center overflow-x-auto overflow-y-hidden border-t px-4'>
+          <code className='text-muted-foreground pr-36 font-mono text-xs whitespace-nowrap select-text'>
             {imagorPath}
           </code>
+        </div>
+
+        {/* Zoom Controls */}
+        <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
+          <div className='pointer-events-auto'>{zoomControl}</div>
         </div>
 
         {dialogs}
@@ -469,9 +469,7 @@ export function ImageEditorLayout({
 
       {/* Zoom Controls */}
       <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
-        <div className='pointer-events-auto'>
-          <ZoomControls zoom={zoom} onZoomChange={onZoomChange} actualScale={actualScale} />
-        </div>
+        <div className='pointer-events-auto'>{zoomControl}</div>
       </div>
 
       {dialogs}
