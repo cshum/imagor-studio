@@ -132,13 +132,14 @@ export function PreviewArea({
   const handleImageLoad = (width: number, height: number) => {
     // In fit mode (both normal and visual crop), use actual rendered size
     // In zoom mode, use natural size for both modes
-    if (zoom === 'fit' && previewImageRef.current) {
-      const rect = previewImageRef.current.getBoundingClientRect()
-      setImageDimensions({ width: rect.width, height: rect.height })
-    } else {
-      setImageDimensions({ width, height })
-    }
-
+    requestAnimationFrame(() => {
+      if (zoom === 'fit' && previewImageRef.current) {
+        const rect = previewImageRef.current.getBoundingClientRect()
+        setImageDimensions({ width: rect.width, height: rect.height })
+      } else {
+        setImageDimensions({ width, height })
+      }
+    })
     // Update overlay flip states after preview loads
     // This ensures overlay position matches the displayed image
     setOverlayHFlip(hFlip)
