@@ -5,38 +5,17 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
 
-import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
-import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
-import { DimensionControl } from '@/components/image-editor/controls/dimension-control.tsx'
-import { FillPaddingControl } from '@/components/image-editor/controls/fill-padding-control.tsx'
-import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
-import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
-import { LayerPanel } from '@/components/image-editor/layer-panel'
 import { SectionDragOverlay } from '@/components/image-editor/section-drag-overlay'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
 import { SECTION_METADATA } from '@/lib/editor-section-metadata'
 import type { EditorSections, SectionKey } from '@/lib/editor-section-storage.ts'
-import type { ImageEditor, ImageEditorState } from '@/lib/image-editor.ts'
 import { cn } from '@/lib/utils'
 
 interface ImageEditorControlsProps {
-  imageEditor: ImageEditor
-  params: ImageEditorState
-  selectedLayerId: string | null
-  editingContext: string | null
-  layerAspectRatioLocked: boolean
-  onLayerAspectRatioLockChange: (locked: boolean) => void
+  sectionComponents: Record<SectionKey, React.ReactNode>
   openSections: EditorSections
   onOpenSectionsChange: (sections: EditorSections) => void
-  onUpdateParams: (updates: Partial<ImageEditorState>) => void
-  onVisualCropToggle?: (enabled: boolean) => Promise<void>
-  isVisualCropEnabled?: boolean
-  outputWidth: number
-  outputHeight: number
-  onCropAspectRatioChange?: (aspectRatio: number | null) => void
-  onReplaceImage?: (layerId: string | null) => void
-  onAddLayer?: (paths: string[]) => Promise<void>
   column?: 'left' | 'right' | 'both'
 }
 
@@ -123,22 +102,9 @@ function DroppableColumn({ id, isEmpty, children }: DroppableColumnProps) {
 }
 
 export function ImageEditorControls({
-  imageEditor,
-  params,
-  selectedLayerId,
-  editingContext,
-  layerAspectRatioLocked,
-  onLayerAspectRatioLockChange,
+  sectionComponents,
   openSections,
   onOpenSectionsChange,
-  onUpdateParams,
-  onVisualCropToggle,
-  isVisualCropEnabled,
-  outputWidth,
-  outputHeight,
-  onCropAspectRatioChange,
-  onReplaceImage,
-  onAddLayer,
   column = 'both',
 }: ImageEditorControlsProps) {
   // Use shared DnD hook
@@ -155,97 +121,20 @@ export function ImageEditorControls({
     [openSections, onOpenSectionsChange],
   )
 
-  // Build section configs using shared metadata
+  // Build section configs by combining shared metadata with passed-in components
   const sectionConfigs: Record<SectionKey, SectionConfig> = useMemo(
-    () => ({
-      crop: {
-        key: 'crop',
-        ...SECTION_METADATA.crop,
-        component: (
-          <CropAspectControl
-            params={params}
-            onUpdateParams={onUpdateParams}
-            onVisualCropToggle={onVisualCropToggle}
-            isVisualCropEnabled={isVisualCropEnabled}
-            outputWidth={outputWidth}
-            outputHeight={outputHeight}
-            onAspectRatioChange={onCropAspectRatioChange}
-          />
-        ),
-      },
-      effects: {
-        key: 'effects',
-        ...SECTION_METADATA.effects,
-        component: <ColorControl params={params} onUpdateParams={onUpdateParams} />,
-      },
-      transform: {
-        key: 'transform',
-        ...SECTION_METADATA.transform,
-        component: <TransformControl params={params} onUpdateParams={onUpdateParams} />,
-      },
-      dimensions: {
-        key: 'dimensions',
-        ...SECTION_METADATA.dimensions,
-        component: (
-          <DimensionControl
-            params={params}
-            onUpdateParams={onUpdateParams}
-            originalDimensions={{ width: outputWidth, height: outputHeight }}
-          />
-        ),
-      },
-      fill: {
-        key: 'fill',
-        ...SECTION_METADATA.fill,
-        component: <FillPaddingControl params={params} onUpdateParams={onUpdateParams} />,
-      },
-      output: {
-        key: 'output',
-        ...SECTION_METADATA.output,
-        component: <OutputControl params={params} onUpdateParams={onUpdateParams} />,
-      },
-      layers: {
-        key: 'layers',
-        ...SECTION_METADATA.layers,
-        component: (
-          <LayerPanel
-            imageEditor={imageEditor}
-            selectedLayerId={selectedLayerId}
-            editingContext={editingContext}
-            layerAspectRatioLocked={layerAspectRatioLocked}
-            onLayerAspectRatioLockChange={onLayerAspectRatioLockChange}
-            visualCropEnabled={isVisualCropEnabled}
-            onReplaceImage={onReplaceImage || (() => {})}
-            onAddLayer={onAddLayer || (() => Promise.resolve())}
-          />
-        ),
-      },
-    }),
-    [
-      imageEditor,
-      params,
-      selectedLayerId,
-      editingContext,
-      layerAspectRatioLocked,
-      onLayerAspectRatioLockChange,
-      onUpdateParams,
-      onVisualCropToggle,
-      isVisualCropEnabled,
-      outputWidth,
-      outputHeight,
-      onCropAspectRatioChange,
-      onReplaceImage,
-      onAddLayer,
-    ],
-  )
-
-  // Build section components map for DragOverlay
-  const sectionComponents = useMemo(
     () =>
       Object.fromEntries(
-        Object.entries(sectionConfigs).map(([key, config]) => [key, config.component]),
-      ) as Record<SectionKey, React.ReactNode>,
-    [sectionConfigs],
+        (Object.keys(SECTION_METADATA) as SectionKey[]).map((key) => [
+          key,
+          {
+            key,
+            ...SECTION_METADATA[key],
+            component: sectionComponents[key],
+          },
+        ]),
+      ) as Record<SectionKey, SectionConfig>,
+    [sectionComponents],
   )
 
   // Get sections for each column (filtered by visibility)

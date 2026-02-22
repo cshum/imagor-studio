@@ -12,8 +12,8 @@ import { DimensionControl } from '@/components/image-editor/controls/dimension-c
 import { FillPaddingControl } from '@/components/image-editor/controls/fill-padding-control.tsx'
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
+import { ImageEditorControls } from '@/components/image-editor/image-editor-controls.tsx'
 import { ImageEditorLayout } from '@/components/image-editor/image-editor-layout'
-import { ImageEditorControls } from '@/components/image-editor/imagor-editor-controls.tsx'
 import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb.tsx'
 import { LayerPanel } from '@/components/image-editor/layer-panel'
 import { PreviewArea } from '@/components/image-editor/preview-area'
@@ -653,26 +653,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     ],
   )
 
-  // Shared controls props
-  const controlsProps = {
-    imageEditor,
-    params,
-    selectedLayerId,
-    editingContext,
-    layerAspectRatioLocked,
-    onLayerAspectRatioLockChange: setLayerAspectRatioLockToggle,
-    openSections: editorOpenSections,
-    onOpenSectionsChange: handleOpenSectionsChange,
-    onUpdateParams: updateParams,
-    onVisualCropToggle: handleVisualCropToggle,
-    isVisualCropEnabled: visualCropEnabled,
-    outputWidth: imageEditor.getOriginalDimensions().width,
-    outputHeight: imageEditor.getOriginalDimensions().height,
-    onCropAspectRatioChange: setCropAspectRatio,
-    onReplaceImage: handleReplaceImageClick,
-    onAddLayer: handleAddLayerWithViewport,
-  }
-
   return (
     <>
       <ImageEditorLayout
@@ -735,9 +715,30 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             isRightColumnEmpty={isRightColumnEmpty}
           />
         )}
-        leftControls={<ImageEditorControls {...controlsProps} column='left' />}
-        rightControls={<ImageEditorControls {...controlsProps} column='right' />}
-        singleColumnControls={<ImageEditorControls {...controlsProps} column='both' />}
+        leftControls={
+          <ImageEditorControls
+            sectionComponents={sectionComponents}
+            openSections={editorOpenSections}
+            onOpenSectionsChange={handleOpenSectionsChange}
+            column='left'
+          />
+        }
+        rightControls={
+          <ImageEditorControls
+            sectionComponents={sectionComponents}
+            openSections={editorOpenSections}
+            onOpenSectionsChange={handleOpenSectionsChange}
+            column='right'
+          />
+        }
+        singleColumnControls={
+          <ImageEditorControls
+            sectionComponents={sectionComponents}
+            openSections={editorOpenSections}
+            onOpenSectionsChange={handleOpenSectionsChange}
+            column='both'
+          />
+        }
         imagorPath={imagorPath}
         zoomControl={<ZoomControl zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />}
         mobileSheetOpen={mobileSheetOpen}
