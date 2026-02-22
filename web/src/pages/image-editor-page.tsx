@@ -211,41 +211,38 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
   }, [imageEditor, isTemplate])
 
-  // Calculate effective preview dimensions based on zoom
-  // Zoom % = preview area size / output dimensions
-  // 100% = preview area matches output dimensions exactly
-  const effectivePreviewDimensions = useMemo(() => {
-    if (!previewMaxDimensions) return null
+  // Sync zoom and preview dimensions with imageEditor
+  useEffect(() => {
+    if (!previewMaxDimensions) {
+      imageEditor.updatePreviewMaxDimensions(undefined)
+      setActualScale(null)
+      return
+    }
+
+    let effectiveDimensions: { width: number; height: number }
 
     if (zoom === 'fit') {
       // Fit mode: use container dimensions
-      return previewMaxDimensions
-    }
-
-    // Zoom mode: set preview area to output dimensions * zoom
-    return {
-      width: Math.round(outputDimensions.width * zoom),
-      height: Math.round(outputDimensions.height * zoom),
-    }
-  }, [previewMaxDimensions, zoom, outputDimensions])
-
-  // Update preview dimensions dynamically when they change
-  useEffect(() => {
-    imageEditor.updatePreviewMaxDimensions(effectivePreviewDimensions ?? undefined)
-  }, [imageEditor, effectivePreviewDimensions])
-
-  // Calculate actual scale from effective preview dimensions
-  useEffect(() => {
-    if (effectivePreviewDimensions) {
-      const scale = Math.min(
-        effectivePreviewDimensions.width / outputDimensions.width,
-        effectivePreviewDimensions.height / outputDimensions.height,
-      )
-      setActualScale(scale)
+      effectiveDimensions = previewMaxDimensions
     } else {
-      setActualScale(null)
+      // Zoom mode: scale output dimensions by zoom factor
+      effectiveDimensions = {
+        width: Math.round(outputDimensions.width * zoom),
+        height: Math.round(outputDimensions.height * zoom),
+      }
     }
-  }, [effectivePreviewDimensions, outputDimensions])
+
+    // Update imageEditor with new dimensions
+    imageEditor.updatePreviewMaxDimensions(effectiveDimensions)
+
+    // Calculate and set actual scale for ZoomControl display
+    setActualScale(
+      Math.min(
+        effectiveDimensions.width / outputDimensions.width,
+        effectiveDimensions.height / outputDimensions.height,
+      ),
+    )
+  }, [imageEditor, previewMaxDimensions, zoom, outputDimensions])
 
   // Update Imagor path whenever params change
   useEffect(() => {
