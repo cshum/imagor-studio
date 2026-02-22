@@ -65,9 +65,6 @@ interface ImageEditorPageProps {
 export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps) {
   const { imageEditor, initialEditorOpenSections, isTemplate, templateMetadata } = loaderData
 
-  // Read imagePath from imageEditor (reactive to swaps)
-  const imagePath = imageEditor.getImagePath()
-
   const { t } = useTranslation()
   const navigate = useNavigate()
   const router = useRouter()
@@ -814,7 +811,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }),
     [
       imageEditor,
-      imagePath,
       params,
       selectedLayerId,
       editingContext,
