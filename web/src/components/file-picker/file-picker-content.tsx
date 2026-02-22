@@ -80,6 +80,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   const [showFileNames, setShowFileNames] = useState(true)
   const [imageExtensions, setImageExtensions] = useState('')
   const [videoExtensions, setVideoExtensions] = useState('')
+  const [showHidden, setShowHidden] = useState(false)
   const [contentWidth, setContentWidth] = useState(800)
   const [filterText, setFilterText] = useState('')
   const [configReady, setConfigReady] = useState(false)
@@ -193,7 +194,9 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
           'config.app_default_sort_by',
           'config.app_default_sort_order',
           'config.app_show_file_names',
+          'config.app_image_extensions',
           'config.app_video_extensions',
+          'config.app_show_hidden',
         ])
 
         const systemSortBy = systemRegistryResult.find(
@@ -211,12 +214,16 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         const systemVideoExtensions = systemRegistryResult.find(
           (r) => r.key === 'config.app_video_extensions',
         )?.value
+        const systemShowHidden = systemRegistryResult.find(
+          (r) => r.key === 'config.app_show_hidden',
+        )?.value
 
         setSortBy((userSortBy || systemSortBy || 'NAME') as SortOption)
         setSortOrder((userSortOrder || systemSortOrder || 'ASC') as SortOrder)
         setShowFileNames((userShowFileNames || systemShowFileNames || 'true') === 'true')
         setImageExtensions(systemImageExtensions || DEFAULT_IMAGE_EXTENSIONS)
         setVideoExtensions(systemVideoExtensions || DEFAULT_VIDEO_EXTENSIONS)
+        setShowHidden((systemShowHidden || 'false') === 'true')
         setConfigReady(true)
       } catch {
         setSortBy('NAME')
@@ -258,12 +265,31 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
       try {
         const config = configRef.current
 
+        // Determine allowed extensions based on fileType and fileExtensions
+        let extensionsString: string
+
+        if (config.fileExtensions && config.fileExtensions.length > 0) {
+          // Custom extensions provided - use them directly (highest priority)
+          extensionsString = config.fileExtensions.join(',')
+        } else {
+          // Use fileType to determine which extensions to include
+          const imgExts = config.imageExtensions
+          const vidExts = config.videoExtensions
+
+          if (config.fileType === 'images') {
+            extensionsString = imgExts
+          } else if (config.fileType === 'videos') {
+            extensionsString = vidExts
+          } else {
+            // 'both' - include all media types plus templates
+            extensionsString = `${imgExts},${vidExts}`
+          }
+        }
+
         const result = await listFiles({
           path: currentPath,
-          offset: 0,
-          limit: 1000,
-          onlyFiles: false,
-          onlyFolders: false,
+          extensions: extensionsString,
+          showHidden,
           sortBy: config.sortBy,
           sortOrder: config.sortOrder,
         })
@@ -276,29 +302,8 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
             galleryName: item.name,
           }))
 
-        // Determine allowed extensions based on fileType and fileExtensions
-        let allowedExtensions: string[]
-
-        if (config.fileExtensions && config.fileExtensions.length > 0) {
-          // Custom extensions provided - use them directly (highest priority)
-          allowedExtensions = config.fileExtensions
-        } else {
-          // Use fileType to determine which extensions to include
-          const imgExts = config.imageExtensions.split(',').map((e) => e.trim())
-          const vidExts = config.videoExtensions.split(',').map((e) => e.trim())
-
-          if (config.fileType === 'images') {
-            allowedExtensions = imgExts
-          } else if (config.fileType === 'videos') {
-            allowedExtensions = vidExts
-          } else {
-            // 'both' - include all media types
-            allowedExtensions = [...imgExts, ...vidExts]
-          }
-        }
-
-        // Process images/files
-        let imageItems: GalleryImage[] = result.items
+        // Process images/files (server-side filtering already applied via extensions parameter)
+        const imageItems: GalleryImage[] = result.items
           .filter((item) => !item.isDirectory && item.thumbnailUrls)
           .map((item) => {
             const isTemplate = hasExtension(item.name, TEMPLATE_EXTENSION)
@@ -313,17 +318,10 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
               imageKey: item.name,
               imageSrc,
               imageName: item.name,
-              isVideo: hasExtension(item.name, config.videoExtensions), // Always use baseline for detection
-              isTemplate, // Detect template files
+              isVideo: hasExtension(item.name, config.videoExtensions),
+              isTemplate,
             }
           })
-
-        // Filter by allowed extensions (handles compound extensions like .imagor.json)
-        imageItems = imageItems.filter((item) => {
-          return allowedExtensions.some((ext) =>
-            item.imageName.toLowerCase().endsWith(ext.toLowerCase()),
-          )
-        })
 
         setFolders(folderItems)
         setImages(imageItems)
@@ -337,7 +335,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     }
 
     loadFilesData()
-  }, [currentPath, configReady])
+  }, [currentPath, configReady, sortBy, sortOrder, showHidden])
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement
