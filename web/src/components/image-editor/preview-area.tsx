@@ -42,7 +42,6 @@ interface PreviewAreaProps {
   onOpenControls?: () => void
   isLeftColumnEmpty?: boolean
   isRightColumnEmpty?: boolean
-  imagePath?: string
   zoom?: number | 'fit'
   previewContainerRef?: React.RefObject<HTMLDivElement | null>
   onImageDimensionsChange?: (dimensions: { width: number; height: number } | null) => void
@@ -72,7 +71,6 @@ export function PreviewArea({
   onOpenControls,
   isLeftColumnEmpty = false,
   isRightColumnEmpty = false,
-  imagePath,
   zoom = 'fit',
   previewContainerRef: externalPreviewContainerRef,
   onImageDimensionsChange,
@@ -219,7 +217,7 @@ export function PreviewArea({
         })
       }
     }
-  }, [visualCropEnabled, zoom])
+  }, [previewContainerRef, visualCropEnabled, zoom])
 
   // Calculate and report preview area dimensions (immediate for resize/mobile)
   useEffect(() => {
@@ -280,7 +278,7 @@ export function PreviewArea({
 
     // Update ref for next zoom change
     previousZoomRef.current = zoom
-  }, [zoom])
+  }, [previewContainerRef, zoom])
 
   // Check if image fits in container and update state
   useEffect(() => {
@@ -296,7 +294,7 @@ export function PreviewArea({
 
       setImageFitsInContainer(fits)
     }
-  }, [imageDimensions])
+  }, [imageDimensions, previewContainerRef])
 
   // Apply scroll adjustment after image loads (when dimensions change)
   useEffect(() => {
@@ -384,7 +382,7 @@ export function PreviewArea({
 
     // Update ref for next comparison
     previousImageDimensionsRef.current = imageDimensions
-  }, [imageDimensions, zoom])
+  }, [imageDimensions, previewContainerRef, zoom])
 
   // Report image dimensions to parent for viewport calculations
   useEffect(() => {
@@ -454,7 +452,7 @@ export function PreviewArea({
                 <PreloadImage
                   ref={previewImageRef}
                   src={getFullImageUrl(previewUrl)}
-                  alt={`Preview of ${imagePath}`}
+                  alt={`Image preview`}
                   onLoad={handleImageLoad}
                   style={
                     zoom !== 'fit' && imageDimensions
