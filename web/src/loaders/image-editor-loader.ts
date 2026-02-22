@@ -1,10 +1,7 @@
 import { statFile } from '@/api/storage-api'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
-import {
-  EditorOpenSectionsStorage,
-  type EditorOpenSections,
-} from '@/lib/editor-open-sections-storage'
+import { EditorSectionStorage, type EditorSections } from '@/lib/editor-sections'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { ImageEditor } from '@/lib/image-editor'
 import { joinImagePath } from '@/lib/path-utils'
@@ -20,7 +17,7 @@ export interface TemplateMetadata {
 }
 
 export interface ImageEditorLoaderData {
-  initialEditorOpenSections: EditorOpenSections
+  initialEditorOpenSections: EditorSections
   breadcrumb: BreadcrumbItem
   imageEditor: ImageEditor
   isTemplate: boolean
@@ -46,7 +43,7 @@ export const imageEditorLoader = async ({
 
   // Load user preferences for editor open sections using storage service
   const authState = getAuth()
-  const storage = new EditorOpenSectionsStorage(authState)
+  const storage = new EditorSectionStorage(authState)
   const editorOpenSections = await storage.get()
 
   // Check if this is a template file

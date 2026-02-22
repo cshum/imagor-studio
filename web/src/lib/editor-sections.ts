@@ -1,9 +1,11 @@
+import React from 'react'
+import { FileImage, Frame, Layers, Maximize2, Palette, RotateCw, Scissors } from 'lucide-react'
+
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage'
 import type { Auth } from '@/stores/auth-store'
 
-// Define sections as a const object (single source of truth with default states)
 const EDITOR_SECTIONS = {
   layers: true,
   crop: true,
@@ -14,7 +16,6 @@ const EDITOR_SECTIONS = {
   fill: false,
 } as const
 
-// Derive SectionKey from the object keys
 export type SectionKey = keyof typeof EDITOR_SECTIONS
 
 export const SECTION_KEYS: SectionKey[] = [
@@ -27,22 +28,56 @@ export const SECTION_KEYS: SectionKey[] = [
   'fill',
 ]
 
-// Use Record type for better type safety
-export interface EditorOpenSections extends Record<SectionKey, boolean> {
+export interface SectionMetadata {
+  icon: React.ComponentType<{ className?: string }>
+  titleKey: string
+}
+
+export const SECTION_METADATA: Record<SectionKey, SectionMetadata> = {
+  crop: {
+    icon: Scissors,
+    titleKey: 'imageEditor.controls.cropAspect',
+  },
+  effects: {
+    icon: Palette,
+    titleKey: 'imageEditor.controls.colorEffects',
+  },
+  transform: {
+    icon: RotateCw,
+    titleKey: 'imageEditor.controls.transformRotate',
+  },
+  dimensions: {
+    icon: Maximize2,
+    titleKey: 'imageEditor.controls.dimensionsResize',
+  },
+  fill: {
+    icon: Frame,
+    titleKey: 'imageEditor.controls.fillPadding',
+  },
+  output: {
+    icon: FileImage,
+    titleKey: 'imageEditor.controls.outputCompression',
+  },
+  layers: {
+    icon: Layers,
+    titleKey: 'imageEditor.layers.title',
+  },
+}
+
+export interface EditorSections extends Record<SectionKey, boolean> {
   leftColumn: SectionKey[]
   rightColumn: SectionKey[]
   visibleSections: SectionKey[]
 }
 
-// Default sections with proper typing
-const defaultOpenSections: EditorOpenSections = {
+const defaultSections: EditorSections = {
   ...EDITOR_SECTIONS,
   leftColumn: ['crop', 'layers'],
   rightColumn: ['effects', 'transform', 'dimensions', 'fill', 'output'],
   visibleSections: ['crop', 'layers', 'effects', 'transform', 'dimensions', 'fill', 'output'],
 }
 
-export class EditorOpenSectionsStorage {
+export class EditorSectionStorage {
   private storage: ConfigStorage
 
   constructor(auth: Auth) {
@@ -56,20 +91,20 @@ export class EditorOpenSectionsStorage {
     }
   }
 
-  async get(): Promise<EditorOpenSections> {
+  async get(): Promise<EditorSections> {
     try {
       const value = await this.storage.get()
       if (value) {
-        const savedSections = JSON.parse(value) as Partial<EditorOpenSections>
+        const savedSections = JSON.parse(value) as Partial<EditorSections>
 
         // Merge with defaults to ensure all properties exist
-        const merged = { ...defaultOpenSections, ...savedSections }
+        const merged = { ...defaultSections, ...savedSections }
 
         // Ensure leftColumn and rightColumn exist and contain valid sections
         const validSectionKeys = Object.keys(EDITOR_SECTIONS) as SectionKey[]
 
         if (!merged.leftColumn || !Array.isArray(merged.leftColumn)) {
-          merged.leftColumn = defaultOpenSections.leftColumn
+          merged.leftColumn = defaultSections.leftColumn
         } else {
           merged.leftColumn = merged.leftColumn.filter((key): key is SectionKey =>
             validSectionKeys.includes(key as SectionKey),
@@ -77,7 +112,7 @@ export class EditorOpenSectionsStorage {
         }
 
         if (!merged.rightColumn || !Array.isArray(merged.rightColumn)) {
-          merged.rightColumn = defaultOpenSections.rightColumn
+          merged.rightColumn = defaultSections.rightColumn
         } else {
           merged.rightColumn = merged.rightColumn.filter((key): key is SectionKey =>
             validSectionKeys.includes(key as SectionKey),
@@ -95,22 +130,22 @@ export class EditorOpenSectionsStorage {
 
         // Ensure visibleSections exists and contains valid sections
         if (!merged.visibleSections || !Array.isArray(merged.visibleSections)) {
-          merged.visibleSections = defaultOpenSections.visibleSections
+          merged.visibleSections = defaultSections.visibleSections
         } else {
           merged.visibleSections = merged.visibleSections.filter((key): key is SectionKey =>
             validSectionKeys.includes(key as SectionKey),
           )
         }
 
-        return merged as EditorOpenSections
+        return merged as EditorSections
       }
     } catch {
       // Silently fall back to defaults if parsing fails
     }
-    return defaultOpenSections
+    return defaultSections
   }
 
-  async set(sections: EditorOpenSections): Promise<void> {
+  async set(sections: EditorSections): Promise<void> {
     try {
       await this.storage.set(JSON.stringify(sections))
     } catch {
