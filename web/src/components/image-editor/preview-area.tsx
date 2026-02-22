@@ -18,10 +18,6 @@ import { cn } from '@/lib/utils'
 interface PreviewAreaProps {
   previewUrl: string
   error: Error | null
-  originalDimensions: {
-    width: number
-    height: number
-  }
   onLoad?: (width: number, height: number) => void
   onCopyUrl: () => void
   onDownload: () => void
@@ -50,7 +46,6 @@ interface PreviewAreaProps {
 export function PreviewArea({
   previewUrl,
   error,
-  originalDimensions,
   onLoad,
   onCopyUrl,
   onDownload,
@@ -79,6 +74,9 @@ export function PreviewArea({
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
   const isDesktop = useBreakpoint('lg') // Desktop when screen >= 1024px
   const isTablet = !isMobile && !isDesktop // Tablet when 768px <= screen < 1024px
+  const [originalDimensions, setOriginalDimensions] = useState<{ width: number; height: number }>(
+    imageEditor?.getOriginalDimensions() || { width: 0, height: 0 },
+  )
   // Use external ref if provided, otherwise use internal ref
   const previewContainerRef = externalPreviewContainerRef || useRef<HTMLDivElement>(null)
   const previewImageRef = useRef<HTMLImageElement>(null)
@@ -125,7 +123,10 @@ export function PreviewArea({
   // Detect context changes and set transition flag
   useEffect(() => {
     setIsTransitioning(true)
-  }, [editingContext])
+    if (imageEditor) {
+      setOriginalDimensions(imageEditor.getOriginalDimensions())
+    }
+  }, [editingContext, imageEditor])
 
   // Track image dimensions when loaded
   const handleImageLoad = (width: number, height: number) => {

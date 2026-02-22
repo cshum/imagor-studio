@@ -964,7 +964,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         <PreviewArea
           previewUrl={previewUrl || ''}
           error={error}
-          originalDimensions={imageEditor.getOriginalDimensions()}
           onLoad={handlePreviewLoad}
           onCopyUrl={handleCopyUrlClick}
           onDownload={handleDownloadClick}
