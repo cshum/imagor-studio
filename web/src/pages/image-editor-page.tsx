@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import {
@@ -716,25 +716,81 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     onAddLayer: handleAddLayerWithViewport,
   }
 
-  // Breadcrumb for desktop
-  const breadcrumb = (
-    <LayerBreadcrumb
-      imageEditor={imageEditor}
-      baseName={isTemplate && templateMetadata ? templateMetadata.name : undefined}
-      baseLabel={
-        isTemplate && templateMetadata ? (
-          <div className='text-muted-foreground flex items-center gap-1.5'>
-            <FileText className='h-3.5 w-3.5 flex-shrink-0' />
-            <span className='max-w-[200px] truncate text-sm'>{templateMetadata.name}</span>
-          </div>
-        ) : undefined
-      }
-    />
-  )
-
-  // Dialogs - shared across all layouts
-  const dialogs = (
+  return (
     <>
+      <ImageEditorLayout
+        isLoading={isLoading}
+        isEmbedded={authState.isEmbedded}
+        onBack={handleBack}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onUndo={() => imageEditor.undo()}
+        onRedo={() => imageEditor.redo()}
+        isTemplate={isTemplate}
+        onSaveTemplate={handleSaveTemplateClick}
+        onDownload={handleDownloadClick}
+        onCopyUrl={handleCopyUrlClick}
+        onSaveTemplateAs={() => setSaveTemplateDialogOpen(true)}
+        onApplyTemplate={() => setApplyTemplateDialogOpen(true)}
+        onLanguageChange={handleLanguageChange}
+        onToggleSectionVisibility={handleToggleSectionVisibility}
+        editorOpenSections={editorOpenSections}
+        iconMap={iconMap}
+        titleKeyMap={titleKeyMap}
+        layerBreadcrumb={
+          <LayerBreadcrumb
+            imageEditor={imageEditor}
+            baseName={isTemplate && templateMetadata ? templateMetadata.name : undefined}
+            baseLabel={
+              isTemplate && templateMetadata ? (
+                <div className='text-muted-foreground flex items-center gap-1.5'>
+                  <FileText className='h-3.5 w-3.5 flex-shrink-0' />
+                  <span className='max-w-[200px] truncate text-sm'>{templateMetadata.name}</span>
+                </div>
+              ) : undefined
+            }
+          />
+        }
+        previewArea={({ isLeftColumnEmpty, isRightColumnEmpty }) => (
+          <PreviewArea
+            previewUrl={previewUrl || ''}
+            error={error}
+            onLoad={handlePreviewLoad}
+            onCopyUrl={handleCopyUrlClick}
+            onDownload={handleDownloadClick}
+            onPreviewDimensionsChange={setPreviewMaxDimensions}
+            visualCropEnabled={visualCropEnabled}
+            cropLeft={params.cropLeft || 0}
+            cropTop={params.cropTop || 0}
+            cropWidth={params.cropWidth || 0}
+            cropHeight={params.cropHeight || 0}
+            onCropChange={handleCropChange}
+            cropAspectRatio={cropAspectRatio}
+            hFlip={params.hFlip}
+            vFlip={params.vFlip}
+            imageEditor={imageEditor}
+            selectedLayerId={selectedLayerId}
+            editingContext={editingContext}
+            layerAspectRatioLocked={layerAspectRatioLocked}
+            zoom={zoom}
+            previewContainerRef={previewContainerRef}
+            onImageDimensionsChange={setPreviewImageDimensions}
+            onOpenControls={isMobile ? () => setMobileSheetOpen(true) : undefined}
+            isLeftColumnEmpty={isLeftColumnEmpty}
+            isRightColumnEmpty={isRightColumnEmpty}
+          />
+        )}
+        leftControls={<ImageEditorControls {...controlsProps} column='left' />}
+        rightControls={<ImageEditorControls {...controlsProps} column='right' />}
+        singleColumnControls={<ImageEditorControls {...controlsProps} column='both' />}
+        imagorPath={imagorPath}
+        zoomControl={<ZoomControl zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />}
+        mobileSheetOpen={mobileSheetOpen}
+        onMobileSheetOpenChange={setMobileSheetOpen}
+        sectionConfigs={sectionConfigs}
+        onOpenSectionsChange={handleOpenSectionsChange}
+      />
+
       <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
       <SaveTemplateDialog
         open={saveTemplateDialogOpen}
@@ -779,68 +835,5 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         onConfirm={handleConfirm}
       />
     </>
-  )
-
-  return (
-    <ImageEditorLayout
-      isLoading={isLoading}
-      isEmbedded={authState.isEmbedded}
-      onBack={handleBack}
-      canUndo={canUndo}
-      canRedo={canRedo}
-      onUndo={() => imageEditor.undo()}
-      onRedo={() => imageEditor.redo()}
-      isTemplate={isTemplate}
-      onSaveTemplate={handleSaveTemplateClick}
-      onDownload={handleDownloadClick}
-      onCopyUrl={handleCopyUrlClick}
-      onSaveTemplateAs={() => setSaveTemplateDialogOpen(true)}
-      onApplyTemplate={() => setApplyTemplateDialogOpen(true)}
-      onLanguageChange={handleLanguageChange}
-      onToggleSectionVisibility={handleToggleSectionVisibility}
-      editorOpenSections={editorOpenSections}
-      iconMap={iconMap}
-      titleKeyMap={titleKeyMap}
-      breadcrumb={breadcrumb}
-      previewArea={({ isLeftColumnEmpty, isRightColumnEmpty }) => (
-        <PreviewArea
-          previewUrl={previewUrl || ''}
-          error={error}
-          onLoad={handlePreviewLoad}
-          onCopyUrl={handleCopyUrlClick}
-          onDownload={handleDownloadClick}
-          onPreviewDimensionsChange={setPreviewMaxDimensions}
-          visualCropEnabled={visualCropEnabled}
-          cropLeft={params.cropLeft || 0}
-          cropTop={params.cropTop || 0}
-          cropWidth={params.cropWidth || 0}
-          cropHeight={params.cropHeight || 0}
-          onCropChange={handleCropChange}
-          cropAspectRatio={cropAspectRatio}
-          hFlip={params.hFlip}
-          vFlip={params.vFlip}
-          imageEditor={imageEditor}
-          selectedLayerId={selectedLayerId}
-          editingContext={editingContext}
-          layerAspectRatioLocked={layerAspectRatioLocked}
-          zoom={zoom}
-          previewContainerRef={previewContainerRef}
-          onImageDimensionsChange={setPreviewImageDimensions}
-          onOpenControls={isMobile ? () => setMobileSheetOpen(true) : undefined}
-          isLeftColumnEmpty={isLeftColumnEmpty}
-          isRightColumnEmpty={isRightColumnEmpty}
-        />
-      )}
-      leftControls={<ImageEditorControls {...controlsProps} column='left' />}
-      rightControls={<ImageEditorControls {...controlsProps} column='right' />}
-      singleColumnControls={<ImageEditorControls {...controlsProps} column='both' />}
-      imagorPath={imagorPath}
-      zoomControl={<ZoomControl zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />}
-      mobileSheetOpen={mobileSheetOpen}
-      onMobileSheetOpenChange={setMobileSheetOpen}
-      sectionConfigs={sectionConfigs}
-      onOpenSectionsChange={handleOpenSectionsChange}
-      dialogs={dialogs}
-    />
   )
 }

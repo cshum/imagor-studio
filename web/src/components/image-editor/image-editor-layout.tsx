@@ -58,8 +58,8 @@ export interface ImageEditorLayoutProps {
   iconMap: Record<string, React.ComponentType<{ className?: string }>>
   titleKeyMap: Record<string, string>
 
-  // Desktop-only header: breadcrumb
-  breadcrumb?: React.ReactNode
+  // Desktop-only header: layer breadcrumb
+  layerBreadcrumb?: React.ReactNode
 
   // Preview area (render prop - receives column sizing info)
   previewArea: (props: {
@@ -85,9 +85,6 @@ export interface ImageEditorLayoutProps {
   // Desktop DnD - section configs for drag overlay
   sectionConfigs: Record<string, { component: React.ReactNode }>
   onOpenSectionsChange: (sections: EditorOpenSections) => void
-
-  // Dialogs (rendered by parent)
-  dialogs: React.ReactNode
 }
 
 export function ImageEditorLayout({
@@ -109,7 +106,7 @@ export function ImageEditorLayout({
   editorOpenSections,
   iconMap,
   titleKeyMap,
-  breadcrumb,
+  layerBreadcrumb,
   previewArea,
   leftControls,
   rightControls,
@@ -120,7 +117,6 @@ export function ImageEditorLayout({
   onMobileSheetOpenChange,
   sectionConfigs,
   onOpenSectionsChange,
-  dialogs,
 }: ImageEditorLayoutProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md')
@@ -271,7 +267,6 @@ export function ImageEditorLayout({
   )
 
   // --- Shared sub-components ---
-
   const primaryActionButton = isTemplate ? (
     <>
       <Button
@@ -451,8 +446,6 @@ export function ImageEditorLayout({
             </SheetContent>
           </Sheet>
         </div>
-
-        {dialogs}
       </div>
     )
   }
@@ -495,8 +488,6 @@ export function ImageEditorLayout({
         <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
           <div className='pointer-events-auto'>{zoomControl}</div>
         </div>
-
-        {dialogs}
       </div>
     )
   }
@@ -509,7 +500,7 @@ export function ImageEditorLayout({
       {/* Header */}
       <div className='flex items-center gap-2 border-b p-3'>
         {backButton}
-        {breadcrumb && <div className='w-[220px]'>{breadcrumb}</div>}
+        {layerBreadcrumb && <div className='w-[220px]'>{layerBreadcrumb}</div>}
         {centeredTitle}
         <div className='ml-auto flex items-center gap-2'>
           <ModeToggle />
@@ -591,8 +582,6 @@ export function ImageEditorLayout({
       <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
         <div className='pointer-events-auto'>{zoomControl}</div>
       </div>
-
-      {dialogs}
     </div>
   )
 }
