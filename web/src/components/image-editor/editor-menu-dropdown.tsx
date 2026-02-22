@@ -11,11 +11,8 @@ import {
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu'
 import { availableLanguages } from '@/i18n'
-import {
-  SECTION_KEYS,
-  type EditorOpenSections,
-  type SectionKey,
-} from '@/lib/editor-open-sections-storage'
+import { SECTION_METADATA } from '@/lib/editor-section-metadata'
+import { SECTION_KEYS, type EditorSections, type SectionKey } from '@/lib/editor-section-storage.ts'
 
 interface EditorMenuDropdownProps {
   onDownload: () => void
@@ -24,9 +21,7 @@ interface EditorMenuDropdownProps {
   onApplyTemplate?: () => void
   onLanguageChange: (languageCode: string) => void
   onToggleSectionVisibility: (sectionKey: SectionKey) => void
-  editorOpenSections: EditorOpenSections
-  sectionIconMap: Record<string, React.ComponentType<{ className?: string }>>
-  sectionTitleKeyMap: Record<string, string>
+  editorOpenSections: EditorSections
   includeUndoRedo?: boolean
   onUndo?: () => void
   onRedo?: () => void
@@ -43,8 +38,6 @@ export function EditorMenuDropdown({
   onLanguageChange,
   onToggleSectionVisibility,
   editorOpenSections,
-  sectionIconMap,
-  sectionTitleKeyMap,
   includeUndoRedo = false,
   onUndo,
   onRedo,
@@ -176,7 +169,8 @@ export function EditorMenuDropdown({
           <DropdownMenuSubContent>
             {SECTION_KEYS.map((sectionKey) => {
               const isVisible = editorOpenSections.visibleSections?.includes(sectionKey) ?? true
-              const SectionIcon = sectionIconMap[sectionKey]
+              const metadata = SECTION_METADATA[sectionKey]
+              const SectionIcon = metadata.icon
               return (
                 <DropdownMenuItem
                   key={sectionKey}
@@ -188,7 +182,7 @@ export function EditorMenuDropdown({
                   <div className='flex w-full items-center justify-between gap-2'>
                     <div className='flex items-center gap-2'>
                       <SectionIcon className='h-4 w-4' />
-                      <span>{t(sectionTitleKeyMap[sectionKey])}</span>
+                      <span>{t(metadata.titleKey)}</span>
                     </div>
                     <div className='flex w-4 items-center justify-center'>
                       {isVisible && <Check className='h-4 w-4' />}

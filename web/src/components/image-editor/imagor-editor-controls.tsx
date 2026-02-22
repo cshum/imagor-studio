@@ -1,37 +1,9 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  closestCenter,
-  DndContext,
-  DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  useDroppable,
-  useSensor,
-  useSensors,
-  type DragOverEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
+import { closestCenter, DndContext, useDroppable } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import {
-  ChevronDown,
-  ChevronUp,
-  FileImage,
-  Frame,
-  GripVertical,
-  Layers,
-  Maximize2,
-  Palette,
-  RotateCw,
-  Scissors,
-} from 'lucide-react'
+import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
 
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
 import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
@@ -40,8 +12,11 @@ import { FillPaddingControl } from '@/components/image-editor/controls/fill-padd
 import { OutputControl } from '@/components/image-editor/controls/output-control.tsx'
 import { TransformControl } from '@/components/image-editor/controls/transform-control.tsx'
 import { LayerPanel } from '@/components/image-editor/layer-panel'
+import { SectionDragOverlay } from '@/components/image-editor/section-drag-overlay'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import type { EditorOpenSections, SectionKey } from '@/lib/editor-open-sections-storage'
+import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
+import { SECTION_METADATA } from '@/lib/editor-section-metadata'
+import type { EditorSections, SectionKey } from '@/lib/editor-section-storage.ts'
 import type { ImageEditor, ImageEditorState } from '@/lib/image-editor.ts'
 import { cn } from '@/lib/utils'
 
@@ -52,8 +27,8 @@ interface ImageEditorControlsProps {
   editingContext: string | null
   layerAspectRatioLocked: boolean
   onLayerAspectRatioLockChange: (locked: boolean) => void
-  openSections: EditorOpenSections
-  onOpenSectionsChange: (sections: EditorOpenSections) => void
+  openSections: EditorSections
+  onOpenSectionsChange: (sections: EditorSections) => void
   onUpdateParams: (updates: Partial<ImageEditorState>) => void
   onVisualCropToggle?: (enabled: boolean) => Promise<void>
   isVisualCropEnabled?: boolean
@@ -63,11 +38,6 @@ interface ImageEditorControlsProps {
   onReplaceImage?: (layerId: string | null) => void
   onAddLayer?: (paths: string[]) => Promise<void>
   column?: 'left' | 'right' | 'both'
-  // Drag handlers (optional - only needed when column is 'left' or 'right')
-  onDragStart?: (event: DragStartEvent) => void
-  onDragOver?: (event: DragOverEvent) => void
-  onDragEnd?: () => void
-  activeId?: SectionKey | null
 }
 
 interface SectionConfig {
@@ -171,20 +141,10 @@ export function ImageEditorControls({
   onAddLayer,
   column = 'both',
 }: ImageEditorControlsProps) {
-  const { t } = useTranslation()
-
-  // Track the active dragged section for DragOverlay
-  const [activeId, setActiveId] = useState<SectionKey | null>(null)
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8, // 8px of movement required before drag starts
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
+  // Use shared DnD hook
+  const { activeId, sensors, handleDragStart, handleDragOver, handleDragEnd } = useEditorSectionDnd(
+    openSections,
+    onOpenSectionsChange,
   )
 
   const handleSectionToggle = useCallback(
@@ -195,118 +155,12 @@ export function ImageEditorControls({
     [openSections, onOpenSectionsChange],
   )
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const draggedId = event.active.id as SectionKey
-    setActiveId(draggedId)
-  }, [])
-
-  const handleDragOver = useCallback(
-    (event: DragOverEvent) => {
-      const { active, over } = event
-      if (!over) return
-
-      const activeId = active.id as SectionKey
-      const overId = over.id as string
-
-      // Determine source and destination columns
-      const activeInLeft = openSections.leftColumn.includes(activeId)
-      const activeInRight = openSections.rightColumn.includes(activeId)
-
-      let targetColumn: 'left' | 'right' | null = null
-      const overIdAsSection = overId as SectionKey
-
-      // Check if dropping over a column droppable area
-      if (overId === 'left-column') {
-        targetColumn = 'left'
-      } else if (overId === 'right-column') {
-        targetColumn = 'right'
-      } else {
-        // Dropping over another section - determine its column
-        if (openSections.leftColumn.includes(overIdAsSection)) {
-          targetColumn = 'left'
-        } else if (openSections.rightColumn.includes(overIdAsSection)) {
-          targetColumn = 'right'
-        }
-      }
-
-      if (!targetColumn) return
-
-      // Handle cross-column movement
-      if (targetColumn === 'left' && activeInRight) {
-        // Move from right to left
-        const newLeftColumn = [...openSections.leftColumn]
-        const newRightColumn = openSections.rightColumn.filter((id) => id !== activeId)
-
-        if (overId === 'left-column' || !openSections.leftColumn.includes(overIdAsSection)) {
-          newLeftColumn.push(activeId)
-        } else {
-          const overIndex = newLeftColumn.indexOf(overIdAsSection)
-          newLeftColumn.splice(overIndex, 0, activeId)
-        }
-
-        onOpenSectionsChange({
-          ...openSections,
-          leftColumn: newLeftColumn,
-          rightColumn: newRightColumn,
-        })
-      } else if (targetColumn === 'right' && activeInLeft) {
-        // Move from left to right
-        const newLeftColumn = openSections.leftColumn.filter((id) => id !== activeId)
-        const newRightColumn = [...openSections.rightColumn]
-
-        if (overId === 'right-column' || !openSections.rightColumn.includes(overIdAsSection)) {
-          newRightColumn.push(activeId)
-        } else {
-          const overIndex = newRightColumn.indexOf(overIdAsSection)
-          newRightColumn.splice(overIndex, 0, activeId)
-        }
-
-        onOpenSectionsChange({
-          ...openSections,
-          leftColumn: newLeftColumn,
-          rightColumn: newRightColumn,
-        })
-      } else if (targetColumn === 'left' && activeInLeft && overId !== 'left-column') {
-        // Reorder within left column
-        const oldIndex = openSections.leftColumn.indexOf(activeId)
-        const newIndex = openSections.leftColumn.indexOf(overIdAsSection)
-
-        if (oldIndex !== newIndex) {
-          const newLeftColumn = arrayMove(openSections.leftColumn, oldIndex, newIndex)
-          onOpenSectionsChange({
-            ...openSections,
-            leftColumn: newLeftColumn,
-          })
-        }
-      } else if (targetColumn === 'right' && activeInRight && overId !== 'right-column') {
-        // Reorder within right column
-        const oldIndex = openSections.rightColumn.indexOf(activeId)
-        const newIndex = openSections.rightColumn.indexOf(overIdAsSection)
-
-        if (oldIndex !== newIndex) {
-          const newRightColumn = arrayMove(openSections.rightColumn, oldIndex, newIndex)
-          onOpenSectionsChange({
-            ...openSections,
-            rightColumn: newRightColumn,
-          })
-        }
-      }
-    },
-    [openSections, onOpenSectionsChange],
-  )
-
-  const handleDragEnd = useCallback(() => {
-    // Clear active dragged item
-    setActiveId(null)
-  }, [])
-
-  // Define all section configurations
+  // Build section configs using shared metadata
   const sectionConfigs: Record<SectionKey, SectionConfig> = useMemo(
     () => ({
       crop: {
         key: 'crop',
-        icon: Scissors,
-        titleKey: 'imageEditor.controls.cropAspect',
+        ...SECTION_METADATA.crop,
         component: (
           <CropAspectControl
             params={params}
@@ -321,20 +175,17 @@ export function ImageEditorControls({
       },
       effects: {
         key: 'effects',
-        icon: Palette,
-        titleKey: 'imageEditor.controls.colorEffects',
+        ...SECTION_METADATA.effects,
         component: <ColorControl params={params} onUpdateParams={onUpdateParams} />,
       },
       transform: {
         key: 'transform',
-        icon: RotateCw,
-        titleKey: 'imageEditor.controls.transformRotate',
+        ...SECTION_METADATA.transform,
         component: <TransformControl params={params} onUpdateParams={onUpdateParams} />,
       },
       dimensions: {
         key: 'dimensions',
-        icon: Maximize2,
-        titleKey: 'imageEditor.controls.dimensionsResize',
+        ...SECTION_METADATA.dimensions,
         component: (
           <DimensionControl
             params={params}
@@ -345,20 +196,17 @@ export function ImageEditorControls({
       },
       fill: {
         key: 'fill',
-        icon: Frame,
-        titleKey: 'imageEditor.controls.fillPadding',
+        ...SECTION_METADATA.fill,
         component: <FillPaddingControl params={params} onUpdateParams={onUpdateParams} />,
       },
       output: {
         key: 'output',
-        icon: FileImage,
-        titleKey: 'imageEditor.controls.outputCompression',
+        ...SECTION_METADATA.output,
         component: <OutputControl params={params} onUpdateParams={onUpdateParams} />,
       },
       layers: {
         key: 'layers',
-        icon: Layers,
-        titleKey: 'imageEditor.layers.title',
+        ...SECTION_METADATA.layers,
         component: (
           <LayerPanel
             imageEditor={imageEditor}
@@ -391,8 +239,14 @@ export function ImageEditorControls({
     ],
   )
 
-  // Get the active section for DragOverlay
-  const activeSection = activeId ? sectionConfigs[activeId] : null
+  // Build section components map for DragOverlay
+  const sectionComponents = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(sectionConfigs).map(([key, config]) => [key, config.component]),
+      ) as Record<SectionKey, React.ReactNode>,
+    [sectionConfigs],
+  )
 
   // Get sections for each column (filtered by visibility)
   const leftColumnSections = useMemo(
@@ -400,7 +254,6 @@ export function ImageEditorControls({
       openSections.leftColumn
         .map((id) => sectionConfigs[id])
         .filter((section) => {
-          // Filter by visibility
           const visibleSections = openSections.visibleSections || []
           if (visibleSections.length > 0 && !visibleSections.includes(section.key)) {
             return false
@@ -415,7 +268,6 @@ export function ImageEditorControls({
       openSections.rightColumn
         .map((id) => sectionConfigs[id])
         .filter((section) => {
-          // Filter by visibility
           const visibleSections = openSections.visibleSections || []
           if (visibleSections.length > 0 && !visibleSections.includes(section.key)) {
             return false
@@ -508,37 +360,12 @@ export function ImageEditorControls({
         </SortableContext>
       </div>
 
-      {/* Drag Overlay */}
-      <DragOverlay>
-        {activeSection ? (
-          <div className='bg-card w-[305px] rounded-md border shadow-lg'>
-            <Collapsible open={openSections[activeSection.key]}>
-              <div className='flex w-full items-center'>
-                {/* Drag handle - matching the actual layout */}
-                <div className='py-2 pr-1 pl-3'>
-                  <GripVertical className='h-4 w-4' />
-                </div>
-
-                {/* Content area - matching the actual layout */}
-                <div className='flex flex-1 items-center justify-between py-2 pr-3'>
-                  <div className='flex items-center gap-2'>
-                    <activeSection.icon className='h-4 w-4' />
-                    <span className='font-medium'>{t(activeSection.titleKey)}</span>
-                  </div>
-                  {openSections[activeSection.key] ? (
-                    <ChevronUp className='h-4 w-4' />
-                  ) : (
-                    <ChevronDown className='h-4 w-4' />
-                  )}
-                </div>
-              </div>
-              <CollapsibleContent className='overflow-hidden px-3 pt-1 pb-3'>
-                {activeSection.component}
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        ) : null}
-      </DragOverlay>
+      {/* Shared Drag Overlay */}
+      <SectionDragOverlay
+        activeId={activeId}
+        openSections={openSections}
+        sectionComponents={sectionComponents}
+      />
     </DndContext>
   )
 }

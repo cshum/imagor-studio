@@ -1,16 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter } from '@tanstack/react-router'
-import {
-  FileImage,
-  FileText,
-  Frame,
-  Layers,
-  Maximize2,
-  Palette,
-  RotateCw,
-  Scissors,
-} from 'lucide-react'
+import { FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { statFile } from '@/api/storage-api'
@@ -35,10 +26,10 @@ import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import { copyToClipboard } from '@/lib/browser-utils'
 import {
-  EditorOpenSectionsStorage,
-  type EditorOpenSections,
+  EditorSectionStorage,
+  type EditorSections,
   type SectionKey,
-} from '@/lib/editor-open-sections-storage'
+} from '@/lib/editor-section-storage.ts'
 import {
   deserializeStateFromUrl,
   getStateFromLocation,
@@ -74,7 +65,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   const [replaceImageDialogOpen, setReplaceImageDialogOpen] = useState(false)
   const [replaceImageLayerId, setReplaceImageLayerId] = useState<string | null>(null)
   const [editorOpenSections, setEditorOpenSections] =
-    useState<EditorOpenSections>(initialEditorOpenSections)
+    useState<EditorSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
 
   // Read state from URL on mount (single source of truth, won't change during component lifetime)
@@ -85,17 +76,17 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   const [isLoading, setIsLoading] = useState<boolean>(hasInitialState)
 
   // Storage service for editor open sections
-  const storage = useMemo(() => new EditorOpenSectionsStorage(authState), [authState])
+  const storage = useMemo(() => new EditorSectionStorage(authState), [authState])
 
   // Debounced save function for editor open sections
   const debouncedSaveOpenSections = useMemo(
-    () => debounce((sections: EditorOpenSections) => storage.set(sections), 300),
+    () => debounce((sections: EditorSections) => storage.set(sections), 300),
     [storage],
   )
 
   // Handler that updates state immediately and saves with debounce
   const handleOpenSectionsChange = useCallback(
-    (sections: EditorOpenSections) => {
+    (sections: EditorSections) => {
       setEditorOpenSections(sections) // Immediate UI update
       debouncedSaveOpenSections(sections) // Debounced persistence
     },
@@ -604,32 +595,11 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     await setLocale(languageCode)
   }
 
-  // Icon mapping for drag overlay
-  const sectionIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-    crop: Scissors,
-    effects: Palette,
-    transform: RotateCw,
-    dimensions: Maximize2,
-    fill: Frame,
-    output: FileImage,
-    layers: Layers,
-  }
-
-  const sectionTitleKeyMap: Record<string, string> = {
-    crop: 'imageEditor.controls.cropAspect',
-    effects: 'imageEditor.controls.colorEffects',
-    transform: 'imageEditor.controls.transformRotate',
-    dimensions: 'imageEditor.controls.dimensionsResize',
-    fill: 'imageEditor.controls.fillPadding',
-    output: 'imageEditor.controls.outputCompression',
-    layers: 'imageEditor.layers.title',
-  }
-
-  // Section configurations with actual components (for desktop DragOverlay)
-  const sectionConfigs = useMemo(
-    () => ({
-      crop: {
-        component: (
+  // Section components for drag overlay (shared between ImageEditorControls and ImageEditorLayout)
+  const sectionComponents = useMemo(
+    () =>
+      ({
+        crop: (
           <CropAspectControl
             params={params}
             onUpdateParams={updateParams}
@@ -640,15 +610,9 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             onAspectRatioChange={setCropAspectRatio}
           />
         ),
-      },
-      effects: {
-        component: <ColorControl params={params} onUpdateParams={updateParams} />,
-      },
-      transform: {
-        component: <TransformControl params={params} onUpdateParams={updateParams} />,
-      },
-      dimensions: {
-        component: (
+        effects: <ColorControl params={params} onUpdateParams={updateParams} />,
+        transform: <TransformControl params={params} onUpdateParams={updateParams} />,
+        dimensions: (
           <DimensionControl
             params={params}
             onUpdateParams={updateParams}
@@ -658,15 +622,9 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             }}
           />
         ),
-      },
-      fill: {
-        component: <FillPaddingControl params={params} onUpdateParams={updateParams} />,
-      },
-      output: {
-        component: <OutputControl params={params} onUpdateParams={updateParams} />,
-      },
-      layers: {
-        component: (
+        fill: <FillPaddingControl params={params} onUpdateParams={updateParams} />,
+        output: <OutputControl params={params} onUpdateParams={updateParams} />,
+        layers: (
           <LayerPanel
             imageEditor={imageEditor}
             selectedLayerId={selectedLayerId}
@@ -678,8 +636,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             onAddLayer={handleAddLayerWithViewport}
           />
         ),
-      },
-    }),
+      }) as Record<SectionKey, React.ReactNode>,
     [
       imageEditor,
       params,
@@ -735,8 +692,6 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         onLanguageChange={handleLanguageChange}
         onToggleSectionVisibility={handleToggleSectionVisibility}
         editorOpenSections={editorOpenSections}
-        sectionIconMap={sectionIconMap}
-        sectionTitleKeyMap={sectionTitleKeyMap}
         layerBreadcrumb={
           <LayerBreadcrumb
             imageEditor={imageEditor}
@@ -787,7 +742,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         zoomControl={<ZoomControl zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />}
         mobileSheetOpen={mobileSheetOpen}
         onMobileSheetOpenChange={setMobileSheetOpen}
-        sectionConfigs={sectionConfigs}
+        sectionComponents={sectionComponents}
         onOpenSectionsChange={handleOpenSectionsChange}
       />
 

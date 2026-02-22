@@ -1,38 +1,18 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  closestCenter,
-  DndContext,
-  DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragOverEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core'
-import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronUp,
-  Download,
-  FileText,
-  GripVertical,
-  MoreVertical,
-  Redo2,
-  Undo2,
-} from 'lucide-react'
+import { closestCenter, DndContext } from '@dnd-kit/core'
+import { ChevronLeft, Download, FileText, MoreVertical, Redo2, Undo2 } from 'lucide-react'
 
 import { EditorMenuDropdown } from '@/components/image-editor/editor-menu-dropdown'
+import { SectionDragOverlay } from '@/components/image-editor/section-drag-overlay'
 import { LoadingBar } from '@/components/loading-bar'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
-import type { EditorOpenSections, SectionKey } from '@/lib/editor-open-sections-storage'
+import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
+import type { EditorSections, SectionKey } from '@/lib/editor-section-storage.ts'
 import { cn } from '@/lib/utils'
 
 export interface ImageEditorLayoutProps {
@@ -54,8 +34,8 @@ export interface ImageEditorLayoutProps {
   onApplyTemplate: () => void
   onLanguageChange: (code: string) => void
   onToggleSectionVisibility: (key: SectionKey) => void
-  editorOpenSections: EditorOpenSections
-  onOpenSectionsChange: (sections: EditorOpenSections) => void
+  editorOpenSections: EditorSections
+  onOpenSectionsChange: (sections: EditorSections) => void
 
   // Desktop-only header: layer breadcrumb
   layerBreadcrumb?: React.ReactNode
@@ -81,10 +61,8 @@ export interface ImageEditorLayoutProps {
   mobileSheetOpen: boolean
   onMobileSheetOpenChange: (open: boolean) => void
 
-  // Section configs for drag overlay
-  sectionIconMap: Record<string, React.ComponentType<{ className?: string }>>
-  sectionTitleKeyMap: Record<string, string>
-  sectionConfigs: Record<string, { component: React.ReactNode }>
+  // Section components for drag overlay (keyed by SectionKey)
+  sectionComponents: Record<SectionKey, React.ReactNode>
 }
 
 export function ImageEditorLayout({
@@ -114,20 +92,18 @@ export function ImageEditorLayout({
   zoomControl,
   mobileSheetOpen,
   onMobileSheetOpenChange,
-  sectionIconMap,
-  sectionTitleKeyMap,
-  sectionConfigs,
+  sectionComponents,
 }: ImageEditorLayoutProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md')
   const isDesktop = useBreakpoint('lg')
   const isTablet = !isMobile && !isDesktop
 
-  // Drag and drop state (desktop only)
-  const [activeId, setActiveId] = useState<string | null>(null)
-
-  const ActiveIcon = activeId ? sectionIconMap[activeId] : null
-  const activeSection = activeId ? sectionConfigs[activeId as SectionKey] : null
+  // Use shared DnD hook (desktop only)
+  const { activeId, sensors, handleDragStart, handleDragOver, handleDragEnd } = useEditorSectionDnd(
+    editorOpenSections,
+    onOpenSectionsChange,
+  )
 
   // Calculate if columns are empty for smart sizing (desktop)
   const leftColumnSections = editorOpenSections.leftColumn.filter((id) => {
@@ -153,117 +129,6 @@ export function ImageEditorLayout({
   const renderedPreviewArea = useMemo(
     () => previewArea({ isLeftColumnEmpty, isRightColumnEmpty }),
     [previewArea, isLeftColumnEmpty, isRightColumnEmpty],
-  )
-
-  // Drag and drop handlers (desktop only)
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id as string)
-  }, [])
-
-  const handleDragOver = useCallback(
-    (event: DragOverEvent) => {
-      const { active, over } = event
-      if (!over) return
-
-      const activeId = active.id as SectionKey
-      const overId = over.id as string
-      const overIdAsSection = overId as SectionKey
-
-      const activeInLeft = editorOpenSections.leftColumn.includes(activeId)
-      const activeInRight = editorOpenSections.rightColumn.includes(activeId)
-
-      let targetColumn: 'left' | 'right' | null = null
-
-      if (overId === 'left-column') {
-        targetColumn = 'left'
-      } else if (overId === 'right-column') {
-        targetColumn = 'right'
-      } else {
-        if (editorOpenSections.leftColumn.includes(overIdAsSection)) {
-          targetColumn = 'left'
-        } else if (editorOpenSections.rightColumn.includes(overIdAsSection)) {
-          targetColumn = 'right'
-        }
-      }
-
-      if (!targetColumn) return
-
-      if (targetColumn === 'left' && activeInRight) {
-        const newLeftColumn = [...editorOpenSections.leftColumn]
-        const newRightColumn = editorOpenSections.rightColumn.filter((id) => id !== activeId)
-
-        if (overId === 'left-column' || !editorOpenSections.leftColumn.includes(overIdAsSection)) {
-          newLeftColumn.push(activeId)
-        } else {
-          const overIndex = newLeftColumn.indexOf(overIdAsSection)
-          newLeftColumn.splice(overIndex, 0, activeId)
-        }
-
-        onOpenSectionsChange({
-          ...editorOpenSections,
-          leftColumn: newLeftColumn,
-          rightColumn: newRightColumn,
-        })
-      } else if (targetColumn === 'right' && activeInLeft) {
-        const newLeftColumn = editorOpenSections.leftColumn.filter((id) => id !== activeId)
-        const newRightColumn = [...editorOpenSections.rightColumn]
-
-        if (
-          overId === 'right-column' ||
-          !editorOpenSections.rightColumn.includes(overIdAsSection)
-        ) {
-          newRightColumn.push(activeId)
-        } else {
-          const overIndex = newRightColumn.indexOf(overIdAsSection)
-          newRightColumn.splice(overIndex, 0, activeId)
-        }
-
-        onOpenSectionsChange({
-          ...editorOpenSections,
-          leftColumn: newLeftColumn,
-          rightColumn: newRightColumn,
-        })
-      } else if (targetColumn === 'left' && activeInLeft && overId !== 'left-column') {
-        const oldIndex = editorOpenSections.leftColumn.indexOf(activeId)
-        const newIndex = editorOpenSections.leftColumn.indexOf(overIdAsSection)
-
-        if (oldIndex !== newIndex) {
-          const newLeftColumn = arrayMove(editorOpenSections.leftColumn, oldIndex, newIndex)
-          onOpenSectionsChange({
-            ...editorOpenSections,
-            leftColumn: newLeftColumn,
-          })
-        }
-      } else if (targetColumn === 'right' && activeInRight && overId !== 'right-column') {
-        const oldIndex = editorOpenSections.rightColumn.indexOf(activeId)
-        const newIndex = editorOpenSections.rightColumn.indexOf(overIdAsSection)
-
-        if (oldIndex !== newIndex) {
-          const newRightColumn = arrayMove(editorOpenSections.rightColumn, oldIndex, newIndex)
-          onOpenSectionsChange({
-            ...editorOpenSections,
-            rightColumn: newRightColumn,
-          })
-        }
-      }
-    },
-    [editorOpenSections, onOpenSectionsChange],
-  )
-
-  const handleDragEnd = useCallback(() => {
-    setActiveId(null)
-  }, [])
-
-  // Drag and drop sensors for desktop
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
   )
 
   // --- Shared sub-components ---
@@ -292,8 +157,6 @@ export function ImageEditorLayout({
           onLanguageChange={onLanguageChange}
           onToggleSectionVisibility={onToggleSectionVisibility}
           editorOpenSections={editorOpenSections}
-          sectionIconMap={sectionIconMap}
-          sectionTitleKeyMap={sectionTitleKeyMap}
           isTemplate={isTemplate}
         />
       </DropdownMenu>
@@ -323,8 +186,6 @@ export function ImageEditorLayout({
           onLanguageChange={onLanguageChange}
           onToggleSectionVisibility={onToggleSectionVisibility}
           editorOpenSections={editorOpenSections}
-          sectionIconMap={sectionIconMap}
-          sectionTitleKeyMap={sectionTitleKeyMap}
         />
       </DropdownMenu>
     </>
@@ -399,8 +260,6 @@ export function ImageEditorLayout({
                   onLanguageChange={onLanguageChange}
                   onToggleSectionVisibility={onToggleSectionVisibility}
                   editorOpenSections={editorOpenSections}
-                  sectionIconMap={sectionIconMap}
-                  sectionTitleKeyMap={sectionTitleKeyMap}
                   includeUndoRedo={true}
                   onUndo={onUndo}
                   onRedo={onRedo}
@@ -541,34 +400,12 @@ export function ImageEditorLayout({
           </div>
         </div>
 
-        {/* Drag Overlay */}
-        <DragOverlay>
-          {activeSection && ActiveIcon ? (
-            <div className='bg-card w-[305px] rounded-md border shadow-lg'>
-              <Collapsible open={editorOpenSections[activeId as SectionKey]}>
-                <div className='flex w-full items-center'>
-                  <div className='py-2 pr-1 pl-3'>
-                    <GripVertical className='h-4 w-4' />
-                  </div>
-                  <div className='flex flex-1 items-center justify-between py-2 pr-3'>
-                    <div className='flex items-center gap-2'>
-                      <ActiveIcon className='h-4 w-4' />
-                      <span className='font-medium'>{t(sectionTitleKeyMap[activeId!])}</span>
-                    </div>
-                    {editorOpenSections[activeId as SectionKey] ? (
-                      <ChevronUp className='h-4 w-4' />
-                    ) : (
-                      <ChevronDown className='h-4 w-4' />
-                    )}
-                  </div>
-                </div>
-                <CollapsibleContent className='overflow-hidden px-3 pt-1 pb-3'>
-                  {activeSection.component}
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
-          ) : null}
-        </DragOverlay>
+        {/* Shared Drag Overlay */}
+        <SectionDragOverlay
+          activeId={activeId}
+          openSections={editorOpenSections}
+          sectionComponents={sectionComponents}
+        />
       </DndContext>
 
       {/* Status bar */}
