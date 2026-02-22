@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { closestCenter, DndContext, useDroppable } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
@@ -8,8 +8,7 @@ import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
 import { SectionDragOverlay } from '@/components/image-editor/section-drag-overlay'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
-import { SECTION_METADATA } from '@/lib/editor-section-metadata'
-import type { EditorSections, SectionKey } from '@/lib/editor-section-storage.ts'
+import { SECTION_METADATA, type EditorSections, type SectionKey } from '@/lib/editor-sections'
 import { cn } from '@/lib/utils'
 
 interface ImageEditorControlsProps {

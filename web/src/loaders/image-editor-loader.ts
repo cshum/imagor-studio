@@ -1,7 +1,7 @@
 import { statFile } from '@/api/storage-api'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
-import { EditorSectionStorage, type EditorSections } from '@/lib/editor-section-storage.ts'
+import { EditorSectionStorage, type EditorSections } from '@/lib/editor-sections'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { ImageEditor } from '@/lib/image-editor'
 import { joinImagePath } from '@/lib/path-utils'

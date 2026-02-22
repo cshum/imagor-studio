@@ -11,8 +11,12 @@ import {
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu'
 import { availableLanguages } from '@/i18n'
-import { SECTION_METADATA } from '@/lib/editor-section-metadata'
-import { SECTION_KEYS, type EditorSections, type SectionKey } from '@/lib/editor-section-storage.ts'
+import {
+  SECTION_KEYS,
+  SECTION_METADATA,
+  type EditorSections,
+  type SectionKey,
+} from '@/lib/editor-sections'
 
 interface EditorMenuDropdownProps {
   onDownload: () => void

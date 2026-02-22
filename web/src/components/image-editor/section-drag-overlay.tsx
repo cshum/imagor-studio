@@ -3,8 +3,7 @@ import { DragOverlay } from '@dnd-kit/core'
 import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
 
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
-import { SECTION_METADATA } from '@/lib/editor-section-metadata'
-import type { EditorSections, SectionKey } from '@/lib/editor-section-storage.ts'
+import { SECTION_METADATA, type EditorSections, type SectionKey } from '@/lib/editor-sections'
 
 interface SectionDragOverlayProps {
   activeId: SectionKey | null

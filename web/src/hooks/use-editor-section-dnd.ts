@@ -9,7 +9,7 @@ import {
 } from '@dnd-kit/core'
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 
-import type { EditorSections, SectionKey } from '@/lib/editor-section-storage.ts'
+import type { EditorSections, SectionKey } from '@/lib/editor-sections'
 
 export function useEditorSectionDnd(
   openSections: EditorSections,

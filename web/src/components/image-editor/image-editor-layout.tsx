@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
-import type { EditorSections, SectionKey } from '@/lib/editor-section-storage.ts'
+import type { EditorSections, SectionKey } from '@/lib/editor-sections'
 import { cn } from '@/lib/utils'
 
 export interface ImageEditorLayoutProps {

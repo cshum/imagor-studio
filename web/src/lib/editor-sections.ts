@@ -1,9 +1,11 @@
+import React from 'react'
+import { FileImage, Frame, Layers, Maximize2, Palette, RotateCw, Scissors } from 'lucide-react'
+
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage'
 import type { Auth } from '@/stores/auth-store'
 
-// Define sections as a const object (single source of truth with default states)
 const EDITOR_SECTIONS = {
   layers: true,
   crop: true,
@@ -14,7 +16,6 @@ const EDITOR_SECTIONS = {
   fill: false,
 } as const
 
-// Derive SectionKey from the object keys
 export type SectionKey = keyof typeof EDITOR_SECTIONS
 
 export const SECTION_KEYS: SectionKey[] = [
@@ -27,14 +28,48 @@ export const SECTION_KEYS: SectionKey[] = [
   'fill',
 ]
 
-// Use Record type for better type safety
+export interface SectionMetadata {
+  icon: React.ComponentType<{ className?: string }>
+  titleKey: string
+}
+
+export const SECTION_METADATA: Record<SectionKey, SectionMetadata> = {
+  crop: {
+    icon: Scissors,
+    titleKey: 'imageEditor.controls.cropAspect',
+  },
+  effects: {
+    icon: Palette,
+    titleKey: 'imageEditor.controls.colorEffects',
+  },
+  transform: {
+    icon: RotateCw,
+    titleKey: 'imageEditor.controls.transformRotate',
+  },
+  dimensions: {
+    icon: Maximize2,
+    titleKey: 'imageEditor.controls.dimensionsResize',
+  },
+  fill: {
+    icon: Frame,
+    titleKey: 'imageEditor.controls.fillPadding',
+  },
+  output: {
+    icon: FileImage,
+    titleKey: 'imageEditor.controls.outputCompression',
+  },
+  layers: {
+    icon: Layers,
+    titleKey: 'imageEditor.layers.title',
+  },
+}
+
 export interface EditorSections extends Record<SectionKey, boolean> {
   leftColumn: SectionKey[]
   rightColumn: SectionKey[]
   visibleSections: SectionKey[]
 }
 
-// Default sections with proper typing
 const defaultSections: EditorSections = {
   ...EDITOR_SECTIONS,
   leftColumn: ['crop', 'layers'],

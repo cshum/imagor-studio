@@ -25,11 +25,7 @@ import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import { copyToClipboard } from '@/lib/browser-utils'
-import {
-  EditorSectionStorage,
-  type EditorSections,
-  type SectionKey,
-} from '@/lib/editor-section-storage.ts'
+import { EditorSectionStorage, type EditorSections, type SectionKey } from '@/lib/editor-sections'
 import {
   deserializeStateFromUrl,
   getStateFromLocation,
