@@ -102,6 +102,7 @@ export function PreviewArea({
 
   // Track context transitions to hide layer overlay until new preview loads
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const previousEditingContextRef = useRef(editingContext)
 
   // Track if image fits in container (for smart centering)
   const [imageFitsInContainer, setImageFitsInContainer] = useState(true)
@@ -122,7 +123,13 @@ export function PreviewArea({
 
   // Detect context changes and set transition flag
   useEffect(() => {
-    setIsTransitioning(true)
+    // Only set transitioning if editingContext actually changed
+    if (previousEditingContextRef.current !== editingContext) {
+      setIsTransitioning(true)
+      previousEditingContextRef.current = editingContext
+    }
+
+    // Always update original dimensions when imageEditor changes
     if (imageEditor) {
       setOriginalDimensions(imageEditor.getOriginalDimensions())
     }
