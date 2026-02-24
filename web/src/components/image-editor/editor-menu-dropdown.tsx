@@ -17,6 +17,7 @@ import {
   type EditorSections,
   type SectionKey,
 } from '@/lib/editor-sections'
+import { getKeyboardShortcut } from '@/lib/utils'
 
 interface EditorMenuDropdownProps {
   onDownload: () => void
@@ -86,6 +87,9 @@ export function EditorMenuDropdown({
           >
             <FileDown className='mr-3 h-4 w-4' />
             {saveTemplateLabel}
+            <span className='text-muted-foreground ml-auto pl-4 text-xs'>
+              {getKeyboardShortcut('S', { ctrl: true, shift: isTemplate })}
+            </span>
           </DropdownMenuItem>
           {/* Hide "Apply Template" when editing templates (doesn't make sense to apply template to itself) */}
           {onApplyTemplate && !isTemplate && (
@@ -121,6 +125,9 @@ export function EditorMenuDropdown({
           >
             <FileDown className='mr-3 h-4 w-4' />
             {saveTemplateLabel}
+            <span className='text-muted-foreground ml-auto pl-4 text-xs'>
+              {getKeyboardShortcut('S', { ctrl: true, shift: isTemplate })}
+            </span>
           </DropdownMenuItem>
           {/* Hide "Apply Template" when editing templates (doesn't make sense to apply template to itself) */}
           {onApplyTemplate && !isTemplate && (
