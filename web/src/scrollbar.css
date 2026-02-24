@@ -37,3 +37,15 @@
 }
 
 /* Remove the .custom-scrollbar utility class as it's no longer needed */
+
+/* Utility class to hide scrollbar while keeping scrollability */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}
