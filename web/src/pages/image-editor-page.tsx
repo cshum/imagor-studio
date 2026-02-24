@@ -793,8 +793,9 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             ? t('imageEditor.template.saveTemplateAs')
             : t('imageEditor.template.createTemplate')
         }
-        onSaveSuccess={(templatePath) => {
+        onSaveSuccess={async (templatePath) => {
           isSavedRef.current = true
+          await router.invalidate()
           navigate({
             to: '/$imagePath/editor',
             params: { imagePath: templatePath },
