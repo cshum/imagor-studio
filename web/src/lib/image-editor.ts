@@ -175,11 +175,10 @@ export class ImageEditor {
     this.callbacks = {}
     this.baseImagePath = config.imagePath
 
-    // Initialize state with original dimensions and fit-in mode
+    // Initialize state with original dimensions
     this.state = {
       width: config.originalDimensions.width,
       height: config.originalDimensions.height,
-      fitIn: true,
     }
   }
 
@@ -204,7 +203,6 @@ export class ImageEditor {
     this.state = {
       width: this.config.originalDimensions.width,
       height: this.config.originalDimensions.height,
-      fitIn: true,
     }
   }
 
@@ -438,7 +436,7 @@ export class ImageEditor {
       // Fitting mode
       if (state.stretch) {
         prefix = 'stretch/'
-      } else if (state.fitIn !== false) {
+      } else if (state.fitIn === true) {
         prefix = 'fit-in/'
       }
 
@@ -1175,7 +1173,6 @@ export class ImageEditor {
     this.state = {
       width: this.config.originalDimensions.width,
       height: this.config.originalDimensions.height,
-      fitIn: true,
     }
 
     this.callbacks.onStateChange?.(this.getState())
@@ -1730,7 +1727,6 @@ export class ImageEditor {
     const freshState: ImageEditorState = {
       width: targetLayer.originalDimensions.width,
       height: targetLayer.originalDimensions.height,
-      fitIn: true,
     }
 
     // If layer has saved transforms, apply them on top of fresh state
