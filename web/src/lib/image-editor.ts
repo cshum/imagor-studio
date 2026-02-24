@@ -436,7 +436,7 @@ export class ImageEditor {
       // Fitting mode
       if (state.stretch) {
         prefix = 'stretch/'
-      } else if (state.fitIn === true) {
+      } else if (state.fitIn) {
         prefix = 'fit-in/'
       }
 
