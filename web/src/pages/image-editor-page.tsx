@@ -528,7 +528,6 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
           transforms: {
             width: layerPosition.width,
             height: layerPosition.height,
-            fitIn: false, // Use fill mode for layers
           },
         }
 

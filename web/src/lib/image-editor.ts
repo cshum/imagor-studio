@@ -342,7 +342,7 @@ export class ImageEditor {
     let finalWidth: number
     let finalHeight: number
 
-    if (state.fitIn !== false) {
+    if (state.fitIn) {
       // fitIn mode: calculate what fitIn will produce
       // fit-in doesn't upscale by default, so cap the scale at 1.0
       const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight, 1.0)
@@ -558,7 +558,6 @@ export class ImageEditor {
           const layerState: Partial<ImageEditorState> = {
             width: layer.originalDimensions.width,
             height: layer.originalDimensions.height,
-            fitIn: false, // Use fill mode for layers by default
           }
           layerPath = ImageEditor.editorStateToImagorPath(
             layerState,
@@ -682,7 +681,7 @@ export class ImageEditor {
     const outputWidth = width ?? sourceWidth
     const outputHeight = height ?? sourceHeight
 
-    if (state.fitIn !== false) {
+    if (state.fitIn) {
       // fitIn mode: calculate what fitIn will produce
       // fit-in doesn't upscale by default, so cap the scale at 1.0
       const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight, 1.0)
