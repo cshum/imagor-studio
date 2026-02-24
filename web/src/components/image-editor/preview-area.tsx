@@ -337,46 +337,49 @@ export function PreviewArea({
       } = pendingScrollAdjustment.current
 
       // Wait for browser to update container dimensions after image loads
+      // Use double RAF to ensure layout is fully complete and stable
       requestAnimationFrame(() => {
-        // Calculate NEW scroll dimensions (after layout)
-        const newScrollWidth = container.scrollWidth - container.clientWidth
-        const newScrollHeight = container.scrollHeight - container.clientHeight
+        requestAnimationFrame(() => {
+          // Calculate NEW scroll dimensions (after layout)
+          const newScrollWidth = container.scrollWidth - container.clientWidth
+          const newScrollHeight = container.scrollHeight - container.clientHeight
 
-        // Only apply if dimensions actually changed
-        if (newScrollWidth !== oldScrollWidth || newScrollHeight !== oldScrollHeight) {
-          if (hasScrolled && oldScrollWidth > 0 && oldScrollHeight > 0) {
-            // User has scrolled - calculate and preserve ratio
-            const ratioX = scrollLeft / oldScrollWidth
-            const ratioY = scrollTop / oldScrollHeight
+          // Only apply if dimensions actually changed
+          if (newScrollWidth !== oldScrollWidth || newScrollHeight !== oldScrollHeight) {
+            if (hasScrolled && oldScrollWidth > 0 && oldScrollHeight > 0) {
+              // User has scrolled - calculate and preserve ratio
+              const ratioX = scrollLeft / oldScrollWidth
+              const ratioY = scrollTop / oldScrollHeight
 
-            const newScrollLeft = ratioX * newScrollWidth
-            const newScrollTop = ratioY * newScrollHeight
+              const newScrollLeft = ratioX * newScrollWidth
+              const newScrollTop = ratioY * newScrollHeight
 
-            container.scrollLeft = newScrollLeft
-            container.scrollTop = newScrollTop
-          } else {
-            // User hasn't scrolled - center it
-            // Enhanced centering logic that works better for wide horizontal images
-            const paddingWidth = imageDimensions.width * 0.5
-            const paddingHeight = imageDimensions.height * 0.5
+              container.scrollLeft = newScrollLeft
+              container.scrollTop = newScrollTop
+            } else {
+              // User hasn't scrolled - center it
+              // Enhanced centering logic that works better for wide horizontal images
+              const paddingWidth = imageDimensions.width * 0.5
+              const paddingHeight = imageDimensions.height * 0.5
 
-            // Calculate the center of the viewport
-            const containerCenterX = container.clientWidth / 2
-            const containerCenterY = container.clientHeight / 2
+              // Calculate the center of the viewport
+              const containerCenterX = container.clientWidth / 2
+              const containerCenterY = container.clientHeight / 2
 
-            // Calculate the center of the image content (accounting for padding)
-            const imageCenterX = paddingWidth + imageDimensions.width / 2
-            const imageCenterY = paddingHeight + imageDimensions.height / 2
+              // Calculate the center of the image content (accounting for padding)
+              const imageCenterX = paddingWidth + imageDimensions.width / 2
+              const imageCenterY = paddingHeight + imageDimensions.height / 2
 
-            // Calculate scroll position to center the image content in the viewport
-            const centerScrollLeft = imageCenterX - containerCenterX
-            const centerScrollTop = imageCenterY - containerCenterY
+              // Calculate scroll position to center the image content in the viewport
+              const centerScrollLeft = imageCenterX - containerCenterX
+              const centerScrollTop = imageCenterY - containerCenterY
 
-            // Apply scroll position with bounds checking
-            container.scrollLeft = Math.max(0, Math.min(centerScrollLeft, newScrollWidth))
-            container.scrollTop = Math.max(0, Math.min(centerScrollTop, newScrollHeight))
+              // Apply scroll position with bounds checking
+              container.scrollLeft = Math.max(0, Math.min(centerScrollLeft, newScrollWidth))
+              container.scrollTop = Math.max(0, Math.min(centerScrollTop, newScrollHeight))
+            }
           }
-        }
+        })
       })
 
       // Clear pending adjustment
