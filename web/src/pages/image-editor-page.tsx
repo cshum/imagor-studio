@@ -42,11 +42,10 @@ import { useAuth } from '@/stores/auth-store'
 import { setLocale } from '@/stores/locale-store'
 
 interface ImageEditorPageProps {
-  galleryKey: string
   loaderData: ImageEditorLoaderData
 }
 
-export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps) {
+export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const { imageEditor, initialEditorOpenSections, isTemplate, templateMetadata } = loaderData
 
   const { t } = useTranslation()
@@ -364,6 +363,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
 
     // Priority 3: Navigate back to gallery
+    const { galleryKey } = splitImagePath(imageEditor.getImagePath())
     if (galleryKey) {
       await navigate({
         to: '/gallery/$galleryKey',
@@ -793,8 +793,13 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
             ? t('imageEditor.template.saveTemplateAs')
             : t('imageEditor.template.createTemplate')
         }
-        onSaveSuccess={(templatePath) => {
+        onSaveSuccess={async (templatePath) => {
           isSavedRef.current = true
+          // Invalidate except editor page
+          // This refreshes gallery cache without causing loading issues in editor
+          await router.invalidate({
+            filter: (match) => !match.id.includes('/editor'),
+          })
           navigate({
             to: '/$imagePath/editor',
             params: { imagePath: templatePath },
