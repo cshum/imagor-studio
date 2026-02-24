@@ -42,11 +42,10 @@ import { useAuth } from '@/stores/auth-store'
 import { setLocale } from '@/stores/locale-store'
 
 interface ImageEditorPageProps {
-  galleryKey: string
   loaderData: ImageEditorLoaderData
 }
 
-export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps) {
+export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const { imageEditor, initialEditorOpenSections, isTemplate, templateMetadata } = loaderData
 
   const { t } = useTranslation()
@@ -364,6 +363,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
 
     // Priority 3: Navigate back to gallery
+    const { galleryKey } = splitImagePath(imageEditor.getImagePath())
     if (galleryKey) {
       await navigate({
         to: '/gallery/$galleryKey',
