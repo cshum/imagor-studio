@@ -77,8 +77,8 @@ export function PreviewArea({
   const [originalDimensions, setOriginalDimensions] = useState<{ width: number; height: number }>(
     imageEditor?.getOriginalDimensions() || { width: 0, height: 0 },
   )
-  // Use external ref if provided, otherwise use internal ref
-  const previewContainerRef = externalPreviewContainerRef || useRef<HTMLDivElement>(null)
+  const internalRef = useRef<HTMLDivElement>(null)
+  const previewContainerRef = externalPreviewContainerRef || internalRef
   const previewImageRef = useRef<HTMLImageElement>(null)
   const [imageDimensions, setImageDimensions] = useState<{
     width: number
