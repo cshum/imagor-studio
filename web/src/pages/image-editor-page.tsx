@@ -259,6 +259,12 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
   // Keyboard shortcuts for undo/redo and escape to exit crop mode or nested layer
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in input fields
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return
+      }
+
       // Escape key - exit crop mode or nested layer editing
       if (e.key === 'Escape') {
         e.preventDefault()
@@ -273,6 +279,26 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
         const contextDepth = imageEditor.getContextDepth()
         if (contextDepth > 0) {
           imageEditor.switchContext(null)
+        }
+        return
+      }
+
+      // Cmd+S (Mac) or Ctrl+S (Windows/Linux) - Save/Create Template
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+
+        if (e.shiftKey) {
+          // Cmd+Shift+S = Save As / Create Template (always open dialog)
+          setSaveTemplateDialogOpen(true)
+        } else {
+          // Cmd+S = Save (existing template) or Create (new)
+          if (isTemplate && templateMetadata) {
+            // Existing template - direct save
+            handleSaveTemplateClick()
+          } else {
+            // New template - open dialog
+            setSaveTemplateDialogOpen(true)
+          }
         }
         return
       }
@@ -293,7 +319,7 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [imageEditor])
+  }, [imageEditor, isTemplate, templateMetadata])
 
   const updateParams = useCallback(
     (updates: Partial<ImageEditorState>) => {
