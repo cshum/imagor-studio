@@ -57,7 +57,7 @@ export function calculateLayerOutputDimensions(
   let finalWidth: number
   let finalHeight: number
 
-  if (transforms.fitIn !== false) {
+  if (transforms.fitIn) {
     // fitIn mode: calculate what fitIn will produce
     const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight)
     finalWidth = Math.round(sourceWidth * outputScale)

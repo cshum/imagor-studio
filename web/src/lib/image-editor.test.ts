@@ -28,7 +28,7 @@ describe('ImageEditor', () => {
       const state = editor.getState()
       expect(state.width).toBe(1920)
       expect(state.height).toBe(1080)
-      expect(state.fitIn).toBe(true)
+      expect(state.fitIn).not.toBe(true)
     })
 
     it('should update parameters', () => {
@@ -553,7 +553,7 @@ describe('ImageEditor', () => {
       expect(state.hue).toBeUndefined()
       expect(state.width).toBe(1920)
       expect(state.height).toBe(1080)
-      expect(state.fitIn).toBe(true)
+      expect(state.fitIn).not.toBe(true)
     })
 
     it('should allow undo after reset', () => {

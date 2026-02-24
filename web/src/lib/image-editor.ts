@@ -175,11 +175,10 @@ export class ImageEditor {
     this.callbacks = {}
     this.baseImagePath = config.imagePath
 
-    // Initialize state with original dimensions and fit-in mode
+    // Initialize state with original dimensions
     this.state = {
       width: config.originalDimensions.width,
       height: config.originalDimensions.height,
-      fitIn: true,
     }
   }
 
@@ -204,7 +203,6 @@ export class ImageEditor {
     this.state = {
       width: this.config.originalDimensions.width,
       height: this.config.originalDimensions.height,
-      fitIn: true,
     }
   }
 
@@ -344,7 +342,7 @@ export class ImageEditor {
     let finalWidth: number
     let finalHeight: number
 
-    if (state.fitIn !== false) {
+    if (state.fitIn) {
       // fitIn mode: calculate what fitIn will produce
       // fit-in doesn't upscale by default, so cap the scale at 1.0
       const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight, 1.0)
@@ -438,7 +436,7 @@ export class ImageEditor {
       // Fitting mode
       if (state.stretch) {
         prefix = 'stretch/'
-      } else if (state.fitIn !== false) {
+      } else if (state.fitIn) {
         prefix = 'fit-in/'
       }
 
@@ -560,7 +558,6 @@ export class ImageEditor {
           const layerState: Partial<ImageEditorState> = {
             width: layer.originalDimensions.width,
             height: layer.originalDimensions.height,
-            fitIn: false, // Use fill mode for layers by default
           }
           layerPath = ImageEditor.editorStateToImagorPath(
             layerState,
@@ -684,7 +681,7 @@ export class ImageEditor {
     const outputWidth = width ?? sourceWidth
     const outputHeight = height ?? sourceHeight
 
-    if (state.fitIn !== false) {
+    if (state.fitIn) {
       // fitIn mode: calculate what fitIn will produce
       // fit-in doesn't upscale by default, so cap the scale at 1.0
       const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight, 1.0)
@@ -1175,7 +1172,6 @@ export class ImageEditor {
     this.state = {
       width: this.config.originalDimensions.width,
       height: this.config.originalDimensions.height,
-      fitIn: true,
     }
 
     this.callbacks.onStateChange?.(this.getState())
@@ -1730,7 +1726,6 @@ export class ImageEditor {
     const freshState: ImageEditorState = {
       width: targetLayer.originalDimensions.width,
       height: targetLayer.originalDimensions.height,
-      fitIn: true,
     }
 
     // If layer has saved transforms, apply them on top of fresh state
