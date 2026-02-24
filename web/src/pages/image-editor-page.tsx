@@ -198,6 +198,19 @@ export function ImageEditorPage({ galleryKey, loaderData }: ImageEditorPageProps
     }
   }, [imageEditor, isTemplate])
 
+  // This ensures React state stays in sync with the actual imageEditor instance
+  useEffect(() => {
+    // Sync editingContext when imageEditor instance changes (e.g., after loader invalidation)
+    setEditingContext(imageEditor.getEditingContext())
+
+    // Reset layer selection (old layer IDs are invalid in new instance)
+    setSelectedLayerId(null)
+
+    // Reset undo/redo state (new instance has its own history)
+    setCanUndo(imageEditor.canUndo())
+    setCanRedo(imageEditor.canRedo())
+  }, [imageEditor])
+
   // Sync zoom and preview dimensions with imageEditor
   useEffect(() => {
     if (!previewMaxDimensions) {
