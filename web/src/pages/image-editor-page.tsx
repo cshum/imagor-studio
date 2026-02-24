@@ -798,9 +798,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
           // Invalidate except editor page
           // This refreshes gallery cache without causing loading issues in editor
           await router.invalidate({
-            filter: (match) => {
-              return !match.id.includes('/editor')
-            },
+            filter: (match) => !match.id.includes('/editor'),
           })
           navigate({
             to: '/$imagePath/editor',
