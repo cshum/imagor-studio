@@ -218,9 +218,16 @@ export function DimensionControl({
               type='number'
               value={localWidth}
               onChange={(e) => setLocalWidth(e.target.value)}
-              onFocus={() => { focusedField.current = 'width' }}
-              onBlur={(e) => { focusedField.current = null; commitWidth(e.target.value) }}
-              onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+              onFocus={() => {
+                focusedField.current = 'width'
+              }}
+              onBlur={(e) => {
+                focusedField.current = null
+                commitWidth(e.target.value)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur()
+              }}
               placeholder={t('imageEditor.dimensions.auto')}
               min='1'
               max='10000'
@@ -252,9 +259,16 @@ export function DimensionControl({
               type='number'
               value={localHeight}
               onChange={(e) => setLocalHeight(e.target.value)}
-              onFocus={() => { focusedField.current = 'height' }}
-              onBlur={(e) => { focusedField.current = null; commitHeight(e.target.value) }}
-              onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+              onFocus={() => {
+                focusedField.current = 'height'
+              }}
+              onBlur={(e) => {
+                focusedField.current = null
+                commitHeight(e.target.value)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur()
+              }}
               placeholder={t('imageEditor.dimensions.auto')}
               min='1'
               max='10000'

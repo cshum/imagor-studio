@@ -702,9 +702,7 @@ export class ImageEditor {
     // as the pre-proportion resize output (needed for the non-preview path) and
     // compute a separate proportioned size used for the preview constraint check.
     const proportionScale =
-      state.proportion !== undefined && state.proportion !== 100
-        ? state.proportion / 100
-        : 1
+      state.proportion !== undefined && state.proportion !== 100 ? state.proportion / 100 : 1
     const proportionedOutputWidth = Math.round(actualOutputWidth * proportionScale)
     const proportionedOutputHeight = Math.round(actualOutputHeight * proportionScale)
 
@@ -1237,7 +1235,10 @@ export class ImageEditor {
    * When disabled, preview shows cropped result
    * Returns a promise that resolves when the new preview has loaded
    */
-  async setVisualCropEnabled(enabled: boolean): Promise<void> {
+  async setVisualCropEnabled(
+    enabled: boolean,
+    additionalUpdates?: Partial<ImageEditorState>,
+  ): Promise<void> {
     if (this.state.visualCropEnabled === enabled) return
 
     // Only save to history when ENTERING crop mode (not when exiting/applying)
@@ -1246,8 +1247,10 @@ export class ImageEditor {
       this.saveHistorySnapshot()
     }
 
-    // Update state first (affects preview URL generation)
-    this.state = { ...this.state, visualCropEnabled: enabled }
+    // Update state first (affects preview URL generation).
+    // additionalUpdates lets the caller bake extra changes (e.g. dim reset)
+    // into the same atomic state mutation so only ONE preview is generated.
+    this.state = { ...this.state, ...additionalUpdates, visualCropEnabled: enabled }
 
     // Trigger preview generation with new crop mode
     this.schedulePreviewUpdate()
