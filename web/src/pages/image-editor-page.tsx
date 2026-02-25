@@ -215,14 +215,23 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
 
     let effectiveDimensions: { width: number; height: number }
 
+    // Proportion scales the final canvas (applied after crop/resize/padding/rotation).
+    // Layer positioning uses outputDimensions directly (pre-proportion coordinate space),
+    // so we only apply proportion here for preview sizing and actualScale display.
+    const proportionScale = (params.proportion ?? 100) / 100
+    const proportionedOutput = {
+      width: Math.round(outputDimensions.width * proportionScale),
+      height: Math.round(outputDimensions.height * proportionScale),
+    }
+
     if (zoom === 'fit') {
       // Fit mode: use container dimensions
       effectiveDimensions = previewMaxDimensions
     } else {
-      // Zoom mode: scale output dimensions by zoom factor
+      // Zoom mode: scale proportioned output dimensions by zoom factor
       effectiveDimensions = {
-        width: Math.round(outputDimensions.width * zoom),
-        height: Math.round(outputDimensions.height * zoom),
+        width: Math.round(proportionedOutput.width * zoom),
+        height: Math.round(proportionedOutput.height * zoom),
       }
     }
 
@@ -232,11 +241,11 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     // Calculate and set actual scale for ZoomControl display
     setActualScale(
       Math.min(
-        effectiveDimensions.width / outputDimensions.width,
-        effectiveDimensions.height / outputDimensions.height,
+        effectiveDimensions.width / proportionedOutput.width,
+        effectiveDimensions.height / proportionedOutput.height,
       ),
     )
-  }, [imageEditor, previewMaxDimensions, zoom, outputDimensions])
+  }, [imageEditor, previewMaxDimensions, zoom, outputDimensions, params.proportion])
 
   // Update Imagor path whenever params change
   useEffect(() => {
