@@ -176,11 +176,8 @@ export class ImageEditor {
     this.callbacks = {}
     this.baseImagePath = config.imagePath
 
-    // Initialize state with original dimensions
-    this.state = {
-      width: config.originalDimensions.width,
-      height: config.originalDimensions.height,
-    }
+    // Dimensions start as auto (undefined) — no explicit resize by default
+    this.state = {}
   }
 
   /**

@@ -88,14 +88,9 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     [debouncedSaveOpenSections],
   )
 
-  // Image transform state
-  const [params, setParams] = useState<ImageEditorState>(() => {
-    const dims = imageEditor.getOriginalDimensions()
-    return {
-      width: dims.width,
-      height: dims.height,
-    }
-  })
+  // Image transform state — initialised from the editor instance so it reflects
+  // the auto-sizing default (no explicit width/height unless restored from URL)
+  const [params, setParams] = useState<ImageEditorState>(() => imageEditor.getState())
   const [outputDimensions, setOutputDimensions] = useState<{ width: number; height: number }>(() =>
     imageEditor.getOutputDimensions(),
   )
