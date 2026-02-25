@@ -596,16 +596,18 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   }
 
   const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {
-    // Clear explicit width/height so they don't conflict with the new crop AR.
-    // The user can set a target output size in the Dimensions panel afterward;
-    // the locked AR will then correctly follow the crop's proportions.
+    // At root level: clear explicit width/height so they don't conflict with the
+    // new crop AR. The user can set a target output size afterward and the locked
+    // AR will follow the crop's proportions.
+    // In layer context: keep explicit dimensions — they control how the layer is
+    // sized within the composition and should not be wiped on crop.
+    const isLayer = editingContext !== null
     updateParams({
       cropLeft: crop.left,
       cropTop: crop.top,
       cropWidth: crop.width,
       cropHeight: crop.height,
-      width: undefined,
-      height: undefined,
+      ...(isLayer ? {} : { width: undefined, height: undefined }),
     })
   }
 
