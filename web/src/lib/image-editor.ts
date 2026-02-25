@@ -63,6 +63,7 @@ export interface ImageEditorState {
   hue?: number
   blur?: number
   sharpen?: number
+  proportion?: number
   grayscale?: boolean
   roundCornerRadius?: number
 
@@ -175,11 +176,8 @@ export class ImageEditor {
     this.callbacks = {}
     this.baseImagePath = config.imagePath
 
-    // Initialize state with original dimensions
-    this.state = {
-      width: config.originalDimensions.width,
-      height: config.originalDimensions.height,
-    }
+    // Dimensions start as auto (undefined) — no explicit resize by default
+    this.state = {}
   }
 
   /**
@@ -200,10 +198,8 @@ export class ImageEditor {
     this.selectedLayerId = null
     // Reset state to defaults when component remounts
     // The page will restore from URL if there's a ?state= parameter
-    this.state = {
-      width: this.config.originalDimensions.width,
-      height: this.config.originalDimensions.height,
-    }
+    // Dimensions start as auto (undefined): no explicit resize step by default.
+    this.state = {}
   }
 
   /**
@@ -546,7 +542,9 @@ export class ImageEditor {
         let layerPath: string
         if (layer.transforms && Object.keys(layer.transforms).length > 0) {
           // Build path from layer transforms (excluding nested layers to prevent recursion)
+          // proportion is global-only — strip it from layer paths
           const layerState = { ...layer.transforms }
+          delete layerState.proportion
           layerPath = ImageEditor.editorStateToImagorPath(
             layerState,
             layer.imagePath,
@@ -582,6 +580,11 @@ export class ImageEditor {
         imageFilter += ')'
         filters.push(imageFilter)
       }
+    }
+
+    // Proportion – applied last, after all composition, to scale the entire result
+    if (state.proportion !== undefined && state.proportion !== 100) {
+      filters.push(`proportion(${state.proportion})`)
     }
 
     // Format/Quality/MaxBytes (only for non-preview layer paths)
@@ -693,30 +696,51 @@ export class ImageEditor {
       actualOutputHeight = outputHeight
     }
 
+    // Derive the true final dimensions after the proportion filter.
+    // proportion runs as a filter after the main resize step, so the image
+    // ends up smaller by the proportion percentage. Keep actualOutputWidth/Height
+    // as the pre-proportion resize output (needed for the non-preview path) and
+    // compute a separate proportioned size used for the preview constraint check.
+    const proportionScale =
+      state.proportion !== undefined && state.proportion !== 100 ? state.proportion / 100 : 1
+    const proportionedOutputWidth = Math.round(actualOutputWidth * proportionScale)
+    const proportionedOutputHeight = Math.round(actualOutputHeight * proportionScale)
+
+    // In preview mode, bake the proportion effect directly into the requested
+    // dimensions so imagor only has to resize — the proportion filter must NOT
+    // also be emitted or the effect would be applied twice.
+    let proportionBakedIntoPreview = false
+
     // Apply preview dimension constraints when generating preview URLs
     if (forPreview && this.config.previewMaxDimensions) {
       const previewWidth = this.config.previewMaxDimensions.width
       const previewHeight = this.config.previewMaxDimensions.height
 
-      // Compare ACTUAL output size vs preview area (without padding)
-      // Padding will be scaled by the same factor as the image
-      const widthScale = previewWidth / actualOutputWidth
-      const heightScale = previewHeight / actualOutputHeight
+      // Compare TRUE final output size (post-proportion) vs preview area.
+      // Padding will be scaled by the same factor as the image.
+      const widthScale = previewWidth / proportionedOutputWidth
+      const heightScale = previewHeight / proportionedOutputHeight
       const scale = Math.min(widthScale, heightScale)
 
-      // Only scale down if actual output is larger than preview area
-      // Never upscale small images - preview should match actual output size
+      // Only scale down if the true final output is larger than the preview area.
+      // Never upscale small images - preview should match actual output size.
       if (scale < 1) {
         scaleFactor = scale
-        // Scale down the actual output dimensions
-        width = Math.round(actualOutputWidth * scale)
-        height = Math.round(actualOutputHeight * scale)
+        width = Math.round(proportionedOutputWidth * scale)
+        height = Math.round(proportionedOutputHeight * scale)
       } else {
-        // Actual output is smaller than or equal to preview area
-        // Use actual output dimensions (no scaling)
-        width = actualOutputWidth
-        height = actualOutputHeight
+        // Proportioned output fits within preview area — use it directly.
+        width = proportionedOutputWidth
+        height = proportionedOutputHeight
         scaleFactor = 1
+      }
+      if (proportionScale !== 1) {
+        proportionBakedIntoPreview = true
+        // Layer dimensions and x/y positions are scaled by scaleFactor.
+        // The canvas is already shrunk to the proportioned size, so layers
+        // must also be scaled by proportionScale — otherwise they composite
+        // at full size on the reduced canvas and appear proportionally too big.
+        scaleFactor *= proportionScale
       }
     }
 
@@ -848,7 +872,9 @@ export class ImageEditor {
         let layerPath: string
         if (layer.transforms && Object.keys(layer.transforms).length > 0) {
           // Build path from layer transforms (NO layers array - prevents recursion)
+          // proportion is global-only — strip it from layer paths
           const layerState = { ...layer.transforms }
+          delete layerState.proportion
           layerPath = ImageEditor.editorStateToImagorPath(
             layerState,
             layer.imagePath,
@@ -886,6 +912,12 @@ export class ImageEditor {
         }
         filters.push({ name: 'image', args })
       }
+    }
+
+    // Proportion – applied last, after all composition, to scale the entire result.
+    // In preview mode the effect is already baked into the target dimensions.
+    if (!proportionBakedIntoPreview && state.proportion !== undefined && state.proportion !== 100) {
+      filters.push({ name: 'proportion', args: state.proportion.toString() })
     }
 
     // Format handling
@@ -1168,11 +1200,8 @@ export class ImageEditor {
     // Save current state to history before resetting (so reset can be undone)
     this.saveHistorySnapshot()
 
-    // Reset to initial state (same as constructor)
-    this.state = {
-      width: this.config.originalDimensions.width,
-      height: this.config.originalDimensions.height,
-    }
+    // Reset to initial state (same as constructor) — dimensions start auto (undefined)
+    this.state = {}
 
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
@@ -1206,7 +1235,10 @@ export class ImageEditor {
    * When disabled, preview shows cropped result
    * Returns a promise that resolves when the new preview has loaded
    */
-  async setVisualCropEnabled(enabled: boolean): Promise<void> {
+  async setVisualCropEnabled(
+    enabled: boolean,
+    additionalUpdates?: Partial<ImageEditorState>,
+  ): Promise<void> {
     if (this.state.visualCropEnabled === enabled) return
 
     // Only save to history when ENTERING crop mode (not when exiting/applying)
@@ -1215,8 +1247,10 @@ export class ImageEditor {
       this.saveHistorySnapshot()
     }
 
-    // Update state first (affects preview URL generation)
-    this.state = { ...this.state, visualCropEnabled: enabled }
+    // Update state first (affects preview URL generation).
+    // additionalUpdates lets the caller bake extra changes (e.g. dim reset)
+    // into the same atomic state mutation so only ONE preview is generated.
+    this.state = { ...this.state, ...additionalUpdates, visualCropEnabled: enabled }
 
     // Trigger preview generation with new crop mode
     this.schedulePreviewUpdate()
@@ -1721,12 +1755,11 @@ export class ImageEditor {
     this.config.imagePath = targetLayer.imagePath
     this.config.originalDimensions = { ...targetLayer.originalDimensions }
 
-    // Start with FRESH defaults based on layer's original dimensions
-    // This ensures no inheritance from base image or previous context
-    const freshState: ImageEditorState = {
-      width: targetLayer.originalDimensions.width,
-      height: targetLayer.originalDimensions.height,
-    }
+    // Start with a clean slate — no explicit width/height (auto sizing).
+    // If the layer has transforms they will be applied on top below.
+    // This matches root-level behaviour: imagor outputs at natural size unless
+    // the user explicitly sets dimensions.
+    const freshState: ImageEditorState = {}
 
     // If layer has saved transforms, apply them on top of fresh state
     if (targetLayer.transforms) {
@@ -2502,10 +2535,13 @@ export class ImageEditor {
       this.savedBaseState = { ...this.savedBaseState, layers: updatedLayers }
       this.loadContextFromLayer(currentLayerId, updatedLayers)
     } else if (layerId === null) {
-      // Swap root BASE image - use smart dimension logic
-      const oldDimensions = this.config.originalDimensions
+      // Swap root BASE image: drop crop params, leave width/height untouched.
+      // - Auto (undefined): stays auto → imagor outputs new image at natural size.
+      // - Explicit (predefined): keeps the user's chosen dimensions.
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { cropLeft, cropTop, cropWidth, cropHeight, ...rootRest } = this.state
       this.state = {
-        ...removeCropAndSmartDimensions(this.state, oldDimensions, newDimensions),
+        ...rootRest,
         imagePath: newImagePath,
         originalDimensions: { ...newDimensions },
       }

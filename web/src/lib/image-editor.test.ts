@@ -26,8 +26,9 @@ describe('ImageEditor', () => {
   describe('State Management', () => {
     it('should initialize with default state', () => {
       const state = editor.getState()
-      expect(state.width).toBe(1920)
-      expect(state.height).toBe(1080)
+      // Dimensions default to auto (undefined) — no explicit resize step on fresh load
+      expect(state.width).toBeUndefined()
+      expect(state.height).toBeUndefined()
       expect(state.fitIn).not.toBe(true)
     })
 
@@ -551,8 +552,9 @@ describe('ImageEditor', () => {
       expect(state.brightness).toBeUndefined()
       expect(state.contrast).toBeUndefined()
       expect(state.hue).toBeUndefined()
-      expect(state.width).toBe(1920)
-      expect(state.height).toBe(1080)
+      // Reset restores auto dimensions (undefined), same as initial state
+      expect(state.width).toBeUndefined()
+      expect(state.height).toBeUndefined()
       expect(state.fitIn).not.toBe(true)
     })
 
@@ -1280,6 +1282,91 @@ describe('ImageEditor', () => {
         expect(path).not.toContain(',0,normal')
       })
     })
+
+    describe('proportion / Scale filter', () => {
+      it('should emit proportion filter in path', () => {
+        editor.updateParams({ proportion: 50 })
+        const path = editor.getImagorPath()
+        expect(path).toContain('proportion(50)')
+      })
+
+      it('should not emit proportion filter when value is 100 (no-op)', () => {
+        editor.updateParams({ proportion: 100 })
+        const path = editor.getImagorPath()
+        expect(path).not.toContain('proportion')
+      })
+
+      it('should not emit proportion filter when not set', () => {
+        editor.updateParams({ brightness: 20 })
+        const path = editor.getImagorPath()
+        expect(path).not.toContain('proportion')
+      })
+
+      it('should emit proportion after other filters (end of pipeline)', () => {
+        editor.updateParams({ brightness: 20, proportion: 50 })
+        const path = editor.getImagorPath()
+        expect(path).toContain('brightness(20)')
+        expect(path).toContain('proportion(50)')
+        // proportion must appear after brightness in the filters segment
+        const filtersSegment = path.split('/').find((s) => s.startsWith('filters:'))!
+        const filterParts = filtersSegment.slice('filters:'.length).split(':')
+        const brightnessIdx = filterParts.findIndex((f) => f.startsWith('brightness('))
+        const proportionIdx = filterParts.findIndex((f) => f.startsWith('proportion('))
+        expect(brightnessIdx).toBeGreaterThanOrEqual(0)
+        expect(proportionIdx).toBeGreaterThan(brightnessIdx)
+      })
+
+      it('should emit proportion after image() layer filters (end of pipeline)', () => {
+        const layer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+        }
+        editor.addLayer(layer)
+        editor.updateParams({ proportion: 50 })
+        const path = editor.getImagorPath()
+        expect(path).toContain('image(/')
+        expect(path).toContain('proportion(50)')
+        // proportion must appear after image( in the full path string
+        // (can't split by '/' because the image() filter itself contains slashes)
+        const imageIdx = path.indexOf('image(/')
+        const proportionIdx = path.indexOf('proportion(50)')
+        expect(imageIdx).toBeGreaterThanOrEqual(0)
+        expect(proportionIdx).toBeGreaterThan(imageIdx)
+      })
+
+      it('should not include proportion in layer sub-paths', () => {
+        const layer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 100,
+          y: 200,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+          transforms: { brightness: 30 },
+        }
+        editor.addLayer(layer)
+        editor.updateParams({ proportion: 50 })
+        const path = editor.getImagorPath()
+        // Outer path must contain proportion
+        expect(path).toContain('proportion(50)')
+        // Everything before 'proportion(50)' includes the image() layer filter.
+        // Since layer state has proportion stripped, no 'proportion' should appear there.
+        const proportionStart = path.indexOf('proportion(50)')
+        const pathBeforeProportion = path.slice(0, proportionStart)
+        expect(pathBeforeProportion).toContain('image(/')
+        expect(pathBeforeProportion).not.toContain('proportion')
+      })
+    })
   })
 
   describe('Async Operations', () => {
@@ -1319,6 +1406,34 @@ describe('ImageEditor', () => {
             }),
           }),
         )
+      })
+
+      it('should include proportion filter in generated URLs', async () => {
+        const { generateImagorUrl } = await import('@/api/imagor-api')
+        editor.updateParams({ proportion: 75 })
+
+        await editor.generateCopyUrl()
+
+        expect(generateImagorUrl).toHaveBeenCalledWith(
+          expect.objectContaining({
+            params: expect.objectContaining({
+              filters: expect.arrayContaining([
+                expect.objectContaining({ name: 'proportion', args: '75' }),
+              ]),
+            }),
+          }),
+        )
+      })
+
+      it('should not include proportion filter in generated URLs when value is 100', async () => {
+        const { generateImagorUrl } = await import('@/api/imagor-api')
+        editor.updateParams({ proportion: 100 })
+
+        await editor.generateCopyUrl()
+
+        const callArg = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls[0][0]
+        const filterNames = (callArg.params.filters as Array<{ name: string }>).map((f) => f.name)
+        expect(filterNames).not.toContain('proportion')
       })
     })
 
@@ -2470,32 +2585,32 @@ describe('ImageEditor', () => {
 
   describe('Smart Dimension Handling on Swap Image', () => {
     describe('Root Base Image - Adaptive Mode', () => {
-      it('should update dimensions when not customized (adaptive)', () => {
-        // Default state: dimensions match original (1920x1080)
+      it('should keep auto dimensions (undefined) after swap when no explicit size was set', () => {
+        // Default state: no explicit dimensions (auto)
         const state = editor.getState()
-        expect(state.width).toBe(1920)
-        expect(state.height).toBe(1080)
+        expect(state.width).toBeUndefined()
+        expect(state.height).toBeUndefined()
 
         // Swap to new image with different dimensions
         editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const newState = editor.getState()
-        // Should update to new dimensions (adaptive mode)
-        expect(newState.width).toBe(2560)
-        expect(newState.height).toBe(1440)
+        // Should stay auto — imagor outputs at new image's natural size
+        expect(newState.width).toBeUndefined()
+        expect(newState.height).toBeUndefined()
       })
 
-      it('should update dimensions when explicitly set to original (adaptive)', () => {
-        // Explicitly set dimensions to match original
+      it('should preserve explicitly set dimensions even when they match original size', () => {
+        // Explicitly typing 1920×1080 is treated as predefined (user intent)
         editor.updateParams({ width: 1920, height: 1080 })
 
         // Swap to new image
         editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
-        // Should update to new dimensions (not customized)
-        expect(state.width).toBe(2560)
-        expect(state.height).toBe(1440)
+        // Explicit dims are preserved (predefined mode)
+        expect(state.width).toBe(1920)
+        expect(state.height).toBe(1080)
       })
     })
 
@@ -2521,10 +2636,9 @@ describe('ImageEditor', () => {
         editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
-        // Should preserve customized width
+        // Customized width preserved; height stays auto (undefined)
         expect(state.width).toBe(1000)
-        // Height stays as original (not updated)
-        expect(state.height).toBe(1080)
+        expect(state.height).toBeUndefined()
       })
 
       it('should preserve dimensions when only height customized', () => {
@@ -2535,9 +2649,8 @@ describe('ImageEditor', () => {
         editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
-        // Width stays as original (not updated)
-        expect(state.width).toBe(1920)
-        // Should preserve customized height
+        // Width stays auto (undefined); customized height preserved
+        expect(state.width).toBeUndefined()
         expect(state.height).toBe(720)
       })
     })
@@ -2730,8 +2843,8 @@ describe('ImageEditor', () => {
     })
 
     describe('Undo/Redo with Smart Dimensions', () => {
-      it('should undo adaptive dimension update', () => {
-        // Swap with adaptive mode (dimensions not customized)
+      it('should undo image swap and restore auto dimensions', () => {
+        // Swap when dimensions are auto (initial state)
         editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
         vi.runAllTimers()
 
@@ -2739,9 +2852,9 @@ describe('ImageEditor', () => {
         editor.undo()
 
         const state = editor.getState()
-        // Should restore original dimensions
-        expect(state.width).toBe(1920)
-        expect(state.height).toBe(1080)
+        // Dimensions were auto before swap — should restore to auto
+        expect(state.width).toBeUndefined()
+        expect(state.height).toBeUndefined()
         expect(state.imagePath).toBe('test-image.jpg')
       })
 
@@ -2764,7 +2877,7 @@ describe('ImageEditor', () => {
         expect(state.imagePath).toBe('test-image.jpg')
       })
 
-      it('should redo adaptive dimension update', () => {
+      it('should redo image swap with auto dimensions preserved', () => {
         editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
         vi.runAllTimers()
 
@@ -2772,28 +2885,28 @@ describe('ImageEditor', () => {
         editor.redo()
 
         const state = editor.getState()
-        // Should restore new dimensions
-        expect(state.width).toBe(2560)
-        expect(state.height).toBe(1440)
+        // Dimensions stay auto after redo (no explicit resize)
+        expect(state.width).toBeUndefined()
+        expect(state.height).toBeUndefined()
         expect(state.imagePath).toBe('new-image.jpg')
       })
     })
 
     describe('Edge Cases', () => {
-      it('should handle undefined width/height (adaptive)', () => {
-        // Remove dimensions
+      it('should keep auto dimensions (undefined) after swap when no explicit size was set', () => {
+        // Dimensions are auto by default; explicitly clear to confirm
         editor.updateParams({ width: undefined, height: undefined })
 
         // Swap
         editor.replaceImage('new-image.jpg', { width: 2560, height: 1440 })
 
         const state = editor.getState()
-        // Should update to new dimensions (not customized)
-        expect(state.width).toBe(2560)
-        expect(state.height).toBe(1440)
+        // No explicit width/height — output size is determined by imagor naturally
+        expect(state.width).toBeUndefined()
+        expect(state.height).toBeUndefined()
       })
 
-      it('should handle crop removal with adaptive dimensions', () => {
+      it('should handle crop removal with auto dimensions', () => {
         // Set crop
         editor.updateParams({
           cropLeft: 100,
@@ -2808,9 +2921,9 @@ describe('ImageEditor', () => {
         const state = editor.getState()
         // Crop removed
         expect(state.cropLeft).toBeUndefined()
-        // Dimensions updated (adaptive)
-        expect(state.width).toBe(2560)
-        expect(state.height).toBe(1440)
+        // Dimensions stay auto (undefined)
+        expect(state.width).toBeUndefined()
+        expect(state.height).toBeUndefined()
       })
 
       it('should handle crop removal with predefined dimensions', () => {
@@ -2835,15 +2948,15 @@ describe('ImageEditor', () => {
         expect(state.height).toBe(600)
       })
 
-      it('should handle swapping to same dimensions (adaptive)', () => {
+      it('should handle swapping to image with same dimensions (auto stays auto)', () => {
         // Swap to image with same dimensions
         editor.replaceImage('new-image.jpg', { width: 1920, height: 1080 })
 
         const state = editor.getState()
-        // Should still update (even though same)
-        expect(state.width).toBe(1920)
-        expect(state.height).toBe(1080)
+        // imagePath updated, dimensions stay auto
         expect(state.imagePath).toBe('new-image.jpg')
+        expect(state.width).toBeUndefined()
+        expect(state.height).toBeUndefined()
       })
 
       it('should handle swapping to same dimensions (predefined)', () => {

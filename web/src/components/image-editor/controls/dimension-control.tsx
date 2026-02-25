@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Lock, RotateCcw, Unlock } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { NumericControl } from '@/components/ui/numeric-control'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Select,
@@ -22,64 +23,85 @@ interface DimensionControlProps {
     width: number
     height: number
   }
+  isEditingLayer?: boolean
 }
 
 export function DimensionControl({
   params,
   onUpdateParams,
   originalDimensions,
+  isEditingLayer = false,
 }: DimensionControlProps) {
   const { t } = useTranslation()
 
-  // Calculate and store aspect ratio at start
-  const [aspectRatio] = useState<number>(() => {
-    const w = params.width || originalDimensions.width
-    const h = params.height || originalDimensions.height
+  // Derive aspect ratio from the SOURCE dimensions feeding into the resize step:
+  // crop region (if active) > original image.
+  // Intentionally excludes params.width/height — those are the OUTPUT values
+  // the user is currently typing. Including them would make the ratio
+  // self-referential and produce 1:1 when only one axis is set.
+  const aspectRatio = useMemo(() => {
+    const w = params.cropWidth ?? originalDimensions.width
+    const h = params.cropHeight ?? originalDimensions.height
     return w / h
-  })
+  }, [params.cropWidth, params.cropHeight, originalDimensions.width, originalDimensions.height])
 
   // Default to locked
   const [aspectRatioLocked, setAspectRatioLocked] = useState(true)
 
-  const handleWidthChange = (value: string) => {
-    const width = parseInt(value) || undefined
+  // Local string state allows free typing without triggering linked-field
+  // updates on every keystroke. Linked values are computed only on commit
+  // (blur or Enter), matching standard design-tool behaviour (Figma, etc.).
+  const [localWidth, setLocalWidth] = useState(params.width?.toString() ?? '')
+  const [localHeight, setLocalHeight] = useState(params.height?.toString() ?? '')
+  const focusedField = useRef<'width' | 'height' | null>(null)
 
-    if (aspectRatioLocked && width) {
-      // Use stored aspect ratio for calculation
+  // Sync local state from params only when the field is not focused so that
+  // external changes (undo, crop, reset) propagate without stomping typing.
+  useEffect(() => {
+    if (focusedField.current !== 'width') {
+      setLocalWidth(params.width?.toString() ?? '')
+    }
+  }, [params.width])
+
+  useEffect(() => {
+    if (focusedField.current !== 'height') {
+      setLocalHeight(params.height?.toString() ?? '')
+    }
+  }, [params.height])
+
+  const commitWidth = (raw: string) => {
+    const width = parseInt(raw) || 0
+    if (width <= 0) {
+      if (aspectRatioLocked) {
+        setLocalHeight('')
+        onUpdateParams({ width: undefined, height: undefined })
+      } else {
+        onUpdateParams({ width: undefined })
+      }
+    } else if (aspectRatioLocked) {
       const newHeight = Math.round(width / aspectRatio)
+      setLocalHeight(newHeight.toString())
       onUpdateParams({ width, height: newHeight })
     } else {
       onUpdateParams({ width })
     }
   }
 
-  const handleHeightChange = (value: string) => {
-    const height = parseInt(value) || undefined
-
-    if (aspectRatioLocked && height) {
-      // Use stored aspect ratio for calculation
+  const commitHeight = (raw: string) => {
+    const height = parseInt(raw) || 0
+    if (height <= 0) {
+      if (aspectRatioLocked) {
+        setLocalWidth('')
+        onUpdateParams({ width: undefined, height: undefined })
+      } else {
+        onUpdateParams({ height: undefined })
+      }
+    } else if (aspectRatioLocked) {
       const newWidth = Math.round(height * aspectRatio)
+      setLocalWidth(newWidth.toString())
       onUpdateParams({ width: newWidth, height })
     } else {
       onUpdateParams({ height })
-    }
-  }
-
-  const handleWidthBlur = (value: string) => {
-    // Validate only when user finishes editing
-    const width = parseInt(value) || 0
-    if (width <= 0) {
-      // Reset to undefined (auto) if invalid
-      onUpdateParams({ width: undefined })
-    }
-  }
-
-  const handleHeightBlur = (value: string) => {
-    // Validate only when user finishes editing
-    const height = parseInt(value) || 0
-    if (height <= 0) {
-      // Reset to undefined (auto) if invalid
-      onUpdateParams({ height: undefined })
     }
   }
 
@@ -129,10 +151,46 @@ export function DimensionControl({
 
   const handleResetSize = () => {
     onUpdateParams({
-      width: originalDimensions.width,
-      height: originalDimensions.height,
+      width: undefined,
+      height: undefined,
     })
   }
+
+  // Live output dimensions: crop → resize → padding → proportion
+  // proportion is applied last and scales the entire canvas (image + padding)
+  const outputDimensions = (() => {
+    const srcW = params.cropWidth ?? originalDimensions.width
+    const srcH = params.cropHeight ?? originalDimensions.height
+    let outW: number
+    let outH: number
+    if (params.width || params.height) {
+      const targetW = params.width ?? 0
+      const targetH = params.height ?? 0
+      if (params.fitIn) {
+        const scale = Math.min(
+          targetW ? targetW / srcW : Infinity,
+          targetH ? targetH / srcH : Infinity,
+          1.0,
+        )
+        outW = Math.round(srcW * scale)
+        outH = Math.round(srcH * scale)
+      } else {
+        outW = targetW || srcW
+        outH = targetH || srcH
+      }
+    } else {
+      outW = srcW
+      outH = srcH
+    }
+    // Add padding before proportion — proportion scales the total canvas
+    outW += (params.paddingLeft ?? 0) + (params.paddingRight ?? 0)
+    outH += (params.paddingTop ?? 0) + (params.paddingBottom ?? 0)
+    if (params.proportion && params.proportion !== 100) {
+      outW = Math.round(outW * (params.proportion / 100))
+      outH = Math.round(outH * (params.proportion / 100))
+    }
+    return { width: outW, height: outH }
+  })()
 
   return (
     <div className='space-y-4'>
@@ -158,9 +216,18 @@ export function DimensionControl({
             <Input
               id='width'
               type='number'
-              value={params.width || ''}
-              onChange={(e) => handleWidthChange(e.target.value)}
-              onBlur={(e) => handleWidthBlur(e.target.value)}
+              value={localWidth}
+              onChange={(e) => setLocalWidth(e.target.value)}
+              onFocus={() => {
+                focusedField.current = 'width'
+              }}
+              onBlur={(e) => {
+                focusedField.current = null
+                commitWidth(e.target.value)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur()
+              }}
               placeholder={t('imageEditor.dimensions.auto')}
               min='1'
               max='10000'
@@ -190,9 +257,18 @@ export function DimensionControl({
             <Input
               id='height'
               type='number'
-              value={params.height || ''}
-              onChange={(e) => handleHeightChange(e.target.value)}
-              onBlur={(e) => handleHeightBlur(e.target.value)}
+              value={localHeight}
+              onChange={(e) => setLocalHeight(e.target.value)}
+              onFocus={() => {
+                focusedField.current = 'height'
+              }}
+              onBlur={(e) => {
+                focusedField.current = null
+                commitHeight(e.target.value)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur()
+              }}
               placeholder={t('imageEditor.dimensions.auto')}
               min='1'
               max='10000'
@@ -235,6 +311,29 @@ export function DimensionControl({
             </Label>
           </div>
         </RadioGroup>
+      </div>
+
+      {/* Active mode description */}
+      <div className='bg-muted/50 rounded-lg p-3 text-xs'>
+        <p className='text-muted-foreground'>
+          <strong>
+            {getCurrentFitMode() === 'fit-in'
+              ? t('imageEditor.dimensions.modes.fitIn')
+              : getCurrentFitMode() === 'fill'
+                ? t('imageEditor.dimensions.modes.fill')
+                : getCurrentFitMode() === 'stretch'
+                  ? t('imageEditor.dimensions.modes.stretch')
+                  : t('imageEditor.dimensions.modes.smart')}
+            :{' '}
+          </strong>
+          {getCurrentFitMode() === 'fit-in'
+            ? t('imageEditor.dimensions.modeDescriptions.fitIn')
+            : getCurrentFitMode() === 'fill'
+              ? t('imageEditor.dimensions.modeDescriptions.fill')
+              : getCurrentFitMode() === 'stretch'
+                ? t('imageEditor.dimensions.modeDescriptions.stretch')
+                : t('imageEditor.dimensions.modeDescriptions.smart')}
+        </p>
       </div>
 
       {/* Alignment - Only show when Fill mode is selected */}
@@ -293,28 +392,27 @@ export function DimensionControl({
         </div>
       )}
 
-      {/* How it works section - at the bottom of resize block */}
-      <div className='bg-muted/50 space-y-3 rounded-lg p-3'>
-        <div className='space-y-1 text-xs'>
-          <ul className='text-muted-foreground space-y-0.5'>
-            <li>
-              • <strong>{t('imageEditor.dimensions.modes.fitIn')}:</strong>{' '}
-              {t('imageEditor.dimensions.modeDescriptions.fitIn')}
-            </li>
-            <li>
-              • <strong>{t('imageEditor.dimensions.modes.fill')}:</strong>{' '}
-              {t('imageEditor.dimensions.modeDescriptions.fill')}
-            </li>
-            <li>
-              • <strong>{t('imageEditor.dimensions.modes.stretch')}:</strong>{' '}
-              {t('imageEditor.dimensions.modeDescriptions.stretch')}
-            </li>
-            <li>
-              • <strong>{t('imageEditor.dimensions.modes.smart')}:</strong>{' '}
-              {t('imageEditor.dimensions.modeDescriptions.smart')}
-            </li>
-          </ul>
+      {/* Scale – hidden when editing a layer (proportion is a global-only setting) */}
+      {!isEditingLayer && (
+        <div className='space-y-3'>
+          <NumericControl
+            label={t('imageEditor.dimensions.scale')}
+            value={params.proportion ?? 100}
+            min={1}
+            max={100}
+            step={1}
+            unit='%'
+            onChange={(value) => onUpdateParams({ proportion: value === 100 ? undefined : value })}
+          />
         </div>
+      )}
+
+      {/* Output dimensions summary */}
+      <div className='flex items-center justify-between text-xs'>
+        <span className='text-muted-foreground'>{t('imageEditor.dimensions.outputSize')}</span>
+        <span className='font-medium tabular-nums'>
+          {outputDimensions.width} × {outputDimensions.height} px
+        </span>
       </div>
     </div>
   )

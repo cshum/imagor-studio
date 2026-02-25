@@ -88,14 +88,9 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     [debouncedSaveOpenSections],
   )
 
-  // Image transform state
-  const [params, setParams] = useState<ImageEditorState>(() => {
-    const dims = imageEditor.getOriginalDimensions()
-    return {
-      width: dims.width,
-      height: dims.height,
-    }
-  })
+  // Image transform state — initialised from the editor instance so it reflects
+  // the auto-sizing default (no explicit width/height unless restored from URL)
+  const [params, setParams] = useState<ImageEditorState>(() => imageEditor.getState())
   const [outputDimensions, setOutputDimensions] = useState<{ width: number; height: number }>(() =>
     imageEditor.getOutputDimensions(),
   )
@@ -568,30 +563,38 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
 
   const handleVisualCropToggle = useCallback(
     async (enabled: boolean) => {
-      // Update ImageEditor to control crop filter in preview
-      // This will update the state and wait for the new preview to load
-      await imageEditor.setVisualCropEnabled(enabled)
+      if (enabled) {
+        // Enter visual crop mode
+        await imageEditor.setVisualCropEnabled(true)
 
-      // Initialize crop dimensions if enabling for the first time
-      if (
-        enabled &&
-        !params.cropLeft &&
-        !params.cropTop &&
-        !params.cropWidth &&
-        !params.cropHeight
-      ) {
-        // Crop works on original dimensions (before resize)
-        // Set initial crop to full original dimensions (100%)
-        const dims = imageEditor.getOriginalDimensions()
-        imageEditor.updateParams({
-          cropLeft: 0,
-          cropTop: 0,
-          cropWidth: dims.width,
-          cropHeight: dims.height,
-        })
+        // Initialize crop dimensions if enabling for the first time
+        if (!params.cropLeft && !params.cropTop && !params.cropWidth && !params.cropHeight) {
+          // Crop works on original dimensions (before resize)
+          // Set initial crop to full original dimensions (100%)
+          const dims = imageEditor.getOriginalDimensions()
+          imageEditor.updateParams({
+            cropLeft: 0,
+            cropTop: 0,
+            cropWidth: dims.width,
+            cropHeight: dims.height,
+          })
+        }
+      } else {
+        // Exit visual crop (apply). Reset output dims to auto at root level in the
+        // same atomic state mutation so only ONE preview is generated — no flash.
+        const dimReset =
+          editingContext === null ? { width: undefined, height: undefined } : undefined
+        await imageEditor.setVisualCropEnabled(false, dimReset)
       }
     },
-    [imageEditor, params.cropHeight, params.cropLeft, params.cropTop, params.cropWidth],
+    [
+      editingContext,
+      imageEditor,
+      params.cropHeight,
+      params.cropLeft,
+      params.cropTop,
+      params.cropWidth,
+    ],
   )
 
   const handlePreviewLoad = () => {
@@ -601,11 +604,23 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   }
 
   const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {
+    // At root level: clear explicit width/height so they don't conflict with the
+    // new crop AR. The user can set a target output size afterward and the locked
+    // AR will follow the crop's proportions.
+    // In layer context: keep explicit dimensions — they control how the layer is
+    // sized within the composition and should not be wiped on crop.
+    // During visual crop dragging, skip the width/height clear — including those
+    // keys breaks the no-op guard in ImageEditor.updateParams (onlyCropParamsChanged)
+    // and causes a preview to be scheduled on every mouse-move tick even though
+    // the URL won't change. The clear fires correctly on exit via handleVisualCropToggle.
+    const isLayer = editingContext !== null
+    const shouldClearDims = !isLayer && !visualCropEnabled
     updateParams({
       cropLeft: crop.left,
       cropTop: crop.top,
       cropWidth: crop.width,
       cropHeight: crop.height,
+      ...(shouldClearDims ? { width: undefined, height: undefined } : {}),
     })
   }
 
@@ -654,6 +669,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
               width: imageEditor.getOriginalDimensions().width,
               height: imageEditor.getOriginalDimensions().height,
             }}
+            isEditingLayer={editingContext !== null}
           />
         ),
         fill: <FillPaddingControl params={params} onUpdateParams={updateParams} />,

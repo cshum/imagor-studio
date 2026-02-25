@@ -746,6 +746,8 @@
       "resetSize": "Reimposta alla Dimensione Originale",
       "lockAspectRatio": "Blocca Proporzioni",
       "unlockAspectRatio": "Sblocca Proporzioni",
+      "scale": "Scala",
+      "outputSize": "Dimensioni Output",
       "aspectRatios": "Proporzioni",
       "resizeMode": "Modalità di Ridimensionamento",
       "modes": {
