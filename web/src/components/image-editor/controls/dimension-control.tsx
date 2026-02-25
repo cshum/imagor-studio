@@ -23,12 +23,14 @@ interface DimensionControlProps {
     width: number
     height: number
   }
+  isEditingLayer?: boolean
 }
 
 export function DimensionControl({
   params,
   onUpdateParams,
   originalDimensions,
+  isEditingLayer = false,
 }: DimensionControlProps) {
   const { t } = useTranslation()
 
@@ -135,6 +137,42 @@ export function DimensionControl({
     })
   }
 
+  // Live output dimensions: crop → resize → padding → proportion
+  // proportion is applied last and scales the entire canvas (image + padding)
+  const outputDimensions = (() => {
+    const srcW = params.cropWidth ?? originalDimensions.width
+    const srcH = params.cropHeight ?? originalDimensions.height
+    let outW: number
+    let outH: number
+    if (params.width || params.height) {
+      const targetW = params.width ?? 0
+      const targetH = params.height ?? 0
+      if (params.fitIn) {
+        const scale = Math.min(
+          targetW ? targetW / srcW : Infinity,
+          targetH ? targetH / srcH : Infinity,
+          1.0,
+        )
+        outW = Math.round(srcW * scale)
+        outH = Math.round(srcH * scale)
+      } else {
+        outW = targetW || srcW
+        outH = targetH || srcH
+      }
+    } else {
+      outW = srcW
+      outH = srcH
+    }
+    // Add padding before proportion — proportion scales the total canvas
+    outW += (params.paddingLeft ?? 0) + (params.paddingRight ?? 0)
+    outH += (params.paddingTop ?? 0) + (params.paddingBottom ?? 0)
+    if (params.proportion && params.proportion !== 100) {
+      outW = Math.round(outW * (params.proportion / 100))
+      outH = Math.round(outH * (params.proportion / 100))
+    }
+    return { width: outW, height: outH }
+  })()
+
   return (
     <div className='space-y-4'>
       {/* Dimensions */}
@@ -203,19 +241,6 @@ export function DimensionControl({
         </div>
       </div>
 
-      {/* Proportion */}
-      <div className='space-y-3'>
-        <NumericControl
-          label={t('imageEditor.dimensions.proportion')}
-          value={params.proportion ?? 100}
-          min={1}
-          max={100}
-          step={1}
-          unit='%'
-          onChange={(value) => onUpdateParams({ proportion: value === 100 ? undefined : value })}
-        />
-      </div>
-
       {/* Resize Mode */}
       <div className='space-y-3'>
         <Label className='text-sm font-medium'>{t('imageEditor.dimensions.resizeMode')}</Label>
@@ -249,6 +274,29 @@ export function DimensionControl({
             </Label>
           </div>
         </RadioGroup>
+      </div>
+
+      {/* Active mode description */}
+      <div className='bg-muted/50 rounded-lg p-3 text-xs'>
+        <p className='text-muted-foreground'>
+          <strong>
+            {getCurrentFitMode() === 'fit-in'
+              ? t('imageEditor.dimensions.modes.fitIn')
+              : getCurrentFitMode() === 'fill'
+                ? t('imageEditor.dimensions.modes.fill')
+                : getCurrentFitMode() === 'stretch'
+                  ? t('imageEditor.dimensions.modes.stretch')
+                  : t('imageEditor.dimensions.modes.smart')}
+            :{' '}
+          </strong>
+          {getCurrentFitMode() === 'fit-in'
+            ? t('imageEditor.dimensions.modeDescriptions.fitIn')
+            : getCurrentFitMode() === 'fill'
+              ? t('imageEditor.dimensions.modeDescriptions.fill')
+              : getCurrentFitMode() === 'stretch'
+                ? t('imageEditor.dimensions.modeDescriptions.stretch')
+                : t('imageEditor.dimensions.modeDescriptions.smart')}
+        </p>
       </div>
 
       {/* Alignment - Only show when Fill mode is selected */}
@@ -307,28 +355,27 @@ export function DimensionControl({
         </div>
       )}
 
-      {/* How it works section - at the bottom of resize block */}
-      <div className='bg-muted/50 space-y-3 rounded-lg p-3'>
-        <div className='space-y-1 text-xs'>
-          <ul className='text-muted-foreground space-y-0.5'>
-            <li>
-              • <strong>{t('imageEditor.dimensions.modes.fitIn')}:</strong>{' '}
-              {t('imageEditor.dimensions.modeDescriptions.fitIn')}
-            </li>
-            <li>
-              • <strong>{t('imageEditor.dimensions.modes.fill')}:</strong>{' '}
-              {t('imageEditor.dimensions.modeDescriptions.fill')}
-            </li>
-            <li>
-              • <strong>{t('imageEditor.dimensions.modes.stretch')}:</strong>{' '}
-              {t('imageEditor.dimensions.modeDescriptions.stretch')}
-            </li>
-            <li>
-              • <strong>{t('imageEditor.dimensions.modes.smart')}:</strong>{' '}
-              {t('imageEditor.dimensions.modeDescriptions.smart')}
-            </li>
-          </ul>
+      {/* Scale – hidden when editing a layer (proportion is a global-only setting) */}
+      {!isEditingLayer && (
+        <div className='space-y-3'>
+          <NumericControl
+            label={t('imageEditor.dimensions.scale')}
+            value={params.proportion ?? 100}
+            min={1}
+            max={100}
+            step={1}
+            unit='%'
+            onChange={(value) => onUpdateParams({ proportion: value === 100 ? undefined : value })}
+          />
         </div>
+      )}
+
+      {/* Output dimensions summary */}
+      <div className='flex items-center justify-between text-xs'>
+        <span className='text-muted-foreground'>{t('imageEditor.dimensions.outputSize')}</span>
+        <span className='font-medium tabular-nums'>
+          {outputDimensions.width} × {outputDimensions.height} px
+        </span>
       </div>
     </div>
   )

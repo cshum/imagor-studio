@@ -654,6 +654,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
               width: imageEditor.getOriginalDimensions().width,
               height: imageEditor.getOriginalDimensions().height,
             }}
+            isEditingLayer={editingContext !== null}
           />
         ),
         fill: <FillPaddingControl params={params} onUpdateParams={updateParams} />,

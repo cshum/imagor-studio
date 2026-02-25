@@ -516,11 +516,6 @@ export class ImageEditor {
       filters.push(`sharpen(${value})`)
     }
 
-    // Proportion (no scaling needed - percentage is relative to image dimensions)
-    if (state.proportion !== undefined && state.proportion !== 100) {
-      filters.push(`proportion(${state.proportion})`)
-    }
-
     // Round corner (scaled)
     if (state.roundCornerRadius !== undefined && state.roundCornerRadius > 0) {
       const value = Math.round(state.roundCornerRadius * scaleFactor)
@@ -552,7 +547,9 @@ export class ImageEditor {
         let layerPath: string
         if (layer.transforms && Object.keys(layer.transforms).length > 0) {
           // Build path from layer transforms (excluding nested layers to prevent recursion)
+          // proportion is global-only — strip it from layer paths
           const layerState = { ...layer.transforms }
+          delete layerState.proportion
           layerPath = ImageEditor.editorStateToImagorPath(
             layerState,
             layer.imagePath,
@@ -588,6 +585,11 @@ export class ImageEditor {
         imageFilter += ')'
         filters.push(imageFilter)
       }
+    }
+
+    // Proportion – applied last, after all composition, to scale the entire result
+    if (state.proportion !== undefined && state.proportion !== 100) {
+      filters.push(`proportion(${state.proportion})`)
     }
 
     // Format/Quality/MaxBytes (only for non-preview layer paths)
@@ -830,12 +832,6 @@ export class ImageEditor {
       filters.push({ name: 'sharpen', args: sharpenValue.toString() })
     }
 
-    // Proportion – in preview mode the effect is already baked into the target
-    // dimensions, so emitting the filter here would apply it a second time.
-    if (!proportionBakedIntoPreview && state.proportion !== undefined && state.proportion !== 100) {
-      filters.push({ name: 'proportion', args: state.proportion.toString() })
-    }
-
     // Round corner (applied before fill so fill can fill the rounded areas)
     // Skip round corner in preview when visual cropping is enabled
     // (so user can crop without round corner, applied after crop in final URL)
@@ -878,7 +874,9 @@ export class ImageEditor {
         let layerPath: string
         if (layer.transforms && Object.keys(layer.transforms).length > 0) {
           // Build path from layer transforms (NO layers array - prevents recursion)
+          // proportion is global-only — strip it from layer paths
           const layerState = { ...layer.transforms }
+          delete layerState.proportion
           layerPath = ImageEditor.editorStateToImagorPath(
             layerState,
             layer.imagePath,
@@ -916,6 +914,12 @@ export class ImageEditor {
         }
         filters.push({ name: 'image', args })
       }
+    }
+
+    // Proportion – applied last, after all composition, to scale the entire result.
+    // In preview mode the effect is already baked into the target dimensions.
+    if (!proportionBakedIntoPreview && state.proportion !== undefined && state.proportion !== 100) {
+      filters.push({ name: 'proportion', args: state.proportion.toString() })
     }
 
     // Format handling
