@@ -1432,9 +1432,7 @@ describe('ImageEditor', () => {
         await editor.generateCopyUrl()
 
         const callArg = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls[0][0]
-        const filterNames = (callArg.params.filters as Array<{ name: string }>).map(
-          (f) => f.name,
-        )
+        const filterNames = (callArg.params.filters as Array<{ name: string }>).map((f) => f.name)
         expect(filterNames).not.toContain('proportion')
       })
     })
