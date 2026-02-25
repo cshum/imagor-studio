@@ -738,6 +738,11 @@ export class ImageEditor {
       }
       if (proportionScale !== 1) {
         proportionBakedIntoPreview = true
+        // Layer dimensions and x/y positions are scaled by scaleFactor.
+        // The canvas is already shrunk to the proportioned size, so layers
+        // must also be scaled by proportionScale — otherwise they composite
+        // at full size on the reduced canvas and appear proportionally too big.
+        scaleFactor *= proportionScale
       }
     }
 
