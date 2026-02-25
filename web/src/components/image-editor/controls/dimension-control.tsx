@@ -136,8 +136,8 @@ export function DimensionControl({
 
   const handleResetSize = () => {
     onUpdateParams({
-      width: originalDimensions.width,
-      height: originalDimensions.height,
+      width: undefined,
+      height: undefined,
     })
   }
 
