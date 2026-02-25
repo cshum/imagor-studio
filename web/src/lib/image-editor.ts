@@ -1750,12 +1750,11 @@ export class ImageEditor {
     this.config.imagePath = targetLayer.imagePath
     this.config.originalDimensions = { ...targetLayer.originalDimensions }
 
-    // Start with FRESH defaults based on layer's original dimensions
-    // This ensures no inheritance from base image or previous context
-    const freshState: ImageEditorState = {
-      width: targetLayer.originalDimensions.width,
-      height: targetLayer.originalDimensions.height,
-    }
+    // Start with a clean slate — no explicit width/height (auto sizing).
+    // If the layer has transforms they will be applied on top below.
+    // This matches root-level behaviour: imagor outputs at natural size unless
+    // the user explicitly sets dimensions.
+    const freshState: ImageEditorState = {}
 
     // If layer has saved transforms, apply them on top of fresh state
     if (targetLayer.transforms) {

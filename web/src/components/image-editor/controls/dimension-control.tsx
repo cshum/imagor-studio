@@ -34,15 +34,16 @@ export function DimensionControl({
 }: DimensionControlProps) {
   const { t } = useTranslation()
 
-  // Derive aspect ratio from the effective source dimensions:
-  // explicit width/height > crop region > original image.
-  // Recalculates whenever crop changes so the lock always reflects
-  // the current source going into the resize step (post-crop).
+  // Derive aspect ratio from the SOURCE dimensions feeding into the resize step:
+  // crop region (if active) > original image.
+  // Intentionally excludes params.width/height — those are the OUTPUT values
+  // the user is currently typing. Including them would make the ratio
+  // self-referential and produce 1:1 when only one axis is set.
   const aspectRatio = useMemo(() => {
-    const w = params.width || params.cropWidth || originalDimensions.width
-    const h = params.height || params.cropHeight || originalDimensions.height
+    const w = params.cropWidth ?? originalDimensions.width
+    const h = params.cropHeight ?? originalDimensions.height
     return w / h
-  }, [params.width, params.height, params.cropWidth, params.cropHeight, originalDimensions.width, originalDimensions.height])
+  }, [params.cropWidth, params.cropHeight, originalDimensions.width, originalDimensions.height])
 
   // Default to locked
   const [aspectRatioLocked, setAspectRatioLocked] = useState(true)
