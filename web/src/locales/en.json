@@ -722,6 +722,7 @@
       "resetSize": "Reset to Original Size",
       "lockAspectRatio": "Lock Aspect Ratio",
       "unlockAspectRatio": "Unlock Aspect Ratio",
+      "proportion": "Proportion",
       "aspectRatios": "Aspect Ratios",
       "resizeMode": "Resize Mode",
       "modes": {

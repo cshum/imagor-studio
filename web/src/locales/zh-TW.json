@@ -749,6 +749,7 @@
       "resetSize": "重置為原始大小",
       "lockAspectRatio": "鎖定縱橫比",
       "unlockAspectRatio": "解鎖縱橫比",
+      "proportion": "縮放比例",
       "aspectRatios": "縱橫比",
       "resizeMode": "調整大小模式",
       "modes": {

@@ -63,6 +63,7 @@ export interface ImageEditorState {
   hue?: number
   blur?: number
   sharpen?: number
+  proportion?: number
   grayscale?: boolean
   roundCornerRadius?: number
 
@@ -515,6 +516,11 @@ export class ImageEditor {
       filters.push(`sharpen(${value})`)
     }
 
+    // Proportion (no scaling needed - percentage is relative to image dimensions)
+    if (state.proportion !== undefined && state.proportion !== 100) {
+      filters.push(`proportion(${state.proportion})`)
+    }
+
     // Round corner (scaled)
     if (state.roundCornerRadius !== undefined && state.roundCornerRadius > 0) {
       const value = Math.round(state.roundCornerRadius * scaleFactor)
@@ -693,30 +699,48 @@ export class ImageEditor {
       actualOutputHeight = outputHeight
     }
 
+    // Derive the true final dimensions after the proportion filter.
+    // proportion runs as a filter after the main resize step, so the image
+    // ends up smaller by the proportion percentage. Keep actualOutputWidth/Height
+    // as the pre-proportion resize output (needed for the non-preview path) and
+    // compute a separate proportioned size used for the preview constraint check.
+    const proportionScale =
+      state.proportion !== undefined && state.proportion !== 100
+        ? state.proportion / 100
+        : 1
+    const proportionedOutputWidth = Math.round(actualOutputWidth * proportionScale)
+    const proportionedOutputHeight = Math.round(actualOutputHeight * proportionScale)
+
+    // In preview mode, bake the proportion effect directly into the requested
+    // dimensions so imagor only has to resize — the proportion filter must NOT
+    // also be emitted or the effect would be applied twice.
+    let proportionBakedIntoPreview = false
+
     // Apply preview dimension constraints when generating preview URLs
     if (forPreview && this.config.previewMaxDimensions) {
       const previewWidth = this.config.previewMaxDimensions.width
       const previewHeight = this.config.previewMaxDimensions.height
 
-      // Compare ACTUAL output size vs preview area (without padding)
-      // Padding will be scaled by the same factor as the image
-      const widthScale = previewWidth / actualOutputWidth
-      const heightScale = previewHeight / actualOutputHeight
+      // Compare TRUE final output size (post-proportion) vs preview area.
+      // Padding will be scaled by the same factor as the image.
+      const widthScale = previewWidth / proportionedOutputWidth
+      const heightScale = previewHeight / proportionedOutputHeight
       const scale = Math.min(widthScale, heightScale)
 
-      // Only scale down if actual output is larger than preview area
-      // Never upscale small images - preview should match actual output size
+      // Only scale down if the true final output is larger than the preview area.
+      // Never upscale small images - preview should match actual output size.
       if (scale < 1) {
         scaleFactor = scale
-        // Scale down the actual output dimensions
-        width = Math.round(actualOutputWidth * scale)
-        height = Math.round(actualOutputHeight * scale)
+        width = Math.round(proportionedOutputWidth * scale)
+        height = Math.round(proportionedOutputHeight * scale)
       } else {
-        // Actual output is smaller than or equal to preview area
-        // Use actual output dimensions (no scaling)
-        width = actualOutputWidth
-        height = actualOutputHeight
+        // Proportioned output fits within preview area — use it directly.
+        width = proportionedOutputWidth
+        height = proportionedOutputHeight
         scaleFactor = 1
+      }
+      if (proportionScale !== 1) {
+        proportionBakedIntoPreview = true
       }
     }
 
@@ -804,6 +828,12 @@ export class ImageEditor {
         ? Math.round(state.sharpen * scaleFactor * 100) / 100
         : state.sharpen
       filters.push({ name: 'sharpen', args: sharpenValue.toString() })
+    }
+
+    // Proportion – in preview mode the effect is already baked into the target
+    // dimensions, so emitting the filter here would apply it a second time.
+    if (!proportionBakedIntoPreview && state.proportion !== undefined && state.proportion !== 100) {
+      filters.push({ name: 'proportion', args: state.proportion.toString() })
     }
 
     // Round corner (applied before fill so fill can fill the rounded areas)

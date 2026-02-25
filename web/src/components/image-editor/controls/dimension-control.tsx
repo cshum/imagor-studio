@@ -5,6 +5,7 @@ import { Lock, RotateCcw, Unlock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { NumericControl } from '@/components/ui/numeric-control'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Select,
@@ -200,6 +201,19 @@ export function DimensionControl({
             />
           </div>
         </div>
+      </div>
+
+      {/* Proportion */}
+      <div className='space-y-3'>
+        <NumericControl
+          label={t('imageEditor.dimensions.proportion')}
+          value={params.proportion ?? 100}
+          min={1}
+          max={100}
+          step={1}
+          unit='%'
+          onChange={(value) => onUpdateParams({ proportion: value === 100 ? undefined : value })}
+        />
       </div>
 
       {/* Resize Mode */}
