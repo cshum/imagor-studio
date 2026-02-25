@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Lock, RotateCcw, Unlock } from 'lucide-react'
 
@@ -48,45 +48,60 @@ export function DimensionControl({
   // Default to locked
   const [aspectRatioLocked, setAspectRatioLocked] = useState(true)
 
-  const handleWidthChange = (value: string) => {
-    const width = parseInt(value) || undefined
+  // Local string state allows free typing without triggering linked-field
+  // updates on every keystroke. Linked values are computed only on commit
+  // (blur or Enter), matching standard design-tool behaviour (Figma, etc.).
+  const [localWidth, setLocalWidth] = useState(params.width?.toString() ?? '')
+  const [localHeight, setLocalHeight] = useState(params.height?.toString() ?? '')
+  const focusedField = useRef<'width' | 'height' | null>(null)
 
-    if (aspectRatioLocked && width) {
-      // Use stored aspect ratio for calculation
+  // Sync local state from params only when the field is not focused so that
+  // external changes (undo, crop, reset) propagate without stomping typing.
+  useEffect(() => {
+    if (focusedField.current !== 'width') {
+      setLocalWidth(params.width?.toString() ?? '')
+    }
+  }, [params.width])
+
+  useEffect(() => {
+    if (focusedField.current !== 'height') {
+      setLocalHeight(params.height?.toString() ?? '')
+    }
+  }, [params.height])
+
+  const commitWidth = (raw: string) => {
+    const width = parseInt(raw) || 0
+    if (width <= 0) {
+      if (aspectRatioLocked) {
+        setLocalHeight('')
+        onUpdateParams({ width: undefined, height: undefined })
+      } else {
+        onUpdateParams({ width: undefined })
+      }
+    } else if (aspectRatioLocked) {
       const newHeight = Math.round(width / aspectRatio)
+      setLocalHeight(newHeight.toString())
       onUpdateParams({ width, height: newHeight })
     } else {
       onUpdateParams({ width })
     }
   }
 
-  const handleHeightChange = (value: string) => {
-    const height = parseInt(value) || undefined
-
-    if (aspectRatioLocked && height) {
-      // Use stored aspect ratio for calculation
+  const commitHeight = (raw: string) => {
+    const height = parseInt(raw) || 0
+    if (height <= 0) {
+      if (aspectRatioLocked) {
+        setLocalWidth('')
+        onUpdateParams({ width: undefined, height: undefined })
+      } else {
+        onUpdateParams({ height: undefined })
+      }
+    } else if (aspectRatioLocked) {
       const newWidth = Math.round(height * aspectRatio)
+      setLocalWidth(newWidth.toString())
       onUpdateParams({ width: newWidth, height })
     } else {
       onUpdateParams({ height })
-    }
-  }
-
-  const handleWidthBlur = (value: string) => {
-    // Validate only when user finishes editing
-    const width = parseInt(value) || 0
-    if (width <= 0) {
-      // Reset to undefined (auto) if invalid
-      onUpdateParams({ width: undefined })
-    }
-  }
-
-  const handleHeightBlur = (value: string) => {
-    // Validate only when user finishes editing
-    const height = parseInt(value) || 0
-    if (height <= 0) {
-      // Reset to undefined (auto) if invalid
-      onUpdateParams({ height: undefined })
     }
   }
 
@@ -201,9 +216,11 @@ export function DimensionControl({
             <Input
               id='width'
               type='number'
-              value={params.width || ''}
-              onChange={(e) => handleWidthChange(e.target.value)}
-              onBlur={(e) => handleWidthBlur(e.target.value)}
+              value={localWidth}
+              onChange={(e) => setLocalWidth(e.target.value)}
+              onFocus={() => { focusedField.current = 'width' }}
+              onBlur={(e) => { focusedField.current = null; commitWidth(e.target.value) }}
+              onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
               placeholder={t('imageEditor.dimensions.auto')}
               min='1'
               max='10000'
@@ -233,9 +250,11 @@ export function DimensionControl({
             <Input
               id='height'
               type='number'
-              value={params.height || ''}
-              onChange={(e) => handleHeightChange(e.target.value)}
-              onBlur={(e) => handleHeightBlur(e.target.value)}
+              value={localHeight}
+              onChange={(e) => setLocalHeight(e.target.value)}
+              onFocus={() => { focusedField.current = 'height' }}
+              onBlur={(e) => { focusedField.current = null; commitHeight(e.target.value) }}
+              onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
               placeholder={t('imageEditor.dimensions.auto')}
               min='1'
               max='10000'
