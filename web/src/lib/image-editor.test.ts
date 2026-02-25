@@ -1280,6 +1280,91 @@ describe('ImageEditor', () => {
         expect(path).not.toContain(',0,normal')
       })
     })
+
+    describe('proportion / Scale filter', () => {
+      it('should emit proportion filter in path', () => {
+        editor.updateParams({ proportion: 50 })
+        const path = editor.getImagorPath()
+        expect(path).toContain('proportion(50)')
+      })
+
+      it('should not emit proportion filter when value is 100 (no-op)', () => {
+        editor.updateParams({ proportion: 100 })
+        const path = editor.getImagorPath()
+        expect(path).not.toContain('proportion')
+      })
+
+      it('should not emit proportion filter when not set', () => {
+        editor.updateParams({ brightness: 20 })
+        const path = editor.getImagorPath()
+        expect(path).not.toContain('proportion')
+      })
+
+      it('should emit proportion after other filters (end of pipeline)', () => {
+        editor.updateParams({ brightness: 20, proportion: 50 })
+        const path = editor.getImagorPath()
+        expect(path).toContain('brightness(20)')
+        expect(path).toContain('proportion(50)')
+        // proportion must appear after brightness in the filters segment
+        const filtersSegment = path.split('/').find((s) => s.startsWith('filters:'))!
+        const filterParts = filtersSegment.slice('filters:'.length).split(':')
+        const brightnessIdx = filterParts.findIndex((f) => f.startsWith('brightness('))
+        const proportionIdx = filterParts.findIndex((f) => f.startsWith('proportion('))
+        expect(brightnessIdx).toBeGreaterThanOrEqual(0)
+        expect(proportionIdx).toBeGreaterThan(brightnessIdx)
+      })
+
+      it('should emit proportion after image() layer filters (end of pipeline)', () => {
+        const layer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+        }
+        editor.addLayer(layer)
+        editor.updateParams({ proportion: 50 })
+        const path = editor.getImagorPath()
+        expect(path).toContain('image(/')
+        expect(path).toContain('proportion(50)')
+        // proportion must appear after image( in the full path string
+        // (can't split by '/' because the image() filter itself contains slashes)
+        const imageIdx = path.indexOf('image(/')
+        const proportionIdx = path.indexOf('proportion(50)')
+        expect(imageIdx).toBeGreaterThanOrEqual(0)
+        expect(proportionIdx).toBeGreaterThan(imageIdx)
+      })
+
+      it('should not include proportion in layer sub-paths', () => {
+        const layer: ImageLayer = {
+          id: 'layer-1',
+          imagePath: 'overlay.jpg',
+          x: 100,
+          y: 200,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+          transforms: { brightness: 30 },
+        }
+        editor.addLayer(layer)
+        editor.updateParams({ proportion: 50 })
+        const path = editor.getImagorPath()
+        // Outer path must contain proportion
+        expect(path).toContain('proportion(50)')
+        // Everything before 'proportion(50)' includes the image() layer filter.
+        // Since layer state has proportion stripped, no 'proportion' should appear there.
+        const proportionStart = path.indexOf('proportion(50)')
+        const pathBeforeProportion = path.slice(0, proportionStart)
+        expect(pathBeforeProportion).toContain('image(/')
+        expect(pathBeforeProportion).not.toContain('proportion')
+      })
+    })
   })
 
   describe('Async Operations', () => {
@@ -1319,6 +1404,36 @@ describe('ImageEditor', () => {
             }),
           }),
         )
+      })
+
+      it('should include proportion filter in generated URLs', async () => {
+        const { generateImagorUrl } = await import('@/api/imagor-api')
+        editor.updateParams({ proportion: 75 })
+
+        await editor.generateCopyUrl()
+
+        expect(generateImagorUrl).toHaveBeenCalledWith(
+          expect.objectContaining({
+            params: expect.objectContaining({
+              filters: expect.arrayContaining([
+                expect.objectContaining({ name: 'proportion', args: '75' }),
+              ]),
+            }),
+          }),
+        )
+      })
+
+      it('should not include proportion filter in generated URLs when value is 100', async () => {
+        const { generateImagorUrl } = await import('@/api/imagor-api')
+        editor.updateParams({ proportion: 100 })
+
+        await editor.generateCopyUrl()
+
+        const callArg = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls[0][0]
+        const filterNames = (callArg.params.filters as Array<{ name: string }>).map(
+          (f) => f.name,
+        )
+        expect(filterNames).not.toContain('proportion')
       })
     })
 
