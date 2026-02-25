@@ -201,10 +201,8 @@ export class ImageEditor {
     this.selectedLayerId = null
     // Reset state to defaults when component remounts
     // The page will restore from URL if there's a ?state= parameter
-    this.state = {
-      width: this.config.originalDimensions.width,
-      height: this.config.originalDimensions.height,
-    }
+    // Dimensions start as auto (undefined): no explicit resize step by default.
+    this.state = {}
   }
 
   /**
@@ -1202,11 +1200,8 @@ export class ImageEditor {
     // Save current state to history before resetting (so reset can be undone)
     this.saveHistorySnapshot()
 
-    // Reset to initial state (same as constructor)
-    this.state = {
-      width: this.config.originalDimensions.width,
-      height: this.config.originalDimensions.height,
-    }
+    // Reset to initial state (same as constructor) — dimensions start auto (undefined)
+    this.state = {}
 
     this.callbacks.onStateChange?.(this.getState())
     this.schedulePreviewUpdate()
@@ -2536,10 +2531,13 @@ export class ImageEditor {
       this.savedBaseState = { ...this.savedBaseState, layers: updatedLayers }
       this.loadContextFromLayer(currentLayerId, updatedLayers)
     } else if (layerId === null) {
-      // Swap root BASE image - use smart dimension logic
-      const oldDimensions = this.config.originalDimensions
+      // Swap root BASE image: drop crop params, leave width/height untouched.
+      // - Auto (undefined): stays auto → imagor outputs new image at natural size.
+      // - Explicit (predefined): keeps the user's chosen dimensions.
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { cropLeft, cropTop, cropWidth, cropHeight, ...rootRest } = this.state
       this.state = {
-        ...removeCropAndSmartDimensions(this.state, oldDimensions, newDimensions),
+        ...rootRest,
         imagePath: newImagePath,
         originalDimensions: { ...newDimensions },
       }
