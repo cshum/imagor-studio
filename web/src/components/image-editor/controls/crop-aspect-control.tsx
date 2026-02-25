@@ -83,11 +83,13 @@ export function CropAspectControl({
     setSelectedAspectRatio(preset.key)
     onAspectRatioChange?.(preset.ratio)
 
-    // Calculate crop dimensions based on aspect ratio
+    // Calculate crop dimensions based on aspect ratio.
+    // Always use the original image dimensions (outputWidth/outputHeight) — crop
+    // is applied BEFORE resize in the pipeline, so params.width/height (output
+    // resize targets) must not influence the source rectangle.
     const targetRatio = preset.ratio
-    // Use current params dimensions instead of stale props
-    const imageWidth = params.width || outputWidth
-    const imageHeight = params.height || outputHeight
+    const imageWidth = outputWidth
+    const imageHeight = outputHeight
 
     let cropWidth: number
     let cropHeight: number
