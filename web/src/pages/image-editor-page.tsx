@@ -601,11 +601,16 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   }
 
   const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {
+    // Clear explicit width/height so they don't conflict with the new crop AR.
+    // The user can set a target output size in the Dimensions panel afterward;
+    // the locked AR will then correctly follow the crop's proportions.
     updateParams({
       cropLeft: crop.left,
       cropTop: crop.top,
       cropWidth: crop.width,
       cropHeight: crop.height,
+      width: undefined,
+      height: undefined,
     })
   }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Lock, RotateCcw, Unlock } from 'lucide-react'
 
@@ -34,12 +34,15 @@ export function DimensionControl({
 }: DimensionControlProps) {
   const { t } = useTranslation()
 
-  // Calculate and store aspect ratio at start
-  const [aspectRatio] = useState<number>(() => {
-    const w = params.width || originalDimensions.width
-    const h = params.height || originalDimensions.height
+  // Derive aspect ratio from the effective source dimensions:
+  // explicit width/height > crop region > original image.
+  // Recalculates whenever crop changes so the lock always reflects
+  // the current source going into the resize step (post-crop).
+  const aspectRatio = useMemo(() => {
+    const w = params.width || params.cropWidth || originalDimensions.width
+    const h = params.height || params.cropHeight || originalDimensions.height
     return w / h
-  })
+  }, [params.width, params.height, params.cropWidth, params.cropHeight, originalDimensions.width, originalDimensions.height])
 
   // Default to locked
   const [aspectRatioLocked, setAspectRatioLocked] = useState(true)
