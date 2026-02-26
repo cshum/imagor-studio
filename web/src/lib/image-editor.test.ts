@@ -1480,6 +1480,59 @@ describe('ImageEditor', () => {
     })
   })
 
+  describe('layer round corner radius clamping', () => {
+    const makeRcLayer = (id: string, origW: number, origH: number, transforms?: object) => ({
+      id,
+      imagePath: 'overlay.jpg',
+      x: 0 as const,
+      y: 0 as const,
+      alpha: 0,
+      blendMode: 'normal' as const,
+      visible: true,
+      name: id,
+      originalDimensions: { width: origW, height: origH },
+      ...(transforms ? { transforms } : {}),
+    })
+
+    it('should clamp roundCornerRadius when layer is shrunk below current value', () => {
+      editor.addLayer(
+        makeRcLayer('rc-shrink', 400, 300, { width: 400, height: 300, roundCornerRadius: 100 }),
+      )
+      // Shrink to 100x80: max = floor(80/2) = 40
+      editor.updateLayer('rc-shrink', { transforms: { width: 100, height: 80 } })
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-shrink')
+      expect(layer?.transforms?.roundCornerRadius).toBe(40)
+    })
+
+    it('should NOT clamp roundCornerRadius when layer dims grow', () => {
+      editor.addLayer(
+        makeRcLayer('rc-grow', 400, 300, { width: 200, height: 150, roundCornerRadius: 50 }),
+      )
+      // Grow to 800x600: max = 300 — 50 stays
+      editor.updateLayer('rc-grow', { transforms: { width: 800, height: 600 } })
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-grow')
+      expect(layer?.transforms?.roundCornerRadius).toBe(50)
+    })
+
+    it('should clamp when radius and small dims are set in the same updateLayer call', () => {
+      editor.addLayer(makeRcLayer('rc-same', 400, 300))
+      // 100x80 → max = floor(80/2) = 40
+      editor.updateLayer('rc-same', {
+        transforms: { width: 100, height: 80, roundCornerRadius: 200 },
+      })
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-same')
+      expect(layer?.transforms?.roundCornerRadius).toBe(40)
+    })
+
+    it('should fall back to originalDimensions when no explicit size in transforms', () => {
+      // originalDimensions 100x80 → max = floor(80/2) = 40
+      editor.addLayer(makeRcLayer('rc-orig', 100, 80))
+      editor.updateLayer('rc-orig', { transforms: { roundCornerRadius: 200 } })
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-orig')
+      expect(layer?.transforms?.roundCornerRadius).toBe(40)
+    })
+  })
+
   describe('Async Operations', () => {
     describe('URL Generation', () => {
       it('should generate copy URL', async () => {

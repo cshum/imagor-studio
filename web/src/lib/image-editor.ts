@@ -2053,6 +2053,19 @@ export class ImageEditor {
           mergedLayer.transforms = { ...layer.transforms, ...updates.transforms }
         }
       }
+      // Clamp roundCornerRadius: same rule as root — max = floor(min(w, h) / 2),
+      // using the layer's effective output dimensions (transforms override originals).
+      if (
+        mergedLayer.transforms?.roundCornerRadius &&
+        mergedLayer.transforms.roundCornerRadius > 0
+      ) {
+        const lw = mergedLayer.transforms.width ?? layer.originalDimensions.width
+        const lh = mergedLayer.transforms.height ?? layer.originalDimensions.height
+        const maxR = Math.floor(Math.min(lw, lh) / 2)
+        if (mergedLayer.transforms.roundCornerRadius > maxR) {
+          mergedLayer.transforms = { ...mergedLayer.transforms, roundCornerRadius: maxR }
+        }
+      }
       return mergedLayer
     })
 
@@ -2082,6 +2095,18 @@ export class ImageEditor {
               } else {
                 // Merge transforms (preserves existing properties)
                 mergedLayer.transforms = { ...l.transforms, ...updates.transforms }
+              }
+            }
+            // Clamp roundCornerRadius in savedBaseState too (keep in sync)
+            if (
+              mergedLayer.transforms?.roundCornerRadius &&
+              mergedLayer.transforms.roundCornerRadius > 0
+            ) {
+              const lw = mergedLayer.transforms.width ?? l.originalDimensions.width
+              const lh = mergedLayer.transforms.height ?? l.originalDimensions.height
+              const maxR = Math.floor(Math.min(lw, lh) / 2)
+              if (mergedLayer.transforms.roundCornerRadius > maxR) {
+                mergedLayer.transforms = { ...mergedLayer.transforms, roundCornerRadius: maxR }
               }
             }
             return mergedLayer
