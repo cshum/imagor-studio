@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
-import type { ImageEditor } from '@/lib/image-editor'
+import type { ImageEditor, ImageEditorState } from '@/lib/image-editor'
 import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
 import { cn } from '@/lib/utils'
 
@@ -593,23 +593,45 @@ export function PreviewArea({
                               layerWidth={layerOutputDims.width}
                               layerHeight={layerOutputDims.height}
                               onLayerChange={(updates) => {
-                                // When a resize sets explicit width/height, exit fill mode on
-                                // that axis so the pixel dimension takes effect instead of f-token.
-                                // Only modify transforms when the update actually contains them
-                                // (drag-only updates have no transforms key; adding transforms: undefined
-                                // would clobber existing layer transforms via the spread in updateLayer).
+                                // Only enrich transforms when the update actually contains them.
+                                // Drag-only updates (x/y, no transforms key) go straight through —
+                                // spreading transforms: undefined would clobber existing transforms.
                                 if (updates.transforms) {
-                                  const enrichedTransforms = {
-                                    ...(updates.transforms.width !== undefined && {
-                                      widthFull: false,
-                                      widthFullOffset: undefined,
-                                    }),
-                                    ...(updates.transforms.height !== undefined && {
-                                      heightFull: false,
-                                      heightFullOffset: undefined,
-                                    }),
+                                  const currentTransforms = selectedLayer.transforms ?? {}
+                                  const enrichedTransforms: Partial<ImageEditorState> = {
                                     ...updates.transforms,
                                   }
+
+                                  // Width axis: if fill mode, convert new px width → offset (keep fill mode).
+                                  // parentWidth - newWidth = inset offset.
+                                  // If newWidth >= parentWidth the offset is 0 (full-bleed, no inset).
+                                  if (updates.transforms.width !== undefined) {
+                                    if (currentTransforms.widthFull) {
+                                      const newOffset = Math.max(
+                                        0,
+                                        outputDims.width - updates.transforms.width,
+                                      )
+                                      enrichedTransforms.widthFull = true
+                                      enrichedTransforms.widthFullOffset = newOffset
+                                      delete enrichedTransforms.width
+                                    }
+                                    // Non-fill axis: leave width as-is (explicit px)
+                                  }
+
+                                  // Height axis: same logic.
+                                  if (updates.transforms.height !== undefined) {
+                                    if (currentTransforms.heightFull) {
+                                      const newOffset = Math.max(
+                                        0,
+                                        outputDims.height - updates.transforms.height,
+                                      )
+                                      enrichedTransforms.heightFull = true
+                                      enrichedTransforms.heightFullOffset = newOffset
+                                      delete enrichedTransforms.height
+                                    }
+                                    // Non-fill axis: leave height as-is (explicit px)
+                                  }
+
                                   imageEditor.updateLayer(selectedLayerId, {
                                     ...updates,
                                     transforms: enrichedTransforms,
