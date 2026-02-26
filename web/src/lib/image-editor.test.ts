@@ -1432,6 +1432,54 @@ describe('ImageEditor', () => {
     })
   })
 
+  describe('getDimensionMode', () => {
+    it('should return adaptive when no explicit dims are set', () => {
+      expect(editor.getDimensionMode()).toBe('adaptive')
+    })
+
+    it('should return adaptive when dims match original dimensions', () => {
+      editor.updateParams({ width: 1920, height: 1080 })
+      expect(editor.getDimensionMode()).toBe('adaptive')
+    })
+
+    it('should return predefined when width differs from original', () => {
+      editor.updateParams({ width: 800, height: 1080 })
+      expect(editor.getDimensionMode()).toBe('predefined')
+    })
+
+    it('should return predefined when both dims differ from original', () => {
+      editor.updateParams({ width: 800, height: 600 })
+      expect(editor.getDimensionMode()).toBe('predefined')
+    })
+  })
+
+  describe('applyCropChange', () => {
+    it('should update crop params', () => {
+      editor.applyCropChange({ left: 10, top: 20, width: 200, height: 100 })
+      const state = editor.getState()
+      expect(state.cropLeft).toBe(10)
+      expect(state.cropTop).toBe(20)
+      expect(state.cropWidth).toBe(200)
+      expect(state.cropHeight).toBe(100)
+    })
+
+    it('should clear width/height at root level when not in visual crop mode', () => {
+      editor.updateParams({ width: 800, height: 600 })
+      editor.applyCropChange({ left: 0, top: 0, width: 400, height: 300 })
+      const state = editor.getState()
+      expect(state.width).toBeUndefined()
+      expect(state.height).toBeUndefined()
+    })
+
+    it('should NOT clear width/height when visualCropEnabled is true (dragging)', () => {
+      editor.updateParams({ width: 800, height: 600, visualCropEnabled: true })
+      editor.applyCropChange({ left: 0, top: 0, width: 400, height: 300 })
+      const state = editor.getState()
+      expect(state.width).toBe(800)
+      expect(state.height).toBe(600)
+    })
+  })
+
   describe('Async Operations', () => {
     describe('URL Generation', () => {
       it('should generate copy URL', async () => {
@@ -1588,6 +1636,57 @@ describe('ImageEditor', () => {
 
         // State change should be called after preview loads
         expect(onStateChange).toHaveBeenCalled()
+      })
+
+      describe('toggleVisualCrop', () => {
+        const resolveToggle = async (promise: Promise<void>) => {
+          await vi.runAllTimersAsync()
+          editor.notifyPreviewLoaded()
+          await promise
+        }
+
+        it('should enable visual crop and initialise crop to original dims when empty', async () => {
+          const promise = editor.toggleVisualCrop(true)
+          await resolveToggle(promise)
+
+          const state = editor.getState()
+          expect(state.visualCropEnabled).toBe(true)
+          // Original dims are 1920x1080 in the test setup
+          expect(state.cropLeft).toBe(0)
+          expect(state.cropTop).toBe(0)
+          expect(state.cropWidth).toBe(1920)
+          expect(state.cropHeight).toBe(1080)
+        })
+
+        it('should NOT reinitialise crop when crop params are already set', async () => {
+          editor.updateParams({ cropLeft: 10, cropTop: 20, cropWidth: 500, cropHeight: 400 })
+
+          const promise = editor.toggleVisualCrop(true)
+          await resolveToggle(promise)
+
+          const state = editor.getState()
+          // Existing crop values must be preserved
+          expect(state.cropLeft).toBe(10)
+          expect(state.cropWidth).toBe(500)
+        })
+
+        it('should disable visual crop and reset dims at root level', async () => {
+          // Enter crop first
+          const enterPromise = editor.toggleVisualCrop(true)
+          await resolveToggle(enterPromise)
+
+          editor.updateParams({ width: 800, height: 600 })
+
+          // Exit crop
+          const exitPromise = editor.toggleVisualCrop(false)
+          await resolveToggle(exitPromise)
+
+          const state = editor.getState()
+          expect(state.visualCropEnabled).toBe(false)
+          // Dims should be reset to auto at root level
+          expect(state.width).toBeUndefined()
+          expect(state.height).toBeUndefined()
+        })
       })
     })
 

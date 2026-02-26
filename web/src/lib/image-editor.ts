@@ -301,6 +301,20 @@ export class ImageEditor {
   }
 
   /**
+   * Determine dimension mode based on current state vs original dimensions.
+   * 'predefined' = explicit width/height set to a value that differs from the original.
+   * 'adaptive'   = no explicit resize; output auto-sizes to the source content.
+   */
+  getDimensionMode(): 'adaptive' | 'predefined' {
+    const { width, height } = this.state
+    const orig = this.config.originalDimensions
+    if (width && height && (width !== orig.width || height !== orig.height)) {
+      return 'predefined'
+    }
+    return 'adaptive'
+  }
+
+  /**
    * Get the base image path
    * Returns the original image path, even when editing nested layers
    * @returns The base image path
@@ -1278,6 +1292,51 @@ export class ImageEditor {
     if (!enabled) {
       this.callbacks.onHistoryChange?.()
     }
+  }
+
+  /**
+   * Toggle visual crop mode, handling crop initialisation and dimension reset
+   * automatically. Callers (page, controls) just pass the desired enabled state.
+   */
+  async toggleVisualCrop(enabled: boolean): Promise<void> {
+    if (enabled) {
+      await this.setVisualCropEnabled(true)
+      // Initialise crop to full original dimensions on first activation
+      const s = this.state
+      if (!s.cropLeft && !s.cropTop && !s.cropWidth && !s.cropHeight) {
+        const dims = this.getOriginalDimensions()
+        this.updateParams({
+          cropLeft: 0,
+          cropTop: 0,
+          cropWidth: dims.width,
+          cropHeight: dims.height,
+        })
+      }
+    } else {
+      // At root level, reset output dims in the same atomic mutation (no flash).
+      const dimReset =
+        this.getEditingContext() === null ? { width: undefined, height: undefined } : undefined
+      await this.setVisualCropEnabled(false, dimReset)
+    }
+  }
+
+  /**
+   * Apply a crop rectangle from the visual crop tool.
+   * - At root level and NOT dragging: clears explicit width/height so they
+   *   don't conflict with the new crop AR.
+   * - While dragging (visualCropEnabled) or in a layer context: leaves
+   *   width/height untouched to avoid triggering unnecessary previews.
+   */
+  applyCropChange(crop: { left: number; top: number; width: number; height: number }): void {
+    const isLayer = this.getEditingContext() !== null
+    const shouldClearDims = !isLayer && !this.state.visualCropEnabled
+    this.updateParams({
+      cropLeft: crop.left,
+      cropTop: crop.top,
+      cropWidth: crop.width,
+      cropHeight: crop.height,
+      ...(shouldClearDims ? { width: undefined, height: undefined } : {}),
+    })
   }
 
   /**
