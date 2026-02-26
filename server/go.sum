@@ -58,6 +58,8 @@ github.com/cevatbarisyilmaz/ara v0.0.4 h1:SGH10hXpBJhhTlObuZzTuFn1rrdmjQImITXnZV
 github.com/cevatbarisyilmaz/ara v0.0.4/go.mod h1:BfFOxnUd6Mj6xmcvRxHN3Sr21Z1T3U2MYkYOmoQe4Ts=
 github.com/cshum/imagor v1.6.16 h1:gBoNpTQ2GPZYKcQFd0Q1Kc8UuBQb6ABDLXdvKPvEC8U=
 github.com/cshum/imagor v1.6.16/go.mod h1:LoNH/R6oLDwIqZC7MUbvSs61v1pKlLNA2IIsWHj50cg=
+github.com/cshum/imagor v1.6.17-0.20260226081120-1dbc131d9fd4 h1:7dWKhb1go5GBuW5BkyGXAbjshL0aG+aKtPRFyJqP3uc=
+github.com/cshum/imagor v1.6.17-0.20260226081120-1dbc131d9fd4/go.mod h1:LoNH/R6oLDwIqZC7MUbvSs61v1pKlLNA2IIsWHj50cg=
 github.com/cshum/imagorvideo v1.0.20 h1:3Sl7yA56oIy7kWOP1F6SioqIdK20AqzSa54cnM9xBtE=
 github.com/cshum/imagorvideo v1.0.20/go.mod h1:biBPyl86Y87ZQuACxrF72/DoAreDPjHbrz7fCYVEouc=
 github.com/cshum/vipsgen v1.3.1 h1:deDY4MCgb0YNlQLBS1LSNknU02AUEex6p3L5/chZGls=
