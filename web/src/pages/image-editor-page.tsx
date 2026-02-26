@@ -94,6 +94,10 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const [outputDimensions, setOutputDimensions] = useState<{ width: number; height: number }>(() =>
     imageEditor.getOutputDimensions(),
   )
+  const [contextParentDimensions, setContextParentDimensions] = useState<{
+    width: number
+    height: number
+  } | null>(() => imageEditor.getContextParentDimensions())
   const [previewUrl, setPreviewUrl] = useState<string>()
   const [imagorPath, setImagorPath] = useState<string>(imageEditor.getImagorPath())
   const [error, setError] = useState<Error | null>(null)
@@ -168,6 +172,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
       onStateChange: (newState) => {
         setParams(newState)
         setOutputDimensions(imageEditor.getOutputDimensions())
+        setContextParentDimensions(imageEditor.getContextParentDimensions())
       },
       onLoadingChange: setIsLoading,
       onHistoryChange: () => {
@@ -208,6 +213,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   useEffect(() => {
     // Sync editingContext when imageEditor instance changes (e.g., after loader invalidation)
     setEditingContext(imageEditor.getEditingContext())
+    setContextParentDimensions(imageEditor.getContextParentDimensions())
 
     // Reset layer selection (old layer IDs are invalid in new instance)
     setSelectedLayerId(null)
@@ -642,7 +648,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
               width: imageEditor.getOriginalDimensions().width,
               height: imageEditor.getOriginalDimensions().height,
             }}
-            parentDimensions={editingContext !== null ? outputDimensions : undefined}
+            parentDimensions={contextParentDimensions ?? undefined}
             isEditingLayer={editingContext !== null}
           />
         ),

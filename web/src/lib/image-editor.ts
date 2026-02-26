@@ -333,6 +333,21 @@ export class ImageEditor {
   }
 
   /**
+   * Returns the parent canvas dimensions for the current editing context.
+   *
+   * - At base level (depth 0): returns null — no parent exists.
+   * - At depth 1 (direct child of root): returns the root canvas output dims.
+   * - At depth N: walks ancestors level-by-level, resolving f-tokens at each step,
+   *   so the result is the immediate parent layer's output size.
+   *
+   * Used by DimensionControl to show the correct resolved output size for fill
+   * (f-token) dimensions without double-subtracting the offset.
+   */
+  getContextParentDimensions(): { width: number; height: number } | null {
+    return this.computeParentDimensionsForContext()
+  }
+
+  /**
    * Calculate the actual output dimensions (after crop + resize + padding + rotation)
    * This is what layers are positioned relative to
    * Uses the same logic as convertStateToGraphQLParams to ensure consistency
@@ -355,19 +370,9 @@ export class ImageEditor {
     }
 
     // Resolve fill-mode dimensions (widthFull / heightFull).
-    // These use the imagor f-token at render time; here we approximate the rendered
-    // pixel size using the parent context's output dimensions so UI feedback
-    // (canvas outline, position offsets) remains meaningful.
-    // When inside a layer context, this.config.originalDimensions has already been
-    // updated to the layer image's own dimensions. We must use savedBaseImageDimensions
-    // (the root image's original dims, saved on first context switch) to correctly
-    // compute the parent's output. For nested layers (layer-within-layer) this is an
-    // approximation using the root dimensions, which is acceptable for UI purposes.
-    const parentOrigDims = this.savedBaseImageDimensions ?? null
-    const parentDims =
-      this.editingContext.length > 0 && this.savedBaseState && parentOrigDims
-        ? this.computeOutputDimensionsFromState(this.savedBaseState, parentOrigDims)
-        : null
+    // Walk the editingContext chain level-by-level so that each nested layer uses
+    // its immediate parent's output size rather than the root canvas size.
+    const parentDims = this.computeParentDimensionsForContext()
 
     // Calculate what the ACTUAL output will be after resize
     let outputWidth: number
@@ -431,17 +436,66 @@ export class ImageEditor {
   }
 
   /**
+   * Walk the editingContext chain level-by-level and return the true immediate-parent
+   * output dimensions for the currently-edited layer.
+   *
+   * - Depth 0 (base image editing): returns null (no parent)
+   * - Depth 1 (direct layer of root): returns root canvas output dims
+   * - Depth N: iterates through ancestors[0..N-2], computing each layer's output
+   *   using that layer's own transforms and its parent's dims, so that f-tokens
+   *   at every nesting level resolve correctly.
+   */
+  private computeParentDimensionsForContext(): { width: number; height: number } | null {
+    if (this.editingContext.length === 0 || !this.savedBaseState || !this.savedBaseImageDimensions) {
+      return null
+    }
+
+    // Root canvas dimensions (no parent dims at this level)
+    let currentDims = this.computeOutputDimensionsFromState(
+      this.savedBaseState,
+      this.savedBaseImageDimensions,
+      null,
+    )
+
+    if (this.editingContext.length === 1) {
+      // Direct child of root — parent is the root canvas
+      return currentDims
+    }
+
+    // Walk ancestors (all context ids except the last, which is the layer being edited)
+    let currentLayers: ImageLayer[] = this.savedBaseState.layers ?? []
+    for (let i = 0; i < this.editingContext.length - 1; i++) {
+      const layerId = this.editingContext[i]
+      const layer = currentLayers.find((l) => l.id === layerId)
+      if (!layer) return currentDims
+
+      // Compute this ancestor layer's output using its own transforms and its parent dims
+      currentDims = this.computeOutputDimensionsFromState(
+        (layer.transforms ?? {}) as ImageEditorState,
+        layer.originalDimensions,
+        currentDims,
+      )
+
+      // Descend into this layer's children for the next iteration
+      currentLayers = layer.transforms?.layers ?? []
+    }
+
+    return currentDims
+  }
+
+  /**
    * Pure helper: compute output dimensions from an arbitrary state snapshot.
-   * Used by getOutputDimensions to resolve parent dimensions for fill-mode layers.
-   * Mirrors the exact same logic as getOutputDimensions but operates on a given state
-   * using the editor's own config (original dimensions + crop source).
+   * Used by computeParentDimensionsForContext to resolve dimensions level-by-level.
    * @param state - The state snapshot to compute dimensions for
    * @param origDims - Override source dimensions (used when config has been updated to
-   *   point at a layer image and we need the pre-switch root image dimensions).
+   *   point at a layer image and we need root / ancestor image dimensions).
+   * @param parentDims - The parent layer's output dimensions, used to resolve
+   *   widthFull / heightFull (f-token) values. Pass null for root level.
    */
   private computeOutputDimensionsFromState(
     state: ImageEditorState,
     origDims?: { width: number; height: number },
+    parentDims?: { width: number; height: number } | null,
   ): { width: number; height: number } {
     let sourceWidth: number
     let sourceHeight: number
@@ -455,8 +509,21 @@ export class ImageEditor {
       sourceHeight = src.height
     }
 
-    const outputWidth = state.width ?? sourceWidth
-    const outputHeight = state.height ?? sourceHeight
+    // Resolve fill-mode (f-token) dimensions using parent context
+    let outputWidth: number
+    let outputHeight: number
+
+    if (state.widthFull && parentDims) {
+      outputWidth = Math.max(1, parentDims.width - (state.widthFullOffset ?? 0))
+    } else {
+      outputWidth = state.width ?? sourceWidth
+    }
+
+    if (state.heightFull && parentDims) {
+      outputHeight = Math.max(1, parentDims.height - (state.heightFullOffset ?? 0))
+    } else {
+      outputHeight = state.height ?? sourceHeight
+    }
 
     let finalWidth: number
     let finalHeight: number
@@ -773,6 +840,24 @@ export class ImageEditor {
     // Dimensions - apply preview constraints if needed
     let width = state.width
     let height = state.height
+
+    // Resolve fill-mode (f-token) dimensions to concrete pixel values.
+    // widthFull/heightFull reference the parent canvas size at imagor render time
+    // (emitted as "f" / "f-N" in the path), but convertStateToGraphQLParams works with
+    // pixel values, so we resolve them here against the current context's parent dims.
+    // This ensures preview URL dimensions (and all downstream scale-factor math) use
+    // the correct fill-resolved size rather than the layer's natural source dimensions.
+    if (state.widthFull || state.heightFull) {
+      const fillParentDims = this.computeParentDimensionsForContext()
+      if (fillParentDims) {
+        if (state.widthFull && width === undefined) {
+          width = Math.max(1, fillParentDims.width - (state.widthFullOffset ?? 0))
+        }
+        if (state.heightFull && height === undefined) {
+          height = Math.max(1, fillParentDims.height - (state.heightFullOffset ?? 0))
+        }
+      }
+    }
 
     // When visual crop is enabled in preview, use original dimensions
     // so the crop overlay can work with the full original image
