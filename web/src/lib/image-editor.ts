@@ -470,8 +470,9 @@ export class ImageEditor {
       }
     }
 
-    // Add alignment (for Fill mode when fitIn is false)
-    if (state.fitIn === false) {
+    // Add alignment (for Fill mode — not fitIn, not smart, not stretch)
+    // state.fitIn === false was too strict; undefined also means default fill mode.
+    if (!state.fitIn && !state.smart) {
       if (state.hAlign) parts.push(state.hAlign)
       if (state.vAlign) parts.push(state.vAlign)
     }

@@ -1367,6 +1367,34 @@ describe('ImageEditor', () => {
         expect(pathBeforeProportion).not.toContain('proportion')
       })
     })
+
+    describe('hAlign / vAlign', () => {
+      it('should include vAlign in path in default fill mode (fitIn undefined)', () => {
+        editor.updateParams({ vAlign: 'top' })
+        const path = editor.getImagorPath()
+        expect(path).toContain('top')
+      })
+
+      it('should include hAlign in path in default fill mode', () => {
+        editor.updateParams({ hAlign: 'left' })
+        const path = editor.getImagorPath()
+        expect(path).toContain('left')
+      })
+
+      it('should NOT include alignment when fitIn is true', () => {
+        editor.updateParams({ fitIn: true, vAlign: 'top', hAlign: 'left' })
+        const path = editor.getImagorPath()
+        expect(path).not.toContain('top')
+        expect(path).not.toContain('left')
+      })
+
+      it('should NOT include alignment when smart is true', () => {
+        editor.updateParams({ smart: true, vAlign: 'top', hAlign: 'left' })
+        const path = editor.getImagorPath()
+        expect(path).not.toContain('top')
+        expect(path).not.toContain('left')
+      })
+    })
   })
 
   describe('Async Operations', () => {
