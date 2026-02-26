@@ -668,7 +668,13 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             onAspectRatioChange={setCropAspectRatio}
           />
         ),
-        effects: <ColorControl params={params} onUpdateParams={updateParams} />,
+        effects: (
+          <ColorControl
+            params={params}
+            onUpdateParams={updateParams}
+            outputDimensions={outputDimensions}
+          />
+        ),
         transform: <TransformControl params={params} onUpdateParams={updateParams} />,
         dimensions: (
           <DimensionControl

@@ -8,9 +8,10 @@ import type { ImageEditorState } from '@/lib/image-editor.ts'
 interface ColorControlProps {
   params: ImageEditorState
   onUpdateParams: (updates: Partial<ImageEditorState>) => void
+  outputDimensions?: { width: number; height: number }
 }
 
-export function ColorControl({ params, onUpdateParams }: ColorControlProps) {
+export function ColorControl({ params, onUpdateParams, outputDimensions }: ColorControlProps) {
   const { t } = useTranslation()
 
   return (
@@ -109,7 +110,11 @@ export function ColorControl({ params, onUpdateParams }: ColorControlProps) {
           label={t('imageEditor.effects.roundCorner')}
           value={params.roundCornerRadius ?? 0}
           min={0}
-          max={params.width ? Math.floor(params.width / 2) : 100}
+          max={
+            outputDimensions
+              ? Math.floor(Math.min(outputDimensions.width, outputDimensions.height) / 2)
+              : 9999
+          }
           step={1}
           unit='px'
           onChange={(value) => onUpdateParams({ roundCornerRadius: value })}
