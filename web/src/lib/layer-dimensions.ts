@@ -25,11 +25,13 @@ function hasCropParams(state: Partial<ImageEditorState>): boolean {
  *
  * @param originalDimensions - Original dimensions of the layer image
  * @param transforms - Layer transforms (crop, resize, padding, rotation, etc.)
+ * @param parentDimensions - Dimensions of the parent canvas (needed to resolve widthFull/heightFull)
  * @returns The actual rendered dimensions after all transforms
  */
 export function calculateLayerOutputDimensions(
   originalDimensions: ImageDimensions,
   transforms?: Partial<ImageEditorState>,
+  parentDimensions?: ImageDimensions,
 ): ImageDimensions {
   // If no transforms, return original dimensions
   if (!transforms) {
@@ -50,9 +52,21 @@ export function calculateLayerOutputDimensions(
     sourceHeight = originalDimensions.height
   }
 
-  // Calculate what the ACTUAL output will be after resize
-  const outputWidth = transforms.width ?? sourceWidth
-  const outputHeight = transforms.height ?? sourceHeight
+  // Calculate what the ACTUAL output will be after resize.
+  // widthFull/heightFull (f-token) resolve to parent canvas size minus offset.
+  let outputWidth: number
+  if (transforms.widthFull && parentDimensions) {
+    outputWidth = Math.max(1, parentDimensions.width - (transforms.widthFullOffset ?? 0))
+  } else {
+    outputWidth = transforms.width ?? sourceWidth
+  }
+
+  let outputHeight: number
+  if (transforms.heightFull && parentDimensions) {
+    outputHeight = Math.max(1, parentDimensions.height - (transforms.heightFullOffset ?? 0))
+  } else {
+    outputHeight = transforms.height ?? sourceHeight
+  }
 
   let finalWidth: number
   let finalHeight: number

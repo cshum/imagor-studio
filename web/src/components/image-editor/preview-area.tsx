@@ -573,9 +573,11 @@ export function PreviewArea({
                           if (!selectedLayer) return null
 
                           // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
+                          // Pass outputDims as parentDimensions so widthFull/heightFull resolve correctly
                           const layerOutputDims = calculateLayerOutputDimensions(
                             selectedLayer.originalDimensions,
                             selectedLayer.transforms,
+                            outputDims,
                           )
 
                           // Get layer's own padding (if it has any) for positioning calculations
@@ -590,9 +592,32 @@ export function PreviewArea({
                               layerY={selectedLayer.y}
                               layerWidth={layerOutputDims.width}
                               layerHeight={layerOutputDims.height}
-                              onLayerChange={(updates) =>
-                                imageEditor.updateLayer(selectedLayerId, updates)
-                              }
+                              onLayerChange={(updates) => {
+                                // When a resize sets explicit width/height, exit fill mode on
+                                // that axis so the pixel dimension takes effect instead of f-token.
+                                // Only modify transforms when the update actually contains them
+                                // (drag-only updates have no transforms key; adding transforms: undefined
+                                // would clobber existing layer transforms via the spread in updateLayer).
+                                if (updates.transforms) {
+                                  const enrichedTransforms = {
+                                    ...(updates.transforms.width !== undefined && {
+                                      widthFull: false,
+                                      widthFullOffset: undefined,
+                                    }),
+                                    ...(updates.transforms.height !== undefined && {
+                                      heightFull: false,
+                                      heightFullOffset: undefined,
+                                    }),
+                                    ...updates.transforms,
+                                  }
+                                  imageEditor.updateLayer(selectedLayerId, {
+                                    ...updates,
+                                    transforms: enrichedTransforms,
+                                  })
+                                } else {
+                                  imageEditor.updateLayer(selectedLayerId, updates)
+                                }
+                              }}
                               lockedAspectRatio={layerAspectRatioLocked}
                               baseImageWidth={outputDims.width}
                               baseImageHeight={outputDims.height}

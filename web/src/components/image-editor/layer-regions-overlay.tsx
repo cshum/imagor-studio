@@ -46,9 +46,11 @@ export function LayerRegionsOverlay({
   const getLayerStyles = useCallback(
     (layer: ImageLayer) => {
       // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
+      // Pass the full canvas as parentDimensions so widthFull/heightFull resolve correctly
       const layerOutputDims = calculateLayerOutputDimensions(
         layer.originalDimensions,
         layer.transforms,
+        { width: baseImageWidth, height: baseImageHeight },
       )
 
       const layerWidth = layerOutputDims.width
