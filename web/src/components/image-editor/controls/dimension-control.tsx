@@ -23,6 +23,10 @@ interface DimensionControlProps {
     width: number
     height: number
   }
+  parentDimensions?: {
+    width: number
+    height: number
+  }
   isEditingLayer?: boolean
 }
 
@@ -30,6 +34,7 @@ export function DimensionControl({
   params,
   onUpdateParams,
   originalDimensions,
+  parentDimensions,
   isEditingLayer = false,
 }: DimensionControlProps) {
   const { t } = useTranslation()
@@ -161,6 +166,20 @@ export function DimensionControl({
   const outputDimensions = (() => {
     const srcW = params.cropWidth ?? originalDimensions.width
     const srcH = params.cropHeight ?? originalDimensions.height
+
+    // Fill-mode axes (f-token): resolve against parent canvas dimensions.
+    // widthFull/heightFull dimensions are set by the parent canvas at imagor render
+    // time; here we compute the pixel equivalent for display purposes.
+    if ((params.widthFull || params.heightFull) && parentDimensions) {
+      const outW = params.widthFull
+        ? Math.max(1, parentDimensions.width - (params.widthFullOffset ?? 0))
+        : (params.width ?? srcW)
+      const outH = params.heightFull
+        ? Math.max(1, parentDimensions.height - (params.heightFullOffset ?? 0))
+        : (params.height ?? srcH)
+      return { width: outW, height: outH }
+    }
+
     let outW: number
     let outH: number
     if (params.width || params.height) {

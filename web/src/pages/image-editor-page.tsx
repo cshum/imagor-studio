@@ -642,6 +642,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
               width: imageEditor.getOriginalDimensions().width,
               height: imageEditor.getOriginalDimensions().height,
             }}
+            parentDimensions={editingContext !== null ? outputDimensions : undefined}
             isEditingLayer={editingContext !== null}
           />
         ),
