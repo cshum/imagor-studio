@@ -119,6 +119,18 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     height: number
   } | null>(null)
 
+  // Invalidate editor loader data when leaving the editor so the next visit always
+  // gets a fresh loader run (avoids stale ImageEditor instance / params).
+  // shouldReload: false on the route is intentional (prevents mid-session reloads),
+  // so we invalidate manually on unmount instead.
+  useEffect(() => {
+    return () => {
+      router.invalidate({
+        filter: (match) => match.routeId.includes('/editor'),
+      })
+    }
+  }, [router])
+
   // Unsaved changes warning hook (skip if template was just saved)
   // Pass a function so it checks the ref value at navigation time, not render time
   const { showDialog, handleConfirm, handleCancel } = useUnsavedChangesWarning(
