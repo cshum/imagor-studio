@@ -1395,6 +1395,41 @@ describe('ImageEditor', () => {
         expect(path).not.toContain('left')
       })
     })
+
+    describe('round corner radius clamping', () => {
+      it('should clamp roundCornerRadius when output dims shrink below current value', () => {
+        // Set large radius within bounds of 1000x800 output: max = floor(800/2) = 400
+        editor.updateParams({ roundCornerRadius: 300, width: 1000, height: 800 })
+        expect(editor.getState().roundCornerRadius).toBe(300)
+        // Shrink to 200x100: max = floor(100/2) = 50
+        editor.updateParams({ width: 200, height: 100 })
+        expect(editor.getState().roundCornerRadius).toBe(50)
+      })
+
+      it('should NOT increase roundCornerRadius when output dims grow', () => {
+        editor.updateParams({ roundCornerRadius: 50, width: 400, height: 300 })
+        // Grow: max = floor(800/2) = 400 — radius stays at 50
+        editor.updateParams({ width: 1000, height: 800 })
+        expect(editor.getState().roundCornerRadius).toBe(50)
+      })
+
+      it('should NOT clamp roundCornerRadius when within bounds', () => {
+        // max = floor(min(1920,1080)/2) = 540 (original dims, no resize)
+        editor.updateParams({ roundCornerRadius: 100 })
+        expect(editor.getState().roundCornerRadius).toBe(100)
+      })
+
+      it('should not affect roundCornerRadius when it is 0', () => {
+        editor.updateParams({ roundCornerRadius: 0, width: 100, height: 50 })
+        expect(editor.getState().roundCornerRadius).toBe(0)
+      })
+
+      it('should clamp immediately when radius is set larger than current output', () => {
+        // 200x100 output: max = floor(100/2) = 50
+        editor.updateParams({ width: 200, height: 100, roundCornerRadius: 200 })
+        expect(editor.getState().roundCornerRadius).toBe(50)
+      })
+    })
   })
 
   describe('Async Operations', () => {

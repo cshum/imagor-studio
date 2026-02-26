@@ -1049,6 +1049,18 @@ export class ImageEditor {
     }
 
     this.state = { ...this.state, ...updates }
+
+    // Clamp roundCornerRadius to max allowed by new output dimensions.
+    // Done here so it fires automatically for any param change (crop, resize,
+    // padding, proportion) without callers needing to know about this constraint.
+    if (this.state.roundCornerRadius && this.state.roundCornerRadius > 0) {
+      const dims = this.getOutputDimensions()
+      const maxRadius = Math.floor(Math.min(dims.width, dims.height) / 2)
+      if (this.state.roundCornerRadius > maxRadius) {
+        this.state = { ...this.state, roundCornerRadius: maxRadius }
+      }
+    }
+
     this.callbacks.onStateChange?.(this.getState())
 
     if (!onlyCropParamsChanged) {
