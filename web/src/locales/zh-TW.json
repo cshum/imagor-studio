@@ -747,6 +747,7 @@
       "auto": "自動",
       "reset": "重置",
       "resetSize": "重置為原始大小",
+      "fill": "塡滿",
       "lockAspectRatio": "鎖定縱橫比",
       "unlockAspectRatio": "解鎖縱橫比",
       "scale": "縮放比例",

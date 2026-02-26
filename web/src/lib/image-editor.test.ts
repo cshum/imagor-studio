@@ -1531,6 +1531,113 @@ describe('ImageEditor', () => {
       const layer = editor.getState().layers?.find((l) => l.id === 'rc-orig')
       expect(layer?.transforms?.roundCornerRadius).toBe(40)
     })
+
+    it('should not NaN when widthFull is true (falls back to originalDimensions)', () => {
+      // originalDimensions 100x80 → max = floor(80/2) = 40
+      editor.addLayer(makeRcLayer('rc-fill', 100, 80))
+      // widthFull: no width set, clamp uses originalDimensions → still safe
+      editor.updateLayer('rc-fill', { transforms: { widthFull: true, roundCornerRadius: 200 } })
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-fill')
+      expect(layer?.transforms?.roundCornerRadius).not.toBeNaN()
+      expect(layer?.transforms?.roundCornerRadius).toBe(40)
+    })
+  })
+
+  describe('fill-mode layer dimensions (widthFull / heightFull)', () => {
+    const makeLayer = (id: string): ImageLayer => ({
+      id,
+      imagePath: 'overlay.jpg',
+      x: 0,
+      y: 0,
+      alpha: 0,
+      blendMode: 'normal',
+      visible: true,
+      name: id,
+      originalDimensions: { width: 200, height: 150 },
+    })
+
+    it('should emit fxf when both widthFull and heightFull are set (no offset)', () => {
+      const layer = makeLayer('fill-both')
+      editor.addLayer({ ...layer, transforms: { widthFull: true, heightFull: true } })
+      const path = editor.getImagorPath()
+      expect(path).toContain('fxf/')
+    })
+
+    it('should emit f-20x0 when widthFull with offset 20, height fixed', () => {
+      const layer = makeLayer('fill-w-offset')
+      editor.addLayer({
+        ...layer,
+        transforms: { widthFull: true, widthFullOffset: 20, height: 150 },
+      })
+      const path = editor.getImagorPath()
+      expect(path).toContain('f-20x')
+    })
+
+    it('should emit fxf-30 when heightFull with offset 30, width fill no offset', () => {
+      const layer = makeLayer('fill-h-offset')
+      editor.addLayer({
+        ...layer,
+        transforms: { widthFull: true, heightFull: true, heightFullOffset: 30 },
+      })
+      const path = editor.getImagorPath()
+      expect(path).toMatch(/fxf-30\//)
+    })
+
+    it('should emit fx200 when widthFull and fixed height', () => {
+      const layer = makeLayer('fill-w-fixed-h')
+      editor.addLayer({ ...layer, transforms: { widthFull: true, height: 200 } })
+      const path = editor.getImagorPath()
+      // width is fill (f), height is fixed px (200 at scaleFactor=1)
+      expect(path).toContain('fx200/')
+    })
+
+    it('should emit -fxf when widthFull and hFlip', () => {
+      const layer = makeLayer('fill-hflip')
+      editor.addLayer({
+        ...layer,
+        transforms: { widthFull: true, heightFull: true, hFlip: true },
+      })
+      const path = editor.getImagorPath()
+      expect(path).toContain('-fxf/')
+    })
+
+    it('should still emit dimension segment when only widthFull is set (no width/height)', () => {
+      const layer = makeLayer('fill-only-w')
+      editor.addLayer({ ...layer, transforms: { widthFull: true } })
+      const path = editor.getImagorPath()
+      // fx0 — width is fill, height defaults to 0 (not set)
+      expect(path).toMatch(/fx0\//)
+    })
+
+    it('getOutputDimensions resolves widthFull against parent dims inside layer context', () => {
+      // Root: 1920x1080 original, no resize -> parent output = 1920x1080
+      const layer = makeLayer('fill-ctx')
+      editor.addLayer({
+        ...layer,
+        transforms: { widthFull: true, widthFullOffset: 20, height: 100 },
+      })
+      // Enter the layer's editing context
+      editor.switchContext('fill-ctx')
+      const dims = editor.getOutputDimensions()
+      // widthFull, offset 20 → 1920 - 20 = 1900
+      expect(dims.width).toBe(1900)
+      // height fixed at 100
+      expect(dims.height).toBe(100)
+      editor.switchContext(null)
+    })
+
+    it('getOutputDimensions returns heightFull - offset correctly', () => {
+      const layer = makeLayer('fill-ctx-h')
+      editor.addLayer({
+        ...layer,
+        transforms: { widthFull: true, heightFull: true, heightFullOffset: 50 },
+      })
+      editor.switchContext('fill-ctx-h')
+      const dims = editor.getOutputDimensions()
+      expect(dims.width).toBe(1920) // full, no offset
+      expect(dims.height).toBe(1030) // 1080 - 50
+      editor.switchContext(null)
+    })
   })
 
   describe('Async Operations', () => {

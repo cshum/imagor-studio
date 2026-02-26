@@ -720,6 +720,7 @@
       "auto": "Auto",
       "reset": "Reset",
       "resetSize": "Reset to Original Size",
+      "fill": "Fill",
       "lockAspectRatio": "Lock Aspect Ratio",
       "unlockAspectRatio": "Unlock Aspect Ratio",
       "scale": "Scale",

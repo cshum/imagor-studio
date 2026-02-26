@@ -49,6 +49,15 @@ export interface ImageEditorState {
   width?: number
   height?: number
 
+  // Parent-relative dimensions (layer transforms only — ignored at root context).
+  // When true the corresponding axis uses the imagor f-token which imagor resolves
+  // to the parent canvas size at render time (e.g. "f" or "f-20").
+  // widthFullOffset / heightFullOffset subtract N pixels from the parent dimension.
+  widthFull?: boolean
+  widthFullOffset?: number // pixels to subtract from parent width (emits "f-N")
+  heightFull?: boolean
+  heightFullOffset?: number // pixels to subtract from parent height (emits "f-N")
+
   // Fitting
   stretch?: boolean
   fitIn?: boolean
@@ -345,9 +354,36 @@ export class ImageEditor {
       sourceHeight = this.config.originalDimensions.height
     }
 
+    // Resolve fill-mode dimensions (widthFull / heightFull).
+    // These use the imagor f-token at render time; here we approximate the rendered
+    // pixel size using the parent context's output dimensions so UI feedback
+    // (canvas outline, position offsets) remains meaningful.
+    // When inside a layer context, this.config.originalDimensions has already been
+    // updated to the layer image's own dimensions. We must use savedBaseImageDimensions
+    // (the root image's original dims, saved on first context switch) to correctly
+    // compute the parent's output. For nested layers (layer-within-layer) this is an
+    // approximation using the root dimensions, which is acceptable for UI purposes.
+    const parentOrigDims = this.savedBaseImageDimensions ?? null
+    const parentDims =
+      this.editingContext.length > 0 && this.savedBaseState && parentOrigDims
+        ? this.computeOutputDimensionsFromState(this.savedBaseState, parentOrigDims)
+        : null
+
     // Calculate what the ACTUAL output will be after resize
-    const outputWidth = state.width ?? sourceWidth
-    const outputHeight = state.height ?? sourceHeight
+    let outputWidth: number
+    let outputHeight: number
+
+    if (state.widthFull && parentDims) {
+      outputWidth = Math.max(1, parentDims.width - (state.widthFullOffset ?? 0))
+    } else {
+      outputWidth = state.width ?? sourceWidth
+    }
+
+    if (state.heightFull && parentDims) {
+      outputHeight = Math.max(1, parentDims.height - (state.heightFullOffset ?? 0))
+    } else {
+      outputHeight = state.height ?? sourceHeight
+    }
 
     let finalWidth: number
     let finalHeight: number
@@ -395,6 +431,58 @@ export class ImageEditor {
   }
 
   /**
+   * Pure helper: compute output dimensions from an arbitrary state snapshot.
+   * Used by getOutputDimensions to resolve parent dimensions for fill-mode layers.
+   * Mirrors the exact same logic as getOutputDimensions but operates on a given state
+   * using the editor's own config (original dimensions + crop source).
+   * @param state - The state snapshot to compute dimensions for
+   * @param origDims - Override source dimensions (used when config has been updated to
+   *   point at a layer image and we need the pre-switch root image dimensions).
+   */
+  private computeOutputDimensionsFromState(
+    state: ImageEditorState,
+    origDims?: { width: number; height: number },
+  ): { width: number; height: number } {
+    let sourceWidth: number
+    let sourceHeight: number
+
+    if (ImageEditor.hasCropParams(state)) {
+      sourceWidth = state.cropWidth!
+      sourceHeight = state.cropHeight!
+    } else {
+      const src = origDims ?? this.config.originalDimensions
+      sourceWidth = src.width
+      sourceHeight = src.height
+    }
+
+    const outputWidth = state.width ?? sourceWidth
+    const outputHeight = state.height ?? sourceHeight
+
+    let finalWidth: number
+    let finalHeight: number
+
+    if (state.fitIn) {
+      const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight, 1.0)
+      finalWidth = Math.round(sourceWidth * outputScale)
+      finalHeight = Math.round(sourceHeight * outputScale)
+    } else {
+      finalWidth = outputWidth
+      finalHeight = outputHeight
+    }
+
+    if (state.fillColor !== undefined) {
+      finalWidth = finalWidth + (state.paddingLeft || 0) + (state.paddingRight || 0)
+      finalHeight = finalHeight + (state.paddingTop || 0) + (state.paddingBottom || 0)
+    }
+
+    if (state.rotation === 90 || state.rotation === 270) {
+      return { width: finalHeight, height: finalWidth }
+    }
+
+    return { width: finalWidth, height: finalHeight }
+  }
+
+  /**
    * Check if all crop parameters are defined
    * Pure utility function - can be used from any context
    */
@@ -439,7 +527,9 @@ export class ImageEditor {
 
     // Add dimensions with flip integration (scaled by scaleFactor)
     // Format: /fit-in/-200x-300 where minus signs indicate flips
-    if (state.width || state.height) {
+    // Fill mode (layer-only): widthFull/heightFull emit the imagor f-token verbatim
+    // (e.g. "f", "f-20") which imagor resolves against the parent canvas at render time.
+    if (state.width || state.height || state.widthFull || state.heightFull) {
       // Build dimension prefix
       let prefix = ''
 
@@ -450,13 +540,28 @@ export class ImageEditor {
         prefix = 'fit-in/'
       }
 
-      // Calculate dimensions with flip integration
-      const w = state.width ? Math.round(state.width * scaleFactor) : 0
-      const h = state.height ? Math.round(state.height * scaleFactor) : 0
+      // Build each axis string.
+      // Fill axes: emit f-token verbatim (never multiply by scaleFactor).
+      // Fixed axes: scale and round as usual. Missing fixed axis defaults to 0.
+      let wStr: string
+      if (state.widthFull) {
+        const fToken =
+          state.widthFullOffset && state.widthFullOffset > 0 ? `f-${state.widthFullOffset}` : 'f'
+        wStr = state.hFlip ? `-${fToken}` : fToken
+      } else {
+        const w = state.width ? Math.round(state.width * scaleFactor) : 0
+        wStr = state.hFlip ? `-${w}` : `${w}`
+      }
 
-      // Add minus sign for flips
-      const wStr = state.hFlip ? `-${w}` : `${w}`
-      const hStr = state.vFlip ? `-${h}` : `${h}`
+      let hStr: string
+      if (state.heightFull) {
+        const fToken =
+          state.heightFullOffset && state.heightFullOffset > 0 ? `f-${state.heightFullOffset}` : 'f'
+        hStr = state.vFlip ? `-${fToken}` : fToken
+      } else {
+        const h = state.height ? Math.round(state.height * scaleFactor) : 0
+        hStr = state.vFlip ? `-${h}` : `${h}`
+      }
 
       parts.push(`${prefix}${wStr}x${hStr}`)
     }
@@ -2055,6 +2160,10 @@ export class ImageEditor {
       }
       // Clamp roundCornerRadius: same rule as root — max = floor(min(w, h) / 2),
       // using the layer's effective output dimensions (transforms override originals).
+      // When widthFull/heightFull is set, the layer renders at the parent canvas size
+      // which is unknown here; we approximate using originalDimensions (always a safe
+      // number — never NaN). The clamp may be slightly over-permissive for fill-mode
+      // layers but avoids any crash or type-error.
       if (
         mergedLayer.transforms?.roundCornerRadius &&
         mergedLayer.transforms.roundCornerRadius > 0
@@ -2097,7 +2206,8 @@ export class ImageEditor {
                 mergedLayer.transforms = { ...l.transforms, ...updates.transforms }
               }
             }
-            // Clamp roundCornerRadius in savedBaseState too (keep in sync)
+            // Clamp roundCornerRadius in savedBaseState too (keep in sync).
+            // See note above: approximates with originalDimensions for fill-mode layers.
             if (
               mergedLayer.transforms?.roundCornerRadius &&
               mergedLayer.transforms.roundCornerRadius > 0
