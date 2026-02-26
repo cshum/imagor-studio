@@ -446,7 +446,11 @@ export class ImageEditor {
    *   at every nesting level resolve correctly.
    */
   private computeParentDimensionsForContext(): { width: number; height: number } | null {
-    if (this.editingContext.length === 0 || !this.savedBaseState || !this.savedBaseImageDimensions) {
+    if (
+      this.editingContext.length === 0 ||
+      !this.savedBaseState ||
+      !this.savedBaseImageDimensions
+    ) {
       return null
     }
 
