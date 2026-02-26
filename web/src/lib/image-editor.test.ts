@@ -1706,6 +1706,45 @@ describe('ImageEditor', () => {
         const filterNames = (callArg.params.filters as Array<{ name: string }>).map((f) => f.name)
         expect(filterNames).not.toContain('proportion')
       })
+
+      it('does not scale f-N offset by scaleFactor in preview URL', async () => {
+        const { generateImagorUrl } = await import('@/api/imagor-api')
+
+        // originalDimensions = 1920x1080, previewMaxDimensions = 960x540 → scaleFactor = 0.5
+        editor.updatePreviewMaxDimensions({ width: 960, height: 540 })
+        // Explicit root dims so the scale calculation is deterministic
+        editor.updateParams({ width: 1920, height: 1080 })
+
+        const layer: ImageLayer = {
+          id: 'fill-scale-test',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'fill-scale-test',
+          originalDimensions: { width: 200, height: 150 },
+          // widthFull: offset 20 scaled by 0.5x scaleFactor → f-10
+          // height: fixed 200px should be scaled to 100 at 0.5x
+          transforms: { widthFull: true, widthFullOffset: 20, height: 200 },
+        }
+        editor.addLayer(layer)
+
+        // Fire the debounced preview
+        await vi.runAllTimersAsync()
+
+        // Inspect the most recent generateImagorUrl call
+        const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as {
+          params: { filters: Array<{ name: string; args: string }> }
+        }
+        const imageFilter = lastCall.params.filters.find((f) => f.name === 'image')
+
+        expect(imageFilter).toBeDefined()
+        // f-N offset is scaled by scaleFactor: 20 * 0.5 = 10; height 200 * 0.5 = 100
+        expect(imageFilter!.args).toContain('f-10x100')
+      })
     })
 
     describe('Preview Generation with Callbacks', () => {

@@ -541,12 +541,14 @@ export class ImageEditor {
       }
 
       // Build each axis string.
-      // Fill axes: emit f-token verbatim (never multiply by scaleFactor).
+      // Fill axes: scale the f-N offset by scaleFactor (same canvas shrink factor applies).
       // Fixed axes: scale and round as usual. Missing fixed axis defaults to 0.
       let wStr: string
       if (state.widthFull) {
         const fToken =
-          state.widthFullOffset && state.widthFullOffset > 0 ? `f-${state.widthFullOffset}` : 'f'
+          state.widthFullOffset && state.widthFullOffset > 0
+            ? `f-${Math.round(state.widthFullOffset * scaleFactor)}`
+            : 'f'
         wStr = state.hFlip ? `-${fToken}` : fToken
       } else {
         const w = state.width ? Math.round(state.width * scaleFactor) : 0
@@ -556,7 +558,9 @@ export class ImageEditor {
       let hStr: string
       if (state.heightFull) {
         const fToken =
-          state.heightFullOffset && state.heightFullOffset > 0 ? `f-${state.heightFullOffset}` : 'f'
+          state.heightFullOffset && state.heightFullOffset > 0
+            ? `f-${Math.round(state.heightFullOffset * scaleFactor)}`
+            : 'f'
         hStr = state.vFlip ? `-${fToken}` : fToken
       } else {
         const h = state.height ? Math.round(state.height * scaleFactor) : 0
