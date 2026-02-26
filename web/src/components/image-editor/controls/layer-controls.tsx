@@ -664,13 +664,13 @@ export function LayerControls({
               <Label htmlFor='layer-width' className='text-muted-foreground text-xs'>
                 W
               </Label>
-              <div className='flex items-center gap-1'>
+              <div className='flex items-center'>
                 <button
                   type='button'
                   onClick={widthFull ? handleWidthModeToggle : undefined}
                   disabled={visualCropEnabled}
                   className={cn(
-                    'text-xs transition-colors',
+                    'px-1 py-0.5 text-xs transition-colors',
                     !widthFull
                       ? 'text-foreground cursor-default font-medium'
                       : 'text-muted-foreground hover:text-foreground cursor-pointer',
@@ -678,13 +678,12 @@ export function LayerControls({
                 >
                   px
                 </button>
-                <span className='text-muted-foreground/50 text-xs'>·</span>
                 <button
                   type='button'
                   onClick={!widthFull ? handleWidthModeToggle : undefined}
                   disabled={visualCropEnabled}
                   className={cn(
-                    'transition-colors',
+                    'px-1 py-0.5 transition-colors',
                     widthFull
                       ? 'text-primary cursor-default'
                       : 'text-muted-foreground hover:text-foreground cursor-pointer',
@@ -746,13 +745,13 @@ export function LayerControls({
               <Label htmlFor='layer-height' className='text-muted-foreground text-xs'>
                 H
               </Label>
-              <div className='flex items-center gap-1'>
+              <div className='flex items-center'>
                 <button
                   type='button'
                   onClick={heightFull ? handleHeightModeToggle : undefined}
                   disabled={visualCropEnabled}
                   className={cn(
-                    'text-xs transition-colors',
+                    'px-1 py-0.5 text-xs transition-colors',
                     !heightFull
                       ? 'text-foreground cursor-default font-medium'
                       : 'text-muted-foreground hover:text-foreground cursor-pointer',
@@ -760,13 +759,12 @@ export function LayerControls({
                 >
                   px
                 </button>
-                <span className='text-muted-foreground/50 text-xs'>·</span>
                 <button
                   type='button'
                   onClick={!heightFull ? handleHeightModeToggle : undefined}
                   disabled={visualCropEnabled}
                   className={cn(
-                    'transition-colors',
+                    'px-1 py-0.5 transition-colors',
                     heightFull
                       ? 'text-primary cursor-default'
                       : 'text-muted-foreground hover:text-foreground cursor-pointer',
