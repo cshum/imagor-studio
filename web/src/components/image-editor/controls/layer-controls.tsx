@@ -10,6 +10,8 @@ import {
   Edit,
   Image as ImageIcon,
   Lock,
+  MoveHorizontal,
+  MoveVertical,
   Unlock,
 } from 'lucide-react'
 
@@ -660,20 +662,38 @@ export function LayerControls({
           <div className='space-y-1'>
             <div className='flex items-center justify-between'>
               <Label htmlFor='layer-width' className='text-muted-foreground text-xs'>
-                {t('imageEditor.dimensions.width')}
+                W
               </Label>
-              <button
-                type='button'
-                onClick={handleWidthModeToggle}
-                disabled={visualCropEnabled}
-                className={cn(
-                  'rounded px-1 text-xs font-medium transition-colors',
-                  widthFull ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
-                  visualCropEnabled && 'pointer-events-none opacity-50',
-                )}
-              >
-                {widthFull ? t('imageEditor.dimensions.fill') : 'px'}
-              </button>
+              <div className='flex items-center gap-1'>
+                <button
+                  type='button'
+                  onClick={widthFull ? handleWidthModeToggle : undefined}
+                  disabled={visualCropEnabled}
+                  className={cn(
+                    'text-xs transition-colors',
+                    !widthFull
+                      ? 'text-foreground cursor-default font-medium'
+                      : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                  )}
+                >
+                  px
+                </button>
+                <span className='text-muted-foreground/50 text-xs'>·</span>
+                <button
+                  type='button'
+                  onClick={!widthFull ? handleWidthModeToggle : undefined}
+                  disabled={visualCropEnabled}
+                  className={cn(
+                    'transition-colors',
+                    widthFull
+                      ? 'text-primary cursor-default'
+                      : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                  )}
+                  title='Stretch to fill width'
+                >
+                  <MoveHorizontal className='h-3 w-3' />
+                </button>
+              </div>
             </div>
             {widthFull ? (
               <div className='flex items-center gap-1'>
@@ -724,20 +744,38 @@ export function LayerControls({
           <div className='space-y-1'>
             <div className='flex items-center justify-between'>
               <Label htmlFor='layer-height' className='text-muted-foreground text-xs'>
-                {t('imageEditor.dimensions.height')}
+                H
               </Label>
-              <button
-                type='button'
-                onClick={handleHeightModeToggle}
-                disabled={visualCropEnabled}
-                className={cn(
-                  'rounded px-1 text-xs font-medium transition-colors',
-                  heightFull ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
-                  visualCropEnabled && 'pointer-events-none opacity-50',
-                )}
-              >
-                {heightFull ? t('imageEditor.dimensions.fill') : 'px'}
-              </button>
+              <div className='flex items-center gap-1'>
+                <button
+                  type='button'
+                  onClick={heightFull ? handleHeightModeToggle : undefined}
+                  disabled={visualCropEnabled}
+                  className={cn(
+                    'text-xs transition-colors',
+                    !heightFull
+                      ? 'text-foreground cursor-default font-medium'
+                      : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                  )}
+                >
+                  px
+                </button>
+                <span className='text-muted-foreground/50 text-xs'>·</span>
+                <button
+                  type='button'
+                  onClick={!heightFull ? handleHeightModeToggle : undefined}
+                  disabled={visualCropEnabled}
+                  className={cn(
+                    'transition-colors',
+                    heightFull
+                      ? 'text-primary cursor-default'
+                      : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                  )}
+                  title='Stretch to fill height'
+                >
+                  <MoveVertical className='h-3 w-3' />
+                </button>
+              </div>
             </div>
             {heightFull ? (
               <div className='flex items-center gap-1'>
