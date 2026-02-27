@@ -807,15 +807,9 @@
       "failedToGenerate": "Impossibile generare l'anteprima"
     },
     "fillPadding": {
-      "fillColor": "Colore di Riempimento",
       "noFill": "Nessun Riempimento",
       "transparent": "Trasparente",
       "customColor": "Colore Personalizzato",
-      "padding": "Spaziatura",
-      "top": "Alto",
-      "right": "Destra",
-      "bottom": "Basso",
-      "left": "Sinistra",
       "description": "Aggiungi spaziatura attorno all'immagine e riempi le aree trasparenti o con spaziatura con un colore"
     },
     "layers": {

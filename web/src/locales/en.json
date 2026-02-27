@@ -788,15 +788,9 @@
       "failedToGenerate": "Failed to generate preview"
     },
     "fillPadding": {
-      "fillColor": "Fill Color",
       "noFill": "No Fill",
       "transparent": "Transparent",
       "customColor": "Custom Color",
-      "padding": "Padding",
-      "top": "Top",
-      "right": "Right",
-      "bottom": "Bottom",
-      "left": "Left",
       "description": "Add padding around the image and fill transparent or padded areas with a color"
     },
     "layers": {

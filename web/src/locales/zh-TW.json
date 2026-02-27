@@ -810,15 +810,9 @@
       "failedToGenerate": "生成預覽失敗"
     },
     "fillPadding": {
-      "fillColor": "填充顏色",
       "noFill": "無填充",
       "transparent": "透明",
       "customColor": "自定義顏色",
-      "padding": "邊距",
-      "top": "上",
-      "right": "右",
-      "bottom": "下",
-      "left": "左",
       "description": "在圖片周圍新增邊距，並用顏色填充透明或邊距區域"
     },
     "layers": {
