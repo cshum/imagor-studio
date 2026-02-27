@@ -75,7 +75,7 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
   const isPaddingEnabled = fillMode === 'transparent' || fillMode === 'color'
 
   return (
-    <div className='space-y-3 pb-2'>
+    <div className='space-y-3'>
       {/* Fill — always-visible color picker; clicking it auto-switches to Color mode */}
       <div className='flex items-center gap-2'>
         <Select value={fillMode} onValueChange={handleFillModeChange}>
@@ -133,8 +133,6 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
           </div>
         ))}
       </div>
-
-      <p className='text-muted-foreground text-xs'>{t('imageEditor.fillPadding.description')}</p>
     </div>
   )
 }

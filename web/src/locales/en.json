@@ -790,8 +790,7 @@
     "fillPadding": {
       "noFill": "No Fill",
       "transparent": "Transparent",
-      "customColor": "Custom Color",
-      "description": "Add padding around the image and fill transparent or padded areas with a color"
+      "customColor": "Custom Color"
     },
     "layers": {
       "title": "Layers",

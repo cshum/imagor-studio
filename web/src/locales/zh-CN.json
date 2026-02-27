@@ -812,8 +812,7 @@
     "fillPadding": {
       "noFill": "无填充",
       "transparent": "透明",
-      "customColor": "自定义颜色",
-      "description": "在图片周围添加边距，并用颜色填充透明或边距区域"
+      "customColor": "自定义颜色"
     },
     "layers": {
       "title": "图层",
