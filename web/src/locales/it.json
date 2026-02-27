@@ -723,12 +723,10 @@
       "flipped": "Ribaltato"
     },
     "effects": {
-      "colorAdjustments": "Regolazioni Colore",
       "brightness": "Luminosità",
       "contrast": "Contrasto",
       "saturation": "Saturazione",
       "hue": "Tonalità",
-      "effects": "Effetti",
       "blur": "Sfocatura",
       "sharpen": "Nitidezza",
       "roundCorner": "Angoli Arrotondati",

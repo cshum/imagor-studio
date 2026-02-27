@@ -726,12 +726,10 @@
       "flipped": "已翻转"
     },
     "effects": {
-      "colorAdjustments": "颜色调整",
       "brightness": "亮度",
       "contrast": "对比度",
       "saturation": "饱和度",
       "hue": "色调",
-      "effects": "效果",
       "blur": "模糊",
       "sharpen": "锐化",
       "roundCorner": "圆角",

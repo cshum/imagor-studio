@@ -10,7 +10,7 @@ const EDITOR_SECTIONS = {
   layers: true,
   crop: true,
   effects: true,
-  transform: false,
+  transform: true,
   dimensions: false,
   output: false,
   fill: false,

@@ -699,12 +699,10 @@
       "flipped": "Flipped"
     },
     "effects": {
-      "colorAdjustments": "Color Adjustments",
       "brightness": "Brightness",
       "contrast": "Contrast",
       "saturation": "Saturation",
       "hue": "Hue",
-      "effects": "Effects",
       "blur": "Blur",
       "sharpen": "Sharpen",
       "roundCorner": "Round Corner",
