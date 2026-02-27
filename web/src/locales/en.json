@@ -760,9 +760,7 @@
         "tiff": "TIFF",
         "jp2": "JPEG 2000"
       },
-      "formatDescription": "Choose output format or keep original",
       "quality": "Quality",
-      "qualityDescription": "Higher quality = larger file size",
       "qualityAutoOptimized": "Quality will be automatically optimized to meet size limit",
       "maxFileSize": "Max Size",
       "maxSizeDescription": "Automatically adjusts quality to meet file size",

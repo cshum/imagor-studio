@@ -118,7 +118,6 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
             ))}
           </SelectContent>
         </Select>
-        <p className='text-muted-foreground text-xs'>{t('imageEditor.output.formatDescription')}</p>
       </div>
 
       {/* Quality Control */}
@@ -133,11 +132,11 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
           onChange={handleQualityChange}
           className={params.maxBytes ? 'pointer-events-none opacity-50' : ''}
         />
-        <p className='text-muted-foreground text-xs'>
-          {params.maxBytes
-            ? t('imageEditor.output.qualityAutoOptimized')
-            : t('imageEditor.output.qualityDescription')}
-        </p>
+        {params.maxBytes && (
+          <p className='text-muted-foreground text-xs'>
+            {t('imageEditor.output.qualityAutoOptimized')}
+          </p>
+        )}
       </div>
 
       {/* Metadata Stripping */}

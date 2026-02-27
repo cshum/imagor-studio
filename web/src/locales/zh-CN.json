@@ -787,9 +787,7 @@
         "tiff": "TIFF",
         "jp2": "JPEG 2000"
       },
-      "formatDescription": "选择输出格式或保持原始格式",
       "quality": "质量",
-      "qualityDescription": "质量越高 = 文件越大",
       "qualityAutoOptimized": "质量将自动优化以满足大小限制",
       "maxFileSize": "最大大小",
       "maxSizeDescription": "自动调整质量以满足目标文件大小",
