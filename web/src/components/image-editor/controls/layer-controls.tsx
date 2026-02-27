@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { BlendMode, ImageEditor, ImageLayer } from '@/lib/image-editor'
+import { clampFillOffset, toggleFillMode } from '@/lib/layer-fill'
 import { cn } from '@/lib/utils'
 
 interface LayerControlsProps {
@@ -181,63 +182,38 @@ export function LayerControls({
   //            If the layer is wider than the parent, clamp inset to 0 (full fill).
   // fill → px: resolve the fill back to an absolute px value using the parent dims.
   const handleWidthModeToggle = useCallback(() => {
-    if (!widthFull) {
-      // Switch to fill mode
-      const inset = Math.max(0, baseWidth - currentWidth)
-      onUpdate({
-        transforms: {
-          ...layer.transforms,
-          widthFull: true,
-          widthFullOffset: inset,
-          width: undefined,
-        },
-      })
-    } else {
-      // Switch back to px mode
-      const px = Math.max(1, baseWidth - widthFullOffset)
-      onUpdate({
-        transforms: {
-          ...layer.transforms,
-          widthFull: false,
-          widthFullOffset: undefined,
-          width: px,
-        },
-      })
-    }
+    onUpdate({
+      transforms: toggleFillMode(
+        'width',
+        widthFull,
+        baseWidth,
+        currentWidth,
+        widthFullOffset,
+        layer.transforms ?? {},
+      ),
+    })
   }, [widthFull, widthFullOffset, baseWidth, currentWidth, layer.transforms, onUpdate])
 
   const handleHeightModeToggle = useCallback(() => {
-    if (!heightFull) {
-      const inset = Math.max(0, baseHeight - currentHeight)
-      onUpdate({
-        transforms: {
-          ...layer.transforms,
-          heightFull: true,
-          heightFullOffset: inset,
-          height: undefined,
-        },
-      })
-    } else {
-      const px = Math.max(1, baseHeight - heightFullOffset)
-      onUpdate({
-        transforms: {
-          ...layer.transforms,
-          heightFull: false,
-          heightFullOffset: undefined,
-          height: px,
-        },
-      })
-    }
+    onUpdate({
+      transforms: toggleFillMode(
+        'height',
+        heightFull,
+        baseHeight,
+        currentHeight,
+        heightFullOffset,
+        layer.transforms ?? {},
+      ),
+    })
   }, [heightFull, heightFullOffset, baseHeight, currentHeight, layer.transforms, onUpdate])
 
   const handleWidthInsetChange = useCallback(
     (value: number) => {
-      const clamped = Math.min(Math.max(0, value), baseWidth - 1)
       onUpdate({
         transforms: {
           ...layer.transforms,
           widthFull: true,
-          widthFullOffset: clamped,
+          widthFullOffset: clampFillOffset(value, baseWidth),
           width: undefined,
         },
       })
@@ -247,12 +223,11 @@ export function LayerControls({
 
   const handleHeightInsetChange = useCallback(
     (value: number) => {
-      const clamped = Math.min(Math.max(0, value), baseHeight - 1)
       onUpdate({
         transforms: {
           ...layer.transforms,
           heightFull: true,
-          heightFullOffset: clamped,
+          heightFullOffset: clampFillOffset(value, baseHeight),
           height: undefined,
         },
       })

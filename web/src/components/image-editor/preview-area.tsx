@@ -11,8 +11,9 @@ import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
-import type { ImageEditor, ImageEditorState } from '@/lib/image-editor'
+import type { ImageEditor } from '@/lib/image-editor'
 import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
+import { enrichTransformsForFillMode } from '@/lib/layer-fill'
 import { cn } from '@/lib/utils'
 
 interface PreviewAreaProps {
@@ -593,48 +594,16 @@ export function PreviewArea({
                               layerWidth={layerOutputDims.width}
                               layerHeight={layerOutputDims.height}
                               onLayerChange={(updates) => {
-                                // Only enrich transforms when the update actually contains them.
-                                // Drag-only updates (x/y, no transforms key) go straight through —
-                                // spreading transforms: undefined would clobber existing transforms.
+                                // Drag-only updates (x/y, no transforms key) go straight through.
+                                // Fill-mode axes get their incoming px size converted to an inset offset.
                                 if (updates.transforms) {
-                                  const currentTransforms = selectedLayer.transforms ?? {}
-                                  const enrichedTransforms: Partial<ImageEditorState> = {
-                                    ...updates.transforms,
-                                  }
-
-                                  // Width axis: if fill mode, convert new px width → offset (keep fill mode).
-                                  // parentWidth - newWidth = inset offset.
-                                  // If newWidth >= parentWidth the offset is 0 (full-bleed, no inset).
-                                  if (updates.transforms.width !== undefined) {
-                                    if (currentTransforms.widthFull) {
-                                      const newOffset = Math.max(
-                                        0,
-                                        outputDims.width - updates.transforms.width,
-                                      )
-                                      enrichedTransforms.widthFull = true
-                                      enrichedTransforms.widthFullOffset = newOffset
-                                      delete enrichedTransforms.width
-                                    }
-                                    // Non-fill axis: leave width as-is (explicit px)
-                                  }
-
-                                  // Height axis: same logic.
-                                  if (updates.transforms.height !== undefined) {
-                                    if (currentTransforms.heightFull) {
-                                      const newOffset = Math.max(
-                                        0,
-                                        outputDims.height - updates.transforms.height,
-                                      )
-                                      enrichedTransforms.heightFull = true
-                                      enrichedTransforms.heightFullOffset = newOffset
-                                      delete enrichedTransforms.height
-                                    }
-                                    // Non-fill axis: leave height as-is (explicit px)
-                                  }
-
                                   imageEditor.updateLayer(selectedLayerId, {
                                     ...updates,
-                                    transforms: enrichedTransforms,
+                                    transforms: enrichTransformsForFillMode(
+                                      updates.transforms,
+                                      selectedLayer.transforms ?? {},
+                                      outputDims,
+                                    ),
                                   })
                                 } else {
                                   imageEditor.updateLayer(selectedLayerId, updates)
