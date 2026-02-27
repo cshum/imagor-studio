@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { ImageDimensions, ImageEditorState } from './image-editor'
-import { calculateLayerOutputDimensions } from './layer-dimensions'
+import { calculateCanvasOutputDimensions, calculateLayerOutputDimensions } from './layer-dimensions'
 
 describe('calculateLayerOutputDimensions', () => {
   const originalDimensions: ImageDimensions = {
@@ -390,6 +390,153 @@ describe('calculateLayerOutputDimensions', () => {
       // 800 * 0.41625 = 333, 600 * 0.41625 = 249.75 → 250
       expect(result.width).toBe(333)
       expect(result.height).toBe(250)
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// calculateCanvasOutputDimensions
+// ---------------------------------------------------------------------------
+
+describe('calculateCanvasOutputDimensions', () => {
+  const orig: ImageDimensions = { width: 800, height: 600 }
+
+  it('returns original dimensions when params is empty', () => {
+    expect(calculateCanvasOutputDimensions({}, orig)).toEqual({ width: 800, height: 600 })
+  })
+
+  it('returns explicit width and height when set', () => {
+    expect(calculateCanvasOutputDimensions({ width: 400, height: 300 }, orig)).toEqual({
+      width: 400,
+      height: 300,
+    })
+  })
+
+  it('uses crop region as source when crop params present', () => {
+    const params: Partial<ImageEditorState> = {
+      cropWidth: 400,
+      cropHeight: 200,
+    }
+    expect(calculateCanvasOutputDimensions(params, orig)).toEqual({ width: 400, height: 200 })
+  })
+
+  describe('fitIn mode', () => {
+    it('scales down proportionally to fit within target', () => {
+      // src 800×600, target 400×400 → scale min(400/800, 400/600) = 0.5
+      const result = calculateCanvasOutputDimensions({ width: 400, height: 400, fitIn: true }, orig)
+      expect(result).toEqual({ width: 400, height: 300 })
+    })
+
+    it('does not upscale beyond 1.0', () => {
+      // target larger than source → scale capped at 1.0
+      const result = calculateCanvasOutputDimensions(
+        { width: 1600, height: 1200, fitIn: true },
+        orig,
+      )
+      expect(result).toEqual({ width: 800, height: 600 })
+    })
+
+    it('treats missing height as unconstrained', () => {
+      // only width constraint; scale = min(400/800, Infinity, 1) = 0.5
+      const result = calculateCanvasOutputDimensions({ width: 400, fitIn: true }, orig)
+      expect(result).toEqual({ width: 400, height: 300 })
+    })
+
+    it('treats missing width as unconstrained', () => {
+      const result = calculateCanvasOutputDimensions({ height: 300, fitIn: true }, orig)
+      expect(result).toEqual({ width: 400, height: 300 })
+    })
+  })
+
+  describe('padding', () => {
+    it('adds padding to output dimensions', () => {
+      const result = calculateCanvasOutputDimensions(
+        {
+          width: 400,
+          height: 300,
+          paddingLeft: 10,
+          paddingRight: 10,
+          paddingTop: 5,
+          paddingBottom: 5,
+        },
+        orig,
+      )
+      expect(result).toEqual({ width: 420, height: 310 })
+    })
+
+    it('always applies padding (not gated on fillColor)', () => {
+      const result = calculateCanvasOutputDimensions({ paddingLeft: 20, paddingRight: 20 }, orig)
+      expect(result).toEqual({ width: 840, height: 600 })
+    })
+  })
+
+  describe('proportion', () => {
+    it('scales the full canvas (image + padding) by proportion', () => {
+      // 800×600 with 50% proportion → 400×300
+      const result = calculateCanvasOutputDimensions({ proportion: 50 }, orig)
+      expect(result).toEqual({ width: 400, height: 300 })
+    })
+
+    it('proportion of 100 is a no-op', () => {
+      const result = calculateCanvasOutputDimensions({ proportion: 100 }, orig)
+      expect(result).toEqual({ width: 800, height: 600 })
+    })
+
+    it('applies proportion after padding', () => {
+      // base 400+20+20=440 wide, 300+10+10=320 tall, then 50%
+      const result = calculateCanvasOutputDimensions(
+        {
+          width: 400,
+          height: 300,
+          paddingLeft: 20,
+          paddingRight: 20,
+          paddingTop: 10,
+          paddingBottom: 10,
+          proportion: 50,
+        },
+        orig,
+      )
+      expect(result).toEqual({ width: 220, height: 160 })
+    })
+  })
+
+  describe('fill mode', () => {
+    const parent: ImageDimensions = { width: 1000, height: 800 }
+
+    it('resolves widthFull axis from parent minus offset', () => {
+      const result = calculateCanvasOutputDimensions(
+        { widthFull: true, widthFullOffset: 100 },
+        orig,
+        parent,
+      )
+      expect(result).toEqual({ width: 900, height: 600 })
+    })
+
+    it('resolves heightFull axis from parent minus offset', () => {
+      const result = calculateCanvasOutputDimensions(
+        { heightFull: true, heightFullOffset: 200 },
+        orig,
+        parent,
+      )
+      expect(result).toEqual({ width: 800, height: 600 })
+    })
+
+    it('resolves both axes in fill mode', () => {
+      const result = calculateCanvasOutputDimensions(
+        { widthFull: true, widthFullOffset: 0, heightFull: true, heightFullOffset: 0 },
+        orig,
+        parent,
+      )
+      expect(result).toEqual({ width: 1000, height: 800 })
+    })
+
+    it('falls back to explicit width for non-fill axis when other axis is fill', () => {
+      const result = calculateCanvasOutputDimensions(
+        { widthFull: true, widthFullOffset: 0, height: 400 },
+        orig,
+        parent,
+      )
+      expect(result).toEqual({ width: 1000, height: 400 })
     })
   })
 })
