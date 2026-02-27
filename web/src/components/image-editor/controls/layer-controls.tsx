@@ -706,7 +706,7 @@ export function LayerControls({
               onBlur={(e) => (!widthFull ? handleWidthBlur(e.target.value) : undefined)}
               disabled={visualCropEnabled}
               min='1'
-              max={widthFull ? baseWidth : 10000}
+              max={widthFull ? baseWidth : undefined}
               className='h-8'
             />
           </div>
@@ -775,7 +775,7 @@ export function LayerControls({
               onBlur={(e) => (!heightFull ? handleHeightBlur(e.target.value) : undefined)}
               disabled={visualCropEnabled}
               min='1'
-              max={heightFull ? baseHeight : 10000}
+              max={heightFull ? baseHeight : undefined}
               className='h-8'
             />
           </div>
