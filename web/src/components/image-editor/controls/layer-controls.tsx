@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { BlendMode, ImageEditor, ImageLayer } from '@/lib/image-editor'
+import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
 import { clampFillOffset, toggleFillMode } from '@/lib/layer-fill'
 import { cn } from '@/lib/utils'
 
@@ -87,15 +88,17 @@ export function LayerControls({
   const baseWidth = baseDimensions.width
   const baseHeight = baseDimensions.height
 
-  // Get current width/height from transforms or use original dimensions.
-  // In fill mode the `width`/`height` keys are undefined, so resolve against the
-  // parent canvas so that alignment-change handlers compute the correct visual position.
-  const currentWidth = widthFull
-    ? Math.max(1, baseWidth - widthFullOffset)
-    : layer.transforms?.width || layer.originalDimensions.width
-  const currentHeight = heightFull
-    ? Math.max(1, baseHeight - heightFullOffset)
-    : layer.transforms?.height || layer.originalDimensions.height
+  // Get the layer's actual rendered size — matches what the overlay uses.
+  // calculateLayerOutputDimensions resolves fill-mode (fh/fw) against parent dims AND
+  // adds the layer's own padding (when fillColor is set), so alignment-change handlers
+  // compute the correct visual position even when the layer has its own fill+padding.
+  const layerOutputDims = calculateLayerOutputDimensions(
+    layer.originalDimensions,
+    layer.transforms,
+    baseDimensions,
+  )
+  const currentWidth = layerOutputDims.width
+  const currentHeight = layerOutputDims.height
 
   const handleWidthChange = useCallback(
     (value: string) => {
