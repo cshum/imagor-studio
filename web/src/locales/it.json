@@ -765,7 +765,8 @@
         "middle": "Mezzo",
         "bottom": "Basso"
       },
-      "originalRatio": "Originale: {{ratio}}"
+      "originalRatio": "Originale: {{ratio}}",
+      "outputSize": "Dimensione output"
     },
     "resize": {
       "title": "Ridimensiona"

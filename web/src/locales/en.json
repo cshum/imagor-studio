@@ -741,7 +741,8 @@
         "middle": "Middle",
         "bottom": "Bottom"
       },
-      "originalRatio": "Original: {{ratio}}"
+      "originalRatio": "Original: {{ratio}}",
+      "outputSize": "Output size"
     },
     "resize": {
       "title": "Resize"

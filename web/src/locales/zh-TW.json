@@ -768,7 +768,8 @@
         "middle": "中",
         "bottom": "下"
       },
-      "originalRatio": "原始：{{ratio}}"
+      "originalRatio": "原始: {{ratio}}",
+      "outputSize": "輸出尺寸"
     },
     "resize": {
       "title": "調整大小"

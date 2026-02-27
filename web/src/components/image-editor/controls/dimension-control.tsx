@@ -381,7 +381,8 @@ export function DimensionControl({
       )}
 
       {/* Output dimensions summary */}
-      <div className='flex items-center justify-end text-xs'>
+      <div className='flex items-center justify-between text-xs'>
+        <span className='text-muted-foreground'>{t('imageEditor.dimensions.outputSize')}</span>
         <span className='font-medium tabular-nums'>
           {outputDimensions.width} × {outputDimensions.height} px
         </span>
