@@ -694,33 +694,21 @@ export function LayerControls({
                 </button>
               </div>
             </div>
-            {widthFull ? (
-              <div className='flex items-center gap-1'>
-                <span className='text-muted-foreground shrink-0 text-xs'>−</span>
-                <Input
-                  type='number'
-                  value={widthFullOffset}
-                  onChange={(e) => handleWidthInsetChange(Number(e.target.value) || 0)}
-                  disabled={visualCropEnabled}
-                  min='0'
-                  max={baseWidth - 1}
-                  placeholder='0'
-                  className='h-8'
-                />
-              </div>
-            ) : (
-              <Input
-                id='layer-width'
-                type='number'
-                value={currentWidth}
-                onChange={(e) => handleWidthChange(e.target.value)}
-                onBlur={(e) => handleWidthBlur(e.target.value)}
-                disabled={visualCropEnabled}
-                min='1'
-                max='10000'
-                className='h-8'
-              />
-            )}
+            <Input
+              id='layer-width'
+              type='number'
+              value={widthFull ? Math.max(1, baseWidth - widthFullOffset) : currentWidth}
+              onChange={(e) =>
+                widthFull
+                  ? handleWidthInsetChange(baseWidth - (Number(e.target.value) || 1))
+                  : handleWidthChange(e.target.value)
+              }
+              onBlur={(e) => (!widthFull ? handleWidthBlur(e.target.value) : undefined)}
+              disabled={visualCropEnabled}
+              min='1'
+              max={widthFull ? baseWidth : 10000}
+              className='h-8'
+            />
           </div>
 
           {/* Lock Button */}
@@ -775,33 +763,21 @@ export function LayerControls({
                 </button>
               </div>
             </div>
-            {heightFull ? (
-              <div className='flex items-center gap-1'>
-                <span className='text-muted-foreground shrink-0 text-xs'>−</span>
-                <Input
-                  type='number'
-                  value={heightFullOffset}
-                  onChange={(e) => handleHeightInsetChange(Number(e.target.value) || 0)}
-                  disabled={visualCropEnabled}
-                  min='0'
-                  max={baseHeight - 1}
-                  placeholder='0'
-                  className='h-8'
-                />
-              </div>
-            ) : (
-              <Input
-                id='layer-height'
-                type='number'
-                value={currentHeight}
-                onChange={(e) => handleHeightChange(e.target.value)}
-                onBlur={(e) => handleHeightBlur(e.target.value)}
-                disabled={visualCropEnabled}
-                min='1'
-                max='10000'
-                className='h-8'
-              />
-            )}
+            <Input
+              id='layer-height'
+              type='number'
+              value={heightFull ? Math.max(1, baseHeight - heightFullOffset) : currentHeight}
+              onChange={(e) =>
+                heightFull
+                  ? handleHeightInsetChange(baseHeight - (Number(e.target.value) || 1))
+                  : handleHeightChange(e.target.value)
+              }
+              onBlur={(e) => (!heightFull ? handleHeightBlur(e.target.value) : undefined)}
+              disabled={visualCropEnabled}
+              min='1'
+              max={heightFull ? baseHeight : 10000}
+              className='h-8'
+            />
           </div>
         </div>
       </div>
