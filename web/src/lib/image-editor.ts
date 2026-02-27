@@ -1137,6 +1137,18 @@ export class ImageEditor {
       height: height ?? actualOutputHeight,
     }
 
+    // When fillColor is set, imagor's fill() expands the canvas by the padding amounts
+    // BEFORE image() filters run, so child f-tokens (fh, fw) resolve against the padded
+    // canvas — not the pre-padding resize dimensions. Add scaled padding here to match.
+    if (state.fillColor !== undefined) {
+      const scaledPL = state.paddingLeft ? Math.round(state.paddingLeft * scaleFactor) : 0
+      const scaledPT = state.paddingTop ? Math.round(state.paddingTop * scaleFactor) : 0
+      const scaledPR = state.paddingRight ? Math.round(state.paddingRight * scaleFactor) : 0
+      const scaledPB = state.paddingBottom ? Math.round(state.paddingBottom * scaleFactor) : 0
+      canvasDimsForLayers.width += scaledPL + scaledPR
+      canvasDimsForLayers.height += scaledPT + scaledPB
+    }
+
     if (shouldApplyLayers && state.layers && state.layers.length > 0) {
       for (const layer of state.layers) {
         if (!layer.visible) continue

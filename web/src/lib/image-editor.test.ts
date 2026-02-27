@@ -1867,6 +1867,65 @@ describe('ImageEditor', () => {
         expect(imageFilter!.args).toContain('950x100')
         expect(imageFilter!.args).not.toContain('f-')
       })
+      it('pre-resolves heightFull layer f-token against padded canvas when parent has fillColor+padding', async () => {
+        // Regression: canvasDimsForLayers was using pre-padding resize dimensions,
+        // so f-tokens were pre-resolved against the wrong (smaller) height.
+        // Fix: add scaled padding to canvasDimsForLayers when fillColor is set.
+        //
+        // Setup: base image 3804x2800 (crop), paddingBottom=200, fillColor=FFFFFF
+        //   → full canvas = 3804x3000
+        //   Layer: heightFull=true, heightFullOffset=110
+        //   Expected pre-resolved height = 3000 - 110 = 2890
+        //   Bug produced:            2800 - 110 = 2690 (missing padding)
+        const { generateImagorUrl } = await import('@/api/imagor-api')
+
+        const paddedEditor = new ImageEditor({
+          imagePath: 'photo.jpg',
+          originalDimensions: { width: 4474, height: 3786 },
+        })
+        paddedEditor.initialize({ onPreviewUpdate: vi.fn() })
+
+        // Crop to 3804x2800, add fillColor+paddingBottom=200
+        paddedEditor.updateParams({
+          cropLeft: 335,
+          cropTop: 493,
+          cropWidth: 3804,
+          cropHeight: 2800,
+          fillColor: 'FFFFFF',
+          paddingBottom: 200,
+        })
+
+        const layer: ImageLayer = {
+          id: 'fill-pad-test',
+          imagePath: 'layer.jpg',
+          x: -736,
+          y: 'top',
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'fill-pad-test',
+          originalDimensions: { width: 2025, height: 5000 },
+          transforms: { width: 2025, heightFull: true, heightFullOffset: 110 },
+        }
+        paddedEditor.addLayer(layer)
+
+        // Force preview without scale constraint (no previewMaxDimensions)
+        await vi.runAllTimersAsync()
+
+        const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as {
+          params: { filters: Array<{ name: string; args: string }> }
+        }
+        const imageFilter = lastCall.params.filters.find((f) => f.name === 'image')
+        expect(imageFilter).toBeDefined()
+
+        // padded canvas height = 2800 + 200 = 3000. heightFullOffset = 110.
+        // Correct pre-resolved height = 3000 - 110 = 2890.
+        // Buggy pre-resolved height was 2800 - 110 = 2690.
+        expect(imageFilter!.args).toContain('2025x2890/')
+        expect(imageFilter!.args).not.toContain('2025x2690/')
+        expect(imageFilter!.args).not.toContain('f-')
+      })
     })
 
     describe('Preview Generation with Callbacks', () => {
