@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
-  applySnapping,
-  calculateLayerPosition,
-  calculateResizeWithAspectRatioAndSnapping,
+  buildDragUpdates,
+  calculateOverlayLayout,
   convertDisplayToLayerPosition,
+  resizeLayerWithCenterAwareness,
   type ResizeHandle,
 } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
@@ -26,9 +26,7 @@ interface LayerOverlayProps {
   baseImageWidth: number
   baseImageHeight: number
   paddingLeft?: number
-  paddingRight?: number
   paddingTop?: number
-  paddingBottom?: number
   layerPaddingLeft?: number
   layerPaddingRight?: number
   layerPaddingTop?: number
@@ -49,9 +47,7 @@ export function LayerOverlay({
   baseImageWidth,
   baseImageHeight,
   paddingLeft = 0,
-  paddingRight = 0,
   paddingTop = 0,
-  paddingBottom = 0,
   layerPaddingLeft = 0,
   layerPaddingRight = 0,
   layerPaddingTop = 0,
@@ -61,16 +57,9 @@ export function LayerOverlay({
   onDeselect,
   onEnterEditMode,
 }: LayerOverlayProps) {
-  // Calculate content area dimensions (image without padding)
-  // Layers are positioned relative to the content area, not the total canvas
-  const contentWidth = baseImageWidth - paddingLeft - paddingRight
-  const contentHeight = baseImageHeight - paddingTop - paddingBottom
-
-  // Calculate CSS percentage strings for position and size
-  // This allows the browser to handle scaling automatically via CSS
-  const getPercentageStyles = useCallback(() => {
-    // Use the utility function to calculate position
-    const { leftPercent, topPercent } = calculateLayerPosition(
+  // Calculate CSS percentage strings, drag capabilities and alignment flags
+  const { leftPercent, topPercent, widthPercent, heightPercent, canDragX, canDragY } =
+    calculateOverlayLayout(
       layerX,
       layerY,
       layerWidth,
@@ -80,54 +69,6 @@ export function LayerOverlay({
       paddingLeft,
       paddingTop,
     )
-
-    // Calculate width/height as percentages relative to total canvas (including padding)
-    // The overlay represents the entire preview image which includes padding
-    const widthPercent = `${(layerWidth / baseImageWidth) * 100}%`
-    const heightPercent = `${(layerHeight / baseImageHeight) * 100}%`
-
-    // Determine drag capabilities and alignment
-    // Allow dragging for all defined positions, including center
-    const canDragX = typeof layerX !== 'undefined'
-    const canDragY = typeof layerY !== 'undefined'
-    const isRightAligned = layerX === 'right' || (typeof layerX === 'number' && layerX < 0)
-    const isBottomAligned = layerY === 'bottom' || (typeof layerY === 'number' && layerY < 0)
-
-    return {
-      leftPercent,
-      topPercent,
-      widthPercent,
-      heightPercent,
-      canDragX,
-      canDragY,
-      isRightAligned,
-      isBottomAligned,
-    }
-  }, [
-    layerX,
-    layerY,
-    layerWidth,
-    layerHeight,
-    baseImageWidth,
-    baseImageHeight,
-    contentWidth,
-    contentHeight,
-    paddingLeft,
-    paddingRight,
-    paddingTop,
-    paddingBottom,
-  ])
-
-  const {
-    leftPercent,
-    topPercent,
-    widthPercent,
-    heightPercent,
-    canDragX,
-    canDragY,
-    isRightAligned,
-    isBottomAligned,
-  } = getPercentageStyles()
 
   const overlayRef = useRef<HTMLDivElement>(null)
   const layerBoxRef = useRef<HTMLDivElement>(null)
@@ -216,106 +157,23 @@ export function LayerOverlay({
         const deltaX = clientX - dragStart.x
         const deltaY = clientY - dragStart.y
 
-        let newDisplayX = initialState.displayX
-        let newDisplayY = initialState.displayY
-
         // Apply delta only to draggable axes
         // No clamping - allow dragging beyond boundaries
-        // convertToLayerPosition will auto-switch alignment when crossing edges
-        if (canDragX) {
-          newDisplayX = initialState.displayX + deltaX
-        }
+        const newDisplayX = canDragX ? initialState.displayX + deltaX : initialState.displayX
+        const newDisplayY = canDragY ? initialState.displayY + deltaY : initialState.displayY
 
-        if (canDragY) {
-          newDisplayY = initialState.displayY + deltaY
-        }
-
-        // Apply snapping (unless Cmd/Ctrl is pressed to disable)
+        // Apply snapping, center-alignment override, and position conversion
         const disableSnapping = e.metaKey || e.ctrlKey
-
-        // Apply edge and center snapping FIRST
-        const snapped = applySnapping(
+        const updates = buildDragUpdates(
           newDisplayX,
           newDisplayY,
           initialState.displayWidth,
           initialState.displayHeight,
           initialState.overlayWidth,
           initialState.overlayHeight,
+          canDragX,
+          canDragY,
           disableSnapping,
-        )
-        newDisplayX = snapped.x
-        newDisplayY = snapped.y
-
-        // Check if snapped to center - if so, auto-switch to center alignment
-        if (!disableSnapping && (snapped.snappedToCenter.x || snapped.snappedToCenter.y)) {
-          // If snapping to center on both axes, switch to full center alignment
-          if (snapped.snappedToCenter.x && snapped.snappedToCenter.y) {
-            onLayerChange({ x: 'center', y: 'center' })
-            return
-          }
-
-          // If snapping to horizontal center only, switch x to center
-          if (snapped.snappedToCenter.x && canDragX) {
-            const updates = convertDisplayToLayerPosition(
-              newDisplayX,
-              newDisplayY,
-              initialState.displayWidth,
-              initialState.displayHeight,
-              initialState.overlayWidth,
-              initialState.overlayHeight,
-              baseImageWidth,
-              baseImageHeight,
-              layerPaddingLeft,
-              layerPaddingRight,
-              layerPaddingTop,
-              layerPaddingBottom,
-              layerRotation,
-              layerX,
-              layerY,
-              layerFillColor,
-              false,
-            )
-            delete updates.transforms
-            updates.x = 'center'
-            onLayerChange(updates)
-            return
-          }
-
-          // If snapping to vertical center only, switch y to center
-          if (snapped.snappedToCenter.y && canDragY) {
-            const updates = convertDisplayToLayerPosition(
-              newDisplayX,
-              newDisplayY,
-              initialState.displayWidth,
-              initialState.displayHeight,
-              initialState.overlayWidth,
-              initialState.overlayHeight,
-              baseImageWidth,
-              baseImageHeight,
-              layerPaddingLeft,
-              layerPaddingRight,
-              layerPaddingTop,
-              layerPaddingBottom,
-              layerRotation,
-              layerX,
-              layerY,
-              layerFillColor,
-              false,
-            )
-            delete updates.transforms
-            updates.y = 'center'
-            onLayerChange(updates)
-            return
-          }
-        }
-
-        const updates = convertDisplayToLayerPosition(
-          newDisplayX,
-          newDisplayY,
-          initialState.displayWidth,
-          initialState.displayHeight,
-          initialState.overlayWidth,
-          initialState.overlayHeight,
           baseImageWidth,
           baseImageHeight,
           layerPaddingLeft,
@@ -326,29 +184,29 @@ export function LayerOverlay({
           layerX,
           layerY,
           layerFillColor,
-          false, // isResizing = false (dragging)
         )
-        // During drag, only update position - don't recalculate dimensions
-        // This prevents rounding errors from causing dimension changes
-        delete updates.transforms
         onLayerChange(updates)
       } else if (isResizing && activeHandle) {
         const deltaX = clientX - dragStart.x
         const deltaY = clientY - dragStart.y
 
-        // Use the pure function to calculate resize dimensions
         const disableSnapping = e.metaKey || e.ctrlKey
         const aspectRatio = layerWidth / layerHeight
 
+        // resizeLayerWithCenterAwareness doubles the effective delta for any
+        // center-aligned axis so the dragged edge tracks the pointer 1:1, then
+        // re-centers the resulting box.
         const {
           left: newLeft,
           top: newTop,
           width: newWidth,
           height: newHeight,
-        } = calculateResizeWithAspectRatioAndSnapping(
+        } = resizeLayerWithCenterAwareness(
           activeHandle,
           deltaX,
           deltaY,
+          layerX === 'center',
+          layerY === 'center',
           initialState.displayX,
           initialState.displayY,
           initialState.displayWidth,
@@ -409,16 +267,12 @@ export function LayerOverlay({
     initialState,
     canDragX,
     canDragY,
-    isRightAligned,
-    isBottomAligned,
     onLayerChange,
     lockedAspectRatio,
     layerWidth,
     layerHeight,
     baseImageWidth,
     baseImageHeight,
-    paddingLeft,
-    paddingTop,
     layerPaddingLeft,
     layerPaddingRight,
     layerPaddingTop,

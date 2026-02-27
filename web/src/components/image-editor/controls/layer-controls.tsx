@@ -10,6 +10,8 @@ import {
   Edit,
   Image as ImageIcon,
   Lock,
+  MoveHorizontal,
+  MoveVertical,
   Unlock,
 } from 'lucide-react'
 
@@ -26,6 +28,8 @@ import {
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { BlendMode, ImageEditor, ImageLayer } from '@/lib/image-editor'
+import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
+import { clampFillOffset, toggleFillMode } from '@/lib/layer-fill'
 import { cn } from '@/lib/utils'
 
 interface LayerControlsProps {
@@ -69,14 +73,41 @@ export function LayerControls({
     return layer.originalDimensions.width / layer.originalDimensions.height
   })
 
-  // Get current width/height from transforms or use original dimensions
-  const currentWidth = layer.transforms?.width || layer.originalDimensions.width
-  const currentHeight = layer.transforms?.height || layer.originalDimensions.height
+  // Fill-mode (parent-relative) state
+  const widthFull = layer.transforms?.widthFull ?? false
+  const heightFull = layer.transforms?.heightFull ?? false
+  const widthFullOffset = layer.transforms?.widthFullOffset ?? 0
+  const heightFullOffset = layer.transforms?.heightFullOffset ?? 0
+
+  // Aspect ratio lock is not meaningful when either axis is in fill mode
+  // (the actual pixel size depends on the parent canvas at imagor render time)
+  const isAspectLockDisabled = visualCropEnabled || widthFull || heightFull
 
   // Get base image dimensions
   const baseDimensions = imageEditor.getOutputDimensions()
   const baseWidth = baseDimensions.width
   const baseHeight = baseDimensions.height
+
+  // Full rendered size including the layer's own padding — used by alignment handlers
+  // and the dimension input display so visual-position math is correct.
+  const layerOutputDims = calculateLayerOutputDimensions(
+    layer.originalDimensions,
+    layer.transforms,
+    baseDimensions,
+  )
+  const currentWidth = layerOutputDims.width
+  const currentHeight = layerOutputDims.height
+
+  // Pre-padding image-resize size — used by toggleFillMode when entering fill mode.
+  // toggleFillMode computes: inset = parentPx - rawPx, so that after the fill filter
+  // re-adds padding the total canvas stays the same size.
+  // (When leaving fill mode, rawPx is ignored; toggleFillMode uses the offset instead.)
+  const rawWidth = widthFull
+    ? Math.max(1, baseWidth - widthFullOffset)
+    : layer.transforms?.width || layer.originalDimensions.width
+  const rawHeight = heightFull
+    ? Math.max(1, baseHeight - heightFullOffset)
+    : layer.transforms?.height || layer.originalDimensions.height
 
   const handleWidthChange = useCallback(
     (value: string) => {
@@ -162,6 +193,64 @@ export function LayerControls({
       }
     },
     [layer.transforms, layer.originalDimensions.height, onUpdate],
+  )
+
+  // Toggle width axis between fixed-px and fill (f-token) mode.
+  // px → fill: convert current pixel size to an inset so the visual size is preserved.
+  //            If the layer is wider than the parent, clamp inset to 0 (full fill).
+  // fill → px: resolve the fill back to an absolute px value using the parent dims.
+  const handleWidthModeToggle = useCallback(() => {
+    onUpdate({
+      transforms: toggleFillMode(
+        'width',
+        widthFull,
+        baseWidth,
+        rawWidth,
+        widthFullOffset,
+        layer.transforms ?? {},
+      ),
+    })
+  }, [widthFull, widthFullOffset, baseWidth, rawWidth, layer.transforms, onUpdate])
+
+  const handleHeightModeToggle = useCallback(() => {
+    onUpdate({
+      transforms: toggleFillMode(
+        'height',
+        heightFull,
+        baseHeight,
+        rawHeight,
+        heightFullOffset,
+        layer.transforms ?? {},
+      ),
+    })
+  }, [heightFull, heightFullOffset, baseHeight, rawHeight, layer.transforms, onUpdate])
+
+  const handleWidthInsetChange = useCallback(
+    (value: number) => {
+      onUpdate({
+        transforms: {
+          ...layer.transforms,
+          widthFull: true,
+          widthFullOffset: clampFillOffset(value, baseWidth),
+          width: undefined,
+        },
+      })
+    },
+    [baseWidth, layer.transforms, onUpdate],
+  )
+
+  const handleHeightInsetChange = useCallback(
+    (value: number) => {
+      onUpdate({
+        transforms: {
+          ...layer.transforms,
+          heightFull: true,
+          heightFullOffset: clampFillOffset(value, baseHeight),
+          height: undefined,
+        },
+      })
+    },
+    [baseHeight, layer.transforms, onUpdate],
   )
 
   // Parse current alignment from x/y values
@@ -562,19 +651,55 @@ export function LayerControls({
       {/* Dimensions Control */}
       <div className='space-y-3'>
         <div className='grid grid-cols-[1fr_auto_1fr] items-end gap-2'>
-          <div>
-            <Label htmlFor='layer-width' className='text-muted-foreground text-xs'>
-              {t('imageEditor.dimensions.width')}
-            </Label>
+          {/* Width */}
+          <div className='space-y-1'>
+            <div className='flex items-center justify-between'>
+              <Label htmlFor='layer-width' className='text-muted-foreground text-xs'>
+                W
+              </Label>
+              <div className='flex items-center'>
+                <button
+                  type='button'
+                  onClick={widthFull ? handleWidthModeToggle : undefined}
+                  disabled={visualCropEnabled}
+                  className={cn(
+                    'px-1 py-0.5 text-xs transition-colors',
+                    !widthFull
+                      ? 'text-foreground cursor-default font-medium'
+                      : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                  )}
+                >
+                  px
+                </button>
+                <button
+                  type='button'
+                  onClick={!widthFull ? handleWidthModeToggle : undefined}
+                  disabled={visualCropEnabled}
+                  className={cn(
+                    'px-1 py-0.5 transition-colors',
+                    widthFull
+                      ? 'text-primary cursor-default'
+                      : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                  )}
+                  title='Stretch to fill width'
+                >
+                  <MoveHorizontal className='h-3 w-3' />
+                </button>
+              </div>
+            </div>
             <Input
               id='layer-width'
               type='number'
-              value={currentWidth}
-              onChange={(e) => handleWidthChange(e.target.value)}
-              onBlur={(e) => handleWidthBlur(e.target.value)}
+              value={widthFull ? Math.max(1, baseWidth - widthFullOffset) : currentWidth}
+              onChange={(e) =>
+                widthFull
+                  ? handleWidthInsetChange(baseWidth - (Number(e.target.value) || 1))
+                  : handleWidthChange(e.target.value)
+              }
+              onBlur={(e) => (!widthFull ? handleWidthBlur(e.target.value) : undefined)}
               disabled={visualCropEnabled}
               min='1'
-              max='10000'
+              max={widthFull ? baseWidth : undefined}
               className='h-8'
             />
           </div>
@@ -584,7 +709,7 @@ export function LayerControls({
             variant='outline'
             size='sm'
             onClick={() => onAspectRatioLockChange(!aspectRatioLocked)}
-            disabled={visualCropEnabled}
+            disabled={isAspectLockDisabled}
             className='h-8 w-8 p-0'
             title={
               aspectRatioLocked
@@ -595,19 +720,55 @@ export function LayerControls({
             {aspectRatioLocked ? <Lock className='h-4 w-4' /> : <Unlock className='h-4 w-4' />}
           </Button>
 
-          <div>
-            <Label htmlFor='layer-height' className='text-muted-foreground text-xs'>
-              {t('imageEditor.dimensions.height')}
-            </Label>
+          {/* Height */}
+          <div className='space-y-1'>
+            <div className='flex items-center justify-between'>
+              <Label htmlFor='layer-height' className='text-muted-foreground text-xs'>
+                H
+              </Label>
+              <div className='flex items-center'>
+                <button
+                  type='button'
+                  onClick={heightFull ? handleHeightModeToggle : undefined}
+                  disabled={visualCropEnabled}
+                  className={cn(
+                    'px-1 py-0.5 text-xs transition-colors',
+                    !heightFull
+                      ? 'text-foreground cursor-default font-medium'
+                      : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                  )}
+                >
+                  px
+                </button>
+                <button
+                  type='button'
+                  onClick={!heightFull ? handleHeightModeToggle : undefined}
+                  disabled={visualCropEnabled}
+                  className={cn(
+                    'px-1 py-0.5 transition-colors',
+                    heightFull
+                      ? 'text-primary cursor-default'
+                      : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                  )}
+                  title='Stretch to fill height'
+                >
+                  <MoveVertical className='h-3 w-3' />
+                </button>
+              </div>
+            </div>
             <Input
               id='layer-height'
               type='number'
-              value={currentHeight}
-              onChange={(e) => handleHeightChange(e.target.value)}
-              onBlur={(e) => handleHeightBlur(e.target.value)}
+              value={heightFull ? Math.max(1, baseHeight - heightFullOffset) : currentHeight}
+              onChange={(e) =>
+                heightFull
+                  ? handleHeightInsetChange(baseHeight - (Number(e.target.value) || 1))
+                  : handleHeightChange(e.target.value)
+              }
+              onBlur={(e) => (!heightFull ? handleHeightBlur(e.target.value) : undefined)}
               disabled={visualCropEnabled}
               min='1'
-              max='10000'
+              max={heightFull ? baseHeight : undefined}
               className='h-8'
             />
           </div>

@@ -15,11 +15,16 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
+import { calculateCanvasOutputDimensions } from '@/lib/layer-dimensions'
 
 interface DimensionControlProps {
   params: ImageEditorState
   onUpdateParams: (updates: Partial<ImageEditorState>) => void
   originalDimensions: {
+    width: number
+    height: number
+  }
+  parentDimensions?: {
     width: number
     height: number
   }
@@ -30,6 +35,7 @@ export function DimensionControl({
   params,
   onUpdateParams,
   originalDimensions,
+  parentDimensions,
   isEditingLayer = false,
 }: DimensionControlProps) {
   const { t } = useTranslation()
@@ -156,41 +162,11 @@ export function DimensionControl({
     })
   }
 
-  // Live output dimensions: crop → resize → padding → proportion
-  // proportion is applied last and scales the entire canvas (image + padding)
-  const outputDimensions = (() => {
-    const srcW = params.cropWidth ?? originalDimensions.width
-    const srcH = params.cropHeight ?? originalDimensions.height
-    let outW: number
-    let outH: number
-    if (params.width || params.height) {
-      const targetW = params.width ?? 0
-      const targetH = params.height ?? 0
-      if (params.fitIn) {
-        const scale = Math.min(
-          targetW ? targetW / srcW : Infinity,
-          targetH ? targetH / srcH : Infinity,
-          1.0,
-        )
-        outW = Math.round(srcW * scale)
-        outH = Math.round(srcH * scale)
-      } else {
-        outW = targetW || srcW
-        outH = targetH || srcH
-      }
-    } else {
-      outW = srcW
-      outH = srcH
-    }
-    // Add padding before proportion — proportion scales the total canvas
-    outW += (params.paddingLeft ?? 0) + (params.paddingRight ?? 0)
-    outH += (params.paddingTop ?? 0) + (params.paddingBottom ?? 0)
-    if (params.proportion && params.proportion !== 100) {
-      outW = Math.round(outW * (params.proportion / 100))
-      outH = Math.round(outH * (params.proportion / 100))
-    }
-    return { width: outW, height: outH }
-  })()
+  const outputDimensions = calculateCanvasOutputDimensions(
+    params,
+    originalDimensions,
+    parentDimensions,
+  )
 
   return (
     <div className='space-y-4'>

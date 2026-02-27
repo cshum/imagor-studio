@@ -1531,6 +1531,232 @@ describe('ImageEditor', () => {
       const layer = editor.getState().layers?.find((l) => l.id === 'rc-orig')
       expect(layer?.transforms?.roundCornerRadius).toBe(40)
     })
+
+    it('should not NaN when widthFull is true (falls back to originalDimensions)', () => {
+      // originalDimensions 100x80 → max = floor(80/2) = 40
+      editor.addLayer(makeRcLayer('rc-fill', 100, 80))
+      // widthFull: no width set, clamp uses originalDimensions → still safe
+      editor.updateLayer('rc-fill', { transforms: { widthFull: true, roundCornerRadius: 200 } })
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-fill')
+      expect(layer?.transforms?.roundCornerRadius).not.toBeNaN()
+      expect(layer?.transforms?.roundCornerRadius).toBe(40)
+    })
+  })
+
+  describe('fill-mode layer dimensions (widthFull / heightFull)', () => {
+    const makeLayer = (id: string): ImageLayer => ({
+      id,
+      imagePath: 'overlay.jpg',
+      x: 0,
+      y: 0,
+      alpha: 0,
+      blendMode: 'normal',
+      visible: true,
+      name: id,
+      originalDimensions: { width: 200, height: 150 },
+    })
+
+    it('should emit fxf when both widthFull and heightFull are set (no offset)', () => {
+      const layer = makeLayer('fill-both')
+      editor.addLayer({ ...layer, transforms: { widthFull: true, heightFull: true } })
+      const path = editor.getImagorPath()
+      expect(path).toContain('fxf/')
+    })
+
+    it('should emit f-20x0 when widthFull with offset 20, height fixed', () => {
+      const layer = makeLayer('fill-w-offset')
+      editor.addLayer({
+        ...layer,
+        transforms: { widthFull: true, widthFullOffset: 20, height: 150 },
+      })
+      const path = editor.getImagorPath()
+      expect(path).toContain('f-20x')
+    })
+
+    it('should emit fxf-30 when heightFull with offset 30, width fill no offset', () => {
+      const layer = makeLayer('fill-h-offset')
+      editor.addLayer({
+        ...layer,
+        transforms: { widthFull: true, heightFull: true, heightFullOffset: 30 },
+      })
+      const path = editor.getImagorPath()
+      expect(path).toMatch(/fxf-30\//)
+    })
+
+    it('should emit fx200 when widthFull and fixed height', () => {
+      const layer = makeLayer('fill-w-fixed-h')
+      editor.addLayer({ ...layer, transforms: { widthFull: true, height: 200 } })
+      const path = editor.getImagorPath()
+      // width is fill (f), height is fixed px (200 at scaleFactor=1)
+      expect(path).toContain('fx200/')
+    })
+
+    it('should emit -fxf when widthFull and hFlip', () => {
+      const layer = makeLayer('fill-hflip')
+      editor.addLayer({
+        ...layer,
+        transforms: { widthFull: true, heightFull: true, hFlip: true },
+      })
+      const path = editor.getImagorPath()
+      expect(path).toContain('-fxf/')
+    })
+
+    it('should still emit dimension segment when only widthFull is set (no width/height)', () => {
+      const layer = makeLayer('fill-only-w')
+      editor.addLayer({ ...layer, transforms: { widthFull: true } })
+      const path = editor.getImagorPath()
+      // fx0 — width is fill, height defaults to 0 (not set)
+      expect(path).toMatch(/fx0\//)
+    })
+
+    it('getOutputDimensions resolves widthFull against parent dims inside layer context', () => {
+      // Root: 1920x1080 original, no resize -> parent output = 1920x1080
+      const layer = makeLayer('fill-ctx')
+      editor.addLayer({
+        ...layer,
+        transforms: { widthFull: true, widthFullOffset: 20, height: 100 },
+      })
+      // Enter the layer's editing context
+      editor.switchContext('fill-ctx')
+      const dims = editor.getOutputDimensions()
+      // widthFull, offset 20 → 1920 - 20 = 1900
+      expect(dims.width).toBe(1900)
+      // height fixed at 100
+      expect(dims.height).toBe(100)
+      editor.switchContext(null)
+    })
+
+    it('getOutputDimensions returns heightFull - offset correctly', () => {
+      const layer = makeLayer('fill-ctx-h')
+      editor.addLayer({
+        ...layer,
+        transforms: { widthFull: true, heightFull: true, heightFullOffset: 50 },
+      })
+      editor.switchContext('fill-ctx-h')
+      const dims = editor.getOutputDimensions()
+      expect(dims.width).toBe(1920) // full, no offset
+      expect(dims.height).toBe(1030) // 1080 - 50
+      editor.switchContext(null)
+    })
+
+    // ── depth-2 (layer inside a layer) tests ──────────────────────────────────
+
+    const makeNestedSetup = () => {
+      const layerB: ImageLayer = {
+        id: 'fill-d2-b',
+        imagePath: 'overlay-b.jpg',
+        x: 0,
+        y: 0,
+        alpha: 0,
+        blendMode: 'normal',
+        visible: true,
+        name: 'Layer B',
+        originalDimensions: { width: 300, height: 200 },
+        transforms: {
+          widthFull: true,
+          widthFullOffset: 200,
+          heightFull: true,
+          heightFullOffset: 100,
+        },
+      }
+      const layerA: ImageLayer = {
+        id: 'fill-d2-a',
+        imagePath: 'overlay-a.jpg',
+        x: 0,
+        y: 0,
+        alpha: 0,
+        blendMode: 'normal',
+        visible: true,
+        name: 'Layer A',
+        originalDimensions: { width: 500, height: 400 },
+        transforms: {
+          widthFull: true,
+          widthFullOffset: 120,
+          heightFull: true,
+          heightFullOffset: 80,
+          layers: [layerB],
+        },
+      }
+      return { layerA, layerB }
+    }
+
+    it('getImagorPath still emits f-tokens for depth-1 and depth-2 layers (imagor resolves at serve time)', () => {
+      // getImagorPath calls editorStateToImagorPath without parentDims → f-tokens emitted.
+      // imagor handles depth-1 tokens correctly at root level, and handles depth-2 tokens
+      // correctly because the image() filter calls resolveFullDimensions against the
+      // layer's own output dimensions before parsing.
+      const { layerA } = makeNestedSetup()
+      editor.addLayer(layerA)
+      const path = editor.getImagorPath()
+      // Layer-A dimension segment: f-120xf-80
+      expect(path).toContain('f-120xf-80/')
+      // Layer-B dimension segment inside Layer-A's path: f-200xf-100
+      expect(path).toContain('f-200xf-100/')
+    })
+
+    it('preview URL pre-resolves depth-2 nested f-tokens against correct intermediate parent dims', async () => {
+      // Bug reproduced: imagor's resolveFullDimensions splits the entire path on '/' and
+      // resolves ALL matching WxH segments, including ones nested inside filter args.
+      // For depth-2, Layer-B's f-tokens would be resolved against the root canvas instead
+      // of Layer-A's output — giving wrong dimensions.
+      // Fix: editorStateToImagorPath pre-resolves f-tokens to concrete pixels whenever
+      // parentDims is provided, and propagates subLayerParentDims to recursive calls.
+      const { generateImagorUrl } = await import('@/api/imagor-api')
+
+      // root 1920x1080, preview 960x540 → scaleFactor = 0.5
+      editor.updatePreviewMaxDimensions({ width: 960, height: 540 })
+      editor.updateParams({ width: 1920, height: 1080 })
+
+      const { layerA } = makeNestedSetup()
+      editor.addLayer(layerA)
+      await vi.runAllTimersAsync()
+
+      const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
+      const lastCall = calls[calls.length - 1][0] as {
+        params: { filters: Array<{ name: string; args: string }> }
+      }
+      const imageFilter = lastCall.params.filters.find((f) => f.name === 'image')
+      expect(imageFilter).toBeDefined()
+
+      const args = imageFilter!.args
+      // Layer-A: canvasDims(960,540) − round(120*0.5)=60 → 900; − round(80*0.5)=40 → 500
+      expect(args).toContain('900x500/')
+      // Layer-B: parentA(900,500) − round(200*0.5)=100 → 800; − round(100*0.5)=50 → 450
+      // Critically: NOT "f-100xf-50" which imagor would have resolved against root dims
+      expect(args).toContain('800x450/')
+      expect(args).not.toContain('f-')
+    })
+
+    it('getContextParentDimensions returns the immediate parent output dims at depth-2', () => {
+      // At editing context ['fill-d2-a', 'fill-d2-b'], parent = Layer-A's output.
+      // Layer-A: widthFull−120 against root 1920×1080 → 1800; heightFull−80 → 1000.
+      const { layerA } = makeNestedSetup()
+      editor.addLayer(layerA)
+      editor.switchContext('fill-d2-a')
+      editor.switchContext('fill-d2-b')
+
+      const parentDims = editor.getContextParentDimensions()
+      expect(parentDims).toEqual({ width: 1800, height: 1000 })
+
+      editor.switchContext(null) // back to layer-a
+      editor.switchContext(null) // back to root
+    })
+
+    it('getOutputDimensions resolves depth-2 widthFull/heightFull against layer-A output', () => {
+      // Layer-A: 1920−120=1800 × 1080−80=1000
+      // Layer-B inside Layer-A: 1800−200=1600 × 1000−100=900
+      const { layerA } = makeNestedSetup()
+      editor.addLayer(layerA)
+      editor.switchContext('fill-d2-a')
+      editor.switchContext('fill-d2-b')
+
+      const dims = editor.getOutputDimensions()
+      expect(dims.width).toBe(1600)
+      expect(dims.height).toBe(900)
+
+      editor.switchContext(null)
+      editor.switchContext(null)
+    })
   })
 
   describe('Async Operations', () => {
@@ -1598,6 +1824,107 @@ describe('ImageEditor', () => {
         const callArg = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls[0][0]
         const filterNames = (callArg.params.filters as Array<{ name: string }>).map((f) => f.name)
         expect(filterNames).not.toContain('proportion')
+      })
+
+      it('emits pre-resolved pixel values (not f-tokens) in preview URL for depth-1 widthFull layers', async () => {
+        const { generateImagorUrl } = await import('@/api/imagor-api')
+
+        // originalDimensions = 1920x1080, previewMaxDimensions = 960x540 → scaleFactor = 0.5
+        editor.updatePreviewMaxDimensions({ width: 960, height: 540 })
+        // Explicit root dims so the scale calculation is deterministic
+        editor.updateParams({ width: 1920, height: 1080 })
+
+        const layer: ImageLayer = {
+          id: 'fill-scale-test',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'fill-scale-test',
+          originalDimensions: { width: 200, height: 150 },
+          transforms: { widthFull: true, widthFullOffset: 20, height: 200 },
+        }
+        editor.addLayer(layer)
+
+        // Fire the debounced preview
+        await vi.runAllTimersAsync()
+
+        // Inspect the most recent generateImagorUrl call
+        const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as {
+          params: { filters: Array<{ name: string; args: string }> }
+        }
+        const imageFilter = lastCall.params.filters.find((f) => f.name === 'image')
+
+        expect(imageFilter).toBeDefined()
+        // canvasDimsForLayers = { 960, 540 } (1920*0.5, 1080*0.5)
+        // widthFull offset 20 pre-resolved: 960 - round(20 * 0.5) = 960 - 10 = 950
+        // height 200 scaled: round(200 * 0.5) = 100
+        // Pre-resolved to concrete pixels 950x100 (NOT f-10x100) to prevent imagor from
+        // mis-resolving f-tokens in nested paths via its path-wide resolveFullDimensions.
+        expect(imageFilter!.args).toContain('950x100')
+        expect(imageFilter!.args).not.toContain('f-')
+      })
+      it('pre-resolves heightFull layer f-token against padded canvas when parent has fillColor+padding', async () => {
+        // Regression: canvasDimsForLayers was using pre-padding resize dimensions,
+        // so f-tokens were pre-resolved against the wrong (smaller) height.
+        // Fix: add scaled padding to canvasDimsForLayers when fillColor is set.
+        //
+        // Setup: base image 3804x2800 (crop), paddingBottom=200, fillColor=FFFFFF
+        //   → full canvas = 3804x3000
+        //   Layer: heightFull=true, heightFullOffset=110
+        //   Expected pre-resolved height = 3000 - 110 = 2890
+        //   Bug produced:            2800 - 110 = 2690 (missing padding)
+        const { generateImagorUrl } = await import('@/api/imagor-api')
+
+        const paddedEditor = new ImageEditor({
+          imagePath: 'photo.jpg',
+          originalDimensions: { width: 4474, height: 3786 },
+        })
+        paddedEditor.initialize({ onPreviewUpdate: vi.fn() })
+
+        // Crop to 3804x2800, add fillColor+paddingBottom=200
+        paddedEditor.updateParams({
+          cropLeft: 335,
+          cropTop: 493,
+          cropWidth: 3804,
+          cropHeight: 2800,
+          fillColor: 'FFFFFF',
+          paddingBottom: 200,
+        })
+
+        const layer: ImageLayer = {
+          id: 'fill-pad-test',
+          imagePath: 'layer.jpg',
+          x: -736,
+          y: 'top',
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'fill-pad-test',
+          originalDimensions: { width: 2025, height: 5000 },
+          transforms: { width: 2025, heightFull: true, heightFullOffset: 110 },
+        }
+        paddedEditor.addLayer(layer)
+
+        // Force preview without scale constraint (no previewMaxDimensions)
+        await vi.runAllTimersAsync()
+
+        const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as {
+          params: { filters: Array<{ name: string; args: string }> }
+        }
+        const imageFilter = lastCall.params.filters.find((f) => f.name === 'image')
+        expect(imageFilter).toBeDefined()
+
+        // padded canvas height = 2800 + 200 = 3000. heightFullOffset = 110.
+        // Correct pre-resolved height = 3000 - 110 = 2890.
+        // Buggy pre-resolved height was 2800 - 110 = 2690.
+        expect(imageFilter!.args).toContain('2025x2890/')
+        expect(imageFilter!.args).not.toContain('2025x2690/')
+        expect(imageFilter!.args).not.toContain('f-')
       })
     })
 

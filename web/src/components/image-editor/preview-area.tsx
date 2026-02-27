@@ -13,6 +13,8 @@ import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
 import type { ImageEditor } from '@/lib/image-editor'
 import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
+import { enrichTransformsForFillMode } from '@/lib/layer-fill'
+import { calculateScrollAdjustment } from '@/lib/scroll-utils'
 import { cn } from '@/lib/utils'
 
 interface PreviewAreaProps {
@@ -344,40 +346,23 @@ export function PreviewArea({
           const newScrollWidth = container.scrollWidth - container.clientWidth
           const newScrollHeight = container.scrollHeight - container.clientHeight
 
-          // Only apply if dimensions actually changed
-          if (newScrollWidth !== oldScrollWidth || newScrollHeight !== oldScrollHeight) {
-            if (hasScrolled && oldScrollWidth > 0 && oldScrollHeight > 0) {
-              // User has scrolled - calculate and preserve ratio
-              const ratioX = scrollLeft / oldScrollWidth
-              const ratioY = scrollTop / oldScrollHeight
+          const adjustment = calculateScrollAdjustment({
+            hasScrolled,
+            scrollLeft,
+            scrollTop,
+            oldScrollWidth,
+            oldScrollHeight,
+            newScrollWidth,
+            newScrollHeight,
+            imageWidth: imageDimensions.width,
+            imageHeight: imageDimensions.height,
+            containerWidth: container.clientWidth,
+            containerHeight: container.clientHeight,
+          })
 
-              const newScrollLeft = ratioX * newScrollWidth
-              const newScrollTop = ratioY * newScrollHeight
-
-              container.scrollLeft = newScrollLeft
-              container.scrollTop = newScrollTop
-            } else {
-              // User hasn't scrolled - center it
-              // Enhanced centering logic that works better for wide horizontal images
-              const paddingWidth = imageDimensions.width * 0.5
-              const paddingHeight = imageDimensions.height * 0.5
-
-              // Calculate the center of the viewport
-              const containerCenterX = container.clientWidth / 2
-              const containerCenterY = container.clientHeight / 2
-
-              // Calculate the center of the image content (accounting for padding)
-              const imageCenterX = paddingWidth + imageDimensions.width / 2
-              const imageCenterY = paddingHeight + imageDimensions.height / 2
-
-              // Calculate scroll position to center the image content in the viewport
-              const centerScrollLeft = imageCenterX - containerCenterX
-              const centerScrollTop = imageCenterY - containerCenterY
-
-              // Apply scroll position with bounds checking
-              container.scrollLeft = Math.max(0, Math.min(centerScrollLeft, newScrollWidth))
-              container.scrollTop = Math.max(0, Math.min(centerScrollTop, newScrollHeight))
-            }
+          if (adjustment) {
+            container.scrollLeft = adjustment.scrollLeft
+            container.scrollTop = adjustment.scrollTop
           }
         })
       })
@@ -573,9 +558,11 @@ export function PreviewArea({
                           if (!selectedLayer) return null
 
                           // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
+                          // Pass outputDims as parentDimensions so widthFull/heightFull resolve correctly
                           const layerOutputDims = calculateLayerOutputDimensions(
                             selectedLayer.originalDimensions,
                             selectedLayer.transforms,
+                            outputDims,
                           )
 
                           // Get layer's own padding (if it has any) for positioning calculations
@@ -590,16 +577,27 @@ export function PreviewArea({
                               layerY={selectedLayer.y}
                               layerWidth={layerOutputDims.width}
                               layerHeight={layerOutputDims.height}
-                              onLayerChange={(updates) =>
-                                imageEditor.updateLayer(selectedLayerId, updates)
-                              }
+                              onLayerChange={(updates) => {
+                                // Drag-only updates (x/y, no transforms key) go straight through.
+                                // Fill-mode axes get their incoming px size converted to an inset offset.
+                                if (updates.transforms) {
+                                  imageEditor.updateLayer(selectedLayerId, {
+                                    ...updates,
+                                    transforms: enrichTransformsForFillMode(
+                                      updates.transforms,
+                                      selectedLayer.transforms ?? {},
+                                      outputDims,
+                                    ),
+                                  })
+                                } else {
+                                  imageEditor.updateLayer(selectedLayerId, updates)
+                                }
+                              }}
                               lockedAspectRatio={layerAspectRatioLocked}
                               baseImageWidth={outputDims.width}
                               baseImageHeight={outputDims.height}
                               paddingLeft={paddingLeft}
-                              paddingRight={paddingRight}
                               paddingTop={paddingTop}
-                              paddingBottom={paddingBottom}
                               layerPaddingLeft={layerPaddingLeft}
                               layerPaddingRight={layerPaddingRight}
                               layerPaddingTop={layerPaddingTop}
