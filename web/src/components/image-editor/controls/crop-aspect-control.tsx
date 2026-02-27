@@ -179,54 +179,30 @@ export function CropAspectControl({
         params.cropTop !== undefined ||
         params.cropWidth !== undefined ||
         params.cropHeight !== undefined) && (
-        <div className='grid grid-cols-2 gap-3'>
-          <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.left')}</Label>
-            <Input
-              type='number'
-              placeholder='0'
-              value={getCropValue('cropLeft')}
-              onChange={(e) => handleCropChange('cropLeft', e.target.value)}
-              min='0'
-              step='1'
-            />
-          </div>
-
-          <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.top')}</Label>
-            <Input
-              type='number'
-              placeholder='0'
-              value={getCropValue('cropTop')}
-              onChange={(e) => handleCropChange('cropTop', e.target.value)}
-              min='0'
-              step='1'
-            />
-          </div>
-
-          <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.width')}</Label>
-            <Input
-              type='number'
-              placeholder='0'
-              value={getCropValue('cropWidth')}
-              onChange={(e) => handleCropChange('cropWidth', e.target.value)}
-              min='0'
-              step='1'
-            />
-          </div>
-
-          <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.height')}</Label>
-            <Input
-              type='number'
-              placeholder='0'
-              value={getCropValue('cropHeight')}
-              onChange={(e) => handleCropChange('cropHeight', e.target.value)}
-              min='0'
-              step='1'
-            />
-          </div>
+        <div className='grid grid-cols-2 gap-1.5'>
+          {(
+            [
+              { field: 'cropLeft', label: 'X' },
+              { field: 'cropTop', label: 'Y' },
+              { field: 'cropWidth', label: 'W' },
+              { field: 'cropHeight', label: 'H' },
+            ] as const
+          ).map(({ field, label }) => (
+            <div key={field} className='flex items-center gap-1.5'>
+              <span className='text-muted-foreground w-3 shrink-0 text-center text-xs font-medium'>
+                {label}
+              </span>
+              <Input
+                type='number'
+                placeholder='0'
+                value={getCropValue(field)}
+                onChange={(e) => handleCropChange(field, e.target.value)}
+                min='0'
+                step='1'
+                className='h-9 px-2'
+              />
+            </div>
+          ))}
         </div>
       )}
     </div>

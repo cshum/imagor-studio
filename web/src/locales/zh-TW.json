@@ -810,10 +810,6 @@
       "metadataDescription": "移除顏色配置檔案和後設資料以減小檔案大小"
     },
     "crop": {
-      "left": "左（畫素）",
-      "top": "上（畫素）",
-      "width": "寬度（畫素）",
-      "height": "高度（畫素）",
       "cropTitle": "裁剪",
       "startCrop": "裁剪",
       "applyCrop": "應用裁剪"

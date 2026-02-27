@@ -810,10 +810,6 @@
       "metadataDescription": "移除颜色配置文件和元数据以减小文件大小"
     },
     "crop": {
-      "left": "左（像素）",
-      "top": "上（像素）",
-      "width": "宽度（像素）",
-      "height": "高度（像素）",
       "cropTitle": "裁剪",
       "startCrop": "裁剪",
       "applyCrop": "应用裁剪"

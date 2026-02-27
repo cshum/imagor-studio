@@ -783,10 +783,6 @@
       "metadataDescription": "Remove metadata to reduce file size"
     },
     "crop": {
-      "left": "Left (px)",
-      "top": "Top (px)",
-      "width": "Width (px)",
-      "height": "Height (px)",
       "cropTitle": "Crop",
       "startCrop": "Crop",
       "applyCrop": "Apply Crop"

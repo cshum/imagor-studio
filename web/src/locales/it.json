@@ -807,10 +807,6 @@
       "metadataDescription": "Rimuovi profili colore e metadati per ridurre le dimensioni del file"
     },
     "crop": {
-      "left": "Sinistra (px)",
-      "top": "Alto (px)",
-      "width": "Larghezza (px)",
-      "height": "Altezza (px)",
       "cropTitle": "Ritaglia",
       "startCrop": "Ritaglia",
       "applyCrop": "Applica Ritaglio"
