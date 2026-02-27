@@ -88,10 +88,8 @@ export function LayerControls({
   const baseWidth = baseDimensions.width
   const baseHeight = baseDimensions.height
 
-  // Get the layer's actual rendered size — matches what the overlay uses.
-  // calculateLayerOutputDimensions resolves fill-mode (fh/fw) against parent dims AND
-  // adds the layer's own padding (when fillColor is set), so alignment-change handlers
-  // compute the correct visual position even when the layer has its own fill+padding.
+  // Full rendered size including the layer's own padding — used by alignment handlers
+  // and the dimension input display so visual-position math is correct.
   const layerOutputDims = calculateLayerOutputDimensions(
     layer.originalDimensions,
     layer.transforms,
@@ -99,6 +97,17 @@ export function LayerControls({
   )
   const currentWidth = layerOutputDims.width
   const currentHeight = layerOutputDims.height
+
+  // Pre-padding image-resize size — used by toggleFillMode when entering fill mode.
+  // toggleFillMode computes: inset = parentPx - rawPx, so that after the fill filter
+  // re-adds padding the total canvas stays the same size.
+  // (When leaving fill mode, rawPx is ignored; toggleFillMode uses the offset instead.)
+  const rawWidth = widthFull
+    ? Math.max(1, baseWidth - widthFullOffset)
+    : layer.transforms?.width || layer.originalDimensions.width
+  const rawHeight = heightFull
+    ? Math.max(1, baseHeight - heightFullOffset)
+    : layer.transforms?.height || layer.originalDimensions.height
 
   const handleWidthChange = useCallback(
     (value: string) => {
@@ -196,12 +205,12 @@ export function LayerControls({
         'width',
         widthFull,
         baseWidth,
-        currentWidth,
+        rawWidth,
         widthFullOffset,
         layer.transforms ?? {},
       ),
     })
-  }, [widthFull, widthFullOffset, baseWidth, currentWidth, layer.transforms, onUpdate])
+  }, [widthFull, widthFullOffset, baseWidth, rawWidth, layer.transforms, onUpdate])
 
   const handleHeightModeToggle = useCallback(() => {
     onUpdate({
@@ -209,12 +218,12 @@ export function LayerControls({
         'height',
         heightFull,
         baseHeight,
-        currentHeight,
+        rawHeight,
         heightFullOffset,
         layer.transforms ?? {},
       ),
     })
-  }, [heightFull, heightFullOffset, baseHeight, currentHeight, layer.transforms, onUpdate])
+  }, [heightFull, heightFullOffset, baseHeight, rawHeight, layer.transforms, onUpdate])
 
   const handleWidthInsetChange = useCallback(
     (value: number) => {
