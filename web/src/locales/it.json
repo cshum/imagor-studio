@@ -748,7 +748,6 @@
       "unlockAspectRatio": "Sblocca Proporzioni",
       "scale": "Scala",
       "outputSize": "Dimensioni Output",
-      "aspectRatios": "Proporzioni",
       "resizeMode": "Modalità di Ridimensionamento",
       "modes": {
         "fitIn": "Adatta a",
@@ -807,7 +806,6 @@
       "metadataDescription": "Rimuovi profili colore e metadati per ridurre le dimensioni del file"
     },
     "crop": {
-      "cropTitle": "Ritaglia",
       "startCrop": "Ritaglia",
       "applyCrop": "Applica Ritaglio"
     },

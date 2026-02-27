@@ -724,7 +724,6 @@
       "unlockAspectRatio": "Unlock Aspect Ratio",
       "scale": "Scale",
       "outputSize": "Output Size",
-      "aspectRatios": "Aspect Ratios",
       "resizeMode": "Resize Mode",
       "modes": {
         "fitIn": "Fit In",
@@ -783,7 +782,6 @@
       "metadataDescription": "Remove metadata to reduce file size"
     },
     "crop": {
-      "cropTitle": "Crop",
       "startCrop": "Crop",
       "applyCrop": "Apply Crop"
     },

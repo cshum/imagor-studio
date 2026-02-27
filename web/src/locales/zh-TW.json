@@ -751,7 +751,6 @@
       "unlockAspectRatio": "解鎖縱橫比",
       "scale": "縮放比例",
       "outputSize": "輸出尺寸",
-      "aspectRatios": "縱橫比",
       "resizeMode": "調整大小模式",
       "modes": {
         "fitIn": "適應",
@@ -810,7 +809,6 @@
       "metadataDescription": "移除顏色配置檔案和後設資料以減小檔案大小"
     },
     "crop": {
-      "cropTitle": "裁剪",
       "startCrop": "裁剪",
       "applyCrop": "應用裁剪"
     },

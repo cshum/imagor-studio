@@ -4,7 +4,6 @@ import { Check, Crop, LoaderCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
 
 // Define aspect ratio presets
@@ -129,49 +128,41 @@ export function CropAspectControl({
   }
 
   return (
-    <div className='space-y-4'>
+    <div className='space-y-2'>
       {/* Crop Button */}
-      <div className='space-y-2'>
-        <Label className='text-sm font-medium'>{t('imageEditor.crop.cropTitle')}</Label>
-        {onVisualCropToggle && (
-          <Button
-            variant='outline'
-            size='default'
-            onClick={handleVisualCropToggle}
-            disabled={isToggling}
-            className='w-full'
-          >
-            {isToggling ? (
-              <LoaderCircle className='mr-2 h-4 w-4 animate-spin' />
-            ) : isVisualCropEnabled ? (
-              <Check className='mr-2 h-4 w-4' />
-            ) : (
-              <Crop className='mr-2 h-4 w-4' />
-            )}
-            {isVisualCropEnabled
-              ? t('imageEditor.crop.applyCrop')
-              : t('imageEditor.crop.startCrop')}
-          </Button>
-        )}
-      </div>
+      {onVisualCropToggle && (
+        <Button
+          variant='outline'
+          size='default'
+          onClick={handleVisualCropToggle}
+          disabled={isToggling}
+          className='w-full'
+        >
+          {isToggling ? (
+            <LoaderCircle className='mr-2 h-4 w-4 animate-spin' />
+          ) : isVisualCropEnabled ? (
+            <Check className='mr-2 h-4 w-4' />
+          ) : (
+            <Crop className='mr-2 h-4 w-4' />
+          )}
+          {isVisualCropEnabled ? t('imageEditor.crop.applyCrop') : t('imageEditor.crop.startCrop')}
+        </Button>
+      )}
 
       {/* Aspect Ratio Presets */}
-      <div className='space-y-3'>
-        <Label className='text-sm font-medium'>{t('imageEditor.dimensions.aspectRatios')}</Label>
-        <div className='grid grid-cols-3 gap-2'>
-          {ASPECT_RATIO_PRESETS.map((preset) => (
-            <Button
-              key={preset.key}
-              variant={selectedAspectRatio === preset.key ? 'default' : 'outline'}
-              size='sm'
-              onClick={() => handleAspectRatioPreset(preset)}
-              disabled={isToggling}
-              className='h-8 text-xs'
-            >
-              {preset.label}
-            </Button>
-          ))}
-        </div>
+      <div className='grid grid-cols-3 gap-1.5'>
+        {ASPECT_RATIO_PRESETS.map((preset) => (
+          <Button
+            key={preset.key}
+            variant={selectedAspectRatio === preset.key ? 'default' : 'outline'}
+            size='sm'
+            onClick={() => handleAspectRatioPreset(preset)}
+            disabled={isToggling}
+            className='h-8 text-xs'
+          >
+            {preset.label}
+          </Button>
+        ))}
       </div>
 
       {/* Only show crop inputs if crop parameters are set */}
