@@ -853,8 +853,6 @@
       "layerName": "Nome Livello",
       "enterLayerName": "Inserisci nome livello",
       "exitEditMode": "Applica",
-      "xOffset": "Offset X",
-      "yOffset": "Offset Y",
       "transparency": "Opacità",
       "blendMode": "Modalità di Fusione",
       "blendModes": {

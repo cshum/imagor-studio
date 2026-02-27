@@ -856,8 +856,6 @@
       "layerName": "圖層名稱",
       "enterLayerName": "輸入圖層名稱",
       "exitEditMode": "應用",
-      "xOffset": "X 偏移",
-      "yOffset": "Y 偏移",
       "transparency": "不透明度",
       "blendMode": "混合模式",
       "blendModes": {

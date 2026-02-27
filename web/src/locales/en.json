@@ -838,8 +838,6 @@
       "layerName": "Layer Name",
       "enterLayerName": "Enter layer name",
       "exitEditMode": "Apply",
-      "xOffset": "X Offset",
-      "yOffset": "Y Offset",
       "transparency": "Opacity",
       "blendMode": "Blend Mode",
       "blendModes": {
