@@ -4,7 +4,6 @@ import { Check, Crop, LoaderCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
 
 // Define aspect ratio presets
@@ -129,49 +128,41 @@ export function CropAspectControl({
   }
 
   return (
-    <div className='space-y-4'>
+    <div className='space-y-2'>
       {/* Crop Button */}
-      <div className='space-y-2'>
-        <Label className='text-sm font-medium'>{t('imageEditor.crop.cropTitle')}</Label>
-        {onVisualCropToggle && (
-          <Button
-            variant='outline'
-            size='default'
-            onClick={handleVisualCropToggle}
-            disabled={isToggling}
-            className='w-full'
-          >
-            {isToggling ? (
-              <LoaderCircle className='mr-2 h-4 w-4 animate-spin' />
-            ) : isVisualCropEnabled ? (
-              <Check className='mr-2 h-4 w-4' />
-            ) : (
-              <Crop className='mr-2 h-4 w-4' />
-            )}
-            {isVisualCropEnabled
-              ? t('imageEditor.crop.applyCrop')
-              : t('imageEditor.crop.startCrop')}
-          </Button>
-        )}
-      </div>
+      {onVisualCropToggle && (
+        <Button
+          variant='outline'
+          size='default'
+          onClick={handleVisualCropToggle}
+          disabled={isToggling}
+          className='w-full'
+        >
+          {isToggling ? (
+            <LoaderCircle className='mr-2 h-4 w-4 animate-spin' />
+          ) : isVisualCropEnabled ? (
+            <Check className='mr-2 h-4 w-4' />
+          ) : (
+            <Crop className='mr-2 h-4 w-4' />
+          )}
+          {isVisualCropEnabled ? t('imageEditor.crop.applyCrop') : t('imageEditor.crop.startCrop')}
+        </Button>
+      )}
 
       {/* Aspect Ratio Presets */}
-      <div className='space-y-3'>
-        <Label className='text-sm font-medium'>{t('imageEditor.dimensions.aspectRatios')}</Label>
-        <div className='grid grid-cols-3 gap-2'>
-          {ASPECT_RATIO_PRESETS.map((preset) => (
-            <Button
-              key={preset.key}
-              variant={selectedAspectRatio === preset.key ? 'default' : 'outline'}
-              size='sm'
-              onClick={() => handleAspectRatioPreset(preset)}
-              disabled={isToggling}
-              className='h-8 text-xs'
-            >
-              {preset.label}
-            </Button>
-          ))}
-        </div>
+      <div className='grid grid-cols-3 gap-1.5'>
+        {ASPECT_RATIO_PRESETS.map((preset) => (
+          <Button
+            key={preset.key}
+            variant={selectedAspectRatio === preset.key ? 'default' : 'outline'}
+            size='sm'
+            onClick={() => handleAspectRatioPreset(preset)}
+            disabled={isToggling}
+            className='h-8 text-xs'
+          >
+            {preset.label}
+          </Button>
+        ))}
       </div>
 
       {/* Only show crop inputs if crop parameters are set */}
@@ -179,54 +170,30 @@ export function CropAspectControl({
         params.cropTop !== undefined ||
         params.cropWidth !== undefined ||
         params.cropHeight !== undefined) && (
-        <div className='grid grid-cols-2 gap-3'>
-          <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.left')}</Label>
-            <Input
-              type='number'
-              placeholder='0'
-              value={getCropValue('cropLeft')}
-              onChange={(e) => handleCropChange('cropLeft', e.target.value)}
-              min='0'
-              step='1'
-            />
-          </div>
-
-          <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.top')}</Label>
-            <Input
-              type='number'
-              placeholder='0'
-              value={getCropValue('cropTop')}
-              onChange={(e) => handleCropChange('cropTop', e.target.value)}
-              min='0'
-              step='1'
-            />
-          </div>
-
-          <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.width')}</Label>
-            <Input
-              type='number'
-              placeholder='0'
-              value={getCropValue('cropWidth')}
-              onChange={(e) => handleCropChange('cropWidth', e.target.value)}
-              min='0'
-              step='1'
-            />
-          </div>
-
-          <div className='space-y-2'>
-            <Label className='text-muted-foreground text-xs'>{t('imageEditor.crop.height')}</Label>
-            <Input
-              type='number'
-              placeholder='0'
-              value={getCropValue('cropHeight')}
-              onChange={(e) => handleCropChange('cropHeight', e.target.value)}
-              min='0'
-              step='1'
-            />
-          </div>
+        <div className='grid grid-cols-2 gap-1.5'>
+          {(
+            [
+              { field: 'cropLeft', label: 'X' },
+              { field: 'cropTop', label: 'Y' },
+              { field: 'cropWidth', label: 'W' },
+              { field: 'cropHeight', label: 'H' },
+            ] as const
+          ).map(({ field, label }) => (
+            <div key={field} className='flex items-center gap-1.5'>
+              <span className='text-muted-foreground w-3 shrink-0 text-center text-xs font-medium'>
+                {label}
+              </span>
+              <Input
+                type='number'
+                placeholder='0'
+                value={getCropValue(field)}
+                onChange={(e) => handleCropChange(field, e.target.value)}
+                min='0'
+                step='1'
+                className='h-9 px-2'
+              />
+            </div>
+          ))}
         </div>
       )}
     </div>

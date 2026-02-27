@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -75,103 +75,64 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
   const isPaddingEnabled = fillMode === 'transparent' || fillMode === 'color'
 
   return (
-    <div className='space-y-4'>
-      {/* Fill Color Section - Compact */}
-      <div className='space-y-2'>
-        <Label className='text-sm font-medium'>{t('imageEditor.fillPadding.fillColor')}</Label>
-        <div className='flex items-center gap-2'>
-          <Select value={fillMode} onValueChange={handleFillModeChange}>
-            <SelectTrigger className='h-8 flex-1'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='none'>{t('imageEditor.fillPadding.noFill')}</SelectItem>
-              <SelectItem value='color'>{t('imageEditor.fillPadding.customColor')}</SelectItem>
-              <SelectItem value='transparent'>
-                {t('imageEditor.fillPadding.transparent')}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          {fillMode === 'color' && (
-            <input
-              type='color'
-              value={customColor}
-              onChange={handleColorChange}
-              className='h-8 w-16 cursor-pointer rounded border'
-            />
-          )}
-        </div>
+    <div className='space-y-3'>
+      {/* Fill — always-visible color picker; clicking it auto-switches to Color mode */}
+      <div className='flex items-center gap-2'>
+        <Select value={fillMode} onValueChange={handleFillModeChange}>
+          <SelectTrigger className='h-9 flex-1'>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='none'>{t('imageEditor.fillPadding.noFill')}</SelectItem>
+            <SelectItem value='color'>{t('imageEditor.fillPadding.customColor')}</SelectItem>
+            <SelectItem value='transparent'>{t('imageEditor.fillPadding.transparent')}</SelectItem>
+          </SelectContent>
+        </Select>
+        <input
+          type='color'
+          value={customColor}
+          onChange={handleColorChange}
+          onClick={() => {
+            if (fillMode !== 'color') handleFillModeChange('color')
+          }}
+          className='h-9 w-10 cursor-pointer rounded border'
+          title={t('imageEditor.fillPadding.customColor')}
+        />
       </div>
 
-      {/* Padding Section */}
-      <div className={`space-y-3 ${!isPaddingEnabled ? 'pointer-events-none opacity-50' : ''}`}>
-        <Label className='text-sm font-medium'>{t('imageEditor.fillPadding.padding')}</Label>
-        <div className='grid grid-cols-2 gap-3'>
-          <div>
-            <Label htmlFor='padding-top' className='text-muted-foreground text-xs'>
-              {t('imageEditor.fillPadding.top')} (px)
-            </Label>
+      {/* Padding — arrow icons, disabled when no fill */}
+      <div
+        className={`grid grid-cols-2 gap-1.5 ${
+          !isPaddingEnabled ? 'pointer-events-none opacity-50' : ''
+        }`}
+      >
+        {(
+          [
+            { side: 'top', Icon: ArrowUp },
+            { side: 'right', Icon: ArrowRight },
+            { side: 'bottom', Icon: ArrowDown },
+            { side: 'left', Icon: ArrowLeft },
+          ] as const
+        ).map(({ side, Icon }) => (
+          <div key={side} className='flex items-center gap-1.5'>
+            <Icon className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
             <Input
-              id='padding-top'
+              id={`padding-${side}`}
               type='number'
-              value={params.paddingTop || 0}
-              onChange={(e) => handlePaddingChange('top', e.target.value)}
+              value={
+                (params[
+                  `padding${side.charAt(0).toUpperCase()}${side.slice(1)}` as keyof ImageEditorState
+                ] as number) || 0
+              }
+              onChange={(e) => handlePaddingChange(side, e.target.value)}
               min='0'
               max='1000'
-              className='h-8'
+              className='h-9 flex-1 px-2'
               disabled={!isPaddingEnabled}
             />
           </div>
-          <div>
-            <Label htmlFor='padding-right' className='text-muted-foreground text-xs'>
-              {t('imageEditor.fillPadding.right')} (px)
-            </Label>
-            <Input
-              id='padding-right'
-              type='number'
-              value={params.paddingRight || 0}
-              onChange={(e) => handlePaddingChange('right', e.target.value)}
-              min='0'
-              max='1000'
-              className='h-8'
-              disabled={!isPaddingEnabled}
-            />
-          </div>
-          <div>
-            <Label htmlFor='padding-left' className='text-muted-foreground text-xs'>
-              {t('imageEditor.fillPadding.left')} (px)
-            </Label>
-            <Input
-              id='padding-left'
-              type='number'
-              value={params.paddingLeft || 0}
-              onChange={(e) => handlePaddingChange('left', e.target.value)}
-              min='0'
-              max='1000'
-              className='h-8'
-              disabled={!isPaddingEnabled}
-            />
-          </div>
-          <div>
-            <Label htmlFor='padding-bottom' className='text-muted-foreground text-xs'>
-              {t('imageEditor.fillPadding.bottom')} (px)
-            </Label>
-            <Input
-              id='padding-bottom'
-              type='number'
-              value={params.paddingBottom || 0}
-              onChange={(e) => handlePaddingChange('bottom', e.target.value)}
-              min='0'
-              max='1000'
-              className='h-8'
-              disabled={!isPaddingEnabled}
-            />
-          </div>
-        </div>
+        ))}
       </div>
-
-      {/* Info section */}
-      <p className='text-muted-foreground text-xs'>{t('imageEditor.fillPadding.description')}</p>
     </div>
   )
 }

@@ -548,103 +548,105 @@ export function LayerControls({
       )}
 
       {/* Position Controls */}
-      <div className='space-y-3'>
+      <div className='space-y-1.5'>
         {/* Horizontal Alignment */}
-        <div className='space-y-2'>
-          <Label className='text-muted-foreground text-xs'>{t('imageEditor.layers.xOffset')}</Label>
-          <div className='flex items-center gap-2'>
-            <ToggleGroup
-              type='single'
-              value={hAlign}
-              onValueChange={handleHAlignChange}
-              variant='outline'
-              className='flex-1 gap-0'
+        <div className='flex items-center gap-2'>
+          <ToggleGroup
+            type='single'
+            value={hAlign}
+            onValueChange={handleHAlignChange}
+            variant='outline'
+            size='sm'
+            className='flex-1 gap-0'
+            disabled={visualCropEnabled}
+          >
+            <ToggleGroupItem
+              value='left'
+              aria-label='Align left'
+              className='w-full rounded-r-none border-r-0'
               disabled={visualCropEnabled}
             >
-              <ToggleGroupItem
-                value='left'
-                aria-label='Align left'
-                className='w-full rounded-r-none border-r-0'
-                disabled={visualCropEnabled}
-              >
-                <AlignHorizontalJustifyStart className='h-4 w-4' />
-              </ToggleGroupItem>
-              <ToggleGroupItem
-                value='center'
-                aria-label='Align center'
-                className='w-full rounded-none border-r-0'
-                disabled={visualCropEnabled}
-              >
-                <AlignHorizontalJustifyCenter className='h-4 w-4' />
-              </ToggleGroupItem>
-              <ToggleGroupItem
-                value='right'
-                aria-label='Align right'
-                className='w-full rounded-l-none'
-                disabled={visualCropEnabled}
-              >
-                <AlignHorizontalJustifyEnd className='h-4 w-4' />
-              </ToggleGroupItem>
-            </ToggleGroup>
-            <Input
-              type='number'
-              value={hAlign === 'center' ? '' : xOffset}
-              onChange={(e) => handleXOffsetChange(Number(e.target.value) || 0)}
-              disabled={hAlign === 'center' || visualCropEnabled}
-              placeholder='—'
-              step={1}
-              className='h-9 w-20'
-            />
-          </div>
+              <AlignHorizontalJustifyStart className='h-4 w-4' />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value='center'
+              aria-label='Align center'
+              className='w-full rounded-none border-r-0'
+              disabled={visualCropEnabled}
+            >
+              <AlignHorizontalJustifyCenter className='h-4 w-4' />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value='right'
+              aria-label='Align right'
+              className='w-full rounded-l-none'
+              disabled={visualCropEnabled}
+            >
+              <AlignHorizontalJustifyEnd className='h-4 w-4' />
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <span className='text-muted-foreground w-3 shrink-0 text-center text-xs font-medium'>
+            X
+          </span>
+          <Input
+            type='number'
+            value={hAlign === 'center' ? '' : xOffset}
+            onChange={(e) => handleXOffsetChange(Number(e.target.value) || 0)}
+            disabled={hAlign === 'center' || visualCropEnabled}
+            placeholder='—'
+            step={1}
+            className='h-9 w-20 px-2'
+          />
         </div>
 
         {/* Vertical Alignment */}
-        <div className='space-y-2'>
-          <Label className='text-muted-foreground text-xs'>{t('imageEditor.layers.yOffset')}</Label>
-          <div className='flex items-center gap-2'>
-            <ToggleGroup
-              type='single'
-              value={vAlign}
-              onValueChange={handleVAlignChange}
-              variant='outline'
-              className='flex-1 gap-0'
+        <div className='flex items-center gap-2'>
+          <ToggleGroup
+            type='single'
+            value={vAlign}
+            onValueChange={handleVAlignChange}
+            variant='outline'
+            size='sm'
+            className='flex-1 gap-0'
+            disabled={visualCropEnabled}
+          >
+            <ToggleGroupItem
+              value='top'
+              aria-label='Align top'
+              className='w-full rounded-r-none border-r-0'
               disabled={visualCropEnabled}
             >
-              <ToggleGroupItem
-                value='top'
-                aria-label='Align top'
-                className='w-full rounded-r-none border-r-0'
-                disabled={visualCropEnabled}
-              >
-                <AlignVerticalJustifyStart className='h-4 w-4' />
-              </ToggleGroupItem>
-              <ToggleGroupItem
-                value='center'
-                aria-label='Align middle'
-                className='w-full rounded-none border-r-0'
-                disabled={visualCropEnabled}
-              >
-                <AlignVerticalJustifyCenter className='h-4 w-4' />
-              </ToggleGroupItem>
-              <ToggleGroupItem
-                value='bottom'
-                aria-label='Align bottom'
-                className='w-full rounded-l-none'
-                disabled={visualCropEnabled}
-              >
-                <AlignVerticalJustifyEnd className='h-4 w-4' />
-              </ToggleGroupItem>
-            </ToggleGroup>
-            <Input
-              type='number'
-              value={vAlign === 'center' ? '' : yOffset}
-              onChange={(e) => handleYOffsetChange(Number(e.target.value) || 0)}
-              disabled={vAlign === 'center' || visualCropEnabled}
-              placeholder='—'
-              step={1}
-              className='h-9 w-20'
-            />
-          </div>
+              <AlignVerticalJustifyStart className='h-4 w-4' />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value='center'
+              aria-label='Align middle'
+              className='w-full rounded-none border-r-0'
+              disabled={visualCropEnabled}
+            >
+              <AlignVerticalJustifyCenter className='h-4 w-4' />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value='bottom'
+              aria-label='Align bottom'
+              className='w-full rounded-l-none'
+              disabled={visualCropEnabled}
+            >
+              <AlignVerticalJustifyEnd className='h-4 w-4' />
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <span className='text-muted-foreground w-3 shrink-0 text-center text-xs font-medium'>
+            Y
+          </span>
+          <Input
+            type='number'
+            value={vAlign === 'center' ? '' : yOffset}
+            onChange={(e) => handleYOffsetChange(Number(e.target.value) || 0)}
+            disabled={vAlign === 'center' || visualCropEnabled}
+            placeholder='—'
+            step={1}
+            className='h-9 w-20 px-2'
+          />
         </div>
       </div>
 

@@ -713,28 +713,23 @@
       "dimensionsResize": "尺寸和调整大小",
       "outputCompression": "输出和压缩",
       "colorEffects": "颜色和效果",
-      "transformRotate": "变换和旋转",
+      "transformRotate": "翻转和旋转",
       "cropResize": "裁剪和调整大小",
       "fillPadding": "填充和边距"
     },
     "transform": {
-      "flipControls": "翻转控制",
       "horizontalFlip": "水平翻转",
       "verticalFlip": "垂直翻转",
       "horizontal": "水平",
       "vertical": "垂直",
       "normal": "正常",
-      "flipped": "已翻转",
-      "rotationControls": "旋转控制",
-      "currentRotation": "当前旋转"
+      "flipped": "已翻转"
     },
     "effects": {
-      "colorAdjustments": "颜色调整",
       "brightness": "亮度",
       "contrast": "对比度",
       "saturation": "饱和度",
       "hue": "色调",
-      "effects": "效果",
       "blur": "模糊",
       "sharpen": "锐化",
       "roundCorner": "圆角",
@@ -750,8 +745,6 @@
       "lockAspectRatio": "锁定纵横比",
       "unlockAspectRatio": "解锁纵横比",
       "scale": "缩放比例",
-      "outputSize": "输出尺寸",
-      "aspectRatios": "纵横比",
       "resizeMode": "调整大小模式",
       "modes": {
         "fitIn": "适应",
@@ -765,7 +758,6 @@
         "stretch": "调整为精确尺寸，忽略纵横比",
         "smart": "智能裁剪以填充尺寸并检测内容"
       },
-      "alignment": "对齐",
       "horizontal": "水平",
       "vertical": "垂直",
       "alignments": {
@@ -776,7 +768,8 @@
         "middle": "中",
         "bottom": "下"
       },
-      "originalRatio": "原始：{{ratio}}"
+      "originalRatio": "原始: {{ratio}}",
+      "outputSize": "输出尺寸"
     },
     "resize": {
       "title": "调整大小"
@@ -794,9 +787,7 @@
         "tiff": "TIFF",
         "jp2": "JPEG 2000"
       },
-      "formatDescription": "选择输出格式或保持原始格式",
       "quality": "质量",
-      "qualityDescription": "质量越高 = 文件越大",
       "qualityAutoOptimized": "质量将自动优化以满足大小限制",
       "maxFileSize": "最大大小",
       "maxSizeDescription": "自动调整质量以满足目标文件大小",
@@ -810,11 +801,6 @@
       "metadataDescription": "移除颜色配置文件和元数据以减小文件大小"
     },
     "crop": {
-      "left": "左（像素）",
-      "top": "上（像素）",
-      "width": "宽度（像素）",
-      "height": "高度（像素）",
-      "cropTitle": "裁剪",
       "startCrop": "裁剪",
       "applyCrop": "应用裁剪"
     },
@@ -823,16 +809,9 @@
       "failedToGenerate": "生成预览失败"
     },
     "fillPadding": {
-      "fillColor": "填充颜色",
       "noFill": "无填充",
       "transparent": "透明",
-      "customColor": "自定义颜色",
-      "padding": "边距",
-      "top": "上",
-      "right": "右",
-      "bottom": "下",
-      "left": "左",
-      "description": "在图片周围添加边距，并用颜色填充透明或边距区域"
+      "customColor": "自定义颜色"
     },
     "layers": {
       "title": "图层",
@@ -856,8 +835,6 @@
       "layerName": "图层名称",
       "enterLayerName": "输入图层名称",
       "exitEditMode": "应用",
-      "xOffset": "X 偏移",
-      "yOffset": "Y 偏移",
       "transparency": "不透明度",
       "blendMode": "混合模式",
       "blendModes": {

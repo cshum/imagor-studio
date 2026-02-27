@@ -686,28 +686,23 @@
       "dimensionsResize": "Dimensions & Resize",
       "outputCompression": "Output & Compression",
       "colorEffects": "Color & Effects",
-      "transformRotate": "Transform & Rotate",
+      "transformRotate": "Flip & Rotate",
       "cropResize": "Crop & Resize",
       "fillPadding": "Fill & Padding"
     },
     "transform": {
-      "flipControls": "Flip Controls",
       "horizontalFlip": "Horizontal Flip",
       "verticalFlip": "Vertical Flip",
       "horizontal": "Horizontal",
       "vertical": "Vertical",
       "normal": "Normal",
-      "flipped": "Flipped",
-      "rotationControls": "Rotation Controls",
-      "currentRotation": "Current Rotation"
+      "flipped": "Flipped"
     },
     "effects": {
-      "colorAdjustments": "Color Adjustments",
       "brightness": "Brightness",
       "contrast": "Contrast",
       "saturation": "Saturation",
       "hue": "Hue",
-      "effects": "Effects",
       "blur": "Blur",
       "sharpen": "Sharpen",
       "roundCorner": "Round Corner",
@@ -723,8 +718,6 @@
       "lockAspectRatio": "Lock Aspect Ratio",
       "unlockAspectRatio": "Unlock Aspect Ratio",
       "scale": "Scale",
-      "outputSize": "Output Size",
-      "aspectRatios": "Aspect Ratios",
       "resizeMode": "Resize Mode",
       "modes": {
         "fitIn": "Fit In",
@@ -738,7 +731,6 @@
         "stretch": "Resize to exact dimensions, ignoring aspect ratio",
         "smart": "Smart crop to fill dimensions with content detection"
       },
-      "alignment": "Alignment",
       "horizontal": "Horizontal",
       "vertical": "Vertical",
       "alignments": {
@@ -749,7 +741,8 @@
         "middle": "Middle",
         "bottom": "Bottom"
       },
-      "originalRatio": "Original: {{ratio}}"
+      "originalRatio": "Original: {{ratio}}",
+      "outputSize": "Output size"
     },
     "resize": {
       "title": "Resize"
@@ -767,9 +760,7 @@
         "tiff": "TIFF",
         "jp2": "JPEG 2000"
       },
-      "formatDescription": "Choose output format or keep original",
       "quality": "Quality",
-      "qualityDescription": "Higher quality = larger file size",
       "qualityAutoOptimized": "Quality will be automatically optimized to meet size limit",
       "maxFileSize": "Max Size",
       "maxSizeDescription": "Automatically adjusts quality to meet file size",
@@ -783,11 +774,6 @@
       "metadataDescription": "Remove metadata to reduce file size"
     },
     "crop": {
-      "left": "Left (px)",
-      "top": "Top (px)",
-      "width": "Width (px)",
-      "height": "Height (px)",
-      "cropTitle": "Crop",
       "startCrop": "Crop",
       "applyCrop": "Apply Crop"
     },
@@ -801,16 +787,9 @@
       "failedToGenerate": "Failed to generate preview"
     },
     "fillPadding": {
-      "fillColor": "Fill Color",
       "noFill": "No Fill",
       "transparent": "Transparent",
-      "customColor": "Custom Color",
-      "padding": "Padding",
-      "top": "Top",
-      "right": "Right",
-      "bottom": "Bottom",
-      "left": "Left",
-      "description": "Add padding around the image and fill transparent or padded areas with a color"
+      "customColor": "Custom Color"
     },
     "layers": {
       "title": "Layers",
@@ -838,8 +817,6 @@
       "layerName": "Layer Name",
       "enterLayerName": "Enter layer name",
       "exitEditMode": "Apply",
-      "xOffset": "X Offset",
-      "yOffset": "Y Offset",
       "transparency": "Opacity",
       "blendMode": "Blend Mode",
       "blendModes": {

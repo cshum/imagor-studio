@@ -549,14 +549,13 @@ export function LayerPanel({
 
   return (
     <div className='flex h-full flex-col'>
-      {/* Header with Add button */}
-      <div className='px-1 pb-3'>
-        <h3 className='text-sm font-medium'>{t('imageEditor.layers.title')}</h3>
+      {/* Add Layer button */}
+      <div className='px-1 pb-2'>
         <Button
           variant='outline'
           onClick={() => setFilePickerOpen(true)}
           disabled={isAddingLayer || visualCropEnabled}
-          className='mt-2 w-full'
+          className='w-full'
         >
           <Plus className='mr-1 h-4 w-4' />
           {t('imageEditor.layers.addLayer')}

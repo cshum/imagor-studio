@@ -710,28 +710,23 @@
       "dimensionsResize": "Dimensioni e Ridimensiona",
       "outputCompression": "Output e Compressione",
       "colorEffects": "Colore ed Effetti",
-      "transformRotate": "Trasforma e Ruota",
+      "transformRotate": "Capovolgi e Ruota",
       "cropResize": "Ritaglia e Ridimensiona",
       "fillPadding": "Riempimento e Spaziatura"
     },
     "transform": {
-      "flipControls": "Controlli di Ribaltamento",
       "horizontalFlip": "Ribaltamento Orizzontale",
       "verticalFlip": "Ribaltamento Verticale",
       "horizontal": "Orizzontale",
       "vertical": "Verticale",
       "normal": "Normale",
-      "flipped": "Ribaltato",
-      "rotationControls": "Controlli di Rotazione",
-      "currentRotation": "Rotazione Attuale"
+      "flipped": "Ribaltato"
     },
     "effects": {
-      "colorAdjustments": "Regolazioni Colore",
       "brightness": "Luminosità",
       "contrast": "Contrasto",
       "saturation": "Saturazione",
       "hue": "Tonalità",
-      "effects": "Effetti",
       "blur": "Sfocatura",
       "sharpen": "Nitidezza",
       "roundCorner": "Angoli Arrotondati",
@@ -747,8 +742,6 @@
       "lockAspectRatio": "Blocca Proporzioni",
       "unlockAspectRatio": "Sblocca Proporzioni",
       "scale": "Scala",
-      "outputSize": "Dimensioni Output",
-      "aspectRatios": "Proporzioni",
       "resizeMode": "Modalità di Ridimensionamento",
       "modes": {
         "fitIn": "Adatta a",
@@ -762,7 +755,6 @@
         "stretch": "Ridimensiona alle dimensioni esatte, ignorando le proporzioni",
         "smart": "Ritaglio intelligente per riempire le dimensioni con il rilevamento del contenuto"
       },
-      "alignment": "Allineamento",
       "horizontal": "Orizzontale",
       "vertical": "Verticale",
       "alignments": {
@@ -773,7 +765,8 @@
         "middle": "Mezzo",
         "bottom": "Basso"
       },
-      "originalRatio": "Originale: {{ratio}}"
+      "originalRatio": "Originale: {{ratio}}",
+      "outputSize": "Dimensione output"
     },
     "resize": {
       "title": "Ridimensiona"
@@ -791,9 +784,7 @@
         "tiff": "TIFF",
         "jp2": "JPEG 2000"
       },
-      "formatDescription": "Scegli il formato di output o mantieni l'originale",
       "quality": "Qualità",
-      "qualityDescription": "Qualità superiore = file più grande",
       "qualityAutoOptimized": "La qualità sarà ottimizzata automaticamente per rispettare il limite di dimensione",
       "maxFileSize": "Dim. Max",
       "maxSizeDescription": "Regola automaticamente la qualità per rispettare la dimensione del file di destinazione",
@@ -807,11 +798,6 @@
       "metadataDescription": "Rimuovi profili colore e metadati per ridurre le dimensioni del file"
     },
     "crop": {
-      "left": "Sinistra (px)",
-      "top": "Alto (px)",
-      "width": "Larghezza (px)",
-      "height": "Altezza (px)",
-      "cropTitle": "Ritaglia",
       "startCrop": "Ritaglia",
       "applyCrop": "Applica Ritaglio"
     },
@@ -820,16 +806,9 @@
       "failedToGenerate": "Impossibile generare l'anteprima"
     },
     "fillPadding": {
-      "fillColor": "Colore di Riempimento",
       "noFill": "Nessun Riempimento",
       "transparent": "Trasparente",
-      "customColor": "Colore Personalizzato",
-      "padding": "Spaziatura",
-      "top": "Alto",
-      "right": "Destra",
-      "bottom": "Basso",
-      "left": "Sinistra",
-      "description": "Aggiungi spaziatura attorno all'immagine e riempi le aree trasparenti o con spaziatura con un colore"
+      "customColor": "Colore Personalizzato"
     },
     "layers": {
       "title": "Livelli",
@@ -853,8 +832,6 @@
       "layerName": "Nome Livello",
       "enterLayerName": "Inserisci nome livello",
       "exitEditMode": "Applica",
-      "xOffset": "Offset X",
-      "yOffset": "Offset Y",
       "transparency": "Opacità",
       "blendMode": "Modalità di Fusione",
       "blendModes": {
