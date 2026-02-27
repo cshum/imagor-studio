@@ -72,10 +72,6 @@ export function LayerControls({
     return layer.originalDimensions.width / layer.originalDimensions.height
   })
 
-  // Get current width/height from transforms or use original dimensions
-  const currentWidth = layer.transforms?.width || layer.originalDimensions.width
-  const currentHeight = layer.transforms?.height || layer.originalDimensions.height
-
   // Fill-mode (parent-relative) state
   const widthFull = layer.transforms?.widthFull ?? false
   const heightFull = layer.transforms?.heightFull ?? false
@@ -90,6 +86,16 @@ export function LayerControls({
   const baseDimensions = imageEditor.getOutputDimensions()
   const baseWidth = baseDimensions.width
   const baseHeight = baseDimensions.height
+
+  // Get current width/height from transforms or use original dimensions.
+  // In fill mode the `width`/`height` keys are undefined, so resolve against the
+  // parent canvas so that alignment-change handlers compute the correct visual position.
+  const currentWidth = widthFull
+    ? Math.max(1, baseWidth - widthFullOffset)
+    : layer.transforms?.width || layer.originalDimensions.width
+  const currentHeight = heightFull
+    ? Math.max(1, baseHeight - heightFullOffset)
+    : layer.transforms?.height || layer.originalDimensions.height
 
   const handleWidthChange = useCallback(
     (value: string) => {
