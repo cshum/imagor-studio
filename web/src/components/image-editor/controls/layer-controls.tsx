@@ -595,7 +595,7 @@ export function LayerControls({
             disabled={hAlign === 'center' || visualCropEnabled}
             placeholder='—'
             step={1}
-            className='h-9 w-16 px-2'
+            className='h-9 w-20 px-2'
           />
         </div>
 
@@ -645,7 +645,7 @@ export function LayerControls({
             disabled={vAlign === 'center' || visualCropEnabled}
             placeholder='—'
             step={1}
-            className='h-9 w-16 px-2'
+            className='h-9 w-20 px-2'
           />
         </div>
       </div>
