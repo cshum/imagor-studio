@@ -695,6 +695,14 @@ export class ImageEditor {
       } else {
         parts.push(`${left}x${top}:${right}x${bottom}`)
       }
+
+      // When fillColor is set, imagor expands the canvas to include padding.
+      // Child-layer fill tokens must be resolved against the padded parent size,
+      // matching the same gate used in computeOutputDimensionsFromState.
+      if (state.fillColor !== undefined) {
+        if (subLayerParentW !== undefined) subLayerParentW += left + right
+        if (subLayerParentH !== undefined) subLayerParentH += top + bottom
+      }
     }
 
     // Add alignment (for Fill mode — not fitIn, not smart, not stretch)

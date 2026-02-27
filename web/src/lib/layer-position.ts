@@ -839,3 +839,255 @@ export function convertDisplayToLayerPosition(
 
   return updates
 }
+
+// ─── Overlay layout ──────────────────────────────────────────────────────────
+
+export interface OverlayLayout {
+  leftPercent: string
+  topPercent: string
+  widthPercent: string
+  heightPercent: string
+  /** Whether the layer can be dragged along the X axis */
+  canDragX: boolean
+  /** Whether the layer can be dragged along the Y axis */
+  canDragY: boolean
+  /** Whether the layer is right-edge anchored */
+  isRightAligned: boolean
+  /** Whether the layer is bottom-edge anchored */
+  isBottomAligned: boolean
+}
+
+/**
+ * Calculate all overlay layout values for a layer.
+ *
+ * Combines {@link calculateLayerPosition} with the extra derived flags
+ * (`widthPercent`, `heightPercent`, `canDragX/Y`, `isRightAligned`,
+ * `isBottomAligned`) that the overlay component needs.
+ *
+ * @returns All CSS percentage strings and boolean flags needed to render the
+ *   layer overlay box.
+ */
+export function calculateOverlayLayout(
+  layerX: string | number | undefined,
+  layerY: string | number | undefined,
+  layerWidth: number,
+  layerHeight: number,
+  baseImageWidth: number,
+  baseImageHeight: number,
+  paddingLeft = 0,
+  paddingTop = 0,
+): OverlayLayout {
+  const { leftPercent, topPercent } = calculateLayerPosition(
+    layerX ?? 'left',
+    layerY ?? 'top',
+    layerWidth,
+    layerHeight,
+    baseImageWidth,
+    baseImageHeight,
+    paddingLeft,
+    paddingTop,
+  )
+
+  const widthPercent = `${(layerWidth / baseImageWidth) * 100}%`
+  const heightPercent = `${(layerHeight / baseImageHeight) * 100}%`
+  const canDragX = typeof layerX !== 'undefined'
+  const canDragY = typeof layerY !== 'undefined'
+  const isRightAligned =
+    layerX === 'right' ||
+    (typeof layerX === 'string' && /^(?:right|r)-\d+$/.test(layerX)) ||
+    (typeof layerX === 'number' && layerX < 0)
+  const isBottomAligned =
+    layerY === 'bottom' ||
+    (typeof layerY === 'string' && /^(?:bottom|b)-\d+$/.test(layerY)) ||
+    (typeof layerY === 'number' && layerY < 0)
+
+  return {
+    leftPercent,
+    topPercent,
+    widthPercent,
+    heightPercent,
+    canDragX,
+    canDragY,
+    isRightAligned,
+    isBottomAligned,
+  }
+}
+
+// ─── Centered resize ──────────────────────────────────────────────────────────
+
+/**
+ * Resize a layer while correctly handling center-aligned axes.
+ *
+ * When a layer is center-aligned on an axis the opposite edge mirrors every
+ * mouse-move, so the dragged edge only appears to move at half speed if we
+ * pass the raw delta to {@link calculateResizeWithAspectRatioAndSnapping}.
+ * This function doubles the effective delta for that axis so the dragged edge
+ * tracks the pointer 1:1, then re-centers the resulting box.
+ *
+ * @param handle - Which resize handle is being dragged
+ * @param deltaX - Raw horizontal mouse delta in display pixels
+ * @param deltaY - Raw vertical mouse delta in display pixels
+ * @param isCenterX - Whether the layer is currently center-aligned on X
+ * @param isCenterY - Whether the layer is currently center-aligned on Y
+ * @param initialLeft
+ * @param initialTop
+ * @param initialWidth
+ * @param initialHeight
+ * @param overlayWidth
+ * @param overlayHeight
+ * @param aspectRatio
+ * @param lockedAspectRatio
+ * @param disableSnapping
+ */
+export function resizeLayerWithCenterAwareness(
+  handle: ResizeHandle,
+  deltaX: number,
+  deltaY: number,
+  isCenterX: boolean,
+  isCenterY: boolean,
+  initialLeft: number,
+  initialTop: number,
+  initialWidth: number,
+  initialHeight: number,
+  overlayWidth: number,
+  overlayHeight: number,
+  aspectRatio: number,
+  lockedAspectRatio: boolean,
+  disableSnapping: boolean,
+): ResizeDimensions {
+  const handlesX = handle.includes('e') || handle.includes('w')
+  const handlesY = handle.includes('n') || handle.includes('s')
+  const effectiveDeltaX = isCenterX && handlesX ? deltaX * 2 : deltaX
+  const effectiveDeltaY = isCenterY && handlesY ? deltaY * 2 : deltaY
+
+  // eslint-disable-next-line prefer-const
+  let { left, top, width, height } = calculateResizeWithAspectRatioAndSnapping(
+    handle,
+    effectiveDeltaX,
+    effectiveDeltaY,
+    initialLeft,
+    initialTop,
+    initialWidth,
+    initialHeight,
+    overlayWidth,
+    overlayHeight,
+    aspectRatio,
+    lockedAspectRatio,
+    disableSnapping,
+  )
+
+  // Re-center along any axis that was centered before the resize.
+  // This also corrects the top/left after aspect-ratio adjustments change the
+  // perpendicular dimension (e.g. dragging 'e' with AR lock changes height,
+  // which needs to be re-centered on Y).
+  if (isCenterX) left = (overlayWidth - width) / 2
+  if (isCenterY) top = (overlayHeight - height) / 2
+
+  return { left, top, width, height }
+}
+
+// ─── Drag update builder ──────────────────────────────────────────────────────
+
+/**
+ * Build layer position updates for a drag operation.
+ *
+ * Bundles the three steps that happen every `mousemove` during a drag:
+ * 1. Apply edge/center snapping to the raw display position.
+ * 2. If snapped to canvas center, override the alignment to `'center'`.
+ * 3. Convert display coordinates to Imagor layer position via
+ *    {@link convertDisplayToLayerPosition} (transforms are omitted since
+ *    drag must not change layer dimensions).
+ *
+ * @param displayX - Proposed X position after applying raw mouse delta
+ * @param displayY - Proposed Y position after applying raw mouse delta
+ * @param displayWidth
+ * @param displayHeight
+ * @param overlayWidth
+ * @param overlayHeight
+ * @param canDragX
+ * @param canDragY
+ * @param disableSnapping
+ * @param baseImageWidth
+ * @param baseImageHeight
+ * @param layerPaddingLeft
+ * @param layerPaddingRight
+ * @param layerPaddingTop
+ * @param layerPaddingBottom
+ * @param layerRotation
+ * @param layerX
+ * @param layerY
+ * @param layerFillColor
+ */
+export function buildDragUpdates(
+  displayX: number,
+  displayY: number,
+  displayWidth: number,
+  displayHeight: number,
+  overlayWidth: number,
+  overlayHeight: number,
+  canDragX: boolean,
+  canDragY: boolean,
+  disableSnapping: boolean,
+  baseImageWidth: number,
+  baseImageHeight: number,
+  layerPaddingLeft: number,
+  layerPaddingRight: number,
+  layerPaddingTop: number,
+  layerPaddingBottom: number,
+  layerRotation: number,
+  layerX: string | number,
+  layerY: string | number,
+  layerFillColor?: string,
+): LayerPositionUpdates {
+  const snapped = applySnapping(
+    displayX,
+    displayY,
+    displayWidth,
+    displayHeight,
+    overlayWidth,
+    overlayHeight,
+    disableSnapping,
+  )
+
+  /** Build position-only updates from snapped coordinates, optionally overriding x/y. */
+  const buildPositionUpdates = (
+    overrides: Partial<Pick<LayerPositionUpdates, 'x' | 'y'>> = {},
+  ): LayerPositionUpdates => {
+    const updates = convertDisplayToLayerPosition(
+      snapped.x,
+      snapped.y,
+      displayWidth,
+      displayHeight,
+      overlayWidth,
+      overlayHeight,
+      baseImageWidth,
+      baseImageHeight,
+      layerPaddingLeft,
+      layerPaddingRight,
+      layerPaddingTop,
+      layerPaddingBottom,
+      layerRotation,
+      layerX,
+      layerY,
+      layerFillColor,
+      false, // isResizing = false (dragging)
+    )
+    // Drop dimension changes — drag must not resize the layer
+    delete updates.transforms
+    return { ...updates, ...overrides }
+  }
+
+  if (!disableSnapping) {
+    if (snapped.snappedToCenter.x && snapped.snappedToCenter.y) {
+      return { x: 'center', y: 'center' }
+    }
+    if (snapped.snappedToCenter.x && canDragX) {
+      return buildPositionUpdates({ x: 'center' })
+    }
+    if (snapped.snappedToCenter.y && canDragY) {
+      return buildPositionUpdates({ y: 'center' })
+    }
+  }
+
+  return buildPositionUpdates()
+}

@@ -613,9 +613,7 @@ export function PreviewArea({
                               baseImageWidth={outputDims.width}
                               baseImageHeight={outputDims.height}
                               paddingLeft={paddingLeft}
-                              paddingRight={paddingRight}
                               paddingTop={paddingTop}
-                              paddingBottom={paddingBottom}
                               layerPaddingLeft={layerPaddingLeft}
                               layerPaddingRight={layerPaddingRight}
                               layerPaddingTop={layerPaddingTop}

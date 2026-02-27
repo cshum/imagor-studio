@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import {
   applySnapping,
+  buildDragUpdates,
   calculateLayerImageDimensions,
   calculateLayerPosition,
+  calculateOverlayLayout,
   calculateResizeWithAspectRatioAndSnapping,
   convertDisplayToLayerPosition,
+  resizeLayerWithCenterAwareness,
   rotatePadding,
   SNAP_THRESHOLDS,
 } from '@/lib/layer-position.ts'
@@ -2465,5 +2468,350 @@ describe('convertDisplayToLayerPosition', () => {
     // canvasX = -100 (left edge outside)
     // Should use 'left-100' syntax regardless of padding
     expect(result.x).toBe('left-100')
+  })
+})
+
+// ─── calculateOverlayLayout ───────────────────────────────────────────────────
+
+describe('calculateOverlayLayout', () => {
+  const bw = 1000
+  const bh = 800
+  const lw = 200
+  const lh = 100
+
+  it('returns correct width/height percent strings', () => {
+    const layout = calculateOverlayLayout('left', 'top', lw, lh, bw, bh)
+    expect(layout.widthPercent).toBe('20%')
+    expect(layout.heightPercent).toBe('12.5%')
+  })
+
+  it('delegates leftPercent/topPercent to calculateLayerPosition', () => {
+    const layout = calculateOverlayLayout('center', 'center', lw, lh, bw, bh)
+    // center X: (1000 - 200) / 2 = 400 → 40%
+    expect(layout.leftPercent).toBe('40%')
+    // center Y: (800 - 100) / 2 = 350 → 43.75%
+    expect(layout.topPercent).toBe('43.75%')
+  })
+
+  it('canDragX/canDragY true when axis is defined', () => {
+    const layout = calculateOverlayLayout('left', 'top', lw, lh, bw, bh)
+    expect(layout.canDragX).toBe(true)
+    expect(layout.canDragY).toBe(true)
+  })
+
+  it('canDragX false when layerX is undefined', () => {
+    const layout = calculateOverlayLayout(undefined, 'top', lw, lh, bw, bh)
+    expect(layout.canDragX).toBe(false)
+    expect(layout.canDragY).toBe(true)
+  })
+
+  it('isRightAligned true for string "right"', () => {
+    const layout = calculateOverlayLayout('right', 'top', lw, lh, bw, bh)
+    expect(layout.isRightAligned).toBe(true)
+    expect(layout.isBottomAligned).toBe(false)
+  })
+
+  it('isRightAligned true for right-N string syntax', () => {
+    const layout = calculateOverlayLayout('right-50', 'top', lw, lh, bw, bh)
+    expect(layout.isRightAligned).toBe(true)
+  })
+
+  it('isRightAligned true for negative numeric X', () => {
+    const layout = calculateOverlayLayout(-50, 'top', lw, lh, bw, bh)
+    expect(layout.isRightAligned).toBe(true)
+  })
+
+  it('isBottomAligned true for string "bottom"', () => {
+    const layout = calculateOverlayLayout('left', 'bottom', lw, lh, bw, bh)
+    expect(layout.isBottomAligned).toBe(true)
+    expect(layout.isRightAligned).toBe(false)
+  })
+
+  it('isBottomAligned true for bottom-N string syntax', () => {
+    const layout = calculateOverlayLayout('left', 'bottom-30', lw, lh, bw, bh)
+    expect(layout.isBottomAligned).toBe(true)
+  })
+
+  it('isBottomAligned true for negative numeric Y', () => {
+    const layout = calculateOverlayLayout('left', -30, lw, lh, bw, bh)
+    expect(layout.isBottomAligned).toBe(true)
+  })
+
+  it('neither aligned flag set for positive numeric positions', () => {
+    const layout = calculateOverlayLayout(100, 50, lw, lh, bw, bh)
+    expect(layout.isRightAligned).toBe(false)
+    expect(layout.isBottomAligned).toBe(false)
+  })
+})
+
+// ─── resizeLayerWithCenterAwareness ──────────────────────────────────────────
+
+describe('resizeLayerWithCenterAwareness', () => {
+  const overlayW = 500
+  const overlayH = 400
+  // Initial box: 200×100 starting at (150, 150)
+  const iLeft = 150
+  const iTop = 150
+  const iWidth = 200
+  const iHeight = 100
+  const ar = iWidth / iHeight // 2
+
+  it('non-centered layer: delegates directly (no delta doubling)', () => {
+    // handle 'e', deltaX=20 — should grow width by 20, left unchanged
+    const result = resizeLayerWithCenterAwareness(
+      'e',
+      20,
+      0,
+      false,
+      false,
+      iLeft,
+      iTop,
+      iWidth,
+      iHeight,
+      overlayW,
+      overlayH,
+      ar,
+      false,
+      true,
+    )
+    expect(result.width).toBe(220)
+    expect(result.left).toBe(iLeft)
+    expect(result.top).toBe(iTop)
+  })
+
+  it('center X, handle e: delta is doubled, box is re-centered horizontally', () => {
+    // Center-aligned layer at (150, 150) in a 500-wide overlay → width 200
+    // deltaX=20 → effectiveDeltaX=40 → newWidth=240
+    // re-center: left = (500 - 240) / 2 = 130
+    const result = resizeLayerWithCenterAwareness(
+      'e',
+      20,
+      0,
+      true,
+      false,
+      iLeft,
+      iTop,
+      iWidth,
+      iHeight,
+      overlayW,
+      overlayH,
+      ar,
+      false,
+      true,
+    )
+    expect(result.width).toBe(240)
+    expect(result.left).toBe((overlayW - 240) / 2)
+    // top unchanged (Y not centered)
+    expect(result.top).toBe(iTop)
+  })
+
+  it('center Y, handle s: delta is doubled, box is re-centered vertically', () => {
+    // deltaY=10 → effectiveDeltaY=20 → newHeight=120
+    // re-center: top = (400 - 120) / 2 = 140
+    const result = resizeLayerWithCenterAwareness(
+      's',
+      0,
+      10,
+      false,
+      true,
+      iLeft,
+      iTop,
+      iWidth,
+      iHeight,
+      overlayW,
+      overlayH,
+      ar,
+      false,
+      true,
+    )
+    expect(result.height).toBe(120)
+    expect(result.top).toBe((overlayH - 120) / 2)
+    expect(result.left).toBe(iLeft)
+  })
+
+  it('handle n (Y-only handle) does NOT double deltaX on center-X layer', () => {
+    // handle n only moves top edge; does not touch X, so doubling should not occur
+    const resultCentered = resizeLayerWithCenterAwareness(
+      'n',
+      0,
+      -10,
+      true,
+      false,
+      iLeft,
+      iTop,
+      iWidth,
+      iHeight,
+      overlayW,
+      overlayH,
+      ar,
+      false,
+      true,
+    )
+    const resultNormal = resizeLayerWithCenterAwareness(
+      'n',
+      0,
+      -10,
+      false,
+      false,
+      iLeft,
+      iTop,
+      iWidth,
+      iHeight,
+      overlayW,
+      overlayH,
+      ar,
+      false,
+      true,
+    )
+    // width should be the same regardless of isCenterX (handle n doesn't touch X)
+    expect(resultCentered.width).toBe(resultNormal.width)
+    // left is re-centered on X for the centered case
+    expect(resultCentered.left).toBe((overlayW - resultCentered.width) / 2)
+  })
+
+  it('both axes centered: both deltas doubled, both axes re-centered', () => {
+    // deltaX=20, deltaY=10; handle se
+    // effectiveDeltaX=40; effectiveDeltaY=20
+    const result = resizeLayerWithCenterAwareness(
+      'se',
+      20,
+      10,
+      true,
+      true,
+      iLeft,
+      iTop,
+      iWidth,
+      iHeight,
+      overlayW,
+      overlayH,
+      ar,
+      false,
+      true,
+    )
+    // Width: 200+40=240; height: 100+20=120
+    expect(result.width).toBe(240)
+    expect(result.height).toBe(120)
+    expect(result.left).toBe((overlayW - 240) / 2)
+    expect(result.top).toBe((overlayH - 120) / 2)
+  })
+})
+
+// ─── buildDragUpdates ─────────────────────────────────────────────────────────
+
+describe('buildDragUpdates', () => {
+  // 1000×800 canvas; 500×400 overlay; 200×100 layer at position 0 (left-aligned)
+  const bw = 1000
+  const bh = 800
+  const ow = 500
+  const oh = 400
+  const dw = 100 // displayWidth  (200 canvas px → 100 display px at 0.5 scale)
+  const dh = 50 // displayHeight
+
+  const defaults = {
+    displayWidth: dw,
+    displayHeight: dh,
+    overlayWidth: ow,
+    overlayHeight: oh,
+    canDragX: true,
+    canDragY: true,
+    disableSnapping: true as boolean, // widened so tests can override with false
+    baseImageWidth: bw,
+    baseImageHeight: bh,
+    layerPaddingLeft: 0,
+    layerPaddingRight: 0,
+    layerPaddingTop: 0,
+    layerPaddingBottom: 0,
+    layerRotation: 0,
+    layerX: 0 as string | number,
+    layerY: 0 as string | number,
+  }
+
+  it('returns position updates without transforms (drag must not resize)', () => {
+    const updates = buildDragUpdates(
+      50,
+      30,
+      ...(Object.values(defaults) as Parameters<typeof buildDragUpdates> extends [
+        number,
+        number,
+        ...infer R,
+      ]
+        ? R
+        : never),
+    )
+    expect(updates.transforms).toBeUndefined()
+  })
+
+  // Simpler call helper
+  const drag = (x: number, y: number, opts: Partial<typeof defaults> = {}) => {
+    const p = { ...defaults, ...opts }
+    return buildDragUpdates(
+      x,
+      y,
+      p.displayWidth,
+      p.displayHeight,
+      p.overlayWidth,
+      p.overlayHeight,
+      p.canDragX,
+      p.canDragY,
+      p.disableSnapping,
+      p.baseImageWidth,
+      p.baseImageHeight,
+      p.layerPaddingLeft,
+      p.layerPaddingRight,
+      p.layerPaddingTop,
+      p.layerPaddingBottom,
+      p.layerRotation,
+      p.layerX,
+      p.layerY,
+    )
+  }
+
+  it('no transforms in returned updates', () => {
+    const updates = drag(50, 30)
+    expect(updates.transforms).toBeUndefined()
+  })
+
+  it('returns canvas-absolute position for simple left-aligned drag', () => {
+    // displayX=50 → xPercent=50/500=0.1 → canvasX=100
+    const updates = drag(50, 0)
+    expect(updates.x).toBe(100)
+  })
+
+  it('snaps to center X+Y and returns {x:center, y:center} (no further computation)', () => {
+    // Position at exact center: displayX=(500-100)/2=200, displayY=(400-50)/2=175
+    const centerX = (ow - dw) / 2
+    const centerY = (oh - dh) / 2
+    const updates = drag(centerX, centerY, { disableSnapping: false })
+    expect(updates.x).toBe('center')
+    expect(updates.y).toBe('center')
+    // When both snap, we return early — no other keys
+    expect(Object.keys(updates)).toEqual(['x', 'y'])
+  })
+
+  it('snaps center X only: overrides x to center, y computed normally', () => {
+    const centerX = (ow - dw) / 2
+    // Place Y far from center so only X snaps
+    const updates = drag(centerX, 0, { disableSnapping: false, layerX: 50, layerY: 0 })
+    expect(updates.x).toBe('center')
+    // Y should be a converted position, not center
+    expect(updates.y).not.toBe('center')
+    expect(updates.transforms).toBeUndefined()
+  })
+
+  it('snaps center Y only: overrides y to center, x computed normally', () => {
+    const centerY = (oh - dh) / 2
+    const updates = drag(0, centerY, { disableSnapping: false, layerX: 0, layerY: 50 })
+    expect(updates.y).toBe('center')
+    expect(updates.x).not.toBe('center')
+    expect(updates.transforms).toBeUndefined()
+  })
+
+  it('disableSnapping skips all center overrides even at exact center position', () => {
+    const centerX = (ow - dw) / 2
+    const centerY = (oh - dh) / 2
+    const updates = drag(centerX, centerY, { disableSnapping: true })
+    // Should not snap to center
+    expect(updates.x).not.toBe('center')
+    expect(updates.y).not.toBe('center')
   })
 })
