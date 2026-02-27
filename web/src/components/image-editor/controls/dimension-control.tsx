@@ -289,29 +289,6 @@ export function DimensionControl({
         </RadioGroup>
       </div>
 
-      {/* Active mode description */}
-      <div className='bg-muted/50 rounded-lg p-3 text-xs'>
-        <p className='text-muted-foreground'>
-          <strong>
-            {getCurrentFitMode() === 'fit-in'
-              ? t('imageEditor.dimensions.modes.fitIn')
-              : getCurrentFitMode() === 'fill'
-                ? t('imageEditor.dimensions.modes.fill')
-                : getCurrentFitMode() === 'stretch'
-                  ? t('imageEditor.dimensions.modes.stretch')
-                  : t('imageEditor.dimensions.modes.smart')}
-            :{' '}
-          </strong>
-          {getCurrentFitMode() === 'fit-in'
-            ? t('imageEditor.dimensions.modeDescriptions.fitIn')
-            : getCurrentFitMode() === 'fill'
-              ? t('imageEditor.dimensions.modeDescriptions.fill')
-              : getCurrentFitMode() === 'stretch'
-                ? t('imageEditor.dimensions.modeDescriptions.stretch')
-                : t('imageEditor.dimensions.modeDescriptions.smart')}
-        </p>
-      </div>
-
       {/* Alignment - Only show when Fill mode is selected */}
       {getCurrentFitMode() === 'fill' && (
         <div className='space-y-2'>
@@ -366,6 +343,29 @@ export function DimensionControl({
           </div>
         </div>
       )}
+
+      {/* Active mode description */}
+      <div className='bg-muted/50 rounded-lg px-3 py-2 text-xs'>
+        <p className='text-muted-foreground'>
+          <strong>
+            {getCurrentFitMode() === 'fit-in'
+              ? t('imageEditor.dimensions.modes.fitIn')
+              : getCurrentFitMode() === 'fill'
+                ? t('imageEditor.dimensions.modes.fill')
+                : getCurrentFitMode() === 'stretch'
+                  ? t('imageEditor.dimensions.modes.stretch')
+                  : t('imageEditor.dimensions.modes.smart')}
+            :{' '}
+          </strong>
+          {getCurrentFitMode() === 'fit-in'
+            ? t('imageEditor.dimensions.modeDescriptions.fitIn')
+            : getCurrentFitMode() === 'fill'
+              ? t('imageEditor.dimensions.modeDescriptions.fill')
+              : getCurrentFitMode() === 'stretch'
+                ? t('imageEditor.dimensions.modeDescriptions.stretch')
+                : t('imageEditor.dimensions.modeDescriptions.smart')}
+        </p>
+      </div>
 
       {/* Scale – hidden when editing a layer (proportion is a global-only setting) */}
       {!isEditingLayer && (
