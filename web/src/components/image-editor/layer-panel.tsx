@@ -550,7 +550,7 @@ export function LayerPanel({
   return (
     <div className='flex h-full flex-col'>
       {/* Add Layer button */}
-      <div className='px-1 pb-3'>
+      <div className='px-1 pb-2'>
         <Button
           variant='outline'
           onClick={() => setFilePickerOpen(true)}
