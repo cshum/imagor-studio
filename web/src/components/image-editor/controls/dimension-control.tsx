@@ -314,8 +314,7 @@ export function DimensionControl({
 
       {/* Alignment - Only show when Fill mode is selected */}
       {getCurrentFitMode() === 'fill' && (
-        <div className='space-y-3'>
-          <Label className='text-sm font-medium'>{t('imageEditor.dimensions.alignment')}</Label>
+        <div className='space-y-2'>
           <div className='grid grid-cols-2 gap-3'>
             <div>
               <Label htmlFor='h-align' className='text-muted-foreground text-xs'>
@@ -370,22 +369,19 @@ export function DimensionControl({
 
       {/* Scale – hidden when editing a layer (proportion is a global-only setting) */}
       {!isEditingLayer && (
-        <div className='space-y-3'>
-          <NumericControl
-            label={t('imageEditor.dimensions.scale')}
-            value={params.proportion ?? 100}
-            min={1}
-            max={100}
-            step={1}
-            unit='%'
-            onChange={(value) => onUpdateParams({ proportion: value === 100 ? undefined : value })}
-          />
-        </div>
+        <NumericControl
+          label={t('imageEditor.dimensions.scale')}
+          value={params.proportion ?? 100}
+          min={1}
+          max={100}
+          step={1}
+          unit='%'
+          onChange={(value) => onUpdateParams({ proportion: value === 100 ? undefined : value })}
+        />
       )}
 
       {/* Output dimensions summary */}
-      <div className='flex items-center justify-between text-xs'>
-        <span className='text-muted-foreground'>{t('imageEditor.dimensions.outputSize')}</span>
+      <div className='flex items-center justify-end text-xs'>
         <span className='font-medium tabular-nums'>
           {outputDimensions.width} × {outputDimensions.height} px
         </span>

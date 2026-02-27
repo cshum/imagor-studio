@@ -713,20 +713,17 @@
       "dimensionsResize": "尺寸和調整大小",
       "outputCompression": "輸出和壓縮",
       "colorEffects": "顏色和效果",
-      "transformRotate": "變換和旋轉",
+      "transformRotate": "翻轉和旋轉",
       "cropResize": "裁剪和調整大小",
       "fillPadding": "填充和邊距"
     },
     "transform": {
-      "flipControls": "翻轉控制",
       "horizontalFlip": "水平翻轉",
       "verticalFlip": "垂直翻轉",
       "horizontal": "水平",
       "vertical": "垂直",
       "normal": "正常",
-      "flipped": "已翻轉",
-      "rotationControls": "旋轉控制",
-      "currentRotation": "當前旋轉"
+      "flipped": "已翻轉"
     },
     "effects": {
       "colorAdjustments": "顏色調整",
@@ -750,7 +747,6 @@
       "lockAspectRatio": "鎖定縱橫比",
       "unlockAspectRatio": "解鎖縱橫比",
       "scale": "縮放比例",
-      "outputSize": "輸出尺寸",
       "resizeMode": "調整大小模式",
       "modes": {
         "fitIn": "適應",
@@ -764,7 +760,6 @@
         "stretch": "調整為精確尺寸，忽略縱橫比",
         "smart": "智慧裁剪以填充尺寸並檢測內容"
       },
-      "alignment": "對齊",
       "horizontal": "水平",
       "vertical": "垂直",
       "alignments": {
