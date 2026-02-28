@@ -1636,57 +1636,57 @@ describe('ImageEditor', () => {
       originalDimensions: { width: 200, height: 150 },
     })
 
-    it('should emit fullxfull when both widthFull and heightFull are set (no offset)', () => {
+    it('should emit fxf when both widthFull and heightFull are set (no offset)', () => {
       const layer = makeLayer('fill-both')
       editor.addLayer({ ...layer, transforms: { widthFull: true, heightFull: true } })
       const path = editor.getImagorPath()
-      expect(path).toContain('fullxfull/')
+      expect(path).toContain('fxf/')
     })
 
-    it('should emit full-20x0 when widthFull with offset 20, height fixed', () => {
+    it('should emit f-20x0 when widthFull with offset 20, height fixed', () => {
       const layer = makeLayer('fill-w-offset')
       editor.addLayer({
         ...layer,
         transforms: { widthFull: true, widthFullOffset: 20, height: 150 },
       })
       const path = editor.getImagorPath()
-      expect(path).toContain('full-20x')
+      expect(path).toContain('f-20x')
     })
 
-    it('should emit fullxfull-30 when heightFull with offset 30, width fill no offset', () => {
+    it('should emit fxf-30 when heightFull with offset 30, width fill no offset', () => {
       const layer = makeLayer('fill-h-offset')
       editor.addLayer({
         ...layer,
         transforms: { widthFull: true, heightFull: true, heightFullOffset: 30 },
       })
       const path = editor.getImagorPath()
-      expect(path).toMatch(/fullxfull-30\//)
+      expect(path).toMatch(/fxf-30\//)
     })
 
-    it('should emit fullx200 when widthFull and fixed height', () => {
+    it('should emit fx200 when widthFull and fixed height', () => {
       const layer = makeLayer('fill-w-fixed-h')
       editor.addLayer({ ...layer, transforms: { widthFull: true, height: 200 } })
       const path = editor.getImagorPath()
       // width is fill (f), height is fixed px (200 at scaleFactor=1)
-      expect(path).toContain('fullx200/')
+      expect(path).toContain('fx200/')
     })
 
-    it('should emit -fullxfull when widthFull and hFlip', () => {
+    it('should emit -fxf when widthFull and hFlip', () => {
       const layer = makeLayer('fill-hflip')
       editor.addLayer({
         ...layer,
         transforms: { widthFull: true, heightFull: true, hFlip: true },
       })
       const path = editor.getImagorPath()
-      expect(path).toContain('-fullxfull/')
+      expect(path).toContain('-fxf/')
     })
 
     it('should still emit dimension segment when only widthFull is set (no width/height)', () => {
       const layer = makeLayer('fill-only-w')
       editor.addLayer({ ...layer, transforms: { widthFull: true } })
       const path = editor.getImagorPath()
-      // fullx0 — width is fill, height defaults to 0 (not set)
-      expect(path).toMatch(/fullx0\//)
+      // fx0 — width is fill, height defaults to 0 (not set)
+      expect(path).toMatch(/fx0\//)
     })
 
     it('getOutputDimensions resolves widthFull against parent dims inside layer context', () => {
@@ -1760,26 +1760,26 @@ describe('ImageEditor', () => {
       return { layerA, layerB }
     }
 
-    it('getImagorPath still emits full-tokens for depth-1 and depth-2 layers (imagor resolves at serve time)', () => {
-      // getImagorPath calls editorStateToImagorPath without parentDims → full-tokens emitted.
+    it('getImagorPath still emits f-tokens for depth-1 and depth-2 layers (imagor resolves at serve time)', () => {
+      // getImagorPath calls editorStateToImagorPath without parentDims → f-tokens emitted.
       // imagor handles depth-1 tokens correctly at root level, and handles depth-2 tokens
       // correctly because the image() filter calls resolveFullDimensions against the
       // layer's own output dimensions before parsing.
       const { layerA } = makeNestedSetup()
       editor.addLayer(layerA)
       const path = editor.getImagorPath()
-      // Layer-A dimension segment: full-120xfull-80
-      expect(path).toContain('full-120xfull-80/')
-      // Layer-B dimension segment inside Layer-A's path: full-200xfull-100
-      expect(path).toContain('full-200xfull-100/')
+      // Layer-A dimension segment: f-120xf-80
+      expect(path).toContain('f-120xf-80/')
+      // Layer-B dimension segment inside Layer-A's path: f-200xf-100
+      expect(path).toContain('f-200xf-100/')
     })
 
-    it('preview URL pre-resolves depth-2 nested full-tokens against correct intermediate parent dims', async () => {
+    it('preview URL pre-resolves depth-2 nested f-tokens against correct intermediate parent dims', async () => {
       // Bug reproduced: imagor's resolveFullDimensions splits the entire path on '/' and
       // resolves ALL matching WxH segments, including ones nested inside filter args.
-      // For depth-2, Layer-B's full-tokens would be resolved against the root canvas instead
+      // For depth-2, Layer-B's f-tokens would be resolved against the root canvas instead
       // of Layer-A's output — giving wrong dimensions.
-      // Fix: editorStateToImagorPath pre-resolves full-tokens to concrete pixels whenever
+      // Fix: editorStateToImagorPath pre-resolves f-tokens to concrete pixels whenever
       // parentDims is provided, and propagates subLayerParentDims to recursive calls.
       const { generateImagorUrl } = await import('@/api/imagor-api')
 
@@ -1802,9 +1802,9 @@ describe('ImageEditor', () => {
       // Layer-A: canvasDims(960,540) − round(120*0.5)=60 → 900; − round(80*0.5)=40 → 500
       expect(args).toContain('900x500/')
       // Layer-B: parentA(900,500) − round(200*0.5)=100 → 800; − round(100*0.5)=50 → 450
-      // Critically: NOT "full-100xfull-50" which imagor would have resolved against root dims
+      // Critically: NOT "f-100xf-50" which imagor would have resolved against root dims
       expect(args).toContain('800x450/')
-      expect(args).not.toContain('full-')
+      expect(args).not.toContain('f-')
     })
 
     it('getContextParentDimensions returns the immediate parent output dims at depth-2', () => {
@@ -1906,7 +1906,7 @@ describe('ImageEditor', () => {
         expect(filterNames).not.toContain('proportion')
       })
 
-      it('emits pre-resolved pixel values (not full-tokens) in preview URL for depth-1 widthFull layers', async () => {
+      it('emits pre-resolved pixel values (not f-tokens) in preview URL for depth-1 widthFull layers', async () => {
         const { generateImagorUrl } = await import('@/api/imagor-api')
 
         // originalDimensions = 1920x1080, previewMaxDimensions = 960x540 → scaleFactor = 0.5
@@ -1942,14 +1942,14 @@ describe('ImageEditor', () => {
         // canvasDimsForLayers = { 960, 540 } (1920*0.5, 1080*0.5)
         // widthFull offset 20 pre-resolved: 960 - round(20 * 0.5) = 960 - 10 = 950
         // height 200 scaled: round(200 * 0.5) = 100
-        // Pre-resolved to concrete pixels 950x100 (NOT full-10x100) to prevent imagor from
-        // mis-resolving full-tokens in nested paths via its path-wide resolveFullDimensions.
+        // Pre-resolved to concrete pixels 950x100 (NOT f-10x100) to prevent imagor from
+        // mis-resolving f-tokens in nested paths via its path-wide resolveFullDimensions.
         expect(imageFilter!.args).toContain('950x100')
-        expect(imageFilter!.args).not.toContain('full-')
+        expect(imageFilter!.args).not.toContain('f-')
       })
-      it('pre-resolves heightFull layer full-token against padded canvas when parent has fillColor+padding', async () => {
+      it('pre-resolves heightFull layer f-token against padded canvas when parent has fillColor+padding', async () => {
         // Regression: canvasDimsForLayers was using pre-padding resize dimensions,
-        // so full-tokens were pre-resolved against the wrong (smaller) height.
+        // so f-tokens were pre-resolved against the wrong (smaller) height.
         // Fix: add scaled padding to canvasDimsForLayers when fillColor is set.
         //
         // Setup: base image 3804x2800 (crop), paddingBottom=200, fillColor=FFFFFF
@@ -2004,7 +2004,7 @@ describe('ImageEditor', () => {
         // Buggy pre-resolved height was 2800 - 110 = 2690.
         expect(imageFilter!.args).toContain('2025x2890/')
         expect(imageFilter!.args).not.toContain('2025x2690/')
-        expect(imageFilter!.args).not.toContain('full-')
+        expect(imageFilter!.args).not.toContain('f-')
       })
     })
 

@@ -50,13 +50,13 @@ export interface ImageEditorState {
   height?: number
 
   // Parent-relative dimensions (layer transforms only — ignored at root context).
-  // When true the corresponding axis uses the imagor full-token which imagor resolves
-  // to the parent canvas size at render time (e.g. "f" or "full-20").
+  // When true the corresponding axis uses the imagor f-token which imagor resolves
+  // to the parent canvas size at render time (e.g. "f" or "f-20").
   // widthFullOffset / heightFullOffset subtract N pixels from the parent dimension.
   widthFull?: boolean
-  widthFullOffset?: number // pixels to subtract from parent width (emits "full-N")
+  widthFullOffset?: number // pixels to subtract from parent width (emits "f-N")
   heightFull?: boolean
-  heightFullOffset?: number // pixels to subtract from parent height (emits "full-N")
+  heightFullOffset?: number // pixels to subtract from parent height (emits "f-N")
 
   // Fitting
   stretch?: boolean
@@ -357,11 +357,11 @@ export class ImageEditor {
    *
    * - At base level (depth 0): returns null — no parent exists.
    * - At depth 1 (direct child of root): returns the root canvas output dims.
-   * - At depth N: walks ancestors level-by-level, resolving full-tokens at each step,
+   * - At depth N: walks ancestors level-by-level, resolving f-tokens at each step,
    *   so the result is the immediate parent layer's output size.
    *
    * Used by DimensionControl to show the correct resolved output size for fill
-   * (full-token) dimensions without double-subtracting the offset.
+   * (f-token) dimensions without double-subtracting the offset.
    */
   getContextParentDimensions(): { width: number; height: number } | null {
     return this.computeParentDimensionsForContext()
@@ -462,7 +462,7 @@ export class ImageEditor {
    * - Depth 0 (base image editing): returns null (no parent)
    * - Depth 1 (direct layer of root): returns root canvas output dims
    * - Depth N: iterates through ancestors[0..N-2], computing each layer's output
-   *   using that layer's own transforms and its parent's dims, so that full-tokens
+   *   using that layer's own transforms and its parent's dims, so that f-tokens
    *   at every nesting level resolve correctly.
    */
   private computeParentDimensionsForContext(): { width: number; height: number } | null {
@@ -514,7 +514,7 @@ export class ImageEditor {
    * @param origDims - Override source dimensions (used when config has been updated to
    *   point at a layer image and we need root / ancestor image dimensions).
    * @param parentDims - The parent layer's output dimensions, used to resolve
-   *   widthFull / heightFull (full-token) values. Pass null for root level.
+   *   widthFull / heightFull (f-token) values. Pass null for root level.
    */
   private computeOutputDimensionsFromState(
     state: ImageEditorState,
@@ -533,7 +533,7 @@ export class ImageEditor {
       sourceHeight = src.height
     }
 
-    // Resolve fill-mode (full-token) dimensions using parent context
+    // Resolve fill-mode (f-token) dimensions using parent context
     let outputWidth: number
     let outputHeight: number
 
@@ -593,7 +593,6 @@ export class ImageEditor {
    * @param imagePath - Image path
    * @param scaleFactor - Scale factor for preview (1.0 for actual)
    * @param forPreview - Whether generating for preview (affects layer visibility in visual crop mode)
-   * @param parentDims
    * @returns Imagor path string
    */
   private static editorStateToImagorPath(
@@ -619,20 +618,20 @@ export class ImageEditor {
     }
 
     // Track resolved pixel dims for this path segment so we can pass them to sub-layer
-    // recursive calls as parentDims. This lets sub-layers pre-resolve their full-tokens too.
+    // recursive calls as parentDims. This lets sub-layers pre-resolve their f-tokens too.
     let subLayerParentW: number | undefined
     let subLayerParentH: number | undefined
 
     // Add dimensions with flip integration (scaled by scaleFactor)
     // Format: /fit-in/-200x-300 where minus signs indicate flips
-    // Fill mode (layer-only): widthFull/heightFull use the full-token syntax which imagor
+    // Fill mode (layer-only): widthFull/heightFull use the f-token syntax which imagor
     // resolves against the parent canvas at serve time — BUT imagor's resolveFullDimensions
     // naively splits the entire path on '/' and resolves ALL matching dimension segments,
     // including ones nested inside filter arguments. For depth >= 2 (a layer inside a layer),
-    // the inner full-tokens would be resolved against the wrong (outer) parent dimensions.
+    // the inner f-tokens would be resolved against the wrong (outer) parent dimensions.
     // Fix: when parentDims is supplied the caller has already told us the parent canvas size
     // at the current scale, so we pre-resolve widthFull/heightFull to concrete pixel integers
-    // instead of emitting full-tokens. Imagor then sees plain integers and leaves them alone.
+    // instead of emitting f-tokens. Imagor then sees plain integers and leaves them alone.
     if (state.width || state.height || state.widthFull || state.heightFull) {
       // Build dimension prefix
       let prefix = ''
@@ -657,11 +656,11 @@ export class ImageEditor {
           subLayerParentW = px
           wStr = state.hFlip ? `-${px}` : `${px}`
         } else {
-          // Depth-0: imagor resolves full-tokens correctly at the top-level path.
+          // Depth-0: imagor resolves f-tokens correctly at the top-level path.
           const fToken =
             state.widthFullOffset && state.widthFullOffset > 0
-              ? `full-${Math.round(state.widthFullOffset * scaleFactor)}`
-              : 'full'
+              ? `f-${Math.round(state.widthFullOffset * scaleFactor)}`
+              : 'f'
           wStr = state.hFlip ? `-${fToken}` : fToken
         }
       } else {
@@ -682,8 +681,8 @@ export class ImageEditor {
         } else {
           const fToken =
             state.heightFullOffset && state.heightFullOffset > 0
-              ? `full-${Math.round(state.heightFullOffset * scaleFactor)}`
-              : 'full'
+              ? `f-${Math.round(state.heightFullOffset * scaleFactor)}`
+              : 'f'
           hStr = state.vFlip ? `-${fToken}` : fToken
         }
       } else {
@@ -793,7 +792,7 @@ export class ImageEditor {
     if (shouldApplyLayers && state.layers && state.layers.length > 0) {
       // Derive sub-layer parent dims from this path's resolved output size.
       // These are passed into recursive editorStateToImagorPath calls so nested
-      // full-tokens get pre-resolved to concrete pixels (see parentDims logic above).
+      // f-tokens get pre-resolved to concrete pixels (see parentDims logic above).
       const subLayerParentDims =
         subLayerParentW !== undefined && subLayerParentH !== undefined
           ? { width: subLayerParentW, height: subLayerParentH }
@@ -917,9 +916,9 @@ export class ImageEditor {
     let width = state.width
     let height = state.height
 
-    // Resolve fill-mode (full-token) dimensions to concrete pixel values.
+    // Resolve fill-mode (f-token) dimensions to concrete pixel values.
     // widthFull/heightFull reference the parent canvas size at imagor render time
-    // (emitted as "f" / "full-N" in the path), but convertStateToGraphQLParams works with
+    // (emitted as "f" / "f-N" in the path), but convertStateToGraphQLParams works with
     // pixel values, so we resolve them here against the current context's parent dims.
     // This ensures preview URL dimensions (and all downstream scale-factor math) use
     // the correct fill-resolved size rather than the layer's natural source dimensions.
@@ -1151,15 +1150,15 @@ export class ImageEditor {
     // For preview: width/height are the post-scaleFactor values.
     // For actual URL: actualOutputWidth/Height at scaleFactor=1.
     // Passing these as parentDims lets editorStateToImagorPath pre-resolve sub-layer
-    // full-tokens to concrete pixels, preventing imagor's resolveFullDimensions from
-    // mis-resolving nested full-tokens at the wrong depth.
+    // f-tokens to concrete pixels, preventing imagor's resolveFullDimensions from
+    // mis-resolving nested f-tokens at the wrong depth.
     const canvasDimsForLayers = {
       width: width ?? actualOutputWidth,
       height: height ?? actualOutputHeight,
     }
 
     // When fillColor is set, imagor's fill() expands the canvas by the padding amounts
-    // BEFORE image() filters run, so child full-tokens (fh, fw) resolve against the padded
+    // BEFORE image() filters run, so child f-tokens (fh, fw) resolve against the padded
     // canvas — not the pre-padding resize dimensions. Add scaled padding here to match.
     if (state.fillColor !== undefined) {
       const scaledPL = state.paddingLeft ? Math.round(state.paddingLeft * scaleFactor) : 0

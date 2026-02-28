@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.10
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.10
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.1
-	github.com/cshum/imagor v1.6.17-0.20260228055340-5ea27b2f9386
+	github.com/cshum/imagor v1.6.17-0.20260227032318-376cdaac2f60
 	github.com/cshum/imagorvideo v1.0.20
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang-jwt/jwt/v5 v5.3.1
