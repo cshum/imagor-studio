@@ -102,7 +102,7 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
   }
 
   return (
-    <div className='space-y-4'>
+    <div className='space-y-3'>
       {/* Format Selection */}
       <div className='space-y-2'>
         <Label className='text-sm font-medium'>{t('imageEditor.output.outputFormat')}</Label>
@@ -121,7 +121,7 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
       </div>
 
       {/* Quality Control */}
-      <div className='space-y-3'>
+      <div className='space-y-2'>
         <NumericControl
           label={t('imageEditor.output.quality')}
           value={qualityValue}
@@ -140,7 +140,7 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
       </div>
 
       {/* Metadata Stripping */}
-      <div className='space-y-3'>
+      <div className='space-y-2'>
         <Label className='text-sm font-medium'>{t('imageEditor.output.metadata')}</Label>
 
         <div className='flex items-center space-x-3'>
@@ -173,7 +173,7 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
       </div>
 
       {/* Max File Size */}
-      <div className='space-y-3'>
+      <div className='space-y-2'>
         <Label className='text-sm font-medium'>{t('imageEditor.output.maxFileSize')}</Label>
 
         {/* Size Presets */}
