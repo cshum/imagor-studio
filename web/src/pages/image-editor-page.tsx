@@ -166,6 +166,10 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     const savedState = isTemplate ? imageEditor.getState() : null
 
     // Initialize editor (this resets state to defaults)
+    // Reset previewUrl to keep React state in sync with imageEditor's lastPreviewUrl reset.
+    // Without this, if the new preview URL equals the current previewUrl React bails out
+    // (no re-render -> no new <img> -> onLoad never fires -> loading stuck).
+    setPreviewUrl(undefined)
     imageEditor.initialize({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,

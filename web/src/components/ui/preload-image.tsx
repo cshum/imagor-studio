@@ -27,10 +27,12 @@ export const PreloadImage = forwardRef<HTMLImageElement, PreloadImageProps>(
         const imageId = `img-${Date.now()}-${Math.random()}`
 
         setImageStack((prev) => {
-          // Check if this src is already in the stack
+          // Check if this src is already in the stack and still loading.
+          // If it's already loaded we must add a fresh entry so the browser fires
+          // onLoad again (e.g. when the URL cycles back to one seen earlier).
           const existingImage = prev.find((item) => item.src === src)
-          if (existingImage) {
-            return prev // Don't add duplicates
+          if (existingImage && !existingImage.loaded) {
+            return prev // Already in-flight, don't add a duplicate request
           }
 
           return [
