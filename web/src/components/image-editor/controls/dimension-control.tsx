@@ -169,7 +169,7 @@ export function DimensionControl({
   )
 
   return (
-    <div className='space-y-4'>
+    <div className='space-y-3'>
       {/* Dimensions */}
       <div className='space-y-2'>
         <div className='flex items-center justify-between'>
