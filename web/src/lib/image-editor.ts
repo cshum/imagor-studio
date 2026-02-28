@@ -600,7 +600,6 @@ export class ImageEditor {
     imagePath: string,
     scaleFactor: number,
     forPreview = false,
-    parentDims?: { width: number; height: number },
   ): string {
     const parts: string[] = []
 
@@ -617,21 +616,12 @@ export class ImageEditor {
       parts.push(`${state.cropLeft}x${state.cropTop}:${right}x${bottom}`)
     }
 
-    // Track resolved pixel dims for this path segment so we can pass them to sub-layer
-    // recursive calls as parentDims. This lets sub-layers pre-resolve their f-tokens too.
-    let subLayerParentW: number | undefined
-    let subLayerParentH: number | undefined
-
-    // Add dimensions with flip integration (scaled by scaleFactor)
-    // Format: /fit-in/-200x-300 where minus signs indicate flips
-    // Fill mode (layer-only): widthFull/heightFull use the f-token syntax which imagor
-    // resolves against the parent canvas at serve time — BUT imagor's resolveFullDimensions
-    // naively splits the entire path on '/' and resolves ALL matching dimension segments,
-    // including ones nested inside filter arguments. For depth >= 2 (a layer inside a layer),
-    // the inner f-tokens would be resolved against the wrong (outer) parent dimensions.
-    // Fix: when parentDims is supplied the caller has already told us the parent canvas size
-    // at the current scale, so we pre-resolve widthFull/heightFull to concrete pixel integers
-    // instead of emitting f-tokens. Imagor then sees plain integers and leaves them alone.
+    // Add dimensions with flip integration (scaled by scaleFactor).
+    // Format: /fit-in/-200x-300 where minus signs indicate flips.
+    // Fill mode (layer-only): widthFull/heightFull emit imagor f-tokens (e.g. "f", "f-20").
+    // Imagor resolves f-tokens against the parent canvas at serve time at every nesting depth
+    // (fixed in cshum/imagor commit 376cdaa — resolveFullDimensions now isolates each layer
+    // scope, so nested f-tokens are resolved against their own parent, not the root canvas).
     if (state.width || state.height || state.widthFull || state.heightFull) {
       // Build dimension prefix
       let prefix = ''
@@ -646,48 +636,25 @@ export class ImageEditor {
       // Build each axis string.
       let wStr: string
       if (state.widthFull) {
-        if (parentDims) {
-          // Pre-resolve: emit concrete pixels so imagor doesn't mis-resolve this nested token.
-          // The offset is already in logical pixels; scale it by scaleFactor like all other dims.
-          const px = Math.max(
-            1,
-            parentDims.width - Math.round((state.widthFullOffset ?? 0) * scaleFactor),
-          )
-          subLayerParentW = px
-          wStr = state.hFlip ? `-${px}` : `${px}`
-        } else {
-          // Depth-0: imagor resolves f-tokens correctly at the top-level path.
-          const fToken =
-            state.widthFullOffset && state.widthFullOffset > 0
-              ? `f-${Math.round(state.widthFullOffset * scaleFactor)}`
-              : 'f'
-          wStr = state.hFlip ? `-${fToken}` : fToken
-        }
+        const fToken =
+          state.widthFullOffset && state.widthFullOffset > 0
+            ? `f-${Math.round(state.widthFullOffset * scaleFactor)}`
+            : 'f'
+        wStr = state.hFlip ? `-${fToken}` : fToken
       } else {
         const w = state.width ? Math.round(state.width * scaleFactor) : 0
-        subLayerParentW = w
         wStr = state.hFlip ? `-${w}` : `${w}`
       }
 
       let hStr: string
       if (state.heightFull) {
-        if (parentDims) {
-          const px = Math.max(
-            1,
-            parentDims.height - Math.round((state.heightFullOffset ?? 0) * scaleFactor),
-          )
-          subLayerParentH = px
-          hStr = state.vFlip ? `-${px}` : `${px}`
-        } else {
-          const fToken =
-            state.heightFullOffset && state.heightFullOffset > 0
-              ? `f-${Math.round(state.heightFullOffset * scaleFactor)}`
-              : 'f'
-          hStr = state.vFlip ? `-${fToken}` : fToken
-        }
+        const fToken =
+          state.heightFullOffset && state.heightFullOffset > 0
+            ? `f-${Math.round(state.heightFullOffset * scaleFactor)}`
+            : 'f'
+        hStr = state.vFlip ? `-${fToken}` : fToken
       } else {
         const h = state.height ? Math.round(state.height * scaleFactor) : 0
-        subLayerParentH = h
         hStr = state.vFlip ? `-${h}` : `${h}`
       }
 
@@ -716,13 +683,7 @@ export class ImageEditor {
         parts.push(`${left}x${top}:${right}x${bottom}`)
       }
 
-      // When fillColor is set, imagor expands the canvas to include padding.
-      // Child-layer fill tokens must be resolved against the padded parent size,
-      // matching the same gate used in computeOutputDimensionsFromState.
-      if (state.fillColor !== undefined) {
-        if (subLayerParentW !== undefined) subLayerParentW += left + right
-        if (subLayerParentH !== undefined) subLayerParentH += top + bottom
-      }
+
     }
 
     // Add alignment (for Fill mode — not fitIn, not smart, not stretch)
@@ -790,14 +751,6 @@ export class ImageEditor {
     const shouldApplyLayers = !forPreview || (forPreview && !state.visualCropEnabled)
 
     if (shouldApplyLayers && state.layers && state.layers.length > 0) {
-      // Derive sub-layer parent dims from this path's resolved output size.
-      // These are passed into recursive editorStateToImagorPath calls so nested
-      // f-tokens get pre-resolved to concrete pixels (see parentDims logic above).
-      const subLayerParentDims =
-        subLayerParentW !== undefined && subLayerParentH !== undefined
-          ? { width: subLayerParentW, height: subLayerParentH }
-          : undefined
-
       for (const layer of state.layers) {
         if (!layer.visible) continue
 
@@ -813,7 +766,6 @@ export class ImageEditor {
             layer.imagePath,
             scaleFactor,
             forPreview,
-            subLayerParentDims,
           )
         } else {
           // No transforms - minimal state (NO layers array)
@@ -826,7 +778,6 @@ export class ImageEditor {
             layer.imagePath,
             scaleFactor,
             forPreview,
-            subLayerParentDims,
           )
         }
 
@@ -1146,29 +1097,6 @@ export class ImageEditor {
     // Note: When editing a layer, state.layers is undefined, so this won't run
     const shouldApplyLayers = !forPreview || (forPreview && !state.visualCropEnabled)
 
-    // Canvas output dimensions at the scale used for layer paths.
-    // For preview: width/height are the post-scaleFactor values.
-    // For actual URL: actualOutputWidth/Height at scaleFactor=1.
-    // Passing these as parentDims lets editorStateToImagorPath pre-resolve sub-layer
-    // f-tokens to concrete pixels, preventing imagor's resolveFullDimensions from
-    // mis-resolving nested f-tokens at the wrong depth.
-    const canvasDimsForLayers = {
-      width: width ?? actualOutputWidth,
-      height: height ?? actualOutputHeight,
-    }
-
-    // When fillColor is set, imagor's fill() expands the canvas by the padding amounts
-    // BEFORE image() filters run, so child f-tokens (fh, fw) resolve against the padded
-    // canvas — not the pre-padding resize dimensions. Add scaled padding here to match.
-    if (state.fillColor !== undefined) {
-      const scaledPL = state.paddingLeft ? Math.round(state.paddingLeft * scaleFactor) : 0
-      const scaledPT = state.paddingTop ? Math.round(state.paddingTop * scaleFactor) : 0
-      const scaledPR = state.paddingRight ? Math.round(state.paddingRight * scaleFactor) : 0
-      const scaledPB = state.paddingBottom ? Math.round(state.paddingBottom * scaleFactor) : 0
-      canvasDimsForLayers.width += scaledPL + scaledPR
-      canvasDimsForLayers.height += scaledPT + scaledPB
-    }
-
     if (shouldApplyLayers && state.layers && state.layers.length > 0) {
       for (const layer of state.layers) {
         if (!layer.visible) continue
@@ -1186,7 +1114,6 @@ export class ImageEditor {
             layer.imagePath,
             forPreview ? scaleFactor : 1,
             forPreview,
-            canvasDimsForLayers,
           )
         } else {
           // No transforms - minimal state (NO layers array)
@@ -1200,7 +1127,6 @@ export class ImageEditor {
             layer.imagePath,
             forPreview ? scaleFactor : 1,
             forPreview,
-            canvasDimsForLayers,
           )
         }
 

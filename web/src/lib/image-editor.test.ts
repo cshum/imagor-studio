@@ -1760,11 +1760,10 @@ describe('ImageEditor', () => {
       return { layerA, layerB }
     }
 
-    it('getImagorPath still emits f-tokens for depth-1 and depth-2 layers (imagor resolves at serve time)', () => {
-      // getImagorPath calls editorStateToImagorPath without parentDims → f-tokens emitted.
-      // imagor handles depth-1 tokens correctly at root level, and handles depth-2 tokens
-      // correctly because the image() filter calls resolveFullDimensions against the
-      // layer's own output dimensions before parsing.
+    it('getImagorPath emits f-tokens for depth-1 and depth-2 layers (imagor resolves at serve time)', () => {
+      // imagor (commit 376cdaa) correctly resolves f-tokens at every nesting depth:
+      // resolveFullDimensions now isolates each layer's own dimension segment, so
+      // nested f-tokens are resolved against their own parent, not the root canvas.
       const { layerA } = makeNestedSetup()
       editor.addLayer(layerA)
       const path = editor.getImagorPath()
@@ -1774,13 +1773,10 @@ describe('ImageEditor', () => {
       expect(path).toContain('f-200xf-100/')
     })
 
-    it('preview URL pre-resolves depth-2 nested f-tokens against correct intermediate parent dims', async () => {
-      // Bug reproduced: imagor's resolveFullDimensions splits the entire path on '/' and
-      // resolves ALL matching WxH segments, including ones nested inside filter args.
-      // For depth-2, Layer-B's f-tokens would be resolved against the root canvas instead
-      // of Layer-A's output — giving wrong dimensions.
-      // Fix: editorStateToImagorPath pre-resolves f-tokens to concrete pixels whenever
-      // parentDims is provided, and propagates subLayerParentDims to recursive calls.
+    it('preview URL emits f-tokens for all depths (imagor resolves nested f-tokens correctly)', async () => {
+      // imagor (commit 376cdaa) isolates f-token resolution per layer scope, so we no
+      // longer need to pre-resolve nested f-tokens client-side. f-tokens are emitted at
+      // every depth and imagor resolves them server-side against the correct parent canvas.
       const { generateImagorUrl } = await import('@/api/imagor-api')
 
       // root 1920x1080, preview 960x540 → scaleFactor = 0.5
@@ -1799,12 +1795,10 @@ describe('ImageEditor', () => {
       expect(imageFilter).toBeDefined()
 
       const args = imageFilter!.args
-      // Layer-A: canvasDims(960,540) − round(120*0.5)=60 → 900; − round(80*0.5)=40 → 500
-      expect(args).toContain('900x500/')
-      // Layer-B: parentA(900,500) − round(200*0.5)=100 → 800; − round(100*0.5)=50 → 450
-      // Critically: NOT "f-100xf-50" which imagor would have resolved against root dims
-      expect(args).toContain('800x450/')
-      expect(args).not.toContain('f-')
+      // Layer-A: f-60xf-40 (offsets scaled by 0.5: 120*0.5=60, 80*0.5=40)
+      expect(args).toContain('f-60xf-40/')
+      // Layer-B: f-100xf-50 (offsets scaled by 0.5: 200*0.5=100, 100*0.5=50)
+      expect(args).toContain('f-100xf-50/')
     })
 
     it('getContextParentDimensions returns the immediate parent output dims at depth-2', () => {
@@ -1906,7 +1900,7 @@ describe('ImageEditor', () => {
         expect(filterNames).not.toContain('proportion')
       })
 
-      it('emits pre-resolved pixel values (not f-tokens) in preview URL for depth-1 widthFull layers', async () => {
+      it('emits f-tokens in preview URL for depth-1 widthFull layers (imagor resolves at serve time)', async () => {
         const { generateImagorUrl } = await import('@/api/imagor-api')
 
         // originalDimensions = 1920x1080, previewMaxDimensions = 960x540 → scaleFactor = 0.5
@@ -1939,24 +1933,14 @@ describe('ImageEditor', () => {
         const imageFilter = lastCall.params.filters.find((f) => f.name === 'image')
 
         expect(imageFilter).toBeDefined()
-        // canvasDimsForLayers = { 960, 540 } (1920*0.5, 1080*0.5)
-        // widthFull offset 20 pre-resolved: 960 - round(20 * 0.5) = 960 - 10 = 950
-        // height 200 scaled: round(200 * 0.5) = 100
-        // Pre-resolved to concrete pixels 950x100 (NOT f-10x100) to prevent imagor from
-        // mis-resolving f-tokens in nested paths via its path-wide resolveFullDimensions.
-        expect(imageFilter!.args).toContain('950x100')
-        expect(imageFilter!.args).not.toContain('f-')
+        // widthFull offset 20 scaled by 0.5 → f-10; height 200 scaled by 0.5 → 100
+        // imagor resolves f-10 against the parent canvas (960px wide) at serve time → 950px
+        expect(imageFilter!.args).toContain('f-10x100')
       })
-      it('pre-resolves heightFull layer f-token against padded canvas when parent has fillColor+padding', async () => {
-        // Regression: canvasDimsForLayers was using pre-padding resize dimensions,
-        // so f-tokens were pre-resolved against the wrong (smaller) height.
-        // Fix: add scaled padding to canvasDimsForLayers when fillColor is set.
-        //
-        // Setup: base image 3804x2800 (crop), paddingBottom=200, fillColor=FFFFFF
-        //   → full canvas = 3804x3000
-        //   Layer: heightFull=true, heightFullOffset=110
-        //   Expected pre-resolved height = 3000 - 110 = 2890
-        //   Bug produced:            2800 - 110 = 2690 (missing padding)
+      it('emits f-tokens for heightFull layer when parent has fillColor+padding (imagor resolves against padded canvas)', async () => {
+        // imagor applies fill()+padding to expand the canvas before resolving image() filters,
+        // so f-tokens are correctly resolved against the padded canvas at serve time.
+        // No client-side pre-resolution needed.
         const { generateImagorUrl } = await import('@/api/imagor-api')
 
         const paddedEditor = new ImageEditor({
@@ -1965,7 +1949,7 @@ describe('ImageEditor', () => {
         })
         paddedEditor.initialize({ onPreviewUpdate: vi.fn() })
 
-        // Crop to 3804x2800, add fillColor+paddingBottom=200
+        // Crop to 3804x2800, add fillColor+paddingBottom=200 → canvas becomes 3804x3000
         paddedEditor.updateParams({
           cropLeft: 335,
           cropTop: 493,
@@ -1989,7 +1973,6 @@ describe('ImageEditor', () => {
         }
         paddedEditor.addLayer(layer)
 
-        // Force preview without scale constraint (no previewMaxDimensions)
         await vi.runAllTimersAsync()
 
         const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
@@ -1999,12 +1982,9 @@ describe('ImageEditor', () => {
         const imageFilter = lastCall.params.filters.find((f) => f.name === 'image')
         expect(imageFilter).toBeDefined()
 
-        // padded canvas height = 2800 + 200 = 3000. heightFullOffset = 110.
-        // Correct pre-resolved height = 3000 - 110 = 2890.
-        // Buggy pre-resolved height was 2800 - 110 = 2690.
-        expect(imageFilter!.args).toContain('2025x2890/')
-        expect(imageFilter!.args).not.toContain('2025x2690/')
-        expect(imageFilter!.args).not.toContain('f-')
+        // width=2025 (concrete), heightFull with offset 110 → f-110
+        // imagor resolves f-110 against padded canvas height (2800+200=3000) → 2890
+        expect(imageFilter!.args).toContain('2025xf-110/')
       })
     })
 
