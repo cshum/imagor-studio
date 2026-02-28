@@ -151,10 +151,6 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
 
   useEffect(() => {
     // Initialize editor (this resets state to cleanInitialState)
-    // Reset previewUrl to keep React state in sync with imageEditor's lastPreviewUrl reset.
-    // Without this, if the new preview URL equals the current previewUrl React bails out
-    // (no re-render -> no new <img> -> onLoad never fires -> loading stuck).
-    setPreviewUrl(undefined)
     imageEditor.initialize({
       onPreviewUpdate: setPreviewUrl,
       onError: setError,
