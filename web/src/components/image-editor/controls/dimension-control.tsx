@@ -171,7 +171,7 @@ export function DimensionControl({
   return (
     <div className='space-y-4'>
       {/* Dimensions */}
-      <div className='space-y-3'>
+      <div className='space-y-2'>
         <div className='flex items-center justify-between'>
           <Label className='text-sm font-medium'>{t('imageEditor.dimensions.title')}</Label>
           <Button
@@ -255,7 +255,7 @@ export function DimensionControl({
       </div>
 
       {/* Resize Mode */}
-      <div className='space-y-3'>
+      <div className='space-y-2'>
         <Label className='text-sm font-medium'>{t('imageEditor.dimensions.resizeMode')}</Label>
         <RadioGroup
           value={getCurrentFitMode()}
