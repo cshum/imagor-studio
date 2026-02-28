@@ -114,12 +114,12 @@ describe('ImageEditor', () => {
       let resolved = false
       const stalePromise = new Promise<void>((resolve) => {
         // Access private field via cast for test purposes
-        ;(editor as unknown as { previewLoadResolvers: Array<() => void> }).previewLoadResolvers.push(
-          () => {
-            resolved = true
-            resolve()
-          },
-        )
+        ;(
+          editor as unknown as { previewLoadResolvers: Array<() => void> }
+        ).previewLoadResolvers.push(() => {
+          resolved = true
+          resolve()
+        })
       })
 
       editor.initialize({})
