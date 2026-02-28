@@ -53,7 +53,7 @@ export function calculateLayerOutputDimensions(
   }
 
   // Calculate what the ACTUAL output will be after resize.
-  // widthFull/heightFull (f-token) resolve to parent canvas size minus offset.
+  // widthFull/heightFull (full-token) resolve to parent canvas size minus offset.
   let outputWidth: number
   if (transforms.widthFull && parentDimensions) {
     outputWidth = Math.max(1, parentDimensions.width - (transforms.widthFullOffset ?? 0))

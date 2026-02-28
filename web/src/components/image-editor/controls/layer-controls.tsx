@@ -195,7 +195,7 @@ export function LayerControls({
     [layer.transforms, layer.originalDimensions.height, onUpdate],
   )
 
-  // Toggle width axis between fixed-px and fill (f-token) mode.
+  // Toggle width axis between fixed-px and fill (full-token) mode.
   // px → fill: convert current pixel size to an inset so the visual size is preserved.
   //            If the layer is wider than the parent, clamp inset to 0 (full fill).
   // fill → px: resolve the fill back to an absolute px value using the parent dims.

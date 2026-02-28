@@ -11,9 +11,9 @@ const EDITOR_SECTIONS = {
   crop: true,
   effects: true,
   transform: true,
+  fill: false,
   dimensions: false,
   output: false,
-  fill: false,
 } as const
 
 export type SectionKey = keyof typeof EDITOR_SECTIONS
