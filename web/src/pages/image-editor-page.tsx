@@ -150,10 +150,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   }, [selectedLayerId])
 
   useEffect(() => {
-    // Save current state before initialize (only if it's a template)
-    const savedState = isTemplate ? imageEditor.getState() : null
-
-    // Initialize editor (this resets state to defaults)
+    // Initialize editor (this resets state to cleanInitialState)
     // Reset previewUrl to keep React state in sync with imageEditor's lastPreviewUrl reset.
     // Without this, if the new preview URL equals the current previewUrl React bails out
     // (no re-render -> no new <img> -> onLoad never fires -> loading stuck).
@@ -184,22 +181,19 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
       onEditingContextChange: setEditingContext,
     })
 
-    // Restore state from URL first (if exists)
+    // Restore state from URL if present (overrides cleanInitialState)
     const encoded = getStateFromLocation()
     if (encoded) {
       const urlState = deserializeStateFromUrl(encoded)
       if (urlState) {
         imageEditor.restoreState(urlState)
       }
-    } else if (savedState) {
-      // No URL state, but we have template state from loader - restore it
-      imageEditor.restoreState(savedState)
     }
 
     return () => {
       imageEditor.destroy()
     }
-  }, [imageEditor, isTemplate])
+  }, [imageEditor])
 
   // This ensures React state stays in sync with the actual imageEditor instance
   useEffect(() => {
