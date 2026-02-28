@@ -199,6 +199,10 @@ export class ImageEditor {
     // Reset lastPreviewUrl when component mounts/remounts
     // This ensures preview updates work correctly when navigating back
     this.lastPreviewUrl = null
+    // Drain any pending crop-wait resolvers from a previous session.
+    // The same ImageEditor instance is reused from the router cache (shouldReload: false
+    // + no invalidation on unmount). Any stale resolver resolves harmlessly here.
+    this.previewLoadResolvers = []
     // Reset history when component remounts
     this.undoStack = []
     this.redoStack = []

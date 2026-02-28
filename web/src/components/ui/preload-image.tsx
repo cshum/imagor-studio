@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState } from 'react'
+import { forwardRef, useEffect, useRef, useState } from 'react'
 
 import { cn } from '@/lib/utils'
 
@@ -20,6 +20,13 @@ interface PreloadImageProps {
 export const PreloadImage = forwardRef<HTMLImageElement, PreloadImageProps>(
   ({ src, alt, className, style, onLoad, onError }, forwardedRef) => {
     const [imageStack, setImageStack] = useState<ImageStackItem[]>([])
+
+    // Track the latest requested src in a ref updated synchronously during render.
+    // handleImageLoad uses this to decide whether to call onLoad: comparing by src
+    // is reliable even if onLoad fires before React commits the setImageStack update
+    // that added the new entry (which would make an imageStack-position check stale).
+    const latestSrcRef = useRef(src)
+    latestSrcRef.current = src
 
     // Handle src changes - add new image to stack
     useEffect(() => {
@@ -48,13 +55,17 @@ export const PreloadImage = forwardRef<HTMLImageElement, PreloadImageProps>(
     }, [src])
 
     // Handle image load events
-    const handleImageLoad = (imageId: string, event: React.SyntheticEvent<HTMLImageElement>) => {
+    const handleImageLoad = (
+      imageId: string,
+      imageSrc: string,
+      event: React.SyntheticEvent<HTMLImageElement>,
+    ) => {
       const img = event.currentTarget
       const { naturalWidth, naturalHeight } = img
 
-      // Check if this is the latest image before updating state
-      const isLatestImage =
-        imageStack.length > 0 && imageStack[imageStack.length - 1].id === imageId
+      // Compare by src, not stack position. latestSrcRef.current is written during render
+      // so it's always current even when onLoad fires before the next React commit.
+      const isLatestImage = imageSrc === latestSrcRef.current
 
       setImageStack((prev) => {
         const updated = prev.map((item) => (item.id === imageId ? { ...item, loaded: true } : item))
@@ -127,7 +138,7 @@ export const PreloadImage = forwardRef<HTMLImageElement, PreloadImageProps>(
               'ios-no-image-drag pointer-events-none',
             )}
             draggable='false'
-            onLoad={(e) => handleImageLoad(image.id, e)}
+            onLoad={(e) => handleImageLoad(image.id, image.src, e)}
             onError={() => handleImageError(image.id)}
           />
         ))}
