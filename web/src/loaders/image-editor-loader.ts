@@ -108,6 +108,10 @@ export const imageEditorLoader = async ({
     // This handles all dimension modes, crop validation, etc.
     await imageEditor.importTemplate(JSON.stringify(template))
 
+    // Snapshot the clean template state so initialize() can restore it when
+    // the user navigates back (the same cached instance is reused).
+    imageEditor.markInitialState()
+
     // Extract template name from filename (source of truth)
     const filename = imagePath.split('/').pop() || ''
     const templateName = filename.replace(/\.imagor\.json$/, '')

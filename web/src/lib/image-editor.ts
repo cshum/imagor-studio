@@ -147,6 +147,11 @@ export class ImageEditor {
   private abortController: AbortController | null = null
   private lastPreviewUrl: string | null = null
   private previewLoadResolvers: Array<() => void> = []
+  // Snapshot of the "clean" state set by the loader (after importTemplate for templates,
+  // or {} for plain images). initialize() restores this so that navigating back to the
+  // same cached instance always starts from the original loader state — not from
+  // whatever edits the user made in the previous session.
+  private cleanInitialState: ImageEditorState = {}
   private undoStack: ImageEditorState[] = []
   private redoStack: ImageEditorState[] = []
   private readonly MAX_HISTORY_SIZE = 50
@@ -209,10 +214,21 @@ export class ImageEditor {
     this.pendingHistorySnapshot = null
     // Reset selected layer
     this.selectedLayerId = null
-    // Reset state to defaults when component remounts
-    // The page will restore from URL if there's a ?state= parameter
-    // Dimensions start as auto (undefined): no explicit resize step by default.
-    this.state = {}
+    // Restore the clean initial state captured by markInitialState().
+    // For plain images this is {} (same as before). For templates it is the
+    // state set by importTemplate() in the loader — so navigating back always
+    // discards the user's unsaved edits and shows the original template.
+    this.state = { ...this.cleanInitialState }
+  }
+
+  /**
+   * Snapshot the current state as the "clean" initial state.
+   * Call this in the loader after all initial setup (e.g. importTemplate) is done.
+   * initialize() will restore this snapshot on every subsequent mount so that
+   * the same cached instance always starts fresh from the loader's intended state.
+   */
+  markInitialState(): void {
+    this.cleanInitialState = { ...this.state }
   }
 
   /**

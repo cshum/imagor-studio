@@ -71,6 +71,86 @@ describe('ImageEditor', () => {
     })
   })
 
+  describe('initialize() and markInitialState()', () => {
+    it('should reset to empty state on re-initialize when markInitialState was never called', () => {
+      editor.updateParams({ brightness: 80, contrast: 40 })
+      editor.initialize({})
+      const state = editor.getState()
+      expect(state.brightness).toBeUndefined()
+      expect(state.contrast).toBeUndefined()
+    })
+
+    it('should restore cleanInitialState on re-initialize after markInitialState()', () => {
+      // Simulate loader: set up template state then snapshot it
+      editor.updateParams({ brightness: 50, contrast: 30 })
+      editor.markInitialState()
+
+      // User makes edits
+      editor.updateParams({ brightness: 99, saturation: -50 })
+      expect(editor.getState().brightness).toBe(99)
+
+      // Component remounts — initialize() should discard edits
+      editor.initialize({})
+      const state = editor.getState()
+      expect(state.brightness).toBe(50)
+      expect(state.contrast).toBe(30)
+      expect(state.saturation).toBeUndefined()
+    })
+
+    it('should clear undo/redo history on re-initialize', () => {
+      editor.updateParams({ brightness: 50 })
+      editor.markInitialState()
+      editor.updateParams({ brightness: 99 })
+      vi.runAllTimers() // flush debounced history snapshot
+      expect(editor.canUndo()).toBe(true)
+
+      editor.initialize({})
+      expect(editor.canUndo()).toBe(false)
+      expect(editor.canRedo()).toBe(false)
+    })
+
+    it('should drain pending previewLoadResolvers on re-initialize', async () => {
+      // Push a resolver manually (mimics a stale crop-wait from a previous session)
+      let resolved = false
+      const stalePromise = new Promise<void>((resolve) => {
+        // Access private field via cast for test purposes
+        ;(
+          editor as unknown as { previewLoadResolvers: Array<() => void> }
+        ).previewLoadResolvers.push(() => {
+          resolved = true
+          resolve()
+        })
+      })
+
+      editor.initialize({})
+
+      // Resolver should have been cleared, not called
+      // (if it were called resolved would be true, but they are simply dropped)
+      await Promise.resolve() // flush microtasks
+      expect(resolved).toBe(false)
+      expect(
+        (editor as unknown as { previewLoadResolvers: Array<() => void> }).previewLoadResolvers
+          .length,
+      ).toBe(0)
+      // Suppress unhandled promise (stalePromise never resolves — that's the correct behavior)
+      stalePromise.catch(() => {})
+    })
+
+    it('markInitialState() should update the snapshot independently of later edits', () => {
+      editor.updateParams({ brightness: 10 })
+      editor.markInitialState()
+
+      editor.updateParams({ brightness: 20 })
+      editor.markInitialState() // second snapshot overwrites first
+
+      editor.updateParams({ brightness: 99 })
+      editor.initialize({})
+
+      // Should restore the LAST markInitialState, not the first
+      expect(editor.getState().brightness).toBe(20)
+    })
+  })
+
   describe('History Management - Base Level', () => {
     it('should not allow undo when no history', () => {
       expect(editor.canUndo()).toBe(false)
