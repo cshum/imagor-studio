@@ -371,7 +371,11 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     }
 
     // Priority 3: Navigate back to gallery
-    const { galleryKey } = splitImagePath(imageEditor.getImagePath())
+    // For templates, navigate to the template file's folder rather than the
+    // source image's folder (imageEditor.getImagePath() returns the source image).
+    const backPath =
+      isTemplate && templateMetadata ? templateMetadata.templatePath : imageEditor.getImagePath()
+    const { galleryKey } = splitImagePath(backPath)
     if (galleryKey) {
       await navigate({
         to: '/gallery/$galleryKey',
