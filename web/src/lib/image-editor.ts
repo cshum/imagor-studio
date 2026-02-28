@@ -682,8 +682,6 @@ export class ImageEditor {
       } else {
         parts.push(`${left}x${top}:${right}x${bottom}`)
       }
-
-
     }
 
     // Add alignment (for Fill mode — not fitIn, not smart, not stretch)
