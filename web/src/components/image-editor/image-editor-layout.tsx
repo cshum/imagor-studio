@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
+import { useNoBodyOverscroll } from '@/hooks/use-no-body-overscroll'
 import type { EditorSections, SectionKey } from '@/lib/editor-sections'
 import { cn } from '@/lib/utils'
 
@@ -98,6 +99,10 @@ export function ImageEditorLayout({
   const isMobile = !useBreakpoint('md')
   const isDesktop = useBreakpoint('lg')
   const isTablet = !isMobile && !isDesktop
+
+  // Prevent macOS document-level bounce while editor is open,
+  // without affecting inner scrollable panels or other pages.
+  useNoBodyOverscroll()
 
   // Use shared DnD hook (desktop only)
   const { activeId, sensors, handleDragStart, handleDragOver, handleDragEnd } = useEditorSectionDnd(
