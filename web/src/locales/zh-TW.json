@@ -319,6 +319,14 @@
             "label": "首頁標題",
             "description": "自定義導航和麵包屑中顯示的首頁標題"
           },
+          "appTitle": {
+            "label": "應用程式名稱",
+            "description": "將顯示在導航列、瀏覽器標籤和所有品牌連結中的自定義應用程式名稱（需要許可證）"
+          },
+          "appUrl": {
+            "label": "應用程式 URL",
+            "description": "使用者點擊應用程式名稱時開啟的 URL（需要許可證）"
+          },
           "defaultLanguage": {
             "label": "預設語言",
             "description": "設定應用程式的預設語言"

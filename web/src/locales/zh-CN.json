@@ -319,6 +319,14 @@
             "label": "首页标题",
             "description": "自定义导航和面包屑中显示的首页标题"
           },
+          "appTitle": {
+            "label": "应用名称",
+            "description": "显示在导航栏、浏览器标签和所有品牌链接中的自定义应用名称（需要许可证）"
+          },
+          "appUrl": {
+            "label": "应用 URL",
+            "description": "用户点击应用名称时打开的 URL（需要许可证）"
+          },
           "defaultLanguage": {
             "label": "默认语言",
             "description": "设置应用程序的默认语言"

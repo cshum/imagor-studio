@@ -316,6 +316,14 @@
             "label": "Titolo Home",
             "description": "Personalizza il titolo mostrato per la home page nella navigazione e nei breadcrumb"
           },
+          "appTitle": {
+            "label": "Titolo Applicazione",
+            "description": "Nome personalizzato dell'applicazione mostrato nella barra di navigazione, nel tab del browser e in tutti i link del brand (richiede licenza)"
+          },
+          "appUrl": {
+            "label": "URL Applicazione",
+            "description": "URL aperto quando gli utenti cliccano sul titolo dell'applicazione (richiede licenza)"
+          },
           "defaultLanguage": {
             "label": "Lingua Predefinita",
             "description": "Imposta la lingua predefinita per l'applicazione"
