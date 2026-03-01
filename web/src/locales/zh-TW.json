@@ -536,15 +536,14 @@
       "registerForLicense": "註冊 Imagor Studio",
       "registerDescription": "輸入您的許可證金鑰以啟用 Imagor Studio。",
       "supportTitle": "💝 支援 Imagor Studio - 來自 imagor 的建立者",
-      "creatorStory": "從 vipsgen 到 imagor，我從頭開始構建了整個圖片處理管道。Imagor Studio 是一個相簿和即時編輯 Web 應用程式，彙集了多年的持續開發成果。",
+      "creatorStory": "我們服務了數百萬張圖片，但需要更好的管理和編輯工具。所以我們構建了 Imagor Studio——開源、自建，建立在從 vipsgen 到 imagor 多年發展的基礎上。",
       "features": {
-        "highPerformance": "高效能虛擬滾動相簿",
-        "realTimeEditing": "即時圖片編輯，即時生成 URL",
-        "zeroConfiguration": "零配置設定，支援通用儲存",
-        "flexibleStorage": "保留原始檔案的非破壞性工作流程",
-        "nonDestructive": "由 imagor 提供支援的專業級圖片處理"
+        "virtualScrollingGallery": "虛擬滾動相簿——即時瀏覽數千張圖片，無需索引或等待",
+        "imageEditing": "圖片編輯——多層合成和範本工作流程，支持即時 URL 生成",
+        "dragAndDrop": "拖曳管理——上傳、整理、批量多選操作",
+        "nonDestructiveWorkflow": "非破壞性工作流程——原始圖片保持不變，所有變更透過 URL 套用"
       },
-      "supportOngoingDevelopment": "您的支援使 Imagor Studio 能夠持續開發。",
+      "supportOngoingDevelopment": "無訂閱費。不鎖定供應商。您的支持使這一切持續。",
       "getEarlyBirdLicense": "獲取早鳥許可證（$39）",
       "licenseTypes": {
         "early_bird": "早鳥",

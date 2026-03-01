@@ -111,11 +111,10 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
               {t('pages.license.creatorStory')}
             </p>
             <ul className='space-y-1 text-sm text-blue-800 dark:text-blue-300'>
-              <li>• {t('pages.license.features.highPerformance')}</li>
-              <li>• {t('pages.license.features.realTimeEditing')}</li>
-              <li>• {t('pages.license.features.zeroConfiguration')}</li>
-              <li>• {t('pages.license.features.flexibleStorage')}</li>
-              <li>• {t('pages.license.features.nonDestructive')}</li>
+              <li>• {t('pages.license.features.virtualScrollingGallery')}</li>
+              <li>• {t('pages.license.features.imageEditing')}</li>
+              <li>• {t('pages.license.features.dragAndDrop')}</li>
+              <li>• {t('pages.license.features.nonDestructiveWorkflow')}</li>
             </ul>
             <p className='mt-3 text-sm text-blue-800 dark:text-blue-300'>
               {t('pages.license.supportOngoingDevelopment')}
