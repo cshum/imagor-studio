@@ -8,6 +8,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
+	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -255,4 +256,17 @@ type MockImagorConfig struct {
 	CachePath      string
 	SignerType     string
 	SignerTruncate int
+}
+
+// MockLicenseChecker mocks the LicenseChecker interface for use in tests.
+type MockLicenseChecker struct {
+	mock.Mock
+}
+
+func (m *MockLicenseChecker) GetLicenseStatus(ctx context.Context, includeDetails bool) (*license.LicenseStatus, error) {
+	args := m.Called(ctx, includeDetails)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*license.LicenseStatus), args.Error(1)
 }

@@ -8,6 +8,27 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 )
 
+// licenseRequiredRegistryKeys contains registry keys that require a valid license.
+// Writes are rejected for unlicensed instances; config-override values in read
+// responses are suppressed so they cannot bypass the frontend license gate.
+var licenseRequiredRegistryKeys = map[string]bool{
+	"config.app_title": true,
+	"config.app_url":   true,
+}
+
+// checkLicensed returns true if the instance is licensed.
+// Returns true when licenseService is nil (test / embedded-dev mode).
+func (r *Resolver) checkLicensed(ctx context.Context) bool {
+	if r.licenseService == nil {
+		return true
+	}
+	status, err := r.licenseService.GetLicenseStatus(ctx, false)
+	if err != nil {
+		return false
+	}
+	return status.IsLicensed
+}
+
 // SetUserRegistry sets user-specific registry (unified flexible API)
 func (r *mutationResolver) SetUserRegistry(ctx context.Context, entry *gql.RegistryEntryInput, entries []*gql.RegistryEntryInput, ownerID *string) ([]*gql.UserRegistry, error) {
 	// Validate input: exactly one of entry or entries must be provided
@@ -244,6 +265,16 @@ func (r *mutationResolver) SetSystemRegistry(ctx context.Context, entry *gql.Reg
 		allEntries = entries
 	}
 
+	// Reject writes for license-required keys when the instance is unlicensed
+	for _, e := range allEntries {
+		if licenseRequiredRegistryKeys[e.Key] {
+			if !r.checkLicensed(ctx) {
+				return nil, fmt.Errorf("a valid license is required to set '%s'", e.Key)
+			}
+			break // license only needs to be verified once
+		}
+	}
+
 	// Check all entries for config conflicts first
 	for _, e := range allEntries {
 		_, configExists := r.config.GetByRegistryKey(e.Key)
@@ -344,6 +375,16 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 
 	var result []*gql.SystemRegistry
 
+	// Lazily check license — only if a license-required key with a config override is encountered
+	var licenseChecked, licensed bool
+	getLicensed := func() bool {
+		if !licenseChecked {
+			licenseChecked = true
+			licensed = r.checkLicensed(ctx)
+		}
+		return licensed
+	}
+
 	// Process database results (if any)
 	for _, registry := range registryList {
 		// Hide encrypted values in GraphQL responses
@@ -352,10 +393,13 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 			value = ""
 		}
 
-		// Check for config override
+		// Check for config override; suppress for license-required keys when unlicensed
 		configValue, configExists := r.config.GetByRegistryKey(registry.Key)
 		var effectiveValue string
-		if configExists {
+		if configExists && licenseRequiredRegistryKeys[registry.Key] && !getLicensed() {
+			configExists = false
+			effectiveValue = value
+		} else if configExists {
 			effectiveValue = configValue
 		} else {
 			effectiveValue = value
@@ -421,6 +465,16 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 
 	var result []*gql.SystemRegistry
 
+	// Lazily check license — only if a license-required key with a config override is encountered
+	var licenseChecked, licensed bool
+	getLicensed := func() bool {
+		if !licenseChecked {
+			licenseChecked = true
+			licensed = r.checkLicensed(ctx)
+		}
+		return licensed
+	}
+
 	// Process database results (if any)
 	for _, registry := range registries {
 		// Hide encrypted values in GraphQL responses
@@ -429,10 +483,13 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 			value = ""
 		}
 
-		// Check for config override
+		// Check for config override; suppress for license-required keys when unlicensed
 		configValue, configExists := r.config.GetByRegistryKey(registry.Key)
 		var effectiveValue string
-		if configExists {
+		if configExists && licenseRequiredRegistryKeys[registry.Key] && !getLicensed() {
+			configExists = false
+			effectiveValue = value
+		} else if configExists {
 			effectiveValue = configValue
 		} else {
 			effectiveValue = value
@@ -449,6 +506,10 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 	// In embedded mode, also check for config-only values that weren't in database
 	if r.config.IsEmbeddedMode() {
 		for _, k := range keysToCheck {
+			// Skip license-required keys if not licensed (suppress env/flag values)
+			if licenseRequiredRegistryKeys[k] && !getLicensed() {
+				continue
+			}
 			configValue, configExists := r.config.GetByRegistryKey(k)
 			if configExists {
 				// Check if we already added this key from database results
