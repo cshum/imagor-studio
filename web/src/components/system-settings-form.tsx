@@ -271,7 +271,7 @@ export function SystemSettingsForm({
                 href='https://imagor.net/buy/early-bird/'
                 target='_blank'
                 rel='noopener noreferrer'
-                className='text-muted-foreground hover:text-foreground mt-1 inline-flex items-center gap-1 transition-colors'
+                className='mt-1 flex items-center gap-1 text-orange-600 transition-colors hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300'
               >
                 <Lock className='h-3 w-3' />
                 {t('pages.systemSettings.licenseRequired')}
