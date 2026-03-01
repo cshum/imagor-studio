@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { useBrand } from '@/hooks/use-brand'
 import { initAuth, useAuth } from '@/stores/auth-store'
 import { initializeLocale } from '@/stores/locale-store'
 
@@ -31,6 +32,7 @@ export function LoginPage() {
   const { authState } = useAuth()
   const navigate = useNavigate()
   const search = useSearch({ from: '/login' })
+  const { title: appTitle, url: appUrl } = useBrand()
 
   // Helper function to validate redirect URL for security
   const isValidRedirectUrl = (url: string): boolean => {
@@ -117,11 +119,11 @@ export function LoginPage() {
       <div className='flex items-center gap-2 border-b px-6 py-3'>
         <div className='flex flex-1'>
           <a
-            href='https://imagor.net'
+            href={appUrl}
             target='_blank'
             className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
           >
-            {t('common.navigation.title')}
+            {appTitle}
           </a>
         </div>
         <div className='ml-auto'>

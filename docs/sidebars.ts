@@ -22,7 +22,6 @@ const sidebars: SidebarsConfig = {
         "features/keyboard-shortcuts",
         "features/url-transformations",
         "features/multi-language",
-        "features/video-support",
       ],
     },
     {
@@ -34,6 +33,7 @@ const sidebars: SidebarsConfig = {
         "configuration/storage",
         "configuration/imagor",
         "configuration/security",
+        "configuration/branding",
       ],
     },
     {

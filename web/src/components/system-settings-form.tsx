@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from '@tanstack/react-router'
+import { Lock } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { setSystemRegistryObject } from '@/api/registry-api'
@@ -18,6 +19,7 @@ import {
 } from '@/components/ui/select'
 import { extractErrorMessage } from '@/lib/error-utils'
 import { setHomeTitle } from '@/stores/folder-tree-store'
+import { licenseStore, setBrand } from '@/stores/license-store'
 
 export interface SystemSetting {
   key: string
@@ -33,6 +35,7 @@ export interface SystemSetting {
   secondaryOptionLabels?: Record<string, string> // For custom secondary option labels
   primaryLabel?: string // For dual-select primary field label
   secondaryLabel?: string // For dual-select secondary field label
+  requiresLicense?: boolean // Field is only editable when the instance is licensed
 }
 
 export interface SystemSettingsFormProps {
@@ -64,6 +67,7 @@ export function SystemSettingsForm({
 }: SystemSettingsFormProps) {
   const router = useRouter()
   const { t } = useTranslation()
+  const { isLicensed } = licenseStore.useStore()
   const [isUpdating, setIsUpdating] = useState(false)
 
   // Current form state - map of registry keys to string values
@@ -97,6 +101,9 @@ export function SystemSettingsForm({
   // Check if there are unsaved changes
   const hasUnsavedChanges = useMemo(() => {
     return settings.some((setting) => {
+      // Skip license-gated fields when not licensed
+      if (setting.requiresLicense && !isLicensed) return false
+
       const currentValue = formValues[setting.key]
       const originalValue = initialValues[setting.key]
       if (currentValue !== originalValue) {
@@ -114,7 +121,7 @@ export function SystemSettingsForm({
 
       return false
     })
-  }, [formValues, initialValues, settings])
+  }, [formValues, initialValues, settings, isLicensed])
 
   const updateSetting = (key: string, value: string) => {
     const newValues = { ...formValues, [key]: value }
@@ -133,6 +140,9 @@ export function SystemSettingsForm({
       // Only send changed values
       const changedValues: Record<string, string> = {}
       settings.forEach((setting) => {
+        // Skip license-gated fields when not licensed
+        if (setting.requiresLicense && !isLicensed) return
+
         const currentValue = formValues[setting.key]
         const originalValue = initialValues[setting.key]
         if (currentValue !== originalValue) {
@@ -157,6 +167,17 @@ export function SystemSettingsForm({
           setHomeTitle(changedValues['config.app_home_title'])
         }
 
+        // Update brand store immediately if brand settings changed
+        if (
+          changedValues['config.app_title'] !== undefined ||
+          changedValues['config.app_url'] !== undefined
+        ) {
+          setBrand(
+            changedValues['config.app_title'] ?? formValues['config.app_title'] ?? '',
+            changedValues['config.app_url'] ?? formValues['config.app_url'] ?? '',
+          )
+        }
+
         toast.success('Settings updated successfully')
 
         // Invalidate the current route to refresh loader data
@@ -179,6 +200,10 @@ export function SystemSettingsForm({
     const registryEntry = systemRegistryList.find((item) => item.key === setting.key)
     const isOverridden = registryEntry?.isOverriddenByConfig || false
 
+    // Check if this setting requires a license
+    const isLicenseRequired = setting.requiresLicense && !isLicensed
+    const isDisabled = isUpdating || isOverridden || isLicenseRequired
+
     // Get the current effective value
     const getEffectiveValue = () => {
       if (isOverridden && registryEntry) {
@@ -198,10 +223,10 @@ export function SystemSettingsForm({
       return (
         <div
           key={setting.key}
-          className='flex flex-row items-center justify-between rounded-lg border p-4'
+          className='flex flex-row items-center justify-between gap-4 px-4 py-3'
         >
-          <div className='space-y-0.5'>
-            <label htmlFor={checkboxId} className='cursor-pointer text-base font-medium'>
+          <div className='min-w-0 flex-1 space-y-0.5'>
+            <label htmlFor={checkboxId} className='cursor-pointer text-sm font-medium'>
               {setting.label}
             </label>
             <div className='text-muted-foreground text-sm'>
@@ -229,68 +254,93 @@ export function SystemSettingsForm({
 
     if (setting.type === 'text') {
       return (
-        <div key={setting.key} className='space-y-2 rounded-lg border p-4'>
-          <Label htmlFor={setting.key} className='text-base font-medium'>
-            {setting.label}
-          </Label>
-          <div className='text-muted-foreground text-sm'>
-            {setting.description}
-            {isOverridden && (
-              <span className='mt-1 block text-orange-600 dark:text-orange-400'>
-                {t('pages.systemSettings.settingOverridden')}
-              </span>
-            )}
+        <div
+          key={setting.key}
+          className='flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4'
+        >
+          <div className='min-w-0 flex-1 space-y-0.5'>
+            <Label htmlFor={setting.key} className='text-sm font-medium'>
+              {setting.label}
+            </Label>
+            <div className='text-muted-foreground text-sm'>
+              {setting.description}
+              {isOverridden && (
+                <span className='mt-1 block text-orange-600 dark:text-orange-400'>
+                  {t('pages.systemSettings.settingOverridden')}
+                </span>
+              )}
+              {isLicenseRequired && (
+                <a
+                  href='https://imagor.net/buy/early-bird/'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='mt-1 flex items-center gap-1 text-orange-600 transition-colors hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300'
+                >
+                  <Lock className='h-3 w-3' />
+                  {t('pages.systemSettings.licenseRequired')}
+                </a>
+              )}
+            </div>
           </div>
-          <Input
-            id={setting.key}
-            value={effectiveValue}
-            onChange={(e) => {
-              if (!isOverridden) {
-                updateSetting(setting.key, e.target.value)
-              }
-            }}
-            disabled={isUpdating || isOverridden}
-            placeholder={setting.defaultValue.toString()}
-          />
+          <div className='w-full shrink-0 sm:w-72 lg:w-100'>
+            <Input
+              id={setting.key}
+              value={isLicenseRequired ? '' : effectiveValue}
+              onChange={(e) => {
+                if (!isOverridden && !isLicenseRequired) {
+                  updateSetting(setting.key, e.target.value)
+                }
+              }}
+              disabled={isDisabled}
+              placeholder={setting.defaultValue.toString()}
+            />
+          </div>
         </div>
       )
     }
 
     if (setting.type === 'select') {
       return (
-        <div key={setting.key} className='space-y-2 rounded-lg border p-4'>
-          <Label htmlFor={setting.key} className='text-base font-medium'>
-            {setting.label}
-          </Label>
-          <div className='text-muted-foreground text-sm'>
-            {setting.description}
-            {isOverridden && (
-              <span className='mt-1 block text-orange-600 dark:text-orange-400'>
-                {t('pages.systemSettings.settingOverridden')}
-              </span>
-            )}
+        <div
+          key={setting.key}
+          className='flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4'
+        >
+          <div className='min-w-0 flex-1 space-y-0.5'>
+            <Label htmlFor={setting.key} className='text-sm font-medium'>
+              {setting.label}
+            </Label>
+            <div className='text-muted-foreground text-sm'>
+              {setting.description}
+              {isOverridden && (
+                <span className='mt-1 block text-orange-600 dark:text-orange-400'>
+                  {t('pages.systemSettings.settingOverridden')}
+                </span>
+              )}
+            </div>
           </div>
-          <Select
-            value={effectiveValue}
-            onValueChange={(value: string) => {
-              if (!isOverridden) {
-                updateSetting(setting.key, value)
-              }
-            }}
-            disabled={isUpdating || isOverridden}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={`Select ${setting.label.toLowerCase()}`} />
-            </SelectTrigger>
-            <SelectContent>
-              {setting.options?.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {setting.optionLabels?.[option] ||
-                    option.charAt(0).toUpperCase() + option.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className='w-full shrink-0 sm:w-72 lg:w-100'>
+            <Select
+              value={effectiveValue}
+              onValueChange={(value: string) => {
+                if (!isOverridden) {
+                  updateSetting(setting.key, value)
+                }
+              }}
+              disabled={isUpdating || isOverridden}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={`Select ${setting.label.toLowerCase()}`} />
+              </SelectTrigger>
+              <SelectContent>
+                {setting.options?.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {setting.optionLabels?.[option] ||
+                      option.charAt(0).toUpperCase() + option.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       )
     }
@@ -327,21 +377,26 @@ export function SystemSettingsForm({
       }
 
       return (
-        <div key={setting.key} className='space-y-2 rounded-lg border p-4'>
-          <Label className='text-base font-medium'>{setting.label}</Label>
-          <div className='text-muted-foreground text-sm'>
-            {setting.description}
-            {(isOverridden || isSecondaryOverridden) && (
-              <span className='mt-1 block text-orange-600 dark:text-orange-400'>
-                {t('pages.systemSettings.settingOverridden')}
-              </span>
-            )}
+        <div
+          key={setting.key}
+          className='flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4'
+        >
+          <div className='min-w-0 flex-1 space-y-0.5'>
+            <Label className='text-sm font-medium'>{setting.label}</Label>
+            <div className='text-muted-foreground text-sm'>
+              {setting.description}
+              {(isOverridden || isSecondaryOverridden) && (
+                <span className='mt-1 block text-orange-600 dark:text-orange-400'>
+                  {t('pages.systemSettings.settingOverridden')}
+                </span>
+              )}
+            </div>
           </div>
-          <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+          <div className='grid w-full shrink-0 grid-cols-2 gap-2 sm:w-72 lg:w-100'>
             <div>
               <Label
                 htmlFor={setting.key}
-                className='text-muted-foreground pb-1 text-sm font-medium'
+                className='text-muted-foreground pb-1 text-xs font-medium'
               >
                 {setting.primaryLabel || 'Primary'}
               </Label>
@@ -369,7 +424,7 @@ export function SystemSettingsForm({
             <div>
               <Label
                 htmlFor={setting.secondaryKey}
-                className='text-muted-foreground pb-1 text-sm font-medium'
+                className='text-muted-foreground pb-1 text-xs font-medium'
               >
                 {setting.secondaryLabel || 'Secondary'}
               </Label>
@@ -404,7 +459,7 @@ export function SystemSettingsForm({
 
   const content = (
     <div className='space-y-4'>
-      {settings.map(renderSetting)}
+      <div className='divide-y rounded-lg border'>{settings.map(renderSetting)}</div>
 
       {!hideUpdateButton && (
         <div className='flex justify-end pt-2'>

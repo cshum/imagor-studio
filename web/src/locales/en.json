@@ -320,6 +320,14 @@
             "label": "Home Title",
             "description": "Customize the title shown for the home page in navigation and breadcrumbs"
           },
+          "appTitle": {
+            "label": "App Title",
+            "description": "Custom application name shown in the navigation bar, browser tab, and all brand links (requires license)"
+          },
+          "appUrl": {
+            "label": "App URL",
+            "description": "URL opened when users click the app title (requires license)"
+          },
           "defaultLanguage": {
             "label": "Default Language",
             "description": "Set the default language for the application"
@@ -456,7 +464,8 @@
       "testConfigFirst": "Please fill in the {{storageType}} storage configuration first"
     },
     "systemSettings": {
-      "settingOverridden": "This setting is overridden by configuration file or environment variable"
+      "settingOverridden": "This setting is overridden by configuration file or environment variable",
+      "licenseRequired": "A valid license is required to use this setting"
     },
     "imagor": {
       "imagorConfiguration": "Imagor Configuration",
@@ -538,15 +547,14 @@
       "registerForLicense": "Register Imagor Studio",
       "registerDescription": "Enter your license key to activate Imagor Studio.",
       "supportTitle": "💝 Support Imagor Studio - from the creator of imagor",
-      "creatorStory": "From vipsgen to imagor, I've built the entire image processing pipeline from the ground up. Imagor Studio is an image gallery and live editing web application that brings together years of ongoing development.",
+      "creatorStory": "We were serving millions of images but needed better tools for managing and editing them. So we built Imagor Studio — open source, self-hosted, built on years of development from vipsgen to imagor.",
       "features": {
-        "highPerformance": "High-performance virtual scrolling gallery",
-        "realTimeEditing": "Live image editing with instant URL generation",
-        "zeroConfiguration": "Zero-configuration setup with universal storage support",
-        "flexibleStorage": "Non-destructive workflow preserving original files",
-        "nonDestructive": "Professional-grade image processing powered by imagor"
+        "virtualScrollingGallery": "Virtual Scrolling Gallery — browse thousands of images instantly, no indexing or waiting",
+        "imageEditing": "Image Editing — multi-layer compositing, template workflows with instant URL generation",
+        "dragAndDrop": "Drag-and-Drop Management — upload, organize, multi-select for bulk operations",
+        "nonDestructiveWorkflow": "Non-Destructive Workflow — originals untouched, all transformations via URL"
       },
-      "supportOngoingDevelopment": "Your support enables continued development of Imagor Studio.",
+      "supportOngoingDevelopment": "No subscriptions. No vendor lock-in. Your support keeps it that way.",
       "getEarlyBirdLicense": "Get Early Bird License ($39)",
       "licenseTypes": {
         "early_bird": "Early Bird",

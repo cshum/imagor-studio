@@ -1,6 +1,7 @@
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { authStore, getAuth } from '@/stores/auth-store.ts'
 import { folderTreeStore } from '@/stores/folder-tree-store.ts'
+import { licenseStore } from '@/stores/license-store.ts'
 import { initializeLocale } from '@/stores/locale-store.ts'
 import { themeStore } from '@/stores/theme-store.ts'
 
@@ -23,6 +24,7 @@ export const rootLoader = async (): Promise<RootLoaderData> => {
   }
   // Get home title from the folder tree store
   const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
+  await licenseStore.waitFor((state) => state.isBrandLoaded)
   const homeTitle = folderTreeState.homeTitle
   const breadcrumb: BreadcrumbItem = {
     label: homeTitle,

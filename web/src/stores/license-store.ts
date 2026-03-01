@@ -15,9 +15,13 @@ export interface LicenseState {
   activatedAt: string | null
   isLoading: boolean
   showDialog: boolean
+  appTitle: string
+  appUrl: string
+  isBrandLoaded: boolean
 }
 
 export type LicenseAction =
+  | { type: 'SET_BRAND'; title: string; url: string }
   | {
       type: 'SET_LICENSE_STATUS'
       payload: {
@@ -54,10 +58,21 @@ const initialState: LicenseState = {
   activatedAt: null,
   isLoading: false,
   showDialog: false,
+  appTitle: '',
+  appUrl: '',
+  isBrandLoaded: false,
 }
 
 const reducer = (state: LicenseState, action: LicenseAction): LicenseState => {
   switch (action.type) {
+    case 'SET_BRAND':
+      return {
+        ...state,
+        appTitle: action.title,
+        appUrl: action.url,
+        isBrandLoaded: true,
+      }
+
     case 'SET_LICENSE_STATUS':
       return {
         ...state,
@@ -109,6 +124,10 @@ const reducer = (state: LicenseState, action: LicenseAction): LicenseState => {
 // Create the store
 export const licenseStore = createStore(initialState, reducer)
 
+export const setBrand = (title: string, url: string) => {
+  licenseStore.dispatch({ type: 'SET_BRAND', title, url })
+}
+
 /**
  * Check license status using public endpoint (no auth required)
  */
@@ -129,6 +148,12 @@ export const checkLicense = async () => {
         supportMessage: data.supportMessage || undefined,
       },
     })
+    // Populate brand from the same public response (only set when licensed)
+    licenseStore.dispatch({
+      type: 'SET_BRAND',
+      title: data.appTitle || '',
+      url: data.appUrl || '',
+    })
   } catch {
     // Fallback for public access
     licenseStore.dispatch({
@@ -139,6 +164,7 @@ export const checkLicense = async () => {
         supportMessage: 'From the creator of imagor & vipsgen',
       },
     })
+    licenseStore.dispatch({ type: 'SET_BRAND', title: '', url: '' })
   } finally {
     licenseStore.dispatch({ type: 'SET_LOADING', payload: { isLoading: false } })
   }

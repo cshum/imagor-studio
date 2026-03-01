@@ -15,6 +15,10 @@ type LicenseStatus struct {
 	Message              string `json:"message"`
 	IsOverriddenByConfig bool   `json:"isOverriddenByConfig"`
 
+	// Brand fields (only populated on public endpoint when licensed)
+	AppTitle *string `json:"appTitle,omitempty"`
+	AppURL   *string `json:"appUrl,omitempty"`
+
 	// Optional detailed fields (only populated when includeDetails=true)
 	SupportMessage   *string `json:"supportMessage,omitempty"`
 	MaskedLicenseKey *string `json:"maskedLicenseKey,omitempty"`

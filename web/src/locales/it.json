@@ -316,6 +316,14 @@
             "label": "Titolo Home",
             "description": "Personalizza il titolo mostrato per la home page nella navigazione e nei breadcrumb"
           },
+          "appTitle": {
+            "label": "Titolo Applicazione",
+            "description": "Nome personalizzato dell'applicazione mostrato nella barra di navigazione, nel tab del browser e in tutti i link del brand (richiede licenza)"
+          },
+          "appUrl": {
+            "label": "URL Applicazione",
+            "description": "URL aperto quando gli utenti cliccano sul titolo dell'applicazione (richiede licenza)"
+          },
           "defaultLanguage": {
             "label": "Lingua Predefinita",
             "description": "Imposta la lingua predefinita per l'applicazione"
@@ -451,7 +459,8 @@
       "testConfigFirst": "Compila prima la configurazione di archiviazione {{storageType}}"
     },
     "systemSettings": {
-      "settingOverridden": "Questa impostazione è sovrascritta dal file di configurazione o dalla variabile d'ambiente"
+      "settingOverridden": "Questa impostazione è sovrascritta dal file di configurazione o dalla variabile d'ambiente",
+      "licenseRequired": "Per utilizzare questa impostazione è necessaria una licenza valida"
     },
     "imagor": {
       "imagorConfiguration": "Configurazione Imagor",
@@ -533,15 +542,14 @@
       "registerForLicense": "Registra Imagor Studio",
       "registerDescription": "Inserisci il tuo codice di licenza per attivare Imagor Studio.",
       "supportTitle": "💝 Supporta Imagor Studio - dal creatore di imagor",
-      "creatorStory": "Da vipsgen a imagor, ho costruito l'intera pipeline di elaborazione delle immagini da zero. Imagor Studio è una galleria di immagini e un'applicazione web di editing live che riunisce anni di sviluppo continuo.",
+      "creatorStory": "Stavamo gestendo milioni di immagini ma avevamo bisogno di strumenti migliori. Così abbiamo costruito Imagor Studio — open source, self-hosted, sviluppato in anni di lavoro da vipsgen a imagor.",
       "features": {
-        "highPerformance": "Galleria a scorrimento virtuale ad alte prestazioni",
-        "realTimeEditing": "Editing di immagini in tempo reale con generazione istantanea di URL",
-        "zeroConfiguration": "Configurazione zero con supporto di archiviazione universale",
-        "flexibleStorage": "Flusso di lavoro non distruttivo che preserva i file originali",
-        "nonDestructive": "Elaborazione di immagini di livello professionale basata su imagor"
+        "virtualScrollingGallery": "Virtual Scrolling Gallery — sfoglia migliaia di immagini istantaneamente, senza indicizzazione o attese",
+        "imageEditing": "Editing immagini — compositing multi-layer e workflow con template con URL istantaneo",
+        "dragAndDrop": "Gestione drag-and-drop — carica, organizza, selezione multipla per operazioni bulk",
+        "nonDestructiveWorkflow": "Workflow non distruttivo — originali intoccati, tutte le trasformazioni via URL"
       },
-      "supportOngoingDevelopment": "Il tuo supporto consente lo sviluppo continuo di Imagor Studio.",
+      "supportOngoingDevelopment": "Nessun abbonamento. Nessun vendor lock-in. Il tuo supporto mantiene tutto questo.",
       "getEarlyBirdLicense": "Ottieni la licenza Early Bird ($39)",
       "licenseTypes": {
         "early_bird": "Early Bird",

@@ -6,6 +6,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -995,4 +996,323 @@ func (m *MockConfigMultiple) GetByRegistryKey(registryKey string) (effectiveValu
 
 func (m *MockConfigMultiple) IsEmbeddedMode() bool {
 	return false // Default to non-embedded mode for tests
+}
+
+// MockConfigEmbedded simulates embedded mode with multiple registry keys.
+type MockConfigEmbedded struct {
+	configs map[string]MockConfigEntry
+}
+
+func (m *MockConfigEmbedded) GetByRegistryKey(registryKey string) (effectiveValue string, exists bool) {
+	if entry, found := m.configs[registryKey]; found {
+		return entry.value, entry.exists
+	}
+	return "", false
+}
+
+func (m *MockConfigEmbedded) IsEmbeddedMode() bool {
+	return true
+}
+
+// --- License enforcement tests ---
+
+func TestSetSystemRegistry_LicenseRequired_Unlicensed(t *testing.T) {
+	tests := []struct {
+		name string
+		key  string
+	}{
+		{name: "app_title rejected when unlicensed", key: "config.app_title"},
+		{name: "app_url rejected when unlicensed", key: "config.app_url"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockStorage := new(MockStorage)
+			mockRegistryStore := new(MockRegistryStore)
+			mockUserStore := new(MockUserStore)
+			mockLicense := new(MockLicenseChecker)
+			logger, _ := zap.NewDevelopment()
+			cfg := &config.Config{}
+			mockStorageProvider := NewMockStorageProvider(mockStorage)
+			resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, mockLicense, logger)
+
+			ctx := createAdminContext("admin-user-id")
+			mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: false}, nil)
+
+			entries := []*gql.RegistryEntryInput{{Key: tt.key, Value: "My Brand"}}
+			result, err := resolver.Mutation().SetSystemRegistry(ctx, nil, entries)
+
+			assert.Error(t, err)
+			assert.Nil(t, result)
+			assert.Contains(t, err.Error(), "a valid license is required")
+			assert.Contains(t, err.Error(), tt.key)
+
+			// Registry store must NOT be called
+			mockRegistryStore.AssertNotCalled(t, "SetMulti")
+			mockLicense.AssertExpectations(t)
+		})
+	}
+}
+
+func TestSetSystemRegistry_LicenseRequired_Licensed(t *testing.T) {
+	tests := []struct {
+		name  string
+		key   string
+		value string
+	}{
+		{name: "app_title allowed when licensed", key: "config.app_title", value: "My Studio"},
+		{name: "app_url allowed when licensed", key: "config.app_url", value: "https://example.com"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockStorage := new(MockStorage)
+			mockRegistryStore := new(MockRegistryStore)
+			mockUserStore := new(MockUserStore)
+			mockLicense := new(MockLicenseChecker)
+			logger, _ := zap.NewDevelopment()
+			cfg := &config.Config{} // no config override
+			mockStorageProvider := NewMockStorageProvider(mockStorage)
+			resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, mockLicense, logger)
+
+			ctx := createAdminContext("admin-user-id")
+			mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: true}, nil)
+
+			resultEntry := &registrystore.Registry{Key: tt.key, Value: tt.value}
+			expectedEntries := []*registrystore.Registry{{Key: tt.key, Value: tt.value, IsEncrypted: false}}
+			mockRegistryStore.On("SetMulti", ctx, "system:global", expectedEntries).Return([]*registrystore.Registry{resultEntry}, nil)
+
+			entries := []*gql.RegistryEntryInput{{Key: tt.key, Value: tt.value}}
+			result, err := resolver.Mutation().SetSystemRegistry(ctx, nil, entries)
+
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+			assert.Len(t, result, 1)
+			assert.Equal(t, tt.key, result[0].Key)
+			assert.Equal(t, tt.value, result[0].Value)
+
+			mockRegistryStore.AssertExpectations(t)
+			mockLicense.AssertExpectations(t)
+		})
+	}
+}
+
+func TestSetSystemRegistry_LicenseRequired_CheckOnlyOnce(t *testing.T) {
+	// Submitting multiple license-required keys should only call GetLicenseStatus once
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockLicense := new(MockLicenseChecker)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, mockLicense, logger)
+
+	ctx := createAdminContext("admin-user-id")
+	// Expect exactly ONE call regardless of how many license-required keys are in the batch
+	mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: false}, nil).Once()
+
+	entries := []*gql.RegistryEntryInput{
+		{Key: "config.app_title", Value: "My Studio"},
+		{Key: "config.app_url", Value: "https://example.com"},
+	}
+	result, err := resolver.Mutation().SetSystemRegistry(ctx, nil, entries)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "a valid license is required")
+	mockLicense.AssertExpectations(t) // verifies called exactly once
+}
+
+func TestSetSystemRegistry_NonLicenseRequired_NoLicenseCheck(t *testing.T) {
+	// Non-license-required keys must not trigger a license check even without licenseService
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	// nil licenseService — if the code wrongly calls it, a nil-pointer panic will fail the test
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createAdminContext("admin-user-id")
+	key := "config.app_home_title"
+	value := "Gallery"
+
+	resultEntry := &registrystore.Registry{Key: key, Value: value}
+	expectedEntries := []*registrystore.Registry{{Key: key, Value: value, IsEncrypted: false}}
+	mockRegistryStore.On("SetMulti", ctx, "system:global", expectedEntries).Return([]*registrystore.Registry{resultEntry}, nil)
+
+	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
+	result, err := resolver.Mutation().SetSystemRegistry(ctx, nil, entries)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 1)
+	mockRegistryStore.AssertExpectations(t)
+}
+
+func TestGetSystemRegistry_LicenseRequired_OmittedWhenUnlicensed(t *testing.T) {
+	// When unlicensed, license-required keys are omitted entirely from the response —
+	// regardless of whether the value comes from the DB, env var, or CLI flag.
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockLicense := new(MockLicenseChecker)
+	logger, _ := zap.NewDevelopment()
+	mockConfig := &MockConfig{configExists: true, configValue: "Env Brand Title"}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
+
+	ctx := createAdminContext("admin-user-id")
+	mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: false}, nil)
+
+	dbEntry := &registrystore.Registry{Key: "config.app_title", Value: "db-title"}
+	mockRegistryStore.On("Get", ctx, "system:global", "config.app_title").Return(dbEntry, nil)
+
+	key := "config.app_title"
+	result, err := resolver.Query().GetSystemRegistry(ctx, &key, nil)
+
+	assert.NoError(t, err)
+	assert.Len(t, result, 0) // entry omitted entirely — DB value is not exposed either
+
+	mockLicense.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
+}
+
+func TestGetSystemRegistry_LicenseRequired_ShowConfigOverrideWhenLicensed(t *testing.T) {
+	// When licensed, the config-override value should be visible as usual.
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockLicense := new(MockLicenseChecker)
+	logger, _ := zap.NewDevelopment()
+	mockConfig := &MockConfig{configExists: true, configValue: "Env Brand Title"}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
+
+	ctx := createAdminContext("admin-user-id")
+	mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: true}, nil)
+
+	dbEntry := &registrystore.Registry{Key: "config.app_title", Value: "db-title"}
+	mockRegistryStore.On("Get", ctx, "system:global", "config.app_title").Return(dbEntry, nil)
+
+	key := "config.app_title"
+	result, err := resolver.Query().GetSystemRegistry(ctx, &key, nil)
+
+	assert.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, "Env Brand Title", result[0].Value) // config/env value shown
+	assert.True(t, result[0].IsOverriddenByConfig)      // override visible
+
+	mockLicense.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
+}
+
+func TestListSystemRegistry_LicenseRequired_OmittedWhenUnlicensed(t *testing.T) {
+	// config.app_title override is suppressed for unlicensed instances;
+	// config.app_home_title (non-license-required) is still shown as overridden.
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockLicense := new(MockLicenseChecker)
+	logger, _ := zap.NewDevelopment()
+	mockConfig := &MockConfigMultiple{
+		configs: map[string]MockConfigEntry{
+			"config.app_title":      {exists: true, value: "Env Brand Title"},
+			"config.app_home_title": {exists: true, value: "Env Home"},
+		},
+	}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
+
+	ctx := createAdminContext("admin-user-id")
+	mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: false}, nil)
+
+	dbEntries := []*registrystore.Registry{
+		{Key: "config.app_title", Value: "db-title"},
+		{Key: "config.app_home_title", Value: "db-home"},
+	}
+	mockRegistryStore.On("List", ctx, "system:global", (*string)(nil)).Return(dbEntries, nil)
+
+	result, err := resolver.Query().ListSystemRegistry(ctx, nil)
+
+	assert.NoError(t, err)
+	assert.Len(t, result, 1) // app_title omitted entirely; only app_home_title returned
+
+	titleEntry := findRegistryByKey(result, "config.app_title")
+	assert.Nil(t, titleEntry) // omitted — neither DB value nor env override is exposed
+
+	homeEntry := findRegistryByKey(result, "config.app_home_title")
+	assert.NotNil(t, homeEntry)
+	assert.Equal(t, "Env Home", homeEntry.Value)   // config value visible
+	assert.True(t, homeEntry.IsOverriddenByConfig) // not license-gated, shows override
+
+	mockLicense.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
+}
+
+func TestGetSystemRegistry_LicenseRequired_EmbeddedMode_Unlicensed(t *testing.T) {
+	// In embedded mode, license-required config-only keys must be omitted when unlicensed.
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockLicense := new(MockLicenseChecker)
+	logger, _ := zap.NewDevelopment()
+	mockConfig := &MockConfigEmbedded{
+		configs: map[string]MockConfigEntry{
+			"config.app_title":      {exists: true, value: "Env Brand Title"},
+			"config.app_home_title": {exists: true, value: "Env Home"},
+		},
+	}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
+
+	ctx := createAdminContext("admin-user-id")
+	mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: false}, nil)
+
+	// Request both keys at once
+	keys := []string{"config.app_title", "config.app_home_title"}
+	result, err := resolver.Query().GetSystemRegistry(ctx, nil, keys)
+
+	assert.NoError(t, err)
+	// app_title must be absent (suppressed); app_home_title must appear
+	titleEntry := findRegistryByKey(result, "config.app_title")
+	assert.Nil(t, titleEntry, "license-required key should be omitted in embedded mode when unlicensed")
+
+	homeEntry := findRegistryByKey(result, "config.app_home_title")
+	assert.NotNil(t, homeEntry)
+	assert.Equal(t, "Env Home", homeEntry.Value)
+	assert.True(t, homeEntry.IsOverriddenByConfig)
+
+	mockLicense.AssertExpectations(t)
+}
+
+func TestGetSystemRegistry_LicenseRequired_EmbeddedMode_Licensed(t *testing.T) {
+	// In embedded mode, license-required keys ARE returned when licensed.
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockLicense := new(MockLicenseChecker)
+	logger, _ := zap.NewDevelopment()
+	mockConfig := &MockConfigEmbedded{
+		configs: map[string]MockConfigEntry{
+			"config.app_title": {exists: true, value: "Env Brand Title"},
+		},
+	}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
+
+	ctx := createAdminContext("admin-user-id")
+	mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: true}, nil)
+
+	key := "config.app_title"
+	result, err := resolver.Query().GetSystemRegistry(ctx, &key, nil)
+
+	assert.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, "Env Brand Title", result[0].Value)
+	assert.True(t, result[0].IsOverriddenByConfig)
+
+	mockLicense.AssertExpectations(t)
 }

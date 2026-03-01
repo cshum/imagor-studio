@@ -1,6 +1,8 @@
 package resolver
 
 import (
+	"context"
+
 	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
@@ -34,17 +36,23 @@ type ImagorProvider interface {
 	GenerateURL(imagePath string, params imagorpath.Params) (string, error)
 }
 
+// LicenseChecker is the interface used by the resolver for license status checks.
+// *license.Service satisfies this interface.
+type LicenseChecker interface {
+	GetLicenseStatus(ctx context.Context, includeDetails bool) (*license.LicenseStatus, error)
+}
+
 type Resolver struct {
 	storageProvider StorageProvider
 	registryStore   registrystore.Store
 	userStore       userstore.Store
 	imagorProvider  ImagorProvider
 	config          ConfigProvider
-	licenseService  *license.Service
+	licenseService  LicenseChecker
 	logger          *zap.Logger
 }
 
-func NewResolver(storageProvider StorageProvider, registryStore registrystore.Store, userStore userstore.Store, imagorProvider ImagorProvider, cfg ConfigProvider, licenseService *license.Service, logger *zap.Logger) *Resolver {
+func NewResolver(storageProvider StorageProvider, registryStore registrystore.Store, userStore userstore.Store, imagorProvider ImagorProvider, cfg ConfigProvider, licenseService LicenseChecker, logger *zap.Logger) *Resolver {
 	return &Resolver{
 		storageProvider: storageProvider,
 		registryStore:   registryStore,

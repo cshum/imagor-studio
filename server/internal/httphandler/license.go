@@ -1,26 +1,38 @@
 package httphandler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/cshum/imagor-studio/server/internal/license"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"go.uber.org/zap"
 )
 
+// LicenseServicer is the interface used by LicenseHandler for license operations.
+type LicenseServicer interface {
+	GetLicenseStatus(ctx context.Context, includeDetails bool) (*license.LicenseStatus, error)
+	ActivateLicense(ctx context.Context, key string) (*license.LicenseStatus, error)
+}
+
 type LicenseHandler struct {
-	licenseService *license.Service
+	licenseService LicenseServicer
+	registryStore  registrystore.Store
 	logger         *zap.Logger
 }
 
-func NewLicenseHandler(licenseService *license.Service, logger *zap.Logger) *LicenseHandler {
+func NewLicenseHandler(licenseService LicenseServicer, registryStore registrystore.Store, logger *zap.Logger) *LicenseHandler {
 	return &LicenseHandler{
 		licenseService: licenseService,
+		registryStore:  registryStore,
 		logger:         logger,
 	}
 }
 
-// GetPublicStatus returns the public license status (no authentication required)
+// GetPublicStatus returns the public license status (no authentication required).
+// When licensed, also includes appTitle and appUrl for brand display on the login screen.
 func (h *LicenseHandler) GetPublicStatus() http.HandlerFunc {
 	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
 		// Use the unified method with includeDetails=false for public access
@@ -32,6 +44,27 @@ func (h *LicenseHandler) GetPublicStatus() http.HandlerFunc {
 				IsLicensed:     false,
 				Message:        "Support ongoing development",
 				SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
+			}
+		}
+
+		// When licensed, attach brand values so the login screen can show them
+		// before authentication. Only set non-empty values.
+		if status.IsLicensed && h.registryStore != nil {
+			entries, regErr := h.registryStore.GetMulti(r.Context(), registrystore.SystemOwnerID,
+				[]string{"config.app_title", "config.app_url"})
+			if regErr == nil {
+				for _, entry := range entries {
+					v := strings.TrimSpace(entry.Value)
+					if v == "" {
+						continue
+					}
+					switch entry.Key {
+					case "config.app_title":
+						status.AppTitle = stringPtr(v)
+					case "config.app_url":
+						status.AppURL = stringPtr(v)
+					}
+				}
 			}
 		}
 

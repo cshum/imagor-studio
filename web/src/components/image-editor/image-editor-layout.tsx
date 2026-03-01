@@ -10,6 +10,7 @@ import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { useBrand } from '@/hooks/use-brand'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
 import { useNoBodyOverscroll } from '@/hooks/use-no-body-overscroll'
@@ -99,6 +100,7 @@ export function ImageEditorLayout({
   const isMobile = !useBreakpoint('md')
   const isDesktop = useBreakpoint('lg')
   const isTablet = !isMobile && !isDesktop
+  const { title: appTitle, url: appUrl } = useBrand()
 
   // Prevent macOS document-level bounce while editor is open,
   // without affecting inner scrollable panels or other pages.
@@ -199,11 +201,11 @@ export function ImageEditorLayout({
   const centeredTitle = (
     <div className='flex flex-1 justify-center'>
       <a
-        href='https://imagor.net'
+        href={appUrl}
         target='_blank'
         className='text-foreground hover:text-foreground/80 text-lg font-semibold transition-colors'
       >
-        {t('common.navigation.title')}
+        {appTitle}
       </a>
     </div>
   )
