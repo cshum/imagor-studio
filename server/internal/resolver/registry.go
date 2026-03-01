@@ -375,7 +375,7 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 
 	var result []*gql.SystemRegistry
 
-	// Lazily check license — only if a license-required key with a config override is encountered
+	// Lazily evaluate license status — called at most once per request, only when needed.
 	var licenseChecked, licensed bool
 	getLicensed := func() bool {
 		if !licenseChecked {
@@ -387,19 +387,22 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 
 	// Process database results (if any)
 	for _, registry := range registryList {
+		// Skip license-required keys entirely when unlicensed.
+		// This covers both DB-stored values and env/flag overrides.
+		if licenseRequiredRegistryKeys[registry.Key] && !getLicensed() {
+			continue
+		}
+
 		// Hide encrypted values in GraphQL responses
 		value := registry.Value
 		if registry.IsEncrypted {
 			value = ""
 		}
 
-		// Check for config override; suppress for license-required keys when unlicensed
+		// Check for config override (env/flag takes priority over DB)
 		configValue, configExists := r.config.GetByRegistryKey(registry.Key)
 		var effectiveValue string
-		if configExists && licenseRequiredRegistryKeys[registry.Key] && !getLicensed() {
-			configExists = false
-			effectiveValue = value
-		} else if configExists {
+		if configExists {
 			effectiveValue = configValue
 		} else {
 			effectiveValue = value
@@ -465,7 +468,7 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 
 	var result []*gql.SystemRegistry
 
-	// Lazily check license — only if a license-required key with a config override is encountered
+	// Lazily evaluate license status — called at most once per request, only when needed.
 	var licenseChecked, licensed bool
 	getLicensed := func() bool {
 		if !licenseChecked {
@@ -477,19 +480,22 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 
 	// Process database results (if any)
 	for _, registry := range registries {
+		// Skip license-required keys entirely when unlicensed.
+		// This covers both DB-stored values and env/flag overrides.
+		if licenseRequiredRegistryKeys[registry.Key] && !getLicensed() {
+			continue
+		}
+
 		// Hide encrypted values in GraphQL responses
 		value := registry.Value
 		if registry.IsEncrypted {
 			value = ""
 		}
 
-		// Check for config override; suppress for license-required keys when unlicensed
+		// Check for config override (env/flag takes priority over DB)
 		configValue, configExists := r.config.GetByRegistryKey(registry.Key)
 		var effectiveValue string
-		if configExists && licenseRequiredRegistryKeys[registry.Key] && !getLicensed() {
-			configExists = false
-			effectiveValue = value
-		} else if configExists {
+		if configExists {
 			effectiveValue = configValue
 		} else {
 			effectiveValue = value

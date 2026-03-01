@@ -1152,9 +1152,9 @@ func TestSetSystemRegistry_NonLicenseRequired_NoLicenseCheck(t *testing.T) {
 	mockRegistryStore.AssertExpectations(t)
 }
 
-func TestGetSystemRegistry_LicenseRequired_SuppressConfigOverrideWhenUnlicensed(t *testing.T) {
-	// When APP_TITLE is set via env/flag but instance is unlicensed, the config
-	// override must be suppressed: the DB value is returned with isOverriddenByConfig=false.
+func TestGetSystemRegistry_LicenseRequired_OmittedWhenUnlicensed(t *testing.T) {
+	// When unlicensed, license-required keys are omitted entirely from the response —
+	// regardless of whether the value comes from the DB, env var, or CLI flag.
 	mockStorage := new(MockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
@@ -1174,9 +1174,7 @@ func TestGetSystemRegistry_LicenseRequired_SuppressConfigOverrideWhenUnlicensed(
 	result, err := resolver.Query().GetSystemRegistry(ctx, &key, nil)
 
 	assert.NoError(t, err)
-	assert.Len(t, result, 1)
-	assert.Equal(t, "db-title", result[0].Value)    // DB value, not env/flag value
-	assert.False(t, result[0].IsOverriddenByConfig) // override suppressed
+	assert.Len(t, result, 0) // entry omitted entirely — DB value is not exposed either
 
 	mockLicense.AssertExpectations(t)
 	mockRegistryStore.AssertExpectations(t)
@@ -1211,7 +1209,7 @@ func TestGetSystemRegistry_LicenseRequired_ShowConfigOverrideWhenLicensed(t *tes
 	mockRegistryStore.AssertExpectations(t)
 }
 
-func TestListSystemRegistry_LicenseRequired_SuppressConfigOverrideWhenUnlicensed(t *testing.T) {
+func TestListSystemRegistry_LicenseRequired_OmittedWhenUnlicensed(t *testing.T) {
 	// config.app_title override is suppressed for unlicensed instances;
 	// config.app_home_title (non-license-required) is still shown as overridden.
 	mockStorage := new(MockStorage)
@@ -1240,12 +1238,10 @@ func TestListSystemRegistry_LicenseRequired_SuppressConfigOverrideWhenUnlicensed
 	result, err := resolver.Query().ListSystemRegistry(ctx, nil)
 
 	assert.NoError(t, err)
-	assert.Len(t, result, 2)
+	assert.Len(t, result, 1) // app_title omitted entirely; only app_home_title returned
 
 	titleEntry := findRegistryByKey(result, "config.app_title")
-	assert.NotNil(t, titleEntry)
-	assert.Equal(t, "db-title", titleEntry.Value)    // DB value, override suppressed
-	assert.False(t, titleEntry.IsOverriddenByConfig) // license check suppressed it
+	assert.Nil(t, titleEntry) // omitted — neither DB value nor env override is exposed
 
 	homeEntry := findRegistryByKey(result, "config.app_home_title")
 	assert.NotNil(t, homeEntry)
