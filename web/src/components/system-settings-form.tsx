@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from '@tanstack/react-router'
+import { Lock } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { setSystemRegistryObject } from '@/api/registry-api'
@@ -17,7 +18,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { extractErrorMessage } from '@/lib/error-utils'
+import { setBrand } from '@/stores/brand-store'
 import { setHomeTitle } from '@/stores/folder-tree-store'
+import { licenseStore } from '@/stores/license-store'
 
 export interface SystemSetting {
   key: string
@@ -33,6 +36,7 @@ export interface SystemSetting {
   secondaryOptionLabels?: Record<string, string> // For custom secondary option labels
   primaryLabel?: string // For dual-select primary field label
   secondaryLabel?: string // For dual-select secondary field label
+  requiresLicense?: boolean // Field is only editable when the instance is licensed
 }
 
 export interface SystemSettingsFormProps {
@@ -64,6 +68,7 @@ export function SystemSettingsForm({
 }: SystemSettingsFormProps) {
   const router = useRouter()
   const { t } = useTranslation()
+  const { isLicensed } = licenseStore.useStore()
   const [isUpdating, setIsUpdating] = useState(false)
 
   // Current form state - map of registry keys to string values
@@ -97,6 +102,9 @@ export function SystemSettingsForm({
   // Check if there are unsaved changes
   const hasUnsavedChanges = useMemo(() => {
     return settings.some((setting) => {
+      // Skip license-gated fields when not licensed
+      if (setting.requiresLicense && !isLicensed) return false
+
       const currentValue = formValues[setting.key]
       const originalValue = initialValues[setting.key]
       if (currentValue !== originalValue) {
@@ -114,7 +122,7 @@ export function SystemSettingsForm({
 
       return false
     })
-  }, [formValues, initialValues, settings])
+  }, [formValues, initialValues, settings, isLicensed])
 
   const updateSetting = (key: string, value: string) => {
     const newValues = { ...formValues, [key]: value }
@@ -133,6 +141,9 @@ export function SystemSettingsForm({
       // Only send changed values
       const changedValues: Record<string, string> = {}
       settings.forEach((setting) => {
+        // Skip license-gated fields when not licensed
+        if (setting.requiresLicense && !isLicensed) return
+
         const currentValue = formValues[setting.key]
         const originalValue = initialValues[setting.key]
         if (currentValue !== originalValue) {
@@ -157,6 +168,17 @@ export function SystemSettingsForm({
           setHomeTitle(changedValues['config.app_home_title'])
         }
 
+        // Update brand store immediately if brand settings changed
+        if (
+          changedValues['config.app_title'] !== undefined ||
+          changedValues['config.app_url'] !== undefined
+        ) {
+          setBrand(
+            changedValues['config.app_title'] ?? formValues['config.app_title'] ?? '',
+            changedValues['config.app_url'] ?? formValues['config.app_url'] ?? '',
+          )
+        }
+
         toast.success('Settings updated successfully')
 
         // Invalidate the current route to refresh loader data
@@ -178,6 +200,10 @@ export function SystemSettingsForm({
     // Check if this setting is overridden by config
     const registryEntry = systemRegistryList.find((item) => item.key === setting.key)
     const isOverridden = registryEntry?.isOverriddenByConfig || false
+
+    // Check if this setting requires a license
+    const isLicenseRequired = setting.requiresLicense && !isLicensed
+    const isDisabled = isUpdating || isOverridden || isLicenseRequired
 
     // Get the current effective value
     const getEffectiveValue = () => {
@@ -240,16 +266,27 @@ export function SystemSettingsForm({
                 {t('pages.systemSettings.settingOverridden')}
               </span>
             )}
+            {isLicenseRequired && (
+              <a
+                href='https://imagor.net/buy/early-bird/'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-muted-foreground hover:text-foreground mt-1 inline-flex items-center gap-1 transition-colors'
+              >
+                <Lock className='h-3 w-3' />
+                {t('pages.systemSettings.licenseRequired')}
+              </a>
+            )}
           </div>
           <Input
             id={setting.key}
-            value={effectiveValue}
+            value={isLicenseRequired ? '' : effectiveValue}
             onChange={(e) => {
-              if (!isOverridden) {
+              if (!isOverridden && !isLicenseRequired) {
                 updateSetting(setting.key, e.target.value)
               }
             }}
-            disabled={isUpdating || isOverridden}
+            disabled={isDisabled}
             placeholder={setting.defaultValue.toString()}
           />
         </div>

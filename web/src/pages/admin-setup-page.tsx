@@ -29,6 +29,7 @@ import {
   type MultiStepFormRef,
   type MultiStepFormStep,
 } from '@/components/ui/multi-step-form'
+import { useBrand } from '@/hooks/use-brand'
 import { useFormErrors } from '@/hooks/use-form-errors'
 import type { AdminSetupLoaderData } from '@/loaders/admin-setup-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
@@ -261,6 +262,7 @@ export function AdminSetupPage() {
   const navigate = useNavigate()
   const router = useRouter()
   const { authState } = useAuth()
+  const { title: appTitle, url: appUrl } = useBrand()
   const multiStepFormRef = useRef<MultiStepFormRef>(null)
 
   // Initialize form error handler
@@ -456,11 +458,11 @@ export function AdminSetupPage() {
       <div className='flex items-center gap-2 border-b px-3 py-2 sm:px-6 sm:py-3'>
         <div className='flex flex-1'>
           <a
-            href='https://imagor.net'
+            href={appUrl}
             target='_blank'
             className='text-foreground hover:text-foreground/80 text-base font-bold transition-colors sm:text-lg md:text-xl'
           >
-            {t('common.navigation.title')}
+            {appTitle}
           </a>
         </div>
         <div className='ml-auto flex items-center gap-1 sm:gap-2'>

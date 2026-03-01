@@ -24,6 +24,22 @@ export function AdminPage({ loaderData }: AdminPageProps) {
       defaultValue: 'Home',
     },
     {
+      key: 'config.app_title',
+      type: 'text',
+      label: t('pages.admin.systemSettings.fields.appTitle.label'),
+      description: t('pages.admin.systemSettings.fields.appTitle.description'),
+      defaultValue: 'Imagor Studio',
+      requiresLicense: true,
+    },
+    {
+      key: 'config.app_url',
+      type: 'text',
+      label: t('pages.admin.systemSettings.fields.appUrl.label'),
+      description: t('pages.admin.systemSettings.fields.appUrl.description'),
+      defaultValue: 'https://imagor.net',
+      requiresLicense: true,
+    },
+    {
       key: 'config.app_default_language',
       type: 'select',
       label: t('pages.admin.systemSettings.fields.defaultLanguage.label'),

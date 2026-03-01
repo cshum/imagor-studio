@@ -1,8 +1,8 @@
-import { useTranslation } from 'react-i18next'
 import { AlertTriangle, Home } from 'lucide-react'
 
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { ModeToggle } from '@/components/mode-toggle'
+import { useBrand } from '@/hooks/use-brand'
 
 import { Button } from './button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card'
@@ -20,7 +20,7 @@ export function ErrorPage({
   title = 'Something went wrong',
   description = 'There was an error loading the page. Please try going back to the home page.',
 }: ErrorPageProps) {
-  const { t } = useTranslation()
+  const { title: appTitle, url: appUrl } = useBrand()
 
   const handleGoHome = () => {
     window.location.href = '/'
@@ -33,11 +33,11 @@ export function ErrorPage({
       <div className='flex items-center gap-2 border-b px-6 py-3'>
         <div className='flex flex-1'>
           <a
-            href='https://imagor.net'
+            href={appUrl}
             target='_blank'
             className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
           >
-            {t('common.navigation.title')}
+            {appTitle}
           </a>
         </div>
         <div className='ml-auto'>

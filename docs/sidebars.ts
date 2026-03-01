@@ -34,6 +34,7 @@ const sidebars: SidebarsConfig = {
         "configuration/storage",
         "configuration/imagor",
         "configuration/security",
+        "configuration/branding",
       ],
     },
     {

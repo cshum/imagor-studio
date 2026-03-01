@@ -59,6 +59,8 @@ type Config struct {
 	ImagorSignerTruncate int    // Signer truncation length
 
 	// Application Configuration
+	AppTitle                  string // Custom application title
+	AppUrl                    string // Custom application URL
 	AppHomeTitle              string // Custom home page title
 	AppImageExtensions        string // Comma-separated list of image file extensions
 	AppVideoExtensions        string // Comma-separated list of video file extensions
@@ -111,6 +113,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		imagorSignerType     = fs.String("imagor-signer-type", "sha1", "imagor signer algorithm: sha1, sha256, sha512")
 		imagorSignerTruncate = fs.Int("imagor-signer-truncate", 0, "imagor signer truncation length")
 
+		appTitle                  = fs.String("app-title", "", "custom application title (license required)")
+		appUrl                    = fs.String("app-url", "", "custom application URL (license required)")
 		appHomeTitle              = fs.String("app-home-title", "", "custom home page title")
 		appImageExtensions        = fs.String("app-image-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", "comma-separated list of image file extensions to show in application")
 		appVideoExtensions        = fs.String("app-video-extensions", ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", "comma-separated list of video file extensions to show in application")
@@ -212,6 +216,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		ImagorUnsafe:                *imagorUnsafe,
 		ImagorSignerType:            *imagorSignerType,
 		ImagorSignerTruncate:        *imagorSignerTruncate,
+		AppTitle:                    *appTitle,
+		AppUrl:                      *appUrl,
 		AppHomeTitle:                *appHomeTitle,
 		AppImageExtensions:          *appImageExtensions,
 		AppVideoExtensions:          *appVideoExtensions,

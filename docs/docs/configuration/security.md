@@ -149,7 +149,7 @@ The **JWT key** provides a second layer of encryption:
 
 ### License Key
 
-Activate Imagor Studio with a license key:
+Activate Imagor Studio with a license key. **[Get a license →](https://imagor.net/buy/early-bird/)**
 
 ```bash
 export LICENSE_KEY=your-license-key-here

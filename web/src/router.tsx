@@ -42,6 +42,7 @@ import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
 import { UsersPage } from '@/pages/users-page'
 import { initAuth, useAuthEffect } from '@/stores/auth-store.ts'
+import { loadBrand } from '@/stores/brand-store'
 import {
   initializeFolderTreeCache,
   loadHomeTitle,
@@ -304,6 +305,7 @@ export function AppRouter() {
       }
       loadRootFolders()
       loadHomeTitle()
+      loadBrand()
     } else if (action.type === 'LOGOUT') {
       initializeTheme(localThemeStorage, 'class')
       initializeSidebar(localSidebarStorage)
