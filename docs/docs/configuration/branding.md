@@ -1,4 +1,4 @@
-# Branding
+# Branding Configuration
 
 Imagor Studio supports customising the application title and brand link shown in the navigation bar, browser tab, login page, and error pages. This feature requires a valid license.
 
